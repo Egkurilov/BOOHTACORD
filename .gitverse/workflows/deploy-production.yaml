@@ -89,7 +89,7 @@ jobs:
           set -euo pipefail
           git_sha="$(git rev-parse HEAD)"
           [[ "$git_sha" =~ ^[0-9a-f]{40}$ ]]
-          archive="voice-platform-${git_sha}.tar.gz"
+          archive="${RUNNER_TEMP:?}/voice-platform-${git_sha}.tar.gz"
           tar --exclude-vcs --exclude=.env --exclude=frontend/node_modules -czf "$archive" .
           printf 'git_sha=%s\n' "$git_sha" >> "$GITVERSE_OUTPUT"
           printf 'archive=%s\n' "$archive" >> "$GITVERSE_OUTPUT"
