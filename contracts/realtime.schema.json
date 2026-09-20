@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-platform.invalid/contracts/realtime.schema.json",
+  "title": "RealtimeEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "kind", "occurred_at", "payload"],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "kind": {
+      "type": "string",
+      "enum": ["connection.ready", "connection.resync_required", "voice.lease_revoked", "channel.updated", "message.created"]
+    },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "payload": { "type": "object" }
+  }
+}

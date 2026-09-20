@@ -1,0 +1,51 @@
+.session-state {
+  display: grid;
+  min-height: 100dvh;
+  place-content: center;
+  gap: var(--gc-space-4);
+  padding: var(--gc-space-6);
+  color: var(--gc-text-secondary);
+  background: var(--gc-canvas);
+  text-align: center;
+}
+
+.session-state button {
+  min-height: var(--gc-size-control);
+  border: 1px solid var(--gc-border-control);
+  border-radius: var(--gc-radius-md);
+  color: var(--gc-text-primary);
+  background: var(--gc-surface);
+}
+
+.authentication-page {
+  display: grid;
+  min-height: 100dvh;
+  place-content: center;
+  padding: var(--gc-space-6);
+  background: var(--gc-canvas);
+}
+
+.authentication-card {
+  width: min(100%, 440px);
+  border: 1px solid var(--gc-border-subtle);
+  border-radius: var(--gc-radius-lg);
+  padding: clamp(var(--gc-space-6), 6vw, var(--gc-space-10));
+  background: var(--gc-content);
+  box-shadow: var(--gc-shadow-shell);
+}
+
+.authentication-card h1 { margin: var(--gc-space-2) 0 0; font-size: var(--gc-text-page); line-height: var(--gc-line-page); }
+.authentication-intro { margin: var(--gc-space-3) 0 0; color: var(--gc-text-secondary); }
+
+.authentication-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gc-space-1); margin-top: var(--gc-space-6); padding: var(--gc-space-1); border-radius: var(--gc-radius-md); background: var(--gc-surface); }
+.authentication-tabs button { min-height: var(--gc-size-control); border: 0; border-radius: var(--gc-radius-sm); color: var(--gc-text-secondary); background: transparent; }
+.authentication-tabs button.selected { color: var(--gc-text-primary); background: var(--gc-surface-raised); }
+
+.authentication-form { display: grid; gap: var(--gc-space-4); margin-top: var(--gc-space-6); }
+.authentication-field { display: grid; gap: var(--gc-space-2); color: var(--gc-text-secondary); font-size: var(--gc-text-small); line-height: var(--gc-line-small); }
+.authentication-field input { width: 100%; min-height: var(--gc-size-control); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-md); padding: 0 var(--gc-space-3); color: var(--gc-text-primary); background: var(--gc-input); }
+.authentication-field input[aria-invalid=true] { border-color: var(--gc-danger); }
+.authentication-hint, .authentication-error { margin: calc(var(--gc-space-2) * -1) 0 0; font-size: var(--gc-text-caption); line-height: var(--gc-line-caption); }
+.authentication-hint { color: var(--gc-text-muted); }
+.authentication-error { color: var(--gc-danger); }
+.authentication-submit { width: 100%; }

@@ -1,0 +1,108 @@
+version: 1
+source: C:\Users\egkur\Downloads\TZ_Voice_Platform_v1.0.md
+tasks:
+  - id: T-001
+    title: Specification packet and traceability
+    requirements: [REQ-PRODUCT-01, REQ-ISOLATION-01, REQ-STACK-01, REQ-ARCH-01, REQ-QUALITY-02]
+    depends_on: []
+    evidence: [scripts/verify-spec-traceability.ps1, scripts/verify-contracts.ps1]
+  - id: T-002
+    title: Architecture, data model and ADR boundaries
+    requirements: [REQ-ARCH-01, REQ-SECURITY-01]
+    depends_on: [T-001]
+    evidence: [docs/ARCHITECTURE_AND_DATA.md]
+  - id: T-003
+    title: Local runtime skeleton
+    requirements: [REQ-STACK-01, REQ-ISOLATION-01, REQ-NOBACKUP-01]
+    depends_on: [T-001, T-002]
+    evidence: [docker-compose-config, health-smoke]
+  - id: T-004
+    title: POC-01 real game capture with audio
+    requirements: [REQ-PLATFORM-01, REQ-SCREEN-02, REQ-VOICE-01, REQ-VOICE-02]
+    depends_on: [T-003]
+    evidence: [evidence/poc-01]
+  - id: T-005
+    title: POC-02 media profile measurements
+    requirements: [REQ-AUDIO-01, REQ-SCREEN-01, REQ-CAPACITY-02]
+    depends_on: [T-004]
+    evidence: [evidence/poc-02]
+  - id: T-006
+    title: POC-03 media revocation and replay checks
+    requirements: [REQ-ADMIN-02, REQ-SECURITY-02]
+    depends_on: [T-003]
+    evidence: [evidence/poc-03]
+  - id: T-007
+    title: Capacity preflight and load profile
+    requirements: [REQ-CAPACITY-01, REQ-CAPACITY-02, REQ-OPS-01]
+    depends_on: [T-003]
+    evidence: [evidence/capacity]
+  - id: T-010
+    title: Registration, profile and session handling
+    requirements: [REQ-AUTH-01, REQ-AUTH-02]
+    depends_on: [T-003]
+    evidence: [backend-auth-tests]
+  - id: T-012
+    title: Password recovery
+    requirements: [REQ-AUTH-03]
+    depends_on: [T-010]
+    evidence: [backend-reset-tests]
+  - id: T-013
+    title: Immutable bootstrap and audited administrator recovery
+    requirements: [REQ-AUTH-04]
+    depends_on: [T-010]
+    evidence: [backend-administrator-bootstrap-tests]
+  - id: T-014
+    title: Fixed roles and administration
+    requirements: [REQ-ADMIN-01, REQ-ADMIN-02]
+    depends_on: [T-010]
+    evidence: [backend-admin-tests]
+  - id: T-020
+    title: Categories, text channels and voice channels
+    requirements: [REQ-CHANNEL-01, REQ-CHANNEL-02]
+    depends_on: [T-014]
+    evidence: [backend-channel-tests]
+  - id: T-022
+    title: Voice admission, controls and recovery
+    requirements: [REQ-VOICE-01, REQ-VOICE-02, REQ-VOICE-03, REQ-AUDIO-01]
+    depends_on: [T-006, T-020]
+    evidence: [voice-integration-tests]
+  - id: T-030
+    title: Screen publication, viewer and diagnostics
+    requirements: [REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-SCREEN-04, REQ-CAPACITY-02]
+    depends_on: [T-004, T-005, T-022]
+    evidence: [media-integration-tests]
+  - id: T-040
+    title: Common chat and mentions
+    requirements: [REQ-CHAT-01, REQ-CHAT-02]
+    depends_on: [T-010, T-020]
+    evidence: [backend-chat-tests]
+  - id: T-041
+    title: Direct messages and search
+    requirements: [REQ-DM-01, REQ-SEARCH-01, REQ-SECURITY-02]
+    depends_on: [T-040]
+    evidence: [backend-dm-search-tests]
+  - id: T-044
+    title: Attachments, storage and disk reservation
+    requirements: [REQ-STORAGE-01, REQ-STORAGE-02, REQ-STORAGE-03, REQ-NOBACKUP-01]
+    depends_on: [T-040, T-041]
+    evidence: [backend-storage-tests]
+  - id: T-050
+    title: Desktop Russian UI and accessibility
+    requirements: [REQ-UI-01, REQ-UI-02]
+    depends_on: [T-020, T-022, T-040]
+    evidence: [frontend-ui-tests, screenshots]
+  - id: T-052
+    title: Security baseline and observability
+    requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]
+    depends_on: [T-010, T-014, T-044]
+    evidence: [security-negative-tests, observability-smoke]
+  - id: T-054
+    title: Continuous delivery and deployment inputs
+    requirements: [REQ-DEPLOY-01, REQ-NOBACKUP-01]
+    depends_on: [T-003, T-052]
+    evidence: [ci-run, deployment-smoke]
+  - id: T-060
+    title: Release quality gates
+    requirements: [REQ-QUALITY-01, REQ-QUALITY-02, REQ-CAPACITY-01, REQ-DEPLOY-01]
+    depends_on: [T-007, T-030, T-044, T-050, T-052, T-054]
+    evidence: [evidence/release]

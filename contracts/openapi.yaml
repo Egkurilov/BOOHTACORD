@@ -1,0 +1,1405 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Voice Platform API",
+    "version": "1.0.0-draft",
+    "description": "Versioned foundation contract. Feature endpoints are added only with matching ACL and contract tests."
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "API process is live",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Health" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/maintenance": {
+      "get": {
+        "operationId": "getMaintenanceAdmission",
+        "description": "Public, metadata-only deployment admission state. It reveals no schedule, operator identity, deployment internals or session data.",
+        "responses": {
+          "200": { "description": "Current new-admission state", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MaintenanceStatus" } } } },
+          "503": { "description": "Maintenance state is temporarily unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/direct-messages": {
+      "post": {
+        "operationId": "openDirectMessage",
+        "description": "Authenticated account only. Opens the single canonical direct-message pair when both accounts are active; administrator status never grants access to a third account's DM.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageOpenRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "New or existing canonical pair", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessage" } } } },
+          "400": { "description": "Malformed or self participant", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Other account is absent or blocked", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "get": {
+        "operationId": "listDirectMessages",
+        "description": "Authenticated caller only. Returns only canonical DM pairs containing caller, paired account display name, and caller-local unread_count derived from that caller's monotonic cursor; administrator role grants no exception. A pre-existing pair remains visible to reach retained history after a block.",
+        "responses": {
+          "200": { "description": "Caller direct-message navigation list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageList" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/direct-message-candidates": {
+      "get": {
+        "operationId": "listDirectMessageCandidates",
+        "description": "Authenticated caller only. Returns a bounded, stable page of other non-blocked deployment accounts that may be selected to open a direct message. It exposes no login, role or block state; POST /direct-messages remains the atomic participant check and canonical-pair creation command.",
+        "parameters": [
+          { "name": "after", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "Caller-scoped direct-message candidate page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageCandidateList" } } } },
+          "400": { "description": "Malformed cursor or limit", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/direct-messages/{directMessageID}/messages": {
+      "post": {
+        "operationId": "sendDirectMessage",
+        "description": "Authenticated participant only. The caller must belong to this DM and both participants must be active; administrator role supplies no exception. Reusing the same author-and-DM-scoped client_message_id returns the existing message.",
+        "parameters": [
+          { "name": "directMessageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageMessageCreateRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Message created or idempotently returned", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageMessage" } } } },
+          "400": { "description": "Malformed or oversized message", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "DM is absent, caller is not a participant, or either account is blocked", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "get": {
+        "operationId": "listDirectMessageHistory",
+        "description": "Authenticated DM participant only. Administrator role grants no exception. Returns newest-first cursor pages and retains history for the other participant after a block.",
+        "parameters": [
+          { "name": "directMessageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "before", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "Newest-first direct-message history page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageMessagePage" } } } },
+          "400": { "description": "Malformed cursor or limit", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "DM is absent or caller is not a participant", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/direct-messages/{directMessageID}/search": {
+      "get": {
+        "operationId": "searchDirectMessageHistory",
+        "description": "Authenticated DM participant only. Searches non-deleted message text in the caller's selected canonical pair with PostgreSQL simple full-text search; administrator role grants no exception.",
+        "parameters": [
+          { "name": "directMessageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "query", "in": "query", "required": true, "schema": { "type": "string", "minLength": 1, "maxLength": 256 } },
+          { "name": "before", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "Newest-first matching message page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageSearchPage" } } } },
+          "400": { "description": "Malformed query or page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "DM is absent or caller is not a participant", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/direct-messages/{directMessageID}/messages/{messageID}": {
+      "patch": {
+        "operationId": "editDirectMessage",
+        "description": "Authenticated DM author only. Pair membership, author ID, non-deleted state, and expected revision are checked atomically; administrator role grants no exception. A conflict intentionally does not disclose which guard failed.",
+        "parameters": [
+          { "name": "directMessageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "messageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageMessageEditRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Author message revised", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageMessageEdited" } } } },
+          "400": { "description": "Malformed revision or body", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Message is stale, deleted, unavailable, or not owned by caller; refresh history before retrying", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "operationId": "deleteDirectMessage",
+        "description": "Authenticated DM author only. Canonical-pair membership, author ID, and non-deleted state are checked atomically; administrator role grants no exception. The message row, ID, reply reference, and history remain, while body is cleared and a deletion marker with a new revision is written.",
+        "parameters": [
+          { "name": "directMessageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "messageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "204": { "description": "Author message replaced with a deletion marker" },
+          "400": { "description": "Malformed path identifier", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Message is absent, already deleted, unavailable, or not owned by caller", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/direct-messages/{directMessageID}/read-cursor": {
+      "put": {
+        "operationId": "advanceDirectMessageReadCursor",
+        "description": "Authenticated participant only. The browser sends a message actually shown in its active visible DM; the server advances only that participant's cursor monotonically and grants no administrator exception. Existing DM history remains readable after a block.",
+        "parameters": [
+          { "name": "directMessageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageReadCursorRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Effective monotonic cursor for this participant", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageReadCursor" } } } },
+          "400": { "description": "Malformed path or body", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "DM or message is absent, or caller is not a participant", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/channels": {
+      "get": {
+        "operationId": "getChannelTopology",
+        "description": "Authenticated member only. Returns ordered categories and non-archived channels; a VOICE channel with closed admission remains visible with admission_closed:true.",
+        "responses": {
+          "200": { "description": "Current readable channel topology", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChannelTopology" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/channels/{channelID}/messages": {
+      "get": {
+        "operationId": "listTextMessages",
+        "description": "Authenticated member only. Returns newest-first cursor pages from a current TEXT channel. Deleted messages retain an ID and deleted marker but never expose their former body.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "before", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "Cursor page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TextMessagePage" } } } },
+          "400": { "description": "Malformed page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Unavailable text channel", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "post": {
+        "operationId": "createTextMessage",
+        "description": "Authenticated member only. Creates or returns the same message for an author-and-channel-scoped client_message_id. The current channel must be non-archived TEXT; a reply may reference only that same channel.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TextMessageCreateRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Message created or idempotently returned", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TextMessage" } } } },
+          "400": { "description": "Malformed or oversized message", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Unavailable text channel or cross-channel reply", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/channels/{channelID}/search": {
+      "get": {
+        "operationId": "searchTextMessages",
+        "description": "Authenticated member only. Searches non-deleted text in one current TEXT channel with PostgreSQL simple full-text search. The endpoint does not search attachments, deleted bodies, or another channel.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "query", "in": "query", "required": true, "schema": { "type": "string", "minLength": 1, "maxLength": 256 } },
+          { "name": "before", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "Newest-first matching message page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TextMessageSearchPage" } } } },
+          "400": { "description": "Malformed query or page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Text channel is absent, archived, or not TEXT", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/channels/{channelID}/attachments": {
+      "post": {
+        "operationId": "uploadTextAttachment",
+        "description": "Authenticated active account only. Streams one file to private staging for a current TEXT channel; the server checks the target before and after staging. The response never grants a download URL or exposes a storage key.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "multipart/form-data": { "schema": { "type": "object", "additionalProperties": false, "required": ["file"], "properties": { "file": { "type": "string", "format": "binary" } } } } }
+        },
+        "responses": {
+          "201": { "description": "Private unattached attachment metadata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AttachmentUpload" } } } },
+          "400": { "description": "Malformed multipart body", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Text channel is absent or unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "413": { "description": "File exceeds 25,000,000 bytes", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "507": { "description": "Attachment volume cannot reserve required space", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/channels/{channelID}/attachments/{attachmentID}": {
+      "get": {
+        "operationId": "downloadTextAttachment",
+        "description": "Authenticated active account only. Before every private file read, the server verifies the current TEXT channel, an attached object linked to a non-deleted message, and the current caller. The response is always a forced binary download; it never reveals a storage key, local path, or public URL.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "attachmentID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Private attachment bytes served with attachment disposition and nosniff",
+            "headers": {
+              "Content-Disposition": { "schema": { "type": "string" }, "description": "Always attachment disposition; active formats are never rendered inline." },
+              "X-Content-Type-Options": { "schema": { "type": "string", "enum": ["nosniff"] } }
+            },
+            "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+          },
+          "400": { "description": "Malformed identifier", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Attachment, current channel, message state, or caller access is unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Private attachment could not be read", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/channels/{channelID}/attachments/{attachmentID}/preview": {
+      "get": {
+        "operationId": "previewTextAttachment",
+        "description": "Authenticated active account only. Before rendering, the server applies the same current TEXT-channel, attached-object, non-deleted-message and caller checks as download. Only a valid bounded PNG/JPEG/GIF source becomes a server-normalized PNG response; source bytes, source MIME, file name, storage key and local path are never exposed. Unsupported, corrupt, oversized, deleted or unauthorized sources are indistinguishable as 404.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "attachmentID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Private server-normalized PNG preview",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "enum": ["no-store"] } },
+              "X-Content-Type-Options": { "schema": { "type": "string", "enum": ["nosniff"] } }
+            },
+            "content": { "image/png": { "schema": { "type": "string", "format": "binary" } } }
+          },
+          "400": { "description": "Malformed identifier", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Attachment, current channel, message state, caller access or safe preview is unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Preview could not be rendered", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/channels/{channelID}/messages/{messageID}": {
+      "patch": {
+        "operationId": "editTextMessage",
+        "description": "Authenticated author only. Updates a current non-deleted TEXT-channel message when expected_revision matches; unavailable, non-owned, deleted and stale messages all return the same conflict response.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "messageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TextMessageEditRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Updated message", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TextMessageEdited" } } } },
+          "400": { "description": "Malformed or oversized message", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Message is stale or unavailable to this author", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTextMessage",
+        "description": "Authenticated author or current ADMINISTRATOR only. Soft-deletes a current TEXT-channel message, clearing the stored body while retaining an audited deleted marker for history and replies.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "messageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "204": { "description": "Message body replaced by a deleted marker" },
+          "400": { "description": "Malformed identifier or role", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Message is unavailable to this principal", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/voice/channels/{channelID}/leases": {
+      "post": {
+        "operationId": "acquireVoiceLease",
+        "description": "Authenticated user only. Creates one logical lease for an active VOICE channel. A second tab or device receives 409 until the user explicitly submits transfer:true; this command does not itself claim that LiveKit is connected.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VoiceLeaseRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Logical lease created; media credential and LiveKit confirmation are separate steps", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VoiceLease" } } } },
+          "400": { "description": "Malformed request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Existing lease, closed admission, archived/non-voice channel or stale state", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VoiceLeaseConflict" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/voice/leases/{leaseID}": {
+      "delete": {
+        "operationId": "releaseVoiceLease",
+        "description": "Authenticated user only. Idempotently releases an active logical lease only when it belongs to the current server-side session; no media-disconnect claim is made.",
+        "parameters": [
+          { "name": "leaseID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "204": { "description": "Matching logical lease released, or no matching active lease exists" },
+          "400": { "description": "Malformed lease identifier", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/voice/leases/{leaseID}/credential": {
+      "post": {
+        "operationId": "issueLiveKitCredential",
+        "description": "Authenticated user only. Rechecks the active session-bound lease, VOICE channel and account state, then returns a 60-second room-scoped non-admin LiveKit JWT. Issuance is not evidence that a LiveKit join completed or that a later revocation is enforced.",
+        "parameters": [
+          { "name": "leaseID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Short-lived credential for the lease room", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LiveKitCredential" } } } },
+          "400": { "description": "Malformed lease ID", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Lease, channel or account is no longer active", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Signer or storage failure", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/accounts/{accountID}/voice-kick": {
+      "post": {
+        "operationId": "kickVoiceParticipant",
+        "description": "Administrator-only. Revokes the target account's current logical voice lease, records audit metadata and creates a durable SFU revocation. The response counts logical leases only; completion and token replay remain POC-03 gates.",
+        "parameters": [
+          { "name": "accountID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Logical leases revoked", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VoiceKick" } } } },
+          "400": { "description": "Malformed account ID", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "operationId": "register",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegistrationRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Member account created; login is a separate action",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Account" }
+              }
+            }
+          },
+          "400": { "description": "Validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Normalized login already exists", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Session created as a secure HTTP-only cookie",
+            "headers": {
+              "Set-Cookie": { "description": "Opaque session cookie", "schema": { "type": "string" } }
+            }
+          },
+          "400": { "description": "Malformed request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Invalid credentials", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Blocked account", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "Current session is revoked when present and the session cookie is cleared",
+            "headers": {
+              "Set-Cookie": { "description": "Expired opaque session cookie", "schema": { "type": "string" } }
+            }
+          },
+          "500": { "description": "Session revocation failure", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/auth/session": {
+      "get": {
+        "operationId": "getCurrentSession",
+        "responses": {
+          "200": { "description": "Authenticated current principal", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Principal" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/auth/password-reset/complete": {
+      "post": {
+        "operationId": "completePasswordReset",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PasswordResetCompletionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "Password changed and all existing sessions revoked" },
+          "400": { "description": "Malformed, unavailable, expired or already-used reset", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Source rate limit exceeded", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/password-reset-links": {
+      "post": {
+        "operationId": "createPasswordResetLink",
+        "description": "Administrator-only. The returned URL is the sole disclosure of the opaque secret and places it in a fragment.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PasswordResetLinkRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "One-use reset URL returned once", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PasswordResetLink" } } } },
+          "400": { "description": "Malformed request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Source rate limit exceeded", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/accounts/{accountID}": {
+      "patch": {
+        "operationId": "updateAdminAccountState",
+        "description": "Administrator-only. Role and block state are changed together under the last-active-administrator guard.",
+        "parameters": [
+          { "name": "accountID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AdminAccountUpdateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Account role and block state changed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminAccountState" } } } },
+          "400": { "description": "Malformed request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Target missing or the last active administrator would be changed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/categories": {
+      "post": {
+        "operationId": "createCategory",
+        "description": "Administrator-only. Appends a category and returns the new topology revision.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CategoryCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Category created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Category" } } } },
+          "400": { "description": "Malformed category name", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/categories/{categoryID}/channels": {
+      "post": {
+        "operationId": "createChannel",
+        "description": "Administrator-only. Channel type is immutable after this creation command.",
+        "parameters": [
+          { "name": "categoryID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChannelCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Channel created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Channel" } } } },
+          "400": { "description": "Malformed name or kind", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Category absent", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/categories/order": {
+      "put": {
+        "operationId": "reorderCategories",
+        "description": "Administrator-only. The IDs must be the complete category order for the supplied topology revision.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CategoryReorderRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Order changed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TopologyRevision" } } } },
+          "400": { "description": "Malformed or duplicate order entries", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Revision or topology mismatch; refresh state and retry", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/categories/{categoryID}": {
+      "patch": {
+        "operationId": "renameCategory",
+        "description": "Administrator-only. Renaming is guarded by the topology revision.",
+        "parameters": [
+          { "name": "categoryID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CategoryRenameRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Category renamed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CategoryRenameResult" } } } },
+          "400": { "description": "Malformed category name", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Revision or category mismatch; refresh state and retry", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "operationId": "deleteEmptyCategory",
+        "description": "Administrator-only. Deletes a category only when its supplied topology revision is current and it contains no channels; every conflict reason is intentionally one response.",
+        "parameters": [
+          { "name": "categoryID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "expected_revision", "in": "query", "required": true, "schema": { "type": "integer", "minimum": 1 } }
+        ],
+        "responses": {
+          "200": { "description": "Empty category deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TopologyRevision" } } } },
+          "400": { "description": "Malformed category ID or topology revision", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Category is absent, non-empty or topology revision is stale", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/channels/{channelID}/category": {
+      "patch": {
+        "operationId": "moveChannel",
+        "description": "Administrator-only. Moves the existing channel without changing its TEXT or VOICE kind.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/ChannelMoveRequest" } }
+          }
+        },
+        "responses": {
+          "200": { "description": "Channel moved to the end of target category", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChannelMoveResult" } } } },
+          "400": { "description": "Malformed move request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Revision or topology mismatch; refresh state and retry", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/categories/{categoryID}/channels/order": {
+      "put": {
+        "operationId": "reorderChannels",
+        "description": "Administrator-only. IDs must be every channel currently in this one category for the supplied topology revision.",
+        "parameters": [
+          { "name": "categoryID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChannelReorderRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Channel order changed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TopologyRevision" } } } },
+          "400": { "description": "Malformed or duplicate order entries", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Revision, category or channel membership mismatch; refresh state and retry", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/channels/{channelID}": {
+      "delete": {
+        "operationId": "archiveTextChannel",
+        "description": "Administrator-only. This route archives only a TEXT channel after explicit confirmation; it never physically deletes its history.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TextChannelArchiveRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Text channel moved to archive state", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ArchivedChannel" } } } },
+          "400": { "description": "Explicit archive confirmation absent", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Revision mismatch, channel absent, already archived or not TEXT", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/voice-channels/{channelID}/close-admission": {
+      "post": {
+        "operationId": "closeVoiceChannelAdmission",
+        "description": "Administrator-only. Closes future logical admission for an active VOICE channel, revokes its active voice leases and creates a durable SFU revocation for each; completion and token replay remain POC-03 gates.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TopologyRevisionRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Voice admission closed and active logical leases revoked", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VoiceAdmissionClosed" } } } },
+          "400": { "description": "Malformed revision", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Revision mismatch, channel absent, not VOICE or admission already closed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Health": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status"],
+        "properties": { "status": { "type": "string", "const": "ok" } }
+      },
+      "MaintenanceStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["active"],
+        "properties": { "active": { "type": "boolean" } }
+      },
+      "RegistrationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["login", "password"],
+        "properties": {
+          "login": { "type": "string", "minLength": 3, "maxLength": 32 },
+          "password": { "type": "string", "minLength": 12, "maxLength": 128 }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["login", "password"],
+        "properties": {
+          "login": { "type": "string", "minLength": 3, "maxLength": 32 },
+          "password": { "type": "string", "minLength": 12, "maxLength": 128 }
+        }
+      },
+      "PasswordResetCompletionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["token", "password"],
+        "properties": {
+          "token": { "type": "string", "minLength": 43, "maxLength": 43, "description": "Opaque secret received from the URL fragment; never place it in a URL query." },
+          "password": { "type": "string", "minLength": 12, "maxLength": 128 }
+        }
+      },
+      "PasswordResetLinkRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["account_id"],
+        "properties": {
+          "account_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "PasswordResetLink": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["url", "expires_at"],
+        "properties": {
+          "url": { "type": "string", "format": "uri", "description": "Opaque reset secret occurs after #token= and is displayed only for this response." },
+          "expires_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AdminAccountUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "blocked"],
+        "properties": {
+          "role": { "type": "string", "enum": ["MEMBER", "ADMINISTRATOR"] },
+          "blocked": { "type": "boolean" }
+        }
+      },
+      "AdminAccountState": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "role", "blocked"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "role": { "type": "string", "enum": ["MEMBER", "ADMINISTRATOR"] },
+          "blocked": { "type": "boolean" }
+        }
+      },
+      "CategoryCreateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "position", "revision"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "position": { "type": "integer", "minimum": 0 },
+          "revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "ChannelTopology": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["revision", "categories"],
+        "properties": {
+          "revision": { "type": "integer", "minimum": 0 },
+          "categories": { "type": "array", "items": { "$ref": "#/components/schemas/TopologyCategory" } }
+        }
+      },
+      "TopologyCategory": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "position", "channels"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "position": { "type": "integer", "minimum": 0 },
+          "channels": { "type": "array", "items": { "$ref": "#/components/schemas/TopologyChannel" } }
+        }
+      },
+      "TopologyChannel": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "kind", "position", "admission_closed"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "kind": { "type": "string", "enum": ["TEXT", "VOICE"] },
+          "position": { "type": "integer", "minimum": 0 },
+          "admission_closed": { "type": "boolean" }
+        }
+      },
+      "DirectMessageOpenRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["participant_id"],
+        "properties": { "participant_id": { "type": "string", "format": "uuid" } }
+      },
+      "DirectMessage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "participant_one_id", "participant_two_id", "created_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "participant_one_id": { "type": "string", "format": "uuid" },
+          "participant_two_id": { "type": "string", "format": "uuid" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DirectMessageList": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["direct_messages"],
+        "properties": {
+          "direct_messages": { "type": "array", "items": { "$ref": "#/components/schemas/DirectMessageListItem" } }
+        }
+      },
+      "DirectMessageListItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "other_participant_id", "other_participant_display_name", "created_at", "unread_count"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "other_participant_id": { "type": "string", "format": "uuid" },
+          "other_participant_display_name": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "unread_count": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "DirectMessageCandidateList": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["candidates"],
+        "properties": {
+          "candidates": { "type": "array", "items": { "$ref": "#/components/schemas/DirectMessageCandidate" } },
+          "next_after": { "type": "string", "format": "uuid" }
+        }
+      },
+      "DirectMessageCandidate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "display_name"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "display_name": { "type": "string" }
+        }
+      },
+      "DirectMessageMessageCreateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["client_message_id", "body"],
+        "properties": {
+          "client_message_id": { "type": "string", "format": "uuid" },
+          "reply_to_id": { "type": "string", "format": "uuid", "description": "Must identify a message in this same direct-message pair." },
+          "body": { "type": "string", "minLength": 1, "maxLength": 8000 }
+        }
+      },
+      "DirectMessageMessage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "direct_message_id", "author_id", "client_message_id", "body", "revision", "created_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "direct_message_id": { "type": "string", "format": "uuid" },
+          "author_id": { "type": "string", "format": "uuid" },
+          "client_message_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string" },
+          "reply_to_id": { "type": "string", "format": "uuid" },
+          "revision": { "type": "integer", "minimum": 1 },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DirectMessageMessageEditRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["body", "expected_revision"],
+        "properties": {
+          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "expected_revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "DirectMessageMessageEdited": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "direct_message_id", "author_id", "client_message_id", "body", "revision", "created_at", "edited_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "direct_message_id": { "type": "string", "format": "uuid" },
+          "author_id": { "type": "string", "format": "uuid" },
+          "client_message_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "reply_to_id": { "type": "string", "format": "uuid" },
+          "revision": { "type": "integer", "minimum": 2 },
+          "created_at": { "type": "string", "format": "date-time" },
+          "edited_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DirectMessageMessagePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["messages"],
+        "properties": {
+          "messages": { "type": "array", "items": { "$ref": "#/components/schemas/DirectMessageMessageHistoryItem" } },
+          "next_cursor": { "type": "string", "format": "uuid" }
+        }
+      },
+      "DirectMessageSearchPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["messages"],
+        "properties": {
+          "messages": { "type": "array", "items": { "$ref": "#/components/schemas/DirectMessageSearchResult" } },
+          "next_cursor": { "type": "string", "format": "uuid" }
+        }
+      },
+      "DirectMessageSearchResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "direct_message_id", "author_id", "body", "created_at", "revision"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "direct_message_id": { "type": "string", "format": "uuid" },
+          "author_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "created_at": { "type": "string", "format": "date-time" },
+          "edited_at": { "type": "string", "format": "date-time" },
+          "revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "DirectMessageMessageHistoryItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "direct_message_id", "author_id", "client_message_id", "body", "created_at", "revision", "deleted"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "direct_message_id": { "type": "string", "format": "uuid" },
+          "author_id": { "type": "string", "format": "uuid" },
+          "client_message_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string" },
+          "reply_to_id": { "type": "string", "format": "uuid" },
+          "reply_preview": { "$ref": "#/components/schemas/DirectMessageReplyPreview" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "edited_at": { "type": "string", "format": "date-time" },
+          "revision": { "type": "integer", "minimum": 1 },
+          "deleted": { "type": "boolean" }
+        }
+      },
+      "DirectMessageReplyPreview": {
+        "type": "object",
+        "description": "Referenced message from the same participant-authorized DM history projection. A soft-deleted source has body:empty and deleted:true.",
+        "additionalProperties": false,
+        "required": ["id", "author_id", "body", "deleted"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "author_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string" },
+          "deleted": { "type": "boolean" }
+        }
+      },
+      "DirectMessageReadCursorRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["message_id"],
+        "properties": {
+          "message_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "DirectMessageReadCursor": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["direct_message_id", "message_id", "message_created_at"],
+        "properties": {
+          "direct_message_id": { "type": "string", "format": "uuid" },
+          "message_id": { "type": "string", "format": "uuid" },
+          "message_created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "TextMessageCreateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["client_message_id", "body"],
+        "properties": {
+          "client_message_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "reply_to_id": { "type": "string", "format": "uuid" },
+          "attachment_ids": { "type": "array", "maxItems": 10, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } }
+        }
+      },
+      "TextMessage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "channel_id", "author_id", "client_message_id", "body", "revision", "created_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "channel_id": { "type": "string", "format": "uuid" },
+          "author_id": { "type": "string", "format": "uuid" },
+          "client_message_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string" },
+          "revision": { "type": "integer", "minimum": 1 },
+          "reply_to_id": { "type": "string", "format": "uuid" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AttachmentUpload": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "original_name", "byte_size"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "original_name": { "type": "string" },
+          "byte_size": { "type": "integer", "minimum": 0, "maximum": 25000000 }
+        }
+      },
+      "TextMessageEditRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["body", "expected_revision"],
+        "properties": {
+          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "expected_revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "TextMessageEdited": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "channel_id", "author_id", "client_message_id", "body", "revision", "created_at", "edited_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "channel_id": { "type": "string", "format": "uuid" },
+          "author_id": { "type": "string", "format": "uuid" },
+          "client_message_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "reply_to_id": { "type": "string", "format": "uuid" },
+          "revision": { "type": "integer", "minimum": 2 },
+          "created_at": { "type": "string", "format": "date-time" },
+          "edited_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "TextMessagePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["messages"],
+        "properties": {
+          "messages": { "type": "array", "items": { "$ref": "#/components/schemas/TextMessageHistoryItem" } },
+          "next_cursor": { "type": "string", "format": "uuid" }
+        }
+      },
+      "TextMessageSearchPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["messages"],
+        "properties": {
+          "messages": { "type": "array", "items": { "$ref": "#/components/schemas/TextMessageSearchResult" } },
+          "next_cursor": { "type": "string", "format": "uuid" }
+        }
+      },
+      "TextMessageSearchResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "channel_id", "author_id", "body", "created_at", "revision"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "channel_id": { "type": "string", "format": "uuid" },
+          "author_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "created_at": { "type": "string", "format": "date-time" },
+          "edited_at": { "type": "string", "format": "date-time" },
+          "revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "TextMessageHistoryItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "channel_id", "author_id", "client_message_id", "body", "created_at", "revision", "deleted", "attachments"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "channel_id": { "type": "string", "format": "uuid" },
+          "author_id": { "type": "string", "format": "uuid" },
+          "client_message_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string" },
+          "reply_to_id": { "type": "string", "format": "uuid" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "edited_at": { "type": "string", "format": "date-time" },
+          "revision": { "type": "integer", "minimum": 1 },
+          "deleted": { "type": "boolean" },
+          "attachments": { "type": "array", "items": { "$ref": "#/components/schemas/TextMessageAttachment" } }
+        }
+      },
+      "TextMessageAttachment": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "original_name", "byte_size"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "original_name": { "type": "string" },
+          "byte_size": { "type": "integer", "minimum": 0, "maximum": 25000000 }
+        }
+      },
+      "ChannelCreateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "kind"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "kind": { "type": "string", "enum": ["TEXT", "VOICE"] }
+        }
+      },
+      "Channel": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "category_id", "name", "kind", "position", "revision"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "category_id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "kind": { "type": "string", "enum": ["TEXT", "VOICE"] },
+          "position": { "type": "integer", "minimum": 0 },
+          "revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "CategoryReorderRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expected_revision", "ids"],
+        "properties": {
+          "expected_revision": { "type": "integer", "minimum": 1 },
+          "ids": { "type": "array", "items": { "type": "string", "format": "uuid" }, "uniqueItems": true }
+        }
+      },
+      "TopologyRevision": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["revision"],
+        "properties": {
+          "revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "CategoryRenameRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "expected_revision"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "expected_revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "CategoryRenameResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "revision"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "ChannelMoveRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["category_id", "expected_revision"],
+        "properties": {
+          "category_id": { "type": "string", "format": "uuid" },
+          "expected_revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "ChannelMoveResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "category_id", "position", "revision"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "category_id": { "type": "string", "format": "uuid" },
+          "position": { "type": "integer", "minimum": 0 },
+          "revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "ChannelReorderRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expected_revision", "ids"],
+        "properties": {
+          "expected_revision": { "type": "integer", "minimum": 1 },
+          "ids": { "type": "array", "items": { "type": "string", "format": "uuid" }, "uniqueItems": true }
+        }
+      },
+      "TextChannelArchiveRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expected_revision", "confirm_archive"],
+        "properties": {
+          "expected_revision": { "type": "integer", "minimum": 1 },
+          "confirm_archive": { "type": "boolean", "const": true }
+        }
+      },
+      "TopologyRevisionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expected_revision"],
+        "properties": {
+          "expected_revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "ArchivedChannel": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "revision"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "VoiceAdmissionClosed": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "revision", "revoked_leases"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "revision": { "type": "integer", "minimum": 1 },
+          "revoked_leases": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "VoiceLeaseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "transfer": { "type": "boolean", "default": false, "description": "Must be true to revoke this account's existing active lease." }
+        }
+      },
+      "VoiceLease": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "channel_id", "transferred"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "channel_id": { "type": "string", "format": "uuid" },
+          "transferred": { "type": "boolean" }
+        }
+      },
+      "VoiceLeaseConflict": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["error"],
+        "properties": {
+          "error": { "$ref": "#/components/schemas/ErrorDetail" },
+          "active_channel_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "VoiceKick": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["revoked_leases"],
+        "properties": {
+          "revoked_leases": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "LiveKitCredential": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["url", "token", "expires_at"],
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "token": { "type": "string", "description": "Short-lived media credential; clients must not persist or log it." },
+          "expires_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Account": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "login", "display_name", "role"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "login": { "type": "string" },
+          "display_name": { "type": "string" },
+          "role": { "type": "string", "enum": ["MEMBER", "ADMINISTRATOR"] }
+        }
+      },
+      "Principal": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["account_id", "role"],
+        "properties": {
+          "account_id": { "type": "string", "format": "uuid" },
+          "role": { "type": "string", "enum": ["MEMBER", "ADMINISTRATOR"] }
+        }
+      },
+      "ErrorDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message", "request_id"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": ["UNAUTHENTICATED", "ACCOUNT_BLOCKED", "FORBIDDEN", "NOT_FOUND", "CONFLICT", "VALIDATION_FAILED", "RATE_LIMITED", "MAINTENANCE", "MAINTENANCE_UNAVAILABLE", "ATTACHMENT_TOO_LARGE", "INSUFFICIENT_STORAGE", "ACTIVE_VOICE_LEASE", "VOICE_CHANNEL_UNAVAILABLE", "VOICE_LEASE_UNAVAILABLE", "INTERNAL"]
+          },
+          "message": { "type": "string" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["error"],
+        "properties": {
+          "error": { "$ref": "#/components/schemas/ErrorDetail" }
+        }
+      }
+    }
+  }
+}

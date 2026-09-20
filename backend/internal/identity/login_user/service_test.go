@@ -1,0 +1,89 @@
+package loginuser
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"voice-platform/backend/internal/identity/password"
+	"voice-platform/backend/internal/identity/session"
+)
+
+func TestLoginNormalizesLoginAndCreatesServerSideSession(t *testing.T) {
+	hash, err := password.Hash("correct horse battery staple")
+	if err != nil {
+		t.Fatalf("Hash() error = %v", err)
+	}
+	accounts := &fakeAccounts{account: Account{ID: "account-1", Login: "egor", PasswordHash: hash}}
+	sessions := &fakeSessions{}
+	service := New(accounts, sessions)
+
+	result, err := service.Login(context.Background(), Input{
+		Login:    "EGOR",
+		Password: "correct horse battery staple",
+	})
+	if err != nil {
+		t.Fatalf("Login() error = %v", err)
+	}
+	if accounts.requestedLogin != "egor" {
+		t.Fatalf("repository login = %q, want normalized value", accounts.requestedLogin)
+	}
+	if sessions.accountID != "account-1" || !session.Verify(result.Token, sessions.digest) {
+		t.Fatal("Login() did not create a verifiable server-side session")
+	}
+}
+
+func TestLoginRejectsWrongOrUnknownCredentialsWithoutSession(t *testing.T) {
+	hash, err := password.Hash("correct horse battery staple")
+	if err != nil {
+		t.Fatalf("Hash() error = %v", err)
+	}
+
+	for _, test := range []struct {
+		name     string
+		accounts *fakeAccounts
+		password string
+	}{
+		{"wrong password", &fakeAccounts{account: Account{ID: "account-1", PasswordHash: hash}}, "not the password"},
+		{"unknown login", &fakeAccounts{err: ErrAccountNotFound}, "correct horse battery staple"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			sessions := &fakeSessions{}
+			service := New(test.accounts, sessions)
+			_, err := service.Login(context.Background(), Input{Login: "egor", Password: test.password})
+			if !errors.Is(err, ErrInvalidCredentials) || sessions.accountID != "" {
+				t.Fatalf("Login() error = %v, session = %#v", err, sessions)
+			}
+		})
+	}
+}
+
+func TestLoginRejectsBlockedAccount(t *testing.T) {
+	service := New(&fakeAccounts{account: Account{Blocked: true}}, &fakeSessions{})
+	_, err := service.Login(context.Background(), Input{Login: "egor", Password: "correct horse battery staple"})
+	if !errors.Is(err, ErrBlocked) {
+		t.Fatalf("Login() error = %v, want ErrBlocked", err)
+	}
+}
+
+type fakeAccounts struct {
+	account        Account
+	err            error
+	requestedLogin string
+}
+
+func (accounts *fakeAccounts) FindByLogin(_ context.Context, login string) (Account, error) {
+	accounts.requestedLogin = login
+	return accounts.account, accounts.err
+}
+
+type fakeSessions struct {
+	accountID string
+	digest    [32]byte
+}
+
+func (sessions *fakeSessions) Create(_ context.Context, accountID string, digest [32]byte) error {
+	sessions.accountID = accountID
+	sessions.digest = digest
+	return nil
+}

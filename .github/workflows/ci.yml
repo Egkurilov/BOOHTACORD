@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify API and requirement traceability
+        shell: pwsh
+        run: |
+          ./scripts/verify-contracts.ps1
+          ./scripts/verify-spec-traceability.ps1
+      - name: Validate Compose interpolation without starting services
+        run: docker compose --env-file .env.example -f compose.yaml config --quiet
+      - name: Reject implicit or latest Compose images
+        shell: pwsh
+        run: ./scripts/verify-compose-images.ps1
+      - name: Test proxy network deployment guard
+        run: bash scripts/deploy-images.test.sh
+
+  backend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Test, vet and build Go API
+        working-directory: backend
+        run: |
+          go test ./...
+          go vet ./...
+          go build -o /tmp/voice-platform-api ./cmd/api
+
+  frontend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install locked dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Test and build Vue client
+        working-directory: frontend
+        run: |
+          npm test
+          npm run build
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [contracts, backend, frontend]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      api_image: ${{ steps.image-refs.outputs.api_image }}
+      web_image: ${{ steps.image-refs.outputs.web_image }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push API image
+        id: api-image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          sbom: true
+          tags: ghcr.io/${{ github.repository_owner }}/voice-platform-api:${{ github.sha }}
+      - name: Build and push web image
+        id: web-image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          sbom: true
+          tags: ghcr.io/${{ github.repository_owner }}/voice-platform-web:${{ github.sha }}
+      - name: Publish digest-qualified release references
+        id: image-refs
+        run: |
+          echo "api_image=ghcr.io/${{ github.repository_owner }}/voice-platform-api@${{ steps.api-image.outputs.digest }}" >> "$GITHUB_OUTPUT"
+          echo "web_image=ghcr.io/${{ github.repository_owner }}/voice-platform-web@${{ steps.web-image.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.publish.result == 'success'
+    needs: publish
+    runs-on: ubuntu-24.04
+    env:
+      API_IMAGE: ${{ needs.publish.outputs.api_image }}
+      WEB_IMAGE: ${{ needs.publish.outputs.web_image }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure verified SSH access
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Install release files and deploy immutable images
+        run: |
+          set -euo pipefail
+          remote="$DEPLOY_USER@$DEPLOY_HOST"
+          staging="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "$remote" 'mktemp -d')"
+          scp -o BatchMode=yes -o StrictHostKeyChecking=yes compose.yaml docker/Caddyfile scripts/deploy-images.sh "$remote:$staging/"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "$remote" "set -eu
+            sudo install -d -m 0755 /opt/voice-platform/docker /opt/voice-platform/scripts
+            sudo install -m 0644 '$staging/compose.yaml' /opt/voice-platform/compose.yaml
+            sudo install -m 0644 '$staging/Caddyfile' /opt/voice-platform/docker/Caddyfile
+            sudo install -m 0755 '$staging/deploy-images.sh' /opt/voice-platform/scripts/deploy-images.sh
+            sudo env API_IMAGE='$API_IMAGE' WEB_IMAGE='$WEB_IMAGE' /opt/voice-platform/scripts/deploy-images.sh
+            rm -rf '$staging'"

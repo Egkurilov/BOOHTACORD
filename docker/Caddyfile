@@ -1,0 +1,30 @@
+{$PUBLIC_HOST:localhost} {
+	route {
+		encode zstd gzip
+		header {
+			X-Content-Type-Options "nosniff"
+			X-Frame-Options "SAMEORIGIN"
+			Referrer-Policy "no-referrer"
+			Permissions-Policy "camera=(), geolocation=(), payment=(), usb=()"
+		}
+
+		@api path /api /api/*
+		reverse_proxy @api api:8080
+
+		@rtc path /rtc /rtc/*
+		log_skip @rtc
+		handle @rtc {
+			forward_auth api:8080 {
+				uri /internal/media-admission
+				header_up X-Forwarded-Uri {uri}
+				header_up X-Forwarded-Method {method}
+			}
+			reverse_proxy livekit:7880
+		}
+
+		@private_metrics path /metrics /metrics/*
+		respond @private_metrics "Not Found" 404
+
+		reverse_proxy web:80
+	}
+}

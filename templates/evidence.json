@@ -1,0 +1,32 @@
+{
+  "id": "poc-01-windows-001",
+  "kind": "poc-01",
+  "status": "NOT_RUN",
+  "executed_at": null,
+  "environment": {
+    "presenter_machine": null,
+    "observer_machine": null,
+    "presenter_os": null,
+    "observer_os": null,
+    "chrome_version": null,
+    "livekit_image_digest": null,
+    "audio_devices": []
+  },
+  "scenario": {
+    "game": null,
+    "capture_source": null,
+    "expected": []
+  },
+  "measurements": {
+    "target_resolution": null,
+    "measured_resolution": null,
+    "decoded_fps": null,
+    "bitrate_bps": null,
+    "rtt_ms": null,
+    "packet_loss_percent": null
+  },
+  "observer": null,
+  "artifacts": [],
+  "failure_or_blocker": null,
+  "notes": null
+}

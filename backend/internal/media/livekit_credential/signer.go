@@ -1,0 +1,54 @@
+package livekitcredential
+
+import (
+	"errors"
+	"fmt"
+	"net/url"
+	"time"
+
+	"github.com/livekit/protocol/auth"
+	"github.com/livekit/protocol/livekit"
+)
+
+const validity = time.Minute
+
+var ErrInvalidConfig = errors.New("invalid livekit credential configuration")
+
+type Config struct{ URL, APIKey, APISecret string }
+type Credential struct {
+	URL, Token, LeaseID string
+	ExpiresAt           time.Time
+}
+type Signer struct {
+	config Config
+	now    func() time.Time
+}
+
+func New(config Config) (Signer, error) {
+	endpoint, err := url.ParseRequestURI(config.URL)
+	if err != nil || endpoint.Host == "" || (endpoint.Scheme != "ws" && endpoint.Scheme != "wss") || config.APIKey == "" || config.APISecret == "" {
+		return Signer{}, ErrInvalidConfig
+	}
+	return Signer{config: config, now: time.Now}, nil
+}
+
+func (signer Signer) Issue(leaseID, channelID, accountID string) (Credential, error) {
+	if leaseID == "" || channelID == "" || accountID == "" {
+		return Credential{}, ErrInvalidConfig
+	}
+	grant := &auth.VideoGrant{RoomJoin: true, RoomCreate: true, Room: "voice:" + channelID}
+	grant.SetCanPublish(true)
+	grant.SetCanSubscribe(true)
+	grant.SetCanPublishData(false)
+	grant.SetCanPublishSources([]livekit.TrackSource{livekit.TrackSource_MICROPHONE, livekit.TrackSource_SCREEN_SHARE, livekit.TrackSource_SCREEN_SHARE_AUDIO})
+	token, err := auth.NewAccessToken(signer.config.APIKey, signer.config.APISecret).
+		SetIdentity("voice-lease:" + leaseID).
+		SetMetadata("account:" + accountID).
+		SetVideoGrant(grant).
+		SetValidFor(validity).
+		ToJWT()
+	if err != nil {
+		return Credential{}, fmt.Errorf("sign livekit credential: %w", err)
+	}
+	return Credential{URL: signer.config.URL, Token: token, LeaseID: leaseID, ExpiresAt: signer.now().Add(validity)}, nil
+}

@@ -1,0 +1,81 @@
+import type { LiveKitCredential } from './admission_client'
+import type { BrowserAudioProcessingSettings } from './audio_processing_diagnostics'
+import { BoundedVoiceReconnectPolicy } from './bounded_voice_reconnect_policy'
+import { setMicrophone, type AudioProcessingOptions, type MicrophonePublishOptions, type MicrophoneState, type ScreenShareOptions } from './media_publishing'
+import type { RemoteVoicePlaybackController } from './livekit_screen_viewer_adapter'
+import type { RemoteParticipantController } from './remote_participant_controller'
+import { ScreenViewerController } from './screen_viewer_controller'
+import type { ScreenDiagnostics } from './screen_diagnostics'
+import { awaitMediaConnection, mediaConnectionTimeoutMs } from './connection_deadline'
+import { defaultLiveKitRoomFactory } from './livekit_room_factory'
+
+export {
+  readScreenShareDiagnostics,
+  applyMicrophoneProcessing,
+  defaultAudioProcessing,
+  microphoneConstraints,
+  setMicrophone,
+  startScreenShare,
+  stopScreenShare,
+  type AudioProcessingOptions,
+  type MicrophonePublishOptions,
+  type MicrophoneState,
+  type ScreenProfile,
+  type ScreenShareOptions,
+} from './media_publishing'
+
+export interface VoiceRoom {
+  connect(url: string, token: string, options?: { autoSubscribe?: boolean }): Promise<void>
+  disconnect(): Promise<void>
+  on(event: 'reconnecting' | 'reconnected' | 'disconnected', listener: () => void): VoiceRoom
+  readScreenDiagnostics?(): Promise<ScreenDiagnostics>
+  participantCards?: RemoteParticipantController
+  remoteVoices?: RemoteVoicePlaybackController
+  screenViewer?: ScreenViewerController
+  setDeafened?(deafened: boolean): void
+  applyMicrophoneProcessing?(options: AudioProcessingOptions): Promise<void>
+  readAudioProcessingSettings?(): BrowserAudioProcessingSettings | undefined
+  switchActiveDevice(kind: 'audioinput' | 'audiooutput', deviceId: string): Promise<boolean>
+  localParticipant: {
+    setMicrophoneEnabled(enabled: boolean, options: MediaTrackConstraints, publishOptions?: MicrophonePublishOptions): Promise<unknown>
+    setScreenShareEnabled(enabled: boolean, options?: ScreenShareOptions): Promise<unknown>
+  }
+}
+
+export type VoiceRoomFactory = () => VoiceRoom | Promise<VoiceRoom>
+export { BoundedVoiceReconnectPolicy }
+export { wireLiveKitRoom } from './livekit_room_factory'
+
+export interface JoinedVoiceRoom {
+  microphone: MicrophoneState
+  room: VoiceRoom
+}
+
+export async function connectLiveKitRoom(
+  credential: LiveKitCredential,
+  makeRoom: VoiceRoomFactory = defaultLiveKitRoomFactory,
+  processing?: AudioProcessingOptions,
+  timeoutMs = mediaConnectionTimeoutMs,
+): Promise<JoinedVoiceRoom> {
+  const room = await makeRoom()
+  try {
+    await awaitMediaConnection(room.connect(credential.url, credential.token, { autoSubscribe: false }), timeoutMs)
+  } catch (cause) {
+    await room.disconnect()
+    throw cause
+  }
+
+  try {
+    return { room, microphone: await awaitMediaConnection(setMicrophone(room, true, processing), timeoutMs) }
+  } catch (cause) {
+    await room.disconnect()
+    throw cause
+  }
+}
+
+export async function connectLiveKitRoomWithProcessing(
+  credential: LiveKitCredential,
+  processing?: AudioProcessingOptions,
+): Promise<JoinedVoiceRoom> {
+  return connectLiveKitRoom(credential, defaultLiveKitRoomFactory, processing)
+}

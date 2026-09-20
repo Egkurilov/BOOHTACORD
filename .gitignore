@@ -1,0 +1,10 @@
+.env
+node_modules/
+dist/
+coverage/
+*.log
+*.exe
+data/
+attachments/
+evidence/*.json
+!evidence/README.md

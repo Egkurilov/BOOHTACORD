@@ -1,0 +1,1 @@
+ALTER TABLE voice_leases DROP CONSTRAINT voice_leases_revocation_reason_check, ADD CONSTRAINT voice_leases_revocation_reason_check CHECK (revocation_reason IN ('TRANSFER', 'KICK', 'CHANNEL_CLOSED', 'SESSION_REVOKED', 'BANNED', 'LOGOUT', 'VOLUNTARY_LEAVE'));

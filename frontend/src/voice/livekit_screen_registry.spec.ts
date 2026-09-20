@@ -1,0 +1,41 @@
+import { describe, expect, it, vi } from 'vitest'
+
+import { LiveKitScreenRegistry, type RemoteScreenParticipant } from './livekit_screen_registry'
+
+function publication() {
+  return { setSubscribed: vi.fn() }
+}
+
+function participant(identity: string, video = publication(), audio?: ReturnType<typeof publication>): RemoteScreenParticipant {
+  return { audio, identity, name: identity.toUpperCase(), video }
+}
+
+describe('LiveKit screen registry', () => {
+  it('lists only remote screen-video publications and disables unselected screen tracks', () => {
+    const aliceVideo = publication()
+    const aliceAudio = publication()
+    const bobVideo = publication()
+    const registry = new LiveKitScreenRegistry()
+
+    registry.refresh([participant('alice', aliceVideo, aliceAudio), participant('bob', bobVideo)], null)
+
+    expect(registry.streams().map(({ hasAudio, id, participantId, participantName }) => ({ hasAudio, id, participantId, participantName }))).toEqual([
+      { hasAudio: true, id: 'alice:screen', participantId: 'alice', participantName: 'ALICE' },
+      { hasAudio: false, id: 'bob:screen', participantId: 'bob', participantName: 'BOB' },
+    ])
+    expect(aliceVideo.setSubscribed).toHaveBeenCalledWith(false)
+    expect(aliceAudio.setSubscribed).toHaveBeenCalledWith(false)
+    expect(bobVideo.setSubscribed).toHaveBeenCalledWith(false)
+  })
+
+  it('does not turn off the currently selected stream while new room events arrive', () => {
+    const video = publication()
+    const audio = publication()
+    const registry = new LiveKitScreenRegistry()
+
+    registry.refresh([participant('alice', video, audio)], 'alice:screen')
+
+    expect(video.setSubscribed).not.toHaveBeenCalled()
+    expect(audio.setSubscribed).not.toHaveBeenCalled()
+  })
+})

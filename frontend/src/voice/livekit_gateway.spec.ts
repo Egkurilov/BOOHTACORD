@@ -1,0 +1,129 @@
+import { describe, expect, it, vi } from 'vitest'
+
+import { applyMicrophoneProcessing, BoundedVoiceReconnectPolicy, connectLiveKitRoom, microphoneConstraints, setMicrophone, startScreenShare, stopScreenShare, wireLiveKitRoom, type VoiceRoom } from './livekit_gateway'
+
+const credential = { url: 'wss://rtc.example', token: 'temporary', expiresAt: '2026-09-17T12:00:00Z' }
+
+function room(microphone: () => Promise<unknown>): VoiceRoom {
+  return {
+    connect: vi.fn().mockResolvedValue(undefined),
+    disconnect: vi.fn().mockResolvedValue(undefined),
+    on: vi.fn(),
+    switchActiveDevice: vi.fn().mockResolvedValue(true),
+    localParticipant: {
+      setMicrophoneEnabled: vi.fn(microphone),
+      setScreenShareEnabled: vi.fn().mockResolvedValue(undefined),
+    },
+  }
+}
+
+describe('LiveKit voice gateway', () => {
+  it('builds microphone constraints from the selected browser processing preferences', () => {
+    expect(microphoneConstraints({ autoGainControl: false, echoCancellation: false, noiseSuppression: false })).toEqual({
+      autoGainControl: false, channelCount: { ideal: 1 }, echoCancellation: false, noiseSuppression: false, sampleRate: { ideal: 48_000 },
+    })
+  })
+
+  it('applies only browser-native processing constraints to an active local microphone track', async () => {
+    const apply = vi.fn().mockResolvedValue(undefined)
+    const fakeRoom = Object.assign(room(async () => undefined), { applyMicrophoneProcessing: apply })
+
+    await applyMicrophoneProcessing(fakeRoom, { autoGainControl: false, echoCancellation: true, noiseSuppression: false })
+
+    expect(apply).toHaveBeenCalledWith({ autoGainControl: false, echoCancellation: true, noiseSuppression: false })
+  })
+
+  it('connects before requesting the microphone with browser audio processing preferences', async () => {
+    const fakeRoom = room(async () => undefined)
+
+    await expect(connectLiveKitRoom(credential, () => fakeRoom)).resolves.toMatchObject({ microphone: 'PUBLISHED' })
+    expect(fakeRoom.connect).toHaveBeenCalledWith(credential.url, credential.token, { autoSubscribe: false })
+    expect(fakeRoom.localParticipant.setMicrophoneEnabled).toHaveBeenCalledWith(
+      true,
+      expect.objectContaining({ autoGainControl: true, channelCount: { ideal: 1 }, echoCancellation: true, noiseSuppression: true }),
+      { audioPreset: { maxBitrate: 128_000 }, forceStereo: false },
+    )
+  })
+
+  it('preserves the SDK connect method when adding viewer subscriptions', async () => {
+    const fakeRoom = room(async () => undefined)
+    const nativeConnect = fakeRoom.connect
+    const viewer = { clear: vi.fn(), refresh: vi.fn(), subscribeMicrophones: vi.fn() }
+    const connected = wireLiveKitRoom(fakeRoom, viewer)
+
+    await connected.connect(credential.url, credential.token, { autoSubscribe: false })
+
+    expect(nativeConnect).toHaveBeenCalledTimes(1)
+    expect(nativeConnect).toHaveBeenCalledWith(credential.url, credential.token, { autoSubscribe: false })
+    expect(viewer.subscribeMicrophones).toHaveBeenCalledOnce()
+    expect(viewer.refresh).toHaveBeenCalledOnce()
+  })
+
+  it('keeps the joined room as a listener when microphone permission is denied', async () => {
+    const denial = Object.assign(new Error('denied'), { name: 'NotAllowedError' })
+    const fakeRoom = room(async () => Promise.reject(denial))
+
+    await expect(connectLiveKitRoom(credential, () => fakeRoom)).resolves.toMatchObject({ microphone: 'LISTENER_PERMISSION_DENIED' })
+    expect(fakeRoom.disconnect).not.toHaveBeenCalled()
+  })
+
+  it('closes an unresponsive media connection instead of leaving the join pending', async () => {
+    const fakeRoom = room(async () => undefined)
+    vi.mocked(fakeRoom.connect).mockImplementation(() => new Promise<void>(() => undefined))
+
+    await expect(connectLiveKitRoom(credential, () => fakeRoom, undefined, 1)).rejects.toThrow('Превышено время ожидания голосового подключения.')
+    expect(fakeRoom.disconnect).toHaveBeenCalledOnce()
+  })
+
+  it('closes a joined room when microphone capture does not settle', async () => {
+    const fakeRoom = room(() => new Promise<never>(() => undefined))
+
+    await expect(connectLiveKitRoom(credential, () => fakeRoom, undefined, 1)).rejects.toThrow('Превышено время ожидания голосового подключения.')
+    expect(fakeRoom.connect).toHaveBeenCalledOnce()
+    expect(fakeRoom.disconnect).toHaveBeenCalledOnce()
+  })
+
+  it('mutes the published microphone without leaving the room', async () => {
+    const fakeRoom = room(async () => undefined)
+
+    await expect(setMicrophone(fakeRoom, false)).resolves.toBe('MUTED')
+    expect(fakeRoom.localParticipant.setMicrophoneEnabled).toHaveBeenCalledWith(false, expect.any(Object), {
+      audioPreset: { maxBitrate: 128_000 }, forceStereo: false,
+    })
+    expect(fakeRoom.disconnect).not.toHaveBeenCalled()
+  })
+
+  it('uses the browser picker for a selected screen profile and stops only screen tracks', async () => {
+    const fakeRoom = room(async () => undefined)
+
+    await startScreenShare(fakeRoom, 'P1080_60')
+    await stopScreenShare(fakeRoom)
+
+    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenNthCalledWith(1, true, {
+      audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 },
+    })
+    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenNthCalledWith(2, false)
+  })
+
+  it('returns only observed screen diagnostics after publishing', async () => {
+    const fakeRoom = Object.assign(room(async () => undefined), {
+      readScreenDiagnostics: vi.fn().mockResolvedValue({
+        audioTrack: 'ABSENT', connectionQuality: 'GOOD', measured: { framesPerSecond: 30, height: 720, width: 1280 }, source: 'ACTIVE',
+      }),
+    })
+
+    await expect(startScreenShare(fakeRoom, 'P1080_60')).resolves.toEqual({
+      audioTrack: 'ABSENT', connectionQuality: 'GOOD', measured: { framesPerSecond: 30, height: 720, width: 1280 }, source: 'ACTIVE',
+    })
+    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenCalledWith(true, {
+      audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 },
+    })
+  })
+})
+
+it('uses bounded exponential reconnect delays with jitter', () => {
+  const policy = new BoundedVoiceReconnectPolicy(() => 0)
+
+  expect([0, 1, 2, 3, 4, 5].map((retryCount) => policy.nextRetryDelayInMs({ retryCount }))).toEqual([200, 400, 800, 1600, 3200, 3200])
+  expect(policy.nextRetryDelayInMs({ retryCount: 6 })).toBeNull()
+})

@@ -1,0 +1,109 @@
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+
+import { loadCurrentSession, type CurrentSession } from '../identity/current_session'
+import MessageItem from './MessageItem.vue'
+import type { TextMessage } from './message_client'
+import { useMessageStore } from './message_store'
+import TextMessageAttachmentPicker from './TextMessageAttachmentPicker.vue'
+import TextMessageSearch from './TextMessageSearch.vue'
+import type { TextAttachmentUpload } from './text_attachment_upload_client'
+
+const props = defineProps<{ channelId: string; channelName: string }>()
+const store = useMessageStore()
+const draft = ref('')
+const session = ref<CurrentSession | null>(null)
+const replyTarget = ref<TextMessage | null>(null)
+const attachments = ref<TextAttachmentUpload[]>([])
+const attachmentPending = ref(false)
+const attachmentClearToken = ref(0)
+const searchOpen = ref(false)
+const emojiOpen = ref(false)
+const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
+
+watch(() => props.channelId, (channelId) => {
+  attachments.value = []
+  void store.open(channelId)
+  void loadSession()
+}, { immediate: true })
+
+async function send(): Promise<void> {
+  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id, attachments.value)) {
+    draft.value = ''
+    replyTarget.value = null
+    attachmentClearToken.value += 1
+  }
+}
+
+async function loadSession(): Promise<void> {
+  try { session.value = await loadCurrentSession() } catch { session.value = null }
+}
+
+async function edit(message: TextMessage, body: string): Promise<void> {
+  await store.edit(message.id, body, message.revision)
+}
+
+async function remove(message: TextMessage): Promise<void> {
+  await store.remove(message.id)
+}
+
+function replyPreview(message: TextMessage): string | undefined {
+  if (!message.replyToId) return undefined
+  const target = store.messages.find((candidate) => candidate.id === message.replyToId)
+  if (!target) return 'Исходное сообщение недоступно'
+  return target.deleted ? 'Сообщение удалено' : `${target.authorId}: ${target.body.slice(0, 140)}`
+}
+
+function addEmoji(emoji: string): void {
+  draft.value += emoji
+}
+</script>
+
+<template>
+  <section class="text-conversation" aria-labelledby="conversation-title">
+    <header class="main-header conversation-header">
+      <span class="conversation-symbol" aria-hidden="true">#</span>
+      <div class="main-title">
+        <h2 id="conversation-title">{{ channelName }}</h2>
+        <small>Текстовый канал</small>
+      </div>
+      <div class="header-actions"><button class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen = !searchOpen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button></div>
+    </header>
+    <div v-if="searchOpen" class="conversation-tools"><TextMessageSearch :channel-id="props.channelId" /></div>
+    <p v-if="store.loading" class="state" aria-live="polite">Загружаем историю…</p>
+    <p v-if="store.error" class="state state-error" role="alert">{{ store.error }}</p>
+    <ol v-if="!store.loading" class="messages message-list" aria-label="История сообщений">
+      <li v-for="message in store.messages" :key="message.id">
+        <MessageItem
+          :message="message"
+          :reply-preview="replyPreview(message)"
+          :can-edit="session?.accountId === message.authorId"
+          :can-delete="session?.accountId === message.authorId || session?.role === 'ADMINISTRATOR'"
+          @edit="edit(message, $event)"
+          @remove="remove(message)"
+          @reply="replyTarget = message"
+        />
+      </li>
+      <li v-if="!store.messages.length" class="state">Сообщений пока нет.</li>
+    </ol>
+    <div class="composer-wrap">
+      <form class="message-composer composer" @submit.prevent="send">
+        <p v-if="replyTarget" class="reply-target">Ответ для {{ replyTarget.authorId }} <button type="button" @click="replyTarget = null">Отмена</button></p>
+        <TextMessageAttachmentPicker
+          :channel-id="props.channelId"
+          :disabled="store.sending || attachmentPending"
+          :clear-token="attachmentClearToken"
+          @change="attachments = $event"
+          @pending="attachmentPending = $event"
+        />
+        <label class="gc-sr-only" for="message-body">Сообщение</label>
+        <textarea id="message-body" v-model="draft" maxlength="8000" :disabled="store.sending" placeholder="Написать сообщение…" />
+        <span class="emoji-picker">
+          <button class="emoji-trigger" type="button" aria-label="Добавить emoji" :aria-expanded="emojiOpen" @click="emojiOpen = !emojiOpen">☺</button>
+          <span v-if="emojiOpen" class="emoji-menu" aria-label="Выбор emoji"><button v-for="emoji in emojis" :key="emoji" type="button" :aria-label="`Добавить ${emoji}`" @click="addEmoji(emoji); emojiOpen = false">{{ emoji }}</button></span>
+        </span>
+        <button class="composer-send" type="submit" :aria-label="store.sending ? 'Отправляем сообщение' : 'Отправить сообщение'" :disabled="store.sending || attachmentPending || !draft"><span v-if="store.sending">…</span><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z" /><path d="m11 13 4-4" /></svg></button>
+      </form>
+    </div>
+  </section>
+</template>
