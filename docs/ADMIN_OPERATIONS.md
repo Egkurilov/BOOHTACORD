@@ -32,17 +32,19 @@ unset RECOVERY_PASSWORD
 
 Владелец сервера обязан передавать password через controlled channel. Эти owner-operated commands не предоставляют backup, account discovery или обычный administration workflow.
 
-## Входные параметры continuous delivery
+## Входные параметры GitVerse Actions
 
-Release path GitHub Actions запускается только после успешных checks на trusted `push` в `main`; он публикует GHCR images и deploy'ит их digest references, никогда `latest`. До первого запуска настройте repository secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_PRIVATE_KEY` и `DEPLOY_KNOWN_HOSTS`. Secret known-hosts должен содержать проверенный SSH host key сервера; workflow никогда не использует `ssh-keyscan` и не принимает изменившийся key.
+Workflow [`.gitverse/workflows/deploy-production.yaml`](../.gitverse/workflows/deploy-production.yaml) запускается только после успешных Go и Vue checks на trusted `push` в `master` или вручную из `master`. Для запуска необходимы repository variables `DEPLOY_SERVER_IP`, `SSH_USER` и `DEPLOY_SSH_PUB_KEY`, а также repository secret `DEPLOY_SSH_PRIVATE_KEY`. Публичный ключ проверяется на соответствие приватному, но не заменяет его: именно приватный ключ аутентифицирует runner на сервере. Публичная часть должна быть установлена для указанного пользователя в `authorized_keys` сервера.
 
-Deployment server уже должен уметь получать private GHCR package, если package не public. Workflow копирует только Compose file, Caddyfile и release script, затем запускает migrations до restart API/web/proxy. Он не запускается для pull requests, не удаляет volumes и не выполняет down migrations.
+Workflow закрепляет проверенный ED25519 host key deployment-сервера в `known_hosts`; он не использует `ssh-keyscan`, `StrictHostKeyChecking=accept-new` или интерактивный SSH. Изменение host key намеренно останавливает поставку до отдельной owner-проверки и обновления workflow.
 
-В этой рабочей папке ранее не было Git remote или настроенных repository secrets, поэтому успешная публикация GHCR и automatic deployment оставались непроверенными до подключения владельцем repository и этих inputs.
+Сервер не обязан быть Git-клоном и не получает registry credential. Pipeline тестирует точный checkout, передаёт `.env`-free source archive, проверяет его SHA-256, распаковывает его в новый `/opt/voice-platform-releases/<commit-sha>` и копирует туда только существующий server-local `/opt/voice-platform/.env` с правами `0600`. Затем он строит `voice-platform-api:<commit-sha>` и `voice-platform-web:<тот же commit-sha>` на сервере. Это не `latest`, не смешивает API/web разных revisions и не заменяет канонический каталог `/opt/voice-platform`.
+
+После build workflow вызывает guard script с `VOICE_PLATFORM_DIR` нового release directory. Guard включает maintenance, запускает migration, перезапускает только API/web/proxy и проверяет Caddy, сети и public health; volumes PostgreSQL, attachments, LiveKit и Caddy не удаляются. Каталоги прошлых releases не удаляются автоматически: их очистка требует отдельного owner-approved maintenance решения.
 
 ## Maintenance admission во время trusted release
 
-Release script включает maintenance admission, ждёт 15 секунд, чтобы public warning дошло до browsers, получает immutable images, запускает migrations, перезапускает API/web/proxy, проверяет Caddy и public health. Он отключает admission только после успешного health check. Неудачный release намеренно оставляет admission active; исследуйте и восстановите deployment до его отключения.
+Release script включает maintenance admission, ждёт 15 секунд, чтобы public warning дошло до browsers, проверяет локальные commit-addressed images или получает registry-digest images, запускает migrations, перезапускает API/web/proxy, проверяет Caddy и public health. Он отключает admission только после успешного health check. Неудачный release намеренно оставляет admission active; исследуйте и восстановите deployment до его отключения.
 
 Первый release, добавляющий эту capability, требует одноразовой schema preparation, потому что его admission row ещё не существует. Подтвердите, что candidate migration — единственная ожидающая compatible migration, выполните её отдельным проверенным шагом, затем запустите normal release script. Не утверждайте, что эта одноразовая preparation была защищена maintenance; каждый дальнейший release использует normal sequence enable-before-pull.
 

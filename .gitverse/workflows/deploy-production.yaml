@@ -1,0 +1,145 @@
+name: Deploy production
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v-bootybay-production
+  cancel-in-progress: false
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Test and vet Go API
+        working-directory: backend
+        run: |
+          go test ./...
+          go vet ./...
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Test and build Vue client
+        working-directory: frontend
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+  release_guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test registry and local-image release guards
+        shell: bash
+        run: |
+          bash scripts/deploy-images.test.sh
+          bash scripts/deploy-local-images.test.sh
+
+  deploy:
+    if: ${{ gitverse.ref_name == 'master' }}
+    needs: [backend, frontend, release_guard]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DEPLOY_SERVER_IP: ${{ vars.DEPLOY_SERVER_IP }}
+      DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      DEPLOY_SSH_PUB_KEY: ${{ vars.DEPLOY_SSH_PUB_KEY }}
+      SSH_USER: ${{ vars.SSH_USER }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate deployment inputs and configure verified SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$DEPLOY_SERVER_IP" =~ ^[0-9A-Fa-f:.]+$ ]]
+          [[ "$SSH_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ -n "$DEPLOY_SSH_PRIVATE_KEY" ]]
+          [[ -n "$DEPLOY_SSH_PUB_KEY" ]]
+          install -d -m 700 ~/.ssh
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_SSH_PUB_KEY" > ~/.ssh/id_ed25519.pub
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub
+          private_fingerprint="$(ssh-keygen -lf ~/.ssh/id_ed25519 | awk '{print $2}')"
+          public_fingerprint="$(ssh-keygen -lf ~/.ssh/id_ed25519.pub | awk '{print $2}')"
+          [[ "$private_fingerprint" == "$public_fingerprint" ]]
+          printf '%s ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOTOd1clMcOJN4YNCn+EDZ6IAM7x99fHD8O8Zk3umZtr\n' "$DEPLOY_SERVER_IP" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Package the checked-out source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git_sha="$(git rev-parse HEAD)"
+          [[ "$git_sha" =~ ^[0-9a-f]{40}$ ]]
+          archive="voice-platform-${git_sha}.tar.gz"
+          tar --exclude-vcs --exclude=.env --exclude=frontend/node_modules -czf "$archive" .
+          printf 'git_sha=%s\n' "$git_sha" >> "$GITVERSE_OUTPUT"
+          printf 'archive=%s\n' "$archive" >> "$GITVERSE_OUTPUT"
+          printf 'archive_sha256=%s\n' "$(sha256sum "$archive" | awk '{print $1}')" >> "$GITVERSE_OUTPUT"
+
+      - name: Transfer, build and perform guarded release
+        shell: bash
+        env:
+          ARCHIVE: ${{ steps.source.outputs.archive }}
+          ARCHIVE_SHA256: ${{ steps.source.outputs.archive_sha256 }}
+          GIT_SHA: ${{ steps.source.outputs.git_sha }}
+        run: |
+          set -euo pipefail
+          remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
+          remote_archive="/tmp/voice-platform-${GIT_SHA}.tar.gz"
+          ssh_options=(-i ~/.ssh/id_ed25519 -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          scp "${ssh_options[@]}" "$ARCHIVE" "$remote:$remote_archive"
+          ssh "${ssh_options[@]}" "$remote" bash -s -- "$GIT_SHA" "$ARCHIVE_SHA256" <<'REMOTE'
+          set -euo pipefail
+          git_sha="$1"
+          expected_archive_sha256="$2"
+          [[ "$git_sha" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$expected_archive_sha256" =~ ^[0-9a-f]{64}$ ]]
+          archive="/tmp/voice-platform-${git_sha}.tar.gz"
+          release_root=/opt/voice-platform-releases
+          release_dir="${release_root}/${git_sha}"
+          staging_dir=''
+          cleanup() {
+            rm -f -- "$archive"
+            if [[ -n "$staging_dir" && "$staging_dir" == "$release_root"/.incoming.* ]]; then
+              sudo -n rm -rf -- "$staging_dir"
+            fi
+          }
+          trap cleanup EXIT
+          actual_archive_sha256="$(sha256sum "$archive" | awk '{print $1}')"
+          [[ "$actual_archive_sha256" == "$expected_archive_sha256" ]]
+          sudo -n install -d -m 0750 "$release_root"
+          [[ ! -e "$release_dir" ]]
+          staging_dir="$(sudo -n mktemp -d "${release_root}/.incoming.XXXXXXXX")"
+          sudo -n tar -xzf "$archive" -C "$staging_dir"
+          sudo -n install -m 0600 /opt/voice-platform/.env "$staging_dir/.env"
+          sudo -n mv "$staging_dir" "$release_dir"
+          staging_dir=''
+          api_image="voice-platform-api:${git_sha}"
+          web_image="voice-platform-web:${git_sha}"
+          sudo -n env API_IMAGE="$api_image" WEB_IMAGE="$web_image" docker compose --project-directory "$release_dir" -f "$release_dir/compose.yaml" build api web
+          sudo -n env VOICE_PLATFORM_DIR="$release_dir" API_IMAGE="$api_image" WEB_IMAGE="$web_image" "$release_dir/scripts/deploy-images.sh"
+          REMOTE

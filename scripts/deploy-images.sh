@@ -10,18 +10,22 @@ fail() {
   exit 1
 }
 
-require_digest_image() {
-  local name="$1"
-  local image="$2"
-  [[ -n "$image" ]] || fail "$name is required."
-  [[ "$image" == */* && "$image" == *@sha256:* ]] || fail "$name must be a registry digest reference."
-  [[ "$image" != *:latest && "$image" != *:latest@* ]] || fail "$name must not use latest."
-}
-
 api_image="${API_IMAGE:-}"
 web_image="${WEB_IMAGE:-}"
-require_digest_image API_IMAGE "$api_image"
-require_digest_image WEB_IMAGE "$web_image"
+[[ -n "$api_image" ]] || fail "API_IMAGE is required."
+[[ -n "$web_image" ]] || fail "WEB_IMAGE is required."
+
+if [[ "$api_image" =~ ^voice-platform-api:([0-9a-f]{40})$ ]]; then
+  api_revision="${BASH_REMATCH[1]}"
+  [[ "$web_image" =~ ^voice-platform-web:([0-9a-f]{40})$ ]] || fail "Images must be matching local commit tags or registry digest references without latest."
+  web_revision="${BASH_REMATCH[1]}"
+  [[ "$api_revision" == "$web_revision" ]] || fail "Local API and web images must use the same commit revision."
+  release_mode="local-build"
+elif [[ "$api_image" == */* && "$api_image" == *@sha256:* && "$web_image" == */* && "$web_image" == *@sha256:* && "$api_image" != *:latest@* && "$web_image" != *:latest@* ]]; then
+  release_mode="registry-digest"
+else
+  fail "Images must be matching local commit tags or registry digest references without latest."
+fi
 [[ -r "$env_file" ]] || fail "Deployment environment file is unavailable."
 public_host="$(sed -n 's/^PUBLIC_HOST=//p' "$env_file" | tail -n 1)"
 [[ "$public_host" =~ ^[A-Za-z0-9.-]+$ ]] || fail "PUBLIC_HOST must be a hostname."
@@ -44,9 +48,16 @@ assert_proxy_networks() {
   done
 }
 
+if [[ "$release_mode" == "local-build" ]]; then
+  docker image inspect "$api_image" >/dev/null || fail "Local API image is unavailable."
+  docker image inspect "$web_image" >/dev/null || fail "Local web image is unavailable."
+fi
+
 "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable
 sleep 15
-API_IMAGE="$api_image" WEB_IMAGE="$web_image" "${compose[@]}" pull api migrate web
+if [[ "$release_mode" == "registry-digest" ]]; then
+  API_IMAGE="$api_image" WEB_IMAGE="$web_image" "${compose[@]}" pull api migrate web
+fi
 
 umask 077
 temporary_env="$(mktemp "$env_file.release.XXXXXX")"

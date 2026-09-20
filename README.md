@@ -23,7 +23,7 @@ Self-hosted веб-платформа в логике лёгкого Discord: г
 | Данные | PostgreSQL и private filesystem volume для attachments |
 | Медиа | Self-hosted LiveKit/WebRTC; Go не проксирует RTP, RTCP или audio/video payload |
 | Edge | Caddy завершает HTTPS и проверяет admission перед `/rtc` signalling |
-| Доставка | Docker Compose, отдельный migration step, immutable image references |
+| Доставка | Docker Compose, отдельный migration step, registry digests или локальные образы с тегом точного commit SHA |
 
 Внешне публикуются edge-порты `80/tcp` и `443/tcp`, а для WebRTC media — `7882/tcp` и `50000-50100/udp`. PostgreSQL, attachment storage, private metrics и LiveKit management HTTP не должны быть публичными.
 
@@ -83,6 +83,7 @@ docker compose --env-file .env.example -f compose.yaml config --quiet
 | Реализовать или интегрировать HTTP/WebSocket | [OpenAPI](contracts/openapi.yaml), [realtime schema](contracts/realtime.schema.json) и [правила API/realtime](docs/API_AND_REALTIME.md) |
 | Подключить мобильный клиент | [Контракт backend для мобильного клиента](contracts/mobile-client-contract.md) |
 | Выполнить bootstrap, recovery и maintenance | [Операции администратора](docs/ADMIN_OPERATIONS.md) |
+| Настроить и проверить автоматическую поставку | [GitVerse Actions deployment](.gitverse/workflows/deploy-production.yaml) и [операционные требования](docs/ADMIN_OPERATIONS.md) |
 | Провести реальную проверку game capture/audio | [Media prototype](docs/MEDIA_PROTOTYPE.md) и [POC-01 runbook](docs/POC_01_OPERATOR_RUNBOOK.md) |
 | Проверить интерфейс | [Спецификация UI](docs/UI_SPEC.md) |
 | Понять GuildChat design system и её фактический статус | [GuildChat v1: дизайн, планы и evidence](docs/design/GUILDCHAT_V1_STATUS.md) |
@@ -101,7 +102,7 @@ Production smoke и runtime traces подтверждают доступност
 3. POC-03: kick, ban, logout, revocation и replay ранее выданных API/SDK credentials на подключённом media.
 4. Нагрузочный профиль: 100 voice participants в гильдии, до 20 в room и утверждённый screen-publisher profile.
 5. Финальные ACL/privacy, browser E2E, accessibility и authenticated visual checks.
-6. CI/CD: workflow сейчас настроен на GitHub `main`, а этот GitVerse repository публикуется в `master`; веточную политику нужно согласовать до автоматической поставки.
+6. CI/CD: GitVerse workflow для `master` добавлен, но ещё требуется первый успешный pipeline run и production evidence без секретов.
 
 Подробный статус, границы evidence и условия выпуска — в [delivery-and-verification](docs/specs/spec-voice-platform/delivery-and-verification.md).
 
