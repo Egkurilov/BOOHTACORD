@@ -86,7 +86,7 @@ Run: `git status --short`; `git diff --cached --name-only`; `git ls-files --othe
 
 Expected: only source, documentation, schemas, tests, build configuration, and automation are candidates.
 
-- [ ] **Step 3: Stage reviewed candidates and create the initial commit.**
+- [x] **Step 3: Stage reviewed candidates and create the initial commit.**
 
 ```powershell
 git add -- <reviewed paths>
