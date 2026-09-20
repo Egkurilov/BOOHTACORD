@@ -18,6 +18,7 @@
 				uri /internal/media-admission
 				header_up X-Forwarded-Uri {uri}
 				header_up X-Forwarded-Method {method}
+				header_up Authorization {http.request.header.Authorization}
 			}
 			reverse_proxy livekit:7880
 		}

@@ -18,6 +18,7 @@ func TestCaddySignalRouteUsesAdmissionGuard(t *testing.T) {
 		"forward_auth api:8080 {",
 		"uri /internal/media-admission",
 		"header_up X-Forwarded-Uri {uri}",
+		"header_up Authorization {http.request.header.Authorization}",
 		"reverse_proxy livekit:7880",
 	} {
 		if !strings.Contains(value, fragment) {

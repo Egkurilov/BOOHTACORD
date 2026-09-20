@@ -9,7 +9,7 @@ import (
 )
 
 type Admitter interface {
-	Admit(context.Context, string) error
+	Admit(context.Context, string, string) error
 }
 
 func NewHandler(admitter Admitter) http.Handler {
@@ -18,7 +18,7 @@ func NewHandler(admitter Admitter) http.Handler {
 			writer.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		if err := admitter.Admit(request.Context(), request.Header.Get("X-Forwarded-Uri")); err != nil {
+		if err := admitter.Admit(request.Context(), request.Header.Get("X-Forwarded-Uri"), request.Header.Get("Authorization")); err != nil {
 			if errors.Is(err, authorizelivekitsignal.ErrDenied) {
 				writer.WriteHeader(http.StatusForbidden)
 				return

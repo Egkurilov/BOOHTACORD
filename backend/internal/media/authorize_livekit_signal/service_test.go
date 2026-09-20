@@ -23,7 +23,22 @@ func TestAdmitVerifiesCurrentLeaseScopedSignalToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
-	if err := service.Admit(context.Background(), "/rtc?access_token="+token(t, &auth.VideoGrant{RoomJoin: true, Room: "voice:" + testChannelID})); err != nil {
+	if err := service.Admit(context.Background(), "/rtc?access_token="+token(t, &auth.VideoGrant{RoomJoin: true, Room: "voice:" + testChannelID}), ""); err != nil {
+		t.Fatalf("Admit() error = %v", err)
+	}
+	if !store.called || store.leaseID != testLeaseID || store.channelID != testChannelID {
+		t.Fatalf("store = %#v", store)
+	}
+}
+
+func TestAdmitAcceptsNativeBearerSignalToken(t *testing.T) {
+	store := &fakeStore{}
+	service, err := New(Config{APIKey: testAPIKey, APISecret: testAPISecret}, store)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	value := token(t, &auth.VideoGrant{RoomJoin: true, Room: "voice:" + testChannelID})
+	if err := service.Admit(context.Background(), "/rtc", "Bearer "+value); err != nil {
 		t.Fatalf("Admit() error = %v", err)
 	}
 	if !store.called || store.leaseID != testLeaseID || store.channelID != testChannelID {
@@ -38,17 +53,20 @@ func TestAdmitRejectsInvalidOrOverprivilegedSignalTokens(t *testing.T) {
 	}
 	valid := token(t, &auth.VideoGrant{RoomJoin: true, Room: "voice:" + testChannelID})
 	expiredToken := expiredToken(t)
-	for name, uri := range map[string]string{
-		"missing token":         "/rtc",
-		"duplicated token":      "/rtc?access_token=" + valid + "&access_token=" + valid,
-		"wrong path":            "/not-rtc?access_token=" + valid,
-		"malformed token":       "/rtc?access_token=not-a-jwt",
-		"expired token":         "/rtc?access_token=" + expiredToken,
-		"room admin credential": "/rtc?access_token=" + token(t, &auth.VideoGrant{RoomJoin: true, RoomAdmin: true, Room: "voice:" + testChannelID}),
-		"wrong room":            "/rtc?access_token=" + token(t, &auth.VideoGrant{RoomJoin: true, Room: "other:" + testChannelID}),
+	for name, input := range map[string]struct{ uri, authorization string }{
+		"missing token":         {uri: "/rtc"},
+		"duplicated token":      {uri: "/rtc?access_token=" + valid + "&access_token=" + valid},
+		"both transports":       {uri: "/rtc?access_token=" + valid, authorization: "Bearer " + valid},
+		"malformed bearer":      {uri: "/rtc", authorization: "bearer " + valid},
+		"spaced bearer":         {uri: "/rtc", authorization: "Bearer " + valid + " trailing"},
+		"wrong path":            {uri: "/not-rtc?access_token=" + valid},
+		"malformed token":       {uri: "/rtc?access_token=not-a-jwt"},
+		"expired token":         {uri: "/rtc?access_token=" + expiredToken},
+		"room admin credential": {uri: "/rtc?access_token=" + token(t, &auth.VideoGrant{RoomJoin: true, RoomAdmin: true, Room: "voice:" + testChannelID})},
+		"wrong room":            {uri: "/rtc?access_token=" + token(t, &auth.VideoGrant{RoomJoin: true, Room: "other:" + testChannelID})},
 	} {
 		t.Run(name, func(t *testing.T) {
-			if err := service.Admit(context.Background(), uri); !errors.Is(err, ErrDenied) {
+			if err := service.Admit(context.Background(), input.uri, input.authorization); !errors.Is(err, ErrDenied) {
 				t.Fatalf("Admit() error = %v, want ErrDenied", err)
 			}
 		})

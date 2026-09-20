@@ -35,16 +35,16 @@ func New(config Config, store Store) (Service, error) {
 	return Service{config: config, store: store}, nil
 }
 
-func (service Service) Admit(context context.Context, originalURI string) error {
+func (service Service) Admit(context context.Context, originalURI, authorization string) error {
 	endpoint, err := url.ParseRequestURI(originalURI)
 	if err != nil || !signalPath(endpoint.Path) {
 		return ErrDenied
 	}
-	query, err := url.ParseQuery(endpoint.RawQuery)
-	if err != nil || len(query["access_token"]) != 1 || query.Get("access_token") == "" {
+	token, err := signalToken(endpoint, authorization)
+	if err != nil {
 		return ErrDenied
 	}
-	leaseID, channelID, err := service.leaseAndChannel(query.Get("access_token"))
+	leaseID, channelID, err := service.leaseAndChannel(token)
 	if err != nil {
 		return ErrDenied
 	}
@@ -55,6 +55,25 @@ func (service Service) Admit(context context.Context, originalURI string) error 
 		return fmt.Errorf("check livekit signal admission: %w", err)
 	}
 	return nil
+}
+
+func signalToken(endpoint *url.URL, authorization string) (string, error) {
+	query, err := url.ParseQuery(endpoint.RawQuery)
+	if err != nil {
+		return "", ErrDenied
+	}
+	queryTokens := query["access_token"]
+	headerToken, hasHeader := strings.CutPrefix(authorization, "Bearer ")
+	if hasHeader && (headerToken == "" || strings.TrimSpace(headerToken) != headerToken || strings.ContainsAny(headerToken, "\t\r\n ")) {
+		return "", ErrDenied
+	}
+	if len(queryTokens) == 1 && queryTokens[0] != "" && !hasHeader {
+		return queryTokens[0], nil
+	}
+	if len(queryTokens) == 0 && hasHeader {
+		return headerToken, nil
+	}
+	return "", ErrDenied
 }
 
 func (service Service) leaseAndChannel(rawToken string) (string, string, error) {
