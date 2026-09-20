@@ -23,13 +23,12 @@ set -euo pipefail
 printf '%s\n' "$*" >> "$FAKE_DOCKER_LOG"
 
 if [[ "$1" == "inspect" ]]; then
-  if [[ "${FAKE_NETWORK_MODE:-allowed}" == "extra" ]]; then
-    printf '%s\n' fluxer_fluxer voice-platform_edge voice-platform_private
-  else
-    printf '%s\n' voice-platform_edge voice-platform_private
-  fi
+  [[ "${FAKE_NETWORK_MODE:-allowed}" != "extra" ]] || printf '%s\n' fluxer_fluxer
+  printf '%s\n' voice-platform_edge voice-platform_private ''
   exit 0
 fi
+
+[[ "$1" == "compose" && " $* " == *" maintenance-admission --disable "* && "${FAKE_DISABLE_MODE:-allowed}" == "fail" ]] && exit 1
 
 if [[ "$1" == "compose" && " $* " == *" ps -q proxy "* ]]; then
   printf '%s\n' proxy-container
@@ -58,6 +57,7 @@ run_deploy() {
   FAKE_DOCKER_LOG="$temporary_root/commands-$network_mode.log" \
   FAKE_NETWORK_MODE="$network_mode" \
   FAKE_HEALTH_MODE="${3:-allowed}" \
+  FAKE_DISABLE_MODE="${4:-allowed}" \
   PATH="$bin_dir:$PATH" \
   VOICE_PLATFORM_DIR="$project_dir" \
   API_IMAGE="ghcr.io/example/voice-platform-api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
@@ -65,11 +65,7 @@ run_deploy() {
   bash "$script" > "$output" 2>&1
 }
 
-line_number() {
-  local pattern="$1"
-  local log_file="$2"
-  grep -n -F "$pattern" "$log_file" | head -n 1 | cut -d: -f1
-}
+line_number() { grep -n -F "$1" "$2" | head -n 1 | cut -d: -f1; }
 
 allowed_output="$temporary_root/allowed.out"
 run_deploy allowed "$allowed_output"
@@ -97,22 +93,21 @@ disable_line="$(line_number 'maintenance-admission --disable' "$allowed_log")"
 [[ "$health_line" -lt "$disable_line" ]]
 
 extra_output="$temporary_root/extra.out"
-if run_deploy extra "$extra_output"; then
-  echo 'expected extra proxy network to fail deployment' >&2
-  exit 1
-fi
+! run_deploy extra "$extra_output" || { echo 'expected extra proxy network to fail deployment' >&2; exit 1; }
 grep -F 'Proxy has an unexpected Docker network attachment.' "$extra_output"
 extra_log="$temporary_root/commands-extra.log"
 ! grep -Fq 'exec -T proxy caddy validate' "$extra_log"
 ! grep -Fq 'curl -fsS --retry 5 --retry-connrefused https://v.bootybay.ru/api/v1/health' "$extra_log"
+grep -Fq 'maintenance-admission --disable' "$extra_log"
 
 health_output="$temporary_root/health.out"
-if run_deploy allowed "$health_output" fail; then
-  echo 'expected health failure to preserve maintenance admission' >&2
-  exit 1
-fi
+! run_deploy allowed "$health_output" fail || { echo 'expected health failure to fail deployment' >&2; exit 1; }
 health_log="$temporary_root/commands-allowed.log"
 grep -Fq 'maintenance-admission --enable' "$health_log"
-! grep -Fq 'maintenance-admission --disable' "$health_log"
+grep -Fq 'maintenance-admission --disable' "$health_log"
+
+disable_output="$temporary_root/disable.out"
+! run_deploy allowed "$disable_output" allowed fail || { echo 'expected maintenance disable failure to fail deployment' >&2; exit 1; }
+grep -F 'Could not disable maintenance admission after a failed deployment.' "$disable_output"
 
 echo 'deploy-images tests passed'
