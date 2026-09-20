@@ -55,11 +55,11 @@ Run `go test ./...`, `go vet ./...`, frontend `npm ci`, `npm test` and `npm run 
 - [x] **Step 2: Configure verified SSH without logging a key.**
 
 ```bash
-printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-test "$(ssh-keygen -y -f ~/.ssh/id_ed25519)" = "$(printf '%s' "$DEPLOY_SSH_PUB_KEY" | tr -d '\r\n')"
+printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+ssh-keygen -y -f ~/.ssh/id_deploy > /dev/null
 ```
 
-Use `secrets.DEPLOY_SSH_PRIVATE_KEY`, `vars.DEPLOY_SSH_PUB_KEY`, `vars.SSH_USER` and `vars.DEPLOY_SERVER_IP`. Store the reviewed ED25519 host key in the workflow `known_hosts`; every `ssh`/`scp` command uses `BatchMode=yes` and `StrictHostKeyChecking=yes`.
+Use `secrets.DEPLOY_SSH_PRIVATE_KEY` only. Store the approved production address, SSH user and reviewed ED25519 host key in the single-environment workflow `known_hosts`; every `ssh`/`scp` command uses `BatchMode=yes` and `StrictHostKeyChecking=yes`.
 
 - [x] **Step 3: Transfer, build and release the exact checkout.**
 

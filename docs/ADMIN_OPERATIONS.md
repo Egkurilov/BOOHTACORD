@@ -34,7 +34,7 @@ unset RECOVERY_PASSWORD
 
 ## Входные параметры GitVerse Actions
 
-Workflow [`.gitverse/workflows/deploy-production.yaml`](../.gitverse/workflows/deploy-production.yaml) запускается только после успешных Go и Vue checks на trusted `push` в `master` или вручную из `master`. Для запуска необходимы repository variables `DEPLOY_SERVER_IP`, `SSH_USER` и `DEPLOY_SSH_PUB_KEY`, а также repository secret `DEPLOY_SSH_PRIVATE_KEY`. Публичный ключ проверяется на соответствие приватному, но не заменяет его: именно приватный ключ аутентифицирует runner на сервере. Публичная часть должна быть установлена для указанного пользователя в `authorized_keys` сервера.
+Workflow [`.gitverse/workflows/deploy-production.yaml`](../.gitverse/workflows/deploy-production.yaml) запускается только после успешных Go и Vue checks на trusted `push` в `master` или вручную из `master`. Для запуска требуется один repository secret: `DEPLOY_SSH_PRIVATE_KEY`. Он должен соответствовать публичному ключу, уже установленному в `authorized_keys` пользователя `shaneque` на утверждённом production-хосте `176.108.242.211`. Адрес, пользователь и host key зафиксированы в workflow для этого единственного окружения; PostgreSQL, LiveKit и файл `.env` не передаются в CI.
 
 Workflow закрепляет проверенный ED25519 host key deployment-сервера в `known_hosts`; он не использует `ssh-keyscan`, `StrictHostKeyChecking=accept-new` или интерактивный SSH. Изменение host key намеренно останавливает поставку до отдельной owner-проверки и обновления workflow.
 
