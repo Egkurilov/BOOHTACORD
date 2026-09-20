@@ -106,15 +106,15 @@ Run: `git remote -v`
 
 Expected: a fetch/push URL for the user-owned remote.
 
-- [ ] **Step 2: Push the committed branch.**
+- [x] **Step 2: Push the committed branch.**
 
 ```powershell
-git push --set-upstream origin codex/voice-platform-foundation
+git push origin HEAD:master
 ```
 
-Expected: the remote reports the new branch and commit.
+Expected: the user-approved remote `master` reports the merged history and current commit.
 
-**Blocker:** At plan creation the repository has no configured remote, so no destination exists for a push. A remote URL or permission to choose/create one is required.
+**Resolved:** The user provided the GitVerse SSH remote and approved publishing the current code to `master`.
 
 ## Self-review
 
