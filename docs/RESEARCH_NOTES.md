@@ -1,14 +1,14 @@
-# Research notes — not product decisions
+# Исследовательские заметки — не продуктовые решения
 
-This file separates facts to verify from approved requirements. It must not be used to overwrite the source brief without an ADR.
+Этот файл отделяет факты, требующие проверки, от утверждённых требований. Он не может переписывать исходное ТЗ без ADR.
 
-| Unknown | Evidence required | Gate affected |
+| Неизвестное | Необходимое evidence | Затронутый gate |
 | --- | --- | --- |
-| Game-audio capture and playout-loop avoidance on Windows/macOS | POC-01 on physical devices | media and release |
-| Supported Chrome/OS combinations and actual video profile | POC-01/02 measurements | compatibility claims |
-| Reliable post-revocation media admission | POC-03 on pinned LiveKit | security |
-| VM throughput, traffic limit and CPU scheduling | preflight and load run | production capacity |
-| Domain, DNS/TLS, registry, SSH and network access | owner deployment-input record | actual deployment |
-| Encoding parameters and resource sufficiency | ADR based on measurements | 1080p/60 and 100-user claims |
+| Захват game audio и предотвращение playout loop на Windows/macOS | POC-01 на физических устройствах | media и release |
+| Поддерживаемые сочетания Chrome/OS и фактический video profile | измерения POC-01/02 | claims о совместимости |
+| Надёжный media admission после revocation | POC-03 на закреплённом LiveKit | security |
+| VM throughput, traffic limit и CPU scheduling | preflight и load run | production capacity |
+| Domain, DNS/TLS, registry, SSH и network access | owner deployment-input record | фактический deployment |
+| Encoding parameters и достаточность resources | ADR на основе measurements | claims 1080p/60 и 100 users |
 
-The starting VM description (4 vCPU, 8 GiB RAM, 30 GiB SSD) is context only, not a proven capacity promise. The application itself must not create or depend upon backups or provider snapshots.
+Исходное описание VM (4 vCPU, 8 GiB RAM, 30 GiB SSD) — только контекст, а не доказанное capacity promise. Само приложение не должно создавать или зависеть от backups либо provider snapshots.

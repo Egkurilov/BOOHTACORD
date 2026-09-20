@@ -1,16 +1,16 @@
-# Implementation task graph
+# Граф задач реализации
 
-The machine-readable source is `backlog/tasks.yaml`; this file is the reviewable execution order.
+Машиночитаемый источник — `backlog/tasks.yaml`; этот файл задаёт удобный для ревью порядок выполнения.
 
-1. `T-001` establishes the specification packet and requirement traceability.
-2. `T-002` defines persistence, ACL, media-admission and transaction boundaries.
-3. `T-003` creates a locally runnable isolated topology.
-4. `T-004`, `T-005` and `T-006` are independent evidence gates for real capture, profile claims and media revocation. No `PASS` may be inferred from mocks.
-5. `T-007` measures the capacity profile on selected infrastructure.
-6. `T-010` through `T-014` establish identity, recovery and fixed administration before resource features.
-7. `T-020` through `T-030` add channels, voice and screen sharing after POC evidence.
-8. `T-040` through `T-044` add chat, DM, search and attachments with the same ACL at every entry point.
-9. `T-050`, `T-052` and `T-054` add accessible UI, security/observability and delivery.
-10. `T-060` evaluates the complete release gate. It cannot be completed while any POC, capacity, security or owner-provided deployment prerequisite is `NOT_RUN` or `BLOCKED`.
+1. `T-001` формирует пакет спецификаций и трассировку требований.
+2. `T-002` определяет persistence, ACL, media-admission и transaction boundaries.
+3. `T-003` создаёт локально запускаемую изолированную topology.
+4. `T-004`, `T-005` и `T-006` — независимые evidence-gates для реального capture, profile claims и media revocation. Нельзя выводить `PASS` из mocks.
+5. `T-007` измеряет capacity profile на выбранной инфраструктуре.
+6. `T-010`–`T-014` создают identity, recovery и фиксированное administration до resource features.
+7. `T-020`–`T-030` добавляют channels, voice и screen sharing после POC evidence.
+8. `T-040`–`T-044` добавляют chat, DM, search и attachments с одинаковым ACL в каждой точке входа.
+9. `T-050`, `T-052` и `T-054` добавляют accessible UI, security/observability и delivery.
+10. `T-060` оценивает полный release gate. Его нельзя завершить, пока любой POC, capacity, security или предоставленный владельцем deployment prerequisite имеет статус `NOT_RUN` или `BLOCKED`.
 
-Feature work selects only one dependency-ready task and adds test/evidence references before closing it.
+Работа над feature выбирает только одну dependency-ready задачу и добавляет ссылки на test/evidence до её закрытия.

@@ -1,43 +1,21 @@
-# ADR-005: self-hosted LiveKit revocation
+# ADR-005: отзыв доступа self-hosted LiveKit
 
-## Context
+## Контекст
 
-The deployment uses a self-hosted LiveKit node. Removing a connected participant
-is necessary to stop current media, but self-hosted LiveKit does not provide the
-Cloud token-revocation service for a previously issued participant JWT. A
-one-minute credential is defence in depth only and cannot by itself prove that a
-revoked client will not reconnect.
+Deployment использует self-hosted LiveKit node. Удаление подключённого participant необходимо для остановки текущего media, но self-hosted LiveKit не предоставляет Cloud token-revocation service для ранее выданного participant JWT. One-minute credential — только defence in depth и сам по себе не может доказать, что revoked client не выполнит reconnect.
 
-## Decision
+## Решение
 
-Every transaction that revokes a `voice_lease` inserts its lease and channel IDs
-into `voice_sfu_revocations` in the same SQL statement. The API worker claims
-those metadata-only rows, calls private `RoomService.RemoveParticipant` for
-`voice-lease:<lease-id>` in `voice:<channel-id>`, and records completion or a
-stable retry code. RoomService credentials are generated only inside the API
-container and sent only to `http://livekit:7880` on the private Docker network.
+Каждая transaction, отзывающая `voice_lease`, вставляет его lease и channel IDs в `voice_sfu_revocations` тем же SQL statement. API worker claim'ит эти metadata-only rows, вызывает private `RoomService.RemoveParticipant` для `voice-lease:<lease-id>` в `voice:<channel-id>` и записывает completion или stable retry code. RoomService credentials генерируются только внутри API container и отправляются только на `http://livekit:7880` в private Docker network.
 
-Before Caddy forwards every `/rtc` signal connection or reconnect, it calls the
-private API admission endpoint. That endpoint verifies the signed LiveKit token
-and checks the current lease, issuing session, channel and account state in
-PostgreSQL. It returns no token detail and Caddy skips access logging for the
-token-bearing signal URI.
+Перед тем как Caddy forward'ит каждое `/rtc` signal connection или reconnect, он вызывает private API admission endpoint. Endpoint проверяет signed LiveKit token и current lease, issuing session, channel и account state в PostgreSQL. Он не возвращает token detail, а Caddy пропускает access logging для token-bearing signal URI.
 
-Go does not proxy RTP, RTCP, or audio/video payloads. LiveKit remains the media
-transport; Go owns only authoritative admission and the private RoomService
-command.
+Go не проксирует RTP, RTCP или audio/video payloads. LiveKit остаётся media transport; Go владеет только authoritative admission и private RoomService command.
 
-## Consequences
+## Последствия
 
-An SFU outage cannot restore admission: the lease transaction and signal guard
-deny new or reconnecting media sessions immediately, while the durable outbox
-retries participant removal. A response that only reports revoked logical leases
-does not claim that the SFU disconnect has completed. POC-03 must separately
-replay an old API credential and a refreshed SDK credential on the pinned image
-with a second observer before the security gate can pass.
+SFU outage не может восстановить admission: lease transaction и signal guard немедленно отклоняют новые и reconnecting media sessions, а durable outbox повторяет participant removal. Response, сообщающий только об отозванных logical leases, не утверждает, что SFU disconnect завершён. POC-03 должен отдельно replay старого API credential и refreshed SDK credential на закреплённом image со вторым observer до прохождения security gate.
 
-## Verification
+## Проверка
 
-Focused Go tests cover signed signal admission, expired/overprivileged token
-denial, RoomService request scope, durable outbox claiming and retry. POC-03 is
-the only evidence for real connected-media termination and replay behaviour.
+Focused Go tests покрывают signed signal admission, отказ expired/overprivileged token, RoomService request scope, durable outbox claiming и retry. POC-03 — единственное evidence для real connected-media termination и replay behaviour.

@@ -1,3 +1,3 @@
-# Evidence records
+# Записи evidence
 
-Evidence is deliberately absent until a real run occurs. Copy `templates/evidence.json` to a new descriptive JSON file, fill it from the observed run, and preserve paths to screenshots, recordings, logs or test reports outside source control when they contain sensitive material. Do not change `status` to `PASS` without an observer and artifacts.
+Evidence намеренно отсутствует до реального прогона. Скопируйте `templates/evidence.json` в новый описательный JSON-файл, заполните его по наблюдаемому запуску и храните пути к screenshots, recordings, logs или test reports вне source control, если они содержат sensitive material. Не меняйте `status` на `PASS` без observer и artifacts.

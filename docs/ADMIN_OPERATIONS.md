@@ -1,8 +1,8 @@
-# Administrator bootstrap and recovery
+# Bootstrap и recovery администратора
 
-Run migrations before any recovery command. No command accepts a password as a command-line flag. Run these one-shot commands from the server owner's terminal; pass the password via standard input so process arguments, application logs and Compose files contain no secret.
+Запускайте migrations до любой recovery command. Ни одна command не принимает password как command-line flag. Выполняйте эти one-shot commands в terminal владельца сервера; передавайте password через standard input, чтобы process arguments, application logs и Compose files не содержали secret.
 
-Bootstrap the first administrator before opening registration:
+Выполните bootstrap первого администратора до открытия регистрации:
 
 ```bash
 read -rsp 'Initial administrator password: ' BOOTSTRAP_PASSWORD; echo
@@ -10,11 +10,11 @@ printf '%s\n' "$BOOTSTRAP_PASSWORD" | sudo docker compose --project-directory /o
 unset BOOTSTRAP_PASSWORD
 ```
 
-The first successful bootstrap creates an `ADMINISTRATOR` and an audit event. Any later bootstrap exits successfully with “already initialized” and changes neither role nor password.
+Первый успешный bootstrap создаёт `ADMINISTRATOR` и audit event. Любой последующий bootstrap успешно завершается с сообщением «already initialized» и не меняет ни role, ни password.
 
-If the command reports that bootstrap state is incomplete, do not retry it, use administrator recovery, or create an account directly in PostgreSQL. Deploy the current repair migration first; it links only the singleton state that has no administrator to exactly one existing active administrator and records the missing initial-bootstrap audit event. A state that does not meet those exact conditions remains unchanged for owner investigation.
+Если command сообщает о неполном bootstrap state, не повторяйте её, не используйте administrator recovery и не создавайте account напрямую в PostgreSQL. Сначала deploy current repair migration: она связывает только singleton state без administrator с ровно одним существующим active administrator и записывает отсутствующий initial-bootstrap audit event. State, не соответствующий этим точным условиям, остаётся неизменным для investigation владельцем.
 
-Emergency recovery is only available when no active administrator exists. It restores an existing account as an unblocked `ADMINISTRATOR`, replaces its password, revokes its prior sessions, and writes an `ADMINISTRATOR_RECOVERED` audit event:
+Emergency recovery доступен только при отсутствии active administrator. Он восстанавливает существующий account как unblocked `ADMINISTRATOR`, заменяет его password, отзывает прежние sessions и создаёт audit event `ADMINISTRATOR_RECOVERED`:
 
 ```bash
 read -rsp 'Replacement administrator password: ' RECOVERY_PASSWORD; echo
@@ -22,7 +22,7 @@ printf '%s\n' "$RECOVERY_PASSWORD" | sudo docker compose --project-directory /op
 unset RECOVERY_PASSWORD
 ```
 
-If the sole active administrator has lost its password, use the separate, explicitly acknowledged command below. It operates only when `owner` is the one active, unblocked `ADMINISTRATOR`; it does not promote another account or change a role. It replaces the password, revokes the account's active sessions and voice leases, and records a `LAST_ADMINISTRATOR_ACCESS_RECOVERED` audit event:
+Если единственный active administrator утратил password, используйте отдельную command ниже с явным acknowledgement. Она работает только когда `owner` — единственный active, unblocked `ADMINISTRATOR`; она не повышает другой account и не меняет role. Command заменяет password, отзывает active sessions и voice leases account и создаёт `LAST_ADMINISTRATOR_ACCESS_RECOVERED`:
 
 ```bash
 read -rsp 'Replacement administrator password: ' RECOVERY_PASSWORD; echo
@@ -30,30 +30,30 @@ printf '%s\n' "$RECOVERY_PASSWORD" | sudo docker compose --project-directory /op
 unset RECOVERY_PASSWORD
 ```
 
-The server owner must transfer the password through a controlled channel. These owner-operated commands do not provide backup, account discovery, or a normal administration workflow.
+Владелец сервера обязан передавать password через controlled channel. Эти owner-operated commands не предоставляют backup, account discovery или обычный administration workflow.
 
-## Continuous delivery inputs
+## Входные параметры continuous delivery
 
-The GitHub Actions release path runs only after checks pass on a trusted `push` to `main`; it publishes GHCR images and deploys their digest references, never `latest`. Configure these repository secrets before its first run: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_PRIVATE_KEY`, and `DEPLOY_KNOWN_HOSTS`. The known-hosts secret must contain the server's verified SSH host key; the workflow never uses `ssh-keyscan` or accepts a changed key.
+Release path GitHub Actions запускается только после успешных checks на trusted `push` в `main`; он публикует GHCR images и deploy'ит их digest references, никогда `latest`. До первого запуска настройте repository secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_PRIVATE_KEY` и `DEPLOY_KNOWN_HOSTS`. Secret known-hosts должен содержать проверенный SSH host key сервера; workflow никогда не использует `ssh-keyscan` и не принимает изменившийся key.
 
-The deployment server must already be able to pull the private GHCR package, if the package is not public. The workflow copies only the Compose file, Caddyfile and release script, then runs migrations before restarting API/web/proxy. It does not run for pull requests, delete volumes or run down migrations.
+Deployment server уже должен уметь получать private GHCR package, если package не public. Workflow копирует только Compose file, Caddyfile и release script, затем запускает migrations до restart API/web/proxy. Он не запускается для pull requests, не удаляет volumes и не выполняет down migrations.
 
-No Git remote or configured repository secrets are currently available in this workspace, so a successful GHCR publish and automatic deployment remain unverified until the owner connects the repository and provides these inputs.
+В этой рабочей папке ранее не было Git remote или настроенных repository secrets, поэтому успешная публикация GHCR и automatic deployment оставались непроверенными до подключения владельцем repository и этих inputs.
 
-## Maintenance admission during a trusted release
+## Maintenance admission во время trusted release
 
-The release script enables maintenance admission, waits 15 seconds for the public warning to reach browsers, pulls immutable images, runs migrations, restarts API/web/proxy, validates Caddy and checks public health. It disables admission only after that health check succeeds. A failed release intentionally leaves admission active; investigate and recover the deployment before disabling it.
+Release script включает maintenance admission, ждёт 15 секунд, чтобы public warning дошло до browsers, получает immutable images, запускает migrations, перезапускает API/web/proxy, проверяет Caddy и public health. Он отключает admission только после успешного health check. Неудачный release намеренно оставляет admission active; исследуйте и восстановите deployment до его отключения.
 
-The very first release that introduces this capability needs a one-time schema preparation because its admission row does not exist yet. Confirm that the candidate migration is the only pending compatible migration, run it as the separate checked migration step, and then run the normal release script. Do not claim that this one-time preparation was maintenance-protected; every later release uses the normal enable-before-pull sequence.
+Первый release, добавляющий эту capability, требует одноразовой schema preparation, потому что его admission row ещё не существует. Подтвердите, что candidate migration — единственная ожидающая compatible migration, выполните её отдельным проверенным шагом, затем запустите normal release script. Не утверждайте, что эта одноразовая preparation была защищена maintenance; каждый дальнейший release использует normal sequence enable-before-pull.
 
-For a controlled verification, use a second browser as an observer. During the warning, confirm that a new registration, login and new voice lease receive a maintenance refusal, while an existing session can still read protected data and an existing media connection is not deliberately disconnected before the restart. After health succeeds and admission is disabled, refresh both browsers and confirm the banner is gone and new admission resumes. Record only image digests, UTC times and pass/fail outcomes—never cookies, passwords, media credentials, private keys or host fingerprints.
+Для controlled verification используйте второй browser как observer. Во время warning подтвердите, что новая registration, login и voice lease получают maintenance refusal, тогда как существующая session продолжает читать protected data, а существующее media connection не отключается намеренно до restart. После успешного health и отключения admission обновите оба browser и подтвердите, что banner исчез, а новые admissions снова доступны. Фиксируйте только image digests, UTC times и pass/fail outcomes — никогда не cookies, passwords, media credentials, private keys или host fingerprints.
 
-## Stale staging cleanup
+## Очистка устаревшего staging
 
-The following explicit, owner-operated command removes only direct, regular `staging/upload-*.part` files strictly older than one hour:
+Следующая явная owner-operated command удаляет только прямые regular files `staging/upload-*.part`, строго старше одного часа:
 
 ```bash
 sudo docker compose --project-directory /opt/voice-platform -f /opt/voice-platform/compose.yaml --profile operator run --rm cleanup-stale-staging
 ```
 
-It preserves symlinks, directories, unexpected names, data exactly at the one-hour cutoff, published attachments, unattached objects, and all database rows. It is deliberately not scheduled and must be run only after the owner decides that deletion is appropriate. Its output reports only the aggregate count; it does not reveal attachment names or contents.
+Она сохраняет symlinks, directories, unexpected names, данные ровно на one-hour cutoff, опубликованные attachments, unattached objects и все database rows. Она намеренно не scheduled и запускается только после решения владельца о допустимости удаления. Её output сообщает только aggregate count; имена и contents attachments не раскрываются.

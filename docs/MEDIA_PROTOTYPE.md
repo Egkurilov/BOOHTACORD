@@ -1,21 +1,21 @@
-# Media prototype protocol
+# Протокол media prototype
 
-## POC-01 — real game audio and capture
+## POC-01 — реальный game audio и capture
 
-Run separately on a Windows machine and an Apple-Silicon macOS machine with a second physical observer machine. Record hardware, OS build, Chrome stable version, input/output devices, LiveKit image digest, game and capture source. The presenter joins voice, starts the real game, chooses a browser-offered source, shares it with audio, and speaks. The observer selects that stream while hearing room voice.
+Выполните отдельные прогоны на Windows и Apple-Silicon macOS со второй физической observer machine. Зафиксируйте hardware, OS build, версию Chrome Stable, input/output devices, LiveKit image digest, игру и capture source. Presenter входит в voice, запускает реальную игру, выбирает предлагаемый браузером source, передаёт его с audio и говорит. Observer выбирает этот stream, одновременно слыша room voice.
 
-The reproducible operator procedure, controlled topology preflight and evidence classification are in [POC_01_OPERATOR_RUNBOOK.md](POC_01_OPERATOR_RUNBOOK.md). It adds execution detail only; this protocol remains the source of the POC-01 acceptance rule.
+Воспроизводимая operator procedure, controlled topology preflight и классификация evidence находятся в [POC_01_OPERATOR_RUNBOOK.md](POC_01_OPERATOR_RUNBOOK.md). Он добавляет только детали выполнения; этот протокол остаётся источником правила приёмки POC-01.
 
-Pass only when the observer sees moving game content, hears game audio and presenter speech, and the presenter does not receive the observer's own playout as a sustained digital loop. Record timestamps and artifacts. A track being present or tab-only audio is insufficient. If game audio cannot be supplied on an OS, record `BLOCKED` with the observed browser/source limitation; do not silently substitute desktop software, a driver or virtual cable.
+`PASS` допустим только когда observer видит движущийся game content, слышит game audio и речь presenter, а presenter не получает собственное воспроизведение observer как устойчивую цифровую петлю. Зафиксируйте timestamps и artifacts. Наличия track или tab-only audio недостаточно. Если OS не позволяет передать game audio, зафиксируйте `BLOCKED` с наблюдаемым ограничением browser/source; не заменяйте сценарий молча desktop software, driver или virtual cable.
 
-## POC-02 — profile measurements
+## POC-02 — измерения profile
 
-For 720p/30, 720p/60, 1080p/30 and 1080p/60 use moving game content and record selected target, measured dimensions, decoded FPS, bitrate, RTT, loss and adaptation/recovery behaviour. Repeat under impaired observer network. The claim of a supported profile comes only from a `PASS` record; the UI must always separate target from measured values.
+Для 720p/30, 720p/60, 1080p/30 и 1080p/60 используйте движущийся game content и фиксируйте selected target, measured dimensions, decoded FPS, bitrate, RTT, loss и adaptation/recovery behaviour. Повторите при ухудшенной сети observer. Claim о поддерживаемом profile появляется только из записи `PASS`; UI всегда отделяет target от measured values.
 
-## POC-03 — revocation
+## POC-03 — отзыв доступа
 
-With a connected publisher and observer, exercise kick, ban, logout, session revocation and voice-channel deletion. Attempt reconnection and replay of a previously issued API media token and LiveKit SDK token after each action. Pass only when the revoked actor cannot publish, subscribe or re-enter and the unaffected caller receives a truthful outcome. Capture the pinned LiveKit version/digest.
+С подключёнными publisher и observer проверьте kick, ban, logout, session revocation и voice-channel deletion. После каждого действия попробуйте reconnect и replay ранее выданных API media token и LiveKit SDK token. `PASS` допустим только когда отозванный actor не может publish, subscribe или re-enter, а unaffected caller получает правдивый outcome. Зафиксируйте закреплённую версию/digest LiveKit.
 
 ## Evidence
 
-Store one JSON record under `evidence/` per run using `templates/evidence.json`. `PASS` requires artifact paths and an observer. `FAIL` identifies the failed expected result. `BLOCKED` identifies an external prerequisite. `NOT_RUN` never satisfies a release gate.
+Сохраняйте одну JSON-запись в `evidence/` для каждого прогона, используя `templates/evidence.json`. Для `PASS` нужны artifact paths и observer. `FAIL` описывает неисполненный expected result. `BLOCKED` описывает внешнюю prerequisite. `NOT_RUN` никогда не удовлетворяет release gate.
