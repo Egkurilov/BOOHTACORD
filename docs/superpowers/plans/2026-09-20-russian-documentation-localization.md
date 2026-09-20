@@ -112,7 +112,7 @@ git diff --stat
 
 Expected: only the named documentation scope and the localization plan are changed.
 
-- [ ] **Step 2: Stage explicit reviewed paths, validate and commit.**
+- [x] **Step 2: Stage explicit reviewed paths, validate and commit.**
 
 ```powershell
 git add -- <reviewed documentation paths>
@@ -120,7 +120,7 @@ git diff --cached --check
 git commit -m "docs: localize maintained documentation to Russian"
 ```
 
-- [ ] **Step 3: Push the reviewed commit through the configured SSH remote.**
+- [x] **Step 3: Push the reviewed commit through the configured SSH remote.**
 
 ```powershell
 $env:GIT_SSH_COMMAND='ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new'
