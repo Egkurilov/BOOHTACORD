@@ -85,6 +85,7 @@ docker compose --env-file .env.example -f compose.yaml config --quiet
 | Выполнить bootstrap, recovery и maintenance | [Операции администратора](docs/ADMIN_OPERATIONS.md) |
 | Провести реальную проверку game capture/audio | [Media prototype](docs/MEDIA_PROTOTYPE.md) и [POC-01 runbook](docs/POC_01_OPERATOR_RUNBOOK.md) |
 | Проверить интерфейс | [Спецификация UI](docs/UI_SPEC.md) |
+| Понять GuildChat design system и её фактический статус | [GuildChat v1: дизайн, планы и evidence](docs/design/GUILDCHAT_V1_STATUS.md) |
 | Понять приёмку и evidence | [Acceptance и release gates](docs/ACCEPTANCE.md), [формат evidence](evidence/README.md) |
 | Найти задачу и её зависимости | [Граф задач](backlog/TASKS.md), [машиночитаемый backlog](backlog/tasks.yaml) и [TODO](TODO.md) |
 | Прочитать принятые решения | [ADR](docs/adr) |
