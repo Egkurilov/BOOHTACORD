@@ -136,5 +136,5 @@ jobs:
           api_image="voice-platform-api:${git_sha}"
           web_image="voice-platform-web:${git_sha}"
           sudo -n env API_IMAGE="$api_image" WEB_IMAGE="$web_image" docker compose --project-directory "$release_dir" -f "$release_dir/compose.yaml" build api web
-          sudo -n env VOICE_PLATFORM_DIR="$release_dir" API_IMAGE="$api_image" WEB_IMAGE="$web_image" "$release_dir/scripts/deploy-images.sh"
+          sudo -n env VOICE_PLATFORM_DIR="$release_dir" API_IMAGE="$api_image" WEB_IMAGE="$web_image" bash "$release_dir/scripts/deploy-images.sh"
           REMOTE
