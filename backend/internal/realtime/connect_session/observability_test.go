@@ -16,7 +16,7 @@ import (
 )
 
 func TestHandlerObservesRealtimeLifecycle(t *testing.T) {
-	observer := &connectionObserver{closed: make(chan struct{})}
+	observer := &connectionObserver{closed: make(chan struct{}), readyObserved: make(chan struct{})}
 	handler := NewHandler(nil, 0, time.Now, nil, observer)
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		handler.ServeHTTP(writer, request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: "user-1"})))
@@ -29,6 +29,11 @@ func TestHandlerObservesRealtimeLifecycle(t *testing.T) {
 	var event Event
 	if err := wsjson.Read(context.Background(), connection, &event); err != nil || event.Kind != "connection.ready" {
 		t.Fatalf("ready event = %#v, error = %v", event, err)
+	}
+	select {
+	case <-observer.readyObserved:
+	case <-time.After(time.Second):
+		t.Fatal("observer did not receive ready")
 	}
 	if opened, ready, closed := observer.counts(); opened != 1 || ready != 1 || closed != 0 {
 		t.Fatalf("counts before close = %d, %d, %d", opened, ready, closed)
@@ -45,11 +50,12 @@ func TestHandlerObservesRealtimeLifecycle(t *testing.T) {
 }
 
 type connectionObserver struct {
-	closed      chan struct{}
-	closedCount int
-	mutex       sync.Mutex
-	opened      int
-	ready       int
+	closed        chan struct{}
+	closedCount   int
+	mutex         sync.Mutex
+	opened        int
+	ready         int
+	readyObserved chan struct{}
 }
 
 func (observer *connectionObserver) RealtimeConnectionOpened() {
@@ -60,8 +66,9 @@ func (observer *connectionObserver) RealtimeConnectionOpened() {
 
 func (observer *connectionObserver) ObserveRealtimeConnectionReady(time.Duration) {
 	observer.mutex.Lock()
-	defer observer.mutex.Unlock()
 	observer.ready++
+	observer.mutex.Unlock()
+	close(observer.readyObserved)
 }
 
 func (observer *connectionObserver) RealtimeConnectionClosed() {
