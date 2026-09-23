@@ -29,8 +29,8 @@ func Validate(input Input) (Validated, error) {
 	if err != nil {
 		return Validated{}, err
 	}
-	if !validUnicodeLength(input.DisplayName, 1, 64) {
-		return Validated{}, ErrInvalidDisplayName
+	if err := ValidateDisplayName(input.DisplayName); err != nil {
+		return Validated{}, err
 	}
 	if err := ValidatePassword(input.Password); err != nil {
 		return Validated{}, err
@@ -41,6 +41,13 @@ func Validate(input Input) (Validated, error) {
 		DisplayName: input.DisplayName,
 		Password:    input.Password,
 	}, nil
+}
+
+func ValidateDisplayName(value string) error {
+	if !validUnicodeLength(value, 1, 64) {
+		return ErrInvalidDisplayName
+	}
+	return nil
 }
 
 func ValidatePassword(value string) error {

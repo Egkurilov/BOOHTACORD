@@ -1,8 +1,22 @@
 <script setup lang="ts">
+import { computed, nextTick, ref } from 'vue'
 import type { TopologyChannel } from '../channel/topology_client'
 import type { VoiceVolumeParticipant } from '../voice/voice_volume_controls'
+import MemberPopover from './MemberPopover.vue'
 
-defineProps<{ activeVoiceChannel: TopologyChannel | null; participants: VoiceVolumeParticipant[] }>()
+const props = defineProps<{ activeVoiceChannel: TopologyChannel | null; participants: VoiceVolumeParticipant[]; role: 'MEMBER' | 'ADMINISTRATOR'; accountID?: string }>()
+const emit = defineEmits<{ openDM: [userID: string]; setVolume: [participantID: string, volume: number] }>()
+const selectedID = ref<string | null>(null); const popoverTop = ref(80); const trigger = ref<HTMLButtonElement | null>(null)
+const selected = computed(() => props.participants.find((participant) => participant.accountId === selectedID.value) ?? null)
+function openProfile(participant: VoiceVolumeParticipant, event: MouseEvent): void {
+  if (!participant.accountId) return
+  const button = event.currentTarget as HTMLButtonElement
+  trigger.value = button
+  popoverTop.value = Math.max(64, button.getBoundingClientRect().top - button.closest('.members')!.getBoundingClientRect().top)
+  selectedID.value = participant.accountId
+}
+function closeProfile(): void { selectedID.value = null; void nextTick(() => trigger.value?.focus()) }
+function setVolume(volume: number): void { if (selected.value) emit('setVolume', selected.value.id, volume) }
 
 function initial(name: string | undefined): string {
   const letter = name?.trim().slice(0, 1)
@@ -18,12 +32,15 @@ function initial(name: string | undefined): string {
       <p class="members-summary">Голосовой канал · {{ activeVoiceChannel.name }}</p>
       <p v-if="!participants.length">В голосовой комнате пока нет других участников.</p>
       <ul v-else class="member-list" aria-label="Участники голосового канала">
-        <li v-for="participant in participants" :key="participant.id" class="member-card member">
-          <span class="member-avatar avatar" aria-hidden="true">{{ initial(participant.name) }}</span>
-          <span class="member-copy name"><span class="member-name">{{ participant.name || 'Участник' }}</span><small class="member-state">{{ participant.microphoneMuted ? 'Микрофон выключен' : 'Микрофон включён' }}</small></span>
-          <span class="member-speaking" :class="{ active: participant.speaking }">{{ participant.speaking ? 'Говорит' : '' }}</span>
+        <li v-for="participant in participants" :key="participant.id">
+          <button class="member-card member" type="button" :disabled="!participant.accountId" :aria-label="`Профиль: ${participant.name || 'Участник'}`" @click="openProfile(participant, $event)">
+            <span class="member-avatar avatar" aria-hidden="true">{{ initial(participant.name) }}</span>
+            <span class="member-copy name"><span class="member-name">{{ participant.name || 'Участник' }}</span><small class="member-state">{{ participant.microphoneMuted ? 'Микрофон выключен' : 'Микрофон включён' }}</small></span>
+            <span class="member-speaking" :class="{ active: participant.speaking }">{{ participant.speaking ? 'Говорит' : '' }}</span>
+          </button>
         </li>
       </ul>
     </template>
+    <MemberPopover v-if="selected && selected.accountId" :member-i-d="selected.accountId" :self="selected.accountId === props.accountID" :viewer-role="props.role" :same-voice="Boolean(activeVoiceChannel)" :volume="selected.volume" :top="popoverTop" @close="closeProfile" @open-d-m="emit('openDM', $event)" @set-volume="setVolume" />
   </aside>
 </template>

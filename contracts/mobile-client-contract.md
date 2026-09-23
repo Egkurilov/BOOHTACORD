@@ -26,7 +26,7 @@
 3. Начинайте каждый запуск приложения с `GET /api/v1/auth/session`; трактуйте `401` как состояние без входа и очищайте platform cookie store при `POST /api/v1/auth/logout`.
 4. Каждый изменяющий состояние запрос обязан пройти production-проверки secure-cookie, CSRF и Origin. Native origin/header поведение отдельно не определено текущим backend: не обходите эти проверки и не изобретайте header. Реализация mobile заблокирована до явного backend-решения об auth transport, если платформа не может им соответствовать.
 
-`GET /api/v1/auth/session` возвращает только идентичность и роль текущего account. Не выводите из ошибок или отсутствующих полей роль другого пользователя, block state, состояние пароля/сессии или membership в direct message.
+`GET /api/v1/auth/session` возвращает только идентичность и роль текущего account. Для редактируемых данных используйте `GET /api/v1/me` и `PATCH /api/v1/me`: профиль всегда определяется текущей server-side session; `login` и `role` доступны только для чтения, а PATCH принимает только `display_name` длиной 1–64 Unicode-символа. `POST /api/v1/me/password` принимает текущий и новый пароли по 12–128 Unicode-символов; текущая session сохраняется, остальные отзываются вместе с их voice leases. `PUT`/`DELETE /api/v1/me/avatar` меняют только аватар вызывающего; загрузка принимает PNG/JPEG до 2 MiB, а нормализованные PNG доступны участникам с действующей session через URL из профиля/списка участников. Никогда не журналируйте пароли. Не выводите из ошибок или отсутствующих полей роль другого пользователя, block state, состояние пароля/сессии или membership в direct message.
 
 ## Карта REST-операций
 
@@ -36,12 +36,14 @@
 | --- | --- | --- |
 | Начальная загрузка | `getHealth`, `getMaintenanceAdmission`, `getCurrentSession` | `maintenance.active` управляет только новыми подключениями; это metadata, а не расписание выкладки. |
 | Аутентификация | `register`, `login`, `logout`, `completePasswordReset` | Ссылки сброса пароля создаёт администратор; клиент не создаёт такую ссылку для себя. |
+| Профиль | `getMe`, `updateMe`, `changePassword`, `uploadAvatar`, `deleteAvatar` | Профиль относится только к вызывающей session; логин не изменяется через UI. Аватары не являются публичными файлами. |
+| Участники | `listMembers`, `getMember`, `getMemberAvatar` | Только активные аккаунты; стабильная UUID-пагинация и безопасная проекция login/display name/role/avatar URL. |
 | Каналы | `getChannelTopology` | Deployment содержит ровно одну гильдию. При admin-изменениях topology используйте `revision`. |
 | Текстовые сообщения | `listTextMessages`, `createTextMessage`, `searchTextMessages`, `editTextMessage`, `deleteTextMessage` | История и поиск — cursor-страницы от новых к старым. Удалённые строки сохраняют identity и marker, но не прежний текст. |
 | Вложения | `uploadTextAttachment`, `downloadTextAttachment`, `previewTextAttachment` | Используйте только разрешённые вызывающему channel paths; attachment IDs не обходят ACL. Связывайте ID загруженных вложений в `createTextMessage` согласно OpenAPI. |
 | Личные сообщения | `listDirectMessageCandidates`, `openDirectMessage`, `listDirectMessages`, `listDirectMessageHistory`, `searchDirectMessageHistory`, `sendDirectMessage`, `editDirectMessage`, `deleteDirectMessage`, `advanceDirectMessageReadCursor` | Direct message принадлежит только двум участникам. Роль администратора не даёт доступа к истории третьей стороны. |
 | Голос и media | `acquireVoiceLease`, `releaseVoiceLease`, `issueLiveKitCredential` | Используйте упорядоченный lifecycle ниже; это не универсальные LiveKit management API. |
-| Администрирование | `createCategory`, `createChannel`, `reorderCategories`, `renameCategory`, `deleteEmptyCategory`, `moveChannel`, `reorderChannels`, `archiveTextChannel`, `closeVoiceChannelAdmission`, `updateAdminAccountState`, `kickVoiceParticipant`, `createPasswordResetLink` | Показывайте UI или вызывайте только после того, как `getCurrentSession` вернёт `ADMINISTRATOR`; всё равно обрабатывайте отказ авторизации. |
+| Администрирование | `listAdminAccounts`, `listAudit`, `createCategory`, `createChannel`, `reorderCategories`, `renameCategory`, `deleteEmptyCategory`, `moveChannel`, `reorderChannels`, `archiveTextChannel`, `closeVoiceChannelAdmission`, `updateAdminAccountState`, `kickVoiceParticipant`, `createPasswordResetLink` | Показывайте UI или вызывайте только после того, как `getCurrentSession` вернёт `ADMINISTRATOR`; всё равно обрабатывайте отказ авторизации. Лента аудита не содержит metadata, сообщений или DM-текста. |
 
 Для каждого endpoint используйте точные request/response-схемы и задокументированные status codes из `openapi.yaml`. Не создавайте mobile-only routes или поля.
 
@@ -94,7 +96,7 @@ Mobile client может публиковать microphone и screen-share media
 ## Неподдерживаемые или намеренно отсутствующие контракты
 
 - Native bearer/mobile auth transport пока не определён.
-- Нет API для push-notification, presence, typing, user-profile, global user search, server discovery, federation или cross-deployment взаимодействия.
+- Нет API для push-notification, presence, typing, global user search, server discovery, federation или cross-deployment взаимодействия.
 - Этот документ не подразумевает camera, recording, group-DM, mobile UI, backup, snapshot или custom-SFU capability.
 - Mobile telemetry не может содержать passwords, sessions, reset/media tokens, message bodies, attachment contents или высококардинальные account/DM identifiers.
 

@@ -52,6 +52,7 @@
 | Shell, responsive grid и navigation | [`shell.css`](../../frontend/src/design/shell.css), [`navigation.css`](../../frontend/src/design/navigation.css) |
 | Chat/DM и composer | [`conversation.css`](../../frontend/src/design/conversation.css) |
 | Voice, participant cards и stream viewer | [`voice.css`](../../frontend/src/design/voice.css) |
+| Центрированные аудио-настройки и управление каналами | [`settings.css`](../../frontend/src/design/settings.css), [`WorkspaceMain.vue`](../../frontend/src/workspace/WorkspaceMain.vue) |
 | Auth surfaces | [`authentication.css`](../../frontend/src/design/authentication.css) |
 | Regression contract | [`design_system_contract.spec.ts`](../../frontend/src/design/design_system_contract.spec.ts) |
 
@@ -63,13 +64,20 @@
 | [Design completion](../superpowers/plans/2026-09-19-guildchat-design-completion.md) | 11/11 шагов завершены |
 | [Reference parity](../superpowers/plans/2026-09-19-guildchat-reference-parity.md) | 14/14 шагов завершены |
 | [Reference rebuild](../superpowers/plans/2026-09-19-guildchat-reference-rebuild.md) | 8/9 шагов завершены; ожидается authenticated browser screenshot comparison перед web-only deploy evidence |
+| [Workspace panels](../superpowers/plans/2026-09-23-guildchat-workspace-panels.md) | 3/3 задач завершены; навигация сохранена слева, Audio/Admin перенесены в центр |
+
+Актуальный сквозной список требований и оставшихся проверок находится в [GUILDCHAT_V1_TODO.md](GUILDCHAT_V1_TODO.md). TODO в исходном ZIP не обновлялся: это неизменяемый входной артефакт, а не текущая запись статуса репозитория.
 
 ## Текущий проверенный статус
 
-- CSS tokens, responsive shell, navigation, auth, conversations, DM, VoiceDock, participant cards, audio settings и stream composition реализованы в `frontend/src`.
+- CSS tokens, responsive shell, navigation, auth, conversations, DM, VoiceDock, participant cards, audio settings и stream composition реализованы в `frontend/src`; настройка аудио и управление каналами теперь отображаются в центральной рабочей области, а не замещают навигацию.
 - Regression contract проверяет palette, breakpoints, semantic shell regions, persistent dock, data-derived participants и preview hierarchy.
 - Последняя зарегистрированная web-only release evidence — [`release-guildchat-reference-parity-2026-09-19-003.json`](../../evidence/release-guildchat-reference-parity-2026-09-19-003.json): frontend suite — 53 test files / 131 tests `PASS`; production build, traceability и public health — `PASS`.
 - Pixel-level authenticated browser acceptance в этой записи — `BLOCKED`: не был записан signed-in browser capture. Runtime smoke и health не заменяют visual acceptance.
+- После workspace-panels packet frontend suite — 53 test files / 132 tests `PASS`; `vue-tsc` и production build — `PASS` (Vite сообщает существующее предупреждение о размере LiveKit chunk).
+- ProfileSettings, member/channel/audit tabs AdminPanel, MemberPopover, role/block/voice-kick actions и reset-link result реализованы на локальной ветке и подключены к API. Global SearchPanel остаётся открытым.
+- Profile API включает GET/PATCH собственного профиля, смену пароля с отзывом других сессий, приватные PNG-аватары, member list/detail/avatar, admin-only account list и summary audit feed без metadata. Backend API ещё ожидает GitVerse Actions deploy и production smoke.
+- Local validation after this packet: backend `go test ./...` / `go vet ./...`, frontend 55 files / 142 tests / production build, OpenAPI verifier и 39-item traceability — PASS. Эти проверки не доказывают production behavior или pixel parity.
 - UI evidence не подтверждает POC game audio, media revocation, capacity или общий product release.
 
 ## Следующее действие для закрытия design gate

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"voice-platform/backend/internal/database/pool"
-	"voice-platform/backend/internal/health"
 	"voice-platform/backend/internal/identity/admin_account"
 	adminapi "voice-platform/backend/internal/identity/admin_account/api"
 	adminpostgres "voice-platform/backend/internal/identity/admin_account/postgres"
@@ -34,7 +33,6 @@ import (
 	registerapi "voice-platform/backend/internal/identity/register_user/api"
 	registerpostgres "voice-platform/backend/internal/identity/register_user/postgres"
 	maintenanceadmission "voice-platform/backend/internal/maintenance/admission"
-	maintenanceapi "voice-platform/backend/internal/maintenance/admission/api"
 	maintenancepostgres "voice-platform/backend/internal/maintenance/admission/postgres"
 	authorizelivekitsignal "voice-platform/backend/internal/media/authorize_livekit_signal"
 	dispatchvoicesfurevocation "voice-platform/backend/internal/media/dispatch_voice_sfu_revocation"
@@ -67,10 +65,8 @@ func main() {
 		slog.Error("configure livekit signal admission", "error", err)
 		os.Exit(1)
 	}
-	mux.Handle("GET /api/v1/health", health.NewHandler())
-	mux.Handle("GET /api/v1/maintenance", maintenanceapi.NewHandler(maintenanceService))
 	metrics := httpmetrics.New()
-	mux.Handle("GET /metrics", metrics.Handler())
+	configureStatusRoutes(mux, maintenanceService, metrics)
 	mux.Handle("POST /api/v1/auth/register", maintenanceadmission.Middleware(maintenanceService)(configuration.registrationLimiter.Middleware(registerapi.NewHandler(registerService))))
 	mux.Handle("POST /api/v1/auth/login", maintenanceadmission.Middleware(maintenanceService)(configuration.loginLimiter.Middleware(loginapi.NewHandler(loginService))))
 	mux.Handle("POST /api/v1/auth/logout", logoutapi.NewHandler(logoutService))
@@ -82,6 +78,10 @@ func main() {
 	configureChatRoutes(mux, database, sessionService)
 	if err := configureStorageRoutes(mux, database, sessionService, configuration.attachmentRoot, configuration.uploadLimiter, metrics); err != nil {
 		slog.Error("configure attachment routes", "error", err)
+		os.Exit(1)
+	}
+	if err := configureProfileAdminRoutes(mux, database, sessionService, configuration); err != nil {
+		slog.Error("configure profile and administration routes", "error", err)
 		os.Exit(1)
 	}
 	configureRealtimeRoutes(mux, sessionService, metrics)

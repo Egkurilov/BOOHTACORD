@@ -496,6 +496,149 @@
         }
       }
     },
+    "/api/v1/me": {
+      "get": {
+        "operationId": "getMe",
+        "description": "Authenticated caller only. Returns the caller's own stable login, display name and fixed role; never accepts another account identifier.",
+        "responses": {
+          "200": { "description": "Current account profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OwnProfile" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Current profile is unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "patch": {
+        "operationId": "updateMe",
+        "description": "Authenticated caller only. Updates display_name for the caller derived from the server-side session; login and role are immutable through this operation.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OwnProfileUpdateRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Updated current account profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OwnProfile" } } } },
+          "400": { "description": "Malformed request or display name outside 1 to 64 Unicode characters", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Current profile is unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/me/password": {
+      "post": {
+        "operationId": "changePassword",
+        "description": "Authenticated caller only. Verifies the current password, changes the caller's password, retains the current session and revokes other sessions and their voice leases.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OwnPasswordChangeRequest" } } }
+        },
+        "responses": {
+          "204": { "description": "Password changed; only the current session remains active" },
+          "400": { "description": "Invalid current or new password; response does not disclose which credential failed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Credentials changed concurrently; authenticate again", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Source rate limit exceeded", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/me/avatar": {
+      "put": {
+        "operationId": "uploadAvatar",
+        "description": "Authenticated caller only. Uploads a PNG or JPEG image up to 2 MiB; backend normalizes it to PNG and stores it privately.",
+        "requestBody": { "required": true, "content": { "image/png": { "schema": { "type": "string", "format": "binary" } }, "image/jpeg": { "schema": { "type": "string", "format": "binary" } } } },
+        "responses": {
+          "204": { "description": "Avatar replaced" },
+          "400": { "description": "Invalid image, media type, dimensions or upload size", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Current profile is unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Source rate limit exceeded", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "operationId": "deleteAvatar",
+        "description": "Authenticated caller only. Removes only the caller's profile avatar.",
+        "responses": {
+          "204": { "description": "Avatar removed; repeated removal is safe" },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Current profile is unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/members": {
+      "get": {
+        "operationId": "listMembers",
+        "description": "Authenticated one-guild member directory. Excludes blocked accounts and exposes only UUID, login/display name, fixed role and an authenticated avatar URL; stable UUID cursor pagination.",
+        "parameters": [
+          { "name": "cursor", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "Bounded guild member page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MemberList" } } } },
+          "400": { "description": "Invalid cursor or page size", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/members/{userID}": {
+      "get": {
+        "operationId": "getMember",
+        "parameters": [{ "name": "userID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Safe member profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Member" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Member absent or blocked", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/members/{userID}/avatar": {
+      "get": {
+        "operationId": "getMemberAvatar",
+        "description": "Authenticated guild members only; serves normalized PNG bytes from private storage.",
+        "parameters": [{ "name": "userID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Private PNG avatar", "content": { "image/png": { "schema": { "type": "string", "format": "binary" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Member or avatar unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/accounts": {
+      "get": {
+        "operationId": "listAdminAccounts",
+        "description": "Administrator-only bounded account directory including the fixed role and blocked state; never includes credential/session data or private messages.",
+        "parameters": [
+          { "name": "cursor", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "Bounded administrator account page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminAccountList" } } } },
+          "400": { "description": "Invalid cursor or page size", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/audit": {
+      "get": {
+        "operationId": "listAudit",
+        "description": "Administrator-only. Returns a bounded event summary. The database query deliberately excludes JSON metadata and never reads message or DM content.",
+        "parameters": [
+          { "name": "before", "in": "query", "required": false, "schema": { "type": "string", "pattern": "^[1-9][0-9]*$" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "Newest-first audit summary page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuditEventList" } } } },
+          "400": { "description": "Invalid cursor or page size", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
     "/api/v1/auth/password-reset/complete": {
       "post": {
         "operationId": "completePasswordReset",
@@ -789,6 +932,78 @@
           "login": { "type": "string", "minLength": 3, "maxLength": 32 },
           "password": { "type": "string", "minLength": 12, "maxLength": 128 }
         }
+      },
+      "OwnProfile": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["account_id", "login", "display_name", "role"],
+        "properties": {
+          "account_id": { "type": "string", "format": "uuid" },
+          "login": { "type": "string", "minLength": 3, "maxLength": 32, "readOnly": true },
+          "display_name": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "role": { "type": "string", "enum": ["MEMBER", "ADMINISTRATOR"], "readOnly": true },
+          "avatar_url": { "type": "string", "format": "uri-reference", "readOnly": true }
+        }
+      },
+      "OwnProfileUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["display_name"],
+        "properties": { "display_name": { "type": "string", "minLength": 1, "maxLength": 64 } }
+      },
+      "OwnPasswordChangeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["current_password", "new_password"],
+        "properties": {
+          "current_password": { "type": "string", "minLength": 12, "maxLength": 128 },
+          "new_password": { "type": "string", "minLength": 12, "maxLength": 128 }
+        }
+      },
+      "Member": {
+        "type": "object", "additionalProperties": false,
+        "required": ["user_id", "login", "display_name", "role"],
+        "properties": {
+          "user_id": { "type": "string", "format": "uuid" },
+          "login": { "type": "string", "minLength": 3, "maxLength": 32 },
+          "display_name": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "role": { "type": "string", "enum": ["MEMBER", "ADMINISTRATOR"] },
+          "avatar_url": { "type": "string", "format": "uri-reference" }
+        }
+      },
+      "MemberList": {
+        "type": "object", "additionalProperties": false, "required": ["members"],
+        "properties": { "members": { "type": "array", "items": { "$ref": "#/components/schemas/Member" } }, "next_cursor": { "type": "string", "format": "uuid" } }
+      },
+      "AdminAccount": {
+        "type": "object", "additionalProperties": false,
+        "required": ["account_id", "login", "display_name", "role", "blocked", "created_at"],
+        "properties": {
+          "account_id": { "type": "string", "format": "uuid" },
+          "login": { "type": "string", "minLength": 3, "maxLength": 32 },
+          "display_name": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "role": { "type": "string", "enum": ["MEMBER", "ADMINISTRATOR"] },
+          "blocked": { "type": "boolean" }, "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AdminAccountList": {
+        "type": "object", "additionalProperties": false, "required": ["accounts"],
+        "properties": { "accounts": { "type": "array", "items": { "$ref": "#/components/schemas/AdminAccount" } }, "next_cursor": { "type": "string", "format": "uuid" } }
+      },
+      "AuditEvent": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "event_type", "created_at"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+          "actor_user_id": { "type": "string", "format": "uuid" },
+          "event_type": { "type": "string" },
+          "target_user_id": { "type": "string", "format": "uuid" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AuditEventList": {
+        "type": "object", "additionalProperties": false, "required": ["events"],
+        "properties": { "events": { "type": "array", "items": { "$ref": "#/components/schemas/AuditEvent" } }, "next_cursor": { "type": "string", "pattern": "^[1-9][0-9]*$" } }
       },
       "PasswordResetCompletionRequest": {
         "type": "object",

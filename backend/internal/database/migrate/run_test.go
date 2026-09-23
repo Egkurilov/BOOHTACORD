@@ -43,6 +43,7 @@ func TestRunExecutesEmbeddedMigrations(t *testing.T) {
 		{"CREATE INDEX IF NOT EXISTS attachments_unattached_cleanup_idx", "ON attachments (created_at, storage_key)", "WHERE state = 'UNATTACHED'"},
 		{"CREATE TABLE IF NOT EXISTS voice_sfu_revocations", "lease_id UUID PRIMARY KEY", "completed_at TIMESTAMPTZ", "attempt_count INTEGER NOT NULL DEFAULT 0"},
 		{"CREATE TABLE IF NOT EXISTS maintenance_admission", "singleton BOOLEAN PRIMARY KEY", "active BOOLEAN NOT NULL DEFAULT FALSE"},
+		{"ADD COLUMN IF NOT EXISTS avatar_key", "^[0-9a-f]{64}$"},
 	}
 	if len(executor.statements) != len(expected) {
 		t.Fatalf("migration count = %d", len(executor.statements))

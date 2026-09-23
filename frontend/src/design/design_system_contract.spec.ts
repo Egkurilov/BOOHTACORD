@@ -14,7 +14,11 @@ import conversationPane from '../conversation/ConversationPane.vue?raw'
 import screenViewer from '../voice/ScreenViewer.vue?raw'
 import textConversation from '../conversation/TextConversation.vue?raw'
 import workspace from '../workspace/WorkspaceApp.vue?raw'
+import workspaceMain from '../workspace/WorkspaceMain.vue?raw'
 import membersPanel from '../workspace/WorkspaceMembersPanel.vue?raw'
+import profileSettings from '../identity/ProfileSettings.vue?raw'
+import adminPanel from '../workspace/AdminPanel.vue?raw'
+import memberPopover from '../workspace/MemberPopover.vue?raw'
 
 function source(relativePath: string): string {
   return readFileSync(new URL(relativePath, import.meta.url), 'utf8')
@@ -80,5 +84,31 @@ describe('GuildChat design-system foundation', () => {
     expect(workspace).toContain('<WorkspaceSidebarTabs')
     expect(conversationPane).toContain('class="room-intro"')
     expect(screenViewer).toContain('class="stream-controls"')
+  })
+
+  it('keeps settings and administration in the central workspace', () => {
+    expect(workspace).toContain("'no-aside': selectedDirectMessage || activePanel !== 'none'")
+    expect(workspace).toContain('<template #admin>')
+    expect(workspace).toContain('<template #audio>')
+    expect(workspace).toContain('<template #profile>')
+    expect(workspace).toContain('<AdminPanel')
+    expect(workspace).toContain('<ChannelNavigation')
+    expect(workspaceMain).toContain('<slot name="admin" />')
+    expect(workspaceMain).toContain('<slot name="audio" />')
+    expect(workspaceMain).toContain('workspace-main-panel')
+    const settingsStyles = source('./settings.css')
+    expect(settingsStyles).toContain('max-width: 720px')
+    expect(settingsStyles).toContain('max-width: 1120px')
+    expect(settingsStyles).toContain('.admin-topology-form { display: grid;')
+    expect(settingsStyles).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))')
+  })
+
+  it('connects profile settings and admin tabs to real API workflows', () => {
+    for (const expected of ['readonly', 'current-password', 'new-password', 'uploadAvatar', 'changeOwnPassword', 'aria-live']) expect(profileSettings).toContain(expected)
+    for (const expected of ['Участники', 'Каналы', 'Аудит', 'AdminMembersSection', 'AdminAuditSection']) expect(adminPanel).toContain(expected)
+  })
+
+  it('keeps the nonmodal member profile actions scoped to existing APIs', () => {
+    for (const expected of ['aria-modal="false"', 'Escape', 'loadMember', 'openDM', 'setVolume', 'kickVoiceParticipant']) expect(memberPopover).toContain(expected)
   })
 })

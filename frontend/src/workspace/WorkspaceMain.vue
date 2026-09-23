@@ -9,6 +9,7 @@ type VoiceConnection = ReturnType<typeof useVoiceConnectionStore>
 type WorkspaceVoiceControls = ReturnType<typeof useWorkspaceVoiceControls>
 
 defineProps<{
+  panel: 'none' | 'admin' | 'audio' | 'profile'
   channel: TopologyChannel | null
   directMessage: DirectMessageListItem | null
   joinVoice: WorkspaceVoiceControls['joinVoice']
@@ -18,7 +19,17 @@ defineProps<{
 </script>
 
 <template>
+  <div v-if="panel === 'admin'" class="workspace-main-panel workspace-main-panel--admin" data-testid="admin-workspace-panel">
+    <slot name="admin" />
+  </div>
+  <div v-else-if="panel === 'audio'" class="workspace-main-panel workspace-main-panel--audio" data-testid="audio-workspace-panel">
+    <slot name="audio" />
+  </div>
+  <div v-else-if="panel === 'profile'" class="workspace-main-panel workspace-main-panel--profile" data-testid="profile-workspace-panel">
+    <slot name="profile" />
+  </div>
   <ConversationPane
+    v-else
     :channel="channel"
     :direct-message="directMessage"
     :screen-diagnostics="voiceConnection.screenDiagnostics"
