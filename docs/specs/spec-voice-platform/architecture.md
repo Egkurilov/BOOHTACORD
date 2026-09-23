@@ -76,4 +76,4 @@ Each long-running runtime container uses JSON log rotation (10 MiB × 3 files). 
 
 The desktop UI is dark, Russian and one-guild: left navigation, persistent voice dock, selected central surface and selected screen viewer. It must expose real observed media status instead of inferring it from target settings. The interface may follow the shipped design system, but does not claim visual identity with Discord.
 
-The current mobile document is an integration guide, not an implemented native client or a new authentication scheme. A mobile client may not work around unknown native `Origin`/CSRF behaviour.
+The mobile document governs the Android Flutter client approved by ADR-006; it does not introduce a new authentication scheme. The client sends the deployment `Origin`, persists only the opaque secure cookie in encrypted platform storage and may not work around server-side CSRF or ACL enforcement.

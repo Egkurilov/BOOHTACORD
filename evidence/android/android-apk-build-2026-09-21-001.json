@@ -1,0 +1,35 @@
+{
+  "id": "android-apk-build-2026-09-21-001",
+  "kind": "integration-build",
+  "status": "PASS",
+  "executed_at": "2026-09-21",
+  "environment": {
+    "host_os": "macOS 26.6.1 arm64",
+    "flutter": "3.47.5 stable",
+    "dart": "3.13.4",
+    "java": "OpenJDK 17.0.20.1",
+    "android_compile_sdk": 36,
+    "android_min_sdk": 24,
+    "android_target_sdk": 36
+  },
+  "scenario": {
+    "command": "flutter build apk --release",
+    "expected": [
+      "Gradle assembleRelease completes",
+      "APK has application id ru.boohtacord.app",
+      "APK signature verifies",
+      "Portrait widget test completes without layout overflow"
+    ]
+  },
+  "observer": "Automated local build and artifact inspection",
+  "artifacts": [
+    {
+      "path": "desktop/build/app/outputs/flutter-apk/app-release.apk",
+      "size_bytes": 90610823,
+      "sha256": "77eb40834823a407adc218b096a524731d1bc21438ce9e7298bd8510c4f47163",
+      "signature": "Android Debug certificate; installable test distribution only"
+    }
+  ],
+  "failure_or_blocker": null,
+  "notes": "This record proves compilation and APK integrity only. Physical-device authentication, microphone, LiveKit media, performance and capacity remain NOT_RUN."
+}

@@ -1,6 +1,6 @@
-# BOOHTACORD Desktop
+# BOOHTACORD Flutter Client
 
-Flutter/Dart desktop-клиент для self-hosted BOOHTACORD. Проект создаёт нативные приложения для macOS и Windows и использует существующие `/api/v1` и LiveKit-контракты серверной части.
+Flutter/Dart-клиент для self-hosted BOOHTACORD. Проект создаёт нативные приложения для Android, macOS и Windows и использует существующие `/api/v1` и LiveKit-контракты серверной части.
 
 ## Реализовано
 
@@ -11,7 +11,8 @@ Flutter/Dart desktop-клиент для self-hosted BOOHTACORD. Проект с
 - Voice lease, краткоживущий LiveKit credential и подключение микрофона;
 - mute, deafen и корректное освобождение lease;
 - адаптивный тёмный desktop shell по GuildChat v1;
-- macOS/Windows runners и минимальный размер окна 1024×680.
+- Android/macOS/Windows runners; desktop-окно имеет минимальный размер 1024×680.
+- адаптивная Android-навигация: в portrait-режиме список каналов и выбранный канал открываются на всю ширину.
 
 ## Запуск
 
@@ -20,16 +21,23 @@ flutter pub get
 flutter run -d macos
 ```
 
-На Windows выполните `flutter run -d windows`. По умолчанию клиент подключается к production deployment `https://v.bootybay.ru/api/v1`. Адрес можно изменить на экране входа; суффикс `/api/v1` добавляется автоматически.
+На Android выполните `flutter run -d <device-id>`, на Windows — `flutter run -d windows`. По умолчанию клиент подключается к production deployment `https://v.bootybay.ru/api/v1`. Адрес можно изменить на экране входа; суффикс `/api/v1` добавляется автоматически.
 
 ## Проверки и сборка
 
 ```bash
 flutter analyze
 flutter test
+flutter build apk --release
 flutter build macos --release
 flutter build windows --release
 ```
+
+Структура целевых платформ:
+
+- android/
+- macos/
+- windows/
 
 Windows release следует собирать на Windows с установленным Visual Studio Desktop development with C++. macOS впервые запросит разрешение на микрофон при входе в голосовой канал.
 

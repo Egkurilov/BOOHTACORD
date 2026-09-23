@@ -10,7 +10,7 @@
 - The browser client is Vue 3/TypeScript/Vite/Pinia with LiveKit Client. The API is Go with PostgreSQL and WebSocket. LiveKit transports media; Go must not proxy RTP/RTCP or media payloads.
 - Every resource operation has server-side ACL. IDs, unguessable paths and a client-side view do not grant access.
 - A DM belongs only to its two participants; administrator status never grants DM reading rights.
-- Never add a backup job, snapshot flow, `pg_dump`, public object store, Redis by default, `latest` production image, camera feature, recording, group DM, mobile app or custom SFU.
+- Never add a backup job, snapshot flow, `pg_dump`, public object store, Redis by default, `latest` production image, camera feature, recording, group DM or custom SFU. The approved Android client must follow ADR-006 and reuse the existing server-side ACL and secure-cookie contract.
 - Do not claim a media capability or capacity profile without hardware/load evidence in `evidence/`.
 
 ## Engineering workflow

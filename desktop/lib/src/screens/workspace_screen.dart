@@ -5,51 +5,76 @@ import '../app_state.dart';
 import '../models.dart';
 import '../theme.dart';
 
-class WorkspaceScreen extends StatelessWidget {
+class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({super.key, required this.state});
   final AppState state;
 
   @override
+  State<WorkspaceScreen> createState() => _WorkspaceScreenState();
+}
+
+class _WorkspaceScreenState extends State<WorkspaceScreen> {
+  bool _showMobileSidebar = true;
+
+  @override
   Widget build(BuildContext context) => Scaffold(
-    body: LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 1280;
-        return Padding(
-          padding: EdgeInsets.all(constraints.maxWidth >= 1400 ? 24 : 16),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border.all(color: GcColors.border),
-              ),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: constraints.maxWidth >= 1400 ? 312 : 264,
-                    child: _Sidebar(state: state),
-                  ),
-                  const VerticalDivider(width: 1),
-                  Expanded(child: _MainSurface(state: state)),
-                  if (wide) ...[
-                    const VerticalDivider(width: 1),
+    body: SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 720;
+          final wide = constraints.maxWidth >= 1280;
+          final content = compact
+              ? _showMobileSidebar
+                    ? _Sidebar(
+                        state: widget.state,
+                        onChannelSelected: () =>
+                            setState(() => _showMobileSidebar = false),
+                      )
+                    : _MainSurface(
+                        state: widget.state,
+                        onBack: () => setState(() => _showMobileSidebar = true),
+                      )
+              : Row(
+                  children: [
                     SizedBox(
-                      width: constraints.maxWidth >= 1400 ? 312 : 240,
-                      child: _MembersPanel(state: state),
+                      width: constraints.maxWidth >= 1400 ? 312 : 264,
+                      child: _Sidebar(state: widget.state),
                     ),
+                    const VerticalDivider(width: 1),
+                    Expanded(child: _MainSurface(state: widget.state)),
+                    if (wide) ...[
+                      const VerticalDivider(width: 1),
+                      SizedBox(
+                        width: constraints.maxWidth >= 1400 ? 312 : 240,
+                        child: _MembersPanel(state: widget.state),
+                      ),
+                    ],
                   ],
-                ],
+                );
+          return Padding(
+            padding: compact
+                ? EdgeInsets.zero
+                : EdgeInsets.all(constraints.maxWidth >= 1400 ? 24 : 16),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(compact ? 0 : 16),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: compact ? null : Border.all(color: GcColors.border),
+                ),
+                child: content,
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     ),
   );
 }
 
 class _Sidebar extends StatelessWidget {
-  const _Sidebar({required this.state});
+  const _Sidebar({required this.state, this.onChannelSelected});
   final AppState state;
+  final VoidCallback? onChannelSelected;
   @override
   Widget build(BuildContext context) => ColoredBox(
     color: GcColors.sidebar,
@@ -93,7 +118,11 @@ class _Sidebar extends StatelessWidget {
                     padding: const EdgeInsets.all(12),
                     children: [
                       for (final category in state.topology!.categories)
-                        _Category(state: state, category: category),
+                        _Category(
+                          state: state,
+                          category: category,
+                          onChannelSelected: onChannelSelected,
+                        ),
                       if (state.topology!.categories.isEmpty)
                         const Padding(
                           padding: EdgeInsets.all(16),
@@ -156,9 +185,14 @@ class _Tab extends StatelessWidget {
 }
 
 class _Category extends StatelessWidget {
-  const _Category({required this.state, required this.category});
+  const _Category({
+    required this.state,
+    required this.category,
+    this.onChannelSelected,
+  });
   final AppState state;
   final ChannelCategory category;
+  final VoidCallback? onChannelSelected;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
@@ -182,7 +216,10 @@ class _Category extends StatelessWidget {
             channel: channel,
             selected: state.selectedChannel?.id == channel.id,
             voiceConnected: state.voiceChannel?.id == channel.id,
-            onTap: () => state.selectChannel(channel),
+            onTap: () {
+              state.selectChannel(channel);
+              onChannelSelected?.call();
+            },
           ),
       ],
     ),
@@ -263,8 +300,9 @@ class _ChannelRow extends StatelessWidget {
 }
 
 class _MainSurface extends StatelessWidget {
-  const _MainSurface({required this.state});
+  const _MainSurface({required this.state, this.onBack});
   final AppState state;
+  final VoidCallback? onBack;
   @override
   Widget build(BuildContext context) {
     final channel = state.selectedChannel;
@@ -282,8 +320,8 @@ class _MainSurface extends StatelessWidget {
     return ColoredBox(
       color: GcColors.content,
       child: channel.kind == ChannelKind.text
-          ? _Conversation(state: state, channel: channel)
-          : _VoiceRoom(state: state, channel: channel),
+          ? _Conversation(state: state, channel: channel, onBack: onBack)
+          : _VoiceRoom(state: state, channel: channel, onBack: onBack),
     );
   }
 }
@@ -293,11 +331,13 @@ class _Header extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.onBack,
     this.trailing,
   });
   final IconData icon;
   final String title;
   final String subtitle;
+  final VoidCallback? onBack;
   final Widget? trailing;
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -310,6 +350,14 @@ class _Header extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Row(
           children: [
+            if (onBack != null) ...[
+              IconButton(
+                tooltip: 'К списку каналов',
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back_rounded),
+              ),
+              const SizedBox(width: 4),
+            ],
             Icon(icon, color: GcColors.muted),
             const SizedBox(width: 12),
             Expanded(
@@ -340,9 +388,14 @@ class _Header extends StatelessWidget {
 }
 
 class _Conversation extends StatefulWidget {
-  const _Conversation({required this.state, required this.channel});
+  const _Conversation({
+    required this.state,
+    required this.channel,
+    this.onBack,
+  });
   final AppState state;
   final GuildChannel channel;
+  final VoidCallback? onBack;
   @override
   State<_Conversation> createState() => _ConversationState();
 }
@@ -378,6 +431,7 @@ class _ConversationState extends State<_Conversation> {
         icon: Icons.tag_rounded,
         title: widget.channel.name,
         subtitle: 'Текстовый канал',
+        onBack: widget.onBack,
         trailing: IconButton(
           tooltip: 'Обновить историю',
           onPressed: () => widget.state.selectChannel(widget.channel),
@@ -539,9 +593,10 @@ class _EmptyConversation extends StatelessWidget {
 }
 
 class _VoiceRoom extends StatelessWidget {
-  const _VoiceRoom({required this.state, required this.channel});
+  const _VoiceRoom({required this.state, required this.channel, this.onBack});
   final AppState state;
   final GuildChannel channel;
+  final VoidCallback? onBack;
   @override
   Widget build(BuildContext context) {
     final active = state.voiceChannel?.id == channel.id;
@@ -550,6 +605,7 @@ class _VoiceRoom extends StatelessWidget {
         _Header(
           icon: Icons.volume_up_outlined,
           title: channel.name,
+          onBack: onBack,
           subtitle: channel.admissionClosed
               ? 'Вход временно закрыт'
               : active

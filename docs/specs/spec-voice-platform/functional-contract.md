@@ -7,7 +7,7 @@
 | HTTP | [`contracts/openapi.yaml`](../../../contracts/openapi.yaml) | Generate and validate request/response models from OpenAPI 3.1. Do not copy field schemas into UI documentation. |
 | Realtime | [`contracts/realtime.schema.json`](../../../contracts/realtime.schema.json) | Validate event envelope and tolerate future event kinds. |
 | Behaviour | [`docs/API_AND_REALTIME.md`](../../API_AND_REALTIME.md) | Apply session, ACL, retry, media and error semantics that schemas cannot express alone. |
-| Mobile integration | [`contracts/mobile-client-contract.md`](../../../contracts/mobile-client-contract.md) | Treat it as integration guidance only; it grants no mobile product scope or bearer flow. |
+| Mobile integration | [`contracts/mobile-client-contract.md`](../../../contracts/mobile-client-contract.md) | Android product scope is approved by ADR-006; the contract grants no bearer flow. |
 
 All public REST routes are under `/api/v1`; JSON errors use `{ error: { code, message, request_id } }`. User-facing messages are Russian; error codes are stable ASCII. IDs are UUIDs and timestamps are RFC 3339 values where schemas declare them.
 
@@ -65,4 +65,4 @@ The product targets a desktop-first dark Russian UI at 1024 CSS px minimum and 1
 
 ## Mobile integration boundary
 
-No native app is part of this release. The available mobile contract documents backend consumption but explicitly forbids invented bearer/OAuth/device authentication. A native implementation is blocked until backend defines a secure transport compatible with native cookie, Origin and CSRF constraints.
+The Android Flutter app is part of this release under ADR-006. It persists the opaque cookie in encrypted platform storage and sends the deployment Origin required by the existing cookie/CSRF boundary. It must not invent bearer/OAuth/device authentication. iOS and push notifications remain outside this release.

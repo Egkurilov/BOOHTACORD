@@ -91,6 +91,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02]
     depends_on: [T-020, T-022, T-040]
     evidence: [frontend-ui-tests, screenshots]
+  - id: T-051
+    title: Android native client and APK
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-AUTH-01, REQ-SECURITY-01, REQ-VOICE-01]
+    depends_on: [T-050]
+    evidence: [android-client-tests, android-release-apk, evidence/android]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

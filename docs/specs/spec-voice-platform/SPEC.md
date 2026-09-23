@@ -56,7 +56,7 @@ sources: []
   success: Захват запрашивается только явным действием, невыбранные screen tracks не attach'ятся, а остановленный источник освобождает media и возвращает UI к честному placeholder.
 
 - id: CAP-8
-  intent: Пользователь может работать с русским desktop-интерфейсом одной гильдии, включая чат, DM, voice dock, участников и stream viewer.
+  intent: Пользователь может работать с русским интерфейсом одной гильдии на desktop и Android, включая чат, DM, voice dock, участников и stream viewer.
   success: UI отображает loading/error/reconnect/permission-denied состояния, доступен с клавиатуры и сохраняет управление при ширине от 1024 CSS px и zoom 125–150%.
 
 - id: CAP-9
@@ -82,7 +82,7 @@ sources: []
 - Multi-guild, global users/friends, federation, server discovery, закрытые per-channel ACL, group DM и групповые звонки.
 - Camera, recording, transcription, bots/webhooks, email/OAuth/invites, custom SFU, Kubernetes/HA, Redis по умолчанию.
 - Backup jobs, snapshots, `pg_dump`, public object storage и TTL опубликованной истории.
-- Нативное мобильное приложение, bearer/mobile OAuth transport, push notifications и публичное LiveKit management API. Существующий mobile contract — только backend-интеграционный документ.
+- iOS-приложение, bearer/mobile OAuth transport, push notifications и публичное LiveKit management API. Android-клиент использует существующий secure-cookie и Origin контракт по ADR-006.
 - Обещание визуальной идентичности Discord или подтверждённой поддержки Safari, Firefox и Linux.
 
 ## Success signal
