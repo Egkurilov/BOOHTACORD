@@ -8,10 +8,10 @@
 | DS-T02 Tokens и primitives | PARTIAL | Токены и основные CSS foundations есть; проверить контракт всех 40 компонентов и отсутствие визуальных отклонений. |
 | DS-T03 Adaptive shell | PARTIAL | Трёхзонный shell и panel layouts есть; проверить реальные размеры, drawers, zoom и responsive states скриншотами. |
 | DS-T04 Общий чат | PARTIAL | Основные conversation/composer/attachment/search flows есть; остаются состояния компонентов и screenshot comparison. |
-| DS-T05 DM и member profile | PARTIAL | ProfileSettings, GET/PATCH/change-password, private avatar upload/read, safe member list/detail и MemberPopover реализованы. Остаётся screenshot/keyboard review и проверка после deploy. |
+| DS-T05 DM и member profile | PARTIAL | ProfileSettings, GET/PATCH/change-password, private avatar upload/read, safe member list/detail и MemberPopover реализованы и развернуты. Остаются authenticated screenshot/keyboard review. |
 | DS-T06 Voice UI | PARTIAL | VoiceDock/room/participants/audio settings реализованы; сверить размеры и все состояния в signed-in browser. |
 | DS-T07 Screen UI | PARTIAL | Viewer/stream controls реализованы; проверить переключение, завершение, diagnostics и адаптивную геометрию визуально. |
-| DS-T08 Auth/settings/admin | PARTIAL | ProfileSettings и AdminPanel (участники/каналы/аудит), роли/блокировка, voice kick и одноразовая reset-ссылка подключены к API. Остаются production и визуальная приёмка. |
+| DS-T08 Auth/settings/admin | PARTIAL | ProfileSettings и AdminPanel (участники/каналы/аудит), роли/блокировка, voice kick и одноразовая reset-ссылка подключены к API и развернуты. Остаётся authenticated визуальная и keyboard приёмка. |
 | DS-T09 Search и обработка ошибок | PARTIAL | Поиск истории чата/DM и ряд ошибок есть; отсутствует общий SearchPanel, требуется сверка полного каталога состояний. |
 | DS-T10 Keyboard и resilience | TODO | Провести отдельный keyboard/focus/reconnect review по acceptance checks и закрыть найденные несоответствия. |
 | DS-T11 Screenshot review | BLOCKED | Нужны authenticated browser captures при 1440/1280/1024 CSS px и zoom 125/150%; текущая попытка управления браузером не загрузила политику запроса. |
@@ -26,7 +26,7 @@
 - Добавлены защищённые `GET/PATCH /api/v1/me`, строгая валидация 1–64 Unicode-символов для имени, OpenAPI schemas и mobile-client contract; логин/роль не меняются этим API.
 - Добавлены смена пароля с сохранением текущей сессии, приватная загрузка/удаление/чтение аватаров, безопасные list/detail участников, admin account listing и audit summary без чтения metadata.
 - Реализованы ProfileSettings, MemberPopover и AdminPanel с обработкой loading/error/saved, password/reset actions и реальными API-клиентами.
-- Backend `go test ./...`, `go vet ./...`, frontend 55 файлов / 142 теста, production build, `verify-contracts` и `verify-spec-traceability` — `PASS` локально; production rollout и Chrome visual check ещё не подтверждены.
+- Backend `go test ./...`, `go vet ./...`, frontend 55 файлов / 142 теста, production build, `verify-contracts` и `verify-spec-traceability` — `PASS`; GitVerse Actions deploy #1629339 и public home/health/session smoke — `PASS`. Chrome visual check остаётся заблокированным и не объявляется пройденным.
 
 ## Условия продолжения
 

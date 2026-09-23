@@ -1,0 +1,67 @@
+{
+  "id": "release-guildchat-profile-admin-2026-09-24-001",
+  "kind": "api-web-release",
+  "status": "PASS_RUNTIME",
+  "executed_at": "2026-09-24T00:49:41+03:00",
+  "environment": "production",
+  "scope": {
+    "source_commit": "7a1ce9d9ee87c1952fe2b1cb5b0ed2e4235165f7",
+    "deploy_commit": "d40942a",
+    "actions_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1629339",
+    "changed_services": ["api", "web", "proxy"],
+    "postgres_volume": "existing voice-platform_postgres-data; preserved",
+    "livekit": "existing service container started after deployment"
+  },
+  "checks": [
+    {
+      "name": "backend_tests_and_vet",
+      "result": "PASS",
+      "detail": "GitVerse Actions backend job passed go test ./... and go vet ./...."
+    },
+    {
+      "name": "frontend_tests_and_build",
+      "result": "PASS",
+      "detail": "55 test files / 142 tests passed; vue-tsc and production Vite build passed in Actions."
+    },
+    {
+      "name": "contracts_and_traceability",
+      "result": "PASS",
+      "detail": "OpenAPI/mobile contract verifier and 39-requirement traceability passed locally."
+    },
+    {
+      "name": "gitverse_release_guard_and_deploy",
+      "result": "PASS",
+      "detail": "Run #1629339 succeeded; API and web images built, migration 0030 ran, guarded rollout and proxy validation completed."
+    },
+    {
+      "name": "public_frontend",
+      "result": "PASS",
+      "detail": "GET / returned 200 HTML and served /assets/index-CdzitYdk.js."
+    },
+    {
+      "name": "public_health_and_guest_session",
+      "result": "PASS",
+      "detail": "GET /api/v1/health returned 200 with status=ok; GET /api/v1/auth/session returned 200 with authenticated=false."
+    },
+    {
+      "name": "protected_profile_without_session",
+      "result": "PASS",
+      "detail": "GET /api/v1/me returned the expected 401 without a session; guest UI initialization uses the successful auth/session response instead."
+    },
+    {
+      "name": "livekit_signal_tcp",
+      "result": "PASS",
+      "detail": "Existing LiveKit container is running and public TCP 7882 accepts connections. UDP media path and an actual voice session were not tested."
+    },
+    {
+      "name": "authenticated_chrome_visual_acceptance",
+      "result": "BLOCKED",
+      "detail": "Chrome automation did not load its browser-request policy; no authenticated screenshot or pixel comparison was performed."
+    }
+  ],
+  "limitations": [
+    "No authenticated profile, avatar, member, admin or audit interaction was exercised against production.",
+    "No Windows/macOS voice or screen-sharing POC was performed.",
+    "Runtime smoke checks do not establish pixel-level design parity or media quality."
+  ]
+}
