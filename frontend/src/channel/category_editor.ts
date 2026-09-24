@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import type { AdminTopologyRequest } from './admin_topology_client'
 import { CategoryMutationError, renameCategory, reorderCategories } from './category_mutation_client'
@@ -60,7 +61,7 @@ export function createCategoryEditor(snapshot: () => CategoryEditorSnapshot, cha
     if (pending.value || needsRefresh.value || !current.selectedCategoryId) return false
     error.value = null
     status.value = null
-    if (!renameDraft.value.trim() || Array.from(renameDraft.value).length > 80) {
+    if (!renameDraft.value.trim() || !validCodePointLength(renameDraft.value, 1, 80)) {
       error.value = 'Введите имя категории до 80 символов.'
       return false
     }

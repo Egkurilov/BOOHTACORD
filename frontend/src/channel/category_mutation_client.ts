@@ -1,4 +1,5 @@
 import { apiBaseUrl } from '../config/runtime'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import type { AdminTopologyRequest } from './admin_topology_client'
 
 export interface CategoryRenameResult { id: string; name: string; revision: number }
@@ -38,7 +39,7 @@ async function mutate(path: string, method: 'PATCH' | 'PUT', body: unknown, requ
 
 export async function renameCategory(id: string, name: string, expected: number, request: AdminTopologyRequest = fetch): Promise<CategoryRenameResult> {
   expectedRevision(expected)
-  if (!id || !name.trim() || Array.from(name).length > 80) throw new Error('Введите имя категории до 80 символов.')
+  if (!id || !name.trim() || !validCodePointLength(name, 1, 80)) throw new Error('Введите имя категории до 80 символов.')
   const result = await mutate(`/admin/categories/${encodeURIComponent(id)}`, 'PATCH', { name, expected_revision: expected }, request)
   if (typeof result.id !== 'string' || result.id !== id || typeof result.name !== 'string' || !result.name) throw new Error('Сервер вернул некорректные данные категории.')
   return { id: result.id, name: result.name, revision: revision(result.revision) }

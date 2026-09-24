@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import { PasswordResetInvalidError } from './password_reset_client'
 
@@ -13,8 +14,7 @@ export function createPasswordResetForm(finish: (password: string) => Promise<vo
   async function submit(): Promise<void> {
     if (pending.value || completed.value || unusable.value) return
     error.value = null
-    const length = Array.from(password.value).length
-    if (length < 12 || length > 128) {
+    if (!validCodePointLength(password.value, 12, 128)) {
       error.value = 'Пароль должен содержать от 12 до 128 символов.'
       return
     }

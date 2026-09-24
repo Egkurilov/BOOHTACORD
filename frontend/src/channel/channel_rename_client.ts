@@ -1,4 +1,5 @@
 import { apiBaseUrl } from '../config/runtime'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import type { AdminTopologyRequest } from './admin_topology_client'
 
 export interface ChannelRenameResult { id: string; name: string; revision: number }
@@ -12,7 +13,7 @@ export class ChannelRenameError extends Error {
 }
 
 export async function renameChannel(id: string, name: string, expectedRevision: number, request: AdminTopologyRequest = fetch): Promise<ChannelRenameResult> {
-  if (!id || !name.trim() || Array.from(name).length > 80 || !Number.isInteger(expectedRevision) || expectedRevision < 1) {
+  if (!id || !name.trim() || !validCodePointLength(name, 1, 80) || !Number.isInteger(expectedRevision) || expectedRevision < 1) {
     throw new Error('Введите имя канала до 80 символов и обновите список.')
   }
   const response = await request(`${apiBaseUrl}/admin/channels/${encodeURIComponent(id)}`, {

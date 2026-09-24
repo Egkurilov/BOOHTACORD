@@ -43,4 +43,14 @@ describe('administrator topology client', () => {
     await expect(createCategory({ name: 'POC' }, request)).rejects.toThrow('некорректные')
     await expect(createChannel('category-1', { name: 'общий', kind: 'TEXT' }, request)).rejects.toThrow('некорректные')
   })
+
+  it('accepts 80 emoji in a channel name and rejects the 81st before transport', async () => {
+    const name = '😀'.repeat(80)
+    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      id: 'channel-1', category_id: 'category-1', name, kind: 'TEXT', position: 0, revision: 8,
+    }), { status: 201 }))
+    await createChannel('category-1', { name, kind: 'TEXT' }, request)
+    await expect(createChannel('category-1', { name: `${name}😀`, kind: 'TEXT' }, request)).rejects.toThrow('80')
+    expect(request).toHaveBeenCalledOnce()
+  })
 })

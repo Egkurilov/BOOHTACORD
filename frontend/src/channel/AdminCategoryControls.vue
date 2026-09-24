@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import { createCategory, deleteEmptyCategory } from './admin_topology_client'
 import { createCategoryEditor } from './category_editor'
@@ -23,7 +24,7 @@ function changeRename(event: Event): void { editor.setRenameDraft((event.target 
 async function create(): Promise<void> {
   localError.value = null
   localStatus.value = null
-  if (!newName.value.trim() || Array.from(newName.value).length > 80) { localError.value = 'Введите имя категории до 80 символов.'; return }
+  if (!newName.value.trim() || !validCodePointLength(newName.value, 1, 80)) { localError.value = 'Введите имя категории до 80 символов.'; return }
   mutating.value = true
   try {
     const category = await createCategory({ name: newName.value })
@@ -54,7 +55,7 @@ async function remove(): Promise<void> {
 <template>
   <div class="admin-category-controls">
     <form class="admin-topology-form" @submit.prevent="create">
-      <label>Новая категория<input v-model="newName" :disabled="busy" maxlength="80" name="category-name" required></label>
+      <label>Новая категория<input v-model="newName" :disabled="busy" name="category-name" required :aria-describedby="editor.error.value || localError ? 'category-error' : undefined"></label>
       <button type="submit" :disabled="busy">Создать категорию</button>
     </form>
     <form class="admin-topology-form admin-topology-form--rename" @submit.prevent="editor.rename">
@@ -64,7 +65,7 @@ async function remove(): Promise<void> {
         </select>
       </label>
       <label>Новое имя категории
-        <input :value="editor.renameDraft.value" :disabled="busy || !selected" maxlength="80" name="rename-category" required @input="changeRename">
+        <input :value="editor.renameDraft.value" :disabled="busy || !selected" name="rename-category" required :aria-describedby="editor.error.value || localError ? 'category-error' : undefined" @input="changeRename">
       </label>
       <button type="submit" :disabled="busy || !selected">Переименовать категорию</button>
     </form>
@@ -75,6 +76,6 @@ async function remove(): Promise<void> {
     <button type="button" :disabled="busy || !selected || selected.channels.length > 0" @click="remove">Удалить пустую категорию</button>
     <button v-if="editor.needsRefresh.value" type="button" @click="emit('changed')">Повторить обновление списка</button>
     <p v-if="editor.status.value || localStatus" class="admin-topology-status" aria-live="polite">{{ editor.status.value ?? localStatus }}</p>
-    <p v-if="editor.error.value || localError" class="admin-topology-error" role="alert">{{ editor.error.value ?? localError }}</p>
+    <p v-if="editor.error.value || localError" id="category-error" class="admin-topology-error" role="alert">{{ editor.error.value ?? localError }}</p>
   </div>
 </template>

@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import type { AdminTopologyRequest } from './admin_topology_client'
 import { ChannelRenameError, renameChannel } from './channel_rename_client'
@@ -44,7 +45,7 @@ export function createChannelRenameEditor(snapshot: () => ChannelRenameSnapshot,
     if (pending.value || needsRefresh.value || !current.selectedChannelId) return false
     error.value = null
     status.value = null
-    if (!draft.value.trim() || Array.from(draft.value).length > 80) {
+    if (!draft.value.trim() || !validCodePointLength(draft.value, 1, 80)) {
       error.value = 'Введите имя канала до 80 символов.'
       return false
     }

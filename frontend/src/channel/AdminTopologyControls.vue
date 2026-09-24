@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import { createChannel } from './admin_topology_client'
 import AdminCategoryControls from './AdminCategoryControls.vue'
@@ -38,8 +39,8 @@ async function submitChannel(): Promise<void> {
     error.value = 'Сначала выберите категорию.'
     return
   }
-  if (!channelName.value.trim()) {
-    error.value = 'Введите имя канала.'
+  if (!channelName.value.trim() || !validCodePointLength(channelName.value, 1, 80)) {
+    error.value = 'Введите имя канала до 80 символов.'
     return
   }
 
@@ -71,7 +72,7 @@ async function submitChannel(): Promise<void> {
       </label>
       <label>
         Новый канал
-        <input v-model="channelName" :disabled="pending || !selectedCategoryExists" maxlength="80" name="channel-name" required>
+        <input v-model="channelName" :disabled="pending || !selectedCategoryExists" name="channel-name" required :aria-describedby="error ? 'admin-topology-error' : undefined">
       </label>
       <label>
         Тип канала
@@ -88,6 +89,6 @@ async function submitChannel(): Promise<void> {
     <AdminTextArchive :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
     <AdminVoiceClose :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
     <p v-if="status" class="admin-topology-status" aria-live="polite">{{ status }}</p>
-    <p v-if="error" class="admin-topology-error" role="alert">{{ error }}</p>
+    <p v-if="error" id="admin-topology-error" class="admin-topology-error" role="alert">{{ error }}</p>
   </section>
 </template>

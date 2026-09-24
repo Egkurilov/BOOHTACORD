@@ -1,4 +1,5 @@
 import { apiBaseUrl } from '../config/runtime'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import type { ChannelKind } from './topology_client'
 
 export interface CreateCategoryInput {
@@ -96,10 +97,12 @@ async function post(path: string, input: CreateCategoryInput | CreateChannelInpu
 }
 
 export async function createCategory(input: CreateCategoryInput, request: AdminTopologyRequest = fetch): Promise<CreatedCategory> {
+  if (!input.name.trim() || !validCodePointLength(input.name, 1, 80)) throw new Error('Введите имя категории до 80 символов.')
   return parseCreatedCategory(await post('/admin/categories', input, request))
 }
 
 export async function createChannel(categoryId: string, input: CreateChannelInput, request: AdminTopologyRequest = fetch): Promise<CreatedChannel> {
+  if (!input.name.trim() || !validCodePointLength(input.name, 1, 80)) throw new Error('Введите имя канала до 80 символов.')
   return parseCreatedChannel(await post(`/admin/categories/${encodeURIComponent(categoryId)}/channels`, input, request))
 }
 

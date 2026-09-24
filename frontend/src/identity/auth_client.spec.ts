@@ -27,4 +27,13 @@ describe('authentication client', () => {
 
     await expect(register({ login: 'member', password: 'correct horse battery staple' }, request)).rejects.toThrow('Регистрация откроется после начальной настройки сервера')
   })
+
+  it('accepts 128 emoji as a registration password without trimming, but rejects 129 before transport', async () => {
+    const request = vi.fn().mockResolvedValue(new Response(null, { status: 201 }))
+    const password = ` ${'😀'.repeat(126)} `
+    await register({ login: 'member', password }, request)
+    expect(JSON.parse(request.mock.calls[0][1].body).password).toBe(password)
+    await expect(register({ login: 'member', password: `${password}😀` }, request)).rejects.toThrow('12 до 128')
+    expect(request).toHaveBeenCalledOnce()
+  })
 })
