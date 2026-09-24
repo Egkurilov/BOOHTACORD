@@ -28,7 +28,8 @@ FROM messages
 LEFT JOIN message_attachments ON message_attachments.message_id = messages.id
 LEFT JOIN attachments ON attachments.id = message_attachments.attachment_id AND attachments.state = 'ATTACHED'
 WHERE messages.channel_id = $1
-  AND ($2::uuid IS NULL OR (messages.created_at, messages.id) < (SELECT created_at, id FROM cursor))
+  AND ($2::uuid IS NULL OR (messages.created_at, messages.id) < (SELECT created_at, id FROM cursor)
+       OR ($4::bool AND messages.id = $2::uuid))
 GROUP BY messages.id, messages.channel_id, messages.author_id, messages.client_message_id, messages.body, messages.reply_to_id, messages.created_at, messages.edited_at, messages.revision, messages.deleted_at
 ORDER BY messages.created_at DESC, messages.id DESC
 LIMIT $3`
@@ -58,8 +59,10 @@ func (repository Repository) List(context context.Context, request listtextmessa
 	var before any
 	if request.Before != "" {
 		before = request.Before
+	} else if request.At != "" {
+		before = request.At
 	}
-	rows, err := repository.database.Query(context, selectMessages, request.ChannelID, before, request.Limit+1)
+	rows, err := repository.database.Query(context, selectMessages, request.ChannelID, before, request.Limit+1, request.At != "")
 	if err != nil {
 		return nil, fmt.Errorf("select text messages: %w", err)
 	}
