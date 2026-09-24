@@ -1,0 +1,32 @@
+# Проверки, эксплуатация и выпуск
+
+Срез: 24.09.2026. Это отдельные verification-пакеты, а не обещания реализовать уже существующий код заново.
+PASS_STATIC/PASS_RUNTIME не равны полному release PASS. Исторические evidence не переписываются.
+
+- [ ] **QA-01 · P1 · T-040/060 — PostgreSQL integration harness.** Для `create_text_message/postgres` добавить disposable PostgreSQL с настоящими migrations, serial/concurrent retries, attachments и cross-channel reply. Готово: тест действительно выполняет SQL, при отсутствии БД явно NOT_RUN, CI не выдаёт пропуск за PASS. Harness создаётся до BE-01 и воспроизводит его дефект; после исправления нужен PASS-прогон. Текущие repository tests используют fake database.
+
+- [ ] **QA-02 · P1 · T-010/012/013/014/020 — Auth/admin concurrency.** Отдельными leaf-прогонами проверить login/logout/reset, bootstrap/recovery, last-admin demote/block race, role refresh, topology revision и transfer lease. Готово: реальный PostgreSQL, два конкурентных клиента, атомарные ограничения и отсутствие secrets в отчёте; WS закрывается после revoke. POC media проверяется в QA-10.
+
+- [ ] **QA-03 · P1 · T-041/044/052 — DM/storage privacy.** Матрица caller/peer/third-party/admin для history/search/reply/attachments/events/counters/notifications. Проверить 25 000 000/25 000 001 байт, 10/11 файлов, нехватку диска, path traversal, SVG/HTML, deleted previews и cleanup races. Готово: все поверхности соблюдают один participant ACL; реальные storage/DB tests. Зависимости: BE-02/09/10/11/12, FE-16/17.
+
+- [ ] **QA-04 · P1 · T-041/054/060 — Search/migrations/CI.** На настоящем PostgreSQL проверить русский/английский текст, имя в тексте, фразу, cursor boundaries и GIN plan; миграции на пустой и существующей схеме. Добавить эти проверки и contract/traceability/image guards в действующий GitVerse pipeline. Готово: trusted pipeline запускает tests до deploy, а failed gate блокирует его. Сейчас GitVerse release_guard проверяет shell scripts, но не запускает contract/traceability suite.
+
+- [ ] **QA-05 · P1 · T-050 — Authenticated browser E2E.** Пройти auth/reset/logout, две переписки, upload/search, admin/topology, voice navigation/reconnect и новые FE-задачи на фиксированном candidate. Готово: сценарии с реальным API, keyboard/focus и screenshots 1440/1280/1024 CSS px + zoom 125/150%; screenshot-review именно этого bundle. Зависимости: FE-01 и затронутые FE/DES-задачи; fixture-данные допустимы только в изолированной тестовой среде.
+
+- [ ] **QA-06 · P1 · T-004 — POC-01.** Отдельные физические Windows и Apple-Silicon macOS presenters, каждый с отдельным observer: движущаяся игра, её звук, разговор и отсутствие цифровой петли. Готово: окружения/версии/устройства и наблюдатель в evidence, compatibility matrix. Evidence preflight от 24.09 — BLOCKED; owner-login и POC topology не считать новой отсутствующей реализацией.
+
+- [ ] **QA-07 · P1 · T-005/030 — POC-02 и низкий FPS.** В существующем плане viewer diagnostics записана жалоба примерно на 1 FPS при macOS → Windows; причина не доказана. Сопоставить sender capture/encode stats и receiver presented/decoded FPS, bitrate/RTT/loss на движущемся контенте для 720p/1080p × 30/60. Готово: измерения до/после и ADR профилей; FE-01 лишь добавляет диагностику. Зависимости: FE-01, QA-06.
+
+- [ ] **QA-08 · P0 · T-007/044 — Запас диска.** Повторно измерить именно filesystem attachments и сравнить с max(2 GiB, 10%) + резервациями. Evidence 24.09 фиксирует root free 2 892 795 904 байт / 9%, но не доказывает текущее состояние attachment mount. Готово: понятный INSUFFICIENT_STORAGE, сохранность истории, план ёмкости; платный upgrade решает владелец. Не удалять опубликованные данные, не вводить backups.
+
+- [ ] **QA-09 · P1 · T-007/060 — Capacity.** Измерить сеть/traffic quota/CPU scheduling, затем профиль 100 voice participants по deployment, до 20 в комнате и согласованный screen-publisher профиль без продуктовой квоты. Готово: hardware/environment, нагрузка и ограничения в evidence; idle CPU/health не считаются capacity. Зависимости: QA-06/07/08, согласованная инфраструктура.
+
+- [ ] **QA-10 · P1 · T-006/022/052 — POC-03.** На pinned LiveKit проверить connected media после kick/ban/logout/reset/session revoke/channel close/transfer, затем replay API и обновлённых SDK credentials. Готово: SFU removal, повторный вход и client reconnect проверены отдельно, revoked доступ не возвращается. Серверный outbox/worker/admission guard уже есть; добавлять новый SFU не нужно.
+
+- [ ] **QA-11 · P1 · T-054 — Контракт доставки.** Действует GitVerse master → тесты → source archive → server build с commit-SHA tags → guarded deploy; есть evidence успешного run #1629339. Исходное ТЗ задаёт main/GHCR, а отдельного delivery ADR нет. Документировать утверждённый путь ADR либо довести поставку до исходного требования; закрыть SBOM/provenance и traceability на CI-host без локального Windows-пути ТЗ. Готово: однозначный trusted pipeline, immutable refs и воспроизводимые checks; существующий успешный deploy не отрицать.
+
+- [ ] **QA-12 · P1 · T-054 — Maintenance/rollback acceptance.** На совместимой схеме проверить warning → запрет новых admissions → migration → rollout → smoke → снятие maintenance; отказ и возврат совместимого image отдельным прогоном. Готово: наблюдатель, сохранённые volumes, две browser sessions и evidence. Guard script и banner готовы; нет auto-down migration/backup. Новые локальные изменения не считать уже выложенными.
+
+- [ ] **QA-13 · P1 · T-051 — Android release/device gate.** ADR-006 разрешает клиент; APK build evidence от 24.09 PASS, но подпись Android Debug, physical-device tests NOT_RUN. Настроить отдельную release-подпись без secrets в Git и проверить install/update/auth/Origin/secure-cookie storage, permission/reconnect/voice/viewer на устройстве. Остальной Flutter parity — отдельные leaf-задачи по [checklist](../docs/flutter-web-parity.md); не обещать завершённые native admin/upload/screen publication. Flutter SDK здесь недоступен, повторной сборки в этом ревью нет.
+
+- [ ] **QA-14 · P1 · T-060 — Решение о выпуске.** Собрать матрицу 39 REQ с проверкой/артефактом и статусом; измерить join p95 ≤3 s, message/WS ≤500 ms, stream switch ≤2 s, voice recovery ≤10 s. Готово: необходимые BE/FE/DES завершены, QA-01…13 подтверждены в применимом объёме, обязательные POC/capacity/security gates PASS; иначе конкретный blocker. Автоматический поиск REQ в YAML не доказывает реализацию.

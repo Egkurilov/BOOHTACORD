@@ -2,7 +2,7 @@
 
 Self-hosted веб-платформа в логике лёгкого Discord: голосовые и текстовые каналы, личные сообщения, демонстрация экрана/игры и передача звука через LiveKit. Один deployment обслуживает ровно одну изолированную гильдию.
 
-> Статус: исходный код, контракты и production smoke существуют, но полный release **ещё не принят**. Для этого необходимы реальные POC на Windows и Apple-Silicon macOS, проверка отзыва media-доступа, нагрузочный профиль и подтверждённый CI/CD deploy.
+> Статус: исходный код, контракты, production smoke и успешный GitVerse deploy зафиксированы, но полный release **ещё не принят**. Нужны реальные POC Windows/Apple-Silicon macOS, media revocation, capacity и browser acceptance. Текущий локальный frontend не проходит tests/build из-за незавершённого viewer FPS: [ревью 24.09](docs/reviews/2026-09-24-functionality.md), [TODO](TODO.md), [реализовано](DONE.md).
 
 ## Возможности
 
@@ -88,7 +88,7 @@ docker compose --env-file .env.example -f compose.yaml config --quiet
 | Проверить интерфейс | [Спецификация UI](docs/UI_SPEC.md) |
 | Понять GuildChat design system и её фактический статус | [GuildChat v1: дизайн, планы и evidence](docs/design/GUILDCHAT_V1_STATUS.md) |
 | Понять приёмку и evidence | [Acceptance и release gates](docs/ACCEPTANCE.md), [формат evidence](evidence/README.md) |
-| Найти задачу и её зависимости | [Граф задач](backlog/TASKS.md), [машиночитаемый backlog](backlog/tasks.yaml) и [TODO](TODO.md) |
+| Найти задачу и её зависимости | [Граф задач](backlog/TASKS.md), [машиночитаемый backlog](backlog/tasks.yaml), [TODO](TODO.md) и [DONE](DONE.md) |
 | Прочитать принятые решения | [ADR](docs/adr) |
 
 ## Текущий статус доказательств
@@ -102,7 +102,7 @@ Production smoke и runtime traces подтверждают доступност
 3. POC-03: kick, ban, logout, revocation и replay ранее выданных API/SDK credentials на подключённом media.
 4. Нагрузочный профиль: 100 voice participants в гильдии, до 20 в room и утверждённый screen-publisher profile.
 5. Финальные ACL/privacy, browser E2E, accessibility и authenticated visual checks.
-6. CI/CD: GitVerse workflow для `master` добавлен, но ещё требуется первый успешный pipeline run и production evidence без секретов.
+6. CI/CD: успешный GitVerse run #1629339 уже зафиксирован в [evidence](evidence/release-guildchat-profile-admin-2026-09-24-001.json). Открыты согласование delivery ADR с исходным main/GHCR, полнота checks/SBOM и maintenance/rollback acceptance — [QA-04/11/12](backlog/VERIFICATION_TODO.md).
 
 Подробный статус, границы evidence и условия выпуска — в [delivery-and-verification](docs/specs/spec-voice-platform/delivery-and-verification.md).
 

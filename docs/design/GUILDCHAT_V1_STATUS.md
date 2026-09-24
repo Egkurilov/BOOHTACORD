@@ -1,5 +1,7 @@
 # GuildChat v1 — дизайн-система, план и текущий статус
 
+Срез ревью 24.09.2026: актуальная незавершённая работа находится в [design TODO](GUILDCHAT_V1_TODO.md), реализованное — в [DONE](../../DONE.md). Текущие frontend tests/build — **FAIL** из-за незавершённого viewer FPS (FE-01); подробности в [отчёте](../reviews/2026-09-24-functionality.md). Числа PASS и production bundle observations ниже относятся к прежним пакетам и не подтверждают готовность нынешнего рабочего дерева.
+
 ## Назначение
 
 Этот документ — versioned repository snapshot дизайн-системы GuildChat v1 для Voice Platform. Он связывает внешний дизайн-пакет, реализацию Vue/CSS, планы, тесты и evidence в одной точке. Дизайн управляет только визуальной композицией и состояниями интерфейса: он не меняет API, ACL, privacy, media architecture или условия product acceptance.
@@ -28,10 +30,14 @@
 
 | Ширина окна | Рамка | Навигация | Участники |
 | --- | ---: | ---: | ---: |
-| ≥1440 CSS px | 24px | 312px | 312px |
+| ≥1440 CSS px | 0px | 280px | 248px |
 | 1280–1439 CSS px | 16px | 264px | 240px |
 | 1024–1279 CSS px | 16px | 256px | drawer 320px |
 | <1024 CSS px | 0px | drawer | drawer |
+
+Исходный текст дизайн-пакета задавал для ≥1440 CSS px значения 24/312/312. Значения таблицы — визуальное исключение по [ADR-009](../adr/ADR-009-png-shell-geometry.md), основанное на горизонтальной композиции приложенных PNG. Верхняя демонстрационная панель HTML-превью в продукт не переносится.
+
+Для экранов голосовой комнаты и выбранной демонстрации действует визуальное исключение [ADR-008](../adr/ADR-008-voice-stage-layout.md): при ширине ≥1280 CSS px центральная область занимает место постоянной правой колонки, а участники открываются кнопкой в шапке как drawer. Текстовый канал сохраняет сетку из таблицы.
 
 Шапка — 72px, channel row — 42px, connected VoiceDock — не менее 116px, UserFooter — 68px. VoiceDock сохраняется при навигации и не перекрывает composer. В DM/settings/admin постоянная правая колонка скрыта; search использует правую область или drawer, а не четвёртую колонку.
 
@@ -64,17 +70,20 @@
 | [Design completion](../superpowers/plans/2026-09-19-guildchat-design-completion.md) | 11/11 шагов завершены |
 | [Reference parity](../superpowers/plans/2026-09-19-guildchat-reference-parity.md) | 14/14 шагов завершены |
 | [Reference rebuild](../superpowers/plans/2026-09-19-guildchat-reference-rebuild.md) | 8/9 шагов завершены; runtime deployment подтверждён, authenticated browser screenshot comparison остаётся заблокированным |
+| [Wide voice roster parity](../superpowers/plans/2026-09-24-wide-voice-roster-parity.md) | Реализовано локально, затем изменено по [ADR-008](../adr/ADR-008-voice-stage-layout.md): на voice/stream участники доступны через drawer, чтобы центральная область соответствовала PNG; production deploy и connected-state screenshots остаются открыты |
+| [PNG shell geometry](../superpowers/plans/2026-09-24-png-shell-geometry.md) | Горизонтальная композиция 1440 CSS px выровнена локально по PNG и ADR-009; браузерная приёмка и production deploy остаются открыты |
+| [Connected voice footer](../superpowers/plans/2026-09-24-connected-voice-room-footer.md) | Контекстная нижняя полоса комнаты реализована локально от 1024 CSS px; старый production bundle её ещё не содержит |
 | [Workspace panels](../superpowers/plans/2026-09-23-guildchat-workspace-panels.md) | 3/3 задач завершены; навигация сохранена слева, Audio/Admin перенесены в центр |
 | [Unified message search](../superpowers/plans/2026-09-24-unified-message-search.md) | Backend/OpenAPI/mobile contract и SearchPanel в существующей правой области/выдвижной панели реализованы локально; deploy, реальные PostgreSQL данные и authenticated visual review не выполнялись |
 
 Актуальный сквозной список требований и оставшихся проверок находится в [GUILDCHAT_V1_TODO.md](GUILDCHAT_V1_TODO.md). TODO в исходном ZIP не обновлялся: это неизменяемый входной артефакт, а не текущая запись статуса репозитория.
 
-## Текущий проверенный статус
+## История проверенных пакетов
 
 - CSS tokens, responsive shell, navigation, auth, conversations, DM, VoiceDock, participant cards, audio settings и stream composition реализованы в `frontend/src`; настройка аудио и управление каналами теперь отображаются в центральной рабочей области, а не замещают навигацию.
 - Regression contract проверяет palette, breakpoints, semantic shell regions, persistent dock, data-derived participants и preview hierarchy.
 - Последняя зарегистрированная web-only release evidence — [`release-guildchat-reference-parity-2026-09-19-003.json`](../../evidence/release-guildchat-reference-parity-2026-09-19-003.json): frontend suite — 53 test files / 131 tests `PASS`; production build, traceability и public health — `PASS`.
-- Pixel-level authenticated browser acceptance в этой записи — `BLOCKED`: не был записан signed-in browser capture. Runtime smoke и health не заменяют visual acceptance.
+- Авторизованная подключённая production-комната просмотрена в Chrome при 1256×1131 CSS px: виден один участник без стрима, отсутствуют вложенный roster и контекстный нижний footer, присутствует лишний desktop-toggle навигации. Production загружал `index-BPuFEA1J.js`, в отличие от локальной сборки. Локально добавлены roster, footer от 1024 CSS px, исправление toggle и сетка без пустого сообщения над одиночной карточкой. Pixel-level приёмка на одинаковых размерах окна и production deploy этих изменений остаются `NOT_RUN`; runtime smoke и health её не заменяют.
 - После workspace-panels packet frontend suite — 53 test files / 132 tests `PASS`; `vue-tsc` и production build — `PASS` (Vite сообщает существующее предупреждение о размере LiveKit chunk).
 - ProfileSettings, member/channel/audit tabs AdminPanel, MemberPopover, role/block/voice-kick actions, reset-link result и общий SearchPanel реализованы на локальной ветке и подключены к API. Для SearchPanel остаются production/real-data и visual проверки.
 - Profile API включает GET/PATCH собственного профиля, смену пароля с отзывом других сессий, приватные PNG-аватары, member list/detail/avatar, admin-only account list и summary audit feed без metadata. GitVerse Actions #1629339 развернул API/web; migration 0030 и публичные runtime smoke checks прошли.
@@ -84,8 +93,9 @@
 
 ## Следующее действие для закрытия design gate
 
-1. Войти в production под тестовым account без private user content.
+1. Завершить локальные визуальные исправления, затем выкатить web-only сборку и открыть подключённый production-сеанс без публикации аудио для сравнения именно новой версии.
 2. Снять authenticated browser screenshots на 1440, 1280 и 1024 CSS px, а также при zoom 125% и 150%.
 3. Сверить shell, header, channel rows, dock, composer, voice room и selected stream с этой design system.
-4. Записать только безопасные screenshots/results в новую evidence record; не включать passwords, cookies, tokens, DM bodies, attachment contents или screen/media payload.
-5. После review закрыть последний шаг [reference rebuild plan](../superpowers/plans/2026-09-19-guildchat-reference-rebuild.md).
+4. Проверить нижнюю контекстную кнопку выхода вместе с постоянным VoiceDock на 1440/1280/1024 CSS px. C-19 запрещает повторять четыре голосовые кнопки в UserFooter, а не отдельное действие выхода в открытой комнате.
+5. Записать только безопасные screenshots/results в новую evidence record; не включать passwords, cookies, tokens, DM bodies, attachment contents или screen/media payload.
+6. После review закрыть последний шаг [reference rebuild plan](../superpowers/plans/2026-09-19-guildchat-reference-rebuild.md).

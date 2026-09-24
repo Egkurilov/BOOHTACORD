@@ -38,7 +38,7 @@ Other evidence records must be read individually with their stated scope. `PASS_
 3. **POC-03:** with real connected media, verify kick, ban, logout, session revocation and voice-channel close against reconnection plus previously issued API/SDK credentials.
 4. **Capacity:** run the approved load profile on selected infrastructure for 100 guild voice participants, up to 20 per room and the specified stream-publisher profile. Network quota and CPU scheduling must be measured, not inferred.
 5. **Security and UX:** finish negative ACL/privacy regression coverage, authenticated browser E2E and accessibility/screenshot acceptance at required desktop zooms.
-6. **CI/CD:** resolve the branch-policy mismatch. The workflow currently publishes only after trusted GitHub `main` pushes, while the configured GitVerse remote uses `master`. Configure one protected publication path and its registry/deployment secrets, then record immutable-image migrate/deploy/health evidence.
+6. **CI/CD:** GitVerse `master` now runs `.gitverse/workflows/deploy-production.yaml`; successful run #1629339, migration and public smoke are recorded in `evidence/release-guildchat-profile-admin-2026-09-24-001.json`. It builds commit-addressed images on the server, while the original brief specifies `main`/GHCR and `.github/workflows/ci.yml` retains that separate path. Close the delivery ADR, contract/traceability/SBOM checks and controlled maintenance/rollback acceptance; see `backlog/VERIFICATION_TODO.md` QA-04/11/12. A prior successful deploy does not establish acceptance of current local changes.
 
 ## Release decision rule
 
