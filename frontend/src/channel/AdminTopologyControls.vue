@@ -7,6 +7,7 @@ import AdminChannelRename from './AdminChannelRename.vue'
 import AdminChannelMove from './AdminChannelMove.vue'
 import AdminChannelOrder from './AdminChannelOrder.vue'
 import AdminTextArchive from './AdminTextArchive.vue'
+import AdminVoiceClose from './AdminVoiceClose.vue'
 import type { ChannelKind, TopologyCategory } from './topology_client'
 
 const props = defineProps<{ categories: TopologyCategory[]; revision: number }>()
@@ -85,6 +86,7 @@ async function submitChannel(): Promise<void> {
     <AdminChannelMove :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
     <AdminChannelOrder :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
     <AdminTextArchive :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
+    <AdminVoiceClose :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
     <p v-if="status" class="admin-topology-status" aria-live="polite">{{ status }}</p>
     <p v-if="error" class="admin-topology-error" role="alert">{{ error }}</p>
   </section>

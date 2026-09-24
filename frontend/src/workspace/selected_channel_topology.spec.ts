@@ -43,4 +43,21 @@ describe('selected channel topology', () => {
     await nextTick()
     expect(navigation.selectedSurface).toEqual({ kind: 'NONE' })
   })
+
+  it('drops a finalized VOICE selection but leaves media state for lease revocation or manual exit', async () => {
+    setActivePinia(createPinia())
+    const topology = useTopologyStore()
+    const navigation = useVoiceNavigationStore()
+    topology.topology = { revision: 1, categories: [{ id: 'cat-1', name: 'Игры', position: 0, channels: [
+      { id: 'voice-1', name: 'Команда', kind: 'VOICE', position: 0, admissionClosed: true },
+    ] }] }
+    const controls = useWorkspaceVoiceControls()
+    navigation.selectVoice('voice-1')
+    navigation.confirmVoiceConnected('voice-1')
+    topology.topology = { revision: 2, categories: [{ id: 'cat-1', name: 'Игры', position: 0, channels: [] }] }
+    await nextTick()
+    expect(navigation.selectedSurface).toEqual({ kind: 'NONE' })
+    expect(navigation.activeVoiceChannelId).toBe('voice-1')
+    expect(controls.selectedChannel.value).toBeNull()
+  })
 })

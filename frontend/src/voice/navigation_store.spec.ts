@@ -36,4 +36,15 @@ describe('voice navigation state', () => {
     expect(store.selectedSurface).toEqual({ kind: 'NONE' })
     expect(store.activeVoiceChannelId).toBe('voice-1')
   })
+
+  it('clears a finalized selected VOICE without claiming its media connection ended', () => {
+    const store = useVoiceNavigationStore()
+    store.confirmVoiceConnected('voice-1')
+    store.selectVoice('voice-1')
+    store.clearSelectedVoice('other')
+    expect(store.selectedSurface).toEqual({ kind: 'VOICE', channelId: 'voice-1' })
+    store.clearSelectedVoice('voice-1')
+    expect(store.selectedSurface).toEqual({ kind: 'NONE' })
+    expect(store.activeVoiceChannelId).toBe('voice-1')
+  })
 })

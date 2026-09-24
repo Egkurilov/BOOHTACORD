@@ -76,6 +76,11 @@ function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id)
             <div class="main-title"><h2>{{ channel.name }}</h2><small>{{ selectedScreenName ? `Демонстрация ${selectedScreenName}` : voiceIsActive ? `Голосовой канал · участников: ${voiceVolumeParticipants.length + 1}` : 'Голосовой канал · подключитесь, чтобы увидеть участников' }}</small></div>
             <WorkspaceHeaderActions :members-expanded="membersOpen" :nav-expanded="navOpen" :show-members="showMembers" @toggle-members="emit('toggleMembers')" @toggle-navigation="emit('toggleNav')" />
           </header>
+          <div v-if="channel.admissionClosed" class="state state-error" role="status">
+            Вход в этот канал закрыт администратором. Отзыв media-доступа ещё подтверждается.
+            <span v-if="voiceError">{{ voiceError }}</span>
+            <button v-if="voiceIsActive" type="button" @click="emit('leave')">Выйти из голосового канала</button>
+          </div>
           <template v-if="screenViewerCards.length || selectedScreenStreamId || screenViewerEnded">
             <ScreenViewer
               ref="screenViewerRef" v-show="selectedScreenStreamId !== null || screenViewerEnded" :cards="screenViewerCards" :ended="screenViewerEnded" :error="screenViewerError" :expanded="screenExpanded" :selected-audio-volume="selectedScreenAudioVolume" :selected-id="selectedScreenStreamId"
@@ -84,8 +89,7 @@ function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id)
             />
           </template>
           <div v-if="!selectedScreenStreamId && !screenViewerEnded" class="room-wrap">
-            <p v-if="channel.admissionClosed" class="state state-error">Вход в этот канал закрыт администратором.</p>
-            <template v-else-if="voiceIsActive">
+            <template v-if="!channel.admissionClosed && voiceIsActive">
               <div class="room-intro">
                 <div class="room-intro-copy">
                   <h3>{{ voiceState === 'RECONNECTING' ? 'Восстанавливаем связь' : 'Все в сборе' }}</h3>
@@ -98,7 +102,7 @@ function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id)
               <VoiceParticipantVolumes :error="voiceVolumeError" :participants="voiceVolumeParticipants" :screen-streams="screenViewerCards" :selected-screen-stream-id="selectedScreenStreamId" :self-name="selfDisplayName" :self-deafened="selfDeafened" :self-microphone-muted="selfMicrophoneMuted" :self-microphone-unavailable="selfMicrophoneUnavailable" :self-speaking="selfSpeaking" @set-volume="(id, percent) => emit('setParticipantVolume', id, percent)" @watch-screen="watchScreen" />
               <details class="voice-advanced"><summary>Параметры демонстрации</summary><ScreenDiagnosticsPanel v-if="screenState === 'SHARING'" :diagnostics="screenDiagnostics" :profile="screenProfile" @refresh="emit('refreshScreen')" /><label class="screen-settings">Целевой профиль<select v-model="selectedScreenProfile" :disabled="screenState === 'STARTING' || screenState === 'SHARING'"><option value="P720_30">720p · 30 FPS</option><option value="P720_60">720p · 60 FPS</option><option value="P1080_30">1080p · 30 FPS</option><option value="P1080_60">1080p · 60 FPS</option></select></label></details>
             </template>
-            <VoicePrejoin v-else :channel-id="channel.id" :voice-error="voiceError" :voice-state="voiceState" :voice-transfer-required="voiceTransferRequired" @join="(id, transfer, mode) => emit('join', id, transfer, mode)" @transfer="emit('transfer', $event)" />
+            <VoicePrejoin v-else-if="!channel.admissionClosed" :channel-id="channel.id" :voice-error="voiceError" :voice-state="voiceState" :voice-transfer-required="voiceTransferRequired" @join="(id, transfer, mode) => emit('join', id, transfer, mode)" @transfer="emit('transfer', $event)" />
           </div>
           <VoiceRoomFooter v-if="voiceIsActive && !selectedScreenStreamId && !screenViewerEnded" :activation-mode="activationMode" :channel-name="channel.name" :state="voiceState" @leave="emit('leave')" />
         </section>

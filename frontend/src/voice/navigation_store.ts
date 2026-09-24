@@ -26,6 +26,10 @@ export const useVoiceNavigationStore = defineStore('voice-navigation', () => {
     if (selectedSurface.value.kind === 'TEXT' && selectedSurface.value.channelId === channelId) selectedSurface.value = { kind: 'NONE' }
   }
 
+  function clearSelectedVoice(channelId: string): void {
+    if (selectedSurface.value.kind === 'VOICE' && selectedSurface.value.channelId === channelId) selectedSurface.value = { kind: 'NONE' }
+  }
+
   function confirmVoiceConnected(channelId: string): void {
     activeVoiceChannelId.value = channelId
   }
@@ -38,6 +42,7 @@ export const useVoiceNavigationStore = defineStore('voice-navigation', () => {
     activeVoiceChannelId,
     clearActiveVoice,
     clearSelectedText,
+    clearSelectedVoice,
     confirmVoiceConnected,
     selectedSurface,
     selectDirectMessage,

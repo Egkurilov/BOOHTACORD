@@ -30,8 +30,10 @@ export function useWorkspaceVoiceControls() {
 
   watch(() => topologyStore.topology, (topology) => {
     const selected = voiceNavigation.selectedSurface
-    if (!topology || selected.kind !== 'TEXT') return
-    if (!topology.categories.some(({ channels }) => channels.some(({ id }) => id === selected.channelId))) voiceNavigation.clearSelectedText(selected.channelId)
+    if (!topology || (selected.kind !== 'TEXT' && selected.kind !== 'VOICE')) return
+    if (topology.categories.some(({ channels }) => channels.some(({ id }) => id === selected.channelId))) return
+    if (selected.kind === 'TEXT') voiceNavigation.clearSelectedText(selected.channelId)
+    else voiceNavigation.clearSelectedVoice(selected.channelId)
   })
 
   function selectChannel(channel: TopologyChannel): void {
