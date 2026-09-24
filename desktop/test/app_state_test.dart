@@ -67,12 +67,44 @@ void main() {
     expect(state.transferRequired, isTrue);
     expect(state.error, contains('Перенесите подключение'));
   });
+
+  test('loads a direct message and advances cursor after rendering', () async {
+    final api = _FakeApi(topology, includeDirectMessage: true);
+    final state = AppState(api);
+    await state.initialize();
+
+    await state.showDirectMessages();
+    await state.openDirectConversation(state.directMessages.single);
+    await state.markSelectedDirectMessageRead();
+
+    expect(state.directMessageHistory.single.body, 'Личное сообщение');
+    expect(state.directMessages.single.unreadCount, 0);
+    expect(api.advancedMessageId, 'dm-message-1');
+  });
+
+  test('edits a text message using its current revision', () async {
+    final api = _FakeApi(topology);
+    final state = AppState(api);
+    await state.initialize();
+
+    final edited = await state.editText(state.messages.single, 'Исправлено');
+
+    expect(edited, isTrue);
+    expect(state.messages.single.body, 'Исправлено');
+    expect(api.editedRevision, 1);
+  });
 }
 
 class _FakeApi extends ApiClient {
-  _FakeApi(this.value, {this.voiceFailure});
+  _FakeApi(this.value, {this.voiceFailure, this.includeDirectMessage = false});
   final ChannelTopology value;
   final ApiFailure? voiceFailure;
+  final bool includeDirectMessage;
+  String? advancedMessageId;
+  int? editedRevision;
+
+  @override
+  bool get realtimeEnabled => false;
 
   @override
   Future<void> initialize() async {}
@@ -82,7 +114,55 @@ class _FakeApi extends ApiClient {
       const SessionUser(accountId: 'account-1', role: 'MEMBER');
 
   @override
+  Future<OwnProfile> ownProfile() async => const OwnProfile(
+    accountId: 'account-1',
+    login: 'member',
+    displayName: 'Участник',
+    role: 'MEMBER',
+  );
+
+  @override
   Future<ChannelTopology> topology() async => value;
+
+  @override
+  Future<List<GuildMember>> members() async => const [];
+
+  @override
+  Future<List<DirectConversation>> directMessages() async =>
+      includeDirectMessage
+      ? const [
+          DirectConversation(
+            id: 'dm-1',
+            participantId: 'account-2',
+            displayName: 'Собеседник',
+            unreadCount: 1,
+          ),
+        ]
+      : const [];
+
+  @override
+  Future<List<DirectCandidate>> directMessageCandidates() async => const [];
+
+  @override
+  Future<List<DirectChatMessage>> directMessageHistory(String id) async => [
+    DirectChatMessage(
+      id: 'dm-message-1',
+      directMessageId: id,
+      authorId: 'account-2',
+      body: 'Личное сообщение',
+      createdAt: DateTime.utc(2026, 9, 24),
+      deleted: false,
+      revision: 1,
+    ),
+  ];
+
+  @override
+  Future<void> advanceDirectMessageReadCursor(
+    String directMessageId,
+    String messageId,
+  ) async {
+    advancedMessageId = messageId;
+  }
 
   @override
   Future<List<ChatMessage>> messages(String channelId) async => [
@@ -111,6 +191,25 @@ class _FakeApi extends ApiClient {
     deleted: false,
     revision: 1,
   );
+
+  @override
+  Future<ChatMessage> editMessage(
+    String channelId,
+    String messageId,
+    String body,
+    int expectedRevision,
+  ) async {
+    editedRevision = expectedRevision;
+    return ChatMessage(
+      id: messageId,
+      channelId: channelId,
+      authorId: 'account-1',
+      body: body,
+      createdAt: DateTime.utc(2026, 9, 20),
+      deleted: false,
+      revision: expectedRevision + 1,
+    );
+  }
 
   @override
   Future<(String, VoiceCredential)> voiceCredential(

@@ -17,7 +17,7 @@ void main() {
     await state.initialize();
     await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
 
-    expect(find.text('BOOHTACORD'), findsOneWidget);
+    expect(find.text('Моя гильдия'), findsOneWidget);
     expect(find.byTooltip('К списку каналов'), findsNothing);
 
     await tester.tap(find.text('общий'));
@@ -29,7 +29,7 @@ void main() {
     await tester.tap(find.byTooltip('К списку каналов'));
     await tester.pumpAndSettle();
 
-    expect(find.text('BOOHTACORD'), findsOneWidget);
+    expect(find.text('Моя гильдия'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
@@ -43,11 +43,22 @@ class _PortraitApi extends ApiClient {
   );
 
   @override
+  bool get realtimeEnabled => false;
+
+  @override
   Future<void> initialize() async {}
 
   @override
   Future<SessionUser?> currentSession() async =>
       const SessionUser(accountId: 'account-1', role: 'MEMBER');
+
+  @override
+  Future<OwnProfile> ownProfile() async => const OwnProfile(
+    accountId: 'account-1',
+    login: 'member',
+    displayName: 'Участник',
+    role: 'MEMBER',
+  );
 
   @override
   Future<ChannelTopology> topology() async => const ChannelTopology(
@@ -60,6 +71,12 @@ class _PortraitApi extends ApiClient {
       ),
     ],
   );
+
+  @override
+  Future<List<GuildMember>> members() async => const [];
+
+  @override
+  Future<List<DirectConversation>> directMessages() async => const [];
 
   @override
   Future<List<ChatMessage>> messages(String channelId) async => const [];

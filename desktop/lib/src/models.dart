@@ -11,6 +11,29 @@ class SessionUser {
   );
 }
 
+class OwnProfile {
+  const OwnProfile({
+    required this.accountId,
+    required this.login,
+    required this.displayName,
+    required this.role,
+    this.avatarUrl,
+  });
+  final String accountId;
+  final String login;
+  final String displayName;
+  final String role;
+  final String? avatarUrl;
+
+  factory OwnProfile.fromJson(Map<String, dynamic> json) => OwnProfile(
+    accountId: json['account_id'] as String,
+    login: json['login'] as String,
+    displayName: json['display_name'] as String,
+    role: json['role'] as String,
+    avatarUrl: json['avatar_url'] as String?,
+  );
+}
+
 class GuildChannel {
   const GuildChannel({
     required this.id,
@@ -99,4 +122,114 @@ class VoiceCredential {
   const VoiceCredential({required this.url, required this.token});
   final String url;
   final String token;
+}
+
+enum MemberPresence { online, offline, unknown }
+
+class GuildMember {
+  const GuildMember({
+    required this.id,
+    required this.login,
+    required this.displayName,
+    required this.role,
+    required this.presence,
+    this.avatarUrl,
+  });
+  final String id;
+  final String login;
+  final String displayName;
+  final String role;
+  final MemberPresence presence;
+  final String? avatarUrl;
+
+  GuildMember withPresence(MemberPresence value) => GuildMember(
+    id: id,
+    login: login,
+    displayName: displayName,
+    role: role,
+    presence: value,
+    avatarUrl: avatarUrl,
+  );
+
+  factory GuildMember.fromJson(Map<String, dynamic> json) => GuildMember(
+    id: json['user_id'] as String,
+    login: json['login'] as String,
+    displayName: json['display_name'] as String,
+    role: json['role'] as String,
+    presence: switch (json['presence']) {
+      'online' => MemberPresence.online,
+      'offline' => MemberPresence.offline,
+      _ => MemberPresence.unknown,
+    },
+    avatarUrl: json['avatar_url'] as String?,
+  );
+}
+
+class DirectConversation {
+  const DirectConversation({
+    required this.id,
+    required this.participantId,
+    required this.displayName,
+    required this.unreadCount,
+  });
+  final String id;
+  final String participantId;
+  final String displayName;
+  final int unreadCount;
+
+  DirectConversation withUnreadCount(int value) => DirectConversation(
+    id: id,
+    participantId: participantId,
+    displayName: displayName,
+    unreadCount: value,
+  );
+
+  factory DirectConversation.fromJson(Map<String, dynamic> json) =>
+      DirectConversation(
+        id: json['id'] as String,
+        participantId: json['other_participant_id'] as String,
+        displayName: json['other_participant_display_name'] as String,
+        unreadCount: json['unread_count'] as int,
+      );
+}
+
+class DirectCandidate {
+  const DirectCandidate({required this.id, required this.displayName});
+  final String id;
+  final String displayName;
+  factory DirectCandidate.fromJson(Map<String, dynamic> json) =>
+      DirectCandidate(
+        id: json['id'] as String,
+        displayName: json['display_name'] as String,
+      );
+}
+
+class DirectChatMessage {
+  const DirectChatMessage({
+    required this.id,
+    required this.directMessageId,
+    required this.authorId,
+    required this.body,
+    required this.createdAt,
+    required this.deleted,
+    required this.revision,
+  });
+  final String id;
+  final String directMessageId;
+  final String authorId;
+  final String body;
+  final DateTime createdAt;
+  final bool deleted;
+  final int revision;
+
+  factory DirectChatMessage.fromJson(Map<String, dynamic> json) =>
+      DirectChatMessage(
+        id: json['id'] as String,
+        directMessageId: json['direct_message_id'] as String,
+        authorId: json['author_id'] as String,
+        body: json['body'] as String? ?? '',
+        createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+        deleted: json['deleted'] as bool? ?? false,
+        revision: json['revision'] as int,
+      );
 }

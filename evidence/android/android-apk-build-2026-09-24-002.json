@@ -1,0 +1,36 @@
+{
+  "id": "android-apk-build-2026-09-24-002",
+  "kind": "integration-build",
+  "status": "PASS",
+  "executed_at": "2026-09-24",
+  "environment": {
+    "host_os": "macOS 26.6.1 arm64",
+    "flutter": "3.47.5 stable",
+    "dart": "3.13.4",
+    "java": "OpenJDK 17.0.20.1",
+    "android_compile_sdk": 36,
+    "android_min_sdk": 24,
+    "android_target_sdk": 36
+  },
+  "scenario": {
+    "command": "flutter analyze && flutter test && flutter build apk --release",
+    "expected": [
+      "Flutter analysis reports no issues",
+      "Flutter client tests pass",
+      "Gradle assembleRelease completes",
+      "APK has application id ru.boohtacord.app",
+      "APK signature verifies"
+    ]
+  },
+  "observer": "Automated local analysis, tests, build and artifact inspection",
+  "artifacts": [
+    {
+      "path": "desktop/build/app/outputs/flutter-apk/app-release.apk",
+      "size_bytes": 91282847,
+      "sha256": "bcc0043a29d9dbc0dd2ac00060647de585b2508cc64d07165b7d61a8887d5fb3",
+      "signature": "Android Debug certificate; installable test distribution only"
+    }
+  ],
+  "failure_or_blocker": null,
+  "notes": "The build contains shared Flutter support for channels, direct messages, authenticated realtime presence, voice participant cards and remote screen viewing. Physical-device authentication, microphone, LiveKit media, performance and capacity remain NOT_RUN."
+}

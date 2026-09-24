@@ -27,6 +27,7 @@ class ApiClient {
         )
       : const FlutterSecureStorage();
   String baseUrl = 'https://v.bootybay.ru/api/v1';
+  bool get realtimeEnabled => true;
 
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
@@ -84,6 +85,9 @@ class ApiClient {
       }
     }
     if (response.statusCode >= 200 && response.statusCode < 300) return decoded;
+    if (response.statusCode == 401) {
+      await _storage.delete(key: _cookieKey);
+    }
     String? code;
     String? message;
     if (decoded is Map<String, dynamic> &&
@@ -144,6 +148,40 @@ class ApiClient {
     }
   }
 
+  Future<OwnProfile> ownProfile() async {
+    final data = await _checked(
+      await _client.get(_uri('/me'), headers: await _headers()),
+    ) as Map<String, dynamic>;
+    return OwnProfile.fromJson(data);
+  }
+
+  Future<OwnProfile> updateOwnProfile(String displayName) async {
+    final data = await _checked(
+      await _client.patch(
+        _uri('/me'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'display_name': displayName}),
+      ),
+    ) as Map<String, dynamic>;
+    return OwnProfile.fromJson(data);
+  }
+
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    await _checked(
+      await _client.post(
+        _uri('/me/password'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        }),
+      ),
+    );
+  }
+
   Future<ChannelTopology> topology() async {
     final data = await _checked(
       await _client.get(_uri('/channels'), headers: await _headers()),
@@ -165,6 +203,151 @@ class ApiClient {
     return values;
   }
 
+  Future<List<GuildMember>> members() async {
+    final result = <GuildMember>[];
+    String? cursor;
+    do {
+      final data = await _checked(
+        await _client.get(
+          _uri('/members', {'limit': '100', 'cursor': ?cursor}),
+          headers: await _headers(),
+        ),
+      ) as Map<String, dynamic>;
+      result.addAll(
+        (data['members'] as List<dynamic>).map(
+          (value) => GuildMember.fromJson(value as Map<String, dynamic>),
+        ),
+      );
+      cursor = data['next_cursor'] as String?;
+    } while (cursor != null);
+    return result;
+  }
+
+  Future<List<DirectConversation>> directMessages() async {
+    final data = await _checked(
+      await _client.get(_uri('/direct-messages'), headers: await _headers()),
+    ) as Map<String, dynamic>;
+    return (data['direct_messages'] as List<dynamic>)
+        .map(
+          (value) => DirectConversation.fromJson(value as Map<String, dynamic>),
+        )
+        .toList(growable: false);
+  }
+
+  Future<List<DirectCandidate>> directMessageCandidates() async {
+    final result = <DirectCandidate>[];
+    String? after;
+    do {
+      final data = await _checked(
+        await _client.get(
+          _uri('/direct-message-candidates', {'limit': '100', 'after': ?after}),
+          headers: await _headers(),
+        ),
+      ) as Map<String, dynamic>;
+      result.addAll(
+        (data['candidates'] as List<dynamic>).map(
+          (value) => DirectCandidate.fromJson(value as Map<String, dynamic>),
+        ),
+      );
+      after = data['next_after'] as String?;
+    } while (after != null);
+    return result;
+  }
+
+  Future<String> openDirectMessage(String participantId) async {
+    final data = await _checked(
+      await _client.post(
+        _uri('/direct-messages'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'participant_id': participantId}),
+      ),
+    ) as Map<String, dynamic>;
+    return data['id'] as String;
+  }
+
+  Future<List<DirectChatMessage>> directMessageHistory(String id) async {
+    final data = await _checked(
+      await _client.get(
+        _uri('/direct-messages/$id/messages'),
+        headers: await _headers(),
+      ),
+    ) as Map<String, dynamic>;
+    final values = (data['messages'] as List<dynamic>)
+        .map(
+          (value) => DirectChatMessage.fromJson(value as Map<String, dynamic>),
+        )
+        .toList();
+    values.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return values;
+  }
+
+  Future<DirectChatMessage> sendDirectMessage(
+    String id,
+    String clientMessageId,
+    String body,
+  ) async {
+    final data = await _checked(
+      await _client.post(
+        _uri('/direct-messages/$id/messages'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'client_message_id': clientMessageId, 'body': body}),
+      ),
+    ) as Map<String, dynamic>;
+    return DirectChatMessage.fromJson(data);
+  }
+
+  Future<DirectChatMessage> editDirectMessage(
+    String directMessageId,
+    String messageId,
+    String body,
+    int expectedRevision,
+  ) async {
+    final data = await _checked(
+      await _client.patch(
+        _uri('/direct-messages/$directMessageId/messages/$messageId'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'body': body, 'expected_revision': expectedRevision}),
+      ),
+    ) as Map<String, dynamic>;
+    return DirectChatMessage.fromJson(data);
+  }
+
+  Future<void> deleteDirectMessage(
+    String directMessageId,
+    String messageId,
+  ) async {
+    await _checked(
+      await _client.delete(
+        _uri('/direct-messages/$directMessageId/messages/$messageId'),
+        headers: await _headers(),
+      ),
+    );
+  }
+
+  Future<void> advanceDirectMessageReadCursor(
+    String directMessageId,
+    String messageId,
+  ) async {
+    await _checked(
+      await _client.put(
+        _uri('/direct-messages/$directMessageId/read-cursor'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'message_id': messageId}),
+      ),
+    );
+  }
+
+  Future<WebSocket> openRealtime() async {
+    final httpUri = Uri.parse(baseUrl);
+    final realtimeUri = httpUri.replace(
+      scheme: 'wss',
+      path: '${httpUri.path}/realtime',
+      query: null,
+    );
+    final headers = await _headers();
+    return WebSocket.connect(realtimeUri.toString(), headers: headers);
+  }
+
   Future<ChatMessage> sendMessage(
     String channelId,
     String clientMessageId,
@@ -177,6 +360,31 @@ class ApiClient {
     );
     return ChatMessage.fromJson(
       await _checked(response) as Map<String, dynamic>,
+    );
+  }
+
+  Future<ChatMessage> editMessage(
+    String channelId,
+    String messageId,
+    String body,
+    int expectedRevision,
+  ) async {
+    final data = await _checked(
+      await _client.patch(
+        _uri('/channels/$channelId/messages/$messageId'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'body': body, 'expected_revision': expectedRevision}),
+      ),
+    ) as Map<String, dynamic>;
+    return ChatMessage.fromJson(data);
+  }
+
+  Future<void> deleteMessage(String channelId, String messageId) async {
+    await _checked(
+      await _client.delete(
+        _uri('/channels/$channelId/messages/$messageId'),
+        headers: await _headers(),
+      ),
     );
   }
 
