@@ -1,0 +1,48 @@
+import { readFileSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
+
+function source(relativePath: string): string {
+  try { return readFileSync(new URL(relativePath, import.meta.url), 'utf8') }
+  catch { return '' }
+}
+
+describe('voice-room visual status and screen presentation', () => {
+  it('gives mute and speaking states visible, explicit icon labels', () => {
+    const status = source('./VoiceParticipantStatus.vue')
+    expect(status).toContain('Микрофон выключен')
+    expect(status).toContain('Микрофон недоступен')
+    expect(status).toContain('Говорит')
+    expect(status).toContain('is-speaking')
+    expect(status).toContain('is-muted')
+    expect(status).toContain('aria-hidden="true"')
+  })
+
+  it('keeps the live room roster visible while a screen is selected', () => {
+    const pane = source('../conversation/ConversationPane.vue')
+    const strip = source('./VoiceParticipantStrip.vue')
+    expect(pane).toContain('<template v-if="screenViewerCards.length || selectedScreenStreamId">')
+    expect(pane).toContain('<div v-else class="room-wrap">')
+    expect(pane).toContain('<VoiceParticipantStrip')
+    expect(pane).toContain(':participants="voiceVolumeParticipants"')
+    expect(pane).toContain('voiceVolumeParticipants.length + (voiceIsActive ? 1 : 0)')
+    expect(source('../workspace/WorkspaceMembersPanel.vue')).toContain('selfMicrophoneUnavailable')
+    expect(strip).toContain('v-for="participant in participants"')
+    expect(strip).toContain('<VoiceParticipantStatus')
+  })
+
+  it('exposes a fullscreen action and visible feedback on the stage', () => {
+    const viewer = source('./ScreenViewer.vue')
+    expect(viewer).toContain('Развернуть демонстрацию на весь экран')
+    expect(viewer).toContain('Выйти из полноэкранного режима')
+    expect(viewer).toContain('aria-live="polite"')
+  })
+
+  it('sizes video to the stage without cropping and preserves compact roster access', () => {
+    const styles = source('../design/voice.css')
+    const shell = source('../design/shell.css')
+    expect(styles).toContain('object-fit: contain')
+    expect(styles).toContain('.screen-stage:fullscreen')
+    expect(styles).toContain('.voice-participant-strip')
+    expect(shell).toContain('grid-template-columns: var(--gc-layout-nav-small) minmax(0, 1fr) 208px')
+  })
+})

@@ -2,9 +2,10 @@
 import { computed, nextTick, ref } from 'vue'
 import type { TopologyChannel } from '../channel/topology_client'
 import type { VoiceVolumeParticipant } from '../voice/voice_volume_controls'
+import VoiceParticipantStatus from '../voice/VoiceParticipantStatus.vue'
 import MemberPopover from './MemberPopover.vue'
 
-const props = defineProps<{ activeVoiceChannel: TopologyChannel | null; participants: VoiceVolumeParticipant[]; role: 'MEMBER' | 'ADMINISTRATOR'; accountID?: string }>()
+const props = defineProps<{ activeVoiceChannel: TopologyChannel | null; participants: VoiceVolumeParticipant[]; role: 'MEMBER' | 'ADMINISTRATOR'; accountID?: string; selfMicrophoneMuted: boolean; selfMicrophoneUnavailable: boolean; selfName: string | null }>()
 const emit = defineEmits<{ openDM: [userID: string]; setVolume: [participantID: string, volume: number] }>()
 const selectedID = ref<string | null>(null); const popoverTop = ref(80); const trigger = ref<HTMLButtonElement | null>(null)
 const selected = computed(() => props.participants.find((participant) => participant.accountId === selectedID.value) ?? null)
@@ -26,17 +27,22 @@ function initial(name: string | undefined): string {
 
 <template>
   <aside class="members members-panel" aria-label="Участники" data-testid="members-panel">
-    <h2 class="members-heading">Участники</h2>
+    <h2 class="members-heading">Участники <span>{{ participants.length + (activeVoiceChannel ? 1 : 0) }}</span></h2>
     <p v-if="!activeVoiceChannel">Выберите голосовой канал, чтобы увидеть участников.</p>
     <template v-else>
       <p class="members-summary">Голосовой канал · {{ activeVoiceChannel.name }}</p>
-      <p v-if="!participants.length">В голосовой комнате пока нет других участников.</p>
-      <ul v-else class="member-list" aria-label="Участники голосового канала">
+      <ul class="member-list" aria-label="Участники голосового канала">
+        <li class="member-card member member-self">
+          <span class="member-avatar avatar" aria-hidden="true">{{ initial(selfName ?? 'Вы') }}</span>
+          <span class="member-copy name"><span class="member-name">{{ selfName || 'Вы' }}</span><small class="member-state">Вы</small></span>
+          <VoiceParticipantStatus compact :microphone-muted="selfMicrophoneMuted" :microphone-unavailable="selfMicrophoneUnavailable" />
+        </li>
+        <li v-if="!participants.length" class="members-empty">Других участников пока нет.</li>
         <li v-for="participant in participants" :key="participant.id">
-          <button class="member-card member" type="button" :disabled="!participant.accountId" :aria-label="`Профиль: ${participant.name || 'Участник'}`" @click="openProfile(participant, $event)">
+          <button class="member-card member" :class="{ 'member-speaking': participant.speaking }" type="button" :disabled="!participant.accountId" :aria-label="`Профиль: ${participant.name || 'Участник'}`" @click="openProfile(participant, $event)">
             <span class="member-avatar avatar" aria-hidden="true">{{ initial(participant.name) }}</span>
-            <span class="member-copy name"><span class="member-name">{{ participant.name || 'Участник' }}</span><small class="member-state">{{ participant.microphoneMuted ? 'Микрофон выключен' : 'Микрофон включён' }}</small></span>
-            <span class="member-speaking" :class="{ active: participant.speaking }">{{ participant.speaking ? 'Говорит' : '' }}</span>
+            <span class="member-copy name"><span class="member-name">{{ participant.name || 'Участник' }}</span><small class="member-state">В голосе</small></span>
+            <VoiceParticipantStatus compact :microphone-muted="participant.microphoneMuted" :speaking="participant.speaking" />
           </button>
         </li>
       </ul>

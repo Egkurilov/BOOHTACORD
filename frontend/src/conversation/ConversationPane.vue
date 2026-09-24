@@ -10,6 +10,7 @@ import type { ScreenDiagnostics } from '../voice/screen_diagnostics'
 import ScreenDiagnosticsPanel from '../voice/ScreenDiagnosticsPanel.vue'
 import ScreenViewer from '../voice/ScreenViewer.vue'
 import VoiceParticipantVolumes from '../voice/VoiceParticipantVolumes.vue'
+import VoiceParticipantStrip from '../voice/VoiceParticipantStrip.vue'
 import type { ScreenViewerCard } from '../voice/screen_viewer_controller'
 import type { VoiceVolumeParticipant } from '../voice/voice_volume_controls'
 import TextConversation from './TextConversation.vue'
@@ -54,13 +55,15 @@ const selectedScreenProfile = ref<ScreenProfile>('P1080_60')
       <section class="voice-room">
         <header class="main-header conversation-header">
           <span class="conversation-symbol" aria-hidden="true">♬</span>
-          <div class="main-title"><h2>{{ channel.name }}</h2><small>Голосовой канал · участников: {{ voiceVolumeParticipants.length + 1 }}</small></div>
+          <div class="main-title"><h2>{{ channel.name }}</h2><small>Голосовой канал · участников: {{ voiceVolumeParticipants.length + (voiceIsActive ? 1 : 0) }}</small></div>
         </header>
-        <ScreenViewer
-          v-if="screenViewerCards.length || selectedScreenStreamId"
-          :cards="screenViewerCards" :error="screenViewerError" :selected-audio-volume="selectedScreenAudioVolume" :selected-id="selectedScreenStreamId"
-          @clear="emit('clearScreenStream')" @select="(id, video, audio) => emit('selectScreenStream', id, video, audio)" @set-audio-volume="emit('setScreenVolume', $event)"
-        />
+        <template v-if="screenViewerCards.length || selectedScreenStreamId">
+          <ScreenViewer
+            :cards="screenViewerCards" :error="screenViewerError" :selected-audio-volume="selectedScreenAudioVolume" :selected-id="selectedScreenStreamId"
+            @clear="emit('clearScreenStream')" @select="(id, video, audio) => emit('selectScreenStream', id, video, audio)" @set-audio-volume="emit('setScreenVolume', $event)"
+          />
+          <VoiceParticipantStrip v-if="voiceIsActive" :error="voiceVolumeError" :participants="voiceVolumeParticipants" />
+        </template>
         <div v-else class="room-wrap">
           <p v-if="channel.admissionClosed" class="state state-error">Вход в этот канал закрыт администратором.</p>
           <template v-else-if="voiceIsActive">

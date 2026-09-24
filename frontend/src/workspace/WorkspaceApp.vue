@@ -113,7 +113,7 @@ onBeforeUnmount(() => realtimeStore.disconnect())
         </WorkspaceMain>
       </main>
 
-      <WorkspaceMembersPanel v-if="!selectedDirectMessage && activePanel === 'none'" :active-voice-channel="activeVoiceChannel" :participants="voiceConnection.voiceVolumeParticipants" :role="props.role" :account-i-d="profile?.account_id" @open-d-m="openDirectMessageFromMember" @set-volume="setParticipantVolume" />
+      <WorkspaceMembersPanel v-if="!selectedDirectMessage && activePanel === 'none'" :active-voice-channel="activeVoiceChannel" :participants="voiceConnection.voiceVolumeParticipants" :role="props.role" :account-i-d="profile?.account_id" :self-name="profile?.display_name ?? null" :self-microphone-muted="voiceConnection.microphoneMuted" :self-microphone-unavailable="voiceConnection.microphonePermissionDenied" @open-d-m="openDirectMessageFromMember" @set-volume="setParticipantVolume" />
       <aside v-else-if="activePanel === 'search'" id="search-aside-panel" class="members search-aside" aria-label="Поиск сообщений" data-testid="search-aside-panel"><WorkspaceSearchPanel @open-channel="selectChannel" @open-direct-message="selectDirectMessage" @close="activePanel = 'none'" /></aside>
     </div>
   </div>
