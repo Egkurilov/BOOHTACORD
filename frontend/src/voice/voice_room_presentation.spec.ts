@@ -24,10 +24,19 @@ describe('voice-room visual status and screen presentation', () => {
     expect(pane).toContain('<div v-else class="room-wrap">')
     expect(pane).toContain('<VoiceParticipantStrip')
     expect(pane).toContain(':participants="voiceVolumeParticipants"')
-    expect(pane).toContain('voiceVolumeParticipants.length + (voiceIsActive ? 1 : 0)')
+    expect(pane).toContain('voiceVolumeParticipants.length + 1')
+    expect(pane).toContain('подключитесь, чтобы увидеть участников')
     expect(source('../workspace/WorkspaceMembersPanel.vue')).toContain('selfMicrophoneUnavailable')
     expect(strip).toContain('v-for="participant in participants"')
     expect(strip).toContain('<VoiceParticipantStatus')
+  })
+
+  it('distinguishes an unselected view from a selected but not joined voice room', () => {
+    const panel = source('../workspace/WorkspaceMembersPanel.vue')
+    expect(panel).toContain('selectedVoiceChannel')
+    expect(panel).toContain('Подключитесь к каналу, чтобы увидеть его участников.')
+    expect(panel).toContain('Выберите голосовой канал, чтобы увидеть участников.')
+    expect(source('../workspace/WorkspaceApp.vue')).toContain(':selected-voice-channel="selectedChannel?.kind === \'VOICE\' ? selectedChannel : null"')
   })
 
   it('exposes a fullscreen action and visible feedback on the stage', () => {

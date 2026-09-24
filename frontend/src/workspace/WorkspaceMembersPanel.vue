@@ -5,10 +5,11 @@ import type { VoiceVolumeParticipant } from '../voice/voice_volume_controls'
 import VoiceParticipantStatus from '../voice/VoiceParticipantStatus.vue'
 import MemberPopover from './MemberPopover.vue'
 
-const props = defineProps<{ activeVoiceChannel: TopologyChannel | null; participants: VoiceVolumeParticipant[]; role: 'MEMBER' | 'ADMINISTRATOR'; accountID?: string; selfMicrophoneMuted: boolean; selfMicrophoneUnavailable: boolean; selfName: string | null }>()
+const props = defineProps<{ activeVoiceChannel: TopologyChannel | null; selectedVoiceChannel: TopologyChannel | null; participants: VoiceVolumeParticipant[]; role: 'MEMBER' | 'ADMINISTRATOR'; accountID?: string; selfMicrophoneMuted: boolean; selfMicrophoneUnavailable: boolean; selfName: string | null }>()
 const emit = defineEmits<{ openDM: [userID: string]; setVolume: [participantID: string, volume: number] }>()
 const selectedID = ref<string | null>(null); const popoverTop = ref(80); const trigger = ref<HTMLButtonElement | null>(null)
 const selected = computed(() => props.participants.find((participant) => participant.accountId === selectedID.value) ?? null)
+const visibleVoiceChannel = computed(() => props.activeVoiceChannel ?? props.selectedVoiceChannel)
 function openProfile(participant: VoiceVolumeParticipant, event: MouseEvent): void {
   if (!participant.accountId) return
   const button = event.currentTarget as HTMLButtonElement
@@ -27,11 +28,12 @@ function initial(name: string | undefined): string {
 
 <template>
   <aside class="members members-panel" aria-label="Участники" data-testid="members-panel">
-    <h2 class="members-heading">Участники <span>{{ participants.length + (activeVoiceChannel ? 1 : 0) }}</span></h2>
-    <p v-if="!activeVoiceChannel">Выберите голосовой канал, чтобы увидеть участников.</p>
+    <h2 class="members-heading">Участники <span>{{ activeVoiceChannel ? participants.length + 1 : '—' }}</span></h2>
+    <p v-if="!visibleVoiceChannel">Выберите голосовой канал, чтобы увидеть участников.</p>
     <template v-else>
-      <p class="members-summary">Голосовой канал · {{ activeVoiceChannel.name }}</p>
-      <ul class="member-list" aria-label="Участники голосового канала">
+      <p class="members-summary">Голосовой канал · {{ visibleVoiceChannel.name }}</p>
+      <p v-if="!activeVoiceChannel" class="members-empty">Подключитесь к каналу, чтобы увидеть его участников.</p>
+      <ul v-else class="member-list" aria-label="Участники голосового канала">
         <li class="member-card member member-self">
           <span class="member-avatar avatar" aria-hidden="true">{{ initial(selfName ?? 'Вы') }}</span>
           <span class="member-copy name"><span class="member-name">{{ selfName || 'Вы' }}</span><small class="member-state">Вы</small></span>

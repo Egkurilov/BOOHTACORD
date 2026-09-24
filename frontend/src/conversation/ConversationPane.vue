@@ -55,7 +55,7 @@ const selectedScreenProfile = ref<ScreenProfile>('P1080_60')
       <section class="voice-room">
         <header class="main-header conversation-header">
           <span class="conversation-symbol" aria-hidden="true">♬</span>
-          <div class="main-title"><h2>{{ channel.name }}</h2><small>Голосовой канал · участников: {{ voiceVolumeParticipants.length + (voiceIsActive ? 1 : 0) }}</small></div>
+          <div class="main-title"><h2>{{ channel.name }}</h2><small>{{ voiceIsActive ? `Голосовой канал · участников: ${voiceVolumeParticipants.length + 1}` : 'Голосовой канал · подключитесь, чтобы увидеть участников' }}</small></div>
         </header>
         <template v-if="screenViewerCards.length || selectedScreenStreamId">
           <ScreenViewer
