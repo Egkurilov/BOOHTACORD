@@ -12,19 +12,16 @@ import MentionPicker from './MentionPicker.vue'
 import type { TextAttachmentUpload } from './text_attachment_upload_client'
 import { advanceTextReadIfVisible, newestServerTextMessageId } from './text_read_gate'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
+import { useComposerScope } from './composer_scope'
 
 const props = defineProps<{ channelId: string; channelName: string; navOpen: boolean; membersOpen: boolean; showMembers: boolean }>()
 const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
 const store = useMessageStore()
 const topology = useTopologyStore()
 const authors = useAuthorDirectory()
-const draft = ref('')
 const session = ref<CurrentSession | null>(null)
-const replyTarget = ref<TextMessage | null>(null)
-const attachments = ref<TextAttachmentUpload[]>([])
-const mentionUserIds = ref<string[]>([])
-const attachmentPending = ref(false)
-const attachmentClearToken = ref(0)
+const composer = useComposerScope<TextMessage, TextAttachmentUpload>()
+const { draft, replyTarget, attachments, mentionUserIds, attachmentPending, attachmentClearToken } = composer
 const searchOpen = ref(false)
 const emojiOpen = ref(false)
 const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
@@ -48,8 +45,7 @@ async function markVisibleRead(): Promise<void> {
 function queueVisibleRead(): void { void markVisibleRead() }
 
 watch(() => props.channelId, (channelId) => {
-  attachments.value = []
-  mentionUserIds.value = []
+  composer.reset()
   lastReadKey = ''
   void store.open(channelId)
   void loadSession()
@@ -59,20 +55,16 @@ onMounted(() => { document.addEventListener('visibilitychange', queueVisibleRead
 onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisibleRead))
 
 async function send(): Promise<void> {
-  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id, attachments.value, session.value?.accountId, mentionUserIds.value)) clearComposer()
+  if (attachmentPending.value || store.channelId !== props.channelId) return
+  const saved = composer.snapshot(props.channelId)
+  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id, attachments.value, session.value?.accountId, mentionUserIds.value)
+    && composer.unchanged(saved, props.channelId) && store.channelId === props.channelId) composer.clear()
 }
 
 async function retry(message: TextMessage): Promise<void> {
-  if (!await store.retry(message.clientMessageId)) return
-  const sameAttachments = attachments.value.map(({ id }) => id).join(',') === message.attachments.map(({ id }) => id).join(',')
-  if (draft.value === message.body && replyTarget.value?.id === message.replyToId && sameAttachments && mentionUserIds.value.join(',') === message.mentionUserIds.join(',')) clearComposer()
-}
-
-function clearComposer(): void {
-  draft.value = ''
-  replyTarget.value = null
-  mentionUserIds.value = []
-  attachmentClearToken.value += 1
+  const saved = composer.snapshot(props.channelId)
+  if (await store.retry(message.clientMessageId) && composer.unchanged(saved, props.channelId)
+    && store.channelId === props.channelId && composer.matchesMessage(message)) composer.clear()
 }
 
 async function loadSession(): Promise<void> {

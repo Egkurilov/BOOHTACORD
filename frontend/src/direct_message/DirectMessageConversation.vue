@@ -12,18 +12,15 @@ import type { DirectMessageHistoryItem } from './direct_message_client'
 import { advanceReadIfVisible, newestServerMessageId } from './direct_message_read_gate'
 import { useDirectMessageStore } from './direct_message_store'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
+import { useComposerScope } from '../conversation/composer_scope'
 
 const props = defineProps<{ directMessageId: string; otherParticipantId: string; otherParticipantDisplayName: string; navOpen: boolean }>()
 const emit = defineEmits<{ toggleNav: [] }>()
 const store = useDirectMessageStore()
 const authors = useAuthorDirectory()
-const draft = ref('')
 const session = ref<CurrentSession | null>(null)
-const replyTarget = ref<DirectMessageHistoryItem | null>(null)
-const mentionUserIds = ref<string[]>([])
-const attachments = ref<TextMessageAttachment[]>([])
-const attachmentPending = ref(false)
-const attachmentClearToken = ref(0)
+const composer = useComposerScope<DirectMessageHistoryItem, TextMessageAttachment>()
+const { draft, replyTarget, mentionUserIds, attachments, attachmentPending, attachmentClearToken } = composer
 const searchOpen = ref(false)
 const emojiOpen = ref(false)
 const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
@@ -47,27 +44,15 @@ function queueVisibleRead(): void { void markVisibleRead() }
 async function send(): Promise<void> {
   if (attachmentPending.value || store.directMessageId !== props.directMessageId) return
   const target = store.directMessageId
-  const body = draft.value
-  const replyToId = replyTarget.value?.id
-  const mentions = mentionUserIds.value.join(',')
-  const files = attachments.value.map(({ id }) => id).join(',')
-  if (await store.send(body, undefined, undefined, replyToId, session.value?.accountId, mentionUserIds.value, attachments.value)
-    && store.directMessageId === target && draft.value === body && replyTarget.value?.id === replyToId && mentionUserIds.value.join(',') === mentions && attachments.value.map(({ id }) => id).join(',') === files) {
-    draft.value = ''
-    replyTarget.value = null
-    mentionUserIds.value = []
-    attachmentClearToken.value++
-  }
+  const saved = composer.snapshot(target)
+  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id, session.value?.accountId, mentionUserIds.value, attachments.value)
+    && composer.unchanged(saved, props.directMessageId) && store.directMessageId === target) composer.clear()
 }
 
 async function retry(message: DirectMessageHistoryItem): Promise<void> {
+  const saved = composer.snapshot(props.directMessageId)
   if (await store.retry(message.clientMessageId) && store.directMessageId === message.directMessageId
-    && draft.value === message.body && replyTarget.value?.id === message.replyToId && mentionUserIds.value.join(',') === message.mentionUserIds.join(',') && attachments.value.map(({ id }) => id).join(',') === message.attachments.map(({ id }) => id).join(',')) {
-    draft.value = ''
-    replyTarget.value = null
-    mentionUserIds.value = []
-    attachmentClearToken.value++
-  }
+    && composer.unchanged(saved, props.directMessageId) && composer.matchesMessage(message)) composer.clear()
 }
 
 async function loadSession(): Promise<void> {
@@ -77,7 +62,7 @@ async function loadSession(): Promise<void> {
 function addEmoji(emoji: string): void { draft.value += emoji }
 
 watch([() => props.directMessageId, () => store.directMessageId, () => store.messages], queueVisibleRead, { flush: 'post' })
-watch(() => props.directMessageId, () => { mentionUserIds.value = []; attachments.value = []; attachmentPending.value = false })
+watch(() => props.directMessageId, () => composer.reset())
 onMounted(() => {
   document.addEventListener('visibilitychange', queueVisibleRead)
   void loadSession()

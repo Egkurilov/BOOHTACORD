@@ -12,7 +12,7 @@ export const useMessageStore = defineStore('text-messages', () => {
 
   async function submit(clientMessageId: string, draft: PendingSend, request = draft.request): Promise<boolean> {
     const targetChannelId = draft.channelId
-    if (sending.value) return false
+    if (sending.value || channelId.value !== targetChannelId) return false
     sending.value = true
     error.value = null
     draft.sendStatus = 'sending'

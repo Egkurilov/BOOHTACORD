@@ -58,7 +58,7 @@ function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id)
 <template>
   <section class="conversation-pane" aria-live="polite">
     <template v-if="directMessage">
-      <DirectMessageConversation :direct-message-id="directMessage.id" :other-participant-id="directMessage.otherParticipantId" :other-participant-display-name="directMessage.otherParticipantDisplayName" :nav-open="navOpen" @toggle-nav="emit('toggleNav')" />
+      <DirectMessageConversation :key="directMessage.id" :direct-message-id="directMessage.id" :other-participant-id="directMessage.otherParticipantId" :other-participant-display-name="directMessage.otherParticipantDisplayName" :nav-open="navOpen" @toggle-nav="emit('toggleNav')" />
     </template>
     <template v-else-if="!channel">
       <p class="eyebrow">Рабочая область</p>
@@ -66,7 +66,7 @@ function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id)
       <p>Навигация показывает только данные, полученные от текущей серверной сессии.</p>
     </template>
     <template v-else-if="channel.kind === 'TEXT'">
-      <TextConversation :channel-id="channel.id" :channel-name="channel.name" :nav-open="navOpen" :members-open="membersOpen" :show-members="showMembers" @toggle-nav="emit('toggleNav')" @toggle-members="emit('toggleMembers')" />
+      <TextConversation :key="channel.id" :channel-id="channel.id" :channel-name="channel.name" :nav-open="navOpen" :members-open="membersOpen" :show-members="showMembers" @toggle-nav="emit('toggleNav')" @toggle-members="emit('toggleMembers')" />
     </template>
     <template v-else>
       <Teleport to="body" :disabled="!screenExpanded">
