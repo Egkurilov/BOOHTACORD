@@ -6,8 +6,9 @@ import { useAuthorDirectory } from '../identity/author_directory'
 import MessageBody from './MessageBody.vue'
 import MentionPicker from './MentionPicker.vue'
 import TextMessageAttachments from './TextMessageAttachments.vue'
+import DirectMessageAttachments from '../direct_message/DirectMessageAttachments.vue'
 
-type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments' | 'mentionUserIds'> & { channelId?: string; attachments?: TextMessageAttachment[]; mentionUserIds?: string[] }
+type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments' | 'mentionUserIds'> & { channelId?: string; directMessageId?: string; attachments?: TextMessageAttachment[]; mentionUserIds?: string[] }
 
 const props = defineProps<{ message: RenderedMessage; replyPreview?: string; canEdit: boolean; canDelete: boolean; retryDisabled?: boolean; mentionRecipient?: { id: string; displayName: string } }>()
 const emit = defineEmits<{ edit: [body: string, mentionUserIds: string[]]; remove: []; reply: []; retry: [] }>()
@@ -67,6 +68,7 @@ function initial(name: string): string {
         <MessageBody :body="message.body" />
         <p v-if="message.mentionUserIds?.length" class="message-mentions">Упомянуты: <span v-for="id in message.mentionUserIds" :key="id">@{{ authors.displayName(id) }} </span></p>
         <TextMessageAttachments v-if="textChannelId && textAttachments.length" :channel-id="textChannelId" :attachments="textAttachments" />
+        <DirectMessageAttachments v-if="message.directMessageId && textAttachments.length" :direct-message-id="message.directMessageId" :attachments="textAttachments" />
         <p v-if="message.sendStatus === 'sending'" class="message-send-status" role="status">Отправляется…</p>
         <div v-if="message.sendStatus === 'failed'" class="message-send-status" role="alert"><span>Не отправлено</span><button type="button" :disabled="retryDisabled" @click="emit('retry')">Повторить отправку</button></div>
       </template>

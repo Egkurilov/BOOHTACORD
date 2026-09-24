@@ -8,7 +8,7 @@
 
 - [ ] **DES-01 · P1 · T-050 — Компонентная сверка.** Сопоставить 40 компонентов исходного пакета с реальными Vue/CSS: имя, путь, состояния, reference и отклонение. Принять геометрию ADR-009 (≥1440: рамка 0, nav 280, aside 248) и wide voice/stream по ADR-008; не возвращать прежние 24/312/312 автоматически. Готово: для каждого компонента есть соответствие либо отдельная задача; DS-T02 не закрывается по наличию tokens.
 
-- [ ] **DES-02 · P1 · T-040/041/044/050 — Переписка.** Описать и довести states: author name/avatar, проверить реализованные длинную историю и сохранение scroll, reply на удалённое/незагруженное сообщение, edit conflict с сохранением draft, pending/failed/retry, unread/mention и upload progress/error. Готово: эталонные состояния TEXT/DM без UUID в роли display name, кнопки доступны на keyboard, длинные имена/ссылки не ломают composer. FE-05/06/08/09/15 реализованы; FE-17/19 и browser-приёмка остаются.
+- [ ] **DES-02 · P1 · T-040/041/044/050 — Переписка.** Описать и довести states: author name/avatar, проверить реализованные длинную историю и сохранение scroll, reply на удалённое/незагруженное сообщение, edit conflict с сохранением draft, pending/failed/retry, unread/mention и upload progress/error. Готово: эталонные состояния TEXT/DM без UUID в роли display name, кнопки доступны на keyboard, длинные имена/ссылки не ломают composer. FE-05/06/08/09/15/17 реализованы; FE-19 и browser-приёмка остаются.
 
 - [ ] **DES-03 · P1 · T-010/012/014/020/050 — Аккаунт и администрирование.** Проверить реализованные logout/reset completion/expired/used link и довести category/channel rename/reorder/move, archive/voice-close confirmations и 409 recovery. Готово: понятные последствия, pending/error/success, focus return; текущие ProfileSettings/AdminPanel сохранены. FE-03/04/10…14 реализованы; визуальная и keyboard-приёмка остаётся.
 
@@ -30,7 +30,7 @@
 | DS-T02 Tokens/primitives | Код есть, приёмка открыта | DES-01/05 |
 | DS-T03 Adaptive shell | Код есть, приёмка открыта | DES-06/08 |
 | DS-T04 Chat | Частично; FE-05 выполнена | DES-02, FE-09/18/19 |
-| DS-T05 DM/profile | Частично; FE-06 выполнена | DES-02/03, FE-08/17 |
+| DS-T05 DM/profile | FE-06/08/17 реализованы | DES-02/03, browser-приёмка |
 | DS-T06 Voice | Код есть, приёмка открыта | DES-04/06/08 |
 | DS-T07 Screen | FPS реализован; визуальная приёмка открыта | DES-04/08, QA-07 |
 | DS-T08 Auth/settings/admin | FE-03/04 выполнены; topology UI частичен | DES-03, FE-10…14 |

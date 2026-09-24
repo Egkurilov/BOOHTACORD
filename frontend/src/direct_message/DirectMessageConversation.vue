@@ -4,6 +4,8 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { loadCurrentSession, type CurrentSession } from '../identity/current_session'
 import { useAuthorDirectory } from '../identity/author_directory'
 import MentionPicker from '../conversation/MentionPicker.vue'
+import type { TextMessageAttachment } from '../conversation/message_client'
+import DirectMessageAttachmentPicker from './DirectMessageAttachmentPicker.vue'
 import DirectMessageHistoryList from './DirectMessageHistoryList.vue'
 import DirectMessageSearch from './DirectMessageSearch.vue'
 import type { DirectMessageHistoryItem } from './direct_message_client'
@@ -19,6 +21,9 @@ const draft = ref('')
 const session = ref<CurrentSession | null>(null)
 const replyTarget = ref<DirectMessageHistoryItem | null>(null)
 const mentionUserIds = ref<string[]>([])
+const attachments = ref<TextMessageAttachment[]>([])
+const attachmentPending = ref(false)
+const attachmentClearToken = ref(0)
 const searchOpen = ref(false)
 const emojiOpen = ref(false)
 const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
@@ -40,24 +45,28 @@ async function markVisibleRead(): Promise<void> {
 function queueVisibleRead(): void { void markVisibleRead() }
 
 async function send(): Promise<void> {
+  if (attachmentPending.value || store.directMessageId !== props.directMessageId) return
   const target = store.directMessageId
   const body = draft.value
   const replyToId = replyTarget.value?.id
   const mentions = mentionUserIds.value.join(',')
-  if (await store.send(body, undefined, undefined, replyToId, session.value?.accountId, mentionUserIds.value)
-    && store.directMessageId === target && draft.value === body && replyTarget.value?.id === replyToId && mentionUserIds.value.join(',') === mentions) {
+  const files = attachments.value.map(({ id }) => id).join(',')
+  if (await store.send(body, undefined, undefined, replyToId, session.value?.accountId, mentionUserIds.value, attachments.value)
+    && store.directMessageId === target && draft.value === body && replyTarget.value?.id === replyToId && mentionUserIds.value.join(',') === mentions && attachments.value.map(({ id }) => id).join(',') === files) {
     draft.value = ''
     replyTarget.value = null
     mentionUserIds.value = []
+    attachmentClearToken.value++
   }
 }
 
 async function retry(message: DirectMessageHistoryItem): Promise<void> {
   if (await store.retry(message.clientMessageId) && store.directMessageId === message.directMessageId
-    && draft.value === message.body && replyTarget.value?.id === message.replyToId && mentionUserIds.value.join(',') === message.mentionUserIds.join(',')) {
+    && draft.value === message.body && replyTarget.value?.id === message.replyToId && mentionUserIds.value.join(',') === message.mentionUserIds.join(',') && attachments.value.map(({ id }) => id).join(',') === message.attachments.map(({ id }) => id).join(',')) {
     draft.value = ''
     replyTarget.value = null
     mentionUserIds.value = []
+    attachmentClearToken.value++
   }
 }
 
@@ -68,7 +77,7 @@ async function loadSession(): Promise<void> {
 function addEmoji(emoji: string): void { draft.value += emoji }
 
 watch([() => props.directMessageId, () => store.directMessageId, () => store.messages], queueVisibleRead, { flush: 'post' })
-watch(() => props.directMessageId, () => { mentionUserIds.value = [] })
+watch(() => props.directMessageId, () => { mentionUserIds.value = []; attachments.value = []; attachmentPending.value = false })
 onMounted(() => {
   document.addEventListener('visibilitychange', queueVisibleRead)
   void loadSession()
@@ -95,13 +104,14 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisi
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
         <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" />
+        <DirectMessageAttachmentPicker :direct-message-id="props.directMessageId" :disabled="store.sending || attachmentPending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" />
         <label class="gc-sr-only" for="direct-message-body">Сообщение</label>
         <textarea id="direct-message-body" v-model="draft" maxlength="8000" :disabled="store.sending" placeholder="Написать сообщение…" />
         <span class="emoji-picker">
           <button class="emoji-trigger" type="button" aria-label="Добавить emoji" :aria-expanded="emojiOpen" @click="emojiOpen = !emojiOpen">☺</button>
           <span v-if="emojiOpen" class="emoji-menu" aria-label="Выбор emoji"><button v-for="emoji in emojis" :key="emoji" type="button" :aria-label="`Добавить ${emoji}`" @click="addEmoji(emoji); emojiOpen = false">{{ emoji }}</button></span>
         </span>
-        <button class="composer-send" type="submit" :aria-label="store.sending ? 'Отправляем сообщение' : 'Отправить сообщение'" :disabled="store.sending || !draft"><span v-if="store.sending">…</span><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z" /><path d="m11 13 4-4" /></svg></button>
+        <button class="composer-send" type="submit" :aria-label="store.sending ? 'Отправляем сообщение' : 'Отправить сообщение'" :disabled="store.sending || attachmentPending || !draft"><span v-if="store.sending">…</span><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z" /><path d="m11 13 4-4" /></svg></button>
       </form>
     </div>
   </section>
