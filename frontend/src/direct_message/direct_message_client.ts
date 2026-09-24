@@ -1,4 +1,5 @@
 import { apiBaseUrl } from '../config/runtime'
+import { parseMentionIds } from '../conversation/mention_ids'
 
 export { loadDirectMessages, type DirectMessageListItem } from './direct_message_navigation_client'
 
@@ -21,6 +22,7 @@ export interface DirectMessageHistoryItem {
   editedAt?: string
   revision: number
   deleted: boolean
+  mentionUserIds: string[]
 }
 
 export interface DirectMessageHistoryPage {
@@ -68,6 +70,7 @@ function historyItem(value: unknown): DirectMessageHistoryItem {
     authorId: requiredText(source.author_id, invalidHistory), clientMessageId: requiredText(source.client_message_id, invalidHistory),
     body: messageBody, replyToId: optionalText(source.reply_to_id), replyPreview: replyPreview(source.reply_preview),
     createdAt: date(source.created_at), editedAt: optionalDate(source.edited_at), revision: revision(source.revision), deleted: messageDeleted,
+    mentionUserIds: parseMentionIds(source.mention_user_ids),
   }
 }
 

@@ -58,7 +58,7 @@ function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id)
 <template>
   <section class="conversation-pane" aria-live="polite">
     <template v-if="directMessage">
-      <DirectMessageConversation :direct-message-id="directMessage.id" :other-participant-display-name="directMessage.otherParticipantDisplayName" :nav-open="navOpen" @toggle-nav="emit('toggleNav')" />
+      <DirectMessageConversation :direct-message-id="directMessage.id" :other-participant-id="directMessage.otherParticipantId" :other-participant-display-name="directMessage.otherParticipantDisplayName" :nav-open="navOpen" @toggle-nav="emit('toggleNav')" />
     </template>
     <template v-else-if="!channel">
       <p class="eyebrow">Рабочая область</p>

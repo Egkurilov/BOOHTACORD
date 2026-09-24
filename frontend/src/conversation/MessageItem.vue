@@ -4,14 +4,16 @@ import { computed, ref, watch } from 'vue'
 import type { TextMessage, TextMessageAttachment } from './message_client'
 import { useAuthorDirectory } from '../identity/author_directory'
 import MessageBody from './MessageBody.vue'
+import MentionPicker from './MentionPicker.vue'
 import TextMessageAttachments from './TextMessageAttachments.vue'
 
 type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments' | 'mentionUserIds'> & { channelId?: string; attachments?: TextMessageAttachment[]; mentionUserIds?: string[] }
 
-const props = defineProps<{ message: RenderedMessage; replyPreview?: string; canEdit: boolean; canDelete: boolean; retryDisabled?: boolean }>()
-const emit = defineEmits<{ edit: [body: string]; remove: []; reply: []; retry: [] }>()
+const props = defineProps<{ message: RenderedMessage; replyPreview?: string; canEdit: boolean; canDelete: boolean; retryDisabled?: boolean; mentionRecipient?: { id: string; displayName: string } }>()
+const emit = defineEmits<{ edit: [body: string, mentionUserIds: string[]]; remove: []; reply: []; retry: [] }>()
 const editing = ref(false)
 const body = ref('')
+const editingMentionIds = ref<string[]>([])
 const textChannelId = computed(() => props.message.channelId ?? '')
 const textAttachments = computed(() => props.message.attachments ?? [])
 const authors = useAuthorDirectory()
@@ -24,12 +26,13 @@ watch(authorAvatar, () => { avatarFailed.value = false })
 
 function beginEdit(): void {
   body.value = props.message.body
+  editingMentionIds.value = [...(props.message.mentionUserIds ?? [])]
   editing.value = true
 }
 
 function saveEdit(): void {
   if (!body.value) return
-  emit('edit', body.value)
+  emit('edit', body.value, [...editingMentionIds.value])
   editing.value = false
 }
 
@@ -55,6 +58,7 @@ function initial(name: string): string {
       <p v-if="message.deleted">Сообщение удалено</p>
       <template v-else-if="editing">
         <textarea v-model="body" maxlength="8000" aria-label="Изменённый текст сообщения" />
+        <MentionPicker v-model="editingMentionIds" :self-id="message.authorId" :disabled="false" :only-participant="mentionRecipient" />
         <button type="button" @click="saveEdit">Сохранить</button>
         <button type="button" @click="editing = false">Отмена</button>
       </template>

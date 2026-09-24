@@ -22,7 +22,7 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
     draft.sendStatus = 'sending'
     state.messages.value = [pendingDirectMessage(clientMessageId, draft), ...state.messages.value.filter((message) => message.clientMessageId !== clientMessageId)]
     try {
-      const created = await createDirectMessage(draft.directMessageId, clientMessageId, draft.body, request, draft.replyToId)
+      const created = await createDirectMessage(draft.directMessageId, clientMessageId, draft.body, request, draft.replyToId, draft.mentionUserIds)
       state.acknowledge(clientMessageId)
       if (state.directMessageId.value !== draft.directMessageId) return false
       state.messages.value = [created, ...state.messages.value.filter((message) => message.id !== created.id && message.clientMessageId !== clientMessageId)]
@@ -39,10 +39,10 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
     }
   }
 
-  async function send(body: string, request?: DirectMessageRequest, createId: () => string = () => crypto.randomUUID(), replyToId?: string, authorId = 'Вы'): Promise<boolean> {
+  async function send(body: string, request?: DirectMessageRequest, createId: () => string = () => crypto.randomUUID(), replyToId?: string, authorId = 'Вы', mentionUserIds: string[] = []): Promise<boolean> {
     const directMessageId = state.directMessageId.value
     if (!directMessageId || state.sending.value || !body) return false
-    const draft: PendingDirectMessageSend = { directMessageId, authorId, body, replyToId, request, sendStatus: 'sending' }
+    const draft: PendingDirectMessageSend = { directMessageId, authorId, body, replyToId, mentionUserIds: [...mentionUserIds], request, sendStatus: 'sending' }
     const key = pendingDirectMessageKey(draft)
     const id = state.retries.get(key) ?? createId()
     const saved = state.pending.get(id) ?? draft
@@ -56,12 +56,13 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
     return draft ? submit(clientMessageId, draft, request ?? draft.request) : false
   }
 
-  async function edit(messageId: string, body: string, expectedRevision: number, request?: DirectMessageRequest): Promise<boolean> {
+  async function edit(messageId: string, body: string, expectedRevision: number, request?: DirectMessageRequest, mentionUserIds?: string[]): Promise<boolean> {
     const targetDirectMessageId = state.directMessageId.value
     if (!targetDirectMessageId || !body) return false
     state.error.value = null
     try {
-      const changed = await editDirectMessage(targetDirectMessageId, messageId, body, expectedRevision, request)
+      const current = state.messages.value.find(({ id }) => id === messageId)
+      const changed = await editDirectMessage(targetDirectMessageId, messageId, body, expectedRevision, request, mentionUserIds ?? current?.mentionUserIds ?? [])
       if (state.directMessageId.value !== targetDirectMessageId) return false
       state.messages.value = state.messages.value.map((message) => message.id === changed.id ? changed : message)
       return true

@@ -5,7 +5,7 @@ import { useDirectMessageStore } from './direct_message_store'
 
 const serverMessage = (dm: string, id: string, clientId: string, body: string) => ({
   id, direct_message_id: dm, author_id: 'me', client_message_id: clientId,
-  body, created_at: '2026-09-25T10:00:00Z', revision: 1, deleted: false,
+  body, created_at: '2026-09-25T10:00:00Z', revision: 1, deleted: false, mention_user_ids: [],
 })
 const page = (messages: unknown[] = []) => new Response(JSON.stringify({ messages }))
 const created = (dm: string, id: string, clientId: string, body: string) =>

@@ -37,6 +37,21 @@ describe('TEXT message mutations', () => {
     expect(store.messages[0]?.mentionUserIds).toEqual(['user-2'])
   })
 
+  it('allows the editor to replace the mention list explicitly', async () => {
+    const store = useMessageStore()
+    let editPayload: Record<string, unknown> | undefined
+    const mentioned = { ...message, mention_user_ids: ['user-2'] }
+    const request = async (_input: string, init: RequestInit) => {
+      if (init.method === 'GET') return new Response(JSON.stringify({ messages: [mentioned] }))
+      editPayload = JSON.parse(String(init.body)) as Record<string, unknown>
+      return new Response(JSON.stringify({ ...mentioned, mention_user_ids: [], revision: 2, edited_at: '2026-09-17T12:02:00Z' }))
+    }
+    await store.open('text-1', request)
+    await expect(store.edit('message-1', 'Без упоминания', 1, request, [])).resolves.toBe(true)
+    expect(editPayload).not.toHaveProperty('mention_user_ids')
+    expect(store.messages[0]?.mentionUserIds).toEqual([])
+  })
+
   it('does not increment a message twice when realtime history wins a delete race', async () => {
     const store = useMessageStore()
     const deleted = { ...message, body: '', deleted: true, revision: 2 }

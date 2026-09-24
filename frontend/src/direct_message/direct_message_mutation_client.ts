@@ -1,4 +1,5 @@
 import { apiBaseUrl } from '../config/runtime'
+import { parseMentionIds } from '../conversation/mention_ids'
 import type { DirectMessageHistoryItem, DirectMessageRequest } from './direct_message_client'
 
 export class DirectMessageMutationError extends Error {
@@ -24,6 +25,7 @@ function message(value: unknown): DirectMessageHistoryItem {
     id: requiredText(source.id), directMessageId: requiredText(source.direct_message_id), authorId: requiredText(source.author_id),
     clientMessageId: requiredText(source.client_message_id), body: messageBody(source.body), replyToId: optionalText(source.reply_to_id),
     createdAt: date(source.created_at), editedAt: optionalDate(source.edited_at), revision: revision(source.revision), deleted: false,
+    mentionUserIds: parseMentionIds(source.mention_user_ids),
   }
 }
 
@@ -50,15 +52,15 @@ function path(directMessageId: string, messageId?: string): string {
   return messageId ? `${base}/${encodeURIComponent(messageId)}` : base
 }
 
-export async function createDirectMessage(directMessageId: string, clientMessageId: string, body: string, request: DirectMessageRequest = fetch, replyToId?: string): Promise<DirectMessageHistoryItem> {
+export async function createDirectMessage(directMessageId: string, clientMessageId: string, body: string, request: DirectMessageRequest = fetch, replyToId?: string, mentionUserIds: string[] = []): Promise<DirectMessageHistoryItem> {
   if (!clientMessageId || !body) invalid()
-  const response = await request(path(directMessageId), requestInit('POST', { client_message_id: clientMessageId, body, ...(replyToId ? { reply_to_id: replyToId } : {}) }))
+  const response = await request(path(directMessageId), requestInit('POST', { client_message_id: clientMessageId, body, ...(replyToId ? { reply_to_id: replyToId } : {}), ...(mentionUserIds.length ? { mention_user_ids: mentionUserIds } : {}) }))
   return message(await checked(response))
 }
 
-export async function editDirectMessage(directMessageId: string, messageId: string, body: string, expectedRevision: number, request: DirectMessageRequest = fetch): Promise<DirectMessageHistoryItem> {
+export async function editDirectMessage(directMessageId: string, messageId: string, body: string, expectedRevision: number, request: DirectMessageRequest = fetch, mentionUserIds: string[] = []): Promise<DirectMessageHistoryItem> {
   if (!body || !Number.isInteger(expectedRevision) || expectedRevision < 1) invalid()
-  const response = await request(path(directMessageId, messageId), requestInit('PATCH', { body, expected_revision: expectedRevision }))
+  const response = await request(path(directMessageId, messageId), requestInit('PATCH', { body, expected_revision: expectedRevision, ...(mentionUserIds.length ? { mention_user_ids: mentionUserIds } : {}) }))
   return message(await checked(response))
 }
 

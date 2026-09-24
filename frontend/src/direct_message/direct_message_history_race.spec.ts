@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { useDirectMessageStore } from './direct_message_store'
 
 function message(id: number) {
-  return { id: `message-${id}`, direct_message_id: 'dm-1', author_id: 'user-2', client_message_id: `client-${id}`, body: `Текст ${id}`, revision: 1, deleted: false, created_at: new Date(Date.UTC(2026, 8, 18, 10, 0, id)).toISOString() }
+  return { id: `message-${id}`, direct_message_id: 'dm-1', author_id: 'user-2', client_message_id: `client-${id}`, body: `Текст ${id}`, revision: 1, deleted: false, created_at: new Date(Date.UTC(2026, 8, 18, 10, 0, id)).toISOString(), mention_user_ids: [] }
 }
 
 function page(from: number, through: number, nextCursor?: string): Response {

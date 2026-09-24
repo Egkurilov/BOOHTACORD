@@ -51,13 +51,13 @@ export const useMessageStore = defineStore('text-messages', () => {
     return draft ? submit(clientMessageId, draft, request ?? draft.request) : false
   }
 
-  async function edit(messageId: string, body: string, expectedRevision: number, request?: MessageRequest): Promise<boolean> {
+  async function edit(messageId: string, body: string, expectedRevision: number, request?: MessageRequest, mentionUserIds?: string[]): Promise<boolean> {
     const targetChannelId = channelId.value
     if (!targetChannelId || !body) return false
     error.value = null
     try {
       const current = messages.value.find(({ id }) => id === messageId)
-      const changed = await editTextMessage(targetChannelId, messageId, body, expectedRevision, request, current?.mentionUserIds ?? [])
+      const changed = await editTextMessage(targetChannelId, messageId, body, expectedRevision, request, mentionUserIds ?? current?.mentionUserIds ?? [])
       if (channelId.value !== targetChannelId) return false
       messages.value = messages.value.map((message) => message.id === changed.id ? changed : message)
       return true

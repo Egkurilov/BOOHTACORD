@@ -6,7 +6,7 @@ import type { CurrentSession } from '../identity/current_session'
 import type { DirectMessageHistoryItem } from './direct_message_client'
 import { useDirectMessageStore } from './direct_message_store'
 
-const props = defineProps<{ directMessageId: string; session: CurrentSession | null }>()
+const props = defineProps<{ directMessageId: string; session: CurrentSession | null; otherParticipantId: string; otherParticipantDisplayName: string }>()
 const emit = defineEmits<{ reply: [message: DirectMessageHistoryItem]; retry: [message: DirectMessageHistoryItem] }>()
 const store = useDirectMessageStore()
 const authors = useAuthorDirectory()
@@ -45,7 +45,8 @@ async function loadOlder(): Promise<void> {
         :can-edit="session?.accountId === message.authorId"
         :can-delete="session?.accountId === message.authorId"
         :retry-disabled="store.sending"
-        @edit="store.edit(message.id, $event, message.revision)"
+        :mention-recipient="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }"
+        @edit="(body, ids) => store.edit(message.id, body, message.revision, undefined, ids)"
         @remove="store.remove(message.id)"
         @reply="emit('reply', message)"
         @retry="emit('retry', message)"

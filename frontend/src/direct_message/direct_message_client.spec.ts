@@ -9,7 +9,7 @@ const directMessage = {
 
 const deletedHistoryItem = {
   id: 'message-2', direct_message_id: 'dm-1', author_id: 'user-2', client_message_id: 'client-2',
-  body: '', created_at: '2026-09-18T10:02:00Z', revision: 2, deleted: true,
+  body: '', created_at: '2026-09-18T10:02:00Z', revision: 2, deleted: true, mention_user_ids: [],
   reply_to_id: 'message-1', reply_preview: { id: 'message-1', author_id: 'user-1', body: '', deleted: true },
 }
 

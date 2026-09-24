@@ -5,7 +5,7 @@ import { useDirectMessageStore } from './direct_message_store'
 
 const history = (id: string, directMessageId: string, body: string) => ({
   id, direct_message_id: directMessageId, author_id: 'user-2', client_message_id: `client-${id}`,
-  body, created_at: '2026-09-18T10:00:00Z', revision: 1, deleted: false,
+  body, created_at: '2026-09-18T10:00:00Z', revision: 1, deleted: false, mention_user_ids: [],
 })
 
 describe('direct-message store', () => {
@@ -60,7 +60,7 @@ describe('direct-message store', () => {
     const store = useDirectMessageStore()
     const request = async (_input: string, init: RequestInit) => init.method === 'GET'
       ? new Response(JSON.stringify({ messages: [] }))
-      : new Response(JSON.stringify({ id: 'message-1', direct_message_id: 'dm-1', author_id: 'user-1', client_message_id: 'client-1', body: 'Привет', revision: 1, created_at: '2026-09-18T10:00:00Z', reply_to_id: 'message-0' }))
+      : new Response(JSON.stringify({ id: 'message-1', direct_message_id: 'dm-1', author_id: 'user-1', client_message_id: 'client-1', body: 'Привет', revision: 1, created_at: '2026-09-18T10:00:00Z', reply_to_id: 'message-0', mention_user_ids: [] }))
 
     await store.open('dm-1', request)
     await expect(store.send('Привет', request, () => 'client-1', 'message-0')).resolves.toBe(true)
@@ -90,7 +90,7 @@ describe('direct-message store', () => {
     const sending = store.send('A', request, () => 'client-a')
     await Promise.resolve()
     await store.open('dm-b', request)
-    resolveSend?.(new Response(JSON.stringify({ id: 'message-a', direct_message_id: 'dm-a', author_id: 'user-1', client_message_id: 'client-a', body: 'A', revision: 1, created_at: '2026-09-18T10:00:00Z' })))
+    resolveSend?.(new Response(JSON.stringify({ id: 'message-a', direct_message_id: 'dm-a', author_id: 'user-1', client_message_id: 'client-a', body: 'A', revision: 1, created_at: '2026-09-18T10:00:00Z', mention_user_ids: [] })))
 
     await expect(sending).resolves.toBe(false)
     expect(store.directMessageId).toBe('dm-b')

@@ -43,7 +43,7 @@ async function loadOlder(): Promise<void> {
         :can-edit="session?.accountId === message.authorId"
         :can-delete="session?.accountId === message.authorId || session?.role === 'ADMINISTRATOR'"
         :retry-disabled="store.sending"
-        @edit="store.edit(message.id, $event, message.revision)"
+        @edit="(body, ids) => store.edit(message.id, body, message.revision, undefined, ids)"
         @remove="store.remove(message.id)"
         @reply="emit('reply', message)"
         @retry="emit('retry', message)"
