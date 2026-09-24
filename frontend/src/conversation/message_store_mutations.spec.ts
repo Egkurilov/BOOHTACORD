@@ -10,16 +10,18 @@ describe('TEXT message mutations', () => {
 
   it('replaces an edit and immediately masks a deleted message', async () => {
     const store = useMessageStore()
+    const attached = { ...message, attachments: [{ id: 'file-a', original_name: 'safe.txt', byte_size: 4 }] }
     const request = async (_input: string, init: RequestInit) => {
-      if (init.method === 'GET') return new Response(JSON.stringify({ messages: [message] }))
+      if (init.method === 'GET') return new Response(JSON.stringify({ messages: [attached] }))
       if (init.method === 'PATCH') return new Response(JSON.stringify({ ...message, body: 'Исправлено', revision: 2, edited_at: '2026-09-17T12:02:00Z' }))
       return new Response(null, { status: 204 })
     }
 
     await store.open('text-1', request)
     await expect(store.edit('message-1', 'Исправлено', 1, request)).resolves.toBe(true)
+    expect(store.messages[0]?.attachments).toMatchObject([{ id: 'file-a' }])
     await expect(store.remove('message-1', request)).resolves.toBe(true)
-    expect(store.messages).toMatchObject([{ body: '', deleted: true, revision: 3 }])
+    expect(store.messages).toMatchObject([{ body: '', deleted: true, attachments: [], revision: 3 }])
   })
 
   it('preserves stable mention IDs when editing message text after a display-name change', async () => {

@@ -2,7 +2,8 @@ import type { Ref } from 'vue'
 
 import type { DirectMessageRequest } from './direct_message_client'
 import type { TextMessageAttachment } from '../conversation/message_client'
-import { createDirectMessage, deleteDirectMessage, editDirectMessage } from './direct_message_mutation_client'
+import { createDirectMessage, deleteDirectMessage, editDirectMessage, DirectMessageMutationError } from './direct_message_mutation_client'
+import type { EditResult } from '../conversation/message_edit_controller'
 import { pendingDirectMessage, pendingDirectMessageKey, type DirectMessageDisplayItem, type PendingDirectMessageSend } from './direct_message_pending'
 
 export interface DirectMessageActionState {
@@ -57,20 +58,27 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
     return draft ? submit(clientMessageId, draft, request ?? draft.request) : false
   }
 
-  async function edit(messageId: string, body: string, expectedRevision: number, request?: DirectMessageRequest, mentionUserIds?: string[]): Promise<boolean> {
+  async function editWithResult(messageId: string, body: string, expectedRevision: number, request?: DirectMessageRequest, mentionUserIds?: string[]): Promise<EditResult> {
     const targetDirectMessageId = state.directMessageId.value
-    if (!targetDirectMessageId || !body) return false
+    if (!targetDirectMessageId || !body) return { kind: 'stale', message: 'Личное сообщение недоступно.' }
     state.error.value = null
     try {
       const current = state.messages.value.find(({ id }) => id === messageId)
       const changed = await editDirectMessage(targetDirectMessageId, messageId, body, expectedRevision, request, mentionUserIds ?? current?.mentionUserIds ?? [])
-      if (state.directMessageId.value !== targetDirectMessageId) return false
+      if (state.directMessageId.value !== targetDirectMessageId) return { kind: 'stale', message: 'Беседа изменилась.' }
       state.messages.value = state.messages.value.map((message) => message.id === changed.id ? { ...changed, attachments: message.attachments } : message)
-      return true
+      return { kind: 'saved' }
     } catch (cause) {
-      if (state.directMessageId.value === targetDirectMessageId) state.error.value = cause instanceof Error ? cause.message : 'Не удалось изменить личное сообщение.'
-      return false
+      const message = cause instanceof DirectMessageMutationError && cause.status === 409
+        ? 'Сообщение изменилось. Обновите версию, чтобы сохранить свой текст.'
+        : cause instanceof Error ? cause.message : 'Не удалось изменить личное сообщение.'
+      if (state.directMessageId.value === targetDirectMessageId) state.error.value = message
+      return { kind: cause instanceof DirectMessageMutationError && cause.status === 409 ? 'conflict' : 'error', message }
     }
+  }
+
+  async function edit(messageId: string, body: string, expectedRevision: number, request?: DirectMessageRequest, mentionUserIds?: string[]): Promise<boolean> {
+    return (await editWithResult(messageId, body, expectedRevision, request, mentionUserIds)).kind === 'saved'
   }
 
   async function remove(messageId: string, request?: DirectMessageRequest): Promise<boolean> {
@@ -88,5 +96,5 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
     }
   }
 
-  return { edit, remove, retry, send }
+  return { edit, editWithResult, remove, retry, send }
 }
