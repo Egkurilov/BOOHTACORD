@@ -5,7 +5,7 @@ import { loadCurrentSession, type CurrentSession } from '../identity/current_ses
 import DirectMessageHistoryList from './DirectMessageHistoryList.vue'
 import DirectMessageSearch from './DirectMessageSearch.vue'
 import type { DirectMessageHistoryItem } from './direct_message_client'
-import { advanceReadIfVisible } from './direct_message_read_gate'
+import { advanceReadIfVisible, newestServerMessageId } from './direct_message_read_gate'
 import { useDirectMessageStore } from './direct_message_store'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
 
@@ -24,7 +24,7 @@ async function markVisibleRead(): Promise<void> {
     const advanced = await advanceReadIfVisible({
       activeDirectMessageId: store.directMessageId,
       renderedDirectMessageId: props.directMessageId,
-      newestDisplayedMessageId: store.messages.at(0)?.id,
+      newestDisplayedMessageId: newestServerMessageId(store.messages),
       visibilityState: document.visibilityState,
     })
     if (advanced) void store.refreshNavigation()
@@ -36,7 +36,19 @@ async function markVisibleRead(): Promise<void> {
 function queueVisibleRead(): void { void markVisibleRead() }
 
 async function send(): Promise<void> {
-  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id)) {
+  const target = store.directMessageId
+  const body = draft.value
+  const replyToId = replyTarget.value?.id
+  if (await store.send(body, undefined, undefined, replyToId, session.value?.accountId)
+    && store.directMessageId === target && draft.value === body && replyTarget.value?.id === replyToId) {
+    draft.value = ''
+    replyTarget.value = null
+  }
+}
+
+async function retry(message: DirectMessageHistoryItem): Promise<void> {
+  if (await store.retry(message.clientMessageId) && store.directMessageId === message.directMessageId
+    && draft.value === message.body && replyTarget.value?.id === message.replyToId) {
     draft.value = ''
     replyTarget.value = null
   }
@@ -70,7 +82,7 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisi
     <div v-if="searchOpen" class="conversation-tools"><DirectMessageSearch :direct-message-id="props.directMessageId" /></div>
     <p v-if="store.loadingHistory" class="state" aria-live="polite">Загружаем историю…</p>
     <p v-if="store.error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refreshHistory()">Повторить загрузку</button></p>
-    <DirectMessageHistoryList :direct-message-id="props.directMessageId" :session="session" @reply="replyTarget = $event" />
+    <DirectMessageHistoryList :direct-message-id="props.directMessageId" :session="session" @reply="replyTarget = $event" @retry="retry" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ replyTarget.authorId }} <button type="button" @click="replyTarget = null">Отмена</button></p>

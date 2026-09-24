@@ -1,10 +1,11 @@
 import { ref } from 'vue'
 
 import { loadDirectMessageHistory, type DirectMessageHistoryItem, type DirectMessageRequest } from './direct_message_client'
+import { pendingDirectMessage, type DirectMessageDisplayItem, type PendingDirectMessageSend } from './direct_message_pending'
 
-export function createDirectMessageHistory() {
+export function createDirectMessageHistory(pending: Map<string, PendingDirectMessageSend>, acknowledge: (id: string) => void) {
   const directMessageId = ref<string | null>(null)
-  const messages = ref<DirectMessageHistoryItem[]>([])
+  const messages = ref<DirectMessageDisplayItem[]>([])
   const nextCursor = ref<string | undefined>()
   const loadingHistory = ref(false)
   const olderLoading = ref(false)
@@ -16,12 +17,15 @@ export function createDirectMessageHistory() {
   let olderPagesLoaded = false
 
   function mergePage(incoming: DirectMessageHistoryItem[]): void {
-    const byId = new Map(messages.value.map((message) => [message.id, message]))
+    const byId = new Map(messages.value.filter((message) => !message.sendStatus).map((message) => [message.id, message]))
     for (const message of incoming) {
       const current = byId.get(message.id)
       if (!current || message.revision >= current.revision) byId.set(message.id, message)
     }
-    messages.value = [...byId.values()].sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt) || right.id.localeCompare(left.id))
+    const server = [...byId.values()].sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt) || right.id.localeCompare(left.id))
+    for (const message of server) acknowledge(message.clientMessageId)
+    const queued = [...pending].flatMap(([id, draft]) => draft.directMessageId === directMessageId.value ? [pendingDirectMessage(id, draft)] : [])
+    messages.value = [...queued, ...server]
   }
 
   async function open(nextDirectMessageId: string, request?: DirectMessageRequest): Promise<void> {

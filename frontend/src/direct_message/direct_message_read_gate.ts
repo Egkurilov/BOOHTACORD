@@ -1,4 +1,9 @@
 import { advanceDirectMessageReadCursor } from './direct_message_client'
+import type { DirectMessageDisplayItem } from './direct_message_pending'
+
+export function newestServerMessageId(messages: Pick<DirectMessageDisplayItem, 'id' | 'sendStatus'>[]): string | undefined {
+  return messages.find((message) => !message.sendStatus)?.id
+}
 
 export interface ReadGateInput {
   activeDirectMessageId: string | null

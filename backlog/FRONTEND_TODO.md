@@ -3,8 +3,6 @@
 Срез: 25.09.2026. Пути относительно корня; source tests не заменяют browser E2E.
 Дизайн — [DES](../docs/design/GUILDCHAT_V1_TODO.md), backend-зависимости — [BE](BACKEND_TODO.md).
 
-- [ ] **FE-08 · P1 · T-041 — DM retry.** `direct_message_message_actions.ts` создаёт новый UUID на каждую попытку. Сохранять payload/client_message_id до подтверждения, показывать pending/failed/retry. Готово: потерянный HTTP-ответ и повтор оставляют одно сообщение, смена диалога не вставляет строку в чужую history. TEXT optimistic send уже есть.
-
 - [ ] **FE-09 · P1 · T-050 — Представление автора.** `MessageItem.vue` и reply previews выводят `authorId`. Использовать безопасный member directory/cache для имени и private avatar с fallback. Готово: TEXT/DM/reply показывают имя, rename обновляется; секретные данные не требуются. Зависимость: DES-02; member API готов.
 
 - [ ] **FE-10 · P1 · T-020 — Категории.** В `AdminTopologyControls.vue` есть create/delete-empty, но нет rename/reorder. Подключить существующие API с expected revision и refresh при 409. Готово: keyboard reorder и конфликт двух администраторов; отдельные tests на каждую команду. Зависимости: DES-03, BE-03.

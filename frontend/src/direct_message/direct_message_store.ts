@@ -8,14 +8,21 @@ import {
 } from './direct_message_client'
 import { createDirectMessageHistory } from './direct_message_history'
 import { createDirectMessageMessageActions } from './direct_message_message_actions'
+import { type PendingDirectMessageSend } from './direct_message_pending'
 
 export const useDirectMessageStore = defineStore('direct-messages', () => {
   const directMessages = ref<DirectMessageListItem[]>([])
-  const { close, directMessageId, messages, nextCursor, loadingHistory, olderLoading, historyLoaded, error, olderError, open, refreshHistory, loadOlder } = createDirectMessageHistory()
+  const pending = new Map<string, PendingDirectMessageSend>()
+  const retries = new Map<string, string>()
+  function acknowledge(id: string): void {
+    pending.delete(id)
+    for (const [key, value] of retries) if (value === id) retries.delete(key)
+  }
+  const { close, directMessageId, messages, nextCursor, loadingHistory, olderLoading, historyLoaded, error, olderError, open, refreshHistory, loadOlder } = createDirectMessageHistory(pending, acknowledge)
   const loadingNavigation = ref(false)
   const sending = ref(false)
   let navigationSequence = 0
-  const actions = createDirectMessageMessageActions({ directMessageId, error, messages, sending })
+  const actions = createDirectMessageMessageActions({ directMessageId, error, messages, sending, pending, retries, acknowledge })
 
   async function refreshNavigation(request?: DirectMessageRequest): Promise<void> {
     const sequence = ++navigationSequence
