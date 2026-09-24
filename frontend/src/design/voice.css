@@ -60,3 +60,60 @@
   .voice-room--screen-expanded .stream-rail { min-height: 48px; }
   .voice-room--screen-expanded .voice-participant-strip { min-height: 52px; }
 }
+
+.voice-prejoin {
+  display: grid;
+  min-height: 100%;
+  place-items: center;
+  padding: clamp(24px, 6vw, 72px);
+}
+
+.voice-prejoin-card {
+  display: flex;
+  width: min(100%, 480px);
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gc-space-4);
+  border: 1px solid var(--gc-border-subtle);
+  border-radius: var(--gc-radius-shell);
+  padding: clamp(28px, 4vw, 44px);
+  background: var(--gc-surface);
+  text-align: center;
+  box-shadow: var(--gc-shadow-shell);
+}
+
+.voice-prejoin-icon {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border: 1px solid var(--gc-border-control);
+  border-radius: var(--gc-radius-full);
+  color: var(--gc-accent-text);
+  background: var(--gc-surface-raised);
+}
+
+.voice-prejoin-icon svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.voice-prejoin-card .eyebrow,
+.voice-prejoin-card h3,
+.voice-prejoin-copy,
+.voice-prejoin-card .state { margin: 0; }
+.voice-prejoin-card h3 { color: var(--gc-text-primary); font-size: var(--gc-text-page); }
+.voice-prejoin-copy { max-width: 34ch; color: var(--gc-text-secondary); line-height: var(--gc-line-body); }
+.voice-prejoin-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: var(--gc-space-3); margin-top: var(--gc-space-2); }
+
+@media (max-width: 600px) {
+  .voice-prejoin { padding: var(--gc-space-4); }
+  .voice-prejoin-card { padding: var(--gc-space-6) var(--gc-space-4); }
+  .voice-prejoin-actions { width: 100%; flex-direction: column; }
+  .voice-prejoin-actions .gc-button { width: 100%; }
+}

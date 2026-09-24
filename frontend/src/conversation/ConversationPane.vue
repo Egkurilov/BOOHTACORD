@@ -92,8 +92,21 @@ const screenExpanded = ref(false)
               <details class="voice-advanced"><summary>Параметры демонстрации</summary><ScreenDiagnosticsPanel v-if="screenState === 'SHARING'" :diagnostics="screenDiagnostics" :profile="screenProfile" @refresh="emit('refreshScreen')" /><label class="screen-settings">Целевой профиль<select v-model="selectedScreenProfile" :disabled="screenState === 'STARTING' || screenState === 'SHARING'"><option value="P720_30">720p · 30 FPS</option><option value="P720_60">720p · 60 FPS</option><option value="P1080_30">1080p · 30 FPS</option><option value="P1080_60">1080p · 60 FPS</option></select></label></details>
             </template>
             <template v-else>
-              <p v-if="voiceError" class="state state-error" role="alert">{{ voiceError }}</p>
-              <div class="room-intro"><p v-if="!voiceError">Вы ещё не подключены к этой комнате.</p><button v-if="voiceTransferRequired" class="gc-button gc-button--secondary" type="button" @click="emit('transfer', channel.id)">Перенести подключение</button><button class="gc-button gc-button--primary" type="button" :disabled="voiceState === 'JOINING'" @click="emit('join', channel.id)">{{ voiceState === 'JOINING' ? 'Подключаемся…' : 'Подключиться' }}</button></div>
+              <div class="voice-prejoin">
+                <article class="voice-prejoin-card" aria-labelledby="voice-prejoin-title">
+                  <span class="voice-prejoin-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Zm-7 8a7 7 0 0 0 14 0M12 18v3m-4 0h8" /></svg>
+                  </span>
+                  <p class="eyebrow">ГОЛОСОВАЯ КОМНАТА</p>
+                  <h3 id="voice-prejoin-title">Вы не подключены</h3>
+                  <p class="voice-prejoin-copy">Подключитесь, чтобы увидеть участников комнаты и статусы микрофонов.</p>
+                  <p v-if="voiceError" class="state state-error" role="alert">{{ voiceError }}</p>
+                  <div class="voice-prejoin-actions">
+                    <button v-if="voiceTransferRequired" class="gc-button gc-button--secondary" type="button" @click="emit('transfer', channel.id)">Перенести подключение</button>
+                    <button class="gc-button gc-button--primary" type="button" :disabled="voiceState === 'JOINING'" @click="emit('join', channel.id)">{{ voiceState === 'JOINING' ? 'Подключаемся…' : 'Подключиться к голосу' }}</button>
+                  </div>
+                </article>
+              </div>
             </template>
           </div>
         </section>
