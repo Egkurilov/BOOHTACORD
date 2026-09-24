@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 
 import type { DirectMessageRequest } from './direct_message_client'
+import type { TextMessageAttachment } from '../conversation/message_client'
 import { createDirectMessage, deleteDirectMessage, editDirectMessage } from './direct_message_mutation_client'
 import { pendingDirectMessage, pendingDirectMessageKey, type DirectMessageDisplayItem, type PendingDirectMessageSend } from './direct_message_pending'
 
@@ -22,10 +23,10 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
     draft.sendStatus = 'sending'
     state.messages.value = [pendingDirectMessage(clientMessageId, draft), ...state.messages.value.filter((message) => message.clientMessageId !== clientMessageId)]
     try {
-      const created = await createDirectMessage(draft.directMessageId, clientMessageId, draft.body, request, draft.replyToId, draft.mentionUserIds)
+      const created = await createDirectMessage(draft.directMessageId, clientMessageId, draft.body, request, draft.replyToId, draft.mentionUserIds, draft.attachments.map(({ id }) => id))
       state.acknowledge(clientMessageId)
       if (state.directMessageId.value !== draft.directMessageId) return false
-      state.messages.value = [created, ...state.messages.value.filter((message) => message.id !== created.id && message.clientMessageId !== clientMessageId)]
+      state.messages.value = [{ ...created, attachments: [...draft.attachments] }, ...state.messages.value.filter((message) => message.id !== created.id && message.clientMessageId !== clientMessageId)]
       return true
     } catch (cause) {
       if (state.pending.has(clientMessageId)) draft.sendStatus = 'failed'
@@ -39,10 +40,10 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
     }
   }
 
-  async function send(body: string, request?: DirectMessageRequest, createId: () => string = () => crypto.randomUUID(), replyToId?: string, authorId = 'Вы', mentionUserIds: string[] = []): Promise<boolean> {
+  async function send(body: string, request?: DirectMessageRequest, createId: () => string = () => crypto.randomUUID(), replyToId?: string, authorId = 'Вы', mentionUserIds: string[] = [], attachments: TextMessageAttachment[] = []): Promise<boolean> {
     const directMessageId = state.directMessageId.value
     if (!directMessageId || state.sending.value || !body) return false
-    const draft: PendingDirectMessageSend = { directMessageId, authorId, body, replyToId, mentionUserIds: [...mentionUserIds], request, sendStatus: 'sending' }
+    const draft: PendingDirectMessageSend = { directMessageId, authorId, body, replyToId, mentionUserIds: [...mentionUserIds], attachments: [...attachments], request, sendStatus: 'sending' }
     const key = pendingDirectMessageKey(draft)
     const id = state.retries.get(key) ?? createId()
     const saved = state.pending.get(id) ?? draft
@@ -64,7 +65,7 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
       const current = state.messages.value.find(({ id }) => id === messageId)
       const changed = await editDirectMessage(targetDirectMessageId, messageId, body, expectedRevision, request, mentionUserIds ?? current?.mentionUserIds ?? [])
       if (state.directMessageId.value !== targetDirectMessageId) return false
-      state.messages.value = state.messages.value.map((message) => message.id === changed.id ? changed : message)
+      state.messages.value = state.messages.value.map((message) => message.id === changed.id ? { ...changed, attachments: message.attachments } : message)
       return true
     } catch (cause) {
       if (state.directMessageId.value === targetDirectMessageId) state.error.value = cause instanceof Error ? cause.message : 'Не удалось изменить личное сообщение.'
@@ -79,7 +80,7 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
     try {
       await deleteDirectMessage(targetDirectMessageId, messageId, request)
       if (state.directMessageId.value !== targetDirectMessageId) return false
-      state.messages.value = state.messages.value.map((message) => message.id === messageId ? { ...message, body: '', deleted: true, revision: message.revision + 1 } : message)
+      state.messages.value = state.messages.value.map((message) => message.id === messageId ? { ...message, body: '', deleted: true, attachments: [], revision: message.revision + 1 } : message)
       return true
     } catch (cause) {
       if (state.directMessageId.value === targetDirectMessageId) state.error.value = cause instanceof Error ? cause.message : 'Не удалось удалить личное сообщение.'
