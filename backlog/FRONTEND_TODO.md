@@ -3,8 +3,6 @@
 Срез: 25.09.2026. Пути относительно корня; source tests не заменяют browser E2E.
 Дизайн — [DES](../docs/design/GUILDCHAT_V1_TODO.md), backend-зависимости — [BE](BACKEND_TODO.md).
 
-- [ ] **FE-16 · P1 · T-040/041 — Уведомления.** Явный permission request, title badge и безопасный текст без DM body; отказ/отключение/нет API. Готово: privacy/dedup в двух вкладках; без background push при закрытом браузере. Зависимости: BE-02/08, FE-07/15, DES-07.
-
 - [ ] **FE-17 · P1 · T-044 — DM-вложения.** Picker до 10 файлов, upload/error/retry, protected download/raster preview. Готово: send ждёт upload, переключение DM не переносит файл, deleted/revoked attachment скрывается. Зависимости: BE-09/10, DES-02; TEXT picker готов.
 
 - [ ] **FE-18 · P1 · T-040/041 — Изоляция composer.** При смене channelId TEXT сбрасывает attachments, но сохраняет draft/reply; DM также сохраняет refs. Сделать отдельный state на беседу либо явный безопасный сброс. Готово: reply/файл из A нельзя отправить в B, поздний upload/ответ не очищает новый draft; тесты быстрых переключений.
