@@ -28,6 +28,7 @@
 .admin-category-order button, .admin-category-controls > button { min-height: var(--gc-size-control); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-4); color: var(--gc-text-primary); background: var(--gc-surface); }
 .admin-category-controls > button { justify-self: start; }
 .admin-category-order button:disabled, .admin-category-controls > button:disabled { cursor: not-allowed; opacity: .55; }
+.admin-topology-kind, .admin-topology-form--rename > .admin-topology-status, .admin-topology-form--rename > .admin-topology-error { grid-column: 1 / -1; margin: 0; }
 .admin-topology-form label { display: grid; min-width: 0; gap: var(--gc-space-2); color: var(--gc-text-secondary); }
 .admin-topology-form button { min-height: var(--gc-size-control); border: 0; border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-4); color: var(--gc-on-accent); background: var(--gc-accent); font-weight: var(--gc-weight-medium); }
 .admin-topology-form button:disabled { cursor: not-allowed; opacity: .55; }

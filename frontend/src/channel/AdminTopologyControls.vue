@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 
 import { createChannel } from './admin_topology_client'
 import AdminCategoryControls from './AdminCategoryControls.vue'
+import AdminChannelRename from './AdminChannelRename.vue'
 import type { ChannelKind, TopologyCategory } from './topology_client'
 
 const props = defineProps<{ categories: TopologyCategory[]; revision: number }>()
@@ -77,6 +78,7 @@ async function submitChannel(): Promise<void> {
       </label>
       <button type="submit" :disabled="pending || !selectedCategoryExists">Создать канал</button>
     </form>
+    <AdminChannelRename :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
     <p v-if="status" class="admin-topology-status" aria-live="polite">{{ status }}</p>
     <p v-if="error" class="admin-topology-error" role="alert">{{ error }}</p>
   </section>
