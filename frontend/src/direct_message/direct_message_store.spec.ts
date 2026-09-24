@@ -1,5 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useDirectMessageStore } from './direct_message_store'
 
@@ -10,6 +10,17 @@ const history = (id: string, directMessageId: string, body: string) => ({
 
 describe('direct-message store', () => {
   beforeEach(() => setActivePinia(createPinia()))
+
+  it('rejects 8001 emoji before creating a private optimistic message or network request', async () => {
+    const store = useDirectMessageStore()
+    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ messages: [] })))
+    await store.open('dm-1', request)
+    request.mockClear()
+    await expect(store.send('😀'.repeat(8001), request)).resolves.toBe(false)
+    expect(store.error).toContain('8000')
+    expect(store.messages).toEqual([])
+    expect(request).not.toHaveBeenCalled()
+  })
 
   it('loads the private navigation list and the selected conversation history', async () => {
     const store = useDirectMessageStore()

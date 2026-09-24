@@ -85,7 +85,7 @@ function addEmoji(emoji: string): void { draft.value += emoji }
     </header>
     <div v-if="searchOpen" class="conversation-tools"><TextMessageSearch :channel-id="props.channelId" /></div>
     <p v-if="store.loading" class="state" aria-live="polite">Загружаем историю…</p>
-    <p v-if="store.error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refresh()">Повторить загрузку</button></p>
+    <p v-if="store.error" id="text-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refresh()">Повторить загрузку</button></p>
     <TextHistoryList :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @retry="retry" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
@@ -99,7 +99,7 @@ function addEmoji(emoji: string): void { draft.value += emoji }
           @pending="attachmentPending = $event"
         />
         <label class="gc-sr-only" for="message-body">Сообщение</label>
-        <textarea id="message-body" v-model="draft" maxlength="8000" :disabled="store.sending" placeholder="Написать сообщение…" />
+        <textarea id="message-body" v-model="draft" :disabled="store.sending" :aria-describedby="store.error ? 'text-conversation-error' : undefined" placeholder="Написать сообщение…" />
         <span class="emoji-picker">
           <button class="emoji-trigger" type="button" aria-label="Добавить emoji" :aria-expanded="emojiOpen" @click="emojiOpen = !emojiOpen">☺</button>
           <span v-if="emojiOpen" class="emoji-menu" aria-label="Выбор emoji"><button v-for="emoji in emojis" :key="emoji" type="button" :aria-label="`Добавить ${emoji}`" @click="addEmoji(emoji); emojiOpen = false">{{ emoji }}</button></span>

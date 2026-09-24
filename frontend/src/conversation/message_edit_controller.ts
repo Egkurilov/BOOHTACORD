@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 export type EditResult = { kind: 'saved' } | { kind: 'conflict' | 'error' | 'stale'; message: string }
 interface Revision { revision: number; deleted: boolean }
@@ -34,6 +35,7 @@ export function useMessageEditController(ports: EditPorts) {
   async function submit(): Promise<void> {
     if (!editing.value || pending.value || needsRefresh.value) return
     if (!body.value) { error.value = 'Введите текст сообщения.'; return }
+    if (!validCodePointLength(body.value, 1, 8000)) { error.value = 'Сообщение должно содержать до 8000 символов.'; return }
     pending.value = true
     error.value = null
     notice.value = null

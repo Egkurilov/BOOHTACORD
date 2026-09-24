@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import MessageBody from './MessageBody.vue'
 import { useAuthorDirectory } from '../identity/author_directory'
@@ -37,6 +38,7 @@ async function runSearch(searchQuery: string, before: string | undefined, append
     error.value = 'Введите поисковый запрос.'
     return
   }
+  if (!validCodePointLength(searchQuery.trim(), 1, 256)) { error.value = 'Запрос должен содержать до 256 символов.'; return }
   const channelId = props.channelId
   const sequence = ++requestSequence
   loading.value = true
@@ -72,11 +74,11 @@ function loadMore(): void {
     <form class="text-search-form" role="search" @submit.prevent="submit">
       <label>
         Запрос
-        <input v-model="query" autocomplete="off" :disabled="loading" maxlength="256" placeholder="Слова или «точная фраза»" type="search">
+        <input v-model="query" autocomplete="off" :disabled="loading" :aria-describedby="error ? 'text-search-error' : undefined" placeholder="Слова или «точная фраза»" type="search">
       </label>
       <button type="submit" :disabled="loading || !hasQuery">{{ loading ? 'Ищем…' : 'Найти' }}</button>
     </form>
-    <p v-if="error" class="text-search-error" role="alert">{{ error }}</p>
+    <p v-if="error" id="text-search-error" class="text-search-error" role="alert">{{ error }}</p>
     <p v-else-if="searched" class="text-search-status" aria-live="polite">
       {{ messages.length ? `Найдено в этой странице: ${messages.length}.` : 'Совпадений нет.' }}
     </p>

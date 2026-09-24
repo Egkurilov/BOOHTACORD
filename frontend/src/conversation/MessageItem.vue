@@ -52,9 +52,9 @@ function initial(name: string): string {
         <span v-if="message.editedAt" class="message-time">изменено</span>
       </div>
       <template v-if="editing">
-        <textarea v-model="body" maxlength="8000" :disabled="pending" aria-label="Изменённый текст сообщения" />
+        <textarea v-model="body" :disabled="pending" aria-label="Изменённый текст сообщения" :aria-describedby="editError ? `message-edit-error-${message.id}` : undefined" />
         <MentionPicker v-model="editingMentionIds" :self-id="message.authorId" :disabled="pending" :only-participant="mentionRecipient" />
-        <p v-if="editError" class="message-send-status" role="alert">{{ editError }}</p>
+        <p v-if="editError" :id="`message-edit-error-${message.id}`" class="message-send-status" role="alert">{{ editError }}</p>
         <p v-if="editNotice" class="message-send-status" role="status">{{ editNotice }}</p>
         <button type="button" :disabled="pending || needsRefresh || !body" @click="editor.submit()">{{ pending ? 'Обрабатываем…' : 'Сохранить' }}</button>
         <button v-if="needsRefresh" type="button" :disabled="pending" @click="editor.refreshVersion()">Обновить версию</button>

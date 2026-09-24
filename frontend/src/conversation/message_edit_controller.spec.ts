@@ -57,4 +57,18 @@ describe('message edit controller', () => {
     expect(editor.needsRefresh.value).toBe(true)
     expect(editor.body.value).toBe('Исходный текст')
   })
+
+  it('keeps an oversized Unicode edit draft and announces its limit before saving', async () => {
+    const save = vi.fn()
+    const editor = useMessageEditController({ save, refresh: vi.fn() })
+    editor.begin(message)
+    editor.body.value = '😀'.repeat(8001)
+    await editor.submit()
+    expect(editor.error.value).toContain('8000')
+    expect(editor.body.value).toHaveLength(16002)
+    expect(save).not.toHaveBeenCalled()
+    editor.body.value = '😀'.repeat(8000)
+    await editor.submit()
+    expect(save).toHaveBeenCalledOnce()
+  })
 })

@@ -1,4 +1,5 @@
 import type { Ref } from 'vue'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import type { DirectMessageRequest } from './direct_message_client'
 import type { TextMessageAttachment } from '../conversation/message_client'
@@ -44,6 +45,7 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
   async function send(body: string, request?: DirectMessageRequest, createId: () => string = () => crypto.randomUUID(), replyToId?: string, authorId = 'Вы', mentionUserIds: string[] = [], attachments: TextMessageAttachment[] = []): Promise<boolean> {
     const directMessageId = state.directMessageId.value
     if (!directMessageId || state.sending.value || !body) return false
+    if (!validCodePointLength(body, 1, 8000)) { state.error.value = 'Сообщение должно содержать до 8000 символов.'; return false }
     const draft: PendingDirectMessageSend = { directMessageId, authorId, body, replyToId, mentionUserIds: [...mentionUserIds], attachments: [...attachments], request, sendStatus: 'sending' }
     const key = pendingDirectMessageKey(draft)
     const id = state.retries.get(key) ?? createId()
