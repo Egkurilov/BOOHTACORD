@@ -1,6 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { applyMicrophoneProcessing, BoundedVoiceReconnectPolicy, connectLiveKitRoom, microphoneConstraints, setMicrophone, startScreenShare, stopScreenShare, wireLiveKitRoom, type VoiceRoom } from './livekit_gateway'
+import {
+  applyMicrophoneProcessing,
+  BoundedVoiceReconnectPolicy,
+  connectLiveKitRoom,
+  microphoneConstraints,
+  setMicrophone,
+  wireLiveKitRoom,
+  type VoiceRoom,
+} from './livekit_gateway'
 
 const credential = { url: 'wss://rtc.example', token: 'temporary', expiresAt: '2026-09-17T12:00:00Z' }
 
@@ -41,7 +49,7 @@ describe('LiveKit voice gateway', () => {
     expect(fakeRoom.localParticipant.setMicrophoneEnabled).toHaveBeenCalledWith(
       true,
       expect.objectContaining({ autoGainControl: true, channelCount: { ideal: 1 }, echoCancellation: true, noiseSuppression: true }),
-      { audioPreset: { maxBitrate: 128_000 }, forceStereo: false },
+      { audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false },
     )
   })
 
@@ -88,37 +96,11 @@ describe('LiveKit voice gateway', () => {
 
     await expect(setMicrophone(fakeRoom, false)).resolves.toBe('MUTED')
     expect(fakeRoom.localParticipant.setMicrophoneEnabled).toHaveBeenCalledWith(false, expect.any(Object), {
-      audioPreset: { maxBitrate: 128_000 }, forceStereo: false,
+      audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false,
     })
     expect(fakeRoom.disconnect).not.toHaveBeenCalled()
   })
 
-  it('uses the browser picker for a selected screen profile and stops only screen tracks', async () => {
-    const fakeRoom = room(async () => undefined)
-
-    await startScreenShare(fakeRoom, 'P1080_60')
-    await stopScreenShare(fakeRoom)
-
-    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenNthCalledWith(1, true, {
-      audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 },
-    })
-    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenNthCalledWith(2, false)
-  })
-
-  it('returns only observed screen diagnostics after publishing', async () => {
-    const fakeRoom = Object.assign(room(async () => undefined), {
-      readScreenDiagnostics: vi.fn().mockResolvedValue({
-        audioTrack: 'ABSENT', connectionQuality: 'GOOD', measured: { framesPerSecond: 30, height: 720, width: 1280 }, source: 'ACTIVE',
-      }),
-    })
-
-    await expect(startScreenShare(fakeRoom, 'P1080_60')).resolves.toEqual({
-      audioTrack: 'ABSENT', connectionQuality: 'GOOD', measured: { framesPerSecond: 30, height: 720, width: 1280 }, source: 'ACTIVE',
-    })
-    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenCalledWith(true, {
-      audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 },
-    })
-  })
 })
 
 it('uses bounded exponential reconnect delays with jitter', () => {

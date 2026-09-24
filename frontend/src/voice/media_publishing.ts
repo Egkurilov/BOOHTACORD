@@ -15,12 +15,18 @@ export interface ScreenShareOptions {
 }
 
 export interface MicrophonePublishOptions {
-  audioPreset: { maxBitrate: number }
+  audioPreset: { maxBitrate: number; priority: 'high' }
   forceStereo: false
 }
 
+export interface ScreenSharePublishOptions {
+  degradationPreference: 'maintain-framerate'
+}
+
 export const defaultAudioProcessing: AudioProcessingOptions = { autoGainControl: true, echoCancellation: true, noiseSuppression: true }
-const microphonePublishOptions: MicrophonePublishOptions = { audioPreset: { maxBitrate: 128_000 }, forceStereo: false }
+export const adaptiveMediaRoomOptions = Object.freeze({ adaptiveStream: true, dynacast: true })
+const microphonePublishOptions: MicrophonePublishOptions = { audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false }
+const screenSharePublishOptions: ScreenSharePublishOptions = { degradationPreference: 'maintain-framerate' }
 const screenProfiles: Record<ScreenProfile, ScreenShareOptions> = {
   P720_30: { audio: true, resolution: { width: 1280, height: 720, frameRate: 30 } },
   P720_60: { audio: true, resolution: { width: 1280, height: 720, frameRate: 60 } },
@@ -51,7 +57,7 @@ export async function readScreenShareDiagnostics(room: VoiceRoom): Promise<Scree
 }
 
 export async function startScreenShare(room: VoiceRoom, profile: ScreenProfile): Promise<ScreenDiagnostics> {
-  await room.localParticipant.setScreenShareEnabled(true, screenProfiles[profile])
+  await room.localParticipant.setScreenShareEnabled(true, screenProfiles[profile], screenSharePublishOptions)
   return readScreenShareDiagnostics(room)
 }
 

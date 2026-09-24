@@ -1,0 +1,51 @@
+import { describe, expect, it, vi } from 'vitest'
+
+import {
+  adaptiveMediaRoomOptions,
+  startScreenShare,
+  stopScreenShare,
+  type VoiceRoom,
+} from './livekit_gateway'
+
+function screenRoom(readScreenDiagnostics?: VoiceRoom['readScreenDiagnostics']): VoiceRoom {
+  return {
+    readScreenDiagnostics,
+    localParticipant: {
+      setMicrophoneEnabled: vi.fn(),
+      setScreenShareEnabled: vi.fn().mockResolvedValue(undefined),
+    },
+  } as unknown as VoiceRoom
+}
+
+describe('LiveKit screen publishing policy', () => {
+  it('keeps the selected capture profile and passes degradation preference as publish options', async () => {
+    const fakeRoom = screenRoom()
+
+    await startScreenShare(fakeRoom, 'P1080_60')
+    await stopScreenShare(fakeRoom)
+
+    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenNthCalledWith(1, true, {
+      audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 },
+    }, { degradationPreference: 'maintain-framerate' })
+    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenNthCalledWith(2, false)
+  })
+
+  it('returns only observed screen diagnostics after publishing', async () => {
+    const diagnostics = {
+      audioTrack: 'ABSENT' as const,
+      connectionQuality: 'GOOD' as const,
+      measured: { framesPerSecond: 30, height: 720, width: 1280 },
+      source: 'ACTIVE' as const,
+    }
+    const fakeRoom = screenRoom(vi.fn().mockResolvedValue(diagnostics))
+
+    await expect(startScreenShare(fakeRoom, 'P1080_60')).resolves.toEqual(diagnostics)
+    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenCalledWith(true, {
+      audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 },
+    }, { degradationPreference: 'maintain-framerate' })
+  })
+
+  it('declares adaptive receive quality and dynacast room preferences', () => {
+    expect(adaptiveMediaRoomOptions).toEqual({ adaptiveStream: true, dynacast: true })
+  })
+})

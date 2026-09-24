@@ -1,7 +1,15 @@
 import type { LiveKitCredential } from './admission_client'
 import type { BrowserAudioProcessingSettings } from './audio_processing_diagnostics'
 import { BoundedVoiceReconnectPolicy } from './bounded_voice_reconnect_policy'
-import { setMicrophone, type AudioProcessingOptions, type MicrophonePublishOptions, type MicrophoneState, type ScreenShareOptions } from './media_publishing'
+import {
+  adaptiveMediaRoomOptions,
+  setMicrophone,
+  type AudioProcessingOptions,
+  type MicrophonePublishOptions,
+  type MicrophoneState,
+  type ScreenShareOptions,
+  type ScreenSharePublishOptions,
+} from './media_publishing'
 import type { RemoteVoicePlaybackController } from './livekit_screen_viewer_adapter'
 import type { RemoteParticipantController } from './remote_participant_controller'
 import { ScreenViewerController } from './screen_viewer_controller'
@@ -17,11 +25,13 @@ export {
   setMicrophone,
   startScreenShare,
   stopScreenShare,
+  adaptiveMediaRoomOptions,
   type AudioProcessingOptions,
   type MicrophonePublishOptions,
   type MicrophoneState,
   type ScreenProfile,
   type ScreenShareOptions,
+  type ScreenSharePublishOptions,
 } from './media_publishing'
 
 export interface VoiceRoom {
@@ -38,7 +48,7 @@ export interface VoiceRoom {
   switchActiveDevice(kind: 'audioinput' | 'audiooutput', deviceId: string): Promise<boolean>
   localParticipant: {
     setMicrophoneEnabled(enabled: boolean, options: MediaTrackConstraints, publishOptions?: MicrophonePublishOptions): Promise<unknown>
-    setScreenShareEnabled(enabled: boolean, options?: ScreenShareOptions): Promise<unknown>
+    setScreenShareEnabled(enabled: boolean, options?: ScreenShareOptions, publishOptions?: ScreenSharePublishOptions): Promise<unknown>
   }
 }
 

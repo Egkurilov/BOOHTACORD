@@ -1,5 +1,6 @@
 import { bindLiveKitScreenViewer, type LiveKitScreenViewerRoom } from './livekit_screen_viewer_adapter'
 import type { VoiceRoom } from './livekit_gateway'
+import { adaptiveMediaRoomOptions } from './media_publishing'
 import { BoundedVoiceReconnectPolicy } from './bounded_voice_reconnect_policy'
 import { inspectLiveKitScreenDiagnostics, type LiveKitScreenVideoTrack } from './screen_livekit_diagnostics'
 
@@ -23,7 +24,7 @@ export function wireLiveKitRoom(
 
 export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   const { Room, RoomEvent, Track } = await import('livekit-client')
-  const liveKitRoom = new Room({ reconnectPolicy: new BoundedVoiceReconnectPolicy() })
+  const liveKitRoom = new Room({ ...adaptiveMediaRoomOptions, reconnectPolicy: new BoundedVoiceReconnectPolicy() })
   const viewer = bindLiveKitScreenViewer(liveKitRoom as unknown as LiveKitScreenViewerRoom, {
     activeSpeakersChanged: RoomEvent.ActiveSpeakersChanged,
     participantConnected: RoomEvent.ParticipantConnected,
