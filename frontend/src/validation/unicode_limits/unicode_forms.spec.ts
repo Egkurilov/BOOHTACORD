@@ -19,6 +19,7 @@ describe('Unicode form boundary contract', () => {
     ['../../conversation/MessageItem.vue', 'body'],
     ['../../conversation/TextMessageSearch.vue', 'query'],
     ['../../direct_message/DirectMessageSearch.vue', 'query'],
+    ['../../search/SearchPanel.vue', 'query'],
   ])('lets the code-point validator handle %s / %s and exposes errors', (path, model) => {
     const source = template(path)
     const input = field(source, model)
