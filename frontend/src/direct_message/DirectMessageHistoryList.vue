@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import MessageItem from '../conversation/MessageItem.vue'
+import { useAuthorDirectory } from '../identity/author_directory'
 import type { CurrentSession } from '../identity/current_session'
 import type { DirectMessageHistoryItem } from './direct_message_client'
 import { useDirectMessageStore } from './direct_message_store'
@@ -8,12 +9,16 @@ import { useDirectMessageStore } from './direct_message_store'
 const props = defineProps<{ directMessageId: string; session: CurrentSession | null }>()
 const emit = defineEmits<{ reply: [message: DirectMessageHistoryItem]; retry: [message: DirectMessageHistoryItem] }>()
 const store = useDirectMessageStore()
+const authors = useAuthorDirectory()
 const list = ref<HTMLOListElement | null>(null)
+watch(() => store.messages, (messages) => {
+  for (const message of messages) if (message.replyPreview) void authors.ensure(message.replyPreview.authorId)
+}, { immediate: true })
 
 function replyPreview(message: DirectMessageHistoryItem): string | undefined {
   const preview = message.replyPreview
   if (!preview) return undefined
-  return preview.deleted ? 'Сообщение удалено' : `${preview.authorId}: ${preview.body.slice(0, 140)}`
+  return preview.deleted ? 'Сообщение удалено' : `${authors.displayName(preview.authorId)}: ${preview.body.slice(0, 140)}`
 }
 
 async function loadOlder(): Promise<void> {

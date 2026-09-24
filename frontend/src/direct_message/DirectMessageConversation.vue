@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { loadCurrentSession, type CurrentSession } from '../identity/current_session'
+import { useAuthorDirectory } from '../identity/author_directory'
 import DirectMessageHistoryList from './DirectMessageHistoryList.vue'
 import DirectMessageSearch from './DirectMessageSearch.vue'
 import type { DirectMessageHistoryItem } from './direct_message_client'
@@ -12,6 +13,7 @@ import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
 const props = defineProps<{ directMessageId: string; otherParticipantDisplayName: string; navOpen: boolean }>()
 const emit = defineEmits<{ toggleNav: [] }>()
 const store = useDirectMessageStore()
+const authors = useAuthorDirectory()
 const draft = ref('')
 const session = ref<CurrentSession | null>(null)
 const replyTarget = ref<DirectMessageHistoryItem | null>(null)
@@ -85,7 +87,7 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisi
     <DirectMessageHistoryList :direct-message-id="props.directMessageId" :session="session" @reply="replyTarget = $event" @retry="retry" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
-        <p v-if="replyTarget" class="reply-target">Ответ для {{ replyTarget.authorId }} <button type="button" @click="replyTarget = null">Отмена</button></p>
+        <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
         <label class="gc-sr-only" for="direct-message-body">Сообщение</label>
         <textarea id="direct-message-body" v-model="draft" maxlength="8000" :disabled="store.sending" placeholder="Написать сообщение…" />
         <span class="emoji-picker">

@@ -3,8 +3,6 @@
 Срез: 25.09.2026. Пути относительно корня; source tests не заменяют browser E2E.
 Дизайн — [DES](../docs/design/GUILDCHAT_V1_TODO.md), backend-зависимости — [BE](BACKEND_TODO.md).
 
-- [ ] **FE-09 · P1 · T-050 — Представление автора.** `MessageItem.vue` и reply previews выводят `authorId`. Использовать безопасный member directory/cache для имени и private avatar с fallback. Готово: TEXT/DM/reply показывают имя, rename обновляется; секретные данные не требуются. Зависимость: DES-02; member API готов.
-
 - [ ] **FE-10 · P1 · T-020 — Категории.** В `AdminTopologyControls.vue` есть create/delete-empty, но нет rename/reorder. Подключить существующие API с expected revision и refresh при 409. Готово: keyboard reorder и конфликт двух администраторов; отдельные tests на каждую команду. Зависимости: DES-03, BE-03.
 
 - [ ] **FE-11 · P1 · T-020 — Переименование канала.** Форма имени, валидация, pending/saved/error, expected revision; kind неизменяем. Готово: название обновляется в navigation/header; 409 сохраняет draft. Зависимости: BE-05, DES-03.

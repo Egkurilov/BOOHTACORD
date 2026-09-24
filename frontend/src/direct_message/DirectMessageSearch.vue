@@ -2,12 +2,15 @@
 import { computed, ref, watch } from 'vue'
 
 import MessageBody from '../conversation/MessageBody.vue'
+import { useAuthorDirectory } from '../identity/author_directory'
 import { searchDirectMessageHistory, type DirectMessageSearchResult } from './direct_message_search_client'
 
 const props = defineProps<{ directMessageId: string }>()
 const query = ref('')
 const activeQuery = ref('')
 const messages = ref<DirectMessageSearchResult[]>([])
+const authors = useAuthorDirectory()
+watch(messages, (results) => { for (const message of results) void authors.ensure(message.authorId) })
 const nextCursor = ref<string | undefined>()
 const loading = ref(false)
 const searched = ref(false)
@@ -72,7 +75,7 @@ function loadMore(): void { if (nextCursor.value) void runSearch(activeQuery.val
     <p v-else-if="searched" class="direct-search-status" aria-live="polite">{{ messages.length ? `Найдено в этой странице: ${messages.length}.` : 'Совпадений нет.' }}</p>
     <ol v-if="messages.length" class="direct-search-results" aria-label="Результаты поиска в личном диалоге">
       <li v-for="message in messages" :key="message.id" class="direct-search-result">
-        <p class="message-meta">{{ message.authorId }} · {{ new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }}<span v-if="message.editedAt"> · изменено</span></p>
+        <p class="message-meta">{{ authors.displayName(message.authorId) }} · {{ new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }}<span v-if="message.editedAt"> · изменено</span></p>
         <MessageBody :body="message.body" />
       </li>
     </ol>

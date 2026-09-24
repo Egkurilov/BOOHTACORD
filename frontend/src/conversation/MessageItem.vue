@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import type { TextMessage, TextMessageAttachment } from './message_client'
+import { useAuthorDirectory } from '../identity/author_directory'
 import MessageBody from './MessageBody.vue'
 import TextMessageAttachments from './TextMessageAttachments.vue'
 
@@ -13,6 +14,12 @@ const editing = ref(false)
 const body = ref('')
 const textChannelId = computed(() => props.message.channelId ?? '')
 const textAttachments = computed(() => props.message.attachments ?? [])
+const authors = useAuthorDirectory()
+const authorName = computed(() => authors.displayName(props.message.authorId))
+const authorAvatar = computed(() => authors.avatarUrl(props.message.authorId))
+const avatarFailed = ref(false)
+watch(() => props.message.authorId, (id) => { void authors.ensure(id) }, { immediate: true })
+watch(authorAvatar, () => { avatarFailed.value = false })
 
 function beginEdit(): void {
   body.value = props.message.body
@@ -29,17 +36,18 @@ function remove(): void {
   if (window.confirm('Удалить это сообщение?')) emit('remove')
 }
 
-function initial(authorId: string): string {
-  return authorId.trim().slice(0, 1).toLocaleUpperCase('ru-RU') || 'У'
+function initial(name: string): string {
+  return name.trim().slice(0, 1).toLocaleUpperCase('ru-RU') || 'У'
 }
 </script>
 
 <template>
   <article class="message-item message-row" :class="{ deleted: message.deleted }">
-    <span class="message-avatar" aria-hidden="true">{{ initial(message.authorId) }}</span>
+    <img v-if="authorAvatar && !avatarFailed" class="message-avatar" :src="authorAvatar" alt="" @error="avatarFailed = true">
+    <span v-else class="message-avatar" aria-hidden="true">{{ initial(authorName) }}</span>
     <div class="message-content">
       <div class="message-meta">
-        <span class="message-author">{{ message.authorId }}</span>
+        <span class="message-author">{{ authorName }}</span>
         <time class="message-time">{{ new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }}</time>
         <span v-if="message.editedAt" class="message-time">изменено</span>
       </div>

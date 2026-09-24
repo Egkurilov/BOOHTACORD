@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { loadCurrentSession, type CurrentSession } from '../identity/current_session'
+import { useAuthorDirectory } from '../identity/author_directory'
 import type { TextMessage } from './message_client'
 import { useMessageStore } from './message_store'
 import TextHistoryList from './TextHistoryList.vue'
@@ -12,6 +13,7 @@ import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
 const props = defineProps<{ channelId: string; channelName: string; navOpen: boolean; membersOpen: boolean; showMembers: boolean }>()
 const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
 const store = useMessageStore()
+const authors = useAuthorDirectory()
 const draft = ref('')
 const session = ref<CurrentSession | null>(null)
 const replyTarget = ref<TextMessage | null>(null)
@@ -68,7 +70,7 @@ function addEmoji(emoji: string): void {
     <TextHistoryList :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @retry="retry" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
-        <p v-if="replyTarget" class="reply-target">Ответ для {{ replyTarget.authorId }} <button type="button" @click="replyTarget = null">Отмена</button></p>
+        <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
         <TextMessageAttachmentPicker
           :channel-id="props.channelId"
           :disabled="store.sending || attachmentPending"

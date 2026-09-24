@@ -1,0 +1,58 @@
+import { createPinia, setActivePinia } from 'pinia'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { useAuthorDirectory } from './author_directory'
+
+const member = (name: string, avatar = true) => new Response(JSON.stringify({
+  user_id: 'user-2', login: 'member', display_name: name, role: 'MEMBER',
+  ...(avatar ? { avatar_url: 'https://attacker.example/track' } : {}),
+}))
+
+describe('author directory', () => {
+  beforeEach(() => setActivePinia(createPinia()))
+
+  it('uses a neutral fallback, deduplicates member lookup and constructs a private avatar URL', async () => {
+    const directory = useAuthorDirectory()
+    let resolveMember: ((response: Response) => void) | undefined
+    const request = vi.fn(() => new Promise<Response>((resolve) => { resolveMember = resolve }))
+    expect(directory.displayName('user-2')).toBe('Участник')
+    expect(directory.avatarUrl('user-2')).toBeUndefined()
+    const first = directory.ensure('user-2', request)
+    const second = directory.ensure('user-2', request)
+    expect(request).toHaveBeenCalledTimes(1)
+    resolveMember?.(member('Лера'))
+    await Promise.all([first, second])
+    expect(directory.displayName('user-2')).toBe('Лера')
+    expect(directory.avatarUrl('user-2')).toBe('/api/v1/members/user-2/avatar')
+    expect(directory.avatarUrl('user-2')).not.toContain('attacker.example')
+  })
+
+  it('refreshes a renamed member and applies own profile changes immediately', async () => {
+    const directory = useAuthorDirectory()
+    const request = vi.fn().mockResolvedValueOnce(member('Старое имя', false)).mockResolvedValueOnce(member('Новое имя', false))
+    await directory.ensure('user-2', request)
+    expect(directory.displayName('user-2')).toBe('Старое имя')
+    await directory.refreshKnown(request)
+    expect(directory.displayName('user-2')).toBe('Новое имя')
+    directory.acceptOwnProfile({ account_id: 'me', login: 'me', display_name: 'Я', role: 'MEMBER' })
+    expect(directory.displayName('me')).toBe('Я')
+    expect(request).toHaveBeenCalledTimes(2)
+  })
+
+  it('retains the safe fallback when a historic author is unavailable', async () => {
+    const directory = useAuthorDirectory()
+    await directory.ensure('blocked-user', vi.fn().mockResolvedValue(new Response(null, { status: 404 })))
+    expect(directory.displayName('blocked-user')).toBe('Участник')
+    expect(directory.avatarUrl('blocked-user')).toBeUndefined()
+  })
+
+  it('does not overwrite a newly saved own name with an older member response', async () => {
+    const directory = useAuthorDirectory()
+    let resolveOld: ((response: Response) => void) | undefined
+    const lookup = directory.ensure('me', () => new Promise<Response>((resolve) => { resolveOld = resolve }))
+    directory.acceptOwnProfile({ account_id: 'me', login: 'me', display_name: 'Новое имя', role: 'MEMBER' })
+    resolveOld?.(new Response(JSON.stringify({ user_id: 'me', login: 'me', display_name: 'Старое имя', role: 'MEMBER' })))
+    await lookup
+    expect(directory.displayName('me')).toBe('Новое имя')
+  })
+})

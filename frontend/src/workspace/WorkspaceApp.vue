@@ -22,6 +22,7 @@ import { useGuildPresence } from '../identity/guild_presence'
 import { useWorkspaceDrawers } from './useWorkspaceDrawers'
 import ProfileSettings from '../identity/ProfileSettings.vue'
 import { useCurrentProfile } from '../identity/current_profile'
+import { useAuthorDirectoryLifecycle } from '../identity/author_directory_lifecycle'
 import AdminPanel from './AdminPanel.vue'
 import SearchLauncher from '../search/SearchLauncher.vue'
 import WorkspaceSearchPanel from '../search/WorkspaceSearchPanel.vue'
@@ -40,6 +41,7 @@ const sidebarSection = ref<'channels' | 'messages'>('channels')
 const activePanel = ref<'none' | 'admin' | 'audio' | 'profile' | 'search'>('none')
 const { navOpen, membersOpen, closeDrawers, toggleNavigation, toggleMembers } = useWorkspaceDrawers()
 const { profile, profileError, profileLoading, refreshProfile, setProfile } = useCurrentProfile()
+useAuthorDirectoryLifecycle(profile)
 const selectedDirectMessage = computed(() => directMessageStore.directMessages.find((item) => item.id === directMessageStore.directMessageId) ?? null)
 const voiceStageWide = computed(() => selectedChannel.value?.kind === 'VOICE' && !selectedDirectMessage.value && activePanel.value === 'none')
 const voiceNavigationPresence = computed(() => buildVoiceNavigationPresence(activeVoiceChannel.value?.id ?? null, profile.value, voiceConnection))
