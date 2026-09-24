@@ -14,8 +14,13 @@ defineProps<{
   directMessage: DirectMessageListItem | null
   joinVoice: WorkspaceVoiceControls['joinVoice']
   startScreen: WorkspaceVoiceControls['startScreen']
+  navOpen: boolean
+  membersOpen: boolean
+  showMembers: boolean
+  selfDisplayName: string | null
   voiceConnection: VoiceConnection
 }>()
+const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
 </script>
 
 <template>
@@ -32,6 +37,10 @@ defineProps<{
     v-else
     :channel="channel"
     :direct-message="directMessage"
+    :nav-open="navOpen"
+    :members-open="membersOpen"
+    :show-members="showMembers"
+    :self-display-name="selfDisplayName"
     :screen-diagnostics="voiceConnection.screenDiagnostics"
     :screen-error="voiceConnection.screenError"
     :screen-profile="voiceConnection.screenProfile"
@@ -40,6 +49,8 @@ defineProps<{
     :screen-viewer-error="voiceConnection.screenViewerError"
     :selected-screen-audio-volume="voiceConnection.selectedScreenAudioVolume"
     :selected-screen-stream-id="voiceConnection.selectedScreenStreamId"
+    :self-microphone-muted="voiceConnection.microphoneMuted"
+    :self-microphone-unavailable="voiceConnection.microphonePermissionDenied"
     :voice-error="voiceConnection.error"
     :voice-is-active="channel?.id === voiceConnection.active?.channelId"
     :voice-state="voiceConnection.state"
@@ -55,5 +66,7 @@ defineProps<{
     @start-screen="startScreen"
     @stop-screen="voiceConnection.stopScreen"
     @transfer="joinVoice($event, true)"
+    @toggle-nav="emit('toggleNav')"
+    @toggle-members="emit('toggleMembers')"
   />
 </template>

@@ -1,7 +1,8 @@
 import { apiBaseUrl } from '../config/runtime'
 
 export interface OwnProfile { account_id: string; login: string; display_name: string; role: 'MEMBER' | 'ADMINISTRATOR'; avatar_url?: string }
-export interface GuildMember { user_id: string; login: string; display_name: string; role: 'MEMBER' | 'ADMINISTRATOR'; avatar_url?: string }
+export type MemberPresence = 'online' | 'offline' | 'unknown'
+export interface GuildMember { user_id: string; login: string; display_name: string; role: 'MEMBER' | 'ADMINISTRATOR'; presence: MemberPresence; avatar_url?: string }
 export interface MemberPage { members: GuildMember[]; next_cursor?: string }
 export type ProfileRequest = (url: string, init: RequestInit) => Promise<Response>
 
@@ -50,5 +51,6 @@ export async function loadMember(userID: string, request: ProfileRequest = fetch
 function parseMember(value: unknown): GuildMember {
   const member = record(value)
   if (member.role !== 'MEMBER' && member.role !== 'ADMINISTRATOR') throw new Error('Сервер вернул некорректную роль участника.')
-  return { user_id: stringField(member.user_id), login: stringField(member.login), display_name: stringField(member.display_name), role: member.role, ...(typeof member.avatar_url === 'string' ? { avatar_url: member.avatar_url } : {}) }
+  const presence = member.presence === 'online' || member.presence === 'offline' ? member.presence : 'unknown'
+  return { user_id: stringField(member.user_id), login: stringField(member.login), display_name: stringField(member.display_name), role: member.role, presence, ...(typeof member.avatar_url === 'string' ? { avatar_url: member.avatar_url } : {}) }
 }

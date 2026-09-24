@@ -37,7 +37,7 @@ describe('GuildChat design-system foundation', () => {
   })
 
   it('keeps the supplied wide, medium, and compact shell breakpoints', () => {
-    const shell = source('./shell.css')
+    const shell = source('./shell.css') + source('./responsive_shell.css')
 
     expect(shell).toContain('@media (min-width: 1440px)')
     expect(shell).toContain('@media (min-width: 1280px) and (max-width: 1439px)')

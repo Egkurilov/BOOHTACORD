@@ -7,8 +7,10 @@ import DirectMessageSearch from './DirectMessageSearch.vue'
 import type { DirectMessageHistoryItem } from './direct_message_client'
 import { advanceReadIfVisible } from './direct_message_read_gate'
 import { useDirectMessageStore } from './direct_message_store'
+import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
 
-const props = defineProps<{ directMessageId: string; otherParticipantDisplayName: string }>()
+const props = defineProps<{ directMessageId: string; otherParticipantDisplayName: string; navOpen: boolean }>()
+const emit = defineEmits<{ toggleNav: [] }>()
 const store = useDirectMessageStore()
 const draft = ref('')
 const session = ref<CurrentSession | null>(null)
@@ -77,7 +79,7 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisi
         <h2 id="direct-message-title">{{ props.otherParticipantDisplayName }}</h2>
         <small>Личный диалог</small>
       </div>
-      <div class="header-actions"><button class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen = !searchOpen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button></div>
+      <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="props.navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')"><button class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen = !searchOpen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button></WorkspaceHeaderActions>
     </header>
     <div v-if="searchOpen" class="conversation-tools"><DirectMessageSearch :direct-message-id="props.directMessageId" /></div>
     <p v-if="store.loadingHistory" class="state" aria-live="polite">Загружаем историю…</p>

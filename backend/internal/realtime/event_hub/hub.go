@@ -16,34 +16,62 @@ type Hub struct {
 	mu          sync.Mutex
 	queueSize   int
 	subscribers map[*Subscription]struct{}
+	connections map[string]int
 }
 
 type Subscription struct {
-	hub        *Hub
-	events     chan Event
-	overflowed chan struct{}
-	dropped    bool
-	once       sync.Once
+	hub          *Hub
+	accountID    string
+	becameOnline bool
+	events       chan Event
+	overflowed   chan struct{}
+	dropped      bool
+	once         sync.Once
 }
 
 func New(queueSize int) *Hub {
 	if queueSize < 1 {
 		queueSize = 1
 	}
-	return &Hub{queueSize: queueSize, subscribers: make(map[*Subscription]struct{})}
+	return &Hub{queueSize: queueSize, subscribers: make(map[*Subscription]struct{}), connections: make(map[string]int)}
 }
 
-func (hub *Hub) Subscribe() *Subscription {
-	subscription := &Subscription{hub: hub, events: make(chan Event, hub.queueSize), overflowed: make(chan struct{}, 1)}
+func (hub *Hub) Subscribe(accountIDs ...string) *Subscription {
+	accountID := ""
+	if len(accountIDs) > 0 {
+		accountID = accountIDs[0]
+	}
+	return hub.subscribe(accountID, nil)
+}
+
+func (hub *Hub) SubscribeAccount(accountID string, onlineEvent Event) *Subscription {
+	return hub.subscribe(accountID, &onlineEvent)
+}
+
+func (hub *Hub) subscribe(accountID string, onlineEvent *Event) *Subscription {
+	subscription := &Subscription{hub: hub, accountID: accountID, events: make(chan Event, hub.queueSize), overflowed: make(chan struct{}, 1)}
 	hub.mu.Lock()
 	hub.subscribers[subscription] = struct{}{}
+	if accountID != "" {
+		subscription.becameOnline = hub.connections[accountID] == 0
+		hub.connections[accountID]++
+		if subscription.becameOnline && onlineEvent != nil {
+			hub.publishLocked(*onlineEvent)
+		}
+	}
 	hub.mu.Unlock()
 	return subscription
 }
 
+func (subscription *Subscription) BecameOnline() bool { return subscription.becameOnline }
+
 func (hub *Hub) Publish(event Event) {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
+	hub.publishLocked(event)
+}
+
+func (hub *Hub) publishLocked(event Event) {
 	for subscription := range hub.subscribers {
 		if subscription.dropped {
 			continue
@@ -77,10 +105,23 @@ func (subscription *Subscription) AcknowledgeOverflow() {
 	}
 }
 
-func (subscription *Subscription) Close() {
+func (subscription *Subscription) Close(offlineEvents ...Event) bool {
+	becameOffline := false
 	subscription.once.Do(func() {
 		subscription.hub.mu.Lock()
 		delete(subscription.hub.subscribers, subscription)
+		if subscription.accountID != "" {
+			if subscription.hub.connections[subscription.accountID] <= 1 {
+				delete(subscription.hub.connections, subscription.accountID)
+				becameOffline = true
+			} else {
+				subscription.hub.connections[subscription.accountID]--
+			}
+		}
+		if becameOffline && len(offlineEvents) > 0 {
+			subscription.hub.publishLocked(offlineEvents[0])
+		}
 		subscription.hub.mu.Unlock()
 	})
+	return becameOffline
 }

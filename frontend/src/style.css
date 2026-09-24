@@ -2,6 +2,7 @@
 @import './design/foundation.css';
 @import './design/authentication.css';
 @import './design/shell.css';
+@import './design/responsive_shell.css';
 @import './design/navigation.css';
 @import './design/voice.css';
 @import './design/conversation.css';

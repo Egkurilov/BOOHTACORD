@@ -589,7 +589,7 @@
     "/api/v1/members": {
       "get": {
         "operationId": "listMembers",
-        "description": "Authenticated one-guild member directory. Excludes blocked accounts and exposes only UUID, login/display name, fixed role and an authenticated avatar URL; stable UUID cursor pagination.",
+        "description": "Authenticated one-guild member directory. Excludes blocked accounts and exposes only UUID, login/display name, fixed role, authenticated avatar URL, and presence derived from active authenticated realtime WebSocket sessions; stable UUID cursor pagination. Unknown is not offline and Away is not supported.",
         "parameters": [
           { "name": "cursor", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
           { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
@@ -982,12 +982,13 @@
       },
       "Member": {
         "type": "object", "additionalProperties": false,
-        "required": ["user_id", "login", "display_name", "role"],
+        "required": ["user_id", "login", "display_name", "role", "presence"],
         "properties": {
           "user_id": { "type": "string", "format": "uuid" },
           "login": { "type": "string", "minLength": 3, "maxLength": 32 },
           "display_name": { "type": "string", "minLength": 1, "maxLength": 64 },
           "role": { "type": "string", "enum": ["MEMBER", "ADMINISTRATOR"] },
+          "presence": { "type": "string", "enum": ["online", "offline", "unknown"], "readOnly": true, "description": "online when at least one authenticated realtime WebSocket is active; offline when the live registry has none; unknown when presence data is unavailable. Away is not supported." },
           "avatar_url": { "type": "string", "format": "uri-reference" }
         }
       },

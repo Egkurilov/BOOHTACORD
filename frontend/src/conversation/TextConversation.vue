@@ -8,8 +8,10 @@ import { useMessageStore } from './message_store'
 import TextMessageAttachmentPicker from './TextMessageAttachmentPicker.vue'
 import TextMessageSearch from './TextMessageSearch.vue'
 import type { TextAttachmentUpload } from './text_attachment_upload_client'
+import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
 
-const props = defineProps<{ channelId: string; channelName: string }>()
+const props = defineProps<{ channelId: string; channelName: string; navOpen: boolean; membersOpen: boolean; showMembers: boolean }>()
+const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
 const store = useMessageStore()
 const draft = ref('')
 const session = ref<CurrentSession | null>(null)
@@ -65,9 +67,8 @@ function addEmoji(emoji: string): void {
       <span class="conversation-symbol" aria-hidden="true">#</span>
       <div class="main-title">
         <h2 id="conversation-title">{{ channelName }}</h2>
-        <small>Текстовый канал</small>
       </div>
-      <div class="header-actions"><button class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen = !searchOpen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button></div>
+      <WorkspaceHeaderActions :members-expanded="props.membersOpen" :nav-expanded="props.navOpen" :show-members="props.showMembers" @toggle-members="emit('toggleMembers')" @toggle-navigation="emit('toggleNav')"><button class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen = !searchOpen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button></WorkspaceHeaderActions>
     </header>
     <div v-if="searchOpen" class="conversation-tools"><TextMessageSearch :channel-id="props.channelId" /></div>
     <p v-if="store.loading" class="state" aria-live="polite">Загружаем историю…</p>

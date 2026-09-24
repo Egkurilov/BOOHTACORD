@@ -60,7 +60,7 @@ func NewDetailHandler(reader Reader) http.Handler {
 			writeError(w, r, http.StatusInternalServerError, "INTERNAL", "Не удалось загрузить участника")
 			return
 		}
-		writeJSON(w, memberResponse{UserID: member.ID, Login: member.Login, DisplayName: member.DisplayName, Role: member.Role, AvatarURL: member.AvatarURL})
+		writeJSON(w, memberResponse{UserID: member.ID, Login: member.Login, DisplayName: member.DisplayName, Role: member.Role, AvatarURL: member.AvatarURL, Presence: safePresence(member.Presence)})
 	})
 }
 
@@ -77,11 +77,12 @@ func queryLimit(r *http.Request) (int, error) {
 }
 
 type memberResponse struct {
-	UserID      string `json:"user_id"`
-	Login       string `json:"login"`
-	DisplayName string `json:"display_name"`
-	Role        string `json:"role"`
-	AvatarURL   string `json:"avatar_url,omitempty"`
+	UserID      string               `json:"user_id"`
+	Login       string               `json:"login"`
+	DisplayName string               `json:"display_name"`
+	Role        string               `json:"role"`
+	AvatarURL   string               `json:"avatar_url,omitempty"`
+	Presence    listmembers.Presence `json:"presence"`
 }
 type listResponse struct {
 	Members    []memberResponse `json:"members"`
@@ -91,9 +92,16 @@ type listResponse struct {
 func memberResponses(members []listmembers.Member) []memberResponse {
 	result := make([]memberResponse, 0, len(members))
 	for _, member := range members {
-		result = append(result, memberResponse{UserID: member.ID, Login: member.Login, DisplayName: member.DisplayName, Role: member.Role, AvatarURL: member.AvatarURL})
+		result = append(result, memberResponse{UserID: member.ID, Login: member.Login, DisplayName: member.DisplayName, Role: member.Role, AvatarURL: member.AvatarURL, Presence: safePresence(member.Presence)})
 	}
 	return result
+}
+
+func safePresence(presence listmembers.Presence) listmembers.Presence {
+	if presence == listmembers.PresenceOnline || presence == listmembers.PresenceOffline {
+		return presence
+	}
+	return listmembers.PresenceUnknown
 }
 func writeJSON(w http.ResponseWriter, value any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

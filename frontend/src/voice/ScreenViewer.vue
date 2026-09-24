@@ -4,8 +4,8 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { ScreenViewerCard } from './screen_viewer_controller'
 import { createScreenFullscreenControls } from './screen_fullscreen_controls'
 
-const props = defineProps<{ cards: ScreenViewerCard[]; error: string | null; selectedAudioVolume: number; selectedId: string | null }>()
-const emit = defineEmits<{ clear: []; select: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setAudioVolume: [percent: number] }>()
+const props = defineProps<{ cards: ScreenViewerCard[]; error: string | null; expanded: boolean; selectedAudioVolume: number; selectedId: string | null }>()
+const emit = defineEmits<{ clear: []; select: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setAudioVolume: [percent: number]; 'update:expanded': [expanded: boolean] }>()
 const video = ref<HTMLVideoElement | null>(null)
 const audio = ref<HTMLAudioElement | null>(null)
 const stage = ref<HTMLDivElement | null>(null)
@@ -18,8 +18,20 @@ function select(id: string): void {
   emit('select', id, video.value, audio.value)
 }
 
-onMounted(() => { fullscreenControls = createScreenFullscreenControls(() => stage.value, document, (active) => { fullscreenActive.value = active }) })
-onBeforeUnmount(() => { fullscreenControls?.dispose(); emit('clear') })
+function handleKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && props.expanded) emit('update:expanded', false)
+}
+
+onMounted(() => {
+  fullscreenControls = createScreenFullscreenControls(() => stage.value, document, (active) => { fullscreenActive.value = active })
+  window.addEventListener('keydown', handleKeydown)
+})
+onBeforeUnmount(() => {
+  fullscreenControls?.dispose()
+  window.removeEventListener('keydown', handleKeydown)
+  if (props.expanded) emit('update:expanded', false)
+  emit('clear')
+})
 
 async function toggleFullscreen(): Promise<void> {
   fullscreenFeedback.value = ''
@@ -52,6 +64,7 @@ async function toggleFullscreen(): Promise<void> {
         <input aria-label="Громкость звука выбранной демонстрации" type="range" min="0" max="200" step="1" :value="selectedAudioVolume" @input="emit('setAudioVolume', Number(($event.target as HTMLInputElement).value))">
       </label>
       <button v-if="selectedId" class="voice-leave" type="button" @click="emit('clear')">Прекратить просмотр</button>
+      <button v-if="selectedId" class="screen-window-toggle gc-button gc-button--secondary" type="button" :aria-pressed="expanded" @click="emit('update:expanded', !expanded)">{{ expanded ? 'Вернуть в окно канала' : 'Развернуть на всю область' }}</button>
     </div>
     <div v-if="cards.length" class="screen-cards stream-rail" aria-label="Выбор демонстрации">
       <button v-for="stream in cards" :key="stream.id" class="screen-card stream-option" :class="{ selected: stream.id === selectedId }" type="button" @click="select(stream.id)">

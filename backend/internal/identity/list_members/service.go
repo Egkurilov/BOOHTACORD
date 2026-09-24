@@ -20,9 +20,18 @@ type Input struct {
 	Cursor string
 	Limit  int
 }
+type Presence string
+
+const (
+	PresenceOnline  Presence = "online"
+	PresenceOffline Presence = "offline"
+	PresenceUnknown Presence = "unknown"
+)
+
 type Member struct {
 	ID, Login, DisplayName, Role, AvatarURL string
 	HasAvatar                               bool
+	Presence                                Presence
 }
 type Result struct {
 	Members    []Member
@@ -32,9 +41,19 @@ type Store interface {
 	List(context.Context, string, int) ([]Member, error)
 	Find(context.Context, string) (Member, error)
 }
-type Service struct{ store Store }
+type PresenceReader interface{ IsOnline(string) bool }
+type Service struct {
+	store    Store
+	presence PresenceReader
+}
 
-func New(store Store) Service { return Service{store: store} }
+func New(store Store, presence ...PresenceReader) Service {
+	service := Service{store: store}
+	if len(presence) > 0 {
+		service.presence = presence[0]
+	}
+	return service
+}
 
 func (service Service) List(ctx context.Context, input Input) (Result, error) {
 	if input.Limit < 0 || input.Limit > maxLimit || (input.Cursor != "" && !validUUID(input.Cursor)) {
@@ -54,6 +73,7 @@ func (service Service) List(ctx context.Context, input Input) (Result, error) {
 		result.NextCursor = result.Members[len(result.Members)-1].ID
 	}
 	for i := range result.Members {
+		result.Members[i].Presence = service.memberPresence(result.Members[i].ID)
 		if result.Members[i].HasAvatar {
 			result.Members[i].AvatarURL = "/api/v1/members/" + result.Members[i].ID + "/avatar"
 		}
@@ -75,7 +95,18 @@ func (service Service) Get(ctx context.Context, memberID string) (Member, error)
 	if member.HasAvatar {
 		member.AvatarURL = "/api/v1/members/" + member.ID + "/avatar"
 	}
+	member.Presence = service.memberPresence(member.ID)
 	return member, nil
+}
+
+func (service Service) memberPresence(accountID string) Presence {
+	if service.presence == nil {
+		return PresenceUnknown
+	}
+	if service.presence.IsOnline(accountID) {
+		return PresenceOnline
+	}
+	return PresenceOffline
 }
 
 func validUUID(value string) bool { _, err := uuid.Parse(value); return err == nil }

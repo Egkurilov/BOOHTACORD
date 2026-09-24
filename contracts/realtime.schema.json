@@ -9,14 +9,14 @@
     "event_id": { "type": "string", "format": "uuid" },
     "kind": {
       "type": "string",
-      "enum": ["connection.ready", "connection.resync_required", "voice.lease_revoked", "channel.updated", "message.created"]
+      "enum": ["connection.ready", "connection.resync_required", "voice.lease_revoked", "channel.updated", "presence.snapshot", "presence.changed", "message.created"]
     },
     "occurred_at": { "type": "string", "format": "date-time" },
     "payload": { "type": "object" }
   },
   "allOf": [
     {
-      "if": { "properties": { "kind": { "const": "message.created" } }, "required": ["kind"] },
+      "if": { "properties": { "kind": { "enum": ["message.created"] } }, "required": ["kind"] },
       "then": {
         "properties": {
           "payload": {
@@ -26,6 +26,35 @@
             "properties": {
               "channel_id": { "type": "string", "format": "uuid" },
               "message_id": { "type": "string", "format": "uuid" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "presence.snapshot" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["online_user_ids"],
+            "properties": { "online_user_ids": { "type": "array", "items": { "type": "string", "format": "uuid" } } }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "presence.changed" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["user_id", "presence"],
+            "properties": {
+              "user_id": { "type": "string", "format": "uuid" },
+              "presence": { "type": "string", "enum": ["online", "offline"] }
             }
           }
         }

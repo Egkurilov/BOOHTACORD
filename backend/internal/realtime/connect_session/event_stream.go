@@ -11,7 +11,7 @@ import (
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
-func streamEvents(connection *websocket.Conn, authenticator sessionapi.Authenticator, cookie *http.Cookie, interval time.Duration, subscription *eventhub.Subscription, newID Identifier, now Clock) {
+func streamEvents(connection *websocket.Conn, authenticator sessionapi.Authenticator, cookie *http.Cookie, interval time.Duration, subscription *eventhub.Subscription, hub *eventhub.Hub, newID Identifier, now Clock) {
 	closed := connection.CloseRead(context.Background()).Done()
 	var events <-chan eventhub.Event
 	var overflowed <-chan struct{}
@@ -39,6 +39,9 @@ func streamEvents(connection *websocket.Conn, authenticator sessionapi.Authentic
 		case <-overflowed:
 			writeContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			ok := writeEvent(writeContext, connection, newID, now, "connection.resync_required", map[string]any{"reason": "event_overflow"})
+			if ok && hub != nil {
+				ok = writeEvent(writeContext, connection, newID, now, "presence.snapshot", map[string]any{"online_user_ids": hub.OnlineAccounts()})
+			}
 			cancel()
 			if !ok {
 				return

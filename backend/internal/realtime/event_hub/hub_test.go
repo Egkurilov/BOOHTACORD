@@ -45,3 +45,43 @@ func TestOverflowSignalsResyncAndCanResume(t *testing.T) {
 		t.Fatal("delivery did not resume")
 	}
 }
+
+func TestPresenceCountsIndependentAuthenticatedConnections(t *testing.T) {
+	hub := New(2)
+	first := hub.Subscribe("account-1")
+	second := hub.Subscribe("account-1")
+	other := hub.Subscribe("account-2")
+	defer second.Close()
+	defer other.Close()
+
+	if !hub.IsOnline("account-1") || !hub.IsOnline("account-2") || hub.IsOnline("account-3") {
+		t.Fatal("presence did not reflect open account connections")
+	}
+	first.Close()
+	if !hub.IsOnline("account-1") {
+		t.Fatal("closing one tab marked another active tab offline")
+	}
+	second.Close()
+	if hub.IsOnline("account-1") {
+		t.Fatal("account remained online after its last connection closed")
+	}
+}
+
+func TestPresenceTransitionEventsAreAtomicWithConnectionCounts(t *testing.T) {
+	hub := New(4)
+	observer := hub.Subscribe()
+	online := Event{EventID: "online", Kind: "presence.changed", Payload: map[string]any{"presence": "online"}}
+	offline := Event{EventID: "offline", Kind: "presence.changed", Payload: map[string]any{"presence": "offline"}}
+	first := hub.SubscribeAccount("account-1", online)
+	second := hub.SubscribeAccount("account-1", online)
+	if event := <-observer.Events(); event.EventID != "online" {
+		t.Fatalf("first transition = %#v", event)
+	}
+	if first.Close(offline) || !second.Close(offline) {
+		t.Fatal("presence transition did not follow the last active connection")
+	}
+	if event := <-observer.Events(); event.EventID != "offline" {
+		t.Fatalf("last transition = %#v", event)
+	}
+	observer.Close()
+}

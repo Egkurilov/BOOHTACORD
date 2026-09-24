@@ -33,12 +33,30 @@ func TestGetValidatesMemberIDAndHidesMissingOrBlockedMember(t *testing.T) {
 	}
 }
 
+func TestListUsesLiveSessionPresenceAndKeepsUnavailableStatusUnknown(t *testing.T) {
+	store := &fakeStore{members: []Member{{ID: "online"}, {ID: "offline"}}}
+	reader := fakePresence{"online": true}
+	result, err := New(store, reader).List(context.Background(), Input{Limit: 10})
+	if err != nil || result.Members[0].Presence != PresenceOnline || result.Members[1].Presence != PresenceOffline {
+		t.Fatalf("List() presence = %#v, %v", result.Members, err)
+	}
+
+	unknown, err := New(store).List(context.Background(), Input{Limit: 10})
+	if err != nil || unknown.Members[0].Presence != PresenceUnknown || unknown.Members[1].Presence != PresenceUnknown {
+		t.Fatalf("List() without presence provider = %#v, %v", unknown.Members, err)
+	}
+}
+
 type fakeStore struct {
 	members []Member
 	limit   int
 	called  bool
 	findErr error
 }
+
+type fakePresence map[string]bool
+
+func (presence fakePresence) IsOnline(accountID string) bool { return presence[accountID] }
 
 func (store *fakeStore) List(_ context.Context, _ string, limit int) ([]Member, error) {
 	store.called, store.limit = true, limit

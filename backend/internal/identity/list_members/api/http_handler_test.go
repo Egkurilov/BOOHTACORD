@@ -13,13 +13,13 @@ import (
 )
 
 func TestListRequiresSessionAndSerializesSafePage(t *testing.T) {
-	reader := &fakeReader{result: listmembers.Result{Members: []listmembers.Member{{ID: "00000000-0000-4000-8000-000000000001", Login: "member", DisplayName: "Member", Role: "MEMBER", AvatarURL: "/api/v1/members/00000000-0000-4000-8000-000000000001/avatar"}, {ID: "00000000-0000-4000-8000-000000000002", Login: "owner", DisplayName: "Owner", Role: "ADMINISTRATOR"}}, NextCursor: "00000000-0000-4000-8000-000000000002"}}
+	reader := &fakeReader{result: listmembers.Result{Members: []listmembers.Member{{ID: "00000000-0000-4000-8000-000000000001", Login: "member", DisplayName: "Member", Role: "MEMBER", Presence: listmembers.PresenceOnline, AvatarURL: "/api/v1/members/00000000-0000-4000-8000-000000000001/avatar"}, {ID: "00000000-0000-4000-8000-000000000002", Login: "owner", DisplayName: "Owner", Role: "ADMINISTRATOR", Presence: listmembers.PresenceUnknown}}, NextCursor: "00000000-0000-4000-8000-000000000002"}}
 	handler := NewHandler(reader)
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/members?limit=2", nil)
 	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: "viewer"}))
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), `"next_cursor"`) || strings.Contains(recorder.Body.String(), "password_hash") || strings.Contains(recorder.Body.String(), "blocked_at") {
+	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), `"next_cursor"`) || !strings.Contains(recorder.Body.String(), `"presence":"online"`) || !strings.Contains(recorder.Body.String(), `"presence":"unknown"`) || strings.Contains(recorder.Body.String(), "password_hash") || strings.Contains(recorder.Body.String(), "blocked_at") {
 		t.Fatalf("status=%d body=%q", recorder.Code, recorder.Body.String())
 	}
 	if reader.input.Limit != 2 {
@@ -40,7 +40,7 @@ func TestDetailPassesOnlyRequestedMemberID(t *testing.T) {
 	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: "viewer"}))
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusOK || reader.memberID != reader.member.ID {
+	if recorder.Code != http.StatusOK || reader.memberID != reader.member.ID || !strings.Contains(recorder.Body.String(), `"presence":"unknown"`) {
 		t.Fatalf("status=%d ID=%q", recorder.Code, reader.memberID)
 	}
 }

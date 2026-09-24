@@ -37,7 +37,7 @@
 | Начальная загрузка | `getHealth`, `getMaintenanceAdmission`, `getCurrentSession` | `maintenance.active` управляет только новыми подключениями; это metadata, а не расписание выкладки. |
 | Аутентификация | `register`, `login`, `logout`, `completePasswordReset` | Ссылки сброса пароля создаёт администратор; клиент не создаёт такую ссылку для себя. |
 | Профиль | `getMe`, `updateMe`, `changePassword`, `uploadAvatar`, `deleteAvatar` | Профиль относится только к вызывающей session; логин не изменяется через UI. Аватары не являются публичными файлами. |
-| Участники | `listMembers`, `getMember`, `getMemberAvatar` | Только активные аккаунты; стабильная UUID-пагинация и безопасная проекция login/display name/role/avatar URL. |
+| Участники | `listMembers`, `getMember`, `getMemberAvatar` | Только активные аккаунты; стабильная UUID-пагинация и безопасная проекция login/display name/role/avatar URL/presence. Presence online означает хотя бы один активный authenticated realtime WebSocket; unknown не считать offline, Away отсутствует. |
 | Каналы | `getChannelTopology` | Deployment содержит ровно одну гильдию. При admin-изменениях topology используйте `revision`. |
 | Текстовые сообщения | `listTextMessages`, `createTextMessage`, `searchTextMessages`, `editTextMessage`, `deleteTextMessage` | История и поиск — cursor-страницы от новых к старым. Удалённые строки сохраняют identity и marker, но не прежний текст. |
 | Вложения | `uploadTextAttachment`, `downloadTextAttachment`, `previewTextAttachment` | Используйте только разрешённые вызывающему channel paths; attachment IDs не обходят ACL. Связывайте ID загруженных вложений в `createTextMessage` согласно OpenAPI. |
@@ -67,6 +67,8 @@
 | --- | --- |
 | `connection.ready` | Отметить realtime transport готовым после валидации event schema. |
 | `connection.resync_required` | Обновить защищённую topology и активную видимую history через REST; не утверждать, что replay удался. |
+| `presence.snapshot` | Полный список `online_user_ids` активных WebSocket-подключений гильдии; отсутствующий в snapshot участник offline только до следующего события/снимка. |
+| `presence.changed` | Payload `user_id` и `presence` (`online`/`offline`); обновить только этот статус, не выводить его из роли или voice membership. |
 | `voice.lease_revoked` | Остановить связанный локальный voice lifecycle и требовать явного действия пользователя для нового входа. |
 | `channel.updated` | Обновить topology, авторизованную для вызывающего пользователя. |
 | `message.created` | Payload содержит только UUID `channel_id` и `message_id`; перечитать историю через авторизованный REST только для уже выбранного текстового канала. Текст и DM через событие не передаются. |

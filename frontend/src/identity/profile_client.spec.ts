@@ -25,6 +25,22 @@ describe('signed-in profile API client', () => {
     expect(request).toHaveBeenCalledWith(expect.stringMatching(/\/members\?limit=100$/), expect.objectContaining({ credentials: 'same-origin' }))
   })
 
+  it('parses online/offline presence and treats missing or unknown status as unknown', async () => {
+    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ members: [
+      { user_id: '1', login: 'online', display_name: 'Online', role: 'MEMBER', presence: 'online' },
+      { user_id: '2', login: 'offline', display_name: 'Offline', role: 'MEMBER', presence: 'offline' },
+      { user_id: '3', login: 'legacy', display_name: 'Legacy', role: 'MEMBER' },
+      { user_id: '4', login: 'unknown', display_name: 'Unknown', role: 'MEMBER', presence: 'away' },
+    ] }), { status: 200 }))
+
+    await expect(loadMembers(undefined, request)).resolves.toMatchObject({ members: [
+      { user_id: '1', presence: 'online' },
+      { user_id: '2', presence: 'offline' },
+      { user_id: '3', presence: 'unknown' },
+      { user_id: '4', presence: 'unknown' },
+    ] })
+  })
+
   it('loads the selected member profile through the authenticated route', async () => {
     const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ user_id: 'user-2', login: 'member', display_name: 'Участник', role: 'MEMBER' }), { status: 200 }))
     await expect(loadMember('user-2', request)).resolves.toMatchObject({ user_id: 'user-2', login: 'member' })

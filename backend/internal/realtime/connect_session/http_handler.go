@@ -45,7 +45,8 @@ func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationIn
 		revalidationInterval = defaultSessionRevalidationInterval
 	}
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if _, ok := sessionapi.PrincipalFrom(request.Context()); !ok {
+		principal, ok := sessionapi.PrincipalFrom(request.Context())
+		if !ok {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -60,8 +61,8 @@ func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationIn
 		}
 		var subscription *eventhub.Subscription
 		if events != nil {
-			subscription = events.Subscribe()
-			defer subscription.Close()
+			subscription = events.SubscribeAccount(principal.AccountID, presenceEvent(principal.AccountID, "online", newID, now))
+			defer subscription.Close(presenceEvent(principal.AccountID, "offline", newID, now))
 		}
 		acceptedAt := time.Now()
 		if observer != nil {
@@ -79,9 +80,16 @@ func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationIn
 		if !writeEvent(writeContext, connection, newID, now, "connection.ready", map[string]any{}) {
 			return
 		}
+		if events != nil && !writeEvent(writeContext, connection, newID, now, "presence.snapshot", map[string]any{"online_user_ids": events.OnlineAccounts()}) {
+			return
+		}
 		if observer != nil {
 			observer.ObserveRealtimeConnectionReady(time.Since(acceptedAt))
 		}
-		streamEvents(connection, authenticator, cookie, revalidationInterval, subscription, newID, now)
+		streamEvents(connection, authenticator, cookie, revalidationInterval, subscription, events, newID, now)
 	})
+}
+
+func presenceEvent(accountID, presence string, newID Identifier, now Clock) eventhub.Event {
+	return eventhub.Event{EventID: newID(), Kind: "presence.changed", OccurredAt: now().UTC(), Payload: map[string]any{"user_id": accountID, "presence": presence}}
 }

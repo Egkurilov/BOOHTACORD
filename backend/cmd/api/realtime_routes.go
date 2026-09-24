@@ -11,8 +11,7 @@ import (
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
-func configureChatAndRealtimeRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, metrics *httpmetrics.Recorder) {
-	events := eventhub.New(64)
+func configureChatAndRealtimeRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, metrics *httpmetrics.Recorder, events *eventhub.Hub) {
 	configureChatRoutes(mux, database, sessions, events)
 	configureRealtimeRoutes(mux, sessions, metrics, events)
 }

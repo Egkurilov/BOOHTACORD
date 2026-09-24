@@ -37,6 +37,7 @@ import (
 	authorizelivekitsignal "voice-platform/backend/internal/media/authorize_livekit_signal"
 	dispatchvoicesfurevocation "voice-platform/backend/internal/media/dispatch_voice_sfu_revocation"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
+	eventhub "voice-platform/backend/internal/realtime/event_hub"
 	"voice-platform/backend/internal/security/request_id"
 )
 
@@ -66,6 +67,7 @@ func main() {
 		os.Exit(1)
 	}
 	metrics := httpmetrics.New()
+	events := eventhub.New(64)
 	configureStatusRoutes(mux, maintenanceService, metrics)
 	mux.Handle("POST /api/v1/auth/register", maintenanceadmission.Middleware(maintenanceService)(configuration.registrationLimiter.Middleware(registerapi.NewHandler(registerService))))
 	mux.Handle("POST /api/v1/auth/login", maintenanceadmission.Middleware(maintenanceService)(configuration.loginLimiter.Middleware(loginapi.NewHandler(loginService))))
@@ -75,12 +77,12 @@ func main() {
 	mux.Handle("POST /api/v1/admin/password-reset-links", sessionapi.Require(sessionService)(sessionapi.RequireAdministrator(configuration.passwordResetLimiter.Middleware(createresetapi.NewHandler(passwordResetCreator, configuration.publicOrigin)))))
 	mux.Handle("PATCH /api/v1/admin/accounts/{accountID}", sessionapi.Require(sessionService)(sessionapi.RequireAdministrator(adminapi.NewHandler(accountAdministration))))
 	configureChannelRoutes(mux, database, sessionService)
-	configureChatAndRealtimeRoutes(mux, database, sessionService, metrics)
+	configureChatAndRealtimeRoutes(mux, database, sessionService, metrics, events)
 	if err := configureStorageRoutes(mux, database, sessionService, configuration.attachmentRoot, configuration.uploadLimiter, metrics); err != nil {
 		slog.Error("configure attachment routes", "error", err)
 		os.Exit(1)
 	}
-	if err := configureProfileAdminRoutes(mux, database, sessionService, configuration); err != nil {
+	if err := configureProfileAdminRoutes(mux, database, sessionService, configuration, events); err != nil {
 		slog.Error("configure profile and administration routes", "error", err)
 		os.Exit(1)
 	}
