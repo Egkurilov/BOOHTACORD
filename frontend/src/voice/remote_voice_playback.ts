@@ -79,8 +79,7 @@ export class RemoteVoicePlayback {
     if (this.speaking.get(participantId) === speaking) return
     this.speaking.set(participantId, speaking)
     const current = this.attached.get(participantId)
-    if (!current) return
-    current.card.speaking = speaking
+    if (current) current.card.speaking = speaking
     this.notify()
   }
 

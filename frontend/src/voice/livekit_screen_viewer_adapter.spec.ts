@@ -23,7 +23,7 @@ describe('LiveKit screen viewer adapter', () => {
       }]]),
     }
     const binding = bindLiveKitScreenViewer(room, {
-      activeSpeakersChanged: 'active-speakers-changed', participantConnected: 'participant-connected', participantDisconnected: 'participant-disconnected', trackPublished: 'track-published', trackSubscribed: 'track-subscribed', trackUnpublished: 'track-unpublished', trackUnsubscribed: 'track-unsubscribed',
+      activeSpeakersChanged: 'active-speakers-changed', participantConnected: 'participant-connected', participantDisconnected: 'participant-disconnected', localTrackPublished: 'local-track-published', localTrackUnpublished: 'local-track-unpublished', trackMuted: 'track-muted', trackPublished: 'track-published', trackSubscribed: 'track-subscribed', trackUnmuted: 'track-unmuted', trackUnpublished: 'track-unpublished', trackUnsubscribed: 'track-unsubscribed',
     }, { microphone: 'microphone', screenAudio: 'screen-audio', screenVideo: 'screen-video' })
 
     binding.subscribeMicrophones()
@@ -34,9 +34,13 @@ describe('LiveKit screen viewer adapter', () => {
     expect(video.setSubscribed).toHaveBeenCalledWith(false)
     expect(audio.setSubscribed).toHaveBeenCalledWith(false)
     expect(binding.viewer.cards()).toEqual([{ accountId: '22222222-2222-4222-8222-222222222222', hasAudio: true, id: '22222222-2222-4222-8222-222222222222:screen', participantId: '22222222-2222-4222-8222-222222222222', participantName: 'Alice' }])
+    expect(binding.participants.cards()[0]?.microphoneMuted).toBe(false)
     microphone.isMuted = true
-    binding.refresh()
-    expect(binding.participants.cards()).toEqual([{ accountId: '22222222-2222-4222-8222-222222222222', id: '22222222-2222-4222-8222-222222222222', microphoneMuted: true, name: 'Alice', speaking: false }])
+    listeners.get('track-muted')!(microphone)
+    expect(binding.participants.cards()[0]?.microphoneMuted).toBe(true)
+    microphone.isMuted = false
+    listeners.get('track-unmuted')!(microphone)
+    expect(binding.participants.cards()[0]?.microphoneMuted).toBe(false)
   })
 
   it('owns remote microphone playback and includes it in deafen cleanup', () => {
@@ -49,7 +53,7 @@ describe('LiveKit screen viewer adapter', () => {
     }
     const playback = { attach: vi.fn(), cards: () => [], clear: vi.fn(), detach: vi.fn(), forget: vi.fn(), isSpeaking: () => false, onChange: () => () => undefined, setDeafened: vi.fn(), setSpeaking: vi.fn(), setVolume: vi.fn() }
     const binding = bindLiveKitScreenViewer(room, {
-      activeSpeakersChanged: 'active-speakers-changed', participantConnected: 'participant-connected', participantDisconnected: 'participant-disconnected', trackPublished: 'track-published', trackSubscribed: 'track-subscribed', trackUnpublished: 'track-unpublished', trackUnsubscribed: 'track-unsubscribed',
+      activeSpeakersChanged: 'active-speakers-changed', participantConnected: 'participant-connected', participantDisconnected: 'participant-disconnected', localTrackPublished: 'local-track-published', localTrackUnpublished: 'local-track-unpublished', trackMuted: 'track-muted', trackPublished: 'track-published', trackSubscribed: 'track-subscribed', trackUnmuted: 'track-unmuted', trackUnpublished: 'track-unpublished', trackUnsubscribed: 'track-unsubscribed',
     }, { microphone: 'microphone', screenAudio: 'screen-audio', screenVideo: 'screen-video' }, playback)
     const track = {} as RemoteVoiceTrack
 
@@ -64,25 +68,29 @@ describe('LiveKit screen viewer adapter', () => {
     expect(playback.clear).toHaveBeenCalledOnce()
   })
 
-  it('maps LiveKit active speakers only to remote participants and forgets a departed participant', () => {
+  it('maps LiveKit active speakers to local and remote participants and forgets a departed participant', () => {
     const microphone = publication('microphone')
     const listeners = new Map<string, (...arguments_: any[]) => void>()
     const alice = { identity: 'lease-a', metadata: 'account:11111111-1111-4111-8111-111111111111', getTrackPublication: () => microphone }
     const bob = { identity: 'lease-b', metadata: 'account:22222222-2222-4222-8222-222222222222', getTrackPublication: () => microphone }
+    const local = { identity: 'owner-lease', metadata: 'account:33333333-3333-4333-8333-333333333333', getTrackPublication: () => microphone }
     const room: LiveKitScreenViewerRoom = {
+      localParticipant: local,
       on: vi.fn((event: string, listener: (...arguments_: any[]) => void) => listeners.set(event, listener)),
       remoteParticipants: new Map([['alice', alice], ['bob', bob]]),
     }
     const playback = { attach: vi.fn(), cards: () => [], clear: vi.fn(), detach: vi.fn(), forget: vi.fn(), isSpeaking: () => false, onChange: () => () => undefined, setDeafened: vi.fn(), setSpeaking: vi.fn(), setVolume: vi.fn() }
     bindLiveKitScreenViewer(room, {
-      activeSpeakersChanged: 'active-speakers-changed', participantConnected: 'participant-connected', participantDisconnected: 'participant-disconnected', trackPublished: 'track-published', trackSubscribed: 'track-subscribed', trackUnpublished: 'track-unpublished', trackUnsubscribed: 'track-unsubscribed',
+      activeSpeakersChanged: 'active-speakers-changed', participantConnected: 'participant-connected', participantDisconnected: 'participant-disconnected', localTrackPublished: 'local-track-published', localTrackUnpublished: 'local-track-unpublished', trackMuted: 'track-muted', trackPublished: 'track-published', trackSubscribed: 'track-subscribed', trackUnmuted: 'track-unmuted', trackUnpublished: 'track-unpublished', trackUnsubscribed: 'track-unsubscribed',
     }, { microphone: 'microphone', screenAudio: 'screen-audio', screenVideo: 'screen-video' }, playback)
 
-    listeners.get('active-speakers-changed')!([alice])
+    listeners.get('active-speakers-changed')!([alice, local])
     listeners.get('participant-disconnected')!(alice)
 
     expect(playback.setSpeaking).toHaveBeenCalledWith('11111111-1111-4111-8111-111111111111', true)
     expect(playback.setSpeaking).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222222', false)
+    expect(playback.setSpeaking).toHaveBeenCalledWith('33333333-3333-4333-8333-333333333333', true)
     expect(playback.forget).toHaveBeenCalledWith('11111111-1111-4111-8111-111111111111')
   })
+
 })

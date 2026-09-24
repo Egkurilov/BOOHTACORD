@@ -40,18 +40,23 @@ describe('screen viewer controller', () => {
 
   it('clears the selection when the selected remote stream disappears', () => {
     const selected = stream('alice')
-    const streams: ScreenViewerStream[] = [selected]
+    const remaining = stream('bob')
+    const streams: ScreenViewerStream[] = [selected, remaining]
     const controller = new ScreenViewerController(() => streams)
     const video = {} as HTMLVideoElement
     const audio = {} as HTMLAudioElement
 
     controller.select('alice', video, audio)
-    streams.splice(0)
+    streams.splice(0, 1)
     controller.reconcile()
 
     expect(controller.selectedId).toBeNull()
+    expect(controller.ended).toBe(true)
+    expect(remaining.video.setSubscribed).not.toHaveBeenCalled()
     expect(selected.video.setSubscribed).toHaveBeenLastCalledWith(false)
     expect(selected.audio!.setSubscribed).toHaveBeenLastCalledWith(false)
+    controller.clear()
+    expect(controller.ended).toBe(false)
   })
 
   it('rejects a stream not reported by the current room', () => {
@@ -89,5 +94,23 @@ describe('screen viewer controller', () => {
     expect(firstOutput.setVolume).toHaveBeenCalledWith(160)
     expect(firstOutput.dispose).toHaveBeenCalledOnce()
     expect(secondOutput.setVolume).toHaveBeenCalledWith(160)
+  })
+
+  it('plays a self screen preview without subscribing to it or routing its audio', () => {
+    const local = {
+      ...stream('self', false), isLocal: true, participantName: 'Ваш экран',
+      video: { track: { attach: vi.fn(), detach: vi.fn() } },
+    }
+    const attachAudio = vi.fn()
+    const controller = new ScreenViewerController(() => [local], { attach: attachAudio } as never)
+    const videoElement = {} as HTMLVideoElement
+    const audioElement = {} as HTMLAudioElement
+
+    controller.select('self', videoElement, audioElement)
+
+    expect('setSubscribed' in local.video).toBe(false)
+    expect(local.video.track!.attach).toHaveBeenCalledWith(videoElement)
+    expect(attachAudio).not.toHaveBeenCalled()
+    expect(controller.cards()[0]?.isLocal).toBe(true)
   })
 })

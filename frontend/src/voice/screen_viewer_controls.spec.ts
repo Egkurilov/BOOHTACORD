@@ -1,33 +1,68 @@
 import { ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 
-import { ScreenViewerController, type ScreenViewerStream } from './screen_viewer_controller'
 import { createScreenViewerControls } from './screen_viewer_controls'
+import { ScreenViewerController, type ScreenViewerStream } from './screen_viewer_controller'
+import type { ScreenViewerCard } from './screen_viewer_controller'
 
-function stream(): ScreenViewerStream {
+function stream(id = 'alice:screen', hasAudio = true): ScreenViewerStream {
   return {
-    hasAudio: true,
-    id: 'alice:screen',
-    participantId: 'alice',
+    hasAudio,
+    id,
+    participantId: id.split(':')[0],
     participantName: 'Alice',
-    audio: { setSubscribed: vi.fn(), track: { attach: vi.fn(), detach: vi.fn() } },
+    audio: hasAudio ? { setSubscribed: vi.fn(), track: { attach: vi.fn(), detach: vi.fn() } } : undefined,
     video: { setSubscribed: vi.fn(), track: { attach: vi.fn(), detach: vi.fn() } },
   }
 }
 
-describe('screen viewer controls', () => {
-  it('clears a removed selected stream and never chooses another one automatically', () => {
-    const source: ScreenViewerStream[] = [stream()]
-    const controller = new ScreenViewerController(() => source)
-    const cards = ref([])
-    const error = ref<string | null>(null)
+describe('screen viewer selection controls', () => {
+  it('exposes ended state and waits for explicit selection instead of auto-playing the next stream', () => {
+    const alice = stream('alice', false)
+    const bob = stream('bob', false)
+    const streams = [alice, bob]
+    const controller = new ScreenViewerController(() => streams)
+    const cards = ref<ScreenViewerCard[]>([])
     const selectedId = ref<string | null>(null)
-    const controls = createScreenViewerControls({ screenViewer: () => controller }, cards, selectedId, error)
-    const video = {} as HTMLVideoElement
-    const audio = {} as HTMLAudioElement
+    const error = ref<string | null>(null)
+    const ended = ref(false)
+    const controls = createScreenViewerControls({ screenViewer: () => controller }, cards, selectedId, error, ended)
 
     controls.start()
-    controls.select('alice:screen', video, audio)
+    controls.select('alice', null, null)
+    streams.splice(0, 1)
+    controller.reconcile()
+
+    expect(selectedId.value).toBeNull()
+    expect(ended.value).toBe(true)
+    expect(cards.value.map((card) => card.id)).toEqual(['bob'])
+    expect(bob.video.setSubscribed).not.toHaveBeenCalled()
+
+    controls.clear()
+    expect(selectedId.value).toBeNull()
+    expect(ended.value).toBe(false)
+    expect(cards.value.map((card) => card.id)).toEqual(['bob'])
+    streams.push(stream('charlie'))
+    controller.reconcile()
+    expect(cards.value.map((card) => card.id)).toEqual(['bob', 'charlie'])
+
+    controls.select('bob', null, null)
+    expect(selectedId.value).toBe('bob')
+    expect(ended.value).toBe(false)
+    controls.stop()
+    expect(ended.value).toBe(false)
+  })
+
+  it('clears a removed selected stream without automatically choosing another one', () => {
+    const source: ScreenViewerStream[] = [stream()]
+    const controller = new ScreenViewerController(() => source)
+    const cards = ref<ScreenViewerCard[]>([])
+    const error = ref<string | null>(null)
+    const selectedId = ref<string | null>(null)
+    const controls = createScreenViewerControls({ screenViewer: () => controller }, cards, selectedId, error, ref(false))
+
+    controls.start()
+    controls.select('alice:screen', {} as HTMLVideoElement, {} as HTMLAudioElement)
     source.splice(0)
     controller.reconcile()
 
@@ -37,10 +72,12 @@ describe('screen viewer controls', () => {
     expect(controller.selectedId).toBeNull()
   })
 
-  it('clears media and stops observing the room on leave', () => {
+  it('clears selected media and stops observing the room on leave', () => {
     const selected = stream()
     const controller = new ScreenViewerController(() => [selected])
-    const controls = createScreenViewerControls({ screenViewer: () => controller }, ref([]), ref<string | null>(null), ref<string | null>(null))
+    const controls = createScreenViewerControls(
+      { screenViewer: () => controller }, ref<ScreenViewerCard[]>([]), ref<string | null>(null), ref<string | null>(null), ref(false),
+    )
 
     controls.start()
     controls.select('alice:screen', {} as HTMLVideoElement, {} as HTMLAudioElement)

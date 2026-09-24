@@ -69,4 +69,16 @@ describe('remote voice playback', () => {
     playback.forget('alice')
     expect(playback.cards()).toEqual([])
   })
+
+  it('notifies listeners when the local participant speaking state changes without an attached track', () => {
+    const playback = new RemoteVoicePlayback(audioElement, vi.fn())
+    const changed = vi.fn()
+    playback.onChange(changed)
+
+    playback.setSpeaking('owner-account', true)
+    playback.setSpeaking('owner-account', false)
+
+    expect(playback.isSpeaking('owner-account')).toBe(false)
+    expect(changed).toHaveBeenCalledTimes(2)
+  })
 })

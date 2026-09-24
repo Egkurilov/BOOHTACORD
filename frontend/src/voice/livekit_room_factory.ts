@@ -27,10 +27,14 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   const liveKitRoom = new Room({ ...adaptiveMediaRoomOptions, reconnectPolicy: new BoundedVoiceReconnectPolicy() })
   const viewer = bindLiveKitScreenViewer(liveKitRoom as unknown as LiveKitScreenViewerRoom, {
     activeSpeakersChanged: RoomEvent.ActiveSpeakersChanged,
+    localTrackPublished: RoomEvent.LocalTrackPublished,
+    localTrackUnpublished: RoomEvent.LocalTrackUnpublished,
     participantConnected: RoomEvent.ParticipantConnected,
     participantDisconnected: RoomEvent.ParticipantDisconnected,
     trackPublished: RoomEvent.TrackPublished,
+    trackMuted: RoomEvent.TrackMuted,
     trackSubscribed: RoomEvent.TrackSubscribed,
+    trackUnmuted: RoomEvent.TrackUnmuted,
     trackUnpublished: RoomEvent.TrackUnpublished,
     trackUnsubscribed: RoomEvent.TrackUnsubscribed,
   }, {

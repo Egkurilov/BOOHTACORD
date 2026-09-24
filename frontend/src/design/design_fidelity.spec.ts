@@ -7,6 +7,12 @@ function source(path: string): string {
 }
 
 describe('GuildChat reference fidelity', () => {
+  it('uses the reference single-guild label and mark in the workspace header', () => {
+    const app = source('../workspace/WorkspaceApp.vue')
+    expect(app).toContain('<span class="guild-mark" aria-hidden="true">G</span>')
+    expect(app).toContain('<span id="app-title">Моя гильдия</span>')
+  })
+
   it('uses the reference desktop columns and compact drawer instead of a squeezed roster column', () => {
     const shell = source('./shell.css') + source('./responsive_shell.css')
     expect(shell).toContain('grid-template-columns: var(--gc-layout-nav-wide) minmax(0, 1fr) var(--gc-layout-aside-wide)')

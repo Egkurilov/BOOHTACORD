@@ -83,7 +83,8 @@ describe('GuildChat design-system foundation', () => {
     expect(directConversation).toContain('class="main-header conversation-header"')
     expect(workspace).toContain('<WorkspaceSidebarTabs')
     expect(conversationPane).toContain('class="room-intro"')
-    expect(screenViewer).toContain('class="stream-controls"')
+    expect(screenViewer).toContain('class="stream-quality-row"')
+    expect(screenViewer).toContain('class="screen-cards stream-rail"')
   })
 
   it('keeps settings and administration in the central workspace', () => {

@@ -62,7 +62,7 @@ onBeforeUnmount(() => realtimeStore.disconnect())
       <div class="gc-shell" :class="{ 'no-aside': activePanel !== 'search' && (selectedDirectMessage || activePanel !== 'none'), 'voice-room-active': !selectedDirectMessage && activePanel === 'none' && selectedChannel?.kind === 'VOICE', 'voice-members-open': membersOpen }" data-testid="app-shell">
       <aside id="nav-sidebar" class="sidebar" :class="{ 'is-open': navOpen }" aria-label="Навигация гильдии" data-testid="nav-sidebar">
         <div class="nav-drawer">
-          <button class="guild-header" type="button" :aria-expanded="activePanel === 'admin'" @click="openGuildPanel"><span class="guild-mark" aria-hidden="true">V</span><span id="app-title">Voice Platform</span></button><SearchLauncher :active="activePanel === 'search'" @open="togglePanel('search')" @close="activePanel = 'none'" />
+          <button class="guild-header" type="button" :aria-expanded="activePanel === 'admin'" @click="openGuildPanel"><span class="guild-mark" aria-hidden="true">G</span><span id="app-title">Моя гильдия</span></button><SearchLauncher :active="activePanel === 'search'" @open="togglePanel('search')" @close="activePanel = 'none'" />
           <WorkspaceSidebarTabs class="sidebar-tabs" :active="sidebarSection" @select="sidebarSection = $event" />
           <div class="nav-content">
           <template v-if="sidebarSection === 'channels'">

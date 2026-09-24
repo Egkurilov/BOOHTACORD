@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { LiveKitScreenRegistry, type RemoteScreenParticipant } from './livekit_screen_registry'
+import { LiveKitScreenRegistry, type ScreenParticipantPublication } from './livekit_screen_registry'
 
 function publication() {
   return { setSubscribed: vi.fn() }
 }
 
-function participant(identity: string, video = publication(), audio?: ReturnType<typeof publication>): RemoteScreenParticipant {
+function participant(identity: string, video = publication(), audio?: ReturnType<typeof publication>): ScreenParticipantPublication {
   return { audio, identity, name: identity.toUpperCase(), video }
 }
 
@@ -37,5 +37,17 @@ describe('LiveKit screen registry', () => {
 
     expect(video.setSubscribed).not.toHaveBeenCalled()
     expect(audio.setSubscribed).not.toHaveBeenCalled()
+  })
+
+  it('lists the owner screen as a silent self-preview without subscribing it', () => {
+    const localVideo = { track: { attach: vi.fn(), detach: vi.fn() } }
+    const registry = new LiveKitScreenRegistry()
+
+    registry.refresh([{ accountId: 'self-account', identity: 'self-account', isLocal: true, name: 'Owner', video: localVideo }], null)
+
+    expect(registry.streams()).toEqual([expect.objectContaining({
+      accountId: 'self-account', hasAudio: false, id: 'local:self-account:screen', isLocal: true,
+      participantId: 'self-account', participantName: 'Ваш экран', video: localVideo,
+    })])
   })
 })

@@ -33,11 +33,12 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   const screenState = ref<ScreenShareState>('IDLE')
   const screenViewerCards = ref<ScreenViewerCard[]>([])
   const screenViewerError = ref<string | null>(null)
+  const screenViewerEnded = ref(false)
   const selectedScreenStreamId = ref<string | null>(null)
   const state = ref<VoiceConnectionState>('IDLE')
   const canJoin = computed(() => state.value === 'IDLE' || state.value === 'ERROR')
   const { refreshScreenDiagnostics, startScreen, stopScreen } = createScreenControls(session.screen, active, screenError, screenProfile, screenState, screenDiagnostics)
-  const screenViewer = createScreenViewerControls(session, screenViewerCards, selectedScreenStreamId, screenViewerError)
+  const screenViewer = createScreenViewerControls(session, screenViewerCards, selectedScreenStreamId, screenViewerError, screenViewerEnded)
   const { deafenChanging, toggleDeafen } = createDeafenControls(session, deafened, microphoneMuted, microphonePermissionDenied, error)
   const { setMicrophoneMuted, toggleMicrophone } = createMicrophoneControls(session, active, state, deafened, microphoneMuted, microphonePermissionDenied, error)
   const volume = createVoiceVolumeControls(session)
@@ -106,5 +107,5 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
     }
   }
 
-  return { active, audioProcessingDiagnostics, canJoin, clearScreenStream: screenViewer.stop, deafenChanging, deafened, error, join, leave, microphoneMuted, microphonePermissionDenied, refreshScreenDiagnostics, screenDiagnostics, screenError, screenProfile, screenState, screenViewerCards, screenViewerError, selectScreenStream: screenViewer.select, selectedScreenStreamId, setAudioProcessing, setMicrophoneMuted, startScreen, state, stopScreen, switchAudioDevice, toggleDeafen, toggleMicrophone, transferRequired, voiceVolumeError: volume.error, voiceVolumeParticipants: volume.participants, selectedScreenAudioVolume: volume.selectedScreenVolume, setParticipantVolume: volume.setParticipantVolume, setScreenVolume: volume.setScreenVolume }
+  return { active, audioProcessingDiagnostics, canJoin, clearScreenStream: screenViewer.clear, deafenChanging, deafened, error, join, leave, microphoneMuted, microphonePermissionDenied, refreshScreenDiagnostics, screenDiagnostics, screenError, screenProfile, screenState, screenViewerCards, screenViewerEnded, screenViewerError, selectScreenStream: screenViewer.select, selectedScreenStreamId, setAudioProcessing, setMicrophoneMuted, startScreen, state, stopScreen, switchAudioDevice, toggleDeafen, toggleMicrophone, transferRequired, voiceVolumeError: volume.error, voiceVolumeParticipants: volume.participants, selfSpeaking: volume.selfSpeaking, selectedScreenAudioVolume: volume.selectedScreenVolume, setParticipantVolume: volume.setParticipantVolume, setScreenVolume: volume.setScreenVolume }
 })

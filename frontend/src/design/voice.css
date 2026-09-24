@@ -41,7 +41,6 @@
 .participant-grid .avatar.lg { flex: 0 0 64px; }
 .participant-grid .participant-name { width: 100%; }
 .participant-grid .participant-status { min-height: 16px; }
-.participant-grid .participant-you { margin-top: auto; color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
 .participant-grid .participant-volume { position: absolute; top: var(--gc-space-2); right: var(--gc-space-2); z-index: 1; width: auto; margin: 0; }
 .participant-grid .participant-volume summary { display: grid; width: 32px; height: 32px; place-items: center; border-radius: var(--gc-radius-sm); color: var(--gc-text-muted); font-size: 16px; list-style: none; }
 .participant-grid .participant-volume summary::-webkit-details-marker { display: none; }

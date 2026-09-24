@@ -39,4 +39,23 @@ describe('voice volume controls', () => {
     expect(remote.setVolume).toHaveBeenCalledWith('track-a', 100)
     expect(controls.error.value).toContain('100%')
   })
+
+  it('tracks the authenticated participant speaking state and clears it when stopped', async () => {
+    let speaking = false
+    let changed: () => void = () => undefined
+    const remote = {
+      isSpeaking: () => speaking,
+      onChange: (listener: () => void) => { changed = listener; return () => { changed = () => undefined } },
+      setVolume: vi.fn(),
+    }
+    const controls = createVoiceVolumeControls({ participantCards: () => null, remoteVoices: () => remote, screenViewer: () => null }, async () => ({ accountId: 'owner-account' }), new VoiceVolumePreferences(storage()))
+
+    await controls.start()
+    expect(controls.selfSpeaking.value).toBe(false)
+    speaking = true
+    changed()
+    expect(controls.selfSpeaking.value).toBe(true)
+    controls.stop()
+    expect(controls.selfSpeaking.value).toBe(false)
+  })
 })

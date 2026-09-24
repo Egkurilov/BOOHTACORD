@@ -4,9 +4,12 @@ import { loadCurrentSession } from '../identity/current_session'
 import { normalizeAudioVolume } from './audio_gain'
 import type { RemoteParticipantCard } from './remote_participant_controller'
 import type { ScreenViewerController } from './screen_viewer_controller'
+import { createVoiceSelfSpeaking, type VoiceActivitySource } from './voice_self_speaking'
 import { VoiceVolumePreferences } from './voice_volume_preferences'
 
-interface RemoteVoiceVolumeSource { setVolume(id: string, percent: number): void }
+interface RemoteVoiceVolumeSource extends VoiceActivitySource {
+  setVolume(id: string, percent: number): void
+}
 
 interface RemoteParticipantVolumeSource {
   cards(): RemoteParticipantCard[]
@@ -36,6 +39,7 @@ export function createVoiceVolumeControls(
   const error = ref<string | null>(null)
   const participants = ref<VoiceVolumeParticipant[]>([])
   const selectedScreenVolume = ref(100)
+  const selfVoice = createVoiceSelfSpeaking(session)
   let stopRemote: () => void = () => undefined
   let stopScreen: () => void = () => undefined
   let revision = 0
@@ -59,16 +63,20 @@ export function createVoiceVolumeControls(
   async function start(): Promise<void> {
     stopRemote()
     stopScreen()
+    selfVoice.stop()
     const current = ++revision
     error.value = null
+    let ownAccountId: string | null = null
     try {
-      preferences.bind((await loadAccount()).accountId)
+      ownAccountId = (await loadAccount()).accountId
+      preferences.bind(ownAccountId)
     } catch {
       error.value = 'Не удалось загрузить настройки громкости; используется 100%.'
     }
     if (current !== revision) return
     stopRemote = session.participantCards()?.onChange(syncRemote) ?? (() => undefined)
     stopScreen = session.screenViewer()?.onChange(syncScreen) ?? (() => undefined)
+    if (ownAccountId) selfVoice.start(ownAccountId)
     syncRemote()
     syncScreen()
   }
@@ -77,6 +85,7 @@ export function createVoiceVolumeControls(
     revision += 1
     stopRemote()
     stopScreen()
+    selfVoice.stop()
     stopRemote = () => undefined
     stopScreen = () => undefined
     participants.value = []
@@ -102,5 +111,5 @@ export function createVoiceVolumeControls(
     selectedScreenVolume.value = volume
   }
 
-  return { error, participants, selectedScreenVolume, setParticipantVolume, setScreenVolume, start, stop, syncScreen }
+  return { error, participants, selfSpeaking: selfVoice.selfSpeaking, selectedScreenVolume, setParticipantVolume, setScreenVolume, start, stop, syncScreen }
 }

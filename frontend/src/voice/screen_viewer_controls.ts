@@ -11,6 +11,7 @@ export function createScreenViewerControls(
   cards: Ref<ScreenViewerCard[]>,
   selectedId: Ref<string | null>,
   error: Ref<string | null>,
+  ended: Ref<boolean>,
 ) {
   let controller: ScreenViewerController | null = null
   let stopObserving: (() => void) | null = null
@@ -18,6 +19,7 @@ export function createScreenViewerControls(
   function sync(): void {
     cards.value = controller?.cards() ?? []
     selectedId.value = controller?.selectedId ?? null
+    ended.value = controller?.ended ?? false
   }
 
   function start(): void {
@@ -47,5 +49,9 @@ export function createScreenViewerControls(
     sync()
   }
 
-  return { select, start, stop }
+  function clear(): void {
+    controller?.clear()
+  }
+
+  return { clear, select, start, stop }
 }
