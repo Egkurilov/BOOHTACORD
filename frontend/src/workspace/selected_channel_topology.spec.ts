@@ -1,4 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia'
+import { nextTick } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('../voice/audio_settings_store', () => ({ useAudioSettingsStore: () => ({}) }))
@@ -6,6 +7,7 @@ vi.mock('../voice/activation_store', () => ({ useVoiceActivationStore: () => ({}
 vi.mock('../voice/connection_store', () => ({ useVoiceConnectionStore: () => ({ active: { channelId: 'channel-1' } }) }))
 
 import { useTopologyStore } from '../channel/topology_store'
+import { useVoiceNavigationStore } from '../voice/navigation_store'
 import { useWorkspaceVoiceControls } from './voice_controls'
 
 describe('selected channel topology', () => {
@@ -26,5 +28,19 @@ describe('selected channel topology', () => {
     ] }
     expect(controls.selectedChannel.value?.id).toBe('channel-1')
     expect(controls.activeVoiceChannel.value?.id).toBe('channel-1')
+  })
+
+  it('drops a selected TEXT when refreshed topology no longer contains it', async () => {
+    setActivePinia(createPinia())
+    const topology = useTopologyStore()
+    const navigation = useVoiceNavigationStore()
+    topology.topology = { revision: 1, categories: [{ id: 'cat-1', name: 'Игры', position: 0, channels: [
+      { id: 'text-1', name: 'Общий', kind: 'TEXT', position: 0, admissionClosed: false },
+    ] }] }
+    useWorkspaceVoiceControls()
+    navigation.selectText('text-1')
+    topology.topology = { revision: 2, categories: [{ id: 'cat-1', name: 'Игры', position: 0, channels: [] }] }
+    await nextTick()
+    expect(navigation.selectedSurface).toEqual({ kind: 'NONE' })
   })
 })

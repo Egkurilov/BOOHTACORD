@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 
 import type { TopologyChannel } from '../channel/topology_client'
 import { useTopologyStore } from '../channel/topology_store'
@@ -27,6 +27,12 @@ export function useWorkspaceVoiceControls() {
   })
   const selectedChannel = computed(() => findChannel(selectedChannelId.value ?? undefined))
   const activeVoiceChannel = computed(() => findChannel(voiceConnection.active?.channelId))
+
+  watch(() => topologyStore.topology, (topology) => {
+    const selected = voiceNavigation.selectedSurface
+    if (!topology || selected.kind !== 'TEXT') return
+    if (!topology.categories.some(({ channels }) => channels.some(({ id }) => id === selected.channelId))) voiceNavigation.clearSelectedText(selected.channelId)
+  })
 
   function selectChannel(channel: TopologyChannel): void {
     if (channel.kind === 'TEXT') voiceNavigation.selectText(channel.id)

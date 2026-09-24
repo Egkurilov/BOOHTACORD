@@ -3,8 +3,6 @@
 Срез: 25.09.2026. Пути относительно корня; source tests не заменяют browser E2E.
 Дизайн — [DES](../docs/design/GUILDCHAT_V1_TODO.md), backend-зависимости — [BE](BACKEND_TODO.md).
 
-- [ ] **FE-13 · P1 · T-020 — Архивирование TEXT.** Подключить DELETE с явным `confirm_archive`, объяснить сохранение истории; обработать 409/403. Готово: archived беседа не остаётся доступной через старый selected state. Зависимости: DES-03, BE-03.
-
 - [ ] **FE-14 · P1 · T-020/022 — Закрытие/удаление VOICE.** Подключить close-admission и pending SFU/finalized состояния; не объявлять disconnect по count logical leases. Готово: причина и безопасный выход у участника, завершение подтверждено сервером. Зависимости: BE-04/06, DES-04, QA-10.
 
 - [ ] **FE-15 · P1 · T-040 — Unread/mentions.** Channel badges, mention picker по user ID, read cursor только после показа в активной видимой беседе. DM badge/visibility gate уже есть. Готово: background tab/другая беседа не списывает счётчик, rename не ломает mention. Зависимости: BE-07/08, DES-02.
