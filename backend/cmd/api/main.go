@@ -75,7 +75,7 @@ func main() {
 	mux.Handle("POST /api/v1/admin/password-reset-links", sessionapi.Require(sessionService)(sessionapi.RequireAdministrator(configuration.passwordResetLimiter.Middleware(createresetapi.NewHandler(passwordResetCreator, configuration.publicOrigin)))))
 	mux.Handle("PATCH /api/v1/admin/accounts/{accountID}", sessionapi.Require(sessionService)(sessionapi.RequireAdministrator(adminapi.NewHandler(accountAdministration))))
 	configureChannelRoutes(mux, database, sessionService)
-	configureChatRoutes(mux, database, sessionService)
+	configureChatAndRealtimeRoutes(mux, database, sessionService, metrics)
 	if err := configureStorageRoutes(mux, database, sessionService, configuration.attachmentRoot, configuration.uploadLimiter, metrics); err != nil {
 		slog.Error("configure attachment routes", "error", err)
 		os.Exit(1)
@@ -84,7 +84,6 @@ func main() {
 		slog.Error("configure profile and administration routes", "error", err)
 		os.Exit(1)
 	}
-	configureRealtimeRoutes(mux, sessionService, metrics)
 	configureVoiceLeaseRoutes(mux, database, sessionService, maintenanceService)
 	configureAdminVoiceRoutes(mux, database, sessionService)
 	configureMediaCredentialRoutes(mux, database, sessionService, configuration.credentialSigner)

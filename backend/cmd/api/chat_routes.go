@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"net/http"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	advancedirectmessagereadcursor "voice-platform/backend/internal/chat/advance_direct_message_read_cursor"
 	advancedirectmessagereadcursorapi "voice-platform/backend/internal/chat/advance_direct_message_read_cursor/api"
@@ -51,9 +54,10 @@ import (
 	senddirectmessagepostgres "voice-platform/backend/internal/chat/send_direct_message/postgres"
 	"voice-platform/backend/internal/identity/authenticate_session"
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
+	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
-func configureChatRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service) {
+func configureChatRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, events *eventhub.Hub) {
 	service := createtextmessage.New(messagepostgres.New(messagepostgres.NewPoolDatabase(database)))
 	editService := edittextmessage.New(editpostgres.New(editpostgres.NewPoolDatabase(database)))
 	deleteService := deletetextmessage.New(deletepostgres.New(deletepostgres.NewPoolDatabase(database)))
@@ -69,7 +73,8 @@ func configureChatRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions au
 	directMessageReadCursor := advancedirectmessagereadcursor.New(advancedirectmessagereadcursorpostgres.New(advancedirectmessagereadcursorpostgres.NewPoolDatabase(database)))
 	directMessageSearch := searchdirectmessagehistory.New(searchdirectmessagehistorypostgres.New(searchdirectmessagehistorypostgres.NewPoolDatabase(database)))
 	messageSearch := searchmessages.New(searchmessagespostgres.New(searchmessagespostgres.NewPoolDatabase(database)))
-	mux.Handle("POST /api/v1/channels/{channelID}/messages", sessionapi.Require(sessions)(messageapi.NewHandler(service)))
+	creator := eventPublishingMessageCreator{creator: service, events: events}
+	mux.Handle("POST /api/v1/channels/{channelID}/messages", sessionapi.Require(sessions)(messageapi.NewHandler(creator)))
 	mux.Handle("GET /api/v1/channels/{channelID}/messages", sessionapi.Require(sessions)(listhandler.NewHandler(listService)))
 	mux.Handle("GET /api/v1/channels/{channelID}/search", sessionapi.Require(sessions)(searchtextmessagesapi.NewHandler(textMessageSearch)))
 	mux.Handle("PATCH /api/v1/channels/{channelID}/messages/{messageID}", sessionapi.Require(sessions)(edithandler.NewHandler(editService)))
@@ -84,4 +89,17 @@ func configureChatRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions au
 	mux.Handle("PATCH /api/v1/direct-messages/{directMessageID}/messages/{messageID}", sessionapi.Require(sessions)(editdirectmessageapi.NewHandler(directMessageEditor)))
 	mux.Handle("DELETE /api/v1/direct-messages/{directMessageID}/messages/{messageID}", sessionapi.Require(sessions)(deletedirectmessageapi.NewHandler(directMessageDeleter)))
 	mux.Handle("PUT /api/v1/direct-messages/{directMessageID}/read-cursor", sessionapi.Require(sessions)(advancedirectmessagereadcursorapi.NewHandler(directMessageReadCursor)))
+}
+
+type eventPublishingMessageCreator struct {
+	creator messageapi.Creator
+	events  *eventhub.Hub
+}
+
+func (creator eventPublishingMessageCreator) Create(ctx context.Context, input createtextmessage.Input) (createtextmessage.Result, error) {
+	result, err := creator.creator.Create(ctx, input)
+	if err == nil {
+		creator.events.Publish(eventhub.Event{EventID: uuid.NewString(), Kind: "message.created", OccurredAt: time.Now().UTC(), Payload: map[string]any{"channel_id": result.ChannelID, "message_id": result.ID}})
+	}
+	return result, err
 }

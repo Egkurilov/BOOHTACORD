@@ -18,4 +18,35 @@ describe('realtime store', () => {
     expect(store.state).toBe('CONNECTED')
     expect(resync).toHaveBeenCalledOnce()
   })
+
+  it('dispatches message-created hints only when both public IDs are present', () => {
+    const socket: RealtimeSocket = { close: vi.fn(), onclose: null, onerror: null, onmessage: null, onopen: null }
+    const onEvent = vi.fn()
+    const store = useRealtimeStore()
+    store.connect(onEvent, () => socket, 'ws://voice.example.test/api/v1/realtime')
+    socket.onmessage?.(new MessageEvent('message', { data: JSON.stringify({ event_id: '33333333-3333-4333-8333-333333333333', kind: 'message.created', occurred_at: '2026-09-17T12:00:00Z', payload: { channel_id: '11111111-1111-4111-8111-111111111111', message_id: '22222222-2222-4222-8222-222222222222' } }) }))
+
+    expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ kind: 'message.created', payload: { channel_id: '11111111-1111-4111-8111-111111111111', message_id: '22222222-2222-4222-8222-222222222222' } }))
+    expect(store.state).toBe('CONNECTING')
+  })
+
+  it('rejects message-created events without both IDs', () => {
+    const socket: RealtimeSocket = { close: vi.fn(), onclose: null, onerror: null, onmessage: null, onopen: null }
+    const store = useRealtimeStore()
+    store.connect(vi.fn(), () => socket, 'ws://voice.example.test/api/v1/realtime')
+    socket.onmessage?.(new MessageEvent('message', { data: JSON.stringify({ event_id: '44444444-4444-4444-8444-444444444444', kind: 'message.created', occurred_at: '2026-09-17T12:00:00Z', payload: { channel_id: '11111111-1111-4111-8111-111111111111' } }) }))
+
+    expect(store.state).toBe('ERROR')
+    expect(store.error).toContain('Некорректное')
+  })
+
+  it('rejects message content in a message-created payload', () => {
+    const socket: RealtimeSocket = { close: vi.fn(), onclose: null, onerror: null, onmessage: null, onopen: null }
+    const store = useRealtimeStore()
+    store.connect(vi.fn(), () => socket, 'ws://voice.example.test/api/v1/realtime')
+    socket.onmessage?.(new MessageEvent('message', { data: JSON.stringify({ event_id: '55555555-5555-4555-8555-555555555555', kind: 'message.created', occurred_at: '2026-09-17T12:00:00Z', payload: { channel_id: '11111111-1111-4111-8111-111111111111', message_id: '22222222-2222-4222-8222-222222222222', body: 'must not be broadcast' } }) }))
+
+    expect(store.state).toBe('ERROR')
+    expect(store.error).toContain('Некорректное')
+  })
 })

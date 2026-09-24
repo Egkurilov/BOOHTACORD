@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
-	"github.com/coder/websocket/wsjson"
 	"github.com/google/uuid"
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
 	"voice-platform/backend/internal/identity/session"
+	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
 type Event struct {
@@ -31,6 +31,10 @@ type ConnectionObserver interface {
 const defaultSessionRevalidationInterval = 15 * time.Second
 
 func NewHandler(authenticator sessionapi.Authenticator, revalidationInterval time.Duration, now Clock, newID Identifier, observer ConnectionObserver) http.Handler {
+	return NewHandlerWithEvents(authenticator, revalidationInterval, now, newID, observer, nil)
+}
+
+func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationInterval time.Duration, now Clock, newID Identifier, observer ConnectionObserver, events *eventhub.Hub) http.Handler {
 	if now == nil {
 		now = time.Now
 	}
@@ -54,6 +58,11 @@ func NewHandler(authenticator sessionapi.Authenticator, revalidationInterval tim
 		if err != nil {
 			return
 		}
+		var subscription *eventhub.Subscription
+		if events != nil {
+			subscription = events.Subscribe()
+			defer subscription.Close()
+		}
 		acceptedAt := time.Now()
 		if observer != nil {
 			observer.RealtimeConnectionOpened()
@@ -73,34 +82,6 @@ func NewHandler(authenticator sessionapi.Authenticator, revalidationInterval tim
 		if observer != nil {
 			observer.ObserveRealtimeConnectionReady(time.Since(acceptedAt))
 		}
-		waitForCloseOrSessionRevocation(connection, authenticator, cookie, revalidationInterval)
+		streamEvents(connection, authenticator, cookie, revalidationInterval, subscription, newID, now)
 	})
-}
-
-func waitForCloseOrSessionRevocation(connection *websocket.Conn, authenticator sessionapi.Authenticator, cookie *http.Cookie, revalidationInterval time.Duration) {
-	closed := connection.CloseRead(context.Background()).Done()
-	if authenticator == nil {
-		<-closed
-		return
-	}
-	ticker := time.NewTicker(revalidationInterval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-closed:
-			return
-		case <-ticker.C:
-			context, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			_, err := authenticator.Authenticate(context, cookie.Value)
-			cancel()
-			if err != nil {
-				_ = connection.Close(websocket.StatusPolicyViolation, "session is no longer valid")
-				return
-			}
-		}
-	}
-}
-
-func writeEvent(context context.Context, connection *websocket.Conn, newID Identifier, now Clock, kind string, payload map[string]any) bool {
-	return wsjson.Write(context, connection, Event{EventID: newID(), Kind: kind, OccurredAt: now().UTC(), Payload: payload}) == nil
 }

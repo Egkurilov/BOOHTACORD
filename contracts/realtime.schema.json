@@ -13,5 +13,23 @@
     },
     "occurred_at": { "type": "string", "format": "date-time" },
     "payload": { "type": "object" }
-  }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "message.created" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["channel_id", "message_id"],
+            "properties": {
+              "channel_id": { "type": "string", "format": "uuid" },
+              "message_id": { "type": "string", "format": "uuid" }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

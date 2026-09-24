@@ -39,7 +39,7 @@ async function openDirectMessageFromMember(userID: string): Promise<void> {
   else directMessageStore.error = directMessageCandidateStore.error ?? 'Не удалось открыть личное сообщение.'
 }
 function setParticipantVolume(participantID: string, volume: number): void { voiceConnection.setParticipantVolume(participantID, volume) }
-function resync(): void { void topologyStore.refresh(); void messageStore.refresh(); void directMessageStore.refreshNavigation(); void directMessageStore.refreshHistory() }
+function resync(event: { kind: string; payload: Record<string, unknown> }): void { if (event.kind === 'message.created') { if (!selectedDirectMessage.value && event.payload.channel_id === messageStore.channelId) void messageStore.refresh(); return }; void topologyStore.refresh(); void messageStore.refresh(); void directMessageStore.refreshNavigation(); void directMessageStore.refreshHistory() }
 function refreshTopology(): void { void topologyStore.refresh() }
 function togglePanel(panel: 'admin' | 'audio' | 'profile' | 'search'): void { activePanel.value = activePanel.value === panel ? 'none' : panel }
 function openGuildPanel(): void { if (props.role === 'ADMINISTRATOR') togglePanel('admin') }

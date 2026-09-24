@@ -69,9 +69,11 @@
 | `connection.resync_required` | Обновить защищённую topology и активную видимую history через REST; не утверждать, что replay удался. |
 | `voice.lease_revoked` | Остановить связанный локальный voice lifecycle и требовать явного действия пользователя для нового входа. |
 | `channel.updated` | Обновить topology, авторизованную для вызывающего пользователя. |
-| `message.created` | Обновить или объединить данные только если авторизованная conversation события уже есть в кэше. |
+| `message.created` | Payload содержит только UUID `channel_id` и `message_id`; перечитать историю через авторизованный REST только для уже выбранного текстового канала. Текст и DM через событие не передаются. |
 
 Дедуплицируйте по `event_id`, используйте `occurred_at` только как server event time и принимайте будущие event kinds, не считая их авторизацией. Realtime reconnect не создаёт новую session, новый Voice lease или новый LiveKit credential. Здоровый WebRTC call не должен закрываться только из-за reconnect этого WebSocket.
+
+`message.created` — ограниченная best-effort подсказка только для новых сообщений открытого текстового канала; она не является durable replay. Если очередь доставки переполнена, сервер отправит `connection.resync_required`, после чего клиент перечитает защищённое состояние через REST.
 
 ## Lifecycle Voice lease и LiveKit credential
 
