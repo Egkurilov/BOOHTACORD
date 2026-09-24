@@ -3,6 +3,7 @@ package createtextmessage
 import (
 	"context"
 	"errors"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -17,7 +18,7 @@ func TestCreatePersistsIdempotencyAndSameConversationReply(t *testing.T) {
 	service := New(store)
 	service.newID = func() (string, error) { return messageID, nil }
 	result, err := service.Create(context.Background(), Input{ActorID: userID, ChannelID: channelID, ClientMessageID: clientID, Body: "Привет", ReplyToID: replyID})
-	if err != nil || store.request.ID != messageID || result != store.result {
+	if err != nil || store.request.ID != messageID || !reflect.DeepEqual(result, store.result) {
 		t.Fatalf("request = %#v, result = %#v, error = %v", store.request, result, err)
 	}
 }

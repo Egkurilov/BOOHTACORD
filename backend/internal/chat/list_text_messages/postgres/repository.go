@@ -16,6 +16,7 @@ WITH cursor AS (
 )
 SELECT messages.id::text, messages.channel_id::text, messages.author_id::text, messages.client_message_id::text,
        CASE WHEN messages.deleted_at IS NULL THEN messages.body ELSE '' END, COALESCE(messages.reply_to_id::text, ''), messages.created_at, messages.edited_at, messages.revision, messages.deleted_at IS NOT NULL,
+       CASE WHEN messages.deleted_at IS NULL THEN messages.mention_user_ids::text[] ELSE ARRAY[]::text[] END,
        COALESCE(
            jsonb_agg(
                jsonb_build_object('id', attachments.id::text, 'original_name', attachments.original_name, 'byte_size', attachments.byte_size)
@@ -67,7 +68,7 @@ func (repository Repository) List(context context.Context, request listtextmessa
 	for rows.Next() {
 		var message listtextmessages.Message
 		var attachments []byte
-		if err := rows.Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.ClientMessageID, &message.Body, &message.ReplyToID, &message.CreatedAt, &message.EditedAt, &message.Revision, &message.Deleted, &attachments); err != nil {
+		if err := rows.Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.ClientMessageID, &message.Body, &message.ReplyToID, &message.CreatedAt, &message.EditedAt, &message.Revision, &message.Deleted, &message.MentionUserIDs, &attachments); err != nil {
 			return nil, fmt.Errorf("scan text message: %w", err)
 		}
 		decoded, err := decodeAttachments(attachments)

@@ -8,9 +8,9 @@ The Vue client uses HTTPS REST for commands and a single authenticated WebSocket
 
 ## Isolation and access
 
-There is one logical guild per deployment. `users`, `sessions`, `categories`, `channels`, `messages`, `direct_messages`, `direct_message_messages`, `direct_message_read_cursors`, `attachments`, `voice_leases`, `password_resets` and `audit_events` belong to it without a guild selector. Every command must derive its actor from a current server-side session and enforce active/not-banned status and resource ACL in its transaction; concurrency acceptance remains separate verification work.
+There is one logical guild per deployment. `users`, `sessions`, `categories`, `channels`, `messages`, `channel_read_cursors`, `direct_messages`, `direct_message_messages`, `direct_message_read_cursors`, `attachments`, `voice_leases`, `realtime_events`, `password_resets` and `audit_events` belong to it without a guild selector. Every command derives its actor from a current server-side session and enforces active/not-banned status and resource ACL; race and capacity acceptance remain separate verification work.
 
-Common channels are available to every active user. `direct_messages` stores exactly two ordered UUID participants (`participant_one_id`, `participant_two_id`) with a unique-pair constraint; no administrator bypass is permitted. Text-channel archive preserves data. Soft delete hides body/attachment links immediately; physical collection without live references is still pending BE-12 in `backlog/BACKEND_TODO.md`.
+Common channels are available to every active user. `direct_messages` stores exactly two ordered UUID participants (`participant_one_id`, `participant_two_id`) with a unique-pair constraint; no administrator bypass is permitted. Text-channel archive preserves data. Soft delete hides body/attachment links immediately; a bounded operator command physically collects hidden files only when no live TEXT or DM link remains.
 
 ## Critical state machines
 
@@ -20,7 +20,7 @@ Common channels are available to every active user. `direct_messages` stores exa
 
 `maintenance_admission`: open ↔ active. A server-local operator command changes only this singleton boolean. When active, the API rejects registration, login, new logical voice leases and private LiveKit signal admission, while health, logout, protected reads, existing media and private SFU-removal work continue. No actor, password, session or media credential is stored in this state.
 
-`attachment`: uploading → unattached → attached → hidden → collected. Upload bytes are streamed to a random temporary name after atomic space reservation. Only incomplete uploads older than one hour and unattached items older than 24 hours may be cleaned automatically; published history has no TTL.
+`attachment`: uploading → unattached → attached → hidden → collected. Upload bytes stream to a random temporary name after atomic space reservation. Explicit operator commands may collect incomplete staging older than one hour, unattached objects older than 24 hours, and hidden files without live links; published history has no TTL or scheduled cleanup.
 
 The `write_upload` leaf creates a random private `.part` file, streams at most
 25,000,000 bytes, fsyncs accepted bytes and removes it after read/write/limit/context
@@ -110,6 +110,8 @@ Caddy calls a private API admission endpoint before forwarding every `/rtc` sign
 `/metrics` remains private: the durable SFU-revocation counter has only `confirmed`, `pending` and `failed` outcomes and excludes lease, account, channel, error and media-token values.
 
 The private realtime collectors expose only active connections, total accepted connections and time from WebSocket acceptance to the ready response. They have no labels and exclude account IDs, cookies, events, message data and channel IDs.
+
+The private media collector calls LiveKit RoomService for each active `voice:<channel UUID>` room and counts connected participants and unmuted published audio/video tracks; screen-share video tracks are also counted separately. These are observations of SFU state, never logical lease estimates or a capacity claim. `voice_platform_voice_media_snapshot_success=0` means the scrape failed and the participant/stream gauges are absent, not zero. Realtime event latency records only successfully written WebSocket hints, and reconnect outcomes use fixed `replayed`, `resync_required`, or `rejected` labels once the resume flow makes that decision. No metric carries an account, DM, channel, lease, token, or message value.
 
 The private attachment-filesystem collector reads the same Linux `Bavail` snapshot used by upload admission and exposes available bytes, total bytes and a no-label snapshot-success gauge. A `0` success value makes both byte values unavailable; it does not prove free space, trigger cleanup, expose a filesystem path, or establish a capacity claim.
 

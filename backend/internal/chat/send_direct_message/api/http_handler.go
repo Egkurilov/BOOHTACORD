@@ -24,9 +24,11 @@ func NewHandler(sender Sender) http.Handler {
 			return
 		}
 		var body struct {
-			ClientMessageID string `json:"client_message_id"`
-			ReplyToID       string `json:"reply_to_id"`
-			Body            string `json:"body"`
+			ClientMessageID string   `json:"client_message_id"`
+			ReplyToID       string   `json:"reply_to_id"`
+			Body            string   `json:"body"`
+			AttachmentIDs   []string `json:"attachment_ids"`
+			MentionUserIDs  []string `json:"mention_user_ids"`
 		}
 		decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 40<<10))
 		decoder.DisallowUnknownFields()
@@ -34,7 +36,7 @@ func NewHandler(sender Sender) http.Handler {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректные данные личного сообщения")
 			return
 		}
-		result, err := sender.Send(request.Context(), senddirectmessage.Input{ActorID: principal.AccountID, DirectMessageID: request.PathValue("directMessageID"), ClientMessageID: body.ClientMessageID, ReplyToID: body.ReplyToID, Body: body.Body})
+		result, err := sender.Send(request.Context(), senddirectmessage.Input{ActorID: principal.AccountID, DirectMessageID: request.PathValue("directMessageID"), ClientMessageID: body.ClientMessageID, ReplyToID: body.ReplyToID, Body: body.Body, AttachmentIDs: body.AttachmentIDs, MentionUserIDs: body.MentionUserIDs})
 		if errors.Is(err, senddirectmessage.ErrInvalidInput) {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректные данные личного сообщения")
 			return
@@ -58,8 +60,16 @@ func NewHandler(sender Sender) http.Handler {
 			ReplyToID       string    `json:"reply_to_id,omitempty"`
 			Revision        int       `json:"revision"`
 			CreatedAt       time.Time `json:"created_at"`
-		}{ID: result.ID, DirectMessageID: result.DirectMessageID, AuthorID: result.AuthorID, ClientMessageID: result.ClientMessageID, Body: result.Body, ReplyToID: result.ReplyToID, Revision: result.Revision, CreatedAt: result.CreatedAt})
+			MentionUserIDs  []string  `json:"mention_user_ids"`
+		}{ID: result.ID, DirectMessageID: result.DirectMessageID, AuthorID: result.AuthorID, ClientMessageID: result.ClientMessageID, Body: result.Body, ReplyToID: result.ReplyToID, Revision: result.Revision, CreatedAt: result.CreatedAt, MentionUserIDs: nonNilMentions(result.MentionUserIDs)})
 	})
+}
+
+func nonNilMentions(ids []string) []string {
+	if ids == nil {
+		return []string{}
+	}
+	return ids
 }
 
 func writeError(writer http.ResponseWriter, request *http.Request, status int, code, message string) {

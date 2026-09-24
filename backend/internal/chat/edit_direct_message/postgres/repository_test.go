@@ -22,7 +22,7 @@ func TestRepositoryGuardsAuthorPairAndRevision(t *testing.T) {
 			t.Fatalf("missing %q in %s", fragment, database.statement)
 		}
 	}
-	if strings.Contains(database.statement, "blocked_at") {
+	if strings.Contains(database.statement, "one.blocked_at") || strings.Contains(database.statement, "two.blocked_at") {
 		t.Fatalf("editing retained history must not require an unblocked counterpart")
 	}
 }

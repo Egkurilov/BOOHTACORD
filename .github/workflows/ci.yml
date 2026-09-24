@@ -29,6 +29,23 @@ jobs:
 
   backend:
     runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_DB: voice_platform_test
+          POSTGRES_USER: voice_platform_test
+          POSTGRES_PASSWORD: test-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U voice_platform_test -d voice_platform_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      VOICE_PLATFORM_TEST_DATABASE_URL: postgres://voice_platform_test:test-only-password@127.0.0.1:5432/voice_platform_test?sslmode=disable
+      TEST_DATABASE_URL: postgres://voice_platform_test:test-only-password@127.0.0.1:5432/voice_platform_test?sslmode=disable
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5

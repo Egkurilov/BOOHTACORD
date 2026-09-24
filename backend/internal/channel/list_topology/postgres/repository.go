@@ -11,7 +11,30 @@ import (
 const selectRevision = `SELECT COALESCE((SELECT revision FROM channel_topology_state WHERE singleton = TRUE), 0)`
 const selectTopology = `
 SELECT category.id::text, category.name, category.position,
-       channel.id::text, channel.name, channel.kind, channel.position, channel.admission_closed_at IS NOT NULL
+       channel.id::text, channel.name, channel.kind, channel.position, channel.admission_closed_at IS NOT NULL,
+       CASE WHEN channel.kind = 'TEXT' THEN (
+           SELECT COUNT(*)
+           FROM messages AS message
+           LEFT JOIN channel_read_cursors AS cursor
+             ON cursor.account_id = $1::uuid AND cursor.channel_id = channel.id
+           WHERE message.channel_id = channel.id
+             AND message.deleted_at IS NULL
+             AND message.author_id <> $1::uuid
+             AND (cursor.message_id IS NULL OR
+                  (message.created_at, message.id) > (cursor.message_created_at, cursor.message_id))
+       ) END AS unread_count,
+       CASE WHEN channel.kind = 'TEXT' THEN (
+           SELECT COUNT(*)
+           FROM messages AS message
+           LEFT JOIN channel_read_cursors AS cursor
+             ON cursor.account_id = $1::uuid AND cursor.channel_id = channel.id
+           WHERE message.channel_id = channel.id
+             AND message.deleted_at IS NULL
+             AND message.author_id <> $1::uuid
+             AND $1::uuid = ANY(message.mention_user_ids)
+             AND (cursor.message_id IS NULL OR
+                  (message.created_at, message.id) > (cursor.message_created_at, cursor.message_id))
+       ) END AS mention_count
 FROM categories AS category
 LEFT JOIN channels AS channel ON channel.category_id = category.id AND channel.archived_at IS NULL
 ORDER BY category.position, channel.position`
@@ -30,12 +53,12 @@ type Database interface {
 type Repository struct{ database Database }
 
 func New(database Database) Repository { return Repository{database: database} }
-func (repository Repository) List(context context.Context) (listtopology.Result, error) {
+func (repository Repository) List(context context.Context, request listtopology.Request) (listtopology.Result, error) {
 	var result listtopology.Result
 	if err := repository.database.QueryRow(context, selectRevision).Scan(&result.Revision); err != nil {
 		return result, fmt.Errorf("select topology revision: %w", err)
 	}
-	rows, err := repository.database.Query(context, selectTopology)
+	rows, err := repository.database.Query(context, selectTopology, request.ActorID)
 	if err != nil {
 		return result, fmt.Errorf("select channel topology: %w", err)
 	}
@@ -45,7 +68,9 @@ func (repository Repository) List(context context.Context) (listtopology.Result,
 		var channelID, channelName, channelKind pgtype.Text
 		var channelPosition pgtype.Int4
 		var admissionClosed pgtype.Bool
-		if err := rows.Scan(&category.ID, &category.Name, &category.Position, &channelID, &channelName, &channelKind, &channelPosition, &admissionClosed); err != nil {
+		var unreadCount pgtype.Int8
+		var mentionCount pgtype.Int8
+		if err := rows.Scan(&category.ID, &category.Name, &category.Position, &channelID, &channelName, &channelKind, &channelPosition, &admissionClosed, &unreadCount, &mentionCount); err != nil {
 			return result, fmt.Errorf("scan channel topology: %w", err)
 		}
 		if len(result.Categories) == 0 || result.Categories[len(result.Categories)-1].ID != category.ID {
@@ -53,7 +78,7 @@ func (repository Repository) List(context context.Context) (listtopology.Result,
 		}
 		if channelID.Valid {
 			last := &result.Categories[len(result.Categories)-1]
-			last.Channels = append(last.Channels, listtopology.Channel{ID: channelID.String, Name: channelName.String, Kind: channelKind.String, Position: int(channelPosition.Int32), AdmissionClosed: admissionClosed.Bool})
+			last.Channels = append(last.Channels, listtopology.Channel{ID: channelID.String, Name: channelName.String, Kind: channelKind.String, Position: int(channelPosition.Int32), AdmissionClosed: admissionClosed.Bool, UnreadCount: unreadCount.Int64, MentionCount: mentionCount.Int64})
 		}
 	}
 	if err := rows.Err(); err != nil {

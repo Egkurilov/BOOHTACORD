@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	validatementions "voice-platform/backend/internal/chat/validate_mentions"
 )
 
 var (
@@ -16,6 +18,8 @@ var (
 
 type Input struct {
 	ActorID, DirectMessageID, ClientMessageID, ReplyToID, Body string
+	AttachmentIDs                                              []string
+	MentionUserIDs                                             []string
 }
 type Request struct {
 	ID string
@@ -25,6 +29,7 @@ type Result struct {
 	ID, DirectMessageID, AuthorID, ClientMessageID, Body, ReplyToID string
 	Revision                                                        int
 	CreatedAt                                                       time.Time
+	MentionUserIDs                                                  []string
 }
 type Store interface {
 	Send(context.Context, Request) (Result, error)
@@ -37,7 +42,7 @@ type Service struct {
 func New(store Store) Service { return Service{store: store, newID: newDirectMessageMessageID} }
 
 func (service Service) Send(context context.Context, input Input) (Result, error) {
-	if !validUUID(input.ActorID) || !validUUID(input.DirectMessageID) || !validUUID(input.ClientMessageID) || (input.ReplyToID != "" && !validUUID(input.ReplyToID)) || !utf8.ValidString(input.Body) || utf8.RuneCountInString(input.Body) > 8000 || input.Body == "" || strings.ContainsRune(input.Body, '\x00') {
+	if !validUUID(input.ActorID) || !validUUID(input.DirectMessageID) || !validUUID(input.ClientMessageID) || (input.ReplyToID != "" && !validUUID(input.ReplyToID)) || !validAttachments(input.AttachmentIDs) || !validatementions.Valid(input.MentionUserIDs, input.ActorID) || !utf8.ValidString(input.Body) || utf8.RuneCountInString(input.Body) > 8000 || input.Body == "" || strings.ContainsRune(input.Body, '\x00') {
 		return Result{}, ErrInvalidInput
 	}
 	id, err := service.newID()

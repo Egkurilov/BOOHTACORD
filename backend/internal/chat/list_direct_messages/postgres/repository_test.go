@@ -10,9 +10,9 @@ import (
 )
 
 func TestRepositoryReturnsOnlyPairedAccountAndKeepsBlockedPairVisible(t *testing.T) {
-	database := &fakeDatabase{rows: &fakeRows{values: [][]any{{"22222222-2222-4222-8222-222222222222", "33333333-3333-4333-8333-333333333333", "Собеседник", time.Unix(1, 0), int64(3)}}}}
+	database := &fakeDatabase{rows: &fakeRows{values: [][]any{{"22222222-2222-4222-8222-222222222222", "33333333-3333-4333-8333-333333333333", "Собеседник", time.Unix(1, 0), int64(3), int64(2)}}}}
 	result, err := New(database).List(context.Background(), listdirectmessages.Request{Input: listdirectmessages.Input{ActorID: "11111111-1111-4111-8111-111111111111"}})
-	if err != nil || len(result) != 1 || result[0].OtherParticipantDisplayName != "Собеседник" || result[0].UnreadCount != 3 || database.arguments[0] != "11111111-1111-4111-8111-111111111111" {
+	if err != nil || len(result) != 1 || result[0].OtherParticipantDisplayName != "Собеседник" || result[0].UnreadCount != 3 || result[0].MentionCount != 2 || database.arguments[0] != "11111111-1111-4111-8111-111111111111" {
 		t.Fatalf("result=%#v arguments=%#v error=%v", result, database.arguments, err)
 	}
 	for _, fragment := range []string{"participant_one_id = $1::uuid", "participant_two_id = $1::uuid", "JOIN users account ON account.id = pair.other_participant_id", "LEFT JOIN direct_message_read_cursors cursor", "cursor.account_id = $1::uuid", "message.author_id <> $1::uuid", "(message.created_at, message.id) > (cursor.message_created_at, cursor.message_id)", "ORDER BY pair.created_at DESC, pair.id DESC"} {

@@ -12,24 +12,6 @@ import (
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
-type Event struct {
-	EventID    string         `json:"event_id"`
-	Kind       string         `json:"kind"`
-	OccurredAt time.Time      `json:"occurred_at"`
-	Payload    map[string]any `json:"payload"`
-}
-
-type Clock func() time.Time
-type Identifier func() string
-
-type ConnectionObserver interface {
-	RealtimeConnectionOpened()
-	ObserveRealtimeConnectionReady(time.Duration)
-	RealtimeConnectionClosed()
-}
-
-const defaultSessionRevalidationInterval = 15 * time.Second
-
 func NewHandler(authenticator sessionapi.Authenticator, revalidationInterval time.Duration, now Clock, newID Identifier, observer ConnectionObserver) http.Handler {
 	return NewHandlerWithEvents(authenticator, revalidationInterval, now, newID, observer, nil)
 }
@@ -72,13 +54,47 @@ func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationIn
 		defer connection.CloseNow()
 		writeContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
+		var replay []eventhub.Event
+		var replayReason string
+		var replayEpoch string
 		if request.URL.Query().Has("after") {
-			if !writeEvent(writeContext, connection, newID, now, "connection.resync_required", map[string]any{"reason": "replay_unavailable"}) {
+			if !privateEventSessionValid(authenticator, cookie, subscription) && events != nil {
+				observeReconnectOutcome(observer, "rejected")
+				_ = connection.Close(websocket.StatusPolicyViolation, "session is no longer valid")
 				return
+			}
+			replay, replayReason, replayEpoch = loadReplay(writeContext, events, principal.AccountID, request.URL.Query().Get("after"))
+			if replayReason == "" && !events.ContinuityAt(replayEpoch) {
+				replay, replayReason = nil, "replay_unavailable"
+			}
+			if replayReason != "" && !writeEvent(writeContext, connection, newID, now, "connection.resync_required", map[string]any{"reason": replayReason}) {
+				return
+			}
+			if replayReason != "" {
+				observeReconnectOutcome(observer, "resync_required")
 			}
 		}
 		if !writeEvent(writeContext, connection, newID, now, "connection.ready", map[string]any{}) {
 			return
+		}
+		replayedIDs := make(map[string]struct{}, len(replay))
+		replayComplete := replayReason == ""
+		if replayReason == "" && len(replay) > 0 {
+			var connectionOpen bool
+			connectionOpen, replayComplete = writeAuthorizedReplay(writeContext, connection, authenticator, cookie, subscription, events, replayEpoch, replay, replayedIDs, newID, now, observer)
+			if !connectionOpen {
+				return
+			}
+		}
+		if replayComplete && request.URL.Query().Has("after") && !events.ContinuityAt(replayEpoch) {
+			replayComplete = false
+			if !writeEvent(writeContext, connection, newID, now, "connection.resync_required", map[string]any{"reason": "replay_unavailable"}) {
+				return
+			}
+			observeReconnectOutcome(observer, "resync_required")
+		}
+		if request.URL.Query().Has("after") && replayComplete {
+			observeReconnectOutcome(observer, "replayed")
 		}
 		if events != nil && !writeEvent(writeContext, connection, newID, now, "presence.snapshot", map[string]any{"online_user_ids": events.OnlineAccounts()}) {
 			return
@@ -86,7 +102,7 @@ func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationIn
 		if observer != nil {
 			observer.ObserveRealtimeConnectionReady(time.Since(acceptedAt))
 		}
-		streamEvents(connection, authenticator, cookie, revalidationInterval, subscription, events, newID, now)
+		streamEvents(connection, authenticator, cookie, revalidationInterval, subscription, events, newID, now, observer, replayedIDs)
 	})
 }
 

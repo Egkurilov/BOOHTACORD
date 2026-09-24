@@ -2,6 +2,7 @@ package listdirectmessagehistorypostgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -27,7 +28,14 @@ WITH readable_pair AS (
 )
 SELECT m.id::text, m.direct_message_id::text, m.author_id::text, m.client_message_id::text,
        CASE WHEN m.deleted_at IS NULL THEN m.body ELSE '' END, COALESCE(m.reply_to_id::text, ''), m.created_at, m.edited_at, m.revision, m.deleted_at IS NOT NULL,
-       COALESCE(reply.id::text, ''), COALESCE(reply.author_id::text, ''), CASE WHEN reply.deleted_at IS NULL THEN COALESCE(reply.body, '') ELSE '' END, reply.deleted_at IS NOT NULL
+       CASE WHEN m.deleted_at IS NULL THEN m.mention_user_ids::text[] ELSE ARRAY[]::text[] END,
+       COALESCE(reply.id::text, ''), COALESCE(reply.author_id::text, ''), CASE WHEN reply.deleted_at IS NULL THEN COALESCE(reply.body, '') ELSE '' END, reply.deleted_at IS NOT NULL,
+       COALESCE((
+           SELECT jsonb_agg(jsonb_build_object('id', a.id::text, 'original_name', a.original_name, 'byte_size', a.byte_size) ORDER BY link.position)
+           FROM direct_message_attachments link
+           JOIN attachments a ON a.id = link.attachment_id
+           WHERE link.message_id = m.id AND a.state = 'ATTACHED' AND m.deleted_at IS NULL
+       ), '[]'::jsonb)
 FROM direct_message_messages m
 LEFT JOIN direct_message_messages reply
   ON reply.id = m.reply_to_id
@@ -72,8 +80,12 @@ func (repository Repository) List(context context.Context, request listdirectmes
 	for rows.Next() {
 		var message listdirectmessagehistory.Message
 		var preview listdirectmessagehistory.ReplyPreview
-		if err := rows.Scan(&message.ID, &message.DirectMessageID, &message.AuthorID, &message.ClientMessageID, &message.Body, &message.ReplyToID, &message.CreatedAt, &message.EditedAt, &message.Revision, &message.Deleted, &preview.ID, &preview.AuthorID, &preview.Body, &preview.Deleted); err != nil {
+		var attachments []byte
+		if err := rows.Scan(&message.ID, &message.DirectMessageID, &message.AuthorID, &message.ClientMessageID, &message.Body, &message.ReplyToID, &message.CreatedAt, &message.EditedAt, &message.Revision, &message.Deleted, &message.MentionUserIDs, &preview.ID, &preview.AuthorID, &preview.Body, &preview.Deleted, &attachments); err != nil {
 			return nil, fmt.Errorf("scan direct message history: %w", err)
+		}
+		if err := json.Unmarshal(attachments, &message.Attachments); err != nil {
+			return nil, fmt.Errorf("decode direct message attachment metadata: %w", err)
 		}
 		if preview.ID != "" {
 			message.ReplyPreview = &preview

@@ -31,6 +31,19 @@
         }
       }
     },
+    "/api/v1/realtime": {
+      "get": {
+        "operationId": "connectRealtime",
+        "description": "Authenticated same-origin WebSocket upgrade. The optional after UUID is the last acknowledged durable event_id. The journal has 7-day retention and a 512-event replay limit; the server rechecks current session and per-event ACL. A cursor from another server boot epoch, an expired/invalid cursor, overflow or unavailable journal causes connection.resync_required and REST full resync. Replayed events can duplicate live delivery, so the client deduplicates by event_id. Presence and connection events are ephemeral and must not be used as after cursors.",
+        "parameters": [
+          { "name": "after", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" }, "description": "Last acknowledged durable event_id; never an authentication token." }
+        ],
+        "responses": {
+          "101": { "description": "WebSocket upgrade; frames follow realtime.schema.json" },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
     "/api/v1/direct-messages": {
       "post": {
         "operationId": "openDirectMessage",
@@ -49,7 +62,7 @@
       },
       "get": {
         "operationId": "listDirectMessages",
-        "description": "Authenticated caller only. Returns only canonical DM pairs containing caller, paired account display name, and caller-local unread_count derived from that caller's monotonic cursor; administrator role grants no exception. A pre-existing pair remains visible to reach retained history after a block.",
+        "description": "Authenticated caller only. Returns canonical DM pairs containing caller, paired account display name, caller-local unread_count and mention_count derived from the monotonic cursor and current live messages; administrator role grants no exception. A pre-existing pair remains visible to reach retained history after a block.",
         "responses": {
           "200": { "description": "Caller direct-message navigation list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageList" } } } },
           "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
@@ -73,10 +86,79 @@
         }
       }
     },
+    "/api/v1/direct-messages/{directMessageID}/attachments": {
+      "post": {
+        "operationId": "uploadDirectMessageAttachment",
+        "description": "Authenticated participant only. Streams one file to private staging for this canonical DM pair while both participants are active; administrator status grants no exception. The response contains metadata only, never a storage key or download URL.",
+        "parameters": [
+          { "name": "directMessageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "multipart/form-data": { "schema": { "type": "object", "additionalProperties": false, "required": ["file"], "properties": { "file": { "type": "string", "format": "binary" } } } } }
+        },
+        "responses": {
+          "201": { "description": "Private unattached attachment metadata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AttachmentUpload" } } } },
+          "400": { "description": "Malformed multipart body", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "DM is absent, caller is not a participant, or either account is blocked", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "413": { "description": "File exceeds 25,000,000 bytes", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "507": { "description": "Insufficient private attachment storage", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/direct-messages/{directMessageID}/attachments/{attachmentID}": {
+      "get": {
+        "operationId": "downloadDirectMessageAttachment",
+        "description": "Authenticated participant of this canonical pair only; administrator status grants no exception. Before each private file read, require an ATTACHED object linked to a live message in this DM. Serve all formats as forced downloads with nosniff, never a storage key or public URL.",
+        "parameters": [
+          { "name": "directMessageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "attachmentID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Private bytes with forced attachment disposition and nosniff",
+            "headers": {
+              "Content-Disposition": { "schema": { "type": "string" } },
+              "X-Content-Type-Options": { "schema": { "type": "string", "enum": ["nosniff"] } }
+            },
+            "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+          },
+          "400": { "description": "Malformed identifier", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Attachment, live DM message or participant access is unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Private attachment could not be read", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/direct-messages/{directMessageID}/attachments/{attachmentID}/preview": {
+      "get": {
+        "operationId": "previewDirectMessageAttachment",
+        "description": "Same participant and live-message checks as private DM download. Only valid bounded PNG/JPEG/GIF sources become a server-normalized PNG; active, corrupt, oversized, deleted or unauthorized content is unavailable and never rendered on the application origin.",
+        "parameters": [
+          { "name": "directMessageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "attachmentID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Private server-normalized PNG preview",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "enum": ["no-store"] } },
+              "X-Content-Type-Options": { "schema": { "type": "string", "enum": ["nosniff"] } }
+            },
+            "content": { "image/png": { "schema": { "type": "string", "format": "binary" } } }
+          },
+          "400": { "description": "Malformed identifier", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Attachment, live DM message, participant access or safe preview is unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Preview could not be rendered", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
     "/api/v1/direct-messages/{directMessageID}/messages": {
       "post": {
         "operationId": "sendDirectMessage",
-        "description": "Authenticated participant only. The caller must belong to this DM and both participants must be active; administrator role supplies no exception. Reusing the same author-and-DM-scoped client_message_id returns the existing message.",
+        "description": "Authenticated participant only. The caller must belong to this DM and both participants must be active; administrator role supplies no exception. Up to ten private attachment_ids must belong to the caller and this DM, and bind atomically to the new message. Reusing the same author-and-DM-scoped client_message_id returns the existing message without adding links.",
         "parameters": [
           { "name": "directMessageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
         ],
@@ -187,10 +269,30 @@
     "/api/v1/channels": {
       "get": {
         "operationId": "getChannelTopology",
-        "description": "Authenticated member only. Returns ordered categories and non-archived channels; a VOICE channel with closed admission remains visible with admission_closed:true.",
+        "description": "Authenticated member only. Returns ordered categories and non-archived channels; each TEXT channel includes caller-local unread_count and mention_count from current live messages after that caller's monotonic cursor, excluding their own messages. VOICE channels omit both counters; a VOICE channel with closed admission remains visible with admission_closed:true until confirmed finalization.",
         "responses": {
           "200": { "description": "Current readable channel topology", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChannelTopology" } } } },
           "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/channels/{channelID}/read-cursor": {
+      "put": {
+        "operationId": "advanceTextChannelReadCursor",
+        "description": "Authenticated member only. Advances only the caller's cursor to a message in the same current TEXT channel. Backward requests leave the effective cursor unchanged; an archived, wrong-kind or mismatched message is unavailable.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChannelReadCursorRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Effective monotonic cursor for this caller and channel", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChannelReadCursor" } } } },
+          "400": { "description": "Malformed path or body", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Channel or message is absent or unavailable to caller", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
       }
@@ -879,6 +981,25 @@
       }
     },
     "/api/v1/admin/channels/{channelID}": {
+      "patch": {
+        "operationId": "renameChannel",
+        "description": "Administrator-only. Renames a current TEXT or VOICE channel under the topology revision lock without changing kind, category, position or media state; writes metadata-only audit after success.",
+        "parameters": [
+          { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChannelRenameRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Channel renamed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChannelRenameResult" } } } },
+          "400": { "description": "Malformed channel name or revision", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Channel unavailable or topology revision stale; refresh state and retry", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
       "delete": {
         "operationId": "archiveTextChannel",
         "description": "Administrator-only. This route archives only a TEXT channel after explicit confirmation; it never physically deletes its history.",
@@ -902,7 +1023,7 @@
     "/api/v1/admin/voice-channels/{channelID}/close-admission": {
       "post": {
         "operationId": "closeVoiceChannelAdmission",
-        "description": "Administrator-only. Closes future logical admission for an active VOICE channel, revokes its active voice leases and creates a durable SFU revocation for each; completion and token replay remain POC-03 gates.",
+        "description": "Administrator-only. Closes future logical admission for an active VOICE channel, revokes its active voice leases and creates a durable SFU revocation for each. A bounded worker archives the channel only after confirmed SFU removal, no active lease and an empty exact LiveKit room; real connected-media and old-token behavior remain POC-03 gates.",
         "parameters": [
           { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
         ],
@@ -1150,13 +1271,14 @@
       "DirectMessageListItem": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "other_participant_id", "other_participant_display_name", "created_at", "unread_count"],
+        "required": ["id", "other_participant_id", "other_participant_display_name", "created_at", "unread_count", "mention_count"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "other_participant_id": { "type": "string", "format": "uuid" },
           "other_participant_display_name": { "type": "string" },
           "created_at": { "type": "string", "format": "date-time" },
-          "unread_count": { "type": "integer", "minimum": 0 }
+          "unread_count": { "type": "integer", "minimum": 0 },
+          "mention_count": { "type": "integer", "minimum": 0, "description": "Caller-local live mentions after this caller's DM read cursor." }
         }
       },
       "DirectMessageCandidateList": {
@@ -1184,13 +1306,15 @@
         "properties": {
           "client_message_id": { "type": "string", "format": "uuid" },
           "reply_to_id": { "type": "string", "format": "uuid", "description": "Must identify a message in this same direct-message pair." },
-          "body": { "type": "string", "minLength": 1, "maxLength": 8000 }
+          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "attachment_ids": { "type": "array", "maxItems": 10, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } },
+          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" }, "description": "Stable IDs; only the other DM participant may be mentioned. No self or broadcast mention." }
         }
       },
       "DirectMessageMessage": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "direct_message_id", "author_id", "client_message_id", "body", "revision", "created_at"],
+        "required": ["id", "direct_message_id", "author_id", "client_message_id", "body", "revision", "created_at", "mention_user_ids"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "direct_message_id": { "type": "string", "format": "uuid" },
@@ -1199,7 +1323,8 @@
           "body": { "type": "string" },
           "reply_to_id": { "type": "string", "format": "uuid" },
           "revision": { "type": "integer", "minimum": 1 },
-          "created_at": { "type": "string", "format": "date-time" }
+          "created_at": { "type": "string", "format": "date-time" },
+          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } }
         }
       },
       "DirectMessageMessageEditRequest": {
@@ -1208,13 +1333,14 @@
         "required": ["body", "expected_revision"],
         "properties": {
           "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
-          "expected_revision": { "type": "integer", "minimum": 1 }
+          "expected_revision": { "type": "integer", "minimum": 1 },
+          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" }, "description": "Complete replacement; omitted means empty." }
         }
       },
       "DirectMessageMessageEdited": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "direct_message_id", "author_id", "client_message_id", "body", "revision", "created_at", "edited_at"],
+        "required": ["id", "direct_message_id", "author_id", "client_message_id", "body", "revision", "created_at", "edited_at", "mention_user_ids"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "direct_message_id": { "type": "string", "format": "uuid" },
@@ -1224,7 +1350,8 @@
           "reply_to_id": { "type": "string", "format": "uuid" },
           "revision": { "type": "integer", "minimum": 2 },
           "created_at": { "type": "string", "format": "date-time" },
-          "edited_at": { "type": "string", "format": "date-time" }
+          "edited_at": { "type": "string", "format": "date-time" },
+          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } }
         }
       },
       "DirectMessageMessagePage": {
@@ -1262,7 +1389,7 @@
       "DirectMessageMessageHistoryItem": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "direct_message_id", "author_id", "client_message_id", "body", "created_at", "revision", "deleted"],
+        "required": ["id", "direct_message_id", "author_id", "client_message_id", "body", "created_at", "revision", "deleted", "attachments", "mention_user_ids"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "direct_message_id": { "type": "string", "format": "uuid" },
@@ -1274,7 +1401,9 @@
           "created_at": { "type": "string", "format": "date-time" },
           "edited_at": { "type": "string", "format": "date-time" },
           "revision": { "type": "integer", "minimum": 1 },
-          "deleted": { "type": "boolean" }
+          "deleted": { "type": "boolean" },
+          "attachments": { "type": "array", "description": "Metadata only for live message links; deleted messages return an empty array. No storage key or URL.", "items": { "$ref": "#/components/schemas/TextMessageAttachment" } },
+          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" }, "description": "Stable recipient IDs; deleted messages return empty." }
         }
       },
       "DirectMessageReplyPreview": {
@@ -1315,13 +1444,14 @@
           "client_message_id": { "type": "string", "format": "uuid" },
           "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
           "reply_to_id": { "type": "string", "format": "uuid" },
-          "attachment_ids": { "type": "array", "maxItems": 10, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } }
+          "attachment_ids": { "type": "array", "maxItems": 10, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } },
+          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" }, "description": "Stable active recipient IDs; no self or broadcast mention." }
         }
       },
       "TextMessage": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "channel_id", "author_id", "client_message_id", "body", "revision", "created_at"],
+        "required": ["id", "channel_id", "author_id", "client_message_id", "body", "revision", "created_at", "mention_user_ids"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "channel_id": { "type": "string", "format": "uuid" },
@@ -1330,7 +1460,8 @@
           "body": { "type": "string" },
           "revision": { "type": "integer", "minimum": 1 },
           "reply_to_id": { "type": "string", "format": "uuid" },
-          "created_at": { "type": "string", "format": "date-time" }
+          "created_at": { "type": "string", "format": "date-time" },
+          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } }
         }
       },
       "AttachmentUpload": {
@@ -1349,13 +1480,14 @@
         "required": ["body", "expected_revision"],
         "properties": {
           "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
-          "expected_revision": { "type": "integer", "minimum": 1 }
+          "expected_revision": { "type": "integer", "minimum": 1 },
+          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" }, "description": "Complete replacement; omitted means empty." }
         }
       },
       "TextMessageEdited": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "channel_id", "author_id", "client_message_id", "body", "revision", "created_at", "edited_at"],
+        "required": ["id", "channel_id", "author_id", "client_message_id", "body", "revision", "created_at", "edited_at", "mention_user_ids"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "channel_id": { "type": "string", "format": "uuid" },
@@ -1365,7 +1497,8 @@
           "reply_to_id": { "type": "string", "format": "uuid" },
           "revision": { "type": "integer", "minimum": 2 },
           "created_at": { "type": "string", "format": "date-time" },
-          "edited_at": { "type": "string", "format": "date-time" }
+          "edited_at": { "type": "string", "format": "date-time" },
+          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } }
         }
       },
       "TextMessagePage": {
@@ -1428,7 +1561,7 @@
       "TextMessageHistoryItem": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "channel_id", "author_id", "client_message_id", "body", "created_at", "revision", "deleted", "attachments"],
+        "required": ["id", "channel_id", "author_id", "client_message_id", "body", "created_at", "revision", "deleted", "attachments", "mention_user_ids"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "channel_id": { "type": "string", "format": "uuid" },
@@ -1440,7 +1573,8 @@
           "edited_at": { "type": "string", "format": "date-time" },
           "revision": { "type": "integer", "minimum": 1 },
           "deleted": { "type": "boolean" },
-          "attachments": { "type": "array", "items": { "$ref": "#/components/schemas/TextMessageAttachment" } }
+          "attachments": { "type": "array", "items": { "$ref": "#/components/schemas/TextMessageAttachment" } },
+          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" }, "description": "Stable recipient IDs; deleted messages return empty." }
         }
       },
       "TextMessageAttachment": {
@@ -1472,7 +1606,9 @@
           "name": { "type": "string" },
           "kind": { "type": "string", "enum": ["TEXT", "VOICE"] },
           "position": { "type": "integer", "minimum": 0 },
-          "revision": { "type": "integer", "minimum": 1 }
+          "revision": { "type": "integer", "minimum": 1 },
+          "unread_count": { "type": "integer", "minimum": 0, "description": "Caller-local unread count for TEXT channels only; omitted for VOICE." },
+          "mention_count": { "type": "integer", "minimum": 0, "description": "Caller-local live mentions after the TEXT read cursor; omitted for VOICE." }
         }
       },
       "CategoryReorderRequest": {
@@ -1509,6 +1645,43 @@
           "id": { "type": "string", "format": "uuid" },
           "name": { "type": "string" },
           "revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "ChannelRenameRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "expected_revision"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "expected_revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "ChannelRenameResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "revision"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "ChannelReadCursorRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["message_id"],
+        "properties": {
+          "message_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "ChannelReadCursor": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["channel_id", "message_id", "message_created_at"],
+        "properties": {
+          "channel_id": { "type": "string", "format": "uuid" },
+          "message_id": { "type": "string", "format": "uuid" },
+          "message_created_at": { "type": "string", "format": "date-time" }
         }
       },
       "ChannelMoveRequest": {

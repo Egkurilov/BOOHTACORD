@@ -1,0 +1,37 @@
+{
+  "id": "be08-postgres-integration-2026-09-25",
+  "kind": "backend-integration",
+  "status": "PASS",
+  "executed_at": "2026-09-25",
+  "environment": {
+    "os": "WSL Linux",
+    "database": "local PostgreSQL, disposable schema per test",
+    "go_module": "voice-platform/backend",
+    "revision": "uncommitted BE-08 working tree"
+  },
+  "scenario": {
+    "requirement": "BE-08 / T-040",
+    "checks": [
+      "TEXT and DM mention UUIDs are persisted with messages and returned on idempotent retry",
+      "TEXT user rename does not alter stored mention UUIDs",
+      "DM mention outside the participant pair is rejected atomically, including administrator",
+      "edit replaces mentions; soft deletion hides mentions from history and counters",
+      "caller-local mention counts exclude own messages and messages at or before read cursor",
+      "third-party administrator cannot read DM history"
+    ]
+  },
+  "observer": "Codex BE-08 agent",
+  "results": {
+    "migration_backed_tests": "PASS: TestTextMention* and TestDMMention* cases",
+    "backend_suite": "PASS: go test ./internal/chat/... ./internal/channel/... ./internal/database/migrate/... ./cmd/api/... -count=1",
+    "focused_go_vet": "PASS",
+    "contract_verifier": "PASS",
+    "spec_traceability": "PASS"
+  },
+  "artifacts": [
+    "backend/internal/chat/create_text_message/postgres/mentions_integration_test.go",
+    "backend/internal/chat/send_direct_message/postgres/mentions_integration_test.go",
+    "backend/internal/database/migrate/migrations/0035_add_message_mentions.sql"
+  ],
+  "limitations": "Local PostgreSQL integration only; no production deploy or release-gate claim."
+}

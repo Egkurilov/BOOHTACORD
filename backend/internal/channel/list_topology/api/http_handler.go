@@ -6,11 +6,12 @@ import (
 	"net/http"
 
 	listtopology "voice-platform/backend/internal/channel/list_topology"
+	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
 	"voice-platform/backend/internal/security/request_id"
 )
 
 type Lister interface {
-	List(context.Context) (listtopology.Result, error)
+	List(context.Context, listtopology.Input) (listtopology.Result, error)
 }
 
 func NewHandler(lister Lister) http.Handler {
@@ -19,7 +20,12 @@ func NewHandler(lister Lister) http.Handler {
 			writer.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		result, err := lister.List(request.Context())
+		principal, ok := sessionapi.PrincipalFrom(request.Context())
+		if !ok {
+			writeError(writer, request)
+			return
+		}
+		result, err := lister.List(request.Context(), listtopology.Input{ActorID: principal.AccountID})
 		if err != nil {
 			writeError(writer, request)
 			return
@@ -45,6 +51,8 @@ type channel struct {
 	Kind            string `json:"kind"`
 	Position        int    `json:"position"`
 	AdmissionClosed bool   `json:"admission_closed"`
+	UnreadCount     *int64 `json:"unread_count,omitempty"`
+	MentionCount    *int64 `json:"mention_count,omitempty"`
 }
 
 func categories(source []listtopology.Category) []category {
@@ -52,7 +60,12 @@ func categories(source []listtopology.Category) []category {
 	for _, item := range source {
 		current := category{ID: item.ID, Name: item.Name, Position: item.Position, Channels: make([]channel, 0, len(item.Channels))}
 		for _, item := range item.Channels {
-			current.Channels = append(current.Channels, channel{ID: item.ID, Name: item.Name, Kind: item.Kind, Position: item.Position, AdmissionClosed: item.AdmissionClosed})
+			value := channel{ID: item.ID, Name: item.Name, Kind: item.Kind, Position: item.Position, AdmissionClosed: item.AdmissionClosed}
+			if item.Kind == "TEXT" {
+				value.UnreadCount = &item.UnreadCount
+				value.MentionCount = &item.MentionCount
+			}
+			current.Channels = append(current.Channels, value)
 		}
 		result = append(result, current)
 	}

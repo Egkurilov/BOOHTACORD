@@ -28,19 +28,28 @@ import (
 	"voice-platform/backend/internal/channel/rename_category"
 	renameapi "voice-platform/backend/internal/channel/rename_category/api"
 	renamepostgres "voice-platform/backend/internal/channel/rename_category/postgres"
+	"voice-platform/backend/internal/channel/rename_channel"
+	renamechannelapi "voice-platform/backend/internal/channel/rename_channel/api"
+	renamechannelpostgres "voice-platform/backend/internal/channel/rename_channel/postgres"
 	"voice-platform/backend/internal/channel/reorder_categories"
 	reorderapi "voice-platform/backend/internal/channel/reorder_categories/api"
 	reorderpostgres "voice-platform/backend/internal/channel/reorder_categories/postgres"
 	"voice-platform/backend/internal/channel/reorder_channels"
 	channelreorderapi "voice-platform/backend/internal/channel/reorder_channels/api"
 	channelreorderpostgres "voice-platform/backend/internal/channel/reorder_channels/postgres"
+	"voice-platform/backend/internal/chat/advance_text_channel_read_cursor"
+	textcursorapi "voice-platform/backend/internal/chat/advance_text_channel_read_cursor/api"
+	textcursorpostgres "voice-platform/backend/internal/chat/advance_text_channel_read_cursor/postgres"
 	"voice-platform/backend/internal/identity/authenticate_session"
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
+	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
-func configureChannelRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service) {
+func configureChannelRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, events *eventhub.Hub) {
 	topologyService := listtopology.New(listpostgres.New(listpostgres.NewPoolDatabase(database)))
 	topologyHandler := sessionapi.Require(sessions)(listapi.NewHandler(topologyService))
+	textCursor := advancetextchannelreadcursor.New(textcursorpostgres.New(textcursorpostgres.NewPoolDatabase(database)))
+	textCursorHandler := sessionapi.Require(sessions)(textcursorapi.NewHandler(textCursor))
 	categoryService := createcategory.New(categorypostgres.New(categorypostgres.NewPoolDatabase(database)))
 	categoryHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(categoryapi.NewHandler(categoryService)))
 	channelService := createchannel.New(channelpostgres.New(channelpostgres.NewPoolDatabase(database)))
@@ -49,6 +58,8 @@ func configureChannelRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 	reorderHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(reorderapi.NewHandler(categoryReorder)))
 	categoryRename := renamecategory.New(renamepostgres.New(renamepostgres.NewPoolDatabase(database)))
 	renameHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(renameapi.NewHandler(categoryRename)))
+	channelRename := renamechannel.New(renamechannelpostgres.New(renamechannelpostgres.NewPoolDatabase(database)))
+	channelRenameHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(renamechannelapi.NewHandler(channelRename)))
 	categoryDelete := deleteemptycategory.New(deletecategorypostgres.New(deletecategorypostgres.NewPoolDatabase(database)))
 	deleteHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(deletecategoryapi.NewHandler(categoryDelete)))
 	channelMove := movechannel.New(movepostgres.New(movepostgres.NewPoolDatabase(database)))
@@ -59,14 +70,18 @@ func configureChannelRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 	archiveHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(archiveapi.NewHandler(textArchive)))
 	voiceAdmission := closevoiceadmission.New(closepostgres.New(closepostgres.NewPoolDatabase(database)))
 	voiceAdmissionHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(closeapi.NewHandler(voiceAdmission)))
-	mux.Handle("POST /api/v1/admin/categories", categoryHandler)
 	mux.Handle("GET /api/v1/channels", topologyHandler)
-	mux.Handle("PATCH /api/v1/admin/categories/{categoryID}", renameHandler)
-	mux.Handle("DELETE /api/v1/admin/categories/{categoryID}", deleteHandler)
-	mux.Handle("POST /api/v1/admin/categories/{categoryID}/channels", channelHandler)
-	mux.Handle("PUT /api/v1/admin/categories/{categoryID}/channels/order", channelReorderHandler)
-	mux.Handle("PATCH /api/v1/admin/channels/{channelID}/category", moveHandler)
-	mux.Handle("DELETE /api/v1/admin/channels/{channelID}", archiveHandler)
-	mux.Handle("POST /api/v1/admin/voice-channels/{channelID}/close-admission", voiceAdmissionHandler)
-	mux.Handle("PUT /api/v1/admin/categories/order", reorderHandler)
+	mux.Handle("PUT /api/v1/channels/{channelID}/read-cursor", textCursorHandler)
+	registerTopologyMutationRoutes(mux, events, topologyMutationHandlers{
+		createCategory:      categoryHandler,
+		reorderCategories:   reorderHandler,
+		renameCategory:      renameHandler,
+		deleteCategory:      deleteHandler,
+		createChannel:       channelHandler,
+		reorderChannels:     channelReorderHandler,
+		renameChannel:       channelRenameHandler,
+		moveChannel:         moveHandler,
+		archiveTextChannel:  archiveHandler,
+		closeVoiceAdmission: voiceAdmissionHandler,
+	})
 }

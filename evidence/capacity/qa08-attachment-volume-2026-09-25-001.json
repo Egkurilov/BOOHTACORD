@@ -1,0 +1,54 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-001",
+  "kind": "storage-capacity-preflight",
+  "status": "BLOCKED",
+  "executed_at": "2026-09-24T21:23:07Z",
+  "environment": "local Windows 11 workspace with Ubuntu WSL; production attachment volume unavailable",
+  "revision": "2dbaf501a89fdb575a83f28678ce482a42719991 (working tree dirty)",
+  "observer": "Codex QA-08 agent",
+  "scope": {
+    "configured_api_attachment_path": "/var/lib/voice-platform/attachments",
+    "configured_compose_volume": "voice-platform_attachments-data",
+    "compose_source": "compose.yaml: api.volumes attachments-data:/var/lib/voice-platform/attachments",
+    "production_attachment_volume_measured": false,
+    "local_workspace_backing_filesystem": "Windows C: mounted at /mnt/c in Ubuntu WSL (9p/DrvFs); not the Compose attachment volume"
+  },
+  "measurements": {
+    "local_windows_c_total_bytes": 999032877056,
+    "local_windows_c_free_bytes": 313822523392,
+    "local_windows_c_free_percent_approx": 31.4,
+    "production_attachment_total_bytes": null,
+    "production_attachment_available_bytes": null,
+    "production_reserved_upload_bytes": null
+  },
+  "checks": [
+    {
+      "name": "production_attachment_mount_statfs",
+      "result": "BLOCKED",
+      "detail": "Docker Desktop Linux daemon is not running (npipe dockerDesktopLinuxEngine unavailable); no production host session or attachment mount is present in this workspace. The Windows C: measurement must not be used as production volume capacity."
+    },
+    {
+      "name": "admission_threshold_and_error_contract",
+      "result": "PASS_STATIC",
+      "detail": "reserve_upload_space protects max(2 GiB, ceil(total/10)) plus each concurrent 25,000,000-byte reservation; stage_upload rechecks capacity during streaming. TEXT and DM upload handlers map insufficient storage to HTTP 507 / INSUFFICIENT_STORAGE."
+    },
+    {
+      "name": "focused_native_tests",
+      "result": "PASS",
+      "detail": "Ubuntu WSL go test -count=1 passed reserve_upload_space, stage_upload, upload_text_attachment/api, upload_direct_message_attachment/api, write_upload, and http_metrics packages. No production upload was attempted."
+    },
+    {
+      "name": "published_history_preservation",
+      "result": "PASS_STATIC",
+      "detail": "No attachment data was deleted or modified during this check. Admission rejects new uploads when the threshold is crossed; it does not remove history."
+    }
+  ],
+  "capacity_action": "On the actual deployment host, resolve voice-platform_attachments-data with docker volume inspect, record its Mountpoint, then run df -B1 and findmnt against that exact path; compare available bytes with max(2 GiB, ceil(total/10)) plus outstanding upload reservations and allow for growth. If below threshold, keep 507 admission active and have the owner provision capacity. Do not delete published attachments or introduce backups as a workaround.",
+  "failure_or_blocker": "The actual attachment volume and current reservation metric were not reachable; QA-08 remains open.",
+  "artifacts": [],
+  "limitations": [
+    "The historical 2026-09-24 root-filesystem observation of 9% free does not establish current attachment-volume capacity.",
+    "The local Windows C: free space is only a diagnostic of the workspace host and not deployment evidence.",
+    "Static tests do not prove the storage behavior on the production filesystem."
+  ]
+}

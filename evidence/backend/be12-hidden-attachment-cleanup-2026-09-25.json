@@ -1,0 +1,36 @@
+{
+  "id": "be12-hidden-attachment-cleanup-2026-09-25",
+  "kind": "backend-integration",
+  "status": "PASS",
+  "executed_at": "2026-09-25",
+  "environment": {
+    "os": "WSL Linux",
+    "database": "local PostgreSQL, disposable migration-backed schema per test",
+    "go_module": "voice-platform/backend",
+    "revision": "uncommitted BE-12 working tree"
+  },
+  "scenario": {
+    "requirement": "BE-12 / T-044",
+    "checks": [
+      "soft-deleted TEXT and DM attachments are removed while live-linked files remain",
+      "expired claims are recoverable and finalization rejects newly discovered live links",
+      "failed file removal releases claim for safe retry",
+      "audit failure after unlink rolls back link and metadata deletion; missing file is safe on retry",
+      "operator command is bounded and Compose deployment config is valid",
+      "persistent file failures do not starve unattempted attachments in bounded batches"
+    ]
+  },
+  "observer": "Codex BE-12 agent",
+  "results": {
+    "migration_backed_tests": "PASS: five hidden-cleanup PostgreSQL integration cases, including bounded fairness",
+    "focused_go_tests": "PASS: storage packages and cleanup-hidden-attachments command",
+    "focused_go_vet": "PASS",
+    "compose_config": "PASS",
+    "compose_image_verifier": "PASS"
+  },
+  "artifacts": [
+    "backend/internal/storage/cleanup_hidden_attachments/postgres/*_test.go",
+    "backend/internal/database/migrate/migrations/0037_add_hidden_attachment_cleanup_claim.sql"
+  ],
+  "limitations": "Scoped local integration evidence only; no production disk-fault exercise or release claim. An active five-minute failed claim can make one run report Claimed: 0 until retry becomes eligible."
+}

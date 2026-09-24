@@ -12,17 +12,28 @@ import (
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
 	"voice-platform/backend/internal/security/rate_limit"
+	dmauthorize "voice-platform/backend/internal/storage/authorize_direct_message_attachment"
+	dmauthorizepostgres "voice-platform/backend/internal/storage/authorize_direct_message_attachment/postgres"
 	authorize "voice-platform/backend/internal/storage/authorize_text_attachment"
 	authorizepostgres "voice-platform/backend/internal/storage/authorize_text_attachment/postgres"
+	dmdownload "voice-platform/backend/internal/storage/download_direct_message_attachment"
+	dmdownloadapi "voice-platform/backend/internal/storage/download_direct_message_attachment/api"
+	dmdownloadpostgres "voice-platform/backend/internal/storage/download_direct_message_attachment/postgres"
 	download "voice-platform/backend/internal/storage/download_text_attachment"
 	downloadapi "voice-platform/backend/internal/storage/download_text_attachment/api"
 	downloadpostgres "voice-platform/backend/internal/storage/download_text_attachment/postgres"
+	dmfinalize "voice-platform/backend/internal/storage/finalize_staged_direct_message_attachment"
+	dmfinalizepostgres "voice-platform/backend/internal/storage/finalize_staged_direct_message_attachment/postgres"
 	finalize "voice-platform/backend/internal/storage/finalize_staged_text_attachment"
 	finalizepostgres "voice-platform/backend/internal/storage/finalize_staged_text_attachment/postgres"
+	dmpreview "voice-platform/backend/internal/storage/preview_direct_message_attachment"
+	dmpreviewapi "voice-platform/backend/internal/storage/preview_direct_message_attachment/api"
 	preview "voice-platform/backend/internal/storage/preview_text_attachment"
 	previewapi "voice-platform/backend/internal/storage/preview_text_attachment/api"
 	reserve "voice-platform/backend/internal/storage/reserve_upload_space"
 	stage "voice-platform/backend/internal/storage/stage_upload"
+	dmupload "voice-platform/backend/internal/storage/upload_direct_message_attachment"
+	dmuploadapi "voice-platform/backend/internal/storage/upload_direct_message_attachment/api"
 	upload "voice-platform/backend/internal/storage/upload_text_attachment"
 	uploadapi "voice-platform/backend/internal/storage/upload_text_attachment/api"
 	writeupload "voice-platform/backend/internal/storage/write_upload"
@@ -65,11 +76,19 @@ func configureStorageRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 	authorizer := authorize.New(authorizepostgres.New(authorizepostgres.NewPoolDatabase(database)))
 	finalizer := finalize.New(finalizepostgres.New(finalizepostgres.NewPoolDatabase(database)), files)
 	uploader := upload.New(authorizer, stage.New(manager, writer), finalizer)
+	dmAuthorizer := dmauthorize.New(dmauthorizepostgres.New(dmauthorizepostgres.NewPoolDatabase(database)))
+	dmFinalizer := dmfinalize.New(dmfinalizepostgres.New(dmfinalizepostgres.NewPoolDatabase(database)), files)
+	dmUploader := dmupload.New(dmAuthorizer, stage.New(manager, writer), dmFinalizer)
 	downloader := download.New(downloadpostgres.New(downloadpostgres.NewPoolDatabase(database)), downloadFiles)
+	dmDownloader := dmdownload.New(dmdownloadpostgres.New(dmdownloadpostgres.NewPoolDatabase(database)), downloadFiles)
 	previewer := preview.New(downloader)
+	dmPreviewer := dmpreview.New(dmDownloader)
 	mux.Handle("POST /api/v1/channels/{channelID}/attachments", sessionapi.Require(sessions)(limiter.Middleware(uploadapi.NewHandler(uploader, metrics))))
+	mux.Handle("POST /api/v1/direct-messages/{directMessageID}/attachments", sessionapi.Require(sessions)(limiter.Middleware(dmuploadapi.NewHandler(dmUploader, metrics))))
 	mux.Handle("GET /api/v1/channels/{channelID}/attachments/{attachmentID}", sessionapi.Require(sessions)(downloadapi.NewHandler(downloader)))
 	mux.Handle("GET /api/v1/channels/{channelID}/attachments/{attachmentID}/preview", sessionapi.Require(sessions)(previewapi.NewHandler(previewer)))
+	mux.Handle("GET /api/v1/direct-messages/{directMessageID}/attachments/{attachmentID}", sessionapi.Require(sessions)(dmdownloadapi.NewHandler(dmDownloader)))
+	mux.Handle("GET /api/v1/direct-messages/{directMessageID}/attachments/{attachmentID}/preview", sessionapi.Require(sessions)(dmpreviewapi.NewHandler(dmPreviewer)))
 	return nil
 }
 

@@ -24,8 +24,9 @@ func NewHandler(editor Editor) http.Handler {
 			return
 		}
 		var body struct {
-			Body             string `json:"body"`
-			ExpectedRevision int    `json:"expected_revision"`
+			Body             string   `json:"body"`
+			ExpectedRevision int      `json:"expected_revision"`
+			MentionUserIDs   []string `json:"mention_user_ids"`
 		}
 		decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 40<<10))
 		decoder.DisallowUnknownFields()
@@ -33,7 +34,7 @@ func NewHandler(editor Editor) http.Handler {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректные данные сообщения")
 			return
 		}
-		result, err := editor.Edit(request.Context(), edittextmessage.Input{ActorID: principal.AccountID, ChannelID: request.PathValue("channelID"), MessageID: request.PathValue("messageID"), Body: body.Body, ExpectedRevision: body.ExpectedRevision})
+		result, err := editor.Edit(request.Context(), edittextmessage.Input{ActorID: principal.AccountID, ChannelID: request.PathValue("channelID"), MessageID: request.PathValue("messageID"), Body: body.Body, ExpectedRevision: body.ExpectedRevision, MentionUserIDs: body.MentionUserIDs})
 		if errors.Is(err, edittextmessage.ErrInvalidInput) {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректные данные сообщения")
 			return
@@ -47,7 +48,7 @@ func NewHandler(editor Editor) http.Handler {
 			return
 		}
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-		_ = json.NewEncoder(writer).Encode(response{ID: result.ID, ChannelID: result.ChannelID, AuthorID: result.AuthorID, ClientMessageID: result.ClientMessageID, Body: result.Body, ReplyToID: result.ReplyToID, Revision: result.Revision, CreatedAt: result.CreatedAt, EditedAt: result.EditedAt})
+		_ = json.NewEncoder(writer).Encode(response{ID: result.ID, ChannelID: result.ChannelID, AuthorID: result.AuthorID, ClientMessageID: result.ClientMessageID, Body: result.Body, ReplyToID: result.ReplyToID, Revision: result.Revision, CreatedAt: result.CreatedAt, EditedAt: result.EditedAt, MentionUserIDs: nonNilMentions(result.MentionUserIDs)})
 	})
 }
 
@@ -61,6 +62,14 @@ type response struct {
 	Revision        int       `json:"revision"`
 	CreatedAt       time.Time `json:"created_at"`
 	EditedAt        time.Time `json:"edited_at"`
+	MentionUserIDs  []string  `json:"mention_user_ids"`
+}
+
+func nonNilMentions(ids []string) []string {
+	if ids == nil {
+		return []string{}
+	}
+	return ids
 }
 
 func writeError(writer http.ResponseWriter, request *http.Request, status int, code, message string) {

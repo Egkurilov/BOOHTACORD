@@ -31,6 +31,7 @@ type Message struct {
 	Revision                                                  int
 	Deleted                                                   bool
 	Attachments                                               []Attachment
+	MentionUserIDs                                            []string
 }
 type Result struct {
 	Messages   []Message

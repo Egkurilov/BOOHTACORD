@@ -44,6 +44,14 @@ func TestRunExecutesEmbeddedMigrations(t *testing.T) {
 		{"CREATE TABLE IF NOT EXISTS voice_sfu_revocations", "lease_id UUID PRIMARY KEY", "completed_at TIMESTAMPTZ", "attempt_count INTEGER NOT NULL DEFAULT 0"},
 		{"CREATE TABLE IF NOT EXISTS maintenance_admission", "singleton BOOLEAN PRIMARY KEY", "active BOOLEAN NOT NULL DEFAULT FALSE"},
 		{"ADD COLUMN IF NOT EXISTS avatar_key", "^[0-9a-f]{64}$"},
+		{"DELETING", "attachments_deleting_cleanup_idx", "attachments_state_timestamps"},
+		{"CREATE TABLE IF NOT EXISTS direct_message_attachments", "attachment_id UUID NOT NULL UNIQUE", "position BETWEEN 0 AND 9"},
+		{"CREATE TABLE IF NOT EXISTS channel_read_cursors", "PRIMARY KEY (account_id, channel_id)"},
+		{"notification_claim_token UUID", "notification_emitted_at TIMESTAMPTZ", "voice_revocation_pending_notification_index"},
+		{"ADD COLUMN IF NOT EXISTS mention_user_ids UUID[]", "messages_live_mentions_idx", "direct_message_messages_live_mentions_idx"},
+		{"CREATE TABLE IF NOT EXISTS realtime_events", "boot_epoch UUID NOT NULL", "recipient_ids UUID[]", "realtime_events_epoch_sequence_idx"},
+		{"hidden_cleanup_claim_token UUID", "hidden_cleanup_claimed_at TIMESTAMPTZ", "attachments_hidden_cleanup_claim_idx"},
+		{"unattached_cleanup_attempts", "unattached_cleanup_retry_after", "attachments_unattached_cleanup_retry_state", "attachments_unattached_cleanup_retry_idx", "attachments_unattached_cleanup_turn_seq"},
 	}
 	if len(executor.statements) != len(expected) {
 		t.Fatalf("migration count = %d", len(executor.statements))

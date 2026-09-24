@@ -15,6 +15,7 @@ type DirectMessage struct {
 	ID, OtherParticipantID, OtherParticipantDisplayName string
 	CreatedAt                                           time.Time
 	UnreadCount                                         int64
+	MentionCount                                        int64
 }
 type Result struct{ DirectMessages []DirectMessage }
 type Store interface {

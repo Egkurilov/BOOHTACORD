@@ -25,8 +25,21 @@ func TestHandlerReadsPageForCurrentParticipantWithoutRoleBypass(t *testing.T) {
 
 	handler.ServeHTTP(recorder, request)
 
-	if recorder.Code != http.StatusOK || input.ActorID != "11111111-1111-4111-8111-111111111111" || input.Limit != 10 || input.Before == "" || !strings.Contains(recorder.Body.String(), `"direct_message_id":"22222222-2222-4222-8222-222222222222"`) || !strings.Contains(recorder.Body.String(), `"reply_to_id":"55555555-5555-4555-8555-555555555555"`) || !strings.Contains(recorder.Body.String(), `"reply_preview":{"id":"55555555-5555-4555-8555-555555555555"`) || !strings.Contains(recorder.Body.String(), `"deleted":true`) {
+	if recorder.Code != http.StatusOK || input.ActorID != "11111111-1111-4111-8111-111111111111" || input.Limit != 10 || input.Before == "" || !strings.Contains(recorder.Body.String(), `"direct_message_id":"22222222-2222-4222-8222-222222222222"`) || !strings.Contains(recorder.Body.String(), `"reply_to_id":"55555555-5555-4555-8555-555555555555"`) || !strings.Contains(recorder.Body.String(), `"reply_preview":{"id":"55555555-5555-4555-8555-555555555555"`) || !strings.Contains(recorder.Body.String(), `"deleted":true`) || !strings.Contains(recorder.Body.String(), `"attachments":[]`) {
 		t.Fatalf("status=%d input=%#v body=%q", recorder.Code, input, recorder.Body.String())
+	}
+}
+
+func TestHandlerIncludesOnlyAttachmentMetadata(t *testing.T) {
+	handler := NewHandler(listerFunc(func(_ context.Context, _ listdirectmessagehistory.Input) (listdirectmessagehistory.Result, error) {
+		return listdirectmessagehistory.Result{Messages: []listdirectmessagehistory.Message{{Attachments: []listdirectmessagehistory.Attachment{{ID: "file", OriginalName: "safe.txt", ByteSize: 3}}}}}, nil
+	}))
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/direct-messages/pair/messages", nil)
+	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: "11111111-1111-4111-8111-111111111111"}))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != 200 || !strings.Contains(response.Body.String(), `"attachments":[{"id":"file","original_name":"safe.txt","byte_size":3}]`) || strings.Contains(response.Body.String(), "storage_key") {
+		t.Fatalf("status=%d body=%q", response.Code, response.Body.String())
 	}
 }
 

@@ -21,7 +21,14 @@ SELECT pair.id::text, pair.other_participant_id::text, account.display_name, pai
        COUNT(message.id) FILTER (
            WHERE message.author_id <> $1::uuid
              AND (cursor.message_id IS NULL OR (message.created_at, message.id) > (cursor.message_created_at, cursor.message_id))
-       ) AS unread_count
+             AND message.deleted_at IS NULL
+       ) AS unread_count,
+       COUNT(message.id) FILTER (
+           WHERE message.author_id <> $1::uuid
+             AND message.deleted_at IS NULL
+             AND $1::uuid = ANY(message.mention_user_ids)
+             AND (cursor.message_id IS NULL OR (message.created_at, message.id) > (cursor.message_created_at, cursor.message_id))
+       ) AS mention_count
 FROM pair
 JOIN users account ON account.id = pair.other_participant_id
 LEFT JOIN direct_message_read_cursors cursor
@@ -53,7 +60,7 @@ func (repository Repository) List(context context.Context, request listdirectmes
 	result := make([]listdirectmessages.DirectMessage, 0)
 	for rows.Next() {
 		var directMessage listdirectmessages.DirectMessage
-		if err := rows.Scan(&directMessage.ID, &directMessage.OtherParticipantID, &directMessage.OtherParticipantDisplayName, &directMessage.CreatedAt, &directMessage.UnreadCount); err != nil {
+		if err := rows.Scan(&directMessage.ID, &directMessage.OtherParticipantID, &directMessage.OtherParticipantDisplayName, &directMessage.CreatedAt, &directMessage.UnreadCount, &directMessage.MentionCount); err != nil {
 			return nil, fmt.Errorf("scan direct message: %w", err)
 		}
 		result = append(result, directMessage)

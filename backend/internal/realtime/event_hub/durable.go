@@ -1,0 +1,74 @@
+package eventhub
+
+import (
+	"context"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+func replayable(kind string) bool {
+	switch kind {
+	case "message.created", "message.updated", "message.deleted",
+		"direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted",
+		"channel.updated", "voice.lease_revoked":
+		return true
+	default:
+		return false
+	}
+}
+
+func (hub *Hub) persist(ctx context.Context, event Event, recipients []string, required bool) (Event, error) {
+	hub.mu.Lock()
+	journal := hub.journal
+	if hub.broken && journal != nil && replayable(event.Kind) {
+		hub.bootEpoch = uuid.NewString()
+	}
+	epoch := hub.bootEpoch
+	hub.mu.Unlock()
+	if required && journal == nil {
+		return event, ErrJournalUnavailable
+	}
+	if required && !replayable(event.Kind) {
+		return event, ErrJournalUnavailable
+	}
+	if !replayable(event.Kind) || journal == nil {
+		return event, nil
+	}
+	event = epochEvent(event, epoch)
+	if err := journal.Append(ctx, event, recipients, epoch); err != nil {
+		hub.breakContinuity()
+		return event, err
+	}
+	hub.mu.Lock()
+	hub.broken = false
+	hub.mu.Unlock()
+	return event, nil
+}
+
+// The voice outbox uses a stable source identifier for retries. Namespacing it
+// by process epoch preserves retry deduplication without making a new boot's
+// cursor indistinguishable from a journal row written before a crash.
+func epochEvent(event Event, epoch string) Event {
+	if event.Kind == "voice.lease_revoked" {
+		event.EventID = uuid.NewSHA1(uuid.NameSpaceOID, []byte(epoch+":"+event.EventID)).String()
+	}
+	return event
+}
+
+func (hub *Hub) breakContinuity() {
+	hub.mu.Lock()
+	defer hub.mu.Unlock()
+	hub.broken = true
+	for subscription := range hub.subscribers {
+		subscription.dropped = true
+		select {
+		case subscription.overflowed <- struct{}{}:
+		default:
+		}
+	}
+}
+
+func backgroundWriteContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 5*time.Second)
+}

@@ -21,6 +21,11 @@ type ReplyPreview struct {
 	ID, AuthorID, Body string
 	Deleted            bool
 }
+type Attachment struct {
+	ID           string `json:"id"`
+	OriginalName string `json:"original_name"`
+	ByteSize     int64  `json:"byte_size"`
+}
 type Message struct {
 	ID, DirectMessageID, AuthorID, ClientMessageID, Body, ReplyToID string
 	CreatedAt                                                       time.Time
@@ -28,6 +33,8 @@ type Message struct {
 	Revision                                                        int
 	Deleted                                                         bool
 	ReplyPreview                                                    *ReplyPreview
+	Attachments                                                     []Attachment
+	MentionUserIDs                                                  []string
 }
 type Result struct {
 	Messages   []Message

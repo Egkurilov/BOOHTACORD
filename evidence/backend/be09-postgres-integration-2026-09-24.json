@@ -1,0 +1,35 @@
+{
+  "id": "be09-postgres-integration-2026-09-24",
+  "kind": "backend-integration",
+  "status": "PASS",
+  "executed_at": "2026-09-24",
+  "environment": {
+    "os": "WSL Linux",
+    "database": "local PostgreSQL, disposable schema per test",
+    "go_module": "voice-platform/backend",
+    "revision": "2dbaf501a89fdb575a83f28678ce482a42719991 + uncommitted BE-09 working tree"
+  },
+  "scenario": {
+    "requirement": "BE-09 / T-044",
+    "checks": [
+      "DM upload authorization and post-write metadata recheck accept only an active participant pair",
+      "administrator outside the pair and blocked participant cannot upload or send",
+      "DM send links only fully valid owner/pair attachments in one statement",
+      "concurrent same-client sends return one message and one attachment link",
+      "concurrent different sends can claim one attachment only once",
+      "DM history returns ordered metadata for live messages and an empty array for deleted messages"
+    ]
+  },
+  "observer": "Codex BE-09 agent",
+  "results": {
+    "migration_backed_tests": "PASS: five TestDMAttach/TestDMUpload cases",
+    "focused_go_tests": "PASS: send DM, DM history, DM upload/authorize/finalize, cmd/api",
+    "focused_go_vet": "PASS",
+    "migration_unit_suite": "Pending shared run_test.go expectation update after concurrent 0034/0036 migrations"
+  },
+  "artifacts": [
+    "backend/internal/chat/send_direct_message/postgres/*_integration_test.go",
+    "backend/internal/database/migrate/migrations/0032_create_direct_message_attachments.sql"
+  ],
+  "limitations": "Scoped local integration evidence only; no production release, disk-failure, or capacity claim."
+}

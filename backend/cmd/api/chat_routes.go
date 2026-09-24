@@ -16,15 +16,19 @@ import (
 	deletedirectmessage "voice-platform/backend/internal/chat/delete_direct_message"
 	deletedirectmessageapi "voice-platform/backend/internal/chat/delete_direct_message/api"
 	deletedirectmessagepostgres "voice-platform/backend/internal/chat/delete_direct_message/postgres"
+	deletedirectmessagerealtime "voice-platform/backend/internal/chat/delete_direct_message/realtime"
 	deletetextmessage "voice-platform/backend/internal/chat/delete_text_message"
 	deletehandler "voice-platform/backend/internal/chat/delete_text_message/api"
 	deletepostgres "voice-platform/backend/internal/chat/delete_text_message/postgres"
+	deletetextmessagerealtime "voice-platform/backend/internal/chat/delete_text_message/realtime"
 	editdirectmessage "voice-platform/backend/internal/chat/edit_direct_message"
 	editdirectmessageapi "voice-platform/backend/internal/chat/edit_direct_message/api"
 	editdirectmessagepostgres "voice-platform/backend/internal/chat/edit_direct_message/postgres"
+	editdirectmessagerealtime "voice-platform/backend/internal/chat/edit_direct_message/realtime"
 	edittextmessage "voice-platform/backend/internal/chat/edit_text_message"
 	edithandler "voice-platform/backend/internal/chat/edit_text_message/api"
 	editpostgres "voice-platform/backend/internal/chat/edit_text_message/postgres"
+	edittextmessagerealtime "voice-platform/backend/internal/chat/edit_text_message/realtime"
 	listdirectmessagecandidates "voice-platform/backend/internal/chat/list_direct_message_candidates"
 	listdirectmessagecandidatesapi "voice-platform/backend/internal/chat/list_direct_message_candidates/api"
 	listdirectmessagecandidatespostgres "voice-platform/backend/internal/chat/list_direct_message_candidates/postgres"
@@ -52,9 +56,11 @@ import (
 	senddirectmessage "voice-platform/backend/internal/chat/send_direct_message"
 	senddirectmessageapi "voice-platform/backend/internal/chat/send_direct_message/api"
 	senddirectmessagepostgres "voice-platform/backend/internal/chat/send_direct_message/postgres"
+	senddirectmessagerealtime "voice-platform/backend/internal/chat/send_direct_message/realtime"
 	"voice-platform/backend/internal/identity/authenticate_session"
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
+	resolvedirectmessagerecipientspostgres "voice-platform/backend/internal/realtime/resolve_direct_message_recipients/postgres"
 )
 
 func configureChatRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, events *eventhub.Hub) {
@@ -70,6 +76,7 @@ func configureChatRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions au
 	directMessageHistory := listdirectmessagehistory.New(listdirectmessagehistorypostgres.New(listdirectmessagehistorypostgres.NewPoolDatabase(database)))
 	directMessageEditor := editdirectmessage.New(editdirectmessagepostgres.New(editdirectmessagepostgres.NewPoolDatabase(database)))
 	directMessageDeleter := deletedirectmessage.New(deletedirectmessagepostgres.New(deletedirectmessagepostgres.NewPoolDatabase(database)))
+	directMessageRecipients := resolvedirectmessagerecipientspostgres.New(resolvedirectmessagerecipientspostgres.NewPoolDatabase(database))
 	directMessageReadCursor := advancedirectmessagereadcursor.New(advancedirectmessagereadcursorpostgres.New(advancedirectmessagereadcursorpostgres.NewPoolDatabase(database)))
 	directMessageSearch := searchdirectmessagehistory.New(searchdirectmessagehistorypostgres.New(searchdirectmessagehistorypostgres.NewPoolDatabase(database)))
 	messageSearch := searchmessages.New(searchmessagespostgres.New(searchmessagespostgres.NewPoolDatabase(database)))
@@ -77,17 +84,17 @@ func configureChatRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions au
 	mux.Handle("POST /api/v1/channels/{channelID}/messages", sessionapi.Require(sessions)(messageapi.NewHandler(creator)))
 	mux.Handle("GET /api/v1/channels/{channelID}/messages", sessionapi.Require(sessions)(listhandler.NewHandler(listService)))
 	mux.Handle("GET /api/v1/channels/{channelID}/search", sessionapi.Require(sessions)(searchtextmessagesapi.NewHandler(textMessageSearch)))
-	mux.Handle("PATCH /api/v1/channels/{channelID}/messages/{messageID}", sessionapi.Require(sessions)(edithandler.NewHandler(editService)))
-	mux.Handle("DELETE /api/v1/channels/{channelID}/messages/{messageID}", sessionapi.Require(sessions)(deletehandler.NewHandler(deleteService)))
+	mux.Handle("PATCH /api/v1/channels/{channelID}/messages/{messageID}", sessionapi.Require(sessions)(edithandler.NewHandler(edittextmessagerealtime.New(editService, events))))
+	mux.Handle("DELETE /api/v1/channels/{channelID}/messages/{messageID}", sessionapi.Require(sessions)(deletehandler.NewHandler(deletetextmessagerealtime.New(deleteService, events))))
 	mux.Handle("POST /api/v1/direct-messages", sessionapi.Require(sessions)(directmessageapi.NewHandler(directMessageService)))
 	mux.Handle("GET /api/v1/direct-message-candidates", sessionapi.Require(sessions)(listdirectmessagecandidatesapi.NewHandler(directMessageCandidates)))
 	mux.Handle("GET /api/v1/direct-messages", sessionapi.Require(sessions)(listdirectmessagesapi.NewHandler(directMessages)))
-	mux.Handle("POST /api/v1/direct-messages/{directMessageID}/messages", sessionapi.Require(sessions)(senddirectmessageapi.NewHandler(directMessageSender)))
+	mux.Handle("POST /api/v1/direct-messages/{directMessageID}/messages", sessionapi.Require(sessions)(senddirectmessageapi.NewHandler(senddirectmessagerealtime.New(directMessageSender, directMessageRecipients, events))))
 	mux.Handle("GET /api/v1/direct-messages/{directMessageID}/messages", sessionapi.Require(sessions)(listdirectmessagehistoryapi.NewHandler(directMessageHistory)))
 	mux.Handle("GET /api/v1/direct-messages/{directMessageID}/search", sessionapi.Require(sessions)(searchdirectmessagehistoryapi.NewHandler(directMessageSearch)))
 	mux.Handle("GET /api/v1/search/messages", sessionapi.Require(sessions)(searchmessagesapi.NewHandler(messageSearch)))
-	mux.Handle("PATCH /api/v1/direct-messages/{directMessageID}/messages/{messageID}", sessionapi.Require(sessions)(editdirectmessageapi.NewHandler(directMessageEditor)))
-	mux.Handle("DELETE /api/v1/direct-messages/{directMessageID}/messages/{messageID}", sessionapi.Require(sessions)(deletedirectmessageapi.NewHandler(directMessageDeleter)))
+	mux.Handle("PATCH /api/v1/direct-messages/{directMessageID}/messages/{messageID}", sessionapi.Require(sessions)(editdirectmessageapi.NewHandler(editdirectmessagerealtime.New(directMessageEditor, directMessageRecipients, events))))
+	mux.Handle("DELETE /api/v1/direct-messages/{directMessageID}/messages/{messageID}", sessionapi.Require(sessions)(deletedirectmessageapi.NewHandler(deletedirectmessagerealtime.New(directMessageDeleter, directMessageRecipients, events))))
 	mux.Handle("PUT /api/v1/direct-messages/{directMessageID}/read-cursor", sessionapi.Require(sessions)(advancedirectmessagereadcursorapi.NewHandler(directMessageReadCursor)))
 }
 

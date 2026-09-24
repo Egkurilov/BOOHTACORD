@@ -16,15 +16,15 @@ const (
 )
 
 func TestRepositoryReadsParticipantHistoryAndHidesDeletedContent(t *testing.T) {
-	database := &fakeDatabase{available: boolRow{value: true}, rows: &fakeRows{values: [][]any{{"44444444-4444-4444-8444-444444444444", directMessageID, actorID, "55555555-5555-4555-8555-555555555555", "", "66666666-6666-4666-8666-666666666666", time.Unix(1, 0), nil, 1, true, "66666666-6666-4666-8666-666666666666", "77777777-7777-4777-8777-777777777777", "", true}}}}
+	database := &fakeDatabase{available: boolRow{value: true}, rows: &fakeRows{values: [][]any{{"44444444-4444-4444-8444-444444444444", directMessageID, actorID, "55555555-5555-4555-8555-555555555555", "", "66666666-6666-4666-8666-666666666666", time.Unix(1, 0), nil, 1, true, []string{}, "66666666-6666-4666-8666-666666666666", "77777777-7777-4777-8777-777777777777", "", true, []byte(`[]`)}}}}
 	result, err := New(database).List(context.Background(), listdirectmessagehistory.Request{Input: listdirectmessagehistory.Input{ActorID: actorID, DirectMessageID: directMessageID, Limit: 2}})
-	if err != nil || len(result) != 1 || result[0].Body != "" || result[0].ReplyToID != "66666666-6666-4666-8666-666666666666" || result[0].ReplyPreview == nil || result[0].ReplyPreview.Body != "" || !result[0].ReplyPreview.Deleted || !result[0].Deleted || database.arguments[3] != 3 {
+	if err != nil || len(result) != 1 || result[0].Body != "" || result[0].ReplyToID != "66666666-6666-4666-8666-666666666666" || result[0].ReplyPreview == nil || result[0].ReplyPreview.Body != "" || !result[0].ReplyPreview.Deleted || !result[0].Deleted || len(result[0].MentionUserIDs) != 0 || database.arguments[3] != 3 {
 		t.Fatalf("result=%#v arguments=%#v error=%v", result, database.arguments, err)
 	}
 	if !strings.Contains(database.availabilityStatement, "$2::uuid IN (dm.participant_one_id, dm.participant_two_id)") {
 		t.Fatalf("availability statement=%s", database.availabilityStatement)
 	}
-	for _, fragment := range []string{"$2::uuid IN (dm.participant_one_id, dm.participant_two_id)", "LEFT JOIN direct_message_messages reply", "reply.direct_message_id = m.direct_message_id", "direct_message_id = (SELECT id FROM readable_pair)", "CASE WHEN m.deleted_at IS NULL THEN m.body ELSE '' END", "CASE WHEN reply.deleted_at IS NULL THEN COALESCE(reply.body, '') ELSE '' END", "COALESCE(m.reply_to_id::text, '')", "ORDER BY m.created_at DESC, m.id DESC"} {
+	for _, fragment := range []string{"$2::uuid IN (dm.participant_one_id, dm.participant_two_id)", "LEFT JOIN direct_message_messages reply", "reply.direct_message_id = m.direct_message_id", "direct_message_attachments", "m.deleted_at IS NULL", "a.state = 'ATTACHED'", "reply.direct_message_id = m.direct_message_id", "direct_message_id = (SELECT id FROM readable_pair)", "CASE WHEN m.deleted_at IS NULL THEN m.body ELSE '' END", "CASE WHEN reply.deleted_at IS NULL THEN COALESCE(reply.body, '') ELSE '' END", "COALESCE(m.reply_to_id::text, '')", "ORDER BY m.created_at DESC, m.id DESC"} {
 		if !strings.Contains(database.statement, fragment) {
 			t.Fatalf("missing %q in %s", fragment, database.statement)
 		}
@@ -96,6 +96,10 @@ func (rows *fakeRows) Scan(destinations ...any) error {
 			*destination = value.(int)
 		case *bool:
 			*destination = value.(bool)
+		case *[]byte:
+			*destination = value.([]byte)
+		case *[]string:
+			*destination = value.([]string)
 		}
 	}
 	return nil

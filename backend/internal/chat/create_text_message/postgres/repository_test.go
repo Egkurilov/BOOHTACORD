@@ -16,7 +16,7 @@ func TestRepositoryCreatesOrReturnsIdempotentTextMessage(t *testing.T) {
 	database := &fakeDatabase{row: fakeRow{values: []any{"message-1", "text-1", "user-1", "client-1", "Привет", "message-0", 1, time.Time{}}}}
 	attachments := []string{"attachment-1"}
 	result, err := New(database).Create(context.Background(), createtextmessage.Request{ID: "message-1", Input: createtextmessage.Input{ChannelID: "text-1", ActorID: "user-1", ClientMessageID: "client-1", Body: "Привет", ReplyToID: "message-0", AttachmentIDs: attachments}})
-	if err != nil || result.ID != "message-1" || database.arguments[5] != "message-0" || len(database.arguments) != 7 || !reflect.DeepEqual(database.arguments[6], attachments) {
+	if err != nil || result.ID != "message-1" || database.arguments[5] != "message-0" || len(database.arguments) != 8 || !reflect.DeepEqual(database.arguments[6], attachments) {
 		t.Fatalf("result = %#v, arguments = %#v, error = %v", result, database.arguments, err)
 	}
 	for _, fragment := range []string{"existing_message", "attachment.owner_id = $3", "attachment.channel_id = channel.id", "attachment.state = 'UNATTACHED'", "INSERT INTO message_attachments", "SET state = 'ATTACHED'"} {
@@ -34,13 +34,25 @@ func TestRepositoryMapsUnavailableChannelOrCrossConversationReply(t *testing.T) 
 }
 
 type fakeDatabase struct {
-	row       fakeRow
-	statement string
-	arguments []any
+	row          fakeRow
+	rows         []fakeRow
+	statement    string
+	arguments    []any
+	statements   []string
+	allArguments [][]any
+	calls        int
 }
 
 func (database *fakeDatabase) QueryRow(_ context.Context, statement string, arguments ...any) Row {
 	database.statement, database.arguments = statement, arguments
+	database.statements = append(database.statements, statement)
+	database.allArguments = append(database.allArguments, arguments)
+	database.calls++
+	if len(database.rows) > 0 {
+		row := database.rows[0]
+		database.rows = database.rows[1:]
+		return row
+	}
 	return database.row
 }
 

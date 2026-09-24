@@ -35,9 +35,7 @@ import (
 	maintenanceadmission "voice-platform/backend/internal/maintenance/admission"
 	maintenancepostgres "voice-platform/backend/internal/maintenance/admission/postgres"
 	authorizelivekitsignal "voice-platform/backend/internal/media/authorize_livekit_signal"
-	dispatchvoicesfurevocation "voice-platform/backend/internal/media/dispatch_voice_sfu_revocation"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
-	eventhub "voice-platform/backend/internal/realtime/event_hub"
 	"voice-platform/backend/internal/security/request_id"
 )
 
@@ -67,7 +65,9 @@ func main() {
 		os.Exit(1)
 	}
 	metrics := httpmetrics.New()
-	events := eventhub.New(64)
+	registerVoiceMediaMetrics(metrics, configuration.mediaSnapshot)
+	events, stopRealtime := startRealtimeServices(database)
+	defer stopRealtime()
 	configureStatusRoutes(mux, maintenanceService, metrics)
 	mux.Handle("POST /api/v1/auth/register", maintenanceadmission.Middleware(maintenanceService)(configuration.registrationLimiter.Middleware(registerapi.NewHandler(registerService))))
 	mux.Handle("POST /api/v1/auth/login", maintenanceadmission.Middleware(maintenanceService)(configuration.loginLimiter.Middleware(loginapi.NewHandler(loginService))))
@@ -76,7 +76,7 @@ func main() {
 	mux.Handle("POST /api/v1/auth/password-reset/complete", configuration.passwordResetLimiter.Middleware(completeresetapi.NewHandler(passwordResetService)))
 	mux.Handle("POST /api/v1/admin/password-reset-links", sessionapi.Require(sessionService)(sessionapi.RequireAdministrator(configuration.passwordResetLimiter.Middleware(createresetapi.NewHandler(passwordResetCreator, configuration.publicOrigin)))))
 	mux.Handle("PATCH /api/v1/admin/accounts/{accountID}", sessionapi.Require(sessionService)(sessionapi.RequireAdministrator(adminapi.NewHandler(accountAdministration))))
-	configureChannelRoutes(mux, database, sessionService)
+	configureChannelRoutes(mux, database, sessionService, events)
 	configureChatAndRealtimeRoutes(mux, database, sessionService, metrics, events)
 	if err := configureStorageRoutes(mux, database, sessionService, configuration.attachmentRoot, configuration.uploadLimiter, metrics); err != nil {
 		slog.Error("configure attachment routes", "error", err)
@@ -89,8 +89,8 @@ func main() {
 	configureVoiceLeaseRoutes(mux, database, sessionService, maintenanceService)
 	configureAdminVoiceRoutes(mux, database, sessionService)
 	configureMediaCredentialRoutes(mux, database, sessionService, configuration.credentialSigner)
-	voiceSFUWorkerStop := startVoiceSFURevocationWorker(context.Background(), dispatchvoicesfurevocation.New(dispatchvoicesfurevocation.NewRepository(dispatchvoicesfurevocation.NewPoolDatabase(database)), configuration.roomRemover), metrics)
-	defer voiceSFUWorkerStop()
+	voiceWorkersStop := startVoiceBackgroundServices(database, configuration, metrics, events)
+	defer voiceWorkersStop()
 
 	server := &http.Server{
 		Addr:              address,

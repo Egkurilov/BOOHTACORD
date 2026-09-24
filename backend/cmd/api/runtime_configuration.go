@@ -8,6 +8,7 @@ import (
 
 	livekitcredential "voice-platform/backend/internal/media/livekit_credential"
 	removelivekitparticipant "voice-platform/backend/internal/media/remove_livekit_participant"
+	snapshotlivekitpresence "voice-platform/backend/internal/media/snapshot_livekit_presence"
 	"voice-platform/backend/internal/security/origin_check"
 	"voice-platform/backend/internal/security/rate_limit"
 )
@@ -17,6 +18,7 @@ type runtimeConfiguration struct {
 	originMiddleware     func(http.Handler) http.Handler
 	credentialSigner     livekitcredential.Signer
 	roomRemover          removelivekitparticipant.Client
+	mediaSnapshot        snapshotlivekitpresence.Client
 	registrationLimiter  *ratelimit.Limiter
 	loginLimiter         *ratelimit.Limiter
 	passwordResetLimiter *ratelimit.Limiter
@@ -40,6 +42,11 @@ func loadRuntimeConfiguration() runtimeConfiguration {
 	configuration.roomRemover, err = removelivekitparticipant.New(removelivekitparticipant.Config{URL: os.Getenv("LIVEKIT_PRIVATE_HTTP_URL"), APIKey: os.Getenv("LIVEKIT_API_KEY"), APISecret: os.Getenv("LIVEKIT_API_SECRET")})
 	if err != nil {
 		slog.Error("configure livekit room service", "error", err)
+		os.Exit(1)
+	}
+	configuration.mediaSnapshot, err = snapshotlivekitpresence.New(snapshotlivekitpresence.Config{URL: os.Getenv("LIVEKIT_PRIVATE_HTTP_URL"), APIKey: os.Getenv("LIVEKIT_API_KEY"), APISecret: os.Getenv("LIVEKIT_API_SECRET")})
+	if err != nil {
+		slog.Error("configure livekit media snapshot", "error", err)
 		os.Exit(1)
 	}
 	configuration.registrationLimiter, err = ratelimit.New(ratelimit.Config{Limit: 5, Window: 15 * time.Minute, MaxSources: 10_000})

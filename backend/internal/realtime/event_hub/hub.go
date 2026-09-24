@@ -3,6 +3,8 @@ package eventhub
 import (
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Event struct {
@@ -14,9 +16,13 @@ type Event struct {
 
 type Hub struct {
 	mu          sync.Mutex
+	publishMu   sync.Mutex
 	queueSize   int
 	subscribers map[*Subscription]struct{}
 	connections map[string]int
+	journal     Journal
+	bootEpoch   string
+	broken      bool
 }
 
 type Subscription struct {
@@ -33,7 +39,7 @@ func New(queueSize int) *Hub {
 	if queueSize < 1 {
 		queueSize = 1
 	}
-	return &Hub{queueSize: queueSize, subscribers: make(map[*Subscription]struct{}), connections: make(map[string]int)}
+	return &Hub{queueSize: queueSize, subscribers: make(map[*Subscription]struct{}), connections: make(map[string]int), bootEpoch: uuid.NewString()}
 }
 
 func (hub *Hub) Subscribe(accountIDs ...string) *Subscription {
@@ -52,6 +58,10 @@ func (hub *Hub) subscribe(accountID string, onlineEvent *Event) *Subscription {
 	subscription := &Subscription{hub: hub, accountID: accountID, events: make(chan Event, hub.queueSize), overflowed: make(chan struct{}, 1)}
 	hub.mu.Lock()
 	hub.subscribers[subscription] = struct{}{}
+	if hub.broken {
+		subscription.dropped = true
+		subscription.overflowed <- struct{}{}
+	}
 	if accountID != "" {
 		subscription.becameOnline = hub.connections[accountID] == 0
 		hub.connections[accountID]++
@@ -64,26 +74,6 @@ func (hub *Hub) subscribe(accountID string, onlineEvent *Event) *Subscription {
 }
 
 func (subscription *Subscription) BecameOnline() bool { return subscription.becameOnline }
-
-func (hub *Hub) Publish(event Event) {
-	hub.mu.Lock()
-	defer hub.mu.Unlock()
-	hub.publishLocked(event)
-}
-
-func (hub *Hub) publishLocked(event Event) {
-	for subscription := range hub.subscribers {
-		if subscription.dropped {
-			continue
-		}
-		select {
-		case subscription.events <- event:
-		default:
-			subscription.dropped = true
-			subscription.overflowed <- struct{}{}
-		}
-	}
-}
 
 func (subscription *Subscription) Events() <-chan Event        { return subscription.events }
 func (subscription *Subscription) Overflowed() <-chan struct{} { return subscription.overflowed }

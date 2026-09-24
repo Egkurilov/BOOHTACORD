@@ -3,6 +3,8 @@ package senddirectmessage
 import (
 	"context"
 	"errors"
+	"github.com/google/uuid"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -22,7 +24,7 @@ func TestSendPersistsIdempotentDirectMessage(t *testing.T) {
 
 	result, err := service.Send(context.Background(), Input{ActorID: senderID, DirectMessageID: directMessageID, ClientMessageID: clientMessageID, ReplyToID: replyID, Body: "Привет"})
 
-	if err != nil || store.request.ID != "44444444-4444-4444-8444-444444444444" || store.request.ReplyToID != replyID || result != store.result {
+	if err != nil || store.request.ID != "44444444-4444-4444-8444-444444444444" || store.request.ReplyToID != replyID || !reflect.DeepEqual(result, store.result) {
 		t.Fatalf("request=%#v result=%#v error=%v", store.request, result, err)
 	}
 }
@@ -42,6 +44,30 @@ func TestSendRejectsMalformedReplyBeforePersistence(t *testing.T) {
 	_, err := New(store).Send(context.Background(), Input{ActorID: senderID, DirectMessageID: directMessageID, ClientMessageID: clientMessageID, ReplyToID: "not-a-uuid", Body: "Привет"})
 	if !errors.Is(err, ErrInvalidInput) || store.called {
 		t.Fatalf("error=%v called=%v", err, store.called)
+	}
+}
+
+func TestSendRejectsInvalidAttachmentListsBeforePersistence(t *testing.T) {
+	valid := "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+	tooMany := make([]string, 11)
+	for index := range tooMany {
+		tooMany[index] = uuid.NewString()
+	}
+	for _, ids := range [][]string{{"bad"}, {valid, valid}, tooMany} {
+		store := &fakeStore{}
+		_, err := New(store).Send(context.Background(), Input{ActorID: senderID, DirectMessageID: directMessageID, ClientMessageID: clientMessageID, Body: "Привет", AttachmentIDs: ids})
+		if !errors.Is(err, ErrInvalidInput) || store.called {
+			t.Fatalf("ids=%#v error=%v called=%v", ids, err, store.called)
+		}
+	}
+}
+
+func TestSendForwardsOrderedAttachmentIDs(t *testing.T) {
+	ids := []string{"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"}
+	store := &fakeStore{}
+	_, _ = New(store).Send(context.Background(), Input{ActorID: senderID, DirectMessageID: directMessageID, ClientMessageID: clientMessageID, Body: "Привет", AttachmentIDs: ids})
+	if len(store.request.AttachmentIDs) != 2 || store.request.AttachmentIDs[1] != ids[1] {
+		t.Fatalf("request=%#v", store.request)
 	}
 }
 

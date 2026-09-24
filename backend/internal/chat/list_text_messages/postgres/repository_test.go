@@ -16,11 +16,11 @@ const attachmentID = "c1b4cc4a-2f12-4c7e-8f18-9d6dba5c6610"
 func TestRepositoryReadsOrderedSafeAttachmentsAndHidesDeletedMessageLinks(t *testing.T) {
 	attachments := []byte(`[{"id":"c1b4cc4a-2f12-4c7e-8f18-9d6dba5c6610","original_name":"notes.svg","byte_size":10}]`)
 	database := &fakeDatabase{channel: boolRow{value: true}, rows: &fakeRows{values: [][]any{
-		{"message-2", "channel-1", "user-1", "client-2", "body", "", time.Time{}, nil, 1, false, attachments},
-		{"message-1", "channel-1", "user-1", "client-1", "", "", time.Time{}, nil, 1, true, []byte(`[]`)},
+		{"message-2", "channel-1", "user-1", "client-2", "body", "", time.Time{}, nil, 1, false, []string{"user-2"}, attachments},
+		{"message-1", "channel-1", "user-1", "client-1", "", "", time.Time{}, nil, 1, true, []string{}, []byte(`[]`)},
 	}}}
 	result, err := New(database).List(context.Background(), listtextmessages.Request{Input: listtextmessages.Input{ChannelID: "channel-1", Limit: 2}})
-	if err != nil || len(result) != 2 || result[0].Attachments[0].ID != attachmentID || result[0].Attachments[0].OriginalName != "notes.svg" || result[0].Attachments[0].SizeBytes != 10 || result[1].Body != "" || !result[1].Deleted || len(result[1].Attachments) != 0 || database.arguments[2] != 3 {
+	if err != nil || len(result) != 2 || result[0].Attachments[0].ID != attachmentID || result[0].Attachments[0].OriginalName != "notes.svg" || result[0].Attachments[0].SizeBytes != 10 || len(result[0].MentionUserIDs) != 1 || result[0].MentionUserIDs[0] != "user-2" || result[1].Body != "" || !result[1].Deleted || len(result[1].Attachments) != 0 || len(result[1].MentionUserIDs) != 0 || database.arguments[2] != 3 {
 		t.Fatalf("result = %#v, arguments = %#v, error = %v", result, database.arguments, err)
 	}
 	for _, fragment := range []string{
@@ -99,6 +99,8 @@ func (rows *fakeRows) Scan(destinations ...any) error {
 			*destination = value.(bool)
 		case *[]byte:
 			*destination = value.([]byte)
+		case *[]string:
+			*destination = value.([]string)
 		}
 	}
 	return nil

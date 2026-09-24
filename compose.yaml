@@ -152,6 +152,38 @@ services:
       - attachments-data:/var/lib/voice-platform/attachments
     networks: [private]
 
+  cleanup-unattached-attachments:
+    profiles: [operator]
+    image: ${API_IMAGE:?set API_IMAGE to a pinned image reference in .env}
+    build:
+      context: ./backend
+    entrypoint: ["/cleanup-unattached-attachments"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-voice_platform}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-voice_platform}?sslmode=disable
+      ATTACHMENTS_DIRECTORY: /var/lib/voice-platform/attachments
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - attachments-data:/var/lib/voice-platform/attachments
+    networks: [private]
+
+  cleanup-hidden-attachments:
+    profiles: [operator]
+    image: ${API_IMAGE:?set API_IMAGE to a pinned image reference in .env}
+    build:
+      context: ./backend
+    entrypoint: ["/cleanup-hidden-attachments"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-voice_platform}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-voice_platform}?sslmode=disable
+      ATTACHMENTS_DIRECTORY: /var/lib/voice-platform/attachments
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - attachments-data:/var/lib/voice-platform/attachments
+    networks: [private]
+
   web:
     image: ${WEB_IMAGE:?set WEB_IMAGE to a pinned image reference in .env}
     build:

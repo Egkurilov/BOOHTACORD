@@ -9,14 +9,108 @@
     "event_id": { "type": "string", "format": "uuid" },
     "kind": {
       "type": "string",
-      "enum": ["connection.ready", "connection.resync_required", "voice.lease_revoked", "channel.updated", "presence.snapshot", "presence.changed", "message.created"]
+      "enum": ["connection.ready", "connection.resync_required", "voice.lease_revoked", "channel.updated", "presence.snapshot", "presence.changed", "message.created", "message.updated", "message.deleted", "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted"]
     },
     "occurred_at": { "type": "string", "format": "date-time" },
     "payload": { "type": "object" }
   },
   "allOf": [
     {
-      "if": { "properties": { "kind": { "enum": ["message.created"] } }, "required": ["kind"] },
+      "if": { "properties": { "kind": { "const": "connection.resync_required" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["reason"],
+            "properties": {
+              "reason": { "type": "string", "enum": ["event_overflow", "server_restart", "cursor_expired", "cursor_invalid", "replay_limit", "replay_unavailable"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "voice.lease_revoked" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["lease_id", "reason"],
+            "properties": {
+              "lease_id": { "type": "string", "format": "uuid" },
+              "reason": { "type": "string", "enum": ["TRANSFER", "KICK", "CHANNEL_CLOSED", "SESSION_REVOKED", "BANNED", "LOGOUT", "VOLUNTARY_LEAVE"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "channel.updated" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["revision"],
+            "properties": { "revision": { "type": "integer", "minimum": 1 } }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "direct_message.message_created" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["direct_message_id", "message_id"],
+            "properties": {
+              "direct_message_id": { "type": "string", "format": "uuid" },
+              "message_id": { "type": "string", "format": "uuid" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "direct_message.message_updated" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["direct_message_id", "message_id", "revision"],
+            "properties": {
+              "direct_message_id": { "type": "string", "format": "uuid" },
+              "message_id": { "type": "string", "format": "uuid" },
+              "revision": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "direct_message.message_deleted" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["direct_message_id", "message_id", "revision"],
+            "properties": {
+              "direct_message_id": { "type": "string", "format": "uuid" },
+              "message_id": { "type": "string", "format": "uuid" },
+              "revision": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "enum": ["message.created", "message.updated", "message.deleted"] } }, "required": ["kind"] },
       "then": {
         "properties": {
           "payload": {

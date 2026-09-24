@@ -11,7 +11,7 @@ import (
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
-func streamEvents(connection *websocket.Conn, authenticator sessionapi.Authenticator, cookie *http.Cookie, interval time.Duration, subscription *eventhub.Subscription, hub *eventhub.Hub, newID Identifier, now Clock) {
+func streamEvents(connection *websocket.Conn, authenticator sessionapi.Authenticator, cookie *http.Cookie, interval time.Duration, subscription *eventhub.Subscription, hub *eventhub.Hub, newID Identifier, now Clock, observer ConnectionObserver, replayedIDs map[string]struct{}) {
 	closed := connection.CloseRead(context.Background()).Done()
 	var events <-chan eventhub.Event
 	var overflowed <-chan struct{}
@@ -30,11 +30,24 @@ func streamEvents(connection *websocket.Conn, authenticator sessionapi.Authentic
 		case <-closed:
 			return
 		case event := <-events:
+			if _, replayed := replayedIDs[event.EventID]; replayed {
+				delete(replayedIDs, event.EventID)
+				continue
+			}
+			if isPrivateDirectMessageEvent(event.Kind) && !privateEventSessionValid(authenticator, cookie, subscription) {
+				_ = connection.Close(websocket.StatusPolicyViolation, "session is no longer valid")
+				return
+			}
 			writeContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			err := wsjson.Write(writeContext, connection, event)
 			cancel()
 			if err != nil {
 				return
+			}
+			if latencyObserver, ok := observer.(interface{ ObserveRealtimeEventDeliveryLatency(time.Duration) }); ok && !event.OccurredAt.IsZero() {
+				if latency := time.Since(event.OccurredAt); latency >= 0 {
+					latencyObserver.ObserveRealtimeEventDeliveryLatency(latency)
+				}
 			}
 		case <-overflowed:
 			writeContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -57,6 +70,25 @@ func streamEvents(connection *websocket.Conn, authenticator sessionapi.Authentic
 			}
 		}
 	}
+}
+
+func isPrivateDirectMessageEvent(kind string) bool {
+	switch kind {
+	case "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted":
+		return true
+	default:
+		return false
+	}
+}
+
+func privateEventSessionValid(authenticator sessionapi.Authenticator, cookie *http.Cookie, subscription *eventhub.Subscription) bool {
+	if authenticator == nil || cookie == nil || subscription == nil || subscription.AccountID() == "" {
+		return false
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	principal, err := authenticator.Authenticate(ctx, cookie.Value)
+	return err == nil && principal.AccountID == subscription.AccountID()
 }
 
 func writeEvent(context context.Context, connection *websocket.Conn, newID Identifier, now Clock, kind string, payload map[string]any) bool {

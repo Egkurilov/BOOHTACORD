@@ -61,6 +61,7 @@ type message struct {
 	Revision        int          `json:"revision"`
 	Deleted         bool         `json:"deleted"`
 	Attachments     []attachment `json:"attachments"`
+	MentionUserIDs  []string     `json:"mention_user_ids"`
 }
 
 type attachment struct {
@@ -72,7 +73,11 @@ type attachment struct {
 func messages(source []listtextmessages.Message) []message {
 	result := make([]message, 0, len(source))
 	for _, value := range source {
-		result = append(result, message{ID: value.ID, ChannelID: value.ChannelID, AuthorID: value.AuthorID, ClientMessageID: value.ClientMessageID, Body: value.Body, ReplyToID: value.ReplyToID, CreatedAt: value.CreatedAt, EditedAt: value.EditedAt, Revision: value.Revision, Deleted: value.Deleted, Attachments: attachments(value.Attachments)})
+		mentions := value.MentionUserIDs
+		if value.Deleted || mentions == nil {
+			mentions = []string{}
+		}
+		result = append(result, message{ID: value.ID, ChannelID: value.ChannelID, AuthorID: value.AuthorID, ClientMessageID: value.ClientMessageID, Body: value.Body, ReplyToID: value.ReplyToID, CreatedAt: value.CreatedAt, EditedAt: value.EditedAt, Revision: value.Revision, Deleted: value.Deleted, Attachments: attachments(value.Attachments), MentionUserIDs: mentions})
 	}
 	return result
 }

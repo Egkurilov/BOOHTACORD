@@ -22,6 +22,48 @@ foreach ($requiredText in @('openapi.yaml', 'realtime.schema.json', 'Voice lease
 }
 
 $openApi = Get-Content -Raw -LiteralPath $openApiPath | ConvertFrom-Json
+$realtime = Get-Content -Raw -LiteralPath $realtimePath | ConvertFrom-Json
+foreach ($kind in @('direct_message.message_created', 'direct_message.message_updated', 'direct_message.message_deleted')) {
+    if ($realtime.properties.kind.enum -notcontains $kind) {
+        throw "Realtime contract must define private $kind."
+    }
+    $branch = $realtime.allOf | Where-Object { $_.if.properties.kind.const -eq $kind } | Select-Object -First 1
+    if ($null -eq $branch -or
+        $branch.then.properties.payload.required -notcontains 'direct_message_id' -or
+        $branch.then.properties.payload.required -notcontains 'message_id' -or
+        $null -ne $branch.then.properties.payload.properties.body -or
+        $branch.then.properties.payload.additionalProperties -ne $false) {
+        throw "Realtime $kind must expose only typed DM identifiers."
+    }
+}
+$channelUpdated = $realtime.allOf | Where-Object { $_.if.properties.kind.const -eq 'channel.updated' } | Select-Object -First 1
+if ($null -eq $channelUpdated -or
+    $channelUpdated.then.properties.payload.required -notcontains 'revision' -or
+    $channelUpdated.then.properties.payload.properties.revision.type -ne 'integer' -or
+    $channelUpdated.then.properties.payload.additionalProperties -ne $false) {
+    throw 'Realtime channel.updated must carry only a typed topology revision.'
+}
+$leaseRevoked = $realtime.allOf | Where-Object { $_.if.properties.kind.const -eq 'voice.lease_revoked' } | Select-Object -First 1
+if ($null -eq $leaseRevoked -or
+    $leaseRevoked.then.properties.payload.required -notcontains 'lease_id' -or
+    $leaseRevoked.then.properties.payload.required -notcontains 'reason' -or
+    $leaseRevoked.then.properties.payload.additionalProperties -ne $false) {
+    throw 'Realtime voice.lease_revoked must identify only the caller lease and reason.'
+}
+$resync = $realtime.allOf | Where-Object { $_.if.properties.kind.const -eq 'connection.resync_required' } | Select-Object -First 1
+if ($null -eq $resync -or
+    $resync.then.properties.payload.required -notcontains 'reason' -or
+    $resync.then.properties.payload.additionalProperties -ne $false) {
+    throw 'Realtime resync_required must carry a typed reason.'
+}
+$realtimeUpgrade = $openApi.paths.'/api/v1/realtime'.get
+if ($null -eq $realtimeUpgrade -or
+    $realtimeUpgrade.parameters[0].name -ne 'after' -or
+    $realtimeUpgrade.parameters[0].schema.format -ne 'uuid' -or
+    $null -eq $realtimeUpgrade.responses.'101' -or
+    $realtimeUpgrade.description -notmatch '7-day') {
+    throw 'Realtime upgrade contract must define the acknowledged after cursor and retention.'
+}
 if ($openApi.openapi -notmatch '^3\.1\.' -or $null -eq $openApi.paths.'/api/v1/health') {
     throw 'OpenAPI must be 3.1.x and define GET /api/v1/health.'
 }
@@ -138,6 +180,16 @@ foreach ($schemaName in @('DirectMessageCandidate', 'DirectMessageCandidateList'
 if ($null -eq $openApi.components.schemas.DirectMessageListItem.properties.unread_count) {
     throw 'DM list contract must define unread_count.'
 }
+foreach ($schemaName in @('TextMessageCreateRequest', 'TextMessageEditRequest', 'DirectMessageMessageCreateRequest', 'DirectMessageMessageEditRequest', 'TextMessageHistoryItem', 'DirectMessageMessageHistoryItem')) {
+    $mentions = $openApi.components.schemas.$schemaName.properties.mention_user_ids
+    if ($null -eq $mentions -or $mentions.type -ne 'array' -or $mentions.uniqueItems -ne $true -or $mentions.items.format -ne 'uuid') {
+        throw "Mentions contract must carry unique user IDs on $schemaName."
+    }
+}
+if ($null -eq $openApi.components.schemas.Channel.properties.mention_count -or
+    $null -eq $openApi.components.schemas.DirectMessageListItem.properties.mention_count) {
+    throw 'Navigation contract must define caller-local mention counts for TEXT and DM.'
+}
 
 if ($null -eq $openApi.paths.'/api/v1/direct-messages/{directMessageID}/messages'.post) {
     throw 'DM contract must define POST /api/v1/direct-messages/{directMessageID}/messages.'
@@ -197,8 +249,37 @@ if ($null -eq $openApi.paths.'/api/v1/channels/{channelID}/messages'.post) {
     throw 'Chat contract must define POST /api/v1/channels/{channelID}/messages.'
 }
 
+$dmUpload = $openApi.paths.'/api/v1/direct-messages/{directMessageID}/attachments'.post
+if ($null -eq $dmUpload -or
+    $dmUpload.operationId -ne 'uploadDirectMessageAttachment' -or
+    $dmUpload.responses.'201'.content.'application/json'.schema.'$ref' -ne '#/components/schemas/AttachmentUpload' -or
+    $null -eq $openApi.components.schemas.DirectMessageMessageCreateRequest.properties.attachment_ids) {
+    throw 'DM contract must define private upload and bounded attachment IDs on send.'
+}
+$dmDownload = $openApi.paths.'/api/v1/direct-messages/{directMessageID}/attachments/{attachmentID}'.get
+$dmPreview = $openApi.paths.'/api/v1/direct-messages/{directMessageID}/attachments/{attachmentID}/preview'.get
+if ($null -eq $dmDownload -or $dmDownload.operationId -ne 'downloadDirectMessageAttachment' -or
+    $null -eq $dmDownload.responses.'404' -or
+    $null -eq $dmPreview -or $dmPreview.operationId -ne 'previewDirectMessageAttachment' -or
+    $null -eq $dmPreview.responses.'404') {
+    throw 'DM contract must define participant-protected download and normalized preview.'
+}
+if ($openApi.components.schemas.DirectMessageMessageHistoryItem.required -notcontains 'attachments' -or
+    $openApi.components.schemas.DirectMessageMessageHistoryItem.properties.attachments.items.'$ref' -ne '#/components/schemas/TextMessageAttachment') {
+    throw 'DM history must expose protected attachment metadata without storage keys.'
+}
+
 if ($null -eq $openApi.paths.'/api/v1/channels/{channelID}/messages'.get) {
     throw 'Chat contract must define GET /api/v1/channels/{channelID}/messages.'
+}
+
+$channelReadCursor = $openApi.paths.'/api/v1/channels/{channelID}/read-cursor'.put
+if ($null -eq $channelReadCursor -or
+    $channelReadCursor.operationId -ne 'advanceTextChannelReadCursor' -or
+    $channelReadCursor.requestBody.content.'application/json'.schema.'$ref' -ne '#/components/schemas/ChannelReadCursorRequest' -or
+    $channelReadCursor.responses.'200'.content.'application/json'.schema.'$ref' -ne '#/components/schemas/ChannelReadCursor' -or
+    $null -eq $openApi.components.schemas.Channel.properties.unread_count) {
+    throw 'Chat contract must define caller-local TEXT channel unread counters and monotonic read cursor.'
 }
 
 if ($null -eq $openApi.paths.'/api/v1/channels/{channelID}/search'.get) {
@@ -229,6 +310,15 @@ if ($null -eq $openApi.paths.'/api/v1/admin/categories/order'.put) {
 
 if ($null -eq $openApi.paths.'/api/v1/admin/categories/{categoryID}'.patch) {
     throw 'Channel contract must define PATCH /api/v1/admin/categories/{categoryID}.'
+}
+
+$renameChannel = $openApi.paths.'/api/v1/admin/channels/{channelID}'.patch
+if ($null -eq $renameChannel -or
+    $renameChannel.operationId -ne 'renameChannel' -or
+    $renameChannel.requestBody.content.'application/json'.schema.'$ref' -ne '#/components/schemas/ChannelRenameRequest' -or
+    $renameChannel.responses.'200'.content.'application/json'.schema.'$ref' -ne '#/components/schemas/ChannelRenameResult' -or
+    $null -eq $renameChannel.responses.'403' -or $null -eq $renameChannel.responses.'409') {
+    throw 'Channel contract must define administrator-only revision-guarded PATCH /api/v1/admin/channels/{channelID}.'
 }
 
 if ($null -eq $openApi.paths.'/api/v1/admin/channels/{channelID}/category'.patch) {

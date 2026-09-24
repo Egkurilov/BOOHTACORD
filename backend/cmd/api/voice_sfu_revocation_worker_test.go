@@ -28,6 +28,33 @@ func TestAttemptRecordsOnlyFailureForNonRetryDispatchError(t *testing.T) {
 	}
 }
 
+func TestLeaseNotificationDispatchUsesBoundedIndependentBatch(t *testing.T) {
+	notifier := &fakeLeaseNotifier{}
+	attemptVoiceLeaseRevocationNotificationDispatch(context.Background(), notifier)
+	if notifier.limit != 100 || !notifier.hasDeadline || notifier.calls != 1 {
+		t.Fatalf("notifier = %#v", notifier)
+	}
+	attemptVoiceSFURevocationDispatch(context.Background(), dispatcherFunc(func(context.Context, int) (dispatchvoicesfurevocation.Result, error) {
+		return dispatchvoicesfurevocation.Result{Pending: 1}, dispatchvoicesfurevocation.ErrPending
+	}), &fakeVoiceSFUObserver{})
+	if notifier.calls != 1 {
+		t.Fatal("SFU pending status changed notification dispatch")
+	}
+}
+
+type fakeLeaseNotifier struct {
+	limit       int
+	hasDeadline bool
+	calls       int
+}
+
+func (notifier *fakeLeaseNotifier) Dispatch(context context.Context, limit int) (int, error) {
+	notifier.limit = limit
+	_, notifier.hasDeadline = context.Deadline()
+	notifier.calls++
+	return 1, nil
+}
+
 type dispatcherFunc func(context.Context, int) (dispatchvoicesfurevocation.Result, error)
 
 func (function dispatcherFunc) Dispatch(context context.Context, limit int) (dispatchvoicesfurevocation.Result, error) {

@@ -21,6 +21,25 @@
 - [x] **T-044:** безопасный stale-staging cleanup primitive и operator CLI, индекс UNATTACHED candidates migration 0027. Источник: backend/cmd/cleanup_stale_staging/main.go. Это не готовая очистка UNATTACHED/скрытых объектов.
 - [x] **T-003:** authenticated same-origin WS, presence snapshot/change с учётом нескольких вкладок, TEXT message.created/updated/deleted hints, bounded queue/resync, повторная проверка session. Источники: realtime_routes.go, realtime/connect_session, event_hub. Нет DM broadcast/replay обещаний.
 
+## Реализованные backend leaf-задачи BE-01…BE-14 (25.09.2026)
+
+- [x] **BE-01:** конкурентный TEXT retry возвращает исходное сообщение только при конфликте его idempotency key; PostgreSQL race-тест подтверждает одну строку и одну связь вложений.
+- [x] **BE-02:** DM create/edit/delete публикуют ID-only события только двум текущим участникам; ACL и session перепроверяются перед приватной доставкой.
+- [x] **BE-03:** успешные topology-команды публикуют `channel.updated {revision}` после commit; конфликт и ошибочный ответ событие не создают.
+- [x] **BE-04:** durable notification outbox публикует владельцу `voice.lease_revoked {lease_id,reason}` отдельно от SFU removal.
+- [x] **BE-05:** admin-only rename TEXT/VOICE-канала проверяет expected topology revision, сохраняет kind и пишет metadata-only audit.
+- [x] **BE-06:** ограниченный worker архивирует закрытый VOICE-канал только после завершённых SFU отзывов, отсутствия active lease и подтверждённой пустой комнаты LiveKit; сбой оставляет pending.
+- [x] **BE-07:** монотонный TEXT read cursor и caller-local `unread_count` в topology; свои и удалённые сообщения исключены.
+- [x] **BE-08:** create/edit TEXT и DM сохраняют проверенные `mention_user_ids`; история возвращает стабильные ID, а topology/DM list — caller-local `mention_count` после read cursor.
+- [x] **BE-09:** приватный DM upload до 25 МБ с reservation и атомарной idempotent привязкой до 10 вложений; история выдаёт только метаданные.
+- [x] **BE-10:** DM download/preview повторно проверяют session, участие в паре и живую связь; скачивание принудительное, raster preview нормализован в PNG.
+- [x] **BE-11:** ограниченная операторская очистка старых `UNATTACHED` объектов и одиночных orphan keys; durable retry, справедливая очередь, защита живых TEXT/DM связей и безопасный путь.
+- [x] **BE-12:** операторская физическая очистка файлов скрытых TEXT/DM сообщений только без живых связей, с claim, повтором после сбоя и транзакционным audit.
+- [x] **BE-13:** приватные метрики фактических LiveKit participants/tracks, исходов realtime reconnect и задержки успешной доставки событий; ошибка media snapshot отделена от нуля.
+- [x] **BE-14:** PostgreSQL-журнал realtime с курсором `after`, 7-дневным сроком, лимитом 512, повторной session/ACL-проверкой и явным REST resync при разрыве непрерывности или смене epoch.
+
+Проверки листьев и миграционные PostgreSQL-тесты выполнены; команды и результаты общего прогона приведены в [отчёте пакета](docs/reviews/2026-09-25-backend-delivery.md). Реальный LiveKit/media POC, нагрузка, browser E2E и release-gate остаются в [QA](backlog/VERIFICATION_TODO.md). При restart сервер требует full REST resync: бесшовное сквозное replay не заявлено.
+
 ## Веб-интерфейс и дизайн
 
 - [x] **T-010/050:** login/register, session bootstrap и maintenance banner. Источники: frontend/src/App.vue, identity/AuthenticationLanding.vue.
