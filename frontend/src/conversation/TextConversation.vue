@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useTopologyStore } from '../channel/topology_store'
 import { loadCurrentSession, type CurrentSession } from '../identity/current_session'
 import { useAuthorDirectory } from '../identity/author_directory'
 import type { TextMessage } from './message_client'
@@ -8,11 +9,13 @@ import TextHistoryList from './TextHistoryList.vue'
 import TextMessageAttachmentPicker from './TextMessageAttachmentPicker.vue'
 import TextMessageSearch from './TextMessageSearch.vue'
 import type { TextAttachmentUpload } from './text_attachment_upload_client'
+import { advanceTextReadIfVisible, newestServerTextMessageId } from './text_read_gate'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
 
 const props = defineProps<{ channelId: string; channelName: string; navOpen: boolean; membersOpen: boolean; showMembers: boolean }>()
 const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
 const store = useMessageStore()
+const topology = useTopologyStore()
 const authors = useAuthorDirectory()
 const draft = ref('')
 const session = ref<CurrentSession | null>(null)
@@ -23,12 +26,34 @@ const attachmentClearToken = ref(0)
 const searchOpen = ref(false)
 const emojiOpen = ref(false)
 const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
+const readPending = new Set<string>()
+let lastReadKey = ''
+
+async function markVisibleRead(): Promise<void> {
+  const messageId = newestServerTextMessageId(store.messages)
+  if (!messageId) return
+  const key = `${props.channelId}:${messageId}`
+  if (key === lastReadKey || readPending.has(key)) return
+  readPending.add(key)
+  try {
+    const advanced = await advanceTextReadIfVisible({ activeChannelId: store.channelId, renderedChannelId: props.channelId,
+      newestDisplayedMessageId: messageId, visibilityState: document.visibilityState })
+    if (advanced) { lastReadKey = key; void topology.refresh() }
+  } catch { /* Keep counters until a later visible retry. */ }
+  finally { readPending.delete(key) }
+}
+
+function queueVisibleRead(): void { void markVisibleRead() }
 
 watch(() => props.channelId, (channelId) => {
   attachments.value = []
+  lastReadKey = ''
   void store.open(channelId)
   void loadSession()
 }, { immediate: true })
+watch([() => props.channelId, () => store.channelId, () => store.messages], queueVisibleRead, { flush: 'post' })
+onMounted(() => { document.addEventListener('visibilitychange', queueVisibleRead); queueVisibleRead() })
+onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisibleRead))
 
 async function send(): Promise<void> {
   if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id, attachments.value, session.value?.accountId)) clearComposer()

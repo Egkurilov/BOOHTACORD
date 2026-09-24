@@ -8,6 +8,8 @@ export interface TopologyChannel {
   kind: ChannelKind
   position: number
   admissionClosed: boolean
+  unreadCount?: number
+  mentionCount?: number
 }
 
 export interface TopologyCategory {
@@ -52,6 +54,7 @@ function asKind(value: unknown): ChannelKind {
 
 function readChannel(value: unknown): TopologyChannel {
   const channel = asRecord(value)
+  const kind = asKind(channel.kind)
   if (typeof channel.admission_closed !== 'boolean') {
     return invalidTopology()
   }
@@ -59,9 +62,10 @@ function readChannel(value: unknown): TopologyChannel {
   return {
     id: asString(channel.id),
     name: asString(channel.name),
-    kind: asKind(channel.kind),
+    kind,
     position: asPosition(channel.position),
     admissionClosed: channel.admission_closed,
+    ...(kind === 'TEXT' ? { unreadCount: asPosition(channel.unread_count), mentionCount: asPosition(channel.mention_count) } : {}),
   }
 }
 
