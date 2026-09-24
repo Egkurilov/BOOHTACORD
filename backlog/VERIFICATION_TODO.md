@@ -1,9 +1,9 @@
 # Проверки, эксплуатация и выпуск
 
-Срез: 24.09.2026. Это отдельные verification-пакеты, а не обещания реализовать уже существующий код заново.
+Срез: 25.09.2026. Это отдельные verification-пакеты, а не обещания реализовать уже существующий код заново.
 PASS_STATIC/PASS_RUNTIME не равны полному release PASS. Исторические evidence не переписываются.
 
-- [ ] **QA-01 · P1 · T-040/060 — PostgreSQL integration harness.** Для `create_text_message/postgres` добавить disposable PostgreSQL с настоящими migrations, serial/concurrent retries, attachments и cross-channel reply. Готово: тест действительно выполняет SQL, при отсутствии БД явно NOT_RUN, CI не выдаёт пропуск за PASS. Harness создаётся до BE-01 и воспроизводит его дефект; после исправления нужен PASS-прогон. Текущие repository tests используют fake database.
+- [ ] **QA-01 · P1 · T-040/060 — PostgreSQL integration harness.** Изолированная PostgreSQL-схема с настоящими migrations уже проверяет serial/concurrent TEXT retries и attachment link; BE-01 race PASS. Осталось добавить отрицательный cross-channel reply и подтвердить, что trusted CI с обязательной PostgreSQL-службой выполняет все SQL-тесты без skip. Готово: воспроизводимый PASS локально и в CI, а отсутствие БД явно NOT_RUN/FAIL, никогда не выдаваемое за PASS.
 
 - [ ] **QA-02 · P1 · T-010/012/013/014/020 — Auth/admin concurrency.** Отдельными leaf-прогонами проверить login/logout/reset, bootstrap/recovery, last-admin demote/block race, role refresh, topology revision и transfer lease. Готово: реальный PostgreSQL, два конкурентных клиента, атомарные ограничения и отсутствие secrets в отчёте; WS закрывается после revoke. POC media проверяется в QA-10.
 
@@ -11,7 +11,7 @@ PASS_STATIC/PASS_RUNTIME не равны полному release PASS. Истор
 
 - [ ] **QA-04 · P1 · T-041/054/060 — Search/migrations/CI.** На настоящем PostgreSQL проверить русский/английский текст, имя в тексте, фразу, cursor boundaries и GIN plan; миграции на пустой и существующей схеме. Добавить эти проверки и contract/traceability/image guards в действующий GitVerse pipeline. Готово: trusted pipeline запускает tests до deploy, а failed gate блокирует его. Сейчас GitVerse release_guard проверяет shell scripts, но не запускает contract/traceability suite.
 
-- [ ] **QA-05 · P1 · T-050 — Authenticated browser E2E.** Пройти auth/reset/logout, две переписки, upload/search, admin/topology, voice navigation/reconnect и новые FE-задачи на фиксированном candidate. Готово: сценарии с реальным API, keyboard/focus и screenshots 1440/1280/1024 CSS px + zoom 125/150%; screenshot-review именно этого bundle. Зависимости: FE-01 и затронутые FE/DES-задачи; fixture-данные допустимы только в изолированной тестовой среде.
+- [ ] **QA-05 · P1 · T-050 — Authenticated browser E2E.** Пройти auth/reset/logout, две переписки, upload/search, admin/topology, voice navigation/reconnect и оставшиеся FE-задачи на фиксированном candidate. Готово: сценарии с реальным API, keyboard/focus и screenshots 1440/1280/1024 CSS px + zoom 125/150%; screenshot-review именно этого bundle. FE-01…07 реализованы; fixture-данные допустимы только в изолированной тестовой среде.
 
 - [ ] **QA-06 · P1 · T-004 — POC-01.** Отдельные физические Windows и Apple-Silicon macOS presenters, каждый с отдельным observer: движущаяся игра, её звук, разговор и отсутствие цифровой петли. Готово: окружения/версии/устройства и наблюдатель в evidence, compatibility matrix. Evidence preflight от 24.09 — BLOCKED; owner-login и POC topology не считать новой отсутствующей реализацией.
 
@@ -25,7 +25,7 @@ PASS_STATIC/PASS_RUNTIME не равны полному release PASS. Истор
 
 - [ ] **QA-11 · P1 · T-054 — Контракт доставки.** Действует GitVerse master → тесты → source archive → server build с commit-SHA tags → guarded deploy; есть evidence успешного run #1629339. Исходное ТЗ задаёт main/GHCR, а отдельного delivery ADR нет. Документировать утверждённый путь ADR либо довести поставку до исходного требования; закрыть SBOM/provenance и traceability на CI-host без локального Windows-пути ТЗ. Готово: однозначный trusted pipeline, immutable refs и воспроизводимые checks; существующий успешный deploy не отрицать.
 
-- [ ] **QA-12 · P1 · T-054 — Maintenance/rollback acceptance.** На совместимой схеме проверить warning → запрет новых admissions → migration → rollout → smoke → снятие maintenance; отказ и возврат совместимого image отдельным прогоном. Готово: наблюдатель, сохранённые volumes, две browser sessions и evidence. Guard script и banner готовы; нет auto-down migration/backup. Новые локальные изменения не считать уже выложенными.
+- [ ] **QA-12 · P1 · T-054 — Maintenance/rollback acceptance.** На совместимой схеме проверить warning → запрет новых admissions → migration → rollout → smoke → снятие maintenance; отказ и возврат совместимого image отдельным прогоном. Готово: наблюдатель, сохранённые volumes, две browser sessions и evidence. Guard script и banner готовы; нет auto-down migration/backup. Наличие source commit в master не доказывает успешный rollout.
 
 - [ ] **QA-13 · P1 · T-051 — Android release/device gate.** ADR-006 разрешает клиент; APK build evidence от 24.09 PASS, но подпись Android Debug, physical-device tests NOT_RUN. Настроить отдельную release-подпись без secrets в Git и проверить install/update/auth/Origin/secure-cookie storage, permission/reconnect/voice/viewer на устройстве. Остальной Flutter parity — отдельные leaf-задачи по [checklist](../docs/flutter-web-parity.md); не обещать завершённые native admin/upload/screen publication. Flutter SDK здесь недоступен, повторной сборки в этом ревью нет.
 
