@@ -3,20 +3,6 @@
 Срез: 24.09.2026. Пути относительно корня; source tests не заменяют browser E2E.
 Дизайн — [DES](../docs/design/GUILDCHAT_V1_TODO.md), backend-зависимости — [BE](BACKEND_TODO.md).
 
-- [ ] **FE-01 · P0 · T-030 — Viewer FPS и сборка.** `frontend/src/voice/screen_playback_fps.spec.ts` импортирует отсутствующий модуль; `screen_video_quality.ts` принимает один аргумент вместо ожидаемых двух. Завершить observer и подключить к `ScreenViewer.vue`; сбрасывать на смене потока/unmount. Готово: freeze даёт измеренный 0 FPS, no-data не заменяется target; `npm test`/`npm run build` проходят. Причина низкого FPS остаётся QA-07.
-
-- [ ] **FE-02 · P1 · T-003 — WS reconnect/resync.** `frontend/src/realtime/realtime_store.ts` после close только ставит DISCONNECTED. Добавить bounded backoff/jitter, отмену на dispose/logout, dedup и REST-resync. Готово: после restart/disconnect history/topology/presence восстанавливаются без reload; отозванная сессия ведёт ко входу; сетевой сбой WS не обрывает здоровый WebRTC. Не ждать BE-14.
-
-- [ ] **FE-03 · P1 · T-010 — Выход из аккаунта.** В `WorkspaceUserFooter.vue` / `ProfileSettings.vue` нет logout action. Подключить готовый `POST /auth/logout`, остановку локальных media/WS, очистку account-bound stores и guest screen. Готово: повтор безопасен, ошибка сервера различима, другой пользователь не видит прежние DM/drafts. Зависимость: DES-03.
-
-- [ ] **FE-04 · P1 · T-012 — Завершение password reset.** Админка выдаёт ссылку, но `App.vue` / `AuthenticationLanding.vue` не обрабатывают fragment. Сделать экран нового пароля и вызов `/auth/password-reset/complete`; удалить secret из адреса после чтения, не писать в storage/logs. Готово: success/expired/reused/invalid token, затем обычный login. Зависимость: DES-03; API готов.
-
-- [ ] **FE-05 · P1 · T-040 — История TEXT.** `message_store.ts` хранит `nextCursor`, но загружает только первую страницу; `TextConversation.vue` не предлагает старую историю. Добавить loadOlder с before, dedup и scroll anchor. Готово: >100 сообщений доступны постранично, end/error/retry, realtime не стирает старые страницы. API готов.
-
-- [ ] **FE-06 · P1 · T-041 — История DM.** Независимый leaf в `direct_message_store.ts` / `DirectMessageConversation.vue`. Готово: старые страницы, смена диалога во время запроса, отсутствие дублей, сохранение scroll; загрузка прошлого не сдвигает cursor назад. API готов.
-
-- [ ] **FE-07 · P1 · T-020/022/041 — Применение событий.** Typed handlers для DM create/edit/delete, `channel.updated`, `voice.lease_revoked`: store пропускает последние два, хотя parser знает kind. Готово: обновляется затронутая беседа/topology; чужой lease не завершает voice; DM badges обновляются без ручного открытия. Зависимости: BE-02/03/04; три семейства делать отдельными leaf-пакетами.
-
 - [ ] **FE-08 · P1 · T-041 — DM retry.** `direct_message_message_actions.ts` создаёт новый UUID на каждую попытку. Сохранять payload/client_message_id до подтверждения, показывать pending/failed/retry. Готово: потерянный HTTP-ответ и повтор оставляют одно сообщение, смена диалога не вставляет строку в чужую history. TEXT optimistic send уже есть.
 
 - [ ] **FE-09 · P1 · T-050 — Представление автора.** `MessageItem.vue` и reply previews выводят `authorId`. Использовать безопасный member directory/cache для имени и private avatar с fallback. Готово: TEXT/DM/reply показывают имя, rename обновляется; секретные данные не требуются. Зависимость: DES-02; member API готов.

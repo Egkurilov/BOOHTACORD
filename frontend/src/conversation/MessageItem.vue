@@ -7,8 +7,8 @@ import TextMessageAttachments from './TextMessageAttachments.vue'
 
 type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments'> & { channelId?: string; attachments?: TextMessageAttachment[] }
 
-const props = defineProps<{ message: RenderedMessage; replyPreview?: string; canEdit: boolean; canDelete: boolean }>()
-const emit = defineEmits<{ edit: [body: string]; remove: []; reply: [] }>()
+const props = defineProps<{ message: RenderedMessage; replyPreview?: string; canEdit: boolean; canDelete: boolean; retryDisabled?: boolean }>()
+const emit = defineEmits<{ edit: [body: string]; remove: []; reply: []; retry: [] }>()
 const editing = ref(false)
 const body = ref('')
 const textChannelId = computed(() => props.message.channelId ?? '')
@@ -53,8 +53,10 @@ function initial(authorId: string): string {
         <p v-if="replyPreview" class="reply-preview">↪ {{ replyPreview }}</p>
         <MessageBody :body="message.body" />
         <TextMessageAttachments v-if="textChannelId && textAttachments.length" :channel-id="textChannelId" :attachments="textAttachments" />
+        <p v-if="message.sendStatus === 'sending'" class="message-send-status" role="status">Отправляется…</p>
+        <div v-if="message.sendStatus === 'failed'" class="message-send-status" role="alert"><span>Не отправлено</span><button type="button" :disabled="retryDisabled" @click="emit('retry')">Повторить отправку</button></div>
       </template>
-      <p v-if="!message.deleted" class="message-actions">
+      <p v-if="!message.deleted && !message.sendStatus" class="message-actions">
         <button type="button" @click="emit('reply')">Ответить</button>
         <button v-if="canEdit" type="button" @click="beginEdit">Изменить</button>
         <button v-if="canDelete" type="button" @click="remove">Удалить</button>

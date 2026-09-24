@@ -1,0 +1,21 @@
+import type { LiveKitCredential, VoiceLease } from './admission_client'
+import type { AudioProcessingOptions, JoinedVoiceRoom, ScreenProfile, VoiceJoinMode } from './livekit_gateway'
+
+export interface VoiceAdmission {
+  acquire(channelId: string, transfer: boolean): Promise<VoiceLease>
+  credential(leaseId: string): Promise<LiveKitCredential>
+  release(leaseId: string): Promise<void>
+}
+
+export interface ActiveVoiceSession extends JoinedVoiceRoom {
+  channelId: string
+  leaseId: string
+  screenProfile: ScreenProfile | null
+}
+
+export type RoomJoiner = (credential: LiveKitCredential, processing?: AudioProcessingOptions, joinMode?: VoiceJoinMode) => Promise<JoinedVoiceRoom>
+export interface VoiceConnectionObserver {
+  disconnected(): void
+  reconnected(): void
+  reconnecting(): void
+}

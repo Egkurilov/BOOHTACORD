@@ -18,6 +18,7 @@ export interface TextMessage {
   editedAt?: string
   deleted: boolean
   attachments: TextMessageAttachment[]
+  sendStatus?: 'sending' | 'failed'
 }
 
 export interface MessagePage {

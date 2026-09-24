@@ -1,59 +1,54 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-import { createTextMessage, deleteTextMessage, editTextMessage, loadMessagePage, type MessageRequest, type TextMessage, type TextMessageAttachment } from './message_client'
+import { createTextMessage, deleteTextMessage, editTextMessage, type MessageRequest, type TextMessageAttachment } from './message_client'
+import { createTextHistory, pendingMessage, type PendingSend } from './text_history'
 
 export const useMessageStore = defineStore('text-messages', () => {
-  const channelId = ref<string | null>(null)
-  const messages = ref<TextMessage[]>([])
-  const nextCursor = ref<string | undefined>()
-  const loading = ref(false)
+  const pending = new Map<string, PendingSend>()
+  const { channelId, messages, nextCursor, loading, olderLoading, historyLoaded, error, olderError, open, refresh, loadOlder } = createTextHistory(pending)
   const sending = ref(false)
-  const error = ref<string | null>(null)
-  let loadSequence = 0
+  const retries = new Map<string, string>()
 
-  async function open(nextChannelId: string, request?: MessageRequest): Promise<void> {
-    if (channelId.value === nextChannelId) return
-    channelId.value = nextChannelId
-    messages.value = []
-    nextCursor.value = undefined
-    await refresh(request)
-  }
-
-  async function refresh(request?: MessageRequest): Promise<void> {
-    const targetChannelId = channelId.value
-    if (!targetChannelId) return
-    const sequence = ++loadSequence
-    loading.value = true
-    error.value = null
-    try {
-      const page = await loadMessagePage(targetChannelId, undefined, request)
-      if (channelId.value !== targetChannelId || sequence !== loadSequence) return
-      messages.value = page.messages
-      nextCursor.value = page.nextCursor
-    } catch (cause) {
-      if (channelId.value === targetChannelId && sequence === loadSequence) error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить историю сообщений.'
-    } finally {
-      if (sequence === loadSequence) loading.value = false
-    }
-  }
-
-  async function send(body: string, request?: MessageRequest, createId: () => string = () => crypto.randomUUID(), replyToId?: string, attachments: TextMessageAttachment[] = []): Promise<boolean> {
-    const targetChannelId = channelId.value
-    if (!targetChannelId || sending.value || !body) return false
+  async function submit(clientMessageId: string, draft: PendingSend, request = draft.request): Promise<boolean> {
+    const targetChannelId = draft.channelId
+    if (sending.value) return false
     sending.value = true
     error.value = null
+    draft.sendStatus = 'sending'
+    const optimisticId = `optimistic:${clientMessageId}`
+    messages.value = [pendingMessage(clientMessageId, draft), ...messages.value.filter((message) => message.clientMessageId !== clientMessageId)]
     try {
-      const created = await createTextMessage(targetChannelId, createId(), body, request, replyToId, attachments.map(({ id }) => id))
+      const created = await createTextMessage(targetChannelId, clientMessageId, draft.body, request, draft.replyToId, draft.attachments.map(({ id }) => id))
+      pending.delete(clientMessageId)
       if (channelId.value !== targetChannelId) return false
-      messages.value = [{ ...created, attachments: [...attachments] }, ...messages.value.filter((message) => message.id !== created.id)]
+      for (const [key, id] of retries) if (id === clientMessageId) retries.delete(key)
+      messages.value = [{ ...created, attachments: [...draft.attachments] }, ...messages.value.filter((message) => message.id !== created.id && message.clientMessageId !== clientMessageId)]
       return true
     } catch (cause) {
-      if (channelId.value === targetChannelId) error.value = cause instanceof Error ? cause.message : 'Не удалось отправить сообщение.'
+      draft.sendStatus = 'failed'
+      if (channelId.value === targetChannelId) {
+        error.value = cause instanceof Error ? cause.message : 'Не удалось отправить сообщение.'
+        messages.value = messages.value.map((message) => message.id === optimisticId ? { ...message, sendStatus: 'failed' } : message)
+      }
       return false
-    } finally {
-      sending.value = false
-    }
+    } finally { sending.value = false }
+  }
+
+  async function send(body: string, request?: MessageRequest, createId: () => string = () => crypto.randomUUID(), replyToId?: string, attachments: TextMessageAttachment[] = [], authorId = 'Вы'): Promise<boolean> {
+    const targetChannelId = channelId.value
+    if (!targetChannelId || sending.value || !body) return false
+    const draft = { channelId: targetChannelId, authorId, body, replyToId, attachments: [...attachments], request }
+    const key = JSON.stringify([targetChannelId, authorId, body, replyToId, attachments.map(({ id }) => id)])
+    const clientMessageId = retries.get(key) ?? createId()
+    pending.set(clientMessageId, draft)
+    retries.set(key, clientMessageId)
+    return submit(clientMessageId, draft)
+  }
+
+  async function retry(clientMessageId: string, request?: MessageRequest): Promise<boolean> {
+    const draft = pending.get(clientMessageId)
+    return draft ? submit(clientMessageId, draft, request ?? draft.request) : false
   }
 
   async function edit(messageId: string, body: string, expectedRevision: number, request?: MessageRequest): Promise<boolean> {
@@ -78,7 +73,7 @@ export const useMessageStore = defineStore('text-messages', () => {
     try {
       await deleteTextMessage(targetChannelId, messageId, request)
       if (channelId.value !== targetChannelId) return false
-      messages.value = messages.value.map((message) => message.id === messageId ? { ...message, body: '', deleted: true, revision: message.revision + 1 } : message)
+      messages.value = messages.value.map((message) => message.id === messageId && !message.deleted ? { ...message, body: '', deleted: true, revision: message.revision + 1 } : message)
       return true
     } catch (cause) {
       if (channelId.value === targetChannelId) error.value = cause instanceof Error ? cause.message : 'Не удалось удалить сообщение.'
@@ -86,5 +81,5 @@ export const useMessageStore = defineStore('text-messages', () => {
     }
   }
 
-  return { channelId, edit, error, loading, messages, nextCursor, open, refresh, remove, send, sending }
+  return { channelId, edit, error, loading, olderLoading, historyLoaded, olderError, loadOlder, messages, nextCursor, open, refresh, remove, retry, send, sending }
 })

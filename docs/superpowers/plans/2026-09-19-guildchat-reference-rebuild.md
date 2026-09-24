@@ -97,7 +97,7 @@ Expected: all tests pass and Vite produces the web artifact.
 
 The deployment is web-only; do not restart API, LiveKit, PostgreSQL or proxy. Attach runtime evidence that distinguishes browser visual comparison from health checks.
 
-**Current constraint:** the automated environment has no authenticated browser surface for a truthful in-app screenshot. A web-only runtime release may be smoke-tested independently, but this checkbox remains open until a signed-in browser comparison is recorded.
+**Current constraint:** the authenticated Chrome production page is currently at pre-join (1256×1214 CSS px, DPR 1.5); production exposes only the usual join action. A listener-only join path and wide-desktop roster parity now exist in the local working tree, but have not been deployed or compared in a connected production state. The supplied `voice-1440.png` also shows a second leave control that conflicts with C-18's VoiceDock-only control rule; resolve that source discrepancy before claiming literal parity.
 
 ## Self-review
 

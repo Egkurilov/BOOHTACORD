@@ -5,10 +5,13 @@ import type { TopologyChannel } from '../channel/topology_client'
 import DirectMessageConversation from '../direct_message/DirectMessageConversation.vue'
 import type { DirectMessageListItem } from '../direct_message/direct_message_client'
 import type { ScreenShareState, VoiceConnectionState } from '../voice/connection_store'
-import type { ScreenProfile } from '../voice/livekit_gateway'
+import type { VoiceActivationMode } from '../voice/activation_store'
+import type { ScreenProfile, VoiceJoinMode } from '../voice/livekit_gateway'
 import type { ScreenDiagnostics } from '../voice/screen_diagnostics'
 import ScreenDiagnosticsPanel from '../voice/ScreenDiagnosticsPanel.vue'
 import ScreenViewer from '../voice/ScreenViewer.vue'
+import VoicePrejoin from '../voice/VoicePrejoin.vue'
+import VoiceRoomFooter from '../voice/VoiceRoomFooter.vue'
 import VoiceParticipantVolumes from '../voice/VoiceParticipantVolumes.vue'
 import type { ScreenViewerCard } from '../voice/screen_viewer_controller'
 import type { VoiceVolumeParticipant } from '../voice/voice_volume_controls'
@@ -22,10 +25,11 @@ const props = defineProps<{
   navOpen: boolean
   membersOpen: boolean
   showMembers: boolean
-  selfDisplayName: string | null
+  selfDisplayName: string | null; selfDeafened: boolean
   voiceError: string | null
   voiceIsActive: boolean
   voiceState: VoiceConnectionState
+  activationMode: VoiceActivationMode
   voiceTransferRequired: boolean
   screenError: string | null
   screenViewerCards: ScreenViewerCard[]
@@ -43,7 +47,7 @@ const props = defineProps<{
   voiceVolumeParticipants: VoiceVolumeParticipant[]
 }>()
 
-const emit = defineEmits<{ clearScreenStream: []; join: [channelId: string]; refreshScreen: []; selectScreenStream: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setParticipantVolume: [id: string, percent: number]; setScreenVolume: [percent: number]; startScreen: [profile: ScreenProfile]; stopScreen: []; transfer: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
+const emit = defineEmits<{ clearScreenStream: []; join: [channelId: string, transfer?: boolean, joinMode?: VoiceJoinMode]; leave: []; refreshScreen: []; selectScreenStream: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setParticipantVolume: [id: string, percent: number]; setScreenVolume: [percent: number]; startScreen: [profile: ScreenProfile]; stopScreen: []; transfer: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
 const selectedScreenProfile = ref<ScreenProfile>('P1080_60')
 const screenExpanded = ref(false)
 const selectedScreenName = computed(() => props.screenViewerCards.find((screen) => screen.id === props.selectedScreenStreamId)?.participantName ?? null)
@@ -91,27 +95,12 @@ function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id)
                 <button v-else class="gc-button gc-button--secondary" type="button" @click="emit('stopScreen')">Остановить показ</button>
               </div>
               <p v-if="screenError" class="state state-error" role="alert">{{ screenError }}</p>
-              <VoiceParticipantVolumes :error="voiceVolumeError" :participants="voiceVolumeParticipants" :screen-streams="screenViewerCards" :selected-screen-stream-id="selectedScreenStreamId" :self-name="selfDisplayName" :self-microphone-muted="selfMicrophoneMuted" :self-microphone-unavailable="selfMicrophoneUnavailable" :self-speaking="selfSpeaking" @set-volume="(id, percent) => emit('setParticipantVolume', id, percent)" @watch-screen="watchScreen" />
+              <VoiceParticipantVolumes :error="voiceVolumeError" :participants="voiceVolumeParticipants" :screen-streams="screenViewerCards" :selected-screen-stream-id="selectedScreenStreamId" :self-name="selfDisplayName" :self-deafened="selfDeafened" :self-microphone-muted="selfMicrophoneMuted" :self-microphone-unavailable="selfMicrophoneUnavailable" :self-speaking="selfSpeaking" @set-volume="(id, percent) => emit('setParticipantVolume', id, percent)" @watch-screen="watchScreen" />
               <details class="voice-advanced"><summary>Параметры демонстрации</summary><ScreenDiagnosticsPanel v-if="screenState === 'SHARING'" :diagnostics="screenDiagnostics" :profile="screenProfile" @refresh="emit('refreshScreen')" /><label class="screen-settings">Целевой профиль<select v-model="selectedScreenProfile" :disabled="screenState === 'STARTING' || screenState === 'SHARING'"><option value="P720_30">720p · 30 FPS</option><option value="P720_60">720p · 60 FPS</option><option value="P1080_30">1080p · 30 FPS</option><option value="P1080_60">1080p · 60 FPS</option></select></label></details>
             </template>
-            <template v-else>
-              <div class="voice-prejoin">
-                <article class="voice-prejoin-card" aria-labelledby="voice-prejoin-title">
-                  <span class="voice-prejoin-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Zm-7 8a7 7 0 0 0 14 0M12 18v3m-4 0h8" /></svg>
-                  </span>
-                  <p class="eyebrow">ГОЛОСОВАЯ КОМНАТА</p>
-                  <h3 id="voice-prejoin-title">Вы не подключены</h3>
-                  <p class="voice-prejoin-copy">Подключитесь, чтобы увидеть участников комнаты и статусы микрофонов.</p>
-                  <p v-if="voiceError" class="state state-error" role="alert">{{ voiceError }}</p>
-                  <div class="voice-prejoin-actions">
-                    <button v-if="voiceTransferRequired" class="gc-button gc-button--secondary" type="button" @click="emit('transfer', channel.id)">Перенести подключение</button>
-                    <button class="gc-button gc-button--primary" type="button" :disabled="voiceState === 'JOINING'" @click="emit('join', channel.id)">{{ voiceState === 'JOINING' ? 'Подключаемся…' : 'Подключиться к голосу' }}</button>
-                  </div>
-                </article>
-              </div>
-            </template>
+            <VoicePrejoin v-else :channel-id="channel.id" :voice-error="voiceError" :voice-state="voiceState" :voice-transfer-required="voiceTransferRequired" @join="(id, transfer, mode) => emit('join', id, transfer, mode)" @transfer="emit('transfer', $event)" />
           </div>
+          <VoiceRoomFooter v-if="voiceIsActive && !selectedScreenStreamId && !screenViewerEnded" :activation-mode="activationMode" :channel-name="channel.name" :state="voiceState" @leave="emit('leave')" />
         </section>
       </Teleport>
     </template>

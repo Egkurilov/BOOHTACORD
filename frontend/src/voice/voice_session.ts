@@ -2,7 +2,6 @@ import {
   acquireVoiceLease,
   issueLiveKitCredential,
   releaseVoiceLease,
-  type LiveKitCredential,
   type VoiceLease,
 } from './admission_client'
 import {
@@ -12,32 +11,17 @@ import {
   type MicrophoneState,
   type AudioProcessingOptions,
   type ScreenProfile,
+  type VoiceJoinMode,
 } from './livekit_gateway'
 import type { AudioDeviceKind } from './audio_devices'
-import { VoiceReconnectMonitor } from './voice_reconnect_monitor'
 import type { ScreenViewerController } from './screen_viewer_controller'
+import { VoiceReconnectMonitor } from './voice_reconnect_monitor'
 import { VoiceDeafen } from './voice_deafen'
 import { VoiceAudioProcessing } from './voice_audio_processing'
 import { VoiceScreenSession } from './voice_screen_session'
+import type { ActiveVoiceSession, RoomJoiner, VoiceAdmission, VoiceConnectionObserver } from './voice_session_types'
 
-export interface VoiceAdmission {
-  acquire(channelId: string, transfer: boolean): Promise<VoiceLease>
-  credential(leaseId: string): Promise<LiveKitCredential>
-  release(leaseId: string): Promise<void>
-}
-
-export interface ActiveVoiceSession extends JoinedVoiceRoom {
-  channelId: string
-  leaseId: string
-  screenProfile: ScreenProfile | null
-}
-
-export type RoomJoiner = (credential: LiveKitCredential, processing?: AudioProcessingOptions) => Promise<JoinedVoiceRoom>
-export interface VoiceConnectionObserver {
-  disconnected(): void
-  reconnected(): void
-  reconnecting(): void
-}
+export type { ActiveVoiceSession, RoomJoiner, VoiceAdmission, VoiceConnectionObserver } from './voice_session_types'
 const defaultAdmission: VoiceAdmission = {
   acquire: acquireVoiceLease,
   credential: issueLiveKitCredential,
@@ -66,13 +50,13 @@ export class VoiceSession {
   remoteVoices() { return this.current?.room.remoteVoices ?? null }
   participantCards() { return this.current?.room.participantCards ?? null }
 
-  async join(channelId: string, transfer = false): Promise<ActiveVoiceSession> {
+  async join(channelId: string, transfer = false, joinMode: VoiceJoinMode = 'with-microphone'): Promise<ActiveVoiceSession> {
     if (this.current) throw new Error('Сначала завершите текущее голосовое подключение.')
 
     let lease: VoiceLease | null = null
     try {
       lease = await this.admission.acquire(channelId, transfer)
-      const joined = await this.joinRoom(await this.admission.credential(lease.id), this.audioProcessing.value)
+      const joined = await this.joinRoom(await this.admission.credential(lease.id), this.audioProcessing.value, joinMode)
       this.current = { channelId: lease.channelId, leaseId: lease.id, screenProfile: null, ...joined }
       this.monitor.bind(joined.room, () => this.current?.room === joined.room, () => this.handleDisconnected(joined.room))
       return this.current
@@ -88,10 +72,21 @@ export class VoiceSession {
 
     await this.monitor.whileLeaving(async () => {
       await current.room.disconnect()
+      this.current = null
+      this.deafen.reset()
       await this.admission.release(current.leaseId)
+    })
+  }
+
+  async revoke(leaseId: string): Promise<boolean> {
+    const current = this.current
+    if (!current || current.leaseId !== leaseId) return false
+    await this.monitor.whileLeaving(async () => {
+      await current.room.disconnect()
       this.current = null
       this.deafen.reset()
     })
+    return true
   }
 
   async setMicrophoneMuted(muted: boolean): Promise<MicrophoneState> {

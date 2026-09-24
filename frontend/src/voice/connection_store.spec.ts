@@ -7,6 +7,7 @@ const fixture = vi.hoisted(() => {
   room.self = room
   return {
     join: vi.fn(),
+    leave: vi.fn(),
     room,
   }
 })
@@ -20,6 +21,8 @@ vi.mock('./voice_session', () => ({
     audioProcessing = { diagnostics: { supported: false } }
     screen = {}
     join = fixture.join
+    leave = fixture.leave
+    get active() { return null }
     participantCards = () => null
     remoteVoices = () => null
     screenViewer = () => null
@@ -34,6 +37,7 @@ describe('voice connection store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     fixture.join.mockReset()
+    fixture.leave.mockReset()
     fixture.join.mockResolvedValue({
       channelId: 'channel-1',
       leaseId: 'lease-1',
@@ -50,5 +54,27 @@ describe('voice connection store', () => {
 
     expect(store.active?.room).toBe(fixture.room)
     expect(isProxy(store.active?.room)).toBe(false)
+  })
+
+  it('keeps a listener-only join muted in the connected store', async () => {
+    fixture.join.mockResolvedValueOnce({ channelId: 'channel-1', leaseId: 'lease-1', microphone: 'MUTED', room: fixture.room, screenProfile: null })
+    const store = useVoiceConnectionStore()
+
+    await store.join('channel-1', false, 'listener')
+
+    expect(fixture.join).toHaveBeenCalledWith('channel-1', false, 'listener')
+    expect(store.state).toBe('LISTENER')
+    expect(store.microphoneMuted).toBe(true)
+  })
+
+  it('clears local active media state when release fails after the room disconnected', async () => {
+    const store = useVoiceConnectionStore()
+    await store.join('channel-1')
+    fixture.leave.mockRejectedValueOnce(new Error('release failed'))
+
+    await store.leave()
+
+    expect(store.active).toBeNull()
+    expect(store.state).toBe('IDLE')
   })
 })

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 
 import voiceDock from '../voice/VoiceDock.vue?raw'
 import directConversation from '../direct_message/DirectMessageConversation.vue?raw'
+import directHistoryList from '../direct_message/DirectMessageHistoryList.vue?raw'
 import directNavigation from '../direct_message/DirectMessageNavigation.vue?raw'
 import directStarter from '../direct_message/DirectMessageStarter.vue?raw'
 import messageItem from '../conversation/MessageItem.vue?raw'
@@ -13,6 +14,7 @@ import messageAttachments from '../conversation/TextMessageAttachments.vue?raw'
 import conversationPane from '../conversation/ConversationPane.vue?raw'
 import screenViewer from '../voice/ScreenViewer.vue?raw'
 import textConversation from '../conversation/TextConversation.vue?raw'
+import textHistoryList from '../conversation/TextHistoryList.vue?raw'
 import workspace from '../workspace/WorkspaceApp.vue?raw'
 import workspaceMain from '../workspace/WorkspaceMain.vue?raw'
 import membersPanel from '../workspace/WorkspaceMembersPanel.vue?raw'
@@ -31,8 +33,9 @@ describe('GuildChat design-system foundation', () => {
 
     expect(tokens).toContain('--gc-canvas: #0E1117')
     expect(tokens).toContain('--gc-accent: #5C5FE8')
-    expect(tokens).toContain('--gc-layout-nav-wide: 312px')
-    expect(tokens).toContain('--gc-layout-aside-wide: 312px')
+    expect(tokens).toContain('--gc-layout-nav-wide: 280px')
+    expect(tokens).toContain('--gc-layout-aside-wide: 248px')
+    expect(tokens).toContain('--gc-layout-frame-wide: 0px')
     expect(foundation).toContain('prefers-reduced-motion: reduce')
   })
 
@@ -54,7 +57,7 @@ describe('GuildChat design-system foundation', () => {
   })
 
   it('keeps conversations on the shared token contract', () => {
-    for (const component of [textConversation, directConversation, messageItem]) {
+    for (const component of [textConversation, textHistoryList, directConversation, directHistoryList, messageItem]) {
       expect(component).not.toContain('<style scoped>')
       expect(component).not.toContain('#222836')
     }
@@ -78,9 +81,12 @@ describe('GuildChat design-system foundation', () => {
     expect(workspace).toContain('class="sidebar"')
     expect(workspace).toContain('class="nav-content"')
     expect(textConversation).toContain('class="main-header conversation-header"')
-    expect(textConversation).toContain('class="messages message-list"')
+    expect(textConversation).toContain('<TextHistoryList')
+    expect(textHistoryList).toContain('class="messages message-list"')
     expect(textConversation).toContain('class="composer-wrap"')
     expect(directConversation).toContain('class="main-header conversation-header"')
+    expect(directConversation).toContain('<DirectMessageHistoryList')
+    expect(directHistoryList).toContain('class="messages message-list"')
     expect(workspace).toContain('<WorkspaceSidebarTabs')
     expect(conversationPane).toContain('class="room-intro"')
     expect(screenViewer).toContain('class="stream-quality-row"')
@@ -88,7 +94,7 @@ describe('GuildChat design-system foundation', () => {
   })
 
   it('keeps settings and administration in the central workspace', () => {
-    expect(workspace).toContain("'no-aside': activePanel !== 'search' && (selectedDirectMessage || activePanel !== 'none')")
+    expect(workspace).toContain("'no-aside': activePanel !== 'search' && (voiceStageWide || selectedDirectMessage || activePanel !== 'none')")
     expect(workspace).toContain('<template #admin>')
     expect(workspace).toContain('<template #audio>')
     expect(workspace).toContain('<template #profile>')

@@ -14,7 +14,7 @@ describe('screen viewer reference composition', () => {
     expect(viewer).toContain('screen-publisher-name')
     expect(viewer).toContain('stream-target')
     expect(viewer).toContain('stream-actual')
-    expect(viewer).toContain('Определяем качество…')
+    expect(source('./screen_playback_quality.ts')).toContain('Определяем качество…')
     expect(viewer).toContain('Голоса участников остаются слышны')
     expect(viewer).toContain('Невыбранные демонстрации не воспроизводятся')
     expect(viewer).toContain('К участникам')
@@ -67,6 +67,8 @@ describe('screen viewer reference composition', () => {
 
   it('shows dimensions only after real video metadata arrives', () => {
     expect(formatScreenVideoQuality({ videoWidth: 1920, videoHeight: 1080 })).toBe('1920 × 1080 · FPS не определена')
+    expect(formatScreenVideoQuality({ videoWidth: 1920, videoHeight: 1080 }, 1)).toBe('1920 × 1080 · 1 FPS у зрителя')
+    expect(formatScreenVideoQuality({ videoWidth: 1920, videoHeight: 1080 }, 0)).toBe('1920 × 1080 · 0 FPS у зрителя')
     expect(formatScreenVideoQuality({ videoWidth: 0, videoHeight: 0 })).toBe('Определяем качество…')
     expect(source('./ScreenViewer.vue')).toContain('@loadedmetadata="refreshVideoQuality"')
     expect(source('./ScreenViewer.vue')).toContain('@resize="refreshVideoQuality"')
@@ -110,6 +112,7 @@ describe('screen viewer reference composition', () => {
 
     expect(styles).toContain('@media (max-width: 1100px)')
     expect(styles).toContain('.stream-quality-row .volume-control, .stream-audio-status')
-    expect(styles).toContain('.screen-window-toggle { width: 100%; }')
+    expect(styles).toContain('.stream-quality-row, .stream-quality, .stream-voice-return { flex-wrap: wrap; }')
+    expect(styles).toContain('.stream-voice-return button:first-of-type { margin-left: 0; }')
   })
 })

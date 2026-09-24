@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-
 import { loadCurrentSession, type CurrentSession } from '../identity/current_session'
-import MessageItem from './MessageItem.vue'
 import type { TextMessage } from './message_client'
 import { useMessageStore } from './message_store'
+import TextHistoryList from './TextHistoryList.vue'
 import TextMessageAttachmentPicker from './TextMessageAttachmentPicker.vue'
 import TextMessageSearch from './TextMessageSearch.vue'
 import type { TextAttachmentUpload } from './text_attachment_upload_client'
@@ -30,30 +29,23 @@ watch(() => props.channelId, (channelId) => {
 }, { immediate: true })
 
 async function send(): Promise<void> {
-  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id, attachments.value)) {
-    draft.value = ''
-    replyTarget.value = null
-    attachmentClearToken.value += 1
-  }
+  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id, attachments.value, session.value?.accountId)) clearComposer()
+}
+
+async function retry(message: TextMessage): Promise<void> {
+  if (!await store.retry(message.clientMessageId)) return
+  const sameAttachments = attachments.value.map(({ id }) => id).join(',') === message.attachments.map(({ id }) => id).join(',')
+  if (draft.value === message.body && replyTarget.value?.id === message.replyToId && sameAttachments) clearComposer()
+}
+
+function clearComposer(): void {
+  draft.value = ''
+  replyTarget.value = null
+  attachmentClearToken.value += 1
 }
 
 async function loadSession(): Promise<void> {
   try { session.value = await loadCurrentSession() } catch { session.value = null }
-}
-
-async function edit(message: TextMessage, body: string): Promise<void> {
-  await store.edit(message.id, body, message.revision)
-}
-
-async function remove(message: TextMessage): Promise<void> {
-  await store.remove(message.id)
-}
-
-function replyPreview(message: TextMessage): string | undefined {
-  if (!message.replyToId) return undefined
-  const target = store.messages.find((candidate) => candidate.id === message.replyToId)
-  if (!target) return 'Исходное сообщение недоступно'
-  return target.deleted ? 'Сообщение удалено' : `${target.authorId}: ${target.body.slice(0, 140)}`
 }
 
 function addEmoji(emoji: string): void {
@@ -72,21 +64,8 @@ function addEmoji(emoji: string): void {
     </header>
     <div v-if="searchOpen" class="conversation-tools"><TextMessageSearch :channel-id="props.channelId" /></div>
     <p v-if="store.loading" class="state" aria-live="polite">Загружаем историю…</p>
-    <p v-if="store.error" class="state state-error" role="alert">{{ store.error }}</p>
-    <ol v-if="!store.loading" class="messages message-list" aria-label="История сообщений">
-      <li v-for="message in store.messages" :key="message.id">
-        <MessageItem
-          :message="message"
-          :reply-preview="replyPreview(message)"
-          :can-edit="session?.accountId === message.authorId"
-          :can-delete="session?.accountId === message.authorId || session?.role === 'ADMINISTRATOR'"
-          @edit="edit(message, $event)"
-          @remove="remove(message)"
-          @reply="replyTarget = message"
-        />
-      </li>
-      <li v-if="!store.messages.length" class="state">Сообщений пока нет.</li>
-    </ol>
+    <p v-if="store.error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refresh()">Повторить загрузку</button></p>
+    <TextHistoryList :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @retry="retry" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ replyTarget.authorId }} <button type="button" @click="replyTarget = null">Отмена</button></p>

@@ -9,12 +9,11 @@ function source(relativePath: string): string {
 describe('disconnected voice-room presentation', () => {
   it('uses a centered branded join state and explains when live participants appear', () => {
     const pane = source('../conversation/ConversationPane.vue')
+    const prejoin = source('./VoicePrejoin.vue')
     const styles = source('../design/voice.css')
 
-    expect(pane).toContain('class="voice-prejoin"')
-    expect(pane).toContain('voice-prejoin-title')
-    expect(pane).toContain('Подключитесь, чтобы увидеть участников комнаты и статусы микрофонов.')
-    expect(pane).toContain('Подключиться к голосу')
+    expect(pane).toContain('<VoicePrejoin')
+    for (const text of ['voice-prejoin-title', 'Подключиться к голосу', 'Подключиться без микрофона', 'Перенести подключение', 'voiceError', "voiceState === 'JOINING'"]) expect(prejoin).toContain(text)
     expect(styles).toContain('.voice-prejoin {')
     expect(styles).toContain('.voice-prejoin-card {')
   })

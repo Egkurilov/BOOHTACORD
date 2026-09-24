@@ -20,12 +20,23 @@ describe('voice-room visual status and screen presentation', () => {
   it('presents the local participant like the reference card, with speaking and self label', () => {
     const participants = source('./VoiceParticipantVolumes.vue')
     expect(participants).toContain(':speaking="selfSpeaking"')
-    expect(participants).toContain('talking: selfSpeaking && !selfMicrophoneMuted && !selfMicrophoneUnavailable')
+    expect(participants).toContain('talking: selfSpeaking && !selfDeafened && !selfMicrophoneMuted && !selfMicrophoneUnavailable')
     expect(participants).toContain('`${name} · вы`')
     expect(participants).not.toContain('Это вы')
     expect(source('./connection_store.ts')).toContain('selfSpeaking: volume.selfSpeaking')
     expect(source('../workspace/WorkspaceMain.vue')).toContain(':self-speaking="voiceConnection.selfSpeaking"')
     expect(source('../conversation/ConversationPane.vue')).toContain(':self-speaking="selfSpeaking"')
+  })
+
+  it('shows the local deafened state distinctly from microphone mute', () => {
+    const status = source('./VoiceParticipantStatus.vue')
+    const cards = source('./VoiceParticipantVolumes.vue')
+    expect(status).toContain('deafened')
+    expect(status).toContain('Звук и микрофон выключены')
+    expect(status).toContain('is-deafened')
+    expect(cards).toContain(':deafened="selfDeafened"')
+    expect(source('../workspace/WorkspaceMain.vue')).toContain(':self-deafened="voiceConnection.deafened"')
+    expect(source('../conversation/ConversationPane.vue')).toContain(':self-deafened="selfDeafened"')
   })
 
   it('keeps voice connected and provides a direct return to the participant room', () => {

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
-import MessageItem from '../conversation/MessageItem.vue'
 import { loadCurrentSession, type CurrentSession } from '../identity/current_session'
+import DirectMessageHistoryList from './DirectMessageHistoryList.vue'
 import DirectMessageSearch from './DirectMessageSearch.vue'
 import type { DirectMessageHistoryItem } from './direct_message_client'
 import { advanceReadIfVisible } from './direct_message_read_gate'
@@ -18,12 +18,6 @@ const replyTarget = ref<DirectMessageHistoryItem | null>(null)
 const searchOpen = ref(false)
 const emojiOpen = ref(false)
 const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
-
-function replyPreview(message: DirectMessageHistoryItem): string | undefined {
-  const preview = message.replyPreview
-  if (!preview) return undefined
-  return preview.deleted ? 'Сообщение удалено' : `${preview.authorId}: ${preview.body.slice(0, 140)}`
-}
 
 async function markVisibleRead(): Promise<void> {
   try {
@@ -52,14 +46,6 @@ async function loadSession(): Promise<void> {
   try { session.value = await loadCurrentSession() } catch { session.value = null }
 }
 
-async function edit(message: DirectMessageHistoryItem, body: string): Promise<void> {
-  await store.edit(message.id, body, message.revision)
-}
-
-async function remove(message: DirectMessageHistoryItem): Promise<void> {
-  await store.remove(message.id)
-}
-
 function addEmoji(emoji: string): void { draft.value += emoji }
 
 watch([() => props.directMessageId, () => store.directMessageId, () => store.messages], queueVisibleRead, { flush: 'post' })
@@ -83,21 +69,8 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisi
     </header>
     <div v-if="searchOpen" class="conversation-tools"><DirectMessageSearch :direct-message-id="props.directMessageId" /></div>
     <p v-if="store.loadingHistory" class="state" aria-live="polite">Загружаем историю…</p>
-    <p v-if="store.error" class="state state-error" role="alert">{{ store.error }}</p>
-    <ol v-if="!store.loadingHistory" class="messages message-list" aria-label="История личного диалога">
-      <li v-for="message in store.messages" :key="message.id">
-        <MessageItem
-          :message="message"
-          :reply-preview="replyPreview(message)"
-          :can-edit="session?.accountId === message.authorId"
-          :can-delete="session?.accountId === message.authorId"
-          @edit="edit(message, $event)"
-          @remove="remove(message)"
-          @reply="replyTarget = message"
-        />
-      </li>
-      <li v-if="!store.messages.length" class="state">Сообщений пока нет.</li>
-    </ol>
+    <p v-if="store.error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refreshHistory()">Повторить загрузку</button></p>
+    <DirectMessageHistoryList :direct-message-id="props.directMessageId" :session="session" @reply="replyTarget = $event" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ replyTarget.authorId }} <button type="button" @click="replyTarget = null">Отмена</button></p>

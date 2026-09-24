@@ -23,15 +23,30 @@ describe('GuildChat reference fidelity', () => {
     expect(shell).not.toContain('208px')
   })
 
-  it('gives voice rooms the full content width and keeps their participant panel on demand', () => {
-    const shell = source('./responsive_shell.css')
+  it('retains the member panel data source and uses drawers for voice and narrow desktop', () => {
+    const shell = source('./shell.css') + source('./responsive_shell.css')
     const app = source('../workspace/WorkspaceApp.vue')
     const actions = source('../workspace/WorkspaceHeaderActions.vue')
-    expect(app).toContain("'voice-room-active': !selectedDirectMessage && activePanel === 'none' && selectedChannel?.kind === 'VOICE'")
-    expect(app).toContain("selectedChannel?.kind !== 'VOICE' || membersOpen")
-    expect(shell).toContain('.gc-shell.voice-room-active')
-    expect(shell).toContain('.gc-shell.voice-members-open .drawer-scrim')
+    expect(app).toContain('<WorkspaceMembersPanel v-if="!selectedDirectMessage && activePanel === \'none\'"')
+    expect(app).not.toContain("selectedChannel?.kind !== 'VOICE' || membersOpen")
+    expect(shell).toContain('grid-template-columns: var(--gc-layout-nav-wide) minmax(0, 1fr) var(--gc-layout-aside-wide)')
+    expect(shell).toContain('grid-template-columns: var(--gc-layout-nav-medium) minmax(0, 1fr) var(--gc-layout-aside-medium)')
+    expect(shell).toContain('@media (min-width: 1024px) and (max-width: 1279px)')
+    expect(shell).toContain('.members.is-open, .search-aside.is-open { display: block; }')
+    expect(shell).not.toContain('.gc-shell.voice-room-active')
+    expect(shell).not.toContain('.gc-shell.voice-members-open')
     expect(actions).toContain('aria-label="Открыть участников"')
+  })
+
+  it('gives voice and stream screens the wide PNG stage with an accessible member drawer', () => {
+    const app = source('../workspace/WorkspaceApp.vue')
+    const shell = source('./responsive_shell.css')
+    expect(app).toContain("selectedChannel.value?.kind === 'VOICE'")
+    expect(app).toContain("'voice-stage-wide': voiceStageWide")
+    expect(app).toContain('voiceStageWide || selectedDirectMessage')
+    expect(shell).toContain('.gc-shell.voice-stage-wide .members.is-open')
+    expect(shell).toContain('.gc-shell.voice-stage-wide .workspace-header-toggle--members')
+    expect(shell).toContain('.gc-shell.voice-stage-wide .drawer-scrim')
   })
 
   it('keeps a visible mobile dock and accessible controls for opening both drawers', () => {
@@ -43,6 +58,15 @@ describe('GuildChat reference fidelity', () => {
     expect(actions).toContain('aria-label="Открыть участников"')
     expect(app).toContain('drawer-scrim')
     expect(app).toContain('toggleMembers')
+  })
+
+  it('does not expose the navigation drawer button while desktop navigation is visible', () => {
+    const responsive = source('./responsive_shell.css')
+    const conversation = source('./conversation.css')
+    expect(responsive).toContain('.workspace-header-toggle { display: none; }')
+    expect(conversation).not.toContain('.header-action { display: grid;')
+    expect(conversation).toContain('.header-action:not(.workspace-header-toggle) { display: grid; }')
+    expect(responsive).toContain('.workspace-header-toggle--nav, .workspace-header-toggle--members { display: grid; }')
   })
 
   it('shows truthful guild presence groups and only confirmed voice-room participants', () => {
@@ -64,11 +88,14 @@ describe('GuildChat reference fidelity', () => {
   it('keeps C-29 participant cards readable and status-visible', () => {
     const cards = source('../voice/VoiceParticipantVolumes.vue')
     const voice = source('./voice.css')
+    const cardRule = voice.match(/\.participant-grid \.participant \{([^}]+)\}/)?.[1] ?? ''
     expect(cards).toContain('participant-grid')
     expect(cards).toContain('voice-participant-self')
     expect(cards).toContain('<VoiceParticipantStatus')
-    expect(voice).toContain('min-height: 144px')
+    expect(cardRule).toContain('min-height: 176px')
+    expect(cardRule).toContain('padding: var(--gc-space-5) var(--gc-space-3) var(--gc-space-3)')
     expect(voice).toContain('minmax(160px, 1fr)')
+    expect(voice).not.toContain('minmax(144px, 1fr)')
     expect(voice).toContain('overflow: auto')
   })
 

@@ -77,8 +77,8 @@
   --gc-size-control-sm: 32px;
   --gc-size-control: 40px;
   --gc-size-control-lg: 48px;
-  --gc-layout-nav-wide: 312px;
-  --gc-layout-aside-wide: 312px;
+  --gc-layout-nav-wide: 280px;
+  --gc-layout-aside-wide: 248px;
   --gc-layout-nav-medium: 264px;
   --gc-layout-aside-medium: 240px;
   --gc-layout-nav-small: 256px;
@@ -88,7 +88,7 @@
   --gc-layout-row-channel: 42px;
   --gc-layout-user-footer: 68px;
   --gc-layout-voice-dock: 116px;
-  --gc-layout-frame-wide: 24px;
+  --gc-layout-frame-wide: 0px;
   --gc-layout-frame-medium: 16px;
   --gc-duration-fast: 120ms;
   --gc-duration-base: 180ms;

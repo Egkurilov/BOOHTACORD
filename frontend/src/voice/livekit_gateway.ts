@@ -61,11 +61,14 @@ export interface JoinedVoiceRoom {
   room: VoiceRoom
 }
 
+export type VoiceJoinMode = 'with-microphone' | 'listener'
+
 export async function connectLiveKitRoom(
   credential: LiveKitCredential,
   makeRoom: VoiceRoomFactory = defaultLiveKitRoomFactory,
   processing?: AudioProcessingOptions,
   timeoutMs = mediaConnectionTimeoutMs,
+  joinMode: VoiceJoinMode = 'with-microphone',
 ): Promise<JoinedVoiceRoom> {
   const room = await makeRoom()
   try {
@@ -74,6 +77,8 @@ export async function connectLiveKitRoom(
     await room.disconnect()
     throw cause
   }
+
+  if (joinMode === 'listener') return { room, microphone: 'MUTED' }
 
   try {
     return { room, microphone: await awaitMediaConnection(setMicrophone(room, true, processing), timeoutMs) }
@@ -86,6 +91,7 @@ export async function connectLiveKitRoom(
 export async function connectLiveKitRoomWithProcessing(
   credential: LiveKitCredential,
   processing?: AudioProcessingOptions,
+  joinMode: VoiceJoinMode = 'with-microphone',
 ): Promise<JoinedVoiceRoom> {
-  return connectLiveKitRoom(credential, defaultLiveKitRoomFactory, processing)
+  return connectLiveKitRoom(credential, defaultLiveKitRoomFactory, processing, undefined, joinMode)
 }

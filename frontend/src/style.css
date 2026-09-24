@@ -5,6 +5,7 @@
 @import './design/responsive_shell.css';
 @import './design/navigation.css';
 @import './design/voice.css';
+@import './design/voice_room_footer.css';
 @import './design/voice_participant_screens.css';
 @import './design/voice_viewer_reference.css';
 @import './design/conversation.css';

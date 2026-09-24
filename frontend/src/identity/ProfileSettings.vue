@@ -2,8 +2,8 @@
 import { ref, watch } from 'vue'
 import { changeOwnPassword, deleteAvatar, loadOwnProfile, saveOwnProfile, uploadAvatar, type OwnProfile } from './profile_client'
 
-const props = defineProps<{ profile: OwnProfile | null; loading: boolean; loadError: string | null }>()
-const emit = defineEmits<{ saved: [profile: OwnProfile] }>()
+const props = defineProps<{ profile: OwnProfile | null; loading: boolean; loadError: string | null; logoutBusy?: boolean; logoutError?: string | null }>()
+const emit = defineEmits<{ saved: [profile: OwnProfile]; logout: [] }>()
 const displayName = ref(''); const currentPassword = ref(''); const newPassword = ref('')
 const busy = ref(false); const error = ref<string | null>(null); const status = ref<string | null>(null)
 watch(() => props.profile, (profile) => { displayName.value = profile?.display_name ?? '' }, { immediate: true })
@@ -57,5 +57,11 @@ async function changePassword(): Promise<void> {
     </template>
     <p v-if="status" class="profile-status" aria-live="polite">{{ status }}</p>
     <p v-if="error" class="profile-error" role="alert">{{ error }}</p>
+    <section class="profile-logout" aria-labelledby="profile-logout-title">
+      <h2 id="profile-logout-title">Выход из аккаунта</h2>
+      <p>Голосовое подключение завершится, а личные данные исчезнут с этого экрана.</p>
+      <button class="profile-secondary-button" type="button" :disabled="busy || props.logoutBusy" @click="emit('logout')">{{ props.logoutBusy ? 'Выходим…' : 'Выйти из аккаунта' }}</button>
+      <p v-if="props.logoutError" class="profile-error" role="alert">{{ props.logoutError }}</p>
+    </section>
   </section>
 </template>

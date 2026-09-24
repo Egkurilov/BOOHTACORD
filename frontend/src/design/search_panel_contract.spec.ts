@@ -13,7 +13,7 @@ describe('GuildChat unified search design contract', () => {
   it('places SearchPanel in the existing right area or drawer', () => {
     expect(workspace).toContain('data-testid="search-aside-panel"')
     expect(workspace).toContain(":panel=\"activePanel === 'search' ? 'none' : activePanel\"")
-    expect(workspace).toContain('activePanel !== \'search\' && (selectedDirectMessage || activePanel !== \'none\')')
+    expect(workspace).toContain('activePanel !== \'search\' && (voiceStageWide || selectedDirectMessage || activePanel !== \'none\')')
     expect(workspaceMain).toContain('<ConversationPane')
     expect(workspaceMain).not.toContain('slot name="search"')
     expect(workspace).toContain('<SearchLauncher')

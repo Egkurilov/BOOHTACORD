@@ -5,8 +5,8 @@
 | Пакет | Подтверждённая реализация | Остаточная граница |
 | --- | --- | --- |
 | BE-01 | Named-conflict recovery конкурентного TEXT send; migration-backed PostgreSQL race | Клиентский retry остаётся отдельной FE-задачей для DM |
-| BE-02 | Адресные DM create/edit/delete hints двум участникам, повторная session-проверка | FE-07 ещё должен применить события |
-| BE-03 | `channel.updated` после успешной topology-транзакции | FE-07 должен обновить topology второго клиента |
+| BE-02 | Адресные DM create/edit/delete hints двум участникам, повторная session-проверка | FE-07 применяет hints; browser E2E остаётся QA-05 |
+| BE-03 | `channel.updated` после успешной topology-транзакции | FE-07 обновляет topology; browser E2E остаётся QA-05 |
 | BE-04 | Durable voice notification outbox с lease ID и reason, отдельно от SFU removal | Реальное connected-media поведение — QA-10 |
 | BE-05 | Admin rename channel с revision guard и audit | UI переименования — FE-11 |
 | BE-06 | Finalization worker проверяет outbox, lease и точную пустую LiveKit room | LiveKit POC-03 — QA-10 |

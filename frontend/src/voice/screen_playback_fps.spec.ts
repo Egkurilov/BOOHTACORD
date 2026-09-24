@@ -1,0 +1,70 @@
+import { readFileSync } from 'node:fs'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+import { observeScreenPlaybackFps } from './screen_playback_fps'
+
+function videoFrames() {
+  let callback: VideoFrameRequestCallback | undefined
+  const cancel = vi.fn()
+  const video = {
+    cancelVideoFrameCallback: cancel,
+    requestVideoFrameCallback: vi.fn((next: VideoFrameRequestCallback) => { callback = next; return 7 }),
+  } as unknown as HTMLVideoElement
+  return { cancel, emitFrame: () => callback?.(0, {} as VideoFrameCallbackMetadata), video }
+}
+
+afterEach(() => vi.useRealTimers())
+
+describe('viewer screen playback FPS', () => {
+  it('binds observation to the selected stream and releases it on unmount', () => {
+    const viewer = readFileSync(new URL('./ScreenViewer.vue', import.meta.url), 'utf8')
+    const binding = readFileSync(new URL('./screen_playback_quality.ts', import.meta.url), 'utf8')
+    expect(viewer).toContain('useScreenPlaybackQuality(video, () => props.selectedId, () => props.ended)')
+    expect(binding).toContain('watch([video, selectedId, ended], restartPlaybackObservation')
+    expect(binding).toContain('stopObservingPlayback?.()')
+    expect(binding).toContain('playbackFps.value = null')
+    expect(binding).toContain('formatScreenVideoQuality(videoReady.value ? video.value : null, playbackFps.value)')
+  })
+
+  it('keeps no-data until the first presented frame, instead of reporting a false zero', () => {
+    vi.useFakeTimers()
+    const frames = videoFrames()
+    const samples: Array<number | null> = []
+    const stop = observeScreenPlaybackFps(frames.video, (fps) => samples.push(fps))
+
+    vi.advanceTimersByTime(2000)
+    expect(samples).toEqual([null])
+    frames.emitFrame()
+    vi.advanceTimersByTime(2000)
+    expect(samples).toEqual([null, 0.5])
+    stop()
+  })
+
+  it('reports observed frames per second over a timed window, including a frozen stream', () => {
+    vi.useFakeTimers()
+    const frames = videoFrames()
+    const samples: Array<number | null> = []
+    const stop = observeScreenPlaybackFps(frames.video, (fps) => samples.push(fps))
+
+    frames.emitFrame()
+    frames.emitFrame()
+    vi.advanceTimersByTime(2000)
+    expect(samples).toEqual([1])
+
+    vi.advanceTimersByTime(2000)
+    expect(samples).toEqual([1, 0])
+    stop()
+    expect(frames.cancel).toHaveBeenCalledWith(7)
+    frames.emitFrame()
+    stop()
+    expect(frames.cancel).toHaveBeenCalledTimes(1)
+    vi.advanceTimersByTime(2000)
+    expect(samples).toEqual([1, 0])
+  })
+
+  it('does not claim a frame rate when the browser cannot report presented frames', () => {
+    const samples: Array<number | null> = []
+    observeScreenPlaybackFps({} as HTMLVideoElement, (fps) => samples.push(fps))()
+    expect(samples).toEqual([null])
+  })
+})

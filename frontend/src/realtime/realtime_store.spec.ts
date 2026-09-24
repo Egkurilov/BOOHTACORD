@@ -57,6 +57,52 @@ describe('realtime store', () => {
     expect(store.state).toBe('CONNECTING')
   })
 
+  it('dispatches message-deleted hints with only channel and message IDs', () => {
+    const socket: RealtimeSocket = { close: vi.fn(), onclose: null, onerror: null, onmessage: null, onopen: null }
+    const onEvent = vi.fn()
+    const store = useRealtimeStore()
+    store.connect(onEvent, () => socket, 'ws://voice.example.test/api/v1/realtime')
+    socket.onmessage?.(new MessageEvent('message', { data: JSON.stringify({ event_id: '66666666-6666-4666-8666-666666666666', kind: 'message.deleted', occurred_at: '2026-09-17T12:00:00Z', payload: { channel_id: '11111111-1111-4111-8111-111111111111', message_id: '22222222-2222-4222-8222-222222222222' } }) }))
+
+    expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ kind: 'message.deleted' }))
+    expect(store.state).toBe('CONNECTING')
+  })
+
+  it('dispatches message-updated hints with only channel and message IDs', () => {
+    const socket: RealtimeSocket = { close: vi.fn(), onclose: null, onerror: null, onmessage: null, onopen: null }
+    const onEvent = vi.fn()
+    const store = useRealtimeStore()
+    store.connect(onEvent, () => socket, 'ws://voice.example.test/api/v1/realtime')
+    socket.onmessage?.(new MessageEvent('message', { data: JSON.stringify({ event_id: '88888888-8888-4888-8888-888888888888', kind: 'message.updated', occurred_at: '2026-09-17T12:00:00Z', payload: { channel_id: '11111111-1111-4111-8111-111111111111', message_id: '22222222-2222-4222-8222-222222222222' } }) }))
+
+    expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ kind: 'message.updated' }))
+    expect(store.state).toBe('CONNECTING')
+  })
+
+  it('rejects message-updated hints missing IDs or containing message content', () => {
+    for (const payload of [{ channel_id: '11111111-1111-4111-8111-111111111111' }, { channel_id: '11111111-1111-4111-8111-111111111111', message_id: '22222222-2222-4222-8222-222222222222', body: 'private' }]) {
+      const socket: RealtimeSocket = { close: vi.fn(), onclose: null, onerror: null, onmessage: null, onopen: null }
+      const onEvent = vi.fn()
+      const store = useRealtimeStore()
+      store.connect(onEvent, () => socket, 'ws://voice.example.test/api/v1/realtime')
+      socket.onmessage?.(new MessageEvent('message', { data: JSON.stringify({ event_id: '99999999-9999-4999-8999-999999999999', kind: 'message.updated', occurred_at: '2026-09-17T12:00:00Z', payload }) }))
+      expect(store.state).toBe('ERROR')
+      expect(onEvent).not.toHaveBeenCalled()
+    }
+  })
+
+  it('rejects message-deleted hints missing IDs or containing message content', () => {
+    for (const payload of [{ channel_id: '11111111-1111-4111-8111-111111111111' }, { channel_id: '11111111-1111-4111-8111-111111111111', message_id: '22222222-2222-4222-8222-222222222222', body: 'private' }]) {
+      const socket: RealtimeSocket = { close: vi.fn(), onclose: null, onerror: null, onmessage: null, onopen: null }
+      const onEvent = vi.fn()
+      const store = useRealtimeStore()
+      store.connect(onEvent, () => socket, 'ws://voice.example.test/api/v1/realtime')
+      socket.onmessage?.(new MessageEvent('message', { data: JSON.stringify({ event_id: '77777777-7777-4777-8777-777777777777', kind: 'message.deleted', occurred_at: '2026-09-17T12:00:00Z', payload }) }))
+      expect(store.state).toBe('ERROR')
+      expect(onEvent).not.toHaveBeenCalled()
+    }
+  })
+
   it('rejects message-created events without both IDs', () => {
     const socket: RealtimeSocket = { close: vi.fn(), onclose: null, onerror: null, onmessage: null, onopen: null }
     const store = useRealtimeStore()

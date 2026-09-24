@@ -2,6 +2,7 @@
 import type { TopologyChannel } from '../channel/topology_client'
 import ConversationPane from '../conversation/ConversationPane.vue'
 import type { DirectMessageListItem } from '../direct_message/direct_message_client'
+import type { VoiceActivationMode } from '../voice/activation_store'
 import { useVoiceConnectionStore } from '../voice/connection_store'
 import type { useWorkspaceVoiceControls } from './voice_controls'
 
@@ -13,6 +14,8 @@ defineProps<{
   channel: TopologyChannel | null
   directMessage: DirectMessageListItem | null
   joinVoice: WorkspaceVoiceControls['joinVoice']
+  leaveVoice: WorkspaceVoiceControls['leaveVoice']
+  activationMode: VoiceActivationMode
   startScreen: WorkspaceVoiceControls['startScreen']
   navOpen: boolean
   membersOpen: boolean
@@ -36,6 +39,7 @@ const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
   <ConversationPane
     v-else
     :channel="channel"
+    :activation-mode="activationMode"
     :direct-message="directMessage"
     :nav-open="navOpen"
     :members-open="membersOpen"
@@ -52,6 +56,7 @@ const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
     :selected-screen-stream-id="voiceConnection.selectedScreenStreamId"
     :self-microphone-muted="voiceConnection.microphoneMuted"
     :self-microphone-unavailable="voiceConnection.microphonePermissionDenied"
+    :self-deafened="voiceConnection.deafened"
     :self-speaking="voiceConnection.selfSpeaking"
     :voice-error="voiceConnection.error"
     :voice-is-active="channel?.id === voiceConnection.active?.channelId"
@@ -61,6 +66,7 @@ const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
     :voice-volume-participants="voiceConnection.voiceVolumeParticipants"
     @clear-screen-stream="voiceConnection.clearScreenStream"
     @join="joinVoice"
+    @leave="leaveVoice"
     @refresh-screen="voiceConnection.refreshScreenDiagnostics"
     @select-screen-stream="voiceConnection.selectScreenStream"
     @set-participant-volume="voiceConnection.setParticipantVolume"

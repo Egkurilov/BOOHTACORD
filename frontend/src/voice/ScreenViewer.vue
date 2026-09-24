@@ -4,7 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { avatarBackground } from '../design/avatar_color'
 import type { ScreenViewerCard } from './screen_viewer_controller'
 import { createScreenFullscreenControls } from './screen_fullscreen_controls'
-import { formatScreenVideoQuality } from './screen_video_quality'
+import { useScreenPlaybackQuality } from './screen_playback_quality'
 import { observeHorizontalOverflow } from './screen_rail_overflow'
 
 const props = defineProps<{ cards: ScreenViewerCard[]; ended: boolean; error: string | null; expanded: boolean; selectedAudioVolume: number; selectedId: string | null }>()
@@ -14,8 +14,7 @@ const audio = ref<HTMLAudioElement | null>(null)
 const stage = ref<HTMLDivElement | null>(null)
 const fullscreenActive = ref(false)
 const fullscreenFeedback = ref('')
-const actualVideoQuality = ref('Определяем качество…')
-const videoReady = ref(false)
+const { actualVideoQuality, markVideoReady, refreshVideoQuality, resetVideoFrame, videoReady } = useScreenPlaybackQuality(video, () => props.selectedId, () => props.ended)
 const rail = ref<HTMLDivElement | null>(null)
 const railHasOverflow = ref(false)
 let stopObservingRail: (() => void) | null = null
@@ -31,11 +30,7 @@ function select(id: string): void {
 }
 function selectStream(id: string): void { select(id) }
 function streamInitial(stream: ScreenViewerCard): string { return Array.from(stream.participantName.trim())[0]?.toLocaleUpperCase('ru-RU') || 'У' }
-function refreshVideoQuality(): void { actualVideoQuality.value = formatScreenVideoQuality(video.value) }
-function markVideoReady(): void { videoReady.value = Boolean(video.value?.videoWidth && video.value?.videoHeight); refreshVideoQuality() }
-function resetVideoFrame(): void { videoReady.value = false; refreshVideoQuality() }
 defineExpose({ selectStream })
-watch(() => props.selectedId, () => { videoReady.value = false; actualVideoQuality.value = 'Определяем качество…' })
 
 function handleKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && props.expanded) emit('update:expanded', false)
@@ -88,7 +83,7 @@ async function toggleFullscreen(): Promise<void> {
     <div v-if="selectedStream" class="stream-quality-row">
       <div class="stream-quality"><span class="stream-target">Цель: не передана источником</span><span class="stream-actual">Сейчас: {{ actualVideoQuality }}</span></div>
       <details class="stream-diagnostics">
-        <summary><span class="stream-diagnostics-badge" aria-hidden="true"></span>Нет свежих данных</summary>
+        <summary title="Нет свежих данных"><span class="stream-diagnostics-badge" aria-hidden="true"></span><span class="gc-sr-only">Нет свежих данных</span></summary>
         <div class="stream-diagnostics-panel"><dl>
           <div><dt>Целевой профиль</dt><dd>Не передан источником</dd></div>
           <div><dt>Текущее разрешение</dt><dd>{{ actualVideoQuality }}</dd></div>
@@ -102,7 +97,6 @@ async function toggleFullscreen(): Promise<void> {
         <input aria-label="Громкость звука выбранной демонстрации" type="range" min="0" max="200" step="1" :value="selectedAudioVolume" @input="emit('setAudioVolume', Number(($event.target as HTMLInputElement).value))">
       </label>
       <p v-else class="stream-audio-status">{{ selectedStream?.isLocal ? 'Предпросмотр собственного экрана без звука.' : selectedStream?.hasAudio ? 'Игровой звук доступен без личной настройки громкости.' : 'У трансляции нет игровой аудиодорожки.' }}</p>
-      <button class="screen-window-toggle gc-button gc-button--secondary" type="button" :aria-pressed="expanded" @click="emit('update:expanded', !expanded)">{{ expanded ? 'Вернуть в окно канала' : 'Развернуть на всю область' }}</button>
     </div>
       <div v-if="cards.length" class="screen-rail-section">
         <h3>Демонстрации в канале</h3>
@@ -115,6 +109,6 @@ async function toggleFullscreen(): Promise<void> {
         </button>
       </div>
     </div>
-    <div v-if="selectedStream || ended" class="stream-voice-return"><div class="stream-voice-return-copy"><p>Голоса участников остаются слышны</p><small>Невыбранные демонстрации не воспроизводятся</small></div><button class="gc-button gc-button--secondary" type="button" @click="emit('clear')">К участникам</button></div>
+    <div v-if="selectedStream || ended" class="stream-voice-return"><div class="stream-voice-return-copy"><p>Голоса участников остаются слышны</p><small>Невыбранные демонстрации не воспроизводятся</small></div><button v-if="selectedStream || expanded" class="screen-window-toggle gc-button gc-button--secondary" type="button" :aria-pressed="expanded" @click="emit('update:expanded', !expanded)">{{ expanded ? 'Вернуть в окно канала' : 'Развернуть на всю область' }}</button><button class="gc-button gc-button--secondary" type="button" @click="emit('clear')">К участникам</button></div>
   </section>
 </template>
