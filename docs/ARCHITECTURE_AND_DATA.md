@@ -8,9 +8,9 @@ The Vue client uses HTTPS REST for commands and a single authenticated WebSocket
 
 ## Isolation and access
 
-There is one logical guild per deployment. `users`, `sessions`, `categories`, `channels`, `conversations`, `conversation_members`, `messages`, `attachments`, `voice_leases`, `password_resets` and `audit_events` all belong to that deployment and have no guild selector. Every command derives the acting user from a current server-side session and checks active/not-banned status plus resource ACL in the same transaction.
+There is one logical guild per deployment. `users`, `sessions`, `categories`, `channels`, `messages`, `direct_messages`, `direct_message_messages`, `direct_message_read_cursors`, `attachments`, `voice_leases`, `password_resets` and `audit_events` belong to it without a guild selector. Every command must derive its actor from a current server-side session and enforce active/not-banned status and resource ACL in its transaction; concurrency acceptance remains separate verification work.
 
-Common channels are available to every active user. A DM conversation has exactly two `conversation_members`; no administrator query path bypasses this membership check. Deleted text-channel data becomes unavailable/archived rather than silently cascaded. A deleted message hides content and attachment links at once; a referenced attachment is physically removed only after a transaction confirms no live reference.
+Common channels are available to every active user. `direct_messages` stores exactly two ordered UUID participants (`participant_one_id`, `participant_two_id`) with a unique-pair constraint; no administrator bypass is permitted. Text-channel archive preserves data. Soft delete hides body/attachment links immediately; physical collection without live references is still pending BE-12 in `backlog/BACKEND_TODO.md`.
 
 ## Critical state machines
 
@@ -22,11 +22,10 @@ Common channels are available to every active user. A DM conversation has exactl
 
 `attachment`: uploading → unattached → attached → hidden → collected. Upload bytes are streamed to a random temporary name after atomic space reservation. Only incomplete uploads older than one hour and unattached items older than 24 hours may be cleaned automatically; published history has no TTL.
 
-The current `write_upload` storage leaf creates a random private `.part` file,
-streams at most 25,000,000 bytes into it, fsyncs the accepted bytes and removes
-the temporary path after a read, write, limit or context failure. Its result is
-not an attachment row, cannot be downloaded and cannot be linked to a message
-until the later reservation, ACL and metadata leaves complete.
+The `write_upload` leaf creates a random private `.part` file, streams at most
+25,000,000 bytes, fsyncs accepted bytes and removes it after read/write/limit/context
+failure. The connected pipeline performs reservation, ACL and metadata finalization
+before a later message can link the attachment.
 
 `reserve_upload_space` is the current in-process admission ledger: before a
 stream starts, it reserves the full 25,000,000-byte maximum against a supplied
@@ -35,21 +34,20 @@ filesystem. Reservations are serialised and released after finalisation or
 cleanup; they do not trust `Content-Length`, evict history or coordinate across
 processes. The Linux `Filesystem` adapter samples the configured private path
 with `statfs`, using `Bavail` rather than `Bfree` so blocks unavailable to the
-API user are not admitted. Passing that production snapshot to the ledger and
-connecting the result to an upload endpoint remain later integration work.
+API user are not admitted. `cmd/api/storage_routes.go` connects this adapter,
+ledger and writer to the TEXT upload endpoint; real storage/DB acceptance remains QA-03.
 
 `stage_upload` now composes the private writer and reservation ledger: it takes
 the maximum reservation before accepting a source, confirms current capacity
 before every source read, deletes a temporary file on a failed confirmation and
 releases the reservation on every result path. The snapshot is still not a
-cross-process lock, and staging does not yet create attachment metadata, grant
+cross-process lock, and the staging leaf itself does not create metadata, grant
 ACL, attach a message or expose an upload route.
 
-The `attachments` schema records a staged object's owner, measured byte count,
-user-visible original filename and random private `storage_key`. A database
-check binds every row to exactly one channel or direct-message target, and a
-state check distinguishes `UNATTACHED`, `ATTACHED` and `HIDDEN`. The row alone
-does not grant conversation access and never supplies a public URL.
+The `attachments` schema records owner, measured byte count, original filename
+and random private `storage_key`. Each row targets exactly one channel or DM;
+states are `UNATTACHED`, `ATTACHED` and `HIDDEN`. A row does not grant access
+and never supplies a public URL.
 
 Before accepting bytes for a text-channel target, `authorize_text_attachment`
 checks in PostgreSQL that the caller remains non-blocked and the target remains
@@ -92,8 +90,8 @@ Only then does the server open the UUID-keyed private object and verify its
 stored byte count. The response is `application/octet-stream` with
 `Content-Disposition: attachment` and `X-Content-Type-Options: nosniff`; it
 does not expose an inline active format, filesystem path, storage key, or
-public URL. DM attachment access, image previews and physical collection are
-separate leaves.
+public URL. A separate protected TEXT preview route already normalizes bounded
+raster images into PNG. DM access and physical collection remain BE-10/12.
 
 Text-message history aggregates only the attached files of each non-deleted
 message, in their stored message position order. Its metadata projection is
