@@ -3,7 +3,7 @@
 Срез: 25.09.2026. Пути относительно корня; source tests не заменяют browser E2E.
 Дизайн — [DES](../docs/design/GUILDCHAT_V1_TODO.md), backend-зависимости — [BE](BACKEND_TODO.md).
 
-- [ ] **FE-15 · P1 · T-040 — Unread/mentions.** TEXT/DM caller-local unread и mention badges, а также read cursor только после показа активной видимой беседы реализованы. Осталось: mention picker по стабильному user ID для TEXT/DM, передача IDs при send/edit и проверка rename. Готово: background tab/другая беседа не списывает счётчик, rename не ломает mention. Зависимости: BE-07/08, DES-02.
+- [ ] **FE-15 · P1 · T-040 — Unread/mentions.** TEXT/DM caller-local unread и mention badges, а также read cursor только после показа активной видимой беседы реализованы. TEXT picker выбирает стабильные user ID, сохраняет их при retry/edit и показывает актуальные имена. Осталось: DM picker, ID в DM send/retry/edit и проверка rename для обоих потоков. Готово: background tab/другая беседа не списывает счётчик, rename не ломает mention. Зависимости: BE-07/08, DES-02.
 
 - [ ] **FE-16 · P1 · T-040/041 — Уведомления.** Явный permission request, title badge и безопасный текст без DM body; отказ/отключение/нет API. Готово: privacy/dedup в двух вкладках; без background push при закрытом браузере. Зависимости: BE-02/08, FE-07/15, DES-07.
 

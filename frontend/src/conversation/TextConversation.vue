@@ -8,6 +8,7 @@ import { useMessageStore } from './message_store'
 import TextHistoryList from './TextHistoryList.vue'
 import TextMessageAttachmentPicker from './TextMessageAttachmentPicker.vue'
 import TextMessageSearch from './TextMessageSearch.vue'
+import MentionPicker from './MentionPicker.vue'
 import type { TextAttachmentUpload } from './text_attachment_upload_client'
 import { advanceTextReadIfVisible, newestServerTextMessageId } from './text_read_gate'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
@@ -21,6 +22,7 @@ const draft = ref('')
 const session = ref<CurrentSession | null>(null)
 const replyTarget = ref<TextMessage | null>(null)
 const attachments = ref<TextAttachmentUpload[]>([])
+const mentionUserIds = ref<string[]>([])
 const attachmentPending = ref(false)
 const attachmentClearToken = ref(0)
 const searchOpen = ref(false)
@@ -47,6 +49,7 @@ function queueVisibleRead(): void { void markVisibleRead() }
 
 watch(() => props.channelId, (channelId) => {
   attachments.value = []
+  mentionUserIds.value = []
   lastReadKey = ''
   void store.open(channelId)
   void loadSession()
@@ -56,18 +59,19 @@ onMounted(() => { document.addEventListener('visibilitychange', queueVisibleRead
 onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisibleRead))
 
 async function send(): Promise<void> {
-  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id, attachments.value, session.value?.accountId)) clearComposer()
+  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id, attachments.value, session.value?.accountId, mentionUserIds.value)) clearComposer()
 }
 
 async function retry(message: TextMessage): Promise<void> {
   if (!await store.retry(message.clientMessageId)) return
   const sameAttachments = attachments.value.map(({ id }) => id).join(',') === message.attachments.map(({ id }) => id).join(',')
-  if (draft.value === message.body && replyTarget.value?.id === message.replyToId && sameAttachments) clearComposer()
+  if (draft.value === message.body && replyTarget.value?.id === message.replyToId && sameAttachments && mentionUserIds.value.join(',') === message.mentionUserIds.join(',')) clearComposer()
 }
 
 function clearComposer(): void {
   draft.value = ''
   replyTarget.value = null
+  mentionUserIds.value = []
   attachmentClearToken.value += 1
 }
 
@@ -75,9 +79,7 @@ async function loadSession(): Promise<void> {
   try { session.value = await loadCurrentSession() } catch { session.value = null }
 }
 
-function addEmoji(emoji: string): void {
-  draft.value += emoji
-}
+function addEmoji(emoji: string): void { draft.value += emoji }
 </script>
 
 <template>
@@ -96,6 +98,7 @@ function addEmoji(emoji: string): void {
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
+        <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" />
         <TextMessageAttachmentPicker
           :channel-id="props.channelId"
           :disabled="store.sending || attachmentPending"

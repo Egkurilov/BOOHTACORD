@@ -4,7 +4,7 @@ import { createTextMessage, deleteTextMessage, editTextMessage, loadMessagePage 
 
 const body = {
   id: 'message-1', channel_id: 'text-1', author_id: 'user-1', client_message_id: 'client-1', body: 'Привет', revision: 1, created_at: '2026-09-17T12:00:00Z', deleted: false,
-  attachments: [{ id: 'attachment-1', original_name: 'notes.svg', byte_size: 10 }],
+  attachments: [{ id: 'attachment-1', original_name: 'notes.svg', byte_size: 10 }], mention_user_ids: [],
 }
 
 describe('message client', () => {
@@ -34,5 +34,15 @@ describe('message client', () => {
     expect(request).toHaveBeenNthCalledWith(1, '/api/v1/channels/text-1/messages', expect.objectContaining({ body: '{"client_message_id":"client-1","body":"Привет","reply_to_id":"message-0","attachment_ids":["attachment-1"]}' }))
     expect(request).toHaveBeenNthCalledWith(2, '/api/v1/channels/text-1/messages/message-1', expect.objectContaining({ method: 'PATCH', body: '{"body":"Исправлено","expected_revision":1}' }))
     expect(request).toHaveBeenNthCalledWith(3, '/api/v1/channels/text-1/messages/message-1', expect.objectContaining({ method: 'DELETE' }))
+  })
+
+  it('sends stable mention user IDs independent of the display name and preserves them on edit', async () => {
+    const mentioned = { ...body, mention_user_ids: ['user-2'] }
+    const request = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(mentioned)))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ...mentioned, revision: 2, edited_at: '2026-09-17T12:01:00Z' })))
+    await expect(createTextMessage('text-1', 'client-1', 'Привет', request, undefined, [], ['user-2'])).resolves.toMatchObject({ mentionUserIds: ['user-2'] })
+    await expect(editTextMessage('text-1', 'message-1', 'Новое имя в тексте', 1, request, ['user-2'])).resolves.toMatchObject({ mentionUserIds: ['user-2'] })
+    expect(JSON.parse(String(request.mock.calls[0][1].body)).mention_user_ids).toEqual(['user-2'])
+    expect(JSON.parse(String(request.mock.calls[1][1].body)).mention_user_ids).toEqual(['user-2'])
   })
 })

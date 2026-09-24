@@ -6,7 +6,7 @@ import { useAuthorDirectory } from '../identity/author_directory'
 import MessageBody from './MessageBody.vue'
 import TextMessageAttachments from './TextMessageAttachments.vue'
 
-type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments'> & { channelId?: string; attachments?: TextMessageAttachment[] }
+type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments' | 'mentionUserIds'> & { channelId?: string; attachments?: TextMessageAttachment[]; mentionUserIds?: string[] }
 
 const props = defineProps<{ message: RenderedMessage; replyPreview?: string; canEdit: boolean; canDelete: boolean; retryDisabled?: boolean }>()
 const emit = defineEmits<{ edit: [body: string]; remove: []; reply: []; retry: [] }>()
@@ -19,6 +19,7 @@ const authorName = computed(() => authors.displayName(props.message.authorId))
 const authorAvatar = computed(() => authors.avatarUrl(props.message.authorId))
 const avatarFailed = ref(false)
 watch(() => props.message.authorId, (id) => { void authors.ensure(id) }, { immediate: true })
+watch(() => props.message.mentionUserIds, (ids) => { for (const id of ids ?? []) void authors.ensure(id) }, { immediate: true })
 watch(authorAvatar, () => { avatarFailed.value = false })
 
 function beginEdit(): void {
@@ -60,6 +61,7 @@ function initial(name: string): string {
       <template v-else>
         <p v-if="replyPreview" class="reply-preview">↪ {{ replyPreview }}</p>
         <MessageBody :body="message.body" />
+        <p v-if="message.mentionUserIds?.length" class="message-mentions">Упомянуты: <span v-for="id in message.mentionUserIds" :key="id">@{{ authors.displayName(id) }} </span></p>
         <TextMessageAttachments v-if="textChannelId && textAttachments.length" :channel-id="textChannelId" :attachments="textAttachments" />
         <p v-if="message.sendStatus === 'sending'" class="message-send-status" role="status">Отправляется…</p>
         <div v-if="message.sendStatus === 'failed'" class="message-send-status" role="alert"><span>Не отправлено</span><button type="button" :disabled="retryDisabled" @click="emit('retry')">Повторить отправку</button></div>

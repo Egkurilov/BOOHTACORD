@@ -1,4 +1,5 @@
 import { apiBaseUrl } from '../config/runtime'
+import { parseMentionIds } from './mention_ids'
 
 export interface TextMessageAttachment {
   id: string
@@ -18,6 +19,7 @@ export interface TextMessage {
   editedAt?: string
   deleted: boolean
   attachments: TextMessageAttachment[]
+  mentionUserIds: string[]
   sendStatus?: 'sending' | 'failed'
 }
 
@@ -70,7 +72,7 @@ function message(value: unknown, requireAttachments = false): TextMessage {
   }
   const replyToId = text(source.reply_to_id) ?? undefined
   const editedAt = text(source.edited_at) ?? undefined
-  return { id, channelId, authorId, clientMessageId, body, replyToId, revision: source.revision as number, createdAt, editedAt, deleted: source.deleted === true, attachments: attachments(source.attachments, requireAttachments) }
+  return { id, channelId, authorId, clientMessageId, body, replyToId, revision: source.revision as number, createdAt, editedAt, deleted: source.deleted === true, attachments: attachments(source.attachments, requireAttachments), mentionUserIds: parseMentionIds(source.mention_user_ids) }
 }
 
 async function checked(response: Response): Promise<unknown> {
@@ -93,18 +95,19 @@ export async function loadMessagePage(channelId: string, before: string | undefi
   return { messages: source.messages.map((value) => message(value, true)), nextCursor }
 }
 
-export async function createTextMessage(channelId: string, clientMessageId: string, body: string, request: MessageRequest = fetch, replyToId?: string, attachmentIds: string[] = []): Promise<TextMessage> {
+export async function createTextMessage(channelId: string, clientMessageId: string, body: string, request: MessageRequest = fetch, replyToId?: string, attachmentIds: string[] = [], mentionUserIds: string[] = []): Promise<TextMessage> {
   const response = await request(`${apiBaseUrl}/channels/${encodeURIComponent(channelId)}/messages`, requestInit('POST', {
     client_message_id: clientMessageId,
     body,
     ...(replyToId ? { reply_to_id: replyToId } : {}),
     ...(attachmentIds.length ? { attachment_ids: attachmentIds } : {}),
+    ...(mentionUserIds.length ? { mention_user_ids: mentionUserIds } : {}),
   }))
   return message(await checked(response))
 }
 
-export async function editTextMessage(channelId: string, messageId: string, body: string, expectedRevision: number, request: MessageRequest = fetch): Promise<TextMessage> {
-  const response = await request(`${apiBaseUrl}/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}`, requestInit('PATCH', { body, expected_revision: expectedRevision }))
+export async function editTextMessage(channelId: string, messageId: string, body: string, expectedRevision: number, request: MessageRequest = fetch, mentionUserIds: string[] = []): Promise<TextMessage> {
+  const response = await request(`${apiBaseUrl}/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}`, requestInit('PATCH', { body, expected_revision: expectedRevision, ...(mentionUserIds.length ? { mention_user_ids: mentionUserIds } : {}) }))
   return message(await checked(response))
 }
 

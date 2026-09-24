@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { useMessageStore } from './message_store'
 
 function message(id: number, channelId = 'text-1') {
-  return { id: `message-${id}`, channel_id: channelId, author_id: 'user-1', client_message_id: `client-${id}`, body: `Текст ${id}`, revision: 1, created_at: `2026-09-17T12:00:${String(id).padStart(2, '0')}Z`, attachments: [] }
+  return { id: `message-${id}`, channel_id: channelId, author_id: 'user-1', client_message_id: `client-${id}`, body: `Текст ${id}`, revision: 1, created_at: `2026-09-17T12:00:${String(id).padStart(2, '0')}Z`, attachments: [], mention_user_ids: [] }
 }
 
 function page(messages: ReturnType<typeof message>[], nextCursor?: string): Response {

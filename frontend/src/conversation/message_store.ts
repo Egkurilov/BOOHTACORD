@@ -19,7 +19,7 @@ export const useMessageStore = defineStore('text-messages', () => {
     const optimisticId = `optimistic:${clientMessageId}`
     messages.value = [pendingMessage(clientMessageId, draft), ...messages.value.filter((message) => message.clientMessageId !== clientMessageId)]
     try {
-      const created = await createTextMessage(targetChannelId, clientMessageId, draft.body, request, draft.replyToId, draft.attachments.map(({ id }) => id))
+      const created = await createTextMessage(targetChannelId, clientMessageId, draft.body, request, draft.replyToId, draft.attachments.map(({ id }) => id), draft.mentionUserIds)
       pending.delete(clientMessageId)
       if (channelId.value !== targetChannelId) return false
       for (const [key, id] of retries) if (id === clientMessageId) retries.delete(key)
@@ -35,11 +35,11 @@ export const useMessageStore = defineStore('text-messages', () => {
     } finally { sending.value = false }
   }
 
-  async function send(body: string, request?: MessageRequest, createId: () => string = () => crypto.randomUUID(), replyToId?: string, attachments: TextMessageAttachment[] = [], authorId = 'Вы'): Promise<boolean> {
+  async function send(body: string, request?: MessageRequest, createId: () => string = () => crypto.randomUUID(), replyToId?: string, attachments: TextMessageAttachment[] = [], authorId = 'Вы', mentionUserIds: string[] = []): Promise<boolean> {
     const targetChannelId = channelId.value
     if (!targetChannelId || sending.value || !body) return false
-    const draft = { channelId: targetChannelId, authorId, body, replyToId, attachments: [...attachments], request }
-    const key = JSON.stringify([targetChannelId, authorId, body, replyToId, attachments.map(({ id }) => id)])
+    const draft = { channelId: targetChannelId, authorId, body, replyToId, attachments: [...attachments], mentionUserIds: [...mentionUserIds], request }
+    const key = JSON.stringify([targetChannelId, authorId, body, replyToId, attachments.map(({ id }) => id), mentionUserIds])
     const clientMessageId = retries.get(key) ?? createId()
     pending.set(clientMessageId, draft)
     retries.set(key, clientMessageId)
@@ -56,7 +56,8 @@ export const useMessageStore = defineStore('text-messages', () => {
     if (!targetChannelId || !body) return false
     error.value = null
     try {
-      const changed = await editTextMessage(targetChannelId, messageId, body, expectedRevision, request)
+      const current = messages.value.find(({ id }) => id === messageId)
+      const changed = await editTextMessage(targetChannelId, messageId, body, expectedRevision, request, current?.mentionUserIds ?? [])
       if (channelId.value !== targetChannelId) return false
       messages.value = messages.value.map((message) => message.id === changed.id ? changed : message)
       return true
