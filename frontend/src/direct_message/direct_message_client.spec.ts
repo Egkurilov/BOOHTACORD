@@ -4,7 +4,7 @@ import { advanceDirectMessageReadCursor, loadDirectMessageHistory, loadDirectMes
 
 const directMessage = {
   id: 'dm-1', other_participant_id: 'user-2', other_participant_display_name: 'Лера',
-  created_at: '2026-09-18T10:00:00Z', unread_count: 3,
+  created_at: '2026-09-18T10:00:00Z', unread_count: 3, mention_count: 2,
 }
 
 const deletedHistoryItem = {
@@ -17,8 +17,15 @@ describe('direct-message client', () => {
   it('reads the caller-local navigation count through a same-origin GET', async () => {
     const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ direct_messages: [directMessage] })))
 
-    await expect(loadDirectMessages(request)).resolves.toMatchObject([{ id: 'dm-1', unreadCount: 3 }])
+    await expect(loadDirectMessages(request)).resolves.toMatchObject([{ id: 'dm-1', unreadCount: 3, mentionCount: 2 }])
     expect(request).toHaveBeenCalledWith('/api/v1/direct-messages', expect.objectContaining({ method: 'GET', credentials: 'same-origin' }))
+  })
+
+  it('rejects a missing or negative caller-local DM mention counter', async () => {
+    const missing = vi.fn().mockResolvedValue(new Response(JSON.stringify({ direct_messages: [{ ...directMessage, mention_count: undefined }] })))
+    const negative = vi.fn().mockResolvedValue(new Response(JSON.stringify({ direct_messages: [{ ...directMessage, mention_count: -1 }] })))
+    await expect(loadDirectMessages(missing)).rejects.toThrow('некоррект')
+    await expect(loadDirectMessages(negative)).rejects.toThrow('некоррект')
   })
 
   it('keeps a deleted reply preview empty while loading a paginated DM history', async () => {

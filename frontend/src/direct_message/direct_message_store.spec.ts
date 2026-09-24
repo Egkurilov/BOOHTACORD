@@ -15,7 +15,7 @@ describe('direct-message store', () => {
     const store = useDirectMessageStore()
     const request = async (input: string) => input.endsWith('/messages')
       ? new Response(JSON.stringify({ messages: [history('message-1', 'dm-1', 'Привет')] }))
-      : new Response(JSON.stringify({ direct_messages: [{ id: 'dm-1', other_participant_id: 'user-2', other_participant_display_name: 'Лера', created_at: '2026-09-18T09:00:00Z', unread_count: 1 }] }))
+      : new Response(JSON.stringify({ direct_messages: [{ id: 'dm-1', other_participant_id: 'user-2', other_participant_display_name: 'Лера', created_at: '2026-09-18T09:00:00Z', unread_count: 1, mention_count: 1 }] }))
 
     await store.refreshNavigation(request)
     await store.open('dm-1', request)
