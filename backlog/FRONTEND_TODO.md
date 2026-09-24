@@ -1,6 +1,6 @@
 # Фронтенд — оставшаяся реализация
 
-Срез: 24.09.2026. Пути относительно корня; source tests не заменяют browser E2E.
+Срез: 25.09.2026. Пути относительно корня; source tests не заменяют browser E2E.
 Дизайн — [DES](../docs/design/GUILDCHAT_V1_TODO.md), backend-зависимости — [BE](BACKEND_TODO.md).
 
 - [ ] **FE-08 · P1 · T-041 — DM retry.** `direct_message_message_actions.ts` создаёт новый UUID на каждую попытку. Сохранять payload/client_message_id до подтверждения, показывать pending/failed/retry. Готово: потерянный HTTP-ответ и повтор оставляют одно сообщение, смена диалога не вставляет строку в чужую history. TEXT optimistic send уже есть.

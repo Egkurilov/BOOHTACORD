@@ -2,7 +2,7 @@
 
 Срез кода: 25.09.2026, ветка codex/voice-platform-foundation.
 Этот список отделён от [оставшихся задач](TODO.md). Отметка означает наличие подключённой реализации, а не полную приёмку всего T-пакета.
-Актуальные результаты проверок и ограничения — в [ревью](docs/reviews/2026-09-24-functionality.md).
+Исходный аудит — в [ревью 24.09](docs/reviews/2026-09-24-functionality.md); проверка нового backend — в [отчёте 25.09](docs/reviews/2026-09-25-backend-delivery.md).
 
 ## Бэкенд и контракты
 
@@ -44,10 +44,10 @@
 
 - [x] **FE-01:** viewer показывает фактическую частоту показанных кадров, 0 FPS при freeze и неопределённость до первого кадра; наблюдатель сбрасывается при смене потока и unmount. Focused 14/14, общий frontend-прогон и TypeScript-сборка прошли после интеграции FE-05.
 - [x] **FE-02:** WebSocket возобновляется с bounded backoff, durable cursor/dedup и защищённой REST-синхронизацией; отзыв сессии возвращает к входу, здоровый WebRTC при сетевом сбое WS не выключается. Focused 27/27, TypeScript-сборка прошла.
+- [x] **FE-03:** logout вызывает серверный 204, останавливает media/WS, очищает account-bound Pinia state и показывает guest screen; ошибка сервера видна с повтором. При отзыве сессии локальный LiveKit teardown запускается даже во время join, без повторного HTTP release; обычный WS сбой media не выключает. Focused 12/12 + интеграционные 4/4, общий frontend-прогон 309/309 и сборка прошли.
+- [x] **FE-04:** одноразовый reset token удаляется из URL fragment до сетевых запросов и остаётся только в локальной переменной; экран вызывает API, показывает общий invalid/expired/reused ответ и возвращает к login. Focused 15/15, общий frontend-прогон 307/307 прошёл.
 - [x] **FE-05:** TEXT history загружает старые страницы с dedup, end/error/retry и сохранением scroll; realtime refresh удерживает уже загруженные страницы. Focused 15/15; общий frontend-прогон 258/258 и сборка прошли.
 - [x] **FE-06:** DM history загружает старые страницы без дублей, сохраняет scroll и самый дальний cursor; поздние ответы после смены/закрытия диалога игнорируются. Focused 23/23 и TypeScript-сборка прошли.
-- [x] **FE-04:** одноразовый reset token удаляется из URL fragment до сетевых запросов и остаётся только в локальной переменной; экран вызывает API, показывает общий invalid/expired/reused ответ и возвращает к login. Focused 15/15, общий frontend-прогон 307/307 прошёл.
-- [x] **FE-03:** logout вызывает серверный 204, останавливает media/WS, очищает account-bound Pinia state и показывает guest screen; ошибка сервера видна с повтором. При отзыве сессии локальный LiveKit teardown запускается даже во время join, без повторного HTTP release; обычный WS сбой media не выключает. Focused 12/12 + интеграционные 4/4, общий frontend-прогон 309/309 и сборка прошли.
 - [x] **FE-07:** typed DM create/edit/delete hints обновляют список и открытую историю двух участников; `channel.updated` обновляет topology, а `voice.lease_revoked` отключает только совпадающий lease с причиной, включая гонки join/leave. Общий frontend-прогон 315/315 и сборка прошли.
 - [x] **T-010/050:** login/register, session bootstrap и maintenance banner. Источники: frontend/src/App.vue, identity/AuthenticationLanding.vue.
 - [x] **T-050:** тёмные tokens/foundations, one-guild shell, navigation, drawers, voice dock и центральные profile/audio/admin panels. Геометрия ≥1440: 0/280/248 по ADR-009; voice/stream wide stage по ADR-008. Исходный design package сохранён.
