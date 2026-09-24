@@ -7,14 +7,17 @@ import MessageBody from './MessageBody.vue'
 import MentionPicker from './MentionPicker.vue'
 import TextMessageAttachments from './TextMessageAttachments.vue'
 import DirectMessageAttachments from '../direct_message/DirectMessageAttachments.vue'
+import { useMessageEditController, type EditResult } from './message_edit_controller'
 
 type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments' | 'mentionUserIds'> & { channelId?: string; directMessageId?: string; attachments?: TextMessageAttachment[]; mentionUserIds?: string[] }
 
-const props = defineProps<{ message: RenderedMessage; replyPreview?: string; canEdit: boolean; canDelete: boolean; retryDisabled?: boolean; mentionRecipient?: { id: string; displayName: string } }>()
-const emit = defineEmits<{ edit: [body: string, mentionUserIds: string[]]; remove: []; reply: []; retry: [] }>()
-const editing = ref(false)
-const body = ref('')
-const editingMentionIds = ref<string[]>([])
+const props = defineProps<{ message: RenderedMessage; replyPreview?: string; canEdit: boolean; canDelete: boolean; retryDisabled?: boolean; mentionRecipient?: { id: string; displayName: string }; editMessage?: (body: string, mentionIds: string[], revision: number) => Promise<EditResult>; refreshMessage?: () => Promise<{ revision: number; deleted: boolean } | null> }>()
+const emit = defineEmits<{ remove: []; reply: []; retry: [] }>()
+const editor = useMessageEditController({
+  save: (body, ids, revision) => props.editMessage?.(body, ids, revision) ?? Promise.resolve({ kind: 'stale', message: 'Сообщение недоступно.' }),
+  refresh: () => props.refreshMessage?.() ?? Promise.resolve(null),
+})
+const { editing, body, mentionUserIds: editingMentionIds, pending, needsRefresh, error: editError, notice: editNotice } = editor
 const textChannelId = computed(() => props.message.channelId ?? '')
 const textAttachments = computed(() => props.message.attachments ?? [])
 const authors = useAuthorDirectory()
@@ -26,15 +29,7 @@ watch(() => props.message.mentionUserIds, (ids) => { for (const id of ids ?? [])
 watch(authorAvatar, () => { avatarFailed.value = false })
 
 function beginEdit(): void {
-  body.value = props.message.body
-  editingMentionIds.value = [...(props.message.mentionUserIds ?? [])]
-  editing.value = true
-}
-
-function saveEdit(): void {
-  if (!body.value) return
-  emit('edit', body.value, [...editingMentionIds.value])
-  editing.value = false
+  editor.begin(props.message)
 }
 
 function remove(): void {
@@ -56,13 +51,16 @@ function initial(name: string): string {
         <time class="message-time">{{ new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }}</time>
         <span v-if="message.editedAt" class="message-time">изменено</span>
       </div>
-      <p v-if="message.deleted">Сообщение удалено</p>
-      <template v-else-if="editing">
-        <textarea v-model="body" maxlength="8000" aria-label="Изменённый текст сообщения" />
-        <MentionPicker v-model="editingMentionIds" :self-id="message.authorId" :disabled="false" :only-participant="mentionRecipient" />
-        <button type="button" @click="saveEdit">Сохранить</button>
-        <button type="button" @click="editing = false">Отмена</button>
+      <template v-if="editing">
+        <textarea v-model="body" maxlength="8000" :disabled="pending" aria-label="Изменённый текст сообщения" />
+        <MentionPicker v-model="editingMentionIds" :self-id="message.authorId" :disabled="pending" :only-participant="mentionRecipient" />
+        <p v-if="editError" class="message-send-status" role="alert">{{ editError }}</p>
+        <p v-if="editNotice" class="message-send-status" role="status">{{ editNotice }}</p>
+        <button type="button" :disabled="pending || needsRefresh || !body" @click="editor.submit()">{{ pending ? 'Обрабатываем…' : 'Сохранить' }}</button>
+        <button v-if="needsRefresh" type="button" :disabled="pending" @click="editor.refreshVersion()">Обновить версию</button>
+        <button type="button" :disabled="pending" @click="editor.cancel()">Отмена</button>
       </template>
+      <p v-else-if="message.deleted">Сообщение удалено</p>
       <template v-else>
         <p v-if="replyPreview" class="reply-preview">↪ {{ replyPreview }}</p>
         <MessageBody :body="message.body" />
@@ -72,7 +70,7 @@ function initial(name: string): string {
         <p v-if="message.sendStatus === 'sending'" class="message-send-status" role="status">Отправляется…</p>
         <div v-if="message.sendStatus === 'failed'" class="message-send-status" role="alert"><span>Не отправлено</span><button type="button" :disabled="retryDisabled" @click="emit('retry')">Повторить отправку</button></div>
       </template>
-      <p v-if="!message.deleted && !message.sendStatus" class="message-actions">
+      <p v-if="!editing && !message.deleted && !message.sendStatus" class="message-actions">
         <button type="button" @click="emit('reply')">Ответить</button>
         <button v-if="canEdit" type="button" @click="beginEdit">Изменить</button>
         <button v-if="canDelete" type="button" @click="remove">Удалить</button>
