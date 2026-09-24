@@ -250,6 +250,26 @@
         }
       }
     },
+    "/api/v1/search/messages": {
+      "get": {
+        "operationId": "searchMessages",
+        "description": "Authenticated member only. Searches non-deleted text across current TEXT channels and only the caller's own DM pairs. Optional channel_id or direct_message_id restricts the current conversation; the filters are mutually exclusive. Uses PostgreSQL simple full-text search and a mixed-source cursor.",
+        "parameters": [
+          { "name": "query", "in": "query", "required": true, "schema": { "type": "string", "minLength": 1, "maxLength": 256 } },
+          { "name": "channel_id", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "direct_message_id", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "before", "in": "query", "required": false, "schema": { "type": "string", "maxLength": 512 } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "Newest-first mixed conversation page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MessageSearchPage" } } } },
+          "400": { "description": "Malformed query, filter or cursor", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Filtered conversation is absent or unavailable to the caller", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
     "/api/v1/channels/{channelID}/attachments": {
       "post": {
         "operationId": "uploadTextAttachment",
@@ -1372,6 +1392,31 @@
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "channel_id": { "type": "string", "format": "uuid" },
+          "author_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "created_at": { "type": "string", "format": "date-time" },
+          "edited_at": { "type": "string", "format": "date-time" },
+          "revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "MessageSearchPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["messages"],
+        "properties": {
+          "messages": { "type": "array", "items": { "$ref": "#/components/schemas/MessageSearchResult" } },
+          "next_cursor": { "type": "string", "minLength": 1, "maxLength": 512 }
+        }
+      },
+      "MessageSearchResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "author_id", "body", "created_at", "revision"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "kind": { "type": "string", "enum": ["CHANNEL", "DIRECT_MESSAGE"] },
+          "channel_id": { "type": "string", "format": "uuid" },
+          "direct_message_id": { "type": "string", "format": "uuid" },
           "author_id": { "type": "string", "format": "uuid" },
           "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
           "created_at": { "type": "string", "format": "date-time" },

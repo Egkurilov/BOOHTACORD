@@ -80,7 +80,7 @@ tasks:
     title: Direct messages and search
     requirements: [REQ-DM-01, REQ-SEARCH-01, REQ-SECURITY-02]
     depends_on: [T-040]
-    evidence: [backend-dm-search-tests]
+    evidence: [backend-dm-search-tests, backend-unified-search-tests, frontend-unified-search-tests]
   - id: T-044
     title: Attachments, storage and disk reservation
     requirements: [REQ-STORAGE-01, REQ-STORAGE-02, REQ-STORAGE-03, REQ-NOBACKUP-01]

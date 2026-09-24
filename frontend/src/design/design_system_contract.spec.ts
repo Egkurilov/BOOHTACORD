@@ -87,7 +87,7 @@ describe('GuildChat design-system foundation', () => {
   })
 
   it('keeps settings and administration in the central workspace', () => {
-    expect(workspace).toContain("'no-aside': selectedDirectMessage || activePanel !== 'none'")
+    expect(workspace).toContain("'no-aside': activePanel !== 'search' && (selectedDirectMessage || activePanel !== 'none')")
     expect(workspace).toContain('<template #admin>')
     expect(workspace).toContain('<template #audio>')
     expect(workspace).toContain('<template #profile>')
@@ -102,6 +102,7 @@ describe('GuildChat design-system foundation', () => {
     expect(settingsStyles).toContain('.admin-topology-form { display: grid;')
     expect(settingsStyles).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))')
   })
+
 
   it('connects profile settings and admin tabs to real API workflows', () => {
     for (const expected of ['readonly', 'current-password', 'new-password', 'uploadAvatar', 'changeOwnPassword', 'aria-live']) expect(profileSettings).toContain(expected)

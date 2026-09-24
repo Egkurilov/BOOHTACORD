@@ -65,6 +65,7 @@
 | [Reference parity](../superpowers/plans/2026-09-19-guildchat-reference-parity.md) | 14/14 шагов завершены |
 | [Reference rebuild](../superpowers/plans/2026-09-19-guildchat-reference-rebuild.md) | 8/9 шагов завершены; runtime deployment подтверждён, authenticated browser screenshot comparison остаётся заблокированным |
 | [Workspace panels](../superpowers/plans/2026-09-23-guildchat-workspace-panels.md) | 3/3 задач завершены; навигация сохранена слева, Audio/Admin перенесены в центр |
+| [Unified message search](../superpowers/plans/2026-09-24-unified-message-search.md) | Backend/OpenAPI/mobile contract и SearchPanel в существующей правой области/выдвижной панели реализованы локально; deploy, реальные PostgreSQL данные и authenticated visual review не выполнялись |
 
 Актуальный сквозной список требований и оставшихся проверок находится в [GUILDCHAT_V1_TODO.md](GUILDCHAT_V1_TODO.md). TODO в исходном ZIP не обновлялся: это неизменяемый входной артефакт, а не текущая запись статуса репозитория.
 
@@ -75,10 +76,11 @@
 - Последняя зарегистрированная web-only release evidence — [`release-guildchat-reference-parity-2026-09-19-003.json`](../../evidence/release-guildchat-reference-parity-2026-09-19-003.json): frontend suite — 53 test files / 131 tests `PASS`; production build, traceability и public health — `PASS`.
 - Pixel-level authenticated browser acceptance в этой записи — `BLOCKED`: не был записан signed-in browser capture. Runtime smoke и health не заменяют visual acceptance.
 - После workspace-panels packet frontend suite — 53 test files / 132 tests `PASS`; `vue-tsc` и production build — `PASS` (Vite сообщает существующее предупреждение о размере LiveKit chunk).
-- ProfileSettings, member/channel/audit tabs AdminPanel, MemberPopover, role/block/voice-kick actions и reset-link result реализованы на локальной ветке и подключены к API. Global SearchPanel остаётся открытым.
+- ProfileSettings, member/channel/audit tabs AdminPanel, MemberPopover, role/block/voice-kick actions, reset-link result и общий SearchPanel реализованы на локальной ветке и подключены к API. Для SearchPanel остаются production/real-data и visual проверки.
 - Profile API включает GET/PATCH собственного профиля, смену пароля с отзывом других сессий, приватные PNG-аватары, member list/detail/avatar, admin-only account list и summary audit feed без metadata. GitVerse Actions #1629339 развернул API/web; migration 0030 и публичные runtime smoke checks прошли.
 - Local and Actions validation: backend `go test ./...` / `go vet ./...`, frontend 55 files / 142 tests / production build, OpenAPI verifier, release guards и 39-item traceability — PASS. Public home, health и guest-session checks также PASS; эти проверки не доказывают authenticated workflows или pixel parity.
 - UI evidence не подтверждает POC game audio, media revocation, capacity или общий product release.
+- Unified search ограничивает DM через participant predicate в PostgreSQL и использует существующие GIN search vectors. Unit/contract validation прошла; интеграция на production PostgreSQL и visual acceptance остаются `NOT_RUN`.
 
 ## Следующее действие для закрытия design gate
 

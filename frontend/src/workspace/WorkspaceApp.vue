@@ -17,6 +17,8 @@ import WorkspaceUserFooter from './WorkspaceUserFooter.vue'
 import ProfileSettings from '../identity/ProfileSettings.vue'
 import { useCurrentProfile } from '../identity/current_profile'
 import AdminPanel from './AdminPanel.vue'
+import SearchLauncher from '../search/SearchLauncher.vue'
+import WorkspaceSearchPanel from '../search/WorkspaceSearchPanel.vue'
 const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR' }>()
 const { activeVoiceChannel, audioSettings, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls()
 const directMessageStore = useDirectMessageStore()
@@ -24,7 +26,7 @@ const directMessageCandidateStore = useDirectMessageCandidateStore()
 const messageStore = useMessageStore()
 const realtimeStore = useRealtimeStore()
 const sidebarSection = ref<'channels' | 'messages'>('channels')
-const activePanel = ref<'none' | 'admin' | 'audio' | 'profile'>('none')
+const activePanel = ref<'none' | 'admin' | 'audio' | 'profile' | 'search'>('none')
 const { profile, profileError, profileLoading, refreshProfile, setProfile } = useCurrentProfile()
 const selectedDirectMessage = computed(() => directMessageStore.directMessages.find((item) => item.id === directMessageStore.directMessageId) ?? null)
 function selectChannel(channel: TopologyChannel): void { activePanel.value = 'none'; sidebarSection.value = 'channels'; directMessageStore.close(); selectWorkspaceChannel(channel) }
@@ -39,7 +41,7 @@ async function openDirectMessageFromMember(userID: string): Promise<void> {
 function setParticipantVolume(participantID: string, volume: number): void { voiceConnection.setParticipantVolume(participantID, volume) }
 function resync(): void { void topologyStore.refresh(); void messageStore.refresh(); void directMessageStore.refreshNavigation(); void directMessageStore.refreshHistory() }
 function refreshTopology(): void { void topologyStore.refresh() }
-function togglePanel(panel: 'admin' | 'audio' | 'profile'): void { activePanel.value = activePanel.value === panel ? 'none' : panel }
+function togglePanel(panel: 'admin' | 'audio' | 'profile' | 'search'): void { activePanel.value = activePanel.value === panel ? 'none' : panel }
 function openGuildPanel(): void { if (props.role === 'ADMINISTRATOR') togglePanel('admin') }
 onMounted(() => { void topologyStore.refresh(); void directMessageStore.refreshNavigation(); void refreshProfile(); realtimeStore.connect(resync) })
 onBeforeUnmount(() => realtimeStore.disconnect())
@@ -48,9 +50,9 @@ onBeforeUnmount(() => realtimeStore.disconnect())
 <template>
   <div class="app-frame">
     <a class="gc-sr-only" href="#main-region">Перейти к содержимому</a>
-    <div class="gc-shell" :class="{ 'no-aside': selectedDirectMessage || activePanel !== 'none' }" data-testid="app-shell">
+    <div class="gc-shell" :class="{ 'no-aside': activePanel !== 'search' && (selectedDirectMessage || activePanel !== 'none') }" data-testid="app-shell">
       <aside class="sidebar" aria-label="Навигация гильдии" data-testid="nav-sidebar">
-        <button class="guild-header" type="button" :aria-expanded="activePanel === 'admin'" @click="openGuildPanel"><span class="guild-mark" aria-hidden="true">V</span><span id="app-title">Voice Platform</span></button>
+        <button class="guild-header" type="button" :aria-expanded="activePanel === 'admin'" @click="openGuildPanel"><span class="guild-mark" aria-hidden="true">V</span><span id="app-title">Voice Platform</span></button><SearchLauncher :active="activePanel === 'search'" @open="activePanel = 'search'" @close="activePanel = 'none'" />
         <WorkspaceSidebarTabs class="sidebar-tabs" :active="sidebarSection" @select="sidebarSection = $event" />
 
         <div class="nav-content">
@@ -91,7 +93,7 @@ onBeforeUnmount(() => realtimeStore.disconnect())
 
       <main id="main-region" class="main" data-testid="main-region">
         <WorkspaceMain
-          :panel="activePanel"
+          :panel="activePanel === 'search' ? 'none' : activePanel"
           :channel="selectedChannel"
           :direct-message="selectedDirectMessage"
           :join-voice="joinVoice"
@@ -112,6 +114,7 @@ onBeforeUnmount(() => realtimeStore.disconnect())
       </main>
 
       <WorkspaceMembersPanel v-if="!selectedDirectMessage && activePanel === 'none'" :active-voice-channel="activeVoiceChannel" :participants="voiceConnection.voiceVolumeParticipants" :role="props.role" :account-i-d="profile?.account_id" @open-d-m="openDirectMessageFromMember" @set-volume="setParticipantVolume" />
+      <aside v-else-if="activePanel === 'search'" id="search-aside-panel" class="members search-aside" aria-label="Поиск сообщений" data-testid="search-aside-panel"><WorkspaceSearchPanel @open-channel="selectChannel" @open-direct-message="selectDirectMessage" @close="activePanel = 'none'" /></aside>
     </div>
   </div>
 </template>
