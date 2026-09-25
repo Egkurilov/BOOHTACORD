@@ -19,6 +19,12 @@
     { "name": "archive_confirmation", "result": "PARTIAL", "detail": "The browser displayed explicit history-preservation and navigation-removal copy. After Cancel, a direct isolated PostgreSQL read confirmed both TEXT channels remained unarchived. Browser dialog control did not complete an OK action, so accepted archive is unverified." },
     { "name": "fixture_cleanup", "result": "PASS_LOCAL", "detail": "Fixture shutdown removed its PostgreSQL schema and attachment directory; API and proxy loopback listeners stopped." }
   ],
+  "trusted_branch_ci": {
+    "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1644225",
+    "source_commit": "ac4ca5b76e1222047abe14d165a9652137d622ea",
+    "result": "Backend with mandatory PostgreSQL, frontend, and release_guard passed; deploy job did not execute because the workflow restricts it to master",
+    "scope": "Branch validation only; no trusted release bundle or production deployment"
+  },
   "remaining": [
     "Accepted TEXT archive and VOICE close confirmation/finalization were not exercised in this browser run",
     "Other admin surfaces, full keyboard/screen-reader traversal, zoom 125/150%, and screenshot parity remain open",
