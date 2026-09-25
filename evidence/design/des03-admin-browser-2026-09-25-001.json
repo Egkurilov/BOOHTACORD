@@ -1,0 +1,27 @@
+{
+  "id": "des03-admin-browser-2026-09-25-001",
+  "tasks": ["DES-03", "DES-06", "QA-05"],
+  "kind": "isolated-built-candidate-admin-browser",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T09:19:52Z",
+  "candidate_base_commit": "f5753086e5d0ede1bfe8fb5faee4df9e8e3e6077",
+  "bundle": {
+    "entry_js_sha256": "bb00845f19bf48b9dd4b80b7190bc94b7ee52a9fe936221beaf8b9a300ec605d",
+    "entry_css_sha256": "7431f25d2d51e2597ffad74d290e4bdb786d52db7e9521fd2934fdcbd20024dc"
+  },
+  "environment": "Chrome and Codex in-app Chromium; observed Chrome viewport 883x447 CSS px; locally built Vue bundle, Go API, isolated PostgreSQL 16.14 schema and attachment directory on WSL loopback; synthetic administrator; no LiveKit service",
+  "validation": "Frontend Vitest: 161 files and 467 tests PASS; vue-tsc and Vite build PASS; spec traceability: 39 requirements PASS",
+  "checks": [
+    { "name": "empty_workspace_navigation", "result": "PASS_LOCAL", "detail": "Before the fix the mobile sidebar was hidden with no trigger; after the fix the no-channel workspace exposed a labelled trigger, opened the navigation drawer and focused its first button." },
+    { "name": "administrator_entry_focus", "result": "PASS_LOCAL", "detail": "Opening the guild administration panel from the drawer focused its h1 after drawer inert state cleared; Tab moved to the Participants section button." },
+    { "name": "topology_mutations", "result": "PASS_LOCAL", "detail": "Created two categories and two TEXT channels, renamed category and channel, reordered categories and channels, and moved a TEXT channel between categories; refreshed UI showed the resulting order and names." },
+    { "name": "revision_conflict", "result": "PASS_LOCAL", "detail": "An isolated direct revision bump caused server HTTP 409 on category rename. The browser retained the draft, focused the alert, cleared stale category success feedback and successfully retried with the refreshed revision." },
+    { "name": "archive_confirmation", "result": "PARTIAL", "detail": "The browser displayed explicit history-preservation and navigation-removal copy. After Cancel, a direct isolated PostgreSQL read confirmed both TEXT channels remained unarchived. Browser dialog control did not complete an OK action, so accepted archive is unverified." },
+    { "name": "fixture_cleanup", "result": "PASS_LOCAL", "detail": "Fixture shutdown removed its PostgreSQL schema and attachment directory; API and proxy loopback listeners stopped." }
+  ],
+  "remaining": [
+    "Accepted TEXT archive and VOICE close confirmation/finalization were not exercised in this browser run",
+    "Other admin surfaces, full keyboard/screen-reader traversal, zoom 125/150%, and screenshot parity remain open",
+    "No LiveKit, trusted release bundle, or production deployment was involved"
+  ]
+}

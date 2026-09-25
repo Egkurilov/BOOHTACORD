@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import { createCategory, deleteEmptyCategory } from './admin_topology_client'
@@ -14,16 +14,24 @@ const newName = ref('')
 const mutating = ref(false)
 const localError = ref<string | null>(null)
 const localStatus = ref<string | null>(null)
+const errorNode = ref<HTMLElement | null>(null)
+const statusNode = ref<HTMLElement | null>(null)
+const errorText = computed(() => editor.error.value ?? localError.value)
+const statusText = computed(() => editor.status.value ?? localStatus.value)
 const busy = computed(() => mutating.value || editor.pending.value || editor.needsRefresh.value)
 
 watch(() => [props.categories, props.revision, props.selectedCategoryId], editor.sync, { immediate: true })
+watch(errorText, async (message) => { if (message) { await nextTick(); errorNode.value?.focus() } })
+watch(statusText, async (message) => { if (message) { await nextTick(); statusNode.value?.focus() } })
 
 function changeSelection(event: Event): void { emit('update:selectedCategoryId', (event.target as HTMLSelectElement).value) }
 function changeRename(event: Event): void { editor.setRenameDraft((event.target as HTMLInputElement).value) }
+function resetFeedback(): void { localError.value = null; localStatus.value = null; editor.error.value = null; editor.status.value = null }
+function rename(): void { resetFeedback(); void editor.rename() }
+function move(direction: -1 | 1): void { resetFeedback(); void editor.move(direction) }
 
 async function create(): Promise<void> {
-  localError.value = null
-  localStatus.value = null
+  resetFeedback()
   if (!newName.value.trim() || !validCodePointLength(newName.value, 1, 80)) { localError.value = 'Введите имя категории до 80 символов.'; return }
   mutating.value = true
   try {
@@ -38,8 +46,7 @@ async function create(): Promise<void> {
 
 async function remove(): Promise<void> {
   if (!selected.value || selected.value.channels.length || !window.confirm(`Удалить пустую категорию «${selected.value.name}»?`)) return
-  localError.value = null
-  localStatus.value = null
+  resetFeedback()
   mutating.value = true
   try {
     await deleteEmptyCategory(selected.value.id, props.revision)
@@ -58,7 +65,7 @@ async function remove(): Promise<void> {
       <label>Новая категория<input v-model="newName" :disabled="busy" name="category-name" required :aria-describedby="editor.error.value || localError ? 'category-error' : undefined"></label>
       <button type="submit" :disabled="busy">Создать категорию</button>
     </form>
-    <form class="admin-topology-form admin-topology-form--rename" @submit.prevent="editor.rename">
+    <form class="admin-topology-form admin-topology-form--rename" @submit.prevent="rename">
       <label>Категория
         <select :value="selectedCategoryId" :disabled="busy || !categories.length" name="edit-category" @change="changeSelection">
           <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
@@ -70,12 +77,12 @@ async function remove(): Promise<void> {
       <button type="submit" :disabled="busy || !selected">Переименовать категорию</button>
     </form>
     <div class="admin-category-order" role="group" aria-label="Порядок категорий">
-      <button type="button" :disabled="busy || !editor.canMove(-1)" :aria-label="`Переместить категорию «${selected?.name ?? ''}» выше`" @click="editor.move(-1)">Выше</button>
-      <button type="button" :disabled="busy || !editor.canMove(1)" :aria-label="`Переместить категорию «${selected?.name ?? ''}» ниже`" @click="editor.move(1)">Ниже</button>
+      <button type="button" :disabled="busy || !editor.canMove(-1)" :aria-label="`Переместить категорию «${selected?.name ?? ''}» выше`" @click="move(-1)">Выше</button>
+      <button type="button" :disabled="busy || !editor.canMove(1)" :aria-label="`Переместить категорию «${selected?.name ?? ''}» ниже`" @click="move(1)">Ниже</button>
     </div>
     <button type="button" :disabled="busy || !selected || selected.channels.length > 0" @click="remove">Удалить пустую категорию</button>
     <button v-if="editor.needsRefresh.value" type="button" @click="emit('changed')">Повторить обновление списка</button>
-    <p v-if="editor.status.value || localStatus" class="admin-topology-status" aria-live="polite">{{ editor.status.value ?? localStatus }}</p>
-    <p v-if="editor.error.value || localError" id="category-error" class="admin-topology-error" role="alert">{{ editor.error.value ?? localError }}</p>
+    <p v-show="statusText" id="category-status" ref="statusNode" class="admin-topology-status" role="status" tabindex="-1">{{ statusText }}</p>
+    <p v-show="errorText" id="category-error" ref="errorNode" class="admin-topology-error" role="alert" tabindex="-1">{{ errorText }}</p>
   </div>
 </template>

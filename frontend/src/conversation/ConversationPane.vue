@@ -61,8 +61,10 @@ function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id)
       <DirectMessageConversation :key="directMessage.id" :direct-message-id="directMessage.id" :other-participant-id="directMessage.otherParticipantId" :other-participant-display-name="directMessage.otherParticipantDisplayName" :nav-open="navOpen" @toggle-nav="emit('toggleNav')" />
     </template>
     <template v-else-if="!channel">
-      <p class="eyebrow">Рабочая область</p>
-      <h2>Выберите канал</h2>
+      <header class="main-header conversation-header">
+        <div class="main-title"><small>Рабочая область</small><h2>Выберите канал</h2></div>
+        <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')" />
+      </header>
       <p>Навигация показывает только данные, полученные от текущей серверной сессии.</p>
     </template>
     <template v-else-if="channel.kind === 'TEXT'">
