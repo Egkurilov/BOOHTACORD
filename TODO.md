@@ -38,6 +38,7 @@ FE-01…FE-21 реализованы и перечислены в [DONE.md](DONE
 - [ ] **QA-09 · P1:** измерить CPU/сеть/quota и профиль 100 voice участников, до 20 в комнате, с реальным hardware/load evidence.
 - [ ] **QA-10 · P1:** выполнить POC-03 connected-media revocation и проверку старых API/SDK credentials после kick/ban/logout/reset/transfer/close.
 - [ ] **QA-11 · P1:** GitHub `main`/GHCR candidate теперь требует no-skip PostgreSQL gate, SBOM, max provenance и digest refs; [локальные проверки](evidence/release/qa11-ghcr-ci-hardening-2026-09-25-001.json) PASS, сам гейт PARTIAL. Зафиксировать утверждённый delivery контракт ADR либо запустить исходный путь; подтвердить trusted CI, опубликованные immutable refs и attestations.
+  [Проект ADR-010](docs/adr/ADR-010-delivery-pipeline-proposal.md) описывает выбор между утверждённым `main`/GHCR и действующим GitVerse `master`; до решения владельца исходное ТЗ остаётся в силе.
 - [ ] **QA-12 · P1:** проверить maintenance → migration → rollout → smoke → снятие режима и совместимый rollback с сохранёнными volumes.
 - [ ] **QA-13 · P1:** настроить Android release signing вне Git и выполнить physical-device install/update/auth/cookie/voice/viewer tests; вести отдельный Flutter parity backlog.
 - [ ] **QA-14 · P1:** собрать матрицу 39 требований, latency/capacity/security evidence и release decision; закрыть только после применимых PASS-гейтов. [Матрица 39 требований](docs/release/2026-09-25-requirements-matrix.md), [актуальное решение NO-GO](evidence/release/qa14-readiness-2026-09-25-004.json).
