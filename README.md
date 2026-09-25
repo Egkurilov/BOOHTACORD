@@ -2,7 +2,7 @@
 
 Self-hosted веб-платформа в логике лёгкого Discord: голосовые и текстовые каналы, личные сообщения, демонстрация экрана/игры и передача звука через LiveKit. Один deployment обслуживает ровно одну изолированную гильдию.
 
-> Статус: frontend FPS исправлен; локально прошёл 471 frontend-тест и production build, backend и release guards прошли [trusted GitVerse CI](evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json). Полный release **ещё не принят**: после [production disk recovery](evidence/capacity/qa08-attachment-volume-2026-09-25-003.json) есть 7 675 785 216 доступных байт, но QA-08 остаётся открытой до проверки in-flight резерваций и устойчивого запаса; также нужны media POC, capacity, browser/design-приёмка и delivery/rollout gates. См. [TODO](TODO.md) и [реализовано](DONE.md).
+> Статус: frontend FPS исправлен; backend, frontend и release guards прошли trusted GitVerse CI. Полный release **ещё не принят**: [master run #1648803](evidence/capacity/qa08-attachment-volume-2026-09-25-012.json) остановился на повторной проверке attachment volume после сборки (5 616 275 456 доступных байт при требуемых 6 343 294 632), а [run #1648935](evidence/capacity/qa08-attachment-volume-2026-09-25-013.json) — уже на первом guard (5 606 604 800 байт). Новые образы не были развернуты. После восстановления места можно [возобновить уже собранный релиз](docs/QA08_BUILT_RELEASE_RECOVERY.md) без повторной сборки; QA-08, media POC, capacity, browser/design-приёмка и delivery/rollout gates остаются открытыми. См. [TODO](TODO.md) и [реализовано](DONE.md).
 
 ## Возможности
 

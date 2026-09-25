@@ -1,0 +1,38 @@
+{
+  "id": "des06-real-zoom-browser-preflight-2026-09-25-001",
+  "tasks": ["DES-06", "QA-05"],
+  "kind": "real-browser-zoom-acceptance-preflight",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T17:46:35Z",
+  "source_commit": "2992eaf4cfd35979eaca49cd370281147f957630",
+  "environment": "Windows Codex Browser Use; no tab, local bundle, fixture, or production session opened",
+  "checks": [
+    {
+      "name": "browser_tool_availability",
+      "result": "BLOCKED_TOOL",
+      "detail": "Three cua.getState() calls, including one after resetting the JS kernel, returned no apps or browsers and 'Unable to load browser request-header policy. Retry the browser command.' No browser binding was available."
+    },
+    {
+      "name": "actual_page_zoom_125_and_150_percent",
+      "result": "NOT_RUN",
+      "detail": "No browser page zoom UI state, CSS viewport, devicePixelRatio, or visualViewport measurement exists for this revision. CSS viewport resizing or DPR emulation is not accepted as proof of browser page zoom."
+    },
+    {
+      "name": "surface_reflow_and_accessible_controls",
+      "result": "NOT_RUN",
+      "detail": "TEXT, DM, admin, profile, search, disconnected voice, and connected viewer were not exercised at real 125% or 150% page zoom. Existing synthetic-width evidence remains historical and narrower in scope."
+    },
+    {
+      "name": "bounded_source_review",
+      "result": "REVIEWED_NO_CONFIRMED_DEFECT",
+      "detail": "Reviewed responsive_shell.css, shell.css, settings.css, search.css, voice.css, voice_viewer_reference.css and voice_room_footer.css at the current commit. Breakpoints and minimum sizes identify short/narrow connected viewer as a priority scenario, but static CSS cannot prove clipping or a safe source fix."
+    }
+  ],
+  "source_sha256": {
+    "frontend/src/design/responsive_shell.css": "d94875e0d431d08810955ed25f697816bd52d2c373e2ceac4c0035324335e7ce",
+    "frontend/src/design/voice.css": "5b4bf499c43b91f841e93046dd184cbe1505603851a13f4d1866b87080fdee62",
+    "frontend/src/design/voice_viewer_reference.css": "6c5daa009bac4d3a7af5ec30fa1b9e7ad29882af0ba77c6f332e44b12e1775c4",
+    "frontend/src/design/search.css": "4efd8df61cf0f0e35578b822372bd888971f7b0b8cb343119ef5c853bac2c254"
+  },
+  "next": "Restore Browser Use request-header policy, build a fixed local bundle with synthetic authenticated fixture, use browser page-zoom controls at 125% and 150%, record zoom UI plus window.innerWidth/devicePixelRatio/visualViewport and element geometry, and inspect keyboard reachability and horizontal/vertical overflow for each named surface."
+}

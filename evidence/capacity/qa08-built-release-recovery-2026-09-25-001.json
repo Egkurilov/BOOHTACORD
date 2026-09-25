@@ -1,0 +1,15 @@
+{
+  "id": "qa08-built-release-recovery-2026-09-25-001",
+  "task": "QA-08",
+  "kind": "local-built-release-resume-safety-validation",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T17:51:14Z",
+  "base_revision": "2992eaf4cfd35979eaca49cd370281147f957630",
+  "checks": [
+    {"name": "resume guard and existing image order", "result": "PASS_LOCAL", "command": "bash scripts/resume_built_release/resume.test.sh", "detail": "A disposable release fixture proved guard-before-image-before-deploy-before-audit, stopped before deploy on guard failure or missing image, and rejected an invalid revision."},
+    {"name": "shell syntax and lint", "result": "PASS_LOCAL", "command": "bash -n and shellcheck on resume.sh and resume.test.sh"},
+    {"name": "native release guards", "result": "PASS_LOCAL", "command": "bash scripts/verify-release-guards.sh", "detail": "Contracts, 39-requirement index traceability, Android signing source guard, Compose/image checks and all focused shell guards passed; the approved brief was unavailable inside WSL, so traceability used the committed requirement index."},
+    {"name": "production capacity restoration and resumed deploy", "result": "NOT_RUN", "reason": "The last trusted production guard had only 5,606,604,800 available bytes against 6,343,294,632 required, and this workspace has no authenticated operator SSH access."}
+  ],
+  "next_action": "Measure reclaimable Docker build cache from the read-only CI storage inspection, restore adequate headroom or expand filesystem, then run docs/QA08_BUILT_RELEASE_RECOVERY.md and capture a fresh post-rollout audit. Local tests do not close QA-08."
+}

@@ -1,0 +1,49 @@
+{
+  "id": "des05-admin-audit-real-api-pagination-2026-09-25-001",
+  "tasks": ["DES-03", "DES-05", "QA-05"],
+  "kind": "isolated-postgresql-go-api-built-bundle-browser-acceptance",
+  "status": "PARTIAL",
+  "leaf_result": "PASS_LOCAL",
+  "observed_at": "2026-09-25T17:52:05Z",
+  "repository_head_at_test": "2992eaf4cfd35979eaca49cd370281147f957630",
+  "bundle": {
+    "lineage": "Existing locally built frontend/dist bundle predates repository HEAD; exact build commit is not established and this is not a trusted release artifact",
+    "entry_js": "index-CKwRS2Ub.js",
+    "entry_js_sha256": "2e6f892d017e90700dcb50354992553c3b62ef8ed9c967aeaac19afadd71d6ac",
+    "entry_css": "index-Bz6I9mD8.css",
+    "entry_css_sha256": "d419160191dbd58755895ca6ac87174025454b009154b59ea0dec9d53acbc9c0"
+  },
+  "fixture": {
+    "database": "Disposable PostgreSQL 16 database qa05_audit_18771 with one synthetic administrator, one synthetic member and 104 audit events; no production data",
+    "api": "Actual locally built Go API on 127.0.0.1:18771; loopback-only static bundle/reverse proxy on 127.0.0.1:18772 preserved same-origin secure-cookie and Origin behavior",
+    "browser": "Codex in-app browser, hidden tab; test-only loopback route obtained a real Go login session for the synthetic administrator without placing a password in the browser or evidence",
+    "media": "No LiveKit server, media clients or production service was exercised"
+  },
+  "checks": [
+    {
+      "name": "real_api_pagination_and_acl",
+      "result": "PASS_LOCAL",
+      "observed": {"administrator_login_status": 204, "first_page_status": 200, "first_page_events": 100, "first_page_has_cursor": true, "second_page_status": 200, "second_page_events": 4, "second_page_has_cursor": false, "cursor_pages_disjoint": true, "member_status": 403, "guest_status": 401, "metadata_in_api_response": false},
+      "detail": "Authenticated HTTP calls used the actual route, session middleware, service and repository. The first event included current actor and target display names; the API omitted metadata."
+    },
+    {
+      "name": "real_api_browser_pagination",
+      "result": "PASS_LOCAL",
+      "observed": {"initial_rendered_admin_events": 100, "older_button_initially_visible": true, "rendered_after_older_click": 104, "older_button_after_second_page": false, "raw_event_code_visible": false, "fixture_metadata_visible": false},
+      "detail": "The built Vue bundle rendered the local real Go API data. All 103 synthetic account-state events displayed Russian titles plus actor and target labels; the bootstrap event displayed its own title."
+    },
+    {
+      "name": "current_account_labels_after_refresh",
+      "result": "PASS_LOCAL",
+      "observed": {"first_page_after_refresh": 100, "updated_actor_labels": 100, "updated_target_labels": 100, "old_actor_labels": 0, "older_button_restored": true},
+      "detail": "Changing only fixture users.display_name in PostgreSQL and selecting Refresh updated every visible actor and target label through the actual API."
+    },
+    {
+      "name": "nearest_native_tests",
+      "result": "PASS_LOCAL",
+      "detail": "Go test passed six audit/session packages; Vitest passed two admin-directory/audit-presentation files with eight tests."
+    }
+  ],
+  "remaining": ["Physical screen-reader speech and full admin keyboard traversal", "Trusted release-bundle acceptance; this local browser run does not prove a production deployment", "Other QA-05 acceptance scenarios outside this audit leaf"],
+  "cleanup": "In-app browser tab closed; API and reverse-proxy ports 18771/18772 are idle. Disposable database and role both verified absent, fixture directory removed after checking it contained no files. Only test harness scripts without credentials remain in the user's TEMP directory."
+}

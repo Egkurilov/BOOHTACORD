@@ -1,0 +1,44 @@
+{
+  "id": "qa03-notification-browser-capability-2026-09-25-001",
+  "tasks": ["QA-03", "QA-05"],
+  "kind": "isolated-browser-notification-permission-attempt",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T17:47:27Z",
+  "source_commit": "2992eaf4cfd35979eaca49cd370281147f957630",
+  "environment": "A disposable localhost-only HTML Notification API probe on 127.0.0.1:18799, inspected through Chrome and the Codex in-app browser. No production account, DM, credential or message was used.",
+  "checks": [
+    {
+      "name": "browser_api_capability",
+      "result": "PASS_LOCAL",
+      "detail": "Both browser tabs displayed secure=true, Notification API=function, permission=default, navigator.locks=true and localStorage=true. This is an API availability observation, not proof of notification delivery."
+    },
+    {
+      "name": "permission_request",
+      "result": "NOT_RUN",
+      "detail": "Clicking the probe's explicit Request notification permission button left both tab accessibility trees and screenshots at permission=default with no action result or visible permission prompt. The permission request did not resolve in the observed page state. No permission was granted."
+    },
+    {
+      "name": "chrome_site_permission_settings",
+      "result": "BLOCKED",
+      "detail": "Browser Use rejected navigation to the localhost site-permission settings with a browser URL policy block and explicitly prohibited workaround, alternate browser surfaces and policy circumvention. No settings were changed."
+    },
+    {
+      "name": "focused_frontend_tests",
+      "result": "PASS_LOCAL",
+      "command": "npm run test -- src/notification/notification_delivery.spec.ts src/notification/notification_policy.spec.ts src/notification/notification_store.spec.ts src/workspace/workspace_realtime.spec.ts",
+      "detail": "Four files, 14 tests passed at the current source commit. These use a fake Notification runtime and do not verify a browser permission prompt or OS notification."
+    },
+    {
+      "name": "two_recipient_tabs_and_nonparticipant_os_delivery",
+      "result": "NOT_RUN",
+      "detail": "Without granted permission, hidden-tab OS delivery, generic preview, cross-tab deduplication and silence for a third nonparticipant were not observed. Earlier private-WebSocket evidence remains separate."
+    },
+    {
+      "name": "fixture_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "Temporary browser tabs closed; localhost server stopped; exact probe file and directory removed; port 18799 has no listener."
+    }
+  ],
+  "remaining_condition": "On an approved browser/test origin, grant Notification permission through visible browser UI; use a fixed trusted Vue bundle, two isolated authenticated recipient tabs and one third nonparticipant, then observe exactly one generic hidden-tab OS notification for an addressed DM, none for the third account, deduplication and silence after permission revocation.",
+  "source_changes": "none"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-013",
+  "task": "QA-08",
+  "kind": "trusted-master-prebuild-headroom-guard-failure",
+  "status": "FAIL",
+  "observed_at": "2026-09-25T17:41:14Z",
+  "source_revision": "2992eaf4cfd35979eaca49cd370281147f957630",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1648935",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1648935/jobs/3223949/logs",
+  "jobs": {"backend": "success", "frontend": "success", "release_guard": "success", "deploy": "failure"},
+  "checks": [
+    {"name": "pre-build exact-volume guard", "result": "FAIL", "available_bytes": 5606604800, "required_bytes": 6343294632, "shortfall_bytes": 736689832},
+    {"name": "build, maintenance, migration, container switch and post-rollout audit", "result": "NOT_RUN", "reason": "The first headroom guard stopped install-received-release.sh."}
+  ],
+  "safety_boundary": "This is a guard snapshot, not a full live volume/in-flight audit. No attachment history or Docker volume was removed, and no new production image was promoted by this run.",
+  "next_action": "Restore measured headroom or expand the filesystem, then resume the already built 9201f219f9c1311a3b58f3bacf040cda00b4029c release using docs/QA08_BUILT_RELEASE_RECOVERY.md and obtain a post-rollout audit. Do not bypass the guard."
+}

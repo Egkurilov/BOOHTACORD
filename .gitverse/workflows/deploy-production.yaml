@@ -79,9 +79,9 @@ jobs:
       SSH_USER: shaneque
     steps:
       - uses: actions/checkout@v4
-      - name: Validate deployment inputs and configure verified SSH
+      - name: Configure verified SSH and inspect Docker storage
         shell: bash
-        run: bash scripts/configure-deploy-ssh.sh
+        run: bash scripts/configure-deploy-ssh.sh && bash scripts/qa08_capacity/inspect_docker_storage.sh
 
       - name: Package the checked-out source
         id: source

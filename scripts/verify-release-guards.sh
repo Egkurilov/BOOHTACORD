@@ -14,3 +14,4 @@ bash scripts/check-attachment-volume-headroom.test.sh
 bash scripts/audit-attachment-volume.test.sh
 bash scripts/deploy-images.test.sh
 bash scripts/deploy-local-images.test.sh
+bash scripts/resume_built_release/resume.test.sh
