@@ -17,6 +17,7 @@ PASS_STATIC/PASS_RUNTIME не равны полному release PASS. Истор
   [Admin/profile/audio mobile navigation](../evidence/design/des06-workspace-panel-navigation-2026-09-25-001.json) проверена на 320/883/1024 CSS px с drawer focus/Escape; full screen-reader, zoom, media и trusted release bundle остаются открытыми.
   [Profile/audio panel entry focus](../evidence/design/des05-settings-panel-entry-focus-2026-09-25-001.json) проверен на 320/1280 CSS px после выбора из drawer/footer; общий QA-05 ещё открыт.
   [Search drawer layering](../evidence/design/des06-search-drawer-layering-2026-09-25-001.json) проверен на 320/883/1024 CSS px: click/focus/Escape работают поверх scrim; на 1280 CSS px остался обычный aside. Реальный zoom отклонён URL-политикой Browser Use, connected voice/viewer не проверены.
+  [Chrome DM upload preflight](../evidence/qa/qa05-dm-upload-picker-2026-09-25-002.json) открыл chooser, но `setFiles` вернул `Not allowed` от расширения; файл не выбран, progress/507 retry/binding/download не проверены.
 
 - [ ] **QA-06 · P1 · T-004 — POC-01.** Отдельные физические Windows и Apple-Silicon macOS presenters, каждый с отдельным observer: движущаяся игра, её звук, разговор и отсутствие цифровой петли. Готово: окружения/версии/устройства и наблюдатель в evidence, compatibility matrix. Evidence preflight от 24.09 — BLOCKED; owner-login и POC topology не считать новой отсутствующей реализацией.
 
