@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { nextTick, onMounted, reactive, ref } from 'vue'
 import { createPasswordResetLink, listAdminAccounts, updateAdminAccount, type AdminAccount, type PasswordResetLink } from '../identity/admin_directory_client'
 
 const accounts = ref<AdminAccount[]>([]); const cursor = ref<string | undefined>(); const loading = ref(false); const busyID = ref('')
 const error = ref<string | null>(null); const status = ref<string | null>(null)
 const resetLink = ref<(PasswordResetLink & { login: string }) | null>(null)
+const resetTrigger = ref<HTMLButtonElement | null>(null)
+const resetResult = ref<HTMLElement | null>(null)
 const drafts = reactive<Record<string, { role: AdminAccount['role']; blocked: boolean }>>({})
 async function load(next?: string): Promise<void> {
   loading.value = true; error.value = null
@@ -17,12 +19,13 @@ async function save(account: AdminAccount): Promise<void> {
   try { await updateAdminAccount(account.account_id, draft.role, draft.blocked); status.value = `Права аккаунта ${account.login} сохранены.`; await load() }
   catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось изменить аккаунт.' } finally { busyID.value = '' }
 }
-async function createReset(account: AdminAccount): Promise<void> {
+async function createReset(account: AdminAccount, event: MouseEvent): Promise<void> {
+  resetTrigger.value = event.currentTarget as HTMLButtonElement
   resetLink.value = null; error.value = null; status.value = null; busyID.value = account.account_id
-  try { resetLink.value = { ...await createPasswordResetLink(account.account_id), login: account.login } }
+  try { resetLink.value = { ...await createPasswordResetLink(account.account_id), login: account.login }; await nextTick(); resetResult.value?.querySelector('input')?.focus() }
   catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось создать ссылку восстановления.' } finally { busyID.value = '' }
 }
-function closeReset(): void { resetLink.value = null }
+function closeReset(): void { resetLink.value = null; void nextTick(() => resetTrigger.value?.isConnected && resetTrigger.value.focus()) }
 async function copyResetLink(): Promise<void> {
   if (!resetLink.value) return
   try { await navigator.clipboard.writeText(resetLink.value.url); status.value = 'Одноразовая ссылка скопирована.' }
@@ -42,11 +45,11 @@ onMounted(() => { void load() })
           <td><span>{{ account.display_name }}</span><small>@{{ account.login }}</small></td>
           <td><select v-model="drafts[account.account_id].role" :disabled="busyID === account.account_id" :aria-label="`Роль: ${account.login}`"><option value="MEMBER">Участник</option><option value="ADMINISTRATOR">Администратор</option></select></td>
           <td><label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id"> Заблокирован</label></td>
-          <td><div class="admin-row-actions"><button type="button" :disabled="busyID === account.account_id" @click="save(account)">Сохранить</button><button type="button" :disabled="busyID === account.account_id" @click="createReset(account)">Сбросить пароль</button></div></td>
+          <td><div class="admin-row-actions"><button type="button" :disabled="busyID === account.account_id" @click="save(account)">Сохранить</button><button type="button" :disabled="busyID === account.account_id" @click="createReset(account, $event)">Сбросить пароль</button></div></td>
         </tr>
       </tbody></table>
     </div>
-    <section v-if="resetLink" class="admin-reset-result" role="dialog" aria-modal="false" aria-labelledby="reset-link-title">
+    <section v-if="resetLink" ref="resetResult" class="admin-reset-result" role="dialog" aria-modal="false" aria-labelledby="reset-link-title" @keydown.esc.stop.prevent="closeReset">
       <header><h3 id="reset-link-title">Одноразовая ссылка для @{{ resetLink.login }}</h3><button type="button" aria-label="Закрыть и удалить ссылку" @click="closeReset">×</button></header>
       <p>Покажите ссылку пользователю. После закрытия она будет удалена с этого экрана.</p>
       <input :value="resetLink.url" readonly aria-label="Одноразовая ссылка сброса пароля">

@@ -39,7 +39,7 @@ const workspaceRealtime = createWorkspaceRealtime({ topology: topologyStore, mes
 watch(() => realtimeStore.state, (state) => { if (state === 'ERROR' || state === 'DISCONNECTED') guildPresence.invalidate() })
 const sidebarSection = ref<'channels' | 'messages'>('channels')
 const activePanel = ref<'none' | 'admin' | 'audio' | 'profile' | 'search'>('none')
-const { navOpen, membersOpen, closeDrawers, toggleNavigation, toggleMembers } = useWorkspaceDrawers()
+const { navOpen, membersOpen, modalDrawer, closeDrawers, toggleNavigation, toggleMembers } = useWorkspaceDrawers(activePanel)
 const { profile, profileError, profileLoading, refreshProfile, setProfile } = useCurrentProfile()
 useAuthorDirectoryLifecycle(profile)
 const selectedDirectMessage = computed(() => directMessageStore.directMessages.find((item) => item.id === directMessageStore.directMessageId) ?? null)
@@ -66,8 +66,8 @@ onBeforeUnmount(() => workspaceRealtime.stop())
   <div class="app-frame">
     <a class="gc-sr-only" href="#main-region">Перейти к содержимому</a>
       <div class="gc-shell" :class="{ 'no-aside': activePanel !== 'search' && (voiceStageWide || selectedDirectMessage || activePanel !== 'none'), 'voice-stage-wide': voiceStageWide }" data-testid="app-shell">
-      <aside id="nav-sidebar" class="sidebar" :class="{ 'is-open': navOpen }" aria-label="Навигация гильдии" data-testid="nav-sidebar">
-        <div class="nav-drawer">
+      <aside id="nav-sidebar" class="sidebar" :class="{ 'is-open': navOpen }" :role="modalDrawer === 'nav' ? 'dialog' : undefined" :aria-modal="modalDrawer === 'nav' ? 'true' : undefined" aria-label="Навигация гильдии" data-testid="nav-sidebar">
+        <div class="nav-drawer" tabindex="-1">
           <button class="guild-header" type="button" :aria-expanded="activePanel === 'admin'" @click="openGuildPanel"><span class="guild-mark" aria-hidden="true">G</span><span id="app-title">Моя гильдия</span></button><SearchLauncher :active="activePanel === 'search'" @open="togglePanel('search')" @close="activePanel = 'none'" />
           <WorkspaceSidebarTabs class="sidebar-tabs" :active="sidebarSection" @select="sidebarSection = $event" />
           <div class="nav-content">
@@ -112,8 +112,8 @@ onBeforeUnmount(() => workspaceRealtime.stop())
         </WorkspaceMain>
       </main>
 
-      <WorkspaceMembersPanel v-if="!selectedDirectMessage && activePanel === 'none'" :open="membersOpen" :active-voice-channel="activeVoiceChannel" :selected-voice-channel="selectedChannel?.kind === 'VOICE' ? selectedChannel : null" :participants="voiceConnection.voiceVolumeParticipants" :presence-resolver="guildPresence.resolve" :role="props.role" :account-i-d="profile?.account_id" :self-name="profile?.display_name ?? null" :self-microphone-muted="voiceConnection.microphoneMuted" :self-microphone-unavailable="voiceConnection.microphonePermissionDenied" @open-d-m="openDirectMessageFromMember" @set-volume="setParticipantVolume" />
-      <aside v-else-if="activePanel === 'search'" id="search-aside-panel" class="members search-aside" :class="{ 'is-open': activePanel === 'search' }" aria-label="Поиск сообщений" data-testid="search-aside-panel"><WorkspaceSearchPanel @open-channel="selectChannel" @open-direct-message="selectDirectMessage" @close="activePanel = 'none'" /></aside>
+      <WorkspaceMembersPanel v-if="!selectedDirectMessage && activePanel === 'none'" :open="membersOpen" :active-voice-channel="activeVoiceChannel" :selected-voice-channel="selectedChannel?.kind === 'VOICE' ? selectedChannel : null" :participants="voiceConnection.voiceVolumeParticipants" :presence-resolver="guildPresence.resolve" :role="props.role" :account-i-d="profile?.account_id" :self-name="profile?.display_name ?? null" :self-microphone-muted="voiceConnection.microphoneMuted" :self-microphone-unavailable="voiceConnection.microphonePermissionDenied" :modal="modalDrawer === 'members'" @open-d-m="openDirectMessageFromMember" @set-volume="setParticipantVolume" />
+      <aside v-else-if="activePanel === 'search'" id="search-aside-panel" class="members search-aside" :class="{ 'is-open': activePanel === 'search' }" :role="modalDrawer === 'search' ? 'dialog' : undefined" :aria-modal="modalDrawer === 'search' ? 'true' : undefined" aria-label="Поиск сообщений" tabindex="-1" data-testid="search-aside-panel"><WorkspaceSearchPanel @open-channel="selectChannel" @open-direct-message="selectDirectMessage" @close="activePanel = 'none'" /></aside>
       <button v-if="navOpen || membersOpen || activePanel === 'search'" class="drawer-scrim" type="button" aria-label="Закрыть навигацию и участников" @click="closeDrawers(); activePanel = 'none'" />
     </div>
   </div>

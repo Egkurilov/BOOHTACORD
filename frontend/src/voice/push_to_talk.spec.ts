@@ -43,6 +43,8 @@ describe('push to talk', () => {
     ptt.start()
 
     source.emit('keydown', { target: { closest: () => ({}) } })
+    source.emit('keydown', { target: { closest: (selector) => selector.includes('button') ? {} : null } })
+    source.emit('keydown', { target: { closest: (selector) => selector.includes('select') ? {} : null } })
 
     expect(states).toEqual([])
   })

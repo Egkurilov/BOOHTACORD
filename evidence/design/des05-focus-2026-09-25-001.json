@@ -1,0 +1,38 @@
+{
+  "id": "des05-focus-2026-09-25-001",
+  "kind": "workspace-keyboard-focus-review",
+  "status": "PASS_STATIC",
+  "executed_at": "2026-09-25",
+  "environment": "local Vue 3/TypeScript/Vite source tree",
+  "checks": [
+    {
+      "name": "modal_drawer_focus",
+      "result": "PASS_STATIC",
+      "detail": "Navigation, members and search use modal semantics only with a visible scrim; focus enters the panel, wraps at the Tab boundaries, background regions become inert and prior focus is restored."
+    },
+    {
+      "name": "nested_nonmodal_surfaces",
+      "result": "PASS_STATIC",
+      "detail": "Escape in a member popover stops propagation to its parent drawer. The reset-link result moves focus to the link and returns it after close."
+    },
+    {
+      "name": "keyboard_shortcuts",
+      "result": "PASS_STATIC",
+      "detail": "Push-to-talk ignores fields, buttons, selects and dialogs; Ctrl/Meta+K ignores editable controls and dialogs."
+    },
+    {
+      "name": "frontend_suite_and_build",
+      "result": "PASS_LOCAL",
+      "detail": "npm test: 157 files, 460 tests passed. npm run build: TypeScript and Vite passed."
+    },
+    {
+      "name": "browser_keyboard_and_screen_reader",
+      "result": "NOT_RUN",
+      "detail": "QA-05 still requires authenticated browser traversal of modal and non-modal layers at responsive widths."
+    }
+  ],
+  "limitations": [
+    "Unit and source tests do not prove browser focus order, visibility or screen-reader announcements.",
+    "DES-05 remains open pending QA-05 browser acceptance."
+  ]
+}

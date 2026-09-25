@@ -9,7 +9,7 @@ import GuildPresenceGroup from './GuildPresenceGroup.vue'
 import MemberPopover from './MemberPopover.vue'
 import { groupMembersByPresence } from './member_presence'
 
-const props = defineProps<{ activeVoiceChannel: TopologyChannel | null; selectedVoiceChannel: TopologyChannel | null; participants: VoiceVolumeParticipant[]; presenceResolver: (userID: string, fallback: MemberPresence) => MemberPresence; role: 'MEMBER' | 'ADMINISTRATOR'; accountID?: string; selfMicrophoneMuted: boolean; selfMicrophoneUnavailable: boolean; selfName: string | null; open: boolean }>()
+const props = defineProps<{ activeVoiceChannel: TopologyChannel | null; selectedVoiceChannel: TopologyChannel | null; participants: VoiceVolumeParticipant[]; presenceResolver: (userID: string, fallback: MemberPresence) => MemberPresence; role: 'MEMBER' | 'ADMINISTRATOR'; accountID?: string; selfMicrophoneMuted: boolean; selfMicrophoneUnavailable: boolean; selfName: string | null; open: boolean; modal: boolean }>()
 const emit = defineEmits<{ openDM: [userID: string]; setVolume: [participantID: string, volume: number] }>()
 const guildMembers = ref<GuildMember[]>([])
 const memberCursor = ref<string | null>(null)
@@ -52,7 +52,7 @@ onMounted(() => { if (!props.selectedVoiceChannel) void loadRoster() })
 </script>
 
 <template>
-  <aside id="members-panel" class="members members-panel" :class="{ 'is-open': open }" aria-label="Участники" data-testid="members-panel">
+  <aside id="members-panel" class="members members-panel" :class="{ 'is-open': open }" :role="modal ? 'dialog' : undefined" :aria-modal="modal ? 'true' : undefined" aria-label="Участники" tabindex="-1" data-testid="members-panel">
     <h2 class="members-heading">Участники <span>{{ membersLoading && !guildMembers.length ? '—' : memberCount }}</span></h2>
     <p v-if="visibleVoiceChannel" class="members-summary">Голосовой канал · {{ visibleVoiceChannel.name }}</p>
     <p v-if="selectedVoiceChannel && !voiceRoomVisible" class="members-empty">{{ activeVoiceChannel ? `Вы подключены к «${activeVoiceChannel.name}». Перенесите подключение, чтобы увидеть участников этого канала.` : 'Подключитесь к каналу, чтобы увидеть его участников.' }}</p>
