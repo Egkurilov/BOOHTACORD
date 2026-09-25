@@ -11,6 +11,11 @@ export function focusBoundaryTarget(items: HTMLElement[], current: Element | nul
   return null
 }
 
+export function restorableDrawerFocusTarget(previous: HTMLElement | null, body: HTMLElement, html: HTMLElement, fallback: HTMLElement | null = null): HTMLElement | null {
+  if (previous?.isConnected && previous !== body && previous !== html) return previous
+  return fallback?.isConnected ? fallback : null
+}
+
 export function useWorkspaceDrawerFocus(
   navOpen: Ref<boolean>, membersOpen: Ref<boolean>, activePanel: Ref<string>, closeDrawers: () => void,
 ) {
@@ -53,7 +58,8 @@ export function useWorkspaceDrawerFocus(
       const entry = panel && (focusables(panel)[0] ?? panel.querySelector<HTMLElement>('.nav-drawer') ?? panel)
       entry?.focus()
     } else {
-      if (priorFocus?.isConnected) priorFocus.focus()
+      const trigger = closed === 'search' ? document.querySelector<HTMLElement>('.guild-search-button') : null
+      restorableDrawerFocusTarget(priorFocus, document.body, document.documentElement, trigger)?.focus()
       priorFocus = null
     }
   }

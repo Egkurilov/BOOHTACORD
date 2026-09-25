@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { shouldOpenSearchShortcut } from './search_shortcut'
+import { searchReturnFocusTarget } from './search_return_focus'
 
 const props = defineProps<{ active: boolean }>()
 const emit = defineEmits<{ open: []; close: [] }>()
@@ -11,7 +12,12 @@ function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && props.active) { emit('close'); return }
   if (shouldOpenSearchShortcut(event)) { event.preventDefault(); openSearch() }
 }
-watch(() => props.active, (active, wasActive) => { if (wasActive && !active) void nextTick(() => { (returnFocus?.isConnected ? returnFocus : trigger.value)?.focus(); returnFocus = null }) })
+watch(() => props.active, (active, wasActive) => {
+  if (wasActive && !active) void nextTick(() => {
+    searchReturnFocusTarget(returnFocus, trigger.value, document.body, document.documentElement)?.focus()
+    returnFocus = null
+  })
+})
 onMounted(() => window.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
