@@ -1,0 +1,54 @@
+{
+  "id": "des08-fe35-39-authenticated-recheck-2026-09-25-001",
+  "tasks": ["DES-08", "QA-05", "FE-35", "FE-36", "FE-37", "FE-38", "FE-39"],
+  "kind": "local-authenticated-fixed-bundle-screenshot-and-interaction-recheck",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25",
+  "source": {
+    "base_commit": "ba38bb3e6f7d18d20bbe5d93b1fa8b85ebd580e6",
+    "working_tree_fingerprint_sha256": "3b14aab301dd220647814728ebb4e08125c07aecf4eeab39ffa853dba83c524d",
+    "fingerprint_method": "Sort the 21 modified/untracked frontend/src paths reported by git status --porcelain=v1; hash each full file with SHA-256; join path:hash lines with LF; SHA-256 the UTF-8 manifest. The fingerprint was unchanged before build, after build and after captures. Unchanged tracked files are identified by base_commit.",
+    "bundle": "Locally built fixed Vue bundle from the working tree; not a trusted release artifact.",
+    "build": "PASS: npm run build (vue-tsc and Vite; 277 modules)",
+    "javascript_sha256": "cc870c7f7aaf3d8825c06445224804b5e8d97acf83930bfd450682fa5094978e",
+    "css_sha256": "b049b58aec84c842a95844a132951a992e2b4325762c9799f9680400569bec23"
+  },
+  "method": {
+    "fixture": "Disposable local Go/PostgreSQL schema: five synthetic accounts, six channels, six TEXT rows, one metadata-only TEXT attachment, one two-participant DM with three rows; no LiveKit connection.",
+    "browser": "Installed Chrome headless CLI, isolated temporary profile, device scale 1, 7000 ms virtual-time budget. Same-origin synthetic fixture login occurred in a temporary HTML entrypoint; no session cookie or token appeared in browser arguments, URL, logs or this evidence. Product JS/CSS assets were unchanged by the entrypoint and probe.",
+    "interaction_limit": "A temporary browser-side script performed DOM focus/click and read aria/display/focus after Vue updates; these are local browser interaction probes, not screen-reader, human-input or connected-media acceptance.",
+    "artifacts": "PNG files are local-only under ignored evidence/design/artifacts/ and were not staged."
+  },
+  "captures": [
+    {"state": "authenticated selected TEXT", "size": "1440x900", "artifact": "evidence/design/artifacts/des08-recheck-text-1440x900-2026-09-25.png", "sha256": "8b7966065c6e304efcbe79295f865707bd1be59e2b11f855bba52b819800ff44"},
+    {"state": "authenticated selected TEXT", "size": "640x720", "artifact": "evidence/design/artifacts/des08-recheck-text-640x720-2026-09-25.png", "sha256": "cca3d1f25d2ad55e19f1abc71dfc6720ad8f49d0d8c0e6dd08dac7aede81418b"},
+    {"state": "authenticated selected DM", "size": "1440x900", "artifact": "evidence/design/artifacts/des08-recheck-dm-1440x900-2026-09-25.png", "sha256": "0464fc3f25b439a9d163d50197937197230bc67f69e65ea44aacb110ad55cab6"}
+  ],
+  "interaction_probes": [
+    {"state": "TEXT desktop member toggle", "artifact": "evidence/design/artifacts/des08-recheck-members-action-1440x900-2026-09-25.png", "sha256": "928fdf34b9d4a047f8b6fe4121fb6237a5a26e179684c0ddb63c27f4ba99a2ee", "result": "PASS_LOCAL: initial panel visible with aria-expanded=true and correct aria-controls; click hid panel with aria-expanded=false and retained trigger focus; second click reopened with aria-expanded=true and retained focus; final click hid panel again."},
+    {"state": "TEXT desktop overflow", "artifact": "evidence/design/artifacts/des08-recheck-text-overflow-1440x900-2026-09-25.png", "sha256": "72d7efc06d60cbc60701a647db83214258b64e8528ff9ada2639ba761760038a", "result": "PASS_LOCAL: click opened a visible role=menu with aria-expanded=true, focus moved to a menu item, and search/member actions were present."},
+    {"state": "DM desktop overflow and privacy", "artifact": "evidence/design/artifacts/des08-recheck-dm-overflow-1440x900-2026-09-25.png", "sha256": "57449abe2470ca1d5300e30ed38ec25e9a32c4b129145f524b7eaa1b0858dfaa", "result": "PASS_LOCAL: click opened a visible role=menu with aria-expanded=true and item focus; only search was offered. DM had no members toggle or members panel."}
+  ],
+  "comparison": {
+    "previous_candidate": "evidence/design/des08-authenticated-chat-visual-2026-09-25-001.json",
+    "reference_archive_sha256": "e93cc89cc1e925a7585aa46f95e6eeb81e244b3db9fda471acc8f3f7d8614101",
+    "reference_chat_1440_sha256": "ff343250ecf0e6c40502072184769ad93ebe032c5d1c20785828b3c50b990ec3",
+    "reference_chat_640_sha256": "17c48590eaecc52e5a866634847427e01fcf0fdce64c2de962d379e7e5f39d66",
+    "result": "IMPROVED_BUT_NOT_PIXEL_ACCEPTED",
+    "resolved_observations": [
+      "The prior plain attachment link is now a bordered file card with icon, metadata and download affordance on desktop and mobile; author avatars now use differentiated pastel fallback colors.",
+      "The desktop composer is now about 55 px high, starts near y=805, and has a helper row below, closely matching the reference composer geometry. The prior roughly 70 px candidate and absent helper are gone.",
+      "At 640 px, navigation now leads the title, and search/members/overflow actions occupy the trailing side. The previous right-side navigation placement and missing overflow are gone.",
+      "Desktop TEXT now shows search, members and overflow controls; the members toggle and TEXT/DM menu contents passed the local browser probes above."
+    ],
+    "remaining_observations": [
+      "The candidate attachment card is about 360 x 64 px at x=364 on desktop and x=72 on mobile; the reference card is about 340 x 62 px at x=356 and x=68 respectively. Its size and offset are still visibly different.",
+      "The candidate retains a beginning-of-history line absent from the reference, shifting the date/message block relative to the product shell. On mobile the capture scroll offset also differs, so message-row positions cannot support a full pixel score.",
+      "Avatar colors are now varied, but exact reference hues differ for synthetic fixture IDs; this is data-dependent and is not classified as a proven palette defect.",
+      "The reference includes a 52 px desktop or 88 px mobile design-system demo top strip excluded from the product by ADR-009. The disconnected voice dock and offline fixture presence are not comparable with the reference's simulated connected voice state."
+    ],
+    "adr_context": "ADR-009 desktop column boundaries x=280 and x=1192 remain aligned. ADR-008 connected voice/stream layout was not tested. The archive has no matching DM reference screenshot, so DM pixel parity was not evaluated."
+  },
+  "remaining_gate": "DES-08 remains open: align remaining chat geometry on matching scroll/content, repeat screenshots at the fixed source and required widths/zoom, exercise hover/focus/mobile actions and screen reader, and capture connected voice plus selected stream with real LiveKit media. Do not infer release pixel parity from these local captures.",
+  "cleanup": "Local API and preview stopped; the exact disposable PostgreSQL schema was dropped and absence verified. Temporary HTML, isolated Chrome profiles and local ignored PNGs remain in TEMP/workspace as applicable; no deletion was retried after the prior automatic approval review rejected exact-file removal as blocked by policy. Dropping the schema invalidated the synthetic session."
+}

@@ -1,0 +1,77 @@
+{
+  "id": "des08-authenticated-chat-visual-2026-09-25-001",
+  "tasks": ["DES-08", "QA-05"],
+  "kind": "local-authenticated-screenshot-comparison",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25",
+  "source": {
+    "commit": "ba38bb3e6f7d18d20bbe5d93b1fa8b85ebd580e6",
+    "bundle": "Locally built fixed Vue bundle from this commit; not a trusted release artifact.",
+    "javascript_sha256": "4c6070e3a2d11c0f7d88e6ded51a6a7eb84e6f0385557d0717a13a84cf8d8e79",
+    "css_sha256": "9c8d52f1007f36dbe82592b5b41923e757495cad0a589404edd80f75123e7e81",
+    "frontend_build": "PASS: npm run build"
+  },
+  "fixture": {
+    "kind": "Disposable local Go/PostgreSQL schema with synthetic accounts and synthetic TEXT/DM history; no LiveKit connection.",
+    "browser": "Installed Chrome headless CLI; isolated temporary profile; device scale 1; 7000 ms virtual-time budget.",
+    "authentication": "Same-origin synthetic fixture login from a temporary HTML entrypoint; no session cookie or token in browser arguments, URL, log or evidence. Product JS/CSS bundle was unmodified.",
+    "artifact_policy": "PNG files remain local in ignored evidence/design/artifacts/ and were not staged."
+  },
+  "reference": {
+    "archive_sha256": "e93cc89cc1e925a7585aa46f95e6eeb81e244b3db9fda471acc8f3f7d8614101",
+    "desktop_chat": {
+      "source": "reference/screenshots/chat-1440.png",
+      "local_artifact": "evidence/design/artifacts/des08-reference-chat-1440-2026-09-25.png",
+      "size": "1440x900",
+      "sha256": "ff343250ecf0e6c40502072184769ad93ebe032c5d1c20785828b3c50b990ec3"
+    },
+    "mobile_chat": {
+      "source": "reference/screenshots/chat-640.png",
+      "local_artifact": "evidence/design/artifacts/des08-reference-chat-640-2026-09-25.png",
+      "size": "640x720",
+      "sha256": "17c48590eaecc52e5a866634847427e01fcf0fdce64c2de962d379e7e5f39d66"
+    }
+  },
+  "captures": [
+    {
+      "state": "authenticated TEXT, selected channel, six synthetic rows",
+      "size": "1440x900",
+      "artifact": "evidence/design/artifacts/des08-candidate-text-1440x900-2026-09-25.png",
+      "sha256": "61e9734cad31684089f2cf270d3967264fdb89236e5f300a4d021f42211f72e8",
+      "result": "PASS_CAPTURE"
+    },
+    {
+      "state": "authenticated DM, selected existing two-participant conversation, three synthetic rows",
+      "size": "1440x900",
+      "artifact": "evidence/design/artifacts/des08-candidate-dm-final-1440x900-2026-09-25.png",
+      "sha256": "400dee9db4c988d3a622d37a1e581778265e427a43898dc571276efdf9e6c8f9",
+      "result": "PASS_CAPTURE"
+    },
+    {
+      "state": "authenticated TEXT, selected channel, narrow layout",
+      "size": "640x720",
+      "artifact": "evidence/design/artifacts/des08-candidate-text-640x720-2026-09-25.png",
+      "sha256": "7359219c56a2653ad2a3ff495da3077c8a588caf398c9126b7feeb5768f0babe",
+      "result": "PASS_CAPTURE"
+    }
+  ],
+  "comparison": {
+    "result": "FAIL_VISUAL_PARITY_WITH_LIMITS",
+    "method": "Manual side-by-side review at identical PNG pixel dimensions. The reference has a 52 px desktop or 88 px mobile design-system demo strip outside the product shell; observations below exclude that strip where applicable. No full-image pixel score is claimed because the strip, presence/media state and scroll position differ.",
+    "adr_context": "ADR-009 requires the 280/912/248 px desktop chat columns and excludes the demo top navigation; these horizontal boundaries are present. ADR-008 concerns connected voice/stream and was not exercised by this fixture.",
+    "observed_differences": [
+      "Desktop product columns align at x=280 and x=1192, but the candidate header occupies 72 px versus about 64 px in the reference shell; the candidate adds a beginning-of-history line and places its date divider about 48 px lower relative to shell top.",
+      "The candidate renders the synthetic file as a plain underlined link; the reference uses a bordered approximately 340 x 62 px attachment card with icon, metadata and download action.",
+      "TEXT message avatars are uniformly blue in the candidate while the reference assigns distinct pastel colors by author.",
+      "Desktop header has only search in the candidate; the reference also shows members and overflow actions. On mobile the candidate places the navigation icon on the right and omits overflow, while the reference places navigation on the left and overflow on the right.",
+      "Desktop composer starts near y=805 in both images, but the candidate is about 70 px high versus about 55 px in the reference and has no helper row underneath. At 640 px the composer starts near y=564 in both, remains about 16 px taller in the candidate, and the reference helper row is absent.",
+      "At 640 px the candidate shows the sixth row and a plain file link; the reference shows a partly occluded attachment card and the next row below the viewport. The differing scroll and attachment geometry prevent a meaningful pixel diff of message positions."
+    ],
+    "fixture_only_differences": [
+      "The candidate has no connected voice dock controls or simulated member presence; the reference depicts connected voice and four online members. These are not attributed to CSS parity.",
+      "The DM capture demonstrates an authenticated selected conversation and full-width main pane, but this reference archive has no matching DM screenshot, so DM pixel parity was not tested."
+    ]
+  },
+  "remaining_gate": "DES-08 stays open: align the concrete chat visual differences, repeat matching-state screenshots at this fixed size and source revision, then capture connected voice and selected stream with real LiveKit media, plus hover/focus/mobile actions and other required widths.",
+  "cleanup": "Disposable API and preview stopped; isolated PostgreSQL schema dropped and absence verified. Local PNG artifacts remain ignored, including failed probe attempts. Temporary capture HTML and Chrome profile remain in TEMP: exact-file deletion was rejected by automatic approval review as blocked by policy. No recursive cleanup was attempted; the synthetic fixture session is invalid after schema removal."
+}

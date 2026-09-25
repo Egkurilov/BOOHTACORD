@@ -35,7 +35,7 @@ describe('GuildChat reference fidelity', () => {
     expect(shell).toContain('.members.is-open, .search-aside.is-open { display: block; }')
     expect(shell).not.toContain('.gc-shell.voice-room-active')
     expect(shell).not.toContain('.gc-shell.voice-members-open')
-    expect(actions).toContain('aria-label="Открыть участников"')
+    expect(actions).toContain("membersExpanded ? 'Скрыть участников' : 'Открыть участников'")
   })
 
   it('gives voice and stream screens the wide PNG stage with an accessible member drawer', () => {
@@ -55,7 +55,7 @@ describe('GuildChat reference fidelity', () => {
     const app = source('../workspace/WorkspaceApp.vue')
     expect(shell).toContain('.mobile-voice-dock')
     expect(actions).toContain('aria-label="Открыть навигацию"')
-    expect(actions).toContain('aria-label="Открыть участников"')
+    expect(actions).toContain("membersExpanded ? 'Скрыть участников' : 'Открыть участников'")
     expect(app).toContain('drawer-scrim')
     expect(app).toContain('toggleMembers')
   })

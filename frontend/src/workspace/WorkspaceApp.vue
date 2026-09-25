@@ -26,6 +26,7 @@ import { useAuthorDirectoryLifecycle } from '../identity/author_directory_lifecy
 import AdminPanel from './AdminPanel.vue'
 import SearchLauncher from '../search/SearchLauncher.vue'
 import WorkspaceSearchPanel from '../search/WorkspaceSearchPanel.vue'
+import { useMemberHeaderExpanded } from './member_header_expanded'
 const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string }>()
 const emit = defineEmits<{ sessionExpired: []; loggedOut: [] }>()
 const { activeVoiceChannel, audioSettings, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls()
@@ -44,6 +45,7 @@ const { profile, profileError, profileLoading, refreshProfile, setProfile } = us
 useAuthorDirectoryLifecycle(profile)
 const selectedDirectMessage = computed(() => directMessageStore.directMessages.find((item) => item.id === directMessageStore.directMessageId) ?? null)
 const voiceStageWide = computed(() => selectedChannel.value?.kind === 'VOICE' && !selectedDirectMessage.value && activePanel.value === 'none')
+const memberHeaderExpandedState = useMemberHeaderExpanded(voiceStageWide, membersOpen, closeDrawers)
 const voiceNavigationPresence = computed(() => buildVoiceNavigationPresence(activeVoiceChannel.value?.id ?? null, profile.value, voiceConnection))
 function selectChannel(channel: TopologyChannel): void { closeDrawers(); activePanel.value = 'none'; sidebarSection.value = 'channels'; directMessageStore.close(); selectWorkspaceChannel(channel) }
 function selectDirectMessage(directMessageId: string): void { closeDrawers(); activePanel.value = 'none'; sidebarSection.value = 'messages'; selectWorkspaceDirectMessage(directMessageId); void directMessageStore.open(directMessageId) }
@@ -61,11 +63,10 @@ function openGuildPanel(): void { if (props.role === 'ADMINISTRATOR') togglePane
 onMounted(() => { void topologyStore.refresh(); void directMessageStore.refreshNavigation(); void refreshProfile(); workspaceRealtime.start() })
 onBeforeUnmount(() => workspaceRealtime.stop())
 </script>
-
 <template>
   <div class="app-frame">
     <a class="gc-sr-only" href="#main-region">Перейти к содержимому</a>
-      <div class="gc-shell" :class="{ 'no-aside': activePanel !== 'search' && (voiceStageWide || selectedDirectMessage || activePanel !== 'none'), 'voice-stage-wide': voiceStageWide }" data-testid="app-shell">
+      <div class="gc-shell" :class="{ 'no-aside': activePanel !== 'search' && (voiceStageWide || selectedDirectMessage || activePanel !== 'none'), 'voice-stage-wide': voiceStageWide, 'members-collapsed': membersOpen && !voiceStageWide && !selectedDirectMessage && activePanel === 'none' }" data-testid="app-shell">
       <aside id="nav-sidebar" class="sidebar" :class="{ 'is-open': navOpen }" :role="modalDrawer === 'nav' ? 'dialog' : undefined" :aria-modal="modalDrawer === 'nav' ? 'true' : undefined" aria-label="Навигация гильдии" data-testid="nav-sidebar">
         <div class="nav-drawer" tabindex="-1">
           <button class="guild-header" type="button" :aria-expanded="activePanel === 'admin'" @click="openGuildPanel"><span class="guild-mark" aria-hidden="true">G</span><span id="app-title">Моя гильдия</span></button><SearchLauncher :active="activePanel === 'search'" @open="togglePanel('search')" @close="activePanel = 'none'" />
@@ -95,10 +96,9 @@ onBeforeUnmount(() => workspaceRealtime.stop())
           @toggle-deafen="voiceConnection.toggleDeafen" @toggle-microphone="voiceConnection.toggleMicrophone" />
         <WorkspaceUserFooter :role="props.role" :display-name="profile?.display_name" :avatar-u-r-l="profile?.avatar_url" @open-profile="togglePanel('profile')" @open-settings="togglePanel('audio')" />
       </aside>
-
       <main id="main-region" class="main" data-testid="main-region">
         <WorkspaceMain :panel="activePanel === 'search' ? 'none' : activePanel" :channel="selectedChannel" :direct-message="selectedDirectMessage" :join-voice="joinVoice" :leave-voice="leaveVoice" :activation-mode="voiceActivation.mode" :start-screen="startScreen"
-          :self-display-name="profile?.display_name ?? null" :nav-open="navOpen" :members-open="membersOpen" :show-members="!selectedDirectMessage && activePanel === 'none'" :voice-connection="voiceConnection"
+          :self-display-name="profile?.display_name ?? null" :nav-open="navOpen" :members-open="memberHeaderExpandedState" :show-members="!selectedDirectMessage && activePanel === 'none'" :voice-connection="voiceConnection"
           @toggle-nav="toggleNavigation" @toggle-members="toggleMembers">
           <template #admin>
             <AdminPanel v-if="props.role === 'ADMINISTRATOR'" :categories="topologyStore.topology?.categories ?? []" :revision="topologyStore.topology?.revision ?? 0" @topology-changed="refreshTopology" />

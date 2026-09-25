@@ -3,6 +3,7 @@
 .nav-drawer { overflow: hidden; }
 
 @media (min-width: 1280px) {
+  .gc-shell:not(.voice-stage-wide) .workspace-header-toggle--members { display: grid; }
   .gc-shell.voice-stage-wide .members { position: absolute; inset: 0 0 0 auto; z-index: 31; display: none; width: min(320px, calc(100% - 32px)); border-left: 1px solid var(--gc-border-subtle); box-shadow: var(--gc-shadow-shell); }
   .gc-shell.voice-stage-wide .members.is-open { display: block; }
   .gc-shell.voice-stage-wide .workspace-header-toggle--members { display: grid; }
@@ -20,6 +21,8 @@
 }
 
 @media (max-width: 1023px) {
+  .conversation-header .workspace-header-actions { display: contents; }
+  .conversation-header .workspace-header-toggle--nav { order: -1; }
   .app-frame { height: 100dvh; min-height: 0; padding: 0; }
   .gc-shell, .gc-shell.no-aside { display: block; width: 100%; height: 100dvh; min-height: 0; border: 0; border-radius: 0; }
   .sidebar { display: contents; }

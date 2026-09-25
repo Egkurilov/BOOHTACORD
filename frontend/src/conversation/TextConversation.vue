@@ -9,6 +9,7 @@ import TextHistoryList from './TextHistoryList.vue'
 import TextMessageAttachmentPicker from './TextMessageAttachmentPicker.vue'
 import TextMessageSearch from './TextMessageSearch.vue'
 import MentionPicker from './MentionPicker.vue'
+import ConversationOverflowMenu from './ConversationOverflowMenu.vue'
 import type { TextAttachmentUpload } from './text_attachment_upload_client'
 import { advanceTextReadIfVisible } from './text_read_gate'
 import { newestVisibleServerMessageId, shouldAdvanceVisibleRead } from './read_visibility'
@@ -89,7 +90,7 @@ function closeSearch(): void { searchOpen.value = false; void nextTick(() => sea
       <div class="main-title">
         <h2 id="conversation-title">{{ channelName }}</h2>
       </div>
-      <WorkspaceHeaderActions :members-expanded="props.membersOpen" :nav-expanded="props.navOpen" :show-members="props.showMembers" @toggle-members="emit('toggleMembers')" @toggle-navigation="emit('toggleNav')"><button ref="searchTrigger" class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen ? closeSearch() : searchOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button></WorkspaceHeaderActions>
+      <WorkspaceHeaderActions :members-expanded="props.membersOpen" :nav-expanded="props.navOpen" :show-members="props.showMembers" @toggle-members="emit('toggleMembers')" @toggle-navigation="emit('toggleNav')"><button ref="searchTrigger" class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen ? closeSearch() : searchOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button><template #overflow><ConversationOverflowMenu :show-members="props.showMembers" :members-open="props.membersOpen" @search="searchOpen = true" @toggle-members="emit('toggleMembers')" /></template></WorkspaceHeaderActions>
     </header>
     <div v-if="searchOpen" class="conversation-tools"><TextMessageSearch :channel-id="props.channelId" @close="closeSearch" /></div>
     <p v-if="store.loading" class="state" aria-live="polite">Загружаем историю…</p>
@@ -99,22 +100,18 @@ function closeSearch(): void { searchOpen.value = false; void nextTick(() => sea
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
+        <TextMessageAttachmentPicker :channel-id="props.channelId" :disabled="store.sending || attachmentPending"
+          :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" />
         <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" />
-        <TextMessageAttachmentPicker
-          :channel-id="props.channelId"
-          :disabled="store.sending || attachmentPending"
-          :clear-token="attachmentClearToken"
-          @change="attachments = $event"
-          @pending="attachmentPending = $event"
-        />
         <label class="gc-sr-only" for="message-body">Сообщение</label>
-        <textarea id="message-body" v-model="draft" :disabled="store.sending" :aria-describedby="store.error ? 'text-conversation-error' : undefined" placeholder="Написать сообщение…" @keydown="submitOnComposerEnter($event, send)" />
+        <textarea id="message-body" v-model="draft" rows="1" :disabled="store.sending" :aria-describedby="store.error ? 'text-conversation-error text-composer-help' : 'text-composer-help'" placeholder="Написать сообщение…" @keydown="submitOnComposerEnter($event, send)" />
         <span class="emoji-picker">
           <button class="emoji-trigger" type="button" aria-label="Добавить emoji" :aria-expanded="emojiOpen" @click="emojiOpen = !emojiOpen">☺</button>
           <span v-if="emojiOpen" class="emoji-menu" aria-label="Выбор emoji"><button v-for="emoji in emojis" :key="emoji" type="button" :aria-label="`Добавить ${emoji}`" @click="addEmoji(emoji); emojiOpen = false">{{ emoji }}</button></span>
         </span>
         <button class="composer-send" type="submit" :aria-label="store.sending ? 'Отправляем сообщение' : 'Отправить сообщение'" :disabled="store.sending || attachmentPending || !draft"><span v-if="store.sending">…</span><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z" /><path d="m11 13 4-4" /></svg></button>
       </form>
+      <div class="composer-helper"><p id="text-composer-help">Enter — отправить · Shift+Enter — новая строка</p><p class="composer-helper__limit">До 25 МБ на файл</p></div>
     </div>
   </section>
 </template>

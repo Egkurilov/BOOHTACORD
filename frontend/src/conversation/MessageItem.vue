@@ -2,6 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 
 import type { TextMessage, TextMessageAttachment } from './message_client'
+import { avatarFallbackStyle } from './avatar_fallback'
 import { useAuthorDirectory } from '../identity/author_directory'
 import MessageBody from './MessageBody.vue'
 import MentionPicker from './MentionPicker.vue'
@@ -66,7 +67,7 @@ function initial(name: string): string {
   <article ref="row" class="message-item message-row" :class="{ deleted: message.deleted, grouped: compact }" tabindex="-1">
     <span v-if="compact" class="message-avatar-spacer" aria-hidden="true"></span>
     <img v-else-if="authorAvatar && !avatarFailed" class="message-avatar" :src="authorAvatar" alt="" @error="avatarFailed = true">
-    <span v-else class="message-avatar" aria-hidden="true">{{ initial(authorName) }}</span>
+    <span v-else class="message-avatar" :style="avatarFallbackStyle(message.authorId)" aria-hidden="true">{{ initial(authorName) }}</span>
     <div class="message-content">
       <div v-if="!compact" class="message-meta">
         <span class="message-author">{{ authorName }}</span>

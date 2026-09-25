@@ -1,0 +1,47 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-010",
+  "task": "QA-08",
+  "kind": "trusted-post-rollout-exact-volume-and-private-metric-audit",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T15:17:40Z",
+  "source_revision": "ba38bb3e6f7d18d20bbe5d93b1fa8b85ebd580e6",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1647706",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1647706/jobs/3221381/logs",
+  "checks": [
+    {
+      "name": "backend/frontend/release guard/deploy and health",
+      "status": "PASS",
+      "observation": "All four jobs SUCCESS; maintenance admission disabled after health returned ok."
+    },
+    {
+      "name": "exact attachment volume before and after image build",
+      "status": "PASS",
+      "before_build_available_bytes": 6544420864,
+      "after_build_available_bytes": 6544203776,
+      "release_required_bytes": 6343294632
+    },
+    {
+      "name": "read-only host and API audit after rollout",
+      "status": "PASS",
+      "volume": "voice-platform_attachments-data",
+      "filesystem_source": "/dev/vda2",
+      "filesystem_type": "ext4",
+      "filesystem_target": "/",
+      "total_bytes": 31591473152,
+      "host_available_bytes": 6545604608,
+      "api_metric_available_bytes": 6545604608,
+      "required_bytes_including_reservations": 6343294632,
+      "host_margin_bytes": 202309976,
+      "in_flight_reserved_bytes": 0,
+      "snapshot_success": 1,
+      "api_image": "voice-platform-api:ba38bb3e6f7d18d20bbe5d93b1fa8b85ebd580e6",
+      "api_health": "ok"
+    },
+    {
+      "name": "sustained capacity after future releases and active uploads",
+      "status": "NOT_PROVEN",
+      "observation": "Post-rollout margin is 202309976 bytes, down 18677760 bytes from the previous trusted audit. The 0-byte reservation is one idle snapshot, not an active-upload load test."
+    }
+  ],
+  "decision": "Guarded rollout and current volume/metric measurement passed, but QA-08 remains open because future build and active-upload headroom is narrow and decreasing. Published attachment history was not deleted."
+}

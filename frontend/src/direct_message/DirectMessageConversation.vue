@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-
 import { loadCurrentSession, type CurrentSession } from '../identity/current_session'
 import { useAuthorDirectory } from '../identity/author_directory'
 import MentionPicker from '../conversation/MentionPicker.vue'
+import ConversationOverflowMenu from '../conversation/ConversationOverflowMenu.vue'
 import type { TextMessageAttachment } from '../conversation/message_client'
 import DirectMessageAttachmentPicker from './DirectMessageAttachmentPicker.vue'
 import DirectMessageHistoryList from './DirectMessageHistoryList.vue'
@@ -17,7 +17,6 @@ import { useComposerScope } from '../conversation/composer_scope'
 import { submitOnComposerEnter } from '../conversation/composer_enter'
 import SearchMessageContext from '../search/SearchMessageContext.vue'
 import { useSearchTargetStore } from '../search/search_target_store'
-
 const props = defineProps<{ directMessageId: string; otherParticipantId: string; otherParticipantDisplayName: string; navOpen: boolean }>()
 const emit = defineEmits<{ toggleNav: [] }>()
 const store = useDirectMessageStore()
@@ -95,7 +94,7 @@ onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVi
         <h2 id="direct-message-title">{{ props.otherParticipantDisplayName }}</h2>
         <small>Личный диалог</small>
       </div>
-      <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="props.navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')"><button ref="searchTrigger" class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen ? closeSearch() : searchOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button></WorkspaceHeaderActions>
+      <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="props.navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')"><button ref="searchTrigger" class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen ? closeSearch() : searchOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button><template #overflow><ConversationOverflowMenu @search="searchOpen = true" /></template></WorkspaceHeaderActions>
     </header>
     <div v-if="searchOpen" class="conversation-tools"><DirectMessageSearch :direct-message-id="props.directMessageId" @close="closeSearch" /></div>
     <p v-if="store.loadingHistory" class="state" aria-live="polite">Загружаем историю…</p>
@@ -105,16 +104,17 @@ onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVi
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
-        <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" />
         <DirectMessageAttachmentPicker :direct-message-id="props.directMessageId" :disabled="store.sending || attachmentPending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" />
+        <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" />
         <label class="gc-sr-only" for="direct-message-body">Сообщение</label>
-        <textarea id="direct-message-body" v-model="draft" :disabled="store.sending" :aria-describedby="store.error ? 'direct-conversation-error' : undefined" placeholder="Написать сообщение…" @keydown="submitOnComposerEnter($event, send)" />
+        <textarea id="direct-message-body" v-model="draft" rows="1" :disabled="store.sending" :aria-describedby="store.error ? 'direct-conversation-error direct-composer-help' : 'direct-composer-help'" placeholder="Написать сообщение…" @keydown="submitOnComposerEnter($event, send)" />
         <span class="emoji-picker">
           <button class="emoji-trigger" type="button" aria-label="Добавить emoji" :aria-expanded="emojiOpen" @click="emojiOpen = !emojiOpen">☺</button>
           <span v-if="emojiOpen" class="emoji-menu" aria-label="Выбор emoji"><button v-for="emoji in emojis" :key="emoji" type="button" :aria-label="`Добавить ${emoji}`" @click="addEmoji(emoji); emojiOpen = false">{{ emoji }}</button></span>
         </span>
         <button class="composer-send" type="submit" :aria-label="store.sending ? 'Отправляем сообщение' : 'Отправить сообщение'" :disabled="store.sending || attachmentPending || !draft"><span v-if="store.sending">…</span><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z" /><path d="m11 13 4-4" /></svg></button>
       </form>
+      <div class="composer-helper"><p id="direct-composer-help">Enter — отправить · Shift+Enter — новая строка</p><p class="composer-helper__limit">До 25 МБ на файл</p></div>
     </div>
   </section>
 </template>

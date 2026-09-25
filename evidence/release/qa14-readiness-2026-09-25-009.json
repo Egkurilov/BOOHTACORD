@@ -1,0 +1,26 @@
+{
+  "id": "qa14-readiness-2026-09-25-009",
+  "kind": "post-visual-recheck-requirement-matrix-refresh",
+  "status": "FAIL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T16:00:47Z",
+  "source_base_commit": "ba38bb3e6f7d18d20bbe5d93b1fa8b85ebd580e6",
+  "candidate_frontend_fingerprint_sha256": "3b14aab301dd220647814728ebb4e08125c07aecf4eeab39ffa853dba83c524d",
+  "requirements": {"total": 39, "mapped": 39, "matrix": "docs/release/2026-09-25-requirements-matrix.md"},
+  "todo": {"total": 55, "completed": 37, "open": 18, "open_backend": 0, "open_frontend": 0, "open_design": 7, "open_verification": 11},
+  "latest_trusted_ci": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1647706",
+  "candidate_status": "FE-35…39 source tests/build PASS; local authenticated visual recheck PARTIAL. These frontend changes are not yet a trusted master release at this decision time.",
+  "new_evidence": [
+    "evidence/capacity/qa08-attachment-volume-2026-09-25-010.json",
+    "evidence/design/des08-authenticated-chat-visual-2026-09-25-001.json",
+    "evidence/design/des08-fe35-39-authenticated-recheck-2026-09-25-001.json"
+  ],
+  "blocking_gates": [
+    "QA-08: exact volume/current reservation measurement passes but only 202309976 bytes remain above release threshold and sustainable headroom is unproven",
+    "QA-06/07/09/10: physical media, hardware load and connected-revocation POCs",
+    "QA-03/05 and DES-02..08: browser upload/notification, screen reader, connected-media and full visual acceptance",
+    "QA-11/12: approved delivery contract, immutable artifacts and compatible rollback acceptance",
+    "QA-13: Android release APK signing and physical-device acceptance"
+  ],
+  "note": "The local screenshot recheck and guarded trusted deployment improve evidence but do not establish mandatory media, capacity, browser, delivery and release gates."
+}
