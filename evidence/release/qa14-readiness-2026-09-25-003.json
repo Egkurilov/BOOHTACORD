@@ -1,0 +1,34 @@
+{
+  "id": "qa14-readiness-2026-09-25-003",
+  "kind": "pre-release-requirement-matrix-update",
+  "status": "FAIL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T07:49:03Z",
+  "source_commit": "83d6bdd2c756d174d2d6668543bbc5b7f4a349b4",
+  "requirements": {
+    "total": 39,
+    "mapped": 39,
+    "matrix": "docs/release/2026-09-25-requirements-matrix.md"
+  },
+  "todo": {
+    "total": 37,
+    "completed": 19,
+    "open": 18,
+    "open_design": 7,
+    "open_verification": 11
+  },
+  "new_pass": {
+    "tasks": ["QA-01", "QA-04"],
+    "evidence": "evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json",
+    "run_id": 1643330,
+    "result": "GitVerse backend, frontend and release_guard jobs succeeded; deploy skipped on candidate branch."
+  },
+  "blocking_gates": [
+    "QA-08: production attachment filesystem has 0 available bytes, below protected threshold",
+    "QA-06/07/09/10: physical media, hardware load and connected-revocation POCs",
+    "QA-03/05 and DES-02..08: candidate browser, notification, accessibility and visual acceptance",
+    "QA-11/12: approved delivery contract, SBOM/provenance and guarded rollout/rollback",
+    "QA-13: Android release signing and physical-device acceptance"
+  ],
+  "note": "CI success does not override the measured QA-08 storage failure or close QA-14."
+}

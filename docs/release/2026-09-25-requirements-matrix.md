@@ -25,34 +25,34 @@
 | REQ-SCREEN-02 · Захват игры и звук | NOT_RUN | Windows/macOS game capture, game audio, отдельный observer [QA] |
 | REQ-SCREEN-03 · Публикация/viewer | PARTIAL: код и FPS source checks [DONE] | Media/visual POC с несколькими publishers/viewers [QA], [DES] |
 | REQ-SCREEN-04 · Диагностика | PARTIAL: sender/viewer counters в коде [DONE] | Сопоставить sender и receiver измерения [QA] |
-| REQ-CHAT-01 · TEXT | LOCAL: PostgreSQL idempotency и локальный browser send [QA-01], [QA-05] | Trusted CI, history/upload/browser candidate [QA] |
+| REQ-CHAT-01 · TEXT | PARTIAL: PostgreSQL idempotency и trusted CI PASS; локальный browser send [QA-01], [QA-05] | History/upload/browser candidate [QA] |
 | REQ-DM-01 · DM только двум | PARTIAL: PostgreSQL ACL и три HTTP-сессии [QA-03] | Browser notification и candidate replay/privacy [QA] |
 | REQ-CHAT-02 · Упоминания/unread | PARTIAL: caller-local код и browser unread [DONE], [QA-05] | Видимость/cursor/notification на candidate [QA], [DES] |
-| REQ-SEARCH-01 · Поиск | LOCAL: PostgreSQL русский/английский, GIN и browser smoke [QA-04], [QA-05] | Trusted CI и candidate browser [QA] |
+| REQ-SEARCH-01 · Поиск | PARTIAL: PostgreSQL русский/английский, GIN и trusted CI PASS; локальный browser smoke [QA-04], [QA-05] | Candidate browser [QA] |
 | REQ-STORAGE-01 · Постоянство/25 МБ | PARTIAL: границы и private storage проверены локально [QA-03] | Attachment volume и rollout/rollback с томами [QA] |
 | REQ-STORAGE-02 · Upload/ACL/preview | LOCAL: PostgreSQL/FS access matrix [QA-03] | Browser upload/preview/download candidate [QA] |
 | REQ-STORAGE-03 · Нехватка диска | FAIL: production attachment filesystem имеет 0 доступных байт; локально подтверждены резерв и HTTP 507 [QA-08] | Увеличить доступное место выше защитного порога с учётом in-flight резерваций и повторить production-измерение [QA] |
 | REQ-NOBACKUP-01 · Нет backup job | PARTIAL: код/Compose не вводят backup [DONE] | Проверить обновление/совместимый rollback без потери томов [QA] |
 | REQ-UI-01 · Русский one-guild shell | PARTIAL: локальный smoke 1440/1280/1024 [QA-05] | Zoom, keyboard, screenshots и media states [DES], [QA] |
 | REQ-UI-02 · Компоненты/доступность | PARTIAL: 40-компонентная матрица и часть focus [DONE], [QA-05] | DES-02…08, screen reader и candidate comparison [DES] |
-| REQ-STACK-01 · Vue/Go/PostgreSQL/LiveKit | LOCAL: native builds и миграции [DONE], [QA-01] | Trusted CI и целевой deployment [QA] |
+| REQ-STACK-01 · Vue/Go/PostgreSQL/LiveKit | PARTIAL: native builds, PostgreSQL и trusted CI PASS [DONE], [QA-01] | Целевой deployment и media POC [QA] |
 | REQ-ARCH-01 · Разделение медиа/API | PARTIAL: код использует LiveKit и lease admission [DONE] | Connected-media POC и приватный network smoke [QA] |
-| REQ-DEPLOY-01 · CI/CD | BLOCKED: исходный main/GHCR и активный GitVerse/master расходятся [QA] | Утверждённый ADR, trusted checks, immutable refs, SBOM и rollout [QA] |
+| REQ-DEPLOY-01 · CI/CD | PARTIAL: GitVerse backend/frontend/release_guard PASS на candidate; исходный main/GHCR и GitVerse/master расходятся [QA-04] | Утверждённый ADR, immutable refs, SBOM/provenance и rollout [QA] |
 | REQ-OPS-01 · Наблюдаемость | PARTIAL: приватные метрики и rotation в коде [DONE] | Live scrape, CPU/сеть/quota и latency evidence [QA] |
 | REQ-SECURITY-01 · Защита операций | PARTIAL: локальные ACL/storage tests [QA-03] | Candidate privacy, CI/security и сетевые проверки [QA] |
 | REQ-SECURITY-02 · DM/media privacy | PARTIAL: DM ACL проверен, media replay нет [QA-03] | Notification preview и POC-03 connected media [QA] |
 | REQ-QUALITY-01 · Latency/capacity цели | NOT_RUN | Измерить p95 join/message/switch/recovery, FPS и нагрузку [QA] |
-| REQ-QUALITY-02 · Выпускные гейты | BLOCKED: 20 пакетов TODO открыты [TODO] | Закрыть применимые DES/QA с PASS и повторить решение [QA] |
+| REQ-QUALITY-02 · Выпускные гейты | BLOCKED: 18 пакетов TODO открыты [TODO] | Закрыть применимые DES/QA с PASS и повторить решение [QA] |
 
-Сквозной счёт: **39/39 ID отражены**, но обязательные media, capacity, browser, CI/deploy и release проверки ещё не имеют PASS. Состояние TODO: **17/37 закрыто, 20/37 открыто**, включая добавленную BE-15. Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
+Сквозной счёт: **39/39 ID отражены**; QA-01/04 имеют trusted CI PASS, но обязательные media, capacity, browser, delivery/rollout и release проверки ещё не имеют PASS. Состояние TODO: **19/37 закрыто, 18/37 открыто**, включая добавленную BE-15. Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
 
 [DONE]: ../../DONE.md
 [TODO]: ../../TODO.md
 [QA]: ../../backlog/VERIFICATION_TODO.md
 [DES]: ../design/GUILDCHAT_V1_TODO.md
-[QA-01]: ../../evidence/qa/qa01-postgres-harness-2026-09-25-001.json
+[QA-01]: ../../evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json
 [QA-02]: ../../evidence/qa/qa02-auth-admin-concurrency-2026-09-25-001.json
 [QA-03]: ../../evidence/qa/qa03-dm-read-matrix-2026-09-25-001.json
-[QA-04]: ../../evidence/qa/qa04-search-migrations-ci-2026-09-25-001.json
+[QA-04]: ../../evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json
 [QA-05]: ../../evidence/qa/qa05-candidate-browser-2026-09-25-001.json
 [QA-08]: ../../evidence/capacity/qa08-attachment-volume-2026-09-25-002.json

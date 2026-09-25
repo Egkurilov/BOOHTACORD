@@ -84,10 +84,12 @@
 
 ## Эксплуатация и подтверждённые записи
 
+- [x] **QA-01:** обязательная PostgreSQL CI-служба, migration-backed TEXT idempotency/reply tests и no-skip Go gate подтверждены локально и trusted [GitVerse run #1643330](evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json); backend job PASS.
 - [x] **QA-02:** PostgreSQL race-проверки admin/bootstrap/reset/recovery, role refresh и WebSocket revoke, topology revision, voice transfer; выдача одноразовой ссылки и её однократное HTTP-применение с отказом старым credentials. [Evidence PASS](evidence/qa/qa02-auth-admin-concurrency-2026-09-25-001.json). Browser reset и connected media проверяются отдельно в QA-05/10.
+- [x] **QA-04:** локальные PostgreSQL search/GIN и migration checks подтверждены trusted [GitVerse run #1643330](evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json): backend, frontend, release_guard PASS; deploy на non-master ветке skipped. Browser и rollout gates остаются отдельными задачами.
 
 - [x] **T-052:** private metrics для HTTP, WS connections/ready/reconnect, фактических LiveKit participants/tracks, задержки доставки событий, SFU revocation, upload failures и attachment filesystem; request-ID logs без body/token labels. Compose log rotation 10 MiB × 3. Live scrape и нагрузочная приёмка остаются QA-09/10.
-- [x] **T-054:** GitHub CI/GHCR/SBOM workflow и отдельный действующий GitVerse master deploy с commit-addressed API/web images, source archive hash, verified SSH, migration-before-rollout, maintenance и smoke guards. Согласование delivery ADR/CI completeness ещё QA-04/11/12.
+- [x] **T-054:** GitHub CI/GHCR/SBOM workflow и отдельный действующий GitVerse master deploy с commit-addressed API/web images, source archive hash, verified SSH, migration-before-rollout, maintenance и smoke guards. Trusted CI подтверждён в QA-04; согласование delivery ADR, SBOM/provenance и rollout ещё QA-11/12.
 - [x] **Исторический production smoke:** evidence/release-guildchat-profile-admin-2026-09-24-001.json содержит PASS_RUNTIME и successful GitVerse run #1629339; это не authenticated workflow/visual/media acceptance и не deploy всех текущих локальных изменений.
 - [x] **T-051:** Flutter source/runners Android/macOS/Windows, cookie-based auth, topology/chat/DM/presence и voice/viewer baseline. ADR-006 разрешает Android. APK evidence/android/android-apk-build-2026-09-24-002.json — build PASS, подпись Debug; физические device tests и production signing ещё QA-13.
 
