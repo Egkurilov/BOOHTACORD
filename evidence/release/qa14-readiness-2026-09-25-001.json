@@ -1,0 +1,29 @@
+{
+  "id": "qa14-readiness-2026-09-25-001",
+  "kind": "pre-release-requirement-matrix",
+  "status": "BLOCKED",
+  "decision": "NO-GO",
+  "executed_at": "2026-09-25",
+  "source_commit": "f17f603",
+  "requirements": {
+    "total": 39,
+    "mapped": 39,
+    "matrix": "docs/release/2026-09-25-requirements-matrix.md"
+  },
+  "todo": {
+    "total_original": 36,
+    "completed": 16,
+    "open": 20,
+    "open_design": 7,
+    "open_verification": 13
+  },
+  "blocking_gates": [
+    "QA-06/07: physical Windows and Apple Silicon macOS media POC and measured sender/receiver profile",
+    "QA-08/09: deployment attachment volume and hardware/network capacity measurements",
+    "QA-10: connected LiveKit revocation and credential replay",
+    "QA-01/04/11/12: trusted CI, approved delivery contract, SBOM/provenance and guarded rollout/rollback",
+    "QA-05 and DES-02..08: pinned-bundle browser, accessibility and visual acceptance",
+    "QA-13: Android release signing and physical-device acceptance"
+  ],
+  "note": "This is a truthful pre-release decision, not QA-14 completion. Recompute the matrix and decision after every applicable gate has PASS evidence."
+}
