@@ -21,6 +21,12 @@
     "Fixture shutdown removed its PostgreSQL schema and temporary attachment directory; loopback listeners stopped"
   ],
   "before_fix": "After success and used-link rejection focus fell to BODY when the submit form disappeared; return to login also left focus on BODY",
+  "trusted_branch_ci": {
+    "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1643974",
+    "source_commit": "e226ed899bc139466aa1446dac47a601fe9c7c64",
+    "result": "Backend with PostgreSQL/no-skip, frontend, and release_guard passed; deploy skipped on codex branch",
+    "scope": "Branch validation only; no trusted release bundle or production deployment"
+  },
   "remaining": [
     "Other DES-03 admin states were not exercised",
     "No screen reader, zoom, media, upload or screenshot comparison was performed",
