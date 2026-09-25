@@ -12,9 +12,9 @@ import (
 )
 
 func TestRepositoryRequiresCurrentLeaseChannelSessionAndAccount(t *testing.T) {
-	database := &fakeDatabase{row: fakeRow{values: []any{"lease-1", "voice-1"}}}
+	database := &fakeDatabase{row: fakeRow{values: []any{"lease-1", "voice-1", "Егор 🎮"}}}
 	lease, err := New(database).FindActive(context.Background(), issuelivekitcredential.Input{ActorID: "user-1", LeaseID: "lease-1", SessionDigest: sha256.Sum256([]byte("session"))})
-	if err != nil || lease != (issuelivekitcredential.Lease{ID: "lease-1", ChannelID: "voice-1"}) || !strings.Contains(database.statement, "channel.admission_closed_at IS NULL") || !strings.Contains(database.statement, "session.revoked_at IS NULL") || !strings.Contains(database.statement, "account.blocked_at IS NULL") {
+	if err != nil || lease != (issuelivekitcredential.Lease{ID: "lease-1", ChannelID: "voice-1", DisplayName: "Егор 🎮"}) || !strings.Contains(database.statement, "account.display_name") || !strings.Contains(database.statement, "channel.admission_closed_at IS NULL") || !strings.Contains(database.statement, "session.revoked_at IS NULL") || !strings.Contains(database.statement, "account.blocked_at IS NULL") {
 		t.Fatalf("error = %v, lease = %#v, statement = %s", err, lease, database.statement)
 	}
 }

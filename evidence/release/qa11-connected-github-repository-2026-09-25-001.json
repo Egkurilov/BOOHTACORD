@@ -1,0 +1,17 @@
+{
+  "id": "qa11-connected-github-repository-2026-09-25-001",
+  "task": "QA-11",
+  "kind": "connected-github-approved-repository-availability",
+  "status": "BLOCKED",
+  "observed_at": "2026-09-25T19:33:16Z",
+  "source_revision": "67a9789a8eac3d12e09dc000b51f45d24fc07965",
+  "checks": [
+    {"name": "GitHub app account", "result": "PASS_READ_ONLY", "detail": "The connected GitHub app has an authenticated owner account whose login matches the requested owner case-insensitively."},
+    {"name": "approved repository lookup", "result": "INACCESSIBLE", "detail": "github_get_repo for egkurilov/BOOHTACORD returned HTTP 404 to this app identity."},
+    {"name": "installed repository search", "result": "EMPTY", "detail": "github_search_installed_repositories_v2 for BOOHTACORD returned no repositories."},
+    {"name": "owner-affiliated repository inventory", "result": "ABSENT", "detail": "github_list_repositories_by_affiliation(owner) returned accessible repositories but no BOOHTACORD entry."},
+    {"name": "trusted main/GHCR delivery", "result": "NOT_RUN", "reason": "The approved repository is unavailable through the connected GitHub identity; no main run, immutable digest, SBOM or provenance could be inspected."}
+  ],
+  "interpretation": "The observations establish current connector inaccessibility, not whether an unconnected private repository exists elsewhere.",
+  "next_action": "Provision or connect the approved GitHub repository and deployment inputs, or accept a final ADR-010 for GitVerse with equivalent immutable-artifact and attestation guarantees. Until then QA-11 remains open."
+}

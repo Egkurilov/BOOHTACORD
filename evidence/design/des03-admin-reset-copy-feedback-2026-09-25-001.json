@@ -1,0 +1,14 @@
+{
+  "id": "des03-admin-reset-copy-feedback-2026-09-25-001",
+  "tasks": ["DES-03"],
+  "kind": "administrator-reset-link-copy-feedback-source-regression",
+  "status": "PARTIAL",
+  "source_base_commit": "67a9789a8eac3d12e09dc000b51f45d24fc07965",
+  "checks": [
+    {"name": "baseline", "result": "FAIL_LOCAL_BEFORE_FIX", "detail": "Focused tests showed that clipboard failure retained a prior copied-success message, and successful retry retained a prior clipboard error."},
+    {"name": "focused_feedback", "result": "PASS_LOCAL", "detail": "The copy action clears stale status and error before each attempt; both success-to-failure and failure-to-success transitions pass."},
+    {"name": "frontend_native", "result": "PASS_LOCAL", "detail": "192 frontend test files and 555 tests passed; vue-tsc and Vite build passed."},
+    {"name": "clipboard_browser_screen_reader", "result": "NOT_RUN", "reason": "No native clipboard permission or screen reader browser session was used for this source-level regression."}
+  ],
+  "decision": "The reset-link result no longer announces contradictory outcomes. DES-03 remains open for complete admin and reset browser acceptance."
+}

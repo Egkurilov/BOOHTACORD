@@ -1,0 +1,28 @@
+{
+  "id": "voice-participant-display-name-2026-09-25-001",
+  "task": "T-022",
+  "kind": "voice-participant-display-name-regression",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T19:42:57Z",
+  "source_base_commit": "67a9789a8eac3d12e09dc000b51f45d24fc07965",
+  "baseline": "LiveKit credential contained lease identity and account metadata but no name claim; remote participant.name was empty and the voice UI rendered its fallback «Участник».",
+  "change": "Each authorized credential request now selects the current users.display_name with its active voice lease, signs that value as the LiveKit name claim, and keeps the existing identity, account metadata and room-scoped grants.",
+  "checks": [
+    {
+      "name": "focused_go_tests",
+      "result": "PASS_LOCAL",
+      "detail": "Tests first failed against the old three-argument signer and two-column lease, then passed. JWT payload decoding asserts the Unicode name claim; service and repository tests assert propagation and current users.display_name selection."
+    },
+    {
+      "name": "backend_native_suite",
+      "result": "PASS_LOCAL",
+      "detail": "go test ./... completed successfully."
+    },
+    {
+      "name": "real_multi_user_livekit_session",
+      "result": "NOT_RUN",
+      "detail": "No two-user LiveKit room or deployed browser session was exercised for this change."
+    }
+  ],
+  "limitation": "Participants already connected with a credential lacking name must reconnect after deployment. A profile rename while connected becomes visible to peers on the next credential and LiveKit reconnection."
+}

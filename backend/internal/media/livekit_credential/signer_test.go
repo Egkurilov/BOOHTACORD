@@ -15,18 +15,28 @@ func TestSignerCreatesShortRoomScopedNonAdminCredential(t *testing.T) {
 		t.Fatalf("New() error = %v", err)
 	}
 	signer.now = func() time.Time { return now }
-	credential, err := signer.Issue("lease-1", "channel-1", "11111111-1111-4111-8111-111111111111")
+	credential, err := signer.Issue("lease-1", "channel-1", "11111111-1111-4111-8111-111111111111", "Егор 🎮")
 	if err != nil || credential.Token == "" || credential.ExpiresAt != now.Add(validity) {
 		t.Fatalf("Issue() error = %v, tokenEmpty = %t, expiresAt = %v", err, credential.Token == "", credential.ExpiresAt)
 	}
 	claims := decodeClaims(t, credential.Token)
 	video := claims["video"].(map[string]any)
-	if claims["sub"] != "voice-lease:lease-1" || claims["metadata"] != "account:11111111-1111-4111-8111-111111111111" || video["room"] != "voice:channel-1" || video["roomJoin"] != true || video["roomCreate"] != true || video["roomAdmin"] == true || video["canPublishData"] != false {
+	if claims["sub"] != "voice-lease:lease-1" || claims["metadata"] != "account:11111111-1111-4111-8111-111111111111" || claims["name"] != "Егор 🎮" || video["room"] != "voice:channel-1" || video["roomJoin"] != true || video["roomCreate"] != true || video["roomAdmin"] == true || video["canPublishData"] != false {
 		t.Fatalf("claims = %#v", claims)
 	}
 	sources := strings.Join(strings.FieldsFunc(video["canPublishSources"].([]any)[0].(string)+","+video["canPublishSources"].([]any)[1].(string)+","+video["canPublishSources"].([]any)[2].(string), func(r rune) bool { return r == ',' }), ",")
 	if sources != "microphone,screen_share,screen_share_audio" {
 		t.Fatalf("sources = %q", sources)
+	}
+}
+
+func TestSignerRejectsMissingParticipantName(t *testing.T) {
+	signer, err := New(Config{URL: "wss://voice.example.test", APIKey: "key", APISecret: "secret"})
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	if _, err := signer.Issue("lease-1", "channel-1", "account-1", ""); err != ErrInvalidConfig {
+		t.Fatalf("Issue() error = %v, want ErrInvalidConfig", err)
 	}
 }
 

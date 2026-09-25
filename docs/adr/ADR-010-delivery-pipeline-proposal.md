@@ -9,7 +9,9 @@
 
 Утверждённое ТЗ в REQ-DEPLOY-01 [U, D] требует `main` → проверки → immutable Docker images → GHCR → автоматическую выкладку по SSH → health/smoke. Отдельного принятого ADR, меняющего этот маршрут, нет.
 
-Текущий единственный Git remote у рабочего репозитория — GitVerse. Его workflow запускает PostgreSQL/no-skip backend, frontend и release guard на `master` и `codex/**`, а deploy только на `master`. Deploy передаёт архив exact checkout, собирает API/web на сервере и помечает локальные образы commit SHA. Успешный GitVerse run #1629339 подтверждает работоспособность этого пути на своём source commit; branch run #1643628 подтвердил проверки, но не выполнял deploy. Он не публикует GHCR digest refs, SBOM и provenance. Рабочий GitHub workflow в `.github/workflows/ci.yml` описывает исходный GHCR-путь, но trusted run и опубликованные attestations не предъявлены.
+Текущий единственный Git remote у рабочего репозитория — GitVerse. Его workflow запускает PostgreSQL/no-skip backend, frontend и release guard на `master` и `codex/**`, а deploy только на `master`. Deploy передаёт архив exact checkout, собирает API/web на сервере и помечает локальные образы commit SHA. [Trusted run #1649768](https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649768) успешно развернул `67a9789` с точными volume guards и post-rollout API health; этот путь не публикует GHCR digest refs, SBOM и provenance. GitHub workflow в `.github/workflows/ci.yml` описывает исходный GHCR-путь и теперь имеет локально проверенные pre/post-pull volume guards и digest audit, но trusted run и опубликованные attestations не предъявлены.
+
+[Read-only проверка connected GitHub](../../evidence/release/qa11-connected-github-repository-2026-09-25-001.json) вернула 404 для `egkurilov/BOOHTACORD`; поиск установленных репозиториев пуст, а доступный owner inventory не содержит проект. Это доказывает недоступность целевого repository текущему коннектору, но не отсутствие не подключённого приватного repository.
 
 Прямой push в GitVerse `master` запускает production deploy. Поэтому выбор маршрута и закрытие QA-11 нельзя выводить из успешной локальной сборки или из push рабочей ветки.
 

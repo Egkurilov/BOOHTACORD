@@ -1,0 +1,47 @@
+{
+  "id": "qa12-compatible-rollback-preflight-2026-09-25-001",
+  "task": "QA-12",
+  "kind": "read-only-production-rollback-feasibility-and-operator-plan",
+  "status": "BLOCKED",
+  "observed_at": "2026-09-25T19:34:00Z",
+  "current_revision": "67a9789a8eac3d12e09dc000b51f45d24fc07965",
+  "previous_revision": "0eed259048c7bdfe8c357b62f8390bc746c9af74",
+  "trusted_current_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649768",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1649768/jobs/3225658/logs",
+  "observations": [
+    {
+      "result": "PASS_READ_ONLY",
+      "name": "current deployed revision",
+      "detail": "Run #1649768 passed backend, frontend, release_guard and deploy. The post-rollout audit reports API image 67a9789, health ok, exact attachments volume /dev/vda2 ext4, 20345540608 available bytes against 6343294632 required, and zero upload reservations."
+    },
+    {
+      "result": "CANDIDATE_ONLY",
+      "name": "schema compatibility",
+      "detail": "git diff --name-only 0eed259..67a9789 shows no backend or compose.yaml changes; no migration file changed in this pair. This is useful source evidence, not a read of the live schema version or proof of downgrade compatibility."
+    },
+    {
+      "result": "PASS_AT_PREFLIGHT_TIME",
+      "name": "previous local image tags",
+      "detail": "The trusted pre-build inventory in run #1649768 listed both voice-platform-api:0eed259 and voice-platform-web:0eed259. It does not prove they still exist at rehearsal time; inspect exact tags and image IDs again before any switch."
+    },
+    {
+      "result": "BLOCKED",
+      "name": "trusted rollback entrypoint",
+      "detail": "The existing GitVerse workflow_dispatch always packages and deploys checked-out HEAD. It has no rollback target input or two-way rehearsal job. Direct production batch SSH denied the local operator key; the local Docker daemon is unavailable. No production rollback was attempted."
+    }
+  ],
+  "preconditions": [
+    "Use an approved maintenance window, two independent authenticated browser observers, and a dedicated manual trusted CI job sharing the existing production concurrency group; never dispatch from an untrusted PR.",
+    "At execution time confirm master and both running API/web image tags equal the expected current SHA; inspect exact current and previous local image IDs and existing release directory before switching.",
+    "Verify the live schema migration version against both image migrators and unchanged migration source. Stop if any migration would require a down migration or the compatibility conclusion is uncertain.",
+    "Read Docker volume identities, drivers and mountpoints for postgres-data, attachments-data, caddy-data and caddy-config; audit exact attachment headroom. Record pre-existing non-sensitive test message and attachment checksums through authorized application reads, without dumping private content."
+  ],
+  "rehearsal": [
+    "Start continuous timestamped browser probes in both sessions before the CI job. Capture update/maintenance warning, GET /api/v1/maintenance active state, and 503 MAINTENANCE for new voice lease admission while existing authenticated reads remain usable.",
+    "Through the trusted CI SSH boundary, invoke the current checked-in deploy-images.sh with VOICE_PLATFORM_DIR set to the verified current release directory and API_IMAGE/WEB_IMAGE set to the exact previous local SHA tags. The script must enable admission block, pass exact-volume guard, run its migration step, switch API/web and proxy, validate proxy and public health, then disable admission block.",
+    "Immediately audit the running previous API/web tags, public health and exact attachment volume with scripts/audit-attachment-volume.sh for the previous SHA. Recheck volume identities and authorized test content/checksums in both browser sessions.",
+    "Repeat the same trusted switch to exact current SHA tags and audit again. Verify both browsers recover, GET /api/v1/maintenance is inactive, new admissions succeed, and the same named volumes and test content remain available."
+  ],
+  "stop_condition": "Abort before mutation if any precondition fails, including current SHA drift, missing image/release, schema uncertainty, volume identity mismatch, inadequate headroom, absent observers or concurrent deploy. During the run, a failed migration, unexpected image, lost volume, failed health, admission state stuck active, or missing browser evidence is a failed rehearsal: use the prevalidated current image restore path if safe, otherwise stop for operator diagnosis. Do not run down migrations, docker compose down -v, volume removal, pg_dump or backup jobs.",
+  "decision": "The 67a9789 to 0eed259 pair is a plausible compatible-image rehearsal candidate, but the real rollback, two-browser behavior and volume persistence remain NOT_RUN. A purpose-built trusted manual job and live precondition checks are required before QA-12 can close."
+}

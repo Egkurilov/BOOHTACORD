@@ -18,12 +18,12 @@ type Input struct {
 	ActorID, LeaseID string
 	SessionDigest    [sha256.Size]byte
 }
-type Lease struct{ ID, ChannelID string }
+type Lease struct{ ID, ChannelID, DisplayName string }
 type Store interface {
 	FindActive(context.Context, Input) (Lease, error)
 }
 type Issuer interface {
-	Issue(string, string, string) (livekitcredential.Credential, error)
+	Issue(string, string, string, string) (livekitcredential.Credential, error)
 }
 type Service struct {
 	store  Store
@@ -42,7 +42,7 @@ func (service Service) Issue(context context.Context, input Input) (livekitcrede
 	if err != nil {
 		return livekitcredential.Credential{}, fmt.Errorf("find active voice lease: %w", err)
 	}
-	credential, err := service.issuer.Issue(lease.ID, lease.ChannelID, input.ActorID)
+	credential, err := service.issuer.Issue(lease.ID, lease.ChannelID, input.ActorID, lease.DisplayName)
 	if err != nil {
 		return livekitcredential.Credential{}, fmt.Errorf("issue livekit credential: %w", err)
 	}

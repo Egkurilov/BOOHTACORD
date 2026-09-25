@@ -2,6 +2,7 @@
 import { nextTick, onMounted, reactive, ref } from 'vue'
 import { createPasswordResetLink, listAdminAccounts, updateAdminAccount, type AdminAccount, type PasswordResetLink } from '../identity/admin_directory_client'
 import { restoreAdminSaveFocus } from './admin_member_save_focus'
+import { copyAdminResetLink } from './admin_reset_link_copy'
 
 const accounts = ref<AdminAccount[]>([]); const cursor = ref<string | undefined>(); const loading = ref(false); const busyID = ref('')
 const error = ref<string | null>(null); const status = ref<string | null>(null)
@@ -31,8 +32,7 @@ async function createReset(account: AdminAccount, event: MouseEvent): Promise<vo
 function closeReset(): void { resetLink.value = null; void nextTick(() => resetTrigger.value?.isConnected && resetTrigger.value.focus()) }
 async function copyResetLink(): Promise<void> {
   if (!resetLink.value) return
-  try { await navigator.clipboard.writeText(resetLink.value.url); status.value = 'Одноразовая ссылка скопирована.' }
-  catch { error.value = 'Не удалось скопировать ссылку. Скопируйте её из поля вручную.' }
+  await copyAdminResetLink(resetLink.value.url, (url) => navigator.clipboard.writeText(url), status, error)
 }
 onMounted(() => { void load() })
 </script>

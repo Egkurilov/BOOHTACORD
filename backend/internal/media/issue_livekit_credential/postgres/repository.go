@@ -10,7 +10,7 @@ import (
 )
 
 const selectActiveLease = `
-SELECT lease.id::text, lease.channel_id::text
+SELECT lease.id::text, lease.channel_id::text, account.display_name
 FROM voice_leases AS lease
 JOIN channels AS channel ON channel.id = lease.channel_id
 JOIN sessions AS session ON session.token_digest = lease.session_token_digest
@@ -28,7 +28,7 @@ type Repository struct{ database Database }
 func New(database Database) Repository { return Repository{database: database} }
 func (repository Repository) FindActive(context context.Context, input issuelivekitcredential.Input) (issuelivekitcredential.Lease, error) {
 	var lease issuelivekitcredential.Lease
-	err := repository.database.QueryRow(context, selectActiveLease, input.LeaseID, input.ActorID, input.SessionDigest[:]).Scan(&lease.ID, &lease.ChannelID)
+	err := repository.database.QueryRow(context, selectActiveLease, input.LeaseID, input.ActorID, input.SessionDigest[:]).Scan(&lease.ID, &lease.ChannelID, &lease.DisplayName)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return issuelivekitcredential.Lease{}, issuelivekitcredential.ErrLeaseUnavailable
 	}

@@ -11,10 +11,10 @@ import (
 
 func TestIssueSignsOnlyActiveLeaseFoundForCurrentSession(t *testing.T) {
 	digest := sha256.Sum256([]byte("session"))
-	store := &fakeStore{lease: Lease{ID: "lease-1", ChannelID: "voice-1"}}
+	store := &fakeStore{lease: Lease{ID: "lease-1", ChannelID: "voice-1", DisplayName: "Егор 🎮"}}
 	issuer := &fakeIssuer{credential: livekitcredential.Credential{Token: "test-token"}}
 	credential, err := New(store, issuer).Issue(context.Background(), Input{ActorID: "user-1", LeaseID: "lease-1", SessionDigest: digest})
-	if err != nil || store.input.SessionDigest != digest || issuer.leaseID != "lease-1" || issuer.channelID != "voice-1" || issuer.accountID != "user-1" || credential.Token == "" {
+	if err != nil || store.input.SessionDigest != digest || issuer.leaseID != "lease-1" || issuer.channelID != "voice-1" || issuer.accountID != "user-1" || issuer.displayName != "Егор 🎮" || credential.Token == "" {
 		t.Fatalf("error = %v, store = %#v, issuer lease = %q", err, store.input, issuer.leaseID)
 	}
 }
@@ -39,13 +39,13 @@ func (store *fakeStore) FindActive(_ context.Context, input Input) (Lease, error
 }
 
 type fakeIssuer struct {
-	leaseID, channelID, accountID string
-	credential         livekitcredential.Credential
-	err                error
-	called             bool
+	leaseID, channelID, accountID, displayName string
+	credential                                 livekitcredential.Credential
+	err                                        error
+	called                                     bool
 }
 
-func (issuer *fakeIssuer) Issue(leaseID, channelID, accountID string) (livekitcredential.Credential, error) {
-	issuer.leaseID, issuer.channelID, issuer.accountID, issuer.called = leaseID, channelID, accountID, true
+func (issuer *fakeIssuer) Issue(leaseID, channelID, accountID, displayName string) (livekitcredential.Credential, error) {
+	issuer.leaseID, issuer.channelID, issuer.accountID, issuer.displayName, issuer.called = leaseID, channelID, accountID, displayName, true
 	return issuer.credential, issuer.err
 }

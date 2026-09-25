@@ -32,8 +32,8 @@ func New(config Config) (Signer, error) {
 	return Signer{config: config, now: time.Now}, nil
 }
 
-func (signer Signer) Issue(leaseID, channelID, accountID string) (Credential, error) {
-	if leaseID == "" || channelID == "" || accountID == "" {
+func (signer Signer) Issue(leaseID, channelID, accountID, displayName string) (Credential, error) {
+	if leaseID == "" || channelID == "" || accountID == "" || displayName == "" {
 		return Credential{}, ErrInvalidConfig
 	}
 	grant := &auth.VideoGrant{RoomJoin: true, RoomCreate: true, Room: "voice:" + channelID}
@@ -43,6 +43,7 @@ func (signer Signer) Issue(leaseID, channelID, accountID string) (Credential, er
 	grant.SetCanPublishSources([]livekit.TrackSource{livekit.TrackSource_MICROPHONE, livekit.TrackSource_SCREEN_SHARE, livekit.TrackSource_SCREEN_SHARE_AUDIO})
 	token, err := auth.NewAccessToken(signer.config.APIKey, signer.config.APISecret).
 		SetIdentity("voice-lease:" + leaseID).
+		SetName(displayName).
 		SetMetadata("account:" + accountID).
 		SetVideoGrant(grant).
 		SetValidFor(validity).

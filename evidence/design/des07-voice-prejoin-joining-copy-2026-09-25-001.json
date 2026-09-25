@@ -1,0 +1,39 @@
+{
+  "id": "des07-voice-prejoin-joining-copy-2026-09-25-001",
+  "tasks": ["DES-07", "QA-05", "QA-07"],
+  "kind": "voice-prejoin-joining-copy-and-live-region",
+  "status": "PARTIAL",
+  "leaf_result": "PASS_NATIVE_ONLY",
+  "observed_at": "2026-09-25T19:34:55Z",
+  "source_base_commit": "67a9789a8eac3d12e09dc000b51f45d24fc07965",
+  "bundle": {
+    "entry_js": "index-B2_AJc2b.js",
+    "entry_js_sha256": "2f818e5fc2300623eb0e01a53f9fc38fb380bc8c758a0af14c445ad34505aeeb",
+    "entry_css": "index-Bz6I9mD8.css",
+    "entry_css_sha256": "d419160191dbd58755895ca6ac87174025454b009154b59ea0dec9d53acbc9c0"
+  },
+  "scenario": "Voice prejoin card while join is pending (voiceState JOINING).",
+  "baseline": {
+    "result": "FAIL_LOCAL_BEFORE_FIX",
+    "detail": "Vue SSR rendered disabled 'Подключаемся…' action alongside idle heading 'Вы не подключены' and idle instruction 'Подключитесь, чтобы увидеть участников'. The focused behavior test failed for the JOINING state before the component change."
+  },
+  "checks": [
+    {
+      "name": "state_specific_vue_ssr",
+      "result": "PASS",
+      "detail": "JOINING now renders 'Подключаемся к голосовой комнате' and an in-progress explanation without the idle invitation; IDLE retains the existing invitation. The heading has aria-live=polite and aria-atomic=true. Two focused tests pass."
+    },
+    {
+      "name": "frontend_native_validation",
+      "result": "PASS",
+      "detail": "192 Vitest files and 555 tests passed; vue-tsc --noEmit and Vite production build passed."
+    }
+  ],
+  "not_run": [
+    "Actual screen-reader announcement of the live heading",
+    "Browser keyboard/AX observation of the built bundle",
+    "Real LiveKit connection or audio verification",
+    "Trusted release bundle acceptance"
+  ],
+  "remaining": "DES-07 and QA-05/07 stay open for browser, screen-reader, real-media and release-gate acceptance."
+}
