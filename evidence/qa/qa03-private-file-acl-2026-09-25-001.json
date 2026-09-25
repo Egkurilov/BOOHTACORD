@@ -1,0 +1,33 @@
+{
+  "id": "qa03-private-file-acl-2026-09-25-001",
+  "kind": "dm-storage-privacy",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "environment": "Ubuntu WSL, Go 1.26.0, PostgreSQL 16.14, isolated migration-backed schema, private temporary filesystem",
+  "checks": [
+    {
+      "name": "download_and_preview_participant_acl",
+      "result": "PASS_LOCAL",
+      "detail": "Both participants accessed a stored PNG; a nonparticipant administrator and a participant addressing another pair were denied. A blocked participant and a deleted message were denied while the private file still existed. Repeated 5 times."
+    },
+    {
+      "name": "untrusted_preview_formats",
+      "result": "PASS_LOCAL",
+      "detail": "HTML and SVG stored files were rejected by the preview service. Repeated 5 times."
+    },
+    {
+      "name": "backend_suite",
+      "result": "PASS_LOCAL",
+      "detail": "go test -json -count=1 ./... with both PostgreSQL test URL variables: 661 passed, 0 skipped, 0 failed; focused go vet passed."
+    },
+    {
+      "name": "remaining_qa03_matrix",
+      "result": "NOT_RUN",
+      "detail": "Cross-surface history/search/reply/events/counters/notifications matrix, limit and low-disk admission, traversal and cleanup-race acceptance remain to be consolidated."
+    }
+  ],
+  "limitations": [
+    "This verifies the service/repository/file path; authenticated browser and full HTTP middleware checks are tracked separately.",
+    "No attachment body or private storage key is recorded in evidence."
+  ]
+}
