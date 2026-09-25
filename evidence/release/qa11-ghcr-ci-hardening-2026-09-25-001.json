@@ -34,6 +34,15 @@
       "detail": "verify-contracts.ps1 passed; verify-spec-traceability.ps1 mapped all 39 requirements; git diff --check passed"
     }
   ],
+  "trusted_gitverse_followup": {
+    "observed_at": "2026-09-25T08:21:14Z",
+    "failed_run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1643558",
+    "run_1643558": "backend/frontend PASS; release_guard ERROR when runner Docker log archive request exceeded its deadline",
+    "passed_run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1643628",
+    "run_1643628": "backend PostgreSQL/no-skip, frontend and release_guard PASS; deploy skipped on codex branch",
+    "source_commit_for_pass": "7fa0338c2535b5cff7bd2a86bb0a4b3da5e31688",
+    "scope": "GitVerse guards only; this did not execute the GitHub main/GHCR publish or deploy jobs"
+  },
   "acceptance_not_observed": [
     "No trusted GitHub main run or GHCR image digest and attestation was available in this environment",
     "Active GitVerse master source-archive/server-build delivery differs from approved main/GHCR path and has no accepted delivery ADR",

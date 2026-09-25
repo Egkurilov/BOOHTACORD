@@ -24,6 +24,11 @@
     "frontend_tests": "PASS: 158 files, 463 tests",
     "frontend_build": "PASS: vue-tsc and Vite"
   },
+  "trusted_ci": {
+    "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1643628",
+    "source_commit": "7fa0338c2535b5cff7bd2a86bb0a4b3da5e31688",
+    "result": "backend PostgreSQL/no-skip, frontend and release_guard PASS; deploy skipped on codex branch"
+  },
   "remaining": [
     "Reset completion and used-link behavior with a real issued token were not exercised",
     "Admin topology controls, confirmations, 409 recovery and focus return remain for DES-03 browser acceptance",
