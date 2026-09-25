@@ -1,0 +1,33 @@
+{
+  "id": "qa02-admin-race-2026-09-25-001",
+  "kind": "auth-admin-concurrency",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "environment": "Ubuntu WSL, Go 1.26.0, PostgreSQL 16.14, isolated migration-backed schema per race",
+  "checks": [
+    {
+      "name": "concurrent_last_admin_demotion",
+      "result": "PASS_LOCAL",
+      "detail": "Two concurrent transactions demoted separate administrators; one succeeded, one was denied, one active administrator and one audit event remained. Repeated 20 times."
+    },
+    {
+      "name": "concurrent_last_admin_block",
+      "result": "PASS_LOCAL",
+      "detail": "Two concurrent transactions blocked separate administrators; one succeeded, one was denied, one active administrator and one audit event remained. The blocked account's session alone was revoked. Repeated 20 times."
+    },
+    {
+      "name": "backend_suite",
+      "result": "PASS_LOCAL",
+      "detail": "go test -json -count=1 ./... with both PostgreSQL test URL variables: 656 passed, 0 skipped, 0 failed."
+    },
+    {
+      "name": "remaining_qa02_matrix",
+      "result": "NOT_RUN",
+      "detail": "Bootstrap/recovery, login/logout/reset, role refresh, topology revision, voice transfer and WebSocket revocation races remain."
+    }
+  ],
+  "limitations": [
+    "The test invokes the administration repository directly; API authorization and WebSocket lifecycle require separate checks.",
+    "Synthetic session digests and IDs were used; no session or reset token values are recorded."
+  ]
+}

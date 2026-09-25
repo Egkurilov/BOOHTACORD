@@ -31,7 +31,7 @@ FE-01…FE-21 реализованы и перечислены в [DONE.md](DONE
 Критерии PASS и требуемые evidence — в [VERIFICATION_TODO.md](backlog/VERIFICATION_TODO.md).
 
 - [ ] **QA-01 · P1:** локально PostgreSQL 16.14: 648 PASS, 0 SKIP; cross-channel reply и отказ при skip проверены. Осталось подтвердить trusted GitVerse CI с обязательной PostgreSQL-службой и no-skip gate. [Evidence](evidence/qa/qa01-postgres-harness-2026-09-25-001.json).
-- [ ] **QA-02 · P1:** проверить реальные concurrent auth/admin/role/topology/voice races на PostgreSQL и отзыв сессии/WS без утечки secrets.
+- [ ] **QA-02 · P1:** last-admin demote/block race на PostgreSQL PASS (по 20 повторов, один admin остаётся, блокировка отзывает только нужную сессию). Остались bootstrap/recovery, login/logout/reset, role refresh, topology/voice races и WS revoke. [Evidence](evidence/qa/qa02-admin-race-2026-09-25-001.json).
 - [ ] **QA-03 · P1:** выполнить матрицу DM/storage ACL caller/peer/third-party/admin, размеры/лимиты, low-disk, traversal, preview и cleanup races.
 - [ ] **QA-04 · P1:** локально PostgreSQL search/GIN и миграции на пустой/существующей схеме PASS; contract, traceability, image и PostgreSQL checks включены в GitVerse до deploy. Осталось подтвердить trusted CI run. [Evidence](evidence/qa/qa04-search-migrations-ci-2026-09-25-001.json).
 - [ ] **QA-05 · P1:** пройти authenticated browser E2E, keyboard/focus и screenshots на фиксированном bundle после затронутых FE/DES задач.
