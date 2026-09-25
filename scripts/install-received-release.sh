@@ -21,6 +21,7 @@ sudo -n install -d -m 0750 "$release_root"
 [[ ! -e "$release_dir" ]]
 staging_dir="$(sudo -n mktemp -d "${release_root}/.incoming.XXXXXXXX")"
 sudo -n tar -xzf "$archive" -C "$staging_dir"
+sudo -n bash "$staging_dir/scripts/check-attachment-volume-headroom.sh"
 sudo -n install -m 0600 /opt/voice-platform/.env "$staging_dir/.env"
 sudo -n mv "$staging_dir" "$release_dir"
 staging_dir=''

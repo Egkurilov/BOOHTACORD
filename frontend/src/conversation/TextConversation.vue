@@ -10,9 +10,11 @@ import TextMessageAttachmentPicker from './TextMessageAttachmentPicker.vue'
 import TextMessageSearch from './TextMessageSearch.vue'
 import MentionPicker from './MentionPicker.vue'
 import type { TextAttachmentUpload } from './text_attachment_upload_client'
-import { advanceTextReadIfVisible, newestServerTextMessageId } from './text_read_gate'
+import { advanceTextReadIfVisible } from './text_read_gate'
+import { newestVisibleServerMessageId, shouldAdvanceVisibleRead } from './read_visibility'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
 import { useComposerScope } from './composer_scope'
+import { submitOnComposerEnter } from './composer_enter'
 import SearchMessageContext from '../search/SearchMessageContext.vue'
 import { useSearchTargetStore } from '../search/search_target_store'
 
@@ -28,27 +30,27 @@ const composer = useComposerScope<TextMessage, TextAttachmentUpload>()
 const { draft, replyTarget, attachments, mentionUserIds, attachmentPending, attachmentClearToken } = composer
 const searchOpen = ref(false)
 const searchTrigger = ref<HTMLButtonElement | null>(null)
+const readRoot = ref<HTMLElement | null>(null)
 const emojiOpen = ref(false)
 const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
 const readPending = new Set<string>()
 let lastReadKey = ''
 
 async function markVisibleRead(): Promise<void> {
-  const messageId = newestServerTextMessageId(store.messages)
+  const messageId = newestVisibleServerMessageId(readRoot.value?.querySelector<HTMLElement>('.message-list') ?? null, store.messages)
   if (!messageId) return
   const key = `${props.channelId}:${messageId}`
-  if (key === lastReadKey || readPending.has(key)) return
+  if (!shouldAdvanceVisibleRead(store.messages, lastReadKey, props.channelId, messageId) || readPending.has(key)) return
   readPending.add(key)
   try {
     const advanced = await advanceTextReadIfVisible({ activeChannelId: store.channelId, renderedChannelId: props.channelId,
       newestDisplayedMessageId: messageId, visibilityState: document.visibilityState })
-    if (advanced) { lastReadKey = key; void topology.refresh() }
+    if (advanced) { if (shouldAdvanceVisibleRead(store.messages, lastReadKey, props.channelId, messageId)) lastReadKey = key; void topology.refresh() }
   } catch { /* Keep counters until a later visible retry. */ }
   finally { readPending.delete(key) }
 }
 
 function queueVisibleRead(): void { void markVisibleRead() }
-
 watch(() => props.channelId, (channelId) => {
   composer.reset()
   lastReadKey = ''
@@ -56,8 +58,8 @@ watch(() => props.channelId, (channelId) => {
   void loadSession()
 }, { immediate: true })
 watch([() => props.channelId, () => store.channelId, () => store.messages], queueVisibleRead, { flush: 'post' })
-onMounted(() => { document.addEventListener('visibilitychange', queueVisibleRead); queueVisibleRead() })
-onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVisibleRead); searchTarget.clearFor('CHANNEL', props.channelId) })
+onMounted(() => { document.addEventListener('visibilitychange', queueVisibleRead); window.addEventListener('resize', queueVisibleRead); queueVisibleRead() })
+onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVisibleRead); window.removeEventListener('resize', queueVisibleRead); searchTarget.clearFor('CHANNEL', props.channelId) })
 
 async function send(): Promise<void> {
   if (attachmentPending.value || store.channelId !== props.channelId) return
@@ -81,7 +83,7 @@ function closeSearch(): void { searchOpen.value = false; void nextTick(() => sea
 </script>
 
 <template>
-  <section class="text-conversation" aria-labelledby="conversation-title">
+  <section ref="readRoot" class="text-conversation" aria-labelledby="conversation-title">
     <header class="main-header conversation-header">
       <span class="conversation-symbol" aria-hidden="true">#</span>
       <div class="main-title">
@@ -93,7 +95,7 @@ function closeSearch(): void { searchOpen.value = false; void nextTick(() => sea
     <p v-if="store.loading" class="state" aria-live="polite">Загружаем историю…</p>
     <p v-if="store.error" id="text-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refresh()">Повторить загрузку</button></p>
     <SearchMessageContext v-if="contextTarget" kind="CHANNEL" :conversation-id="props.channelId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
-    <TextHistoryList :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @retry="retry" />
+    <TextHistoryList :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @retry="retry" @viewport-change="queueVisibleRead" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
@@ -106,7 +108,7 @@ function closeSearch(): void { searchOpen.value = false; void nextTick(() => sea
           @pending="attachmentPending = $event"
         />
         <label class="gc-sr-only" for="message-body">Сообщение</label>
-        <textarea id="message-body" v-model="draft" :disabled="store.sending" :aria-describedby="store.error ? 'text-conversation-error' : undefined" placeholder="Написать сообщение…" />
+        <textarea id="message-body" v-model="draft" :disabled="store.sending" :aria-describedby="store.error ? 'text-conversation-error' : undefined" placeholder="Написать сообщение…" @keydown="submitOnComposerEnter($event, send)" />
         <span class="emoji-picker">
           <button class="emoji-trigger" type="button" aria-label="Добавить emoji" :aria-expanded="emojiOpen" @click="emojiOpen = !emojiOpen">☺</button>
           <span v-if="emojiOpen" class="emoji-menu" aria-label="Выбор emoji"><button v-for="emoji in emojis" :key="emoji" type="button" :aria-label="`Добавить ${emoji}`" @click="addEmoji(emoji); emojiOpen = false">{{ emoji }}</button></span>

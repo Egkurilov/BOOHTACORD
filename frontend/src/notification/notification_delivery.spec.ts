@@ -52,6 +52,20 @@ describe('browser notification delivery', () => {
     expect(value.show.mock.calls[0]?.[1]).toMatchObject({ body: 'Новое личное сообщение.' })
   })
 
+  it('retries an event when showing its notification throws', async () => {
+    const value = fixture('granted')
+    const delivery = createNotificationDelivery('account-a', value.runtime)
+    await delivery.enable()
+    value.show.mockImplementationOnce(() => { throw new Error('notification unavailable') })
+
+    await expect(delivery.deliver('event-1', 'Новое личное сообщение.')).rejects.toThrow('notification unavailable')
+    await delivery.deliver('event-1', 'Новое личное сообщение.')
+    await delivery.deliver('event-1', 'Новое личное сообщение.')
+
+    expect(value.show).toHaveBeenCalledTimes(2)
+    expect(value.show.mock.calls[1]?.[1]).toMatchObject({ body: 'Новое личное сообщение.', tag: 'event-1' })
+  })
+
   it('stays unavailable without a browser API or cross-tab lock', async () => {
     const value = fixture()
     const runtime = { ...value.runtime, lock: null }

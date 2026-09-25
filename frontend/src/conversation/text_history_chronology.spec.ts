@@ -27,4 +27,24 @@ describe('TEXT history reading order', () => {
     expect(html.indexOf('Показать предыдущие сообщения')).toBeLessThan(html.indexOf('Первое сообщение'))
     expect(html.indexOf('Первое сообщение')).toBeLessThan(html.indexOf('Второе сообщение'))
   })
+
+  it('shows one local-date divider per day before its messages', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const store = useMessageStore()
+    store.messages = [{ id: '20', day: 20 }, { id: '19-b', day: 19 }, { id: '19-a', day: 19 }, { id: '18', day: 18 }].map(({ id, day }) => ({
+      id: `message-${id}`, channelId: 'text-1', authorId: 'author', clientMessageId: `client-${id}`,
+      body: `День ${day}`, revision: 1, createdAt: new Date(2026, 8, day, 12).toISOString(),
+      deleted: false, attachments: [], mentionUserIds: [],
+    }))
+    const app = createSSRApp(TextHistoryList, { channelId: 'text-1', session: null })
+    app.use(pinia)
+    const html = await renderToString(app)
+
+    expect(html).toContain('19 сентября 2026')
+    expect(html.match(/19 сентября 2026/g)).toHaveLength(1)
+    expect(html.indexOf('18 сентября 2026')).toBeLessThan(html.indexOf('День 18'))
+    expect(html.indexOf('19 сентября 2026')).toBeLessThan(html.indexOf('День 19'))
+    expect(html.indexOf('20 сентября 2026')).toBeLessThan(html.indexOf('День 20'))
+  })
 })

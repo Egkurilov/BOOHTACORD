@@ -1,0 +1,43 @@
+{
+  "id": "qa05-qa11-trusted-gitverse-ci-2026-09-25-001",
+  "tasks": ["QA-05", "QA-11"],
+  "kind": "trusted-branch-native-candidate-checks",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T13:07:33Z",
+  "run": {
+    "id": 1646451,
+    "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1646451",
+    "branch": "codex/voice-platform-foundation",
+    "commit": "787ac10c50806dd530caa17c6cfe682ffbced804",
+    "workflow": ".gitverse/workflows/deploy-production.yaml",
+    "status": "success"
+  },
+  "jobs": {
+    "backend": {
+      "status": "success",
+      "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1646451?job=3218692",
+      "observed_steps": ["Start mandatory PostgreSQL test database", "Test and vet Go API"]
+    },
+    "frontend": {
+      "status": "success",
+      "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1646451?job=3218693",
+      "observed_steps": ["Test and build Vue client"]
+    },
+    "release_guard": {
+      "status": "success",
+      "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1646451?job=3218694",
+      "observed_steps": ["Verify contracts, traceability, images and release guards"]
+    },
+    "deploy": {
+      "status": "skipped",
+      "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1646451?job=3218695"
+    }
+  },
+  "source_check": "At the exact run commit, the GitVerse workflow runs go test -json -count=1 with verify-go-test-events.py and go vet, npm test and npm run build, then verify-release-guards.sh; deploy is conditional on master.",
+  "acceptance_limits": [
+    "QA-05 browser, visual, keyboard and media acceptance is not established by native CI checks.",
+    "The codex branch did not deploy a release candidate.",
+    "QA-11 still requires an accepted delivery contract and verified immutable image digests and attestations; this GitVerse branch run does not execute the approved main/GHCR path."
+  ],
+  "decision": "Native candidate checks PASS on the exact commit; QA-05 and QA-11 remain open."
+}

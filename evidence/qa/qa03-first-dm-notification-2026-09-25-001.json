@@ -1,0 +1,33 @@
+{
+  "id": "qa03-first-dm-notification-2026-09-25-001",
+  "tasks": ["QA-03", "T-041", "T-050"],
+  "kind": "local-first-dm-notification-regression",
+  "status": "PASS_LOCAL",
+  "observed_at": "2026-09-25T13:06:23Z",
+  "base_commit": "787ac10c50806dd530caa17c6cfe682ffbced804",
+  "scope": ["frontend/src/notification/notification_store.ts", "frontend/src/notification/notification_store.spec.ts"],
+  "contract": "REQ-CHAT-02 permits desktop notifications only after explicit browser permission and without DM body; REQ-SECURITY-02 requires no notification preview leak.",
+  "checks": [
+    {
+      "name": "red_regression",
+      "result": "PASS_LOCAL",
+      "detail": "The new focused test failed before implementation: capture() returned null for a DM create hint absent from the pre-refresh navigation list, suppressing delivery after the row appeared."
+    },
+    {
+      "name": "green_regression_and_nearest_tests",
+      "result": "PASS_LOCAL",
+      "detail": "After the fallback, five notification/workspace realtime test files passed with 19 tests. The new test verified one generic alert for a newly visible unread DM and none when a hinted DM remained absent."
+    },
+    {
+      "name": "typescript_and_bundle",
+      "result": "PASS_LOCAL",
+      "detail": "npm run build passed vue-tsc --noEmit and Vite build. The existing large-chunk advisory remained non-fatal."
+    },
+    {
+      "name": "browser_permission_and_os_delivery",
+      "result": "NOT_RUN",
+      "detail": "No permission prompt or browser notification was exercised in this code leaf; QA-03 still requires authorized hidden-tab OS notification and dedup evidence on a trusted bundle."
+    }
+  ],
+  "behavior": "A missing pre-refresh DM row contributes zero previous unread only for direct_message.message_created. The post-refresh candidate must still find that addressed DM with an increased unread count, so unrelated or absent DMs remain silent."
+}

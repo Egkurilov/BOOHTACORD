@@ -25,16 +25,16 @@
 | REQ-SCREEN-02 · Захват игры и звук | NOT_RUN | Windows/macOS game capture, game audio, отдельный observer [QA] |
 | REQ-SCREEN-03 · Публикация/viewer | PARTIAL: код и FPS source checks [DONE] | Media/visual POC с несколькими publishers/viewers [QA], [DES] |
 | REQ-SCREEN-04 · Диагностика | PARTIAL: sender/viewer counters в коде [DONE] | Сопоставить sender и receiver измерения [QA] |
-| REQ-CHAT-01 · TEXT | PARTIAL: PostgreSQL idempotency и trusted CI PASS [QA-01]; локальный browser history/reply/mention/409/503 [DES-02-FULL]; FE-22 исправил UI порядок чтения TEXT/DM [DES-08-CHAT] | Trusted candidate и attachment browser [QA] |
+| REQ-CHAT-01 · TEXT | PARTIAL: PostgreSQL idempotency и trusted CI PASS [QA-01]; локальный browser history/reply/mention/409/503 [DES-02-FULL]; FE-22…34 обновили хронологию, даты, группировку и keyboard-пути [DONE], [DES-08-CHAT] | Trusted candidate, attachment browser, screen reader и visual comparison [QA], [DES] |
 | REQ-DM-01 · DM только двум | PARTIAL: PostgreSQL ACL и три HTTP-сессии [QA-03]; получатель получил private create/edit/delete без reload [QA-03-BROWSER], третий browser socket — 0/0/0 DM-кадров [QA-03-THIRD] | Browser notification и trusted candidate [QA] |
-| REQ-CHAT-02 · Упоминания/unread | PARTIAL: caller-local код и browser unread [DONE], [QA-05] | Видимость/cursor/notification на candidate [QA], [DES] |
+| REQ-CHAT-02 · Упоминания/unread | PARTIAL: caller-local код и browser unread [DONE], [QA-05]; FE-25/27/28/29/34 исправили первый DM, видимость read cursor, dedup delivery, picker и jump [DONE], [QA-03-FIRST] | Видимость/cursor и разрешённое OS notification на trusted candidate [QA], [DES] |
 | REQ-SEARCH-01 · Поиск | PARTIAL: PostgreSQL русский/английский, GIN и trusted CI PASS; локальный browser smoke [QA-04], [QA-05] | Candidate browser [QA] |
 | REQ-STORAGE-01 · Постоянство/25 МБ | PARTIAL: границы и private storage проверены локально [QA-03] | Attachment volume и rollout/rollback с томами [QA] |
 | REQ-STORAGE-02 · Upload/ACL/preview | LOCAL: PostgreSQL/FS access matrix [QA-03] | Browser upload/preview/download candidate [QA] |
-| REQ-STORAGE-03 · Нехватка диска | PARTIAL: последний успешный read-only замер на production attachment filesystem дал 7 675 338 752 доступных байта в 10:22 UTC [QA-08]; повтор в 11:56 UTC остановился на SSH, текущий запас и in-flight резервации неизвестны [QA-08-RETRY] | Восстановить доступ, развернуть BE-15 через утверждённый гейт, измерить резервации и устойчивый запас на том же volume [QA] |
+| REQ-STORAGE-03 · Нехватка диска | PARTIAL: последний успешный read-only замер на production attachment filesystem дал 7 675 338 752 доступных байта в 10:22 UTC [QA-08]; повтор в 11:56 UTC остановился на SSH [QA-08-RETRY]. Предсборочный fail-closed guard требует 6 343 294 632 байта при последнем размере ФС [DONE]; текущий запас и in-flight резервации неизвестны | Trusted pre-build check, BE-15 gauge и устойчивый post-build запас на том же volume [QA] |
 | REQ-NOBACKUP-01 · Нет backup job | PARTIAL: код/Compose не вводят backup [DONE] | Проверить обновление/совместимый rollback без потери томов [QA] |
 | REQ-UI-01 · Русский one-guild shell | PARTIAL: локальный TEXT/DM browser 1440…320 CSS px [DES-02-FULL], mobile admin/profile/audio navigation [DES-06-NAV] | Реальный zoom, screenshots и connected media states [DES], [QA] |
-| REQ-UI-02 · Компоненты/доступность | PARTIAL: 40-компонентная матрица [DONE], browser keyboard/focus на части surface [DES-03-ADMIN], [DES-06-NAV]; chronological chat preflight [DES-08-CHAT] | DES-02…08, screen reader и сохранённый candidate comparison [DES] |
+| REQ-UI-02 · Компоненты/доступность | PARTIAL: 40-компонентная матрица [DONE], browser keyboard/focus на части surface [DES-03-ADMIN], [DES-06-NAV]; C-21…23 source-leaves с 519 frontend-тестами PASS [DONE] | DES-02…08, screen reader и сохранённый candidate comparison [DES] |
 | REQ-STACK-01 · Vue/Go/PostgreSQL/LiveKit | PARTIAL: native builds, PostgreSQL и trusted CI PASS [DONE], [QA-01] | Целевой deployment и media POC [QA] |
 | REQ-ARCH-01 · Разделение медиа/API | PARTIAL: код использует LiveKit и lease admission [DONE] | Connected-media POC и приватный network smoke [QA] |
 | REQ-DEPLOY-01 · CI/CD | PARTIAL: GitVerse backend/frontend/release_guard PASS на candidate [QA-04], исторический master deploy PASS [QA-11-MASTER]; GitHub main/GHCR source hardening и локальный actionlint PASS, trusted GitHub run NOT_RUN; main/GHCR и GitVerse/master расходятся [QA] | Утверждённый ADR либо исходный trusted pipeline, опубликованные digest/SBOM/provenance и rollout [QA] |
@@ -44,7 +44,7 @@
 | REQ-QUALITY-01 · Latency/capacity цели | NOT_RUN | Измерить p95 join/message/switch/recovery, FPS и нагрузку [QA] |
 | REQ-QUALITY-02 · Выпускные гейты | BLOCKED: 18 пакетов TODO открыты [TODO] | Закрыть применимые DES/QA с PASS и повторить решение [QA] |
 
-Сквозной счёт: **39/39 ID отражены**; QA-01/04 имеют trusted CI PASS, но обязательные media, capacity, browser, delivery/rollout и release проверки ещё не имеют PASS. Состояние TODO: **20/38 закрыто, 18/38 открыто**, включая добавленные BE-15/FE-22. Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
+Сквозной счёт: **39/39 ID отражены**; QA-01/04 имеют trusted CI PASS, но обязательные media, capacity, browser, delivery/rollout и release проверки ещё не имеют PASS. Состояние TODO: **32/50 закрыто, 18/50 открыто**, включая добавленные FE-23…34. Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
 
 [DONE]: ../../DONE.md
 [TODO]: ../../TODO.md
@@ -60,6 +60,7 @@
 [QA-05-RESET]: ../../evidence/qa/qa05-reset-browser-2026-09-25-001.json
 [QA-03-BROWSER]: ../../evidence/qa/qa03-fixed-bundle-browser-2026-09-25-001.json
 [QA-03-THIRD]: ../../evidence/qa/qa03-third-browser-private-hints-2026-09-25-001.json
+[QA-03-FIRST]: ../../evidence/qa/qa03-first-dm-notification-2026-09-25-001.json
 [DES-02-FULL]: ../../evidence/design/des02-full-browser-2026-09-25-001.json
 [DES-03-ADMIN]: ../../evidence/design/des03-admin-members-audit-2026-09-25-001.json
 [DES-03-TOPOLOGY]: ../../evidence/design/des03-admin-browser-2026-09-25-001.json

@@ -6,6 +6,7 @@ import { uploadTextAttachment, type TextAttachmentUpload } from './text_attachme
 const props = defineProps<{ channelId: string; disabled: boolean; clearToken: number }>()
 const emit = defineEmits<{ change: [attachments: TextAttachmentUpload[]]; pending: [value: boolean] }>()
 const attachments = ref<TextAttachmentUpload[]>([])
+const fileInput = ref<HTMLInputElement | null>(null)
 const pending = ref(false)
 const error = ref<string | null>(null)
 let generation = 0
@@ -63,8 +64,8 @@ watch(() => props.channelId, clear)
 
 <template>
   <section class="attachment-picker" aria-labelledby="message-attachments-label">
-    <input id="message-attachments" class="attachment-input" type="file" multiple :disabled="props.disabled || pending" @change="addFiles">
-    <label id="message-attachments-label" class="attachment-trigger" for="message-attachments" aria-label="Прикрепить файлы">+</label>
+    <input ref="fileInput" id="message-attachments" class="attachment-input" type="file" multiple tabindex="-1" aria-hidden="true" :disabled="props.disabled || pending" @change="addFiles">
+    <button id="message-attachments-label" class="attachment-trigger" type="button" aria-label="Прикрепить файлы" :disabled="props.disabled || pending" @click="fileInput?.click()">+</button>
     <p class="attachment-hint">До 10 файлов по 25 МБ. Файлы будут прикреплены после отправки текста.</p>
     <p v-if="pending" class="attachment-state" aria-live="polite">Загружаем вложение…</p>
     <p v-if="error" class="attachment-state attachment-error" role="alert">{{ error }}</p>

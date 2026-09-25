@@ -29,4 +29,25 @@ describe('DM history reading order', () => {
     expect(html.indexOf('Показать предыдущие сообщения')).toBeLessThan(html.indexOf('Первое сообщение'))
     expect(html.indexOf('Первое сообщение')).toBeLessThan(html.indexOf('Второе сообщение'))
   })
+
+  it('shows date dividers before each day of the conversation', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const store = useDirectMessageStore()
+    store.messages = [20, 19].map((day) => ({
+      id: `message-${day}`, directMessageId: 'dm-1', authorId: 'author', clientMessageId: `client-${day}`,
+      body: `День ${day}`, revision: 1, createdAt: new Date(2026, 8, day, 12).toISOString(),
+      deleted: false, attachments: [], mentionUserIds: [],
+    }))
+    const app = createSSRApp(DirectMessageHistoryList, {
+      directMessageId: 'dm-1', session: null, otherParticipantId: 'author', otherParticipantDisplayName: 'Автор',
+    })
+    app.use(pinia)
+    const html = await renderToString(app)
+
+    expect(html).toContain('19 сентября 2026')
+    expect(html).toContain('20 сентября 2026')
+    expect(html.indexOf('19 сентября 2026')).toBeLessThan(html.indexOf('День 19'))
+    expect(html.indexOf('20 сентября 2026')).toBeLessThan(html.indexOf('День 20'))
+  })
 })

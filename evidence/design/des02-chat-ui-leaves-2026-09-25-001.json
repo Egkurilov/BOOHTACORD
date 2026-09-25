@@ -1,0 +1,21 @@
+{
+  "id": "des02-chat-ui-leaves-2026-09-25-001",
+  "tasks": ["DES-02", "DES-05", "DES-06", "DES-08", "QA-05", "FE-23", "FE-24", "FE-26", "FE-29", "FE-30", "FE-31", "FE-32", "FE-33", "FE-34"],
+  "kind": "local-fixed-bundle-browser-and-native-checks",
+  "status": "PASS_LOCAL",
+  "observed_at": "2026-09-25T13:50:00Z",
+  "base_commit": "787ac10c50806dd530caa17c6cfe682ffbced804",
+  "bundle": ["frontend/dist/assets/index-CIzK4Edw.js", "frontend/dist/assets/index-uTiltuxC.css"],
+  "environment": "Isolated disposable PostgreSQL schema; local Go API and built Vue bundle behind a localhost proxy; synthetic accounts/messages only. Browser: connected Chrome at 883x447 and 320x700 CSS px.",
+  "checks": [
+    {"name": "frontend_native", "result": "PASS", "detail": "npm test: 176 files, 519 tests; npm run build: vue-tsc and Vite PASS."},
+    {"name": "release_guard_native", "result": "PASS", "detail": "verify-release-guards.sh passed contract, traceability, Compose, attachment headroom and deploy guard checks."},
+    {"name": "chronology_grouping_semantics", "result": "PASS_LOCAL", "detail": "TEXT log had 50 server rows, one date divider, 49 grouped continuations, role=log and no horizontal overflow at 883 CSS px. The attachment trigger was a visible button; hidden file input had tabIndex -1."},
+    {"name": "scrolled_up_jump", "result": "PASS_LOCAL", "detail": "At 883 and 320 CSS px, sending a synthetic message while reading older rows preserved scrollTop and displayed 'К новым сообщениям (1)'; the button reached the bottom and cleared. At 320 px its rectangle stayed within the 320 px document."},
+    {"name": "attachment_keyboard_trigger", "result": "PASS_LOCAL", "detail": "Clicking the visible attachment button fired a multiple-file chooser. No file was selected or uploaded."},
+    {"name": "earlier_browser_smoke", "result": "PASS_LOCAL", "detail": "Before the final FE-34 leaf, the same local fixture checked TEXT/DM Enter, TEXT Shift+Enter, mobile action disclosure/Escape, inline edit Escape/Ctrl+Enter, mention disclosure and 50-to-67 pagination anchor at 320 CSS px."},
+    {"name": "screen_reader_zoom_upload_os_notification_and_visual_reference", "result": "NOT_RUN", "detail": "No screen reader, browser zoom 125/150%, stored pixel comparison, attachment upload/download or OS notification permission/delivery was completed."}
+  ],
+  "cleanup": "The browser tab was closed, viewport override reset, fixture stopped, and disposable PostgreSQL schema and attachment directory removed.",
+  "decision": "Source and focused local browser leaf checks passed; DES-02/05/06/08 and QA-05 remain open."
+}

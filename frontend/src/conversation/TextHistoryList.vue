@@ -3,24 +3,51 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import type { CurrentSession } from '../identity/current_session'
 import { useAuthorDirectory } from '../identity/author_directory'
 import MessageItem from './MessageItem.vue'
+import { chronologicalDatedMessages } from './history_dates'
+import { createMessageLogAnnouncer } from './message_log_announcement'
+import { groupChronologicalMessages } from './message_grouping'
+import { isHistoryNearBottom, newestServerMessageId, newServerMessageCount } from './new_message_jump'
 import type { TextMessage } from './message_client'
 import { useMessageStore } from './message_store'
 
 const props = defineProps<{ channelId: string; session: CurrentSession | null }>()
-const emit = defineEmits<{ reply: [message: TextMessage]; retry: [message: TextMessage] }>()
+const emit = defineEmits<{ reply: [message: TextMessage]; retry: [message: TextMessage]; viewportChange: [] }>()
 const store = useMessageStore()
 const authors = useAuthorDirectory()
 const list = ref<HTMLOListElement | null>(null)
-const chronologicalMessages = computed(() => [...store.messages].reverse())
+const chronologicalMessages = computed(() => groupChronologicalMessages(chronologicalDatedMessages(store.messages)))
+const announceNew = createMessageLogAnnouncer()
+const announcement = ref('')
+const jumpCount = ref(0)
+const latestServerId = computed(() => newestServerMessageId(store.messages))
+let announcementVersion = 0
 
-onMounted(() => { if (list.value) list.value.scrollTop = list.value.scrollHeight })
-watch(() => store.messages[0]?.id, async (newest) => {
-  const viewport = list.value
-  if (!newest || !viewport) return
-  const nearBottom = viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop <= 96
+watch([() => props.channelId, () => store.channelId, () => store.historyLoaded, () => store.messages, () => props.session?.accountId], async () => {
+  const text = announceNew({ conversationId: props.channelId, loaded: store.historyLoaded && store.channelId === props.channelId,
+    active: typeof document !== 'undefined' && document.visibilityState === 'visible', ownId: props.session?.accountId ?? '',
+    messages: store.messages, displayName: (id) => authors.displayName(id) })
+  const version = ++announcementVersion
+  announcement.value = ''
+  if (!text) return
   await nextTick()
-  if (nearBottom) viewport.scrollTop = viewport.scrollHeight
+  if (version === announcementVersion) announcement.value = text
+}, { immediate: true, flush: 'post' })
+
+onMounted(() => { if (list.value) list.value.scrollTop = list.value.scrollHeight; emit('viewportChange') })
+watch(() => props.channelId, async () => { jumpCount.value = 0; await nextTick(); if (list.value) list.value.scrollTop = list.value.scrollHeight; emit('viewportChange') })
+watch([() => store.historyLoaded, latestServerId], async ([loaded, newest], [wasLoaded, previous]) => {
+  const viewport = list.value
+  if (!newest || !viewport || store.channelId !== props.channelId) return
+  const nearBottom = isHistoryNearBottom(viewport)
+  const added = newServerMessageCount(store.messages, previous, wasLoaded)
+  await nextTick()
+  if (nearBottom) { viewport.scrollTop = viewport.scrollHeight; jumpCount.value = 0 }
+  else if (loaded) jumpCount.value += added
+  emit('viewportChange')
 })
+
+function onScroll(): void { if (isHistoryNearBottom(list.value)) jumpCount.value = 0; emit('viewportChange') }
+function jumpToLatest(): void { if (!list.value) return; list.value.scrollTop = list.value.scrollHeight; jumpCount.value = 0; emit('viewportChange') }
 
 function replyPreview(message: TextMessage): string | undefined {
   if (!message.replyToId) return undefined
@@ -38,31 +65,42 @@ async function loadOlder(): Promise<void> {
   const channelId = props.channelId
   if (!await store.loadOlder()) return
   await nextTick()
-  if (!viewport || channelId !== props.channelId || !anchorId || anchorTop === undefined) return
-  const current = [...viewport.querySelectorAll<HTMLElement>('[data-message-id]')].find((item) => item.dataset.messageId === anchorId)
-  if (current) viewport.scrollTop += current.getBoundingClientRect().top - anchorTop
+  if (!viewport || channelId !== props.channelId) return
+  if (anchorId && anchorTop !== undefined) {
+    const current = [...viewport.querySelectorAll<HTMLElement>('[data-message-id]')].find((item) => item.dataset.messageId === anchorId)
+    if (current) viewport.scrollTop += current.getBoundingClientRect().top - anchorTop
+  }
+  emit('viewportChange')
 }
 </script>
 
 <template>
-  <ol ref="list" class="messages message-list" aria-label="История сообщений">
+  <p class="gc-sr-only" role="status" aria-atomic="true">{{ announcement }}</p>
+  <div class="message-history-wrap">
+  <button v-if="jumpCount" class="message-jump-latest" type="button" @click="jumpToLatest">К новым сообщениям ({{ jumpCount }})</button>
+  <ol ref="list" class="messages message-list" role="log" aria-live="off" aria-label="История сообщений" @scroll.passive="onScroll">
     <li v-if="store.nextCursor" class="message-actions"><button type="button" :disabled="store.olderLoading" @click="loadOlder">{{ store.olderLoading ? 'Загружаем старые сообщения…' : 'Показать предыдущие сообщения' }}</button></li>
     <li v-if="store.olderError" class="state state-error" role="alert">{{ store.olderError }} <button type="button" :disabled="store.olderLoading" @click="loadOlder">Повторить</button></li>
     <li v-if="store.historyLoaded && !store.nextCursor && store.messages.length" class="state">Это начало истории.</li>
-    <li v-for="message in chronologicalMessages" :key="message.id" :data-message-id="message.id">
+    <template v-for="entry in chronologicalMessages" :key="entry.message.id">
+    <li v-if="entry.dateLabel" class="history-date"><time :datetime="entry.dateTime">{{ entry.dateLabel }}</time></li>
+    <li :data-message-id="entry.message.id" :class="{ 'grouped-message': entry.grouped }">
       <MessageItem
-        :message="message"
-        :reply-preview="replyPreview(message)"
-        :can-edit="session?.accountId === message.authorId"
-        :can-delete="session?.accountId === message.authorId || session?.role === 'ADMINISTRATOR'"
+        :message="entry.message"
+        :grouped="entry.grouped"
+        :reply-preview="replyPreview(entry.message)"
+        :can-edit="session?.accountId === entry.message.authorId"
+        :can-delete="session?.accountId === entry.message.authorId || session?.role === 'ADMINISTRATOR'"
         :retry-disabled="store.sending"
-        :edit-message="(body, ids, revision) => store.editWithResult(message.id, body, revision, undefined, ids)"
-        :refresh-message="() => store.refreshMessage(message.id)"
-        @remove="store.remove(message.id)"
-        @reply="emit('reply', message)"
-        @retry="emit('retry', message)"
+        :edit-message="(body, ids, revision) => store.editWithResult(entry.message.id, body, revision, undefined, ids)"
+        :refresh-message="() => store.refreshMessage(entry.message.id)"
+        @remove="store.remove(entry.message.id)"
+        @reply="emit('reply', entry.message)"
+        @retry="emit('retry', entry.message)"
       />
     </li>
+    </template>
     <li v-if="!store.messages.length && !store.loading" class="state">Сообщений пока нет.</li>
   </ol>
+  </div>
 </template>

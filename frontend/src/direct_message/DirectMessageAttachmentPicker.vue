@@ -6,6 +6,7 @@ import { uploadDirectMessageAttachment } from './direct_message_attachment_uploa
 const props = defineProps<{ directMessageId: string; disabled: boolean; clearToken: number }>()
 const emit = defineEmits<{ change: [attachments: TextMessageAttachment[]]; pending: [value: boolean] }>()
 const attachments = ref<TextMessageAttachment[]>([])
+const fileInput = ref<HTMLInputElement | null>(null)
 const failed = ref<File[]>([])
 const pending = ref(false)
 const error = ref<string | null>(null)
@@ -68,8 +69,8 @@ watch(() => props.directMessageId, clear)
 
 <template>
   <section class="attachment-picker" aria-labelledby="dm-attachments-label">
-    <input id="dm-attachments" class="attachment-input" type="file" multiple :disabled="props.disabled || pending" @change="addFiles">
-    <label id="dm-attachments-label" class="attachment-trigger" for="dm-attachments" aria-label="Прикрепить файлы">+</label>
+    <input ref="fileInput" id="dm-attachments" class="attachment-input" type="file" multiple tabindex="-1" aria-hidden="true" :disabled="props.disabled || pending" @change="addFiles">
+    <button id="dm-attachments-label" class="attachment-trigger" type="button" aria-label="Прикрепить файлы" :disabled="props.disabled || pending" @click="fileInput?.click()">+</button>
     <p class="attachment-hint">До 10 файлов по 25 МБ. Файлы прикрепятся после отправки сообщения.</p>
     <p v-if="pending" class="attachment-state" aria-live="polite">Загружаем вложение…</p>
     <p v-if="error" class="attachment-state attachment-error" role="alert">{{ error }}</p>

@@ -9,10 +9,12 @@ import DirectMessageAttachmentPicker from './DirectMessageAttachmentPicker.vue'
 import DirectMessageHistoryList from './DirectMessageHistoryList.vue'
 import DirectMessageSearch from './DirectMessageSearch.vue'
 import type { DirectMessageHistoryItem } from './direct_message_client'
-import { advanceReadIfVisible, newestServerMessageId } from './direct_message_read_gate'
+import { advanceReadIfVisible } from './direct_message_read_gate'
+import { newestVisibleServerMessageId, shouldAdvanceVisibleRead } from '../conversation/read_visibility'
 import { useDirectMessageStore } from './direct_message_store'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
 import { useComposerScope } from '../conversation/composer_scope'
+import { submitOnComposerEnter } from '../conversation/composer_enter'
 import SearchMessageContext from '../search/SearchMessageContext.vue'
 import { useSearchTargetStore } from '../search/search_target_store'
 
@@ -27,23 +29,30 @@ const composer = useComposerScope<DirectMessageHistoryItem, TextMessageAttachmen
 const { draft, replyTarget, mentionUserIds, attachments, attachmentPending, attachmentClearToken } = composer
 const searchOpen = ref(false)
 const searchTrigger = ref<HTMLButtonElement | null>(null)
+const readRoot = ref<HTMLElement | null>(null)
 const emojiOpen = ref(false)
 const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
+const readPending = new Set<string>()
+let lastReadKey = ''
 
 async function markVisibleRead(): Promise<void> {
+  const messageId = newestVisibleServerMessageId(readRoot.value?.querySelector<HTMLElement>('.message-list') ?? null, store.messages)
+  if (!messageId) return
+  const key = `${props.directMessageId}:${messageId}`
+  if (!shouldAdvanceVisibleRead(store.messages, lastReadKey, props.directMessageId, messageId) || readPending.has(key)) return
+  readPending.add(key)
   try {
     const advanced = await advanceReadIfVisible({
       activeDirectMessageId: store.directMessageId,
       renderedDirectMessageId: props.directMessageId,
-      newestDisplayedMessageId: newestServerMessageId(store.messages),
+      newestDisplayedMessageId: messageId,
       visibilityState: document.visibilityState,
     })
-    if (advanced) void store.refreshNavigation()
+    if (advanced) { if (shouldAdvanceVisibleRead(store.messages, lastReadKey, props.directMessageId, messageId)) lastReadKey = key; void store.refreshNavigation() }
   } catch {
     return
-  }
+  } finally { readPending.delete(key) }
 }
-
 function queueVisibleRead(): void { void markVisibleRead() }
 
 async function send(): Promise<void> {
@@ -68,17 +77,18 @@ function addEmoji(emoji: string): void { draft.value += emoji }
 function closeSearch(): void { searchOpen.value = false; void nextTick(() => searchTrigger.value?.focus()) }
 
 watch([() => props.directMessageId, () => store.directMessageId, () => store.messages], queueVisibleRead, { flush: 'post' })
-watch(() => props.directMessageId, () => composer.reset())
+watch(() => props.directMessageId, () => { composer.reset(); lastReadKey = '' })
 onMounted(() => {
   document.addEventListener('visibilitychange', queueVisibleRead)
+  window.addEventListener('resize', queueVisibleRead)
   void loadSession()
   queueVisibleRead()
 })
-onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVisibleRead); searchTarget.clearFor('DIRECT_MESSAGE', props.directMessageId) })
+onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVisibleRead); window.removeEventListener('resize', queueVisibleRead); searchTarget.clearFor('DIRECT_MESSAGE', props.directMessageId) })
 </script>
 
 <template>
-  <section class="direct-message-conversation" aria-labelledby="direct-message-title">
+  <section ref="readRoot" class="direct-message-conversation" aria-labelledby="direct-message-title">
     <header class="main-header conversation-header">
       <span class="conversation-symbol conversation-symbol--person" aria-hidden="true">@</span>
       <div class="main-title">
@@ -91,14 +101,14 @@ onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVi
     <p v-if="store.loadingHistory" class="state" aria-live="polite">Загружаем историю…</p>
     <p v-if="store.error" id="direct-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refreshHistory()">Повторить загрузку</button></p>
     <SearchMessageContext v-if="contextTarget" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
-    <DirectMessageHistoryList :direct-message-id="props.directMessageId" :session="session" :other-participant-id="props.otherParticipantId" :other-participant-display-name="props.otherParticipantDisplayName" @reply="replyTarget = $event" @retry="retry" />
+    <DirectMessageHistoryList :direct-message-id="props.directMessageId" :session="session" :other-participant-id="props.otherParticipantId" :other-participant-display-name="props.otherParticipantDisplayName" @reply="replyTarget = $event" @retry="retry" @viewport-change="queueVisibleRead" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
         <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" />
         <DirectMessageAttachmentPicker :direct-message-id="props.directMessageId" :disabled="store.sending || attachmentPending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" />
         <label class="gc-sr-only" for="direct-message-body">Сообщение</label>
-        <textarea id="direct-message-body" v-model="draft" :disabled="store.sending" :aria-describedby="store.error ? 'direct-conversation-error' : undefined" placeholder="Написать сообщение…" />
+        <textarea id="direct-message-body" v-model="draft" :disabled="store.sending" :aria-describedby="store.error ? 'direct-conversation-error' : undefined" placeholder="Написать сообщение…" @keydown="submitOnComposerEnter($event, send)" />
         <span class="emoji-picker">
           <button class="emoji-trigger" type="button" aria-label="Добавить emoji" :aria-expanded="emojiOpen" @click="emojiOpen = !emojiOpen">☺</button>
           <span v-if="emojiOpen" class="emoji-menu" aria-label="Выбор emoji"><button v-for="emoji in emojis" :key="emoji" type="button" :aria-label="`Добавить ${emoji}`" @click="addEmoji(emoji); emojiOpen = false">{{ emoji }}</button></span>

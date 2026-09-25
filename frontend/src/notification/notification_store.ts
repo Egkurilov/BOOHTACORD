@@ -65,7 +65,8 @@ export const useNotificationStore = defineStore('notifications', () => {
   }
 
   function capture(event: RealtimeEvent): number | null {
-    return addressedUnread(event, topology.topology, directMessages.directMessages)
+    const previous = addressedUnread(event, topology.topology, directMessages.directMessages)
+    return previous ?? (event.kind === 'direct_message.message_created' ? 0 : null)
   }
 
   async function deliver(event: RealtimeEvent, previousUnread: number | null): Promise<void> {

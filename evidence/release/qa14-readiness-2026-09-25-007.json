@@ -1,0 +1,24 @@
+{
+  "id": "qa14-readiness-2026-09-25-007",
+  "kind": "pre-deployment-requirement-matrix-refresh",
+  "status": "FAIL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T13:50:00Z",
+  "source_base_commit": "787ac10c50806dd530caa17c6cfe682ffbced804",
+  "requirements": {"total": 39, "mapped": 39, "matrix": "docs/release/2026-09-25-requirements-matrix.md"},
+  "todo": {"total": 50, "completed": 32, "open": 18, "open_backend": 0, "open_frontend": 0, "open_design": 7, "open_verification": 11},
+  "new_local_evidence": [
+    "evidence/design/des02-chat-ui-leaves-2026-09-25-001.json",
+    "evidence/capacity/qa08-prebuild-volume-guard-2026-09-25-001.json",
+    "evidence/qa/qa03-first-dm-notification-2026-09-25-001.json"
+  ],
+  "native_checks": "Frontend 176 files/519 tests and TypeScript/Vite build PASS; full release guard PASS.",
+  "blocking_gates": [
+    "QA-08: current production attachment filesystem headroom, in-flight reservations and post-build measurement",
+    "QA-06/07/09/10: physical media, hardware load and connected-revocation POCs",
+    "QA-03/05 and DES-02..08: browser notification, accessibility and stored visual acceptance",
+    "QA-11/12: approved delivery contract, immutable artifacts and rollback acceptance",
+    "QA-13: Android release signing and physical-device acceptance"
+  ],
+  "note": "FE-23..34 were added to the task denominator and implemented; 18 design/verification gates remain open. A master deployment, even if technically successful, does not convert these gates to PASS."
+}

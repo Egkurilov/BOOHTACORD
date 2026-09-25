@@ -58,4 +58,25 @@ describe('workspace notification lifecycle', () => {
     expect(value.show).toHaveBeenCalledOnce()
     store.stop()
   })
+
+  it('alerts for the first incoming message when its DM appears after refresh', async () => {
+    vi.stubGlobal('document', { title: 'Voice Platform', visibilityState: 'hidden' })
+    setActivePinia(createPinia())
+    const directMessages = useDirectMessageStore()
+    const value = runtime()
+    const store = useNotificationStore()
+    store.start('account-a', value.port)
+    await store.enable()
+
+    const before = store.capture(event)
+    expect(before).toBe(0)
+    directMessages.directMessages = [{ id: 'dm-a', otherParticipantId: 'peer', otherParticipantDisplayName: 'Участник', createdAt: event.occurredAt, unreadCount: 1, mentionCount: 0 }]
+    await store.deliver(event, before)
+    expect(value.show).toHaveBeenCalledExactlyOnceWith('Voice Platform', { body: 'Новое личное сообщение.', tag: 'event-a' })
+
+    const unrelated = { ...event, eventId: 'event-b', payload: { direct_message_id: 'dm-b' } }
+    await store.deliver(unrelated, store.capture(unrelated))
+    expect(value.show).toHaveBeenCalledOnce()
+    store.stop()
+  })
 })

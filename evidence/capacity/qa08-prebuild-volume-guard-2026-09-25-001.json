@@ -1,0 +1,20 @@
+{
+  "id": "qa08-prebuild-volume-guard-2026-09-25-001",
+  "task": "QA-08",
+  "kind": "local-release-guard-regression",
+  "status": "PASS_LOCAL",
+  "observed_at": "2026-09-25T13:50:00Z",
+  "base_commit": "787ac10c50806dd530caa17c6cfe682ffbced804",
+  "volume": "voice-platform_attachments-data",
+  "required_bytes_formula": "2 * max(2147483648, ceil(total_bytes / 10)) + 25000000",
+  "required_bytes_at_last_measured_total": 6343294632,
+  "last_successful_production_available_bytes": 7675338752,
+  "last_successful_production_measurement": "2026-09-25T10:22:00Z",
+  "checks": [
+    {"name": "boundary_missing_volume_unknown_df_invalid_df", "result": "PASS_LOCAL", "detail": "Shell stubs accepted exactly the threshold and rejected one byte below it, missing Docker volume, unavailable df and malformed measurements."},
+    {"name": "installer_order", "result": "PASS_LOCAL", "detail": "Guard runs after archive extraction, before staging promotion, image build or maintenance; failure trap removes the incoming staging directory only."},
+    {"name": "full_release_guard", "result": "PASS_LOCAL", "detail": "bash scripts/verify-release-guards.sh passed contracts, traceability, Compose and deploy guard tests."},
+    {"name": "production_volume_and_post_build", "result": "NOT_RUN", "detail": "Local SSH read-only access was denied; actual current volume free space, sudo/Docker compatibility, in-flight reservation metric and post-build headroom await trusted master deployment and server evidence."}
+  ],
+  "decision": "The pre-build stop is implemented and tested, but QA-08 remains open. A missing pre-provisioned volume intentionally blocks first deployment."
+}
