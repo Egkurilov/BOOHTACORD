@@ -53,10 +53,11 @@ EOF
 chmod 0755 "$fixture/bin/"*
 
 run_audit() {
+  local expected="${5:-$sha}"
   PATH="$fixture/bin:$PATH" TEST_MOUNTPOINT="$fixture/attachments" \
     TEST_API_IMAGE="${3:-voice-platform-api:$sha}" TEST_AVAILABLE="$1" \
     TEST_VOLUME_MODE="${4:-ok}" TEST_METRICS_MODE="${2:-ok}" \
-    bash "$audit" "$sha" > "$fixture/output" 2>&1
+    bash "$audit" "$expected" > "$fixture/output" 2>&1
 }
 
 run_audit 6582484992 ok
@@ -91,6 +92,18 @@ if TEST_METRIC_TOTAL=3.0e+10 run_audit 6582484992 ok; then
 fi
 if TEST_SNAPSHOT=0 run_audit 6582484992 ok; then
   echo 'expected failed snapshot to fail' >&2
+  exit 1
+fi
+
+digest_ref=ghcr.io/example/voice-platform-api@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+run_audit 6582484992 ok "$digest_ref" ok "$digest_ref"
+grep -Fq "api_image=$digest_ref" "$fixture/output"
+if run_audit 6582484992 ok voice-platform-api:deadbeef ok "$digest_ref"; then
+  echo 'expected wrong GHCR digest to fail' >&2
+  exit 1
+fi
+if run_audit 6582484992 ok "$digest_ref" ok 'ghcr.io/example/voice-platform-api@sha256:short'; then
+  echo 'expected malformed GHCR digest to fail' >&2
   exit 1
 fi
 

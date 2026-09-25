@@ -13,6 +13,7 @@ pwsh -NoProfile -File scripts/verify-compose-images.ps1
 bash scripts/check-attachment-volume-headroom.test.sh
 bash scripts/audit-attachment-volume.test.sh
 bash scripts/deploy-images.test.sh
+bash scripts/deploy-images-volume-guard.test.sh
 bash scripts/deploy-local-images.test.sh
 bash scripts/resume_built_release/resume.test.sh
 bash scripts/qa08_capacity/reclaim_old_images.test.sh

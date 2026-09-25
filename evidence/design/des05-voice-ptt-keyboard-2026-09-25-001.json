@@ -1,0 +1,42 @@
+{
+  "id": "des05-voice-ptt-keyboard-2026-09-25-001",
+  "tasks": ["DES-05", "QA-05"],
+  "kind": "voice-ptt-keyboard-focus-leaf",
+  "status": "PARTIAL",
+  "leaf_result": "PASS_NATIVE_ONLY",
+  "observed_at": "2026-09-25T19:15:57Z",
+  "source_base_commit": "0eed259048c7bdfe8c357b62f8390bc746c9af74",
+  "bundle": {
+    "entry_js": "index-BPcEgmJB.js",
+    "entry_js_sha256": "0a256a832138c7c9864162b07746fe448cf2b751162c2cb0c7990191452620b1",
+    "entry_css": "index-Bz6I9mD8.css",
+    "entry_css_sha256": "d419160191dbd58755895ca6ac87174025454b009154b59ea0dec9d53acbc9c0"
+  },
+  "scenario": "While the Audio Settings PTT-key recorder is active, Tab must preserve native focus navigation and Escape must cancel key recording without closing an enclosing drawer.",
+  "baseline": {
+    "result": "FAIL_LOCAL_BEFORE_FIX",
+    "detail": "The component's keydown handler prevented every key's default action and assigned event.code. The focused test against the equivalent old behavior failed for Tab and Escape: both were assigned, Tab navigation was prevented, and Escape propagation was not stopped."
+  },
+  "checks": [
+    {
+      "name": "focused_native_test",
+      "result": "PASS",
+      "detail": "3/3 Vitest cases pass: Tab stops recording without preventDefault, Escape prevents default and propagation without assignment, ordinary KeyR is assigned."
+    },
+    {
+      "name": "frontend_tests_and_build",
+      "result": "PASS",
+      "detail": "190 Vitest files and 551 tests passed; vue-tsc --noEmit and Vite production build passed."
+    },
+    {
+      "name": "browser_accessibility_preflight",
+      "result": "NOT_RUN",
+      "detail": "Two independent Browser Use inventory attempts returned 'Unable to load browser request-header policy'; no built-bundle keyboard or AX observation was possible."
+    }
+  ],
+  "remaining": [
+    "Exercise Tab and Escape on the built bundle with an actual keyboard and accessibility tree after Browser Use is available.",
+    "Verify actual screen-reader announcements and remaining admin/reset/voice focus surfaces.",
+    "Run trusted-release-bundle QA-05 acceptance; local native results do not close DES-05 or QA-05."
+  ]
+}

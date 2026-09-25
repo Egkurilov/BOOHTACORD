@@ -2,8 +2,13 @@
 set -euo pipefail
 
 fail() { printf 'Attachment capacity audit failed: %s\n' "$1" >&2; exit 1; }
-[[ ${1:-} =~ ^[0-9a-f]{40}$ ]] || fail 'expected deployed Git SHA is invalid'
-expected_image="voice-platform-api:$1"
+if [[ ${1:-} =~ ^[0-9a-f]{40}$ ]]; then
+  expected_image="voice-platform-api:$1"
+elif [[ ${1:-} =~ ^ghcr[.]io/[a-z0-9][a-z0-9-]*/voice-platform-api@sha256:[0-9a-f]{64}$ ]]; then
+  expected_image="$1"
+else
+  fail 'expected deployed API revision or GHCR digest is invalid'
+fi
 
 mountpoint="$(sudo -n docker volume inspect --format '{{.Mountpoint}}' voice-platform_attachments-data)" || fail 'volume inspect unavailable'
 [[ "$mountpoint" == /* ]] || fail 'volume mountpoint unavailable'

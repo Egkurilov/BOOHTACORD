@@ -8,7 +8,8 @@ trap 'rm -rf "$temporary_root"' EXIT
 
 project_dir="$temporary_root/project"
 bin_dir="$temporary_root/bin"
-mkdir -p "$project_dir" "$bin_dir"
+mkdir -p "$project_dir/scripts" "$bin_dir"
+printf '#!/usr/bin/env bash\nexit 0\n' > "$project_dir/scripts/check-attachment-volume-headroom.sh"
 printf 'services: {}\n' > "$project_dir/compose.yaml"
 printf 'PUBLIC_HOST=v.bootybay.ru\n' > "$project_dir/.env"
 
@@ -44,7 +45,7 @@ run_deploy() {
 run_deploy
 grep -Fq "image inspect $api_image" "$temporary_root/commands.log"
 grep -Fq "image inspect $web_image" "$temporary_root/commands.log"
-! grep -Fq 'pull api migrate web' "$temporary_root/commands.log"
+if grep -Fq 'pull api migrate web' "$temporary_root/commands.log"; then exit 1; fi
 
 if run_deploy available "$api_image" "voice-platform-web:fedcba9876543210fedcba9876543210fedcba98"; then
   echo 'expected mismatched local image revisions to fail' >&2

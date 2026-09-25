@@ -81,6 +81,7 @@ sleep 15
 if [[ "$release_mode" == "registry-digest" ]]; then
   API_IMAGE="$api_image" WEB_IMAGE="$web_image" "${compose[@]}" pull api migrate web
 fi
+bash "$project_dir/scripts/check-attachment-volume-headroom.sh"
 
 umask 077
 temporary_env="$(mktemp "$env_file.release.XXXXXX")"

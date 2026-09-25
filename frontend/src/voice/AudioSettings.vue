@@ -3,6 +3,7 @@ import type { AudioDevice, AudioDeviceKind } from './audio_devices'
 import type { AudioSettingsState } from './audio_settings_store'
 import type { VoiceActivationMode } from './activation_store'
 import { audioProcessingStatus, type AudioProcessingDiagnostics } from './audio_processing_diagnostics'
+import { capturePttAssignment } from './ptt_key_capture'
 import type { AudioProcessingOptions } from './livekit_gateway'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
@@ -32,9 +33,7 @@ onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(foc
 
 function capturePttKey(event: KeyboardEvent): void {
   if (!recordingPttKey.value) return
-  event.preventDefault()
-  recordingPttKey.value = false
-  emit('setPttKey', event.code)
+  capturePttAssignment(event, () => { recordingPttKey.value = false }, (code) => emit('setPttKey', code))
 }
 
 function setProcessing(key: keyof AudioProcessingOptions, event: Event): void {

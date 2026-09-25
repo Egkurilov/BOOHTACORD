@@ -1,0 +1,14 @@
+{
+  "id": "des04-voice-dock-transition-2026-09-25-001",
+  "tasks": ["DES-04", "DES-07"],
+  "kind": "voice-dock-transition-status-source-regression",
+  "status": "PARTIAL",
+  "source_base_commit": "0eed259048c7bdfe8c357b62f8390bc746c9af74",
+  "checks": [
+    {"name": "baseline", "result": "FAIL_LOCAL_BEFORE_FIX", "detail": "SSR regression showed a joining session labelled as in-channel with a green connected indicator and a leaving session without an explicit leaving status."},
+    {"name": "focused_voice_states", "result": "PASS_LOCAL", "detail": "New test first failed for JOINING and LEAVING, then passed for transition labels, non-connected indicator, existing RECONNECTING and CONNECTED/LISTENER states."},
+    {"name": "frontend_native", "result": "PASS_LOCAL", "detail": "At the leaf's completion, 189 frontend test files and 548 tests passed; vue-tsc and Vite build passed."},
+    {"name": "connected_media_and_1_6_20_participant_browser_acceptance", "result": "NOT_RUN", "reason": "No real LiveKit media scenario or participant hardware was used for this source-level fix."}
+  ],
+  "decision": "The dock no longer describes transition states as connected. DES-04 remains open for real voice/stream states and POC acceptance."
+}

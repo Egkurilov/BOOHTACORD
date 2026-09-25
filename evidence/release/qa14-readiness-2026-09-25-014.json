@@ -1,0 +1,15 @@
+{
+  "id": "qa14-readiness-2026-09-25-014",
+  "kind": "trusted-repeat-master-deployed-with-open-acceptance-gates",
+  "status": "PARTIAL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T19:09:43Z",
+  "source_revision": "0eed259048c7bdfe8c357b62f8390bc746c9af74",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649611",
+  "requirements": {"total": 39, "mapped": 39},
+  "todo": {"total": 55, "completed": 37, "open": 18, "open_backend": 0, "open_frontend": 0, "open_design": 7, "open_verification": 11},
+  "trusted_result": "Backend PostgreSQL, frontend, release_guard and deploy succeeded. A repeat build without cache pruning passed both exact-volume guards. The post-rollout API image matches the source SHA and health is ok.",
+  "capacity_evidence": "evidence/capacity/qa08-active-upload-preflight-2026-09-25-001.json",
+  "remaining_blockers": "QA-08 active-upload sustained capacity is not measured. Seven design and eleven verification packages remain open, including physical media/load and connected revocation POCs, notification/screen-reader/manual chooser and visual acceptance, approved GHCR or alternate artifact delivery, compatible rollback and signed Android device acceptance.",
+  "release_policy": "Passing the production deployment and idle capacity audit does not close the product acceptance gates. Local source changes after this run require their own trusted checks."
+}

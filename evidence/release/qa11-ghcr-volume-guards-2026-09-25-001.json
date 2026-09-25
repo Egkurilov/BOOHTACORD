@@ -1,0 +1,15 @@
+{
+  "id": "qa11-ghcr-volume-guards-2026-09-25-001",
+  "task": "QA-11",
+  "kind": "approved-ghcr-delivery-capacity-guard-source-validation",
+  "status": "PARTIAL",
+  "source_base_commit": "0eed259048c7bdfe8c357b62f8390bc746c9af74",
+  "checks": [
+    {"name": "digest-qualified post-rollout audit", "result": "PASS_LOCAL", "detail": "A new GHCR digest fixture failed before implementation, then passed; malformed digest and mismatched running image fail closed. The existing local SHA path remains covered."},
+    {"name": "post-pull pre-migration headroom", "result": "PASS_LOCAL", "detail": "A new fake-Docker fixture failed before implementation, then proved image pull precedes exact-volume guard and guard failure leaves .env unchanged, prevents migration/workload switch and disables maintenance admission."},
+    {"name": "approved GitHub workflow wiring", "result": "PASS_STATIC", "detail": "The SSH step stages the exact-volume guard and digest-capable audit, checks headroom before installing release files, deploys digest-qualified API/web images and audits the exact running API reference after rollout. The deploy script repeats the headroom guard after image pull and before .env/migration."},
+    {"name": "validation", "result": "PASS_LOCAL", "detail": "Focused shell tests, full release-guard suite, shellcheck, YAML parse, pinned actionlint v1.7.12 and Windows traceability against the approved brief (39 requirements) passed."},
+    {"name": "trusted GitHub main/GHCR run and artifacts", "result": "NOT_RUN", "reason": "The target GitHub repository and deployment inputs are not available to this checkout; no pushed digest, SBOM or provenance attestation was inspected."}
+  ],
+  "decision": "The approved delivery route is safer in source, but QA-11 cannot close without a trusted GitHub main run or an accepted ADR-010 alternative and verified artifact chain."
+}

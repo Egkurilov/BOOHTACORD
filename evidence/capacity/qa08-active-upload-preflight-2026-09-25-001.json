@@ -1,0 +1,50 @@
+{
+  "id": "qa08-active-upload-preflight-2026-09-25-001",
+  "task": "QA-08",
+  "kind": "read-only-production-active-upload-capacity-preflight",
+  "status": "BLOCKED",
+  "observed_at": "2026-09-25T19:14:05Z",
+  "source_revision": "0eed259048c7bdfe8c357b62f8390bc746c9af74",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649611",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1649611/jobs/3225287/logs",
+  "checks": [
+    {
+      "name": "next trusted production build after cache recovery",
+      "result": "PASS",
+      "detail": "All four CI jobs succeeded for master 0eed259. The deploy log shows guarded exact-volume measurements of 20365070336 and 20364865536 available bytes against 6343294632 required before maintenance and a successful rollout."
+    },
+    {
+      "name": "post-rollout exact attachment volume and private API metric",
+      "result": "PASS_IDLE_ONLY",
+      "volume": "voice-platform_attachments-data",
+      "filesystem_source": "/dev/vda2",
+      "filesystem_type": "ext4",
+      "filesystem_target": "/",
+      "host_available_bytes": 20366057472,
+      "total_bytes": 31591473152,
+      "required_bytes": 6343294632,
+      "reserved_bytes": 0,
+      "metric_available_bytes": 20366057472,
+      "snapshot_success": 1,
+      "api_image": "voice-platform-api:0eed259048c7bdfe8c357b62f8390bc746c9af74",
+      "api_health": "ok"
+    },
+    {
+      "name": "representative active uploads and concurrent build",
+      "result": "NOT_RUN",
+      "reason": "The trusted audit is an idle post-rollout snapshot. No time series, upload concurrency, occupied reservations, upload outcomes or build overlapping uploads were captured."
+    },
+    {
+      "name": "independent read-only production access",
+      "result": "BLOCKED",
+      "detail": "Batch SSH to shaneque@176.108.242.211 returned Permission denied (publickey). Deployment SSH credentials are available only inside trusted GitVerse CI; the checked-in workflow performs rollout and one post-rollout audit, with no bounded load harness or active-upload observation step."
+    },
+    {
+      "name": "507 admission under low storage",
+      "result": "NOT_RUN",
+      "reason": "Deliberately consuming production free space to force 507 is not a safe QA method. Focused local storage tests were previously recorded in qa08-attachment-volume-2026-09-25-001.json, but they do not establish production load behavior."
+    }
+  ],
+  "next_action": "Use an operator-approved production load window and isolated test identities/channel with agreed fixture sizes and concurrency, plus an operator SSH session or a dedicated trusted CI measurement job. Sample docker volume inspect, df/findmnt on that exact mount, private API available/reserved/snapshot metrics, and upload status throughout the load and an overlapping normal build; retain timestamps and running image SHA. Validate 507 on an isolated capacity-limited environment or safe fault-injection test rather than filling the production volume. Preserve published attachment history, volume and backups.",
+  "decision": "One subsequent build retained substantial idle headroom, but QA-08 remains open. The accessible environment cannot safely prove sustained production capacity during representative uploads."
+}

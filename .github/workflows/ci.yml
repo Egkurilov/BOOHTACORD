@@ -86,11 +86,15 @@ jobs:
           set -euo pipefail
           remote="$DEPLOY_USER@$DEPLOY_HOST"
           staging="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "$remote" 'mktemp -d')"
-          scp -o BatchMode=yes -o StrictHostKeyChecking=yes compose.yaml docker/Caddyfile scripts/deploy-images.sh "$remote:$staging/"
+          scp -o BatchMode=yes -o StrictHostKeyChecking=yes compose.yaml docker/Caddyfile scripts/deploy-images.sh scripts/check-attachment-volume-headroom.sh scripts/audit-attachment-volume.sh "$remote:$staging/"
           ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "$remote" "set -eu
+            sudo bash '$staging/check-attachment-volume-headroom.sh'
             sudo install -d -m 0755 /opt/voice-platform/docker /opt/voice-platform/scripts
             sudo install -m 0644 '$staging/compose.yaml' /opt/voice-platform/compose.yaml
             sudo install -m 0644 '$staging/Caddyfile' /opt/voice-platform/docker/Caddyfile
             sudo install -m 0755 '$staging/deploy-images.sh' /opt/voice-platform/scripts/deploy-images.sh
+            sudo install -m 0755 '$staging/check-attachment-volume-headroom.sh' /opt/voice-platform/scripts/check-attachment-volume-headroom.sh
+            sudo install -m 0755 '$staging/audit-attachment-volume.sh' /opt/voice-platform/scripts/audit-attachment-volume.sh
             sudo env API_IMAGE='$API_IMAGE' WEB_IMAGE='$WEB_IMAGE' /opt/voice-platform/scripts/deploy-images.sh
+            bash '$staging/audit-attachment-volume.sh' '$API_IMAGE'
             rm -rf '$staging'"

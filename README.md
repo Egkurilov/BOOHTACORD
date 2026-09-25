@@ -2,7 +2,7 @@
 
 Self-hosted веб-платформа в логике лёгкого Discord: голосовые и текстовые каналы, личные сообщения, демонстрация экрана/игры и передача звука через LiveKit. Один deployment обслуживает ровно одну изолированную гильдию.
 
-> Статус: [trusted master run #1649514](evidence/capacity/qa08-attachment-volume-2026-09-25-018.json) успешно проверил backend, frontend и release guards, освободил неиспользуемый Docker build cache и развернул `935975a`. Post-rollout audit подтвердил здоровый API и **20 376 231 936 байт** на точном attachment volume при пороге **6 343 294 632**. Разовый cache-prune убран из повторяющегося workflow. Полный продуктовый release **ещё не принят**: QA-08 требует измерения при активных загрузках, а media POC, browser/design-приёмка и delivery/rollback gates остаются открытыми. См. [TODO](TODO.md) и [реализовано](DONE.md).
+> Статус: [trusted master run #1649611](evidence/capacity/qa08-active-upload-preflight-2026-09-25-001.json) успешно проверил backend, frontend и release guards и развернул `0eed259` после повторной сборки без cache-prune. Post-rollout audit подтвердил здоровый API и **20 366 057 472 байта** на точном attachment volume при пороге **6 343 294 632**. Полный продуктовый release **ещё не принят**: QA-08 требует измерения при активных загрузках, а media POC, browser/design-приёмка и delivery/rollback gates остаются открытыми. См. [TODO](TODO.md) и [реализовано](DONE.md).
 
 ## Возможности
 

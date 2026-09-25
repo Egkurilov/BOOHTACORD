@@ -8,7 +8,8 @@ trap 'rm -rf "$temporary_root"' EXIT
 
 project_dir="$temporary_root/project"
 bin_dir="$temporary_root/bin"
-mkdir -p "$project_dir" "$bin_dir"
+mkdir -p "$project_dir/scripts" "$bin_dir"
+printf '#!/usr/bin/env bash\nexit 0\n' > "$project_dir/scripts/check-attachment-volume-headroom.sh"
 printf 'services: {}\n' > "$project_dir/compose.yaml"
 cat > "$project_dir/.env" <<'EOF'
 PUBLIC_HOST=v.bootybay.ru
@@ -96,8 +97,8 @@ extra_output="$temporary_root/extra.out"
 ! run_deploy extra "$extra_output" || { echo 'expected extra proxy network to fail deployment' >&2; exit 1; }
 grep -F 'Proxy has an unexpected Docker network attachment.' "$extra_output"
 extra_log="$temporary_root/commands-extra.log"
-! grep -Fq 'exec -T proxy caddy validate' "$extra_log"
-! grep -Fq 'curl -fsS --retry 5 --retry-connrefused https://v.bootybay.ru/api/v1/health' "$extra_log"
+if grep -Fq 'exec -T proxy caddy validate' "$extra_log"; then exit 1; fi
+if grep -Fq 'curl -fsS --retry 5 --retry-connrefused https://v.bootybay.ru/api/v1/health' "$extra_log"; then exit 1; fi
 grep -Fq 'maintenance-admission --disable' "$extra_log"
 
 health_output="$temporary_root/health.out"
