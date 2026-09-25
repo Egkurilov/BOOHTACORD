@@ -37,7 +37,7 @@
 | REQ-UI-02 · Компоненты/доступность | PARTIAL: 40-компонентная матрица и часть focus [DONE], [QA-05] | DES-02…08, screen reader и candidate comparison [DES] |
 | REQ-STACK-01 · Vue/Go/PostgreSQL/LiveKit | PARTIAL: native builds, PostgreSQL и trusted CI PASS [DONE], [QA-01] | Целевой deployment и media POC [QA] |
 | REQ-ARCH-01 · Разделение медиа/API | PARTIAL: код использует LiveKit и lease admission [DONE] | Connected-media POC и приватный network smoke [QA] |
-| REQ-DEPLOY-01 · CI/CD | PARTIAL: GitVerse backend/frontend/release_guard PASS на candidate; исходный main/GHCR и GitVerse/master расходятся [QA-04] | Утверждённый ADR, immutable refs, SBOM/provenance и rollout [QA] |
+| REQ-DEPLOY-01 · CI/CD | PARTIAL: GitVerse backend/frontend/release_guard PASS на candidate; GitHub main/GHCR source hardening и локальный actionlint PASS, trusted GitHub run NOT_RUN; main/GHCR и GitVerse/master расходятся [QA-04/11] | Утверждённый ADR либо исходный trusted pipeline, опубликованные digest/SBOM/provenance и rollout [QA] |
 | REQ-OPS-01 · Наблюдаемость | PARTIAL: приватные метрики и rotation в коде [DONE] | Live scrape, CPU/сеть/quota и latency evidence [QA] |
 | REQ-SECURITY-01 · Защита операций | PARTIAL: локальные ACL/storage tests [QA-03] | Candidate privacy, CI/security и сетевые проверки [QA] |
 | REQ-SECURITY-02 · DM/media privacy | PARTIAL: DM ACL проверен, media replay нет [QA-03] | Notification preview и POC-03 connected media [QA] |

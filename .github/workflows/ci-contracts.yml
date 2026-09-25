@@ -1,0 +1,25 @@
+name: CI contracts
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify API and requirement traceability
+        shell: pwsh
+        run: |
+          ./scripts/verify-contracts.ps1
+          ./scripts/verify-spec-traceability.ps1
+      - name: Validate Compose interpolation without starting services
+        run: docker compose --env-file .env.example -f compose.yaml config --quiet
+      - name: Reject implicit or latest Compose images
+        shell: pwsh
+        run: ./scripts/verify-compose-images.ps1
+      - name: Test proxy network deployment guard
+        run: bash scripts/deploy-images.test.sh
