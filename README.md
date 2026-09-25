@@ -2,7 +2,7 @@
 
 Self-hosted веб-платформа в логике лёгкого Discord: голосовые и текстовые каналы, личные сообщения, демонстрация экрана/игры и передача звука через LiveKit. Один deployment обслуживает ровно одну изолированную гильдию.
 
-> Статус: исходный код, контракты, production smoke и успешный GitVerse deploy зафиксированы, но полный release **ещё не принят**. Нужны реальные POC Windows/Apple-Silicon macOS, media revocation, capacity и browser acceptance. Текущий локальный frontend не проходит tests/build из-за незавершённого viewer FPS: [ревью 24.09](docs/reviews/2026-09-24-functionality.md), [TODO](TODO.md), [реализовано](DONE.md).
+> Статус: frontend FPS исправлен; локально прошли 463 frontend-теста и production build, backend и release guards прошли [trusted GitVerse CI](evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json). Полный release **ещё не принят**: production attachment filesystem имеет [0 доступных байт](evidence/capacity/qa08-attachment-volume-2026-09-25-002.json); остаются media POC, capacity, browser/design-приёмка и delivery/rollout gates. См. [TODO](TODO.md) и [реализовано](DONE.md).
 
 ## Возможности
 
@@ -10,7 +10,7 @@ Self-hosted веб-платформа в логике лёгкого Discord: г
 - Роли `MEMBER` и `ADMINISTRATOR`, серверные ACL и запрет административного чтения чужих DM.
 - Категории, текстовые и голосовые каналы с versioned topology и защитой от конфликтующих изменений.
 - Сообщения, ответы, редактирование, soft delete, cursor-пагинация, поиск, DM и caller-local unread cursor.
-- Приватные вложения для текстовых каналов: лимит 25 000 000 байт, повторная ACL-проверка download и безопасный preview raster-изображений.
+- Приватные вложения для текстовых каналов и DM: лимит 25 000 000 байт, повторная ACL-проверка download и безопасный preview raster-изображений.
 - Voice lifecycle: `voice lease → short-lived LiveKit credential → WebRTC`; есть явный transfer подключения, mute/deafen, выбор устройств и bounded reconnect.
 - Демонстрация экрана через browser picker и просмотр одного выбранного remote stream без лишних подписок.
 
@@ -102,7 +102,7 @@ Production smoke и runtime traces подтверждают доступност
 3. POC-03: kick, ban, logout, revocation и replay ранее выданных API/SDK credentials на подключённом media.
 4. Нагрузочный профиль: 100 voice participants в гильдии, до 20 в room и утверждённый screen-publisher profile.
 5. Финальные ACL/privacy, browser E2E, accessibility и authenticated visual checks.
-6. CI/CD: успешный GitVerse run #1629339 уже зафиксирован в [evidence](evidence/release-guildchat-profile-admin-2026-09-24-001.json). Открыты согласование delivery ADR с исходным main/GHCR, полнота checks/SBOM и maintenance/rollback acceptance — [QA-04/11/12](backlog/VERIFICATION_TODO.md).
+6. CI/CD: PostgreSQL/no-skip, frontend и release guards прошли в [GitVerse run #1643330](evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json). Открыты согласование delivery ADR с исходным main/GHCR, подтверждение опубликованных digest/SBOM/provenance и maintenance/rollback acceptance — [QA-11/12](backlog/VERIFICATION_TODO.md).
 
 Подробный статус, границы evidence и условия выпуска — в [delivery-and-verification](docs/specs/spec-voice-platform/delivery-and-verification.md).
 
