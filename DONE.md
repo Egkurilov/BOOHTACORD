@@ -1,7 +1,6 @@
 # Реализовано — BOOHTACORD
 
-Срез кода: 25.09.2026, ветка codex/voice-platform-foundation.
-Этот список отделён от [оставшихся задач](TODO.md). Отметка означает наличие подключённой реализации, а не полную приёмку всего T-пакета.
+Срез кода: 25.09.2026, ветка codex/voice-platform-foundation. Этот список отделён от [оставшихся задач](TODO.md). Отметка означает наличие подключённой реализации, а не полную приёмку всего T-пакета.
 Исходный аудит — в [ревью 24.09](docs/reviews/2026-09-24-functionality.md); проверка нового backend — в [отчёте 25.09](docs/reviews/2026-09-25-backend-delivery.md).
 
 ## Бэкенд и контракты
@@ -39,6 +38,8 @@
 - [x] **BE-14:** PostgreSQL-журнал realtime с курсором `after`, 7-дневным сроком, лимитом 512, повторной session/ACL-проверкой и явным REST resync при разрыве непрерывности или смене epoch.
 - [x] **BE-15:** метрика `voice_platform_attachment_upload_reserved_bytes` читает текущие in-flight bytes из общего admission manager TEXT/DM; focused тесты проверяют активную резервацию, release и scrape даже при ошибке filesystem snapshot. Production rollout и повторный QA-08 остаются открыты.
 - [x] **QA-08 / release guard leaf:** installer проверяет точный Docker attachment volume и запас `2 × max(2 GiB, ⌈10% total⌉) + 25 МБ` до promotion/build и повторно после build до maintenance; неизвестный volume или `df` останавливают выпуск. Shell boundary/failure/order тесты и полный release-guard прогон прошли. Реальный volume, in-flight reservation и устойчивый запас после rollout по-прежнему открыты в QA-08.
+- [x] **QA-08 / read-only audit source leaf:** master-only ручной GitVerse workflow сверяет точный Docker volume, `df`/`findmnt`, текущий API image/health и приватные filesystem/reservation метрики; отсутствие данных или недостаточный запас с учётом in-flight bytes останавливают аудит. Shell-тесты и static checks прошли; trusted production audit и устойчивый запас остаются в QA-08.
+- [x] **QA-13 / signing source leaf:** Android release-сборка требует отдельный секретный keystore, полный набор CI-переменных либо игнорируемый local `key.properties`; debug signing fallback удалён, неполные входы останавливают release task. Source guard PASS; signed APK/physical-device acceptance остаются в QA-13.
 
 Проверки листьев и миграционные PostgreSQL-тесты выполнены; команды и результаты общего прогона приведены в [отчёте пакета](docs/reviews/2026-09-25-backend-delivery.md). Реальный LiveKit/media POC, нагрузка, browser E2E и release-gate остаются в [QA](backlog/VERIFICATION_TODO.md). При restart сервер требует full REST resync: бесшовное сквозное replay не заявлено.
 
@@ -73,7 +74,7 @@
 - [x] **FE-24:** Enter отправляет сообщение, Shift+Enter добавляет строку; IME и модификаторы не вызывают случайную отправку. Source-тесты и локальный browser smoke TEXT/DM прошли.
 - [x] **FE-25:** первый DM create после refresh даёт generic notification только при приросте caller-local unread; отсутствие строки до refresh считается нулём только для адресованного нового DM. [Source evidence](evidence/qa/qa03-first-dm-notification-2026-09-25-001.json); системное уведомление в browser остаётся QA-03/05.
 - [x] **FE-26:** действия строки сообщения вынесены из потока на desktop; на touch доступны через кнопку «⋯» с Escape и возвратом фокуса. На 320 CSS px browser проверил видимость меню без horizontal overflow.
-- [x] **FE-27:** TEXT/DM read cursor выбирает последнюю видимую серверную строку в viewport истории, игнорирует optimistic-строки и не двигается назад. Source-проверки прошли; browser-приёмка второго участника остаётся QA-05.
+- [x] **FE-27:** TEXT/DM read cursor выбирает последнюю видимую серверную строку в viewport истории, игнорирует optimistic-строки и не двигается назад. Source-проверки и [локальная browser/PostgreSQL проверка двух авторизованных участников](evidence/qa/qa05-visible-read-cursor-2026-09-25-001.json) прошли; trusted bundle и общий QA-05 остаются открытыми.
 - [x] **FE-28:** event ID системного уведомления сохраняется как доставленный только после успешного `show`; после ошибки допускается повтор, после успеха две вкладки не дублируют доставку. Source-тесты прошли; OS delivery остаётся QA-03/05.
 - [x] **FE-29:** compact mention picker открывает список по кнопке «@», скрытые controls не участвуют в Tab, Escape возвращает фокус, стабильные user IDs не меняются. Source-тесты и browser smoke TEXT/DM на 320 CSS px прошли.
 - [x] **FE-30:** история имеет `role=log` и отдельное краткое live-объявление только новых чужих сообщений; начальная загрузка, старые страницы, правки и скрытая вкладка не создают объявление. Source-тесты прошли; фактическое озвучивание screen reader остаётся DES-02/05.
@@ -111,7 +112,6 @@
 - [x] **QA-04:** локальные PostgreSQL search/GIN и migration checks подтверждены trusted [GitVerse run #1643330](evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json): backend, frontend, release_guard PASS; deploy на non-master ветке skipped. Browser и rollout gates остаются отдельными задачами.
 - [x] **QA-14 / матрица evidence leaf:** 39/39 требований имеют строку; новые UI/source и предсборочный disk guard отражены без повышения их до release PASS. [Решение NO-GO](evidence/release/qa14-readiness-2026-09-25-007.json); общий QA-14 остаётся открытым.
 - [x] **QA-03 / адресность browser WebSocket leaf:** на изолированном fixed bundle получатель получил DM create/edit/delete (1/1/1), а аутентифицированный WebSocket третьего участника — 0/0/0; его вкладка не изменилась. [Evidence с ограничением общей cookie jar](evidence/qa/qa03-third-browser-private-hints-2026-09-25-001.json); browser notifications и общий QA-03 остаются открыты.
-
 - [x] **T-052:** private metrics для HTTP, WS connections/ready/reconnect, фактических LiveKit participants/tracks, задержки доставки событий, SFU revocation, upload failures и attachment filesystem; request-ID logs без body/token labels. Compose log rotation 10 MiB × 3. Live scrape и нагрузочная приёмка остаются QA-09/10.
 - [x] **T-054:** GitHub CI/GHCR/SBOM workflow и отдельный действующий GitVerse master deploy с commit-addressed API/web images, source archive hash, verified SSH, migration-before-rollout, maintenance и smoke guards. Trusted CI подтверждён в QA-04; согласование delivery ADR, SBOM/provenance и rollout ещё QA-11/12.
 - [x] **Исторический production smoke:** evidence/release-guildchat-profile-admin-2026-09-24-001.json содержит PASS_RUNTIME и successful GitVerse run #1629339; это не authenticated workflow/visual/media acceptance и не deploy всех текущих локальных изменений.

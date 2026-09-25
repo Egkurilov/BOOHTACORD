@@ -1,0 +1,46 @@
+{
+  "id": "qa05-visible-read-cursor-2026-09-25-001",
+  "tasks": ["QA-05", "FE-27", "BE-07"],
+  "kind": "isolated-fixed-bundle-visible-read-cursor-browser-verification",
+  "status": "PASS_LOCAL",
+  "observed_at": "2026-09-25T14:26:37Z",
+  "source_base_commit": "42e997369389e93d7512cd5bcf47bd77c85e7835",
+  "source_state": "Locally built from the base commit while unrelated QA/Android files were uncommitted in the working tree; not a trusted release artifact.",
+  "bundle": {
+    "build": "npm run build: PASS (vue-tsc --noEmit and Vite)",
+    "entry_js_sha256": "4c6070e3a2d11c0f7d88e6ded51a6a7eb84e6f0385557d0717a13a84cf8d8e79",
+    "entry_css_sha256": "9c8d52f1007f36dbe82592b5b41923e757495cad0a589404edd80f75123e7e81"
+  },
+  "environment": "Chrome recipient UI through a local fixed Vue preview and HTTP/WebSocket proxy; second authenticated actor used a separate local API cookie session. Disposable PostgreSQL schema, local Go API, 70 synthetic historical TEXT and 70 synthetic historical DM messages; no production data or LiveKit.",
+  "checks": [
+    {
+      "name": "text_scrolled_up_unread",
+      "result": "PASS_LOCAL",
+      "detail": "Opening TEXT at the newest row cleared its initial 70 unread messages. The recipient scrolled from the bottom (scrollTop approximately 1221) to mid-history (approximately 513). A second actor's authenticated POST created one message; the existing viewport stayed at approximately 513, the new-message jump showed 1, and the navigation badge and page title each showed 1 unread without reload."
+    },
+    {
+      "name": "text_bottom_and_refresh",
+      "result": "PASS_LOCAL",
+      "detail": "The jump control moved the viewport to its maximum, removed itself and cleared the TEXT unread count. After a page reload, TEXT had no unread badge while the independent DM backlog remained unread."
+    },
+    {
+      "name": "dm_scrolled_up_unread",
+      "result": "PASS_LOCAL",
+      "detail": "Opening DM at the newest row cleared its initial 70 unread messages. From mid-history (scrollTop approximately 513), a second actor's authenticated POST added one DM without changing the viewport; the new-message jump, DM navigation badge and page title showed 1 unread without reload."
+    },
+    {
+      "name": "dm_bottom_and_refresh",
+      "result": "PASS_LOCAL",
+      "detail": "The DM jump moved to the bottom and cleared its unread badge and page-title count. A page reload retained zero unread for both TEXT and DM."
+    },
+    {
+      "name": "durable_cursor_and_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "PostgreSQL confirmed both recipient read-cursor rows matched the latest server message after 71 TEXT and 71 DM messages. The browser tab and local servers were closed; the uniquely created test schema was dropped; fixture files were removed; both local ports had zero listeners."
+    }
+  ],
+  "limitations": [
+    "Only the recipient was exercised through a browser UI; the second actor used the same authenticated send API with an independent local session.",
+    "This bounded FE-27 result does not close QA-05: trusted release bundle, upload, notification permission, media/reconnect, screen reader, zoom and stored visual comparison remain open."
+  ]
+}

@@ -1,0 +1,31 @@
+name: Audit attachment volume
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    if: ${{ gitverse.ref_name == 'master' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      DEPLOY_SERVER_IP: 176.108.242.211
+      DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      SSH_USER: shaneque
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure pinned read-only SSH transport
+        shell: bash
+        run: bash scripts/configure-deploy-ssh.sh
+      - name: Measure exact volume and running API without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git_sha="$(git rev-parse HEAD)"
+          [[ "$git_sha" =~ ^[0-9a-f]{40}$ ]]
+          remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
+          ssh_options=(-i ~/.ssh/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          ssh "${ssh_options[@]}" "$remote" bash -s -- "$git_sha" < scripts/audit-attachment-volume.sh

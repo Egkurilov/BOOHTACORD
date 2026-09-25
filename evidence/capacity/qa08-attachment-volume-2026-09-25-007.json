@@ -1,0 +1,40 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-007",
+  "task": "QA-08",
+  "kind": "trusted-master-deploy-volume-guard",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T14:11:44Z",
+  "source_revision": "42e997369389e93d7512cd5bcf47bd77c85e7835",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1647111",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1647111/jobs/3220059/logs",
+  "checks": [
+    {
+      "name": "exact attachment volume before image build",
+      "status": "PASS",
+      "observed_at": "2026-09-25T14:11:09Z",
+      "available_bytes": 6593200128,
+      "required_bytes": 6343294632,
+      "margin_bytes": 249905496
+    },
+    {
+      "name": "exact attachment volume after api/web image build and before maintenance",
+      "status": "PASS",
+      "observed_at": "2026-09-25T14:11:24Z",
+      "available_bytes": 6582484992,
+      "required_bytes": 6343294632,
+      "margin_bytes": 239190360,
+      "note": "The shared guard script still labels this second output pre-build; log order shows it followed both image builds."
+    },
+    {
+      "name": "deployment completion",
+      "status": "PASS",
+      "observation": "Migrations applied; api/web/proxy started; Caddy configuration valid; health returned {\"status\":\"ok\"; maintenance admission disabled; deploy job SUCCESS."
+    },
+    {
+      "name": "current exact-volume, live reservation and stable post-rollout measurement",
+      "status": "NOT_RUN",
+      "reason": "CI log is a point-in-time deployment measurement and does not contain the private BE-15 reservation gauge. Direct read-only SSH from this workspace was denied by public-key authentication."
+    }
+  ],
+  "decision": "The guarded master deployment passed, but QA-08 remains open. The 239190360-byte post-build margin is narrow and cannot establish stable free space or account for in-flight reservations."
+}

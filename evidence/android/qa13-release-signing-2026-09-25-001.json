@@ -1,0 +1,32 @@
+{
+  "id": "qa13-release-signing-2026-09-25-001",
+  "kind": "release-gate",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "environment": {
+    "host_os": "Windows",
+    "flutter_sdk_available": false,
+    "android_gradle_wrapper_available": false,
+    "release_keystore_available": false
+  },
+  "checks": [
+    {
+      "name": "release-signing source guard",
+      "command": "powershell -File scripts/verify-android-release-signing.ps1",
+      "status": "PASS",
+      "observation": "No debug signing fallback; four external inputs, ignored local file, release task graph guard, and tracked-file check are present."
+    },
+    {
+      "name": "signed release APK build and certificate inspection",
+      "status": "NOT_RUN",
+      "reason": "Flutter/Android SDK and a release keystore are unavailable on this host."
+    },
+    {
+      "name": "physical-device install/update/auth/Origin/secure-cookie/permission/reconnect/voice/viewer",
+      "status": "NOT_RUN",
+      "reason": "No physical-device acceptance run was performed."
+    }
+  ],
+  "failure_or_blocker": "QA-13 remains open until a separately signed APK and physical-device checks have PASS evidence.",
+  "notes": "The 2026-09-24 APK evidence used an Android Debug certificate and does not satisfy release signing."
+}
