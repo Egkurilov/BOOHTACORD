@@ -9,7 +9,7 @@
     "entry_js_sha256": "0da847b610d67f0ba93afaa56f42d8aabc0af6140d264ea0a9d6e81e89c685ae",
     "entry_css_sha256": "a64c119f6735c3377eaf76d8d6681e4dd9fb83e8ce54b86f6052a2a195bf0ef0"
   },
-  "reference": "GuildChat_Design_System_v1.0.zip reference/screenshots/chat-1440.png (1440x900) and chat-640.png (640x700)",
+  "reference": "GuildChat_Design_System_v1.0.zip reference/screenshots/chat-1440.png (1440x900) and chat-640.png (640x720); candidate viewport was 640x700",
   "environment": "Chrome with locally rebuilt Vue bundle, local Go API and disposable PostgreSQL schema; first fixture had six synthetic TEXT and two DM messages, second fixture had 66 TEXT messages plus two browser sends; no production data or media",
   "checks": [
     {

@@ -6,5 +6,6 @@ coverage/
 *.exe
 data/
 attachments/
+evidence/design/artifacts/
 evidence/*.json
 !evidence/README.md

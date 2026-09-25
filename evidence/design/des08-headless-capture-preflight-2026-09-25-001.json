@@ -1,0 +1,32 @@
+{
+  "id": "des08-headless-capture-preflight-2026-09-25-001",
+  "tasks": ["DES-08", "QA-05"],
+  "kind": "local-screenshot-comparison-preflight",
+  "status": "BLOCKED",
+  "observed_at": "2026-09-25",
+  "reference_archive": {
+    "path": "C:/Users/egkur/Downloads/GuildChat_Design_System_v1.0.zip",
+    "sha256": "e93cc89cc1e925a7585aa46f95e6eeb81e244b3db9fda471acc8f3f7d8614101",
+    "screenshots": [
+      {"path": "reference/screenshots/chat-1440.png", "size": "1440x900", "sha256": "ff343250ecf0e6c40502072184769ad93ebe032c5d1c20785828b3c50b990ec3"},
+      {"path": "reference/screenshots/chat-640.png", "size": "640x720", "sha256": "17c48590eaecc52e5a866634847427e01fcf0fdce64c2de962d379e7e5f39d66"},
+      {"path": "reference/screenshots/voice-1440.png", "size": "1440x900", "sha256": "d9bac677bd7de30c50ab2a8bb89ddc0b70bfbbf4d26c1163d938d935989c9efc"},
+      {"path": "reference/screenshots/stream-1440.png", "size": "1440x900", "sha256": "ad2efea9f1dd317088f7e43215527ec52de33b563d490dc1d58a1a65e74a04a0"}
+    ]
+  },
+  "capture_probe": {
+    "source_commit": "071a594",
+    "frontend_command": "npm run dev -- --host 127.0.0.1 --port 5174 --strictPort",
+    "browser": "installed Chrome headless, 1440x900, device scale 1, virtual time budget 3000 ms, isolated temporary profile",
+    "artifact": "Local-only generated PNG in ignored evidence/design/artifacts/; hash recorded for reproducibility, not published as a matched screenshot",
+    "artifact_sha256": "33f8ea3a9adbaf6e06e00700b9d124440032d98cd80666624dc802fd5c94eac6",
+    "result": "PASS_CAPTURE_ONLY",
+    "observation": "The Vue client rendered its session lookup 404 retry state because no API fixture was running. This artifact proves local PNG capture but is not a matched chat, voice or stream state."
+  },
+  "comparison": {
+    "status": "NOT_RUN",
+    "blocker": "No authenticated Go/PostgreSQL candidate fixture or connected LiveKit voice/stream state was active. A screenshot of the unauthenticated 404 state cannot be compared with the chat/voice/stream references.",
+    "next_step": "Run one disposable synthetic authenticated candidate fixture, capture the matching chat state at 1440x900 and 640x720 with the same Chrome headless arguments, then capture connected voice and stream states at 1440x900. Record image hashes, visible layout measurements and deviations under ADR-008/009; exclude preview-only top navigation and synthetic reference data from product parity claims."
+  },
+  "cleanup": "Vite on 127.0.0.1:5174 was stopped; no fixture or media service was started. The generated PNG remains local and ignored. Isolated Chrome profiles remain in TEMP because automatic approval review rejected their recursive deletion."
+}
