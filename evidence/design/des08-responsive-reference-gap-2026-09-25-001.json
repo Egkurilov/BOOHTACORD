@@ -1,0 +1,46 @@
+{
+  "id": "des08-responsive-reference-gap-2026-09-25-001",
+  "tasks": ["DES-08", "T-050"],
+  "kind": "responsive-text-acceptance-limit",
+  "status": "NOT_RUN_PIXEL_PARITY_NO_MATCHING_REFERENCE",
+  "observed_at": "2026-09-25T20:58:06Z",
+  "source": {
+    "commit": "9e2298fee06806113f108299e73c06eca3237b1a",
+    "conversation_css_sha256": "9efd8b604fc2b6ba7148db171571b1867379f7bdb68650daf78929d65133f031",
+    "built_css_sha256": "47b174416c1580aba30184c256debd63b5deff7cc6ca18d6eff1518a7de3fd59",
+    "css_change_in_this_packet": false
+  },
+  "reference": {
+    "archive": "C:/Users/egkur/Downloads/GuildChat_Design_System_v1.0.zip",
+    "archive_sha256": "e93cc89cc1e925a7585aa46f95e6eeb81e244b3db9fda471acc8f3f7d8614101",
+    "available_chat_png_widths_css_px": [640, 1440],
+    "missing_chat_png_widths_css_px": [320, 1024],
+    "preview_limit": "The archived interactive preview HTML is identical to its standalone preview copy, but at 1440 px it shows a framed five-message demonstration rather than the approved full-width six-message chat PNG. It cannot be substituted as an exact 320/1024 pixel reference."
+  },
+  "attempt": {
+    "fixture": "Isolated loopback Go/PostgreSQL six-message TEXT state with synthetic accounts, selected общий channel, metadata-only settings.json; no private data, attachment bytes, or media.",
+    "method": "Installed Chrome headless with separate temporary profiles, temporary same-origin channel selection in generated dist/index.html, then restored index.html. No user browser tab was changed.",
+    "320_request": {
+      "requested_window_px": [320, 700],
+      "output_png_px": [320, 700],
+      "measured_css_viewport_px": [500, 602],
+      "result": "INVALID_FOR_320_ACCEPTANCE: Chrome's minimum layout viewport was 500 px and the 320 px PNG cropped that layout horizontally.",
+      "ignored_local_artifact": "evidence/design/artifacts/des08-text-responsive-320x700-2026-09-25.png",
+      "sha256": "6317c4347ab698930da0fc47828704bde3f195d3bcf0b08c403fb15b7e5a1675"
+    },
+    "1024_request": {
+      "requested_window_px": [1024, 768],
+      "output_png_px": [1024, 768],
+      "measured_css_viewport_px": [1002, 670],
+      "result": "INVALID_FOR_EXACT_1024_ACCEPTANCE: screenshot output dimensions differ from actual CSS viewport and no matching approved reference exists.",
+      "ignored_local_artifact": "evidence/design/artifacts/des08-text-responsive-1024x768-2026-09-25.png",
+      "sha256": "364e5c014dff6079f7ed88df0b5a36e4a8f414cf1494a4edb61483c91d1a9619"
+    }
+  },
+  "interaction_checks": {
+    "hover": "NOT_RUN: local IAB computer-use provider returned Browser is not available; headless screenshots do not establish pointer hover.",
+    "focus": "NOT_RUN: no trusted native keyboard-focus capture was obtained.",
+    "screen_reader": "NOT_RUN"
+  },
+  "conclusion": "The prior 1440/640 TEXT geometry fix remains evidenced separately. This packet makes no 320/1024 pixel-match claim and found no trustworthy CSS defect to change. Exact 320/1024 acceptance needs the approved design state at those widths and browser captures with verified CSS viewport dimensions; hover, focus, screen reader and whole-state parity remain open."
+}

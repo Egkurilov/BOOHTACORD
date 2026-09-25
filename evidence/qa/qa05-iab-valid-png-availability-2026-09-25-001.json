@@ -1,0 +1,34 @@
+{
+  "id": "qa05-iab-valid-png-availability-2026-09-25-001",
+  "tasks": ["QA-05", "DES-02"],
+  "kind": "isolated-in-app-browser-valid-png-preview-preflight",
+  "status": "BLOCKED",
+  "observed_at": "2026-09-25T20:53:58Z",
+  "source_commit": "9e2298fee06806113f108299e73c06eca3237b1a",
+  "intended_sample": {
+    "path": "C:\\Users\\egkur\\AppData\\Local\\Temp\\boohtacord-qa05-valid-preview-20260925.png",
+    "bytes": 464,
+    "sha256": "74f9103e74d435b662024990cb5acae96ae02f77118fbacf032f4618055ba61b",
+    "integrity": "Generated and validated in the prior QA-05 packet; current hash and size rechecked read-only before this attempt."
+  },
+  "checks": [
+    {
+      "name": "iab_inventory",
+      "result": "BLOCKED",
+      "detail": "cua.getState returned the Chrome extension browser only, with no in-app browser surface in this subagent context."
+    },
+    {
+      "name": "isolated_hidden_iab_tab",
+      "result": "BLOCKED",
+      "detail": "A single createBrowserTab('iab', 'about:blank', {visible:false}) attempt returned 'Browser is not available: iab'. No tab was created."
+    },
+    {
+      "name": "valid_png_upload_preview_download_acl",
+      "result": "NOT_RUN",
+      "detail": "No local fixture was started and no file was selected, uploaded or sent. TEXT/DM preview, protected download, wire status and third-participant ACL remain unobserved in this packet."
+    }
+  ],
+  "cleanup": "No fixture processes, database schema, browser tabs or attachment files were created or changed in this packet; the pre-existing synthetic PNG was only read for hash and size.",
+  "scope_limit": "This proves the IAB surface was unavailable to this subagent at this observation time. It does not establish a product preview failure or that IAB is unavailable to every task or host. The prior Chrome file-chooser rejection and native Computer Use policy stop were not retried or bypassed.",
+  "remaining_gate": "QA-05 remains open; valid-PNG browser preview/download and ACL need an allowed browser surface."
+}
