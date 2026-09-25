@@ -2,7 +2,7 @@
   "id": "qa05-local-browser-2026-09-25-001",
   "kind": "authenticated-browser-smoke",
   "status": "PARTIAL",
-  "executed_at_utc": "2026-09-25T01:42:00Z",
+  "executed_at": "2026-09-25",
   "source_commit": "06a5517",
   "environment": "Local Vite development server, Go API, PostgreSQL 16.14 isolated qa05_browser schema, temporary private attachment directory; synthetic accounts in independent in-app browser and Chrome sessions",
   "checks": [

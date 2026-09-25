@@ -2,7 +2,7 @@
   "id": "des05-browser-focus-2026-09-25-001",
   "kind": "browser-keyboard-focus",
   "status": "PARTIAL",
-  "executed_at_utc": "2026-09-25T01:42:00Z",
+  "executed_at": "2026-09-25",
   "source_commit": "06a5517",
   "environment": "Local authenticated browser at 1024 CSS px against isolated PostgreSQL-backed candidate source",
   "checks": [
