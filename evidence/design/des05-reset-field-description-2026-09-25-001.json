@@ -1,0 +1,48 @@
+{
+  "id": "des05-reset-field-description-2026-09-25-001",
+  "tasks": ["DES-05", "QA-05"],
+  "kind": "isolated-built-bundle-reset-accessibility",
+  "status": "PARTIAL",
+  "leaf_result": "PASS_LOCAL",
+  "observed_at": "2026-09-25T16:51:25Z",
+  "candidate_base_commit": "4df09bd772acac695290448ba77735f7755a7fa0",
+  "bundle": {
+    "entry_js": "index-n2iCVLQq.js",
+    "entry_js_sha256": "c4d31b41c136112a0fa1b46fbeba339c56fbde2216bb2f151669b8740fc88f97",
+    "entry_css": "index-C2--DJlv.css",
+    "entry_css_sha256": "ffd7f0a2757483031a020b7ffdaaabe00e5ee87e097140c3b6b3d0780a76721e"
+  },
+  "environment": "In-app browser, locally built Vue bundle served by Vite preview on loopback; synthetic reset token; no API, PostgreSQL or production credentials",
+  "checks": [
+    {
+      "name": "baseline_contract",
+      "result": "FAIL_LOCAL_BEFORE_FIX",
+      "detail": "The visible 12–128-character password hint had no ID and the password input lacked an aria-describedby reference to it. The new focused test failed before the template change."
+    },
+    {
+      "name": "built_bundle_browser_semantics",
+      "result": "PASS_LOCAL",
+      "detail": "The accessibility tree exposed labelled password and confirmation fields. DOM inspection showed the password input referencing password-reset-length-hint, which resolved to the visible 12–128-character hint; the URL fragment was cleared."
+    },
+    {
+      "name": "local_validation_error",
+      "result": "PASS_LOCAL",
+      "detail": "After entering a short synthetic value and submitting, the input had aria-invalid=true and aria-describedby referenced both the length hint and password-reset-error; the latter existed with role=alert. No API request or credential reset was made."
+    },
+    {
+      "name": "native_frontend_validation",
+      "result": "PASS_LOCAL",
+      "detail": "Focused reset tests 9/9; full Vitest 184 files and 537 tests PASS; vue-tsc and Vite production build PASS. Source component 38 lines, focused spec 13 lines."
+    }
+  ],
+  "browser_launch_review": {
+    "action": "Start-Process for a local headless Chrome DOM capture with redirected output",
+    "result": "REJECTED",
+    "reason": "Automatic approval review returned blocked by policy; this launch was not retried through another shell. The supported in-app browser completed the local DOM check."
+  },
+  "not_run": [
+    "Actual screen-reader speech/announcement verification",
+    "Full admin, voice and other keyboard traversal",
+    "Trusted release bundle acceptance"
+  ]
+}

@@ -19,11 +19,15 @@ type Input struct {
 	Limit  int
 }
 type Event struct {
-	ID        string    `json:"id"`
-	ActorID   string    `json:"actor_user_id,omitempty"`
-	EventType string    `json:"event_type"`
-	TargetID  string    `json:"target_user_id,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
+	ID                string    `json:"id"`
+	ActorID           string    `json:"actor_user_id,omitempty"`
+	ActorDisplayName  string    `json:"actor_display_name,omitempty"`
+	ActorLogin        string    `json:"actor_login,omitempty"`
+	EventType         string    `json:"event_type"`
+	TargetID          string    `json:"target_user_id,omitempty"`
+	TargetDisplayName string    `json:"target_display_name,omitempty"`
+	TargetLogin       string    `json:"target_login,omitempty"`
+	CreatedAt         time.Time `json:"created_at"`
 }
 type Result struct {
 	Events     []Event `json:"events"`
@@ -47,7 +51,9 @@ func (service Service) List(ctx context.Context, input Input) (Result, error) {
 	var before int64
 	var err error
 	if input.Before != "" {
-		if strings.Trim(input.Before, "0123456789") != "" { return Result{}, ErrInvalidInput }
+		if strings.Trim(input.Before, "0123456789") != "" {
+			return Result{}, ErrInvalidInput
+		}
 		before, err = strconv.ParseInt(input.Before, 10, 64)
 		if err != nil || before < 1 {
 			return Result{}, ErrInvalidInput

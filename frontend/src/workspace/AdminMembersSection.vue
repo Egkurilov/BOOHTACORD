@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref } from 'vue'
 import { createPasswordResetLink, listAdminAccounts, updateAdminAccount, type AdminAccount, type PasswordResetLink } from '../identity/admin_directory_client'
+import { restoreAdminSaveFocus } from './admin_member_save_focus'
 
 const accounts = ref<AdminAccount[]>([]); const cursor = ref<string | undefined>(); const loading = ref(false); const busyID = ref('')
 const error = ref<string | null>(null); const status = ref<string | null>(null)
@@ -13,11 +14,13 @@ async function load(next?: string): Promise<void> {
   try { const page = await listAdminAccounts(next); accounts.value = next ? [...accounts.value, ...page.accounts] : page.accounts; cursor.value = page.next_cursor; for (const account of page.accounts) drafts[account.account_id] = { role: account.role, blocked: account.blocked } }
   catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить участников.' } finally { loading.value = false }
 }
-async function save(account: AdminAccount): Promise<void> {
+async function save(account: AdminAccount, event: MouseEvent): Promise<void> {
   const draft = drafts[account.account_id]; if (!draft) return
+  const trigger = event.currentTarget as HTMLButtonElement
+  const wasFocused = document.activeElement === trigger
   error.value = null; status.value = null; busyID.value = account.account_id
   try { await updateAdminAccount(account.account_id, draft.role, draft.blocked); status.value = `Права аккаунта ${account.login} сохранены.`; await load() }
-  catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось изменить аккаунт.' } finally { busyID.value = '' }
+  catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось изменить аккаунт.' } finally { busyID.value = ''; await nextTick(); restoreAdminSaveFocus(trigger, wasFocused, document.activeElement, document.body) }
 }
 async function createReset(account: AdminAccount, event: MouseEvent): Promise<void> {
   resetTrigger.value = event.currentTarget as HTMLButtonElement
@@ -44,8 +47,8 @@ onMounted(() => { void load() })
         <tr v-for="account in accounts" :key="account.account_id">
           <td><span>{{ account.display_name }}</span><small>@{{ account.login }}</small></td>
           <td><select v-model="drafts[account.account_id].role" :disabled="busyID === account.account_id" :aria-label="`Роль: ${account.login}`"><option value="MEMBER">Участник</option><option value="ADMINISTRATOR">Администратор</option></select></td>
-          <td><label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id"> Заблокирован</label></td>
-          <td><div class="admin-row-actions"><button type="button" :disabled="busyID === account.account_id" @click="save(account)">Сохранить</button><button type="button" :disabled="busyID === account.account_id" @click="createReset(account, $event)">Сбросить пароль</button></div></td>
+          <td><label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id" :aria-label="`Заблокирован: ${account.login}`"> Заблокирован</label></td>
+          <td><div class="admin-row-actions"><button type="button" :disabled="busyID === account.account_id" :aria-label="`Сохранить изменения для ${account.login}`" @click="save(account, $event)">Сохранить</button><button type="button" :disabled="busyID === account.account_id" :aria-label="`Сбросить пароль для ${account.login}`" @click="createReset(account, $event)">Сбросить пароль</button></div></td>
         </tr>
       </tbody></table>
     </div>

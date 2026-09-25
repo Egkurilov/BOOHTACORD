@@ -1,0 +1,36 @@
+{
+  "id": "qa14-readiness-2026-09-25-011",
+  "kind": "post-accessibility-audit-real-507-and-capacity-release-review",
+  "status": "FAIL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T17:19:59Z",
+  "source_base_commit": "4df09bd772acac695290448ba77735f7755a7fa0",
+  "candidate_scope": "Local working tree before a trusted master run; the last trusted deployment is GitVerse #1648401 for the base commit.",
+  "requirements": {"total": 39, "mapped": 39, "matrix": "docs/release/2026-09-25-requirements-matrix.md"},
+  "todo": {"total": 55, "completed": 37, "open": 18, "open_backend": 0, "open_frontend": 0, "open_design": 7, "open_verification": 11},
+  "candidate_validation": [
+    "Frontend Vitest 188 files / 546 tests PASS and vue-tsc/Vite build PASS after all source edits.",
+    "Local go test ./... exited 0 (some package results cached); audit packages test and vet PASS; PostgreSQL 16.14 rolled-back audit-join fixture PASS.",
+    "verify-contracts.ps1 PASS; verify-spec-traceability.ps1 maps 39/39 requirements."
+  ],
+  "new_evidence": [
+    "evidence/capacity/qa08-attachment-volume-2026-09-25-011.json",
+    "evidence/design/des05-reset-field-description-2026-09-25-001.json",
+    "evidence/design/des05-admin-row-focus-2026-09-25-001.json",
+    "evidence/design/des05-admin-audit-readable-2026-09-25-001.json",
+    "evidence/design/des07-voice-dock-reconnect-2026-09-25-001.json",
+    "evidence/design/des08-conversation-header-geometry-2026-09-25-001.json",
+    "evidence/qa/qa03-notification-permission-preflight-2026-09-25-001.json",
+    "evidence/qa/qa05-real-server-507-2026-09-25-001.json",
+    "evidence/qa/qa05-browser-real-507-retry-2026-09-25-001.json",
+    "evidence/release/qa11-github-repo-availability-2026-09-25-001.json"
+  ],
+  "blocking_gates": [
+    "QA-08: latest trusted exact-volume idle margin is only 152801624 bytes above the guard; future builds and active upload capacity remain unproven.",
+    "QA-06/07/09/10: physical Windows and Apple Silicon macOS media POCs, hardware load, and connected revocation/replay measurements are not run.",
+    "QA-03/05 and DES-02..08: real permission-based OS notifications, screen-reader speech, manually selected OS file, full matching-state visual capture, connected media and trusted browser bundle remain incomplete. Real 507 browser retry is local and its final wire 201 was inferred, not captured.",
+    "QA-11/12: approved main/GHCR delivery or accepted final ADR, immutable artifact attestations and real compatible rollback with preserved volumes remain incomplete.",
+    "QA-13: release-signed Android APK and physical-device acceptance are not run."
+  ],
+  "note": "The new local source and browser evidence improves coverage but does not promote any mandatory design, capacity, media, delivery or release gate to PASS. No production history or attachment volume was deleted."
+}

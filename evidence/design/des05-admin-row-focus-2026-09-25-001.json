@@ -1,0 +1,54 @@
+{
+  "id": "des05-admin-row-focus-2026-09-25-001",
+  "tasks": ["DES-05", "QA-05"],
+  "kind": "isolated-built-bundle-admin-keyboard-semantics",
+  "status": "PARTIAL",
+  "leaf_result": "PASS_LOCAL",
+  "observed_at": "2026-09-25T17:01:04Z",
+  "candidate_base_commit": "4df09bd772acac695290448ba77735f7755a7fa0",
+  "bundle": {
+    "entry_js": "index-Bd3mH1i0.js",
+    "entry_js_sha256": "f0ae90fe4fd6f7a7db6cd246478a305e03da4869b53ec4b51706a70e1c9027c9",
+    "entry_css": "index-C2--DJlv.css",
+    "entry_css_sha256": "ffd7f0a2757483031a020b7ffdaaabe00e5ee87e097140c3b6b3d0780a76721e"
+  },
+  "environment": "Locally built Vue bundle, loopback-only Node API fixture with three synthetic users and one synthetic audit event, Chrome extension browser at 884x448 CSS px; IAB unavailable for this run; no production data or real API",
+  "checks": [
+    {
+      "name": "baseline_repeated_names",
+      "result": "FAIL_LOCAL_BEFORE_FIX",
+      "detail": "The first focused contract test failed because all blocked checkboxes and row Save/Reset buttons repeated the same accessible name, unlike the account-specific role selectors."
+    },
+    {
+      "name": "baseline_save_focus",
+      "result": "FAIL_LOCAL_BEFORE_FIX",
+      "detail": "On the built bundle before the focus fix, keyboard role change, checkbox Space and Save Enter returned success, but focus fell from the disabled Save button to AXWebArea/body."
+    },
+    {
+      "name": "repeated_row_controls",
+      "result": "PASS_LOCAL",
+      "detail": "The accessibility tree exposed distinct role, blocked, Save and Reset names for admin_fixture, alpha_fixture and beta_fixture. Tab from the admin h1 reached section tabs, Refresh, scrollable table, then each row control in order."
+    },
+    {
+      "name": "save_focus_restoration",
+      "result": "PASS_LOCAL",
+      "detail": "On the rebuilt bundle, keyboard End selected Administrator for beta_fixture, Space checked blocked, Tab focused its Save button and Enter submitted the local fixture PATCH. Success appeared and focus remained on 'Сохранить изменения для beta_fixture'. A helper test also rejects focus restoration if focus moved elsewhere or the control unmounted."
+    },
+    {
+      "name": "audit_keyboard",
+      "result": "PASS_LOCAL",
+      "detail": "The Audit tab opened a labelled section with a content list. Tab from the selected tab reached Refresh; the synthetic event was visible."
+    },
+    {
+      "name": "native_frontend_validation",
+      "result": "PASS_LOCAL",
+      "detail": "Full Vitest 186 files and 541 tests PASS; vue-tsc and Vite build PASS. AdminMembersSection 65 lines, focus helper 15 lines, focused specs 13 and 30 lines."
+    }
+  ],
+  "not_run": [
+    "Actual screen-reader speech/announcement verification",
+    "Real PostgreSQL/Go administration and audit authorization; this browser pass used a synthetic API fixture",
+    "Full admin keyboard traversal and trusted release bundle acceptance"
+  ],
+  "observed_follow_up": "The Audit list still exposes raw ACCOUNT_ADMIN_STATE_UPDATED and opaque actor/target IDs rather than a localized event description; this needs a separate design leaf."
+}

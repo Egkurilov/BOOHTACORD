@@ -3,7 +3,7 @@ import type { ProfileRequest } from './profile_client'
 
 export interface AdminAccount { account_id: string; login: string; display_name: string; role: 'MEMBER' | 'ADMINISTRATOR'; blocked: boolean; created_at: string }
 export interface AdminAccountPage { accounts: AdminAccount[]; next_cursor?: string }
-export interface AuditEvent { id: string; actor_user_id?: string; event_type: string; target_user_id?: string; created_at: string }
+export interface AuditEvent { id: string; actor_user_id?: string; actor_display_name?: string; actor_login?: string; event_type: string; target_user_id?: string; target_display_name?: string; target_login?: string; created_at: string }
 export interface AuditPage { events: AuditEvent[]; next_cursor?: string }
 export interface PasswordResetLink { url: string; expires_at: string }
 export interface VoiceKickResult { revoked_leases: number }
@@ -21,7 +21,15 @@ function parseAccount(value: unknown): AdminAccount {
 }
 function parseEvent(value: unknown): AuditEvent {
   const event = record(value)
-  return { id: text(event.id), event_type: text(event.event_type), created_at: text(event.created_at), ...(typeof event.actor_user_id === 'string' ? { actor_user_id: event.actor_user_id } : {}), ...(typeof event.target_user_id === 'string' ? { target_user_id: event.target_user_id } : {}) }
+  return {
+    id: text(event.id), event_type: text(event.event_type), created_at: text(event.created_at),
+    ...(typeof event.actor_user_id === 'string' ? { actor_user_id: event.actor_user_id } : {}),
+    ...(typeof event.actor_display_name === 'string' ? { actor_display_name: event.actor_display_name } : {}),
+    ...(typeof event.actor_login === 'string' ? { actor_login: event.actor_login } : {}),
+    ...(typeof event.target_user_id === 'string' ? { target_user_id: event.target_user_id } : {}),
+    ...(typeof event.target_display_name === 'string' ? { target_display_name: event.target_display_name } : {}),
+    ...(typeof event.target_login === 'string' ? { target_login: event.target_login } : {}),
+  }
 }
 async function call(path: string, init: RequestInit, request: ProfileRequest): Promise<Response> {
   const response = await request(`${apiBaseUrl}${path}`, { ...init, credentials: 'same-origin', headers: { accept: 'application/json', ...init.headers } })

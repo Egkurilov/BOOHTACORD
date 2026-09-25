@@ -1,0 +1,15 @@
+{
+  "id": "qa11-github-repo-availability-2026-09-25-001",
+  "task": "QA-11",
+  "kind": "read-only-approved-delivery-route-preflight",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T16:55:18Z",
+  "source_commit": "4df09bd772acac695290448ba77735f7755a7fa0",
+  "checks": [
+    {"name": "configured_git_remote", "result": "PASS", "observation": "The only configured remote is origin at git@gitverse.ru:egkurilov/BOOHTACORD.git; master points to the source commit above."},
+    {"name": "approved_main_ghcr_target_visibility", "result": "INACCESSIBLE", "observation": "The connected GitHub repository metadata lookup for egkurilov/BOOHTACORD returned HTTP 404. This does not distinguish a nonexistent repository from a private repository unavailable to the connected identity. A direct HTTPS git ls-remote yielded no response for 30 seconds and was cancelled without submitting credentials."},
+    {"name": "current_gitverse_release", "result": "PASS_FOR_CURRENT_ROUTE", "observation": "Trusted GitVerse master run #1648401 completed backend, frontend, release guard and deploy for the source commit. It does not prove the approved main/GHCR digest, SBOM or provenance contract."}
+  ],
+  "decision_needed": "The product owner must identify/provision and connect the approved GitHub repository and deployment inputs, or explicitly accept a final ADR-010 for GitVerse master with equivalent immutable artifact and attestation guarantees. A 404 alone is not authorization to change the product brief.",
+  "release_gate": "QA-11 remains open; no GitHub main/GHCR trusted run or published artifact digests were observed."
+}

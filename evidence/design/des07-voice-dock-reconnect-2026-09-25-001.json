@@ -1,0 +1,42 @@
+{
+  "id": "des07-voice-dock-reconnect-2026-09-25-001",
+  "tasks": ["DES-07", "DES-05"],
+  "kind": "copy-accessibility-regression-and-browser-review",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T17:06:49Z",
+  "base_commit": "4df09bd772acac695290448ba77735f7755a7fa0",
+  "candidate": "working-tree VoiceDock.vue and voice_dock_reconnect_copy.spec.ts",
+  "finding": "When activeSession remained true but the channel was absent during RECONNECTING, the dock said the voice was connected and that the channel was merely hidden. The green status indicator also remained active, and the status text had no live-region semantics.",
+  "change": "RECONNECTING now takes precedence in status and hint copy; the dock announces the recovery state with role=status and aria-atomic=true, removes the connected indicator, and keeps manual exit available.",
+  "checks": [
+    {
+      "name": "test_before_change",
+      "result": "RED_CONFIRMED",
+      "detail": "Focused SSR regression failed on the old connected/missing-channel copy for activeSession=true, channel=null, state=RECONNECTING."
+    },
+    {
+      "name": "focused_tests",
+      "result": "PASS",
+      "detail": "Three nearest VOICE test files passed: 4 tests, including closure preservation."
+    },
+    {
+      "name": "frontend_suite_and_build",
+      "result": "PASS",
+      "detail": "npm test: 187 files, 542 tests passed. npm run build: vue-tsc and Vite passed."
+    },
+    {
+      "name": "isolated_production_bundle_browser",
+      "result": "PASS",
+      "detail": "A temporary Vite production bundle mounted the real VoiceDock component in Codex in-app browser. After a simulated CONNECTED→RECONNECTING transition, AX text changed to 'Восстанавливаем голосовое соединение' and 'Ручной выход отменит ожидание.'; DOM showed role=status, aria-atomic=true, no connected status-dot class, and enabled exit button. The temporary fixture source and two generated bundle files were removed individually."
+    },
+    {
+      "name": "screen_reader_and_physical_media",
+      "result": "NOT_RUN",
+      "detail": "AX/DOM inspection does not prove spoken announcement timing in a screen reader or voice recovery on physical clients; QA-07 remains open."
+    }
+  ],
+  "limitations": [
+    "The browser fixture simulated the component state transition; it did not exercise a real LiveKit reconnect.",
+    "Full DES-07 copy and screen-reader acceptance remains open."
+  ]
+}

@@ -10,6 +10,14 @@ describe('administrator directory API client', () => {
     expect(request).toHaveBeenNthCalledWith(2, expect.stringMatching(/\/admin\/audit\?limit=100$/), expect.objectContaining({ credentials: 'same-origin' }))
   })
 
+  it('keeps current account labels but discards audit metadata', async () => {
+    const payload = { events: [{ id: '1', event_type: 'ACCOUNT_ADMIN_STATE_UPDATED', created_at: '2026-09-25T00:00:00Z', actor_user_id: 'actor-1', actor_display_name: 'Администратор', actor_login: 'admin_fixture', target_user_id: 'target-1', target_display_name: 'Альфа', target_login: 'alpha_fixture', metadata: { secret: 'never expose' } }] }
+    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }))
+    const page = await listAuditEvents(undefined, request)
+    expect(page.events[0]).toMatchObject({ actor_display_name: 'Администратор', actor_login: 'admin_fixture', target_display_name: 'Альфа', target_login: 'alpha_fixture' })
+    expect(page.events[0]).not.toHaveProperty('metadata')
+  })
+
   it('changes only the selected account role and blocked state', async () => {
     const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ account_id: 'account-1', role: 'MEMBER', blocked: false }), { status: 200 }))
     await updateAdminAccount('account-1', 'MEMBER', false, request)

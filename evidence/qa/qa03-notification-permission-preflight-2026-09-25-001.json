@@ -1,0 +1,41 @@
+{
+  "id": "qa03-notification-permission-preflight-2026-09-25-001",
+  "tasks": ["QA-03", "QA-05"],
+  "kind": "notification-browser-gate-preflight",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T16:49:58Z",
+  "source_commit": "4df09bd772acac695290448ba77735f7755a7fa0",
+  "requirements": ["REQ-CHAT-02", "REQ-DM-01", "REQ-SECURITY-02"],
+  "scope": [
+    "frontend/src/notification/notification_delivery.ts",
+    "frontend/src/notification/notification_policy.ts",
+    "frontend/src/notification/notification_store.ts",
+    "frontend/src/workspace/workspace_realtime.ts"
+  ],
+  "checks": [
+    {
+      "name": "focused_frontend_tests",
+      "result": "PASS_LOCAL",
+      "command": "npm run test -- src/notification/notification_delivery.spec.ts src/notification/notification_policy.spec.ts src/notification/notification_store.spec.ts src/workspace/workspace_realtime.spec.ts",
+      "detail": "Four test files, 14 tests passed. Fakes exercise explicit enable, denied/revoked permission, generic DM preview, hidden-tab delivery, cross-tab event deduplication and silence for an unaddressed DM. These are source-level tests, not OS notification observations."
+    },
+    {
+      "name": "third_participant_realtime_delivery",
+      "result": "PASS_LOCAL_PREVIOUS_EVIDENCE",
+      "evidence": "evidence/qa/qa03-third-browser-private-hints-2026-09-25-001.json",
+      "detail": "Previously authenticated third browser socket received zero DM create/edit/delete frames while the recipient received one of each. The current preflight did not repeat this browser experiment."
+    },
+    {
+      "name": "browser_permission_and_os_notification",
+      "result": "NOT_RUN",
+      "detail": "Chrome tab control could not load the browser request-header policy in repeated attempts; the in-app browser had no tab. No permission prompt was accepted, no hidden-tab system notification was observed, and neither generic preview nor cross-tab dedup was verified in an actual browser."
+    },
+    {
+      "name": "isolated_in_app_browser_capability_probe",
+      "result": "NOT_RUN",
+      "detail": "A localhost-only static server was started on port 18798 to inspect Notification API and permission read-only. Creating an in-app browser tab returned Browser is not available: iab; a fresh browser inventory listed only Chrome. No page or permission state was read. The local server was stopped."
+    }
+  ],
+  "remaining_condition": "Use an accessible fixed or trusted browser bundle with two independent synthetic participant sessions and a third nonparticipant; grant notification permission in that test origin through the approved browser UI, hide the recipient tab, send a DM, and observe exactly one generic OS notification across two recipient tabs and none for the third account. Revoke permission and verify silence. Keep DM bodies and credentials out of evidence.",
+  "source_changes": "none"
+}

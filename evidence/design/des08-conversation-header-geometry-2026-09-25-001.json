@@ -1,0 +1,44 @@
+{
+  "id": "des08-conversation-header-geometry-2026-09-25-001",
+  "tasks": ["DES-08", "T-050"],
+  "kind": "local-selected-text-header-screenshot-geometry",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25",
+  "source": {
+    "base_commit": "4df09bd772acac695290448ba77735f7755a7fa0",
+    "changed_css": "frontend/src/design/conversation.css",
+    "changed_css_sha256": "11942f8f02087521c6cc6aeb660747c13732945925c4b1f49d4804cffe69995a",
+    "built_css": "frontend/dist/assets/index-Bz6I9mD8.css",
+    "built_css_sha256": "d419160191dbd58755895ca6ac87174025454b009154b59ea0dec9d53acbc9c0"
+  },
+  "reference": {
+    "desktop": { "artifact": "evidence/design/artifacts/des08-reference-chat-1440-2026-09-25.png", "sha256": "ff343250ecf0e6c40502072184769ad93ebe032c5d1c20785828b3c50b990ec3", "top_strip_px": 52, "header_border_y": 115, "shell_header_px": 64 },
+    "narrow": { "artifact": "evidence/design/artifacts/des08-reference-chat-640-2026-09-25.png", "sha256": "17c48590eaecc52e5a866634847427e01fcf0fdce64c2de962d379e7e5f39d66", "top_strip_px": 88, "header_border_y": 151, "shell_header_px": 64 },
+    "measurement": "RGB row transition at x=700 desktop and x=300 narrow, excluding the archived design-system demo strip under ADR-009. The archive HTML declares 72/56 px, but the requested PNG screenshots show 64/64 px; this packet follows the PNG visual target for conversation headers."
+  },
+  "before": {
+    "desktop": { "artifact": "evidence/design/artifacts/geometry-origin-1440.png", "header_border_y": 71, "shell_header_px": 72 },
+    "narrow": { "artifact": "evidence/design/artifacts/geometry-origin-640.png", "header_border_y": 55, "shell_header_px": 56 }
+  },
+  "change": "A scoped conversation-header rule fixes height, minimum height and flex basis to 64 px after the narrow override. It applies to the shared TEXT/DM header class without changing the shell header token or other panels.",
+  "browser_probe": {
+    "method": "Chrome headless, device scale 1, local file fixture using the production tokens.css and conversation.css plus the selected TEXT header DOM classes. Captures use the same PNG pixel sizes as the archive; fixture HTML is ignored and contains no account or message data.",
+    "fixture": "evidence/design/artifacts/des08-header-fixture.html",
+    "fixture_sha256": "84f0d6ff4388597bedbb72884660f6ce4868764c873abaefb126d91e4d844dde",
+    "desktop": { "artifact": "evidence/design/artifacts/des08-header-desktop-2026-09-25.png", "size": "1440x900", "sha256": "664f357a0682f2a52b624fb18c955a85d75bcba3f38cc70f3e5cb749736b9752", "header_border_y": 63, "shell_header_px": 64 },
+    "narrow": { "artifact": "evidence/design/artifacts/des08-header-narrow-2026-09-25.png", "size": "640x720", "sha256": "e507744da8b09b1a61c1b37324daad643dcc5370b60fa4a3470a018f3a6598e8", "header_border_y": 63, "shell_header_px": 64 },
+    "result": "PASS_LOCAL_HEADER_HEIGHT"
+  },
+  "validation": {
+    "red_first": "A disposable local source probe failed on the original 72/56 px rule and passed after the change; it was removed because it mirrored one CSS declaration.",
+    "focused": "PASS: nearest retained chat geometry test, 1 file, 2 tests.",
+    "frontend_build": "PASS: vue-tsc --noEmit and Vite build, 279 transformed modules.",
+    "diff_check": "PASS: git diff --check for scoped source/test."
+  },
+  "limits": [
+    "This isolated CSS/DOM fixture proves the header edge only. It is not a newly authenticated full TEXT/DM runtime capture; the historic synthetic fixture was removed.",
+    "The fixture omits mobile navigation and message rows, so no whole-image pixel score, scroll/content parity, hover/focus or mobile action claim is made.",
+    "Connected LiveKit voice/selected stream, screen reader, browser zoom and trusted release bundle remain for DES-08; overall gate remains PARTIAL."
+  ],
+  "artifact_policy": "All PNG/HTML paths above are local-only files under gitignored evidence/design/artifacts/ and are not part of the git change. The JSON evidence and CSS source are reviewable; temporary Chrome profiles contain no authenticated session."
+}

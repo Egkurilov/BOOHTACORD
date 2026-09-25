@@ -69,3 +69,4 @@
   .message-row .message-actions .message-action-buttons { position: absolute; top: 0; right: calc(100% + var(--gc-space-1)); display: none; width: max-content; max-width: calc(100vw - 80px); opacity: 1; pointer-events: auto; }
   .message-row .message-actions.is-open .message-action-buttons { display: flex; }
 }
+.conversation-header { height: 64px; min-height: 64px; flex: 0 0 64px; }

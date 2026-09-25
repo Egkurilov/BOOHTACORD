@@ -1,0 +1,49 @@
+{
+  "id": "des05-admin-audit-readable-2026-09-25-001",
+  "tasks": ["DES-03", "DES-05", "QA-05"],
+  "kind": "audit-reader-postgresql-and-built-bundle-browser",
+  "status": "PARTIAL",
+  "leaf_result": "PASS_LOCAL",
+  "observed_at": "2026-09-25T17:11:32Z",
+  "candidate_base_commit": "4df09bd772acac695290448ba77735f7755a7fa0",
+  "bundle": {
+    "entry_js": "index-CKwRS2Ub.js",
+    "entry_js_sha256": "2e6f892d017e90700dcb50354992553c3b62ef8ed9c967aeaac19afadd71d6ac",
+    "entry_css": "index-Bz6I9mD8.css",
+    "entry_css_sha256": "d419160191dbd58755895ca6ac87174025454b009154b59ea0dec9d53acbc9c0"
+  },
+  "environment": "PostgreSQL 16.14 temporary tables inside rolled-back transactions; local production Vue bundle served with a loopback-only synthetic API fixture in Chrome extension browser; no production accounts or messages",
+  "checks": [
+    {
+      "name": "baseline",
+      "result": "FAIL_LOCAL_BEFORE_FIX",
+      "detail": "The audit accessibility tree displayed raw ACCOUNT_ADMIN_STATE_UPDATED and actor/target internal IDs. Focused frontend formatter and backend account-label tests failed before implementation."
+    },
+    {
+      "name": "postgres_current_names",
+      "result": "PASS_LOCAL",
+      "detail": "The exact repository SELECT ran against temporary users/audit_events tables, returned current actor/target display_name and login, and returned empty labels for an unresolved target. Updating a current user from 'Admin Before' to 'Admin After' changed the next read of the same audit row; no historical name snapshot was claimed. Both transactions rolled back."
+    },
+    {
+      "name": "http_admin_acl_and_safe_fields",
+      "result": "PASS_LOCAL",
+      "detail": "HTTP handler/middleware tests returned 200 with current labels for ADMINISTRATOR, 403 without calling the reader for MEMBER, and 401 without a session at the inner handler. API result omitted audit_events.metadata. Backend audit packages and go vet PASS; route registration uses Require then RequireAdministrator."
+    },
+    {
+      "name": "browser_audit_presentation",
+      "result": "PASS_LOCAL",
+      "detail": "Built bundle showed a Russian title and 'Администратор (@admin_fixture)' / 'Альфа (@alpha_fixture)' for one synthetic event. An unknown event and unresolved target showed 'Другое событие управления', 'Система' and 'Удалённый аккаунт'. DOM contained two list items, no opaque fixture IDs or raw event codes; Tab from Audit reached Refresh."
+    },
+    {
+      "name": "native_validation",
+      "result": "PASS_LOCAL",
+      "detail": "Frontend Vitest 189 files/547 tests and vue-tsc/Vite build PASS; focused formatter covers 24 emitted event types, known/unknown actors and no raw ID. Backend audit packages and go vet PASS; verify-contracts.ps1 PASS."
+    }
+  ],
+  "remaining": [
+    "Real Go API plus PostgreSQL browser run and pagination acceptance",
+    "Actual screen-reader speech and full admin keyboard traversal",
+    "Trusted release bundle acceptance"
+  ],
+  "cleanup": "Browser tab closed and loopback fixture port 5192 stopped. An ignored frontend/dist/admin-audit-fixture.mjs file remains after automatic approval review rejected its removal as blocked by policy; it is outside the Git change set and removal was not retried through another shell."
+}

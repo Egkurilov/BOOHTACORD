@@ -1,0 +1,17 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-011",
+  "task": "QA-08",
+  "kind": "trusted-post-rollout-exact-volume-and-private-metric-audit",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T16:43:53Z",
+  "source_revision": "4df09bd772acac695290448ba77735f7755a7fa0",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1648401",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1648401/jobs/3223004/logs",
+  "checks": [
+    {"name": "trusted pipeline and deployed API", "status": "PASS", "jobs": {"backend": "success", "frontend": "success", "release_guard": "success", "deploy": "success"}, "api_image": "voice-platform-api:4df09bd772acac695290448ba77735f7755a7fa0", "api_health": "ok"},
+    {"name": "exact attachment volume around build", "status": "PASS", "before_build_available_bytes": 6505594880, "after_build_available_bytes": 6494945280, "release_required_bytes": 6343294632},
+    {"name": "post-rollout host and private API audit", "status": "PASS", "volume": "voice-platform_attachments-data", "filesystem_source": "/dev/vda2", "filesystem_type": "ext4", "filesystem_target": "/", "total_bytes": 31591473152, "host_available_bytes": 6496096256, "api_metric_available_bytes": 6496096256, "in_flight_reserved_bytes": 0, "snapshot_success": 1, "release_required_bytes": 6343294632, "host_margin_bytes": 152801624},
+    {"name": "sustained capacity under builds and active uploads", "status": "NOT_PROVEN", "observation": "The post-rollout margin fell by 28540928 bytes compared with trusted run #1648126. This is one idle snapshot with no in-flight upload; another build and user attachments can consume the remaining 152801624-byte margin. No attachment history or volume was deleted."}
+  ],
+  "decision": "The current guard and release passed, but QA-08 remains open until available capacity is increased or a measured sustainable usage plan demonstrates adequate headroom, followed by a fresh exact-volume audit under representative uploads."
+}

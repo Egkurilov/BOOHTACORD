@@ -1,0 +1,53 @@
+{
+  "id": "qa05-real-server-507-2026-09-25-001",
+  "tasks": ["QA-05", "REQ-STORAGE-03"],
+  "kind": "isolated-real-filesystem-http-upload-integration",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25",
+  "source": {
+    "commit": "4df09bd772acac695290448ba77735f7755a7fa0",
+    "backend_working_tree": "Clean for backend sources at build and verification; frontend and backlog edits by other active packets were not in this binary.",
+    "local_api_binary_sha256": "8343b987e388b6486405b99e7df2c4d1c7a776f533ada23ca239a23a8481acfd",
+    "trust_scope": "Locally built Go API, not a trusted release image"
+  },
+  "fixture": {
+    "database": "Disposable PostgreSQL database qa05_real507_20260925, migrated and bootstrapped with one synthetic administrator",
+    "api": "127.0.0.1:18757, real authenticated POST /api/v1/channels/{channelID}/attachments with valid Origin and multipart file",
+    "filesystem": "Unique /tmp/qa05-real507-20260925-18757 Linux tmpfs mounted with 64 MiB or 3 GiB size; syscall.Statfs observed its real capacity. No production volume was filled or altered.",
+    "secret_handling": "Synthetic bootstrap password and secure session cookie stayed in local files/process memory; no credential, token, message body or resource ID is in this record."
+  },
+  "checks": [
+    {
+      "name": "preflight_low_headroom",
+      "result": "PASS_LOCAL",
+      "observed": {"filesystem_total_bytes": 67108864, "filesystem_available_bytes": 67100672, "http_status": 507, "error_code": "INSUFFICIENT_STORAGE", "message_nonempty": true, "attachment_rows_before": 1, "attachment_rows_after": 1, "staging_part_files_after": 0},
+      "meaning": "The actual API and filesystem reservation rejected the upload before accepting a stream and left no attachment row or partial file."
+    },
+    {
+      "name": "retry_after_real_headroom_restore",
+      "result": "PASS_LOCAL",
+      "observed": {"filesystem_total_bytes": 3221225472, "filesystem_available_bytes": 3221217280, "retry_http_status": 201, "uploaded_bytes": 21, "attachment_rows_before": 1, "attachment_rows_after": 2, "staging_part_files_after": 0},
+      "meaning": "The same authenticated multipart POST succeeded after tmpfs capacity increased, without an injected response."
+    },
+    {
+      "name": "midstream_low_headroom",
+      "result": "PASS_LOCAL",
+      "observed": {"filesystem_total_bytes_at_admission": 3221225472, "staging_file_observed_before_space_drop": true, "filesystem_total_bytes_after_drop": 67108864, "http_status": 507, "error_code": "INSUFFICIENT_STORAGE", "attachment_rows_before": 2, "attachment_rows_after": 2, "staging_part_files_after": 0},
+      "meaning": "A delayed multipart stream was admitted on the 3 GiB mount, then Statfs fell below reserve while writing; the real API returned 507 and removed the partial file."
+    },
+    {
+      "name": "bounded_server_metrics",
+      "result": "PASS_LOCAL",
+      "observed": {"insufficient_storage_failure_count": 3, "upload_reserved_bytes_after_requests": 0, "filesystem_total_bytes_at_scrape": 67108864, "filesystem_available_bytes_at_scrape": 67096576},
+      "meaning": "Metrics observed the real 507 failures and released upload reservation; count includes an earlier repeated preflight probe."
+    },
+    {
+      "name": "browser_retry_with_real_507",
+      "result": "NOT_RUN",
+      "reason": "This packet exercised the actual HTTP API. Prior browser evidence used an injected 507; a browser UI retry against this real low-headroom server remains to be run."
+    }
+  ],
+  "native_validation": "WSL go test ./internal/storage/reserve_upload_space ./internal/storage/write_upload ./internal/storage/stage_upload ./internal/storage/upload_text_attachment/... ./internal/storage/upload_direct_message_attachment/... PASS (7 packages).",
+  "cleanup": "The exact local API process stopped; port 18757 is idle. The unique tmpfs was unmounted; the disposable database was dropped and PostgreSQL reports zero matching databases. The mountpoint and temporary probe scripts were not recursively removed.",
+  "remaining_gate": "QA-05 remains PARTIAL: run browser UI retry against real 507, native operating-system file chooser, trusted release bundle, screen reader/zoom and remaining voice/reconnect acceptance. This isolated tmpfs test does not establish sustainable production attachment capacity for QA-08."
+}

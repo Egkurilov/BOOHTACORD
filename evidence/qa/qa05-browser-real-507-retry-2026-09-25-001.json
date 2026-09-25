@@ -1,0 +1,50 @@
+{
+  "id": "qa05-browser-real-507-retry-2026-09-25-001",
+  "tasks": ["QA-05", "REQ-STORAGE-03"],
+  "kind": "isolated-browser-retry-against-real-api-low-headroom",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25",
+  "source": {
+    "base_commit": "4df09bd772acac695290448ba77735f7755a7fa0",
+    "bundle": "Locally built Vue/Vite dist, not a trusted release image",
+    "api": "Locally built Go API and migration/bootstrap commands; disposable PostgreSQL schema, synthetic users and private local attachment path",
+    "browser": "Codex in-app browser; controlled filechooser.setFiles selected a synthetic 18-byte text file. This was not a manual operating-system file selection."
+  },
+  "fixture": {
+    "origin": "http://localhost:18770",
+    "api_bind": "127.0.0.1:18084",
+    "filesystem": "Unique local WSL tmpfs at /tmp/qa05-browser-real507-20260925; real Statfs headroom, no production volume or data",
+    "privacy": "No credential, cookie, DM body, participant ID or attachment ID is recorded. The proxy did not inject an HTTP failure in this run."
+  },
+  "checks": [
+    {
+      "name": "fixture_mount_preflight_correction",
+      "result": "CORRECTED",
+      "detail": "An initial browser upload completed while the tmpfs was unmounted because its earlier mount command's WSL process had exited. This created one synthetic attachment row as the baseline. The live WSL fixture was then verified with a mounted 64 MiB tmpfs before the low-headroom attempt."
+    },
+    {
+      "name": "real_low_headroom_browser_error",
+      "result": "PASS_LOCAL",
+      "observed": {"filesystem_total_bytes": 67108864, "browser_error": "Не удалось загрузить вложение (507: INSUFFICIENT_STORAGE).", "retry_button_visible": true, "attachment_rows_before": 1, "attachment_rows_after": 1, "staging_part_files_after": 0},
+      "detail": "The browser sent the selected file through the real DM attachment input and Go API. The proxy's failure-injection endpoint was never called."
+    },
+    {
+      "name": "setup_induced_intermediate_500",
+      "result": "FIXTURE_ERROR",
+      "observed": {"browser_error": "Не удалось загрузить вложение (500: INTERNAL).", "attachment_rows_after": 1},
+      "detail": "The tmpfs had been mounted after API startup, hiding the API-created staging/unattached directories. The first retry after raising tmpfs size therefore failed with 500. These two directories were restored inside the isolated mount before retrying again. This is not a product 507-recovery outcome."
+    },
+    {
+      "name": "browser_retry_after_headroom_and_fixture_restore",
+      "result": "PASS_LOCAL_WITH_STATUS_INFERENCE",
+      "observed": {"filesystem_total_bytes": 3221225472, "browser_prepared_attachment_visible": true, "browser_error_cleared": true, "attachment_rows_before": 1, "attachment_rows_after": 2, "staging_part_files_after": 0, "unattached_files_on_mounted_volume": 1},
+      "detail": "Clicking the same visible Retry control prepared the failed file in the UI and created exactly one new row after the 507 and setup-induced 500. The Go handler's sole success branch writes HTTP 201 (backend/internal/storage/upload_direct_message_attachment/api/http_handler.go), and the local proxy forwards that status; raw response status for this browser retry was not separately captured."
+    },
+    {
+      "name": "fixture_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "Browser tab closed; local API/proxy ports idle; exact disposable PostgreSQL schema dropped and verified absent; tmpfs unmounted; its underlying synthetic file and directories removed; three locally built Go binaries and three new Windows Temp fixture files removed."
+    }
+  ],
+  "remaining_gate": "QA-05 remains PARTIAL. A controlled browser filechooser assignment is not manual OS selection; raw browser network 201 was inferred from the handler and accepted UI/DB state rather than captured; trusted release bundle, remaining screen-reader/zoom/media/notification acceptance and QA-08 production headroom remain open."
+}

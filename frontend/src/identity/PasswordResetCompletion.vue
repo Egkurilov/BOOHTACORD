@@ -23,12 +23,12 @@ usePasswordResetResultFocus(computed(() => completed.value || unusable.value || 
       <p v-else-if="!validLink || unusable" ref="resultMessage" class="authentication-error" role="alert" tabindex="-1">{{ error ?? 'Ссылка недействительна или срок её действия истёк. Попросите администратора выдать новую ссылку.' }}</p>
       <form v-else class="authentication-form" @submit.prevent="submit">
         <label class="authentication-field">Новый пароль
-          <input v-model="password" type="password" autocomplete="new-password" required :disabled="pending" :aria-invalid="Boolean(error)" :aria-describedby="error ? 'password-reset-error' : undefined">
+          <input v-model="password" type="password" autocomplete="new-password" required :disabled="pending" :aria-invalid="Boolean(error)" :aria-describedby="error ? 'password-reset-length-hint password-reset-error' : 'password-reset-length-hint'">
         </label>
         <label class="authentication-field">Повторите пароль
           <input v-model="confirmation" type="password" autocomplete="new-password" required :disabled="pending" :aria-invalid="Boolean(error)" :aria-describedby="error ? 'password-reset-error' : undefined">
         </label>
-        <p class="authentication-hint">От 12 до 128 символов.</p>
+        <p id="password-reset-length-hint" class="authentication-hint">От 12 до 128 символов.</p>
         <p v-if="error" id="password-reset-error" class="authentication-error" role="alert">{{ error }}</p>
         <button class="authentication-submit" type="submit" :disabled="pending">{{ pending ? 'Меняем пароль…' : 'Изменить пароль' }}</button>
       </form>
