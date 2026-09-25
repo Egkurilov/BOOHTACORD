@@ -2,7 +2,7 @@ name: Deploy production
 
 on:
   push:
-    branches: [master]
+    branches: [master, 'codex/**']
   workflow_dispatch:
 
 permissions:
