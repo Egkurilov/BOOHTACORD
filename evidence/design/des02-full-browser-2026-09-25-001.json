@@ -1,0 +1,52 @@
+{
+  "id": "des02-full-browser-2026-09-25-001",
+  "tasks": ["DES-02", "DES-06", "QA-05"],
+  "kind": "isolated-authenticated-conversation-browser-acceptance",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "source_commit": "5032d7be5024d0841f46cc3630871b5e812cbfee",
+  "bundle": {
+    "build": "npm run build: PASS (vue-tsc --noEmit && vite build)",
+    "entry_js_sha256": "e847796482474fe9f71e70154f53769813c4d7f66fd9b9cc5f64f85e8f7fbfad",
+    "entry_css_sha256": "cdc722811f699bd95f0e91440dd595e1fbb0fa9e22222a54c80eae8b673e9b24"
+  },
+  "environment": "Chrome, locally built Vue client, Go API, isolated PostgreSQL schema, temporary attachment directory and two synthetic users. A local test proxy injected one HTTP 503; it did not proxy WebSocket. No production data or LiveKit was used.",
+  "checks": [
+    {
+      "name": "text_history_and_responsive_layout",
+      "result": "PASS_LOCAL",
+      "detail": "TEXT opened with 50 of 60 seeded messages; Show previous loaded all 60 and displayed the beginning marker. At 1440, 1280, 1024, 768, 375 and 320 CSS px there was no document or message-row horizontal overflow, no action control outside its row, and the composer remained visible. Long author name, URL and attachment filename remained within the layout."
+    },
+    {
+      "name": "text_edit_conflict_recovery",
+      "result": "PASS_LOCAL",
+      "detail": "The server advanced a message from revision 1 to 2 while its editor held a draft. Save received HTTP 409, preserved the draft and offered Refresh version. Refresh displayed a review notice; a second Save persisted the draft at revision 3."
+    },
+    {
+      "name": "text_retry_and_reply",
+      "result": "PASS_LOCAL",
+      "detail": "One injected HTTP 503 showed a failed optimistic message and Retry send. Clicking Retry sent the message once; PostgreSQL TEXT count changed 60 to 61. A browser reply then showed its target preview and increased the count to 62."
+    },
+    {
+      "name": "dm_history_mention_and_responsive_layout",
+      "result": "PASS_LOCAL",
+      "detail": "DM opened with 50 of 56 seeded messages and loaded all 56 through Show previous. The long attachment filename and a resolved @qa_peer mention rendered. At 1440, 1024, 768, 375 and 320 CSS px there was no document or row horizontal overflow or control outside its row; the composer remained visible. Sending a DM with a selected mention increased the PostgreSQL DM count 56 to 57 and rendered the mention label. Opening the dialog removed its unread badge."
+    },
+    {
+      "name": "dm_upload_browser_flow",
+      "result": "NOT_RUN",
+      "detail": "Chrome's file chooser event timed out after both the file input and the visible Attach files button were clicked. The synthetic local file was never selected or uploaded."
+    },
+    {
+      "name": "fixture_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "The fixture reported CLEAN after dropping its isolated schema and attachment directory and stopping the Go API; ports 18082 and 18768 had no listeners. Temporary browser tab, viewport override, script, upload sample and Go binaries were removed."
+    }
+  ],
+  "remaining": [
+    "Complete browser upload progress, success and error states in a browser with a working file chooser",
+    "Run full keyboard and screen-reader acceptance and verify real 125% and 150% browser zoom",
+    "Compare stored screenshots with design references across all workspace surfaces",
+    "Run voice/media/reconnect scenarios and repeat browser acceptance against a trusted release bundle"
+  ]
+}
