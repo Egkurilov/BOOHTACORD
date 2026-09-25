@@ -15,6 +15,12 @@ describe('message client', () => {
     expect(request).toHaveBeenCalledWith('/api/v1/channels/text-1/messages', expect.objectContaining({ method: 'GET', credentials: 'same-origin' }))
   })
 
+  it('requests the protected message anchor and a bounded context page', async () => {
+    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ messages: [body] })))
+    await expect(loadMessagePage('text-1', undefined, request, 'message-1')).resolves.toMatchObject({ messages: [{ id: 'message-1' }] })
+    expect(request).toHaveBeenCalledWith('/api/v1/channels/text-1/messages?at=message-1&limit=20', expect.objectContaining({ credentials: 'same-origin' }))
+  })
+
   it('rejects history that omits the required safe attachment array', async () => {
     const { attachments: _attachments, ...withoutAttachments } = body
     const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ messages: [withoutAttachments] })))

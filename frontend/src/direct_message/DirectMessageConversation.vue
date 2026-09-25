@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { loadCurrentSession, type CurrentSession } from '../identity/current_session'
 import { useAuthorDirectory } from '../identity/author_directory'
@@ -13,10 +13,14 @@ import { advanceReadIfVisible, newestServerMessageId } from './direct_message_re
 import { useDirectMessageStore } from './direct_message_store'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
 import { useComposerScope } from '../conversation/composer_scope'
+import SearchMessageContext from '../search/SearchMessageContext.vue'
+import { useSearchTargetStore } from '../search/search_target_store'
 
 const props = defineProps<{ directMessageId: string; otherParticipantId: string; otherParticipantDisplayName: string; navOpen: boolean }>()
 const emit = defineEmits<{ toggleNav: [] }>()
 const store = useDirectMessageStore()
+const searchTarget = useSearchTargetStore()
+const contextTarget = computed(() => searchTarget.target?.kind === 'DIRECT_MESSAGE' && searchTarget.target.conversationId === props.directMessageId ? searchTarget.target : null)
 const authors = useAuthorDirectory()
 const session = ref<CurrentSession | null>(null)
 const composer = useComposerScope<DirectMessageHistoryItem, TextMessageAttachment>()
@@ -68,7 +72,7 @@ onMounted(() => {
   void loadSession()
   queueVisibleRead()
 })
-onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisibleRead))
+onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVisibleRead); searchTarget.clearFor('DIRECT_MESSAGE', props.directMessageId) })
 </script>
 
 <template>
@@ -84,6 +88,7 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisi
     <div v-if="searchOpen" class="conversation-tools"><DirectMessageSearch :direct-message-id="props.directMessageId" /></div>
     <p v-if="store.loadingHistory" class="state" aria-live="polite">Загружаем историю…</p>
     <p v-if="store.error" id="direct-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refreshHistory()">Повторить загрузку</button></p>
+    <SearchMessageContext v-if="contextTarget" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
     <DirectMessageHistoryList :direct-message-id="props.directMessageId" :session="session" :other-participant-id="props.otherParticipantId" :other-participant-display-name="props.otherParticipantDisplayName" @reply="replyTarget = $event" @retry="retry" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">

@@ -35,6 +35,12 @@ describe('direct-message client', () => {
     expect(request).toHaveBeenCalledWith('/api/v1/direct-messages/dm-1/messages', expect.objectContaining({ method: 'GET', credentials: 'same-origin' }))
   })
 
+  it('requests a bounded context page through the participant-only history route', async () => {
+    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ messages: [deletedHistoryItem] })))
+    await expect(loadDirectMessageHistory('dm-1', undefined, request, 'message-2')).resolves.toMatchObject({ messages: [{ id: 'message-2', deleted: true }] })
+    expect(request).toHaveBeenCalledWith('/api/v1/direct-messages/dm-1/messages?at=message-2&limit=20', expect.objectContaining({ credentials: 'same-origin' }))
+  })
+
   it('rejects a deleted item that carries hidden text', async () => {
     const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ messages: [{ ...deletedHistoryItem, body: 'secret' }] })))
 

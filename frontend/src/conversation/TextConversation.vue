@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useTopologyStore } from '../channel/topology_store'
 import { loadCurrentSession, type CurrentSession } from '../identity/current_session'
 import { useAuthorDirectory } from '../identity/author_directory'
@@ -13,11 +13,15 @@ import type { TextAttachmentUpload } from './text_attachment_upload_client'
 import { advanceTextReadIfVisible, newestServerTextMessageId } from './text_read_gate'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
 import { useComposerScope } from './composer_scope'
+import SearchMessageContext from '../search/SearchMessageContext.vue'
+import { useSearchTargetStore } from '../search/search_target_store'
 
 const props = defineProps<{ channelId: string; channelName: string; navOpen: boolean; membersOpen: boolean; showMembers: boolean }>()
 const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
 const store = useMessageStore()
 const topology = useTopologyStore()
+const searchTarget = useSearchTargetStore()
+const contextTarget = computed(() => searchTarget.target?.kind === 'CHANNEL' && searchTarget.target.conversationId === props.channelId ? searchTarget.target : null)
 const authors = useAuthorDirectory()
 const session = ref<CurrentSession | null>(null)
 const composer = useComposerScope<TextMessage, TextAttachmentUpload>()
@@ -52,7 +56,7 @@ watch(() => props.channelId, (channelId) => {
 }, { immediate: true })
 watch([() => props.channelId, () => store.channelId, () => store.messages], queueVisibleRead, { flush: 'post' })
 onMounted(() => { document.addEventListener('visibilitychange', queueVisibleRead); queueVisibleRead() })
-onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisibleRead))
+onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVisibleRead); searchTarget.clearFor('CHANNEL', props.channelId) })
 
 async function send(): Promise<void> {
   if (attachmentPending.value || store.channelId !== props.channelId) return
@@ -86,6 +90,7 @@ function addEmoji(emoji: string): void { draft.value += emoji }
     <div v-if="searchOpen" class="conversation-tools"><TextMessageSearch :channel-id="props.channelId" /></div>
     <p v-if="store.loading" class="state" aria-live="polite">Загружаем историю…</p>
     <p v-if="store.error" id="text-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refresh()">Повторить загрузку</button></p>
+    <SearchMessageContext v-if="contextTarget" kind="CHANNEL" :conversation-id="props.channelId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
     <TextHistoryList :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @retry="retry" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">

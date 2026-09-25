@@ -64,7 +64,7 @@ onMounted(() => { void nextTick(() => queryInput.value?.focus()) })
     <p class="search-status" aria-live="polite" :aria-busy="loading">{{ loading ? 'Ищем сообщения…' : searched ? (messages.length ? `Результатов: ${messages.length}.` : 'Совпадений нет.') : 'Введите запрос и нажмите «Найти».' }}</p>
     <ol v-if="messages.length" class="search-results" aria-label="Результаты поиска">
       <li v-for="message in messages" :key="`${message.kind}:${message.id}`" class="search-result">
-        <article><header><strong>{{ conversationLabel(message) }}</strong><time :datetime="message.createdAt">{{ formattedDate(message.createdAt) }}</time></header><MessageBody :body="message.body" /><button type="button" @click="emit('open', message)">Открыть беседу</button></article>
+        <article><header><strong>{{ conversationLabel(message) }}</strong><time :datetime="message.createdAt">{{ formattedDate(message.createdAt) }}</time></header><MessageBody :body="message.body" /><button type="button" @click="emit('open', message)">Открыть сообщение</button></article>
       </li>
     </ol>
     <button v-if="nextCursor" class="search-more" type="button" :disabled="loading" @click="runSearch(nextCursor)">Показать ещё</button>
