@@ -4,7 +4,7 @@
 
 **Goal:** Obtain a current, reproducible measurement of the production attachment volume and in-flight upload reservations without changing production state.
 
-**Architecture:** A manually dispatched GitVerse workflow on `master` uses the existing pinned deploy SSH identity. Its remote script reads the exact Docker volume, filesystem, API container and private metrics endpoint, emits only bounded numeric/health fields, and fails closed if any measurement is unavailable. No build, migration, Docker cleanup or service restart runs in this workflow.
+**Architecture:** A manually dispatched GitVerse workflow on `master` uses the existing pinned deploy SSH identity. The same audit also runs after a successful master rollout, so trusted evidence does not depend on an interactive GitVerse login. Its remote script reads the exact Docker volume, filesystem, API container and private metrics endpoint, emits only bounded numeric/health fields, and fails closed if any measurement is unavailable. The manual workflow does not build, migrate, clean Docker or restart services.
 
 **Tech Stack:** Bash, Docker CLI, `df`, `findmnt`, `curl`, GitVerse Actions.
 
@@ -31,11 +31,12 @@
 - [x] Execute only `bash scripts/audit-attachment-volume.sh` remotely and preserve its exit status.
 - [x] Add the focused shell test to native release guards.
 - [x] Run the complete native release guards.
+- [ ] Execute the same read-only audit as a final step after successful master rollout; validate the workflow and publish it.
 
 ### Task 3: Capture production evidence
 
 **Files:**
-- Create: `evidence/capacity/qa08-attachment-volume-2026-09-25-008.json` after current read-only CI audit; prior trusted deploy guard is recorded in `007`.
+- Create: `evidence/capacity/qa08-attachment-volume-2026-09-25-009.json` after the automatic read-only CI audit; trusted deploy guards are recorded in `007` and `008`.
 - Modify: `TODO.md`, `backlog/VERIFICATION_TODO.md`, `DONE.md`, requirement matrix only if the measurement changes their verified state.
 
 - [ ] Commit and publish the workflow through the normal branch/master path only after native checks; do not bypass the deployment disk guard.

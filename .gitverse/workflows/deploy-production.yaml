@@ -109,3 +109,11 @@ jobs:
           ssh_options=(-i ~/.ssh/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
           scp "${ssh_options[@]}" "$ARCHIVE" "$remote:$remote_archive"
           ssh "${ssh_options[@]}" "$remote" bash -s -- "$GIT_SHA" "$ARCHIVE_SHA256" < scripts/install-received-release.sh
+      - name: Audit live attachment headroom after rollout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git_sha="$(git rev-parse HEAD)"
+          remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
+          ssh_options=(-i ~/.ssh/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          ssh "${ssh_options[@]}" "$remote" bash -s -- "$git_sha" < scripts/audit-attachment-volume.sh

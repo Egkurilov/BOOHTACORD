@@ -1,0 +1,39 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-008",
+  "task": "QA-08",
+  "kind": "trusted-master-deploy-volume-guard",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T14:41:20Z",
+  "source_revision": "d4976af1c2020c8209c0602714a943b5c6c9e1c6",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1647372",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1647372/jobs/3220695/logs",
+  "checks": [
+    {
+      "name": "exact attachment volume before image build",
+      "status": "PASS",
+      "observed_at": "2026-09-25T14:40:59Z",
+      "available_bytes": 6572843008,
+      "required_bytes": 6343294632,
+      "margin_bytes": 229548376
+    },
+    {
+      "name": "exact attachment volume after image build and before maintenance",
+      "status": "PASS",
+      "observed_at": "2026-09-25T14:41:00Z",
+      "available_bytes": 6572630016,
+      "required_bytes": 6343294632,
+      "margin_bytes": 229335384
+    },
+    {
+      "name": "backend, frontend, release guard, deploy and health",
+      "status": "PASS",
+      "observation": "All master jobs SUCCESS; health returned {\"status\":\"ok\" and maintenance admission was disabled."
+    },
+    {
+      "name": "current filesystem and in-flight reservation audit",
+      "status": "NOT_RUN",
+      "reason": "The manually dispatched workflow needs GitVerse authorization. An unauthenticated dispatch returned HTTP 401. The next master deploy will run the read-only audit automatically after rollout."
+    }
+  ],
+  "decision": "QA-08 remains open. The 229335384-byte margin is a point-in-time guard result and does not establish stable post-rollout capacity or live reservations."
+}

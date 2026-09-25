@@ -5,9 +5,16 @@
   "executed_at": "2026-09-25",
   "environment": {
     "host_os": "Windows",
-    "flutter_sdk_available": false,
+    "jdk": "OpenJDK 21.0.11",
+    "flutter_cli_available": false,
+    "gradle_cli_available": false,
+    "android_sdk_available": true,
+    "android_sdk_platforms": ["android-35"],
+    "android_sdk_build_tools": ["35.0.0"],
+    "adb_available_via_sdk_path": true,
+    "authorized_adb_devices": 0,
     "android_gradle_wrapper_available": false,
-    "release_keystore_available": false
+    "release_signing_inputs_configured": false
   },
   "checks": [
     {
@@ -17,14 +24,24 @@
       "observation": "No debug signing fallback; four external inputs, ignored local file, release task graph guard, and tracked-file check are present."
     },
     {
+      "name": "host Android toolchain and device inventory",
+      "status": "PASS",
+      "observation": "Android SDK API 35/build-tools 35.0.0, platform-tools ADB, and JDK 21 are present. Flutter and Gradle CLIs, Gradle wrapper script/JAR, release signing inputs, and authorized ADB devices are absent. No secret values or device identifiers were read into evidence."
+    },
+    {
+      "name": "debug Gradle source/configuration task",
+      "status": "NOT_RUN",
+      "reason": "Flutter and Gradle CLIs and the repository Gradle wrapper script/JAR are unavailable; Kotlin DSL could not be compiled on this host."
+    },
+    {
       "name": "signed release APK build and certificate inspection",
       "status": "NOT_RUN",
-      "reason": "Flutter/Android SDK and a release keystore are unavailable on this host."
+      "reason": "Flutter/Gradle toolchain and release signing inputs are unavailable on this host."
     },
     {
       "name": "physical-device install/update/auth/Origin/secure-cookie/permission/reconnect/voice/viewer",
       "status": "NOT_RUN",
-      "reason": "No physical-device acceptance run was performed."
+      "reason": "ADB reports zero authorized devices; no physical-device acceptance run was performed."
     }
   ],
   "failure_or_blocker": "QA-13 remains open until a separately signed APK and physical-device checks have PASS evidence.",
