@@ -4,6 +4,7 @@ import ConversationPane from '../conversation/ConversationPane.vue'
 import type { DirectMessageListItem } from '../direct_message/direct_message_client'
 import type { VoiceActivationMode } from '../voice/activation_store'
 import { useVoiceConnectionStore } from '../voice/connection_store'
+import WorkspaceHeaderActions from './WorkspaceHeaderActions.vue'
 import type { useWorkspaceVoiceControls } from './voice_controls'
 
 type VoiceConnection = ReturnType<typeof useVoiceConnectionStore>
@@ -28,12 +29,15 @@ const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
 
 <template>
   <div v-if="panel === 'admin'" class="workspace-main-panel workspace-main-panel--admin" data-testid="admin-workspace-panel">
+    <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')" />
     <slot name="admin" />
   </div>
   <div v-else-if="panel === 'audio'" class="workspace-main-panel workspace-main-panel--audio" data-testid="audio-workspace-panel">
+    <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')" />
     <slot name="audio" />
   </div>
   <div v-else-if="panel === 'profile'" class="workspace-main-panel workspace-main-panel--profile" data-testid="profile-workspace-panel">
+    <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')" />
     <slot name="profile" />
   </div>
   <ConversationPane

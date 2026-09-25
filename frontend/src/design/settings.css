@@ -1,4 +1,5 @@
 .workspace-main-panel { height: 100%; overflow: auto; padding: var(--gc-space-6); overscroll-behavior: contain; scrollbar-width: thin; }
+.workspace-main-panel > .workspace-header-actions { justify-content: flex-end; }
 .workspace-main-panel--audio .audio-settings,
 .workspace-main-panel--admin .admin-topology-controls { display: grid; width: 100%; align-content: start; gap: var(--gc-space-6); margin: 0 auto; border: 0; border-radius: 0; padding: 0; background: transparent; }
 .workspace-main-panel--audio .audio-settings { max-width: 720px; }
