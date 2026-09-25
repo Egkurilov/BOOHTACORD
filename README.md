@@ -2,7 +2,7 @@
 
 Self-hosted веб-платформа в логике лёгкого Discord: голосовые и текстовые каналы, личные сообщения, демонстрация экрана/игры и передача звука через LiveKit. Один deployment обслуживает ровно одну изолированную гильдию.
 
-> Статус: frontend FPS исправлен; backend, frontend и release guards прошли trusted GitVerse CI. Полный release **ещё не принят**: [master run #1649339](evidence/capacity/qa08-attachment-volume-2026-09-25-016.json) удалил 23 пары старых SHA-тегов, но оставил меньше требуемого места. [Последний read-only audit #1649426](evidence/capacity/qa08-attachment-volume-2026-09-25-017.json) измерил 6 112 649 216 доступных байт при пороге 6 343 294 632 и 1,543 ГБ reclaimable build cache. Контейнерный `<none>`-образ на 1,259 ГБ защищён. Следующий guarded run проверит фактический результат очистки только неиспользуемого build cache; если запаса не хватит, нужно расширить filesystem. Новые образы не развернуты. QA-08, media POC, capacity, browser/design-приёмка и delivery/rollout gates остаются открытыми. См. [TODO](TODO.md) и [реализовано](DONE.md).
+> Статус: [trusted master run #1649514](evidence/capacity/qa08-attachment-volume-2026-09-25-018.json) успешно проверил backend, frontend и release guards, освободил неиспользуемый Docker build cache и развернул `935975a`. Post-rollout audit подтвердил здоровый API и **20 376 231 936 байт** на точном attachment volume при пороге **6 343 294 632**. Разовый cache-prune убран из повторяющегося workflow. Полный продуктовый release **ещё не принят**: QA-08 требует измерения при активных загрузках, а media POC, browser/design-приёмка и delivery/rollback gates остаются открытыми. См. [TODO](TODO.md) и [реализовано](DONE.md).
 
 ## Возможности
 

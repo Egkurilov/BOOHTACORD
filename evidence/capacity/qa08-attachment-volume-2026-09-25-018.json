@@ -1,0 +1,19 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-018",
+  "task": "QA-08",
+  "kind": "trusted-master-unused-cache-recovery-and-post-rollout-audit",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T18:59:35Z",
+  "source_revision": "935975a09125fed4f89068297f02ce7abd61da58",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649514",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1649514/jobs/3225073/logs",
+  "jobs": {"backend": "success", "frontend": "success", "release_guard": "success", "deploy": "success"},
+  "checks": [
+    {"name": "exact-volume preflight and unused build cache", "result": "PASS", "before_available_bytes": 6123278336, "docker_reported_reclaimed": "16.36GB", "after_available_bytes": 21749166080, "required_bytes": 6343294632, "build_target_bytes": 7593294632, "detail": "The guarded script verified Docker root and attachment volume share a filesystem and both running image tags matched the expected SHA, then used docker builder prune --all --force. The actual volume increase was measured and the normal guard passed."},
+    {"name": "second guard before maintenance", "result": "PASS", "after_build_available_bytes": 20374437888, "required_bytes": 6343294632},
+    {"name": "rollout and maintenance", "result": "PASS", "detail": "Maintenance admission enabled, API/web/proxy recreated and started, then maintenance admission disabled."},
+    {"name": "post-rollout exact volume, private metric and API", "result": "PASS", "volume": "voice-platform_attachments-data", "filesystem_source": "/dev/vda2", "filesystem_type": "ext4", "filesystem_target": "/", "host_available_bytes": 20376231936, "total_bytes": 31591473152, "required_bytes": 6343294632, "reserved_bytes": 0, "metric_available_bytes": 20376227840, "snapshot_success": 1, "api_image": "voice-platform-api:935975a09125fed4f89068297f02ce7abd61da58", "api_health": "ok"},
+    {"name": "sustained capacity with active uploads", "result": "NOT_RUN", "reason": "The trusted audit is one idle snapshot; no representative uploads or concurrent rebuild were measured."}
+  ],
+  "decision": "The latest source revision deployed successfully and the exact attachment volume has substantial idle headroom. Keep QA-08 open until representative active-upload and sustained-build capacity is measured. The one-time cache-prune hook should be removed from the recurring workflow."
+}

@@ -1,0 +1,15 @@
+{
+  "id": "qa14-readiness-2026-09-25-013",
+  "kind": "trusted-master-deployed-with-open-acceptance-gates",
+  "status": "PARTIAL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T18:59:36Z",
+  "source_revision": "935975a09125fed4f89068297f02ce7abd61da58",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649514",
+  "requirements": {"total": 39, "mapped": 39},
+  "todo": {"total": 55, "completed": 37, "open": 18, "open_backend": 0, "open_frontend": 0, "open_design": 7, "open_verification": 11},
+  "trusted_result": "Backend PostgreSQL, frontend, release_guard and deploy jobs succeeded; both exact-volume guards passed; the post-rollout API image is the source SHA with health ok.",
+  "capacity_evidence": "evidence/capacity/qa08-attachment-volume-2026-09-25-018.json",
+  "remaining_blockers": "QA-08 sustained capacity under representative uploads and builds is not proven. Physical media/load and connected revocation POCs, notification/screen-reader/manual chooser and full visual acceptance, approved artifact delivery and compatible rollback, and signed Android device acceptance remain open.",
+  "release_policy": "A successful production deployment is distinct from full product acceptance. Do not close QA-14 until all applicable DES/QA gates have PASS evidence."
+}
