@@ -1,0 +1,42 @@
+{
+  "id": "des05-text-search-keyboard-2026-09-25-001",
+  "tasks": ["DES-05", "QA-05"],
+  "kind": "isolated-fixed-bundle-text-search-keyboard-verification",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T11:28:46Z",
+  "base_commit": "e359539",
+  "bundle": {
+    "build": "npm run build: PASS (vue-tsc --noEmit && vite build)",
+    "entry_js_sha256": "d07b774212eab13dd6e02d7d08874e44d845287b7eab6069b19e9fc897aab973",
+    "entry_css_sha256": "cdc722811f699bd95f0e91440dd595e1fbb0fa9e22222a54c80eae8b673e9b24"
+  },
+  "environment": "Codex in-app browser, fixed Vue bundle, current Go API, disposable PostgreSQL schema with synthetic TEXT channel and DM; 1280 and 883 by 720 CSS px; no production data",
+  "checks": [
+    {
+      "name": "baseline_text_search_focus",
+      "result": "FAIL_LOCAL_BEFORE_FIX",
+      "detail": "Opening the inline channel search left focus on its trigger. Submitting while its input became disabled moved focus to the web area."
+    },
+    {
+      "name": "text_search_focus_after_fix",
+      "result": "PASS_LOCAL",
+      "detail": "On the rebuilt bundle at 1280 CSS px opening focused the query, an empty-result Enter search kept focus there, and Escape closed the section and restored the trigger. At 883 CSS px opening and Escape preserved the same focus path."
+    },
+    {
+      "name": "nested_mobile_members_drawer",
+      "result": "PASS_LOCAL",
+      "detail": "At 883 CSS px the members drawer exposed dialog/aria-modal and inert main. Opening a member popover focused its close button; the first Escape closed only the popover and restored its card, the next Escape closed the drawer and restored its opener."
+    },
+    {
+      "name": "frontend_validation",
+      "result": "PASS_LOCAL",
+      "detail": "All 161 Vitest files and 471 tests passed; TypeScript/Vite build passed. TextMessageSearch remained under 100 lines; TextConversation reached 109 lines, below the 120-line hard limit."
+    },
+    {
+      "name": "fixture_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "Temporary schema count was zero, ports 18084 and 18770 had no listeners, temporary attachment directory and Go binaries were removed, and the browser viewport was reset."
+    }
+  ],
+  "remaining": "Actual screen-reader traversal, other admin/reset/voice keyboard states, zoom, screenshots and trusted release bundle acceptance remain open under DES-05/QA-05."
+}

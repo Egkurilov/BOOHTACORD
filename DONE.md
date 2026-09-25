@@ -82,6 +82,7 @@
 
 - [x] **DES-01:** все 40 компонентов исходного `components.json` сопоставлены с текущими Vue/CSS, точными контрактными состояниями, screenshot reference и задачей-владельцем отклонения в [матрице](docs/design/GUILDCHAT_COMPONENT_MATRIX.md). Для shell и voice/stream применены ADR-009/008; отсутствие отдельного Toast/Dialog/ShareSetupDialog не выдано за visual parity. Все 40 строк и 78 ссылок проверены, битых ссылок нет. Browser/pixel-приёмка остаётся DES-02…08 и QA-05.
 - [x] **DES-05 / DM-поиск, завершённый leaf:** открытие переводит фокус в запрос, ожидание результата его сохраняет, Escape закрывает поиск и возвращает фокус на кнопку. [Изолированный browser/Go/PostgreSQL прогон](evidence/design/des05-dm-search-keyboard-2026-09-25-001.json) подтвердил поведение на 883/1280 CSS px; общий DES-05 и QA-05 остаются в TODO до полной приёмки.
+- [x] **DES-05 / TEXT-поиск, завершённый leaf:** тот же клавиатурный путь исправлен для общего канала; [изолированный browser/Go/PostgreSQL прогон](evidence/design/des05-text-search-keyboard-2026-09-25-001.json) подтвердил фокус после открытия и Enter, возврат по Escape и вложенный popover в members drawer. Общий DES-05 и QA-05 ещё открыты.
 
 ## Эксплуатация и подтверждённые записи
 
