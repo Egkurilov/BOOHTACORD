@@ -7,7 +7,7 @@ import type { TopologyCategory } from './topology_client'
 export interface TextArchiveSnapshot { categories: TopologyCategory[]; revision: number; selectedChannelId: string }
 
 export function createTextArchiveEditor(snapshot: () => TextArchiveSnapshot, changed: () => void,
-  clearSelected: (id: string) => void, confirm: (message: string) => boolean, request?: AdminTopologyRequest) {
+  clearSelected: (id: string) => void, confirm: (message: string) => boolean | Promise<boolean>, request?: AdminTopologyRequest) {
   const pending = ref(false)
   const conflict = ref(false)
   const needsRefresh = ref(false)
@@ -35,7 +35,7 @@ export function createTextArchiveEditor(snapshot: () => TextArchiveSnapshot, cha
     const current = snapshot()
     const channel = selectedText()
     if (!channel || pending.value || needsRefresh.value || current.revision < 1) return false
-    if (!confirm(`Архивировать текстовый канал «${channel.name}»? История сообщений сохранится, канал исчезнет из навигации.`)) return false
+    if (!await confirm(`Архивировать текстовый канал «${channel.name}»? История сообщений сохранится, канал исчезнет из навигации.`)) return false
     error.value = null
     status.value = null
     pending.value = true

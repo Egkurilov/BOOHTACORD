@@ -17,5 +17,7 @@ describe('administrator VOICE close control', () => {
     expect(html).not.toContain('Общий')
     expect(html).toContain('SFU')
     expect(html).toContain('Закрыть вход')
+    expect(html).toContain('<dialog')
+    expect(html).toContain('Отмена')
   })
 })

@@ -20,5 +20,7 @@ describe('administrator TEXT archive control', () => {
     expect(html).not.toContain('Команда')
     expect(html).toContain('История сообщений сохранится')
     expect(html).toContain('Архивировать канал')
+    expect(html).toContain('<dialog')
+    expect(html).toContain('Отмена')
   })
 })

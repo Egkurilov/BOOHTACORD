@@ -8,7 +8,7 @@ export interface VoiceCloseSnapshot { categories: TopologyCategory[]; revision: 
 export type VoiceClosePhase = 'idle' | 'pending' | 'finalized'
 
 export function createVoiceCloseEditor(snapshot: () => VoiceCloseSnapshot, changed: () => void,
-  confirm: (message: string) => boolean, request?: AdminTopologyRequest) {
+  confirm: (message: string) => boolean | Promise<boolean>, request?: AdminTopologyRequest) {
   const pending = ref(false)
   const needsRefresh = ref(false)
   const error = ref<string | null>(null)
@@ -45,7 +45,7 @@ export function createVoiceCloseEditor(snapshot: () => VoiceCloseSnapshot, chang
     const current = snapshot()
     const channel = selectedVoice()
     if (!channel || channel.admissionClosed || pending.value || needsRefresh.value || current.revision < 1) return false
-    if (!confirm(`Закрыть вход в голосовой канал «${channel.name}»? Участникам будет отправлена причина; отзыв media-доступа в SFU может занять время.`)) return false
+    if (!await confirm(`Закрыть вход в голосовой канал «${channel.name}»? Участникам будет отправлена причина; отзыв media-доступа в SFU может занять время.`)) return false
     error.value = null
     status.value = null
     pending.value = true

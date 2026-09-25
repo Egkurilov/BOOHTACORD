@@ -9,6 +9,27 @@ const categories: TopologyCategory[] = [{ id: 'cat-1', name: 'Игры', positio
 ] }]
 
 describe('TEXT archive editor', () => {
+  it('waits for an asynchronous confirmation before sending the archived channel request', async () => {
+    let decide!: (value: boolean) => void
+    const confirmation = new Promise<boolean>((resolve) => { decide = resolve })
+    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 'text-1', revision: 8 })))
+    const editor = createTextArchiveEditor(() => ({ categories, revision: 7, selectedChannelId: 'text-1' }),
+      vi.fn(), vi.fn(), () => confirmation, request)
+    const action = editor.archive()
+    expect(request).not.toHaveBeenCalled()
+    decide(true)
+    await expect(action).resolves.toBe(true)
+    expect(JSON.parse(String(request.mock.calls[0][1].body))).toEqual({ expected_revision: 7, confirm_archive: true })
+  })
+
+  it('keeps an asynchronously cancelled archive out of the API', async () => {
+    const request = vi.fn()
+    const editor = createTextArchiveEditor(() => ({ categories, revision: 7, selectedChannelId: 'text-1' }),
+      vi.fn(), vi.fn(), async () => false, request)
+    await expect(editor.archive()).resolves.toBe(false)
+    expect(request).not.toHaveBeenCalled()
+  })
+
   it('does not call DELETE without explicit confirmation or for a VOICE channel', async () => {
     const request = vi.fn()
     const confirm = vi.fn().mockReturnValue(false)
