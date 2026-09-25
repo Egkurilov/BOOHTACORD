@@ -1,0 +1,16 @@
+{
+  "id": "qa14-readiness-2026-09-25-012",
+  "kind": "trusted-master-deploy-blocked-by-attachment-headroom",
+  "status": "FAIL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T17:33:39Z",
+  "source_revision": "9201f219f9c1311a3b58f3bacf040cda00b4029c",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1648803",
+  "requirements": {"total": 39, "mapped": 39},
+  "todo": {"total": 55, "completed": 37, "open": 18, "open_backend": 0, "open_frontend": 0, "open_design": 7, "open_verification": 11},
+  "trusted_result": "Backend no-skip PostgreSQL, frontend and release_guard jobs succeeded. Deploy failed at the post-build headroom guard before maintenance, migration, image promotion or post-rollout audit. Production was not updated to the source revision.",
+  "capacity_evidence": "evidence/capacity/qa08-attachment-volume-2026-09-25-012.json",
+  "new_blocker": "QA-08 now has a trusted guard FAIL: 5616275456 bytes available after build versus 6343294632 required, short by 727019176 bytes. A fresh host measurement and capacity recovery are required before attempting promotion.",
+  "other_blockers": "Physical media/load and connected revocation POCs, notification/screen-reader/manual chooser and full visual acceptance, approved artifact delivery and compatible rollback, and signed Android device acceptance remain open as recorded in qa14-readiness-2026-09-25-011.json.",
+  "release_policy": "Do not treat passing test jobs or built but unpromoted images as a successful production deployment; do not bypass the headroom guard or delete attachment history."
+}

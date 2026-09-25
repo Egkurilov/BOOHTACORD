@@ -31,18 +31,18 @@
 | REQ-SEARCH-01 · Поиск | PARTIAL: PostgreSQL русский/английский, GIN и trusted CI PASS; локальный browser smoke [QA-04], [QA-05] | Candidate browser [QA] |
 | REQ-STORAGE-01 · Постоянство/25 МБ | PARTIAL: границы и private storage проверены локально [QA-03] | Attachment volume и rollout/rollback с томами [QA] |
 | REQ-STORAGE-02 · Upload/ACL/preview | PARTIAL: PostgreSQL/FS access matrix [QA-03]; локальный fixed-bundle browser DataTransfer проверил TEXT/DM input, upload/bind, preview/download и third-party 404 [QA-05-UPLOAD]; изолированный Go API вернул реальный 507 и затем 201 [QA-05-REAL507]; browser retry против real 507 подготовил файл после восстановления capacity [QA-05-BROWSER507] | Ручной OS chooser, captured wire 201 после browser retry и trusted candidate [QA] |
-| REQ-STORAGE-03 · Нехватка диска | PARTIAL: trusted post-rollout audit точного volume в 16:43 UTC показал 6 496 096 256 байт свободно и 0 in-flight на idle snapshot; guard и API-метрика PASS при пороге 6 343 294 632, margin лишь 152 801 624 байта [QA-08]; локальный tmpfs проверил preflight/midstream 507 и очистку `.part` [QA-05-REAL507] | Устойчивый production-запас для следующих builds и активных загрузок [QA] |
+| REQ-STORAGE-03 · Нехватка диска | FAIL: trusted master build #1648803 уменьшил место точного volume с 6 484 869 120 до 5 616 275 456 байт при пороге 6 343 294 632; второй guard остановил deploy [QA-08-FAIL]. Предыдущий idle post-rollout audit был PASS [QA-08]; локальный tmpfs проверил preflight/midstream 507 и очистку `.part` [QA-05-REAL507] | Восстановить и доказать устойчивый production-запас для builds и активных загрузок [QA] |
 | REQ-NOBACKUP-01 · Нет backup job | PARTIAL: код/Compose не вводят backup [DONE]; штатный rollout подтверждён [QA-12], отдельный fake-Docker rollback сохранил синтетические volume markers/content [QA-12-REHEARSAL] | Проверить совместимый реальный rollback без потери томов [QA] |
 | REQ-UI-01 · Русский one-guild shell | PARTIAL: локальный TEXT/DM browser 1440…320 CSS px [DES-02-FULL], mobile admin/profile/audio navigation [DES-06-NAV] | Реальный zoom, screenshots и connected media states [DES], [QA] |
 | REQ-UI-02 · Компоненты/доступность | PARTIAL: 40-компонентная матрица [DONE], browser keyboard/focus на части surface [DES-03-ADMIN], [DES-06-NAV], [DES-05-ADMIN]; FE-35…39 и геометрия проверены локально [DES-08-GEOMETRY], browser измерил card 340×62 и маркер даты [DES-08-GEOMETRY-BROWSER], isolated header 64 px [DES-08-HEADER]; reset hint/error association [DES-05-RESET], читаемый аудит [DES-05-AUDIT] | DES-02…08, screen reader, connected media и точная visual parity [DES] |
 | REQ-STACK-01 · Vue/Go/PostgreSQL/LiveKit | PARTIAL: native builds, PostgreSQL и trusted CI PASS [DONE], [QA-01] | Целевой deployment и media POC [QA] |
 | REQ-ARCH-01 · Разделение медиа/API | PARTIAL: код использует LiveKit и lease admission [DONE] | Connected-media POC и приватный network smoke [QA] |
-| REQ-DEPLOY-01 · CI/CD | PARTIAL: GitVerse backend/frontend/release_guard/deploy и post-rollout audit PASS для master SHA `4df09bd` [QA-08]; GitHub main/GHCR source hardening и локальный actionlint PASS, repo metadata для connected GitHub возвращает 404 [QA-11-GITHUB], trusted GitHub run NOT_RUN | Утверждённый ADR либо доступный исходный trusted pipeline, опубликованные digest/SBOM/provenance и rollback [QA] |
+| REQ-DEPLOY-01 · CI/CD | FAIL для текущего master SHA `9201f21`: GitVerse backend/frontend/release_guard PASS, deploy остановлен second headroom guard до переключения [QA-08-FAIL]. Предыдущий deploy `4df09bd` был успешен [QA-08]; GitHub main/GHCR repo metadata вернул 404 [QA-11-GITHUB] | Восстановить capacity и выполнить trusted deploy, затем утвердить доставку/digest/SBOM/provenance и rollback [QA] |
 | REQ-OPS-01 · Наблюдаемость | PARTIAL: приватный production scrape attachment filesystem/reservation PASS [QA-08]; прочие метрики и rotation в коде [DONE] | CPU/сеть/quota, LiveKit и latency evidence [QA] |
 | REQ-SECURITY-01 · Защита операций | PARTIAL: локальные ACL/storage tests [QA-03] | Candidate privacy, CI/security и сетевые проверки [QA] |
 | REQ-SECURITY-02 · DM/media privacy | PARTIAL: DM ACL проверен [QA-03]; notification policy source-тесты PASS, OS-доставка NOT_RUN [QA-03-NOTIFICATION]; media replay NOT_RUN, POC-03 preflight BLOCKED [QA-10-PREFLIGHT] | Notification preview в браузере и POC-03 connected media [QA] |
 | REQ-QUALITY-01 · Latency/capacity цели | NOT_RUN | Измерить p95 join/message/switch/recovery, FPS и нагрузку [QA] |
-| REQ-QUALITY-02 · Выпускные гейты | BLOCKED: 18 пакетов TODO открыты [TODO] | Закрыть применимые DES/QA с PASS, затем повторить решение [QA] |
+| REQ-QUALITY-02 · Выпускные гейты | NO-GO: 18 пакетов TODO открыты, включая P0 guard FAIL [TODO], [QA-08-FAIL] | Восстановить capacity, закрыть применимые DES/QA с PASS, затем повторить решение [QA] |
 
 Сквозной счёт: **39/39 ID отражены**; QA-01/04 имеют trusted CI PASS, но обязательные media, capacity, browser, delivery/rollout и release проверки ещё не имеют PASS. Состояние TODO: **37/55 закрыто, 18/55 открыто**, включая добавленные FE-23…39. Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
 
@@ -60,6 +60,8 @@
 
 [QA-05-UPLOAD]: ../../evidence/qa/qa05-browser-upload-datatransfer-2026-09-25-001.json
 [QA-08]: ../../evidence/capacity/qa08-attachment-volume-2026-09-25-011.json
+
+[QA-08-FAIL]: ../../evidence/capacity/qa08-attachment-volume-2026-09-25-012.json
 [QA-05-CURSOR]: ../../evidence/qa/qa05-visible-read-cursor-2026-09-25-001.json
 [QA-12]: ../../evidence/release/qa12-maintenance-rollback-2026-09-25-001.json
 

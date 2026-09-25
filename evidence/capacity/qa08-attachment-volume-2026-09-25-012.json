@@ -1,0 +1,18 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-012",
+  "task": "QA-08",
+  "kind": "trusted-master-build-headroom-guard-failure",
+  "status": "FAIL",
+  "observed_at": "2026-09-25T17:27:29Z",
+  "source_revision": "9201f219f9c1311a3b58f3bacf040cda00b4029c",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1648803",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1648803/jobs/3223720/logs",
+  "jobs": {"backend": "success", "frontend": "success", "release_guard": "success", "deploy": "failure"},
+  "checks": [
+    {"name": "pre-build exact-volume guard", "result": "PASS", "available_bytes": 6484869120, "required_bytes": 6343294632, "margin_bytes": 141574488},
+    {"name": "post-build pre-maintenance guard", "result": "FAIL", "available_bytes": 5616275456, "required_bytes": 6343294632, "shortfall_bytes": 727019176, "build_interval_available_drop_bytes": 868593664},
+    {"name": "new container rollout and post-rollout audit", "result": "NOT_RUN", "reason": "install-received-release.sh exited at the second guard before deploy-images.sh and before maintenance, migration or container switching."}
+  ],
+  "safety_boundary": "No published attachment, Docker volume or backup was deleted. The new API/web images were built and tagged on the host, but were not promoted. The previous live image was not independently re-audited after this failure. The post-build value is a point-in-time guard measurement, not a fresh live capacity audit.",
+  "next_action": "Measure exact live volume and reclaimable Docker build cache on the host; recover only unused cache if measurement proves enough headroom, or expand the filesystem. Rerun the guard before promoting already built images and perform a fresh post-rollout audit. Do not bypass the guard or delete attachment history."
+}
