@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
-import { computed, ref, shallowRef } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 
+import { useAuthorDirectory } from '../identity/author_directory'
 import { VoiceSession, type ActiveVoiceSession } from './voice_session'
 import type { AudioDeviceKind } from './audio_devices'
 import { VoiceRequestError } from './admission_client'
@@ -16,6 +17,7 @@ import { installVoiceConnectionLifecycle } from './connection_lifecycle'
 import { leaveVoiceConnection } from './voice_connection_leave'
 import { createVoiceConnectionRevocation } from './voice_connection_revocation'
 import { voiceLeaseRevocationMessage } from './voice_lease_revocation_reason'
+import { voiceParticipantName } from './voice_participant_name'
 
 export type VoiceConnectionState = 'IDLE' | 'JOINING' | 'RECONNECTING' | 'CONNECTED' | 'LISTENER' | 'LEAVING' | 'ERROR'
 export type { ScreenShareState } from './screen_controls'
@@ -34,17 +36,28 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   const screenDiagnostics = ref<ScreenDiagnostics>(unknownScreenDiagnostics())
   const screenProfile = ref<ScreenProfile | null>(null)
   const screenState = ref<ScreenShareState>('IDLE')
-  const screenViewerCards = ref<ScreenViewerCard[]>([])
+  const rawScreenViewerCards = ref<ScreenViewerCard[]>([])
   const screenViewerError = ref<string | null>(null)
   const screenViewerEnded = ref(false)
   const selectedScreenStreamId = ref<string | null>(null)
   const state = ref<VoiceConnectionState>('IDLE')
   const canJoin = computed(() => state.value === 'IDLE' || state.value === 'ERROR')
   const { refreshScreenDiagnostics, startScreen, stopScreen } = createScreenControls(session.screen, active, screenError, screenProfile, screenState, screenDiagnostics)
-  const screenViewer = createScreenViewerControls(session, screenViewerCards, selectedScreenStreamId, screenViewerError, screenViewerEnded)
+  const screenViewer = createScreenViewerControls(session, rawScreenViewerCards, selectedScreenStreamId, screenViewerError, screenViewerEnded)
   const { deafenChanging, toggleDeafen } = createDeafenControls(session, deafened, microphoneMuted, microphonePermissionDenied, error)
   const { setMicrophoneMuted, toggleMicrophone } = createMicrophoneControls(session, active, state, deafened, microphoneMuted, microphonePermissionDenied, error)
   const volume = createVoiceVolumeControls(session)
+  const authors = useAuthorDirectory()
+  const voiceVolumeParticipants = computed(() => volume.participants.value.map((participant) => ({ ...participant, name: voiceParticipantName(authors, participant.accountId, participant.name) })))
+  const screenViewerCards = computed(() => rawScreenViewerCards.value.map((stream) => ({
+    ...stream, participantName: stream.isLocal ? stream.participantName : voiceParticipantName(authors, stream.accountId, stream.participantName) ?? stream.participantName,
+  })))
+  let visibleAccountIds = new Set<string>()
+  watch([volume.participants, rawScreenViewerCards], ([participants, streams]) => {
+    const next = new Set([...participants.map((participant) => participant.accountId), ...streams.filter((stream) => !stream.isLocal).map((stream) => stream.accountId)].filter((id): id is string => Boolean(id)))
+    next.forEach((id) => { if (!visibleAccountIds.has(id)) void authors.ensure(id, undefined, true) })
+    visibleAccountIds = next
+  }, { immediate: true })
   const revocation = createVoiceConnectionRevocation({ session, active, state, error, deafened, microphoneMuted, microphonePermissionDenied, screenDiagnostics, screenProfile, screenState, screenViewer, volume, refreshAudioProcessingDiagnostics })
 
   function refreshAudioProcessingDiagnostics(): void {
@@ -98,5 +111,5 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
     if (reason && active.value) await revocation.revokeLease(active.value.leaseId, reason)
   }
 
-  return { active, audioProcessingDiagnostics, canJoin, clearScreenStream: screenViewer.clear, deafenChanging, deafened, disconnectLocal: revocation.disconnectLocal, error, join, leave, microphoneMuted, microphonePermissionDenied, refreshScreenDiagnostics, revokeLease: revocation.revokeLease, screenDiagnostics, screenError, screenProfile, screenState, screenViewerCards, screenViewerEnded, screenViewerError, selectScreenStream: screenViewer.select, selectedScreenStreamId, setAudioProcessing, setMicrophoneMuted, startScreen, state, stopScreen, switchAudioDevice, toggleDeafen, toggleMicrophone, transferRequired, voiceVolumeError: volume.error, voiceVolumeParticipants: volume.participants, selfSpeaking: volume.selfSpeaking, selectedScreenAudioVolume: volume.selectedScreenVolume, setParticipantVolume: volume.setParticipantVolume, setScreenVolume: volume.setScreenVolume }
+  return { active, audioProcessingDiagnostics, canJoin, clearScreenStream: screenViewer.clear, deafenChanging, deafened, disconnectLocal: revocation.disconnectLocal, error, join, leave, microphoneMuted, microphonePermissionDenied, refreshScreenDiagnostics, revokeLease: revocation.revokeLease, screenDiagnostics, screenError, screenProfile, screenState, screenViewerCards, screenViewerEnded, screenViewerError, selectScreenStream: screenViewer.select, selectedScreenStreamId, setAudioProcessing, setMicrophoneMuted, startScreen, state, stopScreen, switchAudioDevice, toggleDeafen, toggleMicrophone, transferRequired, voiceVolumeError: volume.error, voiceVolumeParticipants, selfSpeaking: volume.selfSpeaking, selectedScreenAudioVolume: volume.selectedScreenVolume, setParticipantVolume: volume.setParticipantVolume, setScreenVolume: volume.setScreenVolume }
 })

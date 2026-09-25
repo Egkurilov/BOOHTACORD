@@ -20,7 +20,7 @@ export class LiveKitScreenRegistry {
       id: participant.isLocal ? `local:${participant.identity}:screen` : `${participant.identity}:screen`,
       isLocal: participant.isLocal,
       participantId: participant.identity,
-      participantName: participant.isLocal ? 'Ваш экран' : participant.name || participant.identity,
+      participantName: participant.isLocal ? 'Ваш экран' : participant.name?.trim() || 'Участник',
       video: participant.video,
     }] : [])
     this.current.filter((stream) => stream.id !== selectedId && !stream.isLocal).forEach((stream) => {

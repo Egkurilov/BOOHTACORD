@@ -1,0 +1,28 @@
+{
+  "id": "voice-participant-display-name-2026-09-25-002",
+  "task": "T-022",
+  "kind": "voice-participant-name-client-refresh",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T20:32:20Z",
+  "source_base_commit": "a01423a3ae1ed22f8bff024656f1902165af01d6",
+  "baseline": "Voice cards and screen viewer used the LiveKit participant name; a connected participant with an old or absent name remained stale or appeared as «Участник». A nameless screen publisher could expose the voice-lease identity as its label.",
+  "change": "For account IDs from room participant metadata, the client requests the existing authenticated member endpoint and reactively prefers its matching nonempty display name in voice cards, navigation, and screen viewer. Renames update during the directory refresh cycle. Failed or mismatched lookups preserve the LiveKit name; missing names use a neutral label without showing the lease identity.",
+  "checks": [
+    {
+      "name": "focused_frontend_tests",
+      "result": "PASS_LOCAL",
+      "detail": "11 author-directory, voice-name, and connection-store tests passed; registry test also passed. Tests first failed for missing verified-name behavior and a screen label containing the lease identity."
+    },
+    {
+      "name": "frontend_native_suite_and_build",
+      "result": "PASS_LOCAL",
+      "detail": "After a focused red/green test for blank LiveKit names, npm --prefix frontend test: 193 files, 561 tests passed. npm --prefix frontend run build: vue-tsc and Vite passed (282 modules)."
+    },
+    {
+      "name": "real_two_user_livekit_session",
+      "result": "NOT_RUN",
+      "detail": "No authenticated two-user browser/media call was exercised; the browser and deployment behavior remains a separate acceptance check."
+    }
+  ],
+  "limitation": "A participant without account metadata has no secure profile lookup and keeps the LiveKit name or neutral label. An unavailable member endpoint cannot prove the current nickname; after a refresh failure the voice UI falls back to the token name."
+}

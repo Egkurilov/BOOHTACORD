@@ -16,6 +16,7 @@ describe('author directory', () => {
     let resolveMember: ((response: Response) => void) | undefined
     const request = vi.fn(() => new Promise<Response>((resolve) => { resolveMember = resolve }))
     expect(directory.displayName('user-2')).toBe('Участник')
+    expect(directory.verifiedDisplayName('user-2')).toBeNull()
     expect(directory.avatarUrl('user-2')).toBeUndefined()
     const first = directory.ensure('user-2', request)
     const second = directory.ensure('user-2', request)
@@ -23,6 +24,7 @@ describe('author directory', () => {
     resolveMember?.(member('Лера'))
     await Promise.all([first, second])
     expect(directory.displayName('user-2')).toBe('Лера')
+    expect(directory.verifiedDisplayName('user-2')).toBe('Лера')
     expect(directory.avatarUrl('user-2')).toBe('/api/v1/members/user-2/avatar')
     expect(directory.avatarUrl('user-2')).not.toContain('attacker.example')
   })
@@ -36,6 +38,7 @@ describe('author directory', () => {
     expect(directory.displayName('user-2')).toBe('Новое имя')
     directory.acceptOwnProfile({ account_id: 'me', login: 'me', display_name: 'Я', role: 'MEMBER' })
     expect(directory.displayName('me')).toBe('Я')
+    expect(directory.verifiedDisplayName('me')).toBe('Я')
     expect(request).toHaveBeenCalledTimes(2)
   })
 
@@ -43,7 +46,21 @@ describe('author directory', () => {
     const directory = useAuthorDirectory()
     await directory.ensure('blocked-user', vi.fn().mockResolvedValue(new Response(null, { status: 404 })))
     expect(directory.displayName('blocked-user')).toBe('Участник')
+    expect(directory.verifiedDisplayName('blocked-user')).toBeNull()
     expect(directory.avatarUrl('blocked-user')).toBeUndefined()
+  })
+
+  it('does not treat an empty or failed refreshed profile as a verified current voice name', async () => {
+    const directory = useAuthorDirectory()
+    await directory.ensure('user-2', async () => member('Старое имя'))
+    expect(directory.verifiedDisplayName('user-2')).toBe('Старое имя')
+    await directory.refreshKnown(async () => member('   '))
+    expect(directory.verifiedDisplayName('user-2')).toBeNull()
+    await directory.refreshKnown(async () => member('Снова доступен'))
+    expect(directory.verifiedDisplayName('user-2')).toBe('Снова доступен')
+    await directory.refreshKnown(async () => new Response(null, { status: 503 }))
+    expect(directory.verifiedDisplayName('user-2')).toBeNull()
+    expect(directory.displayName('user-2')).toBe('Снова доступен')
   })
 
   it('does not overwrite a newly saved own name with an older member response', async () => {

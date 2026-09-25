@@ -4,7 +4,7 @@ import { ref } from 'vue'
 import { apiBaseUrl } from '../config/runtime'
 import { loadMember, type OwnProfile, type ProfileRequest } from './profile_client'
 
-interface AuthorEntry { displayName: string; hasAvatar: boolean; checkedAt: number }
+interface AuthorEntry { displayName: string; hasAvatar: boolean; checkedAt: number; verified: boolean }
 
 const freshForMs = 60_000
 const fallbackName = 'Участник'
@@ -15,6 +15,7 @@ export const useAuthorDirectory = defineStore('author-directory', () => {
   const ownRevisions = new Map<string, number>()
 
   function displayName(id: string): string { return authors.value[id]?.displayName || fallbackName }
+  function verifiedDisplayName(id: string): string | null { const entry = authors.value[id]; return entry?.verified ? entry.displayName : null }
   function avatarUrl(id: string): string | undefined {
     return authors.value[id]?.hasAvatar ? `${apiBaseUrl}/members/${encodeURIComponent(id)}/avatar` : undefined
   }
@@ -31,9 +32,12 @@ export const useAuthorDirectory = defineStore('author-directory', () => {
         const member = await loadMember(id, request)
         if (member.user_id !== id) throw new Error('Некорректный участник.')
         if ((ownRevisions.get(id) ?? 0) !== revision) return
-        authors.value[id] = { displayName: member.display_name.trim() || fallbackName, hasAvatar: Boolean(member.avatar_url), checkedAt: Date.now() }
+        const name = member.display_name.trim()
+        authors.value[id] = { displayName: name || fallbackName, hasAvatar: Boolean(member.avatar_url), checkedAt: Date.now(), verified: Boolean(name) }
       } catch {
-        if (!authors.value[id]) authors.value[id] = { displayName: fallbackName, hasAvatar: false, checkedAt: Date.now() }
+        if ((ownRevisions.get(id) ?? 0) !== revision) return
+        const previous = authors.value[id]
+        authors.value[id] = previous ? { ...previous, checkedAt: Date.now(), verified: false } : { displayName: fallbackName, hasAvatar: false, checkedAt: Date.now(), verified: false }
       }
     })()
     inFlight.set(id, task)
@@ -43,12 +47,13 @@ export const useAuthorDirectory = defineStore('author-directory', () => {
 
   function acceptOwnProfile(profile: OwnProfile): void {
     ownRevisions.set(profile.account_id, (ownRevisions.get(profile.account_id) ?? 0) + 1)
-    authors.value[profile.account_id] = { displayName: profile.display_name.trim() || fallbackName, hasAvatar: Boolean(profile.avatar_url), checkedAt: Date.now() }
+    const name = profile.display_name.trim()
+    authors.value[profile.account_id] = { displayName: name || fallbackName, hasAvatar: Boolean(profile.avatar_url), checkedAt: Date.now(), verified: Boolean(name) }
   }
 
   async function refreshKnown(request: ProfileRequest = fetch): Promise<void> {
     await Promise.all(Object.keys(authors.value).map((id) => ensure(id, request, true)))
   }
 
-  return { acceptOwnProfile, avatarUrl, displayName, ensure, refreshKnown }
+  return { acceptOwnProfile, avatarUrl, displayName, ensure, refreshKnown, verifiedDisplayName }
 })

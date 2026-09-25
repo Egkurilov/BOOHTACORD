@@ -1,0 +1,60 @@
+{
+  "id": "qa05-valid-png-preview-browser-attempt-2026-09-25-001",
+  "tasks": ["QA-05", "DES-02"],
+  "kind": "isolated-authenticated-browser-valid-png-preview-attempt",
+  "status": "BLOCKED",
+  "observed_at": "2026-09-25T20:29:47Z",
+  "source": {
+    "commit": "a01423a3ae1ed22f8bff024656f1902165af01d6",
+    "frontend": "Frozen copy of locally built frontend/dist; not a trusted release image",
+    "entry_javascript_sha256": "2f818e5fc2300623eb0e01a53f9fc38fb380bc8c758a0af14c445ad34505aeeb",
+    "entry_css_sha256": "2d87bf17096a8d1d1f919d25e526faf84c467660b686033ad93bca44b47bc29f",
+    "backend": "Go API, migrate and bootstrap binaries built locally from the current checkout"
+  },
+  "fixture": {
+    "origin": "http://localhost:18871",
+    "api_bind": "127.0.0.1:18095",
+    "database": "Disposable PostgreSQL schema with synthetic administrator, sender, peer, one TEXT channel and one DM",
+    "storage": "Private temporary attachment directory, not production",
+    "browser": "Agent-created Chrome extension tab on the isolated localhost origin; existing user tabs were not navigated",
+    "sample": {
+      "path": "C:\\Users\\egkur\\AppData\\Local\\Temp\\boohtacord-qa05-valid-preview-20260925.png",
+      "width": 16,
+      "height": 16,
+      "bytes": 464,
+      "sha256": "74f9103e74d435b662024990cb5acae96ae02f77118fbacf032f4618055ba61b"
+    }
+  },
+  "checks": [
+    {
+      "name": "sample_png_integrity_before_upload",
+      "result": "PASS_LOCAL",
+      "detail": "Generated a synthetic 16x16 RGB PNG. Signature, IHDR/IDAT/IEND chunk CRCs and zlib decompression matched the original scanlines."
+    },
+    {
+      "name": "authenticated_browser_preflight",
+      "result": "PASS_LOCAL",
+      "detail": "The local synthetic session rendered the DM composer and clicking its visible attach control raised a multiple-file chooser event. No user credential, cookie or DM identifier is recorded."
+    },
+    {
+      "name": "chrome_file_selection",
+      "result": "BLOCKED",
+      "detail": "Chrome extension fileChooser.setFiles on the valid synthetic PNG returned Not allowed. The file was not selected or uploaded. The browser extension's file URL permission was not changed."
+    },
+    {
+      "name": "native_picker_fallback",
+      "result": "STOPPED_BY_TOOL_POLICY",
+      "detail": "Before any native input, Windows Computer Use stopped because it could not determine the current Chrome window URL with enough confidence to enforce policy. No further UI action was attempted."
+    },
+    {
+      "name": "browser_preview_download_and_wire_acl",
+      "result": "NOT_RUN",
+      "detail": "No upload occurred, so TEXT/DM preview, protected download, HTTP wire statuses and third-participant ACL could not be tested in this packet. The earlier invalid 70-byte PNG is not reused as evidence."
+    }
+  ],
+  "cleanup": {
+    "result": "PARTIAL",
+    "detail": "The local fixture's own shutdown endpoint returned 204 and its finally handler reported cleanup. API/proxy ports were idle, disposable PostgreSQL schema count was zero, and the isolated WSL attachment directory, frozen bundle, fixture script and Go binaries were removed. The agent-created Chrome tab was not manually closed after Computer Use stopped; it is ephemeral and subject to automatic turn cleanup. The 464-byte synthetic PNG remains in Windows Temp. The three Windows Temp files from the earlier QA-05 packet were not touched, and no previously rejected deletion or Chrome-profile-launch action was retried."
+  },
+  "remaining_gate": "QA-05 remains open. Repeat valid-PNG browser upload and check TEXT/DM preview/download and third-participant ACL in an allowed browser environment; no product preview outcome is established by this blocked attempt."
+}

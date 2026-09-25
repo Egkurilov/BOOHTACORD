@@ -1,0 +1,61 @@
+{
+  "id": "des08-post-attachment-rhythm-2026-09-25-001",
+  "tasks": ["DES-08", "T-050", "QA-05"],
+  "kind": "matching-state-post-attachment-vertical-geometry-regression",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T20:41:08Z",
+  "source": {
+    "base_commit": "a01423a3ae1ed22f8bff024656f1902165af01d6",
+    "changed_file": "frontend/src/design/conversation.css",
+    "changed_file_sha256": "9efd8b604fc2b6ba7148db171571b1867379f7bdb68650daf78929d65133f031",
+    "prior_global_css_sha256": "e4b38d3a4788a2329cb2876a7cdfb307cad19df81d0369cfc29f702cf40b7267",
+    "scoped_capture_css_asset": "frontend/dist/assets/index-lirZadyd.css",
+    "scoped_capture_css_sha256": "47b174416c1580aba30184c256debd63b5deff7cc6ca18d6eff1518a7de3fd59",
+    "scoped_capture_javascript_sha256": "541c4b6898cf0a98f5bf57d16f6d04a4452625281a5d48d2cf5ed641820ff286",
+    "bundle": "Local Vue production build from the working tree after the attachment rules were scoped to TEXT. Concurrent voice-name source changes were present in this later build; the exact CSS, JavaScript and PNG hashes identify the tested bundle, not a trusted release image."
+  },
+  "fixture": {
+    "scope": "Same isolated loopback Go API/PostgreSQL six-message TEXT fixture as the prior DES-08 matching-state packet, recreated with synthetic accounts and metadata-only settings.json. No real attachment bytes, private data or LiveKit media.",
+    "state": "Selected общий channel, fixed 19 September 2026 timestamps, history scrollTop zero, 1440x848 and 640x632 product-only viewports; the archived design-demo strips were already removed from the reference crops.",
+    "method": "Installed Chrome headless with isolated profiles and same-origin synthetic login. The historical A/B on one live fixture compared old 8/18 px spacing to the initial global 10/20 px CSS. A fresh equivalent fixture then captured the final TEXT-scoped CSS at both product viewports without CSS override; its temporary selection/scroll entrypoint was restored."
+  },
+  "reference": {
+    "archive_sha256": "e93cc89cc1e925a7585aa46f95e6eeb81e244b3db9fda471acc8f3f7d8614101",
+    "desktop_product_crop": {"size": "1440x848", "local_artifact": "evidence/design/artifacts/des08-reference-product-1440x848-2026-09-25.png", "sha256": "510231e840bd5d3fefd35cc07c38286d74b98d1431fc16507345800ad22b149e"},
+    "narrow_product_crop": {"size": "640x632", "local_artifact": "evidence/design/artifacts/des08-reference-product-640x632-2026-09-25.png", "sha256": "9233db1b672688be2a09de978ac587e49aecab2b3be2af6c314b9b701f6c1955"}
+  },
+  "captures": {
+    "baseline_desktop": {"size": "1440x848", "local_artifact": "evidence/design/artifacts/des08-postattachment-baseline-1440x848-2026-09-25.png", "sha256": "67ace2a8ee72595ff0336a2e12227e1724edd28f68006425ede5575dc73383d6"},
+    "prior_global_final_desktop": {"size": "1440x848", "local_artifact": "evidence/design/artifacts/des08-postattachment-final-1440x848-2026-09-25.png", "sha256": "e574f3563d0382c60ec4cefe0e6f58e0ba6232afcbe5c05c0f93a84b32312e4a"},
+    "baseline_narrow": {"size": "640x632", "local_artifact": "evidence/design/artifacts/des08-postattachment-baseline-640x632-2026-09-25.png", "sha256": "be1a2e8987ca53c881c1170623ee67dd45bcd5e296d9826001a4b75d6976c1c7"},
+    "prior_global_final_narrow": {"size": "640x632", "local_artifact": "evidence/design/artifacts/des08-postattachment-final-640x632-2026-09-25.png", "sha256": "6af3386cfadc7e947fe19ddbcac31371e567511e0828865c4db108282aeac037"},
+    "scoped_final_desktop": {"size": "1440x848", "local_artifact": "evidence/design/artifacts/des08-text-scoped-1440x848-2026-09-25.png", "sha256": "3b33ef82335d1cce55120a23159557e9cfe0635d370820314d1a7fc520696af5"},
+    "scoped_final_narrow": {"size": "640x632", "local_artifact": "evidence/design/artifacts/des08-text-scoped-640x632-2026-09-25.png", "sha256": "89b597fdf45ae5600bb1926543e696d8b5c07fb7d20ed78f36db520e80fdd39a"},
+    "artifact_policy": "All PNGs contain only synthetic test data and remain ignored local artifacts; hashes and coordinates are recorded here without staging generated media."
+  },
+  "geometry": {
+    "desktop_attachment_card_y_inclusive": {"reference": [448, 509], "baseline": [446, 507], "prior_global_final": [448, 509], "scoped_final": [448, 509]},
+    "desktop_attachment_card_height_px": {"reference": 62, "baseline": 62, "prior_global_final": 62, "scoped_final": 62},
+    "desktop_fifth_avatar_y_inclusive": {"reference": [398, 425], "baseline": [398, 425], "prior_global_final": [398, 425], "scoped_final": [398, 425]},
+    "desktop_sixth_avatar_y_inclusive": {"reference": [536, 563], "baseline": [532, 559], "prior_global_final": [536, 563], "scoped_final": [536, 563]},
+    "narrow_first_five_avatar_top_y": {"reference": [134, 198, 262, 326, 390], "baseline": [134, 198, 262, 326, 390], "prior_global_final": [134, 198, 262, 326, 390], "scoped_final": [134, 198, 262, 326, 390]},
+    "narrow_attachment_top_y": {"reference": 440, "baseline": 438, "prior_global_final": 440, "scoped_final": 440},
+    "narrow_limit": "The fixed composer occludes the lower part of the attachment card and sixth row at this viewport, so their bottom edges and sixth avatar cannot be compared on narrow PNGs.",
+    "measurement": "Desktop card bounds were measured at x=600, where its fill differs from the content background; avatar edge runs were measured at x=309 desktop and x=21 narrow. All y values are product pixels after removing the reference demo strip."
+  },
+  "conclusion": {
+    "classification": "PRODUCT_CSS_GEOMETRY_DEFECT_FIXED_LOCALLY",
+    "reason": "The candidate card had the same 340x62 box as the reference but began 2 px early; the next row began another 2 px early. Different synthetic file size/type text did not change the card height. Attachment-only top margin 10 px and next ungrouped row gap 20 px independently account for the full 4 px shift; first five rows remain fixed.",
+    "change": "Within .text-conversation only, the attachment list has a 10 px top gap and an ungrouped following message has a 20 px gap. DM retains its original 8 px attachment gap and normal 18 px following-row rhythm; grouped-message spacing remains intact.",
+    "fixed_bundle_check": "The final TEXT-scoped source/build was recaptured at both sizes and independently reproduced the measured reference coordinates. Its PNG hashes differ from the prior global-rule capture because the fixture was recreated with new synthetic IDs and the bundle included concurrent JavaScript changes; no cross-build byte-for-byte claim is made."
+  },
+  "validation": {
+    "nearest": "PASS: shell_reference_geometry plus two attachment URL specs, 3 files and 5 tests",
+    "frontend_build": "PASS: vue-tsc --noEmit and Vite production build of the scoped CSS, 282 modules",
+    "computed_css_scope": "PASS_LOCAL: headless Chrome computed style on the built CSS gave TEXT attachment margin-top 10px/following-row margin-top 20px, DM attachment margin-top 8px/following-row margin-top 18px.",
+    "full_suite": "PASS_LOCAL_INTEGRATION: after independent voice-name work completed, the parent integrator reran 193 frontend files and 561 tests successfully, then rebuilt 282 modules with the scoped CSS.",
+    "diff_check": "PASS: scoped conversation.css diff has no whitespace error",
+    "fixture_cleanup": "PASS: disposable des08_chat_* PostgreSQL schema count 0; loopback fixture ports 18086/18773 have no listeners; frontend/dist/index.html restored."
+  },
+  "remaining_gate": "DES-08 remains PARTIAL: a real attached file, connected LiveKit voice and selected stream, hover/focus, screen reader, other widths and zoom, plus trusted-release whole-image parity still require acceptance. This local 4 px fix closes only the measured TEXT attachment rhythm leaf."
+}

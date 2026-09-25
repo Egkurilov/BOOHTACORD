@@ -1,0 +1,17 @@
+{
+  "id": "qa14-readiness-2026-09-25-016",
+  "kind": "trusted-master-chat-rhythm-and-rollback-entrypoint-deploy-with-open-acceptance-gates",
+  "status": "PARTIAL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T20:23:55Z",
+  "source_revision": "a01423a3ae1ed22f8bff024656f1902165af01d6",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1650074",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1650074/jobs/3226450/logs",
+  "jobs": {"backend": "success", "frontend": "success", "release_guard": "success", "deploy": "success"},
+  "backend_tests": {"passed": 679, "skipped": 0, "failed": 0},
+  "requirements": {"total": 39, "mapped": 39},
+  "todo": {"total": 56, "completed": 38, "open": 18, "open_backend": 0, "open_frontend": 0, "open_design": 7, "open_verification": 11},
+  "post_rollout": {"attachment_volume": "voice-platform_attachments-data", "available_bytes": 19437920256, "required_bytes": 6343294632, "reserved_bytes": 0, "metric_available_bytes": 19437916160, "snapshot_success": 1, "api_image": "voice-platform-api:a01423a3ae1ed22f8bff024656f1902165af01d6", "api_health": "ok"},
+  "limits": "The deploy confirms this revision and idle health. QA-05 native picker/valid preview, DES-08 full visual parity, QA-08 active-upload capacity, QA-12 observed live rollback, physical media/load, screen-reader/zoom, Android signed-device acceptance and release provenance still lack required PASS evidence. The manual rollback workflow was not dispatched.",
+  "release_policy": "A successful production deploy and idle volume audit do not close the product release gate."
+}

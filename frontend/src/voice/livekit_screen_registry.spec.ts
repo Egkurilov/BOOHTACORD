@@ -39,6 +39,12 @@ describe('LiveKit screen registry', () => {
     expect(audio.setSubscribed).not.toHaveBeenCalled()
   })
 
+  it('does not display a lease identity when a remote screen has no LiveKit name', () => {
+    const registry = new LiveKitScreenRegistry()
+    registry.refresh([{ identity: 'voice-lease:secret-lease', video: publication() }], null)
+    expect(registry.streams()[0]?.participantName).toBe('Участник')
+  })
+
   it('lists the owner screen as a silent self-preview without subscribing it', () => {
     const localVideo = { track: { attach: vi.fn(), detach: vi.fn() } }
     const registry = new LiveKitScreenRegistry()
