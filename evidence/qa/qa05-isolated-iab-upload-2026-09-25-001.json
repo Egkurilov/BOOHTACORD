@@ -1,0 +1,60 @@
+{
+  "id": "qa05-isolated-iab-upload-2026-09-25-001",
+  "tasks": ["QA-05", "DES-02"],
+  "kind": "isolated-authenticated-browser-text-dm-upload-retry-and-download",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T20:02:57Z",
+  "source": {
+    "commit": "c69e075675a3f9b338caf090c557b167432dcc5c",
+    "frontend": "Frozen copy of locally built frontend/dist, not a trusted release image",
+    "entry_javascript_sha256": "2f818e5fc2300623eb0e01a53f9fc38fb380bc8c758a0af14c445ad34505aeeb",
+    "entry_css_sha256": "d419160191dbd58755895ca6ac87174025454b009154b59ea0dec9d53acbc9c0",
+    "backend": "Go API, migrate and bootstrap binaries built locally from the current checkout"
+  },
+  "fixture": {
+    "browser": "Separate hidden Codex in-app browser tab; no user tab was navigated",
+    "origin": "http://localhost:18870",
+    "api_bind": "127.0.0.1:18094",
+    "database": "Disposable PostgreSQL schema with synthetic administrator, sender, peer, one TEXT channel and one DM",
+    "storage": "Private temporary attachment directory; no production volume, accounts or data",
+    "file_selection": "Clicked the visible TEXT/DM attach control, awaited the browser filechooser event and used chooser.setFiles on a synthetic Windows Temp file. This exercises the real input/change path but is not a manual native OS selection."
+  },
+  "checks": [
+    {
+      "name": "authenticated_dm_upload_and_binding",
+      "result": "PASS_LOCAL",
+      "detail": "The 26-byte synthetic text file appeared as a prepared DM attachment and then as a linked attachment in a sent DM message. The browser raised a download event from its protected link."
+    },
+    {
+      "name": "injected_507_and_retry",
+      "result": "PASS_LOCAL_HARNESS",
+      "detail": "The local same-origin proxy returned a one-shot HTTP 507 for the next DM upload. The UI showed 507 INSUFFICIENT_STORAGE and a Retry button; the disposable DM history count stayed at one message and one linked attachment. Clicking Retry prepared the same file, and a second sent DM message showed its link. This run did not lower real filesystem headroom."
+    },
+    {
+      "name": "authenticated_text_upload_and_binding",
+      "result": "PASS_LOCAL",
+      "detail": "The same synthetic file was selected through the TEXT attach control, prepared, bound to a sent TEXT message and triggered a browser download event."
+    },
+    {
+      "name": "database_linkage_before_png_attempt",
+      "result": "PASS_LOCAL",
+      "observed": {"attached_rows": 3, "text_attachment_links": 1, "dm_attachment_links": 2},
+      "detail": "The counts were measured in the disposable PostgreSQL schema after the two DM messages and one TEXT message, before the later PNG attempt."
+    },
+    {
+      "name": "synthetic_png_preview",
+      "result": "UNVERIFIED",
+      "detail": "A 70-byte synthetic 1x1 PNG was selected and linked to a third DM message, but the browser rendered the generic file icon rather than a preview. An offline PNG integrity check failed to decompress its IDAT payload (incorrect data check), so the sample is invalid and this is not evidence of a product defect. A separate direct-preview tab was also blocked by the browser client. No final PostgreSQL count was captured after this attempt."
+    },
+    {
+      "name": "native_os_file_dialog",
+      "result": "NOT_RUN",
+      "detail": "The supported in-app browser provided controlled chooser.setFiles, not a visible system dialog. The Chrome connector failed twice while loading its request-header policy. A separate Chrome profile launch through Start-Process was rejected by automatic approval with only the stated reason 'blocked by policy'; no more specific reason was supplied."
+    }
+  ],
+  "cleanup": {
+    "result": "PARTIAL",
+    "detail": "Both agent-created browser tabs were closed, API/proxy ports were idle, the exact disposable PostgreSQL schema was dropped and verified absent, and the isolated WSL attachment directory, frozen bundle and Go binaries were removed. Automatic approval rejected deletion of three harmless Windows Temp files with only the stated reason 'blocked by policy': C:\\Users\\egkur\\AppData\\Local\\Temp\\boohtacord_qa05_picker_fixture.py, C:\\Users\\egkur\\AppData\\Local\\Temp\\boohtacord-qa05-picker-synthetic.txt and C:\\Users\\egkur\\AppData\\Local\\Temp\\boohtacord-qa05-picker-pixel.png. No deletion workaround was attempted."
+  },
+  "remaining_gate": "QA-05 remains PARTIAL: verify a real native OS file selection, PNG preview, browser notification, voice/reconnect, full keyboard/screen reader, zoom and a trusted release bundle. Prior evidence covers real Go/filesystem 507; this packet's 507 was injected into the local proxy."
+}

@@ -70,3 +70,6 @@
   .message-row .message-actions.is-open .message-action-buttons { display: flex; }
 }
 .conversation-header { height: 64px; min-height: 64px; flex: 0 0 64px; }
+.message-list > li[data-message-id] + li[data-message-id]:not(.grouped-message) { margin-top: 18px; }
+.message-list > .history-date + li[data-message-id] { margin-top: 28px; }
+@media (max-width: 1023px) { .message-list > .history-date + li[data-message-id] { margin-top: 24px; } }

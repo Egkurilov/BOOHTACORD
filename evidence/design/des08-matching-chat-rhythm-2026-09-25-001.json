@@ -1,0 +1,53 @@
+{
+  "id": "des08-matching-chat-rhythm-2026-09-25-001",
+  "tasks": ["DES-08", "T-050", "QA-05"],
+  "kind": "authenticated-local-matching-state-text-screenshot-and-geometry-regression",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T20:09:22Z",
+  "source": {
+    "base_commit": "c69e075675a3f9b338caf090c557b167432dcc5c",
+    "changed_file": "frontend/src/design/conversation.css",
+    "changed_file_sha256": "362c0acfc31f197f0c83da49d21cdd366cb9b07f08c63856d02642cdfb39f66a",
+    "built_css_sha256": "2d87bf17096a8d1d1f919d25e526faf84c467660b686033ad93bca44b47bc29f",
+    "built_javascript_sha256": "2f818e5fc2300623eb0e01a53f9fc38fb380bc8c758a0af14c445ad34505aeeb",
+    "bundle": "Local fixed Vue production build from the working tree, not the trusted release image. The temporary same-origin entrypoint only selected the synthetic channel and held history scrollTop at zero; it was restored after capture. Product JavaScript and CSS assets were unchanged by the entrypoint."
+  },
+  "fixture": {
+    "scope": "Isolated loopback Go API and WSL PostgreSQL schema, five synthetic accounts, one selected TEXT channel with six Russian messages at the reference times on 19 September 2026, and one metadata-only settings.json attachment. No production account, private message body, physical attachment, or LiveKit media was used.",
+    "browser": "Installed Chrome headless with isolated profiles, device scale 1, 10000 ms virtual-time budget and same-origin synthetic cookie login. Cookie and credentials were never placed in URLs, CLI arguments, screenshot artifacts, or this record.",
+    "scroll": "Both reference and candidate use the beginning of the six-message history. Candidate scrollTop was forced to zero after asynchronous load so narrow captures did not silently select the bottom."
+  },
+  "reference": {
+    "archive_sha256": "e93cc89cc1e925a7585aa46f95e6eeb81e244b3db9fda471acc8f3f7d8614101",
+    "desktop": {"original_pixels": "1440x900", "original_sha256": "ff343250ecf0e6c40502072184769ad93ebe032c5d1c20785828b3c50b990ec3", "demo_strip_removed_px": 52, "product_pixels": "1440x848", "local_product_crop": "evidence/design/artifacts/des08-reference-product-1440x848-2026-09-25.png", "product_crop_sha256": "510231e840bd5d3fefd35cc07c38286d74b98d1431fc16507345800ad22b149e"},
+    "narrow": {"original_pixels": "640x720", "original_sha256": "17c48590eaecc52e5a866634847427e01fcf0fdce64c2de962d379e7e5f39d66", "demo_strip_removed_px": 88, "product_pixels": "640x632", "local_product_crop": "evidence/design/artifacts/des08-reference-product-640x632-2026-09-25.png", "product_crop_sha256": "9233db1b672688be2a09de978ac587e49aecab2b3be2af6c314b9b701f6c1955"}
+  },
+  "captures": {
+    "before": [
+      {"size": "1440x848", "local_artifact": "evidence/design/artifacts/des08-match-product-1440x848-2026-09-25.png", "sha256": "ca8fb11787d70c1e4eae2227d0f5cf832459c7fd95db5c689858c1bdb0a9f08c"},
+      {"size": "640x632", "local_artifact": "evidence/design/artifacts/des08-match-product-640x632-2026-09-25.png", "sha256": "f19668ab4c65e7ef6e02fe4d792968376ccf36d8752c1b49ebd017265eddbc35"}
+    ],
+    "after": [
+      {"size": "1440x848", "local_artifact": "evidence/design/artifacts/des08-final-product-1440x848-2026-09-25.png", "sha256": "4a428c406fec000aa10d3e45ee232952f3a7a674a58a28ae236916a6b4840148"},
+      {"size": "640x632", "local_artifact": "evidence/design/artifacts/des08-final-product-640x632-2026-09-25.png", "sha256": "d2ac206734853d30594706c5f58654d24e8cef5f3fcb2d95f58196ef46b8990f"}
+    ],
+    "artifact_policy": "All PNGs are synthetic, local-only ignored artifacts; their hashes and measured geometry are recorded here, but no generated media is staged."
+  },
+  "comparison": {
+    "measurement": "At desktop x=309 and narrow x=21, contiguous high-brightness runs within the flat-color avatar edge were measured in the reference product crop and the candidate PNG. Values are avatar top y coordinates in product pixels, excluding demo chrome. The first five visible rows have identical fixture text, author order, timestamps, date and scroll position.",
+    "desktop_first_five_avatar_y": {"reference": [142, 206, 270, 334, 398], "before": [126, 196, 266, 336, 406], "after": [142, 206, 270, 334, 398]},
+    "narrow_first_five_avatar_y": {"reference": [134, 198, 262, 326, 390], "before": [122, 192, 262, 332, 402], "after": [134, 198, 262, 326, 390]},
+    "sixth_desktop_avatar_y": {"reference": 536, "before": 546, "after": 532},
+    "aligned": "Desktop conversation-header border is at product y=63 and the first date divider near y=94 in both; x=280/x=1192 shell boundaries remain aligned. The CSS A/B override on the old build first produced the after coordinates; the rebuilt product CSS reproduced both override screenshots byte-for-byte.",
+    "remaining_differences": "The sixth desktop row remains 4 px above the reference after the metadata-only attachment. The fixture has different avatar colors, unread/presence state, a synthetic administrator and no connected voice. Whole-image pixel equality is therefore neither calculated nor claimed. The reference has no matching DM screenshot."
+  },
+  "change": "Only ungrouped adjacent message rows now use an 18 px separation; the first row after a date uses 28 px desktop or 24 px below 1024 px. Grouped-message and non-message list spacing remain on their existing rules.",
+  "validation": {
+    "red_green_browser_geometry": "PASS_LOCAL: 5/5 first avatar y coordinates matched the reference on each width after the CSS change, versus 0/5 desktop and 1/5 narrow before.",
+    "nearest_test": "PASS: shell_reference_geometry.spec.ts, 1 test",
+    "frontend_tests": "PASS: 192 files, 555 tests",
+    "frontend_build": "PASS: vue-tsc --noEmit and Vite production build, 281 modules",
+    "diff_check": "PASS: scoped source diff has no whitespace error"
+  },
+  "remaining_gate": "DES-08 and QA-05 remain open: compare connected LiveKit voice and selected stream against their reference states, verify hover/focus, screen reader, 320/1024/zoom and trusted candidate behavior; revisit the 4 px post-attachment difference with a physical synthetic file before declaring full visual parity."
+}

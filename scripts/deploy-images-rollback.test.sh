@@ -13,8 +13,9 @@ trap cleanup EXIT
 project_dir="$temporary_root/project"
 bin_dir="$temporary_root/bin"
 state_dir="$temporary_root/state"
-mkdir -p "$project_dir" "$bin_dir" "$state_dir/postgres" "$state_dir/attachments"
+mkdir -p "$project_dir/scripts" "$bin_dir" "$state_dir/postgres" "$state_dir/attachments"
 printf 'services: {}\n' > "$project_dir/compose.yaml"
+printf '#!/usr/bin/env bash\nexit 0\n' > "$project_dir/scripts/check-attachment-volume-headroom.sh"
 old_api="ghcr.io/example/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 old_web="ghcr.io/example/web@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 new_api="ghcr.io/example/api@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
@@ -59,7 +60,7 @@ fi
 grep -Fxq "API_IMAGE=$new_api" "$project_dir/.env"
 grep -Fq 'up -d --no-deps --no-build api web' "$QA12_LOG"
 grep -Fq 'up -d --no-deps --no-build --force-recreate proxy' "$QA12_LOG"
-! grep -q '^curl ' "$QA12_LOG"
+if grep -q '^curl ' "$QA12_LOG"; then exit 1; fi
 
 export API_IMAGE="$old_api" WEB_IMAGE="$old_web" QA12_FAIL_PROXY_ONCE=0
 bash "$root/scripts/deploy-images.sh" > "$temporary_root/rollback.out" 2>&1
@@ -72,5 +73,5 @@ grep -Fxq "WEB_IMAGE=$old_web" "$project_dir/.env"
 [[ "$(grep -c 'maintenance-admission --enable' "$QA12_LOG")" == 2 ]]
 [[ "$(grep -c 'maintenance-admission --disable' "$QA12_LOG")" == 2 ]]
 [[ "$(grep -c '^curl ' "$QA12_LOG")" == 1 ]]
-! grep -Eq '(^| )down( |$)|(^| )volume (rm|prune)( |$)' "$QA12_LOG"
+if grep -Eq '(^| )down( |$)|(^| )volume (rm|prune)( |$)' "$QA12_LOG"; then exit 1; fi
 echo 'deploy-images rollback fake-Docker test passed'

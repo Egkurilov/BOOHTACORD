@@ -1,0 +1,33 @@
+{
+  "id": "qa12-manual-entrypoint-2026-09-25-001",
+  "task": "QA-12",
+  "kind": "manual-compatible-image-rollback-entrypoint-source-verification",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T20:08:00Z",
+  "scope": "Source and fake-Docker checks only. The manual GitVerse workflow was not dispatched and production was not changed by this evidence run.",
+  "entrypoint": ".gitverse/workflows/rehearse-compatible-rollback.yaml",
+  "controls": [
+    "workflow_dispatch only, master ref only, production concurrency group v-bootybay-production, exact current HEAD and two distinct 40-character SHA inputs",
+    "Pinned SSH host key and non-interactive deploy key; explicit two-browser observer/window input required before SSH",
+    "Remote preflight checks exact current release directory and running API/web tags and image IDs, four current/previous local image IDs, unchanged backend/migration tree, Compose and Caddyfile, plus four named Docker volumes; each switched container ID is checked against its local tag ID",
+    "Existing deploy-images.sh performs maintenance admission, capacity guard, migration, image switch, proxy validation and health check for previous then current tags",
+    "Audit and named-volume identity checks before, between and after switches; EXIT/INT/TERM best-effort current restore only while original volume identity remains available"
+  ],
+  "checks": [
+    {"command": "bash scripts/qa12_rollback/preflight.test.sh", "result": "PASS", "coverage": "Expected pair and fail-closed current tag or image-ID drift, missing previous image, backend/Compose mismatch and missing volume"},
+    {"command": "bash scripts/qa12_rollback/rehearse.test.sh", "result": "PASS", "coverage": "Previous→current order, three audits, observer window, failure/SIGTERM restore, no automatic restore on volume identity drift, no destructive volume commands in fake trace"},
+    {"command": "bash scripts/deploy-images-rollback.test.sh", "result": "PASS", "coverage": "Existing injected proxy failure and previous-image return; fixed test fixture to include the current headroom guard"},
+    {"command": "bash scripts/verify-release-guards.sh", "result": "PASS", "coverage": "Native release guard suite including new QA-12 tests"},
+    {"command": "shellcheck QA-12 scripts and changed release guard scripts", "result": "PASS"},
+    {"command": "actionlint v1.7.12 .gitverse/workflows/rehearse-compatible-rollback.yaml", "result": "PASS"}
+  ],
+  "limitations": [
+    "The current migrator has no schema version table; this entrypoint accepts only exact identical backend/migration source and Compose topology. It does not prove a live schema downgrade or allow a pair with changed backend code.",
+    "No two authenticated browser observers, maintenance/admission observation, live image switch, test-content read or real volume preservation has been exercised. QA-12 remains open.",
+    "SIGTERM/INT restore is best effort; runner timeout, host failure, SSH disconnection or failed current-image deploy can require operator diagnosis. The workflow must not be treated as autonomous disaster recovery."
+  ],
+  "reference": {
+    "gitverse_dispatch_syntax": "https://gitverse.ru/docs/cicd/docs/triggers/",
+    "gitverse_github_context_alias": "https://gitverse.ru/docs/cicd/docs/context/"
+  }
+}

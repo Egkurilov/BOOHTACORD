@@ -1,0 +1,17 @@
+{
+  "id": "qa14-readiness-2026-09-25-015",
+  "kind": "trusted-master-voice-name-deploy-with-open-acceptance-gates",
+  "status": "PARTIAL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T19:53:05Z",
+  "source_revision": "c69e075675a3f9b338caf090c557b167432dcc5c",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649905",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1649905/jobs/3225954/logs",
+  "jobs": {"backend": "success", "frontend": "success", "release_guard": "success", "deploy": "success"},
+  "requirements": {"total": 39, "mapped": 39},
+  "todo": {"total": 56, "completed": 38, "open": 18, "open_backend": 0, "open_frontend": 0, "open_design": 7, "open_verification": 11},
+  "post_rollout": {"attachment_volume": "voice-platform_attachments-data", "available_bytes": 19458646016, "required_bytes": 6343294632, "reserved_bytes": 0, "snapshot_success": 1, "api_image": "voice-platform-api:c69e075675a3f9b338caf090c557b167432dcc5c", "api_health": "ok"},
+  "source_change_limit": "BE-16 adds the current display name to newly issued LiveKit credentials; no real two-user connected-media acceptance was run. Existing participants must reconnect.",
+  "remaining_blockers": "Seven design and eleven verification packages remain open. Idle attachment headroom is healthy but active-upload sustained capacity, physical media/load/revocation, notification/screen-reader/zoom and visual acceptance, approved artifact delivery, compatible rollback and signed Android device acceptance lack required PASS evidence.",
+  "release_policy": "A successful production deploy and idle health audit do not close the product release gate."
+}

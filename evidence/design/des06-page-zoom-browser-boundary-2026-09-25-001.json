@@ -1,0 +1,15 @@
+{
+  "id": "des06-page-zoom-browser-boundary-2026-09-25-001",
+  "tasks": ["DES-06", "QA-05"],
+  "kind": "real-browser-page-zoom-acceptance-attempt",
+  "status": "BLOCKED_TOOL",
+  "source_revision": "c69e075675a3f9b338caf090c557b167432dcc5c",
+  "environment": "Isolated local Vite dev server on 127.0.0.1:5174, separate Codex in-app and Chrome test tabs; no authenticated fixture or production session was used.",
+  "observations": [
+    {"name": "browser_baseline", "result": "OBSERVED", "detail": "The in-app tab reported innerWidth 1280 CSS px, devicePixelRatio 1.5 and visualViewport.scale 1; Chrome reported innerWidth 1770 CSS px, devicePixelRatio 1.5 and scale 1. Both showed the expected unauthenticated session error because the local API was not running on that port."},
+    {"name": "page_zoom_shortcuts", "result": "NOT_PROVEN", "detail": "Browser Use Control+plus and Control+equal key attempts did not change innerWidth, devicePixelRatio or visualViewport.scale. They do not prove 125% or 150% page zoom."},
+    {"name": "native_chrome_zoom", "result": "BLOCKED_TOOL", "detail": "Windows Computer Use stopped before a Chrome window state or input was obtained because it could not identify the current browser URL confidently enough for policy enforcement. No native Chrome input was sent."},
+    {"name": "surface_acceptance", "result": "NOT_RUN", "detail": "No authenticated TEXT/DM/admin/voice/viewer surface was assessed at actual 125% or 150% page zoom."}
+  ],
+  "decision": "DES-06 and QA-05 remain open. Retry only with a browser control surface that can establish and report actual page zoom, then inspect focus and clipping on an authenticated fixed bundle. Viewport resizing or DPR emulation is not substitute evidence."
+}

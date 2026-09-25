@@ -1,0 +1,61 @@
+name: Rehearse compatible image rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      current_sha:
+        description: 'Exact currently deployed 40-character master revision'
+        required: true
+        type: string
+      previous_sha:
+        description: 'Exact prevalidated previous local image revision'
+        required: true
+        type: string
+      observers_confirmed:
+        description: 'Two authenticated browser observers and maintenance window are ready'
+        required: true
+        type: choice
+        options: [not-ready, two-browsers-ready]
+        default: not-ready
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v-bootybay-production
+  cancel-in-progress: false
+
+jobs:
+  rehearse:
+    if: ${{ github.ref_name == 'master' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DEPLOY_SERVER_IP: 176.108.242.211
+      DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      SSH_USER: shaneque
+      CURRENT_SHA: ${{ inputs.current_sha }}
+      PREVIOUS_SHA: ${{ inputs.previous_sha }}
+      OBSERVERS_CONFIRMED: ${{ inputs.observers_confirmed }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject drift or unobserved rehearsal before SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$CURRENT_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$PREVIOUS_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$CURRENT_SHA" != "$PREVIOUS_SHA" ]]
+          [[ "$(git rev-parse HEAD)" == "$CURRENT_SHA" ]]
+          [[ "$OBSERVERS_CONFIRMED" == two-browsers-ready ]]
+      - name: Configure pinned SSH transport
+        shell: bash
+        run: bash scripts/configure-deploy-ssh.sh
+      - name: Rehearse previous and restore current image without volume mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
+          remote_script="/opt/voice-platform-releases/${CURRENT_SHA}/scripts/qa12_rollback/rehearse.sh"
+          ssh_options=(-i ~/.ssh/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          ssh "${ssh_options[@]}" "$remote" sudo -n bash "$remote_script" "$CURRENT_SHA" "$PREVIOUS_SHA"
