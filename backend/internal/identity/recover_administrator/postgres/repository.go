@@ -9,7 +9,8 @@ import (
 	"voice-platform/backend/internal/identity/recover_administrator"
 )
 
-const recoveryLockKey int64 = 441903815
+// Recovery must serialize with administrator role changes.
+const recoveryLockKey int64 = 441903816
 
 const recoverLastAdministrator = `
 WITH recovered AS (

@@ -1,0 +1,33 @@
+{
+  "id": "qa02-recovery-serialization-2026-09-25-001",
+  "kind": "administrator-recovery-concurrency",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "environment": "Ubuntu WSL, Go 1.26.0, PostgreSQL 16.14, isolated migration-backed schema per test",
+  "checks": [
+    {
+      "name": "reproduced_role_change_race",
+      "result": "FAIL_BEFORE_FIX",
+      "detail": "With the former separate advisory locks, sole-administrator recovery completed successfully while promotion of another administrator remained uncommitted."
+    },
+    {
+      "name": "serialized_recovery",
+      "result": "PASS_LOCAL",
+      "detail": "Both sole-active and zero-active recovery now wait behind administrator role changes; after a concurrent promotion commits they return unavailable without changing password, block state or audit. Five repeated PostgreSQL runs passed."
+    },
+    {
+      "name": "successful_recovery",
+      "result": "PASS_LOCAL",
+      "detail": "Both recovery modes succeeded when eligible; PostgreSQL state confirmed password replacement, session and voice lease revocation, SESSION_REVOKED reason, one SFU outbox row and one audit event."
+    },
+    {
+      "name": "backend_suite",
+      "result": "PASS_LOCAL",
+      "detail": "go test -json -count=1 ./... with both PostgreSQL test URL variables: 670 passed, 0 skipped, 0 failed; focused go vet passed."
+    }
+  ],
+  "limitations": [
+    "Recovery tests use synthetic replacement hashes at repository level; operator CLI and HTTP authorization remain separate checks.",
+    "Queued SFU revocation does not prove a connected media participant was removed; QA-10 covers that gate."
+  ]
+}
