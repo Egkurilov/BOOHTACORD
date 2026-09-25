@@ -1,0 +1,42 @@
+{
+  "id": "des05-settings-panel-entry-focus-2026-09-25-001",
+  "tasks": ["DES-03", "DES-05", "QA-05"],
+  "kind": "isolated-fixed-bundle-settings-panel-focus",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T11:50:40Z",
+  "base_commit": "8e1a262",
+  "bundle": {
+    "build": "npm run build: PASS (vue-tsc --noEmit && vite build)",
+    "entry_js_sha256": "e1ec8e486c2fd689fdeb370c42e5090b04c5a9bc06ee2405c5f58d0b7d66aecf",
+    "entry_css_sha256": "d30b35e0a1833f1a6308dcd68c347c88fd1a2fbbe8b3d01f124ac5358202d36"
+  },
+  "environment": "Codex in-app browser, fixed Vue bundle and local Go API, disposable PostgreSQL schema with synthetic admin; 320 and 1280 by 720 CSS px; no production data",
+  "checks": [
+    {
+      "name": "baseline_panel_entry",
+      "result": "FAIL_LOCAL_BEFORE_FIX",
+      "detail": "After choosing either profile or audio from a modal navigation drawer at 320 CSS px, focus was on document body. Focus-target markup tests both failed before the fix."
+    },
+    {
+      "name": "profile_entry",
+      "result": "PASS_LOCAL",
+      "detail": "After rebuilding, profile entry focused the Profile h1 inside the active workspace at 320 and 1280 CSS px; navigation drawer was closed."
+    },
+    {
+      "name": "audio_entry",
+      "result": "PASS_LOCAL",
+      "detail": "After rebuilding, audio entry focused the labelled audio section inside the active workspace at 320 and 1280 CSS px. Tab advanced to its first button."
+    },
+    {
+      "name": "drawer_restoration",
+      "result": "PASS_LOCAL",
+      "detail": "Opening navigation from the audio panel made it modal and moved focus inside; Escape closed it and restored focus to its trigger. No document overflow at either viewport."
+    },
+    {
+      "name": "frontend_validation_and_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "Focused 2/2; full Vitest 163 files and 476 tests passed, TypeScript/Vite build passed. ProfileSettings 74 lines, AudioSettings 86 lines, focused spec 27 lines. Viewport reset, browser tab closed, disposable schema count zero, fixture ports idle, temporary files and Go binaries removed."
+    }
+  ],
+  "remaining": "Full keyboard and screen-reader traversal, reset/voice states, real zoom, screenshot comparison and trusted release bundle acceptance remain open under DES-03/05 and QA-05."
+}

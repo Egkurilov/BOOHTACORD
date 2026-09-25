@@ -15,6 +15,7 @@ PASS_STATIC/PASS_RUNTIME не равны полному release PASS. Истор
   [DM search keyboard/focus](../evidence/design/des05-dm-search-keyboard-2026-09-25-001.json) исправлен и проверен на локальном fixed bundle; полный screen-reader и release bundle проход остаются.
   [TEXT search keyboard/focus](../evidence/design/des05-text-search-keyboard-2026-09-25-001.json) исправлен и проверен на локальном fixed bundle; общий QA-05 остаётся открытым.
   [Admin/profile/audio mobile navigation](../evidence/design/des06-workspace-panel-navigation-2026-09-25-001.json) проверена на 320/883/1024 CSS px с drawer focus/Escape; full screen-reader, zoom, media и trusted release bundle остаются открытыми.
+  [Profile/audio panel entry focus](../evidence/design/des05-settings-panel-entry-focus-2026-09-25-001.json) проверен на 320/1280 CSS px после выбора из drawer/footer; общий QA-05 ещё открыт.
 
 - [ ] **QA-06 · P1 · T-004 — POC-01.** Отдельные физические Windows и Apple-Silicon macOS presenters, каждый с отдельным observer: движущаяся игра, её звук, разговор и отсутствие цифровой петли. Готово: окружения/версии/устройства и наблюдатель в evidence, compatibility matrix. Evidence preflight от 24.09 — BLOCKED; owner-login и POC topology не считать новой отсутствующей реализацией.
 
