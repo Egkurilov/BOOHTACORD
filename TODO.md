@@ -19,7 +19,7 @@ FE-01…FE-21 реализованы и перечислены в [DONE.md](DONE
 Подробные состояния и связь с DS-T01…12 — в [GUILDCHAT_V1_TODO.md](docs/design/GUILDCHAT_V1_TODO.md).
 
 - [ ] **DES-02 · P1:** общая строка TEXT/DM теперь ограничивает длинное имя автора, переносит action/status controls и имя вложения; 463 frontend-теста и сборка PASS. Остались browser/keyboard/screen-reader приёмка длинной истории, reply/edit conflict, retry, unread/mention и upload на узких строках. [Evidence](evidence/design/des02-conversation-wrap-2026-09-25-001.json).
-- [ ] **DES-03 · P1:** проверить и довести logout/reset, topology controls, подтверждения archive/voice-close, 409 recovery и возврат фокуса.
+- [ ] **DES-03 · P1:** на локальном candidate исправлено наложение expired reset alert на заголовок; [browser-evidence](evidence/design/des03-reset-invalid-spacing-2026-09-25-001.json) подтверждает 1024/1280/1440 CSS px. Остались logout/reset success/used link, topology controls, archive/voice-close confirmations, 409 recovery и возврат фокуса.
 - [ ] **DES-04 · P1:** проверить voice/stream states для listener, mute/deafen, reconnect, transfer/kick, 1/6/20 участников и отсутствующего audio/frame.
 - [ ] **DES-05 · P1:** modal drawer/focus trap/inert и shortcut guard реализованы; browser на локально собранном candidate подтвердил members drawer, Escape и возврат фокуса из поиска при 1024 px. Остались screen-reader и полный keyboard-прогон остальных поверхностей. [Static](evidence/design/des05-focus-2026-09-25-001.json), [browser](evidence/design/des05-browser-focus-2026-09-25-001.json), [candidate](evidence/qa/qa05-candidate-browser-2026-09-25-001.json).
 - [ ] **DES-06 · P1:** проверить и исправить text/DM/voice/viewer/search/profile/admin на 1440/1280/1024 CSS px и zoom 125%/150%.

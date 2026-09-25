@@ -48,4 +48,6 @@
 .authentication-hint, .authentication-error { margin: calc(var(--gc-space-2) * -1) 0 0; font-size: var(--gc-text-caption); line-height: var(--gc-line-caption); }
 .authentication-hint { color: var(--gc-text-muted); }
 .authentication-error { color: var(--gc-danger); }
+.authentication-card > .authentication-error { margin-top: var(--gc-space-4); }
+.authentication-card > .authentication-submit { margin-top: var(--gc-space-6); }
 .authentication-submit { width: 100%; }
