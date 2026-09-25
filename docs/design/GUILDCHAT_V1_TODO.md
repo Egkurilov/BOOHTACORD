@@ -48,6 +48,7 @@
   Новый C-21/C-22/C-23 candidate требует снимков двух последовательных сообщений, hover/focus toolbar, mobile «⋯», scrolled-up jump и компактного composer при 320/640/1440 CSS px; сравнить с reference на одной фиксированной ревизии.
   [Следующая source-правка](../../evidence/design/des08-chat-geometry-2026-09-25-001.json) сократила карточку до CSS 340×62, выровняла горизонтальные отступы и сохранила «Начало» в первом разделителе даты; 536 тестов и сборка PASS. На этапе source-проверки координаты были рассчитаны по CSS; затем выполнен browser recheck ниже.
   [Локальный browser recheck](../../evidence/design/des08-chat-geometry-browser-2026-09-25-001.json) измерил actual card 340×62, x=357/68 на desktop/narrow и совпадение y маркера с первым date divider; снимки TEXT 1440/640 и DM 1440 сохранены локально с SHA. Fixture отличался от архивного reference дополнительными строками, поэтому это проверка конкретной геометрии, не весь pixel gate.
+  [Matching-state preflight](../../evidence/design/des08-matching-state-browser-policy-2026-09-25-001.json) подтвердил несовпадение прежних PNG по данным/scroll/ревизии; Browser Use не загрузил request-header policy, поэтому новый capture и pixel diff NOT_RUN.
 
 ## Связь с исходными DS-T01…DS-T12
 

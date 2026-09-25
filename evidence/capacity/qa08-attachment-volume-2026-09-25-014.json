@@ -1,0 +1,17 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-014",
+  "task": "QA-08",
+  "kind": "trusted-master-storage-summary-and-prebuild-guard-failure",
+  "status": "FAIL",
+  "observed_at": "2026-09-25T18:03:03Z",
+  "source_revision": "c407cdaae0d33e5f3a1261b9b1e3632e9c8907ca",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649040",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1649040/jobs/3224179/logs",
+  "jobs": {"backend": "success", "frontend": "success", "release_guard": "success", "deploy": "failure"},
+  "checks": [
+    {"name": "read-only Docker storage summary", "result": "PASS", "reclaimable_images_display": "17.3GB", "reclaimable_build_cache_display": "857.8MB", "reclaimable_local_volumes_display": "0B", "detail": "Values are Docker's human-readable summary, not exact bytes or a validated deletion plan. No prune or image removal was run."},
+    {"name": "pre-build exact-volume guard", "result": "FAIL", "available_bytes": 5606207488, "required_bytes": 6343294632, "shortfall_bytes": 737087144},
+    {"name": "build, maintenance, migration, container switch and post-rollout audit", "result": "NOT_RUN", "reason": "The first guard stopped install-received-release.sh."}
+  ],
+  "next_action": "List exact unused image tags and running container references, preserve current/rollback images, then reclaim only verified unused build artifacts or expand the filesystem. Recheck guard before any rollout. The already built 9201f219f9c1311a3b58f3bacf040cda00b4029c release can be resumed without rebuilding only after adequate headroom is restored."
+}

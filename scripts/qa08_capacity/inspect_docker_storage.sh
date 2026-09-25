@@ -9,3 +9,11 @@ set -euo pipefail
 remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
 ssh_options=(-i "$HOME/.ssh/id_deploy" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
 ssh "${ssh_options[@]}" "$remote" 'sudo -n docker system df'
+printf 'Voice Platform image tags and dangling images:\n'
+ssh "${ssh_options[@]}" "$remote" \
+  'sudo -n docker image ls --format "{{.Repository}}:{{.Tag}} {{.ID}} {{.Size}}"' \
+  | awk '$1 ~ /^voice-platform-(api|web):/ || $1 == "<none>:<none>"'
+printf 'Running Voice Platform container images:\n'
+ssh "${ssh_options[@]}" "$remote" \
+  'sudo -n docker ps --format "{{.Names}} {{.Image}}"' \
+  | awk '$2 ~ /^voice-platform-(api|web):/'

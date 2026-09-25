@@ -13,3 +13,5 @@ Trusted [run #1648803](https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1648803) с
 3. Сохранить stdout guard и post-rollout audit вместе с revision, временем, ссылкой на запуск и статусом двух авторизованных browser-сессий. QA-08 закрывается только после свежего PASS на точном volume с достаточным запасом; QA-12/14 имеют отдельные критерии.
 
 Локальные fake-Docker проверки сценария запуска входят в `scripts/verify-release-guards.sh`. Они подтверждают порядок и fail-closed поведение скрипта, но не измеряют production capacity и не заменяют post-rollout audit.
+
+Этот путь развернёт только SHA `9201f21…`. Если `master` уже содержит более поздние изменения, для выполнения требования «развернуть все изменения» после восстановления устойчивого запаса необходимо выполнить trusted build/deploy текущего SHA и его post-rollout audit. Промежуточный resume не закрывает этот критерий.

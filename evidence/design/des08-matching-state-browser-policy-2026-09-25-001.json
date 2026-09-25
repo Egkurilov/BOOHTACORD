@@ -1,0 +1,35 @@
+{
+  "id": "des08-matching-state-browser-policy-2026-09-25-001",
+  "tasks": ["DES-08", "QA-05"],
+  "kind": "matching-state-visual-comparison-preflight",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25",
+  "source": {
+    "commit": "c407cdaae0d33e5f3a1261b9b1e3632e9c8907ca",
+    "working_tree_at_start": "clean",
+    "conversation_css_sha256": "11942f8f02087521c6cc6aeb660747c13732945925c4b1f49d4804cffe69995a",
+    "text_history_sha256": "c72c91f3f1430986963b5aa8403211f94f4c3e4ac9b26a81dd3559bb943a7983"
+  },
+  "reference": {
+    "archive_sha256": "e93cc89cc1e925a7585aa46f95e6eeb81e244b3db9fda471acc8f3f7d8614101",
+    "chat_1440": {"size": "1440x900", "sha256": "ff343250ecf0e6c40502072184769ad93ebe032c5d1c20785828b3c50b990ec3"},
+    "chat_640": {"size": "640x720", "sha256": "17c48590eaecc52e5a866634847427e01fcf0fdce64c2de962d379e7e5f39d66"}
+  },
+  "previous_candidate": {
+    "evidence": "evidence/design/des08-chat-geometry-browser-2026-09-25-001.json",
+    "chat_1440": {"size": "1440x900", "sha256": "fa288bd5d60a6b20627ceecc2e2309aa97decf35576f7f7caf3e1afb209634be"},
+    "chat_640": {"size": "640x720", "sha256": "5e6f37a244f453e6a6e61e321513580cb86d32270eb701ac83a93aa95d43d8e0"},
+    "comparison_limit": "The previous fixture shows two English synthetic rows and two attachments, whereas the reference shows six Russian rows and one attachment. Scroll position, date, member presence and voice state also differ. A later source commit added a 64 px conversation-header rule, so these PNGs do not represent the current commit."
+  },
+  "browser_attempt": {
+    "method": "Two consecutive unified-computer-use browser inventory calls; no tab was opened and no UI interaction occurred.",
+    "result": "BLOCKED",
+    "error": "Unable to load browser request-header policy. Retry the browser command."
+  },
+  "matching_state_comparison": {
+    "result": "NOT_RUN",
+    "reason": "The permitted browser surface did not initialize. Existing screenshots differ in source revision and content, so a new pixel diff or visual PASS would be misleading.",
+    "source_bug_confirmed": false
+  },
+  "next_step": "Restore Browser Use policy; run a fixed local build at the recorded commit with deterministic six-message TEXT fixture matching the reference names, timestamps, file, viewport and scroll position; save new screenshots at 1440x900 and 640x720 and compare product-shell geometry after excluding the reference demo strip. Capture connected voice/selected stream only with a real LiveKit fixture and record those separately."
+}
