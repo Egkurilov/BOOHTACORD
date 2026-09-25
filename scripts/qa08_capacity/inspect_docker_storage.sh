@@ -17,3 +17,6 @@ printf 'Running Voice Platform container images:\n'
 ssh "${ssh_options[@]}" "$remote" \
   'sudo -n docker ps --format "{{.Names}} {{.Image}}"' \
   | awk '$2 ~ /^voice-platform-(api|web):/'
+printf 'Unique image usage for release and build families:\n'
+ssh "${ssh_options[@]}" "$remote" 'sudo -n docker system df -v' \
+  | awk '/^REPOSITORY[[:space:]]+TAG/ || $1 ~ /^(voice-platform-|golang|node|postgres|alpine|debian|ubuntu|caddy|nginx|livekit)/ || $1 == "<none>"'

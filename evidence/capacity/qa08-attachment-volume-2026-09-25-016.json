@@ -1,0 +1,18 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-016",
+  "task": "QA-08",
+  "kind": "trusted-master-bounded-image-reclaim-with-insufficient-headroom",
+  "status": "FAIL",
+  "observed_at": "2026-09-25T18:33:43Z",
+  "source_revision": "f76dee01c3c56ef5a4076dcf5cc5b56d1eb55bab",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649339",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1649339/jobs/3224706/logs",
+  "jobs": {"backend": "success", "frontend": "success", "release_guard": "success", "deploy": "failure"},
+  "checks": [
+    {"name": "guarded exact-tag cleanup", "result": "PARTIAL", "removed_tag_count": 46, "removed_sha_pair_count": 23, "detail": "Only the explicit old voice-platform-api/web full-SHA allowlist was processed with docker image rm --no-prune, without --force. The script verified Docker/attachment filesystem identity, live API/web tags, protected image IDs and all container image IDs before deletion. Current, rollback and built-candidate SHA tags were excluded."},
+    {"name": "post-cleanup exact-volume sample", "result": "FAIL", "available_bytes": 6123745280, "normal_required_bytes": 6343294632, "normal_shortfall_bytes": 219549352, "prebuild_target_bytes": 7593294632, "prebuild_target_shortfall_bytes": 1469549352},
+    {"name": "build, maintenance, migration, container switch and post-rollout audit", "result": "NOT_RUN", "reason": "The bounded cleanup exhausted its allowlist without meeting the build target and stopped before source packaging/build."}
+  ],
+  "safety_boundary": "No attachment history, Docker volume, container or release directory was removed. The current/rollback/built-candidate image tags were preserved. The last logged capacity is a guard sample, not a fresh full API reservation audit; bytes actually reclaimed cannot be derived exactly from the previous separate run's snapshot.",
+  "next_action": "Do not repeat the exhausted old-tag allowlist. Inspect unique sizes and container usage of remaining build/release images, then either reclaim a specifically verified unused artifact with enough margin or expand the filesystem. Repeat the normal guard and post-rollout audit before claiming deployment."
+}

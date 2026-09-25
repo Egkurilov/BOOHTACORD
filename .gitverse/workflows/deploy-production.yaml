@@ -79,7 +79,7 @@ jobs:
       SSH_USER: shaneque
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect storage and reclaim allowlisted unused release images
+      - name: Inspect Docker storage before guarded release
         shell: bash
         run: bash scripts/qa08_capacity/prepare_host_storage.sh
 
