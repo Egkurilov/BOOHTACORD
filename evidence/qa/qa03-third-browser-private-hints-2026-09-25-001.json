@@ -1,0 +1,49 @@
+{
+  "id": "qa03-third-browser-private-hints-2026-09-25-001",
+  "tasks": ["QA-03", "QA-05"],
+  "kind": "isolated-fixed-bundle-third-browser-dm-realtime-verification",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T12:37:48Z",
+  "source_commit": "96aada745cf53455d40733277cfdec226659765a",
+  "bundle": {
+    "entry_js_sha256": "e1ec8e486c2fd689fdeb370c42e5090b04c5a9bc06ee2405c5f58d0b7d66aecf",
+    "entry_css_sha256": "a64c119f6735c3377eaf76d8d6681e4dd9fb83e8ce54b86f6052a2a195bf0ef0"
+  },
+  "environment": "Locally built Vue bundle in two Chrome tabs; Go API and PostgreSQL 16 in a disposable schema; two synthetic DM participants and one synthetic nonparticipant; localhost HTTP/WebSocket proxy counted only event kinds per existing socket, without logging payloads or identifiers.",
+  "checks": [
+    {
+      "name": "baseline_and_third_http_acl",
+      "result": "PASS_LOCAL",
+      "detail": "The synthetic third account received HTTP 404 for the pair's DM history. Before mutation its browser DM list was empty. Both peer and third browser WebSockets completed HTTP 101 and each had one active connection."
+    },
+    {
+      "name": "create_private_delivery",
+      "result": "PASS_LOCAL",
+      "detail": "After sender API create returned 201, the peer socket received one direct_message.message_created frame; the third socket received zero. The peer browser badge/title became 1/(1) without reload; the third tab remained unchanged."
+    },
+    {
+      "name": "edit_private_delivery",
+      "result": "PASS_LOCAL",
+      "detail": "After sender API edit returned 200, the peer socket received one direct_message.message_updated frame and its open history updated without reload. The third socket received zero DM frames and its browser tree remained unchanged."
+    },
+    {
+      "name": "delete_private_delivery",
+      "result": "PASS_LOCAL",
+      "detail": "After sender API delete returned 204, the peer socket received one direct_message.message_deleted frame and its open history displayed the deletion marker without reload. The third socket received zero DM frames and its browser tree remained unchanged. Final peer DM-frame counts were 1/1/1; third counts were 0/0/0, with both sockets still open."
+    },
+    {
+      "name": "browser_notifications",
+      "result": "NOT_RUN",
+      "detail": "Notification permission, generic preview and dedup were not tested because permission had not been granted and no new permission approval was requested for this bounded packet."
+    },
+    {
+      "name": "fixture_cleanup",
+      "result": "PARTIAL",
+      "detail": "Browser tabs closed; isolated schema count was zero; ports 18085 and 18771 had no listeners; attachment directory and temporary Go binaries were removed. Two temporary harness files outside the repository remained because the exact PowerShell Remove-Item action was rejected by automatic policy."
+    }
+  ],
+  "limitations": [
+    "The two Chrome tabs shared a cookie jar. The third socket was authenticated and opened before the peer login and remained bound to the third account; the third tab was not reloaded after the cookie changed. The per-socket frame counts directly test realtime delivery, while later HTTP identity in that tab is not an independent third session.",
+    "The fixed bundle was built locally from the pinned source commit, not the trusted release image. QA-03 and QA-05 remain open for notifications and release verification."
+  ]
+}

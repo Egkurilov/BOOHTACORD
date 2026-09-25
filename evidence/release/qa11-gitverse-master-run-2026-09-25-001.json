@@ -1,0 +1,48 @@
+{
+  "id": "qa11-gitverse-master-run-2026-09-25-001",
+  "task": "QA-11",
+  "kind": "trusted-gitverse-master-run-review",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T12:25:56Z",
+  "run": {
+    "id": 1645278,
+    "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1645278",
+    "branch": "master",
+    "commit": "352f8a8ce2beade4f8beb534e855108c7f53bd8f",
+    "workflow": "deploy-production.yaml",
+    "jobs": {
+      "backend": {
+        "status": "success",
+        "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1645278?job=3216186"
+      },
+      "frontend": {
+        "status": "success",
+        "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1645278?job=3216187"
+      },
+      "release_guard": {
+        "status": "success",
+        "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1645278?job=3216188"
+      },
+      "deploy": {
+        "status": "success",
+        "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1645278?job=3216189",
+        "observed_steps": [
+          "Validate deployment inputs and configure verified SSH",
+          "Package the checked-out source",
+          "Transfer, build and perform guarded release"
+        ]
+      }
+    }
+  },
+  "source_checks": [
+    "The public run and individual job pages showed success for this master commit.",
+    "git ls-remote --heads origin at 2026-09-25T12:25:56Z resolved master to the run commit.",
+    "The checked-in .gitverse/workflows/deploy-production.yaml packages the checkout and builds on the server; it does not publish GHCR images."
+  ],
+  "not_established": [
+    "No GHCR immutable API/web digest references or SBOM/provenance attestations were observable from this GitVerse run.",
+    "The approved main/GHCR route has no verified trusted run in this review.",
+    "ADR-010 remains proposed, so this successful GitVerse deployment does not replace the approved delivery contract."
+  ],
+  "decision": "The GitVerse master deployment succeeded at the run commit, but QA-11 remains PARTIAL pending an accepted route and immutable artifact evidence."
+}

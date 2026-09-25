@@ -1,0 +1,21 @@
+{
+  "id": "des07-inline-feedback-policy-2026-09-25-001",
+  "tasks": ["DES-07", "DES-05"],
+  "kind": "design-decision-and-source-review",
+  "status": "PASS_STATIC",
+  "observed_at": "2026-09-25T12:27:30Z",
+  "source_commit": "80ccb1b",
+  "checks": [
+    {
+      "name": "approved_product_boundary",
+      "result": "PASS_STATIC",
+      "detail": "The approved product brief requires private desktop message notifications but does not require transient action toasts. The design system says distinct error conditions must not be collapsed into one red toast."
+    },
+    {
+      "name": "profile_and_admin_feedback",
+      "result": "PASS_STATIC",
+      "detail": "ProfileSettings and AdminMembersSection keep successful action feedback in context with aria-live=polite and errors with role=alert. Neither has a dismissal timer. The component matrix now maps C-11 to this persistent inline equivalent and the copy policy records the reason."
+    }
+  ],
+  "remaining": "No screen-reader announcement was observed. DES-05 and the full DES-07 browser/media acceptance remain open."
+}

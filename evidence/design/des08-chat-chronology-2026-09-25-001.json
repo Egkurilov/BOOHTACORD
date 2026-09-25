@@ -1,0 +1,47 @@
+{
+  "id": "des08-chat-chronology-2026-09-25-001",
+  "tasks": ["FE-22", "DES-02", "DES-08", "QA-05"],
+  "kind": "fixed-bundle-chat-reference-preflight",
+  "status": "PASS_LOCAL",
+  "observed_at": "2026-09-25T12:51:00Z",
+  "source_base_commit": "aa38ab6",
+  "bundle": {
+    "entry_js_sha256": "0da847b610d67f0ba93afaa56f42d8aabc0af6140d264ea0a9d6e81e89c685ae",
+    "entry_css_sha256": "a64c119f6735c3377eaf76d8d6681e4dd9fb83e8ce54b86f6052a2a195bf0ef0"
+  },
+  "reference": "GuildChat_Design_System_v1.0.zip reference/screenshots/chat-1440.png (1440x900) and chat-640.png (640x700)",
+  "environment": "Chrome with locally rebuilt Vue bundle, local Go API and disposable PostgreSQL schema; first fixture had six synthetic TEXT and two DM messages, second fixture had 66 TEXT messages plus two browser sends; no production data or media",
+  "checks": [
+    {
+      "name": "regression_before_fix",
+      "result": "OBSERVED",
+      "detail": "At 1440x900 the candidate showed the newest TEXT message first and the beginning-of-history marker after the oldest row, unlike the reference's chronological reading order. Both new SSR regression tests failed before implementation."
+    },
+    {
+      "name": "chronological_text_and_dm",
+      "result": "PASS_LOCAL",
+      "detail": "After rebuilding, the browser accessibility tree and 1440x900 screenshot showed TEXT messages oldest to newest with the history marker above them. Two synthetic DM sends appeared oldest to newest. Server/API stores retain their descending order and cursor semantics."
+    },
+    {
+      "name": "narrow_viewport_and_scroll",
+      "result": "PASS_LOCAL",
+      "detail": "At 640x700 CSS px the browser document scrollWidth was 640. The TEXT list showed newest messages near the composer with scrollTop about 231 of 680 scrollHeight and 449 clientHeight; its DOM first/last messages remained oldest/newest."
+    },
+    {
+      "name": "paginated_anchor_and_new_message_follow",
+      "result": "PASS_LOCAL",
+      "detail": "With 66 seeded TEXT messages at 640x700 CSS px, initial scroll was at the bottom of a 50-message page. Clicking the top previous-messages control loaded all 66 and kept the previously visible row at the same 140 CSS px top coordinate. A new browser send while at the bottom followed to the new maximum scroll; a second send while scrolled up preserved scrollTop and the visible row coordinate. Document scrollWidth remained 640."
+    },
+    {
+      "name": "native_validation",
+      "result": "PASS_LOCAL",
+      "detail": "Focused SSR tests were red before implementation and green after; complete frontend suite passed 166 files/482 tests, and vue-tsc plus Vite build passed."
+    },
+    {
+      "name": "fixture_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "Browser viewport override reset and tab closed; disposable schema count zero, ports 18085/18771 idle, temporary attachment directory and Go binaries removed."
+    }
+  ],
+  "remaining": "DES-08 remains open: screenshots were visually inspected but not stored as comparable artifacts; reference demo chrome/content differ from the product fixture, and selected stream/connected voice, 125/150% zoom and full pixel comparison were not run. QA-05 still needs trusted candidate acceptance."
+}

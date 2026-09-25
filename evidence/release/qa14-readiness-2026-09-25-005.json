@@ -1,0 +1,38 @@
+{
+  "id": "qa14-readiness-2026-09-25-005",
+  "kind": "pre-release-requirement-matrix-refresh",
+  "status": "FAIL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T12:33:03Z",
+  "source_commit": "55646aa",
+  "requirements": {
+    "total": 39,
+    "mapped": 39,
+    "matrix": "docs/release/2026-09-25-requirements-matrix.md",
+    "links_checked": 19,
+    "broken_links": 0
+  },
+  "todo": {
+    "total": 37,
+    "completed": 19,
+    "open": 18,
+    "open_backend": 0,
+    "open_frontend": 0,
+    "open_design": 7,
+    "open_verification": 11
+  },
+  "newly_reflected_local_evidence": [
+    "Browser reset, admin role/block, topology/revision and confirmation checks",
+    "Fixed-bundle TEXT/DM history and private participant updates",
+    "Latest successful read-only attachment filesystem measurement and later SSH blocker",
+    "Successful historical GitVerse master deploy without GHCR immutable artifacts"
+  ],
+  "blocking_gates": [
+    "QA-08: current attachment filesystem headroom and production reservation metric",
+    "QA-06/07/09/10: physical media, hardware load and connected-revocation POCs",
+    "QA-03/05 and DES-02..08: browser notification, accessibility and visual acceptance",
+    "QA-11/12: approved delivery contract, immutable artifacts and rollback acceptance",
+    "QA-13: Android release signing and physical-device acceptance"
+  ],
+  "note": "Local and historical successful checks are not release PASS. Matrix refresh does not authorize a new master deployment."
+}

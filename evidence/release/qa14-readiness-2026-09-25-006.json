@@ -1,0 +1,36 @@
+{
+  "id": "qa14-readiness-2026-09-25-006",
+  "kind": "pre-release-requirement-matrix-refresh",
+  "status": "FAIL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T12:53:18Z",
+  "source_base_commit": "aa38ab6",
+  "requirements": {
+    "total": 39,
+    "mapped": 39,
+    "matrix": "docs/release/2026-09-25-requirements-matrix.md",
+    "links_checked": 21,
+    "broken_links": 0
+  },
+  "todo": {
+    "total": 38,
+    "completed": 20,
+    "open": 18,
+    "open_backend": 0,
+    "open_frontend": 0,
+    "open_design": 7,
+    "open_verification": 11
+  },
+  "change_since_previous_review": [
+    "FE-22 was added and completed after a browser/reference comparison found reverse chronological TEXT/DM presentation; the native frontend suite and build passed.",
+    "The third authenticated browser WebSocket received no private DM create/edit/delete frames while the recipient received each event."
+  ],
+  "blocking_gates": [
+    "QA-08: current attachment filesystem headroom and production reservation metric",
+    "QA-06/07/09/10: physical media, hardware load and connected-revocation POCs",
+    "QA-03/05 and DES-02..08: browser notification, accessibility and stored visual acceptance",
+    "QA-11/12: approved delivery contract, immutable artifacts and rollback acceptance",
+    "QA-13: Android release signing and physical-device acceptance"
+  ],
+  "note": "A completed source/frontend leaf increases the denominator and numerator together; the 18 remaining release/design gates are unchanged. The verdict remains NO-GO."
+}
