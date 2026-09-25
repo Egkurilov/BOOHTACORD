@@ -1,6 +1,6 @@
 # Матрица требований для решения о выпуске
 
-Срез: 25.09.2026, ветка `codex/voice-platform-foundation`. Источник требований — утверждённый `C:\Users\egkur\Downloads\TZ_Voice_Platform_v1.0.md`. Ни один `LOCAL` или `PARTIAL` в этой таблице не равен выпускному PASS. `LOCAL` означает проверку кода в локальном окружении; `PARTIAL` — часть сценария; `NOT_RUN` — применимая проверка ещё не выполнена; `BLOCKED` — нужен внешний host, устройство или утверждённый контракт. Текущий выпускной вердикт — **NO-GO**.
+Срез: 25.09.2026, ветка `codex/voice-platform-foundation`. Источник требований — утверждённый `C:\Users\egkur\Downloads\TZ_Voice_Platform_v1.0.md`. Ни один `LOCAL` или `PARTIAL` в этой таблице не равен выпускному PASS. `LOCAL` означает проверку кода в локальном окружении; `PARTIAL` — часть сценария; `NOT_RUN` — применимая проверка ещё не выполнена; `BLOCKED` — нужен внешний host, устройство или утверждённый контракт; `FAIL` — измеренный провал критерия. Текущий выпускной вердикт — **NO-GO**.
 
 | Требование | Текущее подтверждение | Для выпускного PASS |
 | --- | --- | --- |
@@ -31,7 +31,7 @@
 | REQ-SEARCH-01 · Поиск | LOCAL: PostgreSQL русский/английский, GIN и browser smoke [QA-04], [QA-05] | Trusted CI и candidate browser [QA] |
 | REQ-STORAGE-01 · Постоянство/25 МБ | PARTIAL: границы и private storage проверены локально [QA-03] | Attachment volume и rollout/rollback с томами [QA] |
 | REQ-STORAGE-02 · Upload/ACL/preview | LOCAL: PostgreSQL/FS access matrix [QA-03] | Browser upload/preview/download candidate [QA] |
-| REQ-STORAGE-03 · Нехватка диска | BLOCKED: HTTP 507 и резерв проверены локально [QA-08] | Измерить фактический deployment attachment volume [QA] |
+| REQ-STORAGE-03 · Нехватка диска | FAIL: production attachment filesystem имеет 0 доступных байт; локально подтверждены резерв и HTTP 507 [QA-08] | Увеличить доступное место выше защитного порога с учётом in-flight резерваций и повторить production-измерение [QA] |
 | REQ-NOBACKUP-01 · Нет backup job | PARTIAL: код/Compose не вводят backup [DONE] | Проверить обновление/совместимый rollback без потери томов [QA] |
 | REQ-UI-01 · Русский one-guild shell | PARTIAL: локальный smoke 1440/1280/1024 [QA-05] | Zoom, keyboard, screenshots и media states [DES], [QA] |
 | REQ-UI-02 · Компоненты/доступность | PARTIAL: 40-компонентная матрица и часть focus [DONE], [QA-05] | DES-02…08, screen reader и candidate comparison [DES] |
@@ -55,4 +55,4 @@
 [QA-03]: ../../evidence/qa/qa03-dm-read-matrix-2026-09-25-001.json
 [QA-04]: ../../evidence/qa/qa04-search-migrations-ci-2026-09-25-001.json
 [QA-05]: ../../evidence/qa/qa05-candidate-browser-2026-09-25-001.json
-[QA-08]: ../../evidence/capacity/qa08-attachment-volume-2026-09-25-001.json
+[QA-08]: ../../evidence/capacity/qa08-attachment-volume-2026-09-25-002.json

@@ -4,7 +4,7 @@
 
 **Цель: закрыть 100% оставшейся работы.** На этом срезе открыто **20 пакетов: BE 0, FE 0, DES 7, QA 13**. Прогресс исходного списка: **16/36**. В числитель попадает только задача с выполненным критерием из тематического списка, native-проверкой и записью результата в DONE. Для QA-гейтов нужны применимые evidence со статусом PASS: NOT_RUN, BLOCKED, source-тесты и успешная сборка сами по себе гейт не закрывают. Если обнаружится обязательная новая работа, добавить отдельный leaf-пакет и пересчитать знаменатель. P2 также входит в цель 100%.
 
-Первый внешний блокер — **QA-08**: измерение фактического attachment volume на deployment host. [Проверка 25.09](evidence/capacity/qa08-attachment-volume-2026-09-25-001.json) подтверждает порог и HTTP 507, но не объём свободного места в целевом volume. Исторические 9% root и локальные 31,4% C: не являются этим измерением; опубликованную историю не удалять.
+**P0 / NO-GO — QA-08:** [измерение production volume 25.09](evidence/capacity/qa08-attachment-volume-2026-09-25-002.json) показало **0 доступных байт** на filesystem `/dev/vda2`, где расположен `voice-platform_attachments-data`; API-метрика подтверждает 0. Порог admission — 3 159 147 316 байт плюс резервации; новые uploads должны получать HTTP 507. Владельцу инфраструктуры требуется увеличить доступное место на этом filesystem и повторить измерение. Историю не удалять. Точное число in-flight резерваций сейчас не экспортируется и остаётся отдельной проверкой QA-08.
 
 ## Бэкенд — 0 открытых задач реализации
 
@@ -36,7 +36,7 @@ FE-01…FE-21 реализованы и перечислены в [DONE.md](DONE
 - [ ] **QA-05 · P1:** локальный dev browser прошёл auth/logout, TEXT/DM, live DM, поиск и часть keyboard; production-built candidate подтвердил login/logout, topology rename, TEXT shell 1440/1280/1024 без overflow, drawer/search focus. Остались reset UI, upload, voice/reconnect, полный keyboard/screen reader, zoom 125/150%, сохраняемые screenshots и повтор через trusted bundle. [Dev](evidence/qa/qa05-local-browser-2026-09-25-001.json), [candidate](evidence/qa/qa05-candidate-browser-2026-09-25-001.json).
 - [ ] **QA-06 · P1:** выполнить POC-01 на физических Windows и Apple Silicon macOS с игрой, звуком, разговором и отдельным наблюдателем.
 - [ ] **QA-07 · P1:** измерить sender/receiver FPS, bitrate, RTT и loss для POC-02, расследовать жалобу около 1 FPS и записать профили в ADR.
-- [ ] **QA-08 · P0:** измерить deployment attachment volume и in-flight reservations, сравнить с max(2 GiB, 10%) и сохранить UTC evidence без удаления истории.
+- [ ] **QA-08 · P0 / FAIL:** production volume измерен: 31 591 473 152 байта всего, **0 доступно** при защитном пороге 3 159 147 316 байт; [UTC evidence](evidence/capacity/qa08-attachment-volume-2026-09-25-002.json). Увеличить доступное место на реальном filesystem, проверить текущие in-flight резервации и повторить read-only `df`/`findmnt`/API-метрику до PASS. Опубликованную историю не удалять.
 - [ ] **QA-09 · P1:** измерить CPU/сеть/quota и профиль 100 voice участников, до 20 в комнате, с реальным hardware/load evidence.
 - [ ] **QA-10 · P1:** выполнить POC-03 connected-media revocation и проверку старых API/SDK credentials после kick/ban/logout/reset/transfer/close.
 - [ ] **QA-11 · P1:** зафиксировать утверждённый GitVerse delivery контракт в ADR и подтвердить immutable refs, trusted checks, SBOM/provenance.

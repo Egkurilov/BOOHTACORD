@@ -1,0 +1,35 @@
+{
+  "id": "qa14-readiness-2026-09-25-002",
+  "kind": "pre-release-requirement-matrix-update",
+  "status": "FAIL",
+  "decision": "NO-GO",
+  "executed_at": "2026-09-25T07:33:18Z",
+  "source_commit": "b1917eb4c7441d2f16b4174cb9cdeabde8637f6d",
+  "requirements": {
+    "total": 39,
+    "mapped": 39,
+    "matrix": "docs/release/2026-09-25-requirements-matrix.md"
+  },
+  "todo": {
+    "total_original": 36,
+    "completed": 16,
+    "open": 20,
+    "open_design": 7,
+    "open_verification": 13
+  },
+  "new_blocker": {
+    "task": "QA-08",
+    "evidence": "evidence/capacity/qa08-attachment-volume-2026-09-25-002.json",
+    "finding": "The production attachment volume shares /dev/vda2 with 0 available bytes, below its 3,159,147,316-byte protected threshold. In-flight reservation bytes are not exposed.",
+    "required_action": "Provision available capacity on the actual filesystem, then repeat the read-only volume/metric check and record in-flight reservations. Preserve published history."
+  },
+  "other_blocking_gates": [
+    "QA-06/07: physical Windows and Apple Silicon macOS media POC and measured sender/receiver profile",
+    "QA-09: hardware/network capacity measurements",
+    "QA-10: connected LiveKit revocation and credential replay",
+    "QA-01/04/11/12: trusted CI, approved delivery contract, SBOM/provenance and guarded rollout/rollback",
+    "QA-05 and DES-02..08: pinned-bundle browser, accessibility and visual acceptance",
+    "QA-13: Android release signing and physical-device acceptance"
+  ],
+  "note": "A measured release failure supersedes the earlier QA-08 unavailable-host blocker. QA-14 remains open until all applicable gates have PASS evidence."
+}
