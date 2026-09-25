@@ -1,0 +1,22 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-006",
+  "task": "QA-08",
+  "kind": "production-attachment-volume-access-recheck",
+  "status": "BLOCKED",
+  "observed_at": "2026-09-25T11:56:32Z",
+  "environment": "documented deployment host 176.108.242.211 and volume voice-platform_attachments-data",
+  "checks": [
+    {
+      "name": "Windows default key with pinned host key",
+      "result": "BLOCKED",
+      "detail": "Batch SSH to the documented deployment user returned Permission denied (publickey)."
+    },
+    {
+      "name": "existing WSL deployment-key candidate with pinned Windows known_hosts",
+      "result": "BLOCKED",
+      "detail": "Batch SSH returned Permission denied (publickey). Strict host-key validation was kept; no remote command ran."
+    }
+  ],
+  "latest_accepted_production_measurement": "qa08-attachment-volume-2026-09-25-004 at 10:22:01Z: 7675338752 available bytes, not a current measurement",
+  "decision": "QA-08 remains open. Exact-volume free space and live in-flight reservations cannot be remeasured until read-only SSH access is restored; no production mutation or attachment deletion occurred."
+}

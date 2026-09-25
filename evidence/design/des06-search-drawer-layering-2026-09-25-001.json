@@ -1,0 +1,42 @@
+{
+  "id": "des06-search-drawer-layering-2026-09-25-001",
+  "tasks": ["DES-05", "DES-06", "QA-05"],
+  "kind": "isolated-fixed-bundle-responsive-search-and-voice-review",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T12:03:51Z",
+  "base_commit": "bf21f3c",
+  "bundle": {
+    "build": "npm run build: PASS (vue-tsc --noEmit && vite build)",
+    "entry_js_sha256": "e1ec8e486c2fd689fdeb370c42e5090b04c5a9bc06ee2405c5f58d0b7d66aecf",
+    "entry_css_sha256": "a64c119f6735c3377eaf76d8d6681e4dd9fb83e8ce54b86f6052a2a195bf0ef0"
+  },
+  "environment": "Codex in-app browser with explicit CSS viewports, fixed Vue bundle, local Go API, disposable PostgreSQL schema and synthetic voice channel; no production data",
+  "checks": [
+    {
+      "name": "search_overlay_baseline",
+      "result": "FAIL_LOCAL_BEFORE_FIX",
+      "detail": "At 320, 883 and 1024 CSS px the later search.css rule assigned the drawer z-index 20 beneath its scrim z-index 30; document.elementFromPoint at the query input hit the scrim. The focused CSS-cascade regression failed 4/4 breakpoint cases."
+    },
+    {
+      "name": "search_overlay_after_fix",
+      "result": "PASS_LOCAL",
+      "detail": "At 320, 883 and 1024 CSS px drawer z-index 31 exceeded scrim 30; elementFromPoint hit INPUT, pointer click focused it, and Escape closed the panel and restored a visible trigger. No document overflow. At 1280 CSS px the aside remained relative, with no visible scrim, and its input was hit-testable. The 320 CSS px drawer screenshot was visually inspected."
+    },
+    {
+      "name": "disconnected_voice_workspace",
+      "result": "PASS_LOCAL",
+      "detail": "A synthetic VOICE channel in the local fixture showed its disconnected room and listener join control at 1440, 1280, 1024, 883 and 320 CSS px without document overflow. The 320 CSS px screenshot was visually inspected. Connected voice, stream and capacity states were not exercised."
+    },
+    {
+      "name": "real_browser_zoom",
+      "result": "NOT_RUN",
+      "detail": "In-app and Chrome tab keyboard zoom commands did not change CSS width, devicePixelRatio or visualViewport scale. Browser Use rejected navigation to Chrome appearance settings under its URL policy and prohibited alternate-surface workarounds. No 125% or 150% zoom claim is made."
+    },
+    {
+      "name": "frontend_validation_and_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "Focused CSS-cascade test 4/4 and full Vitest 164 files/480 tests passed; TypeScript/Vite build passed. Search CSS 32 lines and test 36 lines. Browser viewport reset, test tabs closed, disposable schema count zero, ports idle, temporary attachment directory and Go binaries removed."
+    }
+  ],
+  "remaining": "DES-05/06 and QA-05 remain open for actual screen-reader traversal, connected voice/viewer states, real browser zoom 125%/150%, screenshot comparison and trusted release bundle acceptance."
+}
