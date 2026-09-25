@@ -1,0 +1,33 @@
+{
+  "id": "qa02-topology-voice-races-2026-09-25-001",
+  "kind": "topology-revision-and-voice-transfer-concurrency",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "environment": "Ubuntu WSL, Go 1.26.0, PostgreSQL 16.14, isolated migration-backed schema per test",
+  "checks": [
+    {
+      "name": "concurrent_rename_same_revision",
+      "result": "PASS_LOCAL",
+      "detail": "Two rename transactions with expected revision 1 produced one commit and one conflict; final channel name matched the winner, topology revision became 2 and exactly one rename audit was stored. Twenty repeated runs passed."
+    },
+    {
+      "name": "rename_move_shared_revision",
+      "result": "PASS_LOCAL",
+      "detail": "Concurrent rename and move of the same channel with expected revision 1 produced one commit and one conflict; only the winning mutation persisted, revision became 2 and exactly one audit was stored. Twenty repeated runs passed."
+    },
+    {
+      "name": "concurrent_voice_transfers",
+      "result": "PASS_LOCAL",
+      "detail": "Two concurrent transfers of one user's existing lease both serialized successfully. PostgreSQL held one active lease, two revoked leases with TRANSFER reason, two SFU revocation outbox rows, three issuance audits and two transfer audits. Twenty repeated runs passed."
+    },
+    {
+      "name": "backend_suite",
+      "result": "PASS_LOCAL",
+      "detail": "go test -json -count=1 ./... with both PostgreSQL test URL variables: 675 passed, 0 skipped, 0 failed."
+    }
+  ],
+  "limitations": [
+    "The race tests cover persisted state and queued SFU revocations, not a connected media participant; QA-10 covers that gate.",
+    "QA-02 still needs an end-to-end password-reset flow with issued one-time link."
+  ]
+}
