@@ -54,5 +54,5 @@
 [QA-02]: ../../evidence/qa/qa02-auth-admin-concurrency-2026-09-25-001.json
 [QA-03]: ../../evidence/qa/qa03-dm-read-matrix-2026-09-25-001.json
 [QA-04]: ../../evidence/qa/qa04-search-migrations-ci-2026-09-25-001.json
-[QA-05]: ../../evidence/qa/qa05-local-browser-2026-09-25-001.json
+[QA-05]: ../../evidence/qa/qa05-candidate-browser-2026-09-25-001.json
 [QA-08]: ../../evidence/capacity/qa08-attachment-volume-2026-09-25-001.json

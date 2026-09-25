@@ -1,0 +1,35 @@
+{
+  "id": "qa05-candidate-browser-2026-09-25-001",
+  "kind": "locally-built-candidate-browser-smoke",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "source_commit": "d6dbd39",
+  "bundle": {
+    "build": "vue-tsc --noEmit && vite build: PASS",
+    "entry_js_sha256": "0d977b4065b4f54b46e96cd24f8b6a6978f6de9b418da4f4b2d9d0c5fdd1ed05",
+    "entry_css_sha256": "4163b936c77222e41e5e20e1693491b2aa5111cab20c1068f7413b3f6f2c64a6"
+  },
+  "environment": "Codex in-app Chromium, Vite preview serving built dist, Go API, PostgreSQL 16.14 isolated schema, synthetic administrator/member; no LiveKit service",
+  "checks": [
+    {
+      "name": "auth_and_admin_topology",
+      "result": "PASS_LOCAL",
+      "detail": "Administrator login, creation of a category and TEXT channel, channel rename with immediate navigation update, logout and logged-out reload passed."
+    },
+    {
+      "name": "responsive_text_shell",
+      "result": "PASS_LOCAL",
+      "detail": "At 1440/1280/1024 CSS px, document scrollWidth equaled viewport width. Measured sidebar/main/members widths were 280/912/248, 264/743/240 and 256/735/0 CSS px respectively; 1024 used a members drawer."
+    },
+    {
+      "name": "keyboard_focus",
+      "result": "PASS_LOCAL",
+      "detail": "At 1024 CSS px, members drawer exposed dialog semantics; Escape closed it and restored focus to its opener. Search dialog focused its query; Escape restored focus to the search trigger. Ctrl+K in the TEXT composer did not open search."
+    }
+  ],
+  "limitations": [
+    "The bundle was built and previewed locally, not deployed through the trusted release pipeline.",
+    "Reset completion, attachment upload, DM notifications, voice/media/reconnect, screen-reader, zoom 125/150% and stored screenshot comparison were not completed in this run.",
+    "No full visual parity claim or QA-05 PASS follows from these checks."
+  ]
+}
