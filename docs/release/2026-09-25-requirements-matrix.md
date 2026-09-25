@@ -25,7 +25,7 @@
 | REQ-SCREEN-02 · Захват игры и звук | NOT_RUN | Windows/macOS game capture, game audio, отдельный observer [QA] |
 | REQ-SCREEN-03 · Публикация/viewer | PARTIAL: код и FPS source checks [DONE] | Media/visual POC с несколькими publishers/viewers [QA], [DES] |
 | REQ-SCREEN-04 · Диагностика | PARTIAL: sender/viewer counters в коде [DONE] | Сопоставить sender и receiver измерения [QA] |
-| REQ-CHAT-01 · TEXT | PARTIAL: PostgreSQL idempotency и trusted CI PASS [QA-01]; локальный browser history/reply/mention/409/503 [DES-02-FULL] | Trusted candidate и attachment browser [QA] |
+| REQ-CHAT-01 · TEXT | PARTIAL: PostgreSQL idempotency и trusted CI PASS [QA-01]; локальный browser history/reply/mention/409/503 [DES-02-FULL]; FE-22 исправил UI порядок чтения TEXT/DM [DES-08-CHAT] | Trusted candidate и attachment browser [QA] |
 | REQ-DM-01 · DM только двум | PARTIAL: PostgreSQL ACL и три HTTP-сессии [QA-03]; получатель получил private create/edit/delete без reload [QA-03-BROWSER], третий browser socket — 0/0/0 DM-кадров [QA-03-THIRD] | Browser notification и trusted candidate [QA] |
 | REQ-CHAT-02 · Упоминания/unread | PARTIAL: caller-local код и browser unread [DONE], [QA-05] | Видимость/cursor/notification на candidate [QA], [DES] |
 | REQ-SEARCH-01 · Поиск | PARTIAL: PostgreSQL русский/английский, GIN и trusted CI PASS; локальный browser smoke [QA-04], [QA-05] | Candidate browser [QA] |
@@ -34,7 +34,7 @@
 | REQ-STORAGE-03 · Нехватка диска | PARTIAL: последний успешный read-only замер на production attachment filesystem дал 7 675 338 752 доступных байта в 10:22 UTC [QA-08]; повтор в 11:56 UTC остановился на SSH, текущий запас и in-flight резервации неизвестны [QA-08-RETRY] | Восстановить доступ, развернуть BE-15 через утверждённый гейт, измерить резервации и устойчивый запас на том же volume [QA] |
 | REQ-NOBACKUP-01 · Нет backup job | PARTIAL: код/Compose не вводят backup [DONE] | Проверить обновление/совместимый rollback без потери томов [QA] |
 | REQ-UI-01 · Русский one-guild shell | PARTIAL: локальный TEXT/DM browser 1440…320 CSS px [DES-02-FULL], mobile admin/profile/audio navigation [DES-06-NAV] | Реальный zoom, screenshots и connected media states [DES], [QA] |
-| REQ-UI-02 · Компоненты/доступность | PARTIAL: 40-компонентная матрица [DONE], browser keyboard/focus на части surface [DES-03-ADMIN], [DES-06-NAV] | DES-02…08, screen reader и candidate comparison [DES] |
+| REQ-UI-02 · Компоненты/доступность | PARTIAL: 40-компонентная матрица [DONE], browser keyboard/focus на части surface [DES-03-ADMIN], [DES-06-NAV]; chronological chat preflight [DES-08-CHAT] | DES-02…08, screen reader и сохранённый candidate comparison [DES] |
 | REQ-STACK-01 · Vue/Go/PostgreSQL/LiveKit | PARTIAL: native builds, PostgreSQL и trusted CI PASS [DONE], [QA-01] | Целевой deployment и media POC [QA] |
 | REQ-ARCH-01 · Разделение медиа/API | PARTIAL: код использует LiveKit и lease admission [DONE] | Connected-media POC и приватный network smoke [QA] |
 | REQ-DEPLOY-01 · CI/CD | PARTIAL: GitVerse backend/frontend/release_guard PASS на candidate [QA-04], исторический master deploy PASS [QA-11-MASTER]; GitHub main/GHCR source hardening и локальный actionlint PASS, trusted GitHub run NOT_RUN; main/GHCR и GitVerse/master расходятся [QA] | Утверждённый ADR либо исходный trusted pipeline, опубликованные digest/SBOM/provenance и rollout [QA] |
@@ -44,7 +44,7 @@
 | REQ-QUALITY-01 · Latency/capacity цели | NOT_RUN | Измерить p95 join/message/switch/recovery, FPS и нагрузку [QA] |
 | REQ-QUALITY-02 · Выпускные гейты | BLOCKED: 18 пакетов TODO открыты [TODO] | Закрыть применимые DES/QA с PASS и повторить решение [QA] |
 
-Сквозной счёт: **39/39 ID отражены**; QA-01/04 имеют trusted CI PASS, но обязательные media, capacity, browser, delivery/rollout и release проверки ещё не имеют PASS. Состояние TODO: **19/37 закрыто, 18/37 открыто**, включая добавленную BE-15. Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
+Сквозной счёт: **39/39 ID отражены**; QA-01/04 имеют trusted CI PASS, но обязательные media, capacity, browser, delivery/rollout и release проверки ещё не имеют PASS. Состояние TODO: **20/38 закрыто, 18/38 открыто**, включая добавленные BE-15/FE-22. Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
 
 [DONE]: ../../DONE.md
 [TODO]: ../../TODO.md
@@ -66,3 +66,4 @@
 [DES-03-CONFIRM]: ../../evidence/design/des03-confirmations-browser-2026-09-25-001.json
 [DES-06-NAV]: ../../evidence/design/des06-workspace-panel-navigation-2026-09-25-001.json
 [QA-11-MASTER]: ../../evidence/release/qa11-gitverse-master-run-2026-09-25-001.json
+[DES-08-CHAT]: ../../evidence/design/des08-chat-chronology-2026-09-25-001.json

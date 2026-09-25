@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import MessageItem from '../conversation/MessageItem.vue'
 import { useAuthorDirectory } from '../identity/author_directory'
 import type { CurrentSession } from '../identity/current_session'
@@ -11,6 +11,15 @@ const emit = defineEmits<{ reply: [message: DirectMessageHistoryItem]; retry: [m
 const store = useDirectMessageStore()
 const authors = useAuthorDirectory()
 const list = ref<HTMLOListElement | null>(null)
+const chronologicalMessages = computed(() => [...store.messages].reverse())
+onMounted(() => { if (list.value) list.value.scrollTop = list.value.scrollHeight })
+watch(() => store.messages[0]?.id, async (newest) => {
+  const viewport = list.value
+  if (!newest || !viewport) return
+  const nearBottom = viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop <= 96
+  await nextTick()
+  if (nearBottom) viewport.scrollTop = viewport.scrollHeight
+})
 watch(() => store.messages, (messages) => {
   for (const message of messages) if (message.replyPreview) void authors.ensure(message.replyPreview.authorId)
 }, { immediate: true })
@@ -38,7 +47,10 @@ async function loadOlder(): Promise<void> {
 
 <template>
   <ol ref="list" class="messages message-list" aria-label="История личного диалога">
-    <li v-for="message in store.messages" :key="message.id" :data-message-id="message.id">
+    <li v-if="store.nextCursor" class="message-actions"><button type="button" :disabled="store.olderLoading" @click="loadOlder">{{ store.olderLoading ? 'Загружаем старые сообщения…' : 'Показать предыдущие сообщения' }}</button></li>
+    <li v-if="store.olderError" class="state state-error" role="alert">{{ store.olderError }} <button type="button" :disabled="store.olderLoading" @click="loadOlder">Повторить</button></li>
+    <li v-if="store.historyLoaded && !store.nextCursor && store.messages.length" class="state">Это начало истории.</li>
+    <li v-for="message in chronologicalMessages" :key="message.id" :data-message-id="message.id">
       <MessageItem
         :message="message"
         :reply-preview="replyPreview(message)"
@@ -53,9 +65,6 @@ async function loadOlder(): Promise<void> {
         @retry="emit('retry', message)"
       />
     </li>
-    <li v-if="store.nextCursor" class="message-actions"><button type="button" :disabled="store.olderLoading" @click="loadOlder">{{ store.olderLoading ? 'Загружаем старые сообщения…' : 'Показать предыдущие сообщения' }}</button></li>
-    <li v-if="store.olderError" class="state state-error" role="alert">{{ store.olderError }} <button type="button" :disabled="store.olderLoading" @click="loadOlder">Повторить</button></li>
-    <li v-if="store.historyLoaded && !store.nextCursor && store.messages.length" class="state">Это начало истории.</li>
     <li v-if="!store.messages.length && !store.loadingHistory" class="state">Сообщений пока нет.</li>
   </ol>
 </template>
