@@ -27,18 +27,18 @@
 | REQ-SCREEN-04 · Диагностика | PARTIAL: sender/viewer counters в коде [DONE] | Сопоставить sender и receiver измерения [QA] |
 | REQ-CHAT-01 · TEXT | PARTIAL: PostgreSQL idempotency и trusted CI PASS [QA-01]; локальный browser history/reply/mention/409/503 [DES-02-FULL]; FE-22…34 обновили хронологию, даты, группировку и keyboard-пути [DONE], [DES-08-CHAT] | Trusted candidate, attachment browser, screen reader и visual comparison [QA], [DES] |
 | REQ-DM-01 · DM только двум | PARTIAL: PostgreSQL ACL и три HTTP-сессии [QA-03]; получатель получил private create/edit/delete без reload [QA-03-BROWSER], третий browser socket — 0/0/0 DM-кадров [QA-03-THIRD] | Browser notification и trusted candidate [QA] |
-| REQ-CHAT-02 · Упоминания/unread | PARTIAL: caller-local код и browser unread [DONE], [QA-05]; FE-25/27/28/29/34 исправили первый DM, видимость read cursor, dedup delivery, picker и jump [DONE], [QA-03-FIRST] | Видимость/cursor и разрешённое OS notification на trusted candidate [QA], [DES] |
+| REQ-CHAT-02 · Упоминания/unread | PARTIAL: caller-local код и browser unread [DONE], [QA-05]; локальный TEXT/DM cursor двух участников [QA-05-CURSOR]; FE-25/27/28/29/34 исправили первый DM, видимость read cursor, dedup delivery, picker и jump [DONE], [QA-03-FIRST] | Trusted candidate и разрешённое OS notification [QA], [DES] |
 | REQ-SEARCH-01 · Поиск | PARTIAL: PostgreSQL русский/английский, GIN и trusted CI PASS; локальный browser smoke [QA-04], [QA-05] | Candidate browser [QA] |
 | REQ-STORAGE-01 · Постоянство/25 МБ | PARTIAL: границы и private storage проверены локально [QA-03] | Attachment volume и rollout/rollback с томами [QA] |
 | REQ-STORAGE-02 · Upload/ACL/preview | LOCAL: PostgreSQL/FS access matrix [QA-03] | Browser upload/preview/download candidate [QA] |
-| REQ-STORAGE-03 · Нехватка диска | PARTIAL: последний успешный read-only замер на production attachment filesystem дал 7 675 338 752 доступных байта в 10:22 UTC [QA-08]; повтор в 11:56 UTC остановился на SSH [QA-08-RETRY]. Fail-closed guard до и после build требует 6 343 294 632 байта при последнем размере ФС [DONE]; текущий запас и in-flight резервации неизвестны | Trusted guard, BE-15 gauge и устойчивый запас после rollout на том же volume [QA] |
-| REQ-NOBACKUP-01 · Нет backup job | PARTIAL: код/Compose не вводят backup [DONE] | Проверить обновление/совместимый rollback без потери томов [QA] |
+| REQ-STORAGE-03 · Нехватка диска | PARTIAL: trusted post-rollout audit точного volume в 14:55 UTC показал 6 564 282 368 байт свободно и 0 in-flight на idle snapshot; guard и API-метрика PASS при пороге 6 343 294 632 [QA-08] | Устойчивый запас для следующих builds и активных загрузок [QA] |
+| REQ-NOBACKUP-01 · Нет backup job | PARTIAL: код/Compose не вводят backup [DONE]; штатный rollout подтверждён, rollback не выполнен [QA-12] | Проверить совместимый rollback без потери томов [QA] |
 | REQ-UI-01 · Русский one-guild shell | PARTIAL: локальный TEXT/DM browser 1440…320 CSS px [DES-02-FULL], mobile admin/profile/audio navigation [DES-06-NAV] | Реальный zoom, screenshots и connected media states [DES], [QA] |
 | REQ-UI-02 · Компоненты/доступность | PARTIAL: 40-компонентная матрица [DONE], browser keyboard/focus на части surface [DES-03-ADMIN], [DES-06-NAV]; C-21…23 source-leaves с 519 frontend-тестами PASS [DONE] | DES-02…08, screen reader и сохранённый candidate comparison [DES] |
 | REQ-STACK-01 · Vue/Go/PostgreSQL/LiveKit | PARTIAL: native builds, PostgreSQL и trusted CI PASS [DONE], [QA-01] | Целевой deployment и media POC [QA] |
 | REQ-ARCH-01 · Разделение медиа/API | PARTIAL: код использует LiveKit и lease admission [DONE] | Connected-media POC и приватный network smoke [QA] |
-| REQ-DEPLOY-01 · CI/CD | PARTIAL: GitVerse backend/frontend/release_guard PASS на candidate [QA-04], исторический master deploy PASS [QA-11-MASTER]; GitHub main/GHCR source hardening и локальный actionlint PASS, trusted GitHub run NOT_RUN; main/GHCR и GitVerse/master расходятся [QA] | Утверждённый ADR либо исходный trusted pipeline, опубликованные digest/SBOM/provenance и rollout [QA] |
-| REQ-OPS-01 · Наблюдаемость | PARTIAL: приватные метрики и rotation в коде [DONE] | Live scrape, CPU/сеть/quota и latency evidence [QA] |
+| REQ-DEPLOY-01 · CI/CD | PARTIAL: GitVerse backend/frontend/release_guard/deploy и post-rollout audit PASS для master SHA `14c9058` [QA-08]; GitHub main/GHCR source hardening и локальный actionlint PASS, trusted GitHub run NOT_RUN; main/GHCR и GitVerse/master расходятся [QA] | Утверждённый ADR либо исходный trusted pipeline, опубликованные digest/SBOM/provenance и rollback [QA] |
+| REQ-OPS-01 · Наблюдаемость | PARTIAL: приватный production scrape attachment filesystem/reservation PASS [QA-08]; прочие метрики и rotation в коде [DONE] | CPU/сеть/quota, LiveKit и latency evidence [QA] |
 | REQ-SECURITY-01 · Защита операций | PARTIAL: локальные ACL/storage tests [QA-03] | Candidate privacy, CI/security и сетевые проверки [QA] |
 | REQ-SECURITY-02 · DM/media privacy | PARTIAL: DM ACL проверен, media replay нет [QA-03] | Notification preview и POC-03 connected media [QA] |
 | REQ-QUALITY-01 · Latency/capacity цели | NOT_RUN | Измерить p95 join/message/switch/recovery, FPS и нагрузку [QA] |
@@ -55,8 +55,9 @@
 [QA-03]: ../../evidence/qa/qa03-dm-read-matrix-2026-09-25-001.json
 [QA-04]: ../../evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json
 [QA-05]: ../../evidence/qa/qa05-candidate-browser-2026-09-25-001.json
-[QA-08]: ../../evidence/capacity/qa08-attachment-volume-2026-09-25-004.json
-[QA-08-RETRY]: ../../evidence/capacity/qa08-attachment-volume-2026-09-25-006.json
+[QA-08]: ../../evidence/capacity/qa08-attachment-volume-2026-09-25-009.json
+[QA-05-CURSOR]: ../../evidence/qa/qa05-visible-read-cursor-2026-09-25-001.json
+[QA-12]: ../../evidence/release/qa12-maintenance-rollback-2026-09-25-001.json
 [QA-05-RESET]: ../../evidence/qa/qa05-reset-browser-2026-09-25-001.json
 [QA-03-BROWSER]: ../../evidence/qa/qa03-fixed-bundle-browser-2026-09-25-001.json
 [QA-03-THIRD]: ../../evidence/qa/qa03-third-browser-private-hints-2026-09-25-001.json

@@ -31,7 +31,7 @@
 - [x] Execute only `bash scripts/audit-attachment-volume.sh` remotely and preserve its exit status.
 - [x] Add the focused shell test to native release guards.
 - [x] Run the complete native release guards.
-- [ ] Execute the same read-only audit as a final step after successful master rollout; validate the workflow and publish it.
+- [x] Execute the same read-only audit as a final step after successful master rollout; validate the workflow and publish it.
 
 ### Task 3: Capture production evidence
 
@@ -39,6 +39,6 @@
 - Create: `evidence/capacity/qa08-attachment-volume-2026-09-25-009.json` after the automatic read-only CI audit; trusted deploy guards are recorded in `007` and `008`.
 - Modify: `TODO.md`, `backlog/VERIFICATION_TODO.md`, `DONE.md`, requirement matrix only if the measurement changes their verified state.
 
-- [ ] Commit and publish the workflow through the normal branch/master path only after native checks; do not bypass the deployment disk guard.
-- [ ] Manually dispatch the read-only workflow and inspect trusted logs for exact bytes, reservation gauge, image revision and health.
-- [ ] Compare pre/post deploy measurements with the current reading; mark QA-08 PASS only if the scoped acceptance criteria are proven, otherwise record PARTIAL/BLOCKED with the exact gap.
+- [x] Commit and publish the workflow through the normal branch/master path only after native checks; do not bypass the deployment disk guard.
+- [x] Run the read-only audit after trusted master rollout and inspect exact bytes, reservation gauge, image revision and health. Manual dispatch returned HTTP 401 without a user token; the automatic step succeeded.
+- [x] Compare pre/post deploy measurements with the current reading; record QA-08 PARTIAL because the margin is narrow and ongoing capacity under uploads/releases is unproven.

@@ -1,0 +1,46 @@
+{
+  "id": "qa12-maintenance-rollback-2026-09-25-001",
+  "task": "QA-12",
+  "kind": "local-deploy-boundary-and-trusted-forward-rollout-review",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T14:46:14Z",
+  "acceptance_source": [
+    "backlog/VERIFICATION_TODO.md:43",
+    "C:/Users/egkur/Downloads/TZ_Voice_Platform_v1.0.md:266-272"
+  ],
+  "local_test": {
+    "commit": "14c905854aef395446a34997e0761473a69b84dd",
+    "command": "C:/Program Files/Git/bin/bash.exe scripts/deploy-images.test.sh",
+    "exit_code": 0,
+    "result": "deploy-images tests passed",
+    "verified": [
+      "Fake-Docker command ordering: maintenance enable, wait, image pull, migration, API/web rollout, proxy rollout, network check, Caddy validation, health request, maintenance disable.",
+      "Unexpected proxy network stops before validation and health, then attempts maintenance disable.",
+      "Health failure attempts maintenance disable; disable failure returns an error."
+    ],
+    "boundary": "The test uses temporary files and fake docker/curl/sleep commands; it does not mutate production or exercise real browser sessions."
+  },
+  "trusted_forward_rollout": {
+    "run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1647111",
+    "job": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1647111?job=3220059",
+    "log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1647111/jobs/3220059/logs",
+    "branch": "master",
+    "commit": "42e997369389e93d7512cd5bcf47bd77c85e7835",
+    "job_status": "success",
+    "observed_sequence_utc": [
+      "14:11:25 maintenance admission enabled",
+      "14:11:40 migrations applied",
+      "14:11:41 API and web started",
+      "14:11:43 proxy started; Caddy configuration valid; health returned {\"status\":\"ok\"}",
+      "14:11:44 maintenance admission disabled"
+    ]
+  },
+  "not_established": [
+    "Two browser sessions did not observe the update warning or rejection of new admissions during maintenance.",
+    "A compatible older image was not rolled back in a separate controlled run; schema compatibility remains unverified.",
+    "Identity and contents of PostgreSQL, attachment and Caddy volumes were not compared before and after rollout or rollback.",
+    "No real failure-and-recovery rollout was exercised."
+  ],
+  "decision": "Forward deployment order and local failure cleanup are supported, but the full maintenance and compatible rollback acceptance is not proven.",
+  "next_step": "Plan a controlled rollback rehearsal on a schema-compatible image with an observer, two browser sessions and before/after volume identity checks; capture warning, admission rejection, health and maintenance exit without running down migrations or deleting volumes."
+}

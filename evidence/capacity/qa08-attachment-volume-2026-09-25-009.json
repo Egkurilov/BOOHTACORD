@@ -1,0 +1,48 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-009",
+  "task": "QA-08",
+  "kind": "trusted-post-rollout-exact-volume-and-private-metric-audit",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T14:55:23Z",
+  "source_revision": "14c905854aef395446a34997e0761473a69b84dd",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1647481",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1647481/jobs/3220901/logs",
+  "checks": [
+    {
+      "name": "backend/frontend/release guard/deploy and health",
+      "status": "PASS",
+      "observation": "All jobs SUCCESS; maintenance admission disabled after health returned ok."
+    },
+    {
+      "name": "exact attachment volume before and after image build",
+      "status": "PASS",
+      "before_build_available_bytes": 6563352576,
+      "after_build_available_bytes": 6563135488,
+      "release_required_bytes": 6343294632
+    },
+    {
+      "name": "read-only host and API audit after rollout",
+      "status": "PASS",
+      "volume": "voice-platform_attachments-data",
+      "filesystem_source": "/dev/vda2",
+      "filesystem_type": "ext4",
+      "filesystem_target": "/",
+      "total_bytes": 31591473152,
+      "host_available_bytes": 6564282368,
+      "api_metric_available_bytes": 6564278272,
+      "required_bytes_including_reservations": 6343294632,
+      "host_margin_bytes": 220987736,
+      "api_metric_margin_bytes": 220983640,
+      "in_flight_reserved_bytes": 0,
+      "snapshot_success": 1,
+      "api_image": "voice-platform-api:14c905854aef395446a34997e0761473a69b84dd",
+      "api_health": "ok"
+    },
+    {
+      "name": "sustained capacity after future releases and active uploads",
+      "status": "NOT_PROVEN",
+      "observation": "Three guarded master builds left 6582484992, 6572630016 and 6563135488 bytes immediately after build. The margin remains positive but fell by 19349504 bytes across these builds; the 0-byte reservation is one idle snapshot, not an active-upload load test."
+    }
+  ],
+  "decision": "The urgent exact-volume/current-reservation measurement is complete and the guarded rollout passed. QA-08 stays open because only about 221 MB remains above the conservative release threshold and long-term headroom under further builds/uploads is not established; do not delete published attachment history."
+}

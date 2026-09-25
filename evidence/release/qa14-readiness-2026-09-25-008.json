@@ -1,0 +1,25 @@
+{
+  "id": "qa14-readiness-2026-09-25-008",
+  "kind": "post-deployment-requirement-matrix-refresh",
+  "status": "FAIL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T14:55:23Z",
+  "source_base_commit": "14c905854aef395446a34997e0761473a69b84dd",
+  "requirements": {"total": 39, "mapped": 39, "matrix": "docs/release/2026-09-25-requirements-matrix.md"},
+  "todo": {"total": 50, "completed": 32, "open": 18, "open_backend": 0, "open_frontend": 0, "open_design": 7, "open_verification": 11},
+  "trusted_ci": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1647481",
+  "new_evidence": [
+    "evidence/capacity/qa08-attachment-volume-2026-09-25-009.json",
+    "evidence/qa/qa05-visible-read-cursor-2026-09-25-001.json",
+    "evidence/release/qa12-maintenance-rollback-2026-09-25-001.json",
+    "evidence/android/qa13-release-signing-2026-09-25-001.json"
+  ],
+  "blocking_gates": [
+    "QA-08: exact volume/current in-flight metric now measured, but only about 221 MB remains above release threshold and sustainable capacity under future builds/uploads is unproven",
+    "QA-06/07/09/10: physical media, hardware load and connected-revocation POCs",
+    "QA-03/05 and DES-02..08: browser notification, accessibility and stored visual acceptance",
+    "QA-11/12: approved delivery contract, immutable artifacts and compatible rollback acceptance",
+    "QA-13: Android release APK signing and physical-device acceptance"
+  ],
+  "note": "Trusted deployment and host/API attachment snapshot PASS do not establish the remaining media, capacity, browser, delivery and release gates."
+}
