@@ -1,0 +1,37 @@
+{
+  "id": "qa05-dm-upload-picker-2026-09-25-001",
+  "tasks": ["QA-05", "DES-02"],
+  "kind": "isolated-fixed-bundle-dm-upload-browser-attempt",
+  "status": "NOT_RUN",
+  "observed_at": "2026-09-25T10:57:05Z",
+  "source_commit": "24d0069c62dc50ead114544ad02b51561b888c3c",
+  "bundle": {
+    "build": "npm run build: PASS (vue-tsc --noEmit && vite build)",
+    "entry_js_sha256": "e847796482474fe9f71e70154f53769813c4d7f66fd9b9cc5f64f85e8f7fbfad",
+    "entry_css_sha256": "cdc722811f699bd95f0e91440dd595e1fbb0fa9e22222a54c80eae8b673e9b24"
+  },
+  "environment": "Fixed Vue dist via localhost HTTP proxy to current Go API and disposable PostgreSQL 16 schema; private temporary attachment directory; synthetic administrator and two synthetic DM participants; no production data",
+  "checks": [
+    {
+      "name": "fixture_and_authenticated_dm",
+      "result": "PASS_LOCAL",
+      "detail": "The isolated fixture started, login-issued secure cookie opened the current Vue bundle, and the synthetic DM composer with attachment control rendered."
+    },
+    {
+      "name": "browser_file_selection",
+      "result": "NOT_RUN",
+      "detail": "Clicking the attachment input and visible attach button did not deliver a filechooser event in the in-app browser, including a visible tab. No separate native picker window appeared. No file was selected or uploaded."
+    },
+    {
+      "name": "progress_retry_binding_download",
+      "result": "NOT_RUN",
+      "detail": "The upload path could not proceed past file selection; pending state, HTTP 507 retry, attachment binding and protected download were not observed."
+    },
+    {
+      "name": "fixture_cleanup",
+      "result": "PARTIAL",
+      "detail": "The fixture reported CLEAN, its disposable PostgreSQL schema count was zero, attachment directory was removed and ports 18084/18770 had no listeners. Exact temporary Go binaries were removed. The host's automatic command review rejected deletion of four synthetic Windows Temp files (fixture script, compiled script and two text payloads); they remain outside the repository."
+    }
+  ],
+  "next_action": "Use a browser environment whose file chooser can select an explicit synthetic local file, then observe upload progress, injected HTTP 507/retry, message binding and protected download on the same fixed bundle. Keep QA-05 and DES-02 open."
+}

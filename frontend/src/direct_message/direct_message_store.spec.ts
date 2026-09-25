@@ -1,21 +1,32 @@
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useDirectMessageStore } from './direct_message_store'
 
 const history = (id: string, directMessageId: string, body: string) => ({
   id, direct_message_id: directMessageId, author_id: 'user-2', client_message_id: `client-${id}`,
-  body, created_at: '2026-09-18T10:00:00Z', revision: 1, deleted: false,
+  body, created_at: '2026-09-18T10:00:00Z', revision: 1, deleted: false, mention_user_ids: [],
 })
 
 describe('direct-message store', () => {
   beforeEach(() => setActivePinia(createPinia()))
 
+  it('rejects 8001 emoji before creating a private optimistic message or network request', async () => {
+    const store = useDirectMessageStore()
+    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ messages: [] })))
+    await store.open('dm-1', request)
+    request.mockClear()
+    await expect(store.send('😀'.repeat(8001), request)).resolves.toBe(false)
+    expect(store.error).toContain('8000')
+    expect(store.messages).toEqual([])
+    expect(request).not.toHaveBeenCalled()
+  })
+
   it('loads the private navigation list and the selected conversation history', async () => {
     const store = useDirectMessageStore()
     const request = async (input: string) => input.endsWith('/messages')
       ? new Response(JSON.stringify({ messages: [history('message-1', 'dm-1', 'Привет')] }))
-      : new Response(JSON.stringify({ direct_messages: [{ id: 'dm-1', other_participant_id: 'user-2', other_participant_display_name: 'Лера', created_at: '2026-09-18T09:00:00Z', unread_count: 1 }] }))
+      : new Response(JSON.stringify({ direct_messages: [{ id: 'dm-1', other_participant_id: 'user-2', other_participant_display_name: 'Лера', created_at: '2026-09-18T09:00:00Z', unread_count: 1, mention_count: 1 }] }))
 
     await store.refreshNavigation(request)
     await store.open('dm-1', request)
@@ -60,7 +71,7 @@ describe('direct-message store', () => {
     const store = useDirectMessageStore()
     const request = async (_input: string, init: RequestInit) => init.method === 'GET'
       ? new Response(JSON.stringify({ messages: [] }))
-      : new Response(JSON.stringify({ id: 'message-1', direct_message_id: 'dm-1', author_id: 'user-1', client_message_id: 'client-1', body: 'Привет', revision: 1, created_at: '2026-09-18T10:00:00Z', reply_to_id: 'message-0' }))
+      : new Response(JSON.stringify({ id: 'message-1', direct_message_id: 'dm-1', author_id: 'user-1', client_message_id: 'client-1', body: 'Привет', revision: 1, created_at: '2026-09-18T10:00:00Z', reply_to_id: 'message-0', mention_user_ids: [] }))
 
     await store.open('dm-1', request)
     await expect(store.send('Привет', request, () => 'client-1', 'message-0')).resolves.toBe(true)
@@ -90,7 +101,7 @@ describe('direct-message store', () => {
     const sending = store.send('A', request, () => 'client-a')
     await Promise.resolve()
     await store.open('dm-b', request)
-    resolveSend?.(new Response(JSON.stringify({ id: 'message-a', direct_message_id: 'dm-a', author_id: 'user-1', client_message_id: 'client-a', body: 'A', revision: 1, created_at: '2026-09-18T10:00:00Z' })))
+    resolveSend?.(new Response(JSON.stringify({ id: 'message-a', direct_message_id: 'dm-a', author_id: 'user-1', client_message_id: 'client-a', body: 'A', revision: 1, created_at: '2026-09-18T10:00:00Z', mention_user_ids: [] })))
 
     await expect(sending).resolves.toBe(false)
     expect(store.directMessageId).toBe('dm-b')

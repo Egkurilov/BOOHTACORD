@@ -41,7 +41,8 @@ LEFT JOIN direct_message_messages reply
   ON reply.id = m.reply_to_id
  AND reply.direct_message_id = m.direct_message_id
 WHERE m.direct_message_id = (SELECT id FROM readable_pair)
-  AND ($3::uuid IS NULL OR (m.created_at, m.id) < (SELECT created_at, id FROM cursor))
+  AND ($3::uuid IS NULL OR (m.created_at, m.id) < (SELECT created_at, id FROM cursor)
+       OR ($5::bool AND m.id = $3::uuid))
 ORDER BY m.created_at DESC, m.id DESC
 LIMIT $4`
 
@@ -70,8 +71,10 @@ func (repository Repository) List(context context.Context, request listdirectmes
 	var before any
 	if request.Before != "" {
 		before = request.Before
+	} else if request.At != "" {
+		before = request.At
 	}
-	rows, err := repository.database.Query(context, selectDirectMessageHistory, request.DirectMessageID, request.ActorID, before, request.Limit+1)
+	rows, err := repository.database.Query(context, selectDirectMessageHistory, request.DirectMessageID, request.ActorID, before, request.Limit+1, request.At != "")
 	if err != nil {
 		return nil, fmt.Errorf("select direct message history: %w", err)
 	}

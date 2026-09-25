@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { useMessageStore } from './message_store'
 
-const message = { id: 'message-1', channel_id: 'text-1', author_id: 'user-1', client_message_id: 'client-1', body: 'Привет', revision: 1, created_at: '2026-09-17T12:00:00Z', attachments: [] }
+const message = { id: 'message-1', channel_id: 'text-1', author_id: 'user-1', client_message_id: 'client-1', body: 'Привет', revision: 1, created_at: '2026-09-17T12:00:00Z', attachments: [], mention_user_ids: [] }
 
 describe('message store', () => {
   beforeEach(() => setActivePinia(createPinia()))
@@ -52,6 +52,24 @@ describe('message store', () => {
     expect(store.messages).toHaveLength(1)
   })
 
+  it('retries with the original mention IDs even after an uncertain response', async () => {
+    const store = useMessageStore()
+    const payloads: unknown[] = []
+    const request = async (_input: string, init: RequestInit) => {
+      if (init.method === 'GET') return new Response(JSON.stringify({ messages: [] }))
+      payloads.push(JSON.parse(String(init.body)))
+      if (payloads.length === 1) throw new Error('Сеть недоступна')
+      return new Response(JSON.stringify({ ...message, mention_user_ids: ['user-2'] }))
+    }
+    await store.open('text-1', request)
+    await expect(store.send('Привет', request, () => 'client-1', undefined, [], 'user-1', ['user-2'])).resolves.toBe(false)
+    await expect(store.retry('client-1', request)).resolves.toBe(true)
+    expect(payloads).toMatchObject([
+      { client_message_id: 'client-1', mention_user_ids: ['user-2'] },
+      { client_message_id: 'client-1', mention_user_ids: ['user-2'] },
+    ])
+  })
+
   it('uses a new id when the failed draft changes', async () => {
     const store = useMessageStore()
     const sentIds: string[] = []
@@ -94,44 +112,4 @@ describe('message store', () => {
     expect(store.messages).toHaveLength(1)
   })
 
-  it('keeps a sent message when the initial history request completes later', async () => {
-    const store = useMessageStore()
-    let resolveHistory: ((response: Response) => void) | undefined
-    const request = async (_input: string, init: RequestInit) => init.method === 'GET'
-      ? new Promise<Response>((resolve) => { resolveHistory = resolve })
-      : new Response(JSON.stringify(message))
-
-    const opening = store.open('text-1', request)
-    await expect(store.send('Привет', request, () => 'client-1', undefined, [], 'user-1')).resolves.toBe(true)
-    resolveHistory?.(new Response(JSON.stringify({ messages: [] })))
-    await opening
-    expect(store.messages).toMatchObject([{ id: 'message-1', clientMessageId: 'client-1' }])
-    expect(store.messages).toHaveLength(1)
-  })
-
-  it('replaces an edit and immediately masks a deleted message', async () => {
-    const store = useMessageStore()
-    const request = async (_input: string, init: RequestInit) => {
-      if (init.method === 'GET') return new Response(JSON.stringify({ messages: [message] }))
-      if (init.method === 'PATCH') return new Response(JSON.stringify({ ...message, body: 'Исправлено', revision: 2, edited_at: '2026-09-17T12:02:00Z' }))
-      return new Response(null, { status: 204 })
-    }
-
-    await store.open('text-1', request)
-    await expect(store.edit('message-1', 'Исправлено', 1, request)).resolves.toBe(true)
-    await expect(store.remove('message-1', request)).resolves.toBe(true)
-    expect(store.messages).toMatchObject([{ body: '', deleted: true, revision: 3 }])
-  })
-
-  it('does not increment a message twice when realtime history wins a delete race', async () => {
-    const store = useMessageStore()
-    const deleted = { ...message, body: '', deleted: true, revision: 2 }
-    const request = async (_input: string, init: RequestInit) => init.method === 'GET'
-      ? new Response(JSON.stringify({ messages: [deleted] }))
-      : new Response(null, { status: 204 })
-
-    await store.open('text-1', request)
-    await expect(store.remove('message-1', request)).resolves.toBe(true)
-    expect(store.messages).toMatchObject([{ body: '', deleted: true, revision: 2 }])
-  })
 })

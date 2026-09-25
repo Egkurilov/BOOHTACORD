@@ -1,0 +1,24 @@
+import { apiBaseUrl } from '../config/runtime'
+import type { TextMessageAttachment } from '../conversation/message_client'
+import type { DirectMessageRequest } from './direct_message_client'
+import { parseDirectMessageAttachments } from './direct_message_attachment_metadata'
+
+export async function uploadDirectMessageAttachment(directMessageId: string, file: File, request: DirectMessageRequest = fetch): Promise<TextMessageAttachment> {
+  if (!directMessageId || !file.name || !Number.isInteger(file.size) || file.size < 0 || file.size > 25_000_000) {
+    throw new Error('Файл не соответствует ограничению вложения.')
+  }
+  const body = new FormData()
+  body.append('file', file)
+  const response = await request(`${apiBaseUrl}/direct-messages/${encodeURIComponent(directMessageId)}/attachments`, {
+    method: 'POST', credentials: 'same-origin', headers: { accept: 'application/json' }, body,
+  })
+  let result: unknown = null
+  try { result = await response.json() } catch { /* A bounded status error is sufficient. */ }
+  if (!response.ok) {
+    const source = typeof result === 'object' && result !== null ? result as Record<string, unknown> : {}
+    const error = typeof source.error === 'object' && source.error !== null ? source.error as Record<string, unknown> : {}
+    const code = typeof error.code === 'string' ? `: ${error.code}` : ''
+    throw new Error(`Не удалось загрузить вложение (${response.status}${code}).`)
+  }
+  return parseDirectMessageAttachments([result])[0]!
+}

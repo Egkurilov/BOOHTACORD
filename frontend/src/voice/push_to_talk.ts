@@ -10,7 +10,7 @@ export interface EventSource {
 }
 
 function interactiveTarget(target: KeyboardEventLike['target']): boolean {
-  return Boolean(target?.closest?.('input, textarea, [contenteditable="true"], [role="dialog"]'))
+  return Boolean(target?.closest?.('input, textarea, select, button, [role="button"], [contenteditable="true"], [role="dialog"]'))
 }
 
 export class PushToTalk {

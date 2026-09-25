@@ -34,7 +34,8 @@ function initial(displayName: string): string {
     >
       <span class="dm-avatar" aria-hidden="true">{{ initial(directMessage.otherParticipantDisplayName) }}</span>
       <span class="channel-name">{{ directMessage.otherParticipantDisplayName }}</span>
-      <span v-if="directMessage.unreadCount" class="channel-state">{{ directMessage.unreadCount }}</span>
+      <span v-if="directMessage.unreadCount" class="channel-state" :aria-label="`Непрочитанных личных сообщений: ${directMessage.unreadCount}`">{{ directMessage.unreadCount }}</span>
+      <span v-if="directMessage.mentionCount" class="channel-state" :aria-label="`Упоминаний в личном диалоге: ${directMessage.mentionCount}`">@{{ directMessage.mentionCount }}</span>
     </button>
   </nav>
 </template>

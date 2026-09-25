@@ -11,7 +11,7 @@ import (
 
 func TestRecorderPublishesAttachmentFilesystemMetrics(t *testing.T) {
 	recorder := New()
-	if err := recorder.RegisterAttachmentFilesystem(fakeAttachmentFilesystem{snapshot: AttachmentFilesystemSnapshot{AvailableBytes: 7, TotalBytes: 11}}); err != nil {
+	if err := recorder.RegisterAttachmentFilesystem(fakeAttachmentFilesystem{snapshot: AttachmentFilesystemSnapshot{AvailableBytes: 7, TotalBytes: 11}, reserved: 25_000_000}); err != nil {
 		t.Fatal(err)
 	}
 	metrics := scrapeMetrics(recorder)
@@ -19,6 +19,7 @@ func TestRecorderPublishesAttachmentFilesystemMetrics(t *testing.T) {
 		"voice_platform_attachment_filesystem_available_bytes 7",
 		"voice_platform_attachment_filesystem_total_bytes 11",
 		"voice_platform_attachment_filesystem_snapshot_success 1",
+		"voice_platform_attachment_upload_reserved_bytes 2.5e+07",
 	} {
 		if !strings.Contains(metrics, line) {
 			t.Fatalf("metrics lack %q: %q", line, metrics)
@@ -31,7 +32,7 @@ func TestRecorderPublishesAttachmentFilesystemMetrics(t *testing.T) {
 
 func TestRecorderReportsAttachmentFilesystemSnapshotFailure(t *testing.T) {
 	recorder := New()
-	if err := recorder.RegisterAttachmentFilesystem(fakeAttachmentFilesystem{err: errors.New("attachment-root unavailable")}); err != nil {
+	if err := recorder.RegisterAttachmentFilesystem(fakeAttachmentFilesystem{err: errors.New("attachment-root unavailable"), reserved: 25_000_000}); err != nil {
 		t.Fatal(err)
 	}
 	metrics := scrapeMetrics(recorder)
@@ -39,6 +40,7 @@ func TestRecorderReportsAttachmentFilesystemSnapshotFailure(t *testing.T) {
 		"voice_platform_attachment_filesystem_available_bytes 0",
 		"voice_platform_attachment_filesystem_total_bytes 0",
 		"voice_platform_attachment_filesystem_snapshot_success 0",
+		"voice_platform_attachment_upload_reserved_bytes 2.5e+07",
 	} {
 		if !strings.Contains(metrics, line) {
 			t.Fatalf("metrics lack %q: %q", line, metrics)
@@ -71,8 +73,11 @@ func scrapeMetrics(recorder *Recorder) string {
 type fakeAttachmentFilesystem struct {
 	err      error
 	snapshot AttachmentFilesystemSnapshot
+	reserved int64
 }
 
 func (filesystem fakeAttachmentFilesystem) Snapshot(context.Context) (AttachmentFilesystemSnapshot, error) {
 	return filesystem.snapshot, filesystem.err
 }
+
+func (filesystem fakeAttachmentFilesystem) ReservedBytes() int64 { return filesystem.reserved }

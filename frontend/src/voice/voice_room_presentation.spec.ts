@@ -50,7 +50,7 @@ describe('voice-room visual status and screen presentation', () => {
     expect(pane).toContain('voiceRoomSummary(voiceVolumeParticipants.length + 1, screenViewerCards.length)')
     expect(pane).toContain('Все в сборе')
     expect(pane).toContain('подключитесь, чтобы увидеть участников')
-    expect(viewer).toContain('Голоса участников остаются слышны')
+    expect(viewer).toContain('participantAudioMessage(deafened)')
     expect(viewer).toContain('К участникам')
     expect(viewer).toContain('<video ref="video" v-show="selectedId"')
     expect(source('../workspace/WorkspaceMembersPanel.vue')).toContain('selfMicrophoneUnavailable')

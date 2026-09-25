@@ -26,6 +26,29 @@ func TestAttachmentFilesystemMetricSourceForwardsStorageError(t *testing.T) {
 	}
 }
 
+func TestAttachmentFilesystemMetricSourceReadsLiveReservations(t *testing.T) {
+	space := &fakeAttachmentSpace{snapshot: reserve.Snapshot{AvailableBytes: 5 * reserve.MinimumFreeBytes, TotalBytes: 10 * reserve.MinimumFreeBytes}}
+	manager, err := reserve.New(space)
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := attachmentFilesystemMetricSource{space: space, manager: manager}
+	if got := source.ReservedBytes(); got != 0 {
+		t.Fatalf("initial reserved bytes = %d", got)
+	}
+	reservation, err := manager.Reserve(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := source.ReservedBytes(); got != reserve.MaxAttachmentBytes {
+		t.Fatalf("active reserved bytes = %d", got)
+	}
+	reservation.Release()
+	if got := source.ReservedBytes(); got != 0 {
+		t.Fatalf("released reserved bytes = %d", got)
+	}
+}
+
 type fakeAttachmentSpace struct {
 	called   bool
 	err      error

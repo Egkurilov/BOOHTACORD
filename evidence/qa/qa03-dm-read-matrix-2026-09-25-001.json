@@ -1,0 +1,33 @@
+{
+  "id": "qa03-dm-read-matrix-2026-09-25-001",
+  "kind": "dm-caller-local-acl-matrix",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "environment": "Ubuntu WSL, Go 1.26.0, PostgreSQL 16.14, isolated migration-backed schema",
+  "checks": [
+    {
+      "name": "history_search_reply",
+      "result": "PASS_LOCAL",
+      "detail": "Both participants read the addressed history and searched a live message; a nonparticipant administrator was denied history, search and reply. Deleted content became a tombstone and disappeared from search. Repeated 10 times."
+    },
+    {
+      "name": "read_cursor_and_counters",
+      "result": "PASS_LOCAL",
+      "detail": "Navigation unread and mention counts were caller-local; the nonparticipant administrator saw no pair and could not create a read cursor. Participant cursor advancement cleared only that caller's counts. Repeated 10 times."
+    },
+    {
+      "name": "backend_suite",
+      "result": "PASS_LOCAL",
+      "detail": "go test -json -count=1 ./... with both PostgreSQL test URL variables: 663 passed, 0 skipped, 0 failed; focused go vet passed."
+    },
+    {
+      "name": "remaining_qa03_matrix",
+      "result": "NOT_RUN",
+      "detail": "Addressed realtime delivery and notification integration, upload boundaries, low-disk admission, traversal and cleanup races remain to be consolidated."
+    }
+  ],
+  "limitations": [
+    "This runs services and repositories against PostgreSQL; browser notification delivery and authenticated middleware are checked separately.",
+    "No DM body, file content or high-cardinality identifier is recorded in evidence."
+  ]
+}

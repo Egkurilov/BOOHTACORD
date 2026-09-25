@@ -1,12 +1,9 @@
 import { apiBaseUrl } from '../config/runtime'
+import { parseMentionIds } from '../conversation/mention_ids'
+import type { TextMessageAttachment } from '../conversation/message_client'
+import { parseDirectMessageAttachments } from './direct_message_attachment_metadata'
 
-export interface DirectMessageListItem {
-  id: string
-  otherParticipantId: string
-  otherParticipantDisplayName: string
-  createdAt: string
-  unreadCount: number
-}
+export { loadDirectMessages, type DirectMessageListItem } from './direct_message_navigation_client'
 
 export interface DirectMessageReplyPreview {
   id: string
@@ -27,6 +24,8 @@ export interface DirectMessageHistoryItem {
   editedAt?: string
   revision: number
   deleted: boolean
+  attachments: TextMessageAttachment[]
+  mentionUserIds: string[]
 }
 
 export interface DirectMessageHistoryPage {
@@ -42,7 +41,6 @@ export interface DirectMessageReadCursor {
 
 export type DirectMessageRequest = (input: string, init: RequestInit) => Promise<Response>
 
-function invalidList(): never { throw new Error('Сервер вернул некорректный список личных сообщений.') }
 function invalidHistory(): never { throw new Error('Сервер вернул некорректную историю личных сообщений.') }
 function record(value: unknown): Record<string, unknown> | null { return typeof value === 'object' && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : null }
 function text(value: unknown): string | null { return typeof value === 'string' ? value : null }
@@ -53,17 +51,6 @@ function date(value: unknown): string { const result = requiredText(value, inval
 function optionalDate(value: unknown): string | undefined { return value === undefined ? undefined : date(value) }
 function deleted(value: unknown): boolean { return typeof value === 'boolean' ? value : invalidHistory() }
 function revision(value: unknown): number { return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : invalidHistory() }
-function unreadCount(value: unknown): number { return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : invalidList() }
-
-function directMessage(value: unknown): DirectMessageListItem {
-  const source = record(value)
-  if (!source) invalidList()
-  return {
-    id: requiredText(source.id, invalidList), otherParticipantId: requiredText(source.other_participant_id, invalidList),
-    otherParticipantDisplayName: requiredText(source.other_participant_display_name, invalidList), createdAt: date(source.created_at),
-    unreadCount: unreadCount(source.unread_count),
-  }
-}
 
 function replyPreview(value: unknown): DirectMessageReplyPreview | undefined {
   if (value === undefined) return undefined
@@ -86,6 +73,7 @@ function historyItem(value: unknown): DirectMessageHistoryItem {
     authorId: requiredText(source.author_id, invalidHistory), clientMessageId: requiredText(source.client_message_id, invalidHistory),
     body: messageBody, replyToId: optionalText(source.reply_to_id), replyPreview: replyPreview(source.reply_preview),
     createdAt: date(source.created_at), editedAt: optionalDate(source.edited_at), revision: revision(source.revision), deleted: messageDeleted,
+    attachments: parseDirectMessageAttachments(source.attachments, messageDeleted), mentionUserIds: parseMentionIds(source.mention_user_ids),
   }
 }
 
@@ -113,15 +101,10 @@ function requestInit(method: 'GET' | 'PUT', body?: unknown): RequestInit {
   }
 }
 
-export async function loadDirectMessages(request: DirectMessageRequest = fetch): Promise<DirectMessageListItem[]> {
-  const source = record(await checked(await request(`${apiBaseUrl}/direct-messages`, requestInit('GET'))))
-  if (!source || !Array.isArray(source.direct_messages)) invalidList()
-  return source.direct_messages.map(directMessage)
-}
-
-export async function loadDirectMessageHistory(directMessageId: string, before: string | undefined, request: DirectMessageRequest = fetch): Promise<DirectMessageHistoryPage> {
+export async function loadDirectMessageHistory(directMessageId: string, before: string | undefined, request: DirectMessageRequest = fetch, at?: string): Promise<DirectMessageHistoryPage> {
   if (!directMessageId) invalidHistory()
-  const query = before ? `?before=${encodeURIComponent(before)}` : ''
+  if (before && at) invalidHistory()
+  const query = at ? `?at=${encodeURIComponent(at)}&limit=20` : before ? `?before=${encodeURIComponent(before)}` : ''
   const source = record(await checked(await request(`${apiBaseUrl}/direct-messages/${encodeURIComponent(directMessageId)}/messages${query}`, requestInit('GET'))))
   if (!source || !Array.isArray(source.messages)) invalidHistory()
   return { messages: source.messages.map(historyItem), nextCursor: optionalText(source.next_cursor) }

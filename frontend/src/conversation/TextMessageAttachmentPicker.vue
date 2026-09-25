@@ -8,6 +8,7 @@ const emit = defineEmits<{ change: [attachments: TextAttachmentUpload[]]; pendin
 const attachments = ref<TextAttachmentUpload[]>([])
 const pending = ref(false)
 const error = ref<string | null>(null)
+let generation = 0
 const numberFormat = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 })
 
 function byteLabel(sizeBytes: number): string {
@@ -17,9 +18,12 @@ function byteLabel(sizeBytes: number): string {
 }
 
 function clear(): void {
+  generation++
   attachments.value = []
   error.value = null
+  pending.value = false
   emit('change', [])
+  emit('pending', false)
 }
 
 async function addFiles(event: Event): Promise<void> {
@@ -34,22 +38,22 @@ async function addFiles(event: Event): Promise<void> {
   }
 
   const targetChannelId = props.channelId
+  const version = generation
   pending.value = true
   emit('pending', true)
   try {
     for (const file of files) {
       const uploaded = await uploadTextAttachment(targetChannelId, file)
-      if (props.channelId !== targetChannelId) {
+      if (version !== generation || props.channelId !== targetChannelId) {
         return
       }
       attachments.value = [...attachments.value, uploaded]
       emit('change', [...attachments.value])
     }
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить вложение.'
+    if (version === generation && props.channelId === targetChannelId) error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить вложение.'
   } finally {
-    pending.value = false
-    emit('pending', false)
+    if (version === generation && props.channelId === targetChannelId) { pending.value = false; emit('pending', false) }
   }
 }
 

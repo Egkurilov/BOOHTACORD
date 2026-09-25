@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
-import { createCategory, createChannel, deleteEmptyCategory } from './admin_topology_client'
+import { createChannel } from './admin_topology_client'
+import AdminCategoryControls from './AdminCategoryControls.vue'
+import AdminChannelRename from './AdminChannelRename.vue'
+import AdminChannelMove from './AdminChannelMove.vue'
+import AdminChannelOrder from './AdminChannelOrder.vue'
+import AdminTextArchive from './AdminTextArchive.vue'
+import AdminVoiceClose from './AdminVoiceClose.vue'
 import type { ChannelKind, TopologyCategory } from './topology_client'
 
 const props = defineProps<{ categories: TopologyCategory[]; revision: number }>()
 const emit = defineEmits<{ changed: [] }>()
 
-const categoryName = ref('')
 const channelName = ref('')
 const channelKind = ref<ChannelKind>('VOICE')
 const selectedCategoryId = ref('')
@@ -15,8 +21,6 @@ const pending = ref(false)
 const error = ref<string | null>(null)
 const status = ref<string | null>(null)
 const selectedCategoryExists = computed(() => props.categories.some((category) => category.id === selectedCategoryId.value))
-const selectedCategory = computed(() => props.categories.find((category) => category.id === selectedCategoryId.value))
-const selectedCategoryEmpty = computed(() => selectedCategory.value?.channels.length === 0)
 
 watch(() => props.categories, (categories) => {
   if (!categories.some((category) => category.id === selectedCategoryId.value)) {
@@ -29,35 +33,14 @@ function resetFeedback(): void {
   status.value = null
 }
 
-async function submitCategory(): Promise<void> {
-  resetFeedback()
-  if (!categoryName.value.trim()) {
-    error.value = 'Введите имя категории.'
-    return
-  }
-
-  pending.value = true
-  try {
-    const category = await createCategory({ name: categoryName.value })
-    categoryName.value = ''
-    selectedCategoryId.value = category.id
-    status.value = 'Категория создана. Топология обновляется.'
-    emit('changed')
-  } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Не удалось создать категорию.'
-  } finally {
-    pending.value = false
-  }
-}
-
 async function submitChannel(): Promise<void> {
   resetFeedback()
   if (!selectedCategoryExists.value) {
     error.value = 'Сначала выберите категорию.'
     return
   }
-  if (!channelName.value.trim()) {
-    error.value = 'Введите имя канала.'
+  if (!channelName.value.trim() || !validCodePointLength(channelName.value, 1, 80)) {
+    error.value = 'Введите имя канала до 80 символов.'
     return
   }
 
@@ -74,31 +57,13 @@ async function submitChannel(): Promise<void> {
   }
 }
 
-async function removeSelectedCategory(): Promise<void> {
-  resetFeedback()
-  if (!selectedCategory.value || !selectedCategoryEmpty.value || !window.confirm(`Удалить пустую категорию «${selectedCategory.value.name}»?`)) return
-  pending.value = true
-  try {
-    await deleteEmptyCategory(selectedCategory.value.id, props.revision)
-    status.value = 'Пустая категория удалена. Топология обновляется.'
-    emit('changed')
-  } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Не удалось удалить категорию.'
-  } finally { pending.value = false }
-}
 </script>
 
 <template>
   <section class="admin-topology-controls" aria-labelledby="admin-topology-title">
     <h2 id="admin-topology-title">Управление каналами</h2>
-    <form class="admin-topology-form" @submit.prevent="submitCategory">
-      <label>
-        Новая категория
-        <input v-model="categoryName" :disabled="pending" maxlength="80" name="category-name" required>
-      </label>
-      <button type="submit" :disabled="pending">Создать категорию</button>
-    </form>
-    <form class="admin-topology-form" @submit.prevent="submitChannel">
+    <AdminCategoryControls :categories="props.categories" :revision="props.revision" :selected-category-id="selectedCategoryId" @update:selected-category-id="selectedCategoryId = $event" @changed="emit('changed')" />
+    <form class="admin-topology-form admin-topology-form--channel" @submit.prevent="submitChannel">
       <label>
         Категория
         <select v-model="selectedCategoryId" :disabled="pending || props.categories.length === 0" name="channel-category">
@@ -107,7 +72,7 @@ async function removeSelectedCategory(): Promise<void> {
       </label>
       <label>
         Новый канал
-        <input v-model="channelName" :disabled="pending || !selectedCategoryExists" maxlength="80" name="channel-name" required>
+        <input v-model="channelName" :disabled="pending || !selectedCategoryExists" name="channel-name" required :aria-describedby="error ? 'admin-topology-error' : undefined">
       </label>
       <label>
         Тип канала
@@ -118,8 +83,12 @@ async function removeSelectedCategory(): Promise<void> {
       </label>
       <button type="submit" :disabled="pending || !selectedCategoryExists">Создать канал</button>
     </form>
-    <button type="button" :disabled="pending || !selectedCategoryEmpty" @click="removeSelectedCategory">Удалить пустую категорию</button>
+    <AdminChannelRename :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
+    <AdminChannelMove :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
+    <AdminChannelOrder :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
+    <AdminTextArchive :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
+    <AdminVoiceClose :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
     <p v-if="status" class="admin-topology-status" aria-live="polite">{{ status }}</p>
-    <p v-if="error" class="admin-topology-error" role="alert">{{ error }}</p>
+    <p v-if="error" id="admin-topology-error" class="admin-topology-error" role="alert">{{ error }}</p>
   </section>
 </template>

@@ -11,71 +11,13 @@ permissions:
 
 jobs:
   contracts:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Verify API and requirement traceability
-        shell: pwsh
-        run: |
-          ./scripts/verify-contracts.ps1
-          ./scripts/verify-spec-traceability.ps1
-      - name: Validate Compose interpolation without starting services
-        run: docker compose --env-file .env.example -f compose.yaml config --quiet
-      - name: Reject implicit or latest Compose images
-        shell: pwsh
-        run: ./scripts/verify-compose-images.ps1
-      - name: Test proxy network deployment guard
-        run: bash scripts/deploy-images.test.sh
+    uses: ./.github/workflows/ci-contracts.yml
 
   backend:
-    runs-on: ubuntu-24.04
-    services:
-      postgres:
-        image: postgres:17.6-alpine
-        env:
-          POSTGRES_DB: voice_platform_test
-          POSTGRES_USER: voice_platform_test
-          POSTGRES_PASSWORD: test-only-password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U voice_platform_test -d voice_platform_test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    env:
-      VOICE_PLATFORM_TEST_DATABASE_URL: postgres://voice_platform_test:test-only-password@127.0.0.1:5432/voice_platform_test?sslmode=disable
-      TEST_DATABASE_URL: postgres://voice_platform_test:test-only-password@127.0.0.1:5432/voice_platform_test?sslmode=disable
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
-      - name: Test, vet and build Go API
-        working-directory: backend
-        run: |
-          go test ./...
-          go vet ./...
-          go build -o /tmp/voice-platform-api ./cmd/api
+    uses: ./.github/workflows/ci-backend.yml
 
   frontend:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - name: Install locked dependencies
-        working-directory: frontend
-        run: npm ci
-      - name: Test and build Vue client
-        working-directory: frontend
-        run: |
-          npm test
-          npm run build
+    uses: ./.github/workflows/ci-frontend.yml
 
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -102,6 +44,7 @@ jobs:
           context: ./backend
           push: true
           sbom: true
+          provenance: mode=max
           tags: ghcr.io/${{ github.repository_owner }}/voice-platform-api:${{ github.sha }}
       - name: Build and push web image
         id: web-image
@@ -110,6 +53,7 @@ jobs:
           context: ./frontend
           push: true
           sbom: true
+          provenance: mode=max
           tags: ghcr.io/${{ github.repository_owner }}/voice-platform-web:${{ github.sha }}
       - name: Publish digest-qualified release references
         id: image-refs

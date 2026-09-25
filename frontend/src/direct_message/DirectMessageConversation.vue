@@ -1,20 +1,30 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { loadCurrentSession, type CurrentSession } from '../identity/current_session'
+import { useAuthorDirectory } from '../identity/author_directory'
+import MentionPicker from '../conversation/MentionPicker.vue'
+import type { TextMessageAttachment } from '../conversation/message_client'
+import DirectMessageAttachmentPicker from './DirectMessageAttachmentPicker.vue'
 import DirectMessageHistoryList from './DirectMessageHistoryList.vue'
 import DirectMessageSearch from './DirectMessageSearch.vue'
 import type { DirectMessageHistoryItem } from './direct_message_client'
-import { advanceReadIfVisible } from './direct_message_read_gate'
+import { advanceReadIfVisible, newestServerMessageId } from './direct_message_read_gate'
 import { useDirectMessageStore } from './direct_message_store'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
+import { useComposerScope } from '../conversation/composer_scope'
+import SearchMessageContext from '../search/SearchMessageContext.vue'
+import { useSearchTargetStore } from '../search/search_target_store'
 
-const props = defineProps<{ directMessageId: string; otherParticipantDisplayName: string; navOpen: boolean }>()
+const props = defineProps<{ directMessageId: string; otherParticipantId: string; otherParticipantDisplayName: string; navOpen: boolean }>()
 const emit = defineEmits<{ toggleNav: [] }>()
 const store = useDirectMessageStore()
-const draft = ref('')
+const searchTarget = useSearchTargetStore()
+const contextTarget = computed(() => searchTarget.target?.kind === 'DIRECT_MESSAGE' && searchTarget.target.conversationId === props.directMessageId ? searchTarget.target : null)
+const authors = useAuthorDirectory()
 const session = ref<CurrentSession | null>(null)
-const replyTarget = ref<DirectMessageHistoryItem | null>(null)
+const composer = useComposerScope<DirectMessageHistoryItem, TextMessageAttachment>()
+const { draft, replyTarget, mentionUserIds, attachments, attachmentPending, attachmentClearToken } = composer
 const searchOpen = ref(false)
 const emojiOpen = ref(false)
 const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
@@ -24,7 +34,7 @@ async function markVisibleRead(): Promise<void> {
     const advanced = await advanceReadIfVisible({
       activeDirectMessageId: store.directMessageId,
       renderedDirectMessageId: props.directMessageId,
-      newestDisplayedMessageId: store.messages.at(0)?.id,
+      newestDisplayedMessageId: newestServerMessageId(store.messages),
       visibilityState: document.visibilityState,
     })
     if (advanced) void store.refreshNavigation()
@@ -36,10 +46,17 @@ async function markVisibleRead(): Promise<void> {
 function queueVisibleRead(): void { void markVisibleRead() }
 
 async function send(): Promise<void> {
-  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id)) {
-    draft.value = ''
-    replyTarget.value = null
-  }
+  if (attachmentPending.value || store.directMessageId !== props.directMessageId) return
+  const target = store.directMessageId
+  const saved = composer.snapshot(target)
+  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id, session.value?.accountId, mentionUserIds.value, attachments.value)
+    && composer.unchanged(saved, props.directMessageId) && store.directMessageId === target) composer.clear()
+}
+
+async function retry(message: DirectMessageHistoryItem): Promise<void> {
+  const saved = composer.snapshot(props.directMessageId)
+  if (await store.retry(message.clientMessageId) && store.directMessageId === message.directMessageId
+    && composer.unchanged(saved, props.directMessageId) && composer.matchesMessage(message)) composer.clear()
 }
 
 async function loadSession(): Promise<void> {
@@ -49,12 +66,13 @@ async function loadSession(): Promise<void> {
 function addEmoji(emoji: string): void { draft.value += emoji }
 
 watch([() => props.directMessageId, () => store.directMessageId, () => store.messages], queueVisibleRead, { flush: 'post' })
+watch(() => props.directMessageId, () => composer.reset())
 onMounted(() => {
   document.addEventListener('visibilitychange', queueVisibleRead)
   void loadSession()
   queueVisibleRead()
 })
-onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisibleRead))
+onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVisibleRead); searchTarget.clearFor('DIRECT_MESSAGE', props.directMessageId) })
 </script>
 
 <template>
@@ -69,18 +87,21 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', queueVisi
     </header>
     <div v-if="searchOpen" class="conversation-tools"><DirectMessageSearch :direct-message-id="props.directMessageId" /></div>
     <p v-if="store.loadingHistory" class="state" aria-live="polite">Загружаем историю…</p>
-    <p v-if="store.error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refreshHistory()">Повторить загрузку</button></p>
-    <DirectMessageHistoryList :direct-message-id="props.directMessageId" :session="session" @reply="replyTarget = $event" />
+    <p v-if="store.error" id="direct-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refreshHistory()">Повторить загрузку</button></p>
+    <SearchMessageContext v-if="contextTarget" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
+    <DirectMessageHistoryList :direct-message-id="props.directMessageId" :session="session" :other-participant-id="props.otherParticipantId" :other-participant-display-name="props.otherParticipantDisplayName" @reply="replyTarget = $event" @retry="retry" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
-        <p v-if="replyTarget" class="reply-target">Ответ для {{ replyTarget.authorId }} <button type="button" @click="replyTarget = null">Отмена</button></p>
+        <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
+        <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" />
+        <DirectMessageAttachmentPicker :direct-message-id="props.directMessageId" :disabled="store.sending || attachmentPending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" />
         <label class="gc-sr-only" for="direct-message-body">Сообщение</label>
-        <textarea id="direct-message-body" v-model="draft" maxlength="8000" :disabled="store.sending" placeholder="Написать сообщение…" />
+        <textarea id="direct-message-body" v-model="draft" :disabled="store.sending" :aria-describedby="store.error ? 'direct-conversation-error' : undefined" placeholder="Написать сообщение…" />
         <span class="emoji-picker">
           <button class="emoji-trigger" type="button" aria-label="Добавить emoji" :aria-expanded="emojiOpen" @click="emojiOpen = !emojiOpen">☺</button>
           <span v-if="emojiOpen" class="emoji-menu" aria-label="Выбор emoji"><button v-for="emoji in emojis" :key="emoji" type="button" :aria-label="`Добавить ${emoji}`" @click="addEmoji(emoji); emojiOpen = false">{{ emoji }}</button></span>
         </span>
-        <button class="composer-send" type="submit" :aria-label="store.sending ? 'Отправляем сообщение' : 'Отправить сообщение'" :disabled="store.sending || !draft"><span v-if="store.sending">…</span><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z" /><path d="m11 13 4-4" /></svg></button>
+        <button class="composer-send" type="submit" :aria-label="store.sending ? 'Отправляем сообщение' : 'Отправить сообщение'" :disabled="store.sending || attachmentPending || !draft"><span v-if="store.sending">…</span><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z" /><path d="m11 13 4-4" /></svg></button>
       </form>
     </div>
   </section>

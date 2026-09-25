@@ -1,0 +1,41 @@
+{
+  "id": "des02-browser-2026-09-25-001",
+  "tasks": ["DES-02", "DES-06"],
+  "kind": "isolated-shared-message-row-browser-review",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T10:00:09Z",
+  "source_commit": "3678f72c86ee81c8975b38859e87c6dad492db52",
+  "environment": "Chrome on local Vite dev server; temporary Vue fixture rendering the production MessageItem component and conversation.css with 60 synthetic messages; fixture files removed after the run",
+  "checks": [
+    {
+      "name": "responsive_message_rows",
+      "result": "PASS_LOCAL",
+      "detail": "At 1440, 1280, 1024, 768, 375 and 320 CSS px, document and all 60 message rows had no horizontal overflow, no action or attachment link exceeded its row, composer stayed in viewport, and history scrolled independently."
+    },
+    {
+      "name": "long_content",
+      "result": "PASS_LOCAL",
+      "detail": "Long Cyrillic author name truncated before visible time, long URL and TEXT/DM attachment filenames wrapped; action buttons wrapped within the message row at 320 CSS px."
+    },
+    {
+      "name": "edit_conflict_and_keyboard",
+      "result": "PASS_LOCAL",
+      "detail": "Tab from Reply reached Edit with visible focus; synthetic edit conflict showed alert and Refresh version, preserved the draft, and displayed a review notice after refresh."
+    },
+    {
+      "name": "reply_retry_mention_presentation",
+      "result": "PASS_LOCAL",
+      "detail": "Reply target remained inside the narrow composer; local retry presentation returned to message actions; mention was labelled with the resolved member name. No network retry was exercised."
+    },
+    {
+      "name": "browser_zoom",
+      "result": "NOT_RUN",
+      "detail": "A Ctrl+plus browser action did not change CSS viewport width or devicePixelRatio in this automation environment; explicit 125%/150% zoom remains unverified."
+    }
+  ],
+  "remaining": [
+    "Repeat on the full authenticated candidate workspace, not only the isolated shared row",
+    "Exercise actual TEXT/DM history pagination, upload progress/error, unread counters and network retry with PostgreSQL and attachment storage",
+    "Complete screen-reader and full keyboard acceptance, real 125%/150% browser zoom, and stored screenshot comparison"
+  ]
+}

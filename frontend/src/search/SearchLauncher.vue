@@ -1,19 +1,27 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { shouldOpenSearchShortcut } from './search_shortcut'
+import { searchReturnFocusTarget } from './search_return_focus'
 
 const props = defineProps<{ active: boolean }>()
 const emit = defineEmits<{ open: []; close: [] }>()
 const trigger = ref<HTMLButtonElement | null>(null)
+let returnFocus: HTMLElement | null = null
+function openSearch(): void { returnFocus = document.activeElement as HTMLElement | null; emit('open') }
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && props.active) { emit('close'); return }
-  if (shouldOpenSearchShortcut(event)) { event.preventDefault(); emit('open') }
+  if (shouldOpenSearchShortcut(event)) { event.preventDefault(); openSearch() }
 }
-watch(() => props.active, (active, wasActive) => { if (wasActive && !active) void nextTick(() => trigger.value?.focus()) })
+watch(() => props.active, (active, wasActive) => {
+  if (wasActive && !active) void nextTick(() => {
+    searchReturnFocusTarget(returnFocus, trigger.value, document.body, document.documentElement)?.focus()
+    returnFocus = null
+  })
+})
 onMounted(() => window.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <button ref="trigger" class="guild-search-button" type="button" :aria-expanded="active" aria-controls="search-aside-panel" aria-keyshortcuts="Control+K Meta+K" @click="active ? emit('close') : emit('open')"><span aria-hidden="true">⌕</span><span>Поиск сообщений</span><kbd>Ctrl K</kbd></button>
+  <button ref="trigger" class="guild-search-button" type="button" :aria-expanded="active" aria-controls="search-aside-panel" aria-keyshortcuts="Control+K Meta+K" @click="active ? emit('close') : openSearch()"><span aria-hidden="true">⌕</span><span>Поиск сообщений</span><kbd>Ctrl K</kbd></button>
 </template>

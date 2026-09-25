@@ -1,0 +1,52 @@
+{
+  "id": "des03-confirmations-browser-2026-09-25-001",
+  "tasks": ["DES-03", "DES-05", "QA-05"],
+  "kind": "isolated-built-candidate-admin-confirmation-browser",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T09:40:59Z",
+  "candidate_base_commit": "0bce5d4f26124b48ac5b0f64ebb84c87260fff41",
+  "bundle": {
+    "entry_js_sha256": "e847796482474fe9f71e70154f53769813c4d7f66fd9b9cc5f64f85e8f7fbfad",
+    "entry_css_sha256": "cdc722811f699bd95f0e91440dd595e1fbb0fa9e22222a54c80eae8b673e9b24"
+  },
+  "environment": "Chrome, 883x447 CSS px; locally built Vue client, Go API and isolated PostgreSQL 16.14 schema on WSL loopback; synthetic administrator and channels; no LiveKit service",
+  "validation": "Frontend Vitest: 161 files and 471 tests PASS; vue-tsc and Vite build PASS",
+  "trusted_branch_ci": {
+    "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1644365",
+    "source_commit": "f1eb645d6a963f617090117a61118153b6652e54",
+    "result": "Mandatory PostgreSQL backend, frontend and release_guard jobs succeeded; deploy ran no release steps on the codex branch",
+    "scope": "Branch validation only; no trusted production deployment"
+  },
+  "checks": [
+    {
+      "name": "text_archive_cancel_escape",
+      "result": "PASS_LOCAL",
+      "detail": "Modal dialog exposed title, consequence copy and Cancel as initial focus; Escape returned focus to the archive button. PostgreSQL showed archived_at unset."
+    },
+    {
+      "name": "text_archive_accept",
+      "result": "PASS_LOCAL",
+      "detail": "Accepting the dialog archived the synthetic TEXT channel, removed it from the topology controls, focused the success status and PostgreSQL showed archived_at set."
+    },
+    {
+      "name": "voice_close_cancel",
+      "result": "PASS_LOCAL",
+      "detail": "Cancel returned focus to the close button and PostgreSQL showed admission_closed_at unset."
+    },
+    {
+      "name": "voice_close_accept",
+      "result": "PASS_LOCAL",
+      "detail": "Accepting the dialog disabled the close action, showed pending SFU revocation and PostgreSQL showed admission_closed_at set. Final removal was not claimed without LiveKit."
+    },
+    {
+      "name": "fixture_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "Isolated schema and attachment directory were removed; loopback API and proxy listeners stopped."
+    }
+  ],
+  "remaining": [
+    "Full administrator keyboard and screen-reader traversal, other administrator states, and visual parity remain open",
+    "Connected-media VOICE finalization requires LiveKit integration evidence",
+    "This local working-tree bundle is not a trusted release bundle or production deployment"
+  ]
+}

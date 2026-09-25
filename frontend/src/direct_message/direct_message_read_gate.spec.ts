@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { advanceReadIfVisible } from './direct_message_read_gate'
+import { advanceReadIfVisible, newestServerMessageId } from './direct_message_read_gate'
 
 describe('direct-message read gate', () => {
+  it('ignores optimistic rows when choosing the read cursor', () => {
+    expect(newestServerMessageId([{ id: 'optimistic:a', sendStatus: 'sending' }, { id: 'server-b' }])).toBe('server-b')
+    expect(newestServerMessageId([{ id: 'optimistic:a', sendStatus: 'failed' }])).toBeUndefined()
+  })
   it('does not call the mutation for a hidden, unselected or empty conversation', async () => {
     const advance = vi.fn()
 

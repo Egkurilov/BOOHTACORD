@@ -1,0 +1,28 @@
+{
+  "id": "qa02-session-revalidation-2026-09-25-001",
+  "kind": "session-role-refresh-and-websocket-revocation",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "environment": "Ubuntu WSL, Go 1.26.0, PostgreSQL 16.14, isolated migration-backed schema per test, local httptest WebSocket server",
+  "checks": [
+    {
+      "name": "role_refresh",
+      "result": "PASS_LOCAL",
+      "detail": "An existing session returned MEMBER, then ADMINISTRATOR, then MEMBER after production administrator updates without re-login; blocking revoked the persisted session and rejected subsequent authentication. Twenty repeated PostgreSQL runs passed."
+    },
+    {
+      "name": "websocket_revalidation",
+      "result": "PASS_LOCAL",
+      "detail": "A real session cookie opened a WebSocket through production authentication middleware. After production administrator blocking, periodic database-backed revalidation closed the live socket with policy-violation status; a reconnect returned HTTP 401. Twenty repeated PostgreSQL runs passed."
+    },
+    {
+      "name": "backend_suite",
+      "result": "PASS_LOCAL",
+      "detail": "go test -json -count=1 ./... with both PostgreSQL test URL variables: 672 passed, 0 skipped, 0 failed."
+    }
+  ],
+  "limitations": [
+    "The WebSocket test uses an accelerated 10 ms revalidation interval and an httptest server; production deployment and browser behavior are separate checks.",
+    "QA-02 still needs end-to-end password-reset flow and topology/voice race evidence."
+  ]
+}

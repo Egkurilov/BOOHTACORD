@@ -18,6 +18,7 @@ const error = ref<string | null>(null)
 const session = ref<CurrentSession | null>(null)
 const maintenanceActive = ref(false)
 const resetRoute = ref(false)
+const focusLoginOnReturn = ref(false)
 let resetToken: string | null = null
 if (typeof window !== 'undefined') {
   const reset = consumePasswordResetFragment(window.location, window.history)
@@ -62,6 +63,7 @@ async function finishPasswordReset(password: string): Promise<void> {
 function returnToLogin(): void {
   resetToken = null
   resetRoute.value = false
+  focusLoginOnReturn.value = true
   sessionRevision++
   session.value = null
   clearAuthenticatedState()
@@ -97,6 +99,6 @@ onUnmounted(() => {
     <p>{{ error }}</p>
     <button type="button" @click="refreshSession">Повторить</button>
   </main>
-  <AuthenticationLanding v-else-if="state === 'guest'" @authenticated="refreshSession" />
+  <AuthenticationLanding v-else-if="state === 'guest'" :focus-login-on-mount="focusLoginOnReturn" @authenticated="refreshSession" />
   <WorkspaceApp v-else-if="session" :key="session.accountId" :role="session.role" :account-id="session.accountId" @session-expired="refreshSession" @logged-out="finishLogout" />
 </template>

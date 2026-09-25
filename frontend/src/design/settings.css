@@ -21,7 +21,15 @@
 .workspace-main-panel--audio .audio-settings fieldset { display: grid; gap: var(--gc-space-3); border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-md); padding: var(--gc-space-4); }
 .workspace-main-panel--audio .audio-settings legend { padding: 0 var(--gc-space-2); color: var(--gc-text-secondary); font-size: var(--gc-text-small); }
 .admin-topology-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: var(--gc-space-4); border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-md); padding: var(--gc-space-4); background: var(--gc-surface); }
-.admin-topology-form:nth-of-type(2) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.admin-topology-form--rename { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.admin-topology-form--channel { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.admin-category-controls { display: grid; gap: var(--gc-space-4); }
+.admin-category-order { display: flex; flex-wrap: wrap; gap: var(--gc-space-2); }
+.admin-category-order button, .admin-category-controls > button { min-height: var(--gc-size-control); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-4); color: var(--gc-text-primary); background: var(--gc-surface); }
+.admin-category-controls > button { justify-self: start; }
+.admin-category-order button:disabled, .admin-category-controls > button:disabled { cursor: not-allowed; opacity: .55; }
+.admin-topology-kind, .admin-topology-form--rename > .admin-topology-status, .admin-topology-form--rename > .admin-topology-error { grid-column: 1 / -1; margin: 0; }
+.admin-channel-order .admin-category-order { align-self: end; }
 .admin-topology-form label { display: grid; min-width: 0; gap: var(--gc-space-2); color: var(--gc-text-secondary); }
 .admin-topology-form button { min-height: var(--gc-size-control); border: 0; border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-4); color: var(--gc-on-accent); background: var(--gc-accent); font-weight: var(--gc-weight-medium); }
 .admin-topology-form button:disabled { cursor: not-allowed; opacity: .55; }
@@ -29,8 +37,17 @@
 .admin-topology-status { color: var(--gc-success); }
 .admin-row-actions { display: flex; align-items: center; gap: var(--gc-space-2); }.admin-row-actions button { white-space: nowrap; }.admin-reset-result { display: grid; max-width: 680px; gap: var(--gc-space-3); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-md); padding: var(--gc-space-5); background: var(--gc-surface-raised); }.admin-reset-result header { display: flex; justify-content: space-between; gap: var(--gc-space-3); }.admin-reset-result h3 { margin: 0; font-size: var(--gc-text-section); }.admin-reset-result p { margin: 0; color: var(--gc-text-secondary); }.admin-reset-result input { width: 100%; min-height: var(--gc-size-control); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: var(--gc-space-2); color: var(--gc-text-primary); background: var(--gc-input); }.admin-reset-result button { justify-self: start; min-height: var(--gc-size-control); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-4); color: var(--gc-text-primary); background: var(--gc-surface); }
 .admin-topology-error { color: var(--gc-danger); }
+.admin-confirm-dialog { width: min(440px, calc(100vw - 32px)); max-width: none; border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-md); padding: var(--gc-space-6); color: var(--gc-text-primary); background: var(--gc-surface-raised); box-shadow: 0 20px 60px rgb(0 0 0 / .35); }
+.admin-confirm-dialog::backdrop { background: rgb(0 0 0 / .58); }
+.admin-confirm-dialog h3 { margin: 0 0 var(--gc-space-3); font-size: var(--gc-text-section); }
+.admin-confirm-dialog p { margin: 0; color: var(--gc-text-secondary); line-height: 1.5; }
+.admin-confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--gc-space-3); margin-top: var(--gc-space-6); }
+.admin-confirm-dialog .admin-confirm-actions button { min-height: var(--gc-size-control); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-4); cursor: pointer; }
+.admin-confirm-dialog .admin-confirm-actions button:first-child { border: 1px solid var(--gc-border-control); color: var(--gc-text-primary); background: var(--gc-surface); }
+.admin-confirm-dialog .admin-confirm-actions button:focus-visible { outline: 2px solid var(--gc-accent); outline-offset: 2px; }
 @media (max-width: 720px) {
   .workspace-main-panel { padding: var(--gc-space-4); }
   .admin-topology-form,
-  .admin-topology-form:nth-of-type(2) { grid-template-columns: minmax(0, 1fr); }
+  .admin-topology-form--rename,
+  .admin-topology-form--channel { grid-template-columns: minmax(0, 1fr); }
 }

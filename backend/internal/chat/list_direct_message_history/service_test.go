@@ -23,6 +23,8 @@ func TestListRejectsInvalidCallerCursorAndLimitBeforePersistence(t *testing.T) {
 	for _, input := range []Input{
 		{ActorID: "not-a-uuid", DirectMessageID: historyDirectMessageID, Limit: 10},
 		{ActorID: historyActorID, DirectMessageID: historyDirectMessageID, Before: "not-a-uuid", Limit: 10},
+		{ActorID: historyActorID, DirectMessageID: historyDirectMessageID, At: "not-a-uuid", Limit: 10},
+		{ActorID: historyActorID, DirectMessageID: historyDirectMessageID, Before: historyActorID, At: historyActorID, Limit: 10},
 		{ActorID: historyActorID, DirectMessageID: historyDirectMessageID, Limit: 101},
 	} {
 		store := &fakeStore{}
@@ -30,6 +32,14 @@ func TestListRejectsInvalidCallerCursorAndLimitBeforePersistence(t *testing.T) {
 		if !errors.Is(err, ErrInvalidInput) || store.called {
 			t.Fatalf("input=%#v error=%v called=%v", input, err, store.called)
 		}
+	}
+}
+
+func TestListForwardsAddressedContextAnchor(t *testing.T) {
+	store := &fakeStore{messages: []Message{{ID: historyActorID}}}
+	result, err := New(store).List(context.Background(), Input{ActorID: historyActorID, DirectMessageID: historyDirectMessageID, At: historyActorID, Limit: 20})
+	if err != nil || store.request.At != historyActorID || store.request.Before != "" || len(result.Messages) != 1 {
+		t.Fatalf("result = %#v, request = %#v, error = %v", result, store.request, err)
 	}
 }
 

@@ -8,7 +8,7 @@ const emit = defineEmits<{ close: []; openDM: [userID: string]; setVolume: [volu
 const member = ref<GuildMember | null>(null); const loading = ref(true); const error = ref<string | null>(null); const status = ref<string | null>(null)
 const panel = ref<HTMLElement | null>(null)
 async function load(): Promise<void> { try { member.value = await loadMember(props.memberID) } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить профиль участника.' } finally { loading.value = false } }
-function escape(event: KeyboardEvent): void { if (event.key === 'Escape') emit('close') }
+function escape(event: KeyboardEvent): void { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); emit('close') } }
 async function kick(): Promise<void> {
   if (!window.confirm('Отключить участника от голосового канала?')) return
   try { const result = await kickVoiceParticipant(props.memberID); status.value = result.revoked_leases ? 'Подключение отозвано.' : 'Активное голосовое подключение не найдено.' }

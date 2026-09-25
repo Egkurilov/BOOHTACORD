@@ -1,0 +1,36 @@
+{
+  "id": "qa01-qa04-trusted-gitverse-ci-2026-09-25-001",
+  "kind": "trusted-ci-verification",
+  "status": "PASS",
+  "observed_at": "2026-09-25T07:49:03Z",
+  "run": {
+    "id": 1643330,
+    "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1643330",
+    "workflow": ".gitverse/workflows/deploy-production.yaml",
+    "trigger": "push",
+    "branch": "codex/voice-platform-foundation",
+    "commit": "83d6bdd2c756d174d2d6668543bbc5b7f4a349b4",
+    "status": "success",
+    "started_at": "2026-09-25T07:43:02Z",
+    "stopped_at": "2026-09-25T07:48:17Z",
+    "runner": "GitVerse global/cloud runner 6.0.1"
+  },
+  "jobs": {
+    "backend": "success",
+    "frontend": "success",
+    "release_guard": "success",
+    "deploy": "skipped on non-master branch"
+  },
+  "qa01": {
+    "result": "PASS",
+    "basis": "The backend job started mandatory PostgreSQL, ran go test -json -count=1 ./..., verified the JSON stream with scripts/verify-go-test-events.py, then ran go vet ./.... The validator exits nonzero on any skipped test, failed test or failed package; the job succeeded. Earlier local evidence covers the exact TEXT idempotency and cross-channel cases."
+  },
+  "qa04": {
+    "result": "PASS",
+    "basis": "The same backend job ran migration-backed search/GIN tests on PostgreSQL with the no-skip gate. The release_guard job passed contracts, traceability, Compose, image and deploy guard checks. The deploy job depends on backend, frontend and release_guard and was skipped on this non-master push. Earlier local evidence covers empty/existing schema and cursor cases."
+  },
+  "limitations": [
+    "The public run page exposes job and step outcomes but this record does not claim an exact CI test count.",
+    "This branch run did not deploy a release candidate to production and does not close QA-05, QA-08, QA-11 or QA-12."
+  ]
+}

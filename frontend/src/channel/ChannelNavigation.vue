@@ -35,6 +35,8 @@ function initial(name: string): string { return Array.from(name.trim())[0]?.toLo
             <svg v-else viewBox="0 0 24 24"><path d="M8 10v4a4 4 0 0 0 8 0v-4M12 18v3M8 21h8M12 3a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" /></svg>
           </span>
           <span class="channel-name">{{ channel.name }}</span>
+          <span v-if="channel.kind === 'TEXT' && channel.unreadCount" class="channel-state" :aria-label="`Непрочитанных сообщений: ${channel.unreadCount}`">{{ channel.unreadCount }}</span>
+          <span v-if="channel.kind === 'TEXT' && channel.mentionCount" class="channel-state" :aria-label="`Упоминаний: ${channel.mentionCount}`">@{{ channel.mentionCount }}</span>
           <span v-if="props.voicePresence && props.voicePresence.channelId === channel.id" class="channel-member-count" :title="`Участников в голосовом канале: ${props.voicePresence.memberCount}`">{{ props.voicePresence.memberCount }}</span>
           <span v-if="channel.admissionClosed" class="channel-state">Вход закрыт</span>
         </button>

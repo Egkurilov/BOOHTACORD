@@ -1,0 +1,45 @@
+{
+  "id": "qa05-local-browser-2026-09-25-001",
+  "kind": "authenticated-browser-smoke",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "source_commit": "06a5517",
+  "environment": "Local Vite development server, Go API, PostgreSQL 16.14 isolated qa05_browser schema, temporary private attachment directory; synthetic accounts in independent in-app browser and Chrome sessions",
+  "checks": [
+    {
+      "name": "auth_and_topology",
+      "result": "PASS_LOCAL",
+      "detail": "Login, logout and logged-out reload; administrator created a category and TEXT channel; member could read the channel and its unread count cleared on open."
+    },
+    {
+      "name": "text_and_dm",
+      "result": "PASS_LOCAL",
+      "detail": "TEXT send/history; two-person DM create, send, edit, reply and search. Recipient saw create and edit without reload after WebSocket connection and presence showed both sessions online."
+    },
+    {
+      "name": "keyboard_focus",
+      "result": "PASS_LOCAL",
+      "detail": "At 1024 CSS px the members drawer exposed modal semantics, trapped Shift+Tab, closed with Escape and returned focus to its opener. Ctrl+K ignored the TEXT composer; outside it search focused its query and Escape returned focus to the search trigger after the fix in 06a5517."
+    },
+    {
+      "name": "responsive_text_view",
+      "result": "PASS_LOCAL",
+      "detail": "TEXT view inspected at 1440, 1280 and 1024 CSS px; measured document width did not exceed viewport at these widths."
+    },
+    {
+      "name": "frontend_validation",
+      "result": "PASS_LOCAL",
+      "detail": "Vitest: 158 files, 463 tests passed; vue-tsc and Vite production build passed."
+    },
+    {
+      "name": "full_candidate_acceptance",
+      "result": "NOT_RUN",
+      "detail": "A pinned production bundle, reset completion, browser upload, nonparticipant HTTP ACL, zoom 125/150%, screen-reader pass, voice/media/reconnect and stored screenshot comparison remain to be checked."
+    }
+  ],
+  "limitations": [
+    "The browser used a local development server and synthetic data, so this evidence cannot close the fixed-candidate release gate.",
+    "Screenshots were inspected during the run but not stored as a comparison artifact; DES-08 remains open.",
+    "No pinned LiveKit service or physical media devices were present."
+  ]
+}

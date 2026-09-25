@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { changeOwnPassword, deleteAvatar, loadOwnProfile, saveOwnProfile, uploadAvatar, type OwnProfile } from './profile_client'
+import NotificationSettings from '../notification/NotificationSettings.vue'
 
 const props = defineProps<{ profile: OwnProfile | null; loading: boolean; loadError: string | null; logoutBusy?: boolean; logoutError?: string | null }>()
 const emit = defineEmits<{ saved: [profile: OwnProfile]; logout: [] }>()
@@ -10,7 +12,7 @@ watch(() => props.profile, (profile) => { displayName.value = profile?.display_n
 function fail(cause: unknown, fallback: string): void { error.value = cause instanceof Error ? cause.message : fallback; status.value = null }
 async function saveName(): Promise<void> {
   error.value = null; status.value = null
-  if (Array.from(displayName.value).length < 1 || Array.from(displayName.value).length > 64) { error.value = 'Имя должно содержать от 1 до 64 символов.'; return }
+  if (!validCodePointLength(displayName.value, 1, 64)) { error.value = 'Имя должно содержать от 1 до 64 символов.'; return }
   busy.value = true
   try { const profile = await saveOwnProfile(displayName.value); emit('saved', profile); status.value = 'Имя профиля сохранено.' } catch (cause) { fail(cause, 'Не удалось сохранить профиль.') } finally { busy.value = false }
 }
@@ -25,7 +27,7 @@ async function removeAvatar(): Promise<void> {
 }
 async function changePassword(): Promise<void> {
   error.value = null; status.value = null
-  if (Array.from(newPassword.value).length < 12 || Array.from(newPassword.value).length > 128) { error.value = 'Новый пароль должен содержать от 12 до 128 символов.'; return }
+  if (!validCodePointLength(currentPassword.value, 12, 128) || !validCodePointLength(newPassword.value, 12, 128)) { error.value = 'Пароль должен содержать от 12 до 128 символов.'; return }
   busy.value = true
   try { await changeOwnPassword(currentPassword.value, newPassword.value); currentPassword.value = ''; newPassword.value = ''; status.value = 'Пароль изменён. Другие сессии завершены.' } catch (cause) { fail(cause, 'Не удалось изменить пароль.') } finally { busy.value = false }
 }
@@ -44,19 +46,20 @@ async function changePassword(): Promise<void> {
         <button v-if="props.profile.avatar_url" class="profile-secondary-button" type="button" :disabled="busy" @click="removeAvatar">Удалить</button>
       </div>
       <form class="profile-form" @submit.prevent="saveName">
-        <label>Имя пользователя<input v-model="displayName" autocomplete="nickname" maxlength="64" required></label>
+        <label>Имя пользователя<input v-model="displayName" autocomplete="nickname" required :aria-describedby="error ? 'profile-error' : undefined"></label>
         <label>Логин<input :value="props.profile.login" readonly aria-readonly="true"></label>
         <button type="submit" :disabled="busy">Сохранить изменения</button>
       </form>
       <form class="profile-form profile-password-form" @submit.prevent="changePassword">
         <h2>Изменить пароль</h2>
-        <label>Текущий пароль<input v-model="currentPassword" type="password" autocomplete="current-password" minlength="12" maxlength="128" required></label>
-        <label>Новый пароль<input v-model="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></label>
+        <label>Текущий пароль<input v-model="currentPassword" type="password" autocomplete="current-password" required :aria-describedby="error ? 'profile-error' : undefined"></label>
+        <label>Новый пароль<input v-model="newPassword" type="password" autocomplete="new-password" required :aria-describedby="error ? 'profile-error' : undefined"></label>
         <button type="submit" :disabled="busy">Обновить пароль</button>
       </form>
     </template>
     <p v-if="status" class="profile-status" aria-live="polite">{{ status }}</p>
-    <p v-if="error" class="profile-error" role="alert">{{ error }}</p>
+    <p v-if="error" id="profile-error" class="profile-error" role="alert">{{ error }}</p>
+    <NotificationSettings />
     <section class="profile-logout" aria-labelledby="profile-logout-title">
       <h2 id="profile-logout-title">Выход из аккаунта</h2>
       <p>Голосовое подключение завершится, а личные данные исчезнут с этого экрана.</p>

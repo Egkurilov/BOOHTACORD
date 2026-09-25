@@ -1,0 +1,35 @@
+{
+  "id": "qa05-reset-browser-2026-09-25-001",
+  "tasks": ["DES-03", "QA-05"],
+  "kind": "isolated-built-candidate-reset-browser",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T08:42:02Z",
+  "candidate_base_commit": "de1042bb2d5ffaad3b511064742549863074050e",
+  "bundle": {
+    "entry_js_sha256": "f14b81706915a759140dbfcdc0b1144262147418be665ba9c02eadadbf1fa1d5",
+    "entry_css_sha256": "7431f25d2d51e2597ffad74d290e4bdb786d52db7e9521fd2934fdcbd20024dc"
+  },
+  "environment": "Chrome; locally built Vue bundle; Go API; isolated PostgreSQL 16.14 schema and private attachment directory on WSL loopback; synthetic administrator; no LiveKit service",
+  "checks": [
+    "Fresh administrator-issued reset link opened the form and the URL fragment was cleared before browser inspection",
+    "Completion showed success and focused the role=status paragraph; the old password was rejected",
+    "Reused link was rejected and focused the role=alert paragraph; the reset token remained absent from the visible URL",
+    "An issued token expired in the isolated PostgreSQL schema; completion was rejected and the browser focused the role=alert paragraph",
+    "Return to login focused the username input; login with the new password opened the authenticated workspace",
+    "Missing-token link focused the role=alert paragraph and Tab moved to the return-to-login button",
+    "Frontend Vitest passed 159 files and 465 tests; vue-tsc and Vite build passed",
+    "Fixture shutdown removed its PostgreSQL schema and temporary attachment directory; loopback listeners stopped"
+  ],
+  "before_fix": "After success and used-link rejection focus fell to BODY when the submit form disappeared; return to login also left focus on BODY",
+  "trusted_branch_ci": {
+    "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1643974",
+    "source_commit": "e226ed899bc139466aa1446dac47a601fe9c7c64",
+    "result": "Backend with PostgreSQL/no-skip, frontend, and release_guard passed; deploy skipped on codex branch",
+    "scope": "Branch validation only; no trusted release bundle or production deployment"
+  },
+  "remaining": [
+    "Other DES-03 admin states were not exercised",
+    "No screen reader, zoom, media, upload or screenshot comparison was performed",
+    "This local bundle did not pass through the selected trusted release pipeline, so QA-05 and DES-03 remain open"
+  ]
+}

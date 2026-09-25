@@ -1,0 +1,32 @@
+{
+  "id": "qa11-traceability-host-mode-2026-09-25-001",
+  "task": "QA-11",
+  "kind": "local-cross-host-traceability-verification",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T11:00:33Z",
+  "base_commit": "e04b6de",
+  "script_sha256": "87b7a88679c08165c0e12f3da0af00e8cbe48407cfbdb47797ac362b42ad9050",
+  "checks": [
+    {
+      "name": "Windows approved brief present",
+      "result": "PASS_LOCAL",
+      "detail": "39 requirements referenced; output explicitly reported approved brief SHA-256 and requirement ID validation."
+    },
+    {
+      "name": "Linux CI-like host without approved brief",
+      "result": "PASS_LOCAL",
+      "detail": "WSL PowerShell checked the committed 39-ID index and backlog and explicitly reported index-only source validation."
+    },
+    {
+      "name": "Explicit unavailable brief",
+      "result": "PASS_LOCAL",
+      "detail": "An explicit missing VOICE_PLATFORM_APPROVED_SPEC_PATH was rejected."
+    },
+    {
+      "name": "Contracts and diff",
+      "result": "PASS_LOCAL",
+      "detail": "verify-contracts.ps1 and git diff --check passed."
+    }
+  ],
+  "limitation": "Index-only CI mode does not validate the original brief content on that host. No trusted GitHub main/GHCR run, artifact digests, attestations or accepted delivery ADR were available; QA-11 remains open."
+}

@@ -16,6 +16,7 @@ describe('search shortcut focus guard', () => {
     const editable = { closest: vi.fn(() => ({})) }
     expect(shouldOpenSearchShortcut(shortcut({ target: editable }))).toBe(false)
     expect(editable.closest).toHaveBeenCalledWith(expect.stringContaining('[contenteditable]'))
+    expect(shouldOpenSearchShortcut(shortcut({ target: { closest: (selector: string) => selector.includes('[role="dialog"]') ? {} : null } }))).toBe(false)
   })
 
   it('rejects other keys, alt-modified keys, repeats, and IME composition', () => {

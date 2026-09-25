@@ -33,7 +33,7 @@ func NewHandler(lister Lister) http.Handler {
 			}
 			limit = parsed
 		}
-		result, err := lister.List(request.Context(), listdirectmessagehistory.Input{ActorID: principal.AccountID, DirectMessageID: request.PathValue("directMessageID"), Before: request.URL.Query().Get("before"), Limit: limit})
+		result, err := lister.List(request.Context(), listdirectmessagehistory.Input{ActorID: principal.AccountID, DirectMessageID: request.PathValue("directMessageID"), Before: request.URL.Query().Get("before"), At: request.URL.Query().Get("at"), Limit: limit})
 		if errors.Is(err, listdirectmessagehistory.ErrInvalidInput) {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректная страница личных сообщений")
 			return

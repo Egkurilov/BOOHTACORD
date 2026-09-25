@@ -1,68 +1,46 @@
-# TODO — BOOHTACORD
+# TODO — BOOHTACORD: цель 100%
 
-Сверено 25 сентября 2026 года с текущим рабочим деревом, включая незакоммиченные изменения.
-Основание: утверждённое ТЗ, backlog/tasks.yaml, действующие ADR, код и evidence.
+Срез: 25.09.2026, исходный commit 9091610. Основание: утверждённое ТЗ, backlog/tasks.yaml, ADR, текущие тематические списки, код и evidence. Уже реализованное перечислено в [DONE.md](DONE.md); исходный аудит — в [ревью](docs/reviews/2026-09-24-functionality.md).
 
-**Реализованное вынесено в [DONE.md](DONE.md).** Результаты ревью — в [отчёте](docs/reviews/2026-09-24-functionality.md).
-Наличие реализации не означает приёмку на PostgreSQL, в браузере или на физическом оборудовании.
+**Цель: закрыть 100% оставшейся работы.** На этом срезе открыто **18 пакетов: BE 0, FE 0, DES 7, QA 11**. Прогресс: **19/37** (исходные 16/36 плюс обнаруженная BE-15 и закрытые QA-01/04). В числитель попадает только задача с выполненным критерием из тематического списка, native-проверкой и записью результата в DONE. Для QA-гейтов нужны применимые evidence со статусом PASS: NOT_RUN, BLOCKED, source-тесты и успешная сборка сами по себе гейт не закрывают. Если обнаружится обязательная новая работа, добавить отдельный leaf-пакет и пересчитать знаменатель. P2 также входит в цель 100%.
 
-## Как пользоваться списком
+**P0 — QA-08 остаётся открытой:** исходное [измерение](evidence/capacity/qa08-attachment-volume-2026-09-25-002.json) показало 0 доступных байт и остановленный PostgreSQL. После ограниченной [очистки старых dangling Docker-образов](evidence/capacity/qa08-attachment-volume-2026-09-25-003.json) [измерение в 10:22 UTC](evidence/capacity/qa08-attachment-volume-2026-09-25-004.json) на том же `/dev/vda2` показало **7 675 338 752 доступных байта**, PostgreSQL принимал подключения; API подтверждал свободное место. [Свежая read-only попытка](evidence/capacity/qa08-attachment-volume-2026-09-25-005.json) остановилась на SSH-аутентификации, поэтому это число не является текущим измерением. Защитный порог — 3 159 147 316 байт плюс реальные in-flight резервации; текущий production image их ещё не экспортирует. Нужны восстановленный доступ, BE-15 в утверждённом релизе и устойчивый запас места после новых builds. Опубликованную историю не удалять. Общий release verdict остаётся NO-GO по открытым гейтам.
 
-- Здесь только оставшаяся работа. Тематические списки содержат точки входа, зависимости и критерии закрытия.
-- P0 — восстановить проверки/устранить блокер; P1 — обязательный пользовательский сценарий; P2 — дальнейшее доведение и эксплуатация.
-- BE-*, FE-*, DES-*, QA-* — конкретные задачи; T-* в YAML остаются исходными пакетами требований, а не заявлениями о полной готовности.
-- T-051 обозначает Android по ADR-006. Accessibility относится к T-050 / DES-05 / QA-05; прежний конфликт ID устранён.
-- После выполнения переносить конкретный результат в DONE с источником проверки. Hardware/release gates закрываются отдельно.
+## Бэкенд — 0 открытых задач реализации
 
-## Сначала
+BE-01…BE-15 реализованы и находятся в [DONE.md](DONE.md). Ограничения контракта и эксплуатации — в [BACKEND_TODO.md](backlog/BACKEND_TODO.md). Оставшаяся проверка backend-поверхностей по DM ACL, storage, LiveKit и выпуску входит в QA-03, QA-08…12 и QA-14 ниже; код сам по себе не закрывает эти гейты.
 
-- [ ] **QA-08 · P0:** измерить attachment volume на хосте deployment; [проверка 25.09](evidence/capacity/qa08-attachment-volume-2026-09-25-001.json) подтверждает код порога и HTTP 507, но actual volume недоступен из этой среды. Исторические 9% root и локальные 31,4% C: не являются его показателем.
+## Фронтенд — 0 открытых задач реализации
 
-## Бэкенд
+FE-01…FE-21 реализованы и перечислены в [DONE.md](DONE.md). Browser/keyboard/visual-приёмка и release evidence остаются в DES/QA ниже.
 
-BE-01…14 реализованы и вынесены в [DONE.md](DONE.md). [BACKEND_TODO.md](backlog/BACKEND_TODO.md) фиксирует оставшиеся ограничения реализации; интеграционная, media и release-приёмка остаются в QA ниже.
+## Дизайн — 7 задач
 
-## Фронтенд
+Подробные состояния и связь с DS-T01…12 — в [GUILDCHAT_V1_TODO.md](docs/design/GUILDCHAT_V1_TODO.md).
 
-Детали: [FRONTEND_TODO.md](backlog/FRONTEND_TODO.md).
+- [ ] **DES-02 · P1:** общая строка TEXT/DM ограничивает длинное имя автора, переносит actions/status и имя вложения; 471 frontend-тест и сборка PASS. [Полный локальный browser/Go/PG-прогон](evidence/design/des02-full-browser-2026-09-25-001.json) подтвердил догрузку 60 TEXT и 56 DM, адаптивность 1440…320 CSS px, восстановление после 409, сетевой retry после 503 с одной записью, reply, mention и сброс unread при открытии DM. [Изолированный прогон строки](evidence/design/des02-browser-2026-09-25-001.json) подтвердил focus. [Повтор browser upload](evidence/qa/qa05-dm-upload-picker-2026-09-25-001.json) остановился на file chooser: файл не выбирался. Остались browser upload, screen reader, настоящий zoom 125%/150% и screenshot comparison. [Source evidence](evidence/design/des02-conversation-wrap-2026-09-25-001.json).
+- [ ] **DES-03 · P1:** [reset browser/PG](evidence/qa/qa05-reset-browser-2026-09-25-001.json), [admin topology](evidence/design/des03-admin-browser-2026-09-25-001.json) и [archive/voice-close confirmations](evidence/design/des03-confirmations-browser-2026-09-25-001.json) прошли локально. Подтверждение TEXT архивировало канал; VOICE закрыл вход и показал pending SFU. Отмена и Escape сохранили данные и вернули фокус. Остались остальные admin-состояния, полный keyboard/screen-reader/visual прогон и connected-media подтверждение finalization.
+- [ ] **DES-04 · P1:** проверить voice/stream states для listener, mute/deafen, reconnect, transfer/kick, 1/6/20 участников и отсутствующего audio/frame.
+- [ ] **DES-05 · P1:** modal drawer/focus trap/inert и shortcut guard реализованы; browser на локально собранном candidate подтвердил members drawer, Escape и возврат фокуса из поиска при 1024 px. Остались screen-reader и полный keyboard-прогон остальных поверхностей. [Static](evidence/design/des05-focus-2026-09-25-001.json), [browser](evidence/design/des05-browser-focus-2026-09-25-001.json), [candidate](evidence/qa/qa05-candidate-browser-2026-09-25-001.json).
+- [ ] **DES-06 · P1:** [пустая рабочая область на 883 CSS px](evidence/design/des03-admin-browser-2026-09-25-001.json) даёт открыть навигацию без выбранного канала; [полный TEXT/DM клиент](evidence/design/des02-full-browser-2026-09-25-001.json) не переполняется на 1440…320 CSS px. Проверить voice/viewer/search/profile/admin workspace на 1440/1280/1024 CSS px и настоящий browser zoom 125%/150%.
+- [ ] **DES-07 · P2:** словарь названий и русских media-состояний зафиксирован, ложные обещания звука/слышимости в viewer и dock исправлены; осталось проверить в browser и на реальном media в QA-07. [Evidence](evidence/design/des07-copy-2026-09-25-001.json).
+- [ ] **DES-08 · P1:** сравнить screenshots одного candidate bundle с reference, включая connected voice и stream, сохранить отклонения и повторную проверку.
 
-- [ ] **FE-08:** DM retry с сохранением client_message_id.
-- [ ] **FE-09:** имена и аватары авторов вместо UUID в сообщениях и ответах.
-- [ ] **FE-10–14:** название/порядок категорий, название/перенос/порядок/архивирование каналов и закрытие voice.
-- [ ] **FE-15/16:** unread/mentions в навигации и уведомления после разрешения.
-- [ ] **FE-17:** DM attachment picker, прогресс/ошибки, download и preview.
-- [ ] **FE-18:** привязка draft/reply/attachments к беседе при переключении.
-- [ ] **FE-19:** сохранение текста редактора при 409 или ошибке запроса.
-- [ ] **FE-20:** единый подсчёт Unicode-символов в формах и API.
-- [ ] **FE-21 · P2:** переход из поиска к найденному сообщению и его контексту.
+## Интеграция, эксплуатация и выпуск — 11 задач
 
-## Дизайн
+Критерии PASS и требуемые evidence — в [VERIFICATION_TODO.md](backlog/VERIFICATION_TODO.md).
 
-Детали и исходные DS-T01…12: [GUILDCHAT_V1_TODO.md](docs/design/GUILDCHAT_V1_TODO.md).
+- [ ] **QA-03 · P1:** PostgreSQL/FS DM history, search, reply, cursor, counters, create/edit/delete events и download/preview ACL PASS; 10/11 файлов, 25 MB/+1, low-disk guard, traversal и cleanup проверены локально. [Фиксированный bundle с двумя browser-сессиями](evidence/qa/qa03-fixed-bundle-browser-2026-09-25-001.json) подтвердил WebSocket create/edit/delete без reload, unread/title и HTTP 404 для третьего участника. Остались разрешённое browser notification с проверкой generic preview/dedup и browser-проверка отсутствия private hint у третьего участника; trusted release bundle входит в QA-05. [DM matrix](evidence/qa/qa03-dm-read-matrix-2026-09-25-001.json), [files](evidence/qa/qa03-private-file-acl-2026-09-25-001.json), [events/limits](evidence/qa/qa03-events-limits-2026-09-25-001.json), [HTTP](evidence/qa/qa03-http-session-2026-09-25-001.json).
+- [ ] **QA-05 · P1:** dev browser прошёл auth/logout, TEXT/DM, live DM, поиск и часть keyboard; built candidate подтвердил topology rename, TEXT layout и drawer/search focus. [Reset browser](evidence/qa/qa05-reset-browser-2026-09-25-001.json) прошёл локально с expired/used ссылкой, новым паролем и фокусом. [Admin browser](evidence/design/des03-admin-browser-2026-09-25-001.json) подтвердил topology mutations, 409/retry и мобильную навигацию; [confirmations browser/PG](evidence/design/des03-confirmations-browser-2026-09-25-001.json) подтвердил TEXT archive и VOICE admission close. [Полный локальный TEXT/DM browser/PG](evidence/design/des02-full-browser-2026-09-25-001.json) подтвердил pagination, reply, mention, unread, 409/recovery и 503/retry; [фиксированный DM bundle](evidence/qa/qa03-fixed-bundle-browser-2026-09-25-001.json) подтвердил WebSocket create/edit/delete и title без reload. [Повтор upload](evidence/qa/qa05-dm-upload-picker-2026-09-25-001.json) на изолированном fixed bundle не прошёл file chooser; notification permission не предоставлено. Остались upload, browser notification, voice/reconnect, полный keyboard/screen reader, zoom 125/150%, сохраняемые screenshots и повтор через trusted release bundle. [Dev](evidence/qa/qa05-local-browser-2026-09-25-001.json), [candidate](evidence/qa/qa05-candidate-browser-2026-09-25-001.json).
+- [ ] **QA-06 · P1:** выполнить POC-01 на физических Windows и Apple Silicon macOS с игрой, звуком, разговором и отдельным наблюдателем.
+- [ ] **QA-07 · P1:** измерить sender/receiver FPS, bitrate, RTT и loss для POC-02, расследовать жалобу около 1 FPS и записать профили в ADR.
+- [ ] **QA-08 · P0 / BLOCKED:** [production recovery](evidence/capacity/qa08-attachment-volume-2026-09-25-003.json) вернуло место; [последний успешный read-only recheck](evidence/capacity/qa08-attachment-volume-2026-09-25-004.json) в 10:22 UTC измерил 7 675 338 752 доступных байта при пороге 3 159 147 316, PostgreSQL был готов. [Повтор в 11:05 UTC](evidence/capacity/qa08-attachment-volume-2026-09-25-005.json) не прошёл SSH-аутентификацию, актуальное место неизвестно. Восстановить read-only доступ, развернуть API с BE-15 через утверждённый гейт, измерить текущие in-flight резервации и подтвердить устойчивый запас после новых builds на том же volume. Опубликованную историю не удалять.
+- [ ] **QA-09 · P1:** измерить CPU/сеть/quota и профиль 100 voice участников, до 20 в комнате, с реальным hardware/load evidence.
+- [ ] **QA-10 · P1:** выполнить POC-03 connected-media revocation и проверку старых API/SDK credentials после kick/ban/logout/reset/transfer/close.
+- [ ] **QA-11 · P1:** GitHub `main`/GHCR candidate теперь требует no-skip PostgreSQL gate, SBOM, max provenance и digest refs; [локальные проверки](evidence/release/qa11-ghcr-ci-hardening-2026-09-25-001.json) PASS. [Проверка traceability](evidence/release/qa11-traceability-host-mode-2026-09-25-001.json) теперь явно сообщает full-brief или index-only режим на Windows/Linux. Сам гейт PARTIAL: зафиксировать утверждённый delivery контракт ADR либо запустить исходный путь; подтвердить trusted CI, опубликованные immutable refs и attestations.
+  [Проект ADR-010](docs/adr/ADR-010-delivery-pipeline-proposal.md) описывает выбор между утверждённым `main`/GHCR и действующим GitVerse `master`; до решения владельца исходное ТЗ остаётся в силе.
+- [ ] **QA-12 · P1:** проверить maintenance → migration → rollout → smoke → снятие режима и совместимый rollback с сохранёнными volumes.
+- [ ] **QA-13 · P1:** настроить Android release signing вне Git и выполнить physical-device install/update/auth/cookie/voice/viewer tests; вести отдельный Flutter parity backlog.
+- [ ] **QA-14 · P1:** собрать матрицу 39 требований, latency/capacity/security evidence и release decision; закрыть только после применимых PASS-гейтов. [Матрица 39 требований](docs/release/2026-09-25-requirements-matrix.md), [актуальное решение NO-GO](evidence/release/qa14-readiness-2026-09-25-004.json).
 
-- [ ] **DES-01:** сверить 40 компонентов с исходным контрактом и ADR-008/009.
-- [ ] **DES-02:** состояния переписки: длинная история, reply/edit conflict, retry, unread/mention, upload.
-- [ ] **DES-03:** logout/reset/топология и подтверждения опасных действий.
-- [ ] **DES-04:** listener, mute/deafen, reconnect, transfer/kick, нет аудио/кадра.
-- [ ] **DES-05:** focus, клавиатура, доступные dialogs/drawers и возврат фокуса.
-- [ ] **DES-06:** 1440/1280/1024 CSS px и zoom 125%/150%.
-- [ ] **DES-07:** единые русские названия, подписи и честные обозначения измерений.
-- [ ] **DES-08:** screenshot comparison проверяемой сборки и evidence.
-
-## Интеграция, эксплуатация и выпуск
-
-Детали: [VERIFICATION_TODO.md](backlog/VERIFICATION_TODO.md).
-
-- [ ] **QA-01–04:** PostgreSQL integration, auth/admin races, storage/DM privacy, миграции и CI.
-- [ ] **QA-05:** authenticated browser E2E, визуальная/клавиатурная приёмка.
-- [ ] **QA-06/07:** POC-01 Windows + Apple Silicon macOS; POC-02, включая расследование низкого FPS.
-- [ ] **QA-08/09:** storage preflight и нагрузка 100 участников / до 20 в комнате.
-- [ ] **QA-10:** POC-03: connected-media revocation, replay API/SDK credentials, transfer/reconnect.
-- [ ] **QA-11/12:** действующая схема GitVerse delivery, checks и проверка maintenance/rollback.
-- [ ] **QA-13:** Android: release-подпись, физические device tests и отдельный parity backlog.
-- [ ] **QA-14:** финальная матрица требований, качества и release evidence.
-
-Порядок: оставшиеся FE/DES leaf-задачи → integration/E2E → приёмка кандидата.
-Аппаратные POC и capacity остаются обязательными для release; unit/build/health их не заменяют.
-
-Границы: одна гильдия, Vue/Go/PostgreSQL/LiveKit, DM только для двух участников; без камеры, записи, групповых DM, backups, TTL опубликованной истории и Redis по умолчанию. Android разрешён ADR-006; iOS/background push не добавляются.
+Порядок: QA-08 и DES leaf-пакеты с проверками → browser/media/capacity/Android evidence → QA-14. Backend/CI validation QA-01/04 подтверждена [trusted GitVerse run #1643330](evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json). Границы утверждённого продукта сохраняются: одна гильдия, Vue/Go/PostgreSQL/LiveKit, DM только двум участникам; без камеры, записи, групповых DM, backups, TTL опубликованной истории и Redis по умолчанию.

@@ -1,0 +1,29 @@
+{
+  "id": "qa03-http-session-2026-09-25-001",
+  "kind": "authenticated-dm-http-acl",
+  "status": "PASS_LOCAL",
+  "executed_at": "2026-09-25",
+  "source_commit": "685e4d4",
+  "environment": "Local Go API through same-origin Vite proxy, PostgreSQL 16.14 isolated qa05_browser schema, three synthetic sessions",
+  "checks": [
+    {
+      "name": "history",
+      "result": "PASS_LOCAL",
+      "detail": "Both DM participants received HTTP 200 and the same three-message history; a nonparticipant received HTTP 404."
+    },
+    {
+      "name": "navigation_and_search",
+      "result": "PASS_LOCAL",
+      "detail": "The nonparticipant navigation contained zero DMs and its scoped DM search returned HTTP 404; participant scoped search returned HTTP 200."
+    },
+    {
+      "name": "session_boundary",
+      "result": "PASS_LOCAL",
+      "detail": "Each request used a separate login-issued session cookie. The local HTTP client supplied its secure cookie in the Cookie header; the browser smoke separately confirmed session cookies across reload and logout."
+    }
+  ],
+  "limitations": [
+    "Only synthetic non-production data was queried; this does not establish deployment ACL or browser notification delivery.",
+    "The third account was a member. A nonparticipant administrator was covered by PostgreSQL integration tests, not this HTTP smoke."
+  ]
+}

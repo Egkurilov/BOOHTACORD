@@ -1,0 +1,34 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-004",
+  "task": "QA-08",
+  "kind": "production-attachment-volume-read-only-followup",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T10:22:01Z",
+  "environment": "deployment host 176.108.242.211; Docker volume voice-platform_attachments-data",
+  "method": "Batch-mode SSH with the already pinned ED25519 host key; read-only docker volume inspect, df -B1, findmnt -T, container inspect, pg_isready and private API /metrics scrape",
+  "volume": {
+    "mountpoint": "/var/lib/docker/volumes/voice-platform_attachments-data/_data",
+    "filesystem_device": "/dev/vda2",
+    "filesystem_type": "ext4",
+    "mount_target": "/",
+    "total_bytes": 31591473152,
+    "available_bytes": 7675338752,
+    "protected_threshold_bytes": 3159147316
+  },
+  "runtime": {
+    "api_image": "voice-platform-api:ef0a52a36048321627abe8955e71ed33b8dc40ac",
+    "api_container": "running",
+    "postgres_container": "running",
+    "postgres_pg_isready": "accepting connections",
+    "api_filesystem_available_bytes": 7675326464,
+    "api_filesystem_total_bytes": 31591473152,
+    "api_filesystem_snapshot_success": 1,
+    "api_upload_reserved_bytes": null
+  },
+  "comparison": "df available decreased by 446464 bytes from the 09:48:49Z recovery snapshot; this short observation does not establish headroom after a new build. The API gauge was 12288 bytes lower than the df sample taken moments earlier.",
+  "decision": "Immediate disk recovery remains in place, but QA-08 is PARTIAL: production lacks the BE-15 reservation gauge and no post-release durable capacity evidence exists. No production mutation was performed.",
+  "next_checks": [
+    "Roll out BE-15 only through the approved release gate and read voice_platform_attachment_upload_reserved_bytes",
+    "Repeat the exact-volume measurements after builds and a stable observation interval; compare available bytes with threshold plus in-flight reservations and 25 MB upload headroom"
+  ]
+}

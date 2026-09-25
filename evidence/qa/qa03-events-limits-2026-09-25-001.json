@@ -1,0 +1,43 @@
+{
+  "id": "qa03-events-limits-2026-09-25-001",
+  "kind": "dm-events-storage-limits",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "environment": "Ubuntu WSL, Go 1.26.0, PostgreSQL 16.14, isolated migration-backed schemas and private temporary files",
+  "checks": [
+    {
+      "name": "private_create_edit_delete_events",
+      "result": "PASS_LOCAL",
+      "detail": "Real mutations and PostgreSQL recipient resolution delivered minimal create/edit/delete hints only to the two participants. A nonparticipant administrator received none; a blocked peer was removed from current recipients. Repeated 10 times."
+    },
+    {
+      "name": "attachment_count_boundary",
+      "result": "PASS_LOCAL",
+      "detail": "Ten attachments created ten links; an eleven-attachment send created no message and left the last object unattached. Repeated 10 times."
+    },
+    {
+      "name": "size_reservation_path_and_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "Existing native tests passed for exactly 25,000,000 versus 25,000,001 bytes, 2 GiB/10% reserve and concurrent reservations, filesystem traversal/symlink protection, PostgreSQL hidden-file cleanup and live-link recheck. Cleanup tests repeated 5 times."
+    },
+    {
+      "name": "notification_policy",
+      "result": "PASS_LOCAL",
+      "detail": "Three focused frontend files, 10 tests passed for caller-local generic notifications, cross-tab deduplication and realtime refresh."
+    },
+    {
+      "name": "backend_suite",
+      "result": "PASS_LOCAL",
+      "detail": "go test -json -count=1 ./... with both PostgreSQL test URL variables: 665 passed, 0 skipped, 0 failed; focused go vet passed."
+    },
+    {
+      "name": "authenticated_http_and_browser",
+      "result": "NOT_RUN",
+      "detail": "An integrated authenticated HTTP/browser pass must still demonstrate cookie/session ACL and notification delivery on a fixed candidate."
+    }
+  ],
+  "limitations": [
+    "Synthetic low-disk snapshots prove admission logic but do not measure the deployment attachment volume; that is QA-08.",
+    "Unit notification tests do not prove browser permission and delivery on the candidate build."
+  ]
+}

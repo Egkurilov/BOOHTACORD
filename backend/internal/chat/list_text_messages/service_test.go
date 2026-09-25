@@ -28,12 +28,20 @@ func TestListTrimsLookaheadAndReturnsCursor(t *testing.T) {
 }
 
 func TestListRejectsInvalidCursorAndLimitBeforePersistence(t *testing.T) {
-	for _, input := range []Input{{ChannelID: channelID, Before: "nope", Limit: 10}, {ChannelID: channelID, Limit: 101}} {
+	for _, input := range []Input{{ChannelID: channelID, Before: "nope", Limit: 10}, {ChannelID: channelID, At: "nope", Limit: 10}, {ChannelID: channelID, Before: attachmentID, At: attachmentID, Limit: 10}, {ChannelID: channelID, Limit: 101}} {
 		store := &fakeStore{}
 		_, err := New(store).List(context.Background(), input)
 		if !errors.Is(err, ErrInvalidInput) || store.called {
 			t.Fatalf("input = %#v, error = %v", input, err)
 		}
+	}
+}
+
+func TestListForwardsAddressedContextAnchor(t *testing.T) {
+	store := &fakeStore{messages: []Message{{ID: attachmentID}}}
+	result, err := New(store).List(context.Background(), Input{ChannelID: channelID, At: attachmentID, Limit: 20})
+	if err != nil || store.request.At != attachmentID || store.request.Before != "" || len(result.Messages) != 1 {
+		t.Fatalf("result = %#v, request = %#v, error = %v", result, store.request, err)
 	}
 }
 

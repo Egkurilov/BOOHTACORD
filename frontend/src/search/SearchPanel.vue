@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import MessageBody from '../conversation/MessageBody.vue'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { searchMessages, type SearchMessage } from './search_messages_client'
 
 interface SearchConversation { id: string; kind: 'CHANNEL' | 'DIRECT_MESSAGE'; label: string }
@@ -25,6 +26,7 @@ watch(() => props.currentConversation?.id, () => { if (scope.value === 'current'
 async function runSearch(before?: string): Promise<void> {
   const searchQuery = before ? activeQuery.value : query.value
   if (!searchQuery.trim() || !canSubmit.value && !before) return
+  if (!validCodePointLength(searchQuery.trim(), 1, 256)) { error.value = 'Запрос должен содержать до 256 символов.'; return }
   const conversation = scope.value === 'current' ? props.currentConversation : null
   if (scope.value === 'current' && !conversation) { error.value = 'Выберите беседу или ищите по всем беседам.'; return }
   const sequence = ++requestSequence
@@ -54,15 +56,15 @@ onMounted(() => { void nextTick(() => queryInput.value?.focus()) })
   <section class="search-panel" aria-labelledby="search-panel-title" data-testid="search-panel">
     <header class="search-panel-heading"><div><p class="search-eyebrow">ПОИСК</p><h1 id="search-panel-title">Поиск сообщений</h1><p>По общим каналам и личным диалогам, доступным вашей учётной записи.</p></div><button class="search-close" type="button" aria-label="Закрыть поиск" @click="emit('close')">×</button></header>
     <form class="search-form" role="search" @submit.prevent="runSearch()">
-      <label>Запрос<input ref="queryInput" v-model="query" type="search" autocomplete="off" maxlength="256" placeholder="Слова или «точная фраза»" :disabled="loading"></label>
+      <label>Запрос<input ref="queryInput" v-model="query" type="search" autocomplete="off" placeholder="Слова или «точная фраза»" :disabled="loading" :aria-describedby="error ? 'search-error' : undefined"></label>
       <label>Область поиска<select v-model="scope" :disabled="loading"><option value="all">Все беседы</option><option v-if="currentConversation" value="current">Текущая беседа: {{ currentConversation.label }}</option></select></label>
       <button class="search-submit" type="submit" :disabled="!canSubmit">{{ loading ? 'Ищем…' : 'Найти' }}</button>
     </form>
-    <p v-if="error" class="search-error" role="alert">{{ error }}</p>
+    <p v-if="error" id="search-error" class="search-error" role="alert">{{ error }}</p>
     <p class="search-status" aria-live="polite" :aria-busy="loading">{{ loading ? 'Ищем сообщения…' : searched ? (messages.length ? `Результатов: ${messages.length}.` : 'Совпадений нет.') : 'Введите запрос и нажмите «Найти».' }}</p>
     <ol v-if="messages.length" class="search-results" aria-label="Результаты поиска">
       <li v-for="message in messages" :key="`${message.kind}:${message.id}`" class="search-result">
-        <article><header><strong>{{ conversationLabel(message) }}</strong><time :datetime="message.createdAt">{{ formattedDate(message.createdAt) }}</time></header><MessageBody :body="message.body" /><button type="button" @click="emit('open', message)">Открыть беседу</button></article>
+        <article><header><strong>{{ conversationLabel(message) }}</strong><time :datetime="message.createdAt">{{ formattedDate(message.createdAt) }}</time></header><MessageBody :body="message.body" /><button type="button" @click="emit('open', message)">Открыть сообщение</button></article>
       </li>
     </ol>
     <button v-if="nextCursor" class="search-more" type="button" :disabled="loading" @click="runSearch(nextCursor)">Показать ещё</button>

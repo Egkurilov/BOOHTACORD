@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RealtimeEvent } from '../realtime/realtime_client'
+import { useNotificationStore } from '../notification/notification_store'
 import { useVoiceNavigationStore } from '../voice/navigation_store'
 import { createWorkspaceRealtime } from './workspace_realtime'
 
@@ -43,6 +44,18 @@ describe('workspace typed realtime dispatch', () => {
     await value.deliver(hint('channel.updated', { revision: 7 }))
     expect(value.stores.topology.refresh).toHaveBeenCalledOnce()
     expect(value.stores.directMessages.refreshHistory).not.toHaveBeenCalled()
+  })
+
+  it('captures unread before a create hint and notifies only after protected refresh', async () => {
+    const notifications = useNotificationStore()
+    const capture = vi.spyOn(notifications, 'capture').mockReturnValue(0)
+    const deliver = vi.spyOn(notifications, 'deliver').mockResolvedValue()
+    const value = fixture()
+    const created = hint('direct_message.message_created', { direct_message_id: directID, message_id: messageID })
+    await value.deliver(created)
+    expect(capture).toHaveBeenCalledWith(created)
+    expect(deliver).toHaveBeenCalledWith(created, 0)
+    expect(value.stores.directMessages.refreshNavigation.mock.invocationCallOrder[0]).toBeLessThan(deliver.mock.invocationCallOrder[0]!)
   })
 
   it('applies only the connected lease revocation and clears voice navigation', async () => {

@@ -1,0 +1,28 @@
+{
+  "id": "qa02-reset-race-2026-09-25-001",
+  "kind": "password-reset-concurrency",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "environment": "Ubuntu WSL, Go 1.26.0, PostgreSQL 16.14, isolated migration-backed schema per run",
+  "checks": [
+    {
+      "name": "concurrent_one_time_reset",
+      "result": "PASS_LOCAL",
+      "detail": "Two concurrent repository calls for one synthetic reset digest: one succeeds, one reports consumed/unavailable. The new password hash, used marker, session and voice lease revocation, SESSION_REVOKED reason, one SFU outbox row and one audit event were confirmed; an unrelated user's session remained active. Repeated 20 times."
+    },
+    {
+      "name": "backend_suite",
+      "result": "PASS_LOCAL",
+      "detail": "go test -json -count=1 ./... with both PostgreSQL test URL variables: 666 passed, 0 skipped, 0 failed; focused go vet passed."
+    },
+    {
+      "name": "remaining_qa02_matrix",
+      "result": "NOT_RUN",
+      "detail": "End-to-end reset link completion, recovery, role refresh, topology revision, voice transfer and WebSocket revocation races remain."
+    }
+  ],
+  "limitations": [
+    "This is a repository race using a synthetic replacement hash; HTTP link handling and password hashing are tested separately, not as one integrated reset flow.",
+    "SFU outbox insertion proves revocation is queued, not that a connected media client was removed; QA-10 covers that gate."
+  ]
+}

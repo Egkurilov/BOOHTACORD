@@ -1,0 +1,37 @@
+{
+  "id": "des03-reset-invalid-spacing-2026-09-25-001",
+  "tasks": ["DES-03", "QA-05"],
+  "kind": "local-browser-layout-fix",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T08:13:21Z",
+  "candidate_base_commit": "6aa5d1d",
+  "candidate_css_sha256": "51dadcf381363c600cdcf5239fea3144c7369b0992d6d8f6507c065ef4877cfa",
+  "browser": "Chrome against Vite loopback http://127.0.0.1:5173/reset-password; no reset token or backend session used",
+  "before": {
+    "viewport_css_px": 883,
+    "title_to_alert_gap_px": -8,
+    "alert_to_button_gap_px": 0,
+    "result": "FAIL: expired-link alert overlapped the heading"
+  },
+  "after": {
+    "viewports_css_px": [1024, 1280, 1440],
+    "title_to_alert_gap_px": 16,
+    "alert_to_button_gap_px": 24,
+    "horizontal_overflow": false,
+    "result": "PASS for the expired-link screen at the measured viewports"
+  },
+  "native_checks": {
+    "frontend_tests": "PASS: 158 files, 463 tests",
+    "frontend_build": "PASS: vue-tsc and Vite"
+  },
+  "trusted_ci": {
+    "url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1643628",
+    "source_commit": "7fa0338c2535b5cff7bd2a86bb0a4b3da5e31688",
+    "result": "backend PostgreSQL/no-skip, frontend and release_guard PASS; deploy skipped on codex branch"
+  },
+  "remaining": [
+    "Reset completion and used-link behavior with a real issued token were not exercised",
+    "Admin topology controls, confirmations, 409 recovery and focus return remain for DES-03 browser acceptance",
+    "No screenshot artifact was stored, so DES-08 pixel comparison remains open"
+  ]
+}

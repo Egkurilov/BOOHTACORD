@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref } from 'vue'
 import type { CurrentSession } from '../identity/current_session'
+import { useAuthorDirectory } from '../identity/author_directory'
 import MessageItem from './MessageItem.vue'
 import type { TextMessage } from './message_client'
 import { useMessageStore } from './message_store'
@@ -8,13 +9,14 @@ import { useMessageStore } from './message_store'
 const props = defineProps<{ channelId: string; session: CurrentSession | null }>()
 const emit = defineEmits<{ reply: [message: TextMessage]; retry: [message: TextMessage] }>()
 const store = useMessageStore()
+const authors = useAuthorDirectory()
 const list = ref<HTMLOListElement | null>(null)
 
 function replyPreview(message: TextMessage): string | undefined {
   if (!message.replyToId) return undefined
   const target = store.messages.find((candidate) => candidate.id === message.replyToId)
   if (!target) return 'Исходное сообщение недоступно'
-  return target.deleted ? 'Сообщение удалено' : `${target.authorId}: ${target.body.slice(0, 140)}`
+  return target.deleted ? 'Сообщение удалено' : `${authors.displayName(target.authorId)}: ${target.body.slice(0, 140)}`
 }
 
 async function loadOlder(): Promise<void> {
@@ -41,7 +43,8 @@ async function loadOlder(): Promise<void> {
         :can-edit="session?.accountId === message.authorId"
         :can-delete="session?.accountId === message.authorId || session?.role === 'ADMINISTRATOR'"
         :retry-disabled="store.sending"
-        @edit="store.edit(message.id, $event, message.revision)"
+        :edit-message="(body, ids, revision) => store.editWithResult(message.id, body, revision, undefined, ids)"
+        :refresh-message="() => store.refreshMessage(message.id)"
         @remove="store.remove(message.id)"
         @reply="emit('reply', message)"
         @retry="emit('retry', message)"

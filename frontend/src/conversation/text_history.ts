@@ -1,11 +1,12 @@
 import { ref } from 'vue'
 
 import { loadMessagePage, type MessageRequest, type TextMessage, type TextMessageAttachment } from './message_client'
+import { findLoadedMessage } from './message_revision_refresh'
 
-export interface PendingSend { channelId: string; authorId: string; body: string; replyToId?: string; attachments: TextMessageAttachment[]; request?: MessageRequest; sendStatus?: 'sending' | 'failed' }
+export interface PendingSend { channelId: string; authorId: string; body: string; replyToId?: string; attachments: TextMessageAttachment[]; mentionUserIds: string[]; request?: MessageRequest; sendStatus?: 'sending' | 'failed' }
 
 export function pendingMessage(id: string, draft: PendingSend): TextMessage {
-  return { id: `optimistic:${id}`, channelId: draft.channelId, authorId: draft.authorId, clientMessageId: id, body: draft.body, replyToId: draft.replyToId, revision: 0, createdAt: new Date().toISOString(), deleted: false, attachments: draft.attachments, sendStatus: draft.sendStatus ?? 'failed' }
+  return { id: `optimistic:${id}`, channelId: draft.channelId, authorId: draft.authorId, clientMessageId: id, body: draft.body, replyToId: draft.replyToId, revision: 0, createdAt: new Date().toISOString(), deleted: false, attachments: draft.attachments, mentionUserIds: draft.mentionUserIds, sendStatus: draft.sendStatus ?? 'failed' }
 }
 
 export function createTextHistory(pending: Map<string, PendingSend>) {
@@ -93,5 +94,20 @@ export function createTextHistory(pending: Map<string, PendingSend>) {
     }
   }
 
-  return { channelId, messages, nextCursor, loading, olderLoading, historyLoaded, error, olderError, open, refresh, loadOlder }
+  async function refreshMessage(messageId: string, request?: MessageRequest): Promise<TextMessage | null> {
+    const target = channelId.value
+    const version = generation
+    if (!target || !messages.value.some(({ id }) => id === messageId)) return null
+    try {
+      const count = messages.value.filter(({ sendStatus }) => !sendStatus).length
+      const found = await findLoadedMessage(messageId, count, (before) => loadMessagePage(target, before, request), () => generation === version && channelId.value === target)
+      if (found) mergePage([found])
+      return found ? messages.value.find(({ id }) => id === messageId) ?? null : null
+    } catch (cause) {
+      if (generation === version) error.value = cause instanceof Error ? cause.message : 'Не удалось обновить сообщение.'
+      return null
+    }
+  }
+
+  return { channelId, messages, nextCursor, loading, olderLoading, historyLoaded, error, olderError, open, refresh, loadOlder, refreshMessage }
 }

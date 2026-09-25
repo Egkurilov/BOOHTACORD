@@ -1,0 +1,52 @@
+{
+  "id": "qa11-ghcr-ci-hardening-2026-09-25-001",
+  "task": "QA-11",
+  "kind": "delivery-pipeline-source-validation",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T08:06:03Z",
+  "base_commit": "6dd406df7fba67cc630ae2320dbbccc919096354",
+  "candidate": "uncommitted GitHub Actions workflow changes; hashes identify exact files",
+  "workflow_sha256": {
+    ".github/workflows/ci.yml": "1bca4a432af03af7410d93d84df1d7a71b1dc19c8a38e2abac7dc01a89ff11d0",
+    ".github/workflows/ci-backend.yml": "f2fe83266eea8339637fb88891186f31b905e75c9c96f1d9da99f1627d17882c",
+    ".github/workflows/ci-contracts.yml": "daa27183e7b42be4383a03123ac231a1ff849a99a2cca15813f41e4ed028e91b",
+    ".github/workflows/ci-frontend.yml": "5fe95ff1435dd4383a1d6029b80e2059f1fe9ba9bf0414a519b5af5d22d7525f"
+  },
+  "checks": [
+    {
+      "name": "negative no-skip fixture",
+      "result": "PASS",
+      "detail": "verify-go-test-events.py exited 1 and reported one skipped PostgreSQL test"
+    },
+    {
+      "name": "YAML structure and behavior-preservation comparison to HEAD",
+      "result": "PASS",
+      "detail": "three reusable test jobs preserve previous bodies except backend no-skip command; publish/deploy needs unchanged; two pushed images request SBOM and max provenance; all workflow files below 120 lines"
+    },
+    {
+      "name": "actionlint v1.7.12",
+      "result": "PASS",
+      "detail": "all four GitHub workflow files accepted with exit 0"
+    },
+    {
+      "name": "native contract and traceability checks",
+      "result": "PASS",
+      "detail": "verify-contracts.ps1 passed; verify-spec-traceability.ps1 mapped all 39 requirements; git diff --check passed"
+    }
+  ],
+  "trusted_gitverse_followup": {
+    "observed_at": "2026-09-25T08:21:14Z",
+    "failed_run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1643558",
+    "run_1643558": "backend/frontend PASS; release_guard ERROR when runner Docker log archive request exceeded its deadline",
+    "passed_run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1643628",
+    "run_1643628": "backend PostgreSQL/no-skip, frontend and release_guard PASS; deploy skipped on codex branch",
+    "source_commit_for_pass": "7fa0338c2535b5cff7bd2a86bb0a4b3da5e31688",
+    "scope": "GitVerse guards only; this did not execute the GitHub main/GHCR publish or deploy jobs"
+  },
+  "acceptance_not_observed": [
+    "No trusted GitHub main run or GHCR image digest and attestation was available in this environment",
+    "Active GitVerse master source-archive/server-build delivery differs from approved main/GHCR path and has no accepted delivery ADR",
+    "Production attachment filesystem has zero available bytes per QA-08, so rollout cannot be approved"
+  ],
+  "decision": "QA-11 remains open; source hardening does not establish a production release contract"
+}

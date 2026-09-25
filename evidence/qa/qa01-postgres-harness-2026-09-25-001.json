@@ -1,0 +1,39 @@
+{
+  "id": "qa01-postgres-harness-2026-09-25-001",
+  "kind": "postgres-integration-gate",
+  "status": "NOT_RUN",
+  "executed_at": "2026-09-25T00:25:21Z",
+  "environment": "Ubuntu WSL, Go 1.26.0, PostgreSQL 16.14, isolated migration-backed schema per integration test",
+  "revision": "06d5299da29cf3b40fce20367d56876e8f0cd3a2 with uncommitted QA-01 changes",
+  "checks": [
+    {
+      "name": "cross_channel_text_reply_and_attachment_atomicity",
+      "result": "PASS_LOCAL",
+      "detail": "Cross-channel reply returns ErrChannelUnavailable; no message or attachment link is created and attachment remains UNATTACHED."
+    },
+    {
+      "name": "serial_and_concurrent_text_idempotency",
+      "result": "PASS_LOCAL",
+      "detail": "Migration-backed PostgreSQL test returns one persisted message and one attachment link for concurrent retries."
+    },
+    {
+      "name": "full_backend_suite_with_real_postgres",
+      "result": "PASS_LOCAL",
+      "detail": "go test -json -count=1 ./... inside Ubuntu WSL: 648 passed, 0 skipped, 0 failed. Both database URL variables were configured."
+    },
+    {
+      "name": "missing_database_is_not_a_green_ci_result",
+      "result": "PASS_LOCAL",
+      "detail": "verify-go-test-events.py rejects the no-database run: 6 passed, 4 skipped, exit 1. GitVerse backend job now starts PostgreSQL and applies this gate."
+    },
+    {
+      "name": "trusted_gitverse_ci",
+      "result": "NOT_RUN",
+      "detail": "The modified master-only deploy workflow has not run remotely. Its Ubuntu cloud runner PostgreSQL installation and full test gate still require a trusted CI result before QA-01 can close."
+    }
+  ],
+  "limitations": [
+    "The Windows-to-WSL loopback bridge refused connections during a full Windows-host run; the full passing run used PostgreSQL and Go inside the same Ubuntu WSL instance.",
+    "Local PostgreSQL success does not prove the GitVerse cloud runner can install and start PostgreSQL or that the deploy gate executes before release."
+  ]
+}

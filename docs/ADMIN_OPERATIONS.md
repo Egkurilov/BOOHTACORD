@@ -79,3 +79,7 @@ sudo docker compose --project-directory /opt/voice-platform -f /opt/voice-platfo
 ```
 
 Повторяйте ограниченный запуск, проверяя `retryable failures` после каждого прохода. После такой ошибки claim сохраняется на пять минут, а следующая попытка сначала обрабатывает ещё не проверенные файлы; `Claimed: 0` во время активной lease не доказывает полного завершения. Повторите запуск после истечения lease. Значение `--limit` допускает 1…100; команда не раскрывает имена файлов, содержимое или ID сообщений.
+
+## Проверка места для вложений
+
+На deployment host определите точный путь тома командой `sudo docker volume inspect voice-platform_attachments-data --format '{{.Mountpoint}}'`. Для полученного пути выполните read-only `df -B1 <mountpoint>` и `findmnt -T <mountpoint>`; не подменяйте его измерением другого filesystem. Приватный API `/metrics` выводит `voice_platform_attachment_filesystem_available_bytes`, `voice_platform_attachment_filesystem_total_bytes` и после rollout BE-15 — `voice_platform_attachment_upload_reserved_bytes`. Перед новым upload требуется доступное место не менее `max(2 GiB, ceil(total/10)) + reserved + 25 000 000` байт. Если порог не выполнен, сохраните отказ HTTP 507 и увеличьте доступное место на этом filesystem. Опубликованную историю не удаляйте ради освобождения места.

@@ -3,7 +3,11 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $projectRoot
 try {
-    $resolved = docker compose --env-file .env.example -f compose.yaml --profile operator config --format json
+    if ($env:VOICE_PLATFORM_COMPOSE_CLI) {
+        $resolved = & $env:VOICE_PLATFORM_COMPOSE_CLI --env-file .env.example -f compose.yaml --profile operator config --format json
+    } else {
+        $resolved = docker compose --env-file .env.example -f compose.yaml --profile operator config --format json
+    }
     if ($LASTEXITCODE -ne 0) {
         throw 'Compose image configuration is invalid.'
     }

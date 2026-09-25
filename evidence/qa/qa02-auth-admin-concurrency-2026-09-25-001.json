@@ -1,0 +1,43 @@
+{
+  "id": "qa02-auth-admin-concurrency-2026-09-25-001",
+  "task": "QA-02",
+  "status": "PASS",
+  "executed_at": "2026-09-25",
+  "environment": "Local Ubuntu WSL, Go 1.26.0, PostgreSQL 16.14; migration-backed isolated schemas and local HTTP/WebSocket servers",
+  "checks": [
+    {
+      "name": "administrator_and_bootstrap_races",
+      "result": "PASS",
+      "evidence": ["evidence/qa/qa02-admin-race-2026-09-25-001.json", "evidence/qa/qa02-bootstrap-race-2026-09-25-001.json"]
+    },
+    {
+      "name": "one_time_reset_and_recovery_races",
+      "result": "PASS",
+      "evidence": ["evidence/qa/qa02-reset-race-2026-09-25-001.json", "evidence/qa/qa02-recovery-serialization-2026-09-25-001.json"]
+    },
+    {
+      "name": "live_session_role_and_websocket_revocation",
+      "result": "PASS",
+      "evidence": ["evidence/qa/qa02-session-revalidation-2026-09-25-001.json"]
+    },
+    {
+      "name": "topology_and_voice_transfer_races",
+      "result": "PASS",
+      "evidence": ["evidence/qa/qa02-topology-voice-races-2026-09-25-001.json"]
+    },
+    {
+      "name": "issued_reset_link_http_flow",
+      "result": "PASS",
+      "detail": "Production HTTP handlers and PostgreSQL repositories: member cannot issue link, administrator receives fragment token, completion succeeds once, reuse fails, old session and password fail, new password logs in. Five repeated runs passed; four frontend reset contract files passed 15 tests."
+    },
+    {
+      "name": "native_validation",
+      "result": "PASS",
+      "detail": "Full Go test event gate: 676 passed, 0 skipped, 0 failed; focused go vet passed."
+    }
+  ],
+  "boundaries": [
+    "Physical connected-media revocation is QA-10; PostgreSQL outbox state does not prove SFU removal.",
+    "Full browser reset completion on a pinned production bundle is QA-05."
+  ]
+}

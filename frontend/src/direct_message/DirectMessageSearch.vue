@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import MessageBody from '../conversation/MessageBody.vue'
+import { useAuthorDirectory } from '../identity/author_directory'
 import { searchDirectMessageHistory, type DirectMessageSearchResult } from './direct_message_search_client'
 
 const props = defineProps<{ directMessageId: string }>()
 const query = ref('')
 const activeQuery = ref('')
 const messages = ref<DirectMessageSearchResult[]>([])
+const authors = useAuthorDirectory()
+watch(messages, (results) => { for (const message of results) void authors.ensure(message.authorId) })
 const nextCursor = ref<string | undefined>()
 const loading = ref(false)
 const searched = ref(false)
@@ -34,6 +38,7 @@ async function runSearch(searchQuery: string, before: string | undefined, append
     error.value = 'Введите поисковый запрос.'
     return
   }
+  if (!validCodePointLength(searchQuery.trim(), 1, 256)) { error.value = 'Запрос должен содержать до 256 символов.'; return }
   const directMessageId = props.directMessageId
   const sequence = ++requestSequence
   loading.value = true
@@ -64,15 +69,15 @@ function loadMore(): void { if (nextCursor.value) void runSearch(activeQuery.val
     <form class="direct-search-form" role="search" @submit.prevent="submit">
       <label>
         Запрос
-        <input v-model="query" autocomplete="off" :disabled="loading" maxlength="256" placeholder="Слова или «точная фраза»" type="search">
+        <input v-model="query" autocomplete="off" :disabled="loading" :aria-describedby="error ? 'direct-search-error' : undefined" placeholder="Слова или «точная фраза»" type="search">
       </label>
       <button type="submit" :disabled="loading || !hasQuery">{{ loading ? 'Ищем…' : 'Найти' }}</button>
     </form>
-    <p v-if="error" class="direct-search-error" role="alert">{{ error }}</p>
+    <p v-if="error" id="direct-search-error" class="direct-search-error" role="alert">{{ error }}</p>
     <p v-else-if="searched" class="direct-search-status" aria-live="polite">{{ messages.length ? `Найдено в этой странице: ${messages.length}.` : 'Совпадений нет.' }}</p>
     <ol v-if="messages.length" class="direct-search-results" aria-label="Результаты поиска в личном диалоге">
       <li v-for="message in messages" :key="message.id" class="direct-search-result">
-        <p class="message-meta">{{ message.authorId }} · {{ new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }}<span v-if="message.editedAt"> · изменено</span></p>
+        <p class="message-meta">{{ authors.displayName(message.authorId) }} · {{ new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }}<span v-if="message.editedAt"> · изменено</span></p>
         <MessageBody :body="message.body" />
       </li>
     </ol>

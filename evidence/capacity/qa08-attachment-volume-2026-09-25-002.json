@@ -1,0 +1,47 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-002",
+  "kind": "production-attachment-volume-capacity",
+  "status": "FAIL",
+  "executed_at": "2026-09-25T07:33:18Z",
+  "environment": "deployment host 176.108.242.211, Docker Compose API container and named attachment volume",
+  "revision_checked": "b1917eb4c7441d2f16b4174cb9cdeabde8637f6d (workspace; deployed image revision not established)",
+  "method": [
+    "Strict-host-key, batch-mode SSH to the documented deployment host",
+    "Read-only sudo docker volume inspect voice-platform_attachments-data --format '{{.Mountpoint}}'",
+    "Read-only df -B1, findmnt -T and stat -f on the resolved mountpoint",
+    "Read-only API /metrics scrape over the host's private Docker network"
+  ],
+  "volume": {
+    "name": "voice-platform_attachments-data",
+    "mountpoint": "/var/lib/docker/volumes/voice-platform_attachments-data/_data",
+    "filesystem_device": "/dev/vda2",
+    "filesystem_type": "ext4",
+    "filesystem_mount": "/",
+    "total_bytes": 31591473152,
+    "available_bytes": 0,
+    "used_bytes_df": 30710345728,
+    "free_blocks_including_root_reserve": 215119,
+    "block_size_bytes": 4096,
+    "filesystem_available_percent": 0
+  },
+  "admission": {
+    "protected_threshold_bytes": 3159147316,
+    "threshold_formula": "max(2 GiB, ceil(total_bytes / 10))",
+    "one_upload_reservation_bytes": 25000000,
+    "minimum_available_to_admit_one_upload_bytes": 3184147316,
+    "in_flight_reserved_bytes": null,
+    "in_flight_note": "The current API exports attachment filesystem available/total/snapshot-success but no in-flight reservation gauge. An exact live reservation value cannot be read without changing observability or instrumenting the process. With 0 available bytes, admission fails regardless of any nonnegative in-flight reservation value."
+  },
+  "api_metrics": {
+    "voice_platform_attachment_filesystem_available_bytes": 0,
+    "voice_platform_attachment_filesystem_total_bytes": 31591473152,
+    "voice_platform_attachment_filesystem_snapshot_success": 1
+  },
+  "decision": "NO-GO: production attachment filesystem is below the required reserve and new attachment uploads must remain rejected with HTTP 507. Provision capacity on the actual filesystem, then repeat this measurement before closing QA-08 or release gates.",
+  "data_handling": "No files, published history, Docker volumes or containers were modified or deleted.",
+  "limitations": [
+    "The deployed API image revision was not established by this read-only check.",
+    "The API does not expose live in-flight reservation bytes; the value is unknown, not assumed zero.",
+    "Other services also share /dev/vda2; this record attributes no particular file or service to the usage."
+  ]
+}

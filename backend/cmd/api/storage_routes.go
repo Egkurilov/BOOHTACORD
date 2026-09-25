@@ -54,11 +54,11 @@ func configureStorageRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 	if err != nil {
 		return err
 	}
-	if err := metrics.RegisterAttachmentFilesystem(attachmentFilesystemMetricSource{space: space}); err != nil {
-		return err
-	}
 	manager, err := reserve.New(space)
 	if err != nil {
+		return err
+	}
+	if err := metrics.RegisterAttachmentFilesystem(attachmentFilesystemMetricSource{space: space, manager: manager}); err != nil {
 		return err
 	}
 	writer, err := writeupload.New(staging)
@@ -92,9 +92,16 @@ func configureStorageRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 	return nil
 }
 
-type attachmentFilesystemMetricSource struct{ space reserve.Space }
+type attachmentFilesystemMetricSource struct {
+	space   reserve.Space
+	manager *reserve.Manager
+}
 
 func (source attachmentFilesystemMetricSource) Snapshot(context context.Context) (httpmetrics.AttachmentFilesystemSnapshot, error) {
 	snapshot, err := source.space.Snapshot(context)
 	return httpmetrics.AttachmentFilesystemSnapshot{AvailableBytes: snapshot.AvailableBytes, TotalBytes: snapshot.TotalBytes}, err
+}
+
+func (source attachmentFilesystemMetricSource) ReservedBytes() int64 {
+	return source.manager.ReservedBytes()
 }

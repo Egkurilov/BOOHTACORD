@@ -1,6 +1,6 @@
 # GuildChat v1 — дизайн-система, план и текущий статус
 
-Срез ревью 24.09.2026: актуальная незавершённая работа находится в [design TODO](GUILDCHAT_V1_TODO.md), реализованное — в [DONE](../../DONE.md). Текущие frontend tests/build — **FAIL** из-за незавершённого viewer FPS (FE-01); подробности в [отчёте](../reviews/2026-09-24-functionality.md). Числа PASS и production bundle observations ниже относятся к прежним пакетам и не подтверждают готовность нынешнего рабочего дерева.
+Исторический срез ревью 24.09.2026 зафиксировал **FAIL** frontend tests/build из-за FE-01; подробности в [отчёте](../reviews/2026-09-24-functionality.md). На срезе 25.09.2026 FE-01…21 реализованы, локально прошли 460 frontend-тестов и TypeScript/Vite-сборка; [DES-01 matrix](GUILDCHAT_COMPONENT_MATRIX.md) сопоставляет все 40 компонентов. Актуальная незавершённая работа — в [design TODO](GUILDCHAT_V1_TODO.md), реализованное — в [DONE](../../DONE.md). Исторические production bundle observations ниже не подтверждают visual/browser-приёмку нынешней сборки.
 
 ## Назначение
 
