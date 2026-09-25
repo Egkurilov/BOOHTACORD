@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import MessageBody from '../conversation/MessageBody.vue'
@@ -7,7 +7,9 @@ import { useAuthorDirectory } from '../identity/author_directory'
 import { searchDirectMessageHistory, type DirectMessageSearchResult } from './direct_message_search_client'
 
 const props = defineProps<{ directMessageId: string }>()
+const emit = defineEmits<{ close: [] }>()
 const query = ref('')
+const queryInput = ref<HTMLInputElement | null>(null)
 const activeQuery = ref('')
 const messages = ref<DirectMessageSearchResult[]>([])
 const authors = useAuthorDirectory()
@@ -20,6 +22,7 @@ let requestSequence = 0
 
 const hasQuery = computed(() => query.value.trim().length > 0)
 const canLoadMore = computed(() => Boolean(nextCursor.value) && !loading.value && query.value === activeQuery.value)
+onMounted(() => queryInput.value?.focus())
 
 function reset(): void {
   requestSequence++
@@ -64,12 +67,12 @@ function loadMore(): void { if (nextCursor.value) void runSearch(activeQuery.val
 </script>
 
 <template>
-  <section class="direct-message-search" aria-labelledby="direct-search-title">
+  <section class="direct-message-search" aria-labelledby="direct-search-title" @keydown.esc.stop.prevent="emit('close')">
     <h3 id="direct-search-title">Поиск в диалоге</h3>
-    <form class="direct-search-form" role="search" @submit.prevent="submit">
+    <form class="direct-search-form" role="search" :aria-busy="loading" @submit.prevent="submit">
       <label>
         Запрос
-        <input v-model="query" autocomplete="off" :disabled="loading" :aria-describedby="error ? 'direct-search-error' : undefined" placeholder="Слова или «точная фраза»" type="search">
+        <input ref="queryInput" v-model="query" autocomplete="off" :readonly="loading" :aria-describedby="error ? 'direct-search-error' : undefined" placeholder="Слова или «точная фраза»" type="search">
       </label>
       <button type="submit" :disabled="loading || !hasQuery">{{ loading ? 'Ищем…' : 'Найти' }}</button>
     </form>

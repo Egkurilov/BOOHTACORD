@@ -1,0 +1,42 @@
+{
+  "id": "des05-dm-search-keyboard-2026-09-25-001",
+  "tasks": ["DES-05", "QA-05"],
+  "kind": "isolated-fixed-bundle-keyboard-focus-verification",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T11:20:02Z",
+  "base_commit": "6e10baa",
+  "bundle": {
+    "build": "npm run build: PASS (vue-tsc --noEmit && vite build)",
+    "entry_js_sha256": "83dcb3739d678035046dfa9697a01bef91bf295127a562c4fefe731af747d7a0",
+    "entry_css_sha256": "cdc722811f699bd95f0e91440dd595e1fbb0fa9e22222a54c80eae8b673e9b24"
+  },
+  "environment": "Codex in-app browser, fixed Vue bundle, current Go API, disposable PostgreSQL schema, synthetic DM pair; CSS viewports 1280, 1024 and 883 by 720; no production data",
+  "checks": [
+    {
+      "name": "baseline_dm_search_focus",
+      "result": "FAIL_LOCAL_BEFORE_FIX",
+      "detail": "The DM search trigger opened the inline search but left focus on the trigger. Submitting while the search input became disabled moved focus to the web area."
+    },
+    {
+      "name": "dm_search_focus_after_fix",
+      "result": "PASS_LOCAL",
+      "detail": "On the rebuilt bundle at 883 and 1280 CSS px, opening inline DM search focused the query. Submitting an empty-result search kept focus in the query; Escape closed it and returned focus to the trigger."
+    },
+    {
+      "name": "workspace_keyboard_baseline",
+      "result": "PASS_LOCAL",
+      "detail": "At 1280 CSS px the global search shortcut focused query and Escape restored the trigger; a member popover returned focus to its card. At 1024 CSS px global search had dialog/aria-modal, inert background, Shift+Tab wrap and Escape restoration. At 883 CSS px the navigation drawer had dialog/aria-modal, inert main, Shift+Tab wrap and Escape restoration. Ctrl+K in the DM composer did not open global search."
+    },
+    {
+      "name": "frontend_validation",
+      "result": "PASS_LOCAL",
+      "detail": "All 161 Vitest files and 471 tests passed; TypeScript/Vite build passed. The two edited components remain at 100 and 82 lines."
+    },
+    {
+      "name": "fixture_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "The temporary schema count was zero, ports 18084 and 18770 had no listeners, temporary attachment directory and Go binaries were removed, and the browser viewport was reset."
+    }
+  ],
+  "remaining": "Actual screen-reader traversal, all admin/reset/voice keyboard states, zoom and screenshot comparison, and trusted release bundle acceptance remain open under DES-05/QA-05."
+}
