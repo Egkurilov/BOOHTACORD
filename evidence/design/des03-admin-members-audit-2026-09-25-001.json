@@ -1,0 +1,41 @@
+{
+  "id": "des03-admin-members-audit-2026-09-25-001",
+  "tasks": ["DES-03", "DES-05", "QA-05"],
+  "kind": "isolated-fixed-bundle-admin-members-audit-browser",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T12:20:30Z",
+  "source_commit": "38e5386",
+  "bundle": {
+    "entry_js_sha256": "e1ec8e486c2fd689fdeb370c42e5090b04c5a9bc06ee2405c5f58d0b7d66aecf",
+    "entry_css_sha256": "a64c119f6735c3377eaf76d8d6681e4dd9fb83e8ce54b86f6052a2a195bf0ef0"
+  },
+  "environment": "Codex in-app browser, fixed Vue bundle, local Go API and disposable PostgreSQL schema with three synthetic accounts; 320 and 1280 by 720 CSS px; no production data",
+  "checks": [
+    {
+      "name": "mobile_admin_keyboard_table",
+      "result": "PASS_LOCAL",
+      "detail": "Opening admin from the 320 CSS px modal drawer focused its h1. Tab traversed section tabs, refresh, focusable horizontally scrolling table, role select, blocked checkbox and row actions. The table scrolled to focused controls; document scrollWidth remained 320."
+    },
+    {
+      "name": "role_and_block_mutations",
+      "result": "PASS_LOCAL",
+      "detail": "One synthetic MEMBER was promoted to ADMINISTRATOR and a different synthetic MEMBER was blocked through the browser. Both saves showed success without error; explicit list refresh preserved the new role and blocked state from the server."
+    },
+    {
+      "name": "audit_and_desktop_layout",
+      "result": "PASS_LOCAL",
+      "detail": "The audit panel rendered five events, including two ACCOUNT_ADMIN_STATE_UPDATED records, without error. Tab from the selected Audit tab reached Refresh. The audit list fitted the 1280 CSS px workspace without document overflow."
+    },
+    {
+      "name": "fixture_transport",
+      "result": "PASS_LOCAL",
+      "detail": "An initial attempt returned HTML because the disposable localhost proxy forwarded only GET/POST. The proxy was extended to forward PATCH, restarted with a fresh schema, and the browser role/block mutations then passed. No product source change was needed."
+    },
+    {
+      "name": "fixture_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "Browser viewport reset and tab closed; disposable schema count zero, fixture ports idle, temporary attachment directory and Go binaries removed."
+    }
+  ],
+  "remaining": "DES-03/05 and QA-05 remain open for full admin and screen-reader traversal, reset result handling, connected-media voice finalization, actual browser zoom and trusted release bundle acceptance."
+}
