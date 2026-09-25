@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import { login, register } from './auth_client'
 
+const props = withDefaults(defineProps<{ focusLoginOnMount?: boolean }>(), { focusLoginOnMount: false })
 const emit = defineEmits<{ authenticated: [] }>()
 const mode = ref<'login' | 'register'>('login')
 const loginValue = ref('')
+const loginInput = ref<HTMLInputElement | null>(null)
 const password = ref('')
 const pending = ref(false)
 const error = ref<string | null>(null)
+
+onMounted(() => { if (props.focusLoginOnMount) loginInput.value?.focus() })
 
 function chooseMode(nextMode: 'login' | 'register'): void {
   mode.value = nextMode
@@ -47,7 +51,7 @@ async function submit(): Promise<void> {
       <form class="authentication-form" @submit.prevent="submit">
         <label class="authentication-field">
           Логин
-          <input v-model="loginValue" autocomplete="username" maxlength="32" minlength="3" pattern="[A-Za-z0-9_.-]{3,32}" required :aria-describedby="error ? 'authentication-error' : undefined" :aria-invalid="Boolean(error)">
+          <input v-model="loginValue" ref="loginInput" autocomplete="username" maxlength="32" minlength="3" pattern="[A-Za-z0-9_.-]{3,32}" required :aria-describedby="error ? 'authentication-error' : undefined" :aria-invalid="Boolean(error)">
         </label>
         <label class="authentication-field">
           Пароль

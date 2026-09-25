@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
+
 import { createPasswordResetForm } from './password_reset_form'
+import { usePasswordResetResultFocus } from './password_reset_result_focus'
 
 const props = defineProps<{ validLink: boolean; complete: (password: string) => Promise<void> }>()
 const emit = defineEmits<{ invalidLink: []; returnToLogin: [] }>()
@@ -7,6 +10,8 @@ const { password, confirmation, pending, completed, unusable, error, submit } = 
   (value) => props.complete(value),
   () => emit('invalidLink'),
 )
+const resultMessage = ref<HTMLElement | null>(null)
+usePasswordResetResultFocus(computed(() => completed.value || unusable.value || !props.validLink), resultMessage)
 </script>
 
 <template>
@@ -14,8 +19,8 @@ const { password, confirmation, pending, completed, unusable, error, submit } = 
     <section class="authentication-card">
       <p class="eyebrow">Безопасность аккаунта</p>
       <h1 id="password-reset-title">Новый пароль</h1>
-      <p v-if="completed" class="authentication-intro" role="status">Пароль изменён. Войдите в аккаунт с новым паролем.</p>
-      <p v-else-if="!validLink || unusable" class="authentication-error" role="alert">{{ error ?? 'Ссылка недействительна или срок её действия истёк. Попросите администратора выдать новую ссылку.' }}</p>
+      <p v-if="completed" ref="resultMessage" class="authentication-intro" role="status" tabindex="-1">Пароль изменён. Войдите в аккаунт с новым паролем.</p>
+      <p v-else-if="!validLink || unusable" ref="resultMessage" class="authentication-error" role="alert" tabindex="-1">{{ error ?? 'Ссылка недействительна или срок её действия истёк. Попросите администратора выдать новую ссылку.' }}</p>
       <form v-else class="authentication-form" @submit.prevent="submit">
         <label class="authentication-field">Новый пароль
           <input v-model="password" type="password" autocomplete="new-password" required :disabled="pending" :aria-invalid="Boolean(error)" :aria-describedby="error ? 'password-reset-error' : undefined">
