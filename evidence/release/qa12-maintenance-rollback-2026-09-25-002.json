@@ -1,0 +1,44 @@
+{
+  "id": "qa12-maintenance-rollback-2026-09-25-002",
+  "task": "QA-12",
+  "kind": "isolated-failure-and-previous-image-rehearsal",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T16:18:16Z",
+  "base_commit": "4ce70a7bf498dca5f8e8ae7ea2d5bf68551e6431",
+  "artifacts_committed": false,
+  "acceptance_source": "backlog/VERIFICATION_TODO.md:45",
+  "environment": {
+    "real_compose": "NOT_RUN",
+    "reason": "docker info could not reach npipe:////./pipe/dockerDesktopLinuxEngine (pipe missing); no disposable local Docker/PostgreSQL environment was available.",
+    "production": "No production connection, rollback, volume mutation, or history operation was performed."
+  },
+  "checks": [
+    {
+      "status": "PASS",
+      "command": "C:/Program Files/Git/bin/bash.exe scripts/deploy-images-rollback.test.sh",
+      "scope": "Temporary project, synthetic digest references, fake Docker/curl/sleep and synthetic PostgreSQL/attachment volume files.",
+      "verified": [
+        "Failure injected at proxy rollout after API/web switched to new references; maintenance cleanup disabled admission and no health request ran.",
+        "A separate invocation with previous references restored API/web and .env; health request completed before admission disable.",
+        "Synthetic volume identity markers and content file SHA-256 outputs were identical before and after both invocations; no destructive volume command appeared in the fake Docker trace."
+      ]
+    },
+    {
+      "status": "PASS",
+      "command": "C:/Program Files/Git/bin/bash.exe scripts/deploy-images.test.sh",
+      "scope": "Existing fake-Docker deploy ordering and failure cleanup tests."
+    },
+    {
+      "status": "PASS",
+      "command": "go test ./internal/maintenance/admission/... (backend)",
+      "scope": "Admission service, HTTP state, middleware and PostgreSQL package tests; local test process only."
+    }
+  ],
+  "not_established": [
+    "Two independent authenticated browser/API sessions did not observe a maintenance warning and rejection of new admissions during a real deployment.",
+    "No actual schema compatibility check or rollback against PostgreSQL was exercised.",
+    "Real Docker volume identities and PostgreSQL/attachment contents were not measured before and after rollout/rollback.",
+    "Fake-Docker assertions prove script behavior for this injected failure only; they do not establish production rollback acceptance."
+  ],
+  "next_step": "Provide a disposable Docker daemon and PostgreSQL/attachment volumes, then run a controlled compatible-image failure/return with two independent clients and read-only before/after volume identity/content measurements; keep production untouched."
+}

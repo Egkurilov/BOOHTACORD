@@ -1,0 +1,29 @@
+{
+  "id": "qa14-readiness-2026-09-25-010",
+  "kind": "post-upload-geometry-rollback-and-media-preflight-requirement-matrix-refresh",
+  "status": "FAIL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T16:35:50Z",
+  "source_base_commit": "4ce70a7bf498dca5f8e8ae7ea2d5bf68551e6431",
+  "candidate_frontend_js_sha256": "7c7b49df3b5025969a01449dccac131e99b3cf306fb15c4455eed7e096844d65",
+  "candidate_frontend_css_sha256": "ffd7f0a2757483031a020b7ffdaaabe00e5ee87e097140c3b6b3d0780a76721e",
+  "requirements": {"total": 39, "mapped": 39, "matrix": "docs/release/2026-09-25-requirements-matrix.md"},
+  "todo": {"total": 55, "completed": 37, "open": 18, "open_backend": 0, "open_frontend": 0, "open_design": 7, "open_verification": 11},
+  "latest_trusted_ci_at_decision": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1648126",
+  "candidate_status": "New source geometry and QA-12 rehearsal are local, not yet in a trusted master release at this decision time. The QA-05 DataTransfer run used a fixed local bundle built from the prior master commit.",
+  "new_evidence": [
+    "evidence/design/des08-chat-geometry-2026-09-25-001.json",
+    "evidence/design/des08-chat-geometry-browser-2026-09-25-001.json",
+    "evidence/qa/qa05-browser-upload-datatransfer-2026-09-25-001.json",
+    "evidence/release/qa12-maintenance-rollback-2026-09-25-002.json",
+    "evidence/poc-03/poc-03-preflight-2026-09-25-001.json"
+  ],
+  "blocking_gates": [
+    "QA-08: exact-volume snapshot/guard passes but sustainable headroom for future builds and uploads remains unproven",
+    "QA-06/07/09/10: physical media, hardware load and connected-revocation/replay POCs; QA-10 local runtime unavailable",
+    "QA-03/05 and DES-02..08: permission-based browser notification, native chooser, real low-disk 507, screen reader, connected-media visual and full screenshot acceptance",
+    "QA-11/12: approved delivery contract, immutable artifacts and real compatible rollback with volume identity/content",
+    "QA-13: signed Android release APK and physical-device acceptance"
+  ],
+  "note": "The new browser geometry, upload ACL and synthetic rollback evidence improve coverage but are PARTIAL. No mandatory media, capacity, delivery or release gate was promoted to PASS."
+}

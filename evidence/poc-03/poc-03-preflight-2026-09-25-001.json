@@ -1,0 +1,26 @@
+{
+  "id": "poc-03-preflight-2026-09-25-001",
+  "task": "QA-10",
+  "source_commit": "4ce70a7bf498dca5f8e8ae7ea2d5bf68551e6431",
+  "observed_at": "2026-09-25T16:17:34Z",
+  "status": "BLOCKED",
+  "scope": "local operator preflight only; connected media and credential replay not run",
+  "checks": [
+    {
+      "name": "compose_manifest",
+      "result": "PASS",
+      "detail": "docker compose config --quiet exited 0 with synthetic, process-local non-production values for required variables. No stack was started."
+    },
+    {
+      "name": "local_container_runtime",
+      "result": "BLOCKED",
+      "detail": "Windows Docker Desktop executable and com.docker.service were absent; Docker engine was unavailable. WSL /usr/bin/docker is a nonfunctional 33-byte wrapper, so the existing socket did not provide a usable client."
+    },
+    {
+      "name": "connected_media_and_replay",
+      "result": "NOT_RUN",
+      "detail": "No isolated two-browser LiveKit stack, active presenter track, observer track, pinned running image digest or pre-revocation credentials could be produced in this local environment."
+    }
+  ],
+  "next_action": "Run docs/POC_03_OPERATOR_RUNBOOK.md on an authorized test host with a working container engine, exact LiveKit image digest and two independent clients; record all seven revocation actions and both replay classes before marking QA-10 PASS."
+}

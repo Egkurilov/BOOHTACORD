@@ -1,0 +1,41 @@
+{
+  "id": "qa05-browser-upload-datatransfer-2026-09-25-001",
+  "tasks": ["QA-05", "DES-02"],
+  "kind": "isolated-release-bundle-browser-upload-and-dm-acl-recheck",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25",
+  "source": {
+    "commit": "4ce70a7bf498dca5f8e8ae7ea2d5bf68551e6431",
+    "frontend_working_tree_at_build": "Clean at the specified commit; later unrelated geometry edits are not in this copied fixed bundle.",
+    "bundle": "Local npm run build PASS (vue-tsc and Vite, 277 modules); copied fixed bundle, not a trusted release artifact.",
+    "entry_javascript_sha256": "cc870c7f7aaf3d8825c06445224804b5e8d97acf83930bfd450682fa5094978e",
+    "entry_css_sha256": "b049b58aec84c842a95844a132951a992e2b4325762c9799f9680400569bec23",
+    "backend_provenance": "Local Go binary was built from the earlier ba38bb3 checkout; git diff --quiet confirms backend sources identical between ba38bb3 and 4ce70a7. This is not a trusted deployed binary."
+  },
+  "fixture": {
+    "scope": "Disposable local Go/PostgreSQL schema and private attachment directory; three synthetic accounts, one shared TEXT channel and one two-participant DM. No production data or LiveKit.",
+    "browser": "Installed Chrome headless CLI with isolated profiles and same-origin synthetic login; no session cookie or token in browser arguments, URL, logs or evidence. No remote debugging was used.",
+    "file_selection_method": "Browser-side DataTransfer assigned synthetic File objects to the real TEXT/DM input.files and dispatched change. The visible attach trigger was clicked separately with input.click instrumented; this did not select a system file.",
+    "storage": "Local attachment volume had ample headroom; no attempt was made to fill or alter it to force a real 507."
+  },
+  "checks": [
+    {"name": "visible_attach_trigger", "result": "PASS_LOCAL", "detail": "TEXT and DM visible + buttons each invoked their hidden file input click once. Native operating-system file chooser and physical file selection were NOT_RUN in headless CLI."},
+    {"name": "text_upload_ui", "result": "PASS_LOCAL_HARNESS", "detail": "A 25,000,001-byte File was rejected by client validation without upload; pending label rendered during a delayed response; injected HTTP 507 showed error; re-selecting the same synthetic PNG made a real POST return 201; sending bound the file to a TEXT message; authenticated download and normalized preview returned 200."},
+    {"name": "dm_upload_ui", "result": "PASS_LOCAL_HARNESS", "detail": "The same over-limit and delayed pending checks passed; injected HTTP 507 exposed the DM retry button; clicking retry made a real POST return 201; sending bound the file to a DM message; authenticated download and normalized PNG preview returned 200."},
+    {"name": "dm_private_file_acl", "result": "PASS_LOCAL", "detail": "The sender and the second participant each received 200 for protected download and preview. The second participant received 128 source bytes, attachment disposition, no-store and nosniff headers; preview was image/png with no-store and nosniff. A third guild member received 404 for both URLs and the DM was absent from its navigation API list."},
+    {"name": "database_and_filesystem", "result": "PASS_LOCAL", "detail": "Five small successful uploads were ATTACHED and linked (two TEXT, three DM); zero UNATTACHED rows and zero staging files. Failed client-limit and injected-507 attempts did not create attachment rows."},
+    {"name": "native_file_chooser", "result": "NOT_RUN", "detail": "Chrome headless CLI provides no supported physical file-selection interaction in this packet; the DataTransfer run is not evidence that a person selected a file in the operating-system chooser."},
+    {"name": "real_server_507", "result": "NOT_RUN", "detail": "The 507 was injected into browser fetch to test UI recovery. The real server's low-headroom path was not exercised on the healthy local volume."}
+  ],
+  "local_png_artifacts": [
+    {"state": "TEXT attach trigger", "path": "evidence/design/artifacts/qa05-upload-text-trigger-2026-09-25.png", "size": "1440x900", "sha256": "48018e5f7ca6b3b81c1f29ebf8c62d922732738f761090dc00f2cbc9627071bd"},
+    {"state": "DM attach trigger", "path": "evidence/design/artifacts/qa05-upload-dm-trigger-final-2026-09-25.png", "size": "1440x900", "sha256": "b51935da07ae51c8297bd6d96ae730785f99f534e68350ee0f13b570836b0e08"},
+    {"state": "TEXT upload and preview", "path": "evidence/design/artifacts/qa05-upload-text-flow-valid-2026-09-25.png", "size": "1440x900", "sha256": "f260204e72ddcfe2ebdbc2b8226eb74b2c447cec1334010f5557e711ff2d0974"},
+    {"state": "DM upload and preview", "path": "evidence/design/artifacts/qa05-upload-dm-flow-valid-2026-09-25.png", "size": "1440x900", "sha256": "76ebc568102f794208a3d4d7a0f46d2f1884f31740d70de340a9e621351a541e"},
+    {"state": "second DM participant ACL", "path": "evidence/design/artifacts/qa05-upload-dm-member-acl-final-2026-09-25.png", "size": "1440x900", "sha256": "c905a94cb01cc21c5299b131f16db43ed38cf66426bd4cd23ba6713250850e9c"},
+    {"state": "third guild member denial", "path": "evidence/design/artifacts/qa05-upload-dm-outsider-acl-final-2026-09-25.png", "size": "1440x900", "sha256": "ece822aa17fed045b4d4650d243d26c003bbb965caac0b9a127a1f2cef1344df"}
+  ],
+  "artifact_policy": "PNG files are local-only in ignored evidence/design/artifacts/ and were not staged; the JSON contains no message body, credential, session token or DM identifier.",
+  "cleanup": "The release preview and local API were stopped; ports 18775 and 18089 were verified idle. The exact disposable PostgreSQL schema qa05upload_4ce70a7 was dropped and verified absent. Synthetic attachment files, harness files and isolated Chrome profiles remain in TEMP; filesystem deletion was not retried after an earlier automatic review rejected exact-file removal as blocked by policy. PNGs remain ignored and unstaged.",
+  "remaining_gate": "QA-05 and DES-02 remain open: exercise a real system file chooser/selection in an allowed browser environment, verify a real low-headroom 507 without filling production storage, and complete the remaining browser/screen-reader acceptance criteria."
+}

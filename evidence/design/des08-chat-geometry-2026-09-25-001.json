@@ -1,0 +1,36 @@
+{
+  "id": "des08-chat-geometry-2026-09-25-001",
+  "tasks": ["DES-08", "FE-22"],
+  "kind": "local-chat-geometry-source-and-test-review",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25",
+  "source": {
+    "base_commit": "4ce70a7bf498dca5f8e8ae7ea2d5bf68551e6431",
+    "bundle": "Locally built from the uncommitted working tree; not a trusted release artifact.",
+    "javascript_sha256": "7c7b49df3b5025969a01449dccac131e99b3cf306fb15c4455eed7e096844d65",
+    "css_sha256": "ffd7f0a2757483031a020b7ffdaaabe00e5ee87e097140c3b6b3d0780a76721e",
+    "changed_file_sha256": {
+      "frontend/src/conversation/TextHistoryList.vue": "c72c91f3f1430986963b5aa8403211f94f4c3e4ac9b26a81dd3559bb943a7983",
+      "frontend/src/direct_message/DirectMessageHistoryList.vue": "40b6bab72f3bdd35bdbbd694607cec0bc7439dba8dbf57a017db81902c03cd57",
+      "frontend/src/design/conversation.css": "ee44518e19b11da1f4caafd19cd8a07106fba5f8d77d5ab3649be90a0f819370"
+    }
+  },
+  "reference": "evidence/design/des08-fe35-39-authenticated-recheck-2026-09-25-001.json",
+  "changes": [
+    "Desktop message-list horizontal padding is 24 px and message avatar/content gap is 12 px; with the existing 40 px avatar, the predicted content/card left edge is x=356 at 1440 CSS px. The narrow 16 px list padding predicts x=68 at 640 CSS px. These are CSS calculations, not new browser measurements.",
+    "Published TEXT/DM attachment card width is capped at 340 px and minimum height is 62 px, matching the reference target values in CSS. Private preview/download URLs and accessible link names are unchanged.",
+    "After the last history page loads, TEXT and DM show a visible 'Начало' marker in the first date divider with role=status and aria-label 'Это начало истории.'. The separate flow row is removed, so the boundary no longer adds a row before the date; earlier-page controls and log semantics remain."
+  ],
+  "validation": {
+    "red_first": "PASS: focused tests failed before the source change for the old card dimensions, offsets and standalone history row.",
+    "focused": "PASS: 4 test files, 9 tests.",
+    "frontend_suite": "PASS: 183 test files, 536 tests.",
+    "frontend_build": "PASS: vue-tsc --noEmit and Vite build, 277 modules.",
+    "diff_check": "PASS: git diff --check for scoped source and test files."
+  },
+  "screenshot_comparison": {
+    "result": "NOT_RUN",
+    "reason": "The prior DES-08 disposable PostgreSQL schema and authenticated fixture were removed after their capture. A matching new local fixture was not rebuilt in this bounded source packet; existing PNGs describe the prior bundle and cannot validate this change."
+  },
+  "remaining_gate": "DES-08 stays open. Rebuild a matching synthetic local fixture and capture TEXT at 1440x900 and 640x720 plus DM, then compare actual card bounds, date/status placement and scrolling at a fixed source revision; connected LiveKit voice/stream, keyboard/screen-reader and required width/zoom checks are still outstanding."
+}

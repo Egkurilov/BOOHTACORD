@@ -1,0 +1,22 @@
+{
+  "id": "des08-chat-geometry-browser-2026-09-25-001",
+  "tasks": ["DES-08", "QA-05"],
+  "kind": "authenticated-local-geometry-recheck-after-source-patch",
+  "status": "PARTIAL",
+  "base_commit": "4ce70a7bf498dca5f8e8ae7ea2d5bf68551e6431",
+  "candidate": "Uncommitted frontend source; local Vite bundle JS sha256 7c7b49df3b5025969a01449dccac131e99b3cf306fb15c4455eed7e096844d65, CSS sha256 ffd7f0a2757483031a020b7ffdaaabe00e5ee87e097140c3b6b3d0780a76721e",
+  "environment": "Chrome headless CLI with isolated profiles, device scale 1 and synthetic same-origin login; local Go/PostgreSQL fixture from QA-05, no LiveKit connection. Temporary HTML added only local probes and did not alter product JS/CSS. No cookie or token was supplied in CLI arguments or recorded here.",
+  "captures": [
+    {"state": "TEXT selected", "png": "evidence/design/artifacts/geometry-origin-1440.png", "pixels": "1440x900", "sha256": "fa288bd5d60a6b20627ceecc2e2309aa97decf35576f7f7caf3e1afb209634be"},
+    {"state": "TEXT selected", "png": "evidence/design/artifacts/geometry-origin-640.png", "pixels": "640x720", "sha256": "5e6f37a244f453e6a6e61e321513580cb86d32270eb701ac83a93aa95d43d8e0"},
+    {"state": "DM selected", "png": "evidence/design/artifacts/geometry-origin-dm-1440.png", "pixels": "1440x900", "sha256": "5b6daef9d198b0544190e7120b66da6840bbf9b0513484eb935308fbfa753665"}
+  ],
+  "dom_probe": {
+    "desktop": {"actual_css_viewport": "1418x802", "card": "x=357 y=269 width=340 height=62", "first_date_divider": "x=305 y=113 height=20", "start_marker": "x=305 y=113 height=20", "png_sha256": "31a54c790bcc9912145a36b547fd77b874653b4912fa1f64278d7f73078595c4"},
+    "narrow": {"actual_css_viewport": "618x622", "card": "x=68 y=232 width=340 height=62", "first_date_divider": "x=16 y=76 height=20", "start_marker": "x=16 y=76 height=20", "png_sha256": "d7e42c79ee579e4ca00b33bc24e97042fcce7e4ad98fd8d17cddf9078974e626"},
+    "method": "getBoundingClientRect read by a temporary page script and rendered into local probe PNGs; the requested Chrome window sizes exceed actual CSS viewports by browser framing."
+  },
+  "comparison": "The measured card is 340x62 on both widths and begins at x=357 desktop/x=68 narrow, within 1 px of the prior reference estimate x=356/x=68. The beginning marker shares the first date divider's y coordinate; no separate flow row remains. The synthetic fixture has additional upload messages and different scroll/content from the archived reference, so whole-screen pixel parity is not established.",
+  "limits": ["PNG artifacts are ignored local files and were not staged; hashes permit local inspection but are not portable release artifacts.", "No hover/focus, 320/1024 widths, zoom, screen reader, connected voice or selected stream acceptance was performed in this packet.", "QA-05 and DES-08 remain open; this bundle was not a trusted release image."],
+  "cleanup": "Geometry preview on 127.0.0.1:18775 stopped after captures; QA-05 owns disposable API/schema cleanup."
+}
