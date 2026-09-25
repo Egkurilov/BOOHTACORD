@@ -1,6 +1,5 @@
 # Реализовано — BOOHTACORD
-Срез кода: 25.09.2026, ветка codex/voice-platform-foundation. Этот список отделён от [оставшихся задач](TODO.md). Отметка означает наличие подключённой реализации, а не полную приёмку всего T-пакета.
-Исходный аудит — в [ревью 24.09](docs/reviews/2026-09-24-functionality.md); проверка нового backend — в [отчёте 25.09](docs/reviews/2026-09-25-backend-delivery.md).
+Срез кода: 26.09.2026, ветка codex/voice-platform-foundation. Этот список отделён от [оставшихся задач](TODO.md); отметка означает наличие подключённой реализации, а не полную приёмку всего T-пакета. Исходный аудит — в [ревью 24.09](docs/reviews/2026-09-24-functionality.md), проверка backend — в [отчёте 25.09](docs/reviews/2026-09-25-backend-delivery.md).
 
 ## Бэкенд и контракты
 
@@ -19,7 +18,7 @@
 - [x] **T-044:** безопасный stale-staging cleanup, bounded operator CLI для UNATTACHED и скрытых файлов, retry и проверка живых ссылок. Источники: backend/cmd/cleanup_* и storage leaves.
 - [x] **T-003:** authenticated same-origin WS, presence snapshot/change с учётом нескольких вкладок, TEXT и приватные DM hints, bounded queue/resync, повторная проверка session и durable replay с повторной ACL-проверкой. Источники: realtime_routes.go, realtime/connect_session, event_hub.
 
-## Реализованные backend leaf-задачи BE-01…BE-16 (25.09.2026)
+## Реализованные backend leaf-задачи BE-01…BE-17 (25–26.09.2026)
 
 - [x] **BE-01:** конкурентный TEXT retry возвращает исходное сообщение только при конфликте его idempotency key; PostgreSQL race-тест подтверждает одну строку и одну связь вложений.
 - [x] **BE-02:** DM create/edit/delete публикуют ID-only события только двум текущим участникам; ACL и session перепроверяются перед приватной доставкой.
@@ -37,6 +36,7 @@
 - [x] **BE-14:** PostgreSQL-журнал realtime с курсором `after`, 7-дневным сроком, лимитом 512, повторной session/ACL-проверкой и явным REST resync при разрыве непрерывности или смене epoch.
 - [x] **BE-15:** метрика `voice_platform_attachment_upload_reserved_bytes` читает текущие in-flight bytes из общего admission manager TEXT/DM; focused тесты проверяют активную резервацию, release и scrape даже при ошибке filesystem snapshot. [Trusted production scrape](evidence/capacity/qa08-attachment-volume-2026-09-25-010.json) PASS с 0 байт на idle snapshot; долгосрочный QA-08 открыт.
 - [x] **BE-16:** при каждом разрешённом запросе LiveKit credential сервер читает текущее `users.display_name` для active lease и подписывает его как JWT `name`; существующие identity, metadata и grants сохранены. [Source-регрессия](evidence/design/voice-participant-display-name-2026-09-25-001.json), `go test ./...` и contract guard PASS; реальный звонок и обновление имени после переподключения остаются DES-04/QA-06.
+- [x] **BE-17:** обработчик TEXT download выставляет `Cache-Control: no-store` для успешного ответа и недоступного файла (404), запрещая совместимым HTTP-кешам сохранять приватный ответ. [Локальный browser/API прогон](evidence/qa/qa05-valid-png-text-dm-browser-2026-09-26-001.json) выявил прежний пробел; focused Go-тест сначала воспроизвёл его, затем прошёл с исправлением. OpenAPI для TEXT/DM download теперь явно требует этот заголовок. Полная QA-05 приёмка остаётся открытой.
 - [x] **QA-08 / release guard leaf:** installer проверяет точный Docker attachment volume и запас `2 × max(2 GiB, ⌈10% total⌉) + 25 МБ` до promotion/build и повторно после build до maintenance; неизвестный volume или `df` останавливают выпуск. Shell boundary/failure/order тесты, полный release-guard и [trusted volume checks](evidence/capacity/qa08-attachment-volume-2026-09-25-010.json) прошли; долгосрочная capacity остаётся QA-08.
 - [x] **QA-08 / read-only audit leaf:** master-only ручной GitVerse workflow и шаг после trusted rollout сверяют точный Docker volume, `df`/`findmnt`, текущий API image/health и приватные filesystem/reservation метрики; отсутствие данных или недостаточный запас с учётом in-flight bytes останавливают аудит. Shell-тесты, static checks и [trusted production audit](evidence/capacity/qa08-attachment-volume-2026-09-25-010.json) PASS; устойчивый запас остаётся QA-08.
 - [x] **QA-13 / signing source leaf:** Android release-сборка требует отдельный секретный keystore, полный набор CI-переменных либо игнорируемый local `key.properties`; debug signing fallback удалён, неполные входы останавливают release task. Source guard PASS; signed APK/physical-device acceptance остаются в QA-13.

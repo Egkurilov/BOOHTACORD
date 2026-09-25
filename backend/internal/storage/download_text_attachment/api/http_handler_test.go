@@ -29,7 +29,8 @@ func TestHandlerForcesAuthorizedSVGToSafeDownload(t *testing.T) {
 	NewHandler(downloader).ServeHTTP(recorder, authenticatedRequest())
 	if recorder.Code != http.StatusOK || downloader.input.ActorID != actorID || downloader.input.ChannelID != channelID || downloader.input.AttachmentID != attachmentID ||
 		recorder.Header().Get("Content-Type") != "application/octet-stream" || !strings.HasPrefix(recorder.Header().Get("Content-Disposition"), "attachment;") ||
-		recorder.Header().Get("X-Content-Type-Options") != "nosniff" || recorder.Header().Get("Content-Length") != "10" || recorder.Body.String() != "safe bytes" {
+		recorder.Header().Get("X-Content-Type-Options") != "nosniff" || recorder.Header().Get("Cache-Control") != "no-store" ||
+		recorder.Header().Get("Content-Length") != "10" || recorder.Body.String() != "safe bytes" {
 		t.Fatalf("status = %d, input = %#v, headers = %#v, body = %q", recorder.Code, downloader.input, recorder.Header(), recorder.Body.String())
 	}
 }
@@ -38,7 +39,8 @@ func TestHandlerHidesUnavailableAttachmentMetadata(t *testing.T) {
 	downloader := &fakeDownloader{err: downloadtextattachment.ErrAttachmentUnavailable}
 	recorder := httptest.NewRecorder()
 	NewHandler(downloader).ServeHTTP(recorder, authenticatedRequest())
-	if recorder.Code != http.StatusNotFound || !strings.Contains(recorder.Body.String(), `"NOT_FOUND"`) || strings.Contains(recorder.Body.String(), storageKey) || strings.Contains(recorder.Body.String(), "game-log.svg") {
+	if recorder.Code != http.StatusNotFound || recorder.Header().Get("Cache-Control") != "no-store" ||
+		!strings.Contains(recorder.Body.String(), `"NOT_FOUND"`) || strings.Contains(recorder.Body.String(), storageKey) || strings.Contains(recorder.Body.String(), "game-log.svg") {
 		t.Fatalf("status = %d, body = %q", recorder.Code, recorder.Body.String())
 	}
 }

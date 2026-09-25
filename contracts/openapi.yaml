@@ -120,6 +120,7 @@
             "description": "Private bytes with forced attachment disposition and nosniff",
             "headers": {
               "Content-Disposition": { "schema": { "type": "string" } },
+              "Cache-Control": { "schema": { "type": "string", "enum": ["no-store"] } },
               "X-Content-Type-Options": { "schema": { "type": "string", "enum": ["nosniff"] } }
             },
             "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
@@ -407,6 +408,7 @@
             "description": "Private attachment bytes served with attachment disposition and nosniff",
             "headers": {
               "Content-Disposition": { "schema": { "type": "string" }, "description": "Always attachment disposition; active formats are never rendered inline." },
+              "Cache-Control": { "schema": { "type": "string", "enum": ["no-store"] } },
               "X-Content-Type-Options": { "schema": { "type": "string", "enum": ["nosniff"] } }
             },
             "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }

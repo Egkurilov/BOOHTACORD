@@ -20,6 +20,7 @@ type Downloader interface {
 
 func NewHandler(downloader Downloader) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Cache-Control", "no-store")
 		principal, ok := sessionapi.PrincipalFrom(request.Context())
 		if !ok {
 			writeError(writer, request, http.StatusInternalServerError, "INTERNAL", "Не удалось скачать вложение")

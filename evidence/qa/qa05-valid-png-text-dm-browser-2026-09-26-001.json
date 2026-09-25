@@ -1,0 +1,61 @@
+{
+  "id": "qa05-valid-png-text-dm-browser-2026-09-26-001",
+  "tasks": ["QA-05", "DES-02"],
+  "kind": "isolated-authenticated-browser-valid-png-text-dm-preview-and-acl",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T21:13:13Z",
+  "source": {
+    "commit": "0360b119b4f379bac55e4fafb4a95fb4bce8452f",
+    "frontend": "npm run build PASS; frozen local bundle, not a trusted release artifact",
+    "entry_javascript_sha256": "541c4b6898cf0a98f5bf57d16f6d04a4452625281a5d48d2cf5ed641820ff286",
+    "entry_css_sha256": "47b174416c1580aba30184c256debd63b5deff7cc6ca18d6eff1518a7de3fd59",
+    "backend": "Go API, migrate and bootstrap binaries built locally from the current checkout"
+  },
+  "fixture": {
+    "browser": "Separate hidden Codex in-app browser tab controlled by the root agent; no existing user tab was navigated",
+    "origin": "http://localhost:18872",
+    "api_bind": "127.0.0.1:18096",
+    "database": "Disposable PostgreSQL schema with synthetic sender, peer, third administrator, one TEXT channel and one DM",
+    "storage": "Private temporary attachment directory; no production volume or user data",
+    "sample": {
+      "filename": "boohtacord-qa05-valid-preview-20260925.png",
+      "bytes": 464,
+      "dimensions": "16x16",
+      "sha256": "74f9103e74d435b662024990cb5acae96ae02f77118fbacf032f4618055ba61b",
+      "integrity": "PNG signature, IHDR/IDAT/IEND CRCs and zlib-decoded scanlines verified before fixture start"
+    }
+  },
+  "checks": [
+    {
+      "name": "browser_dm_upload_preview_download",
+      "result": "PASS_LOCAL",
+      "detail": "The root agent's isolated IAB tab selected the valid synthetic PNG through the controlled file chooser, showed it prepared, sent it with a DM message, observed preview img.complete=true with naturalWidth=16 and naturalHeight=16 plus a visible thumbnail, and received a browser download event. This is not manual native OS file selection."
+    },
+    {
+      "name": "browser_text_upload_preview_download",
+      "result": "PASS_LOCAL",
+      "detail": "The same IAB tab selected the valid PNG through the TEXT controlled chooser, sent it with a TEXT message, observed preview img.complete=true at 16x16 and received a browser download event."
+    },
+    {
+      "name": "wire_upload_and_linkage",
+      "result": "PASS_LOCAL",
+      "observed": {"upload_http_statuses": [201, 201], "attached_rows": 2, "text_links": 1, "dm_links": 1},
+      "detail": "The same-origin fixture proxy captured the two real API upload responses. Disposable PostgreSQL counts were measured after both messages."
+    },
+    {
+      "name": "dm_private_download_preview_acl",
+      "result": "PASS_LOCAL",
+      "observed": {"sender_download": 200, "sender_preview": 200, "peer_download": 200, "peer_preview": 200, "third_admin_download": 404, "third_admin_preview": 404},
+      "detail": "For both participants, protected download returned 464 bytes with the sample SHA256 and attachment disposition; preview returned image/png, 90 bytes, no-store and nosniff. DM download also returned no-store and nosniff. The third guild administrator was denied despite the administrator role."
+    },
+    {
+      "name": "text_member_download_preview_acl",
+      "result": "PASS_LOCAL_WITH_HEADER_FINDING",
+      "observed": {"sender_download": 200, "sender_preview": 200, "peer_download": 200, "peer_preview": 200, "admin_download": 200, "admin_preview": 200},
+      "detail": "All three guild members received the same 464-byte source file SHA256 and an image/png preview of 90 bytes with no-store and nosniff. TEXT download had nosniff and attachment disposition, but no Cache-Control header, unlike DM download. The current contract does not require no-store for download, but authenticated TEXT bytes could remain cached after logout; a separate backend header fix and contract test are needed."
+    }
+  ],
+  "privacy": "Evidence contains no cookie, credential, user ID, DM ID, message body or attachment ID. Only synthetic aggregate counts, response metadata and content hashes are recorded.",
+  "cleanup": "PASS_LOCAL: after the root agent's STOP, the fixture shutdown endpoint returned 204 and the process exited 0 with its cleanup message. Ports 18872/18096 were idle, the disposable PostgreSQL schema count was zero, and the private attachment directory was absent. The frozen WSL bundle, fixture script and three Go binaries were removed after verifying exact /var/tmp targets. The pre-existing 464-byte synthetic Windows Temp PNG was not modified or removed; the root agent owns its temporary IAB tab.",
+  "remaining_gate": "QA-05 overall remains PARTIAL: this is a local fixed-bundle controlled-chooser run, not native OS selection or a trusted release acceptance run; notification, voice/reconnect, full accessibility and other QA-05 criteria remain open."
+}
