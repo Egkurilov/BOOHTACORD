@@ -21,7 +21,7 @@
 - [x] **T-044:** безопасный stale-staging cleanup, bounded operator CLI для UNATTACHED и скрытых файлов, retry и проверка живых ссылок. Источники: backend/cmd/cleanup_* и storage leaves.
 - [x] **T-003:** authenticated same-origin WS, presence snapshot/change с учётом нескольких вкладок, TEXT и приватные DM hints, bounded queue/resync, повторная проверка session и durable replay с повторной ACL-проверкой. Источники: realtime_routes.go, realtime/connect_session, event_hub.
 
-## Реализованные backend leaf-задачи BE-01…BE-14 (25.09.2026)
+## Реализованные backend leaf-задачи BE-01…BE-15 (25.09.2026)
 
 - [x] **BE-01:** конкурентный TEXT retry возвращает исходное сообщение только при конфликте его idempotency key; PostgreSQL race-тест подтверждает одну строку и одну связь вложений.
 - [x] **BE-02:** DM create/edit/delete публикуют ID-only события только двум текущим участникам; ACL и session перепроверяются перед приватной доставкой.
@@ -37,6 +37,7 @@
 - [x] **BE-12:** операторская физическая очистка файлов скрытых TEXT/DM сообщений только без живых связей, с claim, повтором после сбоя и транзакционным audit.
 - [x] **BE-13:** приватные метрики фактических LiveKit participants/tracks, исходов realtime reconnect и задержки успешной доставки событий; ошибка media snapshot отделена от нуля.
 - [x] **BE-14:** PostgreSQL-журнал realtime с курсором `after`, 7-дневным сроком, лимитом 512, повторной session/ACL-проверкой и явным REST resync при разрыве непрерывности или смене epoch.
+- [x] **BE-15:** метрика `voice_platform_attachment_upload_reserved_bytes` читает текущие in-flight bytes из общего admission manager TEXT/DM; focused тесты проверяют активную резервацию, release и scrape даже при ошибке filesystem snapshot. Production rollout и повторный QA-08 остаются открыты.
 
 Проверки листьев и миграционные PostgreSQL-тесты выполнены; команды и результаты общего прогона приведены в [отчёте пакета](docs/reviews/2026-09-25-backend-delivery.md). Реальный LiveKit/media POC, нагрузка, browser E2E и release-gate остаются в [QA](backlog/VERIFICATION_TODO.md). При restart сервер требует full REST resync: бесшовное сквозное replay не заявлено.
 

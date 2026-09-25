@@ -44,7 +44,7 @@
 | REQ-QUALITY-01 · Latency/capacity цели | NOT_RUN | Измерить p95 join/message/switch/recovery, FPS и нагрузку [QA] |
 | REQ-QUALITY-02 · Выпускные гейты | BLOCKED: 20 пакетов TODO открыты [TODO] | Закрыть применимые DES/QA с PASS и повторить решение [QA] |
 
-Сквозной счёт: **39/39 ID отражены**, но обязательные media, capacity, browser, CI/deploy и release проверки ещё не имеют PASS. Состояние исходного TODO: **16/36 закрыто, 20/36 открыто**. Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
+Сквозной счёт: **39/39 ID отражены**, но обязательные media, capacity, browser, CI/deploy и release проверки ещё не имеют PASS. Состояние TODO: **17/37 закрыто, 20/37 открыто**, включая добавленную BE-15. Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
 
 [DONE]: ../../DONE.md
 [TODO]: ../../TODO.md
