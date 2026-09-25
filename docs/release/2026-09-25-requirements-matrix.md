@@ -26,7 +26,7 @@
 | REQ-SCREEN-03 · Публикация/viewer | PARTIAL: код и FPS source checks [DONE] | Media/visual POC с несколькими publishers/viewers [QA], [DES] |
 | REQ-SCREEN-04 · Диагностика | PARTIAL: sender/viewer counters в коде [DONE] | Сопоставить sender и receiver измерения [QA] |
 | REQ-CHAT-01 · TEXT | PARTIAL: PostgreSQL idempotency и trusted CI PASS [QA-01]; локальный browser history/reply/mention/409/503 [DES-02-FULL] | Trusted candidate и attachment browser [QA] |
-| REQ-DM-01 · DM только двум | PARTIAL: PostgreSQL ACL и три HTTP-сессии [QA-03]; два browser-участника получили private create/edit/delete без reload [QA-03-BROWSER] | Browser notification, третий browser без private hint и trusted candidate [QA] |
+| REQ-DM-01 · DM только двум | PARTIAL: PostgreSQL ACL и три HTTP-сессии [QA-03]; получатель получил private create/edit/delete без reload [QA-03-BROWSER], третий browser socket — 0/0/0 DM-кадров [QA-03-THIRD] | Browser notification и trusted candidate [QA] |
 | REQ-CHAT-02 · Упоминания/unread | PARTIAL: caller-local код и browser unread [DONE], [QA-05] | Видимость/cursor/notification на candidate [QA], [DES] |
 | REQ-SEARCH-01 · Поиск | PARTIAL: PostgreSQL русский/английский, GIN и trusted CI PASS; локальный browser smoke [QA-04], [QA-05] | Candidate browser [QA] |
 | REQ-STORAGE-01 · Постоянство/25 МБ | PARTIAL: границы и private storage проверены локально [QA-03] | Attachment volume и rollout/rollback с томами [QA] |
@@ -59,6 +59,7 @@
 [QA-08-RETRY]: ../../evidence/capacity/qa08-attachment-volume-2026-09-25-006.json
 [QA-05-RESET]: ../../evidence/qa/qa05-reset-browser-2026-09-25-001.json
 [QA-03-BROWSER]: ../../evidence/qa/qa03-fixed-bundle-browser-2026-09-25-001.json
+[QA-03-THIRD]: ../../evidence/qa/qa03-third-browser-private-hints-2026-09-25-001.json
 [DES-02-FULL]: ../../evidence/design/des02-full-browser-2026-09-25-001.json
 [DES-03-ADMIN]: ../../evidence/design/des03-admin-members-audit-2026-09-25-001.json
 [DES-03-TOPOLOGY]: ../../evidence/design/des03-admin-browser-2026-09-25-001.json
