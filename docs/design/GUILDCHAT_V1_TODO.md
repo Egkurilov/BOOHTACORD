@@ -1,12 +1,10 @@
 # GuildChat v1 — оставшиеся задачи дизайна
 
 Срез 25.09.2026. Источник: [исходный дизайн-пакет](GuildChat_Design_System_v1.0.md), [ADR-008](../adr/ADR-008-voice-stage-layout.md), [ADR-009](../adr/ADR-009-png-shell-geometry.md).
-Реализованные tokens, shell, voice/viewer, profile/admin/search и локальные исправления вынесены в [DONE](../../DONE.md). Подробная история сохранена в [STATUS](GUILDCHAT_V1_STATUS.md).
+Реализованные tokens, shell, voice/viewer, profile/admin/search и локальные исправления вынесены в [DONE](../../DONE.md). [Матрица C-01…C-40](GUILDCHAT_COMPONENT_MATRIX.md) фиксирует карту DES-01. Подробная история сохранена в [STATUS](GUILDCHAT_V1_STATUS.md).
 Дизайн не меняет server-side ACL, media claims или release gates.
 
 ## Задачи
-
-- [ ] **DES-01 · P1 · T-050 — Компонентная сверка.** Сопоставить 40 компонентов исходного пакета с реальными Vue/CSS: имя, путь, состояния, reference и отклонение. Принять геометрию ADR-009 (≥1440: рамка 0, nav 280, aside 248) и wide voice/stream по ADR-008; не возвращать прежние 24/312/312 автоматически. Готово: для каждого компонента есть соответствие либо отдельная задача; DS-T02 не закрывается по наличию tokens.
 
 - [ ] **DES-02 · P1 · T-040/041/044/050 — Переписка.** Описать и довести states: author name/avatar, проверить реализованные длинную историю и сохранение scroll, reply на удалённое/незагруженное сообщение, edit conflict с сохранением draft, pending/failed/retry, unread/mention и upload progress/error. Готово: эталонные состояния TEXT/DM без UUID в роли display name, кнопки доступны на keyboard, длинные имена/ссылки не ломают composer. FE-05/06/08/09/15/17/19 реализованы; browser-приёмка остаётся.
 
@@ -26,20 +24,19 @@
 
 | Исходная задача | Текущий статус | Оставшаяся работа |
 | --- | --- | --- |
-| DS-T01 Mapping | Выполнена базовая сверка | Полная компонентная матрица — DES-01 |
+| DS-T01 Mapping | Матрица C-01…C-40 выполнена | Browser/pixel-приёмка — DES-02…08, QA-05 |
 | DS-T02 Tokens/primitives | Код есть, приёмка открыта | DES-01/05 |
 | DS-T03 Adaptive shell | Код есть, приёмка открыта | DES-06/08 |
 | DS-T04 Chat | FE-05/09/18/19 реализованы | DES-02, browser-приёмка |
 | DS-T05 DM/profile | FE-06/08/17 реализованы | DES-02/03, browser-приёмка |
 | DS-T06 Voice | Код есть, приёмка открыта | DES-04/06/08 |
 | DS-T07 Screen | FPS реализован; визуальная приёмка открыта | DES-04/08, QA-07 |
-| DS-T08 Auth/settings/admin | FE-03/04 выполнены; topology UI частичен | DES-03, FE-10…14 |
-| DS-T09 Search/errors | Поиск реализован | DES-02/05, FE-21 |
+| DS-T08 Auth/settings/admin | FE-03/04/10…14 выполнены | DES-03/05, browser-приёмка |
+| DS-T09 Search/errors | FE-21: адресный контекст поиска реализован | DES-02/05, browser-приёмка |
 | DS-T10 Keyboard/resilience | FE-02 выполнена; focus acceptance открыта | DES-05, QA-05 |
 | DS-T11 Screenshots | Не завершена | DES-06/08 |
 | DS-T12 Evidence | BLOCKED до приёмки | DES-08, QA-05 |
 
 ## Последняя проверка рабочего дерева
 
-25.09.2026: npm test — **PASS**, 103 файла / 315 тестов; npm run build — **PASS** на чистом checkout commit 562c491. Следующий docs-only commit 9091610 не менял frontend.
-Browser runtime, visual review и screenshot comparison этого bundle ещё не выполнены. Исторические production/screenshots/evidence не подтверждают новую локальную сборку.
+25.09.2026: npm test — **PASS**, 154 файла / 454 теста; npm run build — **PASS** на локальном source commit `c84c64f` (последний код `424e71d`). Backend `go test ./...`, contract и traceability checks — **PASS**. Browser runtime, visual review и screenshot comparison этого bundle ещё не выполнены. Исторические production/screenshots/evidence не подтверждают новую локальную сборку.

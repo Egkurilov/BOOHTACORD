@@ -77,6 +77,10 @@
 - [x] **T-030:** screen picker после действия пользователя, выбор target 720p/1080p × 30/60, stop/source-end handling, sender diagnostics с no-data, voice-first policy. Game audio/качество всё ещё требуют POC.
 - [x] **T-030:** выбор одного remote stream с явными subscribe/unsubscribe/detach, local preview без собственного звука, contain/fullscreen/expanded area, stream rail, audio status и измерение viewer FPS. Аппаратное подтверждение качества остаётся QA-07.
 
+## Дизайн
+
+- [x] **DES-01:** все 40 компонентов исходного `components.json` сопоставлены с текущими Vue/CSS, точными контрактными состояниями, screenshot reference и задачей-владельцем отклонения в [матрице](docs/design/GUILDCHAT_COMPONENT_MATRIX.md). Для shell и voice/stream применены ADR-009/008; отсутствие отдельного Toast/Dialog/ShareSetupDialog не выдано за visual parity. Все 40 строк и 78 ссылок проверены, битых ссылок нет. Browser/pixel-приёмка остаётся DES-02…08 и QA-05.
+
 ## Эксплуатация и подтверждённые записи
 
 - [x] **T-052:** private metrics для HTTP, WS connections/ready/reconnect, фактических LiveKit participants/tracks, задержки доставки событий, SFU revocation, upload failures и attachment filesystem; request-ID logs без body/token labels. Compose log rotation 10 MiB × 3. Live scrape и нагрузочная приёмка остаются QA-09/10.
