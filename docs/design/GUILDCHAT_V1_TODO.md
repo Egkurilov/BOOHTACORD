@@ -6,7 +6,7 @@
 
 ## Задачи
 
-- [ ] **DES-02 · P1 · T-040/041/044/050 — Переписка.** Описать и довести states: author name/avatar, проверить реализованные длинную историю и сохранение scroll, reply на удалённое/незагруженное сообщение, edit conflict с сохранением draft, pending/failed/retry, unread/mention и upload progress/error. Готово: эталонные состояния TEXT/DM без UUID в роли display name, кнопки доступны на keyboard, длинные имена/ссылки не ломают composer. FE-05/06/08/09/15/17/19 реализованы; browser-приёмка остаётся.
+- [ ] **DES-02 · P1 · T-040/041/044/050 — Переписка.** [Source review и layout fix](../../evidence/design/des02-conversation-wrap-2026-09-25-001.json): author directory не выводит UUID как имя, общая строка TEXT/DM сокращает длинное имя с сохранением времени, переносит кнопки и длинное имя файла. Реализованы long-history scroll anchor, reply на удалённое/незагруженное, edit conflict с draft, pending/failed/retry, unread/mention и upload progress/error. Готово после browser-приёмки тех же states на длинных строках, keyboard/screen-reader и проверке, что composer/controls не обрезаны; 463 frontend-теста и сборка уже PASS.
 
 - [ ] **DES-03 · P1 · T-010/012/014/020/050 — Аккаунт и администрирование.** Проверить реализованные logout/reset completion/expired/used link и довести category/channel rename/reorder/move, archive/voice-close confirmations и 409 recovery. Готово: понятные последствия, pending/error/success, focus return; текущие ProfileSettings/AdminPanel сохранены. FE-03/04/10…14 реализованы; визуальная и keyboard-приёмка остаётся.
 

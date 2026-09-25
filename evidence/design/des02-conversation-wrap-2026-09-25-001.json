@@ -1,0 +1,24 @@
+{
+  "id": "des02-conversation-wrap-2026-09-25-001",
+  "kind": "conversation-state-and-narrow-layout-review",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-25",
+  "scope": "TEXT and DM message rows using the shared MessageItem and conversation.css",
+  "source_review": [
+    "Author names and avatars resolve through the member directory; an unavailable member displays the neutral 'Участник' label instead of an account UUID.",
+    "TEXT/DM history have older-page, retry and scroll-anchor paths; edit conflict preserves the draft and exposes refresh-version recovery.",
+    "Pending/failed send, reply preview, mention IDs and attachment status are represented in the shared message UI."
+  ],
+  "change": "Allow long author names to shrink with ellipsis while keeping timestamps visible; wrap message action/status buttons and long attachment filenames inside narrow message rows.",
+  "checks": [
+    "frontend npm test -- --run: 158 files, 463 tests PASS",
+    "frontend npm run build: vue-tsc and Vite PASS",
+    "git diff --check: PASS"
+  ],
+  "remaining": [
+    "Render the same candidate bundle in a browser with long Russian names, URLs, attachment filenames and TEXT/DM replies at 1440/1280/1024 CSS px and zoom 125%/150%.",
+    "Complete keyboard and screen-reader acceptance for message actions and upload/error states.",
+    "Compare screenshots and confirm no clipped composer or control before DES-02/DES-06/08 PASS."
+  ],
+  "limitation": "The CSS correction has source/build evidence only; browser rendering was unavailable during this run and is not claimed as visually accepted."
+}
