@@ -1,0 +1,17 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-015",
+  "task": "QA-08",
+  "kind": "trusted-master-image-inventory-and-prebuild-guard-failure",
+  "status": "FAIL",
+  "observed_at": "2026-09-25T18:12:47Z",
+  "source_revision": "e243d389cff2902a78a1138b5b8234e7cb7a4a8b",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649232",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1649232/jobs/3224474/logs",
+  "jobs": {"backend": "success", "frontend": "success", "release_guard": "success", "deploy": "failure"},
+  "checks": [
+    {"name": "read-only Docker inventory", "result": "PASS", "sha_tag_sets": 28, "running_api_image": "voice-platform-api:4df09bd772acac695290448ba77735f7755a7fa0", "running_web_image": "voice-platform-web:4df09bd772acac695290448ba77735f7755a7fa0", "built_candidate_sha": "9201f219f9c1311a3b58f3bacf040cda00b4029c", "rollback_sha_preserved": "4ce70a7bf498dca5f8e8ae7ea2d5bf68551e6431", "detail": "The inventory lists 28 full-SHA release tag sets; it is not a per-image unique-byte measurement or an all-container image-ID safety check."},
+    {"name": "pre-build exact-volume guard", "result": "FAIL", "available_bytes": 5605982208, "required_bytes": 6343294632, "shortfall_bytes": 737312424},
+    {"name": "image cleanup, build, maintenance and rollout", "result": "NOT_RUN", "reason": "This workflow revision only inspected storage; the first guard stopped before build."}
+  ],
+  "next_action": "Run the locally validated fail-closed, exact-tag cleanup after rechecking shared filesystem, every container image ID and protected release refs. Require pre-build headroom above the guard by 1.25 GB for the new build; preserve attachment history and volumes. If the allowlisted images do not restore that margin, expand the filesystem."
+}

@@ -1,0 +1,15 @@
+{
+  "id": "qa08-old-image-reclaim-preflight-2026-09-25-001",
+  "task": "QA-08",
+  "kind": "local-exact-tag-reclaim-safety-validation",
+  "status": "PARTIAL",
+  "source_inventory": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649232",
+  "checks": [
+    {"name": "focused fixture", "result": "PASS_LOCAL", "command": "bash scripts/qa08_capacity/reclaim_old_images.test.sh", "detail": "Deletes only the oldest allowlisted API/web pairs and stops after the target is met. Changed running image, different Docker/attachment filesystems, shared protected image ID, container-referenced image and missing half-pair all stop before deletion."},
+    {"name": "shell syntax and lint", "result": "PASS_LOCAL", "command": "bash -n and shellcheck on reclaim_old_images.sh, reclaim_old_images.test.sh and prepare_host_storage.sh"},
+    {"name": "native release guards", "result": "PASS_LOCAL", "command": "bash scripts/verify-release-guards.sh", "detail": "All contract, traceability-index, signing, Compose and focused release shell checks passed after the final half-pair safety refinement. Windows traceability separately validated the approved brief SHA-256 and all 39 requirement IDs."},
+    {"name": "production cleanup and deploy", "result": "NOT_RUN", "reason": "The code had not yet been published or executed by a trusted production workflow at evidence creation."}
+  ],
+  "protected": ["4df09bd772acac695290448ba77735f7755a7fa0", "4ce70a7bf498dca5f8e8ae7ea2d5bf68551e6431", "9201f219f9c1311a3b58f3bacf040cda00b4029c", "ba38bb3e6f7d18d20bbe5d93b1fa8b85ebd580e6", "352f8a8ce2beade4f8beb534e855108c7f53bd8f"],
+  "limit": "Only 23 exact old full-SHA tag pairs are eligible, oldest first. The script never removes a container, attachment volume, file or release directory; it uses docker image rm --no-prune without --force. It requires at least 1,250,000,000 bytes over the normal headroom threshold before a fresh build and reruns the release guard. Actual reclaimed bytes remain unknown until production execution."
+}
