@@ -57,9 +57,11 @@ if run_guard unknown 31591473152; then
   exit 1
 fi
 
-guard_line="$(grep -nF 'check-attachment-volume-headroom.sh' "$release" | cut -d: -f1)"
+mapfile -t guard_lines < <(grep -nF 'check-attachment-volume-headroom.sh' "$release" | cut -d: -f1)
 promote_line="$(grep -nF 'sudo -n mv ' "$release" | cut -d: -f1)"
 build_line="$(grep -nF 'build api web' "$release" | cut -d: -f1)"
-[[ -n "$guard_line" && -n "$promote_line" && -n "$build_line" ]]
-[[ "$guard_line" -lt "$promote_line" && "$promote_line" -lt "$build_line" ]]
-echo 'attachment volume pre-build guard tests passed'
+deploy_line="$(grep -nF 'deploy-images.sh' "$release" | cut -d: -f1)"
+[[ "${#guard_lines[@]}" -eq 2 && -n "$promote_line" && -n "$build_line" && -n "$deploy_line" ]]
+[[ "${guard_lines[0]}" -lt "$promote_line" && "$promote_line" -lt "$build_line" ]]
+[[ "$build_line" -lt "${guard_lines[1]}" && "${guard_lines[1]}" -lt "$deploy_line" ]]
+echo 'attachment volume pre/post-build guard tests passed'
