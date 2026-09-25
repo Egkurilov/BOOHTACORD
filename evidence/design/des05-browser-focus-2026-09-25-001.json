@@ -1,0 +1,14 @@
+{
+  "id": "des05-browser-focus-2026-09-25-001",
+  "kind": "browser-keyboard-focus",
+  "status": "PARTIAL",
+  "executed_at_utc": "2026-09-25T01:42:00Z",
+  "source_commit": "06a5517",
+  "environment": "Local authenticated browser at 1024 CSS px against isolated PostgreSQL-backed candidate source",
+  "checks": [
+    { "name": "members_drawer", "result": "PASS_LOCAL", "detail": "Role dialog, entry focus, Shift+Tab wrap, Escape close and return focus to opener observed." },
+    { "name": "search_shortcut", "result": "PASS_LOCAL", "detail": "Ctrl+K did not open search in TEXT composer; outside it the search query took focus and Escape returned focus to the search trigger after 06a5517." },
+    { "name": "screen_reader_and_bundle", "result": "NOT_RUN", "detail": "Screen-reader traversal and repeat on a pinned production bundle are still required." }
+  ],
+  "limitations": ["Keyboard smoke on one local browser is not a full accessibility acceptance pass."]
+}

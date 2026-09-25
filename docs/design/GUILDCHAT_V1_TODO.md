@@ -12,7 +12,7 @@
 
 - [ ] **DES-04 · P1 · T-022/030/050 — Voice/stream states.** Сверить disconnected/listener/joining/connected/reconnecting, local deafen и remote mute/speaking, transfer/kick/closed, single/6/20 participants, no stream/first frame/ended/no audio/permission denied. Готово: dock/footer не перекрывают controls, remote deafen не выдуман, viewer target/source/measured/no-data различимы. FE-01/07/14 реализованы, приёмка реального media — QA-06/07/10.
 
-- [ ] **DES-05 · P1 · T-050 — Keyboard/focus.** [Семантика](WORKSPACE_FOCUS_SEMANTICS.md) закреплена: видимые drawer со scrim получают modal dialog, focus trap/inert и возврат фокуса; desktop aside, member popover и reset result остаются non-modal. PTT и Ctrl/⌘+K не перехватывают dialog/поля, Escape во вложенном popover не закрывает drawer. Локально 460 тестов и build PASS; [evidence](../../evidence/design/des05-focus-2026-09-25-001.json). Осталось пройти весь keyboard/screen-reader сценарий в QA-05.
+- [ ] **DES-05 · P1 · T-050 — Keyboard/focus.** [Семантика](WORKSPACE_FOCUS_SEMANTICS.md) закреплена: видимые drawer со scrim получают modal dialog, focus trap/inert и возврат фокуса; desktop aside, member popover и reset result остаются non-modal. PTT и Ctrl/⌘+K не перехватывают dialog/поля, Escape во вложенном popover не закрывает drawer. Локальный browser подтвердил members drawer и Ctrl+K, а фокус после закрытия поиска исправлен; 463 теста и build PASS. [Static evidence](../../evidence/design/des05-focus-2026-09-25-001.json), [browser evidence](../../evidence/design/des05-browser-focus-2026-09-25-001.json). Остался полный keyboard/screen-reader сценарий на фиксированном bundle в QA-05.
 
 - [ ] **DES-06 · P1 · T-050 — Responsive и zoom.** Проверить 1440/1280/1024 CSS px и browser zoom 125%/150%: text/DM/voice/viewer/search/profile/admin, длинные строки, drawers, dock/footer. Готово: нет обрезанного управления или скрытого composer; contain сохраняет пропорции видео; 6-column voice layout не ломает 1024. Зависимости: DES-01/04/05; FE-01 реализована.
 
@@ -39,4 +39,4 @@
 
 ## Последняя проверка рабочего дерева
 
-25.09.2026: npm test — **PASS**, 157 файлов / 460 тестов; npm run build — **PASS** на рабочем дереве с DES-05. Backend `go test ./...` на PostgreSQL, contract и traceability checks — **PASS**. Browser runtime, visual review и screenshot comparison этого bundle ещё не выполнены. Исторические production/screenshots/evidence не подтверждают новую локальную сборку.
+25.09.2026: npm test — **PASS**, 158 файлов / 463 теста; npm run build — **PASS**. Backend `go test ./...` на PostgreSQL, contract и traceability checks — **PASS**. Локальный browser smoke частично пройден; фиксированный bundle, screen reader, visual review и screenshot comparison ещё не проверены. Исторические production/screenshots/evidence не подтверждают новую локальную сборку.
