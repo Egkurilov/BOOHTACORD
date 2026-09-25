@@ -4,7 +4,7 @@ import type { AudioSettingsState } from './audio_settings_store'
 import type { VoiceActivationMode } from './activation_store'
 import { audioProcessingStatus, type AudioProcessingDiagnostics } from './audio_processing_diagnostics'
 import type { AudioProcessingOptions } from './livekit_gateway'
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const props = defineProps<{
   activationError: string | null
@@ -25,6 +25,10 @@ const emit = defineEmits<{
   setPttKey: [key: string]
 }>()
 const recordingPttKey = ref(false)
+const entry = ref<HTMLElement | null>(null)
+let focusFrame: number | null = null
+onMounted(() => { focusFrame = window.requestAnimationFrame(() => entry.value?.focus()) })
+onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(focusFrame) })
 
 function capturePttKey(event: KeyboardEvent): void {
   if (!recordingPttKey.value) return
@@ -39,7 +43,7 @@ function setProcessing(key: keyof AudioProcessingOptions, event: Event): void {
 </script>
 
 <template>
-  <section class="audio-settings" aria-label="Настройки аудио">
+  <section ref="entry" class="audio-settings" aria-label="Настройки аудио" tabindex="-1">
     <button class="voice-leave" type="button" :disabled="state === 'LOADING'" @click="emit('load')">
       {{ state === 'LOADING' ? 'Ищем устройства…' : 'Настройки аудио' }}
     </button>

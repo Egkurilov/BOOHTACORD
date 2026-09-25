@@ -1,0 +1,36 @@
+{
+  "id": "qa05-dm-upload-picker-2026-09-25-002",
+  "tasks": ["QA-05", "DES-02"],
+  "kind": "isolated-fixed-bundle-chrome-dm-upload-browser-attempt",
+  "status": "NOT_RUN",
+  "observed_at": "2026-09-25T12:12:57Z",
+  "source_commit": "96aada7",
+  "bundle": {
+    "entry_js_sha256": "e1ec8e486c2fd689fdeb370c42e5090b04c5a9bc06ee2405c5f58d0b7d66aecf",
+    "entry_css_sha256": "a64c119f6735c3377eaf76d8d6681e4dd9fb83e8ce54b86f6052a2a195bf0ef0"
+  },
+  "environment": "Chrome extension browser, fixed Vue bundle via localhost proxy to current Go API and disposable PostgreSQL schema; private temporary attachment directory and synthetic DM participants; no production data",
+  "checks": [
+    {
+      "name": "authenticated_dm_and_chooser",
+      "result": "PASS_LOCAL",
+      "detail": "The login-issued synthetic session rendered the DM composer. Clicking the visible label for its hidden file input produced a multiple-file chooser event in Chrome; clicking the clipped 1x1 input directly did not."
+    },
+    {
+      "name": "browser_file_selection",
+      "result": "BLOCKED",
+      "detail": "fileChooser.setFiles on an explicit synthetic Windows Temp text file returned Not allowed from the Chrome browser extension. No file was selected, uploaded or attached."
+    },
+    {
+      "name": "progress_retry_binding_download",
+      "result": "NOT_RUN",
+      "detail": "The upload could not proceed past file selection, so pending, injected 507/retry, message binding, preview and protected download remain unobserved in the browser."
+    },
+    {
+      "name": "fixture_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "Chrome test tab closed, disposable PostgreSQL schema count zero, fixture ports idle, temporary attachment directory and Go binaries removed. No production data or published history changed."
+    }
+  ],
+  "next_action": "The user must enable Allow access to file URLs in the ChatGPT browser extension details in chrome://extensions, then repeat the same synthetic browser upload flow. Keep QA-05 and DES-02 open."
+}

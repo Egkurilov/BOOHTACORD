@@ -1,0 +1,42 @@
+{
+  "id": "des06-workspace-panel-navigation-2026-09-25-001",
+  "tasks": ["DES-03", "DES-05", "DES-06", "QA-05"],
+  "kind": "isolated-fixed-bundle-mobile-workspace-navigation",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T11:42:37Z",
+  "base_commit": "d2d5ddc",
+  "bundle": {
+    "build": "npm run build: PASS (vue-tsc --noEmit && vite build)",
+    "entry_js_sha256": "47bcd03d7778c14fbc2925db99a6f737e5e8d7c85e948cd98350b6a697065ac6",
+    "entry_css_sha256": "d30b35e0a1833f1a6308dcd68c347c88fd1a2fbbe8b3d01f124ac5358202d36"
+  },
+  "environment": "Codex in-app browser, local fixed Vue bundle and Go API, disposable PostgreSQL schema with synthetic admin and channels; 320, 883, and 1024 by 720 CSS px; no production data",
+  "checks": [
+    {
+      "name": "baseline",
+      "result": "FAIL_LOCAL_BEFORE_FIX",
+      "detail": "At 320 CSS px the admin workspace had no navigation trigger after its drawer closed. Focused SSR regression tests for admin, audio and profile all failed on the same missing trigger."
+    },
+    {
+      "name": "panel_drawer_navigation",
+      "result": "PASS_LOCAL",
+      "detail": "At 320 CSS px admin, profile and audio each exposed a visible navigation trigger. Opening it set aria-expanded and aria-modal, made main inert and moved focus into the drawer; Escape closed it and restored the trigger. No document overflow (scrollWidth 320)."
+    },
+    {
+      "name": "responsive_boundary",
+      "result": "PASS_LOCAL",
+      "detail": "At 883 CSS px all three panels exposed the trigger without document overflow. At 1024 CSS px the persistent sidebar was visible and the mobile trigger was hidden. The 320 CSS px admin screenshot was visually inspected."
+    },
+    {
+      "name": "frontend_validation",
+      "result": "PASS_LOCAL",
+      "detail": "Focused 3/3; full Vitest 162 files and 474 tests passed. TypeScript/Vite build passed; WorkspaceMain 84 lines, focused spec 23 lines, settings CSS 54 lines."
+    },
+    {
+      "name": "fixture_cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "Browser viewport reset and tab closed; disposable schema count zero, no listeners on ports 18084/18770, no temporary qa05_upload directory, and exact temporary Go binaries removed."
+    }
+  ],
+  "remaining": "DES-03/05/06 and QA-05 remain open for full admin states, actual screen-reader traversal, voice/viewer/search responsive checks, real browser zoom, screenshots and trusted release bundle acceptance."
+}

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { changeOwnPassword, deleteAvatar, loadOwnProfile, saveOwnProfile, uploadAvatar, type OwnProfile } from './profile_client'
 import NotificationSettings from '../notification/NotificationSettings.vue'
@@ -8,6 +8,10 @@ const props = defineProps<{ profile: OwnProfile | null; loading: boolean; loadEr
 const emit = defineEmits<{ saved: [profile: OwnProfile]; logout: [] }>()
 const displayName = ref(''); const currentPassword = ref(''); const newPassword = ref('')
 const busy = ref(false); const error = ref<string | null>(null); const status = ref<string | null>(null)
+const title = ref<HTMLElement | null>(null)
+let focusFrame: number | null = null
+onMounted(() => { focusFrame = window.requestAnimationFrame(() => title.value?.focus()) })
+onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(focusFrame) })
 watch(() => props.profile, (profile) => { displayName.value = profile?.display_name ?? '' }, { immediate: true })
 function fail(cause: unknown, fallback: string): void { error.value = cause instanceof Error ? cause.message : fallback; status.value = null }
 async function saveName(): Promise<void> {
@@ -35,7 +39,7 @@ async function changePassword(): Promise<void> {
 
 <template>
   <section class="profile-settings" aria-labelledby="profile-settings-title" data-testid="profile-settings">
-    <header><h1 id="profile-settings-title">Профиль</h1><p>Настройки вашей учётной записи</p></header>
+    <header><h1 id="profile-settings-title" ref="title" tabindex="-1">Профиль</h1><p>Настройки вашей учётной записи</p></header>
     <p v-if="props.loading" class="state" aria-live="polite">Загружаем профиль…</p>
     <p v-else-if="props.loadError" class="state state-error" role="alert">{{ props.loadError }}</p>
     <template v-else-if="props.profile">
