@@ -30,7 +30,7 @@ FE-01…FE-21 реализованы и перечислены в [DONE.md](DONE
 
 Критерии PASS и требуемые evidence — в [VERIFICATION_TODO.md](backlog/VERIFICATION_TODO.md).
 
-- [ ] **QA-01 · P1:** завершить воспроизводимый PostgreSQL harness для TEXT retries, attachments и cross-channel reply; отсутствие БД не должно выглядеть PASS в CI.
+- [ ] **QA-01 · P1:** локально PostgreSQL 16.14: 648 PASS, 0 SKIP; cross-channel reply и отказ при skip проверены. Осталось подтвердить trusted GitVerse CI с обязательной PostgreSQL-службой и no-skip gate. [Evidence](evidence/qa/qa01-postgres-harness-2026-09-25-001.json).
 - [ ] **QA-02 · P1:** проверить реальные concurrent auth/admin/role/topology/voice races на PostgreSQL и отзыв сессии/WS без утечки secrets.
 - [ ] **QA-03 · P1:** выполнить матрицу DM/storage ACL caller/peer/third-party/admin, размеры/лимиты, low-disk, traversal, preview и cleanup races.
 - [ ] **QA-04 · P1:** проверить search/GIN и миграции на пустой/существующей схеме; включить contract, traceability, image и PostgreSQL checks в trusted GitVerse pipeline до deploy.

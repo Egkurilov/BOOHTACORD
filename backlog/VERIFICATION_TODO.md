@@ -3,7 +3,7 @@
 Срез: 25.09.2026. Это отдельные verification-пакеты, а не обещания реализовать уже существующий код заново.
 PASS_STATIC/PASS_RUNTIME не равны полному release PASS. Исторические evidence не переписываются.
 
-- [ ] **QA-01 · P1 · T-040/060 — PostgreSQL integration harness.** Изолированная PostgreSQL-схема с настоящими migrations уже проверяет serial/concurrent TEXT retries и attachment link; BE-01 race PASS. Осталось добавить отрицательный cross-channel reply и подтвердить, что trusted CI с обязательной PostgreSQL-службой выполняет все SQL-тесты без skip. Готово: воспроизводимый PASS локально и в CI, а отсутствие БД явно NOT_RUN/FAIL, никогда не выдаваемое за PASS.
+- [ ] **QA-01 · P1 · T-040/060 — PostgreSQL integration harness.** Локально на PostgreSQL 16.14 изолированные migration-backed тесты покрыли serial/concurrent TEXT retries, attachment link и отрицательный cross-channel reply; полный Go-прогон: 648 PASS, 0 SKIP. GitVerse job теперь поднимает PostgreSQL и машинно отклоняет skip; отсутствие БД локально даёт exit 1 через no-skip gate. Осталось подтвердить новый workflow в trusted GitVerse CI до закрытия задачи. [Evidence](../evidence/qa/qa01-postgres-harness-2026-09-25-001.json). Готово: воспроизводимый PASS локально и в CI, а отсутствие БД явно NOT_RUN/FAIL, никогда не выдаваемое за PASS.
 
 - [ ] **QA-02 · P1 · T-010/012/013/014/020 — Auth/admin concurrency.** Отдельными leaf-прогонами проверить login/logout/reset, bootstrap/recovery, last-admin demote/block race, role refresh, topology revision и transfer lease. Готово: реальный PostgreSQL, два конкурентных клиента, атомарные ограничения и отсутствие secrets в отчёте; WS закрывается после revoke. POC media проверяется в QA-10.
 
