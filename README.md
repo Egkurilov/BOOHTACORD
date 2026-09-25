@@ -2,7 +2,7 @@
 
 Self-hosted веб-платформа в логике лёгкого Discord: голосовые и текстовые каналы, личные сообщения, демонстрация экрана/игры и передача звука через LiveKit. Один deployment обслуживает ровно одну изолированную гильдию.
 
-> Статус: frontend FPS исправлен; локально прошли 463 frontend-теста и production build, backend и release guards прошли [trusted GitVerse CI](evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json). Полный release **ещё не принят**: production attachment filesystem имеет [0 доступных байт](evidence/capacity/qa08-attachment-volume-2026-09-25-002.json); остаются media POC, capacity, browser/design-приёмка и delivery/rollout gates. См. [TODO](TODO.md) и [реализовано](DONE.md).
+> Статус: frontend FPS исправлен; локально прошёл 471 frontend-тест и production build, backend и release guards прошли [trusted GitVerse CI](evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json). Полный release **ещё не принят**: после [production disk recovery](evidence/capacity/qa08-attachment-volume-2026-09-25-003.json) есть 7 675 785 216 доступных байт, но QA-08 остаётся открытой до проверки in-flight резерваций и устойчивого запаса; также нужны media POC, capacity, browser/design-приёмка и delivery/rollout gates. См. [TODO](TODO.md) и [реализовано](DONE.md).
 
 ## Возможности
 

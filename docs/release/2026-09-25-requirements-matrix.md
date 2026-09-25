@@ -31,7 +31,7 @@
 | REQ-SEARCH-01 · Поиск | PARTIAL: PostgreSQL русский/английский, GIN и trusted CI PASS; локальный browser smoke [QA-04], [QA-05] | Candidate browser [QA] |
 | REQ-STORAGE-01 · Постоянство/25 МБ | PARTIAL: границы и private storage проверены локально [QA-03] | Attachment volume и rollout/rollback с томами [QA] |
 | REQ-STORAGE-02 · Upload/ACL/preview | LOCAL: PostgreSQL/FS access matrix [QA-03] | Browser upload/preview/download candidate [QA] |
-| REQ-STORAGE-03 · Нехватка диска | FAIL: production attachment filesystem имеет 0 доступных байт; локально подтверждены резерв и HTTP 507 [QA-08] | Увеличить доступное место выше защитного порога с учётом in-flight резерваций и повторить production-измерение [QA] |
+| REQ-STORAGE-03 · Нехватка диска | PARTIAL: после recovery production attachment filesystem имеет 7 675 785 216 доступных байт; in-flight резервации неизвестны [QA-08] | Развернуть BE-15 через утверждённый гейт, измерить резервации и устойчивый запас на том же volume [QA] |
 | REQ-NOBACKUP-01 · Нет backup job | PARTIAL: код/Compose не вводят backup [DONE] | Проверить обновление/совместимый rollback без потери томов [QA] |
 | REQ-UI-01 · Русский one-guild shell | PARTIAL: локальный smoke 1440/1280/1024 [QA-05] | Zoom, keyboard, screenshots и media states [DES], [QA] |
 | REQ-UI-02 · Компоненты/доступность | PARTIAL: 40-компонентная матрица и часть focus [DONE], [QA-05] | DES-02…08, screen reader и candidate comparison [DES] |
@@ -55,4 +55,4 @@
 [QA-03]: ../../evidence/qa/qa03-dm-read-matrix-2026-09-25-001.json
 [QA-04]: ../../evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json
 [QA-05]: ../../evidence/qa/qa05-candidate-browser-2026-09-25-001.json
-[QA-08]: ../../evidence/capacity/qa08-attachment-volume-2026-09-25-002.json
+[QA-08]: ../../evidence/capacity/qa08-attachment-volume-2026-09-25-003.json

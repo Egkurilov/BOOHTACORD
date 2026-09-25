@@ -1,0 +1,34 @@
+{
+  "id": "qa14-readiness-2026-09-25-004",
+  "kind": "pre-release-requirement-matrix-update",
+  "status": "FAIL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-25T09:48:49Z",
+  "source_commit": "f1eb645d6a963f617090117a61118153b6652e54",
+  "requirements": {
+    "total": 39,
+    "mapped": 39,
+    "matrix": "docs/release/2026-09-25-requirements-matrix.md"
+  },
+  "todo": {
+    "total": 37,
+    "completed": 19,
+    "open": 18,
+    "open_design": 7,
+    "open_verification": 11
+  },
+  "updated_gate": {
+    "task": "QA-08",
+    "status": "PARTIAL",
+    "evidence": "evidence/capacity/qa08-attachment-volume-2026-09-25-003.json",
+    "result": "Available bytes recovered from 0 to 7,675,785,216 on the actual attachment filesystem and PostgreSQL resumed; in-flight reservations and durable headroom remain unverified"
+  },
+  "blocking_gates": [
+    "QA-08: production reservation metric and durable filesystem headroom",
+    "QA-06/07/09/10: physical media, hardware load and connected-revocation POCs",
+    "QA-03/05 and DES-02..08: candidate browser, notification, accessibility and visual acceptance",
+    "QA-11/12: approved delivery contract, SBOM/provenance and guarded rollout/rollback",
+    "QA-13: Android release signing and physical-device acceptance"
+  ],
+  "note": "Operational disk recovery does not close the release gate or authorize master deployment."
+}

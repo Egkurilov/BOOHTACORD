@@ -11,6 +11,12 @@
   },
   "environment": "Chrome, 883x447 CSS px; locally built Vue client, Go API and isolated PostgreSQL 16.14 schema on WSL loopback; synthetic administrator and channels; no LiveKit service",
   "validation": "Frontend Vitest: 161 files and 471 tests PASS; vue-tsc and Vite build PASS",
+  "trusted_branch_ci": {
+    "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1644365",
+    "source_commit": "f1eb645d6a963f617090117a61118153b6652e54",
+    "result": "Mandatory PostgreSQL backend, frontend and release_guard jobs succeeded; deploy ran no release steps on the codex branch",
+    "scope": "Branch validation only; no trusted production deployment"
+  },
   "checks": [
     {
       "name": "text_archive_cancel_escape",

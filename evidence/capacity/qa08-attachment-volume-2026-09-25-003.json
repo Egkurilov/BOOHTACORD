@@ -1,0 +1,39 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-003",
+  "kind": "production-attachment-volume-capacity-recovery",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-25T09:48:49Z",
+  "environment": "deployment host 176.108.242.211; Docker volume voice-platform_attachments-data on /dev/vda2 ext4 mounted at /",
+  "before": {
+    "total_bytes": 31591473152,
+    "available_bytes": 0,
+    "postgres_container": "exited with code 1; restart policy no",
+    "docker_images_reclaimable_reported": "13.83GB"
+  },
+  "maintenance_action": {
+    "command": "docker image prune --force --filter until=48h",
+    "scope": "Only unused dangling Docker images older than 48 hours; no --all, volume prune, container removal, release tag removal, or attachment deletion",
+    "docker_reported_reclaimed": "1.668GB",
+    "host_df_delta_note": "After pruning, df available rose to 7,676,026,880 bytes; the difference from Docker's reported reclaim is not attributed without further filesystem accounting",
+    "postgres": "Started the existing voice-platform-postgres-1 container; no image replacement or migration"
+  },
+  "after": {
+    "total_bytes": 31591473152,
+    "available_bytes": 7675785216,
+    "protected_threshold_bytes": 3159147316,
+    "minimum_available_for_one_25mb_upload_bytes": 3184147316,
+    "api_filesystem_available_bytes": 7675785216,
+    "api_filesystem_total_bytes": 31591473152,
+    "api_filesystem_snapshot_success": 1,
+    "api_upload_reserved_bytes": null,
+    "postgres": "running; pg_isready accepting connections",
+    "public_health_http_status": 200,
+    "public_maintenance_http_status": 200
+  },
+  "decision": "Immediate disk exhaustion and stopped PostgreSQL were remediated, but QA-08 remains open: current production API has no in-flight reservation metric, and durable capacity under repeated builds is unproven. Release remains NO-GO for other open gates.",
+  "next_checks": [
+    "Deploy the BE-15 candidate only through the approved release gate, then verify voice_platform_attachment_upload_reserved_bytes on the same production instance",
+    "Repeat volume inspect, df -B1, findmnt and API metrics after a stable observation period; compare free bytes with the protected threshold plus actual in-flight reservations",
+    "Establish durable filesystem headroom or an owner-approved retention policy for obsolete Docker build artifacts; do not delete published attachments"
+  ]
+}
