@@ -36,6 +36,9 @@ if (Test-Path -LiteralPath $sourceSpecification) {
     if (($sourceRequirements -join ',') -ne ($requirements -join ',')) {
         throw 'Approved brief requirement IDs do not match the committed index.'
     }
+    $sourceValidation = 'approved brief SHA-256 and requirement IDs'
+} else {
+    $sourceValidation = 'committed requirement index only; approved brief unavailable on this host'
 }
 
 $backlog = Get-Content -Raw -LiteralPath $backlogPath
@@ -45,4 +48,4 @@ if ($missing.Count -gt 0) {
     throw "Requirements without a backlog reference: $($missing -join ', ')"
 }
 
-Write-Output "Traceability OK: $($requirements.Count) requirements are referenced."
+Write-Output "Traceability OK: $($requirements.Count) requirements are referenced; source validation: $sourceValidation."
