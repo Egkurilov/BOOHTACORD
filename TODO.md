@@ -33,7 +33,7 @@ FE-01…FE-21 реализованы и перечислены в [DONE.md](DONE
 - [ ] **QA-01 · P1:** локально PostgreSQL 16.14: 648 PASS, 0 SKIP; cross-channel reply и отказ при skip проверены. Осталось подтвердить trusted GitVerse CI с обязательной PostgreSQL-службой и no-skip gate. [Evidence](evidence/qa/qa01-postgres-harness-2026-09-25-001.json).
 - [ ] **QA-02 · P1:** проверить реальные concurrent auth/admin/role/topology/voice races на PostgreSQL и отзыв сессии/WS без утечки secrets.
 - [ ] **QA-03 · P1:** выполнить матрицу DM/storage ACL caller/peer/third-party/admin, размеры/лимиты, low-disk, traversal, preview и cleanup races.
-- [ ] **QA-04 · P1:** проверить search/GIN и миграции на пустой/существующей схеме; включить contract, traceability, image и PostgreSQL checks в trusted GitVerse pipeline до deploy.
+- [ ] **QA-04 · P1:** локально PostgreSQL search/GIN и миграции на пустой/существующей схеме PASS; contract, traceability, image и PostgreSQL checks включены в GitVerse до deploy. Осталось подтвердить trusted CI run. [Evidence](evidence/qa/qa04-search-migrations-ci-2026-09-25-001.json).
 - [ ] **QA-05 · P1:** пройти authenticated browser E2E, keyboard/focus и screenshots на фиксированном bundle после затронутых FE/DES задач.
 - [ ] **QA-06 · P1:** выполнить POC-01 на физических Windows и Apple Silicon macOS с игрой, звуком, разговором и отдельным наблюдателем.
 - [ ] **QA-07 · P1:** измерить sender/receiver FPS, bitrate, RTT и loss для POC-02, расследовать жалобу около 1 FPS и записать профили в ADR.

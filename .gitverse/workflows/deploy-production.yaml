@@ -64,11 +64,9 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Test registry and local-image release guards
+      - name: Verify contracts, traceability, images and release guards
         shell: bash
-        run: |
-          bash scripts/deploy-images.test.sh
-          bash scripts/deploy-local-images.test.sh
+        run: bash scripts/verify-release-guards.sh
 
   deploy:
     if: ${{ gitverse.ref_name == 'master' }}

@@ -1,0 +1,44 @@
+{
+  "id": "qa04-search-migrations-ci-2026-09-25-001",
+  "kind": "search-migration-ci-gate",
+  "status": "NOT_RUN",
+  "executed_at": "2026-09-25T00:43:23Z",
+  "environment": "Ubuntu WSL, Go 1.26.0, PostgreSQL 16.14, isolated migration-backed schemas",
+  "revision": "5f1a3af with uncommitted QA-04 changes",
+  "checks": [
+    {
+      "name": "search_postgres_behavior",
+      "result": "PASS_LOCAL",
+      "detail": "Russian and English body search, quoted phrase, display name only when present in body, global DM participant ACL, third-party administrator exclusion, and cursor pagination across equal timestamps passed."
+    },
+    {
+      "name": "search_indexes",
+      "result": "PASS_LOCAL",
+      "detail": "EXPLAIN with sequential scans disabled chose both partial GIN search indexes for TEXT and DM tables."
+    },
+    {
+      "name": "migrations_empty_and_existing",
+      "result": "PASS_LOCAL",
+      "detail": "Embedded migrations passed on an empty schema and on a schema seeded through migration 0025 with legacy TEXT and DM rows; a repeated full Run passed and search vectors indexed the legacy rows."
+    },
+    {
+      "name": "backend_suite",
+      "result": "PASS_LOCAL",
+      "detail": "go test -json -count=1 ./... with both PostgreSQL URLs: 654 passed, 0 skipped, 0 failed; focused go vet passed."
+    },
+    {
+      "name": "release_guard_linux",
+      "result": "PASS_LOCAL",
+      "detail": "Contracts, 39 approved requirement IDs, Compose interpolation, image guard, and both deploy shell suites passed in Ubuntu WSL. PowerShell 7.6.6 and Compose 5.5.0 downloads were checked against official release SHA-256 values."
+    },
+    {
+      "name": "trusted_gitverse_pipeline",
+      "result": "NOT_RUN",
+      "detail": "The changed master-only GitVerse workflow has not run remotely; cloud package/network availability and the deploy dependency gate remain unverified."
+    }
+  ],
+  "limitations": [
+    "Forced-index EXPLAIN proves index availability, not production selectivity or latency under load.",
+    "Local WSL checks do not close the trusted GitVerse release gate."
+  ]
+}
