@@ -79,7 +79,7 @@ jobs:
       SSH_USER: shaneque
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect Docker storage before guarded release
+      - name: Inspect storage and reclaim unused build cache before guarded release
         shell: bash
         run: bash scripts/qa08_capacity/prepare_host_storage.sh
 

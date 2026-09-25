@@ -1,0 +1,14 @@
+{
+  "id": "qa08-build-cache-prune-preflight-2026-09-25-001",
+  "task": "QA-08",
+  "kind": "local-unused-build-cache-recovery-validation",
+  "status": "PARTIAL",
+  "source_inventory": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649426",
+  "checks": [
+    {"name": "focused fail-closed fixture", "result": "PASS_LOCAL", "command": "bash scripts/qa08_capacity/prune_build_cache.test.sh", "detail": "Same-filesystem and expected running images are required before any cache mutation. A simulated 1.543GB reclaim reached the 7,593,294,632-byte build target and reran the normal guard; smaller reclaim failed before build, as did changed image or filesystem identity. Already-sufficient capacity skipped prune."},
+    {"name": "shell syntax and lint", "result": "PASS_LOCAL", "command": "bash -n and shellcheck on prune_build_cache.sh, prune_build_cache.test.sh and prepare_host_storage.sh"},
+    {"name": "native release guards", "result": "PASS_LOCAL", "command": "bash scripts/verify-release-guards.sh", "detail": "Contracts, requirement-index traceability, signing, Compose/image checks and every release shell guard passed. Windows traceability separately validated the approved brief SHA-256 and all 39 requirement IDs."},
+    {"name": "production unused-cache reclaim, build and deploy", "result": "NOT_RUN", "reason": "The workflow change had not yet run on production at evidence creation. The Docker 1.543GB reclaimable value is human-readable and may not equal actual freed bytes."}
+  ],
+  "limit": "The script invokes docker builder prune --all --force only for unused build cache; it does not invoke image, container, system or volume prune. It requires 1,250,000,000 bytes beyond the normal attachment guard before build and repeats the normal guard. The installer still has a second guard after build and before maintenance."
+}

@@ -1,0 +1,18 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-017",
+  "task": "QA-08",
+  "kind": "trusted-master-remaining-image-unique-size-audit",
+  "status": "FAIL",
+  "observed_at": "2026-09-25T18:43:47Z",
+  "source_revision": "829eede143dbcaa2bf6d9f5bec989ccb08939272",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1649426",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1649426/jobs/3224878/logs",
+  "jobs": {"backend": "success", "frontend": "success", "release_guard": "success", "deploy": "failure"},
+  "checks": [
+    {"name": "remaining unique image sizes", "result": "PASS_READ_ONLY", "detail": "Docker system df -v showed the 1.259GB UNIQUE SIZE untagged image has one container, so it is not a safe deletion target. Current API/web images have containers; the built 9201 candidate and rollback tags remain. Remaining older release tags and base images have much smaller individual unique sizes and may be shared or needed for rebuilding."},
+    {"name": "build cache summary", "result": "PASS_READ_ONLY", "reclaimable_display": "1.543GB", "active_count": 0, "detail": "Docker's human-readable reclaimable value is an estimate, not guaranteed exact free bytes. Docker builder prune --all --force removes unused build cache only; the next guarded run must measure the actual result."},
+    {"name": "pre-build exact-volume guard", "result": "FAIL", "available_bytes": 6112649216, "required_bytes": 6343294632, "normal_shortfall_bytes": 230645416, "prebuild_target_bytes": 7593294632, "prebuild_target_shortfall_bytes": 1480645416},
+    {"name": "build, maintenance, migration, container switch and post-rollout audit", "result": "NOT_RUN", "reason": "The first guard stopped the workflow before build."}
+  ],
+  "next_action": "Validate Docker root and attachment volume share a filesystem and the current API/web image tags have not changed. Reclaim only unused build cache, measure exact volume again and require the normal guard plus 1.25GB build margin before packaging/build. If the margin is not reached, expand the filesystem; do not remove the container-referenced untagged image."
+}
