@@ -35,7 +35,7 @@ async function submit(): Promise<void> {
 <template>
   <main class="authentication-page" aria-labelledby="authentication-title">
     <section class="authentication-card">
-      <p class="eyebrow">Self-hosted · одна гильдия</p>
+      <p class="eyebrow">На своём сервере · одна гильдия</p>
       <h1 id="authentication-title">Voice Platform</h1>
       <p class="authentication-intro">Голосовые каналы, демонстрация экрана и общий чат для своей компании.</p>
 

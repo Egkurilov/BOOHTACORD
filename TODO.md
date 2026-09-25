@@ -23,7 +23,7 @@ FE-01…FE-21 реализованы и перечислены в [DONE.md](DONE
 - [ ] **DES-04 · P1:** проверить voice/stream states для listener, mute/deafen, reconnect, transfer/kick, 1/6/20 участников и отсутствующего audio/frame.
 - [ ] **DES-05 · P1:** определить modal-семантику drawer/dialog/popover, реализовать корректный focus trap/inert, возврат фокуса и управление без мыши.
 - [ ] **DES-06 · P1:** проверить и исправить text/DM/voice/viewer/search/profile/admin на 1440/1280/1024 CSS px и zoom 125%/150%.
-- [ ] **DES-07 · P2:** утвердить единый словарь названий и русских состояний без недоказанных обещаний game audio или слышимости.
+- [ ] **DES-07 · P2:** словарь названий и русских media-состояний зафиксирован, ложные обещания звука/слышимости в viewer и dock исправлены; осталось проверить в browser и на реальном media в QA-07. [Evidence](evidence/design/des07-copy-2026-09-25-001.json).
 - [ ] **DES-08 · P1:** сравнить screenshots одного candidate bundle с reference, включая connected voice и stream, сохранить отклонения и повторную проверку.
 
 ## Интеграция, эксплуатация и выпуск — 14 задач

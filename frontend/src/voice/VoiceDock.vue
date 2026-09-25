@@ -24,7 +24,7 @@ const emit = defineEmits<{ leave: []; startScreen: []; toggleDeafen: []; toggleM
       <p class="voice-status">{{ channel ? 'В голосовом канале' : activeSession ? 'Голос подключён · канал не отображается' : 'Голос не подключён' }}<span v-if="channel" class="voice-status-channel"> · {{ channel.name }}</span></p>
     </div>
     <p class="voice-hint">
-      {{ !channel && activeSession ? 'Канал сейчас не отображается. Вы можете безопасно выйти вручную.' : state === 'RECONNECTING' ? 'Восстанавливаем голосовое соединение; ручной выход отменит ожидание.' : deafened ? 'Deafen: удалённый звук выключен, микрофон принудительно отключён; демонстрация экрана продолжается.' : microphonePermissionDenied ? 'Микрофон недоступен: вы остаетесь слушателем.' : channel ? 'Вы можете открыть другой канал: голос останется активным.' : 'Откройте голосовой канал, чтобы подготовить подключение.' }}
+      {{ !channel && activeSession ? 'Канал сейчас не отображается. Вы можете безопасно выйти вручную.' : state === 'RECONNECTING' ? 'Восстанавливаем голосовое соединение; ручной выход отменит ожидание.' : deafened ? 'Удалённый звук и микрофон выключены. Показ экрана этой кнопкой не отключается.' : microphonePermissionDenied ? 'Микрофон недоступен: вы остаётесь слушателем.' : channel ? 'Вы можете открыть другой канал: голос останется активным.' : 'Откройте голосовой канал, чтобы подготовить подключение.' }}
     </p>
     <p v-if="error" class="state state-error" role="alert">{{ error }}</p>
     <div v-if="channel || activeSession" class="voice-actions">

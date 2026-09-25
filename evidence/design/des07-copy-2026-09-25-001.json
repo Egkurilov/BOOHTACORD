@@ -1,0 +1,33 @@
+{
+  "id": "des07-copy-2026-09-25-001",
+  "kind": "design-copy-state-review",
+  "status": "PASS_STATIC",
+  "executed_at": "2026-09-25",
+  "environment": "local Vue 3/TypeScript/Vite source tree",
+  "checks": [
+    {
+      "name": "copy_dictionary",
+      "result": "PASS",
+      "detail": "UI_COPY_STATES.md records the existing product, repository and design-system names; auth, header, viewer and notifications were compared without changing the working product name."
+    },
+    {
+      "name": "audio_state_copy",
+      "result": "PASS",
+      "detail": "Viewer labels distinguish local preview, absent audio track, deafen and remote track volume; dock copy does not imply a live stream or guaranteed game sound."
+    },
+    {
+      "name": "frontend_suite_and_build",
+      "result": "PASS",
+      "detail": "npm test: 156 files, 458 tests passed. npm run build: TypeScript and Vite passed."
+    },
+    {
+      "name": "browser_and_physical_media",
+      "result": "NOT_RUN",
+      "detail": "Browser copy review and QA-07 sender/receiver audio and video measurements have not been completed."
+    }
+  ],
+  "limitations": [
+    "Static checks and a build cannot prove that a game audio track is audible on physical devices.",
+    "DES-07 remains open pending browser and media acceptance."
+  ]
+}

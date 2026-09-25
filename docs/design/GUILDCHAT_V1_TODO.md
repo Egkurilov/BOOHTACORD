@@ -16,7 +16,7 @@
 
 - [ ] **DES-06 · P1 · T-050 — Responsive и zoom.** Проверить 1440/1280/1024 CSS px и browser zoom 125%/150%: text/DM/voice/viewer/search/profile/admin, длинные строки, drawers, dock/footer. Готово: нет обрезанного управления или скрытого composer; contain сохраняет пропорции видео; 6-column voice layout не ломает 1024. Зависимости: DES-01/04/05; FE-01 реализована.
 
-- [ ] **DES-07 · P2 · T-050 — Тексты и семантика.** Уточнить рабочие названия BOOHTACORD/GuildChat/Voice Platform без самовольного ребрендинга; унифицировать русские labels/status/error. Убрать безусловные обещания звука/слышимости при deafen или отсутствии audio track, не выдавать наличие дорожки за доказанный звук игры. Готово: словарь состояний и проверка auth/header/viewer/notifications. FE-16 реализована; требуется QA-07.
+- [ ] **DES-07 · P2 · T-050 — Тексты и семантика.** [Словарь](UI_COPY_STATES.md) закрепил контекст BOOHTACORD/GuildChat/Voice Platform, а auth/header/viewer/notifications сверены статически. Viewer и dock различают deafen, отсутствие audio track и доступную регулировку, не обещая звук игры. Локально 458 frontend-тестов и сборка PASS; [evidence](../../evidence/design/des07-copy-2026-09-25-001.json). Осталось подтвердить формулировки в browser и реальном media-сценарии QA-07.
 
 - [ ] **DES-08 · P1 · T-050 — Screenshot acceptance.** Зафиксировать candidate commit/working-tree fingerprint и bundle, затем сравнить screenshots одинаковых размеров с reference; сохранить найденные отклонения и результат повторной проверки. Готово: DES-01…07 проверены, connected voice и selected stream включены, безопасная evidence-запись. Production health и source-string tests не закрывают pixel parity. Зависимость: QA-05; FE-01 реализована, production deploy — отдельная операция.
 
@@ -39,4 +39,4 @@
 
 ## Последняя проверка рабочего дерева
 
-25.09.2026: npm test — **PASS**, 154 файла / 454 теста; npm run build — **PASS** на локальном source commit `c84c64f` (последний код `424e71d`). Backend `go test ./...`, contract и traceability checks — **PASS**. Browser runtime, visual review и screenshot comparison этого bundle ещё не выполнены. Исторические production/screenshots/evidence не подтверждают новую локальную сборку.
+25.09.2026: npm test — **PASS**, 156 файлов / 458 тестов; npm run build — **PASS** на рабочем дереве с DES-07. Backend `go test ./...` на PostgreSQL, contract и traceability checks — **PASS**. Browser runtime, visual review и screenshot comparison этого bundle ещё не выполнены. Исторические production/screenshots/evidence не подтверждают новую локальную сборку.

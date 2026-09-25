@@ -83,7 +83,7 @@ function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id)
           </div>
           <template v-if="screenViewerCards.length || selectedScreenStreamId || screenViewerEnded">
             <ScreenViewer
-              ref="screenViewerRef" v-show="selectedScreenStreamId !== null || screenViewerEnded" :cards="screenViewerCards" :ended="screenViewerEnded" :error="screenViewerError" :expanded="screenExpanded" :selected-audio-volume="selectedScreenAudioVolume" :selected-id="selectedScreenStreamId"
+              ref="screenViewerRef" v-show="selectedScreenStreamId !== null || screenViewerEnded" :cards="screenViewerCards" :deafened="selfDeafened" :ended="screenViewerEnded" :error="screenViewerError" :expanded="screenExpanded" :selected-audio-volume="selectedScreenAudioVolume" :selected-id="selectedScreenStreamId"
               @clear="emit('clearScreenStream')" @select="(id, video, audio) => emit('selectScreenStream', id, video, audio)" @set-audio-volume="emit('setScreenVolume', $event)"
               @update:expanded="screenExpanded = $event"
             />
