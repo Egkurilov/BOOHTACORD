@@ -1,0 +1,27 @@
+{
+  "id": "qa08-attachment-volume-2026-09-25-005",
+  "task": "QA-08",
+  "kind": "production-attachment-volume-access-preflight",
+  "status": "BLOCKED",
+  "observed_at": "2026-09-25T11:05:10Z",
+  "environment": "documented deployment host 176.108.242.211; previous verified volume voice-platform_attachments-data",
+  "checks": [
+    {
+      "name": "strict-host-key batch SSH",
+      "result": "BLOCKED",
+      "detail": "The pinned host key was present, but the deployment user rejected both the Windows default identity and the existing WSL deployment-key candidate with publickey authentication failure. No remote command ran."
+    },
+    {
+      "name": "current BE-15 metric source tests",
+      "result": "PASS_LOCAL",
+      "detail": "Focused Go tests in cmd/api and internal/observability/http_metrics passed, including active/released reservation and scrape on filesystem snapshot failure. This does not measure production."
+    }
+  ],
+  "latest_accepted_production_measurement": "qa08-attachment-volume-2026-09-25-004 at 2026-09-25T10:22:01Z: 7675338752 available bytes; not a current measurement for this attempt",
+  "decision": "QA-08 remains open. Fresh df/findmnt/volume/API metrics cannot be recorded until read-only SSH access is restored. No production mutation or attachment deletion occurred.",
+  "next_checks": [
+    "Restore read-only SSH access without placing a private key in the repository or chat",
+    "Repeat docker volume inspect, df -B1, findmnt -T and API metrics on the exact attachment volume",
+    "After approved BE-15 rollout, read live reservation bytes and recheck durable free space following builds"
+  ]
+}
