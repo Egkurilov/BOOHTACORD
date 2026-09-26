@@ -503,6 +503,121 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('keeps an edit draft through revision conflict and refresh', (
+    tester,
+  ) async {
+    final api = _PortraitApi(withHistory: true, historyCount: 2)
+      ..textEditConflicts = 1;
+    final state = AppState(api);
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Действия с сообщением').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Изменить'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextField).last,
+      'Мой сохранённый черновик',
+    );
+    await tester.tap(find.byTooltip('Выбрать упоминание').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Собеседник').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.textContaining('Обновите версию'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Мой сохранённый черновик'), findsOneWidget);
+    expect(find.text('Обновить версию'), findsOneWidget);
+    expect(state.messages, hasLength(2));
+
+    await tester.tap(find.text('Обновить версию'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Версия обновлена'), findsOneWidget);
+    expect(find.text('Мой сохранённый черновик'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    expect(api.textEditRevisions, [1, 2]);
+    expect(api.textEditMentionIds, [
+      ['account-2'],
+      ['account-2'],
+    ]);
+    expect(state.messages.last.body, 'Мой сохранённый черновик');
+    expect(find.byType(AlertDialog), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('keeps a deleted-during-edit draft available for copying', (
+    tester,
+  ) async {
+    final api = _PortraitApi(withHistory: true, historyCount: 1)
+      ..textEditConflicts = 1
+      ..deleteTextOnConflict = true;
+    final state = AppState(api);
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Действия с сообщением'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Изменить'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextField).last,
+      'Черновик для копирования',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Обновить версию'));
+    await tester.pumpAndSettle();
+
+    expect(state.messages.single.deleted, isTrue);
+    expect(find.text('Черновик для копирования'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.textContaining('черновик сохранён для копирования'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Сохранить'))
+          .onPressed,
+      isNull,
+    );
+    await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('selects a reply target and sends a direct-message reply', (
     tester,
   ) async {
@@ -692,6 +807,12 @@ class _PortraitApi extends ApiClient {
   List<String> sentDirectAttachmentIds = const [];
   int failTextSends = 0;
   final textSendIds = <String>[];
+  int textEditConflicts = 0;
+  int latestTextRevision = 1;
+  bool deleteTextOnConflict = false;
+  bool latestTextDeleted = false;
+  final textEditRevisions = <int>[];
+  final textEditMentionIds = <List<String>>[];
   String? lastSearchQuery;
   bool failAdminUpdate = false;
   bool failResetLink = false;
@@ -944,12 +1065,14 @@ class _PortraitApi extends ApiClient {
             id: 'message-$index',
             channelId: channelId,
             authorId: 'account-1',
-            body: index == historyCount - 1
+            body: latestTextDeleted
+                ? ''
+                : index == historyCount - 1
                 ? 'Последнее сообщение'
                 : 'Сообщение $index',
             createdAt: DateTime.utc(2026, 9, 25).add(Duration(minutes: index)),
-            deleted: false,
-            revision: 1,
+            deleted: latestTextDeleted,
+            revision: latestTextRevision,
           ),
         )
       : const [];
@@ -991,6 +1114,33 @@ class _PortraitApi extends ApiClient {
         for (final id in attachmentIds)
           MessageAttachment(id: id, originalName: 'file.txt', sizeBytes: 3),
       ],
+    );
+  }
+
+  @override
+  Future<ChatMessage> editMessage(
+    String channelId,
+    String messageId,
+    String body,
+    int expectedRevision, {
+    List<String> mentionUserIds = const [],
+  }) async {
+    textEditRevisions.add(expectedRevision);
+    textEditMentionIds.add(mentionUserIds);
+    if (textEditConflicts > 0) {
+      textEditConflicts--;
+      latestTextRevision = expectedRevision + 1;
+      latestTextDeleted = deleteTextOnConflict;
+      throw const ApiFailure('Конфликт редакции', status: 409);
+    }
+    return ChatMessage(
+      id: messageId,
+      channelId: channelId,
+      authorId: 'account-1',
+      body: body,
+      createdAt: DateTime.utc(2026, 9, 25, 1),
+      deleted: false,
+      revision: expectedRevision + 1,
     );
   }
 

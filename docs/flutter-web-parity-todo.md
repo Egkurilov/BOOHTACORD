@@ -42,8 +42,14 @@ its behavior and platform-specific acceptance evidence exist.
 - [x] Add optimistic sending/failed rows and explicit retry controls in TEXT
   and DM. Exact-payload retries reuse `client_message_id`, reconcile server
   acknowledgements from history, and cannot populate another open chat.
-- [ ] Add edit/delete revision-conflict recovery and verify send retry against
-  the live backend.
+- [x] Preserve edit drafts on revision `409`, refresh the target message across
+  cursor pages without dropping the loaded window, and retry with the new
+  revision in TEXT and DM; preserve editable mention IDs through the retry.
+- [x] Keep loaded history and locally tombstone the deleted TEXT/DM row after
+  a confirmed delete instead of reopening the conversation.
+- [ ] Verify edit/delete conflict and send retry flows against the live backend
+  and physical-device UX. Deleted-during-edit and stale-conversation cases have
+  focused local tests.
 - [ ] Verify reply context, pagination/scroll restoration and read cursors at
   boundaries and under realtime updates.
 - [ ] Define a native notification design per platform before exposing any
@@ -102,8 +108,8 @@ its behavior and platform-specific acceptance evidence exist.
 
 ## Currently executing
 
-- [ ] P1: add edit/delete conflict recovery and live backend checks for TEXT
-  and DM sends; optimistic/failed rows and explicit retry are implemented.
+- [ ] P1: verify TEXT/DM edit conflict, delete and send retry against the live
+  backend; local recovery, mention editing and focused tests are implemented.
 - [ ] P1: verify audio device enumeration, switching and screen re-entry with
   real devices and a real voice room on macOS/Android.
 - [ ] Delivery: back up the new Android upload key and run physical-device

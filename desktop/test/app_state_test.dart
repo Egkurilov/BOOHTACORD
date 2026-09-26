@@ -447,6 +447,145 @@ void main() {
     expect(state.messages.single.body, 'Исправлено');
     expect(api.editedRevision, 1);
   });
+
+  test(
+    'refreshes a conflicted older text revision without losing history',
+    () async {
+      final api = _FakeApi(topology, paginated: true)..failTextEdits = 1;
+      final state = AppState(api);
+      addTearDown(state.dispose);
+      await state.initialize();
+      await state.loadOlderMessages();
+      final original = state.messages.first;
+
+      final result = await state.editTextWithResult(
+        original,
+        'Мой черновик',
+        original.revision,
+      );
+      expect(result.kind, MessageEditStatus.conflict);
+      expect(state.messages.map((message) => message.id), [
+        'message-older',
+        'message-1',
+      ]);
+
+      api.olderTextRevision = 2;
+      final refreshed = await state.refreshTextMessageRevision(original);
+      expect(refreshed?.revision, 2);
+      expect(state.messages.map((message) => message.id), [
+        'message-older',
+        'message-1',
+      ]);
+      expect(
+        (await state.editTextWithResult(original, 'Мой черновик', 2)).kind,
+        MessageEditStatus.saved,
+      );
+      expect(api.editedRevision, 2);
+      expect(state.messages.first.body, 'Мой черновик');
+    },
+  );
+
+  test(
+    'refreshes a conflicted older DM revision without losing history',
+    () async {
+      final api = _FakeApi(
+        topology,
+        includeDirectMessage: true,
+        paginated: true,
+      )..failDirectEdits = 1;
+      final state = AppState(api);
+      addTearDown(state.dispose);
+      await state.initialize();
+      await state.openDirectConversation(state.directMessages.single);
+      await state.loadOlderDirectMessages();
+      final original = state.directMessageHistory.first;
+
+      final result = await state.editDirectWithResult(
+        original,
+        'Мой черновик',
+        original.revision,
+      );
+      expect(result.kind, MessageEditStatus.conflict);
+      api.olderDirectRevision = 2;
+      final refreshed = await state.refreshDirectMessageRevision(original);
+      expect(refreshed?.revision, 2);
+      expect(state.directMessageHistory.map((message) => message.id), [
+        'dm-message-older',
+        'dm-message-1',
+      ]);
+      expect(
+        (await state.editDirectWithResult(original, 'Мой черновик', 2)).kind,
+        MessageEditStatus.saved,
+      );
+      expect(api.editedDirectRevision, 2);
+    },
+  );
+
+  test('deletes an older text row without discarding loaded pages', () async {
+    final api = _FakeApi(topology, paginated: true);
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+    await state.loadOlderMessages();
+
+    await state.deleteText(state.messages.first);
+
+    expect(api.deletedTextMessageId, 'message-older');
+    expect(state.messages.map((message) => message.id), [
+      'message-older',
+      'message-1',
+    ]);
+    expect(state.messages.first.deleted, isTrue);
+    expect(state.messages.first.body, isEmpty);
+    expect(state.messages.first.revision, 2);
+    expect(api.olderPageRequests, 1);
+  });
+
+  test('deletes an older DM row without discarding loaded pages', () async {
+    final api = _FakeApi(topology, includeDirectMessage: true, paginated: true);
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+    await state.openDirectConversation(state.directMessages.single);
+    await state.loadOlderDirectMessages();
+
+    await state.deleteDirect(state.directMessageHistory.first);
+
+    expect(api.deletedDirectMessageId, 'dm-message-older');
+    expect(state.directMessageHistory.map((message) => message.id), [
+      'dm-message-older',
+      'dm-message-1',
+    ]);
+    expect(state.directMessageHistory.first.deleted, isTrue);
+    expect(state.directMessageHistory.first.revision, 2);
+  });
+
+  test('does not place a delayed edit into the next channel', () async {
+    final gate = Completer<void>();
+    final api = _FakeApi(topology)..textEditGate = gate;
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+    final pending = state.editTextWithResult(
+      state.messages.single,
+      'Запоздавший текст',
+      1,
+    );
+    const other = GuildChannel(
+      id: 'channel-2',
+      name: 'другой',
+      kind: ChannelKind.text,
+      admissionClosed: false,
+    );
+    await state.selectChannel(other);
+    gate.complete();
+
+    expect((await pending).kind, MessageEditStatus.stale);
+    expect(
+      state.messages.every((message) => message.channelId == other.id),
+      isTrue,
+    );
+  });
 }
 
 class _FakeApi extends ApiClient {
@@ -466,6 +605,13 @@ class _FakeApi extends ApiClient {
   String? advancedTextMessageId;
   int textReadAdvances = 0;
   int? editedRevision;
+  int? editedDirectRevision;
+  int failTextEdits = 0;
+  int failDirectEdits = 0;
+  int olderTextRevision = 1;
+  int olderDirectRevision = 1;
+  String? deletedTextMessageId;
+  String? deletedDirectMessageId;
   bool passwordResetCompleted = false;
   String? sentReplyToId;
   String? sentDirectReplyToId;
@@ -477,6 +623,7 @@ class _FakeApi extends ApiClient {
   int failDirectSends = 0;
   String? committedTextClientId;
   Completer<void>? textSendGate;
+  Completer<void>? textEditGate;
   final textSendIds = <String>[];
   final directSendIds = <String>[];
 
@@ -590,7 +737,26 @@ class _FakeApi extends ApiClient {
     String id, {
     String? before,
     String? at,
-  }) async => DirectChatMessagePage(messages: await directMessageHistory(id));
+  }) async => paginated
+      ? before != null
+            ? DirectChatMessagePage(
+                messages: [
+                  DirectChatMessage(
+                    id: 'dm-message-older',
+                    directMessageId: id,
+                    authorId: 'account-1',
+                    body: 'Старое личное сообщение',
+                    createdAt: DateTime.utc(2026, 9, 19),
+                    deleted: false,
+                    revision: olderDirectRevision,
+                  ),
+                ],
+              )
+            : DirectChatMessagePage(
+                messages: await directMessageHistory(id),
+                nextCursor: 'older-dm-page',
+              )
+      : DirectChatMessagePage(messages: await directMessageHistory(id));
 
   @override
   Future<void> advanceDirectMessageReadCursor(
@@ -630,7 +796,7 @@ class _FakeApi extends ApiClient {
             body: 'Старое сообщение',
             createdAt: DateTime.utc(2026, 9, 19),
             deleted: false,
-            revision: 1,
+            revision: olderTextRevision,
           ),
         ],
       );
@@ -694,9 +860,15 @@ class _FakeApi extends ApiClient {
     String channelId,
     String messageId,
     String body,
-    int expectedRevision,
-  ) async {
+    int expectedRevision, {
+    List<String> mentionUserIds = const [],
+  }) async {
+    await textEditGate?.future;
     editedRevision = expectedRevision;
+    if (failTextEdits > 0) {
+      failTextEdits--;
+      throw const ApiFailure('Конфликт редакции', status: 409);
+    }
     return ChatMessage(
       id: messageId,
       channelId: channelId,
@@ -706,6 +878,43 @@ class _FakeApi extends ApiClient {
       deleted: false,
       revision: expectedRevision + 1,
     );
+  }
+
+  @override
+  Future<DirectChatMessage> editDirectMessage(
+    String directMessageId,
+    String messageId,
+    String body,
+    int expectedRevision, {
+    List<String> mentionUserIds = const [],
+  }) async {
+    editedDirectRevision = expectedRevision;
+    if (failDirectEdits > 0) {
+      failDirectEdits--;
+      throw const ApiFailure('Конфликт редакции', status: 409);
+    }
+    return DirectChatMessage(
+      id: messageId,
+      directMessageId: directMessageId,
+      authorId: 'account-1',
+      body: body,
+      createdAt: DateTime.utc(2026, 9, 19),
+      deleted: false,
+      revision: expectedRevision + 1,
+    );
+  }
+
+  @override
+  Future<void> deleteMessage(String channelId, String messageId) async {
+    deletedTextMessageId = messageId;
+  }
+
+  @override
+  Future<void> deleteDirectMessage(
+    String directMessageId,
+    String messageId,
+  ) async {
+    deletedDirectMessageId = messageId;
   }
 
   @override

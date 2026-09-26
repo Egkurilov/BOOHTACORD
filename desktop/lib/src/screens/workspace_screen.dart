@@ -1680,7 +1680,29 @@ class _MessageRow extends StatelessWidget {
                             message.authorId == state.user?.accountId ||
                             state.user?.isAdmin == true,
                         onReply: onReply,
-                        onEdit: (body) => state.editText(message, body),
+                        mentionOptions: [
+                          for (final member in state.members)
+                            (member.id, member.displayName),
+                        ],
+                        selfId: state.user?.accountId ?? '',
+                        onEdit: (body, revision, ids) =>
+                            state.editTextWithResult(
+                              message,
+                              body,
+                              revision,
+                              mentionUserIds: ids,
+                            ),
+                        onRefresh: () async {
+                          final latest = await state.refreshTextMessageRevision(
+                            message,
+                          );
+                          return latest == null
+                              ? null
+                              : (
+                                  revision: latest.revision,
+                                  deleted: latest.deleted,
+                                );
+                        },
                         onDelete: () => state.deleteText(message),
                       ),
                   ],
@@ -1702,7 +1724,29 @@ class _MessageRow extends StatelessWidget {
                             message.authorId == state.user?.accountId ||
                             state.user?.isAdmin == true,
                         onReply: onReply,
-                        onEdit: (body) => state.editText(message, body),
+                        mentionOptions: [
+                          for (final member in state.members)
+                            (member.id, member.displayName),
+                        ],
+                        selfId: state.user?.accountId ?? '',
+                        onEdit: (body, revision, ids) =>
+                            state.editTextWithResult(
+                              message,
+                              body,
+                              revision,
+                              mentionUserIds: ids,
+                            ),
+                        onRefresh: () async {
+                          final latest = await state.refreshTextMessageRevision(
+                            message,
+                          );
+                          return latest == null
+                              ? null
+                              : (
+                                  revision: latest.revision,
+                                  deleted: latest.deleted,
+                                );
+                        },
                         onDelete: () => state.deleteText(message),
                       ),
                   ],
@@ -1793,7 +1837,10 @@ class _MessageActionMenu extends StatelessWidget {
     required this.canEdit,
     required this.canDelete,
     required this.onReply,
+    required this.mentionOptions,
+    required this.selfId,
     required this.onEdit,
+    required this.onRefresh,
     required this.onDelete,
   });
 
@@ -1801,7 +1848,10 @@ class _MessageActionMenu extends StatelessWidget {
   final bool canEdit;
   final bool canDelete;
   final ValueChanged<ChatMessage>? onReply;
-  final ValueChanged<String> onEdit;
+  final List<(String, String)> mentionOptions;
+  final String selfId;
+  final Future<MessageEditOutcome> Function(String, int, List<String>) onEdit;
+  final Future<({int revision, bool deleted})?> Function() onRefresh;
   final Future<void> Function() onDelete;
 
   @override
@@ -1811,8 +1861,16 @@ class _MessageActionMenu extends StatelessWidget {
       if (action == 'reply') {
         onReply?.call(message);
       } else if (action == 'edit') {
-        final body = await _editMessageDialog(context, message.body);
-        if (body != null) onEdit(body);
+        await _editMessageDialog(
+          context,
+          message.body,
+          message.revision,
+          message.mentionUserIds,
+          mentionOptions,
+          selfId,
+          onEdit,
+          onRefresh,
+        );
       } else if (action == 'delete' && await _confirmDelete(context)) {
         await onDelete();
       }
@@ -1832,14 +1890,20 @@ class _DirectMessageActionMenu extends StatelessWidget {
     required this.message,
     required this.canEdit,
     required this.onReply,
+    required this.mentionOptions,
+    required this.selfId,
     required this.onEdit,
+    required this.onRefresh,
     required this.onDelete,
   });
 
   final DirectChatMessage message;
   final bool canEdit;
   final ValueChanged<DirectChatMessage> onReply;
-  final ValueChanged<String> onEdit;
+  final List<(String, String)> mentionOptions;
+  final String selfId;
+  final Future<MessageEditOutcome> Function(String, int, List<String>) onEdit;
+  final Future<({int revision, bool deleted})?> Function() onRefresh;
   final Future<void> Function() onDelete;
 
   @override
@@ -1849,8 +1913,16 @@ class _DirectMessageActionMenu extends StatelessWidget {
       if (action == 'reply') {
         onReply(message);
       } else if (action == 'edit') {
-        final body = await _editMessageDialog(context, message.body);
-        if (body != null) onEdit(body);
+        await _editMessageDialog(
+          context,
+          message.body,
+          message.revision,
+          message.mentionUserIds,
+          mentionOptions,
+          selfId,
+          onEdit,
+          onRefresh,
+        );
       } else if (action == 'delete' && await _confirmDelete(context)) {
         await onDelete();
       }
@@ -1929,12 +2001,14 @@ class _MentionPicker extends StatelessWidget {
     required this.selfId,
     required this.selectedIds,
     required this.onChanged,
+    this.disabled = false,
   });
 
   final List<(String, String)> options;
   final String selfId;
   final Set<String> selectedIds;
   final ValueChanged<Set<String>> onChanged;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -1951,6 +2025,7 @@ class _MentionPicker extends StatelessWidget {
         children: [
           PopupMenuButton<String>(
             tooltip: 'Выбрать упоминание',
+            enabled: !disabled,
             onSelected: (id) {
               final next = Set<String>.from(selectedIds);
               if (!next.add(id)) {
@@ -2893,8 +2968,30 @@ class _DirectConversationState extends State<_DirectConversation> {
                             message: message,
                             canEdit: own,
                             onReply: _replyToDirect,
-                            onEdit: (body) =>
-                                widget.state.editDirect(message, body),
+                            mentionOptions: [
+                              (
+                                widget.conversation.participantId,
+                                widget.conversation.displayName,
+                              ),
+                            ],
+                            selfId: widget.state.user?.accountId ?? '',
+                            onEdit: (body, revision, ids) =>
+                                widget.state.editDirectWithResult(
+                                  message,
+                                  body,
+                                  revision,
+                                  mentionUserIds: ids,
+                                ),
+                            onRefresh: () async {
+                              final latest = await widget.state
+                                  .refreshDirectMessageRevision(message);
+                              return latest == null
+                                  ? null
+                                  : (
+                                      revision: latest.revision,
+                                      deleted: latest.deleted,
+                                    );
+                            },
                             onDelete: () => widget.state.deleteDirect(message),
                           ),
                       ],
@@ -4671,36 +4768,189 @@ Future<void> _showMemberDialog(
   );
 }
 
-Future<String?> _editMessageDialog(
+Future<void> _editMessageDialog(
   BuildContext context,
   String initialValue,
-) async {
-  final controller = TextEditingController(text: initialValue);
-  final value = await showDialog<String>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Изменить сообщение'),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        maxLength: 8000,
-        minLines: 2,
-        maxLines: 8,
+  int initialRevision,
+  List<String> initialMentionIds,
+  List<(String, String)> mentionOptions,
+  String selfId,
+  Future<MessageEditOutcome> Function(String, int, List<String>) onSave,
+  Future<({int revision, bool deleted})?> Function() onRefresh,
+) => showDialog<void>(
+  context: context,
+  barrierDismissible: false,
+  builder: (_) => _MessageEditDialog(
+    initialValue: initialValue,
+    initialRevision: initialRevision,
+    initialMentionIds: initialMentionIds,
+    mentionOptions: mentionOptions,
+    selfId: selfId,
+    onSave: onSave,
+    onRefresh: onRefresh,
+  ),
+);
+
+class _MessageEditDialog extends StatefulWidget {
+  const _MessageEditDialog({
+    required this.initialValue,
+    required this.initialRevision,
+    required this.initialMentionIds,
+    required this.mentionOptions,
+    required this.selfId,
+    required this.onSave,
+    required this.onRefresh,
+  });
+
+  final String initialValue;
+  final int initialRevision;
+  final List<String> initialMentionIds;
+  final List<(String, String)> mentionOptions;
+  final String selfId;
+  final Future<MessageEditOutcome> Function(String, int, List<String>) onSave;
+  final Future<({int revision, bool deleted})?> Function() onRefresh;
+
+  @override
+  State<_MessageEditDialog> createState() => _MessageEditDialogState();
+}
+
+class _MessageEditDialogState extends State<_MessageEditDialog> {
+  late final TextEditingController _controller;
+  late int _revision;
+  late final Set<String> _mentionIds;
+  bool _pending = false;
+  bool _needsRefresh = false;
+  String? _error;
+  String? _notice;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+    _revision = widget.initialRevision;
+    _mentionIds = widget.initialMentionIds.toSet();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_pending || _needsRefresh) return;
+    final body = _controller.text;
+    if (body.trim().isEmpty || body.trim().runes.length > 8000) {
+      setState(() => _error = 'Сообщение должно содержать до 8000 символов.');
+      return;
+    }
+    setState(() {
+      _pending = true;
+      _error = null;
+      _notice = null;
+    });
+    MessageEditOutcome outcome;
+    try {
+      outcome = await widget.onSave(body, _revision, _mentionIds.toList());
+    } catch (_) {
+      outcome = (
+        kind: MessageEditStatus.error,
+        message: 'Не удалось сохранить сообщение. Повторите попытку.',
+      );
+    }
+    if (!mounted) return;
+    if (outcome.kind == MessageEditStatus.saved) {
+      Navigator.pop(context);
+      return;
+    }
+    setState(() {
+      _pending = false;
+      _needsRefresh = outcome.kind == MessageEditStatus.conflict;
+      _error = outcome.message ?? 'Не удалось сохранить сообщение.';
+    });
+  }
+
+  Future<void> _refresh() async {
+    if (_pending || !_needsRefresh) return;
+    setState(() {
+      _pending = true;
+      _error = null;
+    });
+    ({int revision, bool deleted})? latest;
+    try {
+      latest = await widget.onRefresh();
+    } catch (_) {
+      latest = null;
+    }
+    if (!mounted) return;
+    setState(() {
+      _pending = false;
+      if (latest?.deleted == true) {
+        _error = 'Сообщение удалено. Ваш черновик сохранён для копирования.';
+      } else if (latest != null && latest.revision > _revision) {
+        _revision = latest.revision;
+        _needsRefresh = false;
+        _notice = 'Версия обновлена. Проверьте свой текст перед повторным сохранением.';
+      } else {
+        _error =
+            'Не удалось получить новую версию сообщения. Повторите обновление.';
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Изменить сообщение'),
+    content: SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            enabled: !_pending,
+            maxLength: 8000,
+            minLines: 2,
+            maxLines: 8,
+            decoration: const InputDecoration(
+              labelText: 'Изменённый текст сообщения',
+            ),
+          ),
+          _MentionPicker(
+            options: widget.mentionOptions,
+            selfId: widget.selfId,
+            selectedIds: _mentionIds,
+            disabled: _pending,
+            onChanged: (ids) => setState(() {
+              _mentionIds
+                ..clear()
+                ..addAll(ids);
+            }),
+          ),
+          if (_error != null)
+            Text(_error!, style: const TextStyle(color: GcColors.danger)),
+          if (_notice != null)
+            Text(_notice!, style: const TextStyle(color: GcColors.muted)),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext),
-          child: const Text('Отмена'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(dialogContext, controller.text),
-          child: const Text('Сохранить'),
-        ),
-      ],
     ),
+    actions: [
+      TextButton(
+        onPressed: _pending ? null : () => Navigator.pop(context),
+        child: const Text('Отмена'),
+      ),
+      if (_needsRefresh)
+        TextButton(
+          onPressed: _pending ? null : _refresh,
+          child: const Text('Обновить версию'),
+        ),
+      FilledButton(
+        onPressed: _pending || _needsRefresh ? null : _save,
+        child: Text(_pending ? 'Обрабатываем…' : 'Сохранить'),
+      ),
+    ],
   );
-  controller.dispose();
-  return value;
 }
 
 Future<bool> _confirmDelete(BuildContext context) async =>

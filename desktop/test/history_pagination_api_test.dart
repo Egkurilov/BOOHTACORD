@@ -189,6 +189,45 @@ void main() {
     },
   );
 
+  test('edit requests preserve or clear the full mention set', () async {
+    final requests = <http.Request>[];
+    final api = ApiClient(
+      client: MockClient((request) async {
+        requests.add(request);
+        return http.Response.bytes(
+          utf8.encode(
+            jsonEncode(
+              request.url.path.contains('/direct-messages/')
+                  ? _directMessage
+                  : _textMessage,
+            ),
+          ),
+          200,
+        );
+      }),
+    );
+
+    await api.editMessage(
+      'text-1',
+      'message-1',
+      'Текст',
+      1,
+      mentionUserIds: ['account-2'],
+    );
+    await api.editDirectMessage(
+      'dm-1',
+      'message-1',
+      'Лично',
+      1,
+      mentionUserIds: [],
+    );
+
+    expect((jsonDecode(requests[0].body) as Map)['mention_user_ids'], [
+      'account-2',
+    ]);
+    expect((jsonDecode(requests[1].body) as Map)['mention_user_ids'], isEmpty);
+  });
+
   test(
     'uploads a private attachment as multipart and validates metadata',
     () async {

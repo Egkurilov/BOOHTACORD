@@ -914,13 +914,18 @@ class ApiClient {
     String directMessageId,
     String messageId,
     String body,
-    int expectedRevision,
-  ) async {
+    int expectedRevision, {
+    List<String> mentionUserIds = const [],
+  }) async {
     final data = await _checked(
       await _client.patch(
         _uri('/direct-messages/$directMessageId/messages/$messageId'),
         headers: await _headers(jsonBody: true),
-        body: jsonEncode({'body': body, 'expected_revision': expectedRevision}),
+        body: jsonEncode({
+          'body': body,
+          'expected_revision': expectedRevision,
+          'mention_user_ids': mentionUserIds,
+        }),
       ),
     ) as Map<String, dynamic>;
     return DirectChatMessage.fromJson(data);
@@ -990,13 +995,18 @@ class ApiClient {
     String channelId,
     String messageId,
     String body,
-    int expectedRevision,
-  ) async {
+    int expectedRevision, {
+    List<String> mentionUserIds = const [],
+  }) async {
     final data = await _checked(
       await _client.patch(
         _uri('/channels/$channelId/messages/$messageId'),
         headers: await _headers(jsonBody: true),
-        body: jsonEncode({'body': body, 'expected_revision': expectedRevision}),
+        body: jsonEncode({
+          'body': body,
+          'expected_revision': expectedRevision,
+          'mention_user_ids': mentionUserIds,
+        }),
       ),
     ) as Map<String, dynamic>;
     return ChatMessage.fromJson(data);

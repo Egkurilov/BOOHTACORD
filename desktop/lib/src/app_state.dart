@@ -35,6 +35,10 @@ enum NavigationSection { channels, directMessages }
 
 enum WorkspacePanel { none, profile, audio, admin, search, searchContext }
 
+enum MessageEditStatus { saved, conflict, error, stale }
+
+typedef MessageEditOutcome = ({MessageEditStatus kind, String? message});
+
 class AppState extends ChangeNotifier {
   AppState(
     this.api, {
@@ -1194,40 +1198,127 @@ class AppState extends ChangeNotifier {
     return api.uploadChannelAttachment(channel.id, fileName, bytes);
   }
 
-  Future<bool> editDirect(DirectChatMessage message, String body) async {
+  Future<bool> editDirect(DirectChatMessage message, String body) async =>
+      (await editDirectWithResult(message, body, message.revision)).kind ==
+      MessageEditStatus.saved;
+
+  Future<MessageEditOutcome> editDirectWithResult(
+    DirectChatMessage message,
+    String body,
+    int expectedRevision, {
+    List<String>? mentionUserIds,
+  }) async {
     final trimmed = body.trim();
-    if (trimmed.isEmpty || trimmed.runes.length > 8000) return false;
+    if (selectedDirectMessage?.id != message.directMessageId ||
+        !directMessageHistory.any((item) => item.id == message.id)) {
+      return (kind: MessageEditStatus.stale, message: 'Беседа изменилась.');
+    }
+    if (trimmed.isEmpty || trimmed.runes.length > 8000) {
+      return (
+        kind: MessageEditStatus.error,
+        message: 'Сообщение должно содержать до 8000 символов.',
+      );
+    }
     try {
       final edited = await api.editDirectMessage(
         message.directMessageId,
         message.id,
         trimmed,
-        message.revision,
+        expectedRevision,
+        mentionUserIds: mentionUserIds ?? message.mentionUserIds,
       );
+      if (selectedDirectMessage?.id != message.directMessageId) {
+        return (kind: MessageEditStatus.stale, message: 'Беседа изменилась.');
+      }
       directMessageHistory = directMessageHistory
           .map((value) => value.id == edited.id ? edited : value)
           .toList(growable: false);
+      error = null;
       notifyListeners();
-      return true;
-    } on ApiFailure catch (cause) {
-      error = cause.message;
-      if (cause.status == 409 && selectedDirectMessage != null) {
-        await openDirectConversation(selectedDirectMessage!);
+      return (kind: MessageEditStatus.saved, message: null);
+    } catch (cause) {
+      final conflict = cause is ApiFailure && cause.status == 409;
+      final messageText = conflict
+          ? 'Сообщение изменилось. Обновите версию, чтобы сохранить свой текст.'
+          : _message(cause);
+      if (selectedDirectMessage?.id == message.directMessageId) {
+        error = messageText;
+        notifyListeners();
       }
-      notifyListeners();
-      return false;
+      return (
+        kind: conflict ? MessageEditStatus.conflict : MessageEditStatus.error,
+        message: messageText,
+      );
     }
+  }
+
+  Future<DirectChatMessage?> refreshDirectMessageRevision(
+    DirectChatMessage message,
+  ) async {
+    final target = message.directMessageId;
+    if (selectedDirectMessage?.id != target ||
+        !directMessageHistory.any((item) => item.id == message.id)) {
+      return null;
+    }
+    final count = directMessageHistory
+        .where((item) => item.sendStatus == null)
+        .length;
+    final maxPages = (count + 49) ~/ 50 + 2;
+    final seen = <String>{};
+    String? before;
+    try {
+      for (var pageIndex = 0; pageIndex < maxPages; pageIndex++) {
+        final page = await api.directMessageHistoryPage(target, before: before);
+        if (selectedDirectMessage?.id != target) return null;
+        final found = page.messages
+            .where((item) => item.id == message.id)
+            .firstOrNull;
+        if (found != null) {
+          directMessageHistory = directMessageHistory
+              .map(
+                (item) => item.id == found.id && found.revision >= item.revision
+                    ? found
+                    : item,
+              )
+              .toList(growable: false);
+          error = null;
+          notifyListeners();
+          return directMessageHistory
+              .where((item) => item.id == found.id)
+              .firstOrNull;
+        }
+        final cursor = page.nextCursor;
+        if (cursor == null || !seen.add(cursor)) break;
+        before = cursor;
+      }
+    } catch (cause) {
+      if (selectedDirectMessage?.id == target) {
+        error = _message(cause);
+        notifyListeners();
+      }
+    }
+    return null;
   }
 
   Future<void> deleteDirect(DirectChatMessage message) async {
     try {
       await api.deleteDirectMessage(message.directMessageId, message.id);
-      if (selectedDirectMessage != null) {
-        await openDirectConversation(selectedDirectMessage!);
+      if (selectedDirectMessage?.id == message.directMessageId) {
+        directMessageHistory = directMessageHistory
+            .map(
+              (item) => item.id == message.id && !item.deleted
+                  ? item.asDeleted()
+                  : item,
+            )
+            .toList(growable: false);
+        error = null;
+        notifyListeners();
       }
     } catch (cause) {
-      error = _message(cause);
-      notifyListeners();
+      if (selectedDirectMessage?.id == message.directMessageId) {
+        error = _message(cause);
+        notifyListeners();
+      }
     }
   }
 
@@ -1729,38 +1820,121 @@ class AppState extends ChangeNotifier {
     );
   }
 
-  Future<bool> editText(ChatMessage message, String body) async {
+  Future<bool> editText(ChatMessage message, String body) async =>
+      (await editTextWithResult(message, body, message.revision)).kind ==
+      MessageEditStatus.saved;
+
+  Future<MessageEditOutcome> editTextWithResult(
+    ChatMessage message,
+    String body,
+    int expectedRevision, {
+    List<String>? mentionUserIds,
+  }) async {
     final trimmed = body.trim();
-    if (trimmed.isEmpty || trimmed.runes.length > 8000) return false;
+    if (selectedChannel?.id != message.channelId ||
+        !messages.any((item) => item.id == message.id)) {
+      return (kind: MessageEditStatus.stale, message: 'Беседа изменилась.');
+    }
+    if (trimmed.isEmpty || trimmed.runes.length > 8000) {
+      return (
+        kind: MessageEditStatus.error,
+        message: 'Сообщение должно содержать до 8000 символов.',
+      );
+    }
     try {
       final edited = await api.editMessage(
         message.channelId,
         message.id,
         trimmed,
-        message.revision,
+        expectedRevision,
+        mentionUserIds: mentionUserIds ?? message.mentionUserIds,
       );
+      if (selectedChannel?.id != message.channelId) {
+        return (kind: MessageEditStatus.stale, message: 'Беседа изменилась.');
+      }
       messages = messages
           .map((value) => value.id == edited.id ? edited : value)
           .toList(growable: false);
+      error = null;
       notifyListeners();
-      return true;
-    } on ApiFailure catch (cause) {
-      error = cause.message;
-      if (cause.status == 409 && selectedChannel != null) {
-        await selectChannel(selectedChannel!);
+      return (kind: MessageEditStatus.saved, message: null);
+    } catch (cause) {
+      final conflict = cause is ApiFailure && cause.status == 409;
+      final messageText = conflict
+          ? 'Сообщение изменилось. Обновите версию, чтобы сохранить свой текст.'
+          : _message(cause);
+      if (selectedChannel?.id == message.channelId) {
+        error = messageText;
+        notifyListeners();
       }
-      notifyListeners();
-      return false;
+      return (
+        kind: conflict ? MessageEditStatus.conflict : MessageEditStatus.error,
+        message: messageText,
+      );
     }
+  }
+
+  Future<ChatMessage?> refreshTextMessageRevision(ChatMessage message) async {
+    final target = message.channelId;
+    if (selectedChannel?.id != target ||
+        !messages.any((item) => item.id == message.id)) {
+      return null;
+    }
+    final count = messages.where((item) => item.sendStatus == null).length;
+    final maxPages = (count + 49) ~/ 50 + 2;
+    final seen = <String>{};
+    String? before;
+    try {
+      for (var pageIndex = 0; pageIndex < maxPages; pageIndex++) {
+        final page = await api.messagePage(target, before: before);
+        if (selectedChannel?.id != target) return null;
+        final found = page.messages
+            .where((item) => item.id == message.id)
+            .firstOrNull;
+        if (found != null) {
+          messages = messages
+              .map(
+                (item) => item.id == found.id && found.revision >= item.revision
+                    ? found
+                    : item,
+              )
+              .toList(growable: false);
+          error = null;
+          notifyListeners();
+          return messages.where((item) => item.id == found.id).firstOrNull;
+        }
+        final cursor = page.nextCursor;
+        if (cursor == null || !seen.add(cursor)) break;
+        before = cursor;
+      }
+    } catch (cause) {
+      if (selectedChannel?.id == target) {
+        error = _message(cause);
+        notifyListeners();
+      }
+    }
+    return null;
   }
 
   Future<void> deleteText(ChatMessage message) async {
     try {
       await api.deleteMessage(message.channelId, message.id);
-      if (selectedChannel != null) await selectChannel(selectedChannel!);
+      if (selectedChannel?.id == message.channelId) {
+        messages = messages
+            .map(
+              (item) => item.id == message.id && !item.deleted
+                  ? item.asDeleted()
+                  : item,
+            )
+            .toList(growable: false);
+        error = null;
+        notifyListeners();
+      }
     } catch (cause) {
-      error = _message(cause);
-      notifyListeners();
+      if (selectedChannel?.id == message.channelId) {
+        error = _message(cause);
+        notifyListeners();
+      }
     }
   }
 

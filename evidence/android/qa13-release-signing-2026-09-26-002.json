@@ -1,0 +1,35 @@
+{
+  "id": "qa13-release-signing-2026-09-26-002",
+  "kind": "release-gate",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-26",
+  "apk": "desktop/build/app/outputs/flutter-apk/app-release.apk",
+  "apk_sha256": "590700323d44614b8fb0615f867839fe72236e3b4ebf0c9fc6a7204d7e6157b9",
+  "signer_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b",
+  "checks": [
+    {
+      "name": "Flutter source and widget tests",
+      "command": "flutter analyze && flutter test --reporter compact",
+      "status": "PASS",
+      "observation": "No analyzer issues; all 93 tests passed, including the deleted-during-edit and stale-conversation edge cases."
+    },
+    {
+      "name": "macOS debug and Android signed release builds",
+      "command": "flutter build macos --debug && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Both builds completed; Android APK was signed by the same private upload JKS as the prior release build."
+    },
+    {
+      "name": "APK signer certificate",
+      "command": "apksigner verify --verbose --print-certs desktop/build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified with one signer; fingerprint matches the private upload JKS."
+    },
+    {
+      "name": "physical-device release acceptance and off-host key recovery",
+      "status": "NOT_RUN",
+      "reason": "No physical-device release session or off-host backup was available."
+    }
+  ],
+  "failure_or_blocker": "QA-13 remains open pending physical-device acceptance and secure upload-key backup."
+}

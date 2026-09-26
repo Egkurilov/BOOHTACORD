@@ -427,6 +427,18 @@ class ChatMessage {
     attachments: attachments,
     editedAt: editedAt,
   );
+
+  ChatMessage asDeleted() => ChatMessage(
+    id: id,
+    channelId: channelId,
+    authorId: authorId,
+    body: '',
+    createdAt: createdAt,
+    deleted: true,
+    revision: revision + 1,
+    clientMessageId: clientMessageId,
+    replyToId: replyToId,
+  );
 }
 
 class ChatMessagePage {
@@ -617,6 +629,19 @@ class DirectChatMessage {
         attachments: attachments,
         editedAt: editedAt,
       );
+
+  DirectChatMessage asDeleted() => DirectChatMessage(
+    id: id,
+    directMessageId: directMessageId,
+    authorId: authorId,
+    body: '',
+    createdAt: createdAt,
+    deleted: true,
+    revision: revision + 1,
+    clientMessageId: clientMessageId,
+    replyToId: replyToId,
+    replyPreview: replyPreview,
+  );
 }
 
 class DirectChatMessagePage {
