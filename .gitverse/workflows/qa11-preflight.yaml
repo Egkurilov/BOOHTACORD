@@ -1,0 +1,23 @@
+name: QA-11 release host preflight
+
+on:
+  push:
+    branches: [codex/qa11-release-preflight]
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      DEPLOY_SERVER_IP: 176.108.242.211
+      DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      SSH_USER: shaneque
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read release host image and Buildx capabilities
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/configure-deploy-ssh.sh
+          remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
+          ssh -i "$HOME/.ssh/id_deploy" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" "$remote" bash -s < scripts/qa11_release/preflight.sh
