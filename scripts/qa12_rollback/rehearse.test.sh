@@ -34,7 +34,9 @@ cat > "$release_root/$current/scripts/audit-attachment-volume.sh" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 printf 'audit %s\n' "$1" >> "$QA12_LOG"
-[[ "$(cat "$QA12_STATE/running-api")" == "voice-platform-api:$1" ]]
+expected="voice-platform-api:$1"
+[[ "$1" != "$QA12_CURRENT" || ! -f "$QA12_RELEASE_ROOT/$1/api.oci.json" ]] || expected="voice-platform-api@$QA12_DIGEST"
+[[ "$(cat "$QA12_STATE/running-api")" == "$expected" ]]
 if [[ "${QA12_FAIL_PREVIOUS_AUDIT:-0}" == 1 && "$1" == "$QA12_PREVIOUS" ]]; then exit 29; fi
 EOF
 cat > "$bin_dir/docker" <<'EOF'
@@ -64,7 +66,10 @@ printf 'sleep %s\n' "$*" >> "$QA12_LOG"
 if [[ "${QA12_INTERRUPT_ON_SLEEP:-0}" == 1 ]]; then kill -TERM "$PPID"; fi
 EOF
 chmod 0755 "$bin_dir/docker" "$bin_dir/sleep"
+printf '#!/usr/bin/env bash\nexec python "$@"\n' > "$bin_dir/python3"
+chmod 0755 "$bin_dir/python3"
 export PATH="$bin_dir:$PATH" QA12_STATE="$state_dir" QA12_PREVIOUS="$previous" QA12_OBSERVE_SECONDS=30
+export QA12_CURRENT="$current" QA12_RELEASE_ROOT="$release_root"
 export QA12_LOG="$temporary_root/commands.log"
 script="$root/scripts/qa12_rollback/rehearse.sh"
 bash "$script" "$current" "$previous" "$release_root" > "$temporary_root/success.out"
@@ -97,5 +102,15 @@ QA12_VOLUME_DRIFT=1 bash "$script" "$current" "$previous" "$release_root" > "$te
 [[ "$(grep -c '^deploy ' "$QA12_LOG")" == 1 ]]
 grep -Fq 'named volume identity changed' "$temporary_root/drift.out"
 grep -Fq 'current restore requires operator diagnosis' "$temporary_root/drift.out"
+digest="sha256:$(printf '1%.0s' {1..64})"
+export QA12_DIGEST="$digest"
+for service in api web; do
+  printf '{"index_digest":"%s"}\n' "$digest" > "$release_root/$current/$service.oci.json"
+  printf 'voice-platform-%s@%s\n' "$service" "$digest" > "$state_dir/running-$service"
+done
+: > "$QA12_LOG"
+bash "$script" "$current" "$previous" "$release_root" > "$temporary_root/digest.out"
+[[ "$(cat "$state_dir/running-api")" == "voice-platform-api@$digest" ]]
+grep -Fq "deploy voice-platform-api@$digest voice-platform-web@$digest" "$QA12_LOG"
 if grep -Eq '(^| )down( |$)|(^| )volume (rm|prune)( |$)' "$QA12_LOG"; then exit 1; fi
 echo 'QA-12 two-way rehearsal tests passed'

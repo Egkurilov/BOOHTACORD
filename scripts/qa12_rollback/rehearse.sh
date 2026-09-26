@@ -11,6 +11,7 @@ observe_seconds="${QA12_OBSERVE_SECONDS:-60}"
 (( observe_seconds >= 30 && observe_seconds <= 300 )) || fail 'observer window outside 30..300 seconds'
 release_root="$(cd "${3:-/opt/voice-platform-releases}" && pwd -P)" || fail 'release root unavailable'
 current_dir="$release_root/$current"
+source "$(dirname "${BASH_SOURCE[0]}")/image_ref.sh"
 bash "$current_dir/scripts/qa12_rollback/preflight.sh" "$current" "$previous" "$release_root"
 
 volume_snapshot() {
@@ -26,17 +27,21 @@ assert_running() {
     container="$(docker ps --filter label=com.docker.compose.project=voice-platform --filter "label=com.docker.compose.service=$service" --format '{{.ID}}')"
     [[ "$container" =~ ^[0-9a-f]{12,64}$ ]] || fail "expected one running $service container"
     running="$(docker inspect --format '{{.Config.Image}}' "$container")"
-    [[ "$running" == "voice-platform-${service}:$revision" ]] || fail "running $service image differs"
+    expected="$(qa12_image_ref "$release_root" "$revision" "$service")" || fail "image receipt invalid"
+    [[ "$running" == "$expected" ]] || fail "running $service image differs"
     running_id="$(docker inspect --format '{{.Image}}' "$container")"
-    tag_id="$(docker image inspect --format '{{.Id}}' "voice-platform-${service}:$revision")"
+    tag_id="$(docker image inspect --format '{{.Id}}' "$expected")"
     [[ "$running_id" =~ ^sha256:[0-9a-f]{64}$ && "$running_id" == "$tag_id" ]] || fail "running $service image ID differs from tag"
   done
 }
 
 deploy_revision() {
   local revision="$1"
+  local api_ref web_ref
+  api_ref="$(qa12_image_ref "$release_root" "$revision" api)" || fail 'API image receipt invalid'
+  web_ref="$(qa12_image_ref "$release_root" "$revision" web)" || fail 'web image receipt invalid'
   env VOICE_PLATFORM_DIR="$current_dir" \
-    API_IMAGE="voice-platform-api:$revision" WEB_IMAGE="voice-platform-web:$revision" \
+    API_IMAGE="$api_ref" WEB_IMAGE="$web_ref" \
     bash "$current_dir/scripts/deploy-images.sh"
 }
 

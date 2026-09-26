@@ -9,7 +9,9 @@ pwsh -NoProfile -File scripts/verify-contracts.ps1
 pwsh -NoProfile -File scripts/verify-spec-traceability.ps1
 pwsh -NoProfile -File scripts/verify-ci-sbom.ps1
 pwsh -NoProfile -File scripts/verify-android-release-signing.ps1
+printf 'Checking Compose configuration...\n'
 "$compose_cli" --env-file .env.example -f compose.yaml --profile operator config --quiet
+printf 'Checking Compose image contract...\n'
 pwsh -NoProfile -File scripts/verify-compose-images.ps1
 bash scripts/check-attachment-volume-headroom.test.sh
 bash scripts/audit-attachment-volume.test.sh

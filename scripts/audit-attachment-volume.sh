@@ -4,6 +4,14 @@ set -euo pipefail
 fail() { printf 'Attachment capacity audit failed: %s\n' "$1" >&2; exit 1; }
 if [[ ${1:-} =~ ^[0-9a-f]{40}$ ]]; then
   expected_image="voice-platform-api:$1"
+  receipt="${VOICE_PLATFORM_RELEASE_ROOT:-/opt/voice-platform-releases}/$1/api.oci.json"
+  if sudo -n test -r "$receipt"; then
+    digest="$(sudo -n python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["index_digest"])' "$receipt")" || fail 'OCI receipt unavailable'
+    [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || fail 'OCI receipt digest invalid'
+    expected_image="voice-platform-api@$digest"
+  fi
+elif [[ ${1:-} =~ ^voice-platform-api@sha256:[0-9a-f]{64}$ ]]; then
+  expected_image="$1"
 elif [[ ${1:-} =~ ^ghcr[.]io/[a-z0-9][a-z0-9-]*/voice-platform-api@sha256:[0-9a-f]{64}$ ]]; then
   expected_image="$1"
 else

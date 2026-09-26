@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 audit="$root/scripts/audit-attachment-volume.sh"
 fixture="$(mktemp -d)"
 trap 'rm -rf -- "$fixture"' EXIT
 mkdir -p "$fixture/bin" "$fixture/attachments"
 sha=42e997369389e93d7512cd5bcf47bd77c85e7835
-
 cat > "$fixture/bin/sudo" <<'EOF'
 #!/usr/bin/env bash
 [[ "$1" == -n ]] || exit 2
@@ -51,10 +49,13 @@ else
 fi
 EOF
 chmod 0755 "$fixture/bin/"*
+mkdir -p "$fixture/releases/$sha"
+printf '#!/usr/bin/env bash\nexec python "$@"\n' > "$fixture/bin/python3"
+chmod 0755 "$fixture/bin/python3"
 
 run_audit() {
   local expected="${5:-$sha}"
-  PATH="$fixture/bin:$PATH" TEST_MOUNTPOINT="$fixture/attachments" \
+  PATH="$fixture/bin:$PATH" VOICE_PLATFORM_RELEASE_ROOT="$fixture/releases" TEST_MOUNTPOINT="$fixture/attachments" \
     TEST_API_IMAGE="${3:-voice-platform-api:$sha}" TEST_AVAILABLE="$1" \
     TEST_VOLUME_MODE="${4:-ok}" TEST_METRICS_MODE="${2:-ok}" \
     bash "$audit" "$expected" > "$fixture/output" 2>&1
@@ -104,6 +105,14 @@ if run_audit 6582484992 ok voice-platform-api:deadbeef ok "$digest_ref"; then
 fi
 if run_audit 6582484992 ok "$digest_ref" ok 'ghcr.io/example/voice-platform-api@sha256:short'; then
   echo 'expected malformed GHCR digest to fail' >&2
+  exit 1
+fi
+local_digest="sha256:$(printf '%064d' 1)"
+printf '{"index_digest":"%s"}\n' "$local_digest" > "$fixture/releases/$sha/api.oci.json"
+run_audit 6582484992 ok "voice-platform-api@$local_digest"
+grep -Fq "api_image=voice-platform-api@$local_digest" "$fixture/output"
+if run_audit 6582484992 ok voice-platform-api:deadbeef; then
+  echo 'expected wrong local digest to fail' >&2
   exit 1
 fi
 

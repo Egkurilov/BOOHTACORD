@@ -36,7 +36,7 @@ set -euo pipefail
 case "$1 $2" in
   'image inspect')
     [[ "${QA12_MISSING_PREVIOUS:-0}" != 1 || "$5" != "voice-platform-api:$QA12_PREVIOUS" ]] || exit 1
-    [[ "$5" =~ ^voice-platform-(api|web):[ab]{40}$ ]] || exit 1
+    [[ "$5" =~ ^voice-platform-(api|web):[ab]{40}$ || "$5" =~ ^voice-platform-(api|web)@sha256:1{64}$ ]] || exit 1
     if [[ "${QA12_RETAG_CURRENT:-0}" == 1 && "$5" == "voice-platform-api:$QA12_CURRENT" ]]; then
       printf 'sha256:%s\n' "$(printf '2%.0s' {1..64})"
     else
@@ -60,6 +60,8 @@ case "$1 $2" in
 esac
 EOF
 chmod 0755 "$bin_dir/docker"
+printf '#!/usr/bin/env bash\nexec python "$@"\n' > "$bin_dir/python3"
+chmod 0755 "$bin_dir/python3"
 export PATH="$bin_dir:$PATH" QA12_STATE="$state_dir" QA12_CURRENT="$current" QA12_PREVIOUS="$previous"
 script="$root/scripts/qa12_rollback/preflight.sh"
 bash "$script" "$current" "$previous" "$release_root" > "$temporary_root/passed.log"
@@ -77,6 +79,14 @@ printf 'same backend\n' > "$release_root/$previous/backend/main.go"
 printf 'different compose\n' > "$release_root/$previous/compose.yaml"
 bash "$script" "$current" "$previous" "$release_root" > "$temporary_root/compose.log" 2>&1 && exit 1
 printf 'services: {}\n' > "$release_root/$previous/compose.yaml"
+digest="sha256:$(printf '1%.0s' {1..64})"
+for service in api web; do
+  printf '{"index_digest":"%s"}\n' "$digest" > "$release_root/$current/$service.oci.json"
+  printf 'voice-platform-%s@%s\n' "$service" "$digest" > "$state_dir/running-$service"
+done
+printf 'API_IMAGE=voice-platform-api@%s\nWEB_IMAGE=voice-platform-web@%s\n' "$digest" "$digest" > "$release_root/$current/.env"
+bash "$script" "$current" "$previous" "$release_root" > "$temporary_root/digest.log"
+grep -Fq "image=voice-platform-api@$digest|$digest" "$temporary_root/digest.log"
 rmdir "$state_dir/volumes/voice-platform_postgres-data"
 bash "$script" "$current" "$previous" "$release_root" > "$temporary_root/volume.log" 2>&1 && exit 1
 echo 'QA-12 read-only preflight tests passed'

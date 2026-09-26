@@ -9,6 +9,7 @@ previous="$2"
 release_root="$(cd "${3:-/opt/voice-platform-releases}" && pwd -P)" || fail 'release root unavailable'
 current_dir="$release_root/$current"
 previous_dir="$release_root/$previous"
+source "$(dirname "${BASH_SOURCE[0]}")/image_ref.sh"
 for release_dir in "$current_dir" "$previous_dir"; do
   [[ -d "$release_dir" && "$(cd "$release_dir" && pwd -P)" == "$release_dir" ]] || fail 'exact release directory unavailable'
   [[ -d "$release_dir/backend" && -r "$release_dir/compose.yaml" && -r "$release_dir/docker/Caddyfile" ]] || fail 'release source incomplete'
@@ -22,7 +23,7 @@ cmp -s "$current_dir/docker/Caddyfile" "$previous_dir/docker/Caddyfile" || fail 
 
 for service in api web; do
   upper="${service^^}"
-  expected="voice-platform-${service}:$current"
+  expected="$(qa12_image_ref "$release_root" "$current" "$service")" || fail "current $service image receipt invalid"
   configured="$(sed -n "s/^${upper}_IMAGE=//p" "$current_dir/.env")"
   [[ "$configured" == "$expected" ]] || fail "current $service image in environment differs"
   container="$(docker ps --filter label=com.docker.compose.project=voice-platform --filter "label=com.docker.compose.service=$service" --format '{{.ID}}')" || fail "running $service unavailable"
@@ -31,7 +32,7 @@ for service in api web; do
   [[ "$running" == "$expected" ]] || fail "running $service image differs"
   current_image_id=''
   for sha in "$current" "$previous"; do
-    tag="voice-platform-${service}:$sha"
+    tag="$(qa12_image_ref "$release_root" "$sha" "$service")" || fail "local $service image receipt invalid"
     image_id="$(docker image inspect --format '{{.Id}}' "$tag")" || fail "local $service image tag unavailable"
     [[ "$image_id" =~ ^sha256:[0-9a-f]{64}$ ]] || fail "local $service image ID invalid"
     if [[ "$sha" == "$current" ]]; then current_image_id="$image_id"; fi
