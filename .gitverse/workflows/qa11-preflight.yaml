@@ -20,4 +20,17 @@ jobs:
           set -euo pipefail
           bash scripts/configure-deploy-ssh.sh
           remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
-          ssh -i "$HOME/.ssh/id_deploy" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" "$remote" bash -s < scripts/qa11_release/preflight.sh
+          ssh_options=(-i "$HOME/.ssh/id_deploy" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          ssh "${ssh_options[@]}" "$remote" bash -s < scripts/qa11_release/preflight.sh
+      - name: Probe pinned temporary Buildx plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          binary="${RUNNER_TEMP:?}/docker-buildx"
+          curl -fL --retry 2 --max-time 90 https://github.com/docker/buildx/releases/download/v0.37.1/buildx-v0.37.1.linux-amd64 -o "$binary"
+          printf '9447199cdb435f25880548343c128a4b6650e8891ee598905d8d29d39a8e359b  %s\n' "$binary" | sha256sum -c -
+          remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
+          incoming="/tmp/voice-platform-qa11-buildx-$(git rev-parse HEAD)"
+          ssh_options=(-i "$HOME/.ssh/id_deploy" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          scp "${ssh_options[@]}" "$binary" "$remote:$incoming"
+          ssh "${ssh_options[@]}" "$remote" bash -s -- "$incoming" < scripts/qa11_release/probe_buildx.sh
