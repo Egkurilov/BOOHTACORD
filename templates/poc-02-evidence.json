@@ -1,0 +1,49 @@
+{
+  "id": "poc-02-presenter-os-YYYY-MM-DD-001",
+  "kind": "poc-02",
+  "status": "NOT_RUN",
+  "executed_at": null,
+  "environment": {
+    "source_commit": null,
+    "api_image_digest": null,
+    "web_image_digest": null,
+    "livekit_image_digest": null,
+    "presenter_os": null,
+    "presenter_machine_gpu": null,
+    "observer_os": null,
+    "observer_machine_gpu": null,
+    "presenter_chrome_version": null,
+    "observer_chrome_version": null,
+    "network": null,
+    "capture_source": null,
+    "game": null
+  },
+  "profiles": [
+    { "target": "720p/30", "normal": null, "degraded": null, "recovery": null, "status": "NOT_RUN" },
+    { "target": "720p/60", "normal": null, "degraded": null, "recovery": null, "status": "NOT_RUN" },
+    { "target": "1080p/30", "normal": null, "degraded": null, "recovery": null, "status": "NOT_RUN" },
+    { "target": "1080p/60", "normal": null, "degraded": null, "recovery": null, "status": "NOT_RUN" }
+  ],
+  "measurement_fields_per_phase": {
+    "started_at_utc": null,
+    "ended_at_utc": null,
+    "capture_width_height_fps": null,
+    "capture_source_frames_start_end": null,
+    "sender_width_height_fps": null,
+    "sender_frames_encoded_start_end": null,
+    "receiver_frames_decoded_start_end": null,
+    "viewer_presented_fps": null,
+    "viewer_decoded_fps": null,
+    "viewer_bitrate_bps": null,
+    "viewer_dropped_frames": null,
+    "viewer_packet_loss": null,
+    "viewer_packets_received_start_end": null,
+    "viewer_packet_loss_percent": null,
+    "viewer_jitter_ms": null,
+    "candidate_pair_rtt_ms": null,
+    "adaptation_and_voice_observation": null
+  },
+  "observer": null,
+  "artifacts": [],
+  "failure_or_blocker": null
+}

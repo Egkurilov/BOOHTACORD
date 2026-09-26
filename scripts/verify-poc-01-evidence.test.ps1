@@ -47,8 +47,14 @@ function New-Evidence {
 function Invoke-Validator {
     param([string]$windowsPath, [string]$macPath)
 
-    $output = & powershell -NoProfile -ExecutionPolicy Bypass -File $verifier -WindowsEvidence $windowsPath -MacEvidence $macPath 2>&1 | Out-String
-    [pscustomobject]@{ exitCode = $LASTEXITCODE; output = $output }
+    $priorPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $output = & powershell -NoProfile -ExecutionPolicy Bypass -File $verifier -WindowsEvidence $windowsPath -MacEvidence $macPath 2>&1 | Out-String
+        [pscustomobject]@{ exitCode = $LASTEXITCODE; output = $output }
+    } finally {
+        $ErrorActionPreference = $priorPreference
+    }
 }
 
 New-Item -ItemType Directory -Path $testRoot | Out-Null
@@ -81,6 +87,12 @@ try {
     }
 
     $windows.status = 'PASS'
+    $windows.observations.game_audio = $false
+    $windows | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $windowsPath -Encoding utf8
+    $noGameAudio = Invoke-Validator $windowsPath $macPath
+    if ($noGameAudio.exitCode -eq 0) { throw 'A video-only record must not pass POC-01.' }
+
+    $windows.observations.game_audio = $true
     $windows.environment.presenter_os = 'secret-token'
     $windows | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $windowsPath -Encoding utf8
     $secret = Invoke-Validator $windowsPath $macPath

@@ -5,6 +5,7 @@
   "executed_at": null,
   "environment": {
     "presenter_machine": null,
+    "presenter_architecture": null,
     "observer_machine": null,
     "presenter_os": null,
     "observer_os": null,
@@ -16,6 +17,21 @@
     "game": null,
     "capture_source": null,
     "expected": []
+  },
+  "observations": {
+    "moving_game_video": null,
+    "game_audio": null,
+    "presenter_voice": null,
+    "no_sustained_digital_loop": null,
+    "moving_video_observation_seconds": null
+  },
+  "qa06_audio_controls": {
+    "participant_voice_at_0_percent_silent": null,
+    "participant_voice_at_175_percent_audible": null,
+    "participant_voice_at_200_percent_audible": null,
+    "screen_audio_off_game_silent_voice_audible": null,
+    "screen_audio_on_game_restored": null,
+    "screen_switch_and_reenable": null
   },
   "measurements": {
     "target_resolution": null,

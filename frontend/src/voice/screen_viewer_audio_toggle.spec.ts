@@ -70,4 +70,28 @@ describe('selected screen sound', () => {
     expect(published.audio!.track!.attach).toHaveBeenCalledWith(audio)
     expect(output.setMuted).toHaveBeenCalledWith(true)
   })
+
+  it('detaches the old audio track when LiveKit replaces a subscribed track on reconnect', () => {
+    const selected = stream('alice')
+    const controller = new ScreenViewerController(() => [selected], {
+      attach: vi.fn(() => ({ dispose: vi.fn(), setMuted: vi.fn(), setVolume: vi.fn() })),
+    } as never)
+    const audio = {} as HTMLAudioElement
+    controller.select('alice', {} as HTMLVideoElement, audio)
+    controller.setAudioMuted(true)
+    const oldTrack = selected.audio!.track!
+    const nextTrack = { attach: vi.fn(), detach: vi.fn() }
+    const oldVideoTrack = selected.video.track!
+    const nextVideoTrack = { attach: vi.fn(), detach: vi.fn() }
+    selected.audio!.track = nextTrack
+    selected.video.track = nextVideoTrack
+
+    controller.reconcile()
+
+    expect(oldTrack.detach).toHaveBeenCalledWith(audio)
+    expect(nextTrack.attach).toHaveBeenCalledWith(audio)
+    expect(oldVideoTrack.detach).toHaveBeenCalledOnce()
+    expect(nextVideoTrack.attach).toHaveBeenCalledOnce()
+    expect(controller.audioMuted).toBe(true)
+  })
 })

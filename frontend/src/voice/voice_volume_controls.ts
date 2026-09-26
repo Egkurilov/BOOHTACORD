@@ -69,8 +69,10 @@ export function createVoiceVolumeControls(
     let ownAccountId: string | null = null
     try {
       ownAccountId = (await loadAccount()).accountId
+      if (current !== revision) return
       preferences.bind(ownAccountId)
     } catch {
+      if (current !== revision) return
       preferences.unbind()
       error.value = 'Не удалось загрузить настройки громкости; используется 100%.'
     }

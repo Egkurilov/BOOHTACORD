@@ -1,4 +1,6 @@
 import { AudioMixer, normalizeAudioVolume, type AudioGainHandle } from './audio_gain'
+import { createScreenReceiverReader } from './screen_receiver_reader'
+import { ScreenTrackAttachment } from './screen_track_attachment'
 import type { ScreenViewerCard, ScreenViewerStream } from './screen_viewer_types'
 export type { ScreenViewerCard, ScreenViewerPublication, ScreenViewerStream, ScreenViewerTrack } from './screen_viewer_types'
 
@@ -6,10 +8,13 @@ export class ScreenViewerController {
   private audio: HTMLAudioElement | null = null
   private audioOutput: AudioGainHandle | null = null
   private audioVolume = 100
+  private readonly attachedAudio = new ScreenTrackAttachment()
+  private readonly attachedVideo = new ScreenTrackAttachment()
   private screenAudioMuted = false
   private deafened = false
   private hasEnded = false
   private readonly listeners = new Set<() => void>()
+  private readonly receiverReader = createScreenReceiverReader()
   private selected: ScreenViewerStream | null = null
   private video: HTMLVideoElement | null = null
 
@@ -23,7 +28,7 @@ export class ScreenViewerController {
   cards(): ScreenViewerCard[] {
     return this.source().map(({ accountId, hasAudio, id, isLocal, participantId, participantName, video }) => ({
       accountId, hasAudio, id, isLocal, participantId, participantName,
-      ...(!isLocal && video.track?.getReceiverStats ? { readReceiverStats: () => video.track!.getReceiverStats!() } : {}),
+      ...(!isLocal && video.track?.getReceiverStats ? { readReceiverStats: this.receiverReader(video.track) } : {}),
     }))
   }
 
@@ -91,16 +96,16 @@ export class ScreenViewerController {
 
   private attachSelected(): void {
     if (!this.selected) return
-    if (this.video) this.selected.video.track?.attach(this.video)
-    if (this.audio) this.selected.audio?.track?.attach(this.audio)
+    this.attachedVideo.update(this.selected.video.track ?? null, this.video)
+    this.attachedAudio.update(this.selected.audio?.track ?? null, this.audio)
   }
 
   private detachAndUnsubscribe(): void {
     this.audioOutput?.dispose()
     this.audioOutput = null
     if (!this.selected) return
-    if (this.video) this.selected.video.track?.detach(this.video)
-    if (this.audio) this.selected.audio?.track?.detach(this.audio)
+    this.attachedVideo.clear()
+    this.attachedAudio.clear()
     this.selected.video.setSubscribed?.(false)
     this.selected.audio?.setSubscribed?.(false)
   }

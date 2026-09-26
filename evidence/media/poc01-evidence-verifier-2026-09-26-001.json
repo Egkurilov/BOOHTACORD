@@ -1,0 +1,14 @@
+{
+  "id": "poc01-evidence-verifier-2026-09-26-001",
+  "tasks": ["QA-06", "T-004"],
+  "status": "PARTIAL",
+  "observed_at": "2026-09-26",
+  "change": "Added the previously missing POC-01 two-record validator, completed its disposable negative-case test, and extended the operator runbook/template to record participant volume and selected-stream audio observations.",
+  "checks": [
+    { "name": "validator_test", "result": "PASS_LOCAL", "detail": "Synthetic Windows and Apple-Silicon macOS records passed; Intel macOS, BLOCKED Windows, missing game audio and secret-bearing invalid record failed without printing record contents." },
+    { "name": "template_json_parse", "result": "PASS_LOCAL" },
+    { "name": "requirement_traceability", "result": "PASS_LOCAL", "detail": "39 requirements and approved brief source hash validated." },
+    { "name": "physical_windows_macos_game_and_audio", "result": "NOT_RUN", "detail": "No two-machine POC-01 run or observer judgement was available in this packet." }
+  ],
+  "limitation": "A successful structural validator cannot establish that a human heard game audio or observed no loop. QA-06 remains open."
+}

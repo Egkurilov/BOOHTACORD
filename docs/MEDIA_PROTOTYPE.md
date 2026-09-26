@@ -12,6 +12,8 @@
 
 Для 720p/30, 720p/60, 1080p/30 и 1080p/60 используйте движущийся game content и фиксируйте selected target, measured dimensions, decoded FPS, bitrate, RTT, loss и adaptation/recovery behaviour. Повторите при ухудшенной сети observer. Claim о поддерживаемом profile появляется только из записи `PASS`; UI всегда отделяет target от measured values.
 
+[Операторский протокол POC-02](POC_02_OPERATOR_RUNBOOK.md) задаёт отдельные измерения capture/encoded, decoded/presented FPS и transport RTT, чтобы проверить жалобу 60→15 FPS на физических клиентах. Шаблон записи — [poc-02-evidence.json](../templates/poc-02-evidence.json).
+
 ## POC-03 — отзыв доступа
 
 С подключёнными publisher и observer проверьте kick, ban, logout, session revocation и voice-channel deletion. После каждого действия попробуйте reconnect и replay ранее выданных API media token и LiveKit SDK token. `PASS` допустим только когда отозванный actor не может publish, subscribe или re-enter, а unaffected caller получает правдивый outcome. Зафиксируйте закреплённую версию/digest LiveKit.

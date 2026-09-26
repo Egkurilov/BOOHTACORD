@@ -1,0 +1,15 @@
+{
+  "id": "qa07-viewer-fps-reader-stability-2026-09-26-001",
+  "task": "QA-07",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-26",
+  "finding": "Refreshing a screen card recreated its receiver-stats callback. The viewer's watcher treated that as a new stream and reset the two-sample decoded-FPS window, even when the selected video track was unchanged.",
+  "change": "The callback is now stable for each video track and changes when the track changes. This keeps decoded-FPS samples continuous across card metadata refreshes while still resetting after a track replacement.",
+  "checks": [
+    { "name": "focused_regression_before_fix", "result": "FAIL_EXPECTED", "detail": "The new card-refresh identity assertion failed against the prior implementation." },
+    { "name": "focused_frontend_tests", "result": "PASS_LOCAL", "detail": "Four voice test files, 14 tests passed after the fix." },
+    { "name": "frontend_build", "result": "PASS_LOCAL", "detail": "vue-tsc --noEmit and Vite production build passed." },
+    { "name": "two_client_moving_content", "result": "NOT_RUN", "detail": "No sender/observer pair was available for capture, encoded, decoded and presented FPS measurements on live screen sharing." }
+  ],
+  "limitation": "Code and local tests improve measurement continuity but do not establish 60 FPS at a real viewer. QA-07 remains open until the POC-02 device and network matrix is measured."
+}

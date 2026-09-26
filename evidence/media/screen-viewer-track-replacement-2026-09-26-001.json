@@ -1,0 +1,15 @@
+{
+  "id": "screen-viewer-track-replacement-2026-09-26-001",
+  "task": "FE-47",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-26",
+  "finding": "When LiveKit replaced a selected publication's audio or video track in place, the viewer attached the replacement but did not detach the previously attached track. The old track could continue playing despite the selected stream's current track and mute state.",
+  "change": "The viewer records the actually attached track and element for audio and video, detaches the previous track before replacement, and attaches the new track while preserving selected-stream audio mute.",
+  "checks": [
+    { "name": "focused_frontend_tests", "result": "PASS_LOCAL", "detail": "The replacement-track regression and related selected-screen sound tests passed." },
+    { "name": "integrated_frontend_suite", "result": "PASS_LOCAL", "detail": "199 files and 583 tests passed." },
+    { "name": "frontend_build", "result": "PASS_LOCAL", "detail": "vue-tsc --noEmit and Vite production build passed." },
+    { "name": "two_client_game_audio", "result": "NOT_RUN", "detail": "No separate physical observer confirmed game sound off/on, continued voice or track replacement in a real LiveKit call." }
+  ],
+  "limitation": "QA-06 remains open until the physical POC-01 and audio-control matrix is observed."
+}

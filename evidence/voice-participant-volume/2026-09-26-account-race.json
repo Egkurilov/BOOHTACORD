@@ -1,0 +1,26 @@
+{
+  "id": "voice-participant-volume-account-race-2026-09-26",
+  "kind": "source-regression-and-media-gate",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-26",
+  "observations": [
+    "A focused regression test failed before the fix: a stale account lookup rebound volume preferences to a previous account, so 175% was not persisted for the current account.",
+    "The completed fix ignores both stale successful and stale failed account lookups before mutating preferences or error state.",
+    "A Web Audio unit test applies 0%, 175%, and 200% to one participant gain, leaves another at 100%, and restores the first level after track replacement."
+  ],
+  "automated_checks": [
+    {
+      "command": "npm test -- src/voice/voice_volume_controls.spec.ts src/voice/voice_volume_start_race.spec.ts src/voice/voice_volume_preferences.spec.ts src/voice/remote_voice_playback.spec.ts src/voice/audio_gain.spec.ts src/voice/livekit_screen_viewer_adapter.spec.ts",
+      "result": "PASS: 6 files, 23 tests"
+    },
+    {
+      "command": "npm run build",
+      "result": "PASS: vue-tsc and vite build"
+    }
+  ],
+  "physical_media_check": {
+    "status": "NOT_RUN",
+    "reason": "No controlled two-client voice session or physical listener was available for an audible comparison.",
+    "remaining": "On two real clients, compare one speaker at 0/100/175/200%, confirm other speakers and selected screen audio remain unchanged, then reconnect and verify the stored level."
+  }
+}

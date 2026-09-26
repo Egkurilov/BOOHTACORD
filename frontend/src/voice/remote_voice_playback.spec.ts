@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
+import { AudioMixer } from './audio_gain'
 import { RemoteVoicePlayback, type RemoteVoiceTrack } from './remote_voice_playback'
 
 function audioElement() {
@@ -56,6 +57,29 @@ describe('remote voice playback', () => {
     expect(output.setVolume).toHaveBeenCalledWith(175)
     expect(output.setMuted).toHaveBeenCalledWith(true)
     expect(output.dispose).toHaveBeenCalledOnce()
+  })
+
+  it('changes only one participant gain at 0%, 175%, and 200% across track replacement', () => {
+    const gains: Array<{ gain: { value: number }; connect: ReturnType<typeof vi.fn>; disconnect: ReturnType<typeof vi.fn> }> = []
+    const context = {
+      createGain: () => { const gain = { gain: { value: 1 }, connect: vi.fn(), disconnect: vi.fn() }; gains.push(gain); return gain },
+      createMediaElementSource: () => ({ connect: vi.fn(), disconnect: vi.fn() }),
+      destination: {},
+    }
+    const track: RemoteVoiceTrack = { attach: vi.fn(), detach: vi.fn() }
+    const playback = new RemoteVoicePlayback(audioElement, vi.fn(), new AudioMixer(() => context))
+
+    playback.attach('alice', track)
+    playback.attach('bob', track)
+    playback.setVolume('alice', 0)
+    expect(gains.map(({ gain }) => gain.value)).toEqual([0, 1])
+    playback.setVolume('alice', 175)
+    expect(gains.map(({ gain }) => gain.value)).toEqual([1.75, 1])
+    playback.attach('alice', track)
+    expect(gains[2]?.gain.value).toBe(1.75)
+    playback.setVolume('alice', 200)
+    expect(gains[2]?.gain.value).toBe(2)
+    expect(gains[1]?.gain.value).toBe(1)
   })
 
   it('retains speaking state until a late audio attach and removes it when the participant leaves', () => {
