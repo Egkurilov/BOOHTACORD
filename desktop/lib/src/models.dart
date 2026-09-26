@@ -1,5 +1,81 @@
 enum ChannelKind { text, voice }
 
+enum SearchMessageKind { channel, directMessage }
+
+bool _isUuid(Object? value) =>
+    value is String &&
+    RegExp(
+      r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+      caseSensitive: false,
+    ).hasMatch(value);
+
+class SearchMessage {
+  const SearchMessage({
+    required this.id,
+    required this.kind,
+    required this.conversationId,
+    required this.authorId,
+    required this.body,
+    required this.createdAt,
+    required this.revision,
+    this.editedAt,
+  });
+  final String id;
+  final SearchMessageKind kind;
+  final String conversationId;
+  final String authorId;
+  final String body;
+  final DateTime createdAt;
+  final DateTime? editedAt;
+  final int revision;
+
+  factory SearchMessage.fromJson(Map<String, dynamic> json) {
+    final kind = switch (json['kind']) {
+      'CHANNEL' => SearchMessageKind.channel,
+      'DIRECT_MESSAGE' => SearchMessageKind.directMessage,
+      _ => throw const FormatException('Invalid search result kind.'),
+    };
+    final id = json['id'];
+    final authorId = json['author_id'];
+    final conversationId = kind == SearchMessageKind.channel
+        ? json['channel_id']
+        : json['direct_message_id'];
+    final body = json['body'] as String;
+    final revision = json['revision'] as int;
+    final createdAt = DateTime.parse(json['created_at'] as String).toLocal();
+    final editedAt = json['edited_at'] == null
+        ? null
+        : DateTime.parse(json['edited_at'] as String).toLocal();
+    if (!_isUuid(id) ||
+        !_isUuid(authorId) ||
+        !_isUuid(conversationId) ||
+        body.isEmpty ||
+        revision < 1 ||
+        (kind == SearchMessageKind.channel &&
+            json.containsKey('direct_message_id')) ||
+        (kind == SearchMessageKind.directMessage &&
+            json.containsKey('channel_id'))) {
+      throw const FormatException('Invalid search result.');
+    }
+    return SearchMessage(
+      id: id as String,
+      kind: kind,
+      conversationId: conversationId as String,
+      authorId: authorId as String,
+      body: body,
+      createdAt: createdAt,
+      editedAt: editedAt,
+      revision: revision,
+    );
+  }
+}
+
+class SearchMessagePage {
+  const SearchMessagePage({required this.messages, this.nextCursor});
+  final List<SearchMessage> messages;
+  final String? nextCursor;
+}
+
 class SessionUser {
   const SessionUser({required this.accountId, required this.role});
   final String accountId;
@@ -9,6 +85,128 @@ class SessionUser {
     accountId: json['account_id'] as String,
     role: json['role'] as String,
   );
+}
+
+class AdminAuditEvent {
+  const AdminAuditEvent({
+    required this.id,
+    required this.eventType,
+    required this.createdAt,
+    this.actorUserId,
+    this.actorDisplayName,
+    this.actorLogin,
+    this.targetUserId,
+    this.targetDisplayName,
+    this.targetLogin,
+  });
+
+  final String id;
+  final String eventType;
+  final DateTime createdAt;
+  final String? actorUserId;
+  final String? actorDisplayName;
+  final String? actorLogin;
+  final String? targetUserId;
+  final String? targetDisplayName;
+  final String? targetLogin;
+
+  factory AdminAuditEvent.fromJson(Map<String, dynamic> json) {
+    final id = json['id'];
+    final eventType = json['event_type'];
+    final createdAt = json['created_at'];
+    if (id is! String ||
+        id.isEmpty ||
+        eventType is! String ||
+        eventType.isEmpty ||
+        createdAt is! String) {
+      throw const FormatException('Invalid admin audit event.');
+    }
+    String? optionalText(String key) {
+      final value = json[key];
+      if (value == null) return null;
+      if (value is! String) {
+        throw const FormatException('Invalid admin audit event.');
+      }
+      return value;
+    }
+
+    return AdminAuditEvent(
+      id: id,
+      eventType: eventType,
+      createdAt: DateTime.parse(createdAt).toLocal(),
+      actorUserId: optionalText('actor_user_id'),
+      actorDisplayName: optionalText('actor_display_name'),
+      actorLogin: optionalText('actor_login'),
+      targetUserId: optionalText('target_user_id'),
+      targetDisplayName: optionalText('target_display_name'),
+      targetLogin: optionalText('target_login'),
+    );
+  }
+}
+
+class AdminAuditPage {
+  const AdminAuditPage({required this.events, this.nextCursor});
+
+  final List<AdminAuditEvent> events;
+  final String? nextCursor;
+}
+
+class AdminAccount {
+  const AdminAccount({
+    required this.accountId,
+    required this.login,
+    required this.displayName,
+    required this.role,
+    required this.blocked,
+    required this.createdAt,
+  });
+
+  final String accountId;
+  final String login;
+  final String displayName;
+  final String role;
+  final bool blocked;
+  final DateTime createdAt;
+
+  factory AdminAccount.fromJson(Map<String, dynamic> json) {
+    final accountId = json['account_id'];
+    final login = json['login'];
+    final displayName = json['display_name'];
+    final role = json['role'];
+    final blocked = json['blocked'];
+    final createdAt = json['created_at'];
+    if (accountId is! String ||
+        accountId.isEmpty ||
+        login is! String ||
+        displayName is! String ||
+        (role != 'MEMBER' && role != 'ADMINISTRATOR') ||
+        blocked is! bool ||
+        createdAt is! String) {
+      throw const FormatException('Invalid admin account.');
+    }
+    return AdminAccount(
+      accountId: accountId,
+      login: login,
+      displayName: displayName,
+      role: role as String,
+      blocked: blocked,
+      createdAt: DateTime.parse(createdAt).toLocal(),
+    );
+  }
+}
+
+class AdminAccountPage {
+  const AdminAccountPage({required this.accounts, this.nextCursor});
+
+  final List<AdminAccount> accounts;
+  final String? nextCursor;
+}
+
+class AdminPasswordResetLink {
+  const AdminPasswordResetLink({required this.url, required this.expiresAt});
+
+  final String url;
+  final DateTime expiresAt;
 }
 
 class OwnProfile {
@@ -40,17 +238,47 @@ class GuildChannel {
     required this.name,
     required this.kind,
     required this.admissionClosed,
+    this.unreadCount = 0,
+    this.mentionCount = 0,
   });
   final String id;
   final String name;
   final ChannelKind kind;
   final bool admissionClosed;
-  factory GuildChannel.fromJson(Map<String, dynamic> json) => GuildChannel(
-    id: json['id'] as String,
-    name: json['name'] as String,
-    kind: json['kind'] == 'VOICE' ? ChannelKind.voice : ChannelKind.text,
-    admissionClosed: json['admission_closed'] as bool? ?? false,
-  );
+  final int unreadCount;
+  final int mentionCount;
+
+  GuildChannel withUnreadCounts({required int unread, required int mentions}) =>
+      GuildChannel(
+        id: id,
+        name: name,
+        kind: kind,
+        admissionClosed: admissionClosed,
+        unreadCount: unread,
+        mentionCount: mentions,
+      );
+
+  factory GuildChannel.fromJson(Map<String, dynamic> json) {
+    final kind = json['kind'] == 'VOICE' ? ChannelKind.voice : ChannelKind.text;
+    return GuildChannel(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      kind: kind,
+      admissionClosed: json['admission_closed'] as bool? ?? false,
+      unreadCount: kind == ChannelKind.text
+          ? _nonNegativeCount(json['unread_count'])
+          : 0,
+      mentionCount: kind == ChannelKind.text
+          ? _nonNegativeCount(json['mention_count'])
+          : 0,
+    );
+  }
+}
+
+int _nonNegativeCount(Object? value) {
+  if (value == null) return 0;
+  if (value is int && value >= 0) return value;
+  throw const FormatException('Invalid channel message count.');
 }
 
 class ChannelCategory {
@@ -90,6 +318,50 @@ class ChannelTopology {
       );
 }
 
+class MessageAttachment {
+  const MessageAttachment({
+    required this.id,
+    required this.originalName,
+    required this.sizeBytes,
+  });
+  final String id;
+  final String originalName;
+  final int sizeBytes;
+
+  factory MessageAttachment.fromJson(Map<String, dynamic> json) {
+    final size = json['byte_size'];
+    final id = json['id'];
+    final originalName = json['original_name'];
+    if (id is! String ||
+        id.isEmpty ||
+        originalName is! String ||
+        originalName.isEmpty ||
+        size is! int ||
+        size < 0 ||
+        size > 25000000) {
+      throw const FormatException('Invalid message attachment size.');
+    }
+    return MessageAttachment(
+      id: id,
+      originalName: originalName,
+      sizeBytes: size,
+    );
+  }
+}
+
+List<MessageAttachment> _messageAttachments(Object? value) {
+  if (value == null) return const [];
+  if (value is! List) {
+    throw const FormatException('Invalid message attachments.');
+  }
+  if (value.length > 10) {
+    throw const FormatException('Too many message attachments.');
+  }
+  return value
+      .map((item) => MessageAttachment.fromJson(item as Map<String, dynamic>))
+      .toList(growable: false);
+}
+
 class ChatMessage {
   const ChatMessage({
     required this.id,
@@ -99,6 +371,10 @@ class ChatMessage {
     required this.createdAt,
     required this.deleted,
     required this.revision,
+    this.replyToId,
+    this.mentionUserIds = const [],
+    this.attachments = const [],
+    this.editedAt,
   });
   final String id;
   final String channelId;
@@ -107,6 +383,10 @@ class ChatMessage {
   final DateTime createdAt;
   final bool deleted;
   final int revision;
+  final String? replyToId;
+  final List<String> mentionUserIds;
+  final List<MessageAttachment> attachments;
+  final DateTime? editedAt;
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
     id: json['id'] as String,
     channelId: json['channel_id'] as String,
@@ -115,7 +395,21 @@ class ChatMessage {
     createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
     deleted: json['deleted'] as bool? ?? false,
     revision: json['revision'] as int,
+    replyToId: json['reply_to_id'] as String?,
+    mentionUserIds: (json['mention_user_ids'] as List<dynamic>? ?? const [])
+        .whereType<String>()
+        .toList(growable: false),
+    attachments: _messageAttachments(json['attachments']),
+    editedAt: json['edited_at'] == null
+        ? null
+        : DateTime.parse(json['edited_at'] as String).toLocal(),
   );
+}
+
+class ChatMessagePage {
+  const ChatMessagePage({required this.messages, this.nextCursor});
+  final List<ChatMessage> messages;
+  final String? nextCursor;
 }
 
 class VoiceCredential {
@@ -204,6 +498,28 @@ class DirectCandidate {
       );
 }
 
+class DirectMessageReplyPreview {
+  const DirectMessageReplyPreview({
+    required this.id,
+    required this.authorId,
+    required this.body,
+    required this.deleted,
+  });
+
+  final String id;
+  final String authorId;
+  final String body;
+  final bool deleted;
+
+  factory DirectMessageReplyPreview.fromJson(Map<String, dynamic> json) =>
+      DirectMessageReplyPreview(
+        id: json['id'] as String,
+        authorId: json['author_id'] as String,
+        body: json['body'] as String? ?? '',
+        deleted: json['deleted'] as bool? ?? false,
+      );
+}
+
 class DirectChatMessage {
   const DirectChatMessage({
     required this.id,
@@ -213,6 +529,11 @@ class DirectChatMessage {
     required this.createdAt,
     required this.deleted,
     required this.revision,
+    this.mentionUserIds = const [],
+    this.replyToId,
+    this.replyPreview,
+    this.attachments = const [],
+    this.editedAt,
   });
   final String id;
   final String directMessageId;
@@ -221,6 +542,11 @@ class DirectChatMessage {
   final DateTime createdAt;
   final bool deleted;
   final int revision;
+  final List<String> mentionUserIds;
+  final String? replyToId;
+  final DirectMessageReplyPreview? replyPreview;
+  final List<MessageAttachment> attachments;
+  final DateTime? editedAt;
 
   factory DirectChatMessage.fromJson(Map<String, dynamic> json) =>
       DirectChatMessage(
@@ -231,5 +557,24 @@ class DirectChatMessage {
         createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
         deleted: json['deleted'] as bool? ?? false,
         revision: json['revision'] as int,
+        mentionUserIds: (json['mention_user_ids'] as List<dynamic>? ?? const [])
+            .whereType<String>()
+            .toList(growable: false),
+        replyToId: json['reply_to_id'] as String?,
+        replyPreview: json['reply_preview'] is Map<String, dynamic>
+            ? DirectMessageReplyPreview.fromJson(
+                json['reply_preview'] as Map<String, dynamic>,
+              )
+            : null,
+        attachments: _messageAttachments(json['attachments']),
+        editedAt: json['edited_at'] == null
+            ? null
+            : DateTime.parse(json['edited_at'] as String).toLocal(),
       );
+}
+
+class DirectChatMessagePage {
+  const DirectChatMessagePage({required this.messages, this.nextCursor});
+  final List<DirectChatMessage> messages;
+  final String? nextCursor;
 }

@@ -16,6 +16,14 @@ class _AuthScreenState extends State<AuthScreen> {
   final _password = TextEditingController();
   bool _register = false;
   bool _pending = false;
+  late final bool _focusLogin;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusLogin = widget.state.focusLoginOnMount;
+    widget.state.focusLoginOnMount = false;
+  }
 
   @override
   void dispose() {
@@ -36,6 +44,44 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (_) {
       if (mounted) setState(() => _pending = false);
     }
+  }
+
+  Future<void> _usePasswordResetLink() async {
+    final controller = TextEditingController();
+    final link = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: GcColors.surface,
+        title: const Text('Ссылка для сброса пароля'),
+        content: SizedBox(
+          width: 460,
+          child: TextField(
+            controller: controller,
+            autofocus: true,
+            obscureText: true,
+            maxLength: 512,
+            enableIMEPersonalizedLearning: false,
+            decoration: const InputDecoration(
+              labelText: 'Одноразовая ссылка администратора',
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Продолжить'),
+          ),
+        ],
+      ),
+    );
+    controller.clear();
+    controller.dispose();
+    if (!mounted || link == null) return;
+    widget.state.openPasswordResetLink(link);
   }
 
   Future<void> _changeServer() async {
@@ -148,6 +194,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _login,
+                      autofocus: _focusLogin,
                       autofillHints: const [AutofillHints.username],
                       decoration: const InputDecoration(
                         labelText: 'Логин',
@@ -202,6 +249,11 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
+                    TextButton.icon(
+                      onPressed: _pending ? null : _usePasswordResetLink,
+                      icon: const Icon(Icons.password_outlined, size: 18),
+                      label: const Text('Есть ссылка для сброса пароля?'),
+                    ),
                     TextButton.icon(
                       onPressed: _pending ? null : _changeServer,
                       icon: const Icon(Icons.dns_outlined, size: 18),

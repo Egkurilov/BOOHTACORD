@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -16,11 +17,24 @@ class ApiFailure implements Exception {
   String toString() => message;
 }
 
+class VoiceAdmissionCloseResult {
+  const VoiceAdmissionCloseResult({
+    required this.channelId,
+    required this.revision,
+    required this.revokedLeases,
+  });
+
+  final String channelId;
+  final int revision;
+  final int revokedLeases;
+}
+
 class ApiClient {
   ApiClient({http.Client? client}) : _client = client ?? http.Client();
   static const _serverKey = 'server_url';
   static const _cookieKey = 'boohtacord_session_cookie';
   final http.Client _client;
+  void Function()? onUnauthorized;
   final FlutterSecureStorage _storage = Platform.isMacOS
       ? const FlutterSecureStorage(
           mOptions: MacOsOptions(usesDataProtectionKeychain: false),
@@ -52,11 +66,14 @@ class ApiClient {
     await _storage.delete(key: _cookieKey);
   }
 
-  Future<Map<String, String>> _headers({bool jsonBody = false}) async {
+  Future<Map<String, String>> _headers({
+    bool jsonBody = false,
+    String accept = 'application/json',
+  }) async {
     final cookie = await _storage.read(key: _cookieKey);
     final server = Uri.parse(baseUrl);
     return {
-      'accept': 'application/json',
+      'accept': accept,
       'origin': '${server.scheme}://${server.authority}',
       if (jsonBody) 'content-type': 'application/json',
       'cookie': ?cookie,
@@ -66,7 +83,25 @@ class ApiClient {
   Uri _uri(String path, [Map<String, String>? query]) =>
       Uri.parse('$baseUrl$path').replace(queryParameters: query);
 
-  Future<dynamic> _checked(http.Response response) async {
+  Uri _avatarUri(String value) {
+    final base = Uri.parse(baseUrl);
+    final resolved = base.resolveUri(Uri.parse(value));
+    final expectedPrefix = '${base.path}/members/';
+    if (resolved.scheme != 'https' ||
+        resolved.scheme != base.scheme ||
+        resolved.host != base.host ||
+        resolved.port != base.port ||
+        !resolved.path.startsWith(expectedPrefix) ||
+        !resolved.path.endsWith('/avatar')) {
+      throw const ApiFailure('Сервер вернул недопустимый адрес аватара.');
+    }
+    return resolved;
+  }
+
+  Future<dynamic> _checked(
+    http.Response response, {
+    bool reportUnauthorized = true,
+  }) async {
     final setCookie = response.headers['set-cookie'];
     if (setCookie != null) {
       final pair = setCookie.split(';').first;
@@ -87,6 +122,7 @@ class ApiClient {
     if (response.statusCode >= 200 && response.statusCode < 300) return decoded;
     if (response.statusCode == 401) {
       await _storage.delete(key: _cookieKey);
+      if (reportUnauthorized) onUnauthorized?.call();
     }
     String? code;
     String? message;
@@ -108,10 +144,23 @@ class ApiClient {
       _uri('/auth/session'),
       headers: await _headers(),
     );
-    if (response.statusCode == 401) return null;
+    if (response.statusCode == 401) {
+      await _storage.delete(key: _cookieKey);
+      return null;
+    }
     final data = await _checked(response) as Map<String, dynamic>;
     if (data['authenticated'] == false) return null;
     return SessionUser.fromJson(data);
+  }
+
+  Future<bool> maintenanceActive() async {
+    final data = await _checked(
+      await _client.get(_uri('/maintenance'), headers: await _headers()),
+    );
+    if (data is! Map<String, dynamic> || data['active'] is! bool) {
+      throw const ApiFailure('Сервер вернул некорректный статус обновления.');
+    }
+    return data['active'] as bool;
   }
 
   Future<void> authenticate(
@@ -127,6 +176,7 @@ class ApiClient {
           headers: await _headers(jsonBody: true),
           body: body,
         ),
+        reportUnauthorized: false,
       );
     }
     await _checked(
@@ -135,17 +185,15 @@ class ApiClient {
         headers: await _headers(jsonBody: true),
         body: body,
       ),
+      reportUnauthorized: false,
     );
   }
 
   Future<void> logout() async {
-    try {
-      await _checked(
-        await _client.post(_uri('/auth/logout'), headers: await _headers()),
-      );
-    } finally {
-      await _storage.delete(key: _cookieKey);
-    }
+    await _checked(
+      await _client.post(_uri('/auth/logout'), headers: await _headers()),
+    );
+    await _storage.delete(key: _cookieKey);
   }
 
   Future<OwnProfile> ownProfile() async {
@@ -153,6 +201,18 @@ class ApiClient {
       await _client.get(_uri('/me'), headers: await _headers()),
     ) as Map<String, dynamic>;
     return OwnProfile.fromJson(data);
+  }
+
+  Future<Uint8List> avatarBytes(String avatarUrl) async {
+    final response = await _client.get(
+      _avatarUri(avatarUrl),
+      headers: await _headers(accept: 'image/png'),
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return response.bodyBytes;
+    }
+    await _checked(response);
+    throw const ApiFailure('Не удалось загрузить аватар.');
   }
 
   Future<OwnProfile> updateOwnProfile(String displayName) async {
@@ -164,6 +224,25 @@ class ApiClient {
       ),
     ) as Map<String, dynamic>;
     return OwnProfile.fromJson(data);
+  }
+
+  Future<void> uploadOwnAvatar(Uint8List bytes, String contentType) async {
+    await _checked(
+      await _client.put(
+        _uri('/me/avatar'),
+        headers: {
+          ...await _headers(accept: 'application/json'),
+          'content-type': contentType,
+        },
+        body: bytes,
+      ),
+    );
+  }
+
+  Future<void> deleteOwnAvatar() async {
+    await _checked(
+      await _client.delete(_uri('/me/avatar'), headers: await _headers()),
+    );
   }
 
   Future<void> changePassword(
@@ -182,6 +261,39 @@ class ApiClient {
     );
   }
 
+  Future<void> completePasswordReset(String token, String password) async {
+    late final http.Response response;
+    try {
+      response = await _client.post(
+        _uri('/auth/password-reset/complete'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'token': token, 'password': password}),
+      );
+    } catch (_) {
+      throw const ApiFailure('Нет связи с сервером. Повторите попытку.');
+    }
+    if (response.statusCode == 204) {
+      await _checked(response, reportUnauthorized: false);
+      return;
+    }
+    if (response.statusCode == 400) {
+      throw const ApiFailure(
+        'Ссылка недействительна или срок её действия истёк. Попросите администратора выдать новую ссылку.',
+        status: 400,
+      );
+    }
+    if (response.statusCode == 429) {
+      throw const ApiFailure(
+        'Слишком много попыток. Подождите и повторите.',
+        status: 429,
+      );
+    }
+    throw ApiFailure(
+      'Не удалось изменить пароль (${response.statusCode}). Повторите попытку.',
+      status: response.statusCode,
+    );
+  }
+
   Future<ChannelTopology> topology() async {
     final data = await _checked(
       await _client.get(_uri('/channels'), headers: await _headers()),
@@ -189,10 +301,385 @@ class ApiClient {
     return ChannelTopology.fromJson(data);
   }
 
-  Future<List<ChatMessage>> messages(String channelId) async {
+  Future<void> createCategory(String name) async {
+    final normalized = name.trim();
+    if (normalized.isEmpty || normalized.runes.length > 80) {
+      throw const ApiFailure('Введите имя категории до 80 символов.');
+    }
+    await _checked(
+      await _client.post(
+        _uri('/admin/categories'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'name': name}),
+      ),
+    );
+  }
+
+  Future<void> createChannel({
+    required String categoryId,
+    required String name,
+    required ChannelKind kind,
+  }) async {
+    final normalized = name.trim();
+    if (categoryId.isEmpty ||
+        normalized.isEmpty ||
+        normalized.runes.length > 80) {
+      throw const ApiFailure('Введите имя канала до 80 символов.');
+    }
+    await _checked(
+      await _client.post(
+        _uri('/admin/categories/${Uri.encodeComponent(categoryId)}/channels'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({
+          'name': name,
+          'kind': kind == ChannelKind.text ? 'TEXT' : 'VOICE',
+        }),
+      ),
+    );
+  }
+
+  Future<void> renameCategory({
+    required String categoryId,
+    required String name,
+    required int expectedRevision,
+  }) async {
+    _validateAdminName(name, 'категории');
+    if (categoryId.isEmpty || expectedRevision < 1) {
+      throw const ApiFailure('Обновите список категорий и повторите действие.');
+    }
+    await _checked(
+      await _client.patch(
+        _uri('/admin/categories/${Uri.encodeComponent(categoryId)}'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'name': name, 'expected_revision': expectedRevision}),
+      ),
+    );
+  }
+
+  Future<void> deleteEmptyCategory({
+    required String categoryId,
+    required int expectedRevision,
+  }) async {
+    if (categoryId.isEmpty || expectedRevision < 1) {
+      throw const ApiFailure('Обновите список категорий и повторите действие.');
+    }
+    await _checked(
+      await _client.delete(
+        _uri('/admin/categories/${Uri.encodeComponent(categoryId)}', {
+          'expected_revision': '$expectedRevision',
+        }),
+        headers: await _headers(),
+      ),
+    );
+  }
+
+  Future<void> renameChannel({
+    required String channelId,
+    required String name,
+    required int expectedRevision,
+  }) async {
+    _validateAdminName(name, 'канала');
+    if (channelId.isEmpty || expectedRevision < 1) {
+      throw const ApiFailure('Обновите список каналов и повторите действие.');
+    }
+    await _checked(
+      await _client.patch(
+        _uri('/admin/channels/${Uri.encodeComponent(channelId)}'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'name': name, 'expected_revision': expectedRevision}),
+      ),
+    );
+  }
+
+  Future<void> reorderCategories({
+    required List<String> categoryIds,
+    required int expectedRevision,
+  }) async {
+    _validateOrderedIds(categoryIds, expectedRevision);
+    await _checked(
+      await _client.put(
+        _uri('/admin/categories/order'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({
+          'expected_revision': expectedRevision,
+          'ids': categoryIds,
+        }),
+      ),
+    );
+  }
+
+  Future<void> reorderChannels({
+    required String categoryId,
+    required List<String> channelIds,
+    required int expectedRevision,
+  }) async {
+    if (categoryId.isEmpty) {
+      throw const ApiFailure('Обновите список каналов и повторите действие.');
+    }
+    _validateOrderedIds(channelIds, expectedRevision);
+    await _checked(
+      await _client.put(
+        _uri(
+          '/admin/categories/${Uri.encodeComponent(categoryId)}/channels/order',
+        ),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({
+          'expected_revision': expectedRevision,
+          'ids': channelIds,
+        }),
+      ),
+    );
+  }
+
+  Future<void> moveChannel({
+    required String channelId,
+    required String categoryId,
+    required int expectedRevision,
+  }) async {
+    if (channelId.isEmpty || categoryId.isEmpty || expectedRevision < 1) {
+      throw const ApiFailure('Обновите список и повторите перенос канала.');
+    }
+    await _checked(
+      await _client.patch(
+        _uri('/admin/channels/${Uri.encodeComponent(channelId)}/category'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({
+          'category_id': categoryId,
+          'expected_revision': expectedRevision,
+        }),
+      ),
+    );
+  }
+
+  Future<void> archiveTextChannel({
+    required String channelId,
+    required int expectedRevision,
+  }) async {
+    if (channelId.isEmpty || expectedRevision < 1) {
+      throw const ApiFailure('Обновите список каналов и повторите архивацию.');
+    }
+    await _checked(
+      await _client.delete(
+        _uri('/admin/channels/${Uri.encodeComponent(channelId)}'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({
+          'expected_revision': expectedRevision,
+          'confirm_archive': true,
+        }),
+      ),
+    );
+  }
+
+  Future<VoiceAdmissionCloseResult> closeVoiceAdmission({
+    required String channelId,
+    required int expectedRevision,
+  }) async {
+    if (channelId.isEmpty || expectedRevision < 1) {
+      throw const ApiFailure(
+        'Обновите список голосовых каналов и повторите действие.',
+      );
+    }
+    final data = await _checked(
+      await _client.post(
+        _uri(
+          '/admin/voice-channels/${Uri.encodeComponent(channelId)}/close-admission',
+        ),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'expected_revision': expectedRevision}),
+      ),
+    ) as Map<String, dynamic>;
+    final returnedId = data['id'];
+    final revision = data['revision'];
+    final revokedLeases = data['revoked_leases'];
+    if (returnedId != channelId ||
+        revision is! int ||
+        revision < 1 ||
+        revokedLeases is! int ||
+        revokedLeases < 0) {
+      throw const ApiFailure(
+        'Сервер вернул некорректное состояние закрытия канала.',
+      );
+    }
+    return VoiceAdmissionCloseResult(
+      channelId: channelId,
+      revision: revision,
+      revokedLeases: revokedLeases,
+    );
+  }
+
+  void _validateOrderedIds(List<String> ids, int expectedRevision) {
+    if (ids.isEmpty ||
+        ids.any((id) => id.isEmpty) ||
+        ids.toSet().length != ids.length ||
+        expectedRevision < 1) {
+      throw const ApiFailure('Обновите список и повторите изменение порядка.');
+    }
+  }
+
+  void _validateAdminName(String name, String item) {
+    if (name.trim().isEmpty || name.runes.length > 80) {
+      throw ApiFailure('Введите имя $item до 80 символов.');
+    }
+  }
+
+  Future<void> advanceTextChannelReadCursor(
+    String channelId,
+    String messageId,
+  ) async {
+    await _checked(
+      await _client.put(
+        _uri('/channels/$channelId/read-cursor'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'message_id': messageId}),
+      ),
+    );
+  }
+
+  Future<AdminAuditPage> listAdminAudit({
+    String? before,
+    int limit = 100,
+  }) async {
+    if (limit < 1 ||
+        limit > 100 ||
+        (before != null && (before.isEmpty || before.length > 512))) {
+      throw const ApiFailure('Некорректный курсор аудита.');
+    }
     final data = await _checked(
       await _client.get(
-        _uri('/channels/$channelId/messages'),
+        _uri('/admin/audit', {'limit': '$limit', 'before': ?before}),
+        headers: await _headers(),
+      ),
+    ) as Map<String, dynamic>;
+    final rawEvents = data['events'];
+    final cursor = data['next_cursor'];
+    if (rawEvents is! List ||
+        (cursor != null &&
+            (cursor is! String || cursor.isEmpty || cursor.length > 512))) {
+      throw const ApiFailure('Сервер вернул некорректный список аудита.');
+    }
+    return AdminAuditPage(
+      events: rawEvents
+          .map(
+            (value) => AdminAuditEvent.fromJson(value as Map<String, dynamic>),
+          )
+          .toList(growable: false),
+      nextCursor: cursor as String?,
+    );
+  }
+
+  Future<AdminAccountPage> listAdminAccounts({
+    String? cursor,
+    int limit = 100,
+  }) async {
+    if (limit < 1 ||
+        limit > 100 ||
+        (cursor != null && (cursor.isEmpty || cursor.length > 512))) {
+      throw const ApiFailure('Некорректный курсор участников.');
+    }
+    final data = await _checked(
+      await _client.get(
+        _uri('/admin/accounts', {'limit': '$limit', 'cursor': ?cursor}),
+        headers: await _headers(),
+      ),
+    ) as Map<String, dynamic>;
+    final rawAccounts = data['accounts'];
+    final nextCursor = data['next_cursor'];
+    if (rawAccounts is! List ||
+        (nextCursor != null &&
+            (nextCursor is! String ||
+                nextCursor.isEmpty ||
+                nextCursor.length > 512))) {
+      throw const ApiFailure('Сервер вернул некорректный список участников.');
+    }
+    return AdminAccountPage(
+      accounts: rawAccounts
+          .map((value) => AdminAccount.fromJson(value as Map<String, dynamic>))
+          .toList(growable: false),
+      nextCursor: nextCursor as String?,
+    );
+  }
+
+  Future<void> updateAdminAccount({
+    required String accountId,
+    required String role,
+    required bool blocked,
+  }) async {
+    if (accountId.isEmpty || (role != 'MEMBER' && role != 'ADMINISTRATOR')) {
+      throw const ApiFailure('Некорректные роль или участник.');
+    }
+    await _checked(
+      await _client.patch(
+        _uri('/admin/accounts/${Uri.encodeComponent(accountId)}'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'role': role, 'blocked': blocked}),
+      ),
+    );
+  }
+
+  Future<AdminPasswordResetLink> createAdminPasswordResetLink(
+    String accountId,
+  ) async {
+    if (accountId.isEmpty) {
+      throw const ApiFailure('Выберите участника для сброса пароля.');
+    }
+    final data = await _checked(
+      await _client.post(
+        _uri('/admin/password-reset-links'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode({'account_id': accountId}),
+      ),
+    ) as Map<String, dynamic>;
+    final url = data['url'];
+    final expiresAt = data['expires_at'];
+    if (url is! String || url.isEmpty || expiresAt is! String) {
+      throw const ApiFailure(
+        'Сервер вернул некорректную ссылку сброса пароля.',
+      );
+    }
+    return AdminPasswordResetLink(
+      url: url,
+      expiresAt: DateTime.parse(expiresAt).toLocal(),
+    );
+  }
+
+  Future<int> kickAdminVoiceParticipant(String accountId) async {
+    if (accountId.isEmpty) {
+      throw const ApiFailure('Выберите участника для отключения от голоса.');
+    }
+    final data = await _checked(
+      await _client.post(
+        _uri('/admin/accounts/${Uri.encodeComponent(accountId)}/voice-kick'),
+        headers: await _headers(),
+      ),
+    ) as Map<String, dynamic>;
+    final revokedLeases = data['revoked_leases'];
+    if (revokedLeases is! int || revokedLeases < 0) {
+      throw const ApiFailure(
+        'Сервер вернул некорректный результат отключения.',
+      );
+    }
+    return revokedLeases;
+  }
+
+  Future<List<ChatMessage>> messages(String channelId) async {
+    return (await messagePage(channelId)).messages;
+  }
+
+  Future<ChatMessagePage> messagePage(
+    String channelId, {
+    String? before,
+    String? at,
+  }) async {
+    if (before != null && at != null) {
+      throw const ApiFailure('Выберите один курсор истории.');
+    }
+    final data = await _checked(
+      await _client.get(
+        _uri('/channels/$channelId/messages', {
+          'before': ?before,
+          'at': ?at,
+          if (at != null) 'limit': '20',
+        }),
         headers: await _headers(),
       ),
     ) as Map<String, dynamic>;
@@ -200,7 +687,10 @@ class ApiClient {
         .map((value) => ChatMessage.fromJson(value as Map<String, dynamic>))
         .toList();
     values.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    return values;
+    return ChatMessagePage(
+      messages: values,
+      nextCursor: data['next_cursor'] as String?,
+    );
   }
 
   Future<List<GuildMember>> members() async {
@@ -266,9 +756,24 @@ class ApiClient {
   }
 
   Future<List<DirectChatMessage>> directMessageHistory(String id) async {
+    return (await directMessageHistoryPage(id)).messages;
+  }
+
+  Future<DirectChatMessagePage> directMessageHistoryPage(
+    String id, {
+    String? before,
+    String? at,
+  }) async {
+    if (before != null && at != null) {
+      throw const ApiFailure('Выберите один курсор истории.');
+    }
     final data = await _checked(
       await _client.get(
-        _uri('/direct-messages/$id/messages'),
+        _uri('/direct-messages/$id/messages', {
+          'before': ?before,
+          'at': ?at,
+          if (at != null) 'limit': '20',
+        }),
         headers: await _headers(),
       ),
     ) as Map<String, dynamic>;
@@ -278,19 +783,128 @@ class ApiClient {
         )
         .toList();
     values.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    return values;
+    return DirectChatMessagePage(
+      messages: values,
+      nextCursor: data['next_cursor'] as String?,
+    );
+  }
+
+  Future<SearchMessagePage> searchMessages(
+    String query, {
+    String? channelId,
+    String? directMessageId,
+    String? before,
+    int limit = 20,
+  }) async {
+    if (channelId != null && directMessageId != null) {
+      throw const ApiFailure('Выберите один фильтр беседы.');
+    }
+    final data = await _checked(
+      await _client.get(
+        _uri('/search/messages', {
+          'query': query,
+          'channel_id': ?channelId,
+          'direct_message_id': ?directMessageId,
+          'before': ?before,
+          'limit': '$limit',
+        }),
+        headers: await _headers(),
+      ),
+    ) as Map<String, dynamic>;
+    final rawMessages = data['messages'];
+    if (rawMessages is! List) {
+      throw const ApiFailure('Сервер вернул некорректные результаты поиска.');
+    }
+    final cursor = data['next_cursor'];
+    if (cursor != null &&
+        (cursor is! String || cursor.isEmpty || cursor.length > 512)) {
+      throw const ApiFailure('Сервер вернул некорректные результаты поиска.');
+    }
+    return SearchMessagePage(
+      messages: rawMessages
+          .map((value) => SearchMessage.fromJson(value as Map<String, dynamic>))
+          .toList(growable: false),
+      nextCursor: cursor as String?,
+    );
+  }
+
+  Future<MessageAttachment> uploadChannelAttachment(
+    String channelId,
+    String fileName,
+    Uint8List bytes,
+  ) => _uploadMessageAttachment(
+    '/channels/$channelId/attachments',
+    fileName,
+    bytes,
+  );
+
+  Future<MessageAttachment> uploadDirectMessageAttachment(
+    String directMessageId,
+    String fileName,
+    Uint8List bytes,
+  ) => _uploadMessageAttachment(
+    '/direct-messages/$directMessageId/attachments',
+    fileName,
+    bytes,
+  );
+
+  Future<MessageAttachment> _uploadMessageAttachment(
+    String path,
+    String fileName,
+    Uint8List bytes,
+  ) async {
+    if (fileName.isEmpty || bytes.length > 25000000) {
+      throw const ApiFailure('Файл должен быть не больше 25 МБ.');
+    }
+    final request = http.MultipartRequest('POST', _uri(path));
+    request.headers.addAll(await _headers());
+    request.files.add(
+      http.MultipartFile.fromBytes('file', bytes, filename: fileName),
+    );
+    final response = await http.Response.fromStream(
+      await _client.send(request),
+    );
+    final data = await _checked(response) as Map<String, dynamic>;
+    return MessageAttachment.fromJson(data);
+  }
+
+  Future<Uint8List> messageAttachmentBytes(
+    String parentPath,
+    String attachmentId, {
+    bool preview = false,
+  }) async {
+    final response = await _client.get(
+      _uri(
+        '$parentPath/attachments/${Uri.encodeComponent(attachmentId)}${preview ? '/preview' : ''}',
+      ),
+      headers: await _headers(accept: preview ? 'image/*' : '*/*'),
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return response.bodyBytes;
+    }
+    await _checked(response);
+    throw const ApiFailure('Не удалось загрузить вложение.');
   }
 
   Future<DirectChatMessage> sendDirectMessage(
     String id,
     String clientMessageId,
-    String body,
-  ) async {
+    String body, {
+    String? replyToId,
+    List<String> mentionUserIds = const [],
+    List<String> attachmentIds = const [],
+  }) async {
     final data = await _checked(
       await _client.post(
         _uri('/direct-messages/$id/messages'),
         headers: await _headers(jsonBody: true),
-        body: jsonEncode({'client_message_id': clientMessageId, 'body': body}),
+        body: jsonEncode({
+          'client_message_id': clientMessageId,
+          'body': body,
+          'reply_to_id': ?replyToId,
+          if (mentionUserIds.isNotEmpty) 'mention_user_ids': mentionUserIds,
+          if (attachmentIds.isNotEmpty) 'attachment_ids': attachmentIds,
+        }),
       ),
     ) as Map<String, dynamic>;
     return DirectChatMessage.fromJson(data);
@@ -351,12 +965,21 @@ class ApiClient {
   Future<ChatMessage> sendMessage(
     String channelId,
     String clientMessageId,
-    String body,
-  ) async {
+    String body, {
+    String? replyToId,
+    List<String> mentionUserIds = const [],
+    List<String> attachmentIds = const [],
+  }) async {
     final response = await _client.post(
       _uri('/channels/$channelId/messages'),
       headers: await _headers(jsonBody: true),
-      body: jsonEncode({'client_message_id': clientMessageId, 'body': body}),
+      body: jsonEncode({
+        'client_message_id': clientMessageId,
+        'body': body,
+        'reply_to_id': ?replyToId,
+        if (mentionUserIds.isNotEmpty) 'mention_user_ids': mentionUserIds,
+        if (attachmentIds.isNotEmpty) 'attachment_ids': attachmentIds,
+      }),
     );
     return ChatMessage.fromJson(
       await _checked(response) as Map<String, dynamic>,

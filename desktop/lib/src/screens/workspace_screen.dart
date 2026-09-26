@@ -1,11 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart' hide ChatMessage;
+import 'package:window_manager/window_manager.dart';
 
 import '../app_state.dart';
 import '../models.dart';
 import '../theme.dart';
+import '../services/message_presentation.dart';
+import '../services/api_client.dart';
+import '../widgets/authenticated_avatar.dart';
+import '../widgets/message_attachment_composer.dart';
+import '../widgets/message_attachment_list.dart';
+import '../widgets/formatted_message_body.dart';
 import 'profile_screen.dart';
+import 'admin_screen.dart';
 
 class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({super.key, required this.state});
@@ -15,55 +27,331 @@ class WorkspaceScreen extends StatefulWidget {
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
 }
 
-class _WorkspaceScreenState extends State<WorkspaceScreen> {
-  bool _showMobileSidebar = true;
+class _WorkspaceScreenState extends State<WorkspaceScreen>
+    with WidgetsBindingObserver, WindowListener {
+  bool _showMobileSidebar = false;
+  bool _showMembersDrawer = false;
+  bool _capturingPttKey = false;
+  final _searchTriggerFocus = FocusNode(debugLabel: 'workspace-search-trigger');
+  WorkspacePanel? _lastWorkspacePanel;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastWorkspacePanel = widget.state.workspacePanel;
+    widget.state.addListener(_workspaceChanged);
+    HardwareKeyboard.instance.addHandler(_handleHardwareKey);
+    WidgetsBinding.instance.addObserver(this);
+    if (defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows) {
+      windowManager.addListener(this);
+    }
+  }
+
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleHardwareKey);
+    WidgetsBinding.instance.removeObserver(this);
+    if (defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows) {
+      windowManager.removeListener(this);
+    }
+    unawaited(widget.state.setPushToTalkPressed(false));
+    widget.state.removeListener(_workspaceChanged);
+    _searchTriggerFocus.dispose();
+    super.dispose();
+  }
+
+  void _workspaceChanged() {
+    final previous = _lastWorkspacePanel;
+    final current = widget.state.workspacePanel;
+    _lastWorkspacePanel = current;
+    if ((previous == WorkspacePanel.search ||
+            previous == WorkspacePanel.searchContext) &&
+        current == WorkspacePanel.none) {
+      final compact =
+          MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint;
+      if (compact) {
+        setState(() => _showMobileSidebar = true);
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _searchTriggerFocus.canRequestFocus) {
+          _searchTriggerFocus.requestFocus();
+        }
+      });
+    }
+  }
+
+  bool _handleHardwareKey(KeyEvent event) {
+    if (_capturingPttKey && event is KeyDownEvent) {
+      setState(() => _capturingPttKey = false);
+      if (event.logicalKey == LogicalKeyboardKey.tab ||
+          event.logicalKey == LogicalKeyboardKey.escape) {
+        return true;
+      }
+      final keyLabel = event.logicalKey.keyLabel.trim().isEmpty
+          ? event.logicalKey.debugName ?? 'Клавиша'
+          : event.logicalKey.keyLabel;
+      unawaited(
+        widget.state.setPushToTalkKey(event.logicalKey.keyId, keyLabel),
+      );
+      return true;
+    }
+    final isPttKey = widget.state.pushToTalkKeyId == event.logicalKey.keyId;
+    if (event is KeyUpEvent && isPttKey) {
+      unawaited(widget.state.setPushToTalkPressed(false));
+      return true;
+    }
+    if (event is KeyDownEvent &&
+        isPttKey &&
+        widget.state.audioActivationMode == AudioActivationMode.ptt) {
+      final focusContext = FocusManager.instance.primaryFocus?.context;
+      if (focusContext != null &&
+          (focusContext.widget is EditableText ||
+              focusContext.widget is ButtonStyleButton ||
+              focusContext.findAncestorWidgetOfExactType<EditableText>() !=
+                  null ||
+              focusContext
+                      .findAncestorWidgetOfExactType<
+                        DropdownButton<String>
+                      >() !=
+                  null ||
+              focusContext
+                      .findAncestorWidgetOfExactType<
+                        FormField<AudioActivationMode>
+                      >() !=
+                  null ||
+              focusContext.findAncestorWidgetOfExactType<SwitchListTile>() !=
+                  null ||
+              focusContext.findAncestorWidgetOfExactType<Dialog>() != null)) {
+        return false;
+      }
+      unawaited(widget.state.setPushToTalkPressed(true));
+      return true;
+    }
+    if (event is! KeyDownEvent) return false;
+    if (event.logicalKey == LogicalKeyboardKey.escape) {
+      return _handleEscape();
+    }
+    if (event.logicalKey != LogicalKeyboardKey.keyK ||
+        (!HardwareKeyboard.instance.isControlPressed &&
+            !HardwareKeyboard.instance.isMetaPressed)) {
+      return false;
+    }
+    return _handleSearchShortcut();
+  }
+
+  void _toggleSearch() {
+    if (widget.state.workspacePanel == WorkspacePanel.search ||
+        widget.state.workspacePanel == WorkspacePanel.searchContext) {
+      widget.state.closeSearchPanel();
+    } else {
+      widget.state.openSearchPanel();
+      _closeDrawers();
+    }
+  }
+
+  bool _handleSearchShortcut() {
+    final focusContext = FocusManager.instance.primaryFocus?.context;
+    if (focusContext != null &&
+        (focusContext.widget is EditableText ||
+            focusContext.findAncestorWidgetOfExactType<EditableText>() !=
+                null)) {
+      return false;
+    }
+    _toggleSearch();
+    return true;
+  }
+
+  void _closeDrawers() {
+    if (!_showMobileSidebar && !_showMembersDrawer) return;
+    setState(() {
+      _showMobileSidebar = false;
+      _showMembersDrawer = false;
+    });
+  }
+
+  bool _handleEscape() {
+    if (_showMobileSidebar || _showMembersDrawer) {
+      _closeDrawers();
+      return true;
+    } else if (widget.state.workspacePanel == WorkspacePanel.search ||
+        widget.state.workspacePanel == WorkspacePanel.searchContext) {
+      widget.state.closeSearchPanel();
+      return true;
+    }
+    return false;
+  }
+
+  void _toggleNavigation() {
+    setState(() {
+      _showMobileSidebar = !_showMobileSidebar;
+      _showMembersDrawer = false;
+    });
+  }
+
+  void _toggleMembers() {
+    setState(() {
+      _showMembersDrawer = !_showMembersDrawer;
+      _showMobileSidebar = false;
+    });
+  }
+
+  void _beginPttKeyCapture() => setState(() => _capturingPttKey = true);
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      unawaited(widget.state.setPushToTalkPressed(false));
+    }
+  }
+
+  @override
+  void onWindowBlur() => unawaited(widget.state.setPushToTalkPressed(false));
 
   @override
   Widget build(BuildContext context) => Scaffold(
     body: SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxWidth < 720;
-          final wide = constraints.maxWidth >= 1280;
+          final compact = constraints.maxWidth < GcLayout.mobileBreakpoint;
+          final medium = constraints.maxWidth >= GcLayout.mediumBreakpoint;
+          final wide = constraints.maxWidth >= GcLayout.wideBreakpoint;
+          final voiceStageWide =
+              wide && widget.state.selectedChannel?.kind == ChannelKind.voice;
+          final showPermanentMembers =
+              medium &&
+              widget.state.workspacePanel == WorkspacePanel.none &&
+              widget.state.selectedDirectMessage == null &&
+              !voiceStageWide;
+          final showMemberToggle =
+              !showPermanentMembers &&
+              widget.state.workspacePanel == WorkspacePanel.none &&
+              widget.state.selectedDirectMessage == null;
           final content = compact
-              ? _showMobileSidebar
-                    ? _Sidebar(
-                        state: widget.state,
-                        onChannelSelected: () =>
-                            setState(() => _showMobileSidebar = false),
-                      )
-                    : _MainSurface(
-                        state: widget.state,
-                        onBack: () => setState(() => _showMobileSidebar = true),
-                      )
-              : Row(
+              ? Stack(
                   children: [
-                    SizedBox(
-                      width: constraints.maxWidth >= 1400 ? 312 : 264,
-                      child: _Sidebar(state: widget.state),
-                    ),
-                    const VerticalDivider(width: 1),
-                    Expanded(child: _MainSurface(state: widget.state)),
-                    if (wide &&
-                        widget.state.workspacePanel == WorkspacePanel.none &&
-                        widget.state.selectedDirectMessage == null) ...[
-                      const VerticalDivider(width: 1),
-                      SizedBox(
-                        width: constraints.maxWidth >= 1400 ? 312 : 240,
-                        child: _MembersPanel(state: widget.state),
+                    Positioned.fill(
+                      child: _MainSurface(
+                        state: widget.state,
+                        onToggleNavigation: _toggleNavigation,
+                        onOpenMembers: showMemberToggle ? _toggleMembers : null,
+                        onCapturePttKey: _beginPttKeyCapture,
+                        capturingPttKey: _capturingPttKey,
                       ),
-                    ],
+                    ),
+                    if (_showMobileSidebar || _showMembersDrawer)
+                      Positioned.fill(
+                        child: _DrawerScrim(onTap: _closeDrawers),
+                      ),
+                    if (_showMobileSidebar)
+                      Positioned(
+                        top: 0,
+                        bottom: 0,
+                        left: 0,
+                        width: (constraints.maxWidth - 40)
+                            .clamp(0.0, 320.0)
+                            .toDouble(),
+                        child: _DrawerSurface(
+                          child: _Sidebar(
+                            state: widget.state,
+                            onChannelSelected: _closeDrawers,
+                            onClose: _closeDrawers,
+                            onSearch: _toggleSearch,
+                            searchFocusNode: _searchTriggerFocus,
+                          ),
+                        ),
+                      ),
+                    if (_showMembersDrawer)
+                      Positioned(
+                        top: 0,
+                        bottom: 0,
+                        right: 0,
+                        width: (constraints.maxWidth - 40)
+                            .clamp(0.0, 320.0)
+                            .toDouble(),
+                        child: _DrawerSurface(
+                          child: _MembersPanel(
+                            state: widget.state,
+                            onClose: _closeDrawers,
+                          ),
+                        ),
+                      ),
+                  ],
+                )
+              : Stack(
+                  children: [
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: wide
+                              ? GcLayout.navWide
+                              : medium
+                              ? GcLayout.navMedium
+                              : GcLayout.navSmall,
+                          child: _Sidebar(
+                            state: widget.state,
+                            onSearch: _toggleSearch,
+                            searchFocusNode: _searchTriggerFocus,
+                          ),
+                        ),
+                        const VerticalDivider(width: 1),
+                        Expanded(
+                          child: _MainSurface(
+                            state: widget.state,
+                            onOpenMembers: showMemberToggle
+                                ? _toggleMembers
+                                : null,
+                            onCapturePttKey: _beginPttKeyCapture,
+                            capturingPttKey: _capturingPttKey,
+                          ),
+                        ),
+                        if (showPermanentMembers) ...[
+                          const VerticalDivider(width: 1),
+                          SizedBox(
+                            width: wide
+                                ? GcLayout.asideWide
+                                : GcLayout.asideMedium,
+                            child: _MembersPanel(state: widget.state),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (_showMembersDrawer)
+                      Positioned.fill(
+                        child: _DrawerScrim(onTap: _closeDrawers),
+                      ),
+                    if (_showMembersDrawer)
+                      Positioned(
+                        top: 0,
+                        bottom: 0,
+                        right: 0,
+                        width: (constraints.maxWidth - 32)
+                            .clamp(0.0, 320.0)
+                            .toDouble(),
+                        child: _DrawerSurface(
+                          child: _MembersPanel(
+                            state: widget.state,
+                            onClose: _closeDrawers,
+                          ),
+                        ),
+                      ),
                   ],
                 );
+          final flushShell = constraints.maxWidth >= GcLayout.wideBreakpoint;
           return Padding(
-            padding: compact
+            padding: compact || flushShell
                 ? EdgeInsets.zero
-                : EdgeInsets.all(constraints.maxWidth >= 1400 ? 24 : 16),
+                : const EdgeInsets.all(GcLayout.frameInset),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(compact ? 0 : 16),
+              borderRadius: BorderRadius.circular(
+                compact || flushShell ? 0 : GcLayout.shellRadius,
+              ),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  border: compact ? null : Border.all(color: GcColors.border),
+                  border: compact || flushShell
+                      ? null
+                      : Border.all(color: GcColors.border),
                 ),
                 child: content,
               ),
@@ -75,10 +363,47 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   );
 }
 
+class _DrawerScrim extends StatelessWidget {
+  const _DrawerScrim({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: 'Закрыть панель',
+    child: GestureDetector(
+      onTap: onTap,
+      child: const ColoredBox(color: Color(0xA8000000)),
+    ),
+  );
+}
+
+class _DrawerSurface extends StatelessWidget {
+  const _DrawerSurface({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: GcColors.sidebar,
+    elevation: 20,
+    shadowColor: const Color(0x40000000),
+    child: child,
+  );
+}
+
 class _Sidebar extends StatelessWidget {
-  const _Sidebar({required this.state, this.onChannelSelected});
+  const _Sidebar({
+    required this.state,
+    this.onChannelSelected,
+    this.onClose,
+    this.onSearch,
+    this.searchFocusNode,
+  });
   final AppState state;
   final VoidCallback? onChannelSelected;
+  final VoidCallback? onClose;
+  final VoidCallback? onSearch;
+  final FocusNode? searchFocusNode;
   @override
   Widget build(BuildContext context) => ColoredBox(
     color: GcColors.sidebar,
@@ -99,19 +424,17 @@ class _Sidebar extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Участники',
-                  onPressed: () => showModalBottomSheet<void>(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (_) => SafeArea(
-                      child: SizedBox(
-                        height: MediaQuery.sizeOf(context).height * .72,
-                        child: _MembersPanel(state: state),
-                      ),
-                    ),
-                  ),
-                  icon: const Icon(Icons.people_outline),
+                  tooltip: 'Поиск сообщений',
+                  focusNode: searchFocusNode,
+                  onPressed: onSearch ?? state.openSearchPanel,
+                  icon: const Icon(Icons.search),
                 ),
+                if (onClose != null)
+                  IconButton(
+                    tooltip: 'Закрыть навигацию',
+                    onPressed: onClose,
+                    icon: const Icon(Icons.close),
+                  ),
               ],
             ),
           ),
@@ -178,7 +501,7 @@ class _Sidebar extends StatelessWidget {
         ),
         if (state.voiceChannel != null) _VoiceDock(state: state),
         const Divider(height: 1),
-        _UserFooter(state: state),
+        _UserFooter(state: state, onNavigate: onClose),
       ],
     ),
   );
@@ -333,16 +656,47 @@ class _Category extends StatelessWidget {
             ),
           ),
         ),
-        for (final channel in category.channels)
-          _ChannelRow(
-            channel: channel,
-            selected: state.selectedChannel?.id == channel.id,
-            voiceConnected: state.voiceChannel?.id == channel.id,
-            onTap: () {
-              state.selectChannel(channel);
-              onChannelSelected?.call();
+        if (category.channels.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Text(
+              'Нет каналов',
+              style: TextStyle(color: GcColors.muted, fontSize: 12),
+            ),
+          ),
+        for (final channel in category.channels) ...[
+          Builder(
+            builder: (context) {
+              final room = state.voiceChannel?.id == channel.id
+                  ? state.room
+                  : null;
+              final localParticipant = room?.localParticipant;
+              final memberCount = localParticipant == null
+                  ? null
+                  : room!.remoteParticipants.length + 1;
+              return Column(
+                children: [
+                  _ChannelRow(
+                    channel: channel,
+                    selected: state.selectedChannel?.id == channel.id,
+                    voiceConnected: state.voiceChannel?.id == channel.id,
+                    voiceParticipantCount: memberCount,
+                    onTap: () {
+                      state.selectChannel(channel);
+                      onChannelSelected?.call();
+                    },
+                  ),
+                  if (localParticipant != null)
+                    _VoiceNavigationMembers(
+                      state: state,
+                      localParticipant: localParticipant,
+                      remoteParticipants: room!.remoteParticipants.values,
+                    ),
+                ],
+              );
             },
           ),
+        ],
       ],
     ),
   );
@@ -353,11 +707,13 @@ class _ChannelRow extends StatelessWidget {
     required this.channel,
     required this.selected,
     required this.voiceConnected,
+    this.voiceParticipantCount,
     required this.onTap,
   });
   final GuildChannel channel;
   final bool selected;
   final bool voiceConnected;
+  final int? voiceParticipantCount;
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => Padding(
@@ -404,6 +760,17 @@ class _ChannelRow extends StatelessWidget {
                   ),
                 ),
               ),
+              if (channel.kind == ChannelKind.text && channel.unreadCount > 0)
+                _ChannelStateBadge(
+                  label: '${channel.unreadCount}',
+                  semanticLabel:
+                      'Непрочитанных сообщений: ${channel.unreadCount}',
+                ),
+              if (channel.kind == ChannelKind.text && channel.mentionCount > 0)
+                _ChannelStateBadge(
+                  label: '@${channel.mentionCount}',
+                  semanticLabel: 'Упоминаний: ${channel.mentionCount}',
+                ),
               if (channel.admissionClosed)
                 const Padding(
                   padding: EdgeInsets.only(right: 10),
@@ -411,6 +778,26 @@ class _ChannelRow extends StatelessWidget {
                     Icons.lock_outline,
                     size: 16,
                     color: GcColors.warning,
+                  ),
+                ),
+              if (voiceParticipantCount != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 9),
+                  child: Tooltip(
+                    message:
+                        'Участников в голосовом канале: $voiceParticipantCount',
+                    child: Semantics(
+                      label:
+                          'Участников в голосовом канале: $voiceParticipantCount',
+                      child: Text(
+                        '$voiceParticipantCount',
+                        style: const TextStyle(
+                          color: GcColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -421,14 +808,221 @@ class _ChannelRow extends StatelessWidget {
   );
 }
 
-class _MainSurface extends StatelessWidget {
-  const _MainSurface({required this.state, this.onBack});
+class _VoiceNavigationMembers extends StatelessWidget {
+  const _VoiceNavigationMembers({
+    required this.state,
+    required this.localParticipant,
+    required this.remoteParticipants,
+  });
+
   final AppState state;
-  final VoidCallback? onBack;
+  final LocalParticipant localParticipant;
+  final Iterable<RemoteParticipant> remoteParticipants;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(left: 31, bottom: 5),
+    child: Column(
+      children: [
+        _VoiceNavigationMemberRow(
+          state: state,
+          name: state.profile?.displayName.trim().isNotEmpty == true
+              ? '${state.profile!.displayName} · вы'
+              : 'Вы',
+          accountId: state.user?.accountId,
+          muted: state.microphoneMuted,
+          speaking: localParticipant.isSpeaking && !state.microphoneMuted,
+          screenSharing: state.screenSharePhase == ScreenSharePhase.sharing,
+        ),
+        for (final participant in remoteParticipants)
+          _VoiceNavigationMemberRow(
+            state: state,
+            name: _participantName(participant),
+            accountId: _voiceParticipantAccountId(participant),
+            muted: _participantMuted(participant),
+            speaking: participant.isSpeaking && !_participantMuted(participant),
+            screenSharing: participant.videoTrackPublications.any(
+              (publication) =>
+                  publication.source == TrackSource.screenShareVideo &&
+                  publication.track != null,
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+class _VoiceNavigationMemberRow extends StatelessWidget {
+  const _VoiceNavigationMemberRow({
+    required this.state,
+    required this.name,
+    required this.accountId,
+    required this.muted,
+    required this.speaking,
+    required this.screenSharing,
+  });
+
+  final AppState state;
+  final String name;
+  final String? accountId;
+  final bool muted;
+  final bool speaking;
+  final bool screenSharing;
+
   @override
   Widget build(BuildContext context) {
+    final member = accountId == null
+        ? null
+        : state.members.where((item) => item.id == accountId).firstOrNull;
+    return SizedBox(
+      height: 27,
+      child: Row(
+        children: [
+          AuthenticatedAvatar(
+            state: state,
+            name: name,
+            avatarUrl: member?.avatarUrl,
+            radius: 9,
+            backgroundColor: _voiceAvatarColor(accountId ?? name),
+          ),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: speaking ? GcColors.success : GcColors.textSecondary,
+                fontSize: 11,
+                fontWeight: speaking ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ),
+          if (screenSharing)
+            const Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Tooltip(
+                message: 'Показывает экран',
+                child: Icon(
+                  Icons.screen_share_outlined,
+                  size: 13,
+                  color: GcColors.accentText,
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Tooltip(
+              message: muted ? 'Микрофон выключен' : 'Микрофон включён',
+              child: Icon(
+                muted ? Icons.mic_off_outlined : Icons.mic_none,
+                size: 13,
+                color: muted ? GcColors.muted : GcColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String? _voiceParticipantAccountId(RemoteParticipant participant) {
+  final metadata = participant.metadata;
+  if (metadata == null || !metadata.startsWith('account:')) return null;
+  final id = metadata.substring('account:'.length);
+  return id.isEmpty ? null : id;
+}
+
+Color _voiceAvatarColor(String value) {
+  final hash = value.codeUnits.fold<int>(
+    0,
+    (result, unit) => ((result * 31) + unit) & 0x7fffffff,
+  );
+  const colors = [
+    GcColors.avatarBlue,
+    GcColors.avatarGreen,
+    GcColors.avatarViolet,
+    GcColors.avatarOrange,
+    GcColors.avatarGray,
+  ];
+  return colors[hash % colors.length];
+}
+
+class _ChannelStateBadge extends StatelessWidget {
+  const _ChannelStateBadge({required this.label, required this.semanticLabel});
+  final String label;
+  final String semanticLabel;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: semanticLabel,
+    child: ExcludeSemantics(
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: GcColors.warningBackground,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: GcColors.warning,
+            fontSize: 11,
+            height: 1.2,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _MainSurface extends StatelessWidget {
+  const _MainSurface({
+    required this.state,
+    this.onToggleNavigation,
+    this.onOpenMembers,
+    this.onCapturePttKey,
+    this.capturingPttKey = false,
+  });
+  final AppState state;
+  final VoidCallback? onToggleNavigation;
+  final VoidCallback? onOpenMembers;
+  final VoidCallback? onCapturePttKey;
+  final bool capturingPttKey;
+  @override
+  Widget build(BuildContext context) {
+    if (state.workspacePanel == WorkspacePanel.search) {
+      return _WorkspaceSearchPanel(state: state);
+    }
+    if (state.workspacePanel == WorkspacePanel.searchContext) {
+      return _SearchMessageContext(state: state);
+    }
     if (state.workspacePanel == WorkspacePanel.profile) {
-      return ProfileScreen(state: state);
+      return Column(
+        children: [
+          _Header(
+            icon: Icons.person_outline,
+            title: 'Профиль',
+            subtitle: 'Настройки вашей учётной записи',
+            onToggleNavigation: onToggleNavigation,
+            onOpenMembers: onOpenMembers,
+          ),
+          Expanded(child: ProfileScreen(state: state)),
+        ],
+      );
+    }
+    if (state.workspacePanel == WorkspacePanel.audio) {
+      return _AudioSettingsScreen(
+        state: state,
+        onCapturePttKey: onCapturePttKey,
+        capturingPttKey: capturingPttKey,
+      );
+    }
+    if (state.workspacePanel == WorkspacePanel.admin &&
+        state.user?.isAdmin == true) {
+      return AdminScreen(state: state);
     }
     final direct = state.selectedDirectMessage;
     if (direct != null) {
@@ -437,27 +1031,51 @@ class _MainSurface extends StatelessWidget {
         child: _DirectConversation(
           state: state,
           conversation: direct,
-          onBack: onBack,
+          onToggleNavigation: onToggleNavigation,
+          onOpenMembers: onOpenMembers,
         ),
       );
     }
     final channel = state.selectedChannel;
     if (channel == null) {
-      return const ColoredBox(
-        color: GcColors.content,
-        child: Center(
-          child: Text(
-            'Выберите канал',
-            style: TextStyle(color: GcColors.muted),
+      return Column(
+        children: [
+          _Header(
+            icon: Icons.forum_outlined,
+            title: 'Моя гильдия',
+            subtitle: 'Выберите канал',
+            onToggleNavigation: onToggleNavigation,
+            onOpenMembers: onOpenMembers,
           ),
-        ),
+          const Expanded(
+            child: ColoredBox(
+              color: GcColors.content,
+              child: Center(
+                child: Text(
+                  'Выберите канал',
+                  style: TextStyle(color: GcColors.muted),
+                ),
+              ),
+            ),
+          ),
+        ],
       );
     }
     return ColoredBox(
       color: GcColors.content,
       child: channel.kind == ChannelKind.text
-          ? _Conversation(state: state, channel: channel, onBack: onBack)
-          : _VoiceRoom(state: state, channel: channel, onBack: onBack),
+          ? _Conversation(
+              state: state,
+              channel: channel,
+              onToggleNavigation: onToggleNavigation,
+              onOpenMembers: onOpenMembers,
+            )
+          : _VoiceRoom(
+              state: state,
+              channel: channel,
+              onToggleNavigation: onToggleNavigation,
+              onOpenMembers: onOpenMembers,
+            ),
     );
   }
 }
@@ -467,13 +1085,15 @@ class _Header extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.onBack,
+    this.onToggleNavigation,
+    this.onOpenMembers,
     this.trailing,
   });
   final IconData icon;
   final String title;
   final String subtitle;
-  final VoidCallback? onBack;
+  final VoidCallback? onToggleNavigation;
+  final VoidCallback? onOpenMembers;
   final Widget? trailing;
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -486,11 +1106,11 @@ class _Header extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Row(
           children: [
-            if (onBack != null) ...[
+            if (onToggleNavigation != null) ...[
               IconButton(
-                tooltip: 'К списку каналов',
-                onPressed: onBack,
-                icon: const Icon(Icons.arrow_back_rounded),
+                tooltip: 'Открыть навигацию',
+                onPressed: onToggleNavigation,
+                icon: const Icon(Icons.menu),
               ),
               const SizedBox(width: 4),
             ],
@@ -516,6 +1136,12 @@ class _Header extends StatelessWidget {
               ),
             ),
             ?trailing,
+            if (onOpenMembers != null)
+              IconButton(
+                tooltip: 'Открыть участников',
+                onPressed: onOpenMembers,
+                icon: const Icon(Icons.people_outline),
+              ),
           ],
         ),
       ),
@@ -527,28 +1153,143 @@ class _Conversation extends StatefulWidget {
   const _Conversation({
     required this.state,
     required this.channel,
-    this.onBack,
+    this.onToggleNavigation,
+    this.onOpenMembers,
   });
   final AppState state;
   final GuildChannel channel;
-  final VoidCallback? onBack;
+  final VoidCallback? onToggleNavigation;
+  final VoidCallback? onOpenMembers;
   @override
   State<_Conversation> createState() => _ConversationState();
 }
 
-class _ConversationState extends State<_Conversation> {
+class _ConversationState extends State<_Conversation>
+    with WidgetsBindingObserver {
   final _controller = TextEditingController();
+  final _composerFocus = FocusNode();
   final _scroll = ScrollController();
+  final Map<String, GlobalKey> _messageKeys = {};
+  final Set<String> _mentionUserIds = {};
+  List<MessageAttachment> _attachments = const [];
+  bool _attachmentsPending = false;
+  ChatMessage? _replyTarget;
+  bool _followLatest = true;
+  bool _latestLayoutConfirmed = false;
+  String? _observedChannelId;
+  List<ChatMessage>? _observedMessages;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scroll.addListener(_onScroll);
+  }
+
+  @override
+  void didUpdateWidget(covariant _Conversation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.channel.id != widget.channel.id) {
+      _followLatest = true;
+      _latestLayoutConfirmed = false;
+      _replyTarget = null;
+      _mentionUserIds.clear();
+      _attachments = const [];
+      _attachmentsPending = false;
+      _observedChannelId = null;
+      _observedMessages = null;
+    }
+  }
+
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    _followLatest = _scroll.position.extentAfter <= 48;
+    _scheduleVisibleRead(widget.state.messages);
+  }
+
+  void _scheduleVisibleRead(List<ChatMessage> renderedMessages) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          widget.state.loadingMessages ||
+          widget.state.selectedChannel?.id != widget.channel.id ||
+          !identical(widget.state.messages, renderedMessages) ||
+          !_scroll.hasClients) {
+        return;
+      }
+      if (_followLatest && _scroll.position.extentAfter > 1) {
+        _scroll.jumpTo(_scroll.position.maxScrollExtent);
+        _scheduleVisibleRead(renderedMessages);
+        return;
+      }
+      if (_followLatest && !_latestLayoutConfirmed) {
+        _latestLayoutConfirmed = true;
+        _scheduleVisibleRead(renderedMessages);
+        return;
+      }
+      if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+        return;
+      }
+      final visibleMessages = <ChatMessage>[];
+      for (final message in renderedMessages) {
+        final row = _messageKeys['${widget.channel.id}:${message.id}']
+            ?.currentContext
+            ?.findRenderObject();
+        if (row is! RenderBox || !row.attached) continue;
+        final candidateViewport = RenderAbstractViewport.maybeOf(row);
+        if (candidateViewport is! RenderBox) continue;
+        final viewportBox = candidateViewport as RenderBox;
+        final rowRect = row.localToGlobal(Offset.zero) & row.size;
+        final viewportRect =
+            viewportBox.localToGlobal(Offset.zero) & viewportBox.size;
+        if (rowRect.bottom > viewportRect.top &&
+            rowRect.top < viewportRect.bottom &&
+            rowRect.right > viewportRect.left &&
+            rowRect.left < viewportRect.right) {
+          visibleMessages.add(message);
+        }
+      }
+      final newestVisible = visibleMessages.lastOrNull;
+      if (newestVisible != null) {
+        unawaited(
+          widget.state.markTextChannelRead(widget.channel.id, newestVisible.id),
+        );
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _scheduleVisibleRead(widget.state.messages);
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
+    _composerFocus.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
   Future<void> _send() async {
-    if (await widget.state.send(_controller.text)) {
+    if (_attachmentsPending) return;
+    if (await widget.state.send(
+      _controller.text,
+      replyToId: _replyTarget?.id,
+      mentionUserIds: _mentionUserIds.toList(),
+      attachments: _attachments,
+    )) {
       _controller.clear();
+      if (mounted) {
+        setState(() {
+          _replyTarget = null;
+          _mentionUserIds.clear();
+          _attachments = const [];
+        });
+      }
+      _followLatest = true;
       await Future<void>.delayed(const Duration(milliseconds: 80));
       if (_scroll.hasClients) {
         await _scroll.animateTo(
@@ -560,15 +1301,76 @@ class _ConversationState extends State<_Conversation> {
     }
   }
 
+  void _replyTo(ChatMessage message) {
+    setState(() => _replyTarget = message);
+    _composerFocus.requestFocus();
+  }
+
+  Future<void> _loadOlder() async {
+    if (!_scroll.hasClients) return;
+    final oldOffset = _scroll.position.pixels;
+    final oldExtent = _scroll.position.maxScrollExtent;
+    if (!await widget.state.loadOlderMessages() || !mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      final position = _scroll.position;
+      final restored = oldOffset + position.maxScrollExtent - oldExtent;
+      position.jumpTo(
+        restored.clamp(position.minScrollExtent, position.maxScrollExtent),
+      );
+      _followLatest = false;
+    });
+  }
+
+  void _jumpToReply(ChatMessage message) {
+    final targetId = message.replyToId;
+    if (targetId == null) return;
+    final context =
+        _messageKeys['${widget.channel.id}:$targetId']?.currentContext;
+    if (context != null) {
+      unawaited(
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 220),
+          alignment: 0.25,
+        ),
+      );
+    }
+  }
+
+  String? _replyPreview(ChatMessage message) {
+    final replyToId = message.replyToId;
+    if (replyToId == null) return null;
+    final target = widget.state.messages
+        .where((candidate) => candidate.id == replyToId)
+        .firstOrNull;
+    if (target == null) return 'Исходное сообщение недоступно';
+    if (target.deleted) return 'Сообщение удалено';
+    return '${_mentionDisplayName(widget.state, target.authorId)}: ${_messageSnippet(target.body)}';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final renderedMessages = widget.state.messages;
+    final timeline = messageTimeline(renderedMessages);
+    if (_observedChannelId != widget.channel.id ||
+        !identical(_observedMessages, renderedMessages)) {
+      _observedChannelId = widget.channel.id;
+      _observedMessages = renderedMessages;
+      final renderedKeys = renderedMessages
+          .map((message) => '${widget.channel.id}:${message.id}')
+          .toSet();
+      _messageKeys.removeWhere((key, _) => !renderedKeys.contains(key));
+      _scheduleVisibleRead(renderedMessages);
+    }
     return Column(
       children: [
         _Header(
           icon: Icons.tag_rounded,
           title: widget.channel.name,
           subtitle: 'Текстовый канал',
-          onBack: widget.onBack,
+          onToggleNavigation: widget.onToggleNavigation,
+          onOpenMembers: widget.onOpenMembers,
           trailing: IconButton(
             tooltip: 'Обновить историю',
             onPressed: () => widget.state.selectChannel(widget.channel),
@@ -582,48 +1384,151 @@ class _ConversationState extends State<_Conversation> {
               ? const Center(child: CircularProgressIndicator())
               : widget.state.messages.isEmpty
               ? _EmptyConversation(channel: widget.channel.name)
-              : ListView.builder(
+              : ListView.separated(
                   controller: _scroll,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 28,
                     vertical: 24,
                   ),
-                  itemCount: widget.state.messages.length,
-                  itemBuilder: (context, index) => _MessageRow(
-                    state: widget.state,
-                    message: widget.state.messages[index],
-                  ),
+                  itemCount:
+                      timeline.length +
+                      (widget.state.nextMessageCursor == null ? 0 : 1),
+                  separatorBuilder: (context, index) {
+                    if (widget.state.nextMessageCursor != null && index == 0) {
+                      return const SizedBox(height: 12);
+                    }
+                    final timelineIndex =
+                        index -
+                        (widget.state.nextMessageCursor == null ? 0 : 1);
+                    final current = timeline[timelineIndex];
+                    final next = timeline[timelineIndex + 1];
+                    if (current.message == null) {
+                      return const SizedBox(height: 12);
+                    }
+                    return SizedBox(
+                      height: next.message != null && next.grouped ? 4 : 24,
+                    );
+                  },
+                  itemBuilder: (context, index) {
+                    if (widget.state.nextMessageCursor != null && index == 0) {
+                      return Center(
+                        child: TextButton.icon(
+                          onPressed: widget.state.loadingOlderMessages
+                              ? null
+                              : _loadOlder,
+                          icon: widget.state.loadingOlderMessages
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.history),
+                          label: Text(
+                            widget.state.loadingOlderMessages
+                                ? 'Загружаем…'
+                                : 'Загрузить предыдущие сообщения',
+                          ),
+                        ),
+                      );
+                    }
+                    final timelineIndex =
+                        index -
+                        (widget.state.nextMessageCursor == null ? 0 : 1);
+                    final entry = timeline[timelineIndex];
+                    if (entry.message == null) {
+                      return _HistoryDateDivider(label: entry.dateLabel!);
+                    }
+                    final message = entry.message!;
+                    final key = '${widget.channel.id}:${message.id}';
+                    return KeyedSubtree(
+                      key: _messageKeys.putIfAbsent(
+                        key,
+                        () => GlobalKey(debugLabel: key),
+                      ),
+                      child: _MessageRow(
+                        state: widget.state,
+                        message: message,
+                        grouped: entry.grouped,
+                        replyPreview: _replyPreview(message),
+                        onReply: _replyTo,
+                        onJumpToReply: () => _jumpToReply(message),
+                      ),
+                    );
+                  },
                 ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-          child: CallbackShortcuts(
-            bindings: {const SingleActivator(LogicalKeyboardKey.enter): _send},
-            child: TextField(
-              controller: _controller,
-              enabled: !widget.state.sending,
-              maxLength: 8000,
-              minLines: 1,
-              maxLines: 5,
-              decoration: InputDecoration(
-                counterText: '',
-                hintText: 'Написать сообщение…',
-                prefixIcon: const Icon(Icons.add_circle_outline),
-                suffixIcon: IconButton(
-                  tooltip: 'Отправить сообщение',
-                  onPressed: widget.state.sending ? null : _send,
-                  icon: widget.state.sending
-                      ? const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(
-                          Icons.send_outlined,
-                          color: GcColors.accentText,
-                        ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_replyTarget != null)
+                _ReplyTargetBanner(
+                  text:
+                      'Ответ для ${_mentionDisplayName(widget.state, _replyTarget!.authorId)}',
+                  onCancel: () => setState(() => _replyTarget = null),
+                ),
+              _MentionPicker(
+                options: widget.state.members
+                    .map((member) => (member.id, member.displayName))
+                    .toList(growable: false),
+                selfId: widget.state.user?.accountId ?? '',
+                selectedIds: _mentionUserIds,
+                onChanged: (ids) => setState(() {
+                  _mentionUserIds
+                    ..clear()
+                    ..addAll(ids);
+                }),
+              ),
+              MessageAttachmentComposer(
+                state: widget.state,
+                attachments: _attachments,
+                onChanged: (attachments) => setState(() {
+                  _attachments = attachments;
+                }),
+                onPending: (pending) => setState(() {
+                  _attachmentsPending = pending;
+                }),
+                directMessageId: null,
+                key: ValueKey('attachments:${widget.channel.id}'),
+              ),
+              CallbackShortcuts(
+                bindings: {
+                  const SingleActivator(LogicalKeyboardKey.enter): _send,
+                },
+                child: TextField(
+                  focusNode: _composerFocus,
+                  controller: _controller,
+                  enabled: !widget.state.sending,
+                  maxLength: 8000,
+                  minLines: 1,
+                  maxLines: 5,
+                  decoration: InputDecoration(
+                    counterText: '',
+                    hintText: 'Написать сообщение…',
+                    prefixIcon: const Icon(Icons.add_circle_outline),
+                    suffixIcon: IconButton(
+                      tooltip: 'Отправить сообщение',
+                      onPressed: widget.state.sending || _attachmentsPending
+                          ? null
+                          : _send,
+                      icon: widget.state.sending
+                          ? const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(
+                              Icons.send_outlined,
+                              color: GcColors.accentText,
+                            ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ],
@@ -631,40 +1536,76 @@ class _ConversationState extends State<_Conversation> {
   }
 }
 
+class _HistoryDateDivider extends StatelessWidget {
+  const _HistoryDateDivider({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 4),
+    child: Row(
+      children: [
+        const Expanded(child: Divider(height: 1, color: GcColors.border)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            label,
+            style: const TextStyle(color: GcColors.muted, fontSize: 12),
+          ),
+        ),
+        const Expanded(child: Divider(height: 1, color: GcColors.border)),
+      ],
+    ),
+  );
+}
+
 class _MessageRow extends StatelessWidget {
-  const _MessageRow({required this.state, required this.message});
+  const _MessageRow({
+    required this.state,
+    required this.message,
+    this.grouped = false,
+    this.replyPreview,
+    this.onReply,
+    this.onJumpToReply,
+  });
   final AppState state;
   final ChatMessage message;
+  final bool grouped;
+  final String? replyPreview;
+  final ValueChanged<ChatMessage>? onReply;
+  final VoidCallback? onJumpToReply;
   @override
   Widget build(BuildContext context) {
-    final initials = message.authorId
-        .substring(0, message.authorId.length.clamp(1, 2))
-        .toUpperCase();
+    final member = state.members
+        .where((value) => value.id == message.authorId)
+        .firstOrNull;
+    final authorName = member?.displayName ?? message.authorId;
     final time =
         '${message.createdAt.hour.toString().padLeft(2, '0')}:${message.createdAt.minute.toString().padLeft(2, '0')}';
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 22),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (grouped)
+          const SizedBox(width: 40, height: 0)
+        else
+          AuthenticatedAvatar(
+            state: state,
+            name: authorName,
+            avatarUrl: member?.avatarUrl,
             radius: 20,
             backgroundColor: GcColors.accent,
-            child: Text(
-              initials,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-            ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (!grouped)
                 Row(
                   children: [
                     Flexible(
                       child: Text(
-                        message.authorId,
+                        authorName,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
@@ -677,61 +1618,336 @@ class _MessageRow extends StatelessWidget {
                         fontSize: 12,
                       ),
                     ),
-                    if (!message.deleted &&
-                        (message.authorId == state.user?.accountId ||
-                            state.user?.isAdmin == true))
-                      PopupMenuButton<String>(
-                        tooltip: 'Действия с сообщением',
-                        onSelected: (action) async {
-                          if (action == 'edit') {
-                            final body = await _editMessageDialog(
-                              context,
-                              message.body,
-                            );
-                            if (body != null) {
-                              await state.editText(message, body);
-                            }
-                            return;
-                          }
-                          if (action == 'delete' &&
-                              await _confirmDelete(context)) {
-                            await state.deleteText(message);
-                          }
-                        },
-                        itemBuilder: (_) => [
-                          if (message.authorId == state.user?.accountId)
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: Text('Изменить'),
-                            ),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: Text('Удалить'),
-                          ),
-                        ],
-                        icon: const Icon(Icons.more_horiz, size: 18),
+                    if (!message.deleted)
+                      _MessageActionMenu(
+                        message: message,
+                        canEdit: message.authorId == state.user?.accountId,
+                        canDelete:
+                            message.authorId == state.user?.accountId ||
+                            state.user?.isAdmin == true,
+                        onReply: onReply,
+                        onEdit: (body) => state.editText(message, body),
+                        onDelete: () => state.deleteText(message),
+                      ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: Semantics(
+                        label: '$authorName, $time',
+                        child: const SizedBox.shrink(),
+                      ),
+                    ),
+                    if (!message.deleted)
+                      _MessageActionMenu(
+                        message: message,
+                        canEdit: message.authorId == state.user?.accountId,
+                        canDelete:
+                            message.authorId == state.user?.accountId ||
+                            state.user?.isAdmin == true,
+                        onReply: onReply,
+                        onEdit: (body) => state.editText(message, body),
+                        onDelete: () => state.deleteText(message),
                       ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  message.deleted ? 'Сообщение удалено' : message.body,
+              if (!grouped) const SizedBox(height: 4),
+              if (replyPreview != null && !message.deleted)
+                _ReplyPreview(label: replyPreview!, onTap: onJumpToReply),
+              if (message.deleted)
+                const Text(
+                  'Сообщение удалено',
                   style: TextStyle(
-                    color: message.deleted ? GcColors.muted : GcColors.text,
+                    color: GcColors.muted,
                     fontSize: 15,
                     height: 1.45,
-                    fontStyle: message.deleted
-                        ? FontStyle.italic
-                        : FontStyle.normal,
+                    fontStyle: FontStyle.italic,
+                  ),
+                )
+              else
+                FormattedMessageBody(body: message.body, color: GcColors.text),
+              if (!message.deleted && message.attachments.isNotEmpty)
+                MessageAttachmentList(
+                  state: state,
+                  parentPath:
+                      '/channels/${Uri.encodeComponent(message.channelId)}',
+                  attachments: message.attachments,
+                ),
+              if (message.mentionUserIds.isNotEmpty && !message.deleted)
+                Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Text(
+                    'Упомянуты: ${message.mentionUserIds.map((id) => _mentionDisplayName(state, id)).join(' ')}',
+                    style: const TextStyle(color: GcColors.muted, fontSize: 12),
                   ),
                 ),
-              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String _messageSnippet(String body) {
+  final flattened = body.replaceAll('\n', ' ').trim();
+  return flattened.length <= 140
+      ? flattened
+      : '${flattened.substring(0, 140)}…';
+}
+
+String _searchDateTime(DateTime value) =>
+    '${value.day.toString().padLeft(2, '0')}.${value.month.toString().padLeft(2, '0')}.${value.year} · ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+
+class _SearchContextMessage {
+  const _SearchContextMessage({
+    required this.id,
+    required this.authorId,
+    required this.body,
+    required this.createdAt,
+    required this.deleted,
+    required this.attachments,
+    this.editedAt,
+  });
+  final String id;
+  final String authorId;
+  final String body;
+  final DateTime createdAt;
+  final DateTime? editedAt;
+  final bool deleted;
+  final List<MessageAttachment> attachments;
+}
+
+class _MessageActionMenu extends StatelessWidget {
+  const _MessageActionMenu({
+    required this.message,
+    required this.canEdit,
+    required this.canDelete,
+    required this.onReply,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final ChatMessage message;
+  final bool canEdit;
+  final bool canDelete;
+  final ValueChanged<ChatMessage>? onReply;
+  final ValueChanged<String> onEdit;
+  final Future<void> Function() onDelete;
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<String>(
+    tooltip: 'Действия с сообщением',
+    onSelected: (action) async {
+      if (action == 'reply') {
+        onReply?.call(message);
+      } else if (action == 'edit') {
+        final body = await _editMessageDialog(context, message.body);
+        if (body != null) onEdit(body);
+      } else if (action == 'delete' && await _confirmDelete(context)) {
+        await onDelete();
+      }
+    },
+    itemBuilder: (_) => [
+      const PopupMenuItem(value: 'reply', child: Text('Ответить')),
+      if (canEdit) const PopupMenuItem(value: 'edit', child: Text('Изменить')),
+      if (canDelete)
+        const PopupMenuItem(value: 'delete', child: Text('Удалить')),
+    ],
+    icon: const Icon(Icons.more_horiz, size: 18),
+  );
+}
+
+class _DirectMessageActionMenu extends StatelessWidget {
+  const _DirectMessageActionMenu({
+    required this.message,
+    required this.canEdit,
+    required this.onReply,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final DirectChatMessage message;
+  final bool canEdit;
+  final ValueChanged<DirectChatMessage> onReply;
+  final ValueChanged<String> onEdit;
+  final Future<void> Function() onDelete;
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<String>(
+    tooltip: 'Действия с сообщением',
+    onSelected: (action) async {
+      if (action == 'reply') {
+        onReply(message);
+      } else if (action == 'edit') {
+        final body = await _editMessageDialog(context, message.body);
+        if (body != null) onEdit(body);
+      } else if (action == 'delete' && await _confirmDelete(context)) {
+        await onDelete();
+      }
+    },
+    itemBuilder: (_) => [
+      const PopupMenuItem(value: 'reply', child: Text('Ответить')),
+      if (canEdit) const PopupMenuItem(value: 'edit', child: Text('Изменить')),
+      if (canEdit) const PopupMenuItem(value: 'delete', child: Text('Удалить')),
+    ],
+    icon: const Icon(Icons.more_horiz, size: 18),
+  );
+}
+
+class _ReplyPreview extends StatelessWidget {
+  const _ReplyPreview({required this.label, this.onTap});
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(4),
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(left: 10),
+      decoration: const BoxDecoration(
+        border: Border(left: BorderSide(color: GcColors.accentText, width: 2)),
+      ),
+      child: Text(
+        '↪ $label',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
+      ),
+    ),
+  );
+}
+
+class _ReplyTargetBanner extends StatelessWidget {
+  const _ReplyTargetBanner({required this.text, required this.onCancel});
+  final String text;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.fromLTRB(10, 5, 4, 5),
+    decoration: const BoxDecoration(
+      border: Border(left: BorderSide(color: GcColors.accentText, width: 2)),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
+          ),
+        ),
+        IconButton(
+          tooltip: 'Отменить ответ',
+          onPressed: onCancel,
+          icon: const Icon(Icons.close, size: 16),
+          visualDensity: VisualDensity.compact,
+        ),
+      ],
+    ),
+  );
+}
+
+class _MentionPicker extends StatelessWidget {
+  const _MentionPicker({
+    required this.options,
+    required this.selfId,
+    required this.selectedIds,
+    required this.onChanged,
+  });
+
+  final List<(String, String)> options;
+  final String selfId;
+  final Set<String> selectedIds;
+  final ValueChanged<Set<String>> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final available = options.where((option) => option.$1 != selfId).toList();
+    if (available.isEmpty && selectedIds.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 6,
+        runSpacing: 4,
+        children: [
+          PopupMenuButton<String>(
+            tooltip: 'Выбрать упоминание',
+            onSelected: (id) {
+              final next = Set<String>.from(selectedIds);
+              if (!next.add(id)) {
+                next.remove(id);
+              }
+              onChanged(next);
+            },
+            itemBuilder: (_) => available
+                .where(
+                  (option) =>
+                      selectedIds.contains(option.$1) ||
+                      selectedIds.length < 100,
+                )
+                .map(
+                  (option) => PopupMenuItem<String>(
+                    value: option.$1,
+                    child: Row(
+                      children: [
+                        Icon(
+                          selectedIds.contains(option.$1)
+                              ? Icons.check_box_outlined
+                              : Icons.check_box_outline_blank,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(option.$2),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.alternate_email, size: 17),
+                  SizedBox(width: 4),
+                  Text('Упомянуть', style: TextStyle(fontSize: 12)),
+                ],
+              ),
             ),
           ),
+          for (final id in selectedIds)
+            InputChip(
+              label: Text(
+                '@${options.where((option) => option.$1 == id).firstOrNull?.$2 ?? id}',
+              ),
+              onDeleted: () {
+                onChanged(selectedIds.where((value) => value != id).toSet());
+              },
+              visualDensity: VisualDensity.compact,
+            ),
         ],
       ),
     );
   }
+}
+
+String _mentionDisplayName(AppState state, String id) {
+  final member = state.members
+      .where((candidate) => candidate.id == id)
+      .firstOrNull;
+  return '@${member?.displayName ?? id}';
 }
 
 class _EmptyConversation extends StatelessWidget {
@@ -767,15 +1983,540 @@ class _EmptyConversation extends StatelessWidget {
   );
 }
 
+class _WorkspaceSearchPanel extends StatefulWidget {
+  const _WorkspaceSearchPanel({required this.state});
+  final AppState state;
+
+  @override
+  State<_WorkspaceSearchPanel> createState() => _WorkspaceSearchPanelState();
+}
+
+class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
+  final _query = TextEditingController();
+  final _scroll = ScrollController();
+  String _scope = 'all';
+  String _activeQuery = '';
+  String? _nextCursor;
+  String? _error;
+  bool _loading = false;
+  bool _searched = false;
+  int _sequence = 0;
+  List<SearchMessage> _results = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _query.addListener(_queryChanged);
+  }
+
+  void _queryChanged() {
+    if (mounted) setState(() {});
+  }
+
+  bool get _canLoadMore =>
+      _nextCursor != null && !_loading && _query.text.trim() == _activeQuery;
+
+  AppState get state => widget.state;
+
+  ({String id, String label, bool direct})? _currentConversation() {
+    final direct = state.selectedDirectMessage;
+    if (direct != null) {
+      return (id: direct.id, label: direct.displayName, direct: true);
+    }
+    final channel = state.selectedChannel;
+    if (channel?.kind == ChannelKind.text) {
+      return (id: channel!.id, label: '# ${channel.name}', direct: false);
+    }
+    return null;
+  }
+
+  void _reset() {
+    _sequence++;
+    _results = const [];
+    _nextCursor = null;
+    _activeQuery = '';
+    _error = null;
+    _loading = false;
+    _searched = false;
+  }
+
+  Future<void> _search({String? before}) async {
+    final query = (before == null ? _query.text : _activeQuery).trim();
+    if (query.isEmpty) {
+      setState(() => _error = 'Введите поисковый запрос.');
+      return;
+    }
+    if (query.runes.length > 256) {
+      setState(() => _error = 'Запрос должен содержать до 256 символов.');
+      return;
+    }
+    final current = _currentConversation();
+    if (_scope == 'current' && current == null) {
+      setState(() => _error = 'Выберите текстовый канал или личный диалог.');
+      return;
+    }
+    final sequence = ++_sequence;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final page = await state.api.searchMessages(
+        query,
+        channelId: _scope == 'current' && current?.direct == false
+            ? current!.id
+            : null,
+        directMessageId: _scope == 'current' && current?.direct == true
+            ? current!.id
+            : null,
+        before: before,
+        limit: 20,
+      );
+      if (!mounted || sequence != _sequence) return;
+      setState(() {
+        _results = before == null
+            ? page.messages
+            : [..._results, ...page.messages];
+        _nextCursor = page.nextCursor;
+        _activeQuery = query;
+        _searched = true;
+      });
+    } catch (cause) {
+      if (mounted && sequence == _sequence) {
+        setState(() {
+          _error = cause is ApiFailure
+              ? cause.message
+              : 'Не удалось выполнить поиск сообщений.';
+        });
+      }
+    } finally {
+      if (mounted && sequence == _sequence) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  String _conversationLabel(SearchMessage message) {
+    if (message.kind == SearchMessageKind.directMessage) {
+      return state.directMessages
+              .where((value) => value.id == message.conversationId)
+              .firstOrNull
+              ?.displayName ??
+          'Личный диалог';
+    }
+    final channel = state.topology?.categories
+        .expand((category) => category.channels)
+        .where((value) => value.id == message.conversationId)
+        .firstOrNull;
+    return channel == null ? 'Текстовый канал' : '# ${channel.name}';
+  }
+
+  @override
+  void dispose() {
+    _sequence++;
+    _query.removeListener(_queryChanged);
+    _query.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final current = _currentConversation();
+    if (_scope == 'current' && current == null) _scope = 'all';
+    return Column(
+      children: [
+        _Header(
+          icon: Icons.search,
+          title: 'Поиск сообщений',
+          subtitle: 'По общим каналам и личным диалогам, доступным аккаунту',
+          trailing: IconButton(
+            tooltip: 'Закрыть поиск',
+            onPressed: state.closeSearchPanel,
+            icon: const Icon(Icons.close),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 720;
+              final queryField = TextField(
+                controller: _query,
+                autofocus: true,
+                enabled: !_loading,
+                maxLength: 256,
+                buildCounter: (
+                  _, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => null,
+                onSubmitted: (_) => _search(),
+                decoration: InputDecoration(
+                  hintText: 'Слова или «точная фраза»',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: IconButton(
+                    tooltip: 'Очистить запрос',
+                    onPressed: _query.clear,
+                    icon: const Icon(Icons.close),
+                  ),
+                ),
+              );
+              final scopeField = DropdownButtonFormField<String>(
+                initialValue: _scope,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Область поиска'),
+                items: [
+                  const DropdownMenuItem(
+                    value: 'all',
+                    child: Text('Все беседы'),
+                  ),
+                  if (current != null)
+                    DropdownMenuItem(
+                      value: 'current',
+                      child: Text(
+                        'Текущая беседа: ${current.label}',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+                onChanged: _loading
+                    ? null
+                    : (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _scope = value;
+                          _reset();
+                        });
+                      },
+              );
+              final searchButton = FilledButton.icon(
+                onPressed: _loading ? null : () => _search(),
+                icon: _loading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.search),
+                label: Text(_loading ? 'Ищем…' : 'Найти'),
+              );
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    queryField,
+                    const SizedBox(height: 8),
+                    scopeField,
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: searchButton,
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(flex: 2, child: queryField),
+                  const SizedBox(width: 12),
+                  Expanded(child: scopeField),
+                  const SizedBox(width: 10),
+                  searchButton,
+                ],
+              );
+            },
+          ),
+        ),
+        if (_error case final error?)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                error,
+                style: const TextStyle(color: GcColors.danger),
+              ),
+            ),
+          ),
+        if (_nextCursor != null && !_canLoadMore)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Измените запрос или запустите поиск заново.',
+                style: TextStyle(color: GcColors.muted, fontSize: 12),
+              ),
+            ),
+          ),
+        Expanded(
+          child: _results.isEmpty
+              ? Center(
+                  child: Text(
+                    _searched
+                        ? 'Совпадений нет.'
+                        : 'Введите запрос и нажмите «Найти».',
+                    style: const TextStyle(color: GcColors.muted),
+                  ),
+                )
+              : ListView.separated(
+                  controller: _scroll,
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                  itemCount: _results.length + (_nextCursor == null ? 0 : 1),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    if (index == _results.length) {
+                      return Center(
+                        child: TextButton(
+                          onPressed: !_canLoadMore
+                              ? null
+                              : () => _search(before: _nextCursor),
+                          child: const Text('Показать ещё'),
+                        ),
+                      );
+                    }
+                    final message = _results[index];
+                    final author =
+                        state.members
+                            .where((member) => member.id == message.authorId)
+                            .firstOrNull
+                            ?.displayName ??
+                        message.authorId;
+                    return Card(
+                      color: GcColors.surface,
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _conversationLabel(message),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${_searchDateTime(message.createdAt)} · $author',
+                                  style: const TextStyle(
+                                    color: GcColors.muted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            FormattedMessageBody(
+                              body: message.body,
+                              color: GcColors.text,
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                onPressed: () =>
+                                    state.openSearchContext(message),
+                                icon: const Icon(Icons.open_in_new, size: 17),
+                                label: const Text('Открыть сообщение'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SearchMessageContext extends StatefulWidget {
+  const _SearchMessageContext({required this.state});
+  final AppState state;
+
+  @override
+  State<_SearchMessageContext> createState() => _SearchMessageContextState();
+}
+
+class _SearchMessageContextState extends State<_SearchMessageContext> {
+  final _targetKey = GlobalKey();
+  String? _lastTargetId;
+
+  @override
+  Widget build(BuildContext context) {
+    final target = widget.state.searchContextMessage;
+    final isDirect = target?.kind == SearchMessageKind.directMessage;
+    final List<_SearchContextMessage> messages = isDirect
+        ? widget.state.searchContextDirectMessages
+              .map(
+                (message) => _SearchContextMessage(
+                  id: message.id,
+                  authorId: message.authorId,
+                  body: message.body,
+                  createdAt: message.createdAt,
+                  editedAt: message.editedAt,
+                  deleted: message.deleted,
+                  attachments: message.attachments,
+                ),
+              )
+              .toList(growable: false)
+        : widget.state.searchContextTextMessages
+              .map(
+                (message) => _SearchContextMessage(
+                  id: message.id,
+                  authorId: message.authorId,
+                  body: message.body,
+                  createdAt: message.createdAt,
+                  editedAt: message.editedAt,
+                  deleted: message.deleted,
+                  attachments: message.attachments,
+                ),
+              )
+              .toList(growable: false);
+    if (target != null && target.id != _lastTargetId) {
+      _lastTargetId = target.id;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final targetContext = _targetKey.currentContext;
+        if (targetContext != null) {
+          Scrollable.ensureVisible(
+            targetContext,
+            alignment: .35,
+            duration: const Duration(milliseconds: 250),
+          );
+        }
+      });
+    }
+    return Column(
+      children: [
+        _Header(
+          icon: Icons.manage_search,
+          title: 'Контекст найденного сообщения',
+          subtitle: target == null
+              ? ''
+              : isDirect
+              ? widget.state.selectedDirectMessage?.displayName ??
+                    'Личный диалог'
+              : '# ${widget.state.selectedChannel?.name ?? 'Текстовый канал'}',
+          trailing: TextButton.icon(
+            onPressed: widget.state.returnFromSearchContext,
+            icon: const Icon(Icons.arrow_back, size: 18),
+            label: const Text('Вернуться к беседе'),
+          ),
+        ),
+        if (widget.state.searchContextError case final error?)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(error, style: const TextStyle(color: GcColors.danger)),
+                  const SizedBox(height: 8),
+                  if (target != null)
+                    TextButton(
+                      onPressed: () => widget.state.openSearchContext(target),
+                      child: const Text('Повторить'),
+                    ),
+                ],
+              ),
+            ),
+          )
+        else if (widget.state.loadingSearchContext)
+          const Expanded(child: Center(child: CircularProgressIndicator()))
+        else
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+              itemCount: messages.length,
+              separatorBuilder: (_, index) {
+                final before = messages[index];
+                final after = messages[index + 1];
+                return SizedBox(
+                  height: before.authorId == after.authorId ? 6 : 18,
+                );
+              },
+              itemBuilder: (context, index) {
+                final message = messages[index];
+                final authorId = message.authorId;
+                final authorName = _mentionDisplayName(
+                  widget.state,
+                  authorId,
+                ).substring(1);
+                final isTarget = message.id == target?.id;
+                final createdAt = message.createdAt;
+                final body = message.body;
+                final deleted = message.deleted;
+                final attachments = message.attachments;
+                final conversationId = isDirect
+                    ? widget.state.selectedDirectMessage?.id
+                    : widget.state.selectedChannel?.id;
+                return Container(
+                  key: isTarget ? _targetKey : null,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isTarget ? GcColors.selected : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    border: isTarget
+                        ? Border.all(color: GcColors.accentText)
+                        : null,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$authorName · ${_searchDateTime(createdAt)}${message.editedAt == null ? '' : ' · изменено'}',
+                        style: const TextStyle(
+                          color: GcColors.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      if (deleted)
+                        const Text(
+                          'Сообщение удалено.',
+                          style: TextStyle(
+                            color: GcColors.muted,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        )
+                      else ...[
+                        FormattedMessageBody(body: body, color: GcColors.text),
+                        if (attachments.isNotEmpty && conversationId != null)
+                          MessageAttachmentList(
+                            state: widget.state,
+                            parentPath: isDirect
+                                ? '/direct-messages/${Uri.encodeComponent(conversationId)}'
+                                : '/channels/${Uri.encodeComponent(conversationId)}',
+                            attachments: attachments,
+                          ),
+                      ],
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _DirectConversation extends StatefulWidget {
   const _DirectConversation({
     required this.state,
     required this.conversation,
-    this.onBack,
+    this.onToggleNavigation,
+    this.onOpenMembers,
   });
   final AppState state;
   final DirectConversation conversation;
-  final VoidCallback? onBack;
+  final VoidCallback? onToggleNavigation;
+  final VoidCallback? onOpenMembers;
 
   @override
   State<_DirectConversation> createState() => _DirectConversationState();
@@ -783,15 +2524,97 @@ class _DirectConversation extends StatefulWidget {
 
 class _DirectConversationState extends State<_DirectConversation> {
   final _controller = TextEditingController();
+  final _composerFocus = FocusNode();
+  final _scroll = ScrollController();
+  DirectChatMessage? _replyTarget;
+  final Set<String> _mentionUserIds = {};
+  List<MessageAttachment> _attachments = const [];
+  bool _attachmentsPending = false;
+
+  @override
+  void didUpdateWidget(covariant _DirectConversation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.conversation.id != widget.conversation.id) {
+      _replyTarget = null;
+      _mentionUserIds.clear();
+      _attachments = const [];
+      _attachmentsPending = false;
+    }
+  }
 
   @override
   void dispose() {
     _controller.dispose();
+    _composerFocus.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
+  Future<void> _loadOlderDirect() async {
+    if (!_scroll.hasClients) return;
+    final oldOffset = _scroll.position.pixels;
+    final oldExtent = _scroll.position.maxScrollExtent;
+    if (!await widget.state.loadOlderDirectMessages() || !mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      final position = _scroll.position;
+      position.jumpTo(
+        (oldOffset + position.maxScrollExtent - oldExtent).clamp(
+          position.minScrollExtent,
+          position.maxScrollExtent,
+        ),
+      );
+    });
+  }
+
   Future<void> _send() async {
-    if (await widget.state.sendDirect(_controller.text)) _controller.clear();
+    if (widget.state.sending || _attachmentsPending) return;
+    if (await widget.state.sendDirect(
+      _controller.text,
+      replyToId: _replyTarget?.id,
+      mentionUserIds: _mentionUserIds.toList(),
+      attachments: _attachments,
+    )) {
+      _controller.clear();
+      if (mounted) {
+        setState(() {
+          _replyTarget = null;
+          _mentionUserIds.clear();
+          _attachments = const [];
+        });
+      }
+    }
+  }
+
+  String _directAuthorName(String accountId) {
+    if (accountId == widget.state.user?.accountId) {
+      return widget.state.profile?.displayName ?? 'Вы';
+    }
+    if (accountId == widget.conversation.participantId) {
+      return widget.conversation.displayName;
+    }
+    return _mentionDisplayName(widget.state, accountId).substring(1);
+  }
+
+  String? _directReplyLabel(DirectChatMessage message) {
+    final preview = message.replyPreview;
+    if (preview != null) {
+      if (preview.deleted) return 'Сообщение удалено';
+      return '${_directAuthorName(preview.authorId)}: ${_messageSnippet(preview.body)}';
+    }
+    final replyToId = message.replyToId;
+    if (replyToId == null) return null;
+    final target = widget.state.directMessageHistory
+        .where((candidate) => candidate.id == replyToId)
+        .firstOrNull;
+    if (target == null) return 'Исходное сообщение недоступно';
+    if (target.deleted) return 'Сообщение удалено';
+    return '${_directAuthorName(target.authorId)}: ${_messageSnippet(target.body)}';
+  }
+
+  void _replyToDirect(DirectChatMessage message) {
+    setState(() => _replyTarget = message);
+    _composerFocus.requestFocus();
   }
 
   @override
@@ -808,7 +2631,8 @@ class _DirectConversationState extends State<_DirectConversation> {
           icon: Icons.person_outline,
           title: widget.conversation.displayName,
           subtitle: 'Личные сообщения',
-          onBack: widget.onBack,
+          onToggleNavigation: widget.onToggleNavigation,
+          onOpenMembers: widget.onOpenMembers,
           trailing: IconButton(
             tooltip: 'Обновить диалог',
             onPressed: () =>
@@ -829,13 +2653,44 @@ class _DirectConversationState extends State<_DirectConversation> {
                   ),
                 )
               : ListView.builder(
+                  controller: _scroll,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 28,
                     vertical: 24,
                   ),
-                  itemCount: widget.state.directMessageHistory.length,
+                  itemCount:
+                      widget.state.directMessageHistory.length +
+                      (widget.state.nextDirectMessageCursor == null ? 0 : 1),
                   itemBuilder: (context, index) {
-                    final message = widget.state.directMessageHistory[index];
+                    if (widget.state.nextDirectMessageCursor != null &&
+                        index == 0) {
+                      return Center(
+                        child: TextButton.icon(
+                          onPressed: widget.state.loadingOlderDirectMessages
+                              ? null
+                              : _loadOlderDirect,
+                          icon: widget.state.loadingOlderDirectMessages
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.history),
+                          label: Text(
+                            widget.state.loadingOlderDirectMessages
+                                ? 'Загружаем…'
+                                : 'Загрузить предыдущие сообщения',
+                          ),
+                        ),
+                      );
+                    }
+                    final messageIndex =
+                        index -
+                        (widget.state.nextDirectMessageCursor == null ? 0 : 1);
+                    final message =
+                        widget.state.directMessageHistory[messageIndex];
                     final own =
                         message.authorId == widget.state.user?.accountId;
                     return Row(
@@ -855,50 +2710,56 @@ class _DirectConversationState extends State<_DirectConversation> {
                             color: own ? GcColors.selected : GcColors.surface,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Text(
-                            message.deleted
-                                ? 'Сообщение удалено'
-                                : message.body,
-                            style: TextStyle(
-                              color: message.deleted
-                                  ? GcColors.muted
-                                  : GcColors.text,
-                              fontStyle: message.deleted
-                                  ? FontStyle.italic
-                                  : FontStyle.normal,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (_directReplyLabel(message) case final label?)
+                                _ReplyPreview(label: label),
+                              if (message.deleted)
+                                const Text(
+                                  'Сообщение удалено',
+                                  style: TextStyle(
+                                    color: GcColors.muted,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                )
+                              else
+                                FormattedMessageBody(
+                                  body: message.body,
+                                  color: GcColors.text,
+                                  fontSize: 14,
+                                  lineHeight: 1.4,
+                                ),
+                              if (!message.deleted &&
+                                  message.attachments.isNotEmpty)
+                                MessageAttachmentList(
+                                  state: widget.state,
+                                  parentPath:
+                                      '/direct-messages/${Uri.encodeComponent(message.directMessageId)}',
+                                  attachments: message.attachments,
+                                ),
+                              if (message.mentionUserIds.isNotEmpty &&
+                                  !message.deleted) ...[
+                                const SizedBox(height: 5),
+                                Text(
+                                  'Упомянуты: ${message.mentionUserIds.map((id) => _mentionDisplayName(widget.state, id)).join(' ')}',
+                                  style: const TextStyle(
+                                    color: GcColors.muted,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        if (own && !message.deleted)
-                          PopupMenuButton<String>(
-                            tooltip: 'Действия с сообщением',
-                            onSelected: (action) async {
-                              if (action == 'edit') {
-                                final body = await _editMessageDialog(
-                                  context,
-                                  message.body,
-                                );
-                                if (body != null) {
-                                  await widget.state.editDirect(message, body);
-                                }
-                                return;
-                              }
-                              if (action == 'delete' &&
-                                  await _confirmDelete(context)) {
-                                await widget.state.deleteDirect(message);
-                              }
-                            },
-                            itemBuilder: (_) => const [
-                              PopupMenuItem(
-                                value: 'edit',
-                                child: Text('Изменить'),
-                              ),
-                              PopupMenuItem(
-                                value: 'delete',
-                                child: Text('Удалить'),
-                              ),
-                            ],
-                            icon: const Icon(Icons.more_horiz, size: 18),
+                        if (!message.deleted)
+                          _DirectMessageActionMenu(
+                            message: message,
+                            canEdit: own,
+                            onReply: _replyToDirect,
+                            onEdit: (body) =>
+                                widget.state.editDirect(message, body),
+                            onDelete: () => widget.state.deleteDirect(message),
                           ),
                       ],
                     );
@@ -907,22 +2768,64 @@ class _DirectConversationState extends State<_DirectConversation> {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-          child: TextField(
-            controller: _controller,
-            enabled: !widget.state.sending,
-            maxLength: 8000,
-            minLines: 1,
-            maxLines: 5,
-            onSubmitted: (_) => _send(),
-            decoration: InputDecoration(
-              counterText: '',
-              hintText: 'Сообщение для ${widget.conversation.displayName}…',
-              suffixIcon: IconButton(
-                tooltip: 'Отправить личное сообщение',
-                onPressed: widget.state.sending ? null : _send,
-                icon: const Icon(Icons.send_outlined),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_replyTarget != null)
+                _ReplyTargetBanner(
+                  text:
+                      'Ответ для ${_directAuthorName(_replyTarget!.authorId)}',
+                  onCancel: () => setState(() => _replyTarget = null),
+                ),
+              _MentionPicker(
+                options: [
+                  (
+                    widget.conversation.participantId,
+                    widget.conversation.displayName,
+                  ),
+                ],
+                selfId: widget.state.user?.accountId ?? '',
+                selectedIds: _mentionUserIds,
+                onChanged: (ids) => setState(() {
+                  _mentionUserIds
+                    ..clear()
+                    ..addAll(ids);
+                }),
               ),
-            ),
+              MessageAttachmentComposer(
+                key: ValueKey('attachments:${widget.conversation.id}'),
+                state: widget.state,
+                attachments: _attachments,
+                directMessageId: widget.conversation.id,
+                onChanged: (attachments) => setState(() {
+                  _attachments = attachments;
+                }),
+                onPending: (pending) => setState(() {
+                  _attachmentsPending = pending;
+                }),
+              ),
+              TextField(
+                focusNode: _composerFocus,
+                controller: _controller,
+                enabled: !widget.state.sending,
+                maxLength: 8000,
+                minLines: 1,
+                maxLines: 5,
+                onSubmitted: (_) => _send(),
+                decoration: InputDecoration(
+                  counterText: '',
+                  hintText: 'Сообщение для ${widget.conversation.displayName}…',
+                  suffixIcon: IconButton(
+                    tooltip: 'Отправить личное сообщение',
+                    onPressed: widget.state.sending || _attachmentsPending
+                        ? null
+                        : _send,
+                    icon: const Icon(Icons.send_outlined),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -931,10 +2834,16 @@ class _DirectConversationState extends State<_DirectConversation> {
 }
 
 class _VoiceRoom extends StatefulWidget {
-  const _VoiceRoom({required this.state, required this.channel, this.onBack});
+  const _VoiceRoom({
+    required this.state,
+    required this.channel,
+    this.onToggleNavigation,
+    this.onOpenMembers,
+  });
   final AppState state;
   final GuildChannel channel;
-  final VoidCallback? onBack;
+  final VoidCallback? onToggleNavigation;
+  final VoidCallback? onOpenMembers;
 
   @override
   State<_VoiceRoom> createState() => _VoiceRoomState();
@@ -968,36 +2877,97 @@ class _VoiceRoomState extends State<_VoiceRoom> {
               (participant) => participant.identity == _selectedScreenIdentity,
             )
             .firstOrNull;
-        final selectedTrack = selectedScreen?.videoTrackPublications
+        final selectedTrack =
+            selectedScreen?.videoTrackPublications
+                    .where(
+                      (publication) =>
+                          publication.source == TrackSource.screenShareVideo,
+                    )
+                    .firstOrNull
+                    ?.track
+                as VideoTrack?;
+        final localScreenTrack =
+            state.screenSharePhase == ScreenSharePhase.sharing
+            ? room?.localParticipant
+                      ?.getTrackPublicationBySource(
+                        TrackSource.screenShareVideo,
+                      )
+                      ?.track
+                  as VideoTrack?
+            : null;
+        final selectedAudioPublication = selectedScreen?.audioTrackPublications
             .where(
               (publication) =>
-                  publication.source == TrackSource.screenShareVideo,
+                  publication.source == TrackSource.screenShareAudio,
             )
-            .firstOrNull
-            ?.track;
+            .firstOrNull;
         final participantCount = active ? participants.length + 1 : 0;
-        final selectedName = selectedScreen == null
-            ? null
-            : _participantName(selectedScreen);
+        final showingLocalScreen =
+            selectedTrack == null &&
+            localScreenTrack != null &&
+            _selectedScreenIdentity != '';
+        final viewerTrack =
+            selectedTrack ?? (showingLocalScreen ? localScreenTrack : null);
+        final selectedName = selectedScreen != null
+            ? _participantName(selectedScreen)
+            : showingLocalScreen
+            ? 'ваш экран'
+            : null;
         return Column(
           children: [
             _Header(
               icon: Icons.volume_up_outlined,
               title: channel.name,
-              onBack: widget.onBack,
+              onToggleNavigation: widget.onToggleNavigation,
+              onOpenMembers: widget.onOpenMembers,
               subtitle: selectedName != null
                   ? 'Демонстрация $selectedName'
                   : active
-                  ? 'Голосовой канал · участников: $participantCount'
+                  ? state.voicePhase == VoicePhase.reconnecting
+                        ? 'Восстанавливаем связь · состояние микрофона сохранено'
+                        : 'Голосовой канал · участников: $participantCount'
                   : channel.admissionClosed
                   ? 'Вход временно закрыт'
                   : 'Голосовой канал · подключитесь, чтобы увидеть участников',
+              trailing: active
+                  ? IconButton(
+                      tooltip:
+                          state.screenSharePhase == ScreenSharePhase.sharing
+                          ? 'Остановить демонстрацию экрана'
+                          : 'Начать демонстрацию экрана',
+                      onPressed: switch (state.screenSharePhase) {
+                        ScreenSharePhase.starting ||
+                        ScreenSharePhase.stopping => null,
+                        ScreenSharePhase.sharing => state.stopScreenShare,
+                        _ => () => _toggleLocalScreenShare(state),
+                      },
+                      icon:
+                          state.screenSharePhase == ScreenSharePhase.starting ||
+                              state.screenSharePhase ==
+                                  ScreenSharePhase.stopping
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(
+                              state.screenSharePhase == ScreenSharePhase.sharing
+                                  ? Icons.stop_screen_share_outlined
+                                  : Icons.screen_share_outlined,
+                            ),
+                    )
+                  : null,
             ),
+            if (active && state.screenShareError != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: _ErrorBanner(message: state.screenShareError!),
+              ),
             Expanded(
               child: active
-                  ? selectedTrack != null
+                  ? viewerTrack != null
                         ? _VoiceScreenViewer(
-                            track: selectedTrack,
+                            state: state,
+                            track: viewerTrack,
                             publisherName: selectedName!,
                             screens: screens,
                             selectedIdentity: _selectedScreenIdentity,
@@ -1010,8 +2980,27 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                             localSpeaking:
                                 room?.localParticipant?.isSpeaking ?? false,
                             participants: participants,
+                            screenAudioAvailable:
+                                !showingLocalScreen &&
+                                selectedAudioPublication != null,
+                            screenAudioVolume:
+                                showingLocalScreen ||
+                                    selectedAudioPublication == null ||
+                                    selectedScreen == null
+                                ? null
+                                : state.screenShareVolume(selectedScreen),
+                            deafened: state.deafened,
+                            onScreenAudioVolumeChanged:
+                                selectedScreen == null || showingLocalScreen
+                                ? null
+                                : (level) => unawaited(
+                                    state.setScreenShareVolume(
+                                      selectedScreen,
+                                      level,
+                                    ),
+                                  ),
                             onClose: () =>
-                                setState(() => _selectedScreenIdentity = null),
+                                setState(() => _selectedScreenIdentity = ''),
                             onScreenSelected: (identity) => setState(
                               () => _selectedScreenIdentity = identity,
                             ),
@@ -1032,12 +3021,37 @@ class _VoiceRoomState extends State<_VoiceRoom> {
       },
     );
   }
+
+  Future<void> _toggleLocalScreenShare(AppState state) async {
+    String? sourceId;
+    if (defaultTargetPlatform != TargetPlatform.android &&
+        defaultTargetPlatform != TargetPlatform.iOS) {
+      // ignore: experimental_member_use
+      sourceId = await ScreenSelectDialog.show(
+        context,
+        titleText: 'Выберите, чем поделиться',
+        screenTabText: 'Весь экран',
+        windowTabText: 'Окно',
+        cancelText: 'Отмена',
+        shareText: 'Поделиться',
+      );
+      if (!mounted || sourceId == null) return;
+    }
+    await state.startScreenShare(sourceId: sourceId);
+  }
 }
 
 String _participantName(RemoteParticipant participant) =>
     participant.name.trim().isNotEmpty
     ? participant.name
     : participant.identity;
+
+GuildMember? _participantMember(AppState state, RemoteParticipant participant) {
+  final metadata = participant.metadata;
+  if (metadata == null || !metadata.startsWith('account:')) return null;
+  final accountId = metadata.substring('account:'.length);
+  return state.members.where((member) => member.id == accountId).firstOrNull;
+}
 
 bool _participantMuted(RemoteParticipant participant) {
   final publications = participant.audioTrackPublications;
@@ -1133,6 +3147,19 @@ class _VoicePrejoinCard extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 24),
+                if (state.transferRequired) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: state.voicePhase == VoicePhase.joining
+                          ? null
+                          : () => state.joinVoice(channel, transfer: true),
+                      icon: const Icon(Icons.move_up_outlined),
+                      label: const Text('Перенести подключение'),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
@@ -1140,29 +3167,33 @@ class _VoicePrejoinCard extends StatelessWidget {
                         channel.admissionClosed ||
                             state.voicePhase == VoicePhase.joining
                         ? null
-                        : () => state.joinVoice(
-                            channel,
-                            transfer: state.transferRequired,
-                          ),
+                        : () => state.joinVoice(channel),
                     icon: state.voicePhase == VoicePhase.joining
                         ? const SizedBox.square(
                             dimension: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Icon(
-                            state.transferRequired
-                                ? Icons.move_up_outlined
-                                : Icons.login,
-                          ),
+                        : const Icon(Icons.login),
                     label: Text(
                       channel.admissionClosed
                           ? 'Вход временно закрыт'
                           : state.voicePhase == VoicePhase.joining
-                          ? 'Подключение…'
-                          : state.transferRequired
-                          ? 'Перенести подключение сюда'
-                          : 'Подключиться',
+                          ? 'Подключаемся…'
+                          : 'Подключиться к голосу',
                     ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed:
+                        channel.admissionClosed ||
+                            state.voicePhase == VoicePhase.joining
+                        ? null
+                        : () => state.joinVoice(channel, listenerOnly: true),
+                    icon: const Icon(Icons.headset_outlined),
+                    label: const Text('Подключиться без микрофона'),
                   ),
                 ),
               ],
@@ -1187,7 +3218,7 @@ class _VoiceParticipantRoom extends StatelessWidget {
   final Room? room;
   final List<RemoteParticipant> participants;
   final List<RemoteParticipant> screens;
-  final ValueChanged<String> onScreenSelected;
+  final ValueChanged<String?> onScreenSelected;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -1203,17 +3234,21 @@ class _VoiceParticipantRoom extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Все в сборе',
-                      style: TextStyle(
+                    Text(
+                      state.voicePhase == VoicePhase.reconnecting
+                          ? 'Восстанавливаем связь'
+                          : 'Все в сборе',
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${participants.length + 1} ${_peopleWord(participants.length + 1)} в комнате'
-                      '${screens.isEmpty ? '' : ' · демонстраций: ${screens.length}'}',
+                      state.voicePhase == VoicePhase.reconnecting
+                          ? 'Состояние микрофона сохранено.'
+                          : '${participants.length + 1} ${_peopleWord(participants.length + 1)} в комнате'
+                                '${screens.isEmpty ? '' : ' · демонстраций: ${screens.length}'}',
                       style: const TextStyle(color: GcColors.textSecondary),
                     ),
                   ],
@@ -1261,23 +3296,45 @@ class _VoiceParticipantRoom extends StatelessWidget {
                 : 4,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: constraints.maxWidth < 460 ? 2.25 : 1.45,
+            childAspectRatio:
+                screens.isNotEmpty ||
+                    state.screenSharePhase == ScreenSharePhase.sharing
+                ? constraints.maxWidth < 460
+                      ? 1.65
+                      : 1.2
+                : constraints.maxWidth < 460
+                ? 2.25
+                : 1.45,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: [
               _VoiceParticipantCard(
+                state: state,
                 name: state.profile?.displayName.trim().isNotEmpty == true
                     ? state.profile!.displayName
                     : 'Вы',
+                avatarUrl: state.profile?.avatarUrl,
                 muted: state.microphoneMuted,
                 speaking: room?.localParticipant?.isSpeaking ?? false,
                 isLocal: true,
+                hasScreen: state.screenSharePhase == ScreenSharePhase.sharing,
+                onScreenTap: state.screenSharePhase == ScreenSharePhase.sharing
+                    ? () => onScreenSelected(null)
+                    : null,
               ),
               for (final participant in participants)
                 _VoiceParticipantCard(
+                  state: state,
                   name: _participantName(participant),
+                  avatarUrl: _participantMember(state, participant)?.avatarUrl,
                   muted: _participantMuted(participant),
                   speaking: participant.isSpeaking,
+                  volume: state.participantVolume(participant),
+                  onVolumeChanged: state.participantVolume(participant) == null
+                      ? null
+                      : (level) => unawaited(
+                          state.setParticipantVolume(participant, level),
+                        ),
                   hasScreen: screens.contains(participant),
                   onScreenTap: screens.contains(participant)
                       ? () => onScreenSelected(participant.identity)
@@ -1302,6 +3359,7 @@ String _peopleWord(int value) {
 
 class _VoiceScreenViewer extends StatelessWidget {
   const _VoiceScreenViewer({
+    required this.state,
     required this.track,
     required this.publisherName,
     required this.screens,
@@ -1310,10 +3368,15 @@ class _VoiceScreenViewer extends StatelessWidget {
     required this.localMuted,
     required this.localSpeaking,
     required this.participants,
+    required this.screenAudioAvailable,
+    required this.screenAudioVolume,
+    required this.deafened,
+    required this.onScreenAudioVolumeChanged,
     required this.onClose,
     required this.onScreenSelected,
   });
 
+  final AppState state;
   final VideoTrack track;
   final String publisherName;
   final List<RemoteParticipant> screens;
@@ -1322,6 +3385,10 @@ class _VoiceScreenViewer extends StatelessWidget {
   final bool localMuted;
   final bool localSpeaking;
   final List<RemoteParticipant> participants;
+  final bool screenAudioAvailable;
+  final int? screenAudioVolume;
+  final bool deafened;
+  final ValueChanged<int>? onScreenAudioVolumeChanged;
   final VoidCallback onClose;
   final ValueChanged<String> onScreenSelected;
 
@@ -1401,8 +3468,62 @@ class _VoiceScreenViewer extends StatelessWidget {
           ),
         ),
       ),
+      if (!screenAudioAvailable)
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'У демонстрации нет аудиодорожки.',
+              style: TextStyle(color: GcColors.muted, fontSize: 12),
+            ),
+          ),
+        )
+      else if (screenAudioVolume == null)
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Аудиодорожка есть; личная настройка громкости недоступна.',
+              style: TextStyle(color: GcColors.muted, fontSize: 12),
+            ),
+          ),
+        )
+      else
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 220,
+                child: Text(
+                  deafened
+                      ? 'Удалённый звук выключен.'
+                      : 'Громкость аудиодорожки · $screenAudioVolume%',
+                  style: const TextStyle(color: GcColors.textSecondary),
+                ),
+              ),
+              Expanded(
+                child: Slider(
+                  value: screenAudioVolume!.toDouble(),
+                  min: 0,
+                  max: 200,
+                  divisions: 200,
+                  semanticFormatterCallback: (value) =>
+                      '${value.round()} процентов',
+                  onChanged: deafened
+                      ? null
+                      : (value) => onScreenAudioVolumeChanged!(value.round()),
+                ),
+              ),
+            ],
+          ),
+        ),
       _VoiceParticipantStrip(
+        state: state,
         localName: localName,
+        localAvatarUrl: state.profile?.avatarUrl,
         localMuted: localMuted,
         localSpeaking: localSpeaking,
         participants: participants,
@@ -1439,13 +3560,17 @@ class _ViewerLabel extends StatelessWidget {
 
 class _VoiceParticipantStrip extends StatelessWidget {
   const _VoiceParticipantStrip({
+    required this.state,
     required this.localName,
+    required this.localAvatarUrl,
     required this.localMuted,
     required this.localSpeaking,
     required this.participants,
   });
 
+  final AppState state;
   final String localName;
+  final String? localAvatarUrl;
   final bool localMuted;
   final bool localSpeaking;
   final List<RemoteParticipant> participants;
@@ -1483,13 +3608,17 @@ class _VoiceParticipantStrip extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             children: [
               _VoiceStripPerson(
+                state: state,
                 name: localName,
+                avatarUrl: localAvatarUrl,
                 muted: localMuted,
                 speaking: localSpeaking,
               ),
               for (final participant in participants)
                 _VoiceStripPerson(
+                  state: state,
                   name: _participantName(participant),
+                  avatarUrl: _participantMember(state, participant)?.avatarUrl,
                   muted: _participantMuted(participant),
                   speaking: participant.isSpeaking,
                 ),
@@ -1503,12 +3632,16 @@ class _VoiceParticipantStrip extends StatelessWidget {
 
 class _VoiceStripPerson extends StatelessWidget {
   const _VoiceStripPerson({
+    required this.state,
     required this.name,
+    required this.avatarUrl,
     required this.muted,
     required this.speaking,
   });
 
+  final AppState state;
   final String name;
+  final String? avatarUrl;
   final bool muted;
   final bool speaking;
 
@@ -1524,7 +3657,14 @@ class _VoiceStripPerson extends StatelessWidget {
     ),
     child: Row(
       children: [
-        _VoiceAvatar(name: name, size: 30, speaking: speaking),
+        AuthenticatedAvatar(
+          state: state,
+          name: name,
+          avatarUrl: avatarUrl,
+          radius: 15,
+          borderColor: speaking ? GcColors.success : null,
+          borderWidth: speaking ? 2 : 0,
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -1546,16 +3686,24 @@ class _VoiceStripPerson extends StatelessWidget {
 
 class _VoiceParticipantCard extends StatelessWidget {
   const _VoiceParticipantCard({
+    required this.state,
     required this.name,
+    required this.avatarUrl,
     required this.muted,
     required this.speaking,
+    this.volume,
+    this.onVolumeChanged,
     this.hasScreen = false,
     this.isLocal = false,
     this.onScreenTap,
   });
+  final AppState state;
   final String name;
+  final String? avatarUrl;
   final bool muted;
   final bool speaking;
+  final int? volume;
+  final ValueChanged<int>? onVolumeChanged;
   final bool hasScreen;
   final bool isLocal;
   final VoidCallback? onScreenTap;
@@ -1571,53 +3719,78 @@ class _VoiceParticipantCard extends StatelessWidget {
         width: speaking ? 2 : 1,
       ),
     ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    child: Stack(
       children: [
-        _VoiceAvatar(name: name, size: 62, speaking: speaking),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Flexible(
-              child: Text(
-                isLocal ? '$name (вы)' : name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+        Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AuthenticatedAvatar(
+                state: state,
+                name: name,
+                avatarUrl: avatarUrl,
+                radius: 31,
+                borderColor: speaking
+                    ? GcColors.success
+                    : const Color(0x44365ACA),
+                borderWidth: speaking ? 3 : 1,
               ),
-            ),
-            const SizedBox(width: 7),
-            Icon(
-              muted ? Icons.mic_off : Icons.mic,
-              size: 16,
-              color: muted ? GcColors.danger : GcColors.textSecondary,
-            ),
-          ],
-        ),
-        const SizedBox(height: 5),
-        Text(
-          speaking
-              ? 'Говорит'
-              : muted
-              ? 'Микрофон выключен'
-              : 'Микрофон включён',
-          style: TextStyle(
-            color: speaking ? GcColors.success : GcColors.muted,
-            fontSize: 12,
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      isLocal ? '$name (вы)' : name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  Icon(
+                    muted ? Icons.mic_off : Icons.mic,
+                    size: 16,
+                    color: muted ? GcColors.danger : GcColors.textSecondary,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Text(
+                speaking
+                    ? 'Говорит'
+                    : muted
+                    ? 'Микрофон выключен'
+                    : 'Микрофон включён',
+                style: TextStyle(
+                  color: speaking ? GcColors.success : GcColors.muted,
+                  fontSize: 12,
+                ),
+              ),
+              if (hasScreen)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: OutlinedButton.icon(
+                    onPressed: onScreenTap,
+                    icon: const Icon(Icons.monitor_outlined, size: 16),
+                    label: const Text('Смотреть'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: GcColors.accentText,
+                      minimumSize: const Size(0, 34),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
-        if (hasScreen)
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: OutlinedButton.icon(
-              onPressed: onScreenTap,
-              icon: const Icon(Icons.monitor_outlined, size: 16),
-              label: const Text('Смотреть'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: GcColors.accentText,
-                minimumSize: const Size(0, 34),
-              ),
+        if (volume != null && onVolumeChanged != null)
+          Positioned(
+            top: -12,
+            right: -12,
+            child: _VoiceVolumeMenu(
+              name: name,
+              volume: volume!,
+              onChanged: onVolumeChanged!,
             ),
           ),
       ],
@@ -1625,57 +3798,305 @@ class _VoiceParticipantCard extends StatelessWidget {
   );
 }
 
-class _VoiceAvatar extends StatelessWidget {
-  const _VoiceAvatar({
+class _VoiceVolumeMenu extends StatefulWidget {
+  const _VoiceVolumeMenu({
     required this.name,
-    required this.size,
-    required this.speaking,
+    required this.volume,
+    required this.onChanged,
   });
 
   final String name;
-  final double size;
-  final bool speaking;
+  final int volume;
+  final ValueChanged<int> onChanged;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: const Color(0xFF365ACA),
-      border: Border.all(
-        color: speaking ? GcColors.success : const Color(0x44365ACA),
-        width: speaking ? 3 : 1,
+  State<_VoiceVolumeMenu> createState() => _VoiceVolumeMenuState();
+}
+
+class _VoiceVolumeMenuState extends State<_VoiceVolumeMenu> {
+  late int _volume = widget.volume;
+
+  @override
+  void didUpdateWidget(covariant _VoiceVolumeMenu oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.volume != widget.volume) _volume = widget.volume;
+  }
+
+  @override
+  Widget build(BuildContext context) => MenuAnchor(
+    menuChildren: [
+      SizedBox(
+        width: 240,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Громкость · $_volume%'),
+              Slider(
+                value: _volume.toDouble(),
+                min: 0,
+                max: 200,
+                divisions: 200,
+                semanticFormatterCallback: (value) =>
+                    '${value.round()} процентов',
+                onChanged: (value) {
+                  setState(() => _volume = value.round());
+                  widget.onChanged(_volume);
+                },
+              ),
+            ],
+          ),
+        ),
       ),
-      boxShadow: speaking
-          ? const [BoxShadow(color: Color(0x5558D5A2), blurRadius: 14)]
-          : null,
-    ),
-    alignment: Alignment.center,
-    child: Text(
-      name.characters.first.toUpperCase(),
-      style: TextStyle(
-        fontSize: size * .36,
-        fontWeight: FontWeight.w700,
-        color: Colors.white,
-      ),
+    ],
+    builder: (context, controller, child) => IconButton(
+      tooltip: 'Настройки громкости ${widget.name}',
+      onPressed: controller.isOpen ? controller.close : controller.open,
+      icon: const Icon(Icons.more_horiz, size: 20),
     ),
   );
 }
 
 class _StatusDot extends StatelessWidget {
-  const _StatusDot();
+  const _StatusDot({this.color = GcColors.success});
+  final Color color;
 
   @override
   Widget build(BuildContext context) => Container(
     width: 7,
     height: 7,
-    decoration: const BoxDecoration(
-      color: GcColors.success,
+    decoration: BoxDecoration(
+      color: color,
       shape: BoxShape.circle,
-      boxShadow: [BoxShadow(color: Color(0x8858D5A2), blurRadius: 7)],
+      boxShadow: [
+        BoxShadow(color: color.withValues(alpha: 0.55), blurRadius: 7),
+      ],
     ),
   );
+}
+
+class _AudioSettingsScreen extends StatelessWidget {
+  const _AudioSettingsScreen({
+    required this.state,
+    required this.onCapturePttKey,
+    required this.capturingPttKey,
+  });
+  final AppState state;
+  final VoidCallback? onCapturePttKey;
+  final bool capturingPttKey;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      _Header(
+        icon: Icons.tune,
+        title: 'Настройки аудио',
+        subtitle: 'Устройства и обработка микрофона',
+        trailing: IconButton(
+          tooltip: 'Обновить список устройств',
+          onPressed: state.audioDevicesLoading
+              ? null
+              : state.refreshAudioDevices,
+          icon: state.audioDevicesLoading
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.refresh),
+        ),
+      ),
+      Expanded(
+        child: AnimatedBuilder(
+          animation: state,
+          builder: (context, _) => ListView(
+            padding: const EdgeInsets.all(24),
+            children: [
+              _AudioDeviceDropdown(
+                label: 'Микрофон',
+                icon: Icons.mic_none,
+                devices: state.audioInputDevices,
+                selectedId: state.selectedAudioInputId,
+                emptyLabel: 'Микрофоны не найдены',
+                onChanged: state.selectAudioInput,
+              ),
+              const SizedBox(height: 16),
+              _AudioDeviceDropdown(
+                label: 'Динамик',
+                icon: Icons.volume_up_outlined,
+                devices: state.audioOutputDevices,
+                selectedId: state.selectedAudioOutputId,
+                emptyLabel: 'Динамики не найдены',
+                onChanged: state.selectAudioOutput,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Активация микрофона',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<AudioActivationMode>(
+                initialValue: state.audioActivationMode,
+                decoration: const InputDecoration(
+                  labelText: 'Режим',
+                  border: OutlineInputBorder(),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: AudioActivationMode.vad,
+                    child: Text('Голосовая активность'),
+                  ),
+                  DropdownMenuItem(
+                    value: AudioActivationMode.ptt,
+                    child: Text('Push-to-talk'),
+                  ),
+                ],
+                onChanged: (mode) {
+                  if (mode != null) {
+                    unawaited(state.setAudioActivationMode(mode));
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: onCapturePttKey,
+                icon: Icon(
+                  capturingPttKey
+                      ? Icons.keyboard
+                      : Icons.keyboard_alt_outlined,
+                ),
+                label: Text(
+                  capturingPttKey
+                      ? 'Нажмите клавишу… · Esc — отмена'
+                      : state.pushToTalkKeyLabel == null
+                      ? 'Назначить PTT-клавишу'
+                      : 'Клавиша PTT · ${state.pushToTalkKeyLabel}',
+                ),
+              ),
+              if (state.audioActivationMode == AudioActivationMode.ptt)
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Удерживайте назначенную клавишу, чтобы говорить. При потере фокуса микрофон выключается.',
+                    style: TextStyle(color: GcColors.muted, fontSize: 12),
+                  ),
+                ),
+              if (state.audioActivationError != null) ...[
+                const SizedBox(height: 8),
+                _ErrorBanner(message: state.audioActivationError!),
+              ],
+              const SizedBox(height: 24),
+              Text(
+                'Обработка микрофона',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Параметры передаются LiveKit. Нативный SDK не сообщает, '
+                'какие эффекты фактически применены устройством.',
+                style: TextStyle(color: GcColors.muted, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Автоматическая регулировка усиления'),
+                value: state.audioProcessing.autoGainControl,
+                onChanged: (value) => state.setAudioProcessing(
+                  state.audioProcessing.copyWith(autoGainControl: value),
+                ),
+              ),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Подавление эха'),
+                value: state.audioProcessing.echoCancellation,
+                onChanged: (value) => state.setAudioProcessing(
+                  state.audioProcessing.copyWith(echoCancellation: value),
+                ),
+              ),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Подавление шума'),
+                value: state.audioProcessing.noiseSuppression,
+                onChanged: (value) => state.setAudioProcessing(
+                  state.audioProcessing.copyWith(noiseSuppression: value),
+                ),
+              ),
+              if (state.audioSettingsError != null) ...[
+                const SizedBox(height: 12),
+                _ErrorBanner(message: state.audioSettingsError!),
+              ],
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+class _AudioDeviceDropdown extends StatelessWidget {
+  const _AudioDeviceDropdown({
+    required this.label,
+    required this.icon,
+    required this.devices,
+    required this.selectedId,
+    required this.emptyLabel,
+    required this.onChanged,
+  });
+
+  final String label;
+  final IconData icon;
+  final List<MediaDevice> devices;
+  final String? selectedId;
+  final String emptyLabel;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = devices.any((device) => device.deviceId == selectedId)
+        ? selectedId!
+        : devices.isEmpty
+        ? '__none__'
+        : devices.first.deviceId;
+    return InputDecorator(
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          value: selected,
+          items: [
+            if (devices.isEmpty)
+              DropdownMenuItem(
+                value: '__none__',
+                enabled: false,
+                child: Text(emptyLabel),
+              ),
+            for (var index = 0; index < devices.length; index++)
+              DropdownMenuItem(
+                value: devices[index].deviceId,
+                child: Text(
+                  devices[index].deviceId == 'default'
+                      ? 'Системный выбор · $label'
+                      : devices[index].label.trim().isEmpty
+                      ? '$label ${index + 1}'
+                      : devices[index].label,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+          onChanged: devices.isEmpty
+              ? null
+              : (value) {
+                  if (value != null) onChanged(value);
+                },
+        ),
+      ),
+    );
+  }
 }
 
 class _VoiceDock extends StatelessWidget {
@@ -1693,16 +4114,24 @@ class _VoiceDock extends StatelessWidget {
       children: [
         Row(
           children: [
-            const _StatusDot(),
+            _StatusDot(
+              color: state.voicePhase == VoicePhase.reconnecting
+                  ? GcColors.warning
+                  : GcColors.success,
+            ),
             const SizedBox(width: 9),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'В голосовом канале',
+                  Text(
+                    state.voicePhase == VoicePhase.reconnecting
+                        ? 'Восстанавливаем голосовое соединение'
+                        : 'В голосовом канале',
                     style: TextStyle(
-                      color: GcColors.success,
+                      color: state.voicePhase == VoicePhase.reconnecting
+                          ? GcColors.warning
+                          : GcColors.success,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -1726,17 +4155,23 @@ class _VoiceDock extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _VoiceDockButton(
-              tooltip: state.microphoneMuted
+              tooltip: state.audioActivationMode == AudioActivationMode.ptt
+                  ? 'Микрофон управляется push-to-talk'
+                  : state.microphoneMuted
                   ? 'Включить микрофон'
                   : 'Выключить микрофон',
               icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
               danger: state.microphoneMuted,
+              enabled:
+                  state.voicePhase != VoicePhase.reconnecting &&
+                  state.audioActivationMode != AudioActivationMode.ptt,
               onTap: state.toggleMicrophone,
             ),
             _VoiceDockButton(
               tooltip: state.deafened ? 'Включить звук' : 'Заглушить звук',
               icon: state.deafened ? Icons.headset_off : Icons.headphones,
               danger: state.deafened,
+              enabled: state.voicePhase != VoicePhase.reconnecting,
               onTap: state.toggleDeafen,
             ),
             _VoiceDockButton(
@@ -1758,11 +4193,13 @@ class _VoiceDockButton extends StatelessWidget {
     required this.tooltip,
     required this.danger,
     required this.onTap,
+    this.enabled = true,
   });
   final IconData icon;
   final String tooltip;
   final bool danger;
   final VoidCallback onTap;
+  final bool enabled;
   @override
   Widget build(BuildContext context) => Tooltip(
     message: tooltip,
@@ -1770,7 +4207,7 @@ class _VoiceDockButton extends StatelessWidget {
       color: danger ? const Color(0x33422830) : GcColors.raised,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(10),
         child: SizedBox.square(
           dimension: 42,
@@ -1786,8 +4223,9 @@ class _VoiceDockButton extends StatelessWidget {
 }
 
 class _UserFooter extends StatelessWidget {
-  const _UserFooter({required this.state});
+  const _UserFooter({required this.state, this.onNavigate});
   final AppState state;
+  final VoidCallback? onNavigate;
   @override
   Widget build(BuildContext context) => SizedBox(
     height: 68,
@@ -1797,17 +4235,18 @@ class _UserFooter extends StatelessWidget {
         children: [
           Expanded(
             child: InkWell(
-              onTap: () => state.toggleWorkspacePanel(WorkspacePanel.profile),
+              onTap: () {
+                state.toggleWorkspacePanel(WorkspacePanel.profile);
+                onNavigate?.call();
+              },
               borderRadius: BorderRadius.circular(6),
               child: Row(
                 children: [
-                  CircleAvatar(
+                  AuthenticatedAvatar(
+                    state: state,
+                    name: state.profile?.displayName ?? 'Вы',
+                    avatarUrl: state.profile?.avatarUrl,
                     radius: 18,
-                    backgroundColor: const Color(0xFF365ACA),
-                    child: Text(
-                      (state.profile?.displayName ?? 'В').characters.first
-                          .toUpperCase(),
-                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -1843,9 +4282,39 @@ class _UserFooter extends StatelessWidget {
               if (value == 'logout') state.logout();
               if (value == 'profile') {
                 state.toggleWorkspacePanel(WorkspacePanel.profile);
+                onNavigate?.call();
+              }
+              if (value == 'audio') {
+                state.toggleWorkspacePanel(WorkspacePanel.audio);
+                onNavigate?.call();
+              }
+              if (value == 'admin') {
+                state.toggleWorkspacePanel(WorkspacePanel.admin);
+                onNavigate?.call();
               }
             },
-            itemBuilder: (_) => const [
+            itemBuilder: (_) => [
+              if (state.user?.isAdmin == true)
+                const PopupMenuItem(
+                  value: 'admin',
+                  child: Row(
+                    children: [
+                      Icon(Icons.admin_panel_settings_outlined, size: 18),
+                      SizedBox(width: 10),
+                      Text('Администрирование'),
+                    ],
+                  ),
+                ),
+              PopupMenuItem(
+                value: 'audio',
+                child: Row(
+                  children: [
+                    Icon(Icons.tune, size: 18),
+                    SizedBox(width: 10),
+                    Text('Настройки аудио'),
+                  ],
+                ),
+              ),
               PopupMenuItem(
                 value: 'profile',
                 child: Row(
@@ -1876,8 +4345,9 @@ class _UserFooter extends StatelessWidget {
 }
 
 class _MembersPanel extends StatelessWidget {
-  const _MembersPanel({required this.state});
+  const _MembersPanel({required this.state, this.onClose});
   final AppState state;
+  final VoidCallback? onClose;
   @override
   Widget build(BuildContext context) => ColoredBox(
     color: GcColors.sidebar,
@@ -1887,14 +4357,26 @@ class _MembersPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 10),
-          const Text(
-            'УЧАСТНИКИ',
-            style: TextStyle(
-              color: GcColors.muted,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: .7,
-            ),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'УЧАСТНИКИ',
+                  style: TextStyle(
+                    color: GcColors.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: .7,
+                  ),
+                ),
+              ),
+              if (onClose != null)
+                IconButton(
+                  tooltip: 'Закрыть участников',
+                  onPressed: onClose,
+                  icon: const Icon(Icons.close),
+                ),
+            ],
           ),
           const SizedBox(height: 14),
           Expanded(
@@ -1912,44 +4394,48 @@ class _MembersPanel extends StatelessWidget {
                       GcColors.warning,
                     ),
                   };
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    onTap: () => _showMemberDialog(context, state, member),
-                    leading: Stack(
-                      children: [
-                        CircleAvatar(
-                          child: Text(
-                            member.displayName.characters.first.toUpperCase(),
+                  return Material(
+                    color: GcColors.sidebar,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      onTap: () => _showMemberDialog(context, state, member),
+                      leading: Stack(
+                        children: [
+                          AuthenticatedAvatar(
+                            state: state,
+                            name: member.displayName,
+                            avatarUrl: member.avatarUrl,
+                            radius: 20,
                           ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            width: 11,
-                            height: 11,
-                            decoration: BoxDecoration(
-                              color: presence.$2,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: GcColors.sidebar,
-                                width: 2,
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              width: 11,
+                              height: 11,
+                              decoration: BoxDecoration(
+                                color: presence.$2,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: GcColors.sidebar,
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                      title: Text(
+                        member.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        presence.$1,
+                        style: const TextStyle(
+                          color: GcColors.muted,
+                          fontSize: 11,
                         ),
-                      ],
-                    ),
-                    title: Text(
-                      member.displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Text(
-                      presence.$1,
-                      style: const TextStyle(
-                        color: GcColors.muted,
-                        fontSize: 11,
                       ),
                     ),
                   );
@@ -1968,50 +4454,83 @@ Future<void> _showMemberDialog(
   AppState state,
   GuildMember member,
 ) async {
+  final voiceParticipant = state.voiceParticipantForAccount(member.id);
+  var volume = voiceParticipant == null
+      ? 100
+      : state.participantVolume(voiceParticipant) ?? 100;
   await showDialog<void>(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Row(
-        children: [
-          CircleAvatar(
-            radius: 28,
-            child: Text(member.displayName.characters.first.toUpperCase()),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(member.displayName),
-                Text(
-                  member.login,
-                  style: const TextStyle(color: GcColors.muted, fontSize: 13),
-                ),
-              ],
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (dialogContext, updateDialog) => AlertDialog(
+        title: Row(
+          children: [
+            AuthenticatedAvatar(
+              state: state,
+              name: member.displayName,
+              avatarUrl: member.avatarUrl,
+              radius: 28,
             ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(member.displayName),
+                  Text(
+                    member.login,
+                    style: const TextStyle(color: GcColors.muted, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(member.role == 'ADMINISTRATOR' ? 'Администратор' : 'Участник'),
+            if (voiceParticipant != null) ...[
+              const SizedBox(height: 18),
+              Text('Громкость участника · $volume%'),
+              Slider(
+                value: volume.toDouble(),
+                min: 0,
+                max: 200,
+                divisions: 200,
+                semanticFormatterCallback: (value) =>
+                    '${value.round()} процентов',
+                onChanged: (value) {
+                  updateDialog(() => volume = value.round());
+                  unawaited(
+                    state.setParticipantVolume(voiceParticipant, volume),
+                  );
+                },
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          if (member.id != state.user?.accountId)
+            FilledButton.icon(
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                await state.createDirectConversation(
+                  DirectCandidate(
+                    id: member.id,
+                    displayName: member.displayName,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.chat_bubble_outline),
+              label: const Text('Написать'),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Закрыть'),
           ),
         ],
       ),
-      content: Text(
-        member.role == 'ADMINISTRATOR' ? 'Администратор' : 'Участник',
-      ),
-      actions: [
-        if (member.id != state.user?.accountId)
-          FilledButton.icon(
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-              await state.createDirectConversation(
-                DirectCandidate(id: member.id, displayName: member.displayName),
-              );
-            },
-            icon: const Icon(Icons.chat_bubble_outline),
-            label: const Text('Написать'),
-          ),
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext),
-          child: const Text('Закрыть'),
-        ),
-      ],
     ),
   );
 }

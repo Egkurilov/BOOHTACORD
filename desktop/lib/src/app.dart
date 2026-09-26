@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_state.dart';
 import 'screens/auth_screen.dart';
+import 'screens/password_reset_screen.dart';
 import 'screens/workspace_screen.dart';
 import 'theme.dart';
 
@@ -16,11 +17,47 @@ class BoohtacordApp extends StatelessWidget {
     theme: guildTheme(),
     home: AnimatedBuilder(
       animation: state,
-      builder: (context, _) => switch (state.phase) {
-        AppPhase.loading => const _LoadingScreen(),
-        AppPhase.signedOut => AuthScreen(state: state),
-        AppPhase.ready => WorkspaceScreen(state: state),
-      },
+      builder: (context, _) => Column(
+        children: [
+          if (state.maintenanceActive) const _MaintenanceBanner(),
+          Expanded(
+            child: switch (state.phase) {
+              AppPhase.loading => const _LoadingScreen(),
+              AppPhase.signedOut =>
+                state.resetRoute
+                    ? PasswordResetScreen(state: state)
+                    : AuthScreen(state: state),
+              AppPhase.ready => WorkspaceScreen(state: state),
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _MaintenanceBanner extends StatelessWidget {
+  const _MaintenanceBanner();
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    liveRegion: true,
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      color: GcColors.warningBackground,
+      child: const Text(
+        'Идёт обновление: новые входы и подключения к голосу временно приостановлены.',
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: GcColors.warning,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          height: 1.25,
+        ),
+      ),
     ),
   );
 }
