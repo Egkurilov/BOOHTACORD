@@ -6,6 +6,7 @@ export class ScreenViewerController {
   private audio: HTMLAudioElement | null = null
   private audioOutput: AudioGainHandle | null = null
   private audioVolume = 100
+  private screenAudioMuted = false
   private deafened = false
   private hasEnded = false
   private readonly listeners = new Set<() => void>()
@@ -26,6 +27,10 @@ export class ScreenViewerController {
     return this.hasEnded
   }
 
+  get audioMuted(): boolean {
+    return this.screenAudioMuted
+  }
+
   cards(): ScreenViewerCard[] {
     return this.source().map(({ accountId, hasAudio, id, isLocal, participantId, participantName }) => ({ accountId, hasAudio, id, isLocal, participantId, participantName }))
   }
@@ -37,7 +42,13 @@ export class ScreenViewerController {
 
   setDeafened(deafened: boolean): void {
     this.deafened = deafened
-    this.audioOutput?.setMuted(deafened)
+    this.audioOutput?.setMuted(deafened || this.screenAudioMuted)
+  }
+
+  setAudioMuted(muted: boolean): void {
+    this.screenAudioMuted = muted
+    this.audioOutput?.setMuted(this.deafened || muted)
+    this.notify()
   }
 
   setAudioVolume(percent: number): void {
@@ -50,11 +61,16 @@ export class ScreenViewerController {
   }
 
   reconcile(): void {
-    if (this.selected && !this.source().some((stream) => stream.id === this.selected!.id)) {
+    const current = this.selected && this.source().find((stream) => stream.id === this.selected!.id)
+    if (this.selected && !current) {
       this.detachAndUnsubscribe()
       this.selected = null
       this.hasEnded = true
+    } else if (current && (current.video !== this.selected?.video || current.audio !== this.selected?.audio)) {
+      this.select(current.id, this.video, this.audio)
+      return
     } else {
+      if (current) this.selected = current
       this.attachSelected()
     }
     this.notify()
@@ -70,7 +86,7 @@ export class ScreenViewerController {
     this.audio = audio
     if (this.selected?.audio && this.audio) {
       this.audioOutput = this.mixer.attach(this.audio)
-      this.audioOutput.setMuted(this.deafened)
+      this.audioOutput.setMuted(this.deafened || this.screenAudioMuted)
       this.audioOutput.setVolume(this.audioVolume)
     }
     if (this.selected) {

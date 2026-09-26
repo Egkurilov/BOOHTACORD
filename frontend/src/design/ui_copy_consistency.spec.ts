@@ -18,6 +18,7 @@ describe('working UI name and media wording', () => {
     const dock = source('../voice/VoiceDock.vue')
     expect(viewer).not.toMatch(/Звук игры|Игровой звук|Голоса участников остаются слышны/)
     expect(dock).not.toContain('демонстрация экрана продолжается')
-    expect(viewer).toContain('Громкость аудиодорожки')
+    expect(viewer).toContain('ScreenViewerAudioControl')
+    expect(source('../voice/ScreenViewerAudioControl.vue')).toContain('Громкость аудиодорожки')
   })
 })

@@ -1,0 +1,48 @@
+{
+  "id": "des08-text-composer-reference-2026-09-26-001",
+  "tasks": ["DES-08", "T-050"],
+  "kind": "matching-state-text-reference-comparison",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-26T07:34:37Z",
+  "source": {
+    "base_commit": "7900a5999efc1270034c0bc553075bd860b4b7ef",
+    "before_conversation_css_sha256": "9efd8b604fc2b6ba7148db171571b1867379f7bdb68650daf78929d65133f031",
+    "after_conversation_css_sha256": "af012565f5c7df87077d5870da82c24e85e8df412ee0e539665d8794ad229612",
+    "before_built_css_sha256": "47b174416c1580aba30184c256debd63b5deff7cc6ca18d6eff1518a7de3fd59",
+    "after_built_css": "frontend/dist/assets/index-CHXVSt-W.css",
+    "after_built_css_sha256": "f2b105de8fa8c2f62632bd3a5137c3318c8a14fcbdd167b95cc678a46c2b4116",
+    "after_built_javascript_sha256": "541c4b6898cf0a98f5bf57d16f6d04a4452625281a5d48d2cf5ed641820ff286"
+  },
+  "reference": {
+    "archive_sha256": "e93cc89cc1e925a7585aa46f95e6eeb81e244b3db9fda471acc8f3f7d8614101",
+    "product_crop_640": {"pixels": [640, 632], "demo_strip_removed_px": 88, "sha256": "9233db1b672688be2a09de978ac587e49aecab2b3be2af6c314b9b701f6c1955"},
+    "product_crop_1440": {"pixels": [1440, 848], "demo_strip_removed_px": 52, "sha256": "510231e840bd5d3fefd35cc07c38286d74b98d1431fc16507345800ad22b149e"}
+  },
+  "fixture_and_capture": {
+    "state": "Disposable loopback Go API/PostgreSQL schema with six synthetic TEXT messages at the archived timestamps, one metadata-only attachment, selected channel, history scrollTop=0. No private data, physical file payload, or LiveKit media.",
+    "browser": "Installed Windows Chrome headless, isolated temporary profile and same-origin synthetic login. CDP Emulation.setDeviceMetricsOverride width/height 640/632 and 1440/848, deviceScaleFactor=1, mobile=false; Page.captureScreenshot captureBeyondViewport=false. No user tab was touched.",
+    "verified_viewports": [{"css": [640, 632], "png": [640, 632], "document_width": 640, "message_count": 6}, {"css": [1440, 848], "png": [1440, 848], "document_width": 1440, "message_count": 6}],
+    "before_640_sha256": "3819eea8989b290ad4bf998d6c242ab1adca038b2b2b89642a28fe244e1f6298",
+    "before_1440_sha256": "3fd2a7c93af54c6740609afaa20a01f505aa39244965305c806b5250e2ea84e0",
+    "after_640_sha256": "2318f0f173b86a423278911b9c86f249dadc035ad6a0bdc2bc8aeaa642b02f31",
+    "after_1440_sha256": "c4bcc1d7936c18d59765d4f47200eb57beb7def1cbdd4a0212c8d8e58bb9e337",
+    "artifact_paths": ["evidence/design/artifacts/des08-head7900a59-640x632-2026-09-26.png", "evidence/design/artifacts/des08-head7900a59-1440x848-2026-09-26.png", "evidence/design/artifacts/des08-composer-fix-640x632-2026-09-26.png", "evidence/design/artifacts/des08-composer-fix-1440x848-2026-09-26.png"],
+    "artifact_policy": "PNG files contain only synthetic fixture data and remain ignored local artifacts; they are not staged."
+  },
+  "geometry_px": {
+    "avatar_top_640": {"reference": [134, 198, 262, 326, 390], "before": [134, 198, 262, 326, 390], "after": [134, 198, 262, 326, 390]},
+    "avatar_top_1440": {"reference": [142, 206, 270, 334, 398, 536], "before": [142, 206, 270, 334, 398, 536], "after": [142, 206, 270, 334, 398, 536]},
+    "attachment": {"640_reference_and_candidate": {"x": 68, "top": 440, "width": 340, "height": 62}, "1440_reference_and_candidate": {"x": 356, "top": 448, "width": 340, "height": 62}},
+    "composer_640": {"reference": {"x": 16, "top": 475, "width": 608, "height": 56}, "before": {"x": 12, "top": 468, "width": 616, "height": 56}, "after": {"x": 16, "top": 468, "width": 608, "height": 56}},
+    "composer_1440": {"reference": {"x": 304, "top": 752, "width": 864, "height": 56}, "before": {"x": 300, "top": 752, "width": 872, "height": 56}, "after": {"x": 304, "top": 752, "width": 864, "height": 56}},
+    "measurement": "Avatar top runs sampled at x=21/309; composer border sampled at y=500/780 and the horizontal center. Candidate boxes also measured from DOM in the exact CSS viewports."
+  },
+  "change": "The TEXT composer wrapper now uses 24 px horizontal padding at desktop widths and 16 px below 1024 px. C-23's normative geometry permits margins 16/20/24 px, and both approved chat PNGs use the selected values. DM keeps the previous shared composer padding because this packet has no matching DM reference.",
+  "remaining_visual_differences": [
+    "At 640 px the reference composer top is y=475 but candidate y=468, and the footer begins at y=568 versus y=561. The reference shows connected voice while the synthetic fixture is disconnected; this 7 px vertical difference is not classified as a CSS defect.",
+    "At 1440 px the reference has connected voice, populated channel navigation and online/offline members; the fixture has disconnected voice, one channel and unknown member presence. These unmatched states prevent whole-image parity.",
+    "Header title glyphs begin near x=97/337 in the 640/1440 reference and x=105/341 in the candidate. Font metrics, icon spacing and header composition require a separate matching-environment check before a CSS change.",
+    "The reference content sample is RGB 21,25,34 versus candidate 21,26,35; the archived token and current token both specify #151A23, so the PNG color delta is not evidence that the product token should change. The archive bundles no Inter font file; actual glyph rasterization is not a reliable cross-environment pixel assertion."
+  ],
+  "validation": {"nearest_frontend_tests": "PASS: four specs, 13 tests covering composer behavior and shell geometry", "frontend_build": "PASS: vue-tsc --noEmit and Vite production build, 282 modules", "browser_geometry": "PASS_LOCAL: TEXT composer horizontal bounds match both references after scoped CSS change without moving message rows or attachment", "diff_check": "PASS: git diff --check", "overall_des08": "PARTIAL: connected voice and stream matching states, hover/focus, screen reader, 320/1024 references, zoom and trusted-release full visual acceptance remain open"}
+}

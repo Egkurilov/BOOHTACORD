@@ -1,0 +1,25 @@
+{
+  "id": "voice-participant-volume-2026-09-26",
+  "kind": "voice-participant-volume-integration",
+  "status": "NOT_RUN",
+  "executed_at": null,
+  "scenario": {
+    "expected": [
+      "Two authenticated clients join the same VOICE channel.",
+      "The observer changes one remote participant from 100% to 0%, 175%, and 200%; only that participant's microphone playback changes.",
+      "The level stays adjustable with browser storage unavailable and does not carry into another account."
+    ]
+  },
+  "automated_checks": [
+    {
+      "command": "npm test -- src/voice/voice_volume_preferences.spec.ts src/voice/voice_volume_controls.spec.ts src/voice/remote_voice_playback.spec.ts src/voice/livekit_screen_viewer_adapter.spec.ts src/voice/audio_gain.spec.ts",
+      "result": "PASS: 5 files, 20 tests"
+    },
+    {
+      "command": "npm run build",
+      "result": "PASS: vue-tsc and vite build"
+    }
+  ],
+  "failure_or_blocker": "A live two-client media session was unavailable. Local Docker Compose cannot resolve POSTGRES_PASSWORD without deployment inputs; no hardware playback measurement was made.",
+  "notes": "Automated tests cover the participant volume control, preference fallback, remote playback, LiveKit event adapter, and Web Audio gain. They do not establish audible gain on real devices."
+}

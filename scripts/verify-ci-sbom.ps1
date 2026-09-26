@@ -5,6 +5,10 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $workflow = Get-Content -LiteralPath (Join-Path $projectRoot '.github/workflows/ci.yml') -Raw
 $publisherSteps = @()
 
+if ($workflow -match '(?m)^  deploy:') {
+    throw 'GitHub CI must not be a second production writer; see ADR-010.'
+}
+
 foreach ($name in @('API', 'web')) {
     $step = [regex]::Match(
         $workflow,

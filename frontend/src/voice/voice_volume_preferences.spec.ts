@@ -35,4 +35,25 @@ describe('voice volume preferences', () => {
     expect(preferences.participant('remote-a')).toBe(200)
     expect(preferences.screen('remote-a')).toBe(100)
   })
+
+  it('keeps the current call volume when storage fails and isolates a later account', () => {
+    const blockedStorage = {
+      getItem: (_key: string): string | null => { throw new Error('storage blocked') },
+      setItem: (_key: string, _value: string): void => { throw new Error('storage blocked') },
+    }
+    const preferences = new VoiceVolumePreferences(blockedStorage)
+    preferences.bind('owner-a')
+    preferences.setParticipant('remote-a', 175)
+    preferences.setScreen('remote-a', 35)
+
+    expect(preferences.participant('remote-a')).toBe(175)
+    expect(preferences.screen('remote-a')).toBe(35)
+
+    preferences.bind('owner-a')
+    expect(preferences.participant('remote-a')).toBe(175)
+
+    preferences.bind('owner-b')
+    expect(preferences.participant('remote-a')).toBe(100)
+    expect(preferences.screen('remote-a')).toBe(100)
+  })
 })

@@ -1,0 +1,14 @@
+{
+  "id": "screen-viewer-audio-toggle-2026-09-26-001",
+  "tasks": ["T-030", "QA-06", "QA-07"],
+  "status": "PARTIAL",
+  "source_base_commit": "7900a5999efc1270034c0bc553075bd860b4b7ef",
+  "change": "The selected remote screen now has a separate on/off control independent of participant deafen and its volume slider. Zero volume can be restored with the on control. The setting applies when screen audio publishes after video selection and remains effective when switching streams. AudioMixer reuses the same MediaElementAudioSourceNode for the stable audio element across stream switches.",
+  "checks": {
+    "focused": "PASS_LOCAL: screen sound controller, late publication, zero-volume restore and repeated Web Audio source tests",
+    "frontend_suite": "PASS_LOCAL: 194 files, 574 tests",
+    "frontend_build": "PASS_LOCAL: vue-tsc and Vite",
+    "two_user_audible_playback": "NOT_RUN: no authenticated two-client LiveKit hardware call in this packet"
+  },
+  "limit": "Automated checks prove control wiring and gain state, not audible game sound or speaker output on real devices. QA-06/07 remain open."
+}

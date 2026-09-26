@@ -59,6 +59,7 @@
   [Matching-state preflight](../../evidence/design/des08-matching-state-browser-policy-2026-09-25-001.json) подтвердил несовпадение прежних PNG по данным/scroll/ревизии; Browser Use не загрузил request-header policy, поэтому новый capture и pixel diff NOT_RUN.
   [Matching-state A/B TEXT](../../evidence/design/des08-matching-chat-rhythm-2026-09-25-001.json) сохранил SHA синтетических reference/candidate PNG и после CSS-правки сравнял первые пять avatar Y-координат на 1440×848 и 640×632. Шестая строка desktop всё ещё на 4 px выше reference; полный pixel parity, connected voice/stream, hover/focus, zoom, screen reader и trusted candidate не подтверждены.
   [A/B после TEXT-вложения](../../evidence/design/des08-post-attachment-rhythm-2026-09-25-001.json) выровнял desktop-карточку и шестую строку с reference, а также верх карточки на 640 px, не сдвинув первые пять строк. Это синтетическое состояние без реального файла и media; полный pixel parity, hover/focus, zoom и screen reader всё ещё открыты.
+  [Точный 640/1440 capture](../../evidence/design/des08-text-composer-reference-2026-09-26-001.json) подтвердил одинаковые горизонтальные границы TEXT composer с reference; avatar и attachment геометрия сохранилась. Различие connected voice state, typographic/header details, DM, zoom и selected media остаются отдельными проверками; DES-08 PARTIAL.
 
 ## Связь с исходными DS-T01…DS-T12
 

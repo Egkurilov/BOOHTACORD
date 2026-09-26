@@ -54,7 +54,8 @@ describe('screen viewer reference composition', () => {
     expect(viewer).toContain("stream.isLocal ? 'Ваш экран' : (stream.participantName || 'Участник')")
     expect(viewer).toContain(':muted="selectedStream?.isLocal ?? false"')
     expect(source('./screen_audio_copy.ts')).toContain('Предпросмотр собственного экрана без звука')
-    expect(viewer).toContain('v-if="adjustable"')
+    expect(viewer).toContain('ScreenViewerAudioControl v-if="selectedStream.hasAudio && !selectedStream.isLocal"')
+    expect(source('./ScreenViewerAudioControl.vue')).toContain('v-if="adjustable"')
     expect(source('../conversation/ConversationPane.vue')).toContain(':deafened="selfDeafened"')
     expect(viewer).toContain('data-testid="stream-rail"')
     expect(viewer).toContain('data-testid="stream-select"')
@@ -108,7 +109,6 @@ describe('screen viewer reference composition', () => {
     expect(viewer).toContain('@loadeddata="markVideoReady"')
     expect(viewer).toContain('@emptied="resetVideoFrame"')
   })
-
   it('stacks viewer controls before the toolbar can overflow at zoomed and narrow widths', () => {
     const styles = source('../design/voice_viewer_reference.css')
 

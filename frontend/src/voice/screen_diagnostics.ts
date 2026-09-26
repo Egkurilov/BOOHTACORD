@@ -54,7 +54,7 @@ export function normalizeScreenDiagnostics(input: RawScreenDiagnostics): ScreenD
   const videoAvailable = input.readyState !== undefined
   const width = positive(input.sender?.frameWidth) ?? positive(input.settings?.width)
   const height = positive(input.sender?.frameHeight) ?? positive(input.settings?.height)
-  const framesPerSecond = positive(input.sender?.framesPerSecond) ?? positive(input.settings?.frameRate)
+  const framesPerSecond = positive(input.sender?.framesPerSecond)
   const measured = width && height ? { width, height, ...(framesPerSecond ? { framesPerSecond } : {}) } : null
   const packetsLost = nonNegative(input.sender?.packetsLost)
   const roundTripTime = nonNegative(input.sender?.roundTripTime)

@@ -20,11 +20,18 @@ function browserStorage(): PreferenceStorage | null {
 
 export class VoiceVolumePreferences {
   private accountId: string | null = null
+  private readonly current = new Map<string, StoredVolumes>()
 
   constructor(private readonly storage: PreferenceStorage | null = browserStorage()) {}
 
   bind(accountId: string): void {
+    if (this.accountId !== accountId) this.current.clear()
     this.accountId = accountId
+  }
+
+  unbind(): void {
+    this.accountId = null
+    this.current.clear()
   }
 
   participant(remoteAccountId: string): number {
@@ -48,6 +55,8 @@ export class VoiceVolumePreferences {
   }
 
   private read(remoteAccountId: string): StoredVolumes {
+    const current = this.current.get(remoteAccountId)
+    if (current) return current
     const key = this.key(remoteAccountId)
     if (!key || !this.storage) return { participant: 100, screen: 100 }
     try {
@@ -61,6 +70,7 @@ export class VoiceVolumePreferences {
   }
 
   private write(remoteAccountId: string, volumes: StoredVolumes): void {
+    this.current.set(remoteAccountId, volumes)
     const key = this.key(remoteAccountId)
     if (!key || !this.storage) return
     try {

@@ -37,4 +37,22 @@ describe('audio gain', () => {
     expect(audio.volume).toBe(0.5)
     expect(audio.muted).toBe(true)
   })
+
+  it('reuses a media element source after switching the selected screen', () => {
+    const audio = element()
+    const source = { connect: vi.fn(), disconnect: vi.fn() }
+    const context = {
+      createGain: vi.fn(() => ({ connect: vi.fn(), disconnect: vi.fn(), gain: { value: 1 } })),
+      createMediaElementSource: vi.fn(() => source), destination: {},
+    }
+    const mixer = new AudioMixer(() => context as never)
+
+    mixer.attach(audio).dispose()
+    const next = mixer.attach(audio)
+    next.setMuted(false)
+
+    expect(context.createMediaElementSource).toHaveBeenCalledTimes(1)
+    expect(source.connect).toHaveBeenCalledTimes(2)
+    expect(context.createGain).toHaveBeenCalledTimes(2)
+  })
 })

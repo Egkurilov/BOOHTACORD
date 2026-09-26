@@ -1,4 +1,4 @@
-import type { Ref } from 'vue'
+import { ref, type Ref } from 'vue'
 
 import type { ScreenViewerCard, ScreenViewerController } from './screen_viewer_controller'
 
@@ -15,11 +15,13 @@ export function createScreenViewerControls(
 ) {
   let controller: ScreenViewerController | null = null
   let stopObserving: (() => void) | null = null
+  const audioMuted = ref(false)
 
   function sync(): void {
     cards.value = controller?.cards() ?? []
     selectedId.value = controller?.selectedId ?? null
     ended.value = controller?.ended ?? false
+    audioMuted.value = controller?.audioMuted ?? false
   }
 
   function start(): void {
@@ -53,5 +55,15 @@ export function createScreenViewerControls(
     controller?.clear()
   }
 
-  return { clear, select, start, stop }
+  function toggleAudio(volume: number, setVolume: (percent: number) => void): void {
+    if (!controller?.selectedId) return
+    if (volume === 0) {
+      setVolume(100)
+      if (controller.audioMuted) controller.setAudioMuted(false)
+      return
+    }
+    controller.setAudioMuted(!controller.audioMuted)
+  }
+
+  return { audioMuted, clear, select, start, stop, toggleAudio }
 }

@@ -71,6 +71,7 @@ export function createVoiceVolumeControls(
       ownAccountId = (await loadAccount()).accountId
       preferences.bind(ownAccountId)
     } catch {
+      preferences.unbind()
       error.value = 'Не удалось загрузить настройки громкости; используется 100%.'
     }
     if (current !== revision) return

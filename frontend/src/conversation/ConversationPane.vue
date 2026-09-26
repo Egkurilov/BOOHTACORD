@@ -40,6 +40,7 @@ const props = defineProps<{
   screenState: ScreenShareState
   selectedScreenStreamId: string | null
   selectedScreenAudioVolume: number
+  screenAudioMuted: boolean
   selfMicrophoneMuted: boolean
   selfMicrophoneUnavailable: boolean
   selfSpeaking: boolean
@@ -47,7 +48,7 @@ const props = defineProps<{
   voiceVolumeParticipants: VoiceVolumeParticipant[]
 }>()
 
-const emit = defineEmits<{ clearScreenStream: []; join: [channelId: string, transfer?: boolean, joinMode?: VoiceJoinMode]; leave: []; refreshScreen: []; selectScreenStream: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setParticipantVolume: [id: string, percent: number]; setScreenVolume: [percent: number]; startScreen: [profile: ScreenProfile]; stopScreen: []; transfer: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
+const emit = defineEmits<{ clearScreenStream: []; join: [channelId: string, transfer?: boolean, joinMode?: VoiceJoinMode]; leave: []; refreshScreen: []; selectScreenStream: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setParticipantVolume: [id: string, percent: number]; setScreenVolume: [percent: number]; toggleScreenAudio: []; startScreen: [profile: ScreenProfile]; stopScreen: []; transfer: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
 const selectedScreenProfile = ref<ScreenProfile>('P1080_60')
 const screenExpanded = ref(false)
 const selectedScreenName = computed(() => props.screenViewerCards.find((screen) => screen.id === props.selectedScreenStreamId)?.participantName ?? null)
@@ -85,8 +86,8 @@ function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id)
           </div>
           <template v-if="screenViewerCards.length || selectedScreenStreamId || screenViewerEnded">
             <ScreenViewer
-              ref="screenViewerRef" v-show="selectedScreenStreamId !== null || screenViewerEnded" :cards="screenViewerCards" :deafened="selfDeafened" :ended="screenViewerEnded" :error="screenViewerError" :expanded="screenExpanded" :selected-audio-volume="selectedScreenAudioVolume" :selected-id="selectedScreenStreamId"
-              @clear="emit('clearScreenStream')" @select="(id, video, audio) => emit('selectScreenStream', id, video, audio)" @set-audio-volume="emit('setScreenVolume', $event)"
+              ref="screenViewerRef" v-show="selectedScreenStreamId !== null || screenViewerEnded" :audio-muted="screenAudioMuted" :cards="screenViewerCards" :deafened="selfDeafened" :ended="screenViewerEnded" :error="screenViewerError" :expanded="screenExpanded" :selected-audio-volume="selectedScreenAudioVolume" :selected-id="selectedScreenStreamId"
+              @clear="emit('clearScreenStream')" @select="(id, video, audio) => emit('selectScreenStream', id, video, audio)" @set-audio-volume="emit('setScreenVolume', $event)" @toggle-audio="emit('toggleScreenAudio')"
               @update:expanded="screenExpanded = $event"
             />
           </template>

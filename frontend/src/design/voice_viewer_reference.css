@@ -21,6 +21,7 @@
 .stream-diagnostics-panel dt { color: var(--gc-text-muted); }
 .stream-diagnostics-panel dd { margin: 0; color: var(--gc-text-secondary); font-variant-numeric: tabular-nums; text-align: right; }
 .stream-quality-row .volume-control { display: flex; min-width: 160px; flex: 0 1 200px; align-items: center; gap: var(--gc-space-2); color: var(--gc-text-secondary); font-size: var(--gc-text-caption); }
+.screen-audio-toggle { min-height: 32px; flex: 0 0 auto; }
 .stream-quality-row input { min-width: 90px; accent-color: var(--gc-accent); }
 .stream-audio-status { margin: 0; color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
 .screen-window-toggle { flex: 0 0 auto; }

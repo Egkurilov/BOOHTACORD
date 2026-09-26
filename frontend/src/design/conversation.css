@@ -22,6 +22,7 @@
 .message-send-status { display: flex; align-items: center; gap: var(--gc-space-2); margin-top: var(--gc-space-1) !important; color: var(--gc-text-muted) !important; font-size: var(--gc-text-caption) !important; }.message-send-status button { min-height: var(--gc-size-control-sm); border: 0; border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-2); color: var(--gc-text-secondary); background: var(--gc-surface-raised); }
 .composer-wrap { flex-shrink: 0; padding: 0 var(--gc-space-5) var(--gc-space-6); }.composer { display: flex; min-height: var(--gc-layout-composer-min); align-items: flex-end; gap: var(--gc-space-2); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-md); padding: 7px var(--gc-space-2); background: var(--gc-input); }.composer:focus-within { outline: 2px solid var(--gc-focus); outline-offset: 3px; }.message-composer { flex-wrap: wrap; }.composer textarea { min-width: 0; min-height: 40px; max-height: var(--gc-layout-composer-max); flex: 1; resize: vertical; border: 0; padding: var(--gc-space-2) 0; color: var(--gc-text-primary); background: transparent; font-size: var(--gc-text-body); line-height: var(--gc-line-body); }.composer textarea:focus { outline: 0; }.composer textarea::placeholder { color: var(--gc-text-muted); }
 .composer-wrap { padding-bottom: var(--gc-space-5); }
+.text-conversation .composer-wrap { padding-inline: var(--gc-space-6); }
 .composer { align-items: center; padding: 4px var(--gc-space-2); }
 .composer-helper { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--gc-space-2); margin-top: var(--gc-space-1); color: var(--gc-text-muted); font-size: var(--gc-text-caption); line-height: 16px; }
 .composer-helper p { margin: 0; }
@@ -50,6 +51,7 @@
 .attachment-card__file-icon, .attachment-card__download-icon { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.75; }
 .attachment-card__download-icon { width: 20px; height: 20px; color: var(--gc-text-secondary); }
 @media (max-width: 1023px) { .main-header { min-height: 56px; padding: 0 var(--gc-space-4); }.messages { padding: var(--gc-space-5) var(--gc-space-4); }.composer-wrap { padding: 0 var(--gc-space-3) var(--gc-space-4); }.composer-helper__limit { display: none; } }
+@media (max-width: 1023px) { .text-conversation .composer-wrap { padding-inline: var(--gc-space-4); } }
 .conversation-symbol svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.75; }
 .message-row { position: relative; }
 .message-row:hover, .message-row:focus-within { z-index: 2; }

@@ -1,0 +1,34 @@
+{
+  "id": "screen-share-encoder-fps-2026-09-26-001",
+  "task": "T-030",
+  "kind": "screen-share-fps-regression",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-26T07:37:21Z",
+  "source_base_commit": "7900a5999efc1270034c0bc553075bd860b4b7ef",
+  "trigger": "The owner reported 60 FPS at the presenter and about 15 FPS at the observer while watching a screen share.",
+  "code_level_cause": "The selected frameRate was passed only as a capture constraint. Pinned livekit-client 2.22.3 defaults screenShareEncoding to ScreenSharePresets.h1080fps15.encoding (15 FPS), and LocalParticipant merges publish defaults with the application's publish options. The application previously passed no screenShareEncoding override. Presenter diagnostics could also report source getSettings().frameRate as measured sender FPS when sender stats had no FPS.",
+  "change": "All four selected screen profiles now pass matching capture frameRate and screenShareEncoding.maxFramerate. Encoding bitrate and medium priority reuse the pinned SDK h720fps30/h1080fps30 preset values, and voice-first maintain-framerate remains. Publisher diagnostics now show FPS only when sender stats provide it; capture settings can still supply dimensions.",
+  "checks": [
+    {
+      "name": "focused_tdd",
+      "result": "PASS_LOCAL",
+      "detail": "Four profile tests failed before the publish override and passed afterward; a diagnostics test failed before removal of the source-frame-rate fallback and passed afterward. Three focused files/15 tests passed, including viewer callback FPS sampling."
+    },
+    {
+      "name": "frontend_build",
+      "result": "PASS_LOCAL",
+      "detail": "npm --prefix frontend run build passed vue-tsc and Vite."
+    },
+    {
+      "name": "frontend_full_suite",
+      "result": "PASS_LOCAL",
+      "detail": "After the concurrent viewer-audio-control source assertions were updated, npm --prefix frontend test passed 194 files and 573 tests on the integrated worktree."
+    },
+    {
+      "name": "moving_content_two_user_observer",
+      "result": "NOT_RUN",
+      "detail": "No real two-user LiveKit capture with observer decoded FPS, sender stats, browser/OS/GPU, or network measurements was available in this packet. The publication setting removes a deterministic 15 FPS cap but does not prove actual 60 FPS."
+    }
+  ],
+  "limitation": "Browser capture, encoder load, SFU adaptation, subscriber layer, network and visibility can still reduce decoded FPS. REQ-SCREEN-01 and POC-02 require the operator hardware runs before a capability PASS claim."
+}

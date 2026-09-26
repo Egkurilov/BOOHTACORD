@@ -79,6 +79,7 @@ class WebAudioGain extends BaseAudioGain {
 
 export class AudioMixer {
   private context: AudioContextLike | null | undefined
+  private readonly sources = new WeakMap<HTMLAudioElement, ConnectableAudioNode>()
 
   constructor(private readonly createContext: AudioContextFactory = browserContext) {}
 
@@ -86,10 +87,11 @@ export class AudioMixer {
     this.context ??= this.createContext()
     if (!this.context) return new ElementAudioGain(element)
     try {
-      const source = this.context.createMediaElementSource(element)
       const gain = this.context.createGain()
+      const source = this.sources.get(element) ?? this.context.createMediaElementSource(element)
       source.connect(gain)
       gain.connect(this.context.destination)
+      this.sources.set(element, source)
       return new WebAudioGain(element, source, gain)
     } catch {
       return new ElementAudioGain(element)

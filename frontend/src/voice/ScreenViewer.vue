@@ -3,13 +3,14 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { avatarBackground } from '../design/avatar_color'
 import { participantAudioMessage, screenAudioMessage } from './screen_audio_copy'
+import ScreenViewerAudioControl from './ScreenViewerAudioControl.vue'
 import type { ScreenViewerCard } from './screen_viewer_controller'
 import { createScreenFullscreenControls } from './screen_fullscreen_controls'
 import { useScreenPlaybackQuality } from './screen_playback_quality'
 import { observeHorizontalOverflow } from './screen_rail_overflow'
 
-const props = defineProps<{ cards: ScreenViewerCard[]; deafened: boolean; ended: boolean; error: string | null; expanded: boolean; selectedAudioVolume: number; selectedId: string | null }>()
-const emit = defineEmits<{ clear: []; select: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setAudioVolume: [percent: number]; 'update:expanded': [expanded: boolean] }>()
+const props = defineProps<{ audioMuted: boolean; cards: ScreenViewerCard[]; deafened: boolean; ended: boolean; error: string | null; expanded: boolean; selectedAudioVolume: number; selectedId: string | null }>()
+const emit = defineEmits<{ clear: []; select: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setAudioVolume: [percent: number]; toggleAudio: []; 'update:expanded': [expanded: boolean] }>()
 const video = ref<HTMLVideoElement | null>(null)
 const audio = ref<HTMLAudioElement | null>(null)
 const stage = ref<HTMLDivElement | null>(null)
@@ -98,10 +99,7 @@ async function toggleFullscreen(): Promise<void> {
           <div><dt>Последнее измерение</dt><dd>Нет свежих данных</dd></div>
         </dl></div>
       </details>
-      <label v-if="adjustable" class="volume-control">
-        <span>Громкость аудиодорожки · {{ selectedAudioVolume }}%</span>
-        <input aria-label="Громкость звука выбранной демонстрации" type="range" min="0" max="200" step="1" :value="selectedAudioVolume" @input="emit('setAudioVolume', Number(($event.target as HTMLInputElement).value))">
-      </label>
+      <ScreenViewerAudioControl v-if="selectedStream.hasAudio && !selectedStream.isLocal" :adjustable="adjustable" :deafened="deafened" :muted="audioMuted" :volume="selectedAudioVolume" @toggle="emit('toggleAudio')" @set-volume="emit('setAudioVolume', $event)" />
       <p v-if="audioMessage" class="stream-audio-status" role="status">{{ audioMessage }}</p>
     </div>
       <div v-if="cards.length" class="screen-rail-section">

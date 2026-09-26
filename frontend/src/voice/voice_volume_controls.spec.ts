@@ -40,6 +40,36 @@ describe('voice volume controls', () => {
     expect(controls.error.value).toContain('100%')
   })
 
+  it.each([
+    { name: 'browser storage is unavailable', loadAccount: async () => ({ accountId: 'owner-a' }) },
+    { name: 'account lookup fails', loadAccount: async () => Promise.reject(new Error('session unavailable')) },
+  ])('still changes the remote gain when $name', async ({ loadAccount }) => {
+    const remote = { setVolume: vi.fn() }
+    const participantCards = { cards: () => [{ accountId: 'remote-a', id: 'track-a', microphoneMuted: false, name: 'Alice', speaking: false }], onChange: () => () => undefined }
+    const controls = createVoiceVolumeControls({ participantCards: () => participantCards, remoteVoices: () => remote as never, screenViewer: () => null }, loadAccount, new VoiceVolumePreferences(null))
+
+    await controls.start()
+    controls.setParticipantVolume('track-a', 175)
+
+    expect(remote.setVolume).toHaveBeenLastCalledWith('track-a', 175)
+    expect(controls.participants.value[0]?.volume).toBe(175)
+  })
+
+  it('does not reuse a previous account preference when the next account lookup fails', async () => {
+    const preferences = new VoiceVolumePreferences(null)
+    preferences.bind('previous-owner')
+    preferences.setParticipant('remote-a', 175)
+    const remote = { setVolume: vi.fn() }
+    const participantCards = { cards: () => [{ accountId: 'remote-a', id: 'track-a', microphoneMuted: false, name: 'Alice', speaking: false }], onChange: () => () => undefined }
+    const controls = createVoiceVolumeControls({ participantCards: () => participantCards, remoteVoices: () => remote as never, screenViewer: () => null }, async () => Promise.reject(new Error('session unavailable')), preferences)
+
+    await controls.start()
+    expect(controls.participants.value[0]?.volume).toBe(100)
+    controls.setParticipantVolume('track-a', 80)
+    expect(remote.setVolume).toHaveBeenLastCalledWith('track-a', 80)
+    expect(preferences.participant('remote-a')).toBe(80)
+  })
+
   it('tracks the authenticated participant speaking state and clears it when stopped', async () => {
     let speaking = false
     let changed: () => void = () => undefined

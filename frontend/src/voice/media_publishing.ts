@@ -21,12 +21,14 @@ export interface MicrophonePublishOptions {
 
 export interface ScreenSharePublishOptions {
   degradationPreference: 'maintain-framerate'
+  screenShareEncoding: { maxBitrate: number; maxFramerate: number; priority: 'medium' }
 }
 
 export const defaultAudioProcessing: AudioProcessingOptions = { autoGainControl: true, echoCancellation: true, noiseSuppression: true }
 export const adaptiveMediaRoomOptions = Object.freeze({ adaptiveStream: true, dynacast: true })
 const microphonePublishOptions: MicrophonePublishOptions = { audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false }
-const screenSharePublishOptions: ScreenSharePublishOptions = { degradationPreference: 'maintain-framerate' }
+// Pinned LiveKit 2.22.3 ScreenSharePresets.h720fps30/h1080fps30 bitrates.
+const screenSharePresetBitrates = { P720: 2_000_000, P1080: 5_000_000 } as const
 const screenProfiles: Record<ScreenProfile, ScreenShareOptions> = {
   P720_30: { audio: true, resolution: { width: 1280, height: 720, frameRate: 30 } },
   P720_60: { audio: true, resolution: { width: 1280, height: 720, frameRate: 60 } },
@@ -57,7 +59,16 @@ export async function readScreenShareDiagnostics(room: VoiceRoom): Promise<Scree
 }
 
 export async function startScreenShare(room: VoiceRoom, profile: ScreenProfile): Promise<ScreenDiagnostics> {
-  await room.localParticipant.setScreenShareEnabled(true, screenProfiles[profile], screenSharePublishOptions)
+  const capture = screenProfiles[profile]
+  const screenSharePublishOptions: ScreenSharePublishOptions = {
+    degradationPreference: 'maintain-framerate',
+    screenShareEncoding: {
+      maxBitrate: profile.startsWith('P720') ? screenSharePresetBitrates.P720 : screenSharePresetBitrates.P1080,
+      maxFramerate: capture.resolution.frameRate,
+      priority: 'medium',
+    },
+  }
+  await room.localParticipant.setScreenShareEnabled(true, capture, screenSharePublishOptions)
   return readScreenShareDiagnostics(room)
 }
 

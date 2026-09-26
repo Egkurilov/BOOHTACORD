@@ -18,6 +18,19 @@ function screenRoom(readScreenDiagnostics?: VoiceRoom['readScreenDiagnostics']):
 }
 
 describe('LiveKit screen publishing policy', () => {
+  it.each([
+    ['P720_30', 1280, 720, 30, 2_000_000],
+    ['P720_60', 1280, 720, 60, 2_000_000],
+    ['P1080_30', 1920, 1080, 30, 5_000_000],
+    ['P1080_60', 1920, 1080, 60, 5_000_000],
+  ] as const)('passes the selected %s FPS through capture and encoder', async (profile, width, height, frameRate, maxBitrate) => {
+    const fakeRoom = screenRoom()
+    await startScreenShare(fakeRoom, profile)
+    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenCalledWith(true, {
+      audio: true, resolution: { width, height, frameRate },
+    }, { degradationPreference: 'maintain-framerate', screenShareEncoding: { maxBitrate, maxFramerate: frameRate, priority: 'medium' } })
+  })
+
   it('keeps the selected capture profile and passes degradation preference as publish options', async () => {
     const fakeRoom = screenRoom()
 
@@ -26,7 +39,7 @@ describe('LiveKit screen publishing policy', () => {
 
     expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenNthCalledWith(1, true, {
       audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 },
-    }, { degradationPreference: 'maintain-framerate' })
+    }, { degradationPreference: 'maintain-framerate', screenShareEncoding: { maxBitrate: 5_000_000, maxFramerate: 60, priority: 'medium' } })
     expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenNthCalledWith(2, false)
   })
 
@@ -42,7 +55,7 @@ describe('LiveKit screen publishing policy', () => {
     await expect(startScreenShare(fakeRoom, 'P1080_60')).resolves.toEqual(diagnostics)
     expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenCalledWith(true, {
       audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 },
-    }, { degradationPreference: 'maintain-framerate' })
+    }, { degradationPreference: 'maintain-framerate', screenShareEncoding: { maxBitrate: 5_000_000, maxFramerate: 60, priority: 'medium' } })
   })
 
   it('declares adaptive receive quality and dynacast room preferences', () => {

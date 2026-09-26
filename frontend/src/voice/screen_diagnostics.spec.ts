@@ -27,6 +27,16 @@ describe('screen diagnostics', () => {
     })
   })
 
+  it('does not present the capture frame rate as measured encoded FPS without sender stats', () => {
+    expect(normalizeScreenDiagnostics({
+      audioTrack: false, readyState: 'live', sender: { frameHeight: 1080, frameWidth: 1920 },
+      settings: { frameRate: 60, height: 1080, width: 1920 },
+    }).measured).toEqual({ height: 1080, width: 1920 })
+    expect(normalizeScreenDiagnostics({
+      audioTrack: false, readyState: 'live', settings: { frameRate: 60, height: 1080, width: 1920 },
+    }).measured).toEqual({ height: 1080, width: 1920 })
+  })
+
   it('retains zero loss and zero RTT as measured values', () => {
     expect(normalizeScreenDiagnostics({
       audioTrack: false, readyState: 'live', sender: { packetsLost: 0, roundTripTime: 0 }, settings: {},
