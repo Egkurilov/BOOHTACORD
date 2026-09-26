@@ -17,7 +17,7 @@ foreach ($name in @('API', 'web')) {
     if (-not $step.Success) {
         throw "Missing $name image publisher."
     }
-    $body = $step.Groups['body'].Value
+    $body = $step.Groups['body'].Value -replace "`r`n", "`n"
     if ($body -notmatch '(?m)^        uses: docker/build-push-action@v6$' -or $body -notmatch '(?m)^          push: true$' -or $body -notmatch '(?m)^          sbom: true$' -or $body -notmatch 'github\.sha') {
         throw "$name publisher must push a commit-SHA image with an SBOM attestation."
     }
