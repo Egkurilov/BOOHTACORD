@@ -1,0 +1,47 @@
+{
+  "id": "qa13-admin-topology-widget-2026-09-26-001",
+  "kind": "integration-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-26T13:01:53+03:00",
+  "environment": {
+    "host": "Windows 11 x64",
+    "runner": "Ubuntu WSL x86_64, isolated copy of desktop/ in /root/.cache",
+    "flutter": "3.47.5, revision 6a19cca56475dbfba1478ee68d7bd0c2ef891da1 from desktop/.metadata",
+    "dart": "3.13.4"
+  },
+  "source": {
+    "desktop/test/admin_topology_widget_test.dart": "sha256:7d9df0cf64392e52728c251d1e131df618d0bde6f1fd05aa974d20d46c119f25",
+    "desktop/test/admin_topology_fake_api.dart": "sha256:b257f8d085abad4f30fc191fb826f0c1b123e140cd1367202a0428aa3b2f1fe3"
+  },
+  "checks": [
+    {
+      "name": "admin topology and adjacent workspace widget tests",
+      "command": "wsl -d Ubuntu -- bash -lc 'cd /root/.cache/boohtacord-flutter-app-qa13 && /root/.cache/boohtacord-flutter-qa13/bin/flutter test --no-pub test/admin_topology_widget_test.dart test/workspace_screen_test.dart'",
+      "status": "PASS",
+      "observation": "21 tests passed, including disabled initial reorder, pending control lockout and 409 recovery/retry with refreshed revision."
+    },
+    {
+      "name": "Flutter static analysis",
+      "command": "wsl -d Ubuntu -- bash -lc 'cd /root/.cache/boohtacord-flutter-app-qa13 && /root/.cache/boohtacord-flutter-qa13/bin/flutter analyze --no-pub'",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Dart formatting and source identity",
+      "command": "wsl -d Ubuntu -- /root/.cache/boohtacord-flutter-qa13/bin/dart format --output=none --set-exit-if-changed /mnt/c/Users/egkur/Documents/ChatGPT/BOOHTACORD/desktop/test/admin_topology_fake_api.dart /mnt/c/Users/egkur/Documents/ChatGPT/BOOHTACORD/desktop/test/admin_topology_widget_test.dart",
+      "status": "PASS",
+      "observation": "Both files formatted with no changes; source and isolated runner SHA-256 values matched."
+    },
+    {
+      "name": "administrator REST ACL against running backend",
+      "status": "NOT_RUN",
+      "reason": "Widget fake covers UI behavior, not server authorization."
+    },
+    {
+      "name": "macOS, Windows and Android physical-device acceptance",
+      "status": "NOT_RUN",
+      "reason": "Ubuntu WSL widget runner does not establish platform-specific UX or release behavior."
+    }
+  ],
+  "remaining": "QA-13 stays open for live REST ACL and physical-device acceptance."
+}

@@ -14,8 +14,9 @@ its behavior and platform-specific acceptance evidence exist.
   web-equivalent confirmation; refresh topology and accurately report server
   results (never imply that a lease count proves SFU disconnection).
 - [x] Add API contract tests for every admin topology request.
-- [ ] Add widget coverage for disabled/pending controls and stale-conflict
-  recovery; confirmation dialogs and cancellation already have widget coverage.
+- [x] Add widget coverage for disabled/pending controls and stale-conflict
+  recovery; [native widget checks](../evidence/flutter/qa13-admin-topology-widget-2026-09-26-001.json)
+  pass. Confirmation dialogs and cancellation also have widget coverage.
 
 ## P1 — Admin members and audit
 
