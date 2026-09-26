@@ -2,6 +2,7 @@ import hashlib
 import io
 import json
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -52,7 +53,7 @@ def fixture(path, *, bad_subject=False):
 class VerifyOciTests(unittest.TestCase):
     def run_verifier(self, archive, image_id):
         return subprocess.run([
-            "python", str(Path(__file__).with_name("verify_oci.py")), str(archive),
+            sys.executable, str(Path(__file__).with_name("verify_oci.py")), str(archive),
             REVISION, SOURCE_HASH, image_id,
         ], capture_output=True, text=True)
 
