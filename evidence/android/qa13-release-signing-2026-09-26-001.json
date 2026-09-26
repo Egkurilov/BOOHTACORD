@@ -1,0 +1,48 @@
+{
+  "id": "qa13-release-signing-2026-09-26-001",
+  "kind": "release-gate",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-26",
+  "environment": {
+    "host_os": "macOS arm64",
+    "key_material": "new private JKS outside repository; local properties ignored by Git",
+    "apk": "desktop/build/app/outputs/flutter-apk/app-release.apk"
+  },
+  "checks": [
+    {
+      "name": "Flutter static analysis and tests",
+      "command": "flutter analyze && flutter test --reporter compact",
+      "status": "PASS",
+      "observation": "No analyzer issues; 85 tests passed."
+    },
+    {
+      "name": "signed Android release APK",
+      "command": "flutter build apk --release",
+      "status": "PASS",
+      "observation": "Release APK built with the newly generated private JKS. APK SHA-256: 7bf8bccf49bc88fcff33a35f3d4ca0d31c3c4d38b6b9cd1f509eab9e9e46d17d."
+    },
+    {
+      "name": "APK signature and keystore identity",
+      "command": "apksigner verify --verbose --print-certs app-release.apk; keytool -list -v -keystore private-upload.jks",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified, one signer, CN=BOOHTACORD Android Upload, O=BOOHTACORD. APK and JKS certificate SHA-256 match: 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b."
+    },
+    {
+      "name": "credential isolation",
+      "command": "git check-ignore desktop/android/key.properties; git status --short",
+      "status": "PASS",
+      "observation": "Local signing configuration is ignored; JKS is outside the repository; both files have owner-only permissions. No secret values are recorded here."
+    },
+    {
+      "name": "physical-device install/update/auth/Origin/secure-cookie/permission/reconnect/voice/viewer",
+      "status": "NOT_RUN",
+      "reason": "Physical-device release acceptance was not available on this host."
+    },
+    {
+      "name": "off-host recovery of upload key",
+      "status": "NOT_RUN",
+      "reason": "The user must securely back up the JKS and local signing credentials."
+    }
+  ],
+  "failure_or_blocker": "QA-13 remains open until upload-key backup and physical-device acceptance pass. A newly generated key cannot update an app installed with a different signing certificate."
+}

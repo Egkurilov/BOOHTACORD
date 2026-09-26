@@ -91,9 +91,11 @@ its behavior and platform-specific acceptance evidence exist.
   notification preferences; do not show a nonfunctional toggle.
 - [ ] Build and launch Windows on a Windows runner; test macOS and Android
   release builds/signing before release.
-- [ ] Provision the intended persistent Android upload keystore and build a
-  signed release APK. The local 2026-09-26 release attempt stopped at the
-  signing gate because no keystore or signing configuration was available.
+- [x] Generate a private persistent Android upload keystore and build a signed
+  release APK. The local configuration and JKS are excluded from Git; the APK
+  signer certificate matches the JKS (`evidence/android/qa13-release-signing-2026-09-26-001.json`).
+- [ ] Back up the upload JKS and local signing credentials securely, then
+  install/update and exercise the release APK on a physical Android device.
 - [ ] Track Flutter's Kotlin Gradle Plugin warning for `flutter_webrtc`,
   `livekit_client` and `flutter_background` and verify compatibility before the
   next Flutter toolchain upgrade.
@@ -104,5 +106,5 @@ its behavior and platform-specific acceptance evidence exist.
   and DM sends; optimistic/failed rows and explicit retry are implemented.
 - [ ] P1: verify audio device enumeration, switching and screen re-entry with
   real devices and a real voice room on macOS/Android.
-- [ ] Delivery: complete the signed Android release build when the persistent
-  upload keystore is available.
+- [ ] Delivery: back up the new Android upload key and run physical-device
+  release acceptance; the signed APK build itself passes.
