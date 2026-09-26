@@ -25,7 +25,7 @@ All public REST routes are under `/api/v1`; JSON errors use `{ error: { code, me
 | Voice | Lease → short-lived room credential → LiveKit connection; explicit transfer, leave, mute/deafen, device/audio preferences and bounded reconnect policy are defined. | POC-03 must prove live media disconnect and old-token replay denial; UI state does not prove SFU enforcement. |
 | Screen sharing | Explicit browser picker, screen and optional screen-audio tracks, selected-stream-only subscription, remote participant cards and diagnostic state are defined. | POC-01/02 must prove real game audio, two operating systems, FPS/quality and lack of digital loop. |
 | Desktop interface | Russian one-guild shell includes auth, navigation, chats/DM, voice dock, participant cards, viewer and audio settings with empty/loading/error/reconnect states. | Authenticated screenshot parity, full accessibility sweep and real device/browser E2E evidence remain required. |
-| Operations | Compose has separate migration, maintenance admission, private metrics, network separation and log rotation. | `main`-only GitHub workflow does not currently follow GitVerse `master`; automated publish/deploy is not established by this repository state. |
+| Operations | Compose has separate migration, maintenance admission, private metrics, network separation and log rotation. ADR-010 designates GitVerse `master` as the sole production delivery route. | Trusted GitVerse run #1653749 proved digest-pinned API/web deployment with retained SBOM/provenance and health; live rollback QA-12 and overall release gate QA-14 remain open. |
 
 ## Required user flows
 

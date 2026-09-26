@@ -31,14 +31,14 @@ The expected automated scope is contract shape/traceability, Go unit and package
 
 Other evidence records must be read individually with their stated scope. `PASS_STATIC`, `PASS_RUNTIME`, `BLOCKED` and `NOT_RUN` are not interchangeable with a full release acceptance result.
 
-## Mandatory outstanding gates
+## Release gates and delivery status
 
 1. **POC-01:** two independent physical runs: Windows presenter and Apple-Silicon macOS presenter, each with a distinct physical observer. Each observer must verify moving real-game video, game audio and presenter voice, while the presenter verifies no sustained digital loop.
 2. **POC-02:** measure 720p/30, 720p/60, 1080p/30 and 1080p/60 with moving game content; record measured resolution, decoded FPS, bitrate, RTT, loss and recovery.
 3. **POC-03:** with real connected media, verify kick, ban, logout, session revocation and voice-channel close against reconnection plus previously issued API/SDK credentials.
 4. **Capacity:** run the approved load profile on selected infrastructure for 100 guild voice participants, up to 20 per room and the specified stream-publisher profile. Network quota and CPU scheduling must be measured, not inferred.
 5. **Security and UX:** finish negative ACL/privacy regression coverage, authenticated browser E2E and accessibility/screenshot acceptance at required desktop zooms.
-6. **CI/CD:** Принятый ADR-010 определяет GitVerse `master` единственным production writer. [Trusted run #1653749](../../../evidence/release/qa11-gitverse-oci-2026-09-26-001.json) подтвердил PostgreSQL/no-skip, frontend/release guards, hash-verified `git archive HEAD`, retained API/web OCI index digests с SPDX SBOM и SLSA provenance, digest-pinned Compose, API health и post-rollout volume audit. GitHub/GHCR остаётся CI-only историческим маршрутом; live rollback QA-12 и общий release verdict QA-14 открыты.
+6. **CI/CD · QA-11 PASS:** Принятый ADR-010 определяет GitVerse `master` единственным production writer. [Trusted run #1653749](../../../evidence/release/qa11-gitverse-oci-2026-09-26-001.json) подтвердил PostgreSQL/no-skip, frontend/release guards, hash-verified `git archive HEAD`, retained API/web OCI index digests с SPDX SBOM и SLSA provenance, digest-pinned Compose, API health и post-rollout volume audit. GitHub/GHCR остаётся CI-only историческим маршрутом; live rollback QA-12 и общий release verdict QA-14 открыты.
 
 ## Release decision rule
 
