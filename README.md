@@ -102,7 +102,7 @@ Production smoke и runtime traces подтверждают доступност
 3. POC-03: kick, ban, logout, revocation и replay ранее выданных API/SDK credentials на подключённом media.
 4. Нагрузочный профиль: 100 voice participants в гильдии, до 20 в room и утверждённый screen-publisher profile.
 5. Финальные ACL/privacy, browser E2E, accessibility и authenticated visual checks.
-6. CI/CD: PostgreSQL/no-skip, frontend и release guards прошли в [GitVerse run #1643330](evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json). Открыты согласование delivery ADR с исходным main/GHCR, подтверждение опубликованных digest/SBOM/provenance и maintenance/rollback acceptance — [QA-11/12](backlog/VERIFICATION_TODO.md).
+6. CI/CD: PostgreSQL/no-skip, frontend, release guards и production deploy прошли в [GitVerse run #1653749](evidence/release/qa11-gitverse-oci-2026-09-26-001.json). Принятый [ADR-010](docs/adr/ADR-010-gitverse-delivery.md) закрепил GitVerse `master`; API/web имеют retained OCI digests, SBOM/provenance и digest-pinned Compose. Live rollback и общий release gate остаются [QA-12/14](backlog/VERIFICATION_TODO.md).
 
 Подробный статус, границы evidence и условия выпуска — в [delivery-and-verification](docs/specs/spec-voice-platform/delivery-and-verification.md).
 

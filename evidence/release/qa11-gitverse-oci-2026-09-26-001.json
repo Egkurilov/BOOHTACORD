@@ -1,0 +1,19 @@
+{
+  "id": "qa11-gitverse-oci-2026-09-26-001",
+  "task": "QA-11",
+  "kind": "trusted-master-attested-local-oci-digest-deployment",
+  "status": "PASS",
+  "observed_at": "2026-09-26T09:09:37Z",
+  "source_revision": "269da65f72fea3b256326c1995f9953f189a6f8f",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1653749",
+  "jobs": {"backend": "success", "frontend": "success", "release_guard": "success", "deploy": "success"},
+  "source": "The runner packaged only tracked HEAD bytes with git archive, checked the SHA-256 of the transferred archive on the server, and embedded that SHA-256 and the 40-character revision as image labels. The OCI verifier checked both labels against the runner-supplied values.",
+  "buildx": {"version": "v0.37.1", "binary_sha256": "9447199cdb435f25880548343c128a4b6650e8891ee598905d8d29d39a8e359b", "store": "containerd", "outputs_per_service": ["retained OCI archive", "locally loaded image"]},
+  "images": {
+    "api": {"index_digest": "sha256:db20584d3d6f8f9036ffecbf90a1938a2e5d284fe1f7880600efe936c79b5b4b", "archive_bytes": 36777984, "local_reference": "voice-platform-api@sha256:db20584d3d6f8f9036ffecbf90a1938a2e5d284fe1f7880600efe936c79b5b4b"},
+    "web": {"index_digest": "sha256:9f5d29323e7a2194f9abba6adc6ef35537264b153a713faf75735a73e470edf7", "archive_bytes": 22068224, "local_reference": "voice-platform-web@sha256:9f5d29323e7a2194f9abba6adc6ef35537264b153a713faf75735a73e470edf7"}
+  },
+  "verification": "Each retained OCI tar passed blob SHA-256/size, runnable linux/amd64 manifest, attached SPDX SBOM and SLSA provenance subject, source labels, and loaded image ID checks. The installer checked both running container Image IDs and Config.Image digest refs after health; a mismatch fails the deploy job.",
+  "post_rollout": {"volume": "voice-platform_attachments-data", "filesystem_source": "/dev/vda2", "host_available_bytes": 17054138368, "required_bytes": 6343294632, "metric_available_bytes": 17054134272, "snapshot_success": 1, "api_health": "ok", "api_image": "voice-platform-api@sha256:db20584d3d6f8f9036ffecbf90a1938a2e5d284fe1f7880600efe936c79b5b4b"},
+  "limits": "Artifacts are retained locally under the revision release directory, not published to a remote registry; the provenance is a BuildKit attestation, not an external signature. QA-08 sustained upload capacity, QA-12 live rollback and overall QA-14 release acceptance remain separate open gates."
+}

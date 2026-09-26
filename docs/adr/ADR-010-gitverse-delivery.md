@@ -19,4 +19,8 @@ GitHub workflow описывал исходный маршрут, но дост�
 
 ## Последствия
 
-Документация и release evidence должны ссылаться на GitVerse `master` как на нормативный маршрут. Разработку недостающих артефактов вести в QA-11 с проверкой их происхождения и без параллельного production writer. Если доступный registry/attestation механизм GitVerse не обеспечит требуемый контракт, нужен новый ADR с конкретным операторским решением, а не молчаливый возврат к GitHub/GHCR.
+Документация и release evidence ссылаются на GitVerse `master` как на нормативный маршрут. Production OCI-архивы хранятся локально в каталоге соответствующей ревизии и требуют контроля свободного места; GitHub/GHCR не запускает второй deploy. Если потребуется внешне подписанный или удалённо доступный образ, это отдельное операторское решение и ADR.
+
+## Реализация и проверка · 26.09.2026
+
+[Trusted master run #1653749](../../evidence/release/qa11-gitverse-oci-2026-09-26-001.json) закрыл QA-11: `git archive HEAD` и проверенный SHA-256 источника, API/web OCI index digests, SPDX SBOM и SLSA provenance в retained локальных архивах, Compose `name@sha256`, совпадение запущенных image ID, healthy API и post-rollout volume audit. Это **локальные OCI-артефакты на release-хосте**, не registry-pullable ссылки и не внешне подписанная provenance. QA-12 live rollback, QA-08 sustained capacity и общий QA-14 остаются открытыми.
