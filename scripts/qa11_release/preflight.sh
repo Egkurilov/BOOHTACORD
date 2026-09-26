@@ -14,7 +14,7 @@ sudo -n docker system df
 mountpoint="$(sudo -n docker volume inspect --format '{{.Mountpoint}}' voice-platform_attachments-data)"
 [[ "$mountpoint" == /* ]] || { echo 'Attachment volume mountpoint is invalid' >&2; exit 1; }
 printf 'attachment_volume_mountpoint=%s\n' "$mountpoint"
-df -B1 --output=avail,size -- "$mountpoint" /opt/voice-platform-releases
+sudo -n df -B1 --output=avail,size -- "$mountpoint" /opt/voice-platform-releases
 
 for service in api web; do
   container="$(sudo -n docker ps --filter label=com.docker.compose.project=voice-platform --filter "label=com.docker.compose.service=$service" --format '{{.ID}}')"
