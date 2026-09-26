@@ -59,4 +59,11 @@ if run_deploy missing; then
 fi
 grep -Fq 'Local API image is unavailable.' "$temporary_root/output"
 
+api_digest="voice-platform-api@sha256:$(printf '%064d' 1)"
+web_digest="voice-platform-web@sha256:$(printf '%064d' 2)"
+run_deploy available "$api_digest" "$web_digest"
+grep -Fq "image inspect $api_digest" "$temporary_root/commands.log"
+grep -Fq "image inspect $web_digest" "$temporary_root/commands.log"
+if grep -Fq 'pull api migrate web' "$temporary_root/commands.log"; then exit 1; fi
+
 echo 'deploy-local-images tests passed'

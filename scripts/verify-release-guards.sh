@@ -14,6 +14,8 @@ pwsh -NoProfile -File scripts/verify-compose-images.ps1
 bash scripts/check-attachment-volume-headroom.test.sh
 bash scripts/audit-attachment-volume.test.sh
 bash scripts/qa11_release/preflight.test.sh
+python3 scripts/qa11_release/verify_oci.test.py
+bash scripts/qa11_release/verify_running.test.sh
 bash scripts/deploy-images.test.sh
 bash scripts/deploy-images-volume-guard.test.sh
 bash scripts/deploy-images-rollback.test.sh

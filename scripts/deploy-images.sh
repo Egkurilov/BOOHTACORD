@@ -21,6 +21,8 @@ if [[ "$api_image" =~ ^voice-platform-api:([0-9a-f]{40})$ ]]; then
   web_revision="${BASH_REMATCH[1]}"
   [[ "$api_revision" == "$web_revision" ]] || fail "Local API and web images must use the same commit revision."
   release_mode="local-build"
+elif [[ "$api_image" =~ ^voice-platform-api@sha256:[0-9a-f]{64}$ && "$web_image" =~ ^voice-platform-web@sha256:[0-9a-f]{64}$ ]]; then
+  release_mode="local-build"
 elif [[ "$api_image" == */* && "$api_image" == *@sha256:* && "$web_image" == */* && "$web_image" == *@sha256:* && "$api_image" != *:latest@* && "$web_image" != *:latest@* ]]; then
   release_mode="registry-digest"
 else

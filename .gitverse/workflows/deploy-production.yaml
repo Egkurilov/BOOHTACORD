@@ -91,7 +91,7 @@ jobs:
           git_sha="$(git rev-parse HEAD)"
           [[ "$git_sha" =~ ^[0-9a-f]{40}$ ]]
           archive="${RUNNER_TEMP:?}/voice-platform-${git_sha}.tar.gz"
-          tar --exclude-vcs --exclude=.env --exclude=frontend/node_modules -czf "$archive" .
+          git archive --format=tar HEAD | gzip -n > "$archive"
           printf 'git_sha=%s\n' "$git_sha" >> "$GITVERSE_OUTPUT"
           printf 'archive=%s\n' "$archive" >> "$GITVERSE_OUTPUT"
           printf 'archive_sha256=%s\n' "$(sha256sum "$archive" | awk '{print $1}')" >> "$GITVERSE_OUTPUT"
@@ -102,13 +102,7 @@ jobs:
           ARCHIVE: ${{ steps.source.outputs.archive }}
           ARCHIVE_SHA256: ${{ steps.source.outputs.archive_sha256 }}
           GIT_SHA: ${{ steps.source.outputs.git_sha }}
-        run: |
-          set -euo pipefail
-          remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
-          remote_archive="/tmp/voice-platform-${GIT_SHA}.tar.gz"
-          ssh_options=(-i ~/.ssh/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
-          scp "${ssh_options[@]}" "$ARCHIVE" "$remote:$remote_archive"
-          ssh "${ssh_options[@]}" "$remote" bash -s -- "$GIT_SHA" "$ARCHIVE_SHA256" < scripts/install-received-release.sh
+        run: bash scripts/qa11_release/transfer_release.sh
       - name: Audit live attachment headroom after rollout
         shell: bash
         run: |
