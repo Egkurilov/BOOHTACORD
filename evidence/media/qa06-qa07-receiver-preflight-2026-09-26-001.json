@@ -1,0 +1,15 @@
+{
+  "id": "qa06-qa07-receiver-preflight-2026-09-26-001",
+  "tasks": ["QA-06", "QA-07", "T-004", "T-005", "T-030"],
+  "status": "PARTIAL",
+  "observed_at": "2026-09-26T09:34:09Z",
+  "change": "The selected remote screen diagnostics now read LiveKit receiver counters. Two consecutive snapshots show decoded FPS, received bitrate, dropped-frame delta, cumulative packet loss, jitter and sample time beside the separate presented-frame FPS. Switching streams or ending playback clears measurements; missing SDK data stays explicitly unknown. Receiver stats do not provide RTT, so the viewer does not invent it.",
+  "checks": [
+    { "name": "frontend_unit_suite", "result": "PASS_LOCAL", "detail": "198 files and 578 tests passed, including receiver counter-rate, selected remote-track and selection-reset lifecycle tests." },
+    { "name": "frontend_build", "result": "PASS_LOCAL", "detail": "vue-tsc --noEmit and Vite production build passed." },
+    { "name": "local_media_runtime", "result": "BLOCKED", "detail": "Windows host has Docker CLI but no Docker Desktop Linux daemon; no local LiveKit, PostgreSQL or Vite listener was present on ports 7880, 7881, 5432 or 5173." },
+    { "name": "poc_01_windows_macos_observers", "result": "NOT_RUN", "detail": "No accessible separate physical observer and Apple-Silicon macOS presenter/observer pair in this workspace. Game audio, speech, per-participant 0/175/200% volume and independent screen-audio toggle were not observed." },
+    { "name": "poc_02_profile_matrix", "result": "NOT_RUN", "detail": "No moving-content 720p/1080p × 30/60 capture/encoded/presented/decoded measurements or degraded-network recovery; the prior 60-to-15 FPS complaint has no measured before/after on devices." }
+  ],
+  "next": "On separate physical Windows and Apple-Silicon macOS presenters with independent observers, run docs/MEDIA_PROTOTYPE.md POC-01 and POC-02 against the deployed image digest. Capture presenter sender stats, viewer presented and decoded FPS, bitrate, packet loss, jitter, WebRTC candidate-pair RTT, browser/OS/GPU/network, and sound observations. Keep QA-06/07 open until those records are PASS."
+}

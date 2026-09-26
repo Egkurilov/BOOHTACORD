@@ -15,24 +15,16 @@ export class ScreenViewerController {
 
   constructor(private readonly source: () => ScreenViewerStream[], private readonly mixer: Pick<AudioMixer, 'attach'> = new AudioMixer()) {}
 
-  get selectedId(): string | null {
-    return this.selected?.id ?? null
-  }
-
-  get selectedAccountId(): string | null {
-    return this.selected?.accountId ?? null
-  }
-
-  get ended(): boolean {
-    return this.hasEnded
-  }
-
-  get audioMuted(): boolean {
-    return this.screenAudioMuted
-  }
+  get selectedId(): string | null { return this.selected?.id ?? null }
+  get selectedAccountId(): string | null { return this.selected?.accountId ?? null }
+  get ended(): boolean { return this.hasEnded }
+  get audioMuted(): boolean { return this.screenAudioMuted }
 
   cards(): ScreenViewerCard[] {
-    return this.source().map(({ accountId, hasAudio, id, isLocal, participantId, participantName }) => ({ accountId, hasAudio, id, isLocal, participantId, participantName }))
+    return this.source().map(({ accountId, hasAudio, id, isLocal, participantId, participantName, video }) => ({
+      accountId, hasAudio, id, isLocal, participantId, participantName,
+      ...(!isLocal && video.track?.getReceiverStats ? { readReceiverStats: () => video.track!.getReceiverStats!() } : {}),
+    }))
   }
 
   onChange(listener: () => void): () => void {

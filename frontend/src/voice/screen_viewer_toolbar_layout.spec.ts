@@ -11,7 +11,7 @@ describe('selected-stream toolbar layout', () => {
 
     expect(row).toContain('stream-target')
     expect(row).toContain('stream-actual')
-    expect(row).toContain('stream-diagnostics')
+    expect(row).toContain('ScreenReceiverDiagnosticsPanel')
     expect(row).toContain('ScreenViewerAudioControl')
     expect(source('./ScreenViewerAudioControl.vue')).toContain('volume-control')
     expect(row).not.toContain('screen-window-toggle')
@@ -23,8 +23,9 @@ describe('selected-stream toolbar layout', () => {
     const viewer = source('./ScreenViewer.vue')
     const css = source('../design/voice_viewer_reference.css')
 
-    expect(viewer).toContain('<span class="gc-sr-only">Нет свежих данных</span>')
-    expect(viewer).toContain('title="Нет свежих данных"')
+    const panel = source('./ScreenReceiverDiagnosticsPanel.vue')
+    expect(panel).toContain('Нет свежих данных')
+    expect(panel).toContain(':title="status"')
     expect(css).toMatch(/\.stream-quality \{[^}]*display: flex;[^}]*justify-content: space-between/)
     expect(css).toMatch(/\.stream-diagnostics > summary \{[^}]*width: 32px;[^}]*height: 32px;/)
     expect(css).toContain('.stream-voice-return {')

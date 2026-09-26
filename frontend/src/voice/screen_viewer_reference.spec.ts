@@ -77,19 +77,6 @@ describe('screen viewer reference composition', () => {
     expect(source('./ScreenViewer.vue')).toContain('@resize="refreshVideoQuality"')
   })
 
-  it('offers compact truthful diagnostics for remote streams without fresh network measurements', () => {
-    const viewer = source('./ScreenViewer.vue')
-    const styles = source('../design/voice_viewer_reference.css')
-
-    expect(viewer).toContain('<details class="stream-diagnostics">')
-    expect(viewer).toContain('Нет свежих данных')
-    expect(viewer).toContain('Качество связи')
-    expect(viewer).toContain('<dt>Целевой профиль</dt><dd>Не передан источником</dd>')
-    expect(viewer).toContain("selectedStream.hasAudio ? 'Аудиодорожка есть' : 'Аудиодорожки нет'")
-    expect(styles).toContain('width: min(288px, calc(100vw - 32px))')
-    expect(styles).toContain('font-variant-numeric: tabular-nums')
-  })
-
   it('keeps an ended selected stream visible until the user returns or selects another', () => {
     const pane = source('../conversation/ConversationPane.vue')
     const viewer = source('./ScreenViewer.vue')

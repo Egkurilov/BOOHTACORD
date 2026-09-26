@@ -1,6 +1,7 @@
 export interface ScreenViewerTrack {
   attach(element: HTMLMediaElement): HTMLMediaElement
   detach(element: HTMLMediaElement): HTMLMediaElement[]
+  getReceiverStats?(): Promise<import('./screen_receiver_diagnostics').ScreenReceiverSnapshot | undefined>
 }
 
 export interface ScreenViewerPublication {
@@ -20,4 +21,6 @@ export interface ScreenViewerStream {
   video: ScreenViewerPublication
 }
 
-export type ScreenViewerCard = Pick<ScreenViewerStream, 'accountId' | 'hasAudio' | 'id' | 'isLocal' | 'participantId' | 'participantName'>
+export type ScreenViewerCard = Pick<ScreenViewerStream, 'accountId' | 'hasAudio' | 'id' | 'isLocal' | 'participantId' | 'participantName'> & {
+  readReceiverStats?: () => Promise<import('./screen_receiver_diagnostics').ScreenReceiverSnapshot | undefined>
+}

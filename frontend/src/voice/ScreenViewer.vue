@@ -4,10 +4,12 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { avatarBackground } from '../design/avatar_color'
 import { participantAudioMessage, screenAudioMessage } from './screen_audio_copy'
 import ScreenViewerAudioControl from './ScreenViewerAudioControl.vue'
+import ScreenReceiverDiagnosticsPanel from './ScreenReceiverDiagnosticsPanel.vue'
 import type { ScreenViewerCard } from './screen_viewer_controller'
 import { createScreenFullscreenControls } from './screen_fullscreen_controls'
 import { useScreenPlaybackQuality } from './screen_playback_quality'
 import { observeHorizontalOverflow } from './screen_rail_overflow'
+import { useScreenReceiverDiagnostics } from './use_screen_receiver_diagnostics'
 
 const props = defineProps<{ audioMuted: boolean; cards: ScreenViewerCard[]; deafened: boolean; ended: boolean; error: string | null; expanded: boolean; selectedAudioVolume: number; selectedId: string | null }>()
 const emit = defineEmits<{ clear: []; select: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setAudioVolume: [percent: number]; toggleAudio: []; 'update:expanded': [expanded: boolean] }>()
@@ -22,6 +24,7 @@ const railHasOverflow = ref(false)
 let stopObservingRail: (() => void) | null = null
 let fullscreenControls: ReturnType<typeof createScreenFullscreenControls> | null = null
 const selectedStream = computed(() => props.cards.find((stream) => stream.id === props.selectedId) ?? null)
+const { metrics: receiverMetrics, sampledAt: receiverSampledAt } = useScreenReceiverDiagnostics(selectedStream, () => props.ended)
 const adjustable = computed(() => Boolean(selectedStream.value?.hasAudio && selectedStream.value.accountId && !selectedStream.value.isLocal))
 const audioMessage = computed(() => selectedStream.value ? screenAudioMessage({
   isLocal: Boolean(selectedStream.value.isLocal), hasAudio: selectedStream.value.hasAudio,
@@ -89,16 +92,7 @@ async function toggleFullscreen(): Promise<void> {
     <audio ref="audio" autoplay></audio>
     <div v-if="selectedStream" class="stream-quality-row">
       <div class="stream-quality"><span class="stream-target">Цель: не передана источником</span><span class="stream-actual">Сейчас: {{ actualVideoQuality }}</span></div>
-      <details class="stream-diagnostics">
-        <summary title="Нет свежих данных"><span class="stream-diagnostics-badge" aria-hidden="true"></span><span class="gc-sr-only">Нет свежих данных</span></summary>
-        <div class="stream-diagnostics-panel"><dl>
-          <div><dt>Целевой профиль</dt><dd>Не передан источником</dd></div>
-          <div><dt>Текущее разрешение</dt><dd>{{ actualVideoQuality }}</dd></div>
-          <div><dt>Качество связи</dt><dd>Нет свежих данных</dd></div>
-          <div><dt>Аудиодорожка</dt><dd>{{ selectedStream.isLocal ? 'Предпросмотр без звука' : selectedStream.hasAudio ? 'Аудиодорожка есть' : 'Аудиодорожки нет' }}</dd></div>
-          <div><dt>Последнее измерение</dt><dd>Нет свежих данных</dd></div>
-        </dl></div>
-      </details>
+      <ScreenReceiverDiagnosticsPanel :actual-video-quality="actualVideoQuality" :has-audio="selectedStream.hasAudio" :is-local="Boolean(selectedStream.isLocal)" :metrics="receiverMetrics" :sampled-at="receiverSampledAt" />
       <ScreenViewerAudioControl v-if="selectedStream.hasAudio && !selectedStream.isLocal" :adjustable="adjustable" :deafened="deafened" :muted="audioMuted" :volume="selectedAudioVolume" @toggle="emit('toggleAudio')" @set-volume="emit('setAudioVolume', $event)" />
       <p v-if="audioMessage" class="stream-audio-status" role="status">{{ audioMessage }}</p>
     </div>
