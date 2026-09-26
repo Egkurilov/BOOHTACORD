@@ -36,8 +36,14 @@ enum NavigationSection { channels, directMessages }
 enum WorkspacePanel { none, profile, audio, admin, search, searchContext }
 
 class AppState extends ChangeNotifier {
-  AppState(this.api, {Future<List<MediaDevice>> Function()? audioDeviceLoader})
-    : _audioDeviceLoader = audioDeviceLoader ?? _enumerateAudioDevices {
+  AppState(
+    this.api, {
+    Future<List<MediaDevice>> Function()? audioDeviceLoader,
+    Stream<List<MediaDevice>>? audioDeviceChanges,
+  }) : _audioDeviceLoader = audioDeviceLoader ?? _enumerateAudioDevices,
+       // Public constructor parameter, private stored stream.
+       // ignore: prefer_initializing_formals
+       _audioDeviceChanges = audioDeviceChanges {
     api.onUnauthorized = _handleUnauthorized;
   }
 
@@ -46,6 +52,9 @@ class AppState extends ChangeNotifier {
 
   final ApiClient api;
   final Future<List<MediaDevice>> Function() _audioDeviceLoader;
+  final Stream<List<MediaDevice>>? _audioDeviceChanges;
+  StreamSubscription<List<MediaDevice>>? _audioDeviceSubscription;
+  int _audioDeviceRevision = 0;
   final Uuid _uuid = const Uuid();
   AppPhase phase = AppPhase.loading;
   SessionUser? user;
@@ -401,6 +410,13 @@ class AppState extends ChangeNotifier {
     workspacePanel = workspacePanel == panel ? WorkspacePanel.none : panel;
     error = null;
     if (workspacePanel == WorkspacePanel.audio) {
+      _audioDeviceSubscription ??=
+          (_audioDeviceChanges ?? Hardware.instance.onDeviceChange.stream)
+              .listen((devices) {
+                _audioDeviceRevision++;
+                _applyAudioDevices(devices);
+                notifyListeners();
+              });
       unawaited(refreshAudioDevices());
     }
     notifyListeners();
@@ -437,35 +453,40 @@ class AppState extends ChangeNotifier {
 
   Future<void> refreshAudioDevices() async {
     if (audioDevicesLoading) return;
+    final revision = _audioDeviceRevision;
     audioDevicesLoading = true;
     audioSettingsError = null;
     notifyListeners();
     try {
       final devices = await _audioDeviceLoader();
-      audioInputDevices = devices
-          .where((device) => device.kind == 'audioinput')
-          .toList(growable: false);
-      audioOutputDevices = devices
-          .where((device) => device.kind == 'audiooutput')
-          .toList(growable: false);
-      if (selectedAudioInputId != null &&
-          !audioInputDevices.any(
-            (device) => device.deviceId == selectedAudioInputId,
-          )) {
-        selectedAudioInputId = null;
-      }
-      if (selectedAudioOutputId != null &&
-          !audioOutputDevices.any(
-            (device) => device.deviceId == selectedAudioOutputId,
-          )) {
-        selectedAudioOutputId = null;
-      }
+      if (revision == _audioDeviceRevision) _applyAudioDevices(devices);
     } catch (cause) {
       audioSettingsError =
           'Не удалось получить список аудиоустройств: ${cause.runtimeType}.';
     } finally {
       audioDevicesLoading = false;
       notifyListeners();
+    }
+  }
+
+  void _applyAudioDevices(List<MediaDevice> devices) {
+    audioInputDevices = devices
+        .where((device) => device.kind == 'audioinput')
+        .toList(growable: false);
+    audioOutputDevices = devices
+        .where((device) => device.kind == 'audiooutput')
+        .toList(growable: false);
+    if (selectedAudioInputId != null &&
+        !audioInputDevices.any(
+          (device) => device.deviceId == selectedAudioInputId,
+        )) {
+      selectedAudioInputId = null;
+    }
+    if (selectedAudioOutputId != null &&
+        !audioOutputDevices.any(
+          (device) => device.deviceId == selectedAudioOutputId,
+        )) {
+      selectedAudioOutputId = null;
     }
   }
 
@@ -1417,6 +1438,7 @@ class AppState extends ChangeNotifier {
   void dispose() {
     _realtimeRetry?.cancel();
     _maintenanceTimer?.cancel();
+    unawaited(_audioDeviceSubscription?.cancel());
     api.onUnauthorized = null;
     unawaited(_realtimeSubscription?.cancel());
     unawaited(_realtimeSocket?.close());

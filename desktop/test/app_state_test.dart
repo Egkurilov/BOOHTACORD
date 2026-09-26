@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:livekit_client/livekit_client.dart' show MediaDevice;
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -68,6 +71,62 @@ void main() {
       state.screenShareError,
       'Подключитесь к голосовому каналу перед демонстрацией.',
     );
+  });
+
+  test('updates audio devices when a headset is connected', () async {
+    final changes = StreamController<List<MediaDevice>>.broadcast();
+    final state = AppState(
+      _FakeApi(topology),
+      audioDeviceLoader: () async => const [
+        MediaDevice('built-in', 'Built-in microphone', 'audioinput', null),
+      ],
+      audioDeviceChanges: changes.stream,
+    );
+    addTearDown(() async {
+      state.dispose();
+      await changes.close();
+    });
+    await state.initialize();
+    await state.refreshAudioDevices();
+    state.selectedAudioInputId = 'built-in';
+    state.toggleWorkspacePanel(WorkspacePanel.audio);
+
+    changes.add(const [
+      MediaDevice('usb-mic', 'USB microphone', 'audioinput', null),
+      MediaDevice('usb-speaker', 'USB speaker', 'audiooutput', null),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(state.audioInputDevices.single.deviceId, 'usb-mic');
+    expect(state.audioOutputDevices.single.deviceId, 'usb-speaker');
+    expect(state.selectedAudioInputId, isNull);
+  });
+
+  test('does not replace a hotplug event with a stale device scan', () async {
+    final changes = StreamController<List<MediaDevice>>.broadcast();
+    final oldScan = Completer<List<MediaDevice>>();
+    final state = AppState(
+      _FakeApi(topology),
+      audioDeviceLoader: () => oldScan.future,
+      audioDeviceChanges: changes.stream,
+    );
+    addTearDown(() async {
+      state.dispose();
+      await changes.close();
+    });
+    await state.initialize();
+    state.toggleWorkspacePanel(WorkspacePanel.audio);
+    changes.add(const [
+      MediaDevice('usb-mic', 'USB microphone', 'audioinput', null),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+    oldScan.complete(const [
+      MediaDevice('built-in', 'Built-in microphone', 'audioinput', null),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(state.audioInputDevices.single.deviceId, 'usb-mic');
+    expect(state.audioDevicesLoading, isFalse);
   });
 
   test(

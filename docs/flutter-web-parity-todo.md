@@ -53,7 +53,8 @@ its behavior and platform-specific acceptance evidence exist.
   reopen control and its compact card layout have widget coverage.
 - [ ] Verify enumeration and switching of named microphones and outputs,
   including device hotplug, on macOS, Windows and Android. The dropdown now
-  renders named devices when the native SDK has no `default` entry.
+  renders named devices when the native SDK has no `default` entry, and the
+  audio panel follows device-change events without reverting to stale scans.
 - [ ] Match permission-denied/prejoin/dock copy and accessible states.
 - [ ] Specify and test bounded reconnect behavior against LiveKit's retry
   ownership; avoid competing retry loops or duplicate voice leases.
@@ -96,5 +97,7 @@ its behavior and platform-specific acceptance evidence exist.
 
 ## Currently executing
 
-- [ ] P1: finish members/audit error, empty, focus and secret-copy acceptance
-  tests; then verify admin ACLs against the live contract.
+- [ ] P1: verify audio device enumeration, switching and screen re-entry with
+  real devices and a real voice room on macOS/Android.
+- [ ] Delivery: complete the signed Android release build when the persistent
+  upload keystore is available.
