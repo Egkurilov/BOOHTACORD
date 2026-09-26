@@ -1,0 +1,31 @@
+{
+  "id": "des06-admin-compact-2026-09-26-001",
+  "task": "DES-06",
+  "kind": "deployed-browser-responsive-admin-check",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-26T10:28:41Z",
+  "source_revision": "19b8e584d5bcb9842154def3c2784ee1bca09702",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1654422",
+  "environment": "Authenticated Chrome production browser; 900 CSS px height; explicit 1024, 1280 and 1440 CSS px viewport overrides; devicePixelRatio about 1 and visualViewport.scale 1; viewport override restored afterward.",
+  "before": {
+    "revision": "67fce3c367d01a1d443367090ce89d938ff7ecac",
+    "width_css_px": 1024,
+    "table_client_px": 685,
+    "table_scroll_px": 749,
+    "reset_button_right_px": 1033.9,
+    "table_right_px": 983.3,
+    "observation": "The reset-password button required internal horizontal scrolling. The document itself did not overflow."
+  },
+  "after": [
+    { "width_css_px": 1024, "table_client_px": 685, "table_scroll_px": 685, "reset_button_right_px": 970.7, "table_right_px": 983.3, "actions_direction": "column", "result": "PASS" },
+    { "width_css_px": 1280, "table_client_px": 933, "table_scroll_px": 933, "actions_direction": "row", "result": "PASS" },
+    { "width_css_px": 1440, "table_client_px": 1111, "table_scroll_px": 1111, "actions_direction": "row", "result": "PASS" }
+  ],
+  "checks": [
+    { "name": "frontend_unit_tests", "result": "PASS_LOCAL", "detail": "198 files, 578 tests passed." },
+    { "name": "typescript_vite_build", "result": "PASS_LOCAL", "detail": "vue-tsc --noEmit and vite build passed; deployed stylesheet asset index-DKmtPBkb.css was observed." },
+    { "name": "trusted_deploy_and_health", "result": "PASS", "detail": "Backend, frontend, release_guard and deploy passed; post-rollout API health ok." },
+    { "name": "real_page_zoom_and_connected_viewer", "result": "NOT_RUN", "detail": "Viewport overrides are not actual browser page zoom; connected media/viewer and screen-reader acceptance were not available." }
+  ],
+  "remaining": "DES-06 stays open for 125%/150% actual page zoom, voice/viewer, drawers, focus and visual acceptance across required widths."
+}
