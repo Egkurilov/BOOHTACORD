@@ -1,0 +1,15 @@
+{
+  "id": "qa07-viewer-fps-source-deploy-2026-09-26-001",
+  "kind": "trusted-master-deployment-check",
+  "status": "PASS_DEPLOY_ONLY",
+  "observed_at": "2026-09-26",
+  "source_commit": "9d5bc4cee508e5feb320ada1150acc3a67a42f83",
+  "run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1655140",
+  "observations": [
+    "GitVerse backend, frontend, release_guard and deploy jobs all reported success for the FE-50 source commit.",
+    "Public GET https://v.bootybay.ru/api/v1/health returned 200 with status ok; root index returned 200.",
+    "The root index referenced /assets/index-GBRKwWFm.js; GET returned 200 and the published bundle included presentedFrames.",
+    "Local HEAD and origin/master resolved to the same FE-50 source commit with a clean tracked working tree."
+  ],
+  "limits": "Deployment and guest HTTP smoke do not measure a real stream. POC-01/02 physical presenter/observer, 60 FPS, participant loudness and selected-stream audio checks remain NOT_RUN."
+}
