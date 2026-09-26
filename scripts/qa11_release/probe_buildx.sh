@@ -37,7 +37,7 @@ available="$(sudo -n df -B1 --output=avail -- "$mountpoint" | awk 'NR == 2 { pri
 (( 10#$available > 9000000000 )) || { echo 'Insufficient space for the QA-11 probe' >&2; exit 1; }
 
 sudo -n install -d -m 0755 "$config/context"
-printf 'FROM scratch\nCOPY marker /marker\n' | sudo -n tee "$config/context/Dockerfile" >/dev/null
+printf 'FROM scratch\nCOPY marker /marker\nCMD ["/marker"]\n' | sudo -n tee "$config/context/Dockerfile" >/dev/null
 printf 'QA-11 build probe\n' | sudo -n tee "$config/context/marker" >/dev/null
 if sudo -n env DOCKER_CONFIG="$config" docker buildx build \
   --platform linux/amd64 --sbom=true --provenance=mode=max \
