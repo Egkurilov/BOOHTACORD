@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ChannelNavigation from '../channel/ChannelNavigation.vue'
 import { buildVoiceNavigationPresence } from '../channel/voice_navigation_presence'
+import { createVoiceRosterPolling } from '../voice/voice_roster_polling'
 import type { TopologyChannel } from '../channel/topology_client'
 import DirectMessageNavigation from '../direct_message/DirectMessageNavigation.vue'
 import { useDirectMessageStore } from '../direct_message/direct_message_store'
@@ -33,11 +34,11 @@ const { activeVoiceChannel, audioSettings, joinVoice, leaveVoice, selectAudioDev
 const directMessageStore = useDirectMessageStore()
 const directMessageCandidateStore = useDirectMessageCandidateStore()
 const messageStore = useMessageStore()
-const realtimeStore = useRealtimeStore()
+const realtimeStore = useRealtimeStore(), voiceRoster = createVoiceRosterPolling()
 const { busy: logoutBusy, error: logoutError, signOut } = bindWorkspaceLogout(voiceConnection, leaveVoice, realtimeStore, () => emit('loggedOut'))
 const guildPresence = useGuildPresence()
 const workspaceRealtime = createWorkspaceRealtime({ topology: topologyStore, messages: messageStore, directMessages: directMessageStore }, realtimeStore, guildPresence, voiceConnection, props.accountId, () => expireWorkspaceSession(voiceConnection, () => emit('sessionExpired')))
-watch(() => realtimeStore.state, (state) => { if (state === 'ERROR' || state === 'DISCONNECTED') guildPresence.invalidate() })
+watch(() => realtimeStore.state, (state) => { if (state === 'ERROR' || state === 'DISCONNECTED') guildPresence.invalidate(); if (state === 'CONNECTED') void voiceRoster.refresh() })
 const sidebarSection = ref<'channels' | 'messages'>('channels')
 const activePanel = ref<'none' | 'admin' | 'audio' | 'profile' | 'search'>('none')
 const { navOpen, membersOpen, modalDrawer, closeDrawers, toggleNavigation, toggleMembers } = useWorkspaceDrawers(activePanel)
@@ -60,8 +61,7 @@ function setParticipantVolume(participantID: string, volume: number): void { voi
 function refreshTopology(): void { void topologyStore.refresh() }
 function togglePanel(panel: 'admin' | 'audio' | 'profile' | 'search'): void { closeDrawers(); activePanel.value = activePanel.value === panel ? 'none' : panel }
 function openGuildPanel(): void { if (props.role === 'ADMINISTRATOR') togglePanel('admin') }
-onMounted(() => { void topologyStore.refresh(); void directMessageStore.refreshNavigation(); void refreshProfile(); workspaceRealtime.start() })
-onBeforeUnmount(() => workspaceRealtime.stop())
+onMounted(() => { void topologyStore.refresh(); void directMessageStore.refreshNavigation(); void refreshProfile(); voiceRoster.start(); workspaceRealtime.start() }); onBeforeUnmount(() => { voiceRoster.stop(); workspaceRealtime.stop() })
 </script>
 <template>
   <div class="app-frame">
@@ -76,7 +76,7 @@ onBeforeUnmount(() => workspaceRealtime.stop())
             <p v-if="topologyStore.loading" class="state" aria-live="polite">Загружаем каналы…</p>
             <p v-else-if="topologyStore.error" class="state state-error" role="alert">{{ topologyStore.error }} Войдите в аккаунт или повторите попытку.</p>
             <template v-else-if="topologyStore.topology">
-              <ChannelNavigation :active-voice-channel-id="activeVoiceChannel?.id" :selected-channel-id="selectedChannelId ?? undefined" :topology="topologyStore.topology" :voice-presence="voiceNavigationPresence" @select="selectChannel" />
+              <ChannelNavigation :active-voice-channel-id="activeVoiceChannel?.id" :selected-channel-id="selectedChannelId ?? undefined" :topology="topologyStore.topology" :voice-presence="voiceNavigationPresence" :voice-rosters="voiceRoster.channels.value" @select="selectChannel" />
             </template>
             <p v-else class="state">Каналы пока не созданы.</p>
           </template>
@@ -98,7 +98,7 @@ onBeforeUnmount(() => workspaceRealtime.stop())
       </aside>
       <main id="main-region" class="main" data-testid="main-region">
         <WorkspaceMain :panel="activePanel === 'search' ? 'none' : activePanel" :channel="selectedChannel" :direct-message="selectedDirectMessage" :join-voice="joinVoice" :leave-voice="leaveVoice" :activation-mode="voiceActivation.mode" :start-screen="startScreen"
-          :self-display-name="profile?.display_name ?? null" :nav-open="navOpen" :members-open="memberHeaderExpandedState" :show-members="!selectedDirectMessage && activePanel === 'none'" :voice-connection="voiceConnection"
+          :self-display-name="profile?.display_name ?? null" :nav-open="navOpen" :members-open="memberHeaderExpandedState" :show-members="!selectedDirectMessage && activePanel === 'none'" :voice-connection="voiceConnection" :voice-roster="voiceRoster.channels.value?.find((room) => room.channelId === selectedChannel?.id) ?? null" :voice-roster-error="voiceRoster.error.value"
           @toggle-nav="toggleNavigation" @toggle-members="toggleMembers">
           <template #admin>
             <AdminPanel v-if="props.role === 'ADMINISTRATOR'" :categories="topologyStore.topology?.categories ?? []" :revision="topologyStore.topology?.revision ?? 0" @topology-changed="refreshTopology" />

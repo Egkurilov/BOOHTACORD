@@ -1,0 +1,15 @@
+{
+  "id": "qa12-digest-only-rollback-2026-09-26-001",
+  "task": "QA-12",
+  "kind": "local-rollback-reference-guard",
+  "status": "PASS_LOCAL",
+  "observed_at": "2026-09-26T11:35:20Z",
+  "change": "The manual compatible rollback rejects either release when its API or web OCI digest receipt is absent or invalid; no SHA-tag fallback remains. Both directions use digest-qualified refs.",
+  "validation": [
+    "Digest-only image-ref test: PASS, including missing and malformed receipt rejection.",
+    "Read-only preflight tests: PASS, including missing previous API receipt rejection.",
+    "Two-way fake-Docker rehearsal and manual workflow source tests: PASS.",
+    "ShellCheck on the changed Bash scripts after normalizing Windows checkout CRLF: PASS."
+  ],
+  "limits": "This is source/fake-Docker evidence. No production rollback, two-browser observation or live volume-content preservation was performed; QA-12 remains open."
+}

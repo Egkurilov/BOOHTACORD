@@ -66,6 +66,7 @@ its behavior and platform-specific acceptance evidence exist.
   renders named devices when the native SDK has no `default` entry, and the
   audio panel follows device-change events without reverting to stale scans.
 - [ ] Match permission-denied/prejoin/dock copy and accessible states.
+  Reconnecting voice-room badge now says «Восстанавливаем связь» with live semantics; [96 Flutter tests and analyzer](../evidence/flutter/qa13-voice-reconnect-badge-2026-09-26-001.json) PASS. Permission-denied and physical screen-reader states remain open.
 - [ ] Specify and test bounded reconnect behavior against LiveKit's retry
   ownership; avoid competing retry loops or duplicate voice leases.
 - [ ] Verify real-peer microphone/screen-audio gain, mute/deafen/PTT and device

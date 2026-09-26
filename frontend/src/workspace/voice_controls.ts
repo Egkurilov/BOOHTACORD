@@ -8,6 +8,7 @@ import { useVoiceActivationStore } from '../voice/activation_store'
 import { useVoiceConnectionStore } from '../voice/connection_store'
 import type { ScreenProfile, VoiceJoinMode } from '../voice/livekit_gateway'
 import { useVoiceNavigationStore } from '../voice/navigation_store'
+import { streamStartChime } from '../voice/stream_start_runtime'
 
 export function useWorkspaceVoiceControls() {
   const topologyStore = useTopologyStore()
@@ -48,6 +49,7 @@ export function useWorkspaceVoiceControls() {
   async function joinVoice(channelId: string, transfer = false, joinMode: VoiceJoinMode = 'with-microphone'): Promise<void> {
     const activeChannelId = voiceConnection.active?.channelId
     if (activeChannelId && activeChannelId !== channelId && !window.confirm('Выйти из текущего голосового канала и перейти в другой?')) return
+    streamStartChime.activate()
     if (activeChannelId && activeChannelId !== channelId) await leaveVoice()
     await audioSettings.loadProcessing(voiceConnection.setAudioProcessing)
     await voiceConnection.join(channelId, transfer, joinMode)

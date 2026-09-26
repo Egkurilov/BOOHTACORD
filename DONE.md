@@ -17,7 +17,7 @@
 - [x] **T-044:** TEXT и DM streaming upload до 25 000 000 байт, до 10 attachments, reservation до/во время записи, private staging/atomic move, owner/target checks, protected download, bounded raster PNG preview. Источник: backend/cmd/api/storage_routes.go и storage leaves.
 - [x] **T-044:** безопасный stale-staging cleanup, bounded operator CLI для UNATTACHED и скрытых файлов, retry и проверка живых ссылок. Источники: backend/cmd/cleanup_* и storage leaves.
 - [x] **T-003:** authenticated same-origin WS, presence snapshot/change с учётом нескольких вкладок, TEXT и приватные DM hints, bounded queue/resync, повторная проверка session и durable replay с повторной ACL-проверкой. Источники: realtime_routes.go, realtime/connect_session, event_hub.
-## Реализованные backend leaf-задачи BE-01…BE-17 (25–26.09.2026)
+## Реализованные backend leaf-задачи BE-01…BE-17 (25–26.09.2026); BE-18 — в [новом списке](DONE_RECENT.md)
 
 - [x] **BE-01:** конкурентный TEXT retry возвращает исходное сообщение только при конфликте его idempotency key; PostgreSQL race-тест подтверждает одну строку и одну связь вложений.
 - [x] **BE-02:** DM create/edit/delete публикуют ID-only события только двум текущим участникам; ACL и session перепроверяются перед приватной доставкой.
@@ -90,7 +90,7 @@
 - [x] **T-022/050 · FE-40:** реальные remote participants, observable speaking/mute, local self-deafen, отдельные уровни voice/screen audio 0–200%, active voice roster в navigation, room footer. [FE-40](evidence/design/voice-participant-display-name-2026-09-25-002.json) реактивно показывает подтверждённый текущий ник из `/members/{id}` в voice card/navigation/viewer при пустом или старом LiveKit name, не выводит lease identity; 561 frontend-тест и сборка PASS. Remote deafen не угадывается; двухпользовательский media browser ещё DES-04/QA-06.
 - [x] **T-030:** screen picker после действия пользователя, выбор target 720p/1080p × 30/60, stop/source-end handling, sender diagnostics с no-data, voice-first policy. Game audio/качество всё ещё требуют POC.
 - [x] **T-030:** выбор одного remote stream с явными subscribe/unsubscribe/detach, local preview без собственного звука, contain/fullscreen/expanded area, stream rail, audio status и измерение viewer FPS. Аппаратное подтверждение качества остаётся QA-07.
-Реализованные media leaf-задачи FE-41…47 вынесены в [DONE_MEDIA.md](DONE_MEDIA.md); физическая QA-06/07-приёмка остаётся открытой.
+Реализованные media leaf-задачи FE-41…47 — в [DONE_MEDIA.md](DONE_MEDIA.md); BE-18/FE-48/49 и новые частичные QA leaves — в [DONE_RECENT.md](DONE_RECENT.md). Физическая приёмка остаётся открытой.
 ## Дизайн
 
 - [x] **DES-01:** все 40 компонентов исходного `components.json` сопоставлены с текущими Vue/CSS, точными контрактными состояниями, screenshot reference и задачей-владельцем отклонения в [матрице](docs/design/GUILDCHAT_COMPONENT_MATRIX.md). Для shell и voice/stream применены ADR-009/008; отсутствие отдельного Toast/Dialog/ShareSetupDialog не выдано за visual parity. Все 40 строк и 78 ссылок проверены, битых ссылок нет. Browser/pixel-приёмка остаётся DES-02…08 и QA-05.

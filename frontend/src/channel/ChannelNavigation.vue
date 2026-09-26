@@ -2,6 +2,8 @@
 import type { ChannelTopology, TopologyChannel } from './topology_client'
 import { avatarBackground } from '../design/avatar_color'
 import VoiceParticipantStatus from '../voice/VoiceParticipantStatus.vue'
+import VoiceRoomRoster from '../voice/VoiceRoomRoster.vue'
+import type { VoiceRoomRoster as RoomRoster } from '../voice/voice_roster_client'
 import type { VoiceNavigationPresence } from './voice_navigation_presence'
 
 const props = defineProps<{
@@ -9,11 +11,13 @@ const props = defineProps<{
   selectedChannelId?: string
   topology: ChannelTopology
   voicePresence: VoiceNavigationPresence | null
+  voiceRosters?: RoomRoster[] | null
 }>()
 
 const emit = defineEmits<{ select: [channel: TopologyChannel] }>()
 
 function isConnectedVoice(channel: TopologyChannel): boolean { return channel.kind === 'VOICE' && channel.id === props.activeVoiceChannelId }
+function rosterFor(channelId: string): RoomRoster | undefined { return props.voiceRosters?.find((room) => room.channelId === channelId) }
 function initial(name: string): string { return Array.from(name.trim())[0]?.toLocaleUpperCase('ru-RU') || 'У' }
 </script>
 
@@ -37,17 +41,18 @@ function initial(name: string): string { return Array.from(name.trim())[0]?.toLo
           <span class="channel-name">{{ channel.name }}</span>
           <span v-if="channel.kind === 'TEXT' && channel.unreadCount" class="channel-state" :aria-label="`Непрочитанных сообщений: ${channel.unreadCount}`">{{ channel.unreadCount }}</span>
           <span v-if="channel.kind === 'TEXT' && channel.mentionCount" class="channel-state" :aria-label="`Упоминаний: ${channel.mentionCount}`">@{{ channel.mentionCount }}</span>
-          <span v-if="props.voicePresence && props.voicePresence.channelId === channel.id" class="channel-member-count" :title="`Участников в голосовом канале: ${props.voicePresence.memberCount}`">{{ props.voicePresence.memberCount }}</span>
+          <span v-if="channel.kind === 'VOICE' && (props.voicePresence?.channelId === channel.id || rosterFor(channel.id))" class="channel-member-count" :title="`Участников в голосовом канале: ${props.voicePresence?.channelId === channel.id ? props.voicePresence.memberCount : rosterFor(channel.id)?.participants.length}`">{{ props.voicePresence?.channelId === channel.id ? props.voicePresence.memberCount : rosterFor(channel.id)?.participants.length }}</span>
           <span v-if="channel.admissionClosed" class="channel-state">Вход закрыт</span>
         </button>
         <ul v-if="props.voicePresence && props.voicePresence.channelId === channel.id" class="voice-member-list" aria-label="Участники подключённого голосового канала" data-testid="voice-member-rows">
           <li v-for="member in props.voicePresence.members" :key="member.id" class="voice-member-row" :class="{ 'is-speaking': member.isSpeaking }">
             <span class="voice-member-avatar" :style="{ backgroundColor: avatarBackground(member.id) }" aria-hidden="true">{{ initial(member.name) }}</span>
-            <span class="voice-member-name">{{ member.name }}{{ member.self ? ' · вы' : '' }}</span>
+            <span class="voice-member-name">{{ member.name }}</span>
             <span v-if="member.screenSharing" class="voice-member-share" role="img" aria-label="Показывает экран" title="Показывает экран"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4zM9 20h6m-3-4v4" /></svg></span>
             <VoiceParticipantStatus compact :microphone-muted="member.microphoneMuted" :microphone-unavailable="member.microphoneUnavailable" :speaking="member.speaking" />
           </li>
         </ul>
+        <VoiceRoomRoster v-else-if="channel.kind === 'VOICE' && rosterFor(channel.id)?.participants.length" :roster="rosterFor(channel.id)!" compact />
       </template>
     </section>
   </nav>

@@ -480,6 +480,18 @@
         }
       }
     },
+    "/api/v1/voice/participants": {
+      "get": {
+        "operationId": "listConnectedVoiceParticipants",
+        "description": "Authenticated non-blocked guild member; no voice lease required. Returns all current VOICE channels including empty rooms. Participants are LiveKit ICE-active voice-lease identities intersected with current unrevoked database leases, sessions and accounts. Names come from users, not LiveKit metadata. Screen sharing means a currently unmuted screen video publication in this snapshot; speaking is not asserted. No result is cached.",
+        "responses": {
+          "200": { "description": "Current voice-room roster snapshot", "headers": { "Cache-Control": { "schema": { "type": "string", "enum": ["no-store"] } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VoiceParticipants" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "503": { "description": "Private LiveKit RoomService snapshot unavailable; never interpreted as an empty roster", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
     "/api/v1/voice/channels/{channelID}/leases": {
       "post": {
         "operationId": "acquireVoiceLease",
@@ -1751,6 +1763,25 @@
           "id": { "type": "string", "format": "uuid" },
           "revision": { "type": "integer", "minimum": 1 },
           "revoked_leases": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "VoiceParticipants": {
+        "type": "object", "additionalProperties": false, "required": ["channels"],
+        "properties": { "channels": { "type": "array", "items": { "$ref": "#/components/schemas/VoiceChannelParticipants" } } }
+      },
+      "VoiceChannelParticipants": {
+        "type": "object", "additionalProperties": false, "required": ["channel_id", "participants"],
+        "properties": {
+          "channel_id": { "type": "string", "format": "uuid" },
+          "participants": { "type": "array", "items": { "$ref": "#/components/schemas/VoiceParticipant" } }
+        }
+      },
+      "VoiceParticipant": {
+        "type": "object", "additionalProperties": false, "required": ["account_id", "display_name", "screen_sharing"],
+        "properties": {
+          "account_id": { "type": "string", "format": "uuid" },
+          "display_name": { "type": "string" },
+          "screen_sharing": { "type": "boolean" }
         }
       },
       "VoiceLeaseRequest": {

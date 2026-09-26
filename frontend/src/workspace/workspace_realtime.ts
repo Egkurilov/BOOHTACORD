@@ -47,12 +47,18 @@ export async function refreshProtectedState(stores: WorkspaceRealtimeStores): Pr
 export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtime: ReturnType<typeof useRealtimeStore>, presence: ReturnType<typeof useGuildPresence>, voice: ReturnType<typeof useVoiceConnectionStore>, accountID: string, onSessionExpired: () => void) {
   const voiceNavigation = useVoiceNavigationStore()
   const notifications = useNotificationStore()
+  let active = false
+  let lifecycle = 0
   function onEvent(event: RealtimeEvent): void | Promise<void> {
+    if (!active) return
+    const eventLifecycle = lifecycle
     if (presence.acceptRealtimeEvent(event)) return
     if (event.kind === 'connection.resync_required') return refreshProtectedState(stores)
     if (event.kind === 'direct_message.message_created' || event.kind === 'direct_message.message_updated' || event.kind === 'direct_message.message_deleted') {
       const previousUnread = notifications.capture(event)
-      return refreshDirectMessageHint(stores.directMessages, event.payload.direct_message_id as string).then(() => notifications.deliver(event, previousUnread))
+      return refreshDirectMessageHint(stores.directMessages, event.payload.direct_message_id as string).then(() => {
+        if (active && lifecycle === eventLifecycle) return notifications.deliver(event, previousUnread)
+      })
     }
     if (event.kind === 'channel.updated') return refreshTopologyHint(stores.topology)
     if (event.kind === 'voice.lease_revoked') return applyVoiceLeaseRevocation(voice, voiceNavigation, event.payload.lease_id as string, event.payload.reason as VoiceLeaseRevocationReason)
@@ -62,13 +68,17 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
       return Promise.all([
         checked(() => stores.topology.refresh(), () => stores.topology.error),
         visible ? checked(() => stores.messages.refresh(), () => stores.messages.error) : Promise.resolve(),
-      ]).then(() => notifications.deliver(event, previousUnread))
+      ]).then(() => {
+        if (active && lifecycle === eventLifecycle) return notifications.deliver(event, previousUnread)
+      })
     }
     return refreshProtectedState(stores)
   }
 
   return {
     start(): void {
+      active = true
+      lifecycle += 1
       notifications.start(accountID)
       realtime.connect(onEvent, undefined, undefined, {
         onRecovery: () => refreshProtectedState(stores),
@@ -76,6 +86,6 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
         onSessionExpired,
       })
     },
-    stop(): void { realtime.disconnect(); notifications.stop() },
+    stop(): void { active = false; lifecycle += 1; realtime.disconnect(); notifications.stop() },
   }
 }

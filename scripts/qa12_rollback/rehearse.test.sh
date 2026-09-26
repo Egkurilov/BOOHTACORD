@@ -15,9 +15,14 @@ state_dir="$temporary_root/state"
 bin_dir="$temporary_root/bin"
 current="$(printf 'a%.0s' {1..40})"
 previous="$(printf 'b%.0s' {1..40})"
+current_digest="sha256:$(printf '1%.0s' {1..64})"
+previous_digest="sha256:$(printf '3%.0s' {1..64})"
 mkdir -p "$release_root/$current/scripts/qa12_rollback" "$release_root/$previous" "$state_dir" "$bin_dir"
-printf 'voice-platform-api:%s\n' "$current" > "$state_dir/running-api"
-printf 'voice-platform-web:%s\n' "$current" > "$state_dir/running-web"
+for service in api web; do
+  printf '{"index_digest":"%s"}\n' "$current_digest" > "$release_root/$current/$service.oci.json"
+  printf '{"index_digest":"%s"}\n' "$previous_digest" > "$release_root/$previous/$service.oci.json"
+  printf 'voice-platform-%s@%s\n' "$service" "$current_digest" > "$state_dir/running-$service"
+done
 cat > "$release_root/$current/scripts/qa12_rollback/preflight.sh" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -34,8 +39,8 @@ cat > "$release_root/$current/scripts/audit-attachment-volume.sh" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 printf 'audit %s\n' "$1" >> "$QA12_LOG"
-expected="voice-platform-api:$1"
-[[ "$1" != "$QA12_CURRENT" || ! -f "$QA12_RELEASE_ROOT/$1/api.oci.json" ]] || expected="voice-platform-api@$QA12_DIGEST"
+expected="voice-platform-api@$QA12_CURRENT_DIGEST"
+[[ "$1" != "$QA12_PREVIOUS" ]] || expected="voice-platform-api@$QA12_PREVIOUS_DIGEST"
 [[ "$(cat "$QA12_STATE/running-api")" == "$expected" ]]
 if [[ "${QA12_FAIL_PREVIOUS_AUDIT:-0}" == 1 && "$1" == "$QA12_PREVIOUS" ]]; then exit 29; fi
 EOF
@@ -45,7 +50,7 @@ set -euo pipefail
 case "$1 $2" in
   'image inspect') printf 'sha256:%s\n' "$(printf '1%.0s' {1..64})" ;;
   'volume inspect')
-    if [[ "${QA12_VOLUME_DRIFT:-0}" == 1 && "$(cat "$QA12_STATE/running-api")" == "voice-platform-api:$QA12_PREVIOUS" ]]; then
+    if [[ "${QA12_VOLUME_DRIFT:-0}" == 1 && "$(cat "$QA12_STATE/running-api")" == "voice-platform-api@$QA12_PREVIOUS_DIGEST" ]]; then
       printf '%s|local|/unexpected/%s\n' "$5" "$5"
     else
       printf '%s|local|/volumes/%s\n' "$5" "$5"
@@ -72,47 +77,44 @@ if ! python3 -c 'import sys' >/dev/null 2>&1; then
 fi
 export PATH="$bin_dir:$PATH" QA12_STATE="$state_dir" QA12_PREVIOUS="$previous" QA12_OBSERVE_SECONDS=30
 export QA12_CURRENT="$current" QA12_RELEASE_ROOT="$release_root"
+export QA12_CURRENT_DIGEST="$current_digest" QA12_PREVIOUS_DIGEST="$previous_digest"
 export QA12_LOG="$temporary_root/commands.log"
 script="$root/scripts/qa12_rollback/rehearse.sh"
 bash "$script" "$current" "$previous" "$release_root" > "$temporary_root/success.out"
-[[ "$(cat "$state_dir/running-api")" == "voice-platform-api:$current" ]]
-[[ "$(cat "$state_dir/running-web")" == "voice-platform-web:$current" ]]
+[[ "$(cat "$state_dir/running-api")" == "voice-platform-api@$current_digest" ]]
+[[ "$(cat "$state_dir/running-web")" == "voice-platform-web@$current_digest" ]]
 [[ "$(grep -c '^deploy ' "$QA12_LOG")" == 2 ]]
 [[ "$(grep -c '^audit ' "$QA12_LOG")" == 3 ]]
 grep -Fq 'sleep 30' "$QA12_LOG"
 grep -Fq 'rehearsal=source-checks-pass' "$temporary_root/success.out"
-printf 'voice-platform-api:%s\n' "$current" > "$state_dir/running-api"
-printf 'voice-platform-web:%s\n' "$current" > "$state_dir/running-web"
+printf 'voice-platform-api@%s\n' "$current_digest" > "$state_dir/running-api"
+printf 'voice-platform-web@%s\n' "$current_digest" > "$state_dir/running-web"
 : > "$QA12_LOG"
 QA12_FAIL_PREVIOUS_AUDIT=1 bash "$script" "$current" "$previous" "$release_root" > "$temporary_root/failure.out" 2>&1 && exit 1
-[[ "$(cat "$state_dir/running-api")" == "voice-platform-api:$current" ]]
-[[ "$(cat "$state_dir/running-web")" == "voice-platform-web:$current" ]]
+[[ "$(cat "$state_dir/running-api")" == "voice-platform-api@$current_digest" ]]
+[[ "$(cat "$state_dir/running-web")" == "voice-platform-web@$current_digest" ]]
 [[ "$(grep -c '^deploy ' "$QA12_LOG")" == 2 ]]
 grep -Fq 'attempting current image restore' "$temporary_root/failure.out"
-printf 'voice-platform-api:%s\n' "$current" > "$state_dir/running-api"
-printf 'voice-platform-web:%s\n' "$current" > "$state_dir/running-web"
+printf 'voice-platform-api@%s\n' "$current_digest" > "$state_dir/running-api"
+printf 'voice-platform-web@%s\n' "$current_digest" > "$state_dir/running-web"
 : > "$QA12_LOG"
 QA12_INTERRUPT_ON_SLEEP=1 bash "$script" "$current" "$previous" "$release_root" > "$temporary_root/interrupted.out" 2>&1 && exit 1
-[[ "$(cat "$state_dir/running-api")" == "voice-platform-api:$current" ]]
+[[ "$(cat "$state_dir/running-api")" == "voice-platform-api@$current_digest" ]]
 grep -Fq 'terminated; current restore will be attempted' "$temporary_root/interrupted.out"
 grep -Fq 'attempting current image restore' "$temporary_root/interrupted.out"
-printf 'voice-platform-api:%s\n' "$current" > "$state_dir/running-api"
-printf 'voice-platform-web:%s\n' "$current" > "$state_dir/running-web"
+printf 'voice-platform-api@%s\n' "$current_digest" > "$state_dir/running-api"
+printf 'voice-platform-web@%s\n' "$current_digest" > "$state_dir/running-web"
 : > "$QA12_LOG"
 QA12_VOLUME_DRIFT=1 bash "$script" "$current" "$previous" "$release_root" > "$temporary_root/drift.out" 2>&1 && exit 1
-[[ "$(cat "$state_dir/running-api")" == "voice-platform-api:$previous" ]]
+[[ "$(cat "$state_dir/running-api")" == "voice-platform-api@$previous_digest" ]]
 [[ "$(grep -c '^deploy ' "$QA12_LOG")" == 1 ]]
 grep -Fq 'named volume identity changed' "$temporary_root/drift.out"
 grep -Fq 'current restore requires operator diagnosis' "$temporary_root/drift.out"
-digest="sha256:$(printf '1%.0s' {1..64})"
-export QA12_DIGEST="$digest"
-for service in api web; do
-  printf '{"index_digest":"%s"}\n' "$digest" > "$release_root/$current/$service.oci.json"
-  printf 'voice-platform-%s@%s\n' "$service" "$digest" > "$state_dir/running-$service"
-done
+for service in api web; do printf 'voice-platform-%s@%s\n' "$service" "$current_digest" > "$state_dir/running-$service"; done
 : > "$QA12_LOG"
 bash "$script" "$current" "$previous" "$release_root" > "$temporary_root/digest.out"
-[[ "$(cat "$state_dir/running-api")" == "voice-platform-api@$digest" ]]
-grep -Fq "deploy voice-platform-api@$digest voice-platform-web@$digest" "$QA12_LOG"
+[[ "$(cat "$state_dir/running-api")" == "voice-platform-api@$current_digest" ]]
+grep -Fq "deploy voice-platform-api@$previous_digest voice-platform-web@$previous_digest" "$QA12_LOG"
+grep -Fq "deploy voice-platform-api@$current_digest voice-platform-web@$current_digest" "$QA12_LOG"
 if grep -Eq '(^| )down( |$)|(^| )volume (rm|prune)( |$)' "$QA12_LOG"; then exit 1; fi
 echo 'QA-12 two-way rehearsal tests passed'

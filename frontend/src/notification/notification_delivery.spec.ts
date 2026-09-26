@@ -85,4 +85,19 @@ describe('browser notification delivery', () => {
     await delivery.deliver('event-1', 'Новое личное сообщение.')
     expect(value.show).not.toHaveBeenCalled()
   })
+
+  it('does not save a permission granted after the account is stopped', async () => {
+    const value = fixture()
+    let grant!: (permission: NotificationPermission) => void
+    value.requestPermission.mockImplementation(() => new Promise<NotificationPermission>((resolve) => { grant = resolve }))
+    const delivery = createNotificationDelivery('account-a', value.runtime)
+    const enabling = delivery.enable()
+
+    delivery.cancel()
+    grant('granted')
+    expect(await enabling).toBe(false)
+    expect(value.runtime.storage?.getItem('boohtacord:notification:account-a:enabled')).toBeNull()
+    await delivery.deliver('event-1', 'Новое личное сообщение.')
+    expect(value.show).not.toHaveBeenCalled()
+  })
 })

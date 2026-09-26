@@ -16,6 +16,7 @@ import '../widgets/authenticated_avatar.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
 import '../widgets/formatted_message_body.dart';
+import '../widgets/voice_connection_badge.dart';
 import 'profile_screen.dart';
 import 'admin_screen.dart';
 
@@ -3487,30 +3488,8 @@ class _VoiceParticipantRoom extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 11,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0x2258D5A2),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _StatusDot(),
-                    SizedBox(width: 7),
-                    Text(
-                      'Подключено',
-                      style: TextStyle(
-                        color: GcColors.success,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
+              VoiceConnectionBadge(
+                reconnecting: state.voicePhase == VoicePhase.reconnecting,
               ),
             ],
           ),

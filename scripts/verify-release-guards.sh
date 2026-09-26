@@ -22,6 +22,7 @@ bash scripts/qa11_release/verify_running.test.sh
 bash scripts/deploy-images.test.sh
 bash scripts/deploy-images-volume-guard.test.sh
 bash scripts/deploy-images-rollback.test.sh
+bash scripts/qa12_rollback/image_ref.test.sh
 bash scripts/qa12_rollback/preflight.test.sh
 bash scripts/qa12_rollback/rehearse.test.sh
 bash scripts/qa12_rollback/workflow.test.sh

@@ -1,0 +1,14 @@
+{
+  "id": "qa03-notification-lifecycle-2026-09-26-001",
+  "task": "QA-03",
+  "kind": "notification-lifecycle-source-regression",
+  "status": "PASS_LOCAL",
+  "observed_at": "2026-09-26T11:28:15Z",
+  "checks": [
+    "A queued Web Lock callback does not show a DM notification after logout stops the notification delivery instance.",
+    "A permission result arriving after account stop does not persist an enabled preference.",
+    "A protected DM refresh started for one account cannot deliver a notification after stop and start of another account."
+  ],
+  "validation": "Focused notification/workspace tests: 23/23 PASS; frontend TypeScript/Vite build PASS.",
+  "limits": "Browser permission, OS notification display, cross-tab dedup in a real browser and third-party silence remain NOT_RUN; QA-03 remains open."
+}

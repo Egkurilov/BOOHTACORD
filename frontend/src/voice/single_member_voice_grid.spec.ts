@@ -18,7 +18,8 @@ describe('connected voice room with only the local participant', () => {
       selfSpeaking: false,
     }))
 
-    expect(html).toContain('Оля · вы')
+    expect(html).toContain('>Оля</span>')
+    expect(html).not.toContain('Оля · вы')
     expect(html).toContain('data-testid="participant-card"')
     expect(html).not.toContain('Другие участники пока не подключены')
   })

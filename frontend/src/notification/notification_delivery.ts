@@ -28,10 +28,11 @@ function readSeen(storage: Pick<Storage, 'getItem'>, key: string): string[] {
 }
 
 export function createNotificationDelivery(accountID: string, runtime: NotificationRuntime = browserNotificationRuntime()) {
+  let active = true
   const prefix = `boohtacord:notification:${accountID}`
   const preferenceKey = `${prefix}:enabled`
   const seenKey = `${prefix}:seen`
-  const available = () => runtime.permission() !== 'unavailable' && runtime.storage !== null && runtime.lock !== null
+  const available = () => active && runtime.permission() !== 'unavailable' && runtime.storage !== null && runtime.lock !== null
   const enabled = () => available() && runtime.storage?.getItem(preferenceKey) === '1'
 
   return {
@@ -41,9 +42,11 @@ export function createNotificationDelivery(accountID: string, runtime: Notificat
     async enable(): Promise<boolean> {
       if (!available()) return false
       const permission = runtime.permission() === 'granted' ? 'granted' : await runtime.requestPermission()
+      if (!active) return false
       runtime.storage!.setItem(preferenceKey, permission === 'granted' ? '1' : '0')
       return permission === 'granted'
     },
+    cancel(): void { active = false },
     disable(): void { runtime.storage?.setItem(preferenceKey, '0') },
     async deliver(eventID: string, body: string): Promise<void> {
       if (!enabled() || runtime.permission() !== 'granted') return

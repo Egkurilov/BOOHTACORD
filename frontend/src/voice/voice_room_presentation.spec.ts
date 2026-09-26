@@ -17,11 +17,11 @@ describe('voice-room visual status and screen presentation', () => {
     expect(status).toContain('aria-hidden="true"')
   })
 
-  it('presents the local participant like the reference card, with speaking and self label', () => {
+  it('presents the local participant with their nickname and speaking state', () => {
     const participants = source('./VoiceParticipantVolumes.vue')
     expect(participants).toContain(':speaking="selfSpeaking"')
     expect(participants).toContain('talking: selfSpeaking && !selfDeafened && !selfMicrophoneMuted && !selfMicrophoneUnavailable')
-    expect(participants).toContain('`${name} · вы`')
+    expect(participants).not.toContain('`${name} · вы`')
     expect(participants).not.toContain('Это вы')
     expect(source('./connection_store.ts')).toContain('selfSpeaking: volume.selfSpeaking')
     expect(source('../workspace/WorkspaceMain.vue')).toContain(':self-speaking="voiceConnection.selfSpeaking"')
@@ -49,7 +49,8 @@ describe('voice-room visual status and screen presentation', () => {
     expect(pane).toContain('voiceVolumeParticipants.length + 1')
     expect(pane).toContain('voiceRoomSummary(voiceVolumeParticipants.length + 1, screenViewerCards.length)')
     expect(pane).toContain('Все в сборе')
-    expect(pane).toContain('подключитесь, чтобы увидеть участников')
+    expect(pane).toContain('Голосовой канал · сейчас: ${voiceRoster.participants.length}')
+    expect(pane).toContain('Голосовой канал · состав недоступен')
     expect(viewer).toContain('participantAudioMessage(deafened)')
     expect(viewer).toContain('К участникам')
     expect(viewer).toContain('<video ref="video" v-show="selectedId"')

@@ -45,6 +45,7 @@ export const useNotificationStore = defineStore('notifications', () => {
 
   function stop(): void {
     if (stopTitleWatch) { stopTitleWatch(); stopTitleWatch = null; document.title = originalTitle }
+    delivery?.cancel()
     delivery = null
     refreshStatus()
   }

@@ -1,0 +1,37 @@
+{
+  "id": "qa13-voice-reconnect-badge-2026-09-26-001",
+  "kind": "integration-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-26T14:31:47+03:00",
+  "environment": {
+    "host": "Windows 11 x64",
+    "runner": "Ubuntu WSL x86_64, isolated desktop/ source copy",
+    "flutter": "3.47.5",
+    "dart": "3.13.4"
+  },
+  "source": {
+    "desktop/lib/src/widgets/voice_connection_badge.dart": "sha256:098909260cd3b12c28982a76587f2f705ef0b429d5b0a21723bd0399403ac510",
+    "desktop/lib/src/screens/workspace_screen.dart": "sha256:64b9b84bae6c6f17fc53983dd6cf61f362a2f52ff39d9ce31be78b349515d28e",
+    "desktop/test/voice_connection_badge_test.dart": "sha256:6dd630062e2b21e3e88e2d2af052d37a32f30769aa137927dcc561e1ac2b4768"
+  },
+  "checks": [
+    {
+      "name": "Flutter widget and unit suite",
+      "command": "flutter test --no-pub",
+      "status": "PASS",
+      "observation": "96 tests passed; reconnecting badge presents a warning and never says connected, then returns to connected copy. Status has a live semantics label."
+    },
+    {
+      "name": "Flutter static analysis",
+      "command": "flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Native accessibility and physical-device parity",
+      "status": "NOT_RUN",
+      "reason": "WSL widget tests do not establish screen reader behavior or macOS, Windows and Android hardware UX."
+    }
+  ],
+  "remaining": "QA-13 remains open for other dock/prejoin states, permission-denied copy, real-peer media and physical-device acceptance."
+}

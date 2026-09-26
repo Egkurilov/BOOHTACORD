@@ -8,7 +8,7 @@ import VoiceParticipantStatus from './VoiceParticipantStatus.vue'
 const props = defineProps<{ error: string | null; participants: VoiceVolumeParticipant[]; screenStreams: ScreenViewerCard[]; selectedScreenStreamId: string | null; selfName: string | null; selfDeafened: boolean; selfMicrophoneMuted: boolean; selfMicrophoneUnavailable: boolean; selfSpeaking: boolean }>()
 const emit = defineEmits<{ setVolume: [id: string, percent: number]; watchScreen: [id: string] }>()
 function initial(name: string | null | undefined): string { return name?.trim().slice(0, 1).toLocaleUpperCase('ru-RU') || 'У' }
-function selfDisplayName(name: string | null): string { return name ? `${name} · вы` : 'Вы' }
+function selfDisplayName(name: string | null): string { return name?.trim() || 'Вы' }
 function screenForParticipant(participantId: string): ScreenViewerCard | null { return findParticipantScreen(props.screenStreams, participantId) }
 function watchParticipantScreen(participantId: string): void { const screen = screenForParticipant(participantId); if (screen) emit('watchScreen', screen.id) }
 </script>
@@ -30,7 +30,7 @@ function watchParticipantScreen(participantId: string): void { const screen = sc
       <span class="avatar lg" :style="{ backgroundColor: avatarBackground(participant.accountId ?? participant.id) }" aria-hidden="true">{{ initial(participant.name) }}</span>
       <span class="participant-name">{{ participant.name || 'Участник' }}</span>
       <VoiceParticipantStatus class="participant-status" :microphone-muted="participant.microphoneMuted" :speaking="participant.speaking" />
-      <span v-if="screenForParticipant(participant.id)" class="participant-share-badge" aria-label="Участник показывает экран" title="Показывает экран"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4zM9 20h6m-3-4v4" /></svg></span>
+      <span v-if="screenForParticipant(participant.id)" class="participant-share-badge" aria-label="Участник показывает экран" title="Показывает экран"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4zM9 20h6m-3-4v4" /></svg><b aria-hidden="true">ЭФИР</b></span>
       <button v-if="screenForParticipant(participant.id)" class="participant-watch" type="button" :aria-pressed="screenForParticipant(participant.id)?.id === selectedScreenStreamId" @click="watchParticipantScreen(participant.id)">Смотреть экран</button>
     </article>
   </section>

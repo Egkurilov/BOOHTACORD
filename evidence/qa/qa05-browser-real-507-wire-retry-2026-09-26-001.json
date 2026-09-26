@@ -1,0 +1,65 @@
+{
+  "id": "qa05-browser-real-507-wire-retry-2026-09-26-001",
+  "tasks": ["QA-05", "REQ-STORAGE-03"],
+  "kind": "isolated-browser-retry-against-real-api-and-tmpfs",
+  "status": "PASS_LOCAL_SUBGATE",
+  "observed_at": "2026-09-26",
+  "source": {
+    "base_commit": "7c2b731",
+    "frontend": "Locally built Vue/Vite dist including the uncommitted TEXT retry change",
+    "backend": "Locally built Go API with disposable PostgreSQL; not a trusted release image",
+    "harness": [
+      "scripts/qa05_browser_real507/fixture.sh",
+      "scripts/qa05_browser_real507/proxy.py",
+      "scripts/qa05_browser_real507/probe.py",
+      "scripts/qa05_browser_real507/inspect.py"
+    ]
+  },
+  "fixture": {
+    "origin": "http://localhost:18796",
+    "api_bind": "127.0.0.1:18096",
+    "database": "Disposable qa05_retry_4384, dropped after run",
+    "filesystem": "Unique /tmp/qa05_retry.Pc2v6KMd/storage Linux tmpfs, remounted from 3 GiB to 64 MiB and back to 3 GiB",
+    "synthetic_file": "text/plain, 20 bytes, qa05-synthetic-safe-20260926.txt",
+    "authentication": "The loopback-only proxy supplied a synthetic fixture session cookie to the real API; this run does not validate browser login or cookie persistence.",
+    "selection": "Codex in-app browser controlled filechooser.setFiles; manual native operating-system selection was not tested.",
+    "privacy": "No production account, attachment volume, credential, cookie, message body, participant ID or attachment ID was used or recorded."
+  },
+  "wire_capture": {
+    "source": "Loopback proxy stdout from the live fixture process, captured by the exec session before teardown",
+    "raw_status_lines_in_order": [
+      "qa05_upload_wire_status=507",
+      "qa05_upload_wire_status=201",
+      "qa05_upload_wire_status=507",
+      "qa05_upload_wire_status=201"
+    ],
+    "interpretation": "The first pair belongs to the independent HTTP probe. The second pair belongs to the browser file selection and the same visible Retry control."
+  },
+  "checks": [
+    {
+      "name": "independent_real_api_probe",
+      "result": "PASS_LOCAL",
+      "observed": {"low_headroom_http_status": 507, "restored_headroom_http_status": 201, "attachment_rows_before": 0, "attachment_rows_after": 1, "staging_part_files": 0},
+      "detail": "The fixture probe used the real Go API and actual tmpfs Statfs. It left the mount at 64 MiB before opening the browser."
+    },
+    {
+      "name": "browser_low_headroom",
+      "result": "PASS_LOCAL",
+      "observed": {"proxy_wire_http_status": 507, "ui_error": "INSUFFICIENT_STORAGE", "retry_visible": true, "attachment_rows_before": 1, "attachment_rows_after": 1, "staging_part_files": 0, "mounted_size": "64M"},
+      "detail": "The selected synthetic file was sent through the visible TEXT attachment control to the real API; the proxy forwarded the API response without failure injection."
+    },
+    {
+      "name": "same_ui_retry_after_capacity_restore",
+      "result": "PASS_LOCAL",
+      "observed": {"proxy_wire_http_status": 201, "prepared_attachment_visible": true, "prepared_size_bytes": 20, "attachment_rows_before": 1, "attachment_rows_after": 2, "staging_part_files": 0, "mounted_size": "3G"},
+      "detail": "The same Retry button reused the failed File after remount. A separate proxy status line captured the successful HTTP 201; it is not inferred from UI or database state."
+    },
+    {
+      "name": "cleanup",
+      "result": "PARTIAL",
+      "detail": "Both browser tabs closed, tmpfs unmounted, disposable database dropped, fixture directory removed, and ports 18096/18796 idle. A 20-byte synthetic Windows Temp source file remains: automatic approval review rejected its exact-path deletion."
+    }
+  ],
+  "native_validation": "Frontend 588/588 tests PASS; vue-tsc and Vite build PASS; fixture bash syntax and Python compilation PASS.",
+  "remaining_gate": "QA-05 remains PARTIAL: this is a local build with controlled file chooser and injected fixture session. Manual OS chooser, trusted release bundle, notification, media/reconnect, full keyboard/screen-reader, zoom and stored screenshot comparison still require their own acceptance evidence."
+}

@@ -79,4 +79,28 @@ describe('workspace notification lifecycle', () => {
     expect(value.show).toHaveBeenCalledOnce()
     store.stop()
   })
+
+  it('does not show a queued notification after the account stops', async () => {
+    vi.stubGlobal('document', { title: 'Voice Platform', visibilityState: 'hidden' })
+    setActivePinia(createPinia())
+    const directMessages = useDirectMessageStore()
+    directMessages.directMessages = [{ id: 'dm-a', otherParticipantId: 'peer', otherParticipantDisplayName: 'Участник', createdAt: event.occurredAt, unreadCount: 1, mentionCount: 0 }]
+    const value = runtime()
+    let unlock!: () => void
+    let entered!: () => void
+    const enteredLock = new Promise<void>((resolve) => { entered = resolve })
+    const heldLock = new Promise<void>((resolve) => { unlock = resolve })
+    value.port.lock = async (_key, action) => { entered(); await heldLock; return action() }
+    const store = useNotificationStore()
+    store.start('account-a', value.port)
+    await store.enable()
+
+    const pending = store.deliver(event, 0)
+    await enteredLock
+    store.stop()
+    unlock()
+    await pending
+
+    expect(value.show).not.toHaveBeenCalled()
+  })
 })

@@ -24,8 +24,9 @@ function fixture() {
   let deliver!: (event: RealtimeEvent) => void | Promise<void>
   const realtime = { connect: vi.fn((handler) => { deliver = handler }), disconnect: vi.fn() }
   const presence = { acceptRealtimeEvent: vi.fn(() => false) }
-  createWorkspaceRealtime(stores, realtime as never, presence as never, voice as never, 'account-1', vi.fn()).start()
-  return { stores, voice, deliver: (event: RealtimeEvent) => deliver(event) }
+  const workspace = createWorkspaceRealtime(stores, realtime as never, presence as never, voice as never, 'account-1', vi.fn())
+  workspace.start()
+  return { stores, voice, realtime, presence, workspace, deliver: (event: RealtimeEvent) => deliver(event) }
 }
 
 describe('workspace typed realtime dispatch', () => {
@@ -56,6 +57,22 @@ describe('workspace typed realtime dispatch', () => {
     expect(capture).toHaveBeenCalledWith(created)
     expect(deliver).toHaveBeenCalledWith(created, 0)
     expect(value.stores.directMessages.refreshNavigation.mock.invocationCallOrder[0]).toBeLessThan(deliver.mock.invocationCallOrder[0]!)
+  })
+
+  it('does not deliver an old account notification after refresh finishes in a new account', async () => {
+    const notifications = useNotificationStore()
+    const deliver = vi.spyOn(notifications, 'deliver').mockResolvedValue()
+    const value = fixture()
+    let finishRefresh!: () => void
+    value.stores.directMessages.refreshNavigation.mockImplementationOnce(() => new Promise<void>((resolve) => { finishRefresh = resolve }))
+    const pending = value.deliver(hint('direct_message.message_created', { direct_message_id: directID, message_id: messageID }))
+
+    value.workspace.stop()
+    createWorkspaceRealtime(value.stores, value.realtime as never, value.presence as never, value.voice as never, 'account-2', vi.fn()).start()
+    finishRefresh()
+    await pending
+
+    expect(deliver).not.toHaveBeenCalled()
   })
 
   it('applies only the connected lease revocation and clears voice navigation', async () => {

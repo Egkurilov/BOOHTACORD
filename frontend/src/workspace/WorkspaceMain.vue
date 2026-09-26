@@ -4,6 +4,7 @@ import ConversationPane from '../conversation/ConversationPane.vue'
 import type { DirectMessageListItem } from '../direct_message/direct_message_client'
 import type { VoiceActivationMode } from '../voice/activation_store'
 import { useVoiceConnectionStore } from '../voice/connection_store'
+import type { VoiceRoomRoster } from '../voice/voice_roster_client'
 import WorkspaceHeaderActions from './WorkspaceHeaderActions.vue'
 import type { useWorkspaceVoiceControls } from './voice_controls'
 
@@ -23,6 +24,8 @@ defineProps<{
   showMembers: boolean
   selfDisplayName: string | null
   voiceConnection: VoiceConnection
+  voiceRoster?: VoiceRoomRoster | null
+  voiceRosterError?: string | null
 }>()
 const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
 </script>
@@ -69,6 +72,8 @@ const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
     :voice-transfer-required="voiceConnection.transferRequired"
     :voice-volume-error="voiceConnection.voiceVolumeError"
     :voice-volume-participants="voiceConnection.voiceVolumeParticipants"
+    :voice-roster="voiceRoster ?? null"
+    :voice-roster-error="voiceRosterError ?? null"
     @clear-screen-stream="voiceConnection.clearScreenStream"
     @join="joinVoice"
     @leave="leaveVoice"

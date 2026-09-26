@@ -1,0 +1,63 @@
+{
+  "id": "qa05-voice-roster-mock-browser-2026-09-26-001",
+  "tasks": ["QA-05", "DES-04", "DES-05"],
+  "kind": "isolated-browser-voice-roster-integration-with-mock-roomservice",
+  "status": "PASS_LOCAL_MOCK_SCOPE",
+  "observed_at": "2026-09-26",
+  "source": {
+    "base_commit": "7c2b731",
+    "backend": "Locally built current Go API including uncommitted voice roster route, disposable PostgreSQL",
+    "frontend": "Locally built current Vue/Vite dist, rebuilt after the ConversationPane prejoin-copy correction",
+    "browser": "Codex-controlled Chrome tab at http://localhost:18796/",
+    "authentication": "Loopback-only proxy supplied a synthetic administrator session to the real API; no production credential or data was used."
+  },
+  "fixture": {
+    "api_bind": "127.0.0.1:18096",
+    "proxy_bind": "127.0.0.1:18796",
+    "mock_roomservice_bind": "127.0.0.1:17880",
+    "database": "Disposable qa05_retry_1265, migrated and dropped after run",
+    "accounts": "Synthetic administrator remained outside voice; a distinct synthetic member acquired one real Go/PostgreSQL voice lease and set display name Мика.",
+    "mock_contract": "Private Twirp ListRooms/ListParticipants returned the created room and lease identity in ACTIVE state with an unmuted SCREEN_SHARE video track; empty mode returned no rooms; error mode returned Twirp 503. No real LiveKit connection or media track existed."
+  },
+  "checks": [
+    {
+      "name": "active_room_before_join",
+      "result": "PASS_LOCAL_MOCK",
+      "observed": {
+        "api_http_status": 200,
+        "api_display_name": "Мика",
+        "api_screen_sharing": true,
+        "navigation": ["Игра 1", "Сейчас в канале: 1", "Мика", "Показывает экран"],
+        "selected_prejoin": ["Вы не подключены", "Голосовой канал · сейчас: 1", "Сейчас в канале: 1", "Мика", "Показывает экран"],
+        "rendered_self_suffix_present": false
+      },
+      "detail": "The administrator did not click Join; the dock said Голос не подключён. The API intersected mock ACTIVE presence with the other account's current database lease and profile name."
+    },
+    {
+      "name": "empty_room",
+      "result": "PASS_LOCAL_MOCK",
+      "observed": {
+        "api_http_status": 200,
+        "navigation": ["Игра 0"],
+        "selected_prejoin": ["Голосовой канал · сейчас: 0", "Сейчас в канале: 0", "Пока никого нет."]
+      }
+    },
+    {
+      "name": "roomservice_unavailable",
+      "result": "PASS_LOCAL_MOCK",
+      "observed": {
+        "api_http_status": 503,
+        "navigation": ["Игра"],
+        "selected_prejoin": ["Голосовой канал · состав недоступен", "Не удалось обновить состав комнаты. Повторяем попытку."],
+        "false_empty_room_claim": false
+      }
+    },
+    {
+      "name": "cleanup",
+      "result": "PASS_LOCAL",
+      "detail": "Browser tab closed, Go API/proxy/mock stopped, tmpfs unmounted, fixture directory and active pointer absent, disposable PostgreSQL database absent, ports 17880/18096/18796 idle."
+    }
+  ],
+  "validation": "Frontend vue-tsc and Vite build passed for the browser candidate; this packet did not run physical media or a trusted release image.",
+  "limits": "Mock RoomService proves API/ACL/browser presentation for synthetic ACTIVE and SCREEN_SHARE responses. It cannot establish actual ICE connection, LiveKit speaking/screen-track events, audio/video delivery, hardware FPS, sound, native screen-reader announcement or production freshness. QA-05 and media gates remain open."
+}

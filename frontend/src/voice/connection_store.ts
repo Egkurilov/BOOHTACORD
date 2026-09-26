@@ -18,6 +18,7 @@ import { leaveVoiceConnection } from './voice_connection_leave'
 import { createVoiceConnectionRevocation } from './voice_connection_revocation'
 import { voiceLeaseRevocationMessage } from './voice_lease_revocation_reason'
 import { voiceParticipantName } from './voice_participant_name'
+import { observeStreamStarts } from './stream_start_runtime'
 
 export type VoiceConnectionState = 'IDLE' | 'JOINING' | 'RECONNECTING' | 'CONNECTED' | 'LISTENER' | 'LEAVING' | 'ERROR'
 export type { ScreenShareState } from './screen_controls'
@@ -52,6 +53,7 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   const screenViewerCards = computed(() => rawScreenViewerCards.value.map((stream) => ({
     ...stream, participantName: stream.isLocal ? stream.participantName : voiceParticipantName(authors, stream.accountId, stream.participantName) ?? stream.participantName,
   })))
+  watch([rawScreenViewerCards, state], ([cards, phase]) => observeStreamStarts(cards, phase), { immediate: true, flush: 'sync' })
   let visibleAccountIds = new Set<string>()
   watch([volume.participants, rawScreenViewerCards], ([participants, streams]) => {
     const next = new Set([...participants.map((participant) => participant.accountId), ...streams.filter((stream) => !stream.isLocal).map((stream) => stream.accountId)].filter((id): id is string => Boolean(id)))

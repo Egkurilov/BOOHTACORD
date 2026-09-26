@@ -1,0 +1,20 @@
+{
+  "id": "voice-roster-stream-alert-2026-09-26-001",
+  "tasks": ["BE-18", "FE-48", "FE-49", "DES-04", "QA-06"],
+  "kind": "prejoin-roster-and-stream-signal-source-integration",
+  "status": "PASS_LOCAL",
+  "observed_at": "2026-09-26T11:47:00Z",
+  "behavior": [
+    "GET /api/v1/voice/participants serves all current VOICE rooms to an authenticated nonblocked guild member without requiring a voice lease; empty rooms have empty participant arrays, LiveKit failure is 503 and responses are no-store.",
+    "Only ACTIVE LiveKit voice-lease identities intersected with current, unrevoked database leases, sessions and unblocked accounts are shown; names come from users and screen_sharing from an unmuted screen video track.",
+    "Navigation and selected prejoin show current names and stream badges before joining; unavailable roster is not displayed as empty. Own nickname has no '· вы' suffix.",
+    "A newly published remote stream in the joined room displays an amber ЭФИР badge and six-second notice; a short, switchable Web Audio signal excludes own stream and initial/reconnect duplicates."
+  ],
+  "validation": [
+    "Backend go test ./... PASS; focused LiveKit RoomService httptest and handler ACL tests PASS.",
+    "PostgreSQL 16 integration with migrations PASS on disposable database: active/revoked/blocked/archived/TEXT cases; test database and role removed.",
+    "OpenAPI contract verifier and spec traceability PASS; frontend 206 files, 601 tests PASS; TypeScript/Vite build PASS.",
+    "Isolated browser Go/PostgreSQL plus mock RoomService roster prejoin, empty and 503 states PASS_LOCAL_MOCK_SCOPE: evidence/qa/qa05-voice-roster-mock-browser-2026-09-26-001.json."
+  ],
+  "limits": "Real LiveKit with two clients, audible signal under browser autoplay policy, screen reader and physical device visual/media acceptance remain NOT_RUN; DES-04 and QA-06/07 remain open."
+}
