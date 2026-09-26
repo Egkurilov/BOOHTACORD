@@ -66,8 +66,10 @@ printf 'sleep %s\n' "$*" >> "$QA12_LOG"
 if [[ "${QA12_INTERRUPT_ON_SLEEP:-0}" == 1 ]]; then kill -TERM "$PPID"; fi
 EOF
 chmod 0755 "$bin_dir/docker" "$bin_dir/sleep"
-printf '#!/usr/bin/env bash\nexec python "$@"\n' > "$bin_dir/python3"
-chmod 0755 "$bin_dir/python3"
+if ! python3 -c 'import sys' >/dev/null 2>&1; then
+  printf '#!/usr/bin/env bash\nexec python "$@"\n' > "$bin_dir/python3"
+  chmod 0755 "$bin_dir/python3"
+fi
 export PATH="$bin_dir:$PATH" QA12_STATE="$state_dir" QA12_PREVIOUS="$previous" QA12_OBSERVE_SECONDS=30
 export QA12_CURRENT="$current" QA12_RELEASE_ROOT="$release_root"
 export QA12_LOG="$temporary_root/commands.log"

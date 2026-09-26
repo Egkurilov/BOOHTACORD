@@ -23,11 +23,11 @@ case "$1 $2" in
 esac
 EOF
 chmod +x "$fixture/bin/docker"
-cat > "$fixture/bin/python3" <<'EOF'
+if ! python3 -c 'import sys' >/dev/null 2>&1; then cat > "$fixture/bin/python3" <<'EOF'
 #!/usr/bin/env bash
 exec python "$@"
 EOF
-chmod +x "$fixture/bin/python3"
+chmod +x "$fixture/bin/python3"; fi
 export PATH="$fixture/bin:$PATH" VOICE_PLATFORM_DIR="$fixture"
 export TEST_IMAGE_ID="$digest" TEST_RUNNING_ID="$digest"
 bash "$root/verify_running.sh" "$revision" > "$fixture/output"

@@ -50,9 +50,10 @@ fi
 EOF
 chmod 0755 "$fixture/bin/"*
 mkdir -p "$fixture/releases/$sha"
-printf '#!/usr/bin/env bash\nexec python "$@"\n' > "$fixture/bin/python3"
-chmod 0755 "$fixture/bin/python3"
-
+if ! python3 -c 'import sys' >/dev/null 2>&1; then
+  printf '#!/usr/bin/env bash\nexec python "$@"\n' > "$fixture/bin/python3"
+  chmod 0755 "$fixture/bin/python3"
+fi
 run_audit() {
   local expected="${5:-$sha}"
   PATH="$fixture/bin:$PATH" VOICE_PLATFORM_RELEASE_ROOT="$fixture/releases" TEST_MOUNTPOINT="$fixture/attachments" \
@@ -115,5 +116,4 @@ if run_audit 6582484992 ok voice-platform-api:deadbeef; then
   echo 'expected wrong local digest to fail' >&2
   exit 1
 fi
-
 echo 'read-only attachment capacity audit tests passed'

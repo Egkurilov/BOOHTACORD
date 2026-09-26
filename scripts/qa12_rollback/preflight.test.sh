@@ -60,8 +60,10 @@ case "$1 $2" in
 esac
 EOF
 chmod 0755 "$bin_dir/docker"
-printf '#!/usr/bin/env bash\nexec python "$@"\n' > "$bin_dir/python3"
-chmod 0755 "$bin_dir/python3"
+if ! python3 -c 'import sys' >/dev/null 2>&1; then
+  printf '#!/usr/bin/env bash\nexec python "$@"\n' > "$bin_dir/python3"
+  chmod 0755 "$bin_dir/python3"
+fi
 export PATH="$bin_dir:$PATH" QA12_STATE="$state_dir" QA12_CURRENT="$current" QA12_PREVIOUS="$previous"
 script="$root/scripts/qa12_rollback/preflight.sh"
 bash "$script" "$current" "$previous" "$release_root" > "$temporary_root/passed.log"
