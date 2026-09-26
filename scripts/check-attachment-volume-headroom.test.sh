@@ -59,7 +59,7 @@ fi
 
 mapfile -t guard_lines < <(grep -nF 'check-attachment-volume-headroom.sh' "$release" | cut -d: -f1)
 promote_line="$(grep -nF 'sudo -n mv ' "$release" | cut -d: -f1)"
-build_line="$(grep -nF 'build api web' "$release" | cut -d: -f1)"
+build_line="$(grep -nF 'qa11_release/build_images.sh' "$release" | cut -d: -f1)"
 deploy_line="$(grep -nF 'deploy-images.sh' "$release" | cut -d: -f1)"
 [[ "${#guard_lines[@]}" -eq 2 && -n "$promote_line" && -n "$build_line" && -n "$deploy_line" ]]
 [[ "${guard_lines[0]}" -lt "$promote_line" && "$promote_line" -lt "$build_line" ]]
