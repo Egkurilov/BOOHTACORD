@@ -40,6 +40,19 @@ describe('viewer screen playback FPS', () => {
     stop()
   })
 
+  it('signals the first presented frame even when loadeddata never fires', () => {
+    const frames = videoFrames()
+    const onFirstFrame = vi.fn()
+    const stop = observeScreenPlaybackFps(frames.video, vi.fn(), onFirstFrame)
+    expect(onFirstFrame).not.toHaveBeenCalled()
+    frames.emitFrame(1)
+    frames.emitFrame(2)
+    expect(onFirstFrame).toHaveBeenCalledTimes(1)
+    stop()
+    frames.emitFrame(3)
+    expect(onFirstFrame).toHaveBeenCalledTimes(1)
+  })
+
   it('reports observed frames per second over a timed window, including a frozen stream', () => {
     vi.useFakeTimers()
     const frames = videoFrames()

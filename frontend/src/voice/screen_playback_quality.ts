@@ -23,6 +23,9 @@ export function useScreenPlaybackQuality(video: Ref<HTMLVideoElement | null>, se
       stopObservingPlayback = observeScreenPlaybackFps(video.value, (fps) => {
         playbackFps.value = fps
         refreshVideoQuality()
+      }, () => {
+        videoReady.value = true
+        refreshVideoQuality()
       })
     }
   }

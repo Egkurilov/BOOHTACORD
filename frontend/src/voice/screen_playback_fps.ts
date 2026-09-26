@@ -1,7 +1,7 @@
 const sampleWindowMs = 2000
 
 /** Measures frames presented by this viewer, not the publisher's target FPS. */
-export function observeScreenPlaybackFps(video: HTMLVideoElement, onSample: (fps: number | null) => void): () => void {
+export function observeScreenPlaybackFps(video: HTMLVideoElement, onSample: (fps: number | null) => void, onFirstFrame?: () => void): () => void {
   if (typeof video.requestVideoFrameCallback !== 'function' || typeof video.cancelVideoFrameCallback !== 'function') {
     onSample(null)
     return () => {}
@@ -16,6 +16,7 @@ export function observeScreenPlaybackFps(video: HTMLVideoElement, onSample: (fps
 
   function onFrame(_now: DOMHighResTimeStamp, metadata: VideoFrameCallbackMetadata): void {
     if (stopped) return
+    if (!observedFrame) onFirstFrame?.()
     observedFrame = true
     const presentedFrames = metadata.presentedFrames
     const validCounter = Number.isFinite(presentedFrames) && presentedFrames >= 0

@@ -1,0 +1,36 @@
+{
+  "id": "android-iphone-first-frame-2026-09-26-001",
+  "kind": "two-device-media-observation",
+  "status": "PARTIAL_FAIL_OBSERVED",
+  "observed_at_utc": "2026-09-26T13:03:00Z",
+  "devices_reported_by_owner": ["Android native app", "iPhone web", "Android web"],
+  "directions": [
+    {
+      "source": "Android native app",
+      "viewer": "iPhone web",
+      "result": "FAIL_OBSERVED",
+      "observation": "Selected screen share remained at the first-frame waiting overlay and unknown viewer quality in the provided screenshot. No screen-audio track was advertised.",
+      "unknown": "No incoming bitrate, decoded-frame, presented-frame or sender counter was captured, so the loss stage is undetermined."
+    },
+    {
+      "source": "iPhone web",
+      "viewer": "Android web",
+      "result": "PARTIAL_PASS_OBSERVED",
+      "observation": "The provided screenshot shows a moving remote image and 496 x 1080 at 26.5 viewer-presented FPS. This is one moment, not a 10-second counter window or profile claim."
+    }
+  ],
+  "source_findings": [
+    "The Android native source currently requests at most 30 FPS and disables screen-audio capture; the installed APK version was not verified.",
+    "The web viewer previously removed its waiting overlay only on loadeddata. A first presented frame now removes it even if loadeddata is absent; this source fix has not yet been retested on iPhone."
+  ],
+  "checks": [
+    { "name": "first_frame_regression_before_fix", "result": "FAIL_EXPECTED" },
+    { "name": "frontend_unit_suite", "result": "PASS_LOCAL", "detail": "206 files, 604 tests" },
+    { "name": "frontend_typescript_vite_build", "result": "PASS_LOCAL" },
+    { "name": "sender_receiver_counters_on_devices", "result": "NOT_CAPTURED" },
+    { "name": "two_browser_local_reproduction", "result": "BLOCKED", "detail": "The second isolated browser profile is unauthenticated and the single active-lease rule requires a different account. No production test account was created." }
+  ],
+  "privacy": "Screenshots remain in the task conversation; no account names, session tokens, media credentials, ICE addresses, SDP, or chat content were copied into this record.",
+  "reference": "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/loadeddata_event",
+  "next": "Collect iPhone receiver bitrate/decoded and presented counters during Android native sharing, and Android native sender stats. Retest the first-frame overlay after deployment. Keep QA-06, QA-07 and QA-13 open."
+}
