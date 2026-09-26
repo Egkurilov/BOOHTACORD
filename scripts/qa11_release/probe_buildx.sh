@@ -52,6 +52,30 @@ if sudo -n env DOCKER_CONFIG="$config" docker buildx build \
   printf 'default_driver_dual_export=yes\n'
   printf 'probe_image_id=%s\n' "$(sudo -n docker image inspect --format '{{.Id}}' "$probe_image")"
   sudo -n ls -l "$config/probe-dual.oci.tar"
+  sudo -n python3 - "$config/probe-dual.oci.tar" <<'PY'
+import json
+import sys
+import tarfile
+
+with tarfile.open(sys.argv[1], "r") as archive:
+    def document(name):
+        member = archive.extractfile(name)
+        if member is None:
+            raise ValueError(f"missing OCI entry: {name}")
+        return json.load(member)
+
+    index = document("index.json")
+    for descriptor in index["manifests"]:
+        digest = descriptor["digest"]
+        manifest = document(f"blobs/sha256/{digest.split(':', 1)[1]}")
+        print("descriptor", digest, descriptor.get("platform"), descriptor.get("annotations"))
+        print("config", manifest["config"]["digest"])
+        for layer in manifest["layers"]:
+            if layer["mediaType"] != "application/vnd.in-toto+json":
+                continue
+            statement = document(f"blobs/sha256/{layer['digest'].split(':', 1)[1]}")
+            print("attestation", statement.get("predicateType"), statement.get("subject"))
+PY
 else
   printf 'default_driver_dual_export=no\n'
 fi
