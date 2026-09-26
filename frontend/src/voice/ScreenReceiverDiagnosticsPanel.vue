@@ -16,7 +16,7 @@ const value = (number: number | null | undefined, suffix: string) => number === 
 
 <template>
   <details class="stream-diagnostics">
-    <summary :title="status"><span class="stream-diagnostics-badge" aria-hidden="true"></span><span class="gc-sr-only">{{ status }}</span></summary>
+    <summary :title="status"><span class="stream-diagnostics-badge" aria-hidden="true"></span><span>Статистика</span><span class="gc-sr-only">{{ status }}</span></summary>
     <div class="stream-diagnostics-panel"><dl>
       <div><dt>Целевой профиль</dt><dd>Не передан источником</dd></div>
       <div><dt>Сейчас у зрителя</dt><dd>{{ actualVideoQuality }}</dd></div>

@@ -19,6 +19,7 @@ export function createScreenControls(
   screenState: Ref<ScreenShareState>,
   screenDiagnostics: Ref<ScreenDiagnostics>,
 ) {
+  let refreshingDiagnostics = false
   async function startScreen(profile: ScreenProfile): Promise<void> {
     if (!active.value || screenState.value === 'STARTING') return
     screenState.value = 'STARTING'
@@ -50,7 +51,8 @@ export function createScreenControls(
   }
 
   async function refreshScreenDiagnostics(): Promise<void> {
-    if (!active.value || screenState.value !== 'SHARING') return
+    if (!active.value || screenState.value !== 'SHARING' || refreshingDiagnostics) return
+    refreshingDiagnostics = true
     try {
       screenDiagnostics.value = await session.readScreenDiagnostics()
       screenError.value = screenDiagnosticMessage(screenDiagnostics.value)
@@ -61,6 +63,8 @@ export function createScreenControls(
       }
     } catch (cause) {
       screenError.value = screenFailureMessage(cause)
+    } finally {
+      refreshingDiagnostics = false
     }
   }
 

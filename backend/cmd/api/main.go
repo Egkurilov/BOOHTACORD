@@ -88,6 +88,7 @@ func main() {
 	}
 	configureVoiceLeaseRoutes(mux, database, sessionService, maintenanceService)
 	configureVoiceParticipantRoutes(mux, database, sessionService, configuration.mediaSnapshot)
+	configureClientScreenRoutes(mux, sessionService, metrics)
 	configureAdminVoiceRoutes(mux, database, sessionService)
 	configureMediaCredentialRoutes(mux, database, sessionService, configuration.credentialSigner)
 	voiceWorkersStop := startVoiceBackgroundServices(database, configuration, metrics, events)

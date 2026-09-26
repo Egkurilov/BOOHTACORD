@@ -37,5 +37,5 @@ export function useScreenPlaybackQuality(video: Ref<HTMLVideoElement | null>, se
 
   watch([video, selectedId, ended], restartPlaybackObservation, { flush: 'post' })
   onBeforeUnmount(() => stopObservingPlayback?.())
-  return { actualVideoQuality, markVideoReady, refreshVideoQuality, resetVideoFrame: restartPlaybackObservation, videoReady }
+  return { actualVideoQuality, markVideoReady, playbackFps, refreshVideoQuality, resetVideoFrame: restartPlaybackObservation, videoReady }
 }

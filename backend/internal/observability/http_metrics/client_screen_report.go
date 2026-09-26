@@ -1,0 +1,70 @@
+package httpmetrics
+
+import (
+	"errors"
+	"math"
+)
+
+var ErrInvalidClientScreenReport = errors.New("invalid client screen report")
+
+// ClientScreenReport contains only bounded measurements and fixed enums.
+// It intentionally has no account, room, track, address, or content fields.
+type ClientScreenReport struct {
+	Platform      string   `json:"platform"`
+	Direction     string   `json:"direction"`
+	State         string   `json:"state"`
+	EncodedFPS    *float64 `json:"encoded_fps,omitempty"`
+	DecodedFPS    *float64 `json:"decoded_fps,omitempty"`
+	PresentedFPS  *float64 `json:"presented_fps,omitempty"`
+	BitrateKbps   *float64 `json:"bitrate_kbps,omitempty"`
+	JitterMs      *float64 `json:"jitter_ms,omitempty"`
+	PacketsLost   *int64   `json:"packets_lost,omitempty"`
+	DroppedFrames *int64   `json:"dropped_frames,omitempty"`
+	RTTMs         *float64 `json:"rtt_ms,omitempty"`
+}
+
+func (report ClientScreenReport) validate() error {
+	switch report.Platform {
+	case "ios_web", "android_web", "desktop_web", "android_native", "desktop_native":
+	default:
+		return ErrInvalidClientScreenReport
+	}
+	switch report.Direction {
+	case "sender", "receiver":
+	default:
+		return ErrInvalidClientScreenReport
+	}
+	switch report.State {
+	case "waiting_subscription", "waiting_first_frame", "playing", "stalled":
+	default:
+		return ErrInvalidClientScreenReport
+	}
+	for _, value := range []*float64{report.EncodedFPS, report.DecodedFPS, report.PresentedFPS} {
+		if !validRange(value, 240) {
+			return ErrInvalidClientScreenReport
+		}
+	}
+	if !validRange(report.BitrateKbps, 100000) || !validRange(report.JitterMs, 60000) {
+		return ErrInvalidClientScreenReport
+	}
+	if !validRange(report.RTTMs, 60000) {
+		return ErrInvalidClientScreenReport
+	}
+	if report.PacketsLost != nil && (*report.PacketsLost < 0 || *report.PacketsLost > 1000000000) {
+		return ErrInvalidClientScreenReport
+	}
+	if report.DroppedFrames != nil && (*report.DroppedFrames < 0 || *report.DroppedFrames > 1000000000) {
+		return ErrInvalidClientScreenReport
+	}
+	if report.Direction == "sender" && (report.DecodedFPS != nil || report.PresentedFPS != nil) {
+		return ErrInvalidClientScreenReport
+	}
+	if report.Direction == "receiver" && report.EncodedFPS != nil {
+		return ErrInvalidClientScreenReport
+	}
+	return nil
+}
+
+func validRange(value *float64, maximum float64) bool {
+	return value == nil || (!math.IsNaN(*value) && !math.IsInf(*value, 0) && *value >= 0 && *value <= maximum)
+}

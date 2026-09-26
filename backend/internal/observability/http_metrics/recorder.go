@@ -9,6 +9,7 @@ import (
 
 type Recorder struct {
 	attachmentFilesystemRegistered bool
+	clientScreen                   *clientScreenMetrics
 	voiceMediaRegistered           bool
 	duration                       *prometheus.HistogramVec
 	eventDeliveryLatency           prometheus.Histogram
@@ -39,8 +40,9 @@ func New() *Recorder {
 	reconnectOutcomes := newRealtimeReconnectOutcomes()
 	eventDeliveryLatency := newRealtimeEventDeliveryLatency()
 	uploadFailures := newUploadFailureMetrics()
-	registry.MustRegister(requests, duration, voiceSFURevocations, realtime.active, realtime.total, realtime.ready, reconnectOutcomes, eventDeliveryLatency, uploadFailures.total)
-	return &Recorder{duration: duration, eventDeliveryLatency: eventDeliveryLatency, handler: promhttp.HandlerFor(registry, promhttp.HandlerOpts{}), reconnectOutcomes: reconnectOutcomes, realtime: realtime, registry: registry, requests: requests, uploadFailures: uploadFailures, voiceSFURevocations: voiceSFURevocations}
+	clientScreen := newClientScreenMetrics()
+	registry.MustRegister(requests, duration, voiceSFURevocations, realtime.active, realtime.total, realtime.ready, reconnectOutcomes, eventDeliveryLatency, uploadFailures.total, clientScreen.total, clientScreen.fps, clientScreen.bitrate)
+	return &Recorder{clientScreen: clientScreen, duration: duration, eventDeliveryLatency: eventDeliveryLatency, handler: promhttp.HandlerFor(registry, promhttp.HandlerOpts{}), reconnectOutcomes: reconnectOutcomes, realtime: realtime, registry: registry, requests: requests, uploadFailures: uploadFailures, voiceSFURevocations: voiceSFURevocations}
 }
 
 func (recorder *Recorder) Handler() http.Handler { return recorder.handler }

@@ -1,0 +1,18 @@
+{
+  "id": "client-screen-telemetry-2026-09-26-001",
+  "kind": "media-diagnostics-source-check",
+  "status": "PASS_SOURCE_ONLY",
+  "observed_at_utc": "2026-09-26T13:18:00Z",
+  "change": "Visible browser viewers and senders submit only fixed-enum, bounded screen measurements every five seconds. An authenticated POST records a 60-second anonymous platform/direction snapshot; the administrator-only GET displays it in a Media tab. Private Prometheus counters and FPS/bitrate histograms have fixed labels. No identifier or media content enters the report schema.",
+  "checks": [
+    { "name": "backend_observability_tests", "result": "PASS_LOCAL" },
+    { "name": "backend_route_acl_tests", "result": "PASS_LOCAL" },
+    { "name": "frontend_unit_suite", "result": "PASS_LOCAL", "detail": "208 files and 610 tests, including periodic diagnostic refresh and mobile toolbar layout" },
+    { "name": "frontend_typescript_vite_build", "result": "PASS_LOCAL" },
+    { "name": "openapi_contracts", "result": "PASS_LOCAL" },
+    { "name": "production_client_reports", "result": "NOT_RUN", "detail": "No authenticated second browser or live device stream was available after the owner ended the call." },
+    { "name": "android_native_sender_stats", "result": "NOT_IMPLEMENTED", "detail": "Current Flutter client has no sender report; local Flutter SDK and Android device are not connected to this workspace." }
+  ],
+  "limitation": "The one-minute latest sample is grouped by platform and direction, not by a call. Multiple simultaneous clients of the same platform overwrite one another. Client-reported values are diagnostic only and cannot close QA-06, QA-07 or QA-13.",
+  "privacy": "The schema rejects unknown fields and includes no account, channel, track, IP/ICE, SDP, token or content value. Admin snapshot is no-store; Prometheus labels are fixed enums."
+}

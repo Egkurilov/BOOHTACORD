@@ -19,15 +19,18 @@ describe('selected-stream toolbar layout', () => {
     expect(footer).toContain('К участникам')
   })
 
-  it('distributes target and actual quality horizontally and keeps diagnostics compact', () => {
+  it('keeps quality legible and gives mobile diagnostics a visible label', () => {
     const viewer = source('./ScreenViewer.vue')
     const css = source('../design/voice_viewer_reference.css')
 
     const panel = source('./ScreenReceiverDiagnosticsPanel.vue')
     expect(panel).toContain('Нет свежих данных')
     expect(panel).toContain(':title="status"')
+    expect(panel).toContain('<span>Статистика</span>')
     expect(css).toMatch(/\.stream-quality \{[^}]*display: flex;[^}]*justify-content: space-between/)
-    expect(css).toMatch(/\.stream-diagnostics > summary \{[^}]*width: 32px;[^}]*height: 32px;/)
+    expect(css).toMatch(/\.stream-diagnostics > summary \{[^}]*min-height: 36px;/)
+    expect(css).toContain('@media (max-width: 600px)')
+    expect(css).toContain('.stream-diagnostics { flex: 1 1 100%; }')
     expect(css).toContain('.stream-voice-return {')
   })
 })

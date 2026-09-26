@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-
 import { avatarBackground } from '../design/avatar_color'
 import { participantAudioMessage, screenAudioMessage } from './screen_audio_copy'
 import ScreenViewerAudioControl from './ScreenViewerAudioControl.vue'
@@ -10,7 +9,7 @@ import { createScreenFullscreenControls } from './screen_fullscreen_controls'
 import { useScreenPlaybackQuality } from './screen_playback_quality'
 import { observeHorizontalOverflow } from './screen_rail_overflow'
 import { useScreenReceiverDiagnostics } from './use_screen_receiver_diagnostics'
-
+import { buildScreenClientReport, startScreenClientReporting, webPlatform } from './screen_client_reporter'
 const props = defineProps<{ audioMuted: boolean; cards: ScreenViewerCard[]; deafened: boolean; ended: boolean; error: string | null; expanded: boolean; selectedAudioVolume: number; selectedId: string | null }>()
 const emit = defineEmits<{ clear: []; select: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setAudioVolume: [percent: number]; toggleAudio: []; 'update:expanded': [expanded: boolean] }>()
 const video = ref<HTMLVideoElement | null>(null)
@@ -18,11 +17,12 @@ const audio = ref<HTMLAudioElement | null>(null)
 const stage = ref<HTMLDivElement | null>(null)
 const fullscreenActive = ref(false)
 const fullscreenFeedback = ref('')
-const { actualVideoQuality, markVideoReady, refreshVideoQuality, resetVideoFrame, videoReady } = useScreenPlaybackQuality(video, () => props.selectedId, () => props.ended)
+const { actualVideoQuality, markVideoReady, playbackFps, refreshVideoQuality, resetVideoFrame, videoReady } = useScreenPlaybackQuality(video, () => props.selectedId, () => props.ended)
 const rail = ref<HTMLDivElement | null>(null)
 const railHasOverflow = ref(false)
 let stopObservingRail: (() => void) | null = null
 let fullscreenControls: ReturnType<typeof createScreenFullscreenControls> | null = null
+let stopReporting: (() => void) | null = null
 const selectedStream = computed(() => props.cards.find((stream) => stream.id === props.selectedId) ?? null)
 const { metrics: receiverMetrics, sampledAt: receiverSampledAt } = useScreenReceiverDiagnostics(selectedStream, () => props.ended)
 const adjustable = computed(() => Boolean(selectedStream.value?.hasAudio && selectedStream.value.accountId && !selectedStream.value.isLocal))
@@ -48,9 +48,16 @@ function handleKeydown(event: KeyboardEvent): void {
 
 onMounted(() => {
   fullscreenControls = createScreenFullscreenControls(() => stage.value, document, (active) => { fullscreenActive.value = active })
+  const platform = webPlatform(navigator.userAgent)
+  stopReporting = startScreenClientReporting(() => buildScreenClientReport({
+    platform, selected: Boolean(selectedStream.value && !selectedStream.value.isLocal && !props.ended),
+    hasTrack: Boolean(selectedStream.value?.readReceiverStats), videoReady: videoReady.value,
+    playbackFps: playbackFps.value, receiverMetrics: receiverMetrics.value,
+  }), () => document.visibilityState === 'visible')
   window.addEventListener('keydown', handleKeydown)
 })
 onBeforeUnmount(() => {
+  stopReporting?.()
   stopObservingRail?.()
   fullscreenControls?.dispose()
   window.removeEventListener('keydown', handleKeydown)

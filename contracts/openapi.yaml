@@ -492,6 +492,19 @@
         }
       }
     },
+    "/api/v1/voice/screen-metrics": {
+      "post": {
+        "operationId": "reportClientScreenMetrics",
+        "description": "Authenticated client report. Strict 2 KiB body with fixed platform/direction/state enums and bounded numeric measurements only; no user, room, track, address, SDP or content fields. Client-reported values are diagnostic and not capability evidence. Mutation requires the deployment Origin.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientScreenReport" } } } },
+        "responses": {
+          "204": { "description": "Anonymous report accepted" },
+          "400": { "description": "Malformed or out-of-range report" },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Origin rejected", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
     "/api/v1/voice/channels/{channelID}/leases": {
       "post": {
         "operationId": "acquireVoiceLease",
@@ -774,6 +787,17 @@
           "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/screen-metrics": {
+      "get": {
+        "operationId": "listClientScreenMetrics",
+        "description": "Administrator-only latest client-reported screen metrics by fixed platform/direction pair. Samples expire after 60 seconds. No account, room, track or network identifiers are returned.",
+        "responses": {
+          "200": { "description": "Fresh anonymous samples", "headers": { "Cache-Control": { "schema": { "type": "string", "enum": ["no-store"] } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientScreenSnapshot" } } } },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
       }
     },
@@ -1768,6 +1792,33 @@
       "VoiceParticipants": {
         "type": "object", "additionalProperties": false, "required": ["channels"],
         "properties": { "channels": { "type": "array", "items": { "$ref": "#/components/schemas/VoiceChannelParticipants" } } }
+      },
+      "ClientScreenReport": {
+        "type": "object", "additionalProperties": false, "required": ["platform", "direction", "state"],
+        "properties": {
+          "platform": { "type": "string", "enum": ["ios_web", "android_web", "desktop_web", "android_native", "desktop_native"] },
+          "direction": { "type": "string", "enum": ["sender", "receiver"] },
+          "state": { "type": "string", "enum": ["waiting_subscription", "waiting_first_frame", "playing", "stalled"] },
+          "encoded_fps": { "type": "number", "minimum": 0, "maximum": 240 },
+          "decoded_fps": { "type": "number", "minimum": 0, "maximum": 240 },
+          "presented_fps": { "type": "number", "minimum": 0, "maximum": 240 },
+          "bitrate_kbps": { "type": "number", "minimum": 0, "maximum": 100000 },
+          "jitter_ms": { "type": "number", "minimum": 0, "maximum": 60000 },
+          "packets_lost": { "type": "integer", "minimum": 0, "maximum": 1000000000 },
+          "dropped_frames": { "type": "integer", "minimum": 0, "maximum": 1000000000 },
+          "rtt_ms": { "type": "number", "minimum": 0, "maximum": 60000 }
+        }
+      },
+      "ClientScreenSample": {
+        "type": "object", "additionalProperties": false, "required": ["report", "sampled_at_utc"],
+        "properties": {
+          "report": { "$ref": "#/components/schemas/ClientScreenReport" },
+          "sampled_at_utc": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ClientScreenSnapshot": {
+        "type": "object", "additionalProperties": false, "required": ["samples"],
+        "properties": { "samples": { "type": "array", "maxItems": 10, "items": { "$ref": "#/components/schemas/ClientScreenSample" } } }
       },
       "VoiceChannelParticipants": {
         "type": "object", "additionalProperties": false, "required": ["channel_id", "participants"],

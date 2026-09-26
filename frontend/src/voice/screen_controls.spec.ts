@@ -1,10 +1,25 @@
 import { ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 
-import { createScreenControls } from './screen_controls'
+import { createScreenControls, type ScreenShareState } from './screen_controls'
 import { unknownScreenDiagnostics } from './screen_diagnostics'
 
 describe('screen controls', () => {
+  it('does not overlap periodic screen measurements', async () => {
+    let finishRead: ((value: ReturnType<typeof unknownScreenDiagnostics>) => void) | undefined
+    const session = {
+      readScreenDiagnostics: vi.fn(() => new Promise<ReturnType<typeof unknownScreenDiagnostics>>((resolve) => { finishRead = resolve })),
+      startScreen: vi.fn(), stopScreen: vi.fn(),
+    }
+    const controls = createScreenControls(session, ref({}), ref(null), ref(null), ref<ScreenShareState>('SHARING'), ref(unknownScreenDiagnostics()))
+
+    const first = controls.refreshScreenDiagnostics()
+    await controls.refreshScreenDiagnostics()
+    expect(session.readScreenDiagnostics).toHaveBeenCalledOnce()
+    finishRead?.(unknownScreenDiagnostics())
+    await first
+  })
+
   it('keeps screen sharing active while warning that the browser supplied no audio track', async () => {
     const screenDiagnostics = ref(unknownScreenDiagnostics())
     const screenError = ref<string | null>(null)

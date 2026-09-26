@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
 
 import type { ScreenDiagnostics } from './screen_diagnostics'
 import type { ScreenProfile } from './livekit_gateway'
+import { buildSenderScreenReport, startScreenClientReporting, webPlatform } from './screen_client_reporter'
 
 const props = defineProps<{ diagnostics: ScreenDiagnostics; profile: ScreenProfile | null }>()
 const emit = defineEmits<{ refresh: [] }>()
@@ -22,6 +23,14 @@ const technical = computed(() => [
   `RTT: ${props.diagnostics.roundTripTimeMs === undefined ? 'нет данных' : `${props.diagnostics.roundTripTimeMs} мс`}`,
   `Адаптация: ${props.diagnostics.adaptationReason ?? 'не сообщена'}`,
 ].join(' · '))
+let stopReporting: (() => void) | null = null
+let refreshTimer: ReturnType<typeof setInterval> | null = null
+onMounted(() => {
+  const platform = webPlatform(navigator.userAgent)
+  stopReporting = startScreenClientReporting(() => buildSenderScreenReport(platform, props.diagnostics), () => document.visibilityState === 'visible')
+  refreshTimer = setInterval(() => { if (document.visibilityState === 'visible') emit('refresh') }, 2000)
+})
+onBeforeUnmount(() => { stopReporting?.(); if (refreshTimer) clearInterval(refreshTimer) })
 </script>
 
 <template>

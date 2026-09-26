@@ -12,7 +12,7 @@
 .stream-quality { display: flex; min-width: 0; flex: 1; align-items: center; justify-content: space-between; gap: var(--gc-space-4); color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
 .stream-actual { color: var(--gc-text-secondary); }
 .stream-diagnostics { position: relative; flex: 0 0 auto; color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
-.stream-diagnostics > summary { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-sm); padding: 0; cursor: pointer; list-style: none; }
+.stream-diagnostics > summary { display: flex; min-height: 36px; align-items: center; gap: var(--gc-space-2); border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-3); cursor: pointer; list-style: none; }
 .stream-diagnostics > summary::-webkit-details-marker { display: none; }
 .stream-diagnostics-badge { width: 8px; height: 8px; flex: 0 0 8px; border-radius: var(--gc-radius-full); background: var(--gc-warning); }
 .stream-diagnostics-panel { position: absolute; top: calc(100% + var(--gc-space-2)); right: 0; z-index: 4; width: min(288px, calc(100vw - 32px)); border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-md); padding: var(--gc-space-4); background: var(--gc-surface-raised); box-shadow: var(--gc-shadow-shell); }
@@ -43,3 +43,4 @@
 .stream-voice-return-copy small { color: var(--gc-text-muted); font-size: var(--gc-text-caption); line-height: var(--gc-line-caption); }
 .stream-voice-return button:first-of-type { margin-left: auto; }
 @media (max-width: 1100px) { .stream-quality-row, .stream-quality, .stream-voice-return { flex-wrap: wrap; }.stream-quality { flex: 1 1 100%; }.stream-quality-row .volume-control, .stream-audio-status { flex: 1 1 160px; width: auto; }.stream-voice-return-copy { flex: 1 1 100%; }.stream-voice-return button:first-of-type { margin-left: 0; } }
+@media (max-width: 600px) { .stream-quality-row { align-items: flex-start; }.stream-diagnostics { flex: 1 1 100%; }.stream-diagnostics > summary { width: fit-content; }.stream-diagnostics-panel { right: auto; left: 0; } }

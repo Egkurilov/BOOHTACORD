@@ -1,0 +1,59 @@
+package reportscreenapi
+
+import (
+	"bytes"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
+)
+
+type fakeRecorder struct {
+	reports []httpmetrics.ClientScreenReport
+	samples []httpmetrics.ClientScreenSample
+}
+
+func (fake *fakeRecorder) ObserveClientScreen(report httpmetrics.ClientScreenReport) error {
+	fake.reports = append(fake.reports, report)
+	return nil
+}
+func (fake *fakeRecorder) ClientScreenSnapshot() []httpmetrics.ClientScreenSample {
+	return fake.samples
+}
+
+func TestSubmitAcceptsOnlyStrictBoundedMeasurements(t *testing.T) {
+	recorder := &fakeRecorder{}
+	handler := NewSubmitHandler(recorder)
+	for _, body := range []string{
+		`{"platform":"ios_web","direction":"receiver","state":"playing","account_id":"private"}`,
+		`{"platform":"ios_web","direction":"receiver","state":"playing"}{"extra":true}`,
+		strings.Repeat(" ", 2049),
+	} {
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body)))
+		if response.Code != http.StatusBadRequest {
+			t.Fatalf("accepted malformed report with status %d", response.Code)
+		}
+	}
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(`{"platform":"ios_web","direction":"receiver","state":"waiting_first_frame"}`)))
+	if response.Code != http.StatusNoContent || len(recorder.reports) != 1 {
+		t.Fatalf("valid report status=%d count=%d", response.Code, len(recorder.reports))
+	}
+}
+
+func TestAdminSnapshotContainsOnlyAnonymousSamples(t *testing.T) {
+	recorder := &fakeRecorder{samples: []httpmetrics.ClientScreenSample{{Report: httpmetrics.ClientScreenReport{Platform: "ios_web", Direction: "receiver", State: "playing"}, SampledAtUTC: "2026-09-26T13:00:00Z"}}}
+	response := httptest.NewRecorder()
+	NewAdminHandler(recorder).ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/", nil))
+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), `"ios_web"`) {
+		t.Fatalf("snapshot status=%d body=%s", response.Code, response.Body.String())
+	}
+	for _, forbidden := range []string{"account_id", "channel_id", "track_id", "session_token"} {
+		if strings.Contains(response.Body.String(), forbidden) {
+			t.Fatalf("snapshot disclosed %q", forbidden)
+		}
+	}
+}
