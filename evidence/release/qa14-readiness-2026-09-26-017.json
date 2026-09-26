@@ -1,0 +1,18 @@
+{
+  "id": "qa14-readiness-2026-09-26-017",
+  "kind": "trusted-master-media-controls-deploy-with-open-acceptance-gates",
+  "status": "PARTIAL",
+  "decision": "NO-GO",
+  "observed_at": "2026-09-26T07:59:29Z",
+  "source_revision": "e24fb2ac11f0733c38d42e8b8608d5955050905e",
+  "trusted_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1653272",
+  "deploy_job_log": "https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/runs/1653272/jobs/3234173/logs",
+  "jobs": {"backend": "success", "frontend": "success", "release_guard": "success", "deploy": "success"},
+  "backend_tests": {"passed": 679, "skipped": 0, "failed": 0},
+  "frontend_tests": {"passed_locally": 574, "build": "PASS", "trusted_job": "success"},
+  "requirements": {"total": 39, "mapped": 39},
+  "todo": {"total": 61, "completed": 43, "open": 18, "open_backend": 0, "open_frontend": 0, "open_design": 7, "open_verification": 11},
+  "post_rollout": {"attachment_volume": "voice-platform_attachments-data", "available_bytes": 18447339520, "required_bytes": 6343294632, "reserved_bytes": 0, "metric_available_bytes": 18447335424, "api_image": "voice-platform-api:e24fb2ac11f0733c38d42e8b8608d5955050905e", "api_health": "ok"},
+  "limits": "The trusted deploy confirms the source revision and idle API/volume health. Physical two-user sender/receiver FPS and audible participant/screen controls were not measured. DES-02…08 and QA-03/05…14 remain open under their own acceptance criteria; ADR-010 route selection does not provide digest/SBOM/provenance evidence.",
+  "release_policy": "A successful production deploy and idle volume audit do not close the product release gate."
+}
