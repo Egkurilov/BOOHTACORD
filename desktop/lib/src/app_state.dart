@@ -135,6 +135,9 @@ class AppState extends ChangeNotifier {
   Timer? _maintenanceTimer;
   int _realtimeAttempt = 0;
   final Set<String> _realtimeEventIds = <String>{};
+  final Map<String, String> _sendRetryIds = <String, String>{};
+  final Map<String, ChatMessage> _pendingTextSends = {};
+  final Map<String, DirectChatMessage> _pendingDirectSends = {};
   String? _lastReadDirectMessageId;
   bool _expiringSession = false;
   bool _checkingRealtimeSession = false;
@@ -220,6 +223,9 @@ class AppState extends ChangeNotifier {
     nextDirectMessageCursor = null;
     selectedChannel = null;
     messages = const [];
+    _sendRetryIds.clear();
+    _pendingTextSends.clear();
+    _pendingDirectSends.clear();
     nextMessageCursor = null;
     workspacePanel = WorkspacePanel.none;
     navigationSection = NavigationSection.channels;
@@ -366,6 +372,9 @@ class AppState extends ChangeNotifier {
     topology = null;
     selectedChannel = null;
     messages = const [];
+    _sendRetryIds.clear();
+    _pendingTextSends.clear();
+    _pendingDirectSends.clear();
     members = const [];
     directMessages = const [];
     directMessageCandidates = const [];
@@ -972,7 +981,13 @@ class AppState extends ChangeNotifier {
     try {
       final page = await api.directMessageHistoryPage(conversation.id);
       if (selectedDirectMessage?.id == conversation.id) {
-        directMessageHistory = page.messages;
+        _acknowledgeMessageIds(
+          page.messages.map((message) => message.clientMessageId),
+        );
+        directMessageHistory = _withPendingDirect(
+          conversation.id,
+          page.messages,
+        );
         nextDirectMessageCursor = page.nextCursor;
       }
     } catch (cause) {
@@ -1003,8 +1018,10 @@ class AppState extends ChangeNotifier {
       for (final message in page.messages) {
         byId.putIfAbsent(message.id, () => message);
       }
-      directMessageHistory = byId.values.toList()
-        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      _acknowledgeMessageIds(
+        page.messages.map((message) => message.clientMessageId),
+      );
+      directMessageHistory = _withPendingDirect(conversation.id, byId.values);
       nextDirectMessageCursor = page.nextCursor;
       return true;
     } catch (cause) {
@@ -1020,7 +1037,10 @@ class AppState extends ChangeNotifier {
     final conversation = selectedDirectMessage;
     if (conversation == null || loadingDirectMessages) return;
     final visibleOtherMessages = directMessageHistory
-        .where((message) => message.authorId != user?.accountId)
+        .where(
+          (message) =>
+              message.sendStatus == null && message.authorId != user?.accountId,
+        )
         .toList();
     if (visibleOtherMessages.isEmpty) return;
     final messageId = visibleOtherMessages.last.id;
@@ -1065,8 +1085,46 @@ class AppState extends ChangeNotifier {
   }) async {
     final conversation = selectedDirectMessage;
     final trimmed = body.trim();
-    if (conversation == null || trimmed.isEmpty || trimmed.length > 8000) {
+    if (conversation == null ||
+        sending ||
+        trimmed.isEmpty ||
+        trimmed.runes.length > 8000) {
       return false;
+    }
+    final mentions = mentionUserIds.take(100).toSet().toList();
+    final attachmentIds = attachments.map((item) => item.id).toList();
+    final retryKey = _sendRetryKey(
+      'dm',
+      conversation.id,
+      trimmed,
+      replyToId,
+      mentions,
+      attachmentIds,
+    );
+    final clientMessageId = _sendRetryIds.putIfAbsent(retryKey, _uuid.v4);
+    final pending =
+        _pendingDirectSends[clientMessageId] ??
+        DirectChatMessage(
+          id: 'optimistic:$clientMessageId',
+          directMessageId: conversation.id,
+          authorId: user?.accountId ?? '',
+          body: trimmed,
+          createdAt: DateTime.now(),
+          deleted: false,
+          revision: 0,
+          clientMessageId: clientMessageId,
+          mentionUserIds: mentions,
+          replyToId: replyToId,
+          attachments: attachments,
+        );
+    _pendingDirectSends[clientMessageId] = pending.withSendStatus(
+      MessageSendStatus.sending,
+    );
+    if (selectedDirectMessage?.id == conversation.id) {
+      directMessageHistory = _withPendingDirect(
+        conversation.id,
+        directMessageHistory,
+      );
     }
     sending = true;
     error = null;
@@ -1074,16 +1132,42 @@ class AppState extends ChangeNotifier {
     try {
       final message = await api.sendDirectMessage(
         conversation.id,
-        _uuid.v4(),
+        clientMessageId,
         trimmed,
         replyToId: replyToId,
-        mentionUserIds: mentionUserIds.take(100).toSet().toList(),
-        attachmentIds: attachments.map((item) => item.id).toList(),
+        mentionUserIds: mentions,
+        attachmentIds: attachmentIds,
       );
-      directMessageHistory = [...directMessageHistory, message];
+      _sendRetryIds.remove(retryKey);
+      _pendingDirectSends.remove(clientMessageId);
+      if (phase == AppPhase.ready &&
+          selectedDirectMessage?.id == conversation.id) {
+        directMessageHistory = [
+          ...directMessageHistory.where(
+            (value) =>
+                value.id != message.id &&
+                value.clientMessageId != clientMessageId,
+          ),
+          message,
+        ];
+      }
       return true;
     } catch (cause) {
-      error = _message(cause);
+      if (_pendingDirectSends.containsKey(clientMessageId)) {
+        _pendingDirectSends[clientMessageId] = pending.withSendStatus(
+          MessageSendStatus.failed,
+        );
+        if (selectedDirectMessage?.id == conversation.id) {
+          directMessageHistory = _withPendingDirect(
+            conversation.id,
+            directMessageHistory,
+          );
+        }
+      }
+      if (phase == AppPhase.ready &&
+          selectedDirectMessage?.id == conversation.id) {
+        error = _message(cause);
+      }
       return false;
     } finally {
       sending = false;
@@ -1185,7 +1269,10 @@ class AppState extends ChangeNotifier {
       try {
         final page = await api.messagePage(channel.id);
         if (selectedChannel?.id == channel.id) {
-          messages = page.messages;
+          _acknowledgeMessageIds(
+            page.messages.map((message) => message.clientMessageId),
+          );
+          messages = _withPendingText(channel.id, page.messages);
           nextMessageCursor = page.nextCursor;
         }
       } catch (cause) {
@@ -1215,8 +1302,10 @@ class AppState extends ChangeNotifier {
       for (final message in page.messages) {
         byId.putIfAbsent(message.id, () => message);
       }
-      messages = byId.values.toList()
-        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      _acknowledgeMessageIds(
+        page.messages.map((message) => message.clientMessageId),
+      );
+      messages = _withPendingText(channel.id, byId.values);
       nextMessageCursor = page.nextCursor;
       return true;
     } catch (cause) {
@@ -1235,7 +1324,12 @@ class AppState extends ChangeNotifier {
       return;
     }
     final message = messages
-        .where((candidate) => candidate.id == messageId && !candidate.deleted)
+        .where(
+          (candidate) =>
+              candidate.id == messageId &&
+              !candidate.deleted &&
+              candidate.sendStatus == null,
+        )
         .firstOrNull;
     if (message == null) return;
     final lastReadAt = _lastReadTextAt[channelId];
@@ -1456,31 +1550,183 @@ class AppState extends ChangeNotifier {
     final trimmed = body.trim();
     if (channel == null ||
         channel.kind != ChannelKind.text ||
+        sending ||
         trimmed.isEmpty ||
-        trimmed.length > 8000) {
+        trimmed.runes.length > 8000) {
       return false;
     }
+    final mentions = mentionUserIds.take(100).toSet().toList();
+    final attachmentIds = attachments.map((item) => item.id).toList();
+    final retryKey = _sendRetryKey(
+      'text',
+      channel.id,
+      trimmed,
+      replyToId,
+      mentions,
+      attachmentIds,
+    );
+    final clientMessageId = _sendRetryIds.putIfAbsent(retryKey, _uuid.v4);
+    final pending =
+        _pendingTextSends[clientMessageId] ??
+        ChatMessage(
+          id: 'optimistic:$clientMessageId',
+          channelId: channel.id,
+          authorId: user?.accountId ?? '',
+          body: trimmed,
+          createdAt: DateTime.now(),
+          deleted: false,
+          revision: 0,
+          clientMessageId: clientMessageId,
+          replyToId: replyToId,
+          mentionUserIds: mentions,
+          attachments: attachments,
+        );
+    _pendingTextSends[clientMessageId] = pending.withSendStatus(
+      MessageSendStatus.sending,
+    );
+    messages = _withPendingText(channel.id, messages);
     sending = true;
     error = null;
     notifyListeners();
     try {
       final message = await api.sendMessage(
         channel.id,
-        _uuid.v4(),
+        clientMessageId,
         trimmed,
         replyToId: replyToId,
-        mentionUserIds: mentionUserIds.take(100).toSet().toList(),
-        attachmentIds: attachments.map((item) => item.id).toList(),
+        mentionUserIds: mentions,
+        attachmentIds: attachmentIds,
       );
-      messages = [...messages, message];
+      _sendRetryIds.remove(retryKey);
+      _pendingTextSends.remove(clientMessageId);
+      if (phase == AppPhase.ready && selectedChannel?.id == channel.id) {
+        messages = [
+          ...messages.where(
+            (value) =>
+                value.id != message.id &&
+                value.clientMessageId != clientMessageId,
+          ),
+          message,
+        ];
+      }
       return true;
     } catch (cause) {
-      error = _message(cause);
+      if (_pendingTextSends.containsKey(clientMessageId)) {
+        _pendingTextSends[clientMessageId] = pending.withSendStatus(
+          MessageSendStatus.failed,
+        );
+        if (selectedChannel?.id == channel.id) {
+          messages = _withPendingText(channel.id, messages);
+        }
+      }
+      if (phase == AppPhase.ready && selectedChannel?.id == channel.id) {
+        error = _message(cause);
+      }
       return false;
     } finally {
       sending = false;
       notifyListeners();
     }
+  }
+
+  String _sendRetryKey(
+    String kind,
+    String conversationId,
+    String body,
+    String? replyToId,
+    List<String> mentions,
+    List<String> attachmentIds,
+  ) => jsonEncode([
+    kind,
+    conversationId,
+    body,
+    replyToId,
+    mentions,
+    attachmentIds,
+  ]);
+
+  void _acknowledgeMessageIds(Iterable<String?> ids) {
+    final acknowledged = ids.whereType<String>().toSet();
+    if (acknowledged.isEmpty) return;
+    _sendRetryIds.removeWhere((_, id) => acknowledged.contains(id));
+    for (final id in acknowledged) {
+      _pendingTextSends.remove(id);
+      _pendingDirectSends.remove(id);
+    }
+  }
+
+  List<ChatMessage> _withPendingText(
+    String channelId,
+    Iterable<ChatMessage> history,
+  ) {
+    final confirmed = history
+        .where((message) => message.sendStatus == null)
+        .toList();
+    final confirmedIds = confirmed
+        .map((message) => message.clientMessageId)
+        .toSet();
+    final combined = [
+      ...confirmed,
+      ..._pendingTextSends.values.where(
+        (message) =>
+            message.channelId == channelId &&
+            !confirmedIds.contains(message.clientMessageId),
+      ),
+    ];
+    combined.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return combined;
+  }
+
+  List<DirectChatMessage> _withPendingDirect(
+    String conversationId,
+    Iterable<DirectChatMessage> history,
+  ) {
+    final confirmed = history
+        .where((message) => message.sendStatus == null)
+        .toList();
+    final confirmedIds = confirmed
+        .map((message) => message.clientMessageId)
+        .toSet();
+    final combined = [
+      ...confirmed,
+      ..._pendingDirectSends.values.where(
+        (message) =>
+            message.directMessageId == conversationId &&
+            !confirmedIds.contains(message.clientMessageId),
+      ),
+    ];
+    combined.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return combined;
+  }
+
+  Future<bool> retryTextSend(String clientMessageId) async {
+    final pending = _pendingTextSends[clientMessageId];
+    if (pending == null ||
+        pending.sendStatus != MessageSendStatus.failed ||
+        selectedChannel?.id != pending.channelId) {
+      return false;
+    }
+    return send(
+      pending.body,
+      replyToId: pending.replyToId,
+      mentionUserIds: pending.mentionUserIds,
+      attachments: pending.attachments,
+    );
+  }
+
+  Future<bool> retryDirectSend(String clientMessageId) async {
+    final pending = _pendingDirectSends[clientMessageId];
+    if (pending == null ||
+        pending.sendStatus != MessageSendStatus.failed ||
+        selectedDirectMessage?.id != pending.directMessageId) {
+      return false;
+    }
+    return sendDirect(
+      pending.body,
+      replyToId: pending.replyToId,
+      mentionUserIds: pending.mentionUserIds,
+      attachments: pending.attachments,
+    );
   }
 
   Future<bool> editText(ChatMessage message, String body) async {

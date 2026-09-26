@@ -249,6 +249,117 @@ void main() {
     expect(state.sending, isFalse);
   });
 
+  test('reuses the text send ID after an uncertain failure', () async {
+    final api = _FakeApi(topology)..failTextSends = 1;
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+
+    expect(await state.send('Привет', replyToId: 'message-1'), isFalse);
+    final failed = state.messages.last;
+    expect(failed.sendStatus, MessageSendStatus.failed);
+    expect(failed.clientMessageId, api.textSendIds.single);
+    expect(await state.retryTextSend(failed.clientMessageId!), isTrue);
+    expect(api.textSendIds[1], api.textSendIds[0]);
+    expect(
+      state.messages.where((message) => message.body == 'Привет'),
+      hasLength(1),
+    );
+
+    expect(await state.send('Другой текст'), isTrue);
+    expect(api.textSendIds[2], isNot(api.textSendIds[1]));
+  });
+
+  test('counts Unicode code points for the message limit', () async {
+    final api = _FakeApi(topology);
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+
+    expect(await state.send('🙂' * 5000), isTrue);
+    expect(state.messages.last.body.runes.length, 5000);
+  });
+
+  test('reconciles a lost text acknowledgement with server history', () async {
+    final api = _FakeApi(topology)..failTextSends = 1;
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+
+    expect(await state.send('Привет'), isFalse);
+    expect(state.messages.last.sendStatus, MessageSendStatus.failed);
+    api.committedTextClientId = api.textSendIds.single;
+    await state.selectChannel(textChannel);
+    expect(
+      state.messages.where((message) => message.body == 'Привет'),
+      hasLength(1),
+    );
+    expect(state.messages.last.sendStatus, isNull);
+    expect(await state.retryTextSend(api.textSendIds.first), isFalse);
+
+    expect(await state.send('Привет'), isTrue);
+    expect(api.textSendIds.last, isNot(api.textSendIds.first));
+  });
+
+  test('reuses the direct send ID without inserting into another DM', () async {
+    final api = _FakeApi(topology, includeDirectMessage: true)
+      ..failDirectSends = 1;
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+    final first = state.directMessages.single;
+    await state.openDirectConversation(first);
+
+    expect(await state.sendDirect('Личное приветствие'), isFalse);
+    final failedId = state.directMessageHistory.last.clientMessageId!;
+    expect(
+      state.directMessageHistory.last.sendStatus,
+      MessageSendStatus.failed,
+    );
+    const other = DirectConversation(
+      id: 'dm-2',
+      participantId: 'account-3',
+      displayName: 'Другой собеседник',
+      unreadCount: 0,
+    );
+    await state.openDirectConversation(other);
+    expect(await state.sendDirect('Другое сообщение'), isTrue);
+    expect(state.directMessageHistory.last.body, 'Другое сообщение');
+    await state.openDirectConversation(first);
+    expect(
+      state.directMessageHistory.last.sendStatus,
+      MessageSendStatus.failed,
+    );
+    expect(await state.retryDirectSend(failedId), isTrue);
+    expect(api.directSendIds.last, api.directSendIds.first);
+    expect(api.directSendIds[1], isNot(api.directSendIds.first));
+  });
+
+  test('does not append a delayed text send into the next channel', () async {
+    final gate = Completer<void>();
+    final api = _FakeApi(topology)..textSendGate = gate;
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+
+    final pending = state.send('Сообщение первого канала');
+    expect(state.messages.last.sendStatus, MessageSendStatus.sending);
+    const other = GuildChannel(
+      id: 'channel-2',
+      name: 'другой',
+      kind: ChannelKind.text,
+      admissionClosed: false,
+    );
+    await state.selectChannel(other);
+    gate.complete();
+    expect(await pending, isTrue);
+    expect(state.selectedChannel?.id, other.id);
+    expect(
+      state.messages.every((message) => message.channelId == other.id),
+      isTrue,
+    );
+  });
+
   test(
     'loads older text history by cursor without duplicating messages',
     () async {
@@ -362,6 +473,12 @@ class _FakeApi extends ApiClient {
   List<String> sentDirectMentionIds = const [];
   List<String> sentAttachmentIds = const [];
   List<String> sentDirectAttachmentIds = const [];
+  int failTextSends = 0;
+  int failDirectSends = 0;
+  String? committedTextClientId;
+  Completer<void>? textSendGate;
+  final textSendIds = <String>[];
+  final directSendIds = <String>[];
 
   @override
   bool get realtimeEnabled => false;
@@ -427,12 +544,18 @@ class _FakeApi extends ApiClient {
     List<String> mentionUserIds = const [],
     List<String> attachmentIds = const [],
   }) async {
+    directSendIds.add(clientMessageId);
+    if (failDirectSends > 0) {
+      failDirectSends--;
+      throw const ApiFailure('Подтверждение отправки потеряно.');
+    }
     sentDirectReplyToId = replyToId;
     sentDirectMentionIds = mentionUserIds;
     sentDirectAttachmentIds = attachmentIds;
     return DirectChatMessage(
-      id: 'dm-message-2',
+      id: 'dm-message-${directSendIds.length + 1}',
       directMessageId: directMessageId,
+      clientMessageId: clientMessageId,
       authorId: 'account-1',
       body: body,
       createdAt: DateTime.utc(2026, 9, 20, 1),
@@ -513,7 +636,20 @@ class _FakeApi extends ApiClient {
       );
     }
     return ChatMessagePage(
-      messages: await messages(channelId),
+      messages: [
+        ...await messages(channelId),
+        if (committedTextClientId != null)
+          ChatMessage(
+            id: 'message-committed',
+            channelId: channelId,
+            authorId: 'account-1',
+            clientMessageId: committedTextClientId,
+            body: 'Привет',
+            createdAt: DateTime.utc(2026, 9, 20, 1),
+            deleted: false,
+            revision: 1,
+          ),
+      ],
       nextCursor: paginated ? 'older-page' : null,
     );
   }
@@ -527,12 +663,19 @@ class _FakeApi extends ApiClient {
     List<String> mentionUserIds = const [],
     List<String> attachmentIds = const [],
   }) async {
+    await textSendGate?.future;
+    textSendIds.add(clientMessageId);
+    if (failTextSends > 0) {
+      failTextSends--;
+      throw const ApiFailure('Подтверждение отправки потеряно.');
+    }
     sentReplyToId = replyToId;
     sentMentionIds = mentionUserIds;
     sentAttachmentIds = attachmentIds;
     return ChatMessage(
-      id: 'message-2',
+      id: 'message-${textSendIds.length + 1}',
       channelId: channelId,
+      clientMessageId: clientMessageId,
       authorId: 'account-1',
       body: body,
       createdAt: DateTime.utc(2026, 9, 20, 1),

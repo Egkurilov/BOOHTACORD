@@ -1231,6 +1231,7 @@ class _ConversationState extends State<_Conversation>
       }
       final visibleMessages = <ChatMessage>[];
       for (final message in renderedMessages) {
+        if (message.sendStatus != null) continue;
         final row = _messageKeys['${widget.channel.id}:${message.id}']
             ?.currentContext
             ?.findRenderObject();
@@ -1275,30 +1276,78 @@ class _ConversationState extends State<_Conversation>
 
   Future<void> _send() async {
     if (_attachmentsPending) return;
-    if (await widget.state.send(
-      _controller.text,
-      replyToId: _replyTarget?.id,
+    final body = _controller.text;
+    final replyId = _replyTarget?.id;
+    final mentionIds = _mentionUserIds.toSet();
+    final attachmentIds = _attachments.map((item) => item.id).toList();
+    final sent = await widget.state.send(
+      body,
+      replyToId: replyId,
       mentionUserIds: _mentionUserIds.toList(),
       attachments: _attachments,
-    )) {
-      _controller.clear();
-      if (mounted) {
-        setState(() {
-          _replyTarget = null;
-          _mentionUserIds.clear();
-          _attachments = const [];
-        });
-      }
-      _followLatest = true;
-      await Future<void>.delayed(const Duration(milliseconds: 80));
-      if (_scroll.hasClients) {
-        await _scroll.animateTo(
-          _scroll.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-        );
-      }
+    );
+    if (!sent ||
+        !mounted ||
+        widget.state.selectedChannel?.id != widget.channel.id) {
+      return;
     }
+    if (_controller.text != body ||
+        _replyTarget?.id != replyId ||
+        !setEquals(_mentionUserIds, mentionIds) ||
+        !listEquals(
+          _attachments.map((item) => item.id).toList(),
+          attachmentIds,
+        )) {
+      return;
+    }
+    _controller.clear();
+    setState(() {
+      _replyTarget = null;
+      _mentionUserIds.clear();
+      _attachments = const [];
+    });
+    _followLatest = true;
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    if (mounted && _scroll.hasClients) {
+      await _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  Future<void> _retry(ChatMessage message) async {
+    final body = _controller.text;
+    final replyId = _replyTarget?.id;
+    final mentionIds = _mentionUserIds.toSet();
+    final attachmentIds = _attachments.map((item) => item.id).toList();
+    final sent = await widget.state.retryTextSend(message.clientMessageId!);
+    if (!sent ||
+        !mounted ||
+        widget.state.selectedChannel?.id != widget.channel.id ||
+        body.trim() != message.body ||
+        _controller.text != body ||
+        replyId != message.replyToId ||
+        _replyTarget?.id != replyId ||
+        !setEquals(mentionIds, message.mentionUserIds.toSet()) ||
+        !setEquals(_mentionUserIds, mentionIds) ||
+        !listEquals(
+          attachmentIds,
+          message.attachments.map((item) => item.id).toList(),
+        ) ||
+        !listEquals(
+          _attachments.map((item) => item.id).toList(),
+          attachmentIds,
+        )) {
+      return;
+    }
+    _controller.clear();
+    setState(() {
+      _replyTarget = null;
+      _mentionUserIds.clear();
+      _attachments = const [];
+    });
   }
 
   void _replyTo(ChatMessage message) {
@@ -1454,6 +1503,9 @@ class _ConversationState extends State<_Conversation>
                         replyPreview: _replyPreview(message),
                         onReply: _replyTo,
                         onJumpToReply: () => _jumpToReply(message),
+                        onRetry: message.clientMessageId == null
+                            ? null
+                            : () => _retry(message),
                       ),
                     );
                   },
@@ -1567,6 +1619,7 @@ class _MessageRow extends StatelessWidget {
     this.replyPreview,
     this.onReply,
     this.onJumpToReply,
+    this.onRetry,
   });
   final AppState state;
   final ChatMessage message;
@@ -1574,6 +1627,7 @@ class _MessageRow extends StatelessWidget {
   final String? replyPreview;
   final ValueChanged<ChatMessage>? onReply;
   final VoidCallback? onJumpToReply;
+  final VoidCallback? onRetry;
   @override
   Widget build(BuildContext context) {
     final member = state.members
@@ -1618,7 +1672,7 @@ class _MessageRow extends StatelessWidget {
                         fontSize: 12,
                       ),
                     ),
-                    if (!message.deleted)
+                    if (!message.deleted && message.sendStatus == null)
                       _MessageActionMenu(
                         message: message,
                         canEdit: message.authorId == state.user?.accountId,
@@ -1640,7 +1694,7 @@ class _MessageRow extends StatelessWidget {
                         child: const SizedBox.shrink(),
                       ),
                     ),
-                    if (!message.deleted)
+                    if (!message.deleted && message.sendStatus == null)
                       _MessageActionMenu(
                         message: message,
                         canEdit: message.authorId == state.user?.accountId,
@@ -1668,7 +1722,20 @@ class _MessageRow extends StatelessWidget {
                 )
               else
                 FormattedMessageBody(body: message.body, color: GcColors.text),
-              if (!message.deleted && message.attachments.isNotEmpty)
+              if (message.sendStatus == MessageSendStatus.sending)
+                const Text(
+                  'Отправляется…',
+                  style: TextStyle(color: GcColors.muted, fontSize: 12),
+                ),
+              if (message.sendStatus == MessageSendStatus.failed)
+                TextButton.icon(
+                  onPressed: state.sending ? null : onRetry,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Не отправлено · Повторить отправку'),
+                ),
+              if (!message.deleted &&
+                  message.sendStatus == null &&
+                  message.attachments.isNotEmpty)
                 MessageAttachmentList(
                   state: state,
                   parentPath:
@@ -2569,21 +2636,69 @@ class _DirectConversationState extends State<_DirectConversation> {
 
   Future<void> _send() async {
     if (widget.state.sending || _attachmentsPending) return;
-    if (await widget.state.sendDirect(
-      _controller.text,
-      replyToId: _replyTarget?.id,
+    final body = _controller.text;
+    final replyId = _replyTarget?.id;
+    final mentionIds = _mentionUserIds.toSet();
+    final attachmentIds = _attachments.map((item) => item.id).toList();
+    final sent = await widget.state.sendDirect(
+      body,
+      replyToId: replyId,
       mentionUserIds: _mentionUserIds.toList(),
       attachments: _attachments,
-    )) {
-      _controller.clear();
-      if (mounted) {
-        setState(() {
-          _replyTarget = null;
-          _mentionUserIds.clear();
-          _attachments = const [];
-        });
-      }
+    );
+    if (!sent ||
+        !mounted ||
+        widget.state.selectedDirectMessage?.id != widget.conversation.id) {
+      return;
     }
+    if (_controller.text != body ||
+        _replyTarget?.id != replyId ||
+        !setEquals(_mentionUserIds, mentionIds) ||
+        !listEquals(
+          _attachments.map((item) => item.id).toList(),
+          attachmentIds,
+        )) {
+      return;
+    }
+    _controller.clear();
+    setState(() {
+      _replyTarget = null;
+      _mentionUserIds.clear();
+      _attachments = const [];
+    });
+  }
+
+  Future<void> _retry(DirectChatMessage message) async {
+    final body = _controller.text;
+    final replyId = _replyTarget?.id;
+    final mentionIds = _mentionUserIds.toSet();
+    final attachmentIds = _attachments.map((item) => item.id).toList();
+    final sent = await widget.state.retryDirectSend(message.clientMessageId!);
+    if (!sent ||
+        !mounted ||
+        widget.state.selectedDirectMessage?.id != widget.conversation.id ||
+        body.trim() != message.body ||
+        _controller.text != body ||
+        replyId != message.replyToId ||
+        _replyTarget?.id != replyId ||
+        !setEquals(mentionIds, message.mentionUserIds.toSet()) ||
+        !setEquals(_mentionUserIds, mentionIds) ||
+        !listEquals(
+          attachmentIds,
+          message.attachments.map((item) => item.id).toList(),
+        ) ||
+        !listEquals(
+          _attachments.map((item) => item.id).toList(),
+          attachmentIds,
+        )) {
+      return;
+    }
+    _controller.clear();
+    setState(() {
+      _replyTarget = null;
+      _mentionUserIds.clear();
+      _attachments = const [];
+    });
   }
 
   String _directAuthorName(String accountId) {
@@ -2730,7 +2845,28 @@ class _DirectConversationState extends State<_DirectConversation> {
                                   fontSize: 14,
                                   lineHeight: 1.4,
                                 ),
+                              if (message.sendStatus ==
+                                  MessageSendStatus.sending)
+                                const Text(
+                                  'Отправляется…',
+                                  style: TextStyle(
+                                    color: GcColors.muted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              if (message.sendStatus ==
+                                  MessageSendStatus.failed)
+                                TextButton.icon(
+                                  onPressed: widget.state.sending
+                                      ? null
+                                      : () => _retry(message),
+                                  icon: const Icon(Icons.refresh, size: 16),
+                                  label: const Text(
+                                    'Не отправлено · Повторить отправку',
+                                  ),
+                                ),
                               if (!message.deleted &&
+                                  message.sendStatus == null &&
                                   message.attachments.isNotEmpty)
                                 MessageAttachmentList(
                                   state: widget.state,
@@ -2752,7 +2888,7 @@ class _DirectConversationState extends State<_DirectConversation> {
                             ],
                           ),
                         ),
-                        if (!message.deleted)
+                        if (!message.deleted && message.sendStatus == null)
                           _DirectMessageActionMenu(
                             message: message,
                             canEdit: own,

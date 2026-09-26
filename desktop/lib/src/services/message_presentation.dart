@@ -63,6 +63,8 @@ List<PresentedMessage> presentMessages(List<ChatMessage> messages) {
         message.replyToId == null &&
         !previous.deleted &&
         !message.deleted &&
+        previous.sendStatus == null &&
+        message.sendStatus == null &&
         gap != null &&
         !gap.isNegative &&
         gap <= const Duration(minutes: 5);

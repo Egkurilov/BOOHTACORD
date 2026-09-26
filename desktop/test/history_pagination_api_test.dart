@@ -39,6 +39,7 @@ void main() {
     expect(request.url.queryParameters, {'before': 'cursor-1'});
     expect(request.headers['cookie'], 'session=test-session');
     expect(page.messages.single.id, 'message-1');
+    expect(page.messages.single.clientMessageId, 'client-text-1');
     expect(page.messages.single.attachments.single.originalName, 'image.png');
     expect(page.nextCursor, 'older-message');
   });
@@ -66,6 +67,7 @@ void main() {
     expect(request.url.queryParameters, {'before': 'cursor-2'});
     expect(request.headers['cookie'], 'session=test-session');
     expect(page.messages.single.id, 'dm-message-1');
+    expect(page.messages.single.clientMessageId, 'client-dm-1');
     expect(page.messages.single.attachments.single.id, 'attachment-2');
     expect(page.nextCursor, 'older-dm-message');
   });
@@ -256,6 +258,7 @@ void main() {
 
 const _textMessage = {
   'id': 'message-1',
+  'client_message_id': 'client-text-1',
   'channel_id': 'text-1',
   'author_id': 'account-1',
   'body': 'Старое',
@@ -269,6 +272,7 @@ const _textMessage = {
 
 const _directMessage = {
   'id': 'dm-message-1',
+  'client_message_id': 'client-dm-1',
   'direct_message_id': 'dm-1',
   'author_id': 'account-2',
   'body': 'Старое личное',

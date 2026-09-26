@@ -349,6 +349,8 @@ class MessageAttachment {
   }
 }
 
+enum MessageSendStatus { sending, failed }
+
 List<MessageAttachment> _messageAttachments(Object? value) {
   if (value == null) return const [];
   if (value is! List) {
@@ -371,6 +373,8 @@ class ChatMessage {
     required this.createdAt,
     required this.deleted,
     required this.revision,
+    this.clientMessageId,
+    this.sendStatus,
     this.replyToId,
     this.mentionUserIds = const [],
     this.attachments = const [],
@@ -383,6 +387,8 @@ class ChatMessage {
   final DateTime createdAt;
   final bool deleted;
   final int revision;
+  final String? clientMessageId;
+  final MessageSendStatus? sendStatus;
   final String? replyToId;
   final List<String> mentionUserIds;
   final List<MessageAttachment> attachments;
@@ -395,6 +401,7 @@ class ChatMessage {
     createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
     deleted: json['deleted'] as bool? ?? false,
     revision: json['revision'] as int,
+    clientMessageId: json['client_message_id'] as String?,
     replyToId: json['reply_to_id'] as String?,
     mentionUserIds: (json['mention_user_ids'] as List<dynamic>? ?? const [])
         .whereType<String>()
@@ -403,6 +410,22 @@ class ChatMessage {
     editedAt: json['edited_at'] == null
         ? null
         : DateTime.parse(json['edited_at'] as String).toLocal(),
+  );
+
+  ChatMessage withSendStatus(MessageSendStatus status) => ChatMessage(
+    id: id,
+    channelId: channelId,
+    authorId: authorId,
+    body: body,
+    createdAt: createdAt,
+    deleted: deleted,
+    revision: revision,
+    clientMessageId: clientMessageId,
+    sendStatus: status,
+    replyToId: replyToId,
+    mentionUserIds: mentionUserIds,
+    attachments: attachments,
+    editedAt: editedAt,
   );
 }
 
@@ -529,6 +552,8 @@ class DirectChatMessage {
     required this.createdAt,
     required this.deleted,
     required this.revision,
+    this.clientMessageId,
+    this.sendStatus,
     this.mentionUserIds = const [],
     this.replyToId,
     this.replyPreview,
@@ -542,6 +567,8 @@ class DirectChatMessage {
   final DateTime createdAt;
   final bool deleted;
   final int revision;
+  final String? clientMessageId;
+  final MessageSendStatus? sendStatus;
   final List<String> mentionUserIds;
   final String? replyToId;
   final DirectMessageReplyPreview? replyPreview;
@@ -557,6 +584,7 @@ class DirectChatMessage {
         createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
         deleted: json['deleted'] as bool? ?? false,
         revision: json['revision'] as int,
+        clientMessageId: json['client_message_id'] as String?,
         mentionUserIds: (json['mention_user_ids'] as List<dynamic>? ?? const [])
             .whereType<String>()
             .toList(growable: false),
@@ -570,6 +598,24 @@ class DirectChatMessage {
         editedAt: json['edited_at'] == null
             ? null
             : DateTime.parse(json['edited_at'] as String).toLocal(),
+      );
+
+  DirectChatMessage withSendStatus(MessageSendStatus status) =>
+      DirectChatMessage(
+        id: id,
+        directMessageId: directMessageId,
+        authorId: authorId,
+        body: body,
+        createdAt: createdAt,
+        deleted: deleted,
+        revision: revision,
+        clientMessageId: clientMessageId,
+        sendStatus: status,
+        mentionUserIds: mentionUserIds,
+        replyToId: replyToId,
+        replyPreview: replyPreview,
+        attachments: attachments,
+        editedAt: editedAt,
       );
 }
 

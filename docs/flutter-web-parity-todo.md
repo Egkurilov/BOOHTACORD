@@ -39,8 +39,11 @@ its behavior and platform-specific acceptance evidence exist.
 
 - [ ] Add per-file upload progress/retry and safe cleanup/recovery for abandoned
   uploads in TEXT and DM; preserve successful attachment IDs on partial failure.
-- [ ] Add send retry/idempotency and edit/delete revision-conflict recovery in
-  TEXT and DM; do not duplicate messages or discard the user's draft.
+- [x] Add optimistic sending/failed rows and explicit retry controls in TEXT
+  and DM. Exact-payload retries reuse `client_message_id`, reconcile server
+  acknowledgements from history, and cannot populate another open chat.
+- [ ] Add edit/delete revision-conflict recovery and verify send retry against
+  the live backend.
 - [ ] Verify reply context, pagination/scroll restoration and read cursors at
   boundaries and under realtime updates.
 - [ ] Define a native notification design per platform before exposing any
@@ -97,6 +100,8 @@ its behavior and platform-specific acceptance evidence exist.
 
 ## Currently executing
 
+- [ ] P1: add edit/delete conflict recovery and live backend checks for TEXT
+  and DM sends; optimistic/failed rows and explicit retry are implemented.
 - [ ] P1: verify audio device enumeration, switching and screen re-entry with
   real devices and a real voice room on macOS/Android.
 - [ ] Delivery: complete the signed Android release build when the persistent

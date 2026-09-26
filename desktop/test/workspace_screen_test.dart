@@ -472,6 +472,37 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('shows a failed text send and retries the same client ID', (
+    tester,
+  ) async {
+    final api = _PortraitApi()..failTextSends = 1;
+    final state = AppState(api);
+    await state.initialize();
+    expect(await state.send('Повторяемое сообщение'), isFalse);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Не отправлено · Повторить отправку'), findsOneWidget);
+    expect(state.messages.last.sendStatus, MessageSendStatus.failed);
+    await tester.tap(find.text('Не отправлено · Повторить отправку'));
+    await tester.pumpAndSettle();
+
+    expect(api.textSendIds, hasLength(2));
+    expect(api.textSendIds.last, api.textSendIds.first);
+    expect(state.messages.last.sendStatus, isNull);
+    expect(find.text('Не отправлено · Повторить отправку'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('selects a reply target and sends a direct-message reply', (
     tester,
   ) async {
@@ -659,6 +690,8 @@ class _PortraitApi extends ApiClient {
   List<String> sentDirectMentionIds = const [];
   List<String> sentAttachmentIds = const [];
   List<String> sentDirectAttachmentIds = const [];
+  int failTextSends = 0;
+  final textSendIds = <String>[];
   String? lastSearchQuery;
   bool failAdminUpdate = false;
   bool failResetLink = false;
@@ -937,6 +970,11 @@ class _PortraitApi extends ApiClient {
     List<String> mentionUserIds = const [],
     List<String> attachmentIds = const [],
   }) async {
+    textSendIds.add(clientMessageId);
+    if (failTextSends > 0) {
+      failTextSends--;
+      throw const ApiFailure('Отправка не подтверждена.');
+    }
     sentReplyToId = replyToId;
     sentMentionIds = mentionUserIds;
     sentAttachmentIds = attachmentIds;
