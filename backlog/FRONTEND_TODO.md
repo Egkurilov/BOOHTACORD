@@ -8,3 +8,5 @@ FE-01…FE-47 перенесены в [DONE.md](../DONE.md) и [DONE_MEDIA.md](.
 FE-48/49: [prejoin roster и заметный сигнал нового stream](../evidence/design/voice-roster-stream-alert-2026-09-26-001.json) реализованы по [дизайну состояний](../docs/design/VOICE_ROSTER_AND_STREAM_SIGNAL.md); ник без суффикса «· вы», звук выключается. Физический voice, OS audio policy и доступность проверяются в DES-04/05 и QA-06.
 
 FE-50: [viewer presentedFrames](../evidence/media/qa07-viewer-presented-counter-2026-09-26-001.json) заменил подсчёт одних callback на счёт compositor-submitted frames, если Chrome отдаёт metadata. Source PASS; физический FPS остаётся QA-07.
+
+FE-51: [Android Chrome screen capture](../evidence/media/android-chrome-capture-capability-2026-09-26-001.json) объясняет отсутствие системного picker и направляет к Android-приложению или браузеру ПК. Source PASS; Android browser visual после деплоя и физический media POC остаются QA-07.

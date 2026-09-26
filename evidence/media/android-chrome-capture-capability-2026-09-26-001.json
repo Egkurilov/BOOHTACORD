@@ -1,0 +1,20 @@
+{
+  "id": "android-chrome-capture-capability-2026-09-26-001",
+  "kind": "screen-capture-compatibility-diagnosis",
+  "status": "PASS_SOURCE_ONLY",
+  "observed_at_utc": "2026-09-26T15:11:00Z",
+  "user_observation": "In Android Chrome, tapping start screen share produced the generic failure and no system source picker appeared.",
+  "root_cause": "The pinned LiveKit JavaScript SDK throws DeviceUnsupportedError when navigator.mediaDevices.getDisplayMedia is missing. MDN browser-compat-data marks getDisplayMedia unsupported in Chrome for Android. The product mapped this named error to a generic browser/network message and left the start button enabled.",
+  "change": "Screen capture availability is checked before presenting the action. Unsupported Android Chrome receives a disabled screen-share control and a visible route to the Android application or desktop browser. The voice and viewer controls remain available. DeviceUnsupportedError now maps to the same specific explanation.",
+  "checks": [
+    { "name": "red_regression", "result": "FAIL_EXPECTED" },
+    { "name": "frontend_unit_suite", "result": "PASS_LOCAL", "detail": "210 files, 613 tests" },
+    { "name": "frontend_typescript_vite_build", "result": "PASS_LOCAL" },
+    { "name": "android_chrome_post_deploy_visual", "result": "NOT_RUN" }
+  ],
+  "references": [
+    "https://github.com/mdn/browser-compat-data/blob/main/api/MediaDevices.json",
+    "https://docs.livekit.io/transport/media/screenshare/"
+  ],
+  "limitation": "The current Android Chrome runtime was not inspected directly; the user's no-picker report matches documented browser support and the pinned SDK path. The earlier reported Android-browser sender remains unverified and could have used another client."
+}

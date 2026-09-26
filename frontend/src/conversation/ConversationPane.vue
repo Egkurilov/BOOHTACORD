@@ -8,6 +8,7 @@ import type { ScreenShareState, VoiceConnectionState } from '../voice/connection
 import type { VoiceActivationMode } from '../voice/activation_store'
 import type { ScreenProfile, VoiceJoinMode } from '../voice/livekit_gateway'
 import type { ScreenDiagnostics } from '../voice/screen_diagnostics'
+import { screenCaptureSupported, screenCaptureUnavailableMessage } from '../voice/screen_capture_support'
 import ScreenDiagnosticsPanel from '../voice/ScreenDiagnosticsPanel.vue'
 import ScreenViewer from '../voice/ScreenViewer.vue'
 import VoicePrejoin from '../voice/VoicePrejoin.vue'
@@ -50,15 +51,15 @@ const props = defineProps<{
   voiceRoster?: VoiceRoomRoster | null
   voiceRosterError?: string | null
 }>()
-
 const emit = defineEmits<{ clearScreenStream: []; join: [channelId: string, transfer?: boolean, joinMode?: VoiceJoinMode]; leave: []; refreshScreen: []; selectScreenStream: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setParticipantVolume: [id: string, percent: number]; setScreenVolume: [percent: number]; toggleScreenAudio: []; startScreen: [profile: ScreenProfile]; stopScreen: []; transfer: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
 const selectedScreenProfile = ref<ScreenProfile>('P1080_60')
+const screenCaptureAvailable = screenCaptureSupported()
+const captureUnavailableMessage = screenCaptureUnavailableMessage()
 const screenExpanded = ref(false)
 const selectedScreenName = computed(() => props.screenViewerCards.find((screen) => screen.id === props.selectedScreenStreamId)?.participantName ?? null)
 const screenViewerRef = ref<{ selectStream: (id: string) => void } | null>(null)
 function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id) }
 </script>
-
 <template>
   <section class="conversation-pane" aria-live="polite">
     <template v-if="directMessage">
@@ -101,9 +102,10 @@ function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id)
                   <h3>{{ voiceState === 'RECONNECTING' ? 'Восстанавливаем связь' : 'Все в сборе' }}</h3>
                   <p>{{ voiceState === 'RECONNECTING' ? 'Состояние микрофона сохранено.' : voiceRoomSummary(voiceVolumeParticipants.length + 1, screenViewerCards.length) }}</p>
                 </div>
-                <button v-if="screenState !== 'SHARING'" class="gc-button gc-button--primary" type="button" :disabled="screenState === 'STARTING'" @click="emit('startScreen', selectedScreenProfile)">{{ screenState === 'STARTING' ? 'Открываем выбор экрана…' : 'Показать экран' }}</button>
+                <button v-if="screenState !== 'SHARING'" class="gc-button gc-button--primary" type="button" :disabled="!screenCaptureAvailable || screenState === 'STARTING'" :title="screenCaptureAvailable ? undefined : captureUnavailableMessage" @click="emit('startScreen', selectedScreenProfile)">{{ screenState === 'STARTING' ? 'Открываем выбор экрана…' : 'Показать экран' }}</button>
                 <button v-else class="gc-button gc-button--secondary" type="button" @click="emit('stopScreen')">Остановить показ</button>
               </div>
+              <p v-if="!screenCaptureAvailable" class="state" role="status">{{ captureUnavailableMessage }}</p>
               <p v-if="screenError" class="state state-error" role="alert">{{ screenError }}</p>
               <VoiceParticipantVolumes :error="voiceVolumeError" :participants="voiceVolumeParticipants" :screen-streams="screenViewerCards" :selected-screen-stream-id="selectedScreenStreamId" :self-name="selfDisplayName" :self-deafened="selfDeafened" :self-microphone-muted="selfMicrophoneMuted" :self-microphone-unavailable="selfMicrophoneUnavailable" :self-speaking="selfSpeaking" @set-volume="(id, percent) => emit('setParticipantVolume', id, percent)" @watch-screen="watchScreen" />
               <details class="voice-advanced"><summary>Параметры демонстрации</summary><ScreenDiagnosticsPanel v-if="screenState === 'SHARING'" :diagnostics="screenDiagnostics" :profile="screenProfile" @refresh="emit('refreshScreen')" /><label class="screen-settings">Целевой профиль<select v-model="selectedScreenProfile" :disabled="screenState === 'STARTING' || screenState === 'SHARING'"><option value="P720_30">720p · 30 FPS</option><option value="P720_60">720p · 60 FPS</option><option value="P1080_30">1080p · 30 FPS</option><option value="P1080_60">1080p · 60 FPS</option></select></label></details>

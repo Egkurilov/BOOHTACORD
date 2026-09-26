@@ -5,9 +5,9 @@ Desktop-first русский UI содержит один shell гильдии �
 | Компонент | Обязательное состояние и действие |
 | --- | --- |
 | Shell/navigation | loading, пустой список categories, выбранный unread/mention, channel archive и reorder conflict |
-| Voice dock | disconnected, permission denied, joining, connected, reconnecting, muted, deafened, transferred elsewhere, kicked |
+| Voice dock | disconnected, permission denied, joining, connected, reconnecting, muted, deafened, transferred elsewhere, kicked; when screen capture is unsupported, disable only its control and explain the Android-app/desktop route |
 | Participant card | speaking indicator, local volume 0–200%, состояние mute/deafen текстом/icon, а не только colour |
-| Stream viewer | picker cancelled, нет audio track, metadata-only cards, один selected stream, placeholder остановленного stream, switch in progress, overload; audio/video невыбранного stream нельзя attach'ить |
+| Stream viewer | picker cancelled, unsupported browser capture before picker, нет audio track, metadata-only cards, один selected stream, placeholder остановленного stream, switch in progress, overload; audio/video невыбранного stream нельзя attach'ить |
 | Audio settings | выбор input/output, VAD/PTT, processing toggles, недоступное device и validation feedback |
 | Chat compositor | пустая history, pagination, reply/deleted origin, edit conflict, send retry и attachment progress/error |
 | Search/DM/admin | нет результата, unauthorized action, loading, confirmation destructive action, recoverable error |

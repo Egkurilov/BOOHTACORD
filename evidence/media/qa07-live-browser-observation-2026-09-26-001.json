@@ -4,7 +4,7 @@
   "kind": "live-screen-observation",
   "status": "PARTIAL_LIVE_PASS",
   "observed_at_utc": "2026-09-26T15:03:46Z",
-  "source": "Owner-confirmed Android browser screen share; source capture and encoded counters unavailable in the running bundle.",
+  "source": "Owner reported an Android browser screen share; exact source app and browser runtime were not independently verified. Source capture and encoded counters were unavailable in the running bundle.",
   "observers": [
     {
       "platform_reported": "android_web",
@@ -29,7 +29,7 @@
   ],
   "first_frame": "A second authenticated browser joined as listener, selected the live share and displayed moving video after about six seconds.",
   "ui_finding": "At an approximately 897 CSS px viewer width, the statistics popover was positioned beyond the left viewport edge. The medium-width alignment is corrected in source, pending deployment and visual retest.",
-  "sender_finding": "No android_web sender sample appeared. Sender reporting was coupled to a conditional channel panel and a visible-page predicate. Source now binds refresh/reporting to the active share state and permits reporting while the page is hidden; this has not yet been observed on the owner's device.",
+  "sender_finding": "No android_web sender sample appeared. Sender reporting was coupled to a conditional channel panel and a visible-page predicate. Source now binds refresh/reporting to the active share state and permits reporting while the page is hidden. A later Android Chrome attempt did not open the system picker, consistent with that browser lacking getDisplayMedia; the earlier source identity needs confirmation before diagnosing its FPS.",
   "checks": [
     { "name": "two_browser_live_reception", "result": "PARTIAL_PASS_OBSERVED" },
     { "name": "sender_reporting_hidden_page_unit", "result": "PASS_LOCAL" },

@@ -4,6 +4,7 @@ import type { TopologyChannel } from '../channel/topology_client'
 import type { VoiceConnectionState } from './connection_store'
 import type { VoiceActivationMode } from './activation_store'
 import { streamStartChime, streamStartNotice } from './stream_start_runtime'
+import { screenCaptureSupported, screenCaptureUnavailableMessage } from './screen_capture_support'
 
 const props = defineProps<{
   channel: TopologyChannel | null
@@ -18,6 +19,8 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ leave: []; startScreen: []; toggleDeafen: []; toggleMicrophone: [] }>()
 const streamSoundEnabled = streamStartChime.enabled
+const screenCaptureAvailable = screenCaptureSupported()
+const captureUnavailableMessage = screenCaptureUnavailableMessage()
 function toggleStreamSound(): void {
   streamStartChime.setEnabled(!streamSoundEnabled.value)
   if (streamSoundEnabled.value) streamStartChime.activate()
@@ -53,7 +56,7 @@ const hint = computed(() => {
     <div v-if="channel || activeSession" class="voice-actions">
       <button v-if="channel" class="voice-icon-button" type="button" :aria-label="microphoneMuted ? 'Включить микрофон' : 'Выключить микрофон'" :aria-pressed="!microphoneMuted" :disabled="activationMode === 'PTT' || deafened" :title="activationMode === 'PTT' ? 'Микрофон управляется PTT' : microphoneMuted ? 'Включить микрофон' : 'Выключить микрофон'" @click="emit('toggleMicrophone')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 10v4a4 4 0 0 0 8 0v-4M12 18v3M8 21h8M12 3a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" /></svg></button>
       <button v-if="channel" class="voice-icon-button" type="button" :aria-label="deafened ? 'Включить удалённый звук' : 'Выключить удалённый звук'" :aria-pressed="deafened" :disabled="deafenChanging || state === 'LEAVING'" :title="deafened ? 'Включить удалённый звук' : 'Выключить удалённый звук'" @click="emit('toggleDeafen')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4ZM16 9.5a4 4 0 0 1 0 5M18.5 7a7 7 0 0 1 0 10" /></svg></button>
-      <button v-if="channel" class="voice-icon-button" type="button" aria-label="Начать демонстрацию экрана" :disabled="state === 'RECONNECTING' || state === 'LEAVING'" title="Начать демонстрацию экрана" @click="emit('startScreen')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H4zM8 20h8M12 16v4M12 7v6M9 10l3-3 3 3" /></svg></button>
+      <button v-if="channel" class="voice-icon-button" type="button" :aria-label="screenCaptureAvailable ? 'Начать демонстрацию экрана' : captureUnavailableMessage" :disabled="!screenCaptureAvailable || state === 'RECONNECTING' || state === 'LEAVING'" :title="screenCaptureAvailable ? 'Начать демонстрацию экрана' : captureUnavailableMessage" @click="emit('startScreen')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H4zM8 20h8M12 16v4M12 7v6M9 10l3-3 3 3" /></svg></button>
       <button class="voice-icon-button voice-stream-alert-toggle" type="button" :aria-label="streamSoundEnabled ? 'Звук начала трансляций включён' : 'Звук начала трансляций выключен'" :aria-pressed="streamSoundEnabled" :title="streamSoundEnabled ? 'Выключить сигнал новых трансляций' : 'Включить сигнал новых трансляций'" @click="toggleStreamSound"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M4 3l16 18" v-if="!streamSoundEnabled" /><path v-else d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg></button>
       <button class="voice-icon-button voice-icon-button--danger" type="button" aria-label="Выйти из голосового канала" :disabled="state === 'LEAVING'" :title="state === 'LEAVING' ? 'Выходим…' : 'Выйти из голосового канала'" @click="emit('leave')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17H5V7h4M15 7l4 5-4 5M19 12H9" /></svg></button>
     </div>

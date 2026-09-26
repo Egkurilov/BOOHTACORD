@@ -1,7 +1,9 @@
 import type { ScreenDiagnostics } from './screen_diagnostics'
+import { screenCaptureUnavailableMessage } from './screen_capture_support'
 
-export function screenFailureMessage(cause: unknown): string {
+export function screenFailureMessage(cause: unknown, userAgent?: string): string {
   const name = cause instanceof Error ? cause.name : ''
+  if (name === 'DeviceUnsupportedError') return screenCaptureUnavailableMessage(userAgent)
   if (name === 'AbortError') return 'Выбор источника отменён. Откройте демонстрацию снова и выберите окно, экран или вкладку.'
   if (name === 'NotAllowedError') return 'Браузер запретил захват экрана. Разрешите его в Chrome и повторите выбор источника.'
   if (name === 'NotReadableError') return 'Источник недоступен для захвата. Закройте конфликтующее приложение или выберите другой источник.'
