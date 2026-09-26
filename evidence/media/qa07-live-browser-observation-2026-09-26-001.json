@@ -1,0 +1,43 @@
+{
+  "id": "qa07-live-browser-observation-2026-09-26-001",
+  "task": "QA-07",
+  "kind": "live-screen-observation",
+  "status": "PARTIAL_LIVE_PASS",
+  "observed_at_utc": "2026-09-26T15:03:46Z",
+  "source": "Owner-confirmed Android browser screen share; source capture and encoded counters unavailable in the running bundle.",
+  "observers": [
+    {
+      "platform_reported": "android_web",
+      "state": "playing",
+      "decoded_fps": 15.5,
+      "presented_fps": 14,
+      "bitrate_kbps": 1750,
+      "packets_lost_cumulative": 0,
+      "dropped_frames_cumulative": 0,
+      "jitter_ms": 48
+    },
+    {
+      "platform_reported": "desktop_web",
+      "state": "playing",
+      "decoded_fps": 15,
+      "presented_fps": 15,
+      "bitrate_kbps": 2480.4,
+      "packets_lost_cumulative": 397,
+      "dropped_frames_cumulative": 0,
+      "jitter_ms": 36
+    }
+  ],
+  "first_frame": "A second authenticated browser joined as listener, selected the live share and displayed moving video after about six seconds.",
+  "ui_finding": "At an approximately 897 CSS px viewer width, the statistics popover was positioned beyond the left viewport edge. The medium-width alignment is corrected in source, pending deployment and visual retest.",
+  "sender_finding": "No android_web sender sample appeared. Sender reporting was coupled to a conditional channel panel and a visible-page predicate. Source now binds refresh/reporting to the active share state and permits reporting while the page is hidden; this has not yet been observed on the owner's device.",
+  "checks": [
+    { "name": "two_browser_live_reception", "result": "PARTIAL_PASS_OBSERVED" },
+    { "name": "sender_reporting_hidden_page_unit", "result": "PASS_LOCAL" },
+    { "name": "frontend_unit_suite", "result": "PASS_LOCAL", "detail": "209 files, 611 tests" },
+    { "name": "frontend_typescript_vite_build", "result": "PASS_LOCAL" },
+    { "name": "production_sender_counters_after_deploy", "result": "NOT_RUN" },
+    { "name": "physical_poc02_profile_matrix", "result": "NOT_RUN" }
+  ],
+  "limitation": "The anonymous dashboard groups the latest client sample by platform and direction. Packet loss is a cumulative counter, not a rate. Without sender capture/encoded FPS and selected transport RTT, the 14-15 FPS receiver result cannot be assigned to capture, encoder, network or decoder. No supported 30/60 FPS profile is claimed.",
+  "privacy": "Only bounded aggregate metrics and device-class labels are recorded; no account, channel, track, token, stream content or network address is included."
+}

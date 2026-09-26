@@ -19,6 +19,7 @@ import { createVoiceConnectionRevocation } from './voice_connection_revocation'
 import { voiceLeaseRevocationMessage } from './voice_lease_revocation_reason'
 import { voiceParticipantName } from './voice_participant_name'
 import { observeStreamStarts } from './stream_start_runtime'
+import { installScreenSenderReporting } from './screen_sender_reporting'
 
 export type VoiceConnectionState = 'IDLE' | 'JOINING' | 'RECONNECTING' | 'CONNECTED' | 'LISTENER' | 'LEAVING' | 'ERROR'
 export type { ScreenShareState } from './screen_controls'
@@ -44,6 +45,7 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   const state = ref<VoiceConnectionState>('IDLE')
   const canJoin = computed(() => state.value === 'IDLE' || state.value === 'ERROR')
   const { refreshScreenDiagnostics, startScreen, stopScreen } = createScreenControls(session.screen, active, screenError, screenProfile, screenState, screenDiagnostics)
+  installScreenSenderReporting(screenState, screenDiagnostics, refreshScreenDiagnostics)
   const screenViewer = createScreenViewerControls(session, rawScreenViewerCards, selectedScreenStreamId, screenViewerError, screenViewerEnded)
   const { deafenChanging, toggleDeafen } = createDeafenControls(session, deafened, microphoneMuted, microphonePermissionDenied, error)
   const { setMicrophoneMuted, toggleMicrophone } = createMicrophoneControls(session, active, state, deafened, microphoneMuted, microphonePermissionDenied, error)
