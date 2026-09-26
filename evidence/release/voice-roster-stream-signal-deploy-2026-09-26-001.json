@@ -1,0 +1,16 @@
+{
+  "id": "voice-roster-stream-signal-deploy-2026-09-26-001",
+  "kind": "trusted-master-deployment-check",
+  "status": "PASS_DEPLOY_ONLY",
+  "observed_at": "2026-09-26T12:06:17Z",
+  "source_commit": "962c7e159f7b55ea0ff27a8972295ca7a69bd4ed",
+  "remote": "git@gitverse.ru:egkurilov/BOOHTACORD.git",
+  "run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1654975",
+  "observations": [
+    "GitVerse run #1654975 reported success for backend, frontend, release_guard and deploy jobs against source commit 962c7e1.",
+    "Public GET https://v.bootybay.ru/ returned 200; GET /api/v1/health returned 200 with {\"status\":\"ok\"}; unauthenticated GET /api/v1/auth/session returned 200 with {\"authenticated\":false}.",
+    "The public index referenced /assets/index-2HlqjoPC.js; GET returned 200 and its bundle contained /voice/participants and the ЭФИР label.",
+    "Local HEAD and origin/master both resolved to 962c7e159f7b55ea0ff27a8972295ca7a69bd4ed with a clean tracked working tree."
+  ],
+  "limits": "Deploy success and guest HTTP smoke do not close QA-14. Physical LiveKit/two-client audio, screen-reader, visual parity, capacity and rollback acceptance remain open in TODO.md."
+}

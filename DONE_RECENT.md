@@ -2,6 +2,8 @@
 
 Этот список дополняет [DONE.md](DONE.md). Локальная реализация и тесты не закрывают физическую media/visual приёмку в TODO.
 
+[Trusted deploy #1654975](evidence/release/voice-roster-stream-signal-deploy-2026-09-26-001.json) опубликовал BE-18/FE-48/49 на GitVerse `master`; guest health и наличие нового frontend bundle проверены. QA-14 остаётся открытым.
+
 - [x] **BE-18 · T-022:** защищённый `GET /api/v1/voice/participants` показывает авторизованному участнику состав доступных VOICE-комнат без собственного voice lease. Только LiveKit `ACTIVE` с действующими lease/session/account попадают в roster; имена из БД, stream по unmuted screen video, 503 при ошибке SFU. [Source/PG evidence](evidence/design/voice-roster-stream-alert-2026-09-26-001.json), OpenAPI и native Go tests PASS; реальный LiveKit остаётся QA-06.
 - [x] **FE-48 · T-022/050:** навигация показывает состав комнат до входа, выбранная комната повторяет его над кнопками Join; пустой, загружаемый и недоступный snapshot различаются. Один защищённый запрос обновляется после realtime reconnect и каждые 10 секунд, а после logout очищается. Собственный ник показан без суффикса «· вы». [Дизайн](docs/design/VOICE_ROSTER_AND_STREAM_SIGNAL.md), [source evidence](evidence/design/voice-roster-stream-alert-2026-09-26-001.json); физический voice browser остаётся QA-06/DES-04.
 - [x] **FE-49 · T-030/050:** новый чужой screen share выделен «ЭФИР» и временным сообщением в voice dock; короткий сигнал можно выключить. Собственный stream, первичная загрузка и reconnect не дублируют звук. [Source evidence](evidence/design/voice-roster-stream-alert-2026-09-26-001.json); audible и visual acceptance остаются QA-06/DES-04.
