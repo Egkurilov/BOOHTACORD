@@ -16,5 +16,5 @@
     "https://github.com/mdn/browser-compat-data/blob/main/api/MediaDevices.json",
     "https://docs.livekit.io/transport/media/screenshare/"
   ],
-  "limitation": "The current Android Chrome runtime was not inspected directly; the user's no-picker report matches documented browser support and the pinned SDK path. The earlier reported Android-browser sender remains unverified and could have used another client."
+  "limitation": "The current Android Chrome runtime was not inspected directly; the user's no-picker report matches documented browser support and the pinned SDK path. The owner later confirmed the earlier working stream came from the Android native application."
 }

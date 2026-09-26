@@ -73,6 +73,8 @@ its behavior and platform-specific acceptance evidence exist.
   switching on macOS, Windows and Android hardware.
 - [ ] Verify local share permission grants, OS-level stop, Android 14+
   MediaProjection service behavior and real-peer capture on each target.
+- [ ] Add Android native sender metrics and compare them with two receivers
+  per [FE-52](../backlog/FRONTEND_TODO.md).
 - [ ] Complete viewer stream rail, fullscreen, quality/diagnostics and audio
   states against the web reference.
 
