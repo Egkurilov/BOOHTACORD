@@ -64,17 +64,23 @@ with tarfile.open(sys.argv[1], "r") as archive:
             raise ValueError(f"missing OCI entry: {name}")
         return json.load(member)
 
-    index = document("index.json")
-    for descriptor in index["manifests"]:
+    def walk(descriptor):
         digest = descriptor["digest"]
         manifest = document(f"blobs/sha256/{digest.split(':', 1)[1]}")
         print("descriptor", digest, descriptor.get("platform"), descriptor.get("annotations"))
+        if "manifests" in manifest:
+            for child in manifest["manifests"]:
+                walk(child)
+            return
         print("config", manifest["config"]["digest"])
         for layer in manifest["layers"]:
             if layer["mediaType"] != "application/vnd.in-toto+json":
                 continue
             statement = document(f"blobs/sha256/{layer['digest'].split(':', 1)[1]}")
             print("attestation", statement.get("predicateType"), statement.get("subject"))
+
+    for descriptor in document("index.json")["manifests"]:
+        walk(descriptor)
 PY
 else
   printf 'default_driver_dual_export=no\n'
