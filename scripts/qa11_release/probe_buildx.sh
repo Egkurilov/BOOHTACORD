@@ -8,7 +8,9 @@ incoming="${1:-}"
 }
 expected=9447199cdb435f25880548343c128a4b6650e8891ee598905d8d29d39a8e359b
 config=''
+probe_image="voice-platform-qa11-probe:${incoming##*-}"
 cleanup() {
+  sudo -n docker image rm -- "$probe_image" >/dev/null 2>&1 || true
   if [[ "$config" == /tmp/voice-platform-qa11-config.* ]]; then
     sudo -n rm -rf -- "$config"
   fi
@@ -41,4 +43,15 @@ if sudo -n env DOCKER_CONFIG="$config" docker buildx build \
   sudo -n ls -l "$config/probe.oci.tar" "$config/build-metadata.json"
 else
   printf 'default_driver_oci_export=no\n'
+fi
+
+if sudo -n env DOCKER_CONFIG="$config" docker buildx build \
+  --platform linux/amd64 --sbom=true --provenance=mode=max \
+  --output="type=oci,dest=$config/probe-dual.oci.tar" \
+  --load --tag "$probe_image" "$config/context"; then
+  printf 'default_driver_dual_export=yes\n'
+  printf 'probe_image_id=%s\n' "$(sudo -n docker image inspect --format '{{.Id}}' "$probe_image")"
+  sudo -n ls -l "$config/probe-dual.oci.tar"
+else
+  printf 'default_driver_dual_export=no\n'
 fi
