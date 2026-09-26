@@ -10,7 +10,7 @@ function videoFrames() {
     cancelVideoFrameCallback: cancel,
     requestVideoFrameCallback: vi.fn((next: VideoFrameRequestCallback) => { callback = next; return 7 }),
   } as unknown as HTMLVideoElement
-  return { cancel, emitFrame: () => callback?.(0, {} as VideoFrameCallbackMetadata), video }
+  return { cancel, emitFrame: (presentedFrames?: number) => callback?.(0, { presentedFrames } as VideoFrameCallbackMetadata), video }
 }
 
 afterEach(() => vi.useRealTimers())
@@ -60,6 +60,31 @@ describe('viewer screen playback FPS', () => {
     expect(frames.cancel).toHaveBeenCalledTimes(1)
     vi.advanceTimersByTime(2000)
     expect(samples).toEqual([1, 0])
+  })
+
+  it('counts compositor frames missed between callbacks', () => {
+    vi.useFakeTimers()
+    const frames = videoFrames()
+    const samples: Array<number | null> = []
+    const stop = observeScreenPlaybackFps(frames.video, (fps) => samples.push(fps))
+    frames.emitFrame(11)
+    frames.emitFrame(15)
+    vi.advanceTimersByTime(2000)
+    expect(samples).toEqual([2.5])
+    stop()
+  })
+
+  it('does not treat a compositor counter reset as a large frame jump', () => {
+    vi.useFakeTimers()
+    const frames = videoFrames()
+    const samples: Array<number | null> = []
+    const stop = observeScreenPlaybackFps(frames.video, (fps) => samples.push(fps))
+    frames.emitFrame(10)
+    frames.emitFrame(2)
+    frames.emitFrame(3)
+    vi.advanceTimersByTime(2000)
+    expect(samples).toEqual([1.5])
+    stop()
   })
 
   it('does not claim a frame rate when the browser cannot report presented frames', () => {

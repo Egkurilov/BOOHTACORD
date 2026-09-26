@@ -32,6 +32,7 @@
     "sender_width_height_fps": null,
     "sender_frames_encoded_start_end": null,
     "receiver_frames_decoded_start_end": null,
+    "viewer_presented_frames_start_end": null,
     "viewer_presented_fps": null,
     "viewer_decoded_fps": null,
     "viewer_bitrate_bps": null,

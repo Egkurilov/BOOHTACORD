@@ -1,6 +1,6 @@
 # Матрица требований для решения о выпуске
 
-Срез: 26.09.2026, delivery baseline `269da65` подтверждён trusted [run #1653749](../../evidence/release/qa11-gitverse-oci-2026-09-26-001.json); production product-code baseline `7c2b731` включает FE-41…47; локальный candidate добавляет BE-18/FE-48/49. Источник требований — утверждённый `C:\Users\egkur\Downloads\TZ_Voice_Platform_v1.0.md` с [ADR-010](../adr/ADR-010-gitverse-delivery.md) для REQ-DEPLOY-01. Ни один `LOCAL` или `PARTIAL` в этой таблице не равен выпускному PASS. `LOCAL` означает проверку кода в локальном окружении; `PARTIAL` — часть сценария; `NOT_RUN` — применимая проверка ещё не выполнена; `BLOCKED` — нужен внешний host, устройство или утверждённый контракт; `FAIL` — измеренный провал критерия. Текущий выпускной вердикт — **NO-GO**.
+Срез: 26.09.2026, delivery baseline `269da65` подтверждён trusted [run #1653749](../../evidence/release/qa11-gitverse-oci-2026-09-26-001.json); production product-code baseline `962c7e1` с BE-18/FE-48/49 опубликован trusted [run #1655044](../../evidence/release/voice-roster-stream-signal-deploy-2026-09-26-001.json); локальный candidate добавляет FE-50. Источник требований — утверждённый `C:\Users\egkur\Downloads\TZ_Voice_Platform_v1.0.md` с [ADR-010](../adr/ADR-010-gitverse-delivery.md) для REQ-DEPLOY-01. Ни один `LOCAL` или `PARTIAL` в этой таблице не равен выпускному PASS. `LOCAL` означает проверку кода в локальном окружении; `PARTIAL` — часть сценария; `NOT_RUN` — применимая проверка ещё не выполнена; `BLOCKED` — нужен внешний host, устройство или утверждённый контракт; `FAIL` — измеренный провал критерия. Текущий выпускной вердикт — **NO-GO**.
 
 | Требование | Текущее подтверждение | Для выпускного PASS |
 | --- | --- | --- |
@@ -10,7 +10,7 @@
 | REQ-CAPACITY-01 · 100 voice / 20 room | NOT_RUN | Hardware/load профиль и границы [QA] |
 | REQ-CAPACITY-02 · Демонстрации без квоты | NOT_RUN | Профиль публикаций и одна подписка viewer на выбранной инфраструктуре [QA] |
 | REQ-AUDIO-01 · Opus/voice качество | PARTIAL: [FE-42](../../evidence/voice-participant-volume/2026-09-26.json) исправил in-memory fallback уровня участника; реальные устройства NOT_RUN | Измерить голос, персональную громкость и audio pipeline двух клиентов [QA] |
-| REQ-SCREEN-01 · 720p/1080p × 30/60 | PARTIAL: [FE-41](../../evidence/media/screen-share-encoder-fps-2026-09-26-001.json) устранил кодовый encoder cap 15 FPS для 30/60, source tests PASS; фактический viewer FPS не измерен | Sender/receiver FPS, bitrate, RTT/loss и adaptive profile на движущемся контенте [QA] |
+| REQ-SCREEN-01 · 720p/1080p × 30/60 | PARTIAL: [FE-41](../../evidence/media/screen-share-encoder-fps-2026-09-26-001.json) устранил кодовый encoder cap 15 FPS для 30/60; [FE-50](../../evidence/media/qa07-viewer-presented-counter-2026-09-26-001.json) исправил недосчёт browser presented FPS; фактический viewer FPS не измерен | Sender/receiver FPS, bitrate, RTT/loss и adaptive profile на движущемся контенте [QA] |
 | REQ-AUTH-01 · Свободная регистрация | LOCAL: API/source tests и login smoke [DONE], [QA-05] | Регистрация и отказ гостю на фиксированном bundle [QA] |
 | REQ-AUTH-02 · Вход, профиль, logout | PARTIAL: login/logout browser; PostgreSQL session проверки [QA-02], [QA-05] | Полный profile/password/browser сценарий [QA] |
 | REQ-AUTH-03 · Одноразовый reset | LOCAL: HTTP выдача/consume/reuse, session/WS revoke [QA-02]; browser expired/used/old-password rejection и новый вход [QA-05-RESET]; built-bundle browser подтвердил описание длины пароля и error association [DES-05-RESET] | Connected-media отзыв, screen reader и trusted candidate [QA] |
@@ -44,7 +44,7 @@
 | REQ-QUALITY-01 · Latency/capacity цели | NOT_RUN | Измерить p95 join/message/switch/recovery, FPS и нагрузку [QA] |
 | REQ-QUALITY-02 · Выпускные гейты | NO-GO: 17 пакетов TODO открыты; P0 production headroom восстановлен, но sustained capacity и DES/QA ещё не имеют полного PASS [TODO], [QA-08-RECOVERED] | Закрыть применимые DES/QA с PASS, затем повторить решение [QA] |
 
-Сквозной счёт: **39/39 ID отражены**; QA-01/04 имеют trusted CI PASS, но обязательные media, capacity, browser, live rollback и release проверки ещё не имеют PASS. Состояние TODO: **51/68 закрыто, 17/68 открыто**. Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
+Сквозной счёт: **39/39 ID отражены**; QA-01/04 имеют trusted CI PASS, но обязательные media, capacity, browser, live rollback и release проверки ещё не имеют PASS. Состояние TODO: **52/69 закрыто, 17/69 открыто**. Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
 
 [DONE]: ../../DONE.md
 [TODO]: ../../TODO.md

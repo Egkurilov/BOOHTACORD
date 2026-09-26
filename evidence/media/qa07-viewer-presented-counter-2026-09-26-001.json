@@ -1,0 +1,18 @@
+{
+  "id": "qa07-viewer-presented-counter-2026-09-26-001",
+  "task": "QA-07",
+  "leaf": "FE-50",
+  "status": "PASS_SOURCE_ONLY",
+  "observed_at": "2026-09-26",
+  "finding": "The viewer counted requestVideoFrameCallback invocations as presented frames. The browser's presentedFrames metadata can advance by several compositor-submitted frames between callbacks, so the displayed FPS could undercount the actual presented rate.",
+  "change": "The viewer now counts positive presentedFrames deltas; the first callback, missing metadata and counter reset retain the prior single-frame fallback. Frozen playback still reports zero after its first frame, and no frame remains unknown.",
+  "checks": [
+    { "name": "focused_red", "result": "FAIL_EXPECTED", "detail": "With metadata 11 then 15 in a two-second window, old code reported 1 FPS instead of 2.5 FPS." },
+    { "name": "focused_green", "result": "PASS_LOCAL", "detail": "screen_playback_fps.spec.ts: 6/6, including missed callbacks and counter reset." },
+    { "name": "frontend_full", "result": "PASS_LOCAL", "detail": "206 files, 603/603 Vitest tests and vue-tsc/Vite production build passed." },
+    { "name": "local_media_preflight", "result": "NOT_RUN", "detail": "Windows Docker Linux engine socket was absent; the refreshed authenticated production browser showed two empty VOICE rooms and no active screen share. No presenter/observer pair was started." },
+    { "name": "physical_poc02", "result": "NOT_RUN", "detail": "No two physical Windows/Apple-Silicon presenter-observer sessions, moving game capture, synchronized sender/receiver stats or managed network degradation were available." }
+  ],
+  "reference": "https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/requestVideoFrameCallback",
+  "limitation": "This corrects the browser display metric when presentedFrames exists. It does not prove the actual stream reaches 60 FPS, that sound controls are audible, or that QA-07 can close."
+}

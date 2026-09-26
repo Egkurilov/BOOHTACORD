@@ -11,12 +11,18 @@ export function observeScreenPlaybackFps(video: HTMLVideoElement, onSample: (fps
   let requestId: number | null = null
   let observedFrame = false
   let framesInWindow = 0
+  let previousPresentedFrames: number | null = null
   let windowStartedAt = performance.now()
 
-  function onFrame(): void {
+  function onFrame(_now: DOMHighResTimeStamp, metadata: VideoFrameCallbackMetadata): void {
     if (stopped) return
     observedFrame = true
-    framesInWindow += 1
+    const presentedFrames = metadata.presentedFrames
+    const validCounter = Number.isFinite(presentedFrames) && presentedFrames >= 0
+    framesInWindow += validCounter && previousPresentedFrames !== null && presentedFrames > previousPresentedFrames
+      ? presentedFrames - previousPresentedFrames
+      : 1
+    previousPresentedFrames = validCounter ? presentedFrames : null
     requestId = video.requestVideoFrameCallback(onFrame)
   }
 
