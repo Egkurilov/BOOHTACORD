@@ -1,0 +1,25 @@
+{
+  "id": "qa08-active-sampler-2026-09-26-001",
+  "task": "QA-08",
+  "kind": "read-only-trusted-active-upload-sampler-preflight",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-26T09:52:58Z",
+  "source_base_revision": "be0c5c9fed8525915c9958b85355ce27e3250299",
+  "latest_trusted_deploy": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1654064",
+  "latest_idle_snapshot": {
+    "volume": "voice-platform_attachments-data",
+    "filesystem_source": "/dev/vda2",
+    "available_bytes": 16886272000,
+    "required_bytes": 6343294632,
+    "reserved_bytes": 0,
+    "api_health": "ok",
+    "api_image": "voice-platform-api@sha256:76681aabaf172a2a55133b32df96c9878c000b85a7946f3ffac1b9045a26118e"
+  },
+  "change": "A manual GitVerse master-only workflow now starts a bounded, read-only SSH sampler. Each sample runs the existing exact-volume/private-metric audit against the deployed revision, logs UTC time, available/required/reserved bytes, and fails if headroom is below the guarded threshold. A successful sampler run requires at least two active reservation samples (peak at least 25,000,000 bytes) followed by release to zero. It creates no attachment files, users, containers, or backups.",
+  "checks": [
+    { "name": "local_sampler_contract", "result": "PASS_LOCAL", "detail": "Bash fixture passed active/released and rejected no-active, unreleased, malformed and failing audit cases; ShellCheck and bash -n passed." },
+    { "name": "trusted_manual_sampler", "result": "NOT_RUN", "detail": "The workflow needs a controlled upload already in progress; no fixture upload or matching operator session was available in this packet." },
+    { "name": "representative_concurrency_and_507", "result": "NOT_RUN", "detail": "No concurrent production upload outcome or sustained build-overlap series was measured. Production disk was not filled to force a 507; isolated real-API/tmpfs 507 evidence remains separate." }
+  ],
+  "next": "Run a controlled slow 25 MB upload through an authorized test identity while manually starting the sampler on the exact deployed master revision; retain upload HTTP outcome and sampler log. Repeat with representative concurrency and during a normal build window. Keep QA-08 open until those observations and safe isolated 507 checks support the capacity decision."
+}

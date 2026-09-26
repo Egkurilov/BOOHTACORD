@@ -1,0 +1,41 @@
+name: Sample active attachment uploads
+
+on:
+  workflow_dispatch:
+    inputs:
+      operator_ready:
+        description: 'A controlled upload is ready to run for at least two samples'
+        required: true
+        type: choice
+        options: [not-ready, upload-in-progress]
+        default: not-ready
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v-bootybay-qa08-observe
+  cancel-in-progress: false
+
+jobs:
+  sample:
+    if: ${{ gitverse.ref_name == 'master' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      DEPLOY_SERVER_IP: 176.108.242.211
+      DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      SSH_USER: shaneque
+      OPERATOR_READY: ${{ inputs.operator_ready }}
+      QA08_SAMPLE_COUNT: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require an active operator upload
+        shell: bash
+        run: test "$OPERATOR_READY" = upload-in-progress
+      - name: Configure pinned read-only SSH transport
+        shell: bash
+        run: bash scripts/configure-deploy-ssh.sh
+      - name: Sample exact volume and private reservation gauge
+        shell: bash
+        run: bash scripts/qa08_capacity/sample_active_uploads.sh "$(git rev-parse HEAD)"
