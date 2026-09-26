@@ -8,8 +8,12 @@ incoming="${1:-}"
 }
 expected=9447199cdb435f25880548343c128a4b6650e8891ee598905d8d29d39a8e359b
 config=''
+probe_compose=''
 probe_image="voice-platform-qa11-probe:${incoming##*-}"
 cleanup() {
+  if [[ -n "$probe_compose" ]]; then
+    sudo -n docker compose -p "$probe_project" -f "$probe_compose" down --remove-orphans >/dev/null 2>&1 || true
+  fi
   sudo -n docker image rm -- "$probe_image" >/dev/null 2>&1 || true
   if [[ "$config" == /tmp/voice-platform-qa11-config.* ]]; then
     sudo -n rm -rf -- "$config"
@@ -52,18 +56,14 @@ if sudo -n env DOCKER_CONFIG="$config" docker buildx build \
   printf 'default_driver_dual_export=yes\n'
   printf 'probe_image_id=%s\n' "$(sudo -n docker image inspect --format '{{.Id}}' "$probe_image")"
   sudo -n ls -l "$config/probe-dual.oci.tar"
-  sudo -n python3 - "$config/probe-dual.oci.tar" <<'PY'
-import json
-import sys
-import tarfile
-
+  sudo -n python3 - "$config/probe-dual.oci.tar" "$config/oci-index-digest" <<'PY'
+import hashlib, json, re, sys, tarfile
 with tarfile.open(sys.argv[1], "r") as archive:
     def document(name):
         member = archive.extractfile(name)
         if member is None:
             raise ValueError(f"missing OCI entry: {name}")
         return json.load(member)
-
     def walk(descriptor):
         digest = descriptor["digest"]
         manifest = document(f"blobs/sha256/{digest.split(':', 1)[1]}")
@@ -78,10 +78,43 @@ with tarfile.open(sys.argv[1], "r") as archive:
                 continue
             statement = document(f"blobs/sha256/{layer['digest'].split(':', 1)[1]}")
             print("attestation", statement.get("predicateType"), statement.get("subject"))
-
-    for descriptor in document("index.json")["manifests"]:
+    root = document("index.json")["manifests"]
+    if len(root) != 1 or root[0]["mediaType"] != "application/vnd.oci.image.index.v1+json":
+        raise ValueError("expected one OCI image index root descriptor")
+    index_digest = root[0]["digest"]
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", index_digest):
+        raise ValueError("invalid OCI image index digest")
+    index_blob = archive.extractfile(f"blobs/sha256/{index_digest.removeprefix('sha256:')}").read()
+    if hashlib.sha256(index_blob).hexdigest() != index_digest.removeprefix("sha256:") or len(index_blob) != root[0]["size"]:
+        raise ValueError("OCI image index digest or size mismatch")
+    print("oci_index_digest", index_digest)
+    with open(sys.argv[2], "w", encoding="ascii") as output:
+        output.write(index_digest)
+    for descriptor in root:
         walk(descriptor)
 PY
+  index_digest="$(sudo -n cat "$config/oci-index-digest")"
+  probe_ref="${probe_image%%:*}@$index_digest"
+  if [[ "$(sudo -n docker image inspect --format '{{.Id}}' "$probe_ref" 2>/dev/null || true)" == "$index_digest" ]]; then
+    printf 'local_digest_ref=yes\n'
+  else
+    printf 'local_digest_ref=no\n'
+  fi
+  probe_project="qa11${config##*.}"
+  probe_project="${probe_project,,}"
+  probe_compose="$config/probe-compose.yaml"
+  printf 'services:\n  probe:\n    image: %s\n    pull_policy: never\n    network_mode: none\n' "$probe_ref" | sudo -n tee "$probe_compose" >/dev/null
+  if sudo -n docker compose -p "$probe_project" -f "$probe_compose" create --no-build --pull never probe; then
+    container="$(sudo -n docker compose -p "$probe_project" -f "$probe_compose" ps --all --quiet probe)"
+    observed="$(sudo -n docker inspect --format '{{.Image}} {{.Config.Image}} {{.State.Running}}' "$container")"
+    if [[ "$observed" == "$index_digest $probe_ref false" ]]; then
+      printf 'compose_local_digest_ref=yes\n'
+    else
+      printf 'compose_local_digest_ref=no; observed=%s\n' "$observed"
+    fi
+  else
+    printf 'compose_local_digest_ref=no\n'
+  fi
 else
   printf 'default_driver_dual_export=no\n'
 fi
