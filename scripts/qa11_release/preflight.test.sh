@@ -18,7 +18,8 @@ cat > "$fixture/bin/docker" <<'EOF'
 set -euo pipefail
 case "$1 $2" in
   'version --format') echo 29.0.0 ;;
-  'info --format') echo overlay2 ;;
+  'info --format')
+    if [[ "$3" == '{{.Driver}}' ]]; then echo overlay2; else echo '[["driver-type","io.containerd.snapshotter.v1"]]'; fi ;;
   'buildx version') [[ "${TEST_BUILDX:-yes}" == yes ]] && echo 'github.com/docker/buildx v0.30.0' ;;
   'buildx ls') echo 'builder docker-container' ;;
   'system df') echo 'Images 2 400MB' ;;
@@ -46,6 +47,11 @@ echo 'Avail Size'
 echo '18000000000 32000000000'
 echo '18000000000 32000000000'
 EOF
+cat > "$fixture/bin/apt-cache" <<'EOF'
+#!/usr/bin/env bash
+echo 'docker-buildx-plugin:'
+echo '  Candidate: 0.30.1'
+EOF
 chmod 0755 "$fixture/bin/"*
 
 run_preflight() {
@@ -57,6 +63,7 @@ grep -Fq "deployed_revision=$revision" "$fixture/output"
 grep -Fq 'buildx_available=yes' "$fixture/output"
 grep -Fq 'api_image_size_bytes=200000000' "$fixture/output"
 grep -Fq 'web_image_id=sha256:' "$fixture/output"
+grep -Fq 'Candidate: 0.30.1' "$fixture/output"
 
 if TEST_WEB_REVISION=0000000000000000000000000000000000000000 run_preflight; then
   echo 'expected mismatched deployed revisions to fail' >&2

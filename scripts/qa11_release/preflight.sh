@@ -3,6 +3,14 @@ set -euo pipefail
 
 printf 'docker_server_version=%s\n' "$(sudo -n docker version --format '{{.Server.Version}}')"
 printf 'docker_storage_driver=%s\n' "$(sudo -n docker info --format '{{.Driver}}')"
+printf 'docker_driver_status=%s\n' "$(sudo -n docker info --format '{{json .DriverStatus}}')"
+if [[ -r /etc/os-release ]]; then
+  source /etc/os-release
+  printf 'host_os=%s %s\n' "${ID:-unknown}" "${VERSION_ID:-unknown}"
+fi
+if command -v apt-cache >/dev/null 2>&1; then
+  apt-cache policy docker-buildx-plugin | head -n 12
+fi
 if sudo -n docker buildx version; then
   printf 'buildx_available=yes\n'
   sudo -n docker buildx ls
