@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
+import 'package:boohtacord_desktop/src/services/system_clipboard_paste.dart';
 import 'package:boohtacord_desktop/src/widgets/message_attachment_composer.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,226 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  testWidgets('pastes clipboard text at the selection and uploads its image', (
+    tester,
+  ) async {
+    final state = _UploadState();
+    addTearDown(state.dispose);
+    final controller = TextEditingController.fromValue(
+      const TextEditingValue(
+        text: 'hello world',
+        selection: TextSelection(baseOffset: 6, extentOffset: 11),
+      ),
+    );
+    final focusNode = FocusNode();
+    final key = GlobalKey<MessageAttachmentComposerState>();
+    final imageBytes = Uint8List.fromList([7, 8, 9]);
+    var attachments = <MessageAttachment>[];
+    addTearDown(controller.dispose);
+    addTearDown(focusNode.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, rebuild) => MessageAttachmentComposer(
+              key: key,
+              state: state,
+              channelId: 'text-a',
+              textController: controller,
+              focusNode: focusNode,
+              attachments: attachments,
+              clipboardReader: () async => ClipboardPasteContent(
+                text: 'pasted text',
+                image: ClipboardImagePaste(
+                  bytes: imageBytes,
+                  fileName: 'clipboard-image.png',
+                ),
+              ),
+              onChanged: (value) => rebuild(() => attachments = value),
+              onPending: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await key.currentState!.pasteFromClipboard();
+    await tester.pumpAndSettle();
+
+    expect(controller.text, 'hello pasted text');
+    expect(controller.selection.extentOffset, 'hello pasted text'.length);
+    expect(state.uploadedNames, ['clipboard-image.png']);
+    expect(state.uploadedBytes.single, imageBytes);
+    expect(state.targetChannels, ['text-a']);
+    expect(attachments.single.originalName, 'clipboard-image.png');
+  });
+
+  testWidgets(
+    'does not leak clipboard contents when the conversation changes',
+    (tester) async {
+      final gate = Completer<ClipboardPasteContent?>();
+      final state = _UploadState();
+      addTearDown(state.dispose);
+      final controller = TextEditingController(text: 'unchanged');
+      final focusNode = FocusNode();
+      final key = GlobalKey<MessageAttachmentComposerState>();
+      var target = 'text-a';
+      addTearDown(controller.dispose);
+      addTearDown(focusNode.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, rebuild) => Column(
+                children: [
+                  TextButton(
+                    onPressed: () => rebuild(() => target = 'text-b'),
+                    child: const Text('Другой канал'),
+                  ),
+                  MessageAttachmentComposer(
+                    key: key,
+                    state: state,
+                    channelId: target,
+                    textController: controller,
+                    focusNode: focusNode,
+                    attachments: const [],
+                    clipboardReader: () => gate.future,
+                    onChanged: (_) {},
+                    onPending: (_) {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final paste = key.currentState!.pasteFromClipboard();
+      await tester.pump();
+      await tester.tap(find.text('Другой канал'));
+      await tester.pump();
+      gate.complete(
+        ClipboardPasteContent(
+          text: 'secret clipboard text',
+          image: ClipboardImagePaste(
+            bytes: Uint8List.fromList([1]),
+            fileName: 'clipboard-image.png',
+          ),
+        ),
+      );
+      await paste;
+      await tester.pumpAndSettle();
+
+      expect(controller.text, 'unchanged');
+      expect(state.uploadedNames, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'keeps co-pasted text when the image exceeds the attachment cap',
+    (tester) async {
+      final state = _UploadState();
+      addTearDown(state.dispose);
+      final controller = TextEditingController(text: 'caption');
+      final focusNode = FocusNode();
+      final key = GlobalKey<MessageAttachmentComposerState>();
+      addTearDown(controller.dispose);
+      addTearDown(focusNode.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MessageAttachmentComposer(
+              key: key,
+              state: state,
+              channelId: 'text-a',
+              textController: controller,
+              focusNode: focusNode,
+              attachments: const [],
+              clipboardReader: () async => ClipboardPasteContent(
+                text: ' + image',
+                image: ClipboardImagePaste(
+                  bytes: Uint8List(25000001),
+                  fileName: 'clipboard-image.png',
+                ),
+              ),
+              onChanged: (_) {},
+              onPending: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      await key.currentState!.pasteFromClipboard();
+      await tester.pumpAndSettle();
+
+      expect(controller.text, 'caption + image');
+      expect(state.uploadedNames, isEmpty);
+      expect(
+        find.text('Каждый файл должен быть не больше 25 МБ.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('retries a clipboard image in the captured private DM', (
+    tester,
+  ) async {
+    final imageBytes = Uint8List.fromList([4, 5, 6]);
+    final state = _UploadState()
+      ..failedNames.add('clipboard-image.png')
+      ..failureStatus = 507;
+    addTearDown(state.dispose);
+    final controller = TextEditingController();
+    final focusNode = FocusNode();
+    final key = GlobalKey<MessageAttachmentComposerState>();
+    var attachments = <MessageAttachment>[];
+    addTearDown(controller.dispose);
+    addTearDown(focusNode.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, rebuild) => MessageAttachmentComposer(
+              key: key,
+              state: state,
+              directMessageId: 'dm-private',
+              textController: controller,
+              focusNode: focusNode,
+              attachments: attachments,
+              clipboardReader: () async => ClipboardPasteContent(
+                image: ClipboardImagePaste(
+                  bytes: imageBytes,
+                  fileName: 'clipboard-image.png',
+                ),
+              ),
+              onChanged: (value) => rebuild(() => attachments = value),
+              onPending: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await key.currentState!.pasteFromClipboard();
+    await tester.pumpAndSettle();
+    expect(find.text('clipboard-image.png · не загружено'), findsOneWidget);
+    expect(find.textContaining('недостаточно места'), findsOneWidget);
+    expect(state.targetChannels, ['dm-private']);
+
+    state.failedNames.clear();
+    await tester.tap(find.byTooltip('Повторить загрузку clipboard-image.png'));
+    await tester.pumpAndSettle();
+
+    expect(state.uploadedNames, ['clipboard-image.png', 'clipboard-image.png']);
+    expect(state.uploadedBytes, [imageBytes, imageBytes]);
+    expect(state.targetChannels, ['dm-private', 'dm-private']);
+    expect(attachments.single.originalName, 'clipboard-image.png');
+  });
+
   testWidgets('retains successful uploads and retries only the failed file', (
     tester,
   ) async {
@@ -19,6 +240,10 @@ void main() {
       ..failedNames.add('two.txt')
       ..failureStatus = 507;
     addTearDown(state.dispose);
+    final controller = TextEditingController();
+    final focusNode = FocusNode();
+    addTearDown(controller.dispose);
+    addTearDown(focusNode.dispose);
     var attachments = <MessageAttachment>[];
     await tester.pumpWidget(
       MaterialApp(
@@ -27,6 +252,8 @@ void main() {
             builder: (context, rebuild) => MessageAttachmentComposer(
               state: state,
               channelId: 'text-a',
+              textController: controller,
+              focusNode: focusNode,
               attachments: attachments,
               filePicker: () async => [
                 XFile.fromData(
@@ -70,6 +297,10 @@ void main() {
     final selected = Completer<List<XFile>>();
     final state = _UploadState();
     addTearDown(state.dispose);
+    final controller = TextEditingController();
+    final focusNode = FocusNode();
+    addTearDown(controller.dispose);
+    addTearDown(focusNode.dispose);
     var target = 'text-a';
     await tester.pumpWidget(
       MaterialApp(
@@ -84,6 +315,8 @@ void main() {
                 MessageAttachmentComposer(
                   state: state,
                   channelId: target,
+                  textController: controller,
+                  focusNode: focusNode,
                   attachments: const [],
                   filePicker: () => selected.future,
                   onChanged: (_) {},
@@ -114,6 +347,10 @@ void main() {
     final gate = Completer<void>();
     final state = _UploadState()..uploadGate = gate;
     addTearDown(state.dispose);
+    final controller = TextEditingController();
+    final focusNode = FocusNode();
+    addTearDown(controller.dispose);
+    addTearDown(focusNode.dispose);
     var attachments = <MessageAttachment>[];
     await tester.pumpWidget(
       MaterialApp(
@@ -122,6 +359,8 @@ void main() {
             builder: (context, rebuild) => MessageAttachmentComposer(
               state: state,
               directMessageId: 'dm-a',
+              textController: controller,
+              focusNode: focusNode,
               attachments: attachments,
               filePicker: () async => [
                 XFile.fromData(
@@ -154,6 +393,10 @@ void main() {
     final readGate = Completer<void>();
     final state = _UploadState();
     addTearDown(state.dispose);
+    final controller = TextEditingController();
+    final focusNode = FocusNode();
+    addTearDown(controller.dispose);
+    addTearDown(focusNode.dispose);
     var target = 'text-a';
     await tester.pumpWidget(
       MaterialApp(
@@ -168,6 +411,8 @@ void main() {
                 MessageAttachmentComposer(
                   state: state,
                   channelId: target,
+                  textController: controller,
+                  focusNode: focusNode,
                   attachments: const [],
                   filePicker: () async => [_GatedFile(readGate)],
                   onChanged: (_) {},
@@ -210,6 +455,7 @@ class _UploadState extends AppState {
 
   final failedNames = <String>{};
   final uploadedNames = <String>[];
+  final uploadedBytes = <Uint8List>[];
   final targetChannels = <String>[];
   Completer<void>? uploadGate;
   int? failureStatus;
@@ -223,6 +469,7 @@ class _UploadState extends AppState {
     void Function(int sent, int total)? onProgress,
   }) async {
     uploadedNames.add(fileName);
+    uploadedBytes.add(bytes);
     targetChannels.add(channelId ?? directMessageId ?? 'missing');
     onProgress?.call(1, 2);
     await uploadGate?.future;

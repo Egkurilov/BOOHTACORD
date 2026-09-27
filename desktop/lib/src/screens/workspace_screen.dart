@@ -1382,6 +1382,7 @@ class _ConversationState extends State<_Conversation>
     with WidgetsBindingObserver {
   final _controller = TextEditingController();
   final _composerFocus = FocusNode();
+  final _attachmentComposerKey = GlobalKey<MessageAttachmentComposerState>();
   final _scroll = ScrollController();
   final Map<String, GlobalKey> _messageKeys = {};
   final Set<String> _mentionUserIds = {};
@@ -1470,6 +1471,10 @@ class _ConversationState extends State<_Conversation>
         );
       }
     });
+  }
+
+  Future<void> _pasteFromClipboard() async {
+    await _attachmentComposerKey.currentState?.pasteFromClipboard();
   }
 
   @override
@@ -1750,8 +1755,11 @@ class _ConversationState extends State<_Conversation>
                 }),
               ),
               MessageAttachmentComposer(
+                key: _attachmentComposerKey,
                 state: widget.state,
                 channelId: widget.channel.id,
+                textController: _controller,
+                focusNode: _composerFocus,
                 attachments: _attachments,
                 onChanged: (attachments) => setState(() {
                   _attachments = attachments;
@@ -1760,15 +1768,26 @@ class _ConversationState extends State<_Conversation>
                   _attachmentsPending = pending;
                 }),
                 directMessageId: null,
-                key: ValueKey('attachments:${widget.channel.id}'),
               ),
               CallbackShortcuts(
                 bindings: {
                   const SingleActivator(LogicalKeyboardKey.enter): _send,
+                  const SingleActivator(LogicalKeyboardKey.keyV, control: true):
+                      _pasteFromClipboard,
+                  const SingleActivator(LogicalKeyboardKey.keyV, meta: true):
+                      _pasteFromClipboard,
+                  const SingleActivator(LogicalKeyboardKey.insert, shift: true):
+                      _pasteFromClipboard,
                 },
                 child: TextField(
                   focusNode: _composerFocus,
                   controller: _controller,
+                  contextMenuBuilder: (context, editableTextState) =>
+                      _messageContextMenu(
+                        context,
+                        editableTextState,
+                        _pasteFromClipboard,
+                      ),
                   enabled: !widget.state.sending,
                   maxLength: 8000,
                   minLines: 1,
@@ -1801,6 +1820,28 @@ class _ConversationState extends State<_Conversation>
       ],
     );
   }
+}
+
+Widget _messageContextMenu(
+  BuildContext context,
+  EditableTextState editableTextState,
+  Future<void> Function() pasteFromClipboard,
+) {
+  final items =
+      List<ContextMenuButtonItem>.of(editableTextState.contextMenuButtonItems)
+        ..add(
+          ContextMenuButtonItem(
+            label: 'Вставить из буфера',
+            onPressed: () {
+              editableTextState.hideToolbar();
+              unawaited(pasteFromClipboard());
+            },
+          ),
+        );
+  return AdaptiveTextSelectionToolbar.buttonItems(
+    anchors: editableTextState.contextMenuAnchors,
+    buttonItems: items,
+  );
 }
 
 class _HistoryDateDivider extends StatelessWidget {
@@ -2935,11 +2976,16 @@ class _DirectConversation extends StatefulWidget {
 class _DirectConversationState extends State<_DirectConversation> {
   final _controller = TextEditingController();
   final _composerFocus = FocusNode();
+  final _attachmentComposerKey = GlobalKey<MessageAttachmentComposerState>();
   final _scroll = ScrollController();
   DirectChatMessage? _replyTarget;
   final Set<String> _mentionUserIds = {};
   List<MessageAttachment> _attachments = const [];
   bool _attachmentsPending = false;
+
+  Future<void> _pasteFromClipboard() async {
+    await _attachmentComposerKey.currentState?.pasteFromClipboard();
+  }
 
   @override
   void didUpdateWidget(covariant _DirectConversation oldWidget) {
@@ -3295,9 +3341,11 @@ class _DirectConversationState extends State<_DirectConversation> {
                 }),
               ),
               MessageAttachmentComposer(
-                key: ValueKey('attachments:${widget.conversation.id}'),
+                key: _attachmentComposerKey,
                 state: widget.state,
                 attachments: _attachments,
+                textController: _controller,
+                focusNode: _composerFocus,
                 directMessageId: widget.conversation.id,
                 onChanged: (attachments) => setState(() {
                   _attachments = attachments;
@@ -3306,23 +3354,41 @@ class _DirectConversationState extends State<_DirectConversation> {
                   _attachmentsPending = pending;
                 }),
               ),
-              TextField(
-                focusNode: _composerFocus,
-                controller: _controller,
-                enabled: !widget.state.sending,
-                maxLength: 8000,
-                minLines: 1,
-                maxLines: 5,
-                onSubmitted: (_) => _send(),
-                decoration: InputDecoration(
-                  counterText: '',
-                  hintText: 'Сообщение для ${widget.conversation.displayName}…',
-                  suffixIcon: IconButton(
-                    tooltip: 'Отправить личное сообщение',
-                    onPressed: widget.state.sending || _attachmentsPending
-                        ? null
-                        : _send,
-                    icon: const Icon(Icons.send_outlined),
+              CallbackShortcuts(
+                bindings: {
+                  const SingleActivator(LogicalKeyboardKey.enter): _send,
+                  const SingleActivator(LogicalKeyboardKey.keyV, control: true):
+                      _pasteFromClipboard,
+                  const SingleActivator(LogicalKeyboardKey.keyV, meta: true):
+                      _pasteFromClipboard,
+                  const SingleActivator(LogicalKeyboardKey.insert, shift: true):
+                      _pasteFromClipboard,
+                },
+                child: TextField(
+                  focusNode: _composerFocus,
+                  controller: _controller,
+                  contextMenuBuilder: (context, editableTextState) =>
+                      _messageContextMenu(
+                        context,
+                        editableTextState,
+                        _pasteFromClipboard,
+                      ),
+                  enabled: !widget.state.sending,
+                  maxLength: 8000,
+                  minLines: 1,
+                  maxLines: 5,
+                  onSubmitted: (_) => _send(),
+                  decoration: InputDecoration(
+                    counterText: '',
+                    hintText:
+                        'Сообщение для ${widget.conversation.displayName}…',
+                    suffixIcon: IconButton(
+                      tooltip: 'Отправить личное сообщение',
+                      onPressed: widget.state.sending || _attachmentsPending
+                          ? null
+                          : _send,
+                      icon: const Icon(Icons.send_outlined),
+                    ),
                   ),
                 ),
               ),

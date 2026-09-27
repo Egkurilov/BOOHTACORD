@@ -1,9 +1,11 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../app_state.dart';
 import '../models.dart';
 import '../services/api_client.dart';
+import '../services/system_clipboard_paste.dart';
 
 class MessageAttachmentComposer extends StatefulWidget {
   const MessageAttachmentComposer({
@@ -12,28 +14,34 @@ class MessageAttachmentComposer extends StatefulWidget {
     required this.attachments,
     required this.onChanged,
     required this.onPending,
+    required this.textController,
+    required this.focusNode,
     this.channelId,
     this.directMessageId,
     this.filePicker,
+    this.clipboardReader,
   }) : assert((channelId == null) != (directMessageId == null));
 
   final AppState state;
   final List<MessageAttachment> attachments;
   final ValueChanged<List<MessageAttachment>> onChanged;
   final ValueChanged<bool> onPending;
+  final TextEditingController textController;
+  final FocusNode focusNode;
   final String? channelId;
   final String? directMessageId;
   final Future<List<XFile>> Function()? filePicker;
+  final Future<ClipboardPasteContent?> Function()? clipboardReader;
 
   @override
   State<MessageAttachmentComposer> createState() =>
-      _MessageAttachmentComposerState();
+      MessageAttachmentComposerState();
 }
 
-class _MessageAttachmentComposerState extends State<MessageAttachmentComposer> {
+class MessageAttachmentComposerState extends State<MessageAttachmentComposer> {
   bool _pending = false;
   String? _error;
-  final List<XFile> _failedFiles = [];
+  final List<_AttachmentSource> _failedFiles = [];
   String? _activeName;
   int? _activePercent;
   int _generation = 0;
@@ -97,10 +105,120 @@ class _MessageAttachmentComposerState extends State<MessageAttachmentComposer> {
       );
       return;
     }
-    await _uploadBatch(files, generation: generation, scope: scope);
+    await _uploadBatch(
+      files.map(_AttachmentSource.fromXFile).toList(growable: false),
+      generation: generation,
+      scope: scope,
+    );
   }
 
-  Future<void> _retry(XFile file) async {
+  Future<void> pasteFromClipboard() async {
+    if (widget.state.sending) return;
+    final generation = _generation;
+    final scope = _scope;
+    final originalValue = widget.textController.value;
+    ClipboardPasteContent? content;
+    var clipboardReadFailed = false;
+    try {
+      content =
+          await (widget.clipboardReader?.call() ?? readSystemClipboardPaste());
+    } catch (_) {
+      // Fall back to Flutter's text-only clipboard below. This keeps standard
+      // text paste working if native image clipboard access is unavailable.
+      clipboardReadFailed = true;
+    }
+    String? fallbackText;
+    if (content == null) {
+      try {
+        fallbackText = (await Clipboard.getData('text/plain'))?.text;
+      } catch (_) {
+        if (content == null && _isCurrent(generation, scope)) {
+          setState(
+            () => _error =
+                'Не удалось прочитать буфер обмена. Повторите попытку.',
+          );
+        }
+      }
+    }
+    if (!_isCurrent(generation, scope)) {
+      return;
+    }
+    if (content == null && fallbackText == null) {
+      if (clipboardReadFailed) {
+        setState(
+          () =>
+              _error = 'Не удалось прочитать буфер обмена. Повторите попытку.',
+        );
+      }
+      return;
+    }
+    if (widget.textController.text == originalValue.text) {
+      _insertText(content?.text ?? fallbackText ?? '', originalValue);
+    }
+    if (content?.imageError case final imageError?) {
+      setState(() => _error = imageError);
+    }
+    final image = content?.image;
+    if (image != null) {
+      if (_pending) {
+        setState(() => _error = 'Дождитесь завершения текущей загрузки.');
+      } else {
+        await addClipboardImage(
+          image.bytes,
+          fileName: image.fileName,
+          expectedGeneration: generation,
+          expectedScope: scope,
+        );
+      }
+    }
+    widget.focusNode.requestFocus();
+  }
+
+  void _insertText(String text, TextEditingValue value) {
+    if (text.isEmpty) return;
+    final currentSelection = value.selection;
+    final start = currentSelection.isValid
+        ? currentSelection.start.clamp(0, value.text.length)
+        : value.text.length;
+    final end = currentSelection.isValid
+        ? currentSelection.end.clamp(start, value.text.length)
+        : value.text.length;
+    final updated = value.text.replaceRange(start, end, text);
+    widget.textController.value = TextEditingValue(
+      text: updated,
+      selection: TextSelection.collapsed(offset: start + text.length),
+    );
+  }
+
+  Future<void> addClipboardImage(
+    Uint8List bytes, {
+    required String fileName,
+    int? expectedGeneration,
+    String? expectedScope,
+  }) async {
+    if (_pending || widget.state.sending) return;
+    final generation = expectedGeneration ?? _generation;
+    final scope = expectedScope ?? _scope;
+    if (!_isCurrent(generation, scope)) return;
+    if (bytes.isEmpty || bytes.length > 25000000) {
+      setState(() => _error = 'Каждый файл должен быть не больше 25 МБ.');
+      return;
+    }
+    final remaining = 10 - widget.attachments.length - _failedFiles.length;
+    if (remaining <= 0) {
+      setState(
+        () => _error = 'К сообщению можно прикрепить не более 10 файлов.',
+      );
+      return;
+    }
+    await _uploadBatch(
+      [_AttachmentSource.fromBytes(bytes, name: fileName)],
+      generation: generation,
+      scope: scope,
+    );
+  }
+
+  Future<void> _retry(_AttachmentSource file) async {
     if (_pending || widget.state.sending || !_failedFiles.contains(file)) {
       return;
     }
@@ -109,7 +227,7 @@ class _MessageAttachmentComposerState extends State<MessageAttachmentComposer> {
   }
 
   Future<void> _uploadBatch(
-    List<XFile> files, {
+    List<_AttachmentSource> files, {
     required int generation,
     required String scope,
   }) async {
@@ -206,6 +324,11 @@ class _MessageAttachmentComposerState extends State<MessageAttachmentComposer> {
             icon: const Icon(Icons.attach_file, size: 18),
             label: const Text('Прикрепить файлы'),
           ),
+          TextButton.icon(
+            onPressed: widget.state.sending ? null : pasteFromClipboard,
+            icon: const Icon(Icons.content_paste, size: 18),
+            label: const Text('Вставить'),
+          ),
           const Text(
             'До 10 файлов · 25 МБ каждый',
             style: TextStyle(color: Color(0xFF9AA0AA), fontSize: 11),
@@ -284,4 +407,31 @@ class _MessageAttachmentComposerState extends State<MessageAttachmentComposer> {
         ),
     ],
   );
+}
+
+class _AttachmentSource {
+  const _AttachmentSource({
+    required this.name,
+    required this.length,
+    required this.readAsBytes,
+  });
+
+  factory _AttachmentSource.fromXFile(XFile file) => _AttachmentSource(
+    name: file.name,
+    length: file.length,
+    readAsBytes: file.readAsBytes,
+  );
+
+  factory _AttachmentSource.fromBytes(
+    Uint8List bytes, {
+    required String name,
+  }) => _AttachmentSource(
+    name: name,
+    length: () async => bytes.length,
+    readAsBytes: () async => bytes,
+  );
+
+  final String name;
+  final Future<int> Function() length;
+  final Future<Uint8List> Function() readAsBytes;
 }

@@ -5,6 +5,7 @@
 import FlutterMacOS
 import Foundation
 
+import clipboard
 import connectivity_plus
 import device_info_plus
 import file_selector_macos
@@ -17,6 +18,7 @@ import url_launcher_macos
 import window_manager
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+  ClipboardPlugin.register(with: registry.registrar(forPlugin: "ClipboardPlugin"))
   ConnectivityPlusPlugin.register(with: registry.registrar(forPlugin: "ConnectivityPlusPlugin"))
   DeviceInfoPlusMacosPlugin.register(with: registry.registrar(forPlugin: "DeviceInfoPlusMacosPlugin"))
   FileSelectorPlugin.register(with: registry.registrar(forPlugin: "FileSelectorPlugin"))

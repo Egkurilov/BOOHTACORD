@@ -1,0 +1,56 @@
+{
+  "id": "qa22-native-clipboard-image-paste-2026-09-27-001",
+  "kind": "native-flutter-clipboard-image-paste",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "implementation": {
+    "plugin": "clipboard 3.0.14",
+    "license": "BSD-3-Clause",
+    "interaction": [
+      "Ctrl/Cmd+V",
+      "Shift+Insert",
+      "text-selection context menu action",
+      "explicit composer paste button"
+    ],
+    "behavior": "Native plugin reads PNG and any co-present plain text only after a paste action. Text is inserted at the active selection; image bytes enter the existing TEXT/DM-scoped upload queue and never enter the message body. The queue enforces 10 attachments, 25 MB per image, pending/error/507/retry states and drops stale reads after a conversation switch."
+  },
+  "checks": [
+    {
+      "name": "Clipboard payload, text and size handling",
+      "command": "flutter test test/system_clipboard_paste_test.dart",
+      "status": "PASS",
+      "observation": "Three tests cover mixed text+PNG payloads, an image above the 25 MB upload limit, and an empty clipboard."
+    },
+    {
+      "name": "Composer queue and scope",
+      "command": "flutter test test/message_attachment_composer_test.dart",
+      "status": "PASS",
+      "observation": "Tests cover insertion at the selected range, image upload through TEXT, stale read cancellation after a channel switch, preserving text when image size is rejected, and participant-scoped DM upload with 507 retry using the same clipboard bytes."
+    },
+    {
+      "name": "Full Flutter suite and static analysis",
+      "command": "flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "All 130 Flutter tests passed; analyzer reported no issues."
+    },
+    {
+      "name": "macOS native plugin integration",
+      "command": "flutter build macos --debug",
+      "status": "PASS",
+      "observation": "Debug BOOHTACORD.app built with ClipboardPlugin registered. The app was not manually run against a real system clipboard."
+    },
+    {
+      "name": "Android native plugin integration",
+      "command": "flutter build apk --debug",
+      "status": "PASS",
+      "observation": "Debug APK built with ClipboardPlugin registered. AndroidX requires compileSdk 34, while clipboard 3.0.14 pins its library to 33; android/build.gradle.kts raises compileSdk to 34 for only that library and leaves app targetSdk unchanged. The pre-existing Kotlin Gradle Plugin warning for flutter_background/flutter_webrtc/livekit_client remains."
+    },
+    {
+      "name": "Windows native build and real clipboard acceptance",
+      "status": "NOT_RUN",
+      "reason": "No Windows build runner or attached device/clipboard session was available. Actual Ctrl/Cmd+V, Shift+Insert, menu/context action, macOS paste prompt, Android URI lifetime, Windows DIB conversion, live 507 and switching during native read must still be tested on each OS."
+    }
+  ],
+  "privacy": "The client does not monitor or poll the clipboard. A read is initiated only by the user's keyboard shortcut, selection-menu action or explicit paste button. Clipboard image bytes are uploaded using the current conversation identifier and are not serialized into message text.",
+  "remaining": "Verify real clipboard paste, permissions/URI lifetime, 25 MB rejection, retry and conversation switching on macOS, Windows and Android; compile the Windows client on a Windows runner."
+}
