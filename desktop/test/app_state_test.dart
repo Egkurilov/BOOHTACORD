@@ -316,6 +316,32 @@ void main() {
     expect(state.messages.last.body.runes.length, 5000);
   });
 
+  test('allows attachment-only TEXT messages but rejects a blank draft without files', () async {
+    final api = _FakeApi(topology);
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+
+    expect(await state.send(''), isFalse);
+    expect(api.textSendIds, isEmpty);
+    expect(
+      await state.send(
+        '',
+        attachments: const [
+          MessageAttachment(
+            id: 'file-image',
+            originalName: 'clipboard.png',
+            sizeBytes: 4,
+          ),
+        ],
+      ),
+      isTrue,
+    );
+    expect(api.sentAttachmentIds, ['file-image']);
+    expect(state.messages.last.body, isEmpty);
+    expect(state.messages.last.attachments.single.id, 'file-image');
+  });
+
   test('reconciles a lost text acknowledgement with server history', () async {
     final api = _FakeApi(topology)..failTextSends = 1;
     final state = AppState(api);
@@ -369,6 +395,36 @@ void main() {
     expect(await state.retryDirectSend(failedId), isTrue);
     expect(api.directSendIds.last, api.directSendIds.first);
     expect(api.directSendIds[1], isNot(api.directSendIds.first));
+  });
+
+  test('allows attachment-only DM messages but rejects an empty draft without files', () async {
+    final api = _FakeApi(topology, includeDirectMessage: true);
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+    await state.openDirectConversation(state.directMessages.single);
+
+    expect(await state.sendDirect(''), isFalse);
+    expect(api.directSendIds, isEmpty);
+    expect(
+      await state.sendDirect(
+        '',
+        attachments: const [
+          MessageAttachment(
+            id: 'dm-file-image',
+            originalName: 'clipboard.png',
+            sizeBytes: 4,
+          ),
+        ],
+      ),
+      isTrue,
+    );
+    expect(api.sentDirectAttachmentIds, ['dm-file-image']);
+    expect(state.directMessageHistory.last.body, isEmpty);
+    expect(
+      state.directMessageHistory.last.attachments.single.id,
+      'dm-file-image',
+    );
   });
 
   test('does not append a delayed text send into the next channel', () async {

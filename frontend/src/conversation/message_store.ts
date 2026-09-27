@@ -39,8 +39,8 @@ export const useMessageStore = defineStore('text-messages', () => {
 
   async function send(body: string, request?: MessageRequest, createId: () => string = () => crypto.randomUUID(), replyToId?: string, attachments: TextMessageAttachment[] = [], authorId = 'Вы', mentionUserIds: string[] = []): Promise<boolean> {
     const targetChannelId = channelId.value
-    if (!targetChannelId || sending.value || !body) return false
-    if (!validCodePointLength(body, 1, 8000)) { error.value = 'Сообщение должно содержать до 8000 символов.'; return false }
+    if (!targetChannelId || sending.value || (!body && attachments.length === 0)) return false
+    if (body && !validCodePointLength(body, 1, 8000)) { error.value = 'Сообщение должно содержать до 8000 символов.'; return false }
     const draft = { channelId: targetChannelId, authorId, body, replyToId, attachments: [...attachments], mentionUserIds: [...mentionUserIds], request }
     const key = JSON.stringify([targetChannelId, authorId, body, replyToId, attachments.map(({ id }) => id), mentionUserIds])
     const clientMessageId = retries.get(key) ?? createId()

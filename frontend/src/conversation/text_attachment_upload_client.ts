@@ -1,5 +1,6 @@
 import { apiBaseUrl } from '../config/runtime'
 import { MessageRequestError, type MessageRequest } from './message_client'
+import { MAX_MESSAGE_ATTACHMENT_BYTES } from './attachment_limits'
 
 export interface TextAttachmentUpload {
   id: string
@@ -35,7 +36,7 @@ async function checked(response: Response): Promise<unknown> {
 }
 
 export async function uploadTextAttachment(channelId: string, file: File, request: MessageRequest = fetch): Promise<TextAttachmentUpload> {
-  if (!channelId || !file.name || !Number.isInteger(file.size) || file.size < 0 || file.size > 25_000_000) {
+  if (!channelId || !file.name || !Number.isInteger(file.size) || file.size < 0 || file.size > MAX_MESSAGE_ATTACHMENT_BYTES) {
     throw new Error('Файл не соответствует ограничению вложения.')
   }
   const body = new FormData()

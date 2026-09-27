@@ -22,6 +22,30 @@ describe('direct-message store', () => {
     expect(request).not.toHaveBeenCalled()
   })
 
+  it('sends a private attachment-only message and keeps an empty text-only draft unsent', async () => {
+    const store = useDirectMessageStore()
+    const payloads: Record<string, unknown>[] = []
+    const request = async (input: string, init: RequestInit) => {
+      if (init.method === 'GET') return new Response(JSON.stringify({ messages: [] }))
+      const payload = JSON.parse(String(init.body)) as Record<string, unknown>
+      payloads.push(payload)
+      return new Response(JSON.stringify({
+        id: 'message-image', direct_message_id: 'dm-1', author_id: 'user-1',
+        client_message_id: payload.client_message_id, body: '', created_at: '2026-09-18T10:00:00Z',
+        revision: 1, deleted: false, mention_user_ids: [],
+        attachments: [{ id: 'attachment-image', original_name: 'clipboard.png', byte_size: 4 }],
+      }))
+    }
+    await store.open('dm-1', request)
+    await expect(store.send('', request)).resolves.toBe(false)
+    await expect(store.send('', request, () => 'client-image', undefined, 'user-1', [], [
+      { id: 'attachment-image', originalName: 'clipboard.png', sizeBytes: 4 },
+    ])).resolves.toBe(true)
+
+    expect(payloads).toMatchObject([{ body: '', attachment_ids: ['attachment-image'] }])
+    expect(store.messages).toMatchObject([{ body: '', attachments: [{ id: 'attachment-image' }] }])
+  })
+
   it('loads the private navigation list and the selected conversation history', async () => {
     const store = useDirectMessageStore()
     const request = async (input: string) => input.endsWith('/messages')

@@ -20,6 +20,29 @@ describe('message store', () => {
     expect(store.messages).toMatchObject([{ id: 'message-1', createdAt: '2026-09-17T12:00:00Z', attachments }])
   })
 
+  it('sends an attachment-only message but still rejects an empty draft without files', async () => {
+    const store = useMessageStore()
+    const payloads: Record<string, unknown>[] = []
+    const attachment = { id: 'attachment-image', originalName: 'clipboard.png', sizeBytes: 4 }
+    const request = async (_input: string, init: RequestInit) => {
+      if (init.method === 'GET') return new Response(JSON.stringify({ messages: [] }))
+      const payload = JSON.parse(String(init.body)) as Record<string, unknown>
+      payloads.push(payload)
+      return new Response(JSON.stringify({
+        ...message,
+        body: '',
+        attachments: [{ id: attachment.id, original_name: attachment.originalName, byte_size: attachment.sizeBytes }],
+      }))
+    }
+
+    await store.open('text-1', request)
+    await expect(store.send('', request, () => 'client-image')).resolves.toBe(false)
+    await expect(store.send('', request, () => 'client-image', undefined, [attachment])).resolves.toBe(true)
+
+    expect(payloads).toMatchObject([{ body: '', attachment_ids: ['attachment-image'] }])
+    expect(store.messages).toMatchObject([{ body: '', attachments: [attachment] }])
+  })
+
   it('shows an optimistic message and retains it as failed when acknowledgement is lost', async () => {
     const store = useMessageStore()
     let rejectPost: ((cause: Error) => void) | undefined

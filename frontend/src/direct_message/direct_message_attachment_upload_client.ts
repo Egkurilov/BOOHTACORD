@@ -1,10 +1,11 @@
 import { apiBaseUrl } from '../config/runtime'
+import { MAX_MESSAGE_ATTACHMENT_BYTES } from '../conversation/attachment_limits'
 import type { TextMessageAttachment } from '../conversation/message_client'
 import type { DirectMessageRequest } from './direct_message_client'
 import { parseDirectMessageAttachments } from './direct_message_attachment_metadata'
 
 export async function uploadDirectMessageAttachment(directMessageId: string, file: File, request: DirectMessageRequest = fetch): Promise<TextMessageAttachment> {
-  if (!directMessageId || !file.name || !Number.isInteger(file.size) || file.size < 0 || file.size > 25_000_000) {
+  if (!directMessageId || !file.name || !Number.isInteger(file.size) || file.size < 0 || file.size > MAX_MESSAGE_ATTACHMENT_BYTES) {
     throw new Error('Файл не соответствует ограничению вложения.')
   }
   const body = new FormData()

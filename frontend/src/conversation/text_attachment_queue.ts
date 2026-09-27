@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 
 import { uploadTextAttachment, type TextAttachmentUpload } from './text_attachment_upload_client'
+import { exceedsAttachmentCount } from './attachment_limits'
 
 type Emit = ((event: 'change', attachments: TextAttachmentUpload[]) => void) & ((event: 'pending', value: boolean) => void)
 type Upload = typeof uploadTextAttachment
@@ -24,7 +25,7 @@ export function useTextAttachmentQueue(channelId: () => string, disabled: () => 
 
   async function upload(files: File[]): Promise<void> {
     if (!files.length || pending.value || disabled()) return
-    if (attachments.value.length + failed.value.length + files.length > 10) {
+    if (exceedsAttachmentCount(attachments.value.length, failed.value.length, files.length)) {
       error.value = 'К сообщению можно прикрепить не более 10 файлов.'
       return
     }

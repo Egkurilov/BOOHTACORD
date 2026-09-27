@@ -1,0 +1,39 @@
+{
+  "id": "qa21-clipboard-image-paste-2026-09-27-001",
+  "kind": "clipboard-image-attachment-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "checks": [
+    {
+      "name": "Clipboard image extraction and text-preserving paste",
+      "command": "npm test -- --run src/conversation/clipboard_images.spec.ts",
+      "status": "PASS",
+      "observation": "Tests verify image-only paste, unchanged ordinary text paste, mixed image+plain-text insertion at the active textarea selection, fallback filenames for anonymous clipboard blobs, non-image filtering, and wiring into the TEXT and DM scoped upload pickers. Paste does not submit a message. Shared-limit tests cover exactly ten accepted files, rejects the eleventh, and enforce the common 25 MB per-file maximum before upload."
+    },
+    {
+      "name": "Attachment-only TEXT and DM send contract",
+      "command": "npm test -- --run src/conversation/message_store.spec.ts src/direct_message/direct_message_store.spec.ts src/direct_message/direct_message_mutation_client.spec.ts",
+      "status": "PASS",
+      "observation": "Both stores send body:empty only when attachment IDs exist and keep empty text-only drafts unsent. The private DM mutation client accepts an empty response body only when the response contains at least one attachment."
+    },
+    {
+      "name": "Full frontend suite and production build",
+      "command": "npm test -- --run && npm run build",
+      "status": "PASS",
+      "observation": "213 test files and 627 tests passed; vue-tsc and Vite production build passed. Vite reports the existing LiveKit chunk-size warning."
+    },
+    {
+      "name": "Flutter attachment-only send parity",
+      "command": "flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "All 123 Flutter tests passed, including empty-body TEXT/DM with an attachment and rejection without attachments; analyzer reported no issues."
+    },
+    {
+      "name": "Authenticated browser/device clipboard acceptance",
+      "status": "NOT_RUN",
+      "reason": "No authenticated browser/OS clipboard fixture was available. Real clipboard permissions, actual image paste in TEXT/DM, channel/DM switching during upload, and 507/retry need a browser session. Native Flutter image clipboard support is not yet implemented and is tracked as FE-56."
+    }
+  ],
+  "privacy": "The browser reads only image/* ClipboardEvent items. Image bytes enter the existing conversation-scoped upload path and never enter the message body; any co-pasted text is inserted as plain text at the caret. No send is automatic, and existing size/count checks remain in force.",
+  "remaining": "Run authenticated browser paste/retry/507/DM-participant checks and implement FE-56 for native image clipboard on Android, macOS and Windows."
+}

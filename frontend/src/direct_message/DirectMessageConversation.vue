@@ -17,6 +17,7 @@ import { useComposerScope } from '../conversation/composer_scope'
 import { submitOnComposerEnter } from '../conversation/composer_enter'
 import SearchMessageContext from '../search/SearchMessageContext.vue'
 import { useSearchTargetStore } from '../search/search_target_store'
+import { pasteClipboardImages } from '../conversation/clipboard_images'
 const props = defineProps<{ directMessageId: string; otherParticipantId: string; otherParticipantDisplayName: string; navOpen: boolean }>()
 const emit = defineEmits<{ toggleNav: [] }>()
 const store = useDirectMessageStore()
@@ -29,6 +30,8 @@ const { draft, replyTarget, mentionUserIds, attachments, attachmentPending, atta
 const searchOpen = ref(false)
 const searchTrigger = ref<HTMLButtonElement | null>(null)
 const readRoot = ref<HTMLElement | null>(null)
+const composerTextarea = ref<HTMLTextAreaElement | null>(null)
+const attachmentPicker = ref<{ addPastedFiles: (files: File[]) => void } | null>(null)
 const emojiOpen = ref(false)
 const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
 const readPending = new Set<string>()
@@ -74,6 +77,9 @@ async function loadSession(): Promise<void> {
 
 function addEmoji(emoji: string): void { draft.value += emoji }
 function closeSearch(): void { searchOpen.value = false; void nextTick(() => searchTrigger.value?.focus()) }
+function onComposerPaste(event: ClipboardEvent): void {
+  if (composerTextarea.value) pasteClipboardImages(event, composerTextarea.value, (files) => attachmentPicker.value?.addPastedFiles(files))
+}
 
 watch([() => props.directMessageId, () => store.directMessageId, () => store.messages], queueVisibleRead, { flush: 'post' })
 watch(() => props.directMessageId, () => { composer.reset(); lastReadKey = '' })
@@ -104,15 +110,15 @@ onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVi
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
-        <DirectMessageAttachmentPicker :direct-message-id="props.directMessageId" :disabled="store.sending || attachmentPending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" />
+        <DirectMessageAttachmentPicker ref="attachmentPicker" :direct-message-id="props.directMessageId" :disabled="store.sending || attachmentPending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" />
         <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" />
         <label class="gc-sr-only" for="direct-message-body">Сообщение</label>
-        <textarea id="direct-message-body" v-model="draft" rows="1" :disabled="store.sending" :aria-describedby="store.error ? 'direct-conversation-error direct-composer-help' : 'direct-composer-help'" placeholder="Написать сообщение…" @keydown="submitOnComposerEnter($event, send)" />
+        <textarea id="direct-message-body" ref="composerTextarea" v-model="draft" rows="1" :disabled="store.sending" :aria-describedby="store.error ? 'direct-conversation-error direct-composer-help' : 'direct-composer-help'" placeholder="Написать сообщение…" @keydown="submitOnComposerEnter($event, send)" @paste="onComposerPaste" />
         <span class="emoji-picker">
           <button class="emoji-trigger" type="button" aria-label="Добавить emoji" :aria-expanded="emojiOpen" @click="emojiOpen = !emojiOpen">☺</button>
           <span v-if="emojiOpen" class="emoji-menu" aria-label="Выбор emoji"><button v-for="emoji in emojis" :key="emoji" type="button" :aria-label="`Добавить ${emoji}`" @click="addEmoji(emoji); emojiOpen = false">{{ emoji }}</button></span>
         </span>
-        <button class="composer-send" type="submit" :aria-label="store.sending ? 'Отправляем сообщение' : 'Отправить сообщение'" :disabled="store.sending || attachmentPending || !draft"><span v-if="store.sending">…</span><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z" /><path d="m11 13 4-4" /></svg></button>
+        <button class="composer-send" type="submit" :aria-label="store.sending ? 'Отправляем сообщение' : 'Отправить сообщение'" :disabled="store.sending || attachmentPending || (!draft && attachments.length === 0)"><span v-if="store.sending">…</span><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z" /><path d="m11 13 4-4" /></svg></button>
       </form>
       <div class="composer-helper"><p id="direct-composer-help">Enter — отправить · Shift+Enter — новая строка</p><p class="composer-helper__limit">До 25 МБ на файл</p></div>
     </div>

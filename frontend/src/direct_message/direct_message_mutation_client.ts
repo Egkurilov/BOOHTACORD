@@ -13,7 +13,7 @@ function invalid(): never { throw new Error('Сервер вернул неко�
 function record(value: unknown): Record<string, unknown> | null { return typeof value === 'object' && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : null }
 function text(value: unknown): string | null { return typeof value === 'string' ? value : null }
 function requiredText(value: unknown): string { const result = text(value); return result ? result : invalid() }
-function messageBody(value: unknown): string { const result = text(value); return result === null || !result ? invalid() : result }
+function messageBody(value: unknown, hasAttachments: boolean): string { const result = text(value); return result === null || (!result && !hasAttachments) ? invalid() : result }
 function date(value: unknown): string { const result = requiredText(value); return Number.isNaN(Date.parse(result)) ? invalid() : result }
 function optionalText(value: unknown): string | undefined { if (value === undefined) return undefined; return requiredText(value) }
 function optionalDate(value: unknown): string | undefined { return value === undefined ? undefined : date(value) }
@@ -22,11 +22,12 @@ function revision(value: unknown): number { return typeof value === 'number' && 
 function message(value: unknown): DirectMessageHistoryItem {
   const source = record(value)
   if (!source) invalid()
+  const attachments = parseDirectMessageAttachments(source.attachments)
   return {
     id: requiredText(source.id), directMessageId: requiredText(source.direct_message_id), authorId: requiredText(source.author_id),
-    clientMessageId: requiredText(source.client_message_id), body: messageBody(source.body), replyToId: optionalText(source.reply_to_id),
+    clientMessageId: requiredText(source.client_message_id), body: messageBody(source.body, attachments.length > 0), replyToId: optionalText(source.reply_to_id),
     createdAt: date(source.created_at), editedAt: optionalDate(source.edited_at), revision: revision(source.revision), deleted: false,
-    attachments: parseDirectMessageAttachments(source.attachments), mentionUserIds: parseMentionIds(source.mention_user_ids),
+    attachments, mentionUserIds: parseMentionIds(source.mention_user_ids),
   }
 }
 
@@ -54,7 +55,7 @@ function path(directMessageId: string, messageId?: string): string {
 }
 
 export async function createDirectMessage(directMessageId: string, clientMessageId: string, body: string, request: DirectMessageRequest = fetch, replyToId?: string, mentionUserIds: string[] = [], attachmentIds: string[] = []): Promise<DirectMessageHistoryItem> {
-  if (!clientMessageId || !body) invalid()
+  if (!clientMessageId || (!body && attachmentIds.length === 0)) invalid()
   const response = await request(path(directMessageId), requestInit('POST', { client_message_id: clientMessageId, body, ...(replyToId ? { reply_to_id: replyToId } : {}), ...(attachmentIds.length ? { attachment_ids: attachmentIds } : {}), ...(mentionUserIds.length ? { mention_user_ids: mentionUserIds } : {}) }))
   return message(await checked(response))
 }

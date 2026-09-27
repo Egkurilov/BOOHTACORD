@@ -3,6 +3,20 @@ import { describe, expect, it, vi } from 'vitest'
 import { createDirectMessage, deleteDirectMessage, editDirectMessage } from './direct_message_mutation_client'
 
 describe('direct-message mutation client', () => {
+  it('allows an empty body only when sending an attachment-only DM', async () => {
+    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      id: 'message-image', direct_message_id: 'dm-1', author_id: 'user-1', client_message_id: 'client-image',
+      body: '', revision: 1, created_at: '2026-09-18T10:00:00Z', mention_user_ids: [],
+      attachments: [{ id: 'attachment-image', original_name: 'clipboard.png', byte_size: 4 }],
+    })))
+
+    await expect(createDirectMessage('dm-1', 'client-image', '', request, undefined, [], ['attachment-image']))
+      .resolves.toMatchObject({ body: '', attachments: [{ id: 'attachment-image' }] })
+    await expect(createDirectMessage('dm-1', 'client-empty', '', request)).rejects.toThrow('некорректное')
+    expect(request).toHaveBeenCalledOnce()
+    expect(JSON.parse(String(request.mock.calls[0]?.[1].body))).toMatchObject({ body: '', attachment_ids: ['attachment-image'] })
+  })
+
   it('uses idempotent send, guarded edit and author-delete endpoints', async () => {
     const request = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'message-1', direct_message_id: 'dm-1', author_id: 'user-1', client_message_id: 'client-1', body: 'Привет', revision: 1, created_at: '2026-09-18T10:00:00Z', reply_to_id: 'message-0', mention_user_ids: [] })))

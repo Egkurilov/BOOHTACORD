@@ -44,8 +44,8 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
 
   async function send(body: string, request?: DirectMessageRequest, createId: () => string = () => crypto.randomUUID(), replyToId?: string, authorId = 'Вы', mentionUserIds: string[] = [], attachments: TextMessageAttachment[] = []): Promise<boolean> {
     const directMessageId = state.directMessageId.value
-    if (!directMessageId || state.sending.value || !body) return false
-    if (!validCodePointLength(body, 1, 8000)) { state.error.value = 'Сообщение должно содержать до 8000 символов.'; return false }
+    if (!directMessageId || state.sending.value || (!body && attachments.length === 0)) return false
+    if (body && !validCodePointLength(body, 1, 8000)) { state.error.value = 'Сообщение должно содержать до 8000 символов.'; return false }
     const draft: PendingDirectMessageSend = { directMessageId, authorId, body, replyToId, mentionUserIds: [...mentionUserIds], attachments: [...attachments], request, sendStatus: 'sending' }
     const key = pendingDirectMessageKey(draft)
     const id = state.retries.get(key) ?? createId()

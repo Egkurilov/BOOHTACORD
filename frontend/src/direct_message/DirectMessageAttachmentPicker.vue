@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import type { TextMessageAttachment } from '../conversation/message_client'
 import { uploadDirectMessageAttachment } from './direct_message_attachment_upload_client'
+import { exceedsAttachmentCount } from '../conversation/attachment_limits'
 
 const props = defineProps<{ directMessageId: string; disabled: boolean; clearToken: number }>()
 const emit = defineEmits<{ change: [attachments: TextMessageAttachment[]]; pending: [value: boolean] }>()
@@ -26,7 +27,7 @@ function clear(): void {
 
 async function upload(files: File[]): Promise<void> {
   if (!files.length || pending.value || props.disabled) return
-  if (attachments.value.length + failed.value.length + files.length > 10) { error.value = 'К сообщению можно прикрепить не более 10 файлов.'; return }
+  if (exceedsAttachmentCount(attachments.value.length, failed.value.length, files.length)) { error.value = 'К сообщению можно прикрепить не более 10 файлов.'; return }
   const target = props.directMessageId
   const version = generation
   pending.value = true
@@ -65,6 +66,9 @@ function retry(): void {
 
 watch(() => props.clearToken, clear)
 watch(() => props.directMessageId, clear)
+
+function addPastedFiles(files: File[]): void { void upload(files) }
+defineExpose({ addPastedFiles })
 </script>
 
 <template>

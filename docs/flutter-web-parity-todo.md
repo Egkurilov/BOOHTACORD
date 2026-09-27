@@ -48,7 +48,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] Проверить reply context, pagination/scroll anchoring и read cursors на границах страниц и при realtime updates.
 - [ ] Спроектировать native notifications для каждой платформы с permission denial, generic preview и deduplication до показа настройки пользователю.
 - [ ] Сверить нативный защищённый просмотр изображений TEXT/DM с DES-09; проверить ACL, loading/error/deleted состояния, масштабирование и отдельное скачивание на deployment и устройствах.
-- [ ] Для Android и desktop Flutter определить и реализовать вставку изображения из clipboard/OS share в TEXT и DM с подготовкой, лимитами, retry и attachment-only отправкой после BE-19/20; сохранить обычную вставку текста.
+- [ ] Реализовать native image clipboard support в Flutter TEXT/DM, связывая вставленное изображение с активной scoped upload queue, сохраняя текстовую вставку, лимиты/retry и attachment-only отправку — [FE-56](../backlog/FRONTEND_TODO.md).
 
 ## P2 — Visual, keyboard и accessibility
 

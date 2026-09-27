@@ -28,4 +28,11 @@ describe('text attachment upload client', () => {
 
     await expect(uploadTextAttachment('text-1', file, request)).rejects.toThrow('некорректные данные')
   })
+
+  it('rejects images above the shared 25 MB limit before sending bytes', async () => {
+    const request = vi.fn()
+    const oversized = { name: 'clipboard.png', size: 25_000_001 } as File
+    await expect(uploadTextAttachment('text-1', oversized, request)).rejects.toThrow('ограничению')
+    expect(request).not.toHaveBeenCalled()
+  })
 })

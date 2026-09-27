@@ -1167,7 +1167,7 @@ class AppState extends ChangeNotifier {
     final trimmed = body.trim();
     if (conversation == null ||
         sending ||
-        trimmed.isEmpty ||
+        trimmed.isEmpty && attachments.isEmpty ||
         trimmed.runes.length > 8000) {
       return false;
     }
@@ -1728,7 +1728,7 @@ class AppState extends ChangeNotifier {
     if (channel == null ||
         channel.kind != ChannelKind.text ||
         sending ||
-        trimmed.isEmpty ||
+        trimmed.isEmpty && attachments.isEmpty ||
         trimmed.runes.length > 8000) {
       return false;
     }
