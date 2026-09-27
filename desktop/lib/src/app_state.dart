@@ -12,6 +12,7 @@ import 'models.dart';
 import 'services/api_client.dart';
 import 'services/audio_preferences.dart';
 import 'services/password_reset_link.dart';
+import 'services/screen_share_quality.dart';
 import 'services/screen_share_metrics.dart';
 import 'services/voice_lease_revocation.dart';
 import 'services/voice_volume_preferences.dart';
@@ -124,6 +125,10 @@ class AppState extends ChangeNotifier {
   bool deafened = false;
   ScreenSharePhase screenSharePhase = ScreenSharePhase.idle;
   String? screenShareError;
+  ScreenShareQuality screenShareQuality =
+      defaultTargetPlatform == TargetPlatform.android
+      ? ScreenShareQuality.balanced
+      : ScreenShareQuality.desktopDefault;
   List<MediaDevice> audioInputDevices = const [];
   List<MediaDevice> audioOutputDevices = const [];
   String? selectedAudioInputId;
@@ -2264,7 +2269,10 @@ class AppState extends ChangeNotifier {
     });
   }
 
-  Future<void> startScreenShare({String? sourceId}) async {
+  Future<void> startScreenShare({
+    String? sourceId,
+    ScreenShareQuality? quality,
+  }) async {
     final room = _room;
     final participant = room?.localParticipant;
     if (room == null ||
@@ -2283,6 +2291,7 @@ class AppState extends ChangeNotifier {
     }
     screenSharePhase = ScreenSharePhase.starting;
     screenShareError = null;
+    screenShareQuality = quality ?? screenShareQuality;
     notifyListeners();
     var androidBackgroundEnabled = false;
     LocalVideoTrack? pendingScreenShareTrack;
@@ -2305,10 +2314,8 @@ class AppState extends ChangeNotifier {
       }
       final captureOptions = ScreenShareCaptureOptions(
         sourceId: sourceId,
-        maxFrameRate: defaultTargetPlatform == TargetPlatform.android ? 15 : 30,
-        params: defaultTargetPlatform == TargetPlatform.android
-            ? VideoParametersPresets.screenShareH720FPS15
-            : VideoParametersPresets.screenShareH1080FPS30,
+        maxFrameRate: screenShareQuality.frameRate.toDouble(),
+        params: screenShareQuality.parameters,
       );
       pendingScreenShareTrack = await LocalVideoTrack.createScreenShareTrack(
         captureOptions,

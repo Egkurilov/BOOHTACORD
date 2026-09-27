@@ -15,6 +15,7 @@ import '../services/api_client.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
+import '../widgets/screen_share_setup_dialog.dart';
 import '../widgets/formatted_message_body.dart';
 import '../widgets/voice_connection_badge.dart';
 import 'profile_screen.dart';
@@ -3601,21 +3602,20 @@ class _VoiceRoomState extends State<_VoiceRoom> {
   }
 
   Future<void> _toggleLocalScreenShare(AppState state) async {
-    String? sourceId;
-    if (defaultTargetPlatform != TargetPlatform.android &&
-        defaultTargetPlatform != TargetPlatform.iOS) {
-      // ignore: experimental_member_use
-      sourceId = await ScreenSelectDialog.show(
-        context,
-        titleText: 'Выберите, чем поделиться',
-        screenTabText: 'Весь экран',
-        windowTabText: 'Окно',
-        cancelText: 'Отмена',
-        shareText: 'Поделиться',
-      );
-      if (!mounted || sourceId == null) return;
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      await state.startScreenShare();
+      return;
     }
-    await state.startScreenShare(sourceId: sourceId);
+    final selection = await ScreenShareSetupDialog.show(
+      context,
+      initialQuality: state.screenShareQuality,
+      allowSourceSelection: defaultTargetPlatform != TargetPlatform.android,
+    );
+    if (!mounted || selection == null) return;
+    await state.startScreenShare(
+      sourceId: selection.sourceId,
+      quality: selection.quality,
+    );
   }
 
   Future<void> _openScreenFullscreen({

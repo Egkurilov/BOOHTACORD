@@ -1,0 +1,40 @@
+{
+  "id": "qa24-screen-share-quality-picker-2026-09-27-001",
+  "kind": "screen-share-quality-and-source-picker",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "implementation": {
+    "quality": {
+      "resolutions": [720, 1080, 1440],
+      "frame_rates": [15, 30, 60],
+      "behavior": "All nine combinations set LiveKit capture dimensions, max capture frame rate, encoder maximum frame rate and an estimated maximum bitrate. Android defaults to 720p/15 FPS; desktop defaults to 1080p/30 FPS. The selected combination remains active for subsequent shares in the same app session."
+    },
+    "source_picker": "Replaces the plain SDK dialog with a responsive dark-themed screen/window picker, live thumbnails, selected state, refresh, empty/error/retry states, Android system-permission guidance and a bandwidth hint."
+  },
+  "checks": [
+    {
+      "name": "Quality mapping and picker selection",
+      "command": "flutter test test/screen_share_quality_test.dart",
+      "status": "PASS",
+      "observation": "All nine resolution/frame-rate combinations map to the requested capture dimensions and encoding caps; widget test selects 1440p/60 FPS and verifies it is returned to the launch flow."
+    },
+    {
+      "name": "Full Flutter suite and analysis",
+      "command": "flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "All 133 Flutter tests passed; analyzer reported no issues."
+    },
+    {
+      "name": "Android and macOS debug builds",
+      "command": "flutter build apk --debug && flutter build macos --debug",
+      "status": "PASS",
+      "observation": "Both debug builds completed. Android retains the existing Kotlin Gradle Plugin migration warning for flutter_background/flutter_webrtc/livekit_client."
+    },
+    {
+      "name": "Native desktop source enumeration and live encode quality",
+      "status": "NOT_RUN",
+      "reason": "No Windows runner or physical macOS/Windows/Android screen-share session with a remote peer was attached."
+    }
+  ],
+  "remaining": "On macOS and Windows verify screen/window source enumeration, thumbnails, selection, system capture permissions and cancel behavior. On Android and desktop test actual 720/1080/1440p at 15/30/60 FPS profiles, compare sender and receiver stats, confirm device/network resource use and peer playback."
+}
