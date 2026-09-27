@@ -29,6 +29,38 @@ func TestHandlerUsesCurrentPrincipalAndPathChannel(t *testing.T) {
 	}
 }
 
+func TestHandlerAttachmentOnlyRequiresFile(t *testing.T) {
+	const actor = "a1b4cc4a-2f12-4c7e-8f18-9d6dba5c6610"
+	const channel = "b1b4cc4a-2f12-4c7e-8f18-9d6dba5c6610"
+	creator := createtextmessage.New(messageStoreFunc(func(_ context.Context, request createtextmessage.Request) (createtextmessage.Result, error) {
+		return createtextmessage.Result{ID: request.ID, ChannelID: request.ChannelID, AuthorID: request.ActorID, ClientMessageID: request.ClientMessageID, Body: request.Body}, nil
+	}))
+	for _, item := range []struct {
+		name, payload string
+		want          int
+	}{
+		{"with file", `{"client_message_id":"c1b4cc4a-2f12-4c7e-8f18-9d6dba5c6610","body":"","attachment_ids":["e1b4cc4a-2f12-4c7e-8f18-9d6dba5c6610"]}`, http.StatusCreated},
+		{"without file", `{"client_message_id":"c1b4cc4a-2f12-4c7e-8f18-9d6dba5c6610","body":"","attachment_ids":[]}`, http.StatusBadRequest},
+	} {
+		t.Run(item.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodPost, "/api/v1/channels/"+channel+"/messages", strings.NewReader(item.payload))
+			request.SetPathValue("channelID", channel)
+			request = request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: actor}))
+			recorder := httptest.NewRecorder()
+			NewHandler(creator).ServeHTTP(recorder, request)
+			if recorder.Code != item.want {
+				t.Fatalf("status = %d, want %d, body = %q", recorder.Code, item.want, recorder.Body.String())
+			}
+		})
+	}
+}
+
+type messageStoreFunc func(context.Context, createtextmessage.Request) (createtextmessage.Result, error)
+
+func (function messageStoreFunc) Create(ctx context.Context, request createtextmessage.Request) (createtextmessage.Result, error) {
+	return function(ctx, request)
+}
+
 type creatorFunc func(context.Context, createtextmessage.Input) (createtextmessage.Result, error)
 
 func (function creatorFunc) Create(context context.Context, input createtextmessage.Input) (createtextmessage.Result, error) {

@@ -52,6 +52,7 @@ func TestRunExecutesEmbeddedMigrations(t *testing.T) {
 		{"CREATE TABLE IF NOT EXISTS realtime_events", "boot_epoch UUID NOT NULL", "recipient_ids UUID[]", "realtime_events_epoch_sequence_idx"},
 		{"hidden_cleanup_claim_token UUID", "hidden_cleanup_claimed_at TIMESTAMPTZ", "attachments_hidden_cleanup_claim_idx"},
 		{"unattached_cleanup_attempts", "unattached_cleanup_retry_after", "attachments_unattached_cleanup_retry_state", "attachments_unattached_cleanup_retry_idx", "attachments_unattached_cleanup_turn_seq"},
+		{"DROP CONSTRAINT IF EXISTS messages_body_or_deleted_marker", "char_length(body) BETWEEN 0 AND 8000", "DROP CONSTRAINT IF EXISTS direct_message_messages_body_or_deleted_marker"},
 	}
 	if len(executor.statements) != len(expected) {
 		t.Fatalf("migration count = %d", len(executor.statements))

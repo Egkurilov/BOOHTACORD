@@ -1,0 +1,13 @@
+{
+  "id": "be19-be20-attachment-only-2026-09-27-001",
+  "kind": "backend-postgresql-integration",
+  "status": "PASS",
+  "observed_at": "2026-09-27T12:30:25Z",
+  "environment": "Ubuntu WSL, PostgreSQL 16.14, test-only voice_platform_test database",
+  "checks": [
+    "BE-19 and BE-20 service/API/PostgreSQL tests passed, including attachment-only create, empty request denial, foreign or already-attached object denial, pair-only DM history, private ID-only hints and concurrent same-key retry with one row and one link.",
+    "go test -json -count=1 ./... with VOICE_PLATFORM_TEST_DATABASE_URL and TEST_DATABASE_URL against local PostgreSQL: 704 passed, 0 skipped, 0 failed; scripts/verify-go-test-events.py passed.",
+    "go vet ./... passed; scripts/verify-contracts.ps1 and scripts/verify-spec-traceability.ps1 passed."
+  ],
+  "limits": "Browser clipboard paste, image viewer and physical media acceptance remain open as FE-53/54/55 and QA gates. Production deployment is verified separately."
+}

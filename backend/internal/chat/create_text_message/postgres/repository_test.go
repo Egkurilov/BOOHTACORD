@@ -19,7 +19,7 @@ func TestRepositoryCreatesOrReturnsIdempotentTextMessage(t *testing.T) {
 	if err != nil || result.ID != "message-1" || database.arguments[5] != "message-0" || len(database.arguments) != 8 || !reflect.DeepEqual(database.arguments[6], attachments) {
 		t.Fatalf("result = %#v, arguments = %#v, error = %v", result, database.arguments, err)
 	}
-	for _, fragment := range []string{"existing_message", "attachment.owner_id = $3", "attachment.channel_id = channel.id", "attachment.state = 'UNATTACHED'", "INSERT INTO message_attachments", "SET state = 'ATTACHED'"} {
+	for _, fragment := range []string{"existing_message", "attachment.owner_id = $3", "attachment.channel_id = channel.id", "attachment.state = 'UNATTACHED'", "AND ($5 <> '' OR cardinality($7::uuid[]) > 0)", "INSERT INTO message_attachments", "SET state = 'ATTACHED'"} {
 		if !strings.Contains(database.statement, fragment) {
 			t.Fatalf("statement does not include %q: %s", fragment, database.statement)
 		}

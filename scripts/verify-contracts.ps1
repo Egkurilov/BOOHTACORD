@@ -186,6 +186,17 @@ foreach ($schemaName in @('TextMessageCreateRequest', 'TextMessageEditRequest', 
         throw "Mentions contract must carry unique user IDs on $schemaName."
     }
 }
+foreach ($schemaName in @('TextMessageCreateRequest', 'DirectMessageMessageCreateRequest')) {
+    $schema = $openApi.components.schemas.$schemaName
+    if ($schema.properties.body.minLength -ne 0 -or
+        $schema.required -notcontains 'body' -or
+        $schema.anyOf.Count -ne 2 -or
+        $schema.anyOf[0].properties.body.minLength -ne 1 -or
+        $schema.anyOf[1].required -notcontains 'attachment_ids' -or
+        $schema.anyOf[1].properties.attachment_ids.minItems -ne 1) {
+        throw "$schemaName must allow an empty caption only with attachment IDs."
+    }
+}
 if ($null -eq $openApi.components.schemas.Channel.properties.mention_count -or
     $null -eq $openApi.components.schemas.DirectMessageListItem.properties.mention_count) {
     throw 'Navigation contract must define caller-local mention counts for TEXT and DM.'

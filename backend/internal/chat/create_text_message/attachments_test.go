@@ -24,6 +24,26 @@ func TestCreatePassesValidAttachmentIDsToStore(t *testing.T) {
 	}
 }
 
+func TestCreateAllowsAttachmentWithoutCaption(t *testing.T) {
+	store := &fakeStore{}
+	input := standardInput()
+	input.Body = ""
+	input.AttachmentIDs = []string{"e1b4cc4a-2f12-4c7e-8f18-9d6dba5c6610"}
+	if _, err := New(store).Create(context.Background(), input); err != nil || !store.called || store.request.Body != "" || len(store.request.AttachmentIDs) != 1 {
+		t.Fatalf("request = %#v, called = %v, error = %v", store.request, store.called, err)
+	}
+}
+
+func TestCreateRejectsEmptyCaptionWithoutAttachments(t *testing.T) {
+	store := &fakeStore{}
+	input := standardInput()
+	input.Body = ""
+	_, err := New(store).Create(context.Background(), input)
+	if !errors.Is(err, ErrInvalidInput) || store.called {
+		t.Fatalf("called = %v, error = %v", store.called, err)
+	}
+}
+
 func TestCreateRejectsInvalidAttachmentIDsBeforePersistence(t *testing.T) {
 	valid := "e1b4cc4a-2f12-4c7e-8f18-9d6dba5c6610"
 	for _, ids := range [][]string{{"invalid"}, {valid, valid}, elevenIDs(valid)} {

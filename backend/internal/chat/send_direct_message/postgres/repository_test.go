@@ -18,7 +18,7 @@ func TestRepositoryWritesOnlyForActiveParticipantPair(t *testing.T) {
 	if len(database.arguments) != 8 {
 		t.Fatalf("arguments=%#v", database.arguments)
 	}
-	for _, fragment := range []string{"$3::uuid IN (dm.participant_one_id, dm.participant_two_id)", "blocked_at IS NULL", "$6::uuid IS NULL OR EXISTS", "reply.direct_message_id = active_pair.id", "COALESCE(reply_to_id::text, '')", "ON CONFLICT (author_id, direct_message_id, client_message_id)", "direct_message_attachments", "FOR UPDATE OF attachment", "attachment.owner_id = $3", "attachment.direct_message_id = active_pair.id"} {
+	for _, fragment := range []string{"$3::uuid IN (dm.participant_one_id, dm.participant_two_id)", "blocked_at IS NULL", "$5 <> '' OR cardinality($7::uuid[]) > 0", "$6::uuid IS NULL OR EXISTS", "reply.direct_message_id = active_pair.id", "COALESCE(reply_to_id::text, '')", "ON CONFLICT (author_id, direct_message_id, client_message_id)", "direct_message_attachments", "FOR UPDATE OF attachment", "attachment.owner_id = $3", "attachment.direct_message_id = active_pair.id"} {
 		if !strings.Contains(database.statement, fragment) {
 			t.Fatalf("missing %q in %s", fragment, database.statement)
 		}

@@ -43,7 +43,7 @@ func TestRepositoryIdempotencyWithPostgresMigrations(t *testing.T) {
 			<-start
 			results[index], errors[index] = repository.Create(context, createtextmessage.Request{ID: uuid.NewString(), Input: createtextmessage.Input{
 				ActorID: fixture.authorID, ChannelID: fixture.channelID, ClientMessageID: concurrentClientID,
-				Body: "concurrent send", AttachmentIDs: []string{fixture.attachmentID},
+				Body: "", AttachmentIDs: []string{fixture.attachmentID},
 			}})
 		}(index)
 	}
@@ -56,6 +56,9 @@ func TestRepositoryIdempotencyWithPostgresMigrations(t *testing.T) {
 	}
 	if results[0].ID == "" || results[0].ID != results[1].ID {
 		t.Fatalf("concurrent sends returned different messages: %#v", results)
+	}
+	if results[0].Body != "" || results[1].Body != "" {
+		t.Fatalf("concurrent sends changed attachment-only body: %#v", results)
 	}
 	assertMessageCount(t, fixture, concurrentClientID, 1)
 	var links int

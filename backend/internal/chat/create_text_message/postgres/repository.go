@@ -43,6 +43,7 @@ WITH existing_message AS (
     SELECT $1, channel.id, $3, $4, $5, reply.id, $8::uuid[]
     FROM channel LEFT JOIN reply ON $6::uuid IS NOT NULL
     WHERE NOT EXISTS (SELECT 1 FROM existing_message)
+      AND ($5 <> '' OR cardinality($7::uuid[]) > 0)
       AND ($6::uuid IS NULL OR reply.id IS NOT NULL)
       AND (SELECT value FROM attachments_valid)
       AND (SELECT count(*) FROM valid_mentions) = cardinality($8::uuid[])

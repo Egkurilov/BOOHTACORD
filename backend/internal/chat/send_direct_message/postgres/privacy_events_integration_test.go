@@ -29,7 +29,7 @@ func TestDMCreateEditDeleteHintsReachOnlyCurrentPairInPostgres(t *testing.T) {
 	defer admin.Close()
 	resolver := recipients.New(recipients.NewPoolDatabase(f.pool))
 	sender := sendrealtime.New(send.New(New(NewPoolDatabase(f.pool))), resolver, hub)
-	message, err := sender.Send(ctx, send.Input{ActorID: f.actor, DirectMessageID: f.pair, ClientMessageID: uuid.NewString(), Body: "private fixture"})
+	message, err := sender.Send(ctx, send.Input{ActorID: f.actor, DirectMessageID: f.pair, ClientMessageID: uuid.NewString(), AttachmentIDs: []string{f.attachment}})
 	if err != nil {
 		t.Fatal(err)
 	}

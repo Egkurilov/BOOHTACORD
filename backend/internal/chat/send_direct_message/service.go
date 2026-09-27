@@ -42,7 +42,7 @@ type Service struct {
 func New(store Store) Service { return Service{store: store, newID: newDirectMessageMessageID} }
 
 func (service Service) Send(context context.Context, input Input) (Result, error) {
-	if !validUUID(input.ActorID) || !validUUID(input.DirectMessageID) || !validUUID(input.ClientMessageID) || (input.ReplyToID != "" && !validUUID(input.ReplyToID)) || !validAttachments(input.AttachmentIDs) || !validatementions.Valid(input.MentionUserIDs, input.ActorID) || !utf8.ValidString(input.Body) || utf8.RuneCountInString(input.Body) > 8000 || input.Body == "" || strings.ContainsRune(input.Body, '\x00') {
+	if !validUUID(input.ActorID) || !validUUID(input.DirectMessageID) || !validUUID(input.ClientMessageID) || (input.ReplyToID != "" && !validUUID(input.ReplyToID)) || !validAttachments(input.AttachmentIDs) || !validatementions.Valid(input.MentionUserIDs, input.ActorID) || !utf8.ValidString(input.Body) || utf8.RuneCountInString(input.Body) > 8000 || (input.Body == "" && len(input.AttachmentIDs) == 0) || strings.ContainsRune(input.Body, '\x00') {
 		return Result{}, ErrInvalidInput
 	}
 	id, err := service.newID()

@@ -29,6 +29,23 @@ func TestSendPersistsIdempotentDirectMessage(t *testing.T) {
 	}
 }
 
+func TestSendAcceptsAttachmentWithoutCaption(t *testing.T) {
+	attachmentID := "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+	store := &fakeStore{result: Result{ID: "44444444-4444-4444-8444-444444444444", Body: ""}}
+	result, err := New(store).Send(context.Background(), Input{ActorID: senderID, DirectMessageID: directMessageID, ClientMessageID: clientMessageID, AttachmentIDs: []string{attachmentID}})
+	if err != nil || !store.called || store.request.Body != "" || len(store.request.AttachmentIDs) != 1 || store.request.AttachmentIDs[0] != attachmentID || result.Body != "" {
+		t.Fatalf("request=%#v result=%#v error=%v", store.request, result, err)
+	}
+}
+
+func TestSendRejectsEmptyMessageWithoutAttachment(t *testing.T) {
+	store := &fakeStore{}
+	_, err := New(store).Send(context.Background(), Input{ActorID: senderID, DirectMessageID: directMessageID, ClientMessageID: clientMessageID})
+	if !errors.Is(err, ErrInvalidInput) || store.called {
+		t.Fatalf("error=%v called=%v", err, store.called)
+	}
+}
+
 func TestSendRejectsEmptyOrOversizedMessageBeforePersistence(t *testing.T) {
 	for _, body := range []string{"", strings.Repeat("я", 8001)} {
 		store := &fakeStore{}

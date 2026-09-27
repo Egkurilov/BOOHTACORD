@@ -1342,11 +1342,16 @@
       "DirectMessageMessageCreateRequest": {
         "type": "object",
         "additionalProperties": false,
+        "description": "An empty body is allowed only when attachment_ids contains at least one valid attachment. An empty body without attachments is rejected.",
         "required": ["client_message_id", "body"],
+        "anyOf": [
+          { "properties": { "body": { "minLength": 1 } } },
+          { "required": ["attachment_ids"], "properties": { "attachment_ids": { "minItems": 1 } } }
+        ],
         "properties": {
           "client_message_id": { "type": "string", "format": "uuid" },
           "reply_to_id": { "type": "string", "format": "uuid", "description": "Must identify a message in this same direct-message pair." },
-          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "body": { "type": "string", "minLength": 0, "maxLength": 8000 },
           "attachment_ids": { "type": "array", "maxItems": 10, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } },
           "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" }, "description": "Stable IDs; only the other DM participant may be mentioned. No self or broadcast mention." }
         }
@@ -1479,10 +1484,15 @@
       "TextMessageCreateRequest": {
         "type": "object",
         "additionalProperties": false,
+        "description": "An empty body is allowed only when attachment_ids contains at least one valid attachment. An empty body without attachments is rejected.",
         "required": ["client_message_id", "body"],
+        "anyOf": [
+          { "properties": { "body": { "minLength": 1 } } },
+          { "required": ["attachment_ids"], "properties": { "attachment_ids": { "minItems": 1 } } }
+        ],
         "properties": {
           "client_message_id": { "type": "string", "format": "uuid" },
-          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "body": { "type": "string", "minLength": 0, "maxLength": 8000 },
           "reply_to_id": { "type": "string", "format": "uuid" },
           "attachment_ids": { "type": "array", "maxItems": 10, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } },
           "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" }, "description": "Stable active recipient IDs; no self or broadcast mention." }
@@ -1592,7 +1602,7 @@
           "channel_id": { "type": "string", "format": "uuid" },
           "direct_message_id": { "type": "string", "format": "uuid" },
           "author_id": { "type": "string", "format": "uuid" },
-          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "body": { "type": "string", "minLength": 0, "maxLength": 8000 },
           "created_at": { "type": "string", "format": "date-time" },
           "edited_at": { "type": "string", "format": "date-time" },
           "revision": { "type": "integer", "minimum": 1 }

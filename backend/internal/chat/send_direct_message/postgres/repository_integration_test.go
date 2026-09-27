@@ -15,14 +15,14 @@ func TestDMAttachIsAtomicAndIdempotentWithPostgres(t *testing.T) {
 	f := newDMFixture(t)
 	ctx := context.Background()
 	repository := New(NewPoolDatabase(f.pool))
-	request := send.Request{ID: uuid.NewString(), Input: send.Input{ActorID: f.actor, DirectMessageID: f.pair, ClientMessageID: uuid.NewString(), Body: "attached", AttachmentIDs: []string{f.attachment}}}
-	first, err := repository.Send(ctx, request)
+	request := send.Request{ID: uuid.NewString(), Input: send.Input{ActorID: f.actor, DirectMessageID: f.pair, ClientMessageID: uuid.NewString(), AttachmentIDs: []string{f.attachment}}}
+	first, err := send.New(repository).Send(ctx, request.Input)
 	if err != nil {
 		t.Fatal(err)
 	}
 	request.ID, request.Body = uuid.NewString(), "changed on retry"
 	retry, err := repository.Send(ctx, request)
-	if err != nil || retry.ID != first.ID || retry.Body != first.Body {
+	if err != nil || retry.ID != first.ID || retry.Body != "" {
 		t.Fatalf("first=%#v retry=%#v error=%v", first, retry, err)
 	}
 	var links int
@@ -37,9 +37,14 @@ func TestDMAttachIsAtomicAndIdempotentWithPostgres(t *testing.T) {
 		t.Fatalf("links=%d state=%s", links, state)
 	}
 	history := list.New(listpostgres.New(listpostgres.NewPoolDatabase(f.pool)))
-	page, err := history.List(ctx, list.Input{ActorID: f.peer, DirectMessageID: f.pair, Limit: 10})
-	if err != nil || len(page.Messages) != 1 || len(page.Messages[0].Attachments) != 1 || page.Messages[0].Attachments[0].ID != f.attachment {
-		t.Fatalf("history=%#v error=%v", page, err)
+	for _, actor := range []string{f.actor, f.peer} {
+		page, err := history.List(ctx, list.Input{ActorID: actor, DirectMessageID: f.pair, Limit: 10})
+		if err != nil || len(page.Messages) != 1 || page.Messages[0].Body != "" || len(page.Messages[0].Attachments) != 1 || page.Messages[0].Attachments[0].ID != f.attachment {
+			t.Fatalf("history=%#v error=%v", page, err)
+		}
+	}
+	if _, err := history.List(ctx, list.Input{ActorID: f.outsider, DirectMessageID: f.pair, Limit: 10}); !errors.Is(err, list.ErrDirectMessageUnavailable) {
+		t.Fatalf("administrator history error=%v", err)
 	}
 	second := send.Request{ID: uuid.NewString(), Input: send.Input{ActorID: f.actor, DirectMessageID: f.pair, ClientMessageID: uuid.NewString(), Body: "reuse", AttachmentIDs: []string{f.attachment}}}
 	if _, err := repository.Send(ctx, second); !errors.Is(err, send.ErrDirectMessageUnavailable) {
@@ -49,7 +54,7 @@ func TestDMAttachIsAtomicAndIdempotentWithPostgres(t *testing.T) {
 	if _, err := f.pool.Exec(ctx, `UPDATE direct_message_messages SET body='', deleted_at=now() WHERE id=$1`, first.ID); err != nil {
 		t.Fatal(err)
 	}
-	page, err = history.List(ctx, list.Input{ActorID: f.peer, DirectMessageID: f.pair, Limit: 10})
+	page, err := history.List(ctx, list.Input{ActorID: f.peer, DirectMessageID: f.pair, Limit: 10})
 	if err != nil || len(page.Messages) != 1 || len(page.Messages[0].Attachments) != 0 {
 		t.Fatalf("deleted history=%#v error=%v", page, err)
 	}
@@ -64,7 +69,7 @@ func TestDMAttachRejectsForeignPairAndPartialSet(t *testing.T) {
 		t.Fatal(err)
 	}
 	clientID := uuid.NewString()
-	_, err = New(NewPoolDatabase(f.pool)).Send(ctx, send.Request{ID: uuid.NewString(), Input: send.Input{ActorID: f.actor, DirectMessageID: f.pair, ClientMessageID: clientID, Body: "partial", AttachmentIDs: []string{f.attachment, other}}})
+	_, err = New(NewPoolDatabase(f.pool)).Send(ctx, send.Request{ID: uuid.NewString(), Input: send.Input{ActorID: f.actor, DirectMessageID: f.pair, ClientMessageID: clientID, AttachmentIDs: []string{f.attachment, other}}})
 	if !errors.Is(err, send.ErrDirectMessageUnavailable) {
 		t.Fatalf("partial attach error=%v", err)
 	}
@@ -73,7 +78,15 @@ func TestDMAttachRejectsForeignPairAndPartialSet(t *testing.T) {
 	if err := f.pool.QueryRow(ctx, `SELECT state FROM attachments WHERE id=$1`, f.attachment).Scan(&state); err != nil || state != "UNATTACHED" {
 		t.Fatalf("state=%q error=%v", state, err)
 	}
-	_, err = New(NewPoolDatabase(f.pool)).Send(ctx, send.Request{ID: uuid.NewString(), Input: send.Input{ActorID: f.outsider, DirectMessageID: f.pair, ClientMessageID: uuid.NewString(), Body: "admin"}})
+	peerOwned := uuid.NewString()
+	if _, err := f.pool.Exec(ctx, `INSERT INTO attachments (id,owner_id,direct_message_id,original_name,storage_key,byte_size,state) VALUES ($1,$2,$3,'peer',$4,1,'UNATTACHED')`, peerOwned, f.peer, f.pair, uuid.NewString()); err != nil {
+		t.Fatal(err)
+	}
+	_, err = New(NewPoolDatabase(f.pool)).Send(ctx, send.Request{ID: uuid.NewString(), Input: send.Input{ActorID: f.actor, DirectMessageID: f.pair, ClientMessageID: uuid.NewString(), AttachmentIDs: []string{peerOwned}}})
+	if !errors.Is(err, send.ErrDirectMessageUnavailable) {
+		t.Fatalf("foreign owner attachment error=%v", err)
+	}
+	_, err = New(NewPoolDatabase(f.pool)).Send(ctx, send.Request{ID: uuid.NewString(), Input: send.Input{ActorID: f.outsider, DirectMessageID: f.pair, ClientMessageID: uuid.NewString(), AttachmentIDs: []string{f.attachment}}})
 	if !errors.Is(err, send.ErrDirectMessageUnavailable) {
 		t.Fatalf("outsider administrator error=%v", err)
 	}
@@ -81,7 +94,7 @@ func TestDMAttachRejectsForeignPairAndPartialSet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = New(NewPoolDatabase(f.pool)).Send(ctx, send.Request{ID: uuid.NewString(), Input: send.Input{ActorID: f.actor, DirectMessageID: f.pair, ClientMessageID: uuid.NewString(), Body: "blocked", AttachmentIDs: []string{f.attachment}}})
+	_, err = New(NewPoolDatabase(f.pool)).Send(ctx, send.Request{ID: uuid.NewString(), Input: send.Input{ActorID: f.actor, DirectMessageID: f.pair, ClientMessageID: uuid.NewString(), AttachmentIDs: []string{f.attachment}}})
 	if !errors.Is(err, send.ErrDirectMessageUnavailable) {
 		t.Fatalf("blocked pair error=%v", err)
 	}

@@ -37,12 +37,12 @@ func TestHandlerForwardsAttachmentIDs(t *testing.T) {
 		input = candidate
 		return senddirectmessage.Result{ID: "44444444-4444-4444-8444-444444444444"}, nil
 	}))
-	request := httptest.NewRequest(http.MethodPost, "/api/v1/direct-messages/pair/messages", strings.NewReader(`{"client_message_id":"33333333-3333-4333-8333-333333333333","body":"Привет","attachment_ids":["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]}`))
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/direct-messages/pair/messages", strings.NewReader(`{"client_message_id":"33333333-3333-4333-8333-333333333333","body":"","attachment_ids":["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]}`))
 	request.SetPathValue("directMessageID", "22222222-2222-4222-8222-222222222222")
 	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: "11111111-1111-4111-8111-111111111111"}))
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
-	if response.Code != 201 || len(input.AttachmentIDs) != 1 || input.AttachmentIDs[0] != "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" {
+	if response.Code != 201 || input.Body != "" || len(input.AttachmentIDs) != 1 || input.AttachmentIDs[0] != "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" {
 		t.Fatalf("status=%d input=%#v", response.Code, input)
 	}
 }

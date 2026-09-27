@@ -22,7 +22,7 @@ func TestDMAttachConcurrentIdempotencyWithPostgres(t *testing.T) {
 		go func(i int) {
 			defer wait.Done()
 			<-start
-			results[i], errors[i] = repository.Send(context.Background(), send.Request{ID: uuid.NewString(), Input: send.Input{ActorID: f.actor, DirectMessageID: f.pair, ClientMessageID: clientID, Body: "race", AttachmentIDs: []string{f.attachment}}})
+			results[i], errors[i] = repository.Send(context.Background(), send.Request{ID: uuid.NewString(), Input: send.Input{ActorID: f.actor, DirectMessageID: f.pair, ClientMessageID: clientID, AttachmentIDs: []string{f.attachment}}})
 		}(i)
 	}
 	close(start)
@@ -32,7 +32,7 @@ func TestDMAttachConcurrentIdempotencyWithPostgres(t *testing.T) {
 			t.Fatalf("send %d: %v", i, err)
 		}
 	}
-	if results[0].ID == "" || results[0].ID != results[1].ID {
+	if results[0].ID == "" || results[0].ID != results[1].ID || results[0].Body != "" || results[1].Body != "" {
 		t.Fatalf("results=%#v", results)
 	}
 	assertDMMessageCount(t, f, clientID, 1)

@@ -49,6 +49,7 @@ WITH active_pair AS (
     INSERT INTO direct_message_messages (id, direct_message_id, author_id, client_message_id, body, reply_to_id, mention_user_ids)
     SELECT $1::uuid, active_pair.id, $3::uuid, $4::uuid, $5, $6::uuid, $8::uuid[] FROM active_pair
     WHERE NOT EXISTS (SELECT 1 FROM existing_message)
+      AND ($5 <> '' OR cardinality($7::uuid[]) > 0)
       AND (SELECT value FROM attachments_valid)
       AND (SELECT count(*) FROM valid_mentions) = cardinality($8::uuid[])
       AND ($6::uuid IS NULL OR EXISTS (
