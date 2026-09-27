@@ -1182,20 +1182,27 @@ class AppState extends ChangeNotifier {
   Future<MessageAttachment> uploadAttachment(
     String fileName,
     Uint8List bytes, {
+    String? channelId,
     String? directMessageId,
+    void Function(int sent, int total)? onProgress,
   }) async {
+    if ((channelId == null) == (directMessageId == null)) {
+      throw const ApiFailure('Выберите беседу для вложения.');
+    }
     if (directMessageId != null) {
       return api.uploadDirectMessageAttachment(
         directMessageId,
         fileName,
         bytes,
+        onProgress: onProgress,
       );
     }
-    final channel = selectedChannel;
-    if (channel == null || channel.kind != ChannelKind.text) {
-      throw const ApiFailure('Выберите текстовый канал.');
-    }
-    return api.uploadChannelAttachment(channel.id, fileName, bytes);
+    return api.uploadChannelAttachment(
+      channelId!,
+      fileName,
+      bytes,
+      onProgress: onProgress,
+    );
   }
 
   Future<bool> editDirect(DirectChatMessage message, String body) async =>

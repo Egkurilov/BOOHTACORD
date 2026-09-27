@@ -232,6 +232,7 @@ void main() {
     'uploads a private attachment as multipart and validates metadata',
     () async {
       late http.Request request;
+      final progress = <(int, int)>[];
       final api = ApiClient(
         client: MockClient((value) async {
           request = value;
@@ -252,6 +253,7 @@ void main() {
         'text-1',
         'image.png',
         Uint8List.fromList([137, 80, 78]),
+        onProgress: (sent, total) => progress.add((sent, total)),
       );
 
       expect(request.method, 'POST');
@@ -264,6 +266,8 @@ void main() {
       expect(latin1.decode(request.bodyBytes), contains('image.png'));
       expect(uploaded.id, 'attachment-1');
       expect(uploaded.sizeBytes, 3);
+      expect(progress, isNotEmpty);
+      expect(progress.last.$1, progress.last.$2);
     },
   );
 

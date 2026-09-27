@@ -1,0 +1,41 @@
+{
+  "id": "qa13-attachment-retry-2026-09-27-001",
+  "kind": "integration-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "environment": {
+    "host_os": "macOS arm64",
+    "apk": "desktop/build/app/outputs/flutter-apk/app-release.apk"
+  },
+  "checks": [
+    {
+      "name": "Flutter static analysis and full tests",
+      "command": "flutter analyze && flutter test --reporter expanded",
+      "status": "PASS",
+      "observation": "No analyzer issues; 101 tests passed. Focused tests cover multipart byte progress, partial failure with retained successful IDs, individual retry, explicit TEXT/DM targeting, and conversation switches during file selection/read."
+    },
+    {
+      "name": "macOS debug and signed Android release builds",
+      "command": "flutter build macos --debug && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Both native builds completed; APK SHA-256: 1a36670f0e13efee54ba1a8d52bdf4f841ad80e6e3286d394833ee0db48bbb11."
+    },
+    {
+      "name": "Android APK signature",
+      "command": "apksigner verify --verbose --print-certs desktop/build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified with one signer; certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b matches the previously generated private upload JKS."
+    },
+    {
+      "name": "live partial-upload, 507 and server-side UNATTACHED cleanup",
+      "status": "NOT_RUN",
+      "reason": "No live upload or cleanup operation was performed; the repository has an operator cleanup command but no client DELETE contract for unattached uploads."
+    },
+    {
+      "name": "Windows and physical Android attachment UX",
+      "status": "NOT_RUN",
+      "reason": "No Windows runner or physical-device session was available in this check."
+    }
+  ],
+  "remaining": "QA-13 remains open for live backend, Windows and physical-device acceptance; backup of the Android upload key remains required."
+}

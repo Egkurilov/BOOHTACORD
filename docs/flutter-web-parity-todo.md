@@ -5,7 +5,7 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
 ## P1 — Admin и переписка
 
 - [ ] Проверить administrator REST ACL на работающем backend: роль, блокировка, topology, reset-link, voice kick и audit через два аккаунта.
-- [ ] Добавить per-file upload progress/retry и безопасное восстановление/очистку abandoned TEXT/DM uploads с сохранением уже успешно загруженных attachment IDs.
+- [ ] Проверить серверную очистку `UNATTACHED` вложений через 24 часа и восстановление после сбоя на реальном deployment; клиентского DELETE-контракта нет. Пройти live 507/partial-upload UX на TEXT/DM и устройствах.
 - [ ] Проверить edit/delete 409 и idempotent send retry с реальным backend и физическим устройством, включая удаление во время редактирования и смену диалога.
 - [ ] Проверить reply context, pagination/scroll anchoring и read cursors на границах страниц и при realtime updates.
 - [ ] Спроектировать native notifications для каждой платформы с permission denial, generic preview и deduplication до показа настройки пользователю.

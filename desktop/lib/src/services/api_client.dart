@@ -831,32 +831,37 @@ class ApiClient {
   Future<MessageAttachment> uploadChannelAttachment(
     String channelId,
     String fileName,
-    Uint8List bytes,
-  ) => _uploadMessageAttachment(
+    Uint8List bytes, {
+    void Function(int sent, int total)? onProgress,
+  }) => _uploadMessageAttachment(
     '/channels/$channelId/attachments',
     fileName,
     bytes,
+    onProgress: onProgress,
   );
 
   Future<MessageAttachment> uploadDirectMessageAttachment(
     String directMessageId,
     String fileName,
-    Uint8List bytes,
-  ) => _uploadMessageAttachment(
+    Uint8List bytes, {
+    void Function(int sent, int total)? onProgress,
+  }) => _uploadMessageAttachment(
     '/direct-messages/$directMessageId/attachments',
     fileName,
     bytes,
+    onProgress: onProgress,
   );
 
   Future<MessageAttachment> _uploadMessageAttachment(
     String path,
     String fileName,
-    Uint8List bytes,
-  ) async {
+    Uint8List bytes, {
+    void Function(int sent, int total)? onProgress,
+  }) async {
     if (fileName.isEmpty || bytes.length > 25000000) {
       throw const ApiFailure('Файл должен быть не больше 25 МБ.');
     }
-    final request = http.MultipartRequest('POST', _uri(path));
+    final request = _ProgressMultipartRequest('POST', _uri(path), onProgress);
     request.headers.addAll(await _headers());
     request.files.add(
       http.MultipartFile.fromBytes('file', bytes, filename: fileName),
@@ -1054,6 +1059,25 @@ class ApiClient {
         _uri('/voice/leases/$leaseId'),
         headers: await _headers(),
       ),
+    );
+  }
+}
+
+class _ProgressMultipartRequest extends http.MultipartRequest {
+  _ProgressMultipartRequest(super.method, super.url, this.onProgress);
+
+  final void Function(int sent, int total)? onProgress;
+
+  @override
+  http.ByteStream finalize() {
+    final total = contentLength;
+    var sent = 0;
+    return http.ByteStream(
+      super.finalize().map((chunk) {
+        sent += chunk.length;
+        onProgress?.call(sent, total);
+        return chunk;
+      }),
     );
   }
 }

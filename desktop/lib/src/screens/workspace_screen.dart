@@ -1538,6 +1538,7 @@ class _ConversationState extends State<_Conversation>
               ),
               MessageAttachmentComposer(
                 state: widget.state,
+                channelId: widget.channel.id,
                 attachments: _attachments,
                 onChanged: (attachments) => setState(() {
                   _attachments = attachments;

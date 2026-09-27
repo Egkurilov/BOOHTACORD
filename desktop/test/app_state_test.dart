@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
@@ -586,6 +587,27 @@ void main() {
       isTrue,
     );
   });
+
+  test('routes attachment bytes to the explicit conversation', () async {
+    final api = _FakeApi(topology);
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+    final bytes = Uint8List.fromList([1, 2]);
+    const other = GuildChannel(
+      id: 'channel-2',
+      name: 'другой',
+      kind: ChannelKind.text,
+      admissionClosed: false,
+    );
+    await state.selectChannel(other);
+
+    await state.uploadAttachment('text.txt', bytes, channelId: textChannel.id);
+    await state.uploadAttachment('dm.txt', bytes, directMessageId: 'dm-1');
+
+    expect(api.uploadedTextChannelId, textChannel.id);
+    expect(api.uploadedDirectMessageId, 'dm-1');
+  });
 }
 
 class _FakeApi extends ApiClient {
@@ -612,6 +634,8 @@ class _FakeApi extends ApiClient {
   int olderDirectRevision = 1;
   String? deletedTextMessageId;
   String? deletedDirectMessageId;
+  String? uploadedTextChannelId;
+  String? uploadedDirectMessageId;
   bool passwordResetCompleted = false;
   String? sentReplyToId;
   String? sentDirectReplyToId;
@@ -915,6 +939,36 @@ class _FakeApi extends ApiClient {
     String messageId,
   ) async {
     deletedDirectMessageId = messageId;
+  }
+
+  @override
+  Future<MessageAttachment> uploadChannelAttachment(
+    String channelId,
+    String fileName,
+    Uint8List bytes, {
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    uploadedTextChannelId = channelId;
+    return MessageAttachment(
+      id: 'text-file',
+      originalName: fileName,
+      sizeBytes: bytes.length,
+    );
+  }
+
+  @override
+  Future<MessageAttachment> uploadDirectMessageAttachment(
+    String directMessageId,
+    String fileName,
+    Uint8List bytes, {
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    uploadedDirectMessageId = directMessageId;
+    return MessageAttachment(
+      id: 'dm-file',
+      originalName: fileName,
+      sizeBytes: bytes.length,
+    );
   }
 
   @override

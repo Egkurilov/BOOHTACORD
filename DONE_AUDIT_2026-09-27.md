@@ -21,6 +21,7 @@
 - [x] Админ-топология: reorder/move, TEXT archive/VOICE close, revision/409 recovery, confirmations, API и widget-тесты — [evidence](evidence/flutter/qa13-admin-topology-widget-2026-09-26-001.json).
 - [x] Админ-аккаунты: pagination, role/block save, reset links/copy/expiry, voice kick, audit pagination/presentation и role-gated вкладки; локальные widget-тесты есть. Live REST ACL остаётся открытым.
 - [x] TEXT/DM: optimistic send/retry, reconciliation по `client_message_id`, edit 409 recovery, сохранение истории и tombstone после delete; live/device-проверка остаётся открытой.
+- [x] Flutter TEXT/DM вложения: прогресс multipart для каждого файла, повтор только неудачного файла с сохранением успешных ID, явная привязка к исходному каналу/DM и защита при переключении беседы — [локальное свидетельство](evidence/flutter/qa13-attachment-retry-2026-09-27-001.json). Live 507 и серверная очистка `UNATTACHED` остаются открытыми.
 - [x] Приватный Android upload keystore и подписанный release APK; сертификат проверен [release evidence](evidence/android/qa13-release-signing-2026-09-26-002.json). Внешнее хранение ключа и device-приёмка остаются открытыми.
 
 Из активных файлов убраны эти закрытые пункты и повторяющие их отчёты; точные проверки и ограничения остаются доступны по ссылкам на evidence и в истории Git.
