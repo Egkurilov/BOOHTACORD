@@ -18,6 +18,7 @@ import 'services/screen_share_quality.dart';
 import 'services/screen_share_metrics.dart';
 import 'services/voice_lease_revocation.dart';
 import 'services/voice_volume_preferences.dart';
+import 'services/voice_reconnect_policy.dart';
 
 enum AppPhase { loading, signedOut, ready }
 
@@ -2203,6 +2204,16 @@ class AppState extends ChangeNotifier {
   void _bindVoiceRoomEvents(Room room) {
     final listener = room.createListener();
     _voiceEvents = listener;
+    listener.on<RoomAttemptReconnectEvent>((event) {
+      if (!identical(_room, room) ||
+          voicePhase != VoicePhase.reconnecting ||
+          shouldAllowVoiceReconnectAttempt(event.attempt)) {
+        return;
+      }
+      error =
+          'Не удалось восстановить голосовое соединение после $voiceReconnectAttemptLimit попыток. Подключитесь ещё раз.';
+      unawaited(leaveVoice());
+    });
     listener.on<RoomReconnectingEvent>((_) {
       if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
       voicePhase = VoicePhase.reconnecting;

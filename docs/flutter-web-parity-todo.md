@@ -24,6 +24,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] На реальных peers проверить microphone/screen-audio gain, mute/deafen/PTT,
   смену устройств и ограниченный reconnect без параллельных loops/дублирующих
   voice lease на macOS, Windows и Android.
+- [x] Ограничить reconnect активной голосовой комнаты шестью попытками, как
+  в web policy, и завершать сессию с сообщением после исчерпания лимита —
+  [QA-33](../evidence/flutter/qa33-flutter-voice-reconnect-limit-2026-09-28-001.json).
+  Flutter LiveKit SDK пока задаёт собственные интервалы backoff; их точное
+  выравнивание с web и проверка на реальном peer остаются открытыми.
 - [ ] Сверить permission-denied/prejoin/dock copy, focus и screen-reader
   announcements на устройствах.
 - [x] Явно показывать после отказа/сбоя microphone capture, что пользователь

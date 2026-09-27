@@ -1,0 +1,39 @@
+{
+  "id": "qa33-flutter-voice-reconnect-limit-2026-09-28-001",
+  "kind": "flutter-voice-reconnect-attempt-limit",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Active Flutter voice-room reconnect now stops before attempt seven, matching the web BoundedVoiceReconnectPolicy limit of six retries. The voice lease and room are released, and the selected voice channel returns to prejoin with an actionable reconnect error.",
+  "checks": [
+    {
+      "name": "Web retry budget boundary",
+      "command": "flutter test test/voice_reconnect_policy_test.dart",
+      "status": "PASS",
+      "observation": "Attempts 1–6 are allowed and attempts 7 and later are rejected, matching web retryCount values 0–5."
+    },
+    {
+      "name": "Voice screen regression suite",
+      "command": "flutter test test/voice_reconnect_policy_test.dart test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "Reconnect limit policy and all workspace voice, roster, and navigation widget tests passed."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 145 Flutter tests passed."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    },
+    {
+      "name": "Native retry timing and real-peer recovery",
+      "status": "NOT_RUN",
+      "reason": "Requires physical macOS, Windows or Android clients and a connected peer; the LiveKit Flutter SDK currently owns a different backoff schedule from the web client."
+    }
+  ],
+  "remaining": "Match web reconnect delay/jitter timing if the native SDK permits it, then verify bounded recovery and lease cleanup against real peers on macOS, Windows and Android."
+}
