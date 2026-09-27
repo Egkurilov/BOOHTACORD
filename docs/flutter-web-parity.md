@@ -248,6 +248,10 @@ the implementation.
   than obscuring its lower edge; stream cards follow the web avatar/name/status/
   audio/selected-marker layout and expose track availability to assistive tech
   [QA-37](../evidence/flutter/qa37-voice-viewer-rail-web-parity-2026-09-28-001.json).
+  If a selected remote screen disappears, Flutter now retains a distinct ended
+  state and waits for an explicit selection or return-to-participants action;
+  it does not silently fall back to the local share
+  [QA-38](../evidence/flutter/qa38-voice-screen-ended-state-2026-09-28-001.json).
   Verify actual playback/gain and matched viewer screenshots on each target
   platform.
 - Keep platform-specific permission prompts native while preserving the same

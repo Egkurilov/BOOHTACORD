@@ -1,0 +1,45 @@
+{
+  "id": "qa38-voice-screen-ended-state-2026-09-28-001",
+  "kind": "voice-screen-ended-state",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "When the selected remote screen track disappears, Flutter now retains an explicit ended state instead of returning silently to the participant room or substituting the local share. Remaining streams can be selected manually; the user can explicitly return to participants.",
+  "checks": [
+    {
+      "name": "Ended-state action and stream selection",
+      "command": "flutter test test/voice_screen_ended_test.dart",
+      "status": "PASS",
+      "observation": "Verified ended copy, remaining stream choices, selecting a replacement stream, return-to-participants action and absence of widget exceptions."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 150 Flutter tests passed."
+    },
+    {
+      "name": "macOS native debug build",
+      "command": "flutter build macos --debug",
+      "status": "PASS",
+      "observation": "Built build/macos/Build/Products/Debug/BOOHTACORD.app."
+    },
+    {
+      "name": "Android debug build",
+      "command": "flutter build apk --debug",
+      "status": "PASS",
+      "observation": "Built build/app/outputs/flutter-apk/app-debug.apk. Gradle emitted the previously known Kotlin Gradle Plugin migration warning for flutter_background, flutter_webrtc and livekit_client."
+    },
+    {
+      "name": "Live remote screen termination and matched devices",
+      "status": "NOT_RUN",
+      "reason": "No remote LiveKit screen track, Android device or Windows runner was available for runtime acceptance."
+    }
+  ],
+  "remaining": "Terminate a selected remote screen on a live peer and verify the ended state, alternate selection and return action on macOS, Windows and Android."
+}

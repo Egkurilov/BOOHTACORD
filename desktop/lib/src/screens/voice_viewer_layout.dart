@@ -8,12 +8,14 @@ class VoiceViewerLayout extends StatelessWidget {
     required this.participants,
     this.audioControls,
     this.streamRail,
+    this.bottomActions,
   });
 
   final Widget stage;
   final Widget diagnostics;
   final Widget? audioControls;
   final Widget? streamRail;
+  final Widget? bottomActions;
   final Widget participants;
 
   @override
@@ -23,6 +25,7 @@ class VoiceViewerLayout extends StatelessWidget {
       diagnostics,
       ?audioControls,
       ?streamRail,
+      ?bottomActions,
       participants,
     ],
   );

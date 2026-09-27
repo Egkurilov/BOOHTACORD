@@ -23,6 +23,7 @@ import '../widgets/voice_connection_badge.dart';
 import '../widgets/voice_microphone_unavailable_notice.dart';
 import 'profile_screen.dart';
 import 'admin_screen.dart';
+import 'voice_screen_ended.dart';
 import 'voice_screen_selection_rail.dart';
 import 'voice_viewer_layout.dart';
 import 'screen_receiver_diagnostics.dart';
@@ -3625,6 +3626,58 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                             onScreenSelected: (identity) => setState(
                               () => _selectedScreenIdentity = identity,
                             ),
+                          )
+                        : _selectedScreenIdentity?.isNotEmpty == true
+                        ? VoiceScreenEndedView(
+                            choices: [
+                              if (localScreenTrack != null)
+                                VoiceScreenChoice(
+                                  identity: null,
+                                  label: 'Ваш экран',
+                                  selected: false,
+                                  isLocal: true,
+                                  avatarIdentity: state.user?.accountId,
+                                  avatarLabel:
+                                      state.profile?.displayName ?? 'Вы',
+                                ),
+                              for (final participant in screens)
+                                VoiceScreenChoice(
+                                  identity: participant.identity,
+                                  label: _participantName(participant),
+                                  selected: false,
+                                  accountId: _voiceParticipantAccountId(
+                                    participant,
+                                  ),
+                                  avatarLabel: _participantName(participant),
+                                  hasAudio: participant.audioTrackPublications
+                                      .any(
+                                        (publication) =>
+                                            publication.source ==
+                                                TrackSource.screenShareAudio &&
+                                            publication.track != null,
+                                      ),
+                                ),
+                            ],
+                            participants: _VoiceParticipantStrip(
+                              state: state,
+                              localName:
+                                  state.profile?.displayName
+                                          .trim()
+                                          .isNotEmpty ==
+                                      true
+                                  ? state.profile!.displayName
+                                  : 'Вы',
+                              localAvatarUrl: state.profile?.avatarUrl,
+                              localMuted: state.microphoneMuted,
+                              localSpeaking:
+                                  room?.localParticipant?.isSpeaking ?? false,
+                              participants: participants,
+                            ),
+                            onScreenSelected: (identity) => setState(
+                              () => _selectedScreenIdentity = identity,
+                            ),
+                            onReturnToParticipants: () =>
+                                setState(() => _selectedScreenIdentity = ''),
                           )
                         : _VoiceParticipantRoom(
                             state: state,
