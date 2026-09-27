@@ -12,7 +12,7 @@
 ## Реализованные BE/FE и локальные дизайн-результаты
 
 - [x] **BE-01…18:** конкурентная идемпотентность, приватные DM-события/файлы, topology/voice ACL и revocation, read cursors, поиск, realtime replay и voice roster — [подробности](DONE.md) и [BE-18](DONE_RECENT.md). Текущая backend-задача BE-19/20 относится к новому требованию отправлять вложение без текста.
-- [x] **FE-01…51:** чат, DM, вложения, голос, screen viewer, измерения и объяснение отсутствующего захвата в Android Chrome — [основной список](DONE.md), [media leaves](DONE_MEDIA.md), [последние leaves](DONE_RECENT.md). Защищённый PNG preview уже существует, но открытие карточки скачивает файл; полноценный просмотр в чате ещё не сделан.
+- [x] **FE-01…51:** чат, DM, вложения, голос, screen viewer, измерения и объяснение отсутствующего захвата в Android Chrome — [основной список](DONE.md), [media leaves](DONE_MEDIA.md), [последние leaves](DONE_RECENT.md). Защищённый PNG preview существует; Flutter image-viewer добавлен в отдельном QA-13 leaf ниже.
 - [x] **DES-01 и завершённые части DES-02…08:** матрица 40 компонентов, чат-хронология, responsive/admin/focus исправления и отдельные совпадения геометрии — [матрица](docs/design/GUILDCHAT_COMPONENT_MATRIX.md), [результаты](DONE.md) и [история](docs/design/GUILDCHAT_V1_STATUS.md). Общая visual/screen-reader приёмка остаётся открытой.
 - [x] **Части QA-03/05/07/08/12/13:** серверная DM/file ACL, controlled PNG preview и retry 507→201, два browser-зрителя с 14–15 FPS, восстановленный idle запас attachment volume, fake-Docker rollback и подписанный APK подтверждены [evidence](evidence/). Соответствующие физические, browser и нагрузочные критерии остаются в активном [списке](backlog/VERIFICATION_TODO.md).
 
@@ -22,6 +22,7 @@
 - [x] Админ-аккаунты: pagination, role/block save, reset links/copy/expiry, voice kick, audit pagination/presentation и role-gated вкладки; локальные widget-тесты есть. Live REST ACL остаётся открытым.
 - [x] TEXT/DM: optimistic send/retry, reconciliation по `client_message_id`, edit 409 recovery, сохранение истории и tombstone после delete; live/device-проверка остаётся открытой.
 - [x] Flutter TEXT/DM вложения: прогресс multipart для каждого файла, повтор только неудачного файла с сохранением успешных ID, явная привязка к исходному каналу/DM и защита при переключении беседы — [локальное свидетельство](evidence/flutter/qa13-attachment-retry-2026-09-27-001.json). Live 507 и серверная очистка `UNATTACHED` остаются открытыми.
+- [x] Flutter TEXT/DM: защищённый просмотр изображения в отдельном окне, авторизованный preview запрос, масштабирование, повтор временной ошибки и сообщение для удалённого/недоступного вложения; скачивание доступно отдельно — [локальное свидетельство](evidence/flutter/qa13-attachment-viewer-2026-09-27-001.json). Проверка ACL на deployment и визуальная приёмка остаются открытыми.
 - [x] Приватный Android upload keystore и подписанный release APK; сертификат проверен [release evidence](evidence/android/qa13-release-signing-2026-09-26-002.json). Внешнее хранение ключа и device-приёмка остаются открытыми.
 
 Из активных файлов убраны эти закрытые пункты и повторяющие их отчёты; точные проверки и ограничения остаются доступны по ссылкам на evidence и в истории Git.

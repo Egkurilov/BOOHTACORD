@@ -1,0 +1,41 @@
+{
+  "id": "qa13-attachment-viewer-2026-09-27-001",
+  "kind": "integration-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "environment": {
+    "host_os": "macOS arm64",
+    "apk": "desktop/build/app/outputs/flutter-apk/app-release.apk"
+  },
+  "checks": [
+    {
+      "name": "Flutter analyzer and full test suite",
+      "command": "flutter analyze && flutter test --reporter compact",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues; all 103 tests passed. New widget tests verify authenticated TEXT preview requests, unavailable/deleted state and retry after a transient failure."
+    },
+    {
+      "name": "macOS debug and signed Android release builds",
+      "command": "flutter build macos --debug && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Both builds completed. Android APK SHA-256: 1f0d7ac291bb0ca0f0cc90da203f3b8140059c98b0484a8bf3a937c0c23c64e2."
+    },
+    {
+      "name": "Android APK signature",
+      "command": "apksigner verify --verbose --print-certs desktop/build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified with one signer; certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b matches the private upload JKS."
+    },
+    {
+      "name": "Live TEXT/DM attachment ACL and viewer acceptance",
+      "status": "NOT_RUN",
+      "reason": "No authenticated live deployment or physical-device session was used for this local implementation check."
+    },
+    {
+      "name": "Windows build and viewer acceptance",
+      "status": "NOT_RUN",
+      "reason": "No Windows runner was available in this check."
+    }
+  ],
+  "remaining": "QA-13 remains open for live attachment ACL, visual comparison, Windows build and physical-device acceptance."
+}

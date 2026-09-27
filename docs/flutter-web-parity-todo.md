@@ -9,7 +9,7 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
 - [ ] Проверить edit/delete 409 и idempotent send retry с реальным backend и физическим устройством, включая удаление во время редактирования и смену диалога.
 - [ ] Проверить reply context, pagination/scroll anchoring и read cursors на границах страниц и при realtime updates.
 - [ ] Спроектировать native notifications для каждой платформы с permission denial, generic preview и deduplication до показа настройки пользователю.
-- [ ] Добавить нативный защищённый просмотр изображений TEXT/DM с отдельным скачиванием и состояниями loading/error/deleted; сравнить с DES-09 и проверить ACL на устройстве.
+- [ ] Сверить нативный защищённый просмотр изображений TEXT/DM с DES-09; проверить ACL, loading/error/deleted состояния, масштабирование и отдельное скачивание на deployment и устройствах.
 - [ ] Для Android и desktop Flutter определить и реализовать вставку изображения из clipboard/OS share в TEXT и DM с подготовкой, лимитами, retry и attachment-only отправкой после BE-19/20; сохранить обычную вставку текста.
 
 ## P1 — Voice и screen share
