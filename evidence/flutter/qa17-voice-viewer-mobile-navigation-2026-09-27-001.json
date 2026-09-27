@@ -1,0 +1,44 @@
+{
+  "id": "qa17-voice-viewer-mobile-navigation-2026-09-27-001",
+  "kind": "integration-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "environment": {
+    "host_os": "macOS arm64",
+    "flutter_project": "desktop",
+    "android_device": "not connected",
+    "windows_runner": "not available"
+  },
+  "checks": [
+    {
+      "name": "Flutter unit/widget suite",
+      "command": "flutter test --reporter compact",
+      "status": "PASS",
+      "observation": "All 111 tests passed, including compact audio settings returning on Android-style back navigation, wider desktop text-search rail, screen diagnostics state, and fullscreen exit controls."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS debug and signed Android release builds",
+      "command": "flutter build macos --debug && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Both builds completed. Android APK SHA-256: 4afd0eac175face358014b385404779ced64b8b24569097adf69e7d2e1e1d689."
+    },
+    {
+      "name": "Android release APK signature",
+      "command": "apksigner verify --verbose --print-certs desktop/build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified with one signer; certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b matches the upload JKS."
+    },
+    {
+      "name": "Live receiver statistics and cross-platform acceptance",
+      "status": "NOT_RUN",
+      "reason": "No connected Android device or real remote screen-share peer was available. The receiver polling no longer stops solely because LiveKit marks the video track inactive; UI now distinguishes unavailable stats from a pending sample. Populated native counters and units still require a live call. Windows build and matched screenshots also remain unverified."
+    }
+  ],
+  "remaining": "Validate populated receiver metrics, fullscreen/share permissions and OS-level stop during a real two-peer session on macOS, Windows and Android; compare viewer/search screenshots on devices and build on a Windows runner."
+}

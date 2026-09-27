@@ -71,7 +71,11 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -400));
     await tester.pumpAndSettle();
 
-    expect(find.text('Нет свежих данных'), findsNWidgets(2));
+    expect(
+      find.text('Метрики приёмника не применимы к предпросмотру'),
+      findsOneWidget,
+    );
+    expect(find.text('Нет свежих данных'), findsOneWidget);
     expect(find.text('Предпросмотр без звука'), findsOneWidget);
     expect(find.text('Нет данных от приёмника'), findsOneWidget);
   });

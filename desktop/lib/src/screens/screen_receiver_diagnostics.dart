@@ -142,6 +142,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
   ScreenReceiverMetrics? _metrics;
   DateTime? _sampledAt;
   bool _sampling = false;
+  String _sampleStatus = 'Ожидание статистики приёмника';
 
   @override
   void initState() {
@@ -168,6 +169,11 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
     _metrics = null;
     _sampledAt = null;
     final track = widget.track;
+    _sampleStatus = widget.isLocal
+        ? 'Метрики приёмника не применимы к предпросмотру'
+        : track == null
+        ? 'Видеоприёмник недоступен'
+        : 'Ожидание статистики приёмника';
     if (track == null) return;
     unawaited(_sample(track));
     _timer = Timer.periodic(
@@ -177,11 +183,15 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
   }
 
   Future<void> _sample(RemoteVideoTrack track) async {
-    if (_sampling || !track.isActive) return;
+    if (_sampling) return;
     _sampling = true;
     try {
       final stats = await track.getReceiverStats();
-      if (!mounted || !identical(track, widget.track) || stats == null) return;
+      if (!mounted || !identical(track, widget.track)) return;
+      if (stats == null) {
+        setState(() => _sampleStatus = 'Приёмник не вернул статистику');
+        return;
+      }
       final next = ScreenReceiverSnapshot(
         timestampMs: stats.timestamp.toDouble(),
         bytesReceived: stats.bytesReceived?.toDouble(),
@@ -199,9 +209,12 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
         _current = next;
         _metrics = metrics;
         _sampledAt = DateTime.now();
+        _sampleStatus = 'Измерено в ${_formatTime(_sampledAt!)}';
       });
     } catch (_) {
-      // Native WebRTC may not expose receiver stats on every platform/build.
+      if (mounted && identical(track, widget.track)) {
+        setState(() => _sampleStatus = 'Не удалось прочитать статистику');
+      }
     } finally {
       _sampling = false;
     }
@@ -211,13 +224,10 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
   Widget build(BuildContext context) {
     final sampledAt = _sampledAt;
     return ExpansionTile(
-      tilePadding: EdgeInsets.zero,
+      tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+      childrenPadding: const EdgeInsets.symmetric(horizontal: 12),
       title: const Text('Статистика'),
-      subtitle: Text(
-        sampledAt == null
-            ? 'Нет свежих данных'
-            : 'Измерено в ${_formatTime(sampledAt)}',
-      ),
+      subtitle: Text(_sampleStatus),
       children: [
         SizedBox(
           height: 240,
@@ -225,16 +235,19 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
             padding: const EdgeInsets.only(bottom: 10),
             children: [
               const _DiagnosticRow(
-                label: 'Целевой профиль',
+                label: 'Профиль источника',
                 value: 'Не передан источником',
               ),
               _DiagnosticRow(
-                label: 'Кадр от источника',
+                label: 'Сейчас у зрителя',
                 value: _formatResolution(_current),
               ),
               _DiagnosticRow(
                 label: 'Декодировано',
-                value: _formatMetric(_metrics?.decodedFps, 'FPS'),
+                value: _formatMetric(
+                  _metrics?.decodedFps ?? _current?.framesPerSecond,
+                  'FPS',
+                ),
               ),
               _DiagnosticRow(
                 label: 'Получено',

@@ -21,6 +21,7 @@ import 'profile_screen.dart';
 import 'admin_screen.dart';
 import 'voice_screen_selection_rail.dart';
 import 'screen_receiver_diagnostics.dart';
+import 'screen_fullscreen_overlay.dart';
 
 class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({super.key, required this.state});
@@ -375,9 +376,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                           if (searchPanelActive && !searchPanelModal) ...[
                             const VerticalDivider(width: 1),
                             SizedBox(
-                              width: wide
-                                  ? GcLayout.asideWide
-                                  : GcLayout.asideMedium,
+                              width: wide ? 400 : 360,
                               child: _WorkspaceSearchPanel(state: widget.state),
                             ),
                           ],
@@ -1095,33 +1094,53 @@ class _MainSurface extends StatelessWidget {
   final bool capturingPttKey;
   @override
   Widget build(BuildContext context) {
+    final compact =
+        MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint;
+    void leaveWorkspacePanel() {
+      state.toggleWorkspacePanel(WorkspacePanel.none);
+    }
+
     if (state.workspacePanel == WorkspacePanel.searchContext) {
       return _SearchMessageContext(state: state);
     }
     if (state.workspacePanel == WorkspacePanel.profile) {
-      return Column(
-        children: [
-          _Header(
-            icon: Icons.person_outline,
-            title: 'Профиль',
-            subtitle: 'Настройки вашей учётной записи',
-            onToggleNavigation: onToggleNavigation,
-            onOpenMembers: onOpenMembers,
-          ),
-          Expanded(child: ProfileScreen(state: state)),
-        ],
+      return PopScope<Object?>(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) leaveWorkspacePanel();
+        },
+        child: Column(
+          children: [
+            _Header(
+              icon: Icons.person_outline,
+              title: 'Профиль',
+              subtitle: 'Настройки вашей учётной записи',
+              onToggleNavigation: onToggleNavigation,
+              onOpenMembers: onOpenMembers,
+              onBack: compact ? leaveWorkspacePanel : null,
+            ),
+            Expanded(child: ProfileScreen(state: state)),
+          ],
+        ),
       );
     }
     if (state.workspacePanel == WorkspacePanel.audio) {
       return _AudioSettingsScreen(
         state: state,
+        onBack: leaveWorkspacePanel,
         onCapturePttKey: onCapturePttKey,
         capturingPttKey: capturingPttKey,
       );
     }
     if (state.workspacePanel == WorkspacePanel.admin &&
         state.user?.isAdmin == true) {
-      return AdminScreen(state: state);
+      return PopScope<Object?>(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) leaveWorkspacePanel();
+        },
+        child: AdminScreen(state: state),
+      );
     }
     final direct = state.selectedDirectMessage;
     if (direct != null) {
@@ -1186,6 +1205,7 @@ class _Header extends StatelessWidget {
     required this.subtitle,
     this.onToggleNavigation,
     this.onOpenMembers,
+    this.onBack,
     this.trailing,
   });
   final IconData icon;
@@ -1193,6 +1213,7 @@ class _Header extends StatelessWidget {
   final String subtitle;
   final VoidCallback? onToggleNavigation;
   final VoidCallback? onOpenMembers;
+  final VoidCallback? onBack;
   final Widget? trailing;
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -1205,6 +1226,12 @@ class _Header extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Row(
           children: [
+            if (onBack != null)
+              IconButton(
+                tooltip: 'Назад',
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back),
+              ),
             if (onToggleNavigation != null) ...[
               IconButton(
                 tooltip: 'Открыть навигацию',
@@ -3390,6 +3417,12 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                                       level,
                                     ),
                                   ),
+                            onFullscreen: () => unawaited(
+                              _openScreenFullscreen(
+                                track: viewerTrack,
+                                publisherName: selectedName,
+                              ),
+                            ),
                             onClose: () =>
                                 setState(() => _selectedScreenIdentity = ''),
                             onScreenSelected: (identity) => setState(
@@ -3429,6 +3462,39 @@ class _VoiceRoomState extends State<_VoiceRoom> {
       if (!mounted || sourceId == null) return;
     }
     await state.startScreenShare(sourceId: sourceId);
+  }
+
+  Future<void> _openScreenFullscreen({
+    required VideoTrack track,
+    required String publisherName,
+  }) async {
+    ScreenFullscreenPresentation? presentation;
+    try {
+      presentation = await ScreenFullscreenPresentation.enter();
+      if (!mounted) return;
+      await showGeneralDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        barrierLabel: 'Закрыть полноэкранный режим',
+        barrierColor: Colors.black,
+        transitionDuration: const Duration(milliseconds: 160),
+        pageBuilder: (dialogContext, _, _) => ScreenFullscreenOverlay(
+          publisherName: publisherName,
+          video: VideoTrackRenderer(track, renderMode: VideoRenderMode.auto),
+          onClose: () => Navigator.of(dialogContext).pop(),
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Не удалось развернуть демонстрацию на весь экран.'),
+          ),
+        );
+      }
+    } finally {
+      await presentation?.restore();
+    }
   }
 }
 
@@ -3744,6 +3810,7 @@ class _VoiceScreenViewer extends StatelessWidget {
     required this.screenAudioVolume,
     required this.deafened,
     required this.onScreenAudioVolumeChanged,
+    required this.onFullscreen,
     required this.onClose,
     required this.onScreenSelected,
   });
@@ -3764,6 +3831,7 @@ class _VoiceScreenViewer extends StatelessWidget {
   final int? screenAudioVolume;
   final bool deafened;
   final ValueChanged<int>? onScreenAudioVolumeChanged;
+  final VoidCallback onFullscreen;
   final VoidCallback onClose;
   final ValueChanged<String?> onScreenSelected;
 
@@ -3794,6 +3862,15 @@ class _VoiceScreenViewer extends StatelessWidget {
                 left: 28,
                 top: 28,
                 child: _ViewerLabel(name: publisherName),
+              ),
+              Positioned(
+                right: 76,
+                top: 28,
+                child: IconButton.filledTonal(
+                  tooltip: 'Развернуть демонстрацию на весь экран',
+                  onPressed: onFullscreen,
+                  icon: const Icon(Icons.fullscreen_outlined),
+                ),
               ),
               Positioned(
                 right: 28,
@@ -3832,10 +3909,13 @@ class _VoiceScreenViewer extends StatelessWidget {
           ),
         ),
       ),
-      ScreenReceiverDiagnostics(
-        track: receiverTrack,
-        isLocal: showingLocalScreen,
-        hasAudio: screenAudioAvailable,
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: ScreenReceiverDiagnostics(
+          track: receiverTrack,
+          isLocal: showingLocalScreen,
+          hasAudio: screenAudioAvailable,
+        ),
       ),
       if (showingLocalScreen)
         const Padding(
@@ -4260,158 +4340,171 @@ class _StatusDot extends StatelessWidget {
 class _AudioSettingsScreen extends StatelessWidget {
   const _AudioSettingsScreen({
     required this.state,
+    required this.onBack,
     required this.onCapturePttKey,
     required this.capturingPttKey,
   });
   final AppState state;
+  final VoidCallback onBack;
   final VoidCallback? onCapturePttKey;
   final bool capturingPttKey;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      _Header(
-        icon: Icons.tune,
-        title: 'Настройки аудио',
-        subtitle: 'Устройства и обработка микрофона',
-        trailing: IconButton(
-          tooltip: 'Обновить список устройств',
-          onPressed: state.audioDevicesLoading
-              ? null
-              : state.refreshAudioDevices,
-          icon: state.audioDevicesLoading
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.refresh),
-        ),
-      ),
-      Expanded(
-        child: AnimatedBuilder(
-          animation: state,
-          builder: (context, _) => ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              _AudioDeviceDropdown(
-                label: 'Микрофон',
-                icon: Icons.mic_none,
-                devices: state.audioInputDevices,
-                selectedId: state.selectedAudioInputId,
-                emptyLabel: 'Микрофоны не найдены',
-                onChanged: state.selectAudioInput,
-              ),
-              const SizedBox(height: 16),
-              _AudioDeviceDropdown(
-                label: 'Динамик',
-                icon: Icons.volume_up_outlined,
-                devices: state.audioOutputDevices,
-                selectedId: state.selectedAudioOutputId,
-                emptyLabel: 'Динамики не найдены',
-                onChanged: state.selectAudioOutput,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Активация микрофона',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<AudioActivationMode>(
-                initialValue: state.audioActivationMode,
-                decoration: const InputDecoration(
-                  labelText: 'Режим',
-                  border: OutlineInputBorder(),
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: AudioActivationMode.vad,
-                    child: Text('Голосовая активность'),
+  Widget build(BuildContext context) {
+    final compact =
+        MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint;
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) onBack();
+      },
+      child: Column(
+        children: [
+          _Header(
+            icon: Icons.tune,
+            title: 'Настройки аудио',
+            subtitle: 'Устройства и обработка микрофона',
+            onBack: compact ? onBack : null,
+            trailing: IconButton(
+              tooltip: 'Обновить список устройств',
+              onPressed: state.audioDevicesLoading
+                  ? null
+                  : state.refreshAudioDevices,
+              icon: state.audioDevicesLoading
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh),
+            ),
+          ),
+          Expanded(
+            child: AnimatedBuilder(
+              animation: state,
+              builder: (context, _) => ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  _AudioDeviceDropdown(
+                    label: 'Микрофон',
+                    icon: Icons.mic_none,
+                    devices: state.audioInputDevices,
+                    selectedId: state.selectedAudioInputId,
+                    emptyLabel: 'Микрофоны не найдены',
+                    onChanged: state.selectAudioInput,
                   ),
-                  DropdownMenuItem(
-                    value: AudioActivationMode.ptt,
-                    child: Text('Push-to-talk'),
+                  const SizedBox(height: 16),
+                  _AudioDeviceDropdown(
+                    label: 'Динамик',
+                    icon: Icons.volume_up_outlined,
+                    devices: state.audioOutputDevices,
+                    selectedId: state.selectedAudioOutputId,
+                    emptyLabel: 'Динамики не найдены',
+                    onChanged: state.selectAudioOutput,
                   ),
-                ],
-                onChanged: (mode) {
-                  if (mode != null) {
-                    unawaited(state.setAudioActivationMode(mode));
-                  }
-                },
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: onCapturePttKey,
-                icon: Icon(
-                  capturingPttKey
-                      ? Icons.keyboard
-                      : Icons.keyboard_alt_outlined,
-                ),
-                label: Text(
-                  capturingPttKey
-                      ? 'Нажмите клавишу… · Esc — отмена'
-                      : state.pushToTalkKeyLabel == null
-                      ? 'Назначить PTT-клавишу'
-                      : 'Клавиша PTT · ${state.pushToTalkKeyLabel}',
-                ),
-              ),
-              if (state.audioActivationMode == AudioActivationMode.ptt)
-                const Padding(
-                  padding: EdgeInsets.only(top: 4),
-                  child: Text(
-                    'Удерживайте назначенную клавишу, чтобы говорить. При потере фокуса микрофон выключается.',
+                  const SizedBox(height: 24),
+                  Text(
+                    'Активация микрофона',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<AudioActivationMode>(
+                    initialValue: state.audioActivationMode,
+                    decoration: const InputDecoration(
+                      labelText: 'Режим',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: AudioActivationMode.vad,
+                        child: Text('Голосовая активность'),
+                      ),
+                      DropdownMenuItem(
+                        value: AudioActivationMode.ptt,
+                        child: Text('Push-to-talk'),
+                      ),
+                    ],
+                    onChanged: (mode) {
+                      if (mode != null) {
+                        unawaited(state.setAudioActivationMode(mode));
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: onCapturePttKey,
+                    icon: Icon(
+                      capturingPttKey
+                          ? Icons.keyboard
+                          : Icons.keyboard_alt_outlined,
+                    ),
+                    label: Text(
+                      capturingPttKey
+                          ? 'Нажмите клавишу… · Esc — отмена'
+                          : state.pushToTalkKeyLabel == null
+                          ? 'Назначить PTT-клавишу'
+                          : 'Клавиша PTT · ${state.pushToTalkKeyLabel}',
+                    ),
+                  ),
+                  if (state.audioActivationMode == AudioActivationMode.ptt)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Удерживайте назначенную клавишу, чтобы говорить. При потере фокуса микрофон выключается.',
+                        style: TextStyle(color: GcColors.muted, fontSize: 12),
+                      ),
+                    ),
+                  if (state.audioActivationError != null) ...[
+                    const SizedBox(height: 8),
+                    _ErrorBanner(message: state.audioActivationError!),
+                  ],
+                  const SizedBox(height: 24),
+                  Text(
+                    'Обработка микрофона',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Параметры передаются LiveKit. Нативный SDK не сообщает, '
+                    'какие эффекты фактически применены устройством.',
                     style: TextStyle(color: GcColors.muted, fontSize: 12),
                   ),
-                ),
-              if (state.audioActivationError != null) ...[
-                const SizedBox(height: 8),
-                _ErrorBanner(message: state.audioActivationError!),
-              ],
-              const SizedBox(height: 24),
-              Text(
-                'Обработка микрофона',
-                style: Theme.of(context).textTheme.titleMedium,
+                  const SizedBox(height: 8),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Автоматическая регулировка усиления'),
+                    value: state.audioProcessing.autoGainControl,
+                    onChanged: (value) => state.setAudioProcessing(
+                      state.audioProcessing.copyWith(autoGainControl: value),
+                    ),
+                  ),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Подавление эха'),
+                    value: state.audioProcessing.echoCancellation,
+                    onChanged: (value) => state.setAudioProcessing(
+                      state.audioProcessing.copyWith(echoCancellation: value),
+                    ),
+                  ),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Подавление шума'),
+                    value: state.audioProcessing.noiseSuppression,
+                    onChanged: (value) => state.setAudioProcessing(
+                      state.audioProcessing.copyWith(noiseSuppression: value),
+                    ),
+                  ),
+                  if (state.audioSettingsError != null) ...[
+                    const SizedBox(height: 12),
+                    _ErrorBanner(message: state.audioSettingsError!),
+                  ],
+                ],
               ),
-              const SizedBox(height: 6),
-              const Text(
-                'Параметры передаются LiveKit. Нативный SDK не сообщает, '
-                'какие эффекты фактически применены устройством.',
-                style: TextStyle(color: GcColors.muted, fontSize: 12),
-              ),
-              const SizedBox(height: 8),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Автоматическая регулировка усиления'),
-                value: state.audioProcessing.autoGainControl,
-                onChanged: (value) => state.setAudioProcessing(
-                  state.audioProcessing.copyWith(autoGainControl: value),
-                ),
-              ),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Подавление эха'),
-                value: state.audioProcessing.echoCancellation,
-                onChanged: (value) => state.setAudioProcessing(
-                  state.audioProcessing.copyWith(echoCancellation: value),
-                ),
-              ),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Подавление шума'),
-                value: state.audioProcessing.noiseSuppression,
-                onChanged: (value) => state.setAudioProcessing(
-                  state.audioProcessing.copyWith(noiseSuppression: value),
-                ),
-              ),
-              if (state.audioSettingsError != null) ...[
-                const SizedBox(height: 12),
-                _ErrorBanner(message: state.audioSettingsError!),
-              ],
-            ],
+            ),
           ),
-        ),
+        ],
       ),
-    ],
-  );
+    );
+  }
 }
 
 class _AudioDeviceDropdown extends StatelessWidget {

@@ -536,6 +536,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final compact =
+        MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint;
     final categories =
         widget.state.topology?.categories ?? const <ChannelCategory>[];
     final selectedId = categories.any((item) => item.id == _categoryId)
@@ -571,6 +573,13 @@ class _AdminScreenState extends State<AdminScreen> {
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 18),
             child: Row(
               children: [
+                if (compact)
+                  IconButton(
+                    tooltip: 'Назад',
+                    onPressed: () =>
+                        widget.state.toggleWorkspacePanel(WorkspacePanel.none),
+                    icon: const Icon(Icons.arrow_back),
+                  ),
                 const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

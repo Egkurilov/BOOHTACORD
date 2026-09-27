@@ -26,9 +26,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   voice lease на macOS, Windows и Android.
 - [ ] Сверить permission-denied/prejoin/dock copy, focus и screen-reader
   announcements на устройствах.
-- [ ] Добавить fullscreen viewer; проверить реальные receiver metrics, audio
-  states и переключение rail/viewer на физических устройствах; matched web
-  screenshot сравнение остаётся открытым.
+- [ ] На физических устройствах проверить receiver metrics/audio states,
+  fullscreen/share permissions и переключение rail/viewer; локальный fullscreen
+  и исправления диагностики, отступов и мобильного возврата — [QA-17](../evidence/flutter/qa17-voice-viewer-mobile-navigation-2026-09-27-001.json).
+- [ ] Сравнить search в текстовом и голосовом контекстах на matched screenshots;
+  узкая desktop-панель расширена с 240/248 до 360/400 px, но визуальная
+  device-приёмка остаётся открытой.
 - [ ] Реализовать FE-52: ограниченные анонимные Android sender encoded FPS/bitrate/RTT
   и сопоставить их с двумя receiver snapshots в QA-07.
 

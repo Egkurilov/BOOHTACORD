@@ -48,6 +48,11 @@ void main() {
     await tester.pump();
     expect(state.audioActivationMode, AudioActivationMode.ptt);
 
+    expect(find.byTooltip('Назад'), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(state.workspacePanel, WorkspacePanel.none);
+
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
   });
@@ -795,6 +800,12 @@ void main() {
     expect(state.workspacePanel, WorkspacePanel.search);
     expect(find.text('Область поиска'), findsOneWidget);
     expect(find.text('Последнее сообщение'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is SizedBox && widget.width == 400,
+      ),
+      findsOneWidget,
+    );
     expect(find.bySemanticsLabel('Закрыть панель'), findsNothing);
     expect(
       tester
