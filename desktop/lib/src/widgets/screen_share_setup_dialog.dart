@@ -371,94 +371,133 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
     ),
   );
 
-  Widget _buildQualityPicker() => Padding(
-    padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildQualityPicker() {
+    final compact = MediaQuery.sizeOf(context).width < 640;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.tune, size: 17, color: GcColors.textSecondary),
+              SizedBox(width: 8),
+              Text(
+                'Качество трансляции',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _buildQualityOption(
+            label: 'Разрешение',
+            selectorKey: const ValueKey('resolution-segments'),
+            compact: compact,
+            selected: _resolution,
+            values: ScreenShareQuality.resolutions,
+            labelFor: (value) =>
+                Text('${value}p', maxLines: 1, softWrap: false),
+            onSelectionChanged: (values) => setState(() {
+              _resolution = values.first;
+              _quality = ScreenShareQuality(
+                resolution: _resolution,
+                frameRate: _frameRate,
+              );
+            }),
+          ),
+          const SizedBox(height: 12),
+          _buildQualityOption(
+            label: 'Частота кадров',
+            selectorKey: const ValueKey('frame-rate-segments'),
+            compact: compact,
+            selected: _frameRate,
+            values: ScreenShareQuality.frameRates,
+            labelFor: (value) =>
+                Text('$value FPS', maxLines: 1, softWrap: false),
+            onSelectionChanged: (values) => setState(() {
+              _frameRate = values.first;
+              _quality = ScreenShareQuality(
+                resolution: _resolution,
+                frameRate: _frameRate,
+              );
+            }),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: EdgeInsets.only(left: compact ? 0 : 104),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: Icon(
+                    Icons.network_check,
+                    size: 15,
+                    color: GcColors.muted,
+                  ),
+                ),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    'Ориентировочно ${_quality.estimatedBandwidth}; более высокое качество увеличивает нагрузку на сеть и устройство.',
+                    style: const TextStyle(color: GcColors.muted, fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQualityOption({
+    required String label,
+    required Key selectorKey,
+    required bool compact,
+    required int selected,
+    required List<int> values,
+    required Widget Function(int value) labelFor,
+    required ValueChanged<Set<int>> onSelectionChanged,
+  }) {
+    final selector = SizedBox(
+      key: selectorKey,
+      width: double.infinity,
+      child: SegmentedButton<int>(
+        showSelectedIcon: true,
+        style: ButtonStyle(
+          textStyle: WidgetStatePropertyAll(
+            TextStyle(fontSize: compact ? 13 : 14),
+          ),
+          padding: WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: compact ? 6 : 12, vertical: 12),
+          ),
+        ),
+        segments: [
+          for (final value in values)
+            ButtonSegment(value: value, label: labelFor(value)),
+        ],
+        selected: {selected},
+        onSelectionChanged: onSelectionChanged,
+      ),
+    );
+    final description = Text(
+      label,
+      style: const TextStyle(color: GcColors.textSecondary, fontSize: 13),
+    );
+    if (compact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [description, const SizedBox(height: 6), selector],
+      );
+    }
+    return Row(
       children: [
-        const Row(
-          children: [
-            Icon(Icons.tune, size: 17, color: GcColors.textSecondary),
-            SizedBox(width: 8),
-            Text(
-              'Качество трансляции',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            const SizedBox(
-              width: 104,
-              child: Text(
-                'Разрешение',
-                style: TextStyle(color: GcColors.textSecondary, fontSize: 13),
-              ),
-            ),
-            Expanded(
-              child: SegmentedButton<int>(
-                segments: [
-                  for (final value in ScreenShareQuality.resolutions)
-                    ButtonSegment(value: value, label: Text('${value}p')),
-                ],
-                selected: {_resolution},
-                onSelectionChanged: (values) => setState(() {
-                  _resolution = values.first;
-                  _quality = ScreenShareQuality(
-                    resolution: _resolution,
-                    frameRate: _frameRate,
-                  );
-                }),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const SizedBox(
-              width: 104,
-              child: Text(
-                'Частота кадров',
-                style: TextStyle(color: GcColors.textSecondary, fontSize: 13),
-              ),
-            ),
-            Expanded(
-              child: SegmentedButton<int>(
-                segments: [
-                  for (final value in ScreenShareQuality.frameRates)
-                    ButtonSegment(value: value, label: Text('$value FPS')),
-                ],
-                selected: {_frameRate},
-                onSelectionChanged: (values) => setState(() {
-                  _frameRate = values.first;
-                  _quality = ScreenShareQuality(
-                    resolution: _resolution,
-                    frameRate: _frameRate,
-                  );
-                }),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const SizedBox(width: 104),
-            Icon(Icons.network_check, size: 15, color: GcColors.muted),
-            const SizedBox(width: 7),
-            Expanded(
-              child: Text(
-                'Ориентировочно ${_quality.estimatedBandwidth}; более высокое качество увеличивает нагрузку на сеть и устройство.',
-                style: const TextStyle(color: GcColors.muted, fontSize: 11),
-              ),
-            ),
-          ],
-        ),
+        SizedBox(width: 104, child: description),
+        Expanded(child: selector),
       ],
-    ),
-  );
+    );
+  }
 
   Widget _buildFooter(bool canStart) => Container(
     padding: const EdgeInsets.fromLTRB(24, 14, 24, 18),

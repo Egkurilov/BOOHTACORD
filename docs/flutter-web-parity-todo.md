@@ -56,7 +56,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Добавить выбор screen-share resolution `720/1080/1440p` и `15/30/60 FPS`,
   собственный оформленный picker для экранов/окон с preview, обновлением списка
   и явными error/empty/retry состояниями; Android получает мобильный вариант
-  настройки качества — [QA-24](../evidence/flutter/qa24-screen-share-quality-picker-2026-09-27-001.json).
+  настройки качества; исправить перенос значений качества в узком Android
+  портрете — [QA-24](../evidence/flutter/qa24-screen-share-quality-picker-2026-09-27-001.json),
+  [QA-31](../evidence/flutter/qa31-android-share-quality-compact-layout-2026-09-27-001.json).
 - [ ] На macOS и Windows принять системный список экранов/окон и thumbnail
   обновления; измерить качество/битрейт на реальных устройствах и сетях для
   выбранных комбинаций.

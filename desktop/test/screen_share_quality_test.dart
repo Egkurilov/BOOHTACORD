@@ -87,4 +87,56 @@ void main() {
     expect(result?.quality.resolution, 1440);
     expect(result?.quality.frameRate, 60);
   });
+
+  testWidgets('keeps quality options on one line in Android portrait', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(576, 1280);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => ScreenShareSetupDialog.show(
+                context,
+                initialQuality: ScreenShareQuality.balanced,
+                allowSourceSelection: false,
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    for (final label in [
+      '720p',
+      '1080p',
+      '1440p',
+      '15 FPS',
+      '30 FPS',
+      '60 FPS',
+    ]) {
+      final text = tester.widget<Text>(find.text(label));
+      expect(text.maxLines, 1);
+      expect(text.softWrap, isFalse);
+    }
+    final resolutionLabel = tester.getRect(find.text('Разрешение'));
+    final resolutionSegments = tester.getRect(
+      find.byKey(const ValueKey('resolution-segments')),
+    );
+    final frameRateLabel = tester.getRect(find.text('Частота кадров'));
+    final frameRateSegments = tester.getRect(
+      find.byKey(const ValueKey('frame-rate-segments')),
+    );
+    expect(resolutionSegments.width, greaterThan(440));
+    expect(resolutionLabel.bottom, lessThan(resolutionSegments.top));
+    expect(frameRateLabel.bottom, lessThan(frameRateSegments.top));
+    expect(tester.takeException(), isNull);
+  });
 }
