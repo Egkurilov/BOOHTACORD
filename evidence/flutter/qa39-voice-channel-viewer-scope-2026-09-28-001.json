@@ -6,10 +6,10 @@
   "implementation": "The voice-room widget now has a channel-specific key. Transient screen selection state is discarded when navigating to another voice channel, preventing a previous room's remote identity or ended state from appearing in the new room.",
   "checks": [
     {
-      "name": "Viewer state resets across voice channel selection",
-      "command": "flutter test test/workspace_screen_test.dart --plain-name \"resets viewer state when selecting another voice channel\"",
+      "name": "Viewer state resets through the app root on voice channel selection",
+      "command": "flutter test test/workspace_screen_test.dart --plain-name \"resets viewer state through app rebuild on voice channel change\"",
       "status": "PASS",
-      "observation": "Switched from voice-1 to voice-2 and verified the room widget State instance is recreated."
+      "observation": "Mounted BoohtacordApp, switched from voice-1 to voice-2 through AppState.selectChannel, and verified the room widget State instance is recreated by the app's AnimatedBuilder rebuild without replacing the app root."
     },
     {
       "name": "Flutter analysis",

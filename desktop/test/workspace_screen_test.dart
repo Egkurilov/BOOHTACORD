@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/workspace_screen.dart';
@@ -183,38 +184,38 @@ void main() {
     state.dispose();
   });
 
-  testWidgets('resets viewer state when selecting another voice channel', (
-    tester,
-  ) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(1200, 900);
-    addTearDown(tester.view.reset);
-    final state = AppState(
-      _PortraitApi(extraVoiceChannels: [_PortraitApi.secondVoiceChannel]),
-    );
-    await state.initialize();
-    state.selectedChannel = _PortraitApi.voiceChannel;
-    state.voiceChannel = _PortraitApi.voiceChannel;
-    state.voicePhase = VoicePhase.connected;
-    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'resets viewer state through app rebuild on voice channel change',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1200, 900);
+      addTearDown(tester.view.reset);
+      final state = AppState(
+        _PortraitApi(extraVoiceChannels: [_PortraitApi.secondVoiceChannel]),
+      );
+      await state.initialize();
+      state.selectedChannel = _PortraitApi.voiceChannel;
+      state.voiceChannel = _PortraitApi.voiceChannel;
+      state.voicePhase = VoicePhase.connected;
+      await tester.pumpWidget(BoohtacordApp(state: state));
+      await tester.pumpAndSettle();
 
-    final firstRoom = tester.state(
-      find.byKey(const ValueKey('voice-room:voice-1')),
-    );
-    await state.selectChannel(_PortraitApi.secondVoiceChannel);
-    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
-    await tester.pumpAndSettle();
+      final firstRoom = tester.state(
+        find.byKey(const ValueKey('voice-room:voice-1')),
+      );
+      await state.selectChannel(_PortraitApi.secondVoiceChannel);
+      await tester.pumpAndSettle();
 
-    final secondRoom = tester.state(
-      find.byKey(const ValueKey('voice-room:voice-2')),
-    );
-    expect(identical(firstRoom, secondRoom), isFalse);
-    expect(tester.takeException(), isNull);
+      final secondRoom = tester.state(
+        find.byKey(const ValueKey('voice-room:voice-2')),
+      );
+      expect(identical(firstRoom, secondRoom), isFalse);
+      expect(tester.takeException(), isNull);
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    state.dispose();
-  });
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+    },
+  );
 
   testWidgets('shows channel administration only for administrators', (
     tester,
