@@ -26,8 +26,8 @@ peer/platform-проверки и выравниваем viewer с вебом.
   voice lease на macOS, Windows и Android.
 - [ ] Сверить permission-denied/prejoin/dock copy, focus и screen-reader
   announcements на устройствах.
-- [ ] Довести stream rail, fullscreen, quality/diagnostics и audio states
-  зрителя до web reference и проверить на устройстве.
+- [ ] Довести fullscreen, quality/diagnostics и audio states зрителя до web
+  reference и проверить переключение rail/viewer на физических устройствах.
 - [ ] Реализовать FE-52: ограниченные анонимные Android sender encoded FPS/bitrate/RTT
   и сопоставить их с двумя receiver snapshots в QA-07.
 

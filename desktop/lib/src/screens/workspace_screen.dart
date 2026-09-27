@@ -19,6 +19,7 @@ import '../widgets/formatted_message_body.dart';
 import '../widgets/voice_connection_badge.dart';
 import 'profile_screen.dart';
 import 'admin_screen.dart';
+import 'voice_screen_selection_rail.dart';
 
 class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({super.key, required this.state});
@@ -3355,6 +3356,8 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                             publisherName: selectedName!,
                             screens: screens,
                             selectedIdentity: _selectedScreenIdentity,
+                            localScreenAvailable: localScreenTrack != null,
+                            showingLocalScreen: showingLocalScreen,
                             localName:
                                 state.profile?.displayName.trim().isNotEmpty ==
                                     true
@@ -3726,6 +3729,8 @@ class _VoiceScreenViewer extends StatelessWidget {
     required this.publisherName,
     required this.screens,
     required this.selectedIdentity,
+    required this.localScreenAvailable,
+    required this.showingLocalScreen,
     required this.localName,
     required this.localMuted,
     required this.localSpeaking,
@@ -3743,6 +3748,8 @@ class _VoiceScreenViewer extends StatelessWidget {
   final String publisherName;
   final List<RemoteParticipant> screens;
   final String? selectedIdentity;
+  final bool localScreenAvailable;
+  final bool showingLocalScreen;
   final String localName;
   final bool localMuted;
   final bool localSpeaking;
@@ -3752,7 +3759,7 @@ class _VoiceScreenViewer extends StatelessWidget {
   final bool deafened;
   final ValueChanged<int>? onScreenAudioVolumeChanged;
   final VoidCallback onClose;
-  final ValueChanged<String> onScreenSelected;
+  final ValueChanged<String?> onScreenSelected;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -3791,46 +3798,46 @@ class _VoiceScreenViewer extends StatelessWidget {
                   icon: const Icon(Icons.close_fullscreen_outlined),
                 ),
               ),
-              if (screens.length > 1)
+              if (screens.isNotEmpty || localScreenAvailable)
                 Positioned(
                   left: 16,
                   right: 16,
                   bottom: 14,
-                  child: SizedBox(
-                    height: 54,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: screens.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        final participant = screens[index];
-                        final selected =
-                            participant.identity == selectedIdentity;
-                        return OutlinedButton.icon(
-                          onPressed: () =>
-                              onScreenSelected(participant.identity),
-                          icon: const Icon(Icons.monitor_outlined, size: 17),
-                          label: Text(_participantName(participant)),
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: selected
-                                ? const Color(0x335C5FE8)
-                                : GcColors.surface,
-                            side: BorderSide(
-                              color: selected
-                                  ? GcColors.accentText
-                                  : GcColors.border,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                  child: VoiceScreenSelectionRail(
+                    choices: [
+                      if (localScreenAvailable)
+                        VoiceScreenChoice(
+                          identity: null,
+                          label: 'Ваш экран',
+                          selected: showingLocalScreen,
+                          isLocal: true,
+                        ),
+                      for (final participant in screens)
+                        VoiceScreenChoice(
+                          identity: participant.identity,
+                          label: _participantName(participant),
+                          selected: participant.identity == selectedIdentity,
+                        ),
+                    ],
+                    onSelected: onScreenSelected,
                   ),
                 ),
             ],
           ),
         ),
       ),
-      if (!screenAudioAvailable)
+      if (showingLocalScreen)
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Предпросмотр собственного экрана без звука.',
+              style: TextStyle(color: GcColors.muted, fontSize: 12),
+            ),
+          ),
+        )
+      else if (!screenAudioAvailable)
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: Align(

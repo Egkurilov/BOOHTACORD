@@ -1,0 +1,36 @@
+{
+  "id": "qa15-screen-share-rail-2026-09-27-001",
+  "kind": "integration-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "environment": {
+    "host_os": "macOS arm64",
+    "apk": "desktop/build/app/outputs/flutter-apk/app-release.apk"
+  },
+  "checks": [
+    {
+      "name": "Flutter analyzer and full test suite",
+      "command": "flutter test --reporter compact && flutter analyze",
+      "status": "PASS",
+      "observation": "All 106 tests passed and analyzer reported no issues. The screen-share selection rail widget test verifies local/remote choices, selection switching, accessible selected/button semantics, and local-preview tooltip."
+    },
+    {
+      "name": "macOS debug and signed Android release builds",
+      "command": "flutter build macos --debug && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Both builds completed. Android APK SHA-256: 021dd5615be56a3f22c3526175db1363c4ed38a6110b9b3287aa0dae2ce2043d."
+    },
+    {
+      "name": "Android APK signature",
+      "command": "apksigner verify --verbose --print-certs desktop/build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified with one signer; certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b matches the upload JKS."
+    },
+    {
+      "name": "Real-peer screen share on physical devices and Windows build",
+      "status": "NOT_RUN",
+      "reason": "This stage had no physical peer/device setup or Windows runner. Widget semantics and local builds do not prove actual capture, track selection, permissions, OS-level stop, or receiver rendering."
+    }
+  ],
+  "remaining": "Run a two-peer screen-share session on macOS, Windows, and Android; validate permissions, switching between local and remote streams, OS-level stop, audio status/gain, fullscreen, quality diagnostics, and matched web screenshots."
+}
