@@ -4,10 +4,14 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
 
 ## P0 — Запуск приложения
 
-- [ ] Разобраться, почему свежий macOS debug-клиент после запуска остаётся на
-  «Подключаемся к гильдии…», хотя веб-сервер и анонимный endpoint сессии
-  отвечают; проверить startup до экрана логина —
+- [x] Разобраться, почему свежий macOS debug-клиент после запуска остаётся на
+  «Подключаемся к гильдии…»: legacy Keychain блокировал
+  `SecItemCopyMatching`; переключено на Data Protection Keychain, debug startup
+  доходит до логина —
   [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
+- [ ] На подписанной macOS release-сборке проверить запуск и сохранение сессии
+  через перезапуск; подтвердить ожидаемый повторный вход для cookies, ранее
+  сохранённых в legacy Keychain — [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
 
 ## P0 — Голосовые каналы и демонстрация экрана
 

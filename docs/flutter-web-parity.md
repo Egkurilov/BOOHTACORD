@@ -262,17 +262,20 @@ the implementation.
 
 ### 8. Parity gate and release
 
-- A fresh macOS debug launch currently stays on the initial
-  “Подключаемся к гильдии…” screen; the server and anonymous session endpoint
-  respond to direct HTTP checks, but the client process had no external socket
-  during the observation. Investigate app startup before treating macOS runtime
-  smoke as passed [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
+- A fresh macOS debug launch exposed a legacy Keychain stall: the native sample
+  showed `flutter_secure_storage` blocked in `SecItemCopyMatching` while
+  `SecurityServer` decrypted a legacy item. macOS now uses the Data Protection
+  Keychain; debug startup reaches the signed-out login screen. Verify signed
+  release persistence and the one-time re-login behavior for legacy cookies
+  [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
 - Compare reference and Flutter screenshots at the same viewport and data;
   track geometry/color/type deviations per screen.
 - Exercise every control and non-happy state against the same backend contracts.
 - Check keyboard/focus, accessibility labels, narrow layouts and window resize
   behavior on macOS, Windows and Android.
 - Current local verification now covers macOS debug and Android debug builds.
+  macOS release build also succeeds after the Keychain change, but release
+  runtime/session persistence still needs a signed install and restart check.
   Windows still requires a native Windows build runner; do not infer it from
   analyzer/tests or generated plugin registration.
 - Android debug build succeeds but reports that `flutter_webrtc` and

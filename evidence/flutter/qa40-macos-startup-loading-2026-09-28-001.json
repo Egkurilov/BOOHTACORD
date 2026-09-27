@@ -1,38 +1,52 @@
 {
   "id": "qa40-macos-startup-loading-2026-09-28-001",
   "kind": "macos-runtime-startup-smoke",
-  "status": "FAIL",
+  "status": "PASS",
+  "implementation": "macOS now uses the Data Protection Keychain. On the original legacy Keychain path, flutter_secure_storage blocked inside SecItemCopyMatching while Security.framework waited in CSSM_DecryptDataFinal. With the Data Protection Keychain, the same read completed and startup reached the signed-out flow.",
   "executed_at": "2026-09-28",
   "checks": [
     {
-      "name": "macOS debug build and launch",
+      "name": "Original macOS startup failure reproduced",
+      "command": "flutter run -d macos",
+      "status": "FAIL",
+      "observation": "The debug app stayed on ‘Подключаемся к гильдии…’. Temporary startup markers localized the wait to FlutterSecureStorage.read."
+    },
+    {
+      "name": "Native Keychain call root cause",
+      "command": "sample <BOOHTACORD_PID> 2",
+      "status": "PASS",
+      "observation": "The flutter_secure_storage_service serial queue was blocked in SecItemCopyMatching → Security::KeychainCore::ItemImpl::getContent → CSSM_DecryptDataFinal → SecurityServer mach_msg. The login keychain was reported unlocked with no timeout."
+    },
+    {
+      "name": "Data Protection Keychain control run",
       "command": "flutter run -d macos",
       "status": "PASS",
-      "observation": "Flutter built and launched the debug app."
+      "observation": "With usesDataProtectionKeychain enabled, preference and Keychain reads completed, /auth/session returned HTTP 200, and the app displayed the signed-out login screen. This control run used SharedPreferencesAsync to isolate the Keychain setting."
     },
     {
-      "name": "startup reaches signed-out or ready state",
-      "status": "FAIL",
-      "observation": "After more than 30 seconds, the window still displayed ‘Подключаемся к гильдии…’."
-    },
-    {
-      "name": "web server reachability",
-      "command": "curl -I --max-time 8 https://v.bootybay.ru/",
+      "name": "Final Keychain setting with existing SharedPreferences API",
+      "command": "flutter run -d macos",
       "status": "PASS",
-      "observation": "The web server returned HTTP 200."
+      "observation": "Restoring the existing SharedPreferences API still completed initialization; the Data Protection Keychain read completed, /auth/session returned HTTP 200, and currentSession finished. The Mac was locked before a second visual capture."
     },
     {
-      "name": "anonymous session endpoint reachability",
-      "command": "curl -sS --max-time 8 -D - -o /dev/null -H 'Origin: https://v.bootybay.ru' https://v.bootybay.ru/api/v1/auth/session",
+      "name": "Full Flutter tests",
+      "command": "flutter test",
       "status": "PASS",
-      "observation": "The endpoint returned HTTP 200 without a session cookie."
+      "observation": "All 151 tests passed."
     },
     {
-      "name": "client external socket during loading",
-      "command": "lsof -nP -a -p 81067 -i",
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
       "status": "PASS",
-      "observation": "At observation time only the local Flutter VM service socket was present; this is a point-in-time observation, not a root-cause diagnosis."
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "macOS release build",
+      "command": "flutter build macos --release",
+      "status": "PASS",
+      "observation": "Release app built successfully (82.8 MB). Xcode emitted existing file_selector_macos API deprecation and linker warnings."
     }
   ],
-  "remaining": "Find why AppState.initialize does not leave its loading phase in the macOS runtime, then repeat startup smoke through the login screen."
+  "remaining": "Run the signed macOS release build and verify Keychain write/read persistence across app restart; confirm the expected re-login behavior for sessions previously stored in the legacy Keychain."
 }

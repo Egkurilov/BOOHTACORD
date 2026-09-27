@@ -35,9 +35,10 @@ class ApiClient {
   static const _cookieKey = 'boohtacord_session_cookie';
   final http.Client _client;
   void Function()? onUnauthorized;
+  // Legacy Keychain reads can block SecItemCopyMatching on current macOS.
   final FlutterSecureStorage _storage = Platform.isMacOS
       ? const FlutterSecureStorage(
-          mOptions: MacOsOptions(usesDataProtectionKeychain: false),
+          mOptions: MacOsOptions(usesDataProtectionKeychain: true),
         )
       : const FlutterSecureStorage();
   String baseUrl = 'https://v.bootybay.ru/api/v1';
