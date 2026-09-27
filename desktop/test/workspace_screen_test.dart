@@ -183,6 +183,39 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('resets viewer state when selecting another voice channel', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      _PortraitApi(extraVoiceChannels: [_PortraitApi.secondVoiceChannel]),
+    );
+    await state.initialize();
+    state.selectedChannel = _PortraitApi.voiceChannel;
+    state.voiceChannel = _PortraitApi.voiceChannel;
+    state.voicePhase = VoicePhase.connected;
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    final firstRoom = tester.state(
+      find.byKey(const ValueKey('voice-room:voice-1')),
+    );
+    await state.selectChannel(_PortraitApi.secondVoiceChannel);
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    final secondRoom = tester.state(
+      find.byKey(const ValueKey('voice-room:voice-2')),
+    );
+    expect(identical(firstRoom, secondRoom), isFalse);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('shows channel administration only for administrators', (
     tester,
   ) async {
@@ -1139,6 +1172,7 @@ class _PortraitApi extends ApiClient {
     this.historyCount = 1,
     this.includeDirectMessage = false,
     this.voiceRosters = const [],
+    this.extraVoiceChannels = const [],
     this.membersFailures = 0,
     this.memberProfileFailures = 0,
     this.membersResult = const [
@@ -1162,6 +1196,7 @@ class _PortraitApi extends ApiClient {
   final int historyCount;
   final bool includeDirectMessage;
   final List<VoiceRoomRoster> voiceRosters;
+  final List<GuildChannel> extraVoiceChannels;
   int membersFailures;
   int memberProfileFailures;
   final List<GuildMember> membersResult;
@@ -1206,6 +1241,14 @@ class _PortraitApi extends ApiClient {
     unreadCount: 9,
     mentionCount: 3,
   );
+  static const secondVoiceChannel = GuildChannel(
+    id: 'voice-2',
+    name: 'комната 2',
+    kind: ChannelKind.voice,
+    admissionClosed: false,
+    unreadCount: 0,
+    mentionCount: 0,
+  );
 
   @override
   bool get realtimeEnabled => false;
@@ -1229,13 +1272,13 @@ class _PortraitApi extends ApiClient {
   );
 
   @override
-  Future<ChannelTopology> topology() async => const ChannelTopology(
+  Future<ChannelTopology> topology() async => ChannelTopology(
     revision: 1,
     categories: [
       ChannelCategory(
         id: 'category-1',
         name: 'Текстовые каналы',
-        channels: [channel, voiceChannel],
+        channels: [channel, voiceChannel, ...extraVoiceChannels],
       ),
     ],
   );

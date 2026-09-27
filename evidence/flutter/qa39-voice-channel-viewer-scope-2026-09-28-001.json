@@ -1,0 +1,33 @@
+{
+  "id": "qa39-voice-channel-viewer-scope-2026-09-28-001",
+  "kind": "voice-channel-viewer-selection-scope",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "The voice-room widget now has a channel-specific key. Transient screen selection state is discarded when navigating to another voice channel, preventing a previous room's remote identity or ended state from appearing in the new room.",
+  "checks": [
+    {
+      "name": "Viewer state resets across voice channel selection",
+      "command": "flutter test test/workspace_screen_test.dart --plain-name \"resets viewer state when selecting another voice channel\"",
+      "status": "PASS",
+      "observation": "Switched from voice-1 to voice-2 and verified the room widget State instance is recreated."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 151 Flutter tests passed."
+    },
+    {
+      "name": "Live multi-room screen selection",
+      "status": "NOT_RUN",
+      "reason": "No live remote screen tracks or peer devices were available to verify room switching at runtime."
+    }
+  ],
+  "remaining": "Verify switching rooms while a remote stream is selected on macOS, Windows and Android with a live peer."
+}

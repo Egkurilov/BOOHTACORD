@@ -252,6 +252,9 @@ the implementation.
   state and waits for an explicit selection or return-to-participants action;
   it does not silently fall back to the local share
   [QA-38](../evidence/flutter/qa38-voice-screen-ended-state-2026-09-28-001.json).
+  Viewer selection state is keyed to its voice-channel ID, preventing a stream
+  identity or ended-state from leaking into another room
+  [QA-39](../evidence/flutter/qa39-voice-channel-viewer-scope-2026-09-28-001.json).
   Verify actual playback/gain and matched viewer screenshots on each target
   platform.
 - Keep platform-specific permission prompts native while preserving the same

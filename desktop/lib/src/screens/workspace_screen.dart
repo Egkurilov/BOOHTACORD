@@ -1322,6 +1322,7 @@ class _MainSurface extends StatelessWidget {
               onOpenMembers: onOpenMembers,
             )
           : _VoiceRoom(
+              key: ValueKey('voice-room:${channel.id}'),
               state: state,
               channel: channel,
               onToggleNavigation: onToggleNavigation,
@@ -3447,6 +3448,7 @@ class _DirectConversationState extends State<_DirectConversation> {
 
 class _VoiceRoom extends StatefulWidget {
   const _VoiceRoom({
+    super.key,
     required this.state,
     required this.channel,
     this.onToggleNavigation,
