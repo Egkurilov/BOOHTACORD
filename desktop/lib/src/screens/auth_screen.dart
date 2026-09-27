@@ -248,8 +248,19 @@ class _AuthScreenState extends State<AuthScreen> {
                             ],
                             decoration: _authFieldDecoration(),
                             onFieldSubmitted: (_) => _submit(),
-                            validator: (value) =>
-                                (value?.length ?? 0) >= 12 ? null : 'Пароль должен содержать не менее 12 символов',
+                            validator: (value) {
+                              final password = value ?? '';
+                              if (password.isEmpty) return 'Введите пароль.';
+                              if (!_register) return null;
+                              final length = password.runes.length;
+                              if (length < 12) {
+                                return 'Пароль должен содержать не менее 12 символов';
+                              }
+                              if (length > 128) {
+                                return 'Пароль должен содержать не более 128 символов';
+                              }
+                              return null;
+                            },
                           ),
                           if (_register) ...[
                             const SizedBox(height: 8),
