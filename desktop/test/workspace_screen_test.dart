@@ -160,6 +160,22 @@ void main() {
     expect(find.text('Мика'), findsNWidgets(2));
     expect(find.byTooltip('Показывает экран'), findsNWidgets(2));
     expect(find.text('Идёт трансляция'), findsOneWidget);
+    expect(
+      tester
+          .widgetList<CircleAvatar>(find.byType(CircleAvatar))
+          .map((avatar) => avatar.radius),
+      everyElement(12),
+    );
+    expect(
+      tester
+          .widgetList<CircleAvatar>(find.byType(CircleAvatar))
+          .map((avatar) => avatar.backgroundColor),
+      everyElement(GcColors.avatarBlue),
+    );
+    expect(
+      tester.widgetList<Icon>(find.byIcon(Icons.desktop_windows_outlined)),
+      hasLength(2),
+    );
     expect(state.voicePhase, VoicePhase.idle);
     expect(state.voiceChannel, isNull);
 

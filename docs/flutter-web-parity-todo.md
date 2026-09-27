@@ -104,7 +104,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] Сохранить matched web/Flutter screenshots 1440×900, 1280×800, 1024×768 и Android portrait для auth, chat, DM, search, members, voice, screen share, profile, audio и admin; зафиксировать отличия по экранам.
 - [ ] Завершить focus trap/return и keyboard reachability для admin/profile/dialogs; responsive modal search и drawer traps, начальный/возвращаемый фокус реализованы. Открыты device screen-reader приёмка и matched screenshots.
 - [ ] Проверить responsive breakpoints, resize, accessibility labels и узкие layouts на macOS, Windows и Android.
-- [ ] Сравнить navigation voice roster order, spacing, avatars и indicators с web client.
+- [ ] Сравнить active/prejoin voice roster на matched screenshots при desktop
+  breakpoints и Android portrait; проверить реальный список активных участников.
+- [x] Выровнять prejoin и navigation roster по вебовым размерам аватаров/текста,
+  отступам и интервалам; синхронизировать FNV avatar palette и screen-share badge —
+  [QA-36](../evidence/flutter/qa36-voice-roster-web-geometry-2026-09-28-001.json).
 - [x] Выровнять приоритет статусов участников и speaking-индикаторы voice roster,
   strip и cards с `VoiceParticipantStatus.vue`; целевые тесты, analyzer и полный
   Flutter suite прошли — [QA-35](../evidence/flutter/qa35-voice-participant-status-web-parity-2026-09-28-001.json).

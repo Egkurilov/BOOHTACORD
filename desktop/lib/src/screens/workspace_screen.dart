@@ -12,6 +12,7 @@ import '../models.dart';
 import '../theme.dart';
 import '../services/message_presentation.dart';
 import '../services/api_client.dart';
+import '../services/voice_avatar_palette.dart';
 import '../services/voice_participant_presentation.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/message_attachment_composer.dart';
@@ -932,7 +933,7 @@ class _VoiceNavigationMembers extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 31, bottom: 5),
+    padding: const EdgeInsets.fromLTRB(40, 4, 8, 8),
     child: Column(
       children: [
         _VoiceNavigationMemberRow(
@@ -947,7 +948,8 @@ class _VoiceNavigationMembers extends StatelessWidget {
           speaking: localParticipant.isSpeaking,
           screenSharing: state.screenSharePhase == ScreenSharePhase.sharing,
         ),
-        for (final participant in remoteParticipants)
+        for (final participant in remoteParticipants) ...[
+          const SizedBox(height: 4),
           _VoiceNavigationMemberRow(
             state: state,
             name: _participantName(participant),
@@ -960,6 +962,7 @@ class _VoiceNavigationMembers extends StatelessWidget {
                   publication.track != null,
             ),
           ),
+        ],
       ],
     ),
   );
@@ -972,11 +975,16 @@ class _VoiceRosterNavigationMembers extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 31, bottom: 5),
+    padding: const EdgeInsets.fromLTRB(40, 4, 8, 8),
     child: Column(
       children: [
-        for (final participant in roster.participants)
-          _VoiceRosterMemberRow(participant: participant, compact: true),
+        for (var index = 0; index < roster.participants.length; index++) ...[
+          if (index > 0) const SizedBox(height: 4),
+          _VoiceRosterMemberRow(
+            participant: roster.participants[index],
+            compact: true,
+          ),
+        ],
       ],
     ),
   );
@@ -992,50 +1000,58 @@ class _VoiceRosterMemberRow extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: EdgeInsets.symmetric(vertical: compact ? 2 : 5),
+  Widget build(BuildContext context) => SizedBox(
+    height: 24,
     child: Row(
       children: [
         CircleAvatar(
-          radius: compact ? 10 : 17,
+          radius: 12,
           backgroundColor: _voiceAvatarColor(participant.accountId),
           child: Text(
             _initial(participant.displayName),
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: compact ? 10 : 14,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: Colors.white, fontSize: 12),
           ),
         ),
-        SizedBox(width: compact ? 7 : 10),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             participant.displayName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: compact ? 12 : 14),
+            style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
           ),
         ),
         if (participant.screenSharing)
           Tooltip(
             message: 'Показывает экран',
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.screen_share_outlined,
-                  size: compact ? 14 : 17,
-                  color: GcColors.accentText,
-                ),
-                if (!compact) ...[
-                  const SizedBox(width: 5),
-                  const Text(
-                    'Идёт трансляция',
-                    style: TextStyle(color: GcColors.accentText, fontSize: 11),
+            child: Container(
+              decoration: BoxDecoration(
+                color: GcColors.selected,
+                border: Border.all(color: GcColors.accent),
+                borderRadius: BorderRadius.circular(GcRadii.sm),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.desktop_windows_outlined,
+                    size: 16,
+                    color: GcColors.accentText,
                   ),
+                  if (!compact) ...[
+                    const SizedBox(width: 4),
+                    const Text(
+                      'Идёт трансляция',
+                      style: TextStyle(
+                        color: GcColors.accentText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
       ],
@@ -1079,17 +1095,17 @@ class _VoiceNavigationMemberRow extends StatelessWidget {
         ? null
         : state.members.where((item) => item.id == accountId).firstOrNull;
     return SizedBox(
-      height: 27,
+      height: 24,
       child: Row(
         children: [
           AuthenticatedAvatar(
             state: state,
             name: name,
             avatarUrl: member?.avatarUrl,
-            radius: 9,
+            radius: 12,
             backgroundColor: _voiceAvatarColor(accountId ?? name),
           ),
-          const SizedBox(width: 7),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               name,
@@ -1099,7 +1115,7 @@ class _VoiceNavigationMemberRow extends StatelessWidget {
                 color: presentation.isSpeaking
                     ? GcColors.success
                     : GcColors.textSecondary,
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: presentation.isSpeaking
                     ? FontWeight.w600
                     : FontWeight.w400,
@@ -1112,8 +1128,8 @@ class _VoiceNavigationMemberRow extends StatelessWidget {
               child: Tooltip(
                 message: 'Показывает экран',
                 child: Icon(
-                  Icons.screen_share_outlined,
-                  size: 13,
+                  Icons.desktop_windows_outlined,
+                  size: 16,
                   color: GcColors.accentText,
                 ),
               ),
@@ -1130,7 +1146,7 @@ class _VoiceNavigationMemberRow extends StatelessWidget {
                     : muted || microphoneUnavailable
                     ? Icons.mic_off_outlined
                     : Icons.mic_none,
-                size: 13,
+                size: 16,
                 color: deafened
                     ? GcColors.danger
                     : microphoneUnavailable
@@ -1155,10 +1171,6 @@ String? _voiceParticipantAccountId(RemoteParticipant participant) {
 }
 
 Color _voiceAvatarColor(String value) {
-  final hash = value.codeUnits.fold<int>(
-    0,
-    (result, unit) => ((result * 31) + unit) & 0x7fffffff,
-  );
   const colors = [
     GcColors.avatarBlue,
     GcColors.avatarGreen,
@@ -1166,7 +1178,7 @@ Color _voiceAvatarColor(String value) {
     GcColors.avatarOrange,
     GcColors.avatarGray,
   ];
-  return colors[hash % colors.length];
+  return colors[voiceAvatarPaletteIndex(value)];
 }
 
 class _ChannelStateBadge extends StatelessWidget {
@@ -3861,10 +3873,10 @@ class _VoiceRosterPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(14),
+    padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
       color: GcColors.raised,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(GcRadii.md),
       border: Border.all(color: GcColors.border),
     ),
     child: Column(
@@ -3874,7 +3886,11 @@ class _VoiceRosterPreview extends StatelessWidget {
           roster == null
               ? 'Участники голосового канала'
               : 'Сейчас в канале: ${roster!.participants.length}',
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          style: const TextStyle(
+            color: GcColors.text,
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+          ),
         ),
         const SizedBox(height: 8),
         if (roster == null)
@@ -3890,11 +3906,14 @@ class _VoiceRosterPreview extends StatelessWidget {
         else if (roster!.participants.isEmpty)
           const Text(
             'Пока никого нет.',
-            style: TextStyle(color: GcColors.muted, fontSize: 12),
+            style: TextStyle(color: GcColors.muted, fontSize: 13),
           )
-        else
-          for (final participant in roster!.participants)
-            _VoiceRosterMemberRow(participant: participant),
+        else ...[
+          for (var index = 0; index < roster!.participants.length; index++) ...[
+            if (index > 0) const SizedBox(height: 8),
+            _VoiceRosterMemberRow(participant: roster!.participants[index]),
+          ],
+        ],
       ],
     ),
   );
