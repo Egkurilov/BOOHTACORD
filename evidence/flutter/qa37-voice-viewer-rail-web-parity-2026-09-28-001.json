@@ -1,0 +1,51 @@
+{
+  "id": "qa37-voice-viewer-rail-web-parity-2026-09-28-001",
+  "kind": "voice-viewer-stream-rail-web-parity",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Moved selectable stream cards out of the video-stage overlay into a distinct rail below the stage. Cards now follow web's 36 px avatar, stream name, selected/unselected prompt, audio availability icon, selected marker and accessible track-state hint. The viewer layout orders stage, diagnostics, audio state/control, stream rail and participant strip.",
+  "checks": [
+    {
+      "name": "Stream card content, selection and accessibility",
+      "command": "flutter test test/voice_screen_selection_rail_test.dart --plain-name \"screen selection rail includes local and remote streams\"",
+      "status": "PASS",
+      "observation": "Verified local and remote choices, selected state changes, audio availability icons, 184 × 64 px card geometry and screen-reader hints."
+    },
+    {
+      "name": "Viewer stage/rail ordering",
+      "command": "flutter test test/voice_screen_selection_rail_test.dart --plain-name \"places the selectable stream rail below the video stage\"",
+      "status": "PASS",
+      "observation": "Widget geometry confirms video stage ends before diagnostics and rail; rail ends before the participant strip without overflow at the tested 900 × 700 viewport."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 149 Flutter tests passed."
+    },
+    {
+      "name": "macOS native debug build",
+      "command": "flutter build macos --debug",
+      "status": "PASS",
+      "observation": "Built build/macos/Build/Products/Debug/BOOHTACORD.app."
+    },
+    {
+      "name": "Android debug build",
+      "command": "flutter build apk --debug",
+      "status": "PASS",
+      "observation": "Built build/app/outputs/flutter-apk/app-debug.apk. Gradle emitted the existing Flutter/Kotlin Gradle Plugin migration warning for flutter_background, flutter_webrtc and livekit_client; toolchain migration is tracked separately."
+    },
+    {
+      "name": "Matched runtime screenshots and device playback",
+      "status": "NOT_RUN",
+      "reason": "No real remote screen track, Android device or Windows runner was available for visual/playback acceptance."
+    }
+  ],
+  "remaining": "Compare viewer cards and stage at desktop/Android breakpoints, test remote screen selection and audio on a live peer, and verify compact layouts on Android."
+}

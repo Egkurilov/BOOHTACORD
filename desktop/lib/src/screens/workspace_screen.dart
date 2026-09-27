@@ -24,6 +24,7 @@ import '../widgets/voice_microphone_unavailable_notice.dart';
 import 'profile_screen.dart';
 import 'admin_screen.dart';
 import 'voice_screen_selection_rail.dart';
+import 'voice_viewer_layout.dart';
 import 'screen_receiver_diagnostics.dart';
 import 'screen_fullscreen_overlay.dart';
 
@@ -4105,161 +4106,189 @@ class _VoiceScreenViewer extends StatelessWidget {
   final ValueChanged<String?> onScreenSelected;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Expanded(
-        child: Container(
-          color: const Color(0xFF080A0E),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 82),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: ColoredBox(
-                      color: Colors.black,
-                      child: VideoTrackRenderer(
-                        track,
-                        renderMode: VideoRenderMode.auto,
-                      ),
-                    ),
+  Widget build(BuildContext context) => VoiceViewerLayout(
+    stage: Container(
+      color: const Color(0xFF080A0E),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: ColoredBox(
+                  color: Colors.black,
+                  child: VideoTrackRenderer(
+                    track,
+                    renderMode: VideoRenderMode.auto,
                   ),
                 ),
               ),
-              Positioned(
-                left: 28,
-                top: 28,
-                child: _ViewerLabel(name: publisherName),
-              ),
-              Positioned(
-                right: 76,
-                top: 28,
-                child: IconButton.filledTonal(
-                  tooltip: 'Развернуть демонстрацию на весь экран',
-                  onPressed: onFullscreen,
-                  icon: const Icon(Icons.fullscreen_outlined),
-                ),
-              ),
-              Positioned(
-                right: 28,
-                top: 28,
-                child: IconButton.filledTonal(
-                  tooltip: 'Вернуться к участникам',
-                  onPressed: onClose,
-                  icon: const Icon(Icons.close_fullscreen_outlined),
-                ),
-              ),
-              if (screens.isNotEmpty || localScreenAvailable)
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 14,
-                  child: VoiceScreenSelectionRail(
-                    choices: [
-                      if (localScreenAvailable)
-                        VoiceScreenChoice(
-                          identity: null,
-                          label: 'Ваш экран',
-                          selected: showingLocalScreen,
-                          isLocal: true,
-                        ),
-                      for (final participant in screens)
-                        VoiceScreenChoice(
-                          identity: participant.identity,
-                          label: _participantName(participant),
-                          selected: participant.identity == selectedIdentity,
-                        ),
-                    ],
-                    onSelected: onScreenSelected,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: ScreenReceiverDiagnostics(
-          track: receiverTrack,
-          isLocal: showingLocalScreen,
-          hasAudio: screenAudioAvailable,
-          sourceTrackName: sourceTrackName,
-        ),
-      ),
-      if (showingLocalScreen)
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Предпросмотр собственного экрана без звука.',
-              style: TextStyle(color: GcColors.muted, fontSize: 12),
             ),
           ),
-        )
-      else if (!screenAudioAvailable)
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'У демонстрации нет аудиодорожки.',
-              style: TextStyle(color: GcColors.muted, fontSize: 12),
+          Positioned(
+            left: 28,
+            top: 28,
+            child: _ViewerLabel(name: publisherName),
+          ),
+          Positioned(
+            right: 76,
+            top: 28,
+            child: IconButton.filledTonal(
+              tooltip: 'Развернуть демонстрацию на весь экран',
+              onPressed: onFullscreen,
+              icon: const Icon(Icons.fullscreen_outlined),
             ),
           ),
-        )
-      else if (screenAudioVolume == null)
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Аудиодорожка есть; личная настройка громкости недоступна.',
-              style: TextStyle(color: GcColors.muted, fontSize: 12),
+          Positioned(
+            right: 28,
+            top: 28,
+            child: IconButton.filledTonal(
+              tooltip: 'Вернуться к участникам',
+              onPressed: onClose,
+              icon: const Icon(Icons.close_fullscreen_outlined),
             ),
           ),
-        )
-      else
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 220,
-                child: Text(
-                  deafened
-                      ? 'Удалённый звук выключен.'
-                      : 'Громкость аудиодорожки · $screenAudioVolume%',
-                  style: const TextStyle(color: GcColors.textSecondary),
-                ),
-              ),
-              Expanded(
-                child: Slider(
-                  value: screenAudioVolume!.toDouble(),
-                  min: 0,
-                  max: 200,
-                  divisions: 200,
-                  semanticFormatterCallback: (value) =>
-                      '${value.round()} процентов',
-                  onChanged: deafened
-                      ? null
-                      : (value) => onScreenAudioVolumeChanged!(value.round()),
-                ),
-              ),
-            ],
-          ),
-        ),
-      _VoiceParticipantStrip(
-        state: state,
-        localName: localName,
-        localAvatarUrl: state.profile?.avatarUrl,
-        localMuted: localMuted,
-        localSpeaking: localSpeaking,
-        participants: participants,
+        ],
       ),
-    ],
+    ),
+    diagnostics: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: ScreenReceiverDiagnostics(
+        track: receiverTrack,
+        isLocal: showingLocalScreen,
+        hasAudio: screenAudioAvailable,
+        sourceTrackName: sourceTrackName,
+      ),
+    ),
+    audioControls: _audioControls,
+    streamRail: _streamRail,
+    participants: _VoiceParticipantStrip(
+      state: state,
+      localName: localName,
+      localAvatarUrl: state.profile?.avatarUrl,
+      localMuted: localMuted,
+      localSpeaking: localSpeaking,
+      participants: participants,
+    ),
   );
+
+  Widget get _audioControls {
+    if (showingLocalScreen) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Предпросмотр собственного экрана без звука.',
+            style: TextStyle(color: GcColors.muted, fontSize: 12),
+          ),
+        ),
+      );
+    }
+    if (!screenAudioAvailable) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'У демонстрации нет аудиодорожки.',
+            style: TextStyle(color: GcColors.muted, fontSize: 12),
+          ),
+        ),
+      );
+    }
+    if (screenAudioVolume == null) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Аудиодорожка есть; личная настройка громкости недоступна.',
+            style: TextStyle(color: GcColors.muted, fontSize: 12),
+          ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 220,
+            child: Text(
+              deafened
+                  ? 'Удалённый звук выключен.'
+                  : 'Громкость аудиодорожки · $screenAudioVolume%',
+              style: const TextStyle(color: GcColors.textSecondary),
+            ),
+          ),
+          Expanded(
+            child: Slider(
+              value: screenAudioVolume!.toDouble(),
+              min: 0,
+              max: 200,
+              divisions: 200,
+              semanticFormatterCallback: (value) =>
+                  '${value.round()} процентов',
+              onChanged: deafened
+                  ? null
+                  : (value) => onScreenAudioVolumeChanged!(value.round()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget? get _streamRail {
+    if (screens.isEmpty && !localScreenAvailable) return null;
+    final choices = [
+      if (localScreenAvailable)
+        VoiceScreenChoice(
+          identity: null,
+          label: 'Ваш экран',
+          selected: showingLocalScreen,
+          isLocal: true,
+          avatarIdentity: state.user?.accountId,
+          avatarLabel: localName,
+        ),
+      for (final participant in screens)
+        VoiceScreenChoice(
+          identity: participant.identity,
+          label: _participantName(participant),
+          selected: participant.identity == selectedIdentity,
+          accountId: _voiceParticipantAccountId(participant),
+          avatarLabel: _participantName(participant),
+          hasAudio: participant.audioTrackPublications.any(
+            (publication) =>
+                publication.source == TrackSource.screenShareAudio &&
+                publication.track != null,
+          ),
+        ),
+    ];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Демонстрации в канале',
+            style: TextStyle(
+              color: GcColors.textSecondary,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          VoiceScreenSelectionRail(
+            choices: choices,
+            onSelected: onScreenSelected,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ViewerLabel extends StatelessWidget {

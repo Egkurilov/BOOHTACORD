@@ -37,6 +37,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] На физических устройствах проверить receiver metrics/audio states,
   fullscreen/share permissions и переключение rail/viewer; локальный fullscreen
   и исправления диагностики, отступов и мобильного возврата — [QA-17](../evidence/flutter/qa17-voice-viewer-mobile-navigation-2026-09-27-001.json).
+- [x] Вынести rail выбора трансляции из наложения на видеокадр под stage,
+  выровнять stream cards с web и показывать selected/audio состояния с
+  screen-reader подсказкой — [QA-37](../evidence/flutter/qa37-voice-viewer-rail-web-parity-2026-09-28-001.json).
 - [ ] Проверить prejoin roster на реальном сервере с двумя аккаунтами: вход/выход,
   смену демонстрации, 10-секундное обновление и поведение при недоступности
   private presence — реализация и целевые тесты в [QA-18](../evidence/flutter/qa18-prejoin-voice-roster-2026-09-27-001.json).

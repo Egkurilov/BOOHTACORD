@@ -244,7 +244,12 @@ the implementation.
 - Match viewer stream rail, explicit selection, fullscreen, screen audio/volume,
   quality controls and diagnostics. The remote audio slider now follows the
   selected stream's account-scoped preference and distinguishes absent audio
-  from deafen; verify actual playback/gain on each target platform.
+  from deafen. The selectable stream rail now sits below the video stage rather
+  than obscuring its lower edge; stream cards follow the web avatar/name/status/
+  audio/selected-marker layout and expose track availability to assistive tech
+  [QA-37](../evidence/flutter/qa37-voice-viewer-rail-web-parity-2026-09-28-001.json).
+  Verify actual playback/gain and matched viewer screenshots on each target
+  platform.
 - Keep platform-specific permission prompts native while preserving the same
   in-app flow and recovery copy.
 
