@@ -12,6 +12,7 @@ class AuthenticatedAvatar extends StatefulWidget {
     required this.radius,
     this.avatarUrl,
     this.backgroundColor = const Color(0xFF365ACA),
+    this.fallbackFontSize,
     this.borderColor,
     this.borderWidth = 0,
   });
@@ -21,6 +22,7 @@ class AuthenticatedAvatar extends StatefulWidget {
   final double radius;
   final String? avatarUrl;
   final Color backgroundColor;
+  final double? fallbackFontSize;
   final Color? borderColor;
   final double borderWidth;
 
@@ -63,7 +65,7 @@ class _AuthenticatedAvatarState extends State<AuthenticatedAvatar> {
             : widget.name.characters.first.toUpperCase(),
         style: TextStyle(
           color: Colors.white,
-          fontSize: widget.radius * .72,
+          fontSize: widget.fallbackFontSize ?? widget.radius * .72,
           fontWeight: FontWeight.w700,
         ),
       ),

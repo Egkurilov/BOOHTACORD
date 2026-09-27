@@ -4,6 +4,8 @@ import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/workspace_screen.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
+import 'package:boohtacord_desktop/src/theme.dart';
+import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -1067,7 +1069,32 @@ void main() {
     );
     final rowRect = tester.getRect(memberRow);
     final popoverRect = tester.getRect(profilePopover);
-    expect((popoverRect.top - rowRect.top).abs(), lessThan(16));
+    final membersPanelRect = tester.getRect(membersPanel);
+    expect(popoverRect.width, closeTo(membersPanelRect.width - 32, 1));
+    expect(popoverRect.width, 216);
+    expect(popoverRect.top, closeTo(rowRect.top, 1));
+    expect(popoverRect.right, closeTo(membersPanelRect.right - 16, 1));
+    final profileAvatar = tester.widget<AuthenticatedAvatar>(
+      find.descendant(
+        of: profilePopover,
+        matching: find.byType(AuthenticatedAvatar),
+      ),
+    );
+    expect(profileAvatar.radius, 32);
+    expect(profileAvatar.backgroundColor, GcColors.avatarViolet);
+    expect(profileAvatar.fallbackFontSize, 20);
+    final profileName = tester.widget<Text>(
+      find.descendant(of: profilePopover, matching: find.text('Неизвестен')),
+    );
+    expect(profileName.style?.fontSize, 20);
+    final messageButton = find.descendant(
+      of: profilePopover,
+      matching: find.widgetWithText(OutlinedButton, 'Сообщение'),
+    );
+    expect(messageButton, findsOneWidget);
+    expect(tester.getSize(messageButton).width, popoverRect.width - 32);
+    expect(tester.getSize(messageButton).width, 184);
+    expect(tester.getSize(messageButton).height, 40);
     expect(
       popoverRect.right,
       lessThanOrEqualTo(tester.view.physicalSize.width),

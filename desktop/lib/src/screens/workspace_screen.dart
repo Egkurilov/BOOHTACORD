@@ -5165,148 +5165,160 @@ class _MembersPanelState extends State<_MembersPanel> {
       ),
     ];
 
-    return OverlayPortal(
-      controller: _profilePortal,
-      overlayChildBuilder: (context) {
-        final memberId = _profileMemberId;
-        if (memberId == null) return const SizedBox.shrink();
-        return Focus(
-          onKeyEvent: (node, event) {
-            if (event is KeyDownEvent &&
-                event.logicalKey == LogicalKeyboardKey.escape) {
-              _closeMemberProfile();
-              return KeyEventResult.handled;
-            }
-            return KeyEventResult.ignored;
-          },
-          child: CompositedTransformFollower(
-            link: _profileLink,
-            showWhenUnlinked: false,
-            targetAnchor: Alignment.topRight,
-            followerAnchor: Alignment.topRight,
-            offset: const Offset(-12, 8),
-            child: _MemberProfilePopover(
-              key: ValueKey(memberId),
-              state: state,
-              memberId: memberId,
-              onClose: _closeMemberProfile,
-              onOpenDirectMessage: (member) async {
+    return LayoutBuilder(
+      builder: (context, constraints) => OverlayPortal(
+        controller: _profilePortal,
+        overlayChildBuilder: (context) {
+          final memberId = _profileMemberId;
+          if (memberId == null) return const SizedBox.shrink();
+          final popoverWidth = (constraints.maxWidth - GcSpacing.x8)
+              .clamp(0.0, 288.0)
+              .toDouble();
+          return Focus(
+            onKeyEvent: (node, event) {
+              if (event is KeyDownEvent &&
+                  event.logicalKey == LogicalKeyboardKey.escape) {
                 _closeMemberProfile();
-                await state.createDirectConversation(
-                  DirectCandidate(
-                    id: member.id,
-                    displayName: member.displayName,
-                  ),
-                );
-              },
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
+            child: CompositedTransformFollower(
+              link: _profileLink,
+              showWhenUnlinked: false,
+              targetAnchor: Alignment.topRight,
+              followerAnchor: Alignment.topRight,
+              offset: const Offset(8, 0),
+              child: UnconstrainedBox(
+                alignment: Alignment.topRight,
+                child: _MemberProfilePopover(
+                  key: ValueKey(memberId),
+                  state: state,
+                  memberId: memberId,
+                  width: popoverWidth,
+                  onClose: _closeMemberProfile,
+                  onOpenDirectMessage: (member) async {
+                    _closeMemberProfile();
+                    await state.createDirectConversation(
+                      DirectCandidate(
+                        id: member.id,
+                        displayName: member.displayName,
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
-          ),
-        );
-      },
-      child: ColoredBox(
-        key: const ValueKey('members-panel'),
-        color: GcColors.sidebar,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'УЧАСТНИКИ',
-                      style: TextStyle(
-                        color: GcColors.muted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: .7,
+          );
+        },
+        child: ColoredBox(
+          color: GcColors.sidebar,
+          child: Padding(
+            key: const ValueKey('members-panel'),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'УЧАСТНИКИ',
+                        style: TextStyle(
+                          color: GcColors.muted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: .7,
+                        ),
                       ),
                     ),
-                  ),
-                  if (onClose != null)
-                    IconButton(
-                      tooltip: 'Закрыть участников',
-                      onPressed: onClose,
-                      icon: const Icon(Icons.close),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: state.refreshMembers,
-                  child: ListView(
-                    children: [
-                      if (state.membersError != null)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Semantics(
-                                liveRegion: true,
+                    if (onClose != null)
+                      IconButton(
+                        tooltip: 'Закрыть участников',
+                        onPressed: onClose,
+                        icon: const Icon(Icons.close),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: state.refreshMembers,
+                    child: ListView(
+                      children: [
+                        if (state.membersError != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Semantics(
+                                  liveRegion: true,
+                                  child: Text(
+                                    state.membersError!,
+                                    style: const TextStyle(
+                                      color: GcColors.danger,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: state.membersLoading
+                                      ? null
+                                      : state.refreshMembers,
+                                  child: Text(
+                                    state.membersLoading
+                                        ? 'Загружаем…'
+                                        : 'Повторить',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else if (state.membersLoading && state.members.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Text(
+                              'Загружаем участников…',
+                              style: TextStyle(color: GcColors.muted),
+                            ),
+                          )
+                        else if (state.members.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Text(
+                              'В гильдии пока нет участников.',
+                              style: TextStyle(color: GcColors.muted),
+                            ),
+                          ),
+                        for (final group in groups)
+                          if (group.members.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: 20,
+                                bottom: 8,
+                              ),
+                              child: Semantics(
+                                header: true,
                                 child: Text(
-                                  state.membersError!,
+                                  '${group.title} — ${group.members.length}',
                                   style: const TextStyle(
-                                    color: GcColors.danger,
+                                    color: GcColors.muted,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ),
-                              TextButton(
-                                onPressed: state.membersLoading
-                                    ? null
-                                    : state.refreshMembers,
-                                child: Text(
-                                  state.membersLoading
-                                      ? 'Загружаем…'
-                                      : 'Повторить',
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      else if (state.membersLoading && state.members.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Text(
-                            'Загружаем участников…',
-                            style: TextStyle(color: GcColors.muted),
-                          ),
-                        )
-                      else if (state.members.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Text(
-                            'В гильдии пока нет участников.',
-                            style: TextStyle(color: GcColors.muted),
-                          ),
-                        ),
-                      for (final group in groups)
-                        if (group.members.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.only(top: 20, bottom: 8),
-                            child: Semantics(
-                              header: true,
-                              child: Text(
-                                '${group.title} — ${group.members.length}',
-                                style: const TextStyle(
-                                  color: GcColors.muted,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
                             ),
-                          ),
-                          for (final member in group.members)
-                            _memberRow(context, member),
-                        ],
-                    ],
+                            for (final member in group.members)
+                              _memberRow(context, member),
+                          ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -5379,12 +5391,14 @@ class _MemberProfilePopover extends StatefulWidget {
     super.key,
     required this.state,
     required this.memberId,
+    required this.width,
     required this.onClose,
     required this.onOpenDirectMessage,
   });
 
   final AppState state;
   final String memberId;
+  final double width;
   final VoidCallback onClose;
   final ValueChanged<GuildMember> onOpenDirectMessage;
 
@@ -5466,14 +5480,20 @@ class _MemberProfilePopoverState extends State<_MemberProfilePopover> {
     final participant = widget.state.voiceParticipantForAccount(
       widget.memberId,
     );
+    final canMessage = _member?.id != widget.state.user?.accountId;
+    final canKick =
+        canMessage && participant != null && widget.state.user?.isAdmin == true;
     return Material(
       key: const ValueKey('member-profile-popover'),
       color: GcColors.raised,
-      elevation: 16,
-      borderRadius: BorderRadius.circular(12),
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: GcColors.border),
+        borderRadius: BorderRadius.circular(GcRadii.md),
+      ),
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
-        width: 288,
+        width: widget.width,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -5497,6 +5517,7 @@ class _MemberProfilePopoverState extends State<_MemberProfilePopover> {
                   ),
                 ],
               ),
+              const SizedBox(height: GcSpacing.x4),
               if (_loading)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
@@ -5531,6 +5552,8 @@ class _MemberProfilePopoverState extends State<_MemberProfilePopover> {
                       name: member.displayName,
                       avatarUrl: member.avatarUrl,
                       radius: 32,
+                      backgroundColor: GcColors.avatarViolet,
+                      fallbackFontSize: 20,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -5541,15 +5564,21 @@ class _MemberProfilePopoverState extends State<_MemberProfilePopover> {
                             member.displayName,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              color: GcColors.text,
+                              fontSize: 20,
+                              height: 28 / 20,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           Text(
                             '@${member.login}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: GcColors.muted,
-                              fontSize: 12,
+                              color: GcColors.textSecondary,
+                              fontSize: 14,
+                              height: 20 / 14,
                             ),
                           ),
                           Text(
@@ -5558,7 +5587,8 @@ class _MemberProfilePopoverState extends State<_MemberProfilePopover> {
                                 : 'Участник',
                             style: const TextStyle(
                               color: GcColors.muted,
-                              fontSize: 11,
+                              fontSize: 12,
+                              height: 16 / 12,
                             ),
                           ),
                         ],
@@ -5566,42 +5596,73 @@ class _MemberProfilePopoverState extends State<_MemberProfilePopover> {
                     ),
                   ],
                 ),
-                if (member.id != widget.state.user?.accountId ||
-                    (participant != null &&
-                        widget.state.user?.isAdmin == true)) ...[
-                  const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: member.id == widget.state.user?.accountId
-                        ? null
-                        : () => widget.onOpenDirectMessage(member),
-                    child: const Text('Сообщение'),
-                  ),
-                  if (participant != null && widget.state.user?.isAdmin == true)
+                if (canMessage || canKick) ...[
+                  const SizedBox(height: GcSpacing.x4),
+                  if (canMessage)
+                    OutlinedButton(
+                      onPressed: member.id == widget.state.user?.accountId
+                          ? null
+                          : () => widget.onOpenDirectMessage(member),
+                      style: _memberProfileActionStyle,
+                      child: const Text('Сообщение'),
+                    ),
+                  if (canKick) ...[
+                    const SizedBox(height: GcSpacing.x2),
                     OutlinedButton.icon(
                       onPressed: _kicking ? null : () => _kick(participant),
                       icon: const Icon(Icons.call_end, size: 18),
                       label: Text(
                         _kicking ? 'Отключаем…' : 'Отключить от голоса',
                       ),
+                      style: _memberProfileActionStyle,
                     ),
+                  ],
                 ],
                 if (participant != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'Громкость участника · ${widget.state.participantVolume(participant) ?? 100}%',
+                  const SizedBox(height: GcSpacing.x4),
+                  const Text(
+                    'Громкость участника',
+                    style: TextStyle(
+                      color: GcColors.textSecondary,
+                      fontSize: 13,
+                      height: 18 / 13,
+                    ),
                   ),
-                  Slider(
-                    value: (widget.state.participantVolume(participant) ?? 100)
-                        .toDouble(),
-                    min: 0,
-                    max: 200,
-                    divisions: 200,
-                    semanticFormatterCallback: (value) =>
-                        '${value.round()} процентов',
-                    onChanged: (value) => unawaited(
-                      widget.state.setParticipantVolume(
-                        participant,
-                        value.round(),
+                  const SizedBox(height: GcSpacing.x2),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: Text(
+                      '${widget.state.participantVolume(participant) ?? 100}%',
+                      style: const TextStyle(
+                        color: GcColors.textSecondary,
+                        fontSize: 13,
+                        height: 18 / 13,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: GcSpacing.x2),
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: GcColors.accent,
+                      thumbColor: GcColors.accent,
+                      inactiveTrackColor: GcColors.control.withValues(
+                        alpha: 0.55,
+                      ),
+                    ),
+                    child: Slider(
+                      value:
+                          (widget.state.participantVolume(participant) ?? 100)
+                              .toDouble(),
+                      min: 0,
+                      max: 200,
+                      divisions: 200,
+                      semanticFormatterCallback: (value) =>
+                          '${value.round()} процентов',
+                      onChanged: (value) => unawaited(
+                        widget.state.setParticipantVolume(
+                          participant,
+                          value.round(),
+                        ),
                       ),
                     ),
                   ),
@@ -5639,6 +5700,19 @@ class _MemberProfilePopoverState extends State<_MemberProfilePopover> {
     builder: (context, _) => _buildPopover(context),
   );
 }
+
+final _memberProfileActionStyle = OutlinedButton.styleFrom(
+  minimumSize: const Size(0, GcLayout.control),
+  visualDensity: VisualDensity.compact,
+  padding: const EdgeInsets.symmetric(horizontal: GcSpacing.x3),
+  foregroundColor: GcColors.text,
+  backgroundColor: GcColors.surface,
+  side: const BorderSide(color: GcColors.control),
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(GcRadii.sm),
+  ),
+  textStyle: const TextStyle(fontSize: 14, height: 20 / 14),
+);
 
 Future<void> _editMessageDialog(
   BuildContext context,

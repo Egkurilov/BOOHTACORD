@@ -1,0 +1,33 @@
+{
+  "id": "qa34-member-profile-popover-web-geometry-2026-09-28-001",
+  "kind": "member-profile-popover-web-geometry",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "The Flutter member profile popover now shrink-wraps its overlay instead of occupying the full screen, follows the selected row and web 16 px aside inset, and applies the web CSS responsive max-width, 64 px violet fallback avatar, 20 px display name, 40 px actions and separated volume percentage layout.",
+  "checks": [
+    {
+      "name": "Web-equivalent member popover geometry and visual tokens",
+      "command": "flutter test test/workspace_screen_test.dart --plain-name \"groups guild members by presence with web-equivalent counts\"",
+      "status": "PASS",
+      "observation": "At 1440×900 with a 248 px aside, the popover is 216 px wide (aside width − 32 px), aligned to the selected row top and 16 px from the aside right; avatar radius is 32 px with violet empty state, name is 20 px, and action button is 184×40 px inside 16 px padding."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 145 Flutter tests passed."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    },
+    {
+      "name": "Matched web and Flutter screenshots",
+      "status": "NOT_RUN",
+      "reason": "No matched runtime screenshots were captured in this change; full cross-viewport and device visual acceptance remains open in the parity checklist."
+    }
+  ],
+  "remaining": "Capture and compare matched member roster/profile screenshots at desktop breakpoints and Android portrait; verify popover behavior with live profiles on devices."
+}

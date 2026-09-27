@@ -95,6 +95,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Заменить центрированный профиль участника на anchored popover с loading,
   error/retry, DM, same-voice volume и admin voice kick
   [QA-29](../evidence/flutter/qa29-member-profile-popover-2026-09-27-001.json).
+- [x] Выровнять member profile popover с web CSS: responsive max-width aside,
+  привязка к верху строки и правому отступу, 64 px violet fallback avatar,
+  20 px имя, 40 px action и volume layout —
+  [QA-34](../evidence/flutter/qa34-member-profile-popover-web-geometry-2026-09-28-001.json).
+  Matched screenshots и визуальная приёмка на экранах остаются открытыми.
 - [ ] Проверить live-переходы presence двумя аккаунтами на backend.
 - [ ] Сохранить matched web/Flutter screenshots 1440×900, 1280×800, 1024×768 и Android portrait для auth, chat, DM, search, members, voice, screen share, profile, audio и admin; зафиксировать отличия по экранам.
 - [ ] Завершить focus trap/return и keyboard reachability для admin/profile/dialogs; responsive modal search и drawer traps, начальный/возвращаемый фокус реализованы. Открыты device screen-reader приёмка и matched screenshots.
