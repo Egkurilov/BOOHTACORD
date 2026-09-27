@@ -1,0 +1,34 @@
+{
+  "id": "qa44-auth-mode-error-reset-2026-09-28-001",
+  "kind": "authentication-mode-error-reset-web-parity",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Switching between login and registration clears a previous authentication error, matching AuthenticationLanding.vue chooseMode behavior.",
+  "checks": [
+    {
+      "name": "Switching auth mode clears the previous error",
+      "command": "flutter test test/auth_screen_test.dart --plain-name \"switching auth mode clears the previous error\"",
+      "status": "PASS",
+      "observation": "A displayed login error disappears after selecting Registration."
+    },
+    {
+      "name": "Targeted auth widget tests",
+      "command": "flutter test test/auth_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 6 auth screen tests passed."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 156 tests passed."
+    }
+  ],
+  "remaining": "This closes only the auth-mode error reset leaf. Full authentication/profile loading, native error/focus and physical Gboard acceptance remain open."
+}

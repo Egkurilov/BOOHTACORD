@@ -192,6 +192,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearError() {
+    if (error == null) return;
+    error = null;
+    notifyListeners();
+  }
+
   void openPasswordResetLink(String value) {
     resetToken = parsePasswordResetToken(api.baseUrl, value);
     resetRoute = true;

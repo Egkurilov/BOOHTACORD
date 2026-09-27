@@ -202,8 +202,10 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                             ],
                             selected: {_register},
-                            onSelectionChanged: (value) =>
-                                setState(() => _register = value.first),
+                            onSelectionChanged: (value) {
+                              setState(() => _register = value.first);
+                              widget.state.clearError();
+                            },
                           ),
                           const SizedBox(height: 24),
                           _AuthFieldLabel('Логин'),

@@ -114,6 +114,20 @@ void main() {
     );
   });
 
+  testWidgets('switching auth mode clears the previous error', (tester) async {
+    final state = AppState(ApiClient())..phase = AppPhase.signedOut;
+    addTearDown(state.dispose);
+    state.reportError('Неверный логин или пароль');
+
+    await tester.pumpWidget(MaterialApp(home: AuthScreen(state: state)));
+    expect(find.text('Неверный логин или пароль'), findsOneWidget);
+
+    await tester.tap(find.text('Регистрация'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Неверный логин или пароль'), findsNothing);
+  });
+
   testWidgets('registration enforces server password length limits', (
     tester,
   ) async {
