@@ -1,0 +1,33 @@
+{
+  "id": "qa20-web-attachment-image-viewer-2026-09-27-001",
+  "kind": "web-native-attachment-viewer-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "checks": [
+    {
+      "name": "TEXT/DM attachment viewer markup and protected URLs",
+      "command": "npm test -- --run src/conversation/published_attachment_card.spec.ts",
+      "status": "PASS",
+      "observation": "SSR tests cover the image-open control, named viewer dialog, same-origin channel and DM preview paths, separate original download action, and non-raster download-only fallback. Additional source-contract tests check Escape/close/focus return, same-origin no-store loading, 404/410 handling, object-URL cleanup and narrow viewport bounds."
+    },
+    {
+      "name": "TypeScript and production bundle",
+      "command": "npm run build",
+      "status": "PASS",
+      "observation": "vue-tsc and Vite production build passed. Vite printed the existing informational warning about the LiveKit chunk exceeding 500 kB."
+    },
+    {
+      "name": "Full frontend suite",
+      "command": "npm test -- --run",
+      "status": "PASS",
+      "observation": "211 test files and 616 tests passed."
+    },
+    {
+      "name": "Authenticated browser/device acceptance",
+      "status": "NOT_RUN",
+      "reason": "No authenticated user fixture was available. Escape/focus return, actual protected image loading/ACL denial, responsive sizing and matched Flutter/browser screenshots need a real browser/device pass."
+    }
+  ],
+  "privacy": "The viewer fetches only the existing protected preview URL using same-origin credentials and no-store caching; object URLs are revoked when the viewer closes or unmounts. Original files remain behind a separate explicit download link.",
+  "remaining": "Verify a real TEXT attachment and participant-only DM attachment, including denied/removed cases, focus return and narrow mobile layout; compare against the Flutter viewer."
+}
