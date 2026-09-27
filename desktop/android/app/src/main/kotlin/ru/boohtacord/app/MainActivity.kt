@@ -1,15 +1,23 @@
 package ru.boohtacord.app
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val channelName = "boohtacord/download"
+    private val screenShareChannelName = "boohtacord/screen_share"
+    private val backgroundServiceClassName =
+        "de.julianassmann.flutter_background.IsolateHolderService"
     private val requestCode = 7641
+    private val mainHandler = Handler(Looper.getMainLooper())
     private var pendingSaveResult: MethodChannel.Result? = null
     private var pendingBytes: ByteArray? = null
 
@@ -46,6 +54,38 @@ class MainActivity : FlutterActivity() {
                     pendingSaveResult = null
                     result.error("SAVE_FAILED", error.message, null)
                 }
+            }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, screenShareChannelName)
+            .setMethodCallHandler { call, result ->
+                if (call.method != "awaitForegroundService") {
+                    result.notImplemented()
+                    return@setMethodCallHandler
+                }
+
+                val timeoutMs = (call.argument<Int>("timeoutMs") ?: 3000)
+                    .coerceIn(250, 5000)
+                val startedAt = SystemClock.elapsedRealtime()
+                val activityManager =
+                    getSystemService(ACTIVITY_SERVICE) as ActivityManager
+
+                fun checkForegroundState() {
+                    val isForeground = activityManager
+                        .getRunningServices(Int.MAX_VALUE)
+                        .any { service ->
+                            service.service.className == backgroundServiceClassName &&
+                                service.foreground
+                        }
+                    if (isForeground) {
+                        result.success(true)
+                    } else if (SystemClock.elapsedRealtime() - startedAt >= timeoutMs) {
+                        result.success(false)
+                    } else {
+                        mainHandler.postDelayed(::checkForegroundState, 50)
+                    }
+                }
+
+                checkForegroundState()
             }
     }
 

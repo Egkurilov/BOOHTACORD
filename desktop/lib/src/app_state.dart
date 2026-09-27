@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:flutter_background/flutter_background.dart';
 import 'package:livekit_client/livekit_client.dart' hide ChatMessage;
@@ -2311,6 +2312,14 @@ class AppState extends ChangeNotifier {
           throw StateError('Не удалось включить фоновую передачу экрана.');
         }
         androidBackgroundEnabled = true;
+        final foregroundStarted = await const MethodChannel(
+          'boohtacord/screen_share',
+        ).invokeMethod<bool>('awaitForegroundService', {'timeoutMs': 3000});
+        if (foregroundStarted != true) {
+          throw StateError(
+            'Android не успел запустить foreground service для захвата экрана.',
+          );
+        }
       }
       final captureOptions = ScreenShareCaptureOptions(
         sourceId: sourceId,
@@ -2320,7 +2329,15 @@ class AppState extends ChangeNotifier {
       pendingScreenShareTrack = await LocalVideoTrack.createScreenShareTrack(
         captureOptions,
       );
-      await participant.publishVideoTrack(pendingScreenShareTrack);
+      await participant.publishVideoTrack(
+        pendingScreenShareTrack,
+        publishOptions: screenShareQuality.publishOptions(
+          // Use a single layer on Android while investigating receiver-side
+          // clipping reported across Flutter and web viewers. Verify on-device
+          // before deciding whether the bandwidth trade-off is acceptable.
+          simulcast: defaultTargetPlatform != TargetPlatform.android,
+        ),
+      );
       // Ownership transfers to the participant after a successful publish.
       pendingScreenShareTrack = null;
       screenSharePhase = ScreenSharePhase.sharing;

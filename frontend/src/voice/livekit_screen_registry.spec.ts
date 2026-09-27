@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { LiveKitScreenRegistry, type ScreenParticipantPublication } from './livekit_screen_registry'
 
 function publication() {
-  return { setSubscribed: vi.fn() }
+  return { setSubscribed: vi.fn(), name: 'screenshare-1080p-30fps' }
 }
 
 function participant(identity: string, video = publication(), audio?: ReturnType<typeof publication>): ScreenParticipantPublication {
@@ -55,5 +55,11 @@ describe('LiveKit screen registry', () => {
       accountId: 'self-account', hasAudio: false, id: 'local:self-account:screen', isLocal: true,
       participantId: 'self-account', participantName: 'Ваш экран', video: localVideo,
     })])
+  })
+
+  it('reads the sender target profile from the LiveKit video track name', () => {
+    const registry = new LiveKitScreenRegistry()
+    registry.refresh([participant('alice')], null)
+    expect(registry.streams()[0]?.targetProfile).toBe('1080p · 30 FPS')
   })
 })

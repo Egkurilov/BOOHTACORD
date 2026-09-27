@@ -124,11 +124,13 @@ class ScreenReceiverDiagnostics extends StatefulWidget {
     required this.track,
     required this.isLocal,
     required this.hasAudio,
+    this.sourceTrackName,
   });
 
   final RemoteVideoTrack? track;
   final bool isLocal;
   final bool hasAudio;
+  final String? sourceTrackName;
 
   @override
   State<ScreenReceiverDiagnostics> createState() =>
@@ -234,9 +236,9 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
           child: ListView(
             padding: const EdgeInsets.only(bottom: 10),
             children: [
-              const _DiagnosticRow(
+              _DiagnosticRow(
                 label: 'Профиль источника',
-                value: 'Не передан источником',
+                value: _screenShareTargetProfile(widget.sourceTrackName),
               ),
               _DiagnosticRow(
                 label: 'Сейчас у зрителя',
@@ -289,6 +291,14 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
       ],
     );
   }
+}
+
+String _screenShareTargetProfile(String? trackName) {
+  final match = RegExp(r'^screenshare-(720|1080|1440)p-(15|30|60)fps$')
+      .firstMatch(trackName ?? '');
+  return match == null
+      ? 'Нет данных от источника'
+      : '${match.group(1)}p · ${match.group(2)} FPS';
 }
 
 class _DiagnosticRow extends StatelessWidget {

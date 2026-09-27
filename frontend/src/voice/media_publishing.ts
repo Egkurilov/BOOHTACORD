@@ -20,6 +20,7 @@ export interface MicrophonePublishOptions {
 }
 
 export interface ScreenSharePublishOptions {
+  name: string
   degradationPreference: 'maintain-framerate'
   screenShareEncoding: { maxBitrate: number; maxFramerate: number; priority: 'medium' }
 }
@@ -61,6 +62,7 @@ export async function readScreenShareDiagnostics(room: VoiceRoom): Promise<Scree
 export async function startScreenShare(room: VoiceRoom, profile: ScreenProfile): Promise<ScreenDiagnostics> {
   const capture = screenProfiles[profile]
   const screenSharePublishOptions: ScreenSharePublishOptions = {
+    name: `screenshare-${profile.startsWith('P720') ? 720 : 1080}p-${capture.resolution.frameRate}fps`,
     degradationPreference: 'maintain-framerate',
     screenShareEncoding: {
       maxBitrate: profile.startsWith('P720') ? screenSharePresetBitrates.P720 : screenSharePresetBitrates.P1080,

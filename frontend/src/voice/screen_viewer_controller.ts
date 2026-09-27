@@ -26,8 +26,8 @@ export class ScreenViewerController {
   get audioMuted(): boolean { return this.screenAudioMuted }
 
   cards(): ScreenViewerCard[] {
-    return this.source().map(({ accountId, hasAudio, id, isLocal, participantId, participantName, video }) => ({
-      accountId, hasAudio, id, isLocal, participantId, participantName,
+    return this.source().map(({ accountId, hasAudio, id, isLocal, participantId, participantName, targetProfile, video }) => ({
+      accountId, hasAudio, id, isLocal, participantId, participantName, targetProfile,
       ...(!isLocal && video.track?.getReceiverStats ? { readReceiverStats: this.receiverReader(video.track) } : {}),
     }))
   }

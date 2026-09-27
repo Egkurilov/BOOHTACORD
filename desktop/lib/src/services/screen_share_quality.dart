@@ -31,6 +31,8 @@ class ScreenShareQuality {
       ? '≈ ${(maxBitrate / 1000).toStringAsFixed(maxBitrate % 1000 == 0 ? 0 : 1)} Мбит/с'
       : '≈ $maxBitrate Кбит/с';
 
+  String get trackName => 'screenshare-${resolution}p-${frameRate}fps';
+
   VideoParameters get parameters => VideoParameters(
     dimensions: switch (resolution) {
       720 => VideoDimensionsPresets.h720_169,
@@ -42,6 +44,14 @@ class ScreenShareQuality {
       maxBitrate: maxBitrate * 1000,
     ),
   );
+
+  VideoPublishOptions publishOptions({required bool simulcast}) =>
+      VideoPublishOptions(
+        name: trackName,
+        screenShareEncoding: parameters.encoding,
+        degradationPreference: DegradationPreference.maintainFramerate,
+        simulcast: simulcast,
+      );
 
   static const balanced = ScreenShareQuality(resolution: 720, frameRate: 15);
   static const desktopDefault = ScreenShareQuality(

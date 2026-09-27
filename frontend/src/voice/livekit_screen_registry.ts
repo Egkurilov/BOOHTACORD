@@ -21,6 +21,7 @@ export class LiveKitScreenRegistry {
       isLocal: participant.isLocal,
       participantId: participant.identity,
       participantName: participant.isLocal ? 'Ваш экран' : participant.name?.trim() || 'Участник',
+      targetProfile: screenShareTargetProfile(participant.video.name),
       video: participant.video,
     }] : [])
     this.current.filter((stream) => stream.id !== selectedId && !stream.isLocal).forEach((stream) => {
@@ -32,4 +33,9 @@ export class LiveKitScreenRegistry {
   streams(): ScreenViewerStream[] {
     return this.current
   }
+}
+
+export function screenShareTargetProfile(trackName?: string): string | undefined {
+  const match = /^screenshare-(720|1080|1440)p-(15|30|60)fps$/.exec(trackName ?? '')
+  return match ? `${match[1]}p · ${match[2]} FPS` : undefined
 }

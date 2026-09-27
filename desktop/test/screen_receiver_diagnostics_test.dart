@@ -79,4 +79,24 @@ void main() {
     expect(find.text('Предпросмотр без звука'), findsOneWidget);
     expect(find.text('Нет данных от приёмника'), findsOneWidget);
   });
+
+  testWidgets('shows the source profile transmitted in the track name', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ScreenReceiverDiagnostics(
+            track: null,
+            isLocal: false,
+            hasAudio: false,
+            sourceTrackName: 'screenshare-1440p-60fps',
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Статистика'));
+    await tester.pumpAndSettle();
+    expect(find.text('1440p · 60 FPS'), findsOneWidget);
+  });
 }

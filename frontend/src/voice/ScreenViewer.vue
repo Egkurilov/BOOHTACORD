@@ -98,8 +98,8 @@ async function toggleFullscreen(): Promise<void> {
     </div>
     <audio ref="audio" autoplay></audio>
     <div v-if="selectedStream" class="stream-quality-row">
-      <div class="stream-quality"><span class="stream-target">Цель: не передана источником</span><span class="stream-actual">Сейчас: {{ actualVideoQuality }}</span></div>
-      <ScreenReceiverDiagnosticsPanel :actual-video-quality="actualVideoQuality" :has-audio="selectedStream.hasAudio" :is-local="Boolean(selectedStream.isLocal)" :metrics="receiverMetrics" :sampled-at="receiverSampledAt" />
+      <div class="stream-quality"><span class="stream-target">Цель: {{ selectedStream.targetProfile ?? 'нет данных' }}</span><span class="stream-actual">Сейчас: {{ actualVideoQuality }}</span></div>
+      <ScreenReceiverDiagnosticsPanel :actual-video-quality="actualVideoQuality" :has-audio="selectedStream.hasAudio" :is-local="Boolean(selectedStream.isLocal)" :metrics="receiverMetrics" :sampled-at="receiverSampledAt" :target-profile="selectedStream.targetProfile" />
       <ScreenViewerAudioControl v-if="selectedStream.hasAudio && !selectedStream.isLocal" :adjustable="adjustable" :deafened="deafened" :muted="audioMuted" :volume="selectedAudioVolume" @toggle="emit('toggleAudio')" @set-volume="emit('setAudioVolume', $event)" />
       <p v-if="audioMessage" class="stream-audio-status" role="status">{{ audioMessage }}</p>
     </div>

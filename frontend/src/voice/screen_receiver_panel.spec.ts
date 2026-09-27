@@ -14,7 +14,7 @@ describe('selected screen receiver panel', () => {
     expect(panel).toContain('Нет свежих данных')
     expect(panel).toContain('Декодировано')
     expect(panel).toContain('Нет данных от приёмника')
-    expect(panel).toContain('<dt>Целевой профиль</dt><dd>Не передан источником</dd>')
+    expect(panel).toContain('Нет данных от источника')
     expect(panel).toContain("hasAudio ? 'Аудиодорожка есть' : 'Аудиодорожки нет'")
     expect(styles).toContain('width: min(288px, calc(100vw - 32px))')
     expect(styles).toContain('font-variant-numeric: tabular-nums')

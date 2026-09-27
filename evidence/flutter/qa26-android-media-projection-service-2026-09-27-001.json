@@ -1,0 +1,37 @@
+{
+  "id": "qa26-android-media-projection-service-2026-09-27-001",
+  "kind": "android-media-projection-foreground-service",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "reported_error": "Unable to getDisplayMedia: Media projections require a foreground service of type ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION",
+  "implementation": {
+    "manifest": "The app manifest declares FOREGROUND_SERVICE and FOREGROUND_SERVICE_MEDIA_PROJECTION and assigns foregroundServiceType=mediaProjection to flutter_background IsolateHolderService.",
+    "ordering": "Android requests screen-capture consent, initializes/enables FlutterBackground foreground execution, waits for ActivityManager to report IsolateHolderService as foreground, then creates the LiveKit screen-share track. A timeout aborts capture with a clear error and cleanup.",
+    "api_behavior": "The release manifest merger resolves targetSdkVersion 36 and retains the mediaProjection service type and permission. flutter_background 1.3.1 returns from enableBackgroundExecution immediately after startForegroundService(), before its asynchronous onStartCommand/startForeground sequence completes; the app now waits for that transition."
+  },
+  "checks": [
+    {
+      "name": "Android release build",
+      "command": "flutter build apk --release",
+      "status": "PASS",
+      "observation": "Release APK built successfully at desktop/build/app/outputs/flutter-apk/app-release.apk (95.3 MB). Existing Kotlin Gradle Plugin migration warning remains."
+    },
+    {
+      "name": "Merged release manifest",
+      "status": "PASS",
+      "observation": "Merged release manifest contains FOREGROUND_SERVICE_MEDIA_PROJECTION and declares IsolateHolderService with foregroundServiceType=mediaProjection."
+    },
+    {
+      "name": "Foreground service startup gate",
+      "command": "flutter test && flutter analyze && flutter build apk --debug && flutter build apk --release",
+      "status": "PASS",
+      "observation": "All 135 Flutter tests passed, analyzer had no issues, and both Android builds completed. Dart waits for the plugin service to be foreground before creating MediaProjection."
+    },
+    {
+      "name": "Android 14+ live capture",
+      "status": "NOT_RUN",
+      "reason": "No Android device is connected. Runtime capture cannot be confirmed until this fresh release APK is installed and tested."
+    }
+  ],
+  "remaining": "Install the fresh APK on the affected Android device and repeat MediaProjection. If the same error persists, collect device API level and logcat from screen-share start; verify IsolateHolderService reaches foreground state with MEDIA_PROJECTION before getDisplayMedia calls MediaProjectionManager.getMediaProjection."
+}

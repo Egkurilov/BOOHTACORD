@@ -1,0 +1,35 @@
+{
+  "id": "qa25-android-screen-share-receiver-clipping-2026-09-27-001",
+  "kind": "android-screen-share-receiver-clipping-investigation",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "reported_behavior": {
+    "permission_scope": "Entire screen",
+    "local_preview": "Full screen is visible locally",
+    "remote_viewers": "Only the upper part is visible in both web and Flutter clients"
+  },
+  "implementation": {
+    "fallback": "Android screen-share publication uses a single encoded layer while preserving the selected track name, bitrate and frame-rate options. Desktop publishers continue using simulcast.",
+    "diagnostic_basis": "The earlier receiver snapshot reported 540×1170, consistent with a half-size portrait layer from a 1080×2340 source. Both Flutter and web viewers use contain fitting, so the investigation targets Android sender encoding/layer selection. This is a hypothesis, not proof of root cause."
+  },
+  "checks": [
+    {
+      "name": "Publish option contract",
+      "command": "flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "All 135 Flutter tests passed; analyzer reported no issues. Focused quality tests verify all nine profiles preserve encoder caps and turn simulcast off only for the Android options path."
+    },
+    {
+      "name": "Android debug build",
+      "command": "flutter build apk --debug",
+      "status": "PASS",
+      "observation": "Android debug APK built successfully. Existing Kotlin Gradle Plugin migration warning remains."
+    },
+    {
+      "name": "Remote frame and network acceptance",
+      "status": "NOT_RUN",
+      "reason": "No Samsung Android device or live remote peers were connected for a before/after share."
+    }
+  ],
+  "remaining": "Build/install the Android app, share the entire screen from the affected Samsung phone, inspect the full frame in both web and Flutter receivers, and compare sender/receiver dimensions, FPS, packet loss and bitrate. Reassess the single-layer bandwidth trade-off before retaining this fallback."
+}

@@ -17,6 +17,35 @@ void main() {
           expect(quality.parameters.dimensions.height, resolution);
           expect(quality.parameters.encoding?.maxFramerate, frameRate);
           expect(quality.parameters.encoding!.maxBitrate, greaterThan(0));
+          expect(
+            quality.trackName,
+            'screenshare-${resolution}p-${frameRate}fps',
+          );
+        }
+      }
+    },
+  );
+
+  test(
+    'publishes selected profile and allows Android single-layer fallback',
+    () {
+      for (final resolution in ScreenShareQuality.resolutions) {
+        for (final frameRate in ScreenShareQuality.frameRates) {
+          final quality = ScreenShareQuality(
+            resolution: resolution,
+            frameRate: frameRate,
+          );
+          final androidOptions = quality.publishOptions(simulcast: false);
+          final desktopOptions = quality.publishOptions(simulcast: true);
+
+          expect(androidOptions.name, quality.trackName);
+          expect(androidOptions.screenShareEncoding?.maxFramerate, frameRate);
+          expect(
+            androidOptions.screenShareEncoding?.maxBitrate,
+            quality.maxBitrate * 1000,
+          );
+          expect(androidOptions.simulcast, isFalse);
+          expect(desktopOptions.simulcast, isTrue);
         }
       }
     },

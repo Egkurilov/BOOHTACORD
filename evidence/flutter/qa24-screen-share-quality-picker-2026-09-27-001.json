@@ -7,7 +7,7 @@
     "quality": {
       "resolutions": [720, 1080, 1440],
       "frame_rates": [15, 30, 60],
-      "behavior": "All nine combinations set LiveKit capture dimensions, max capture frame rate, encoder maximum frame rate and an estimated maximum bitrate. Android defaults to 720p/15 FPS; desktop defaults to 1080p/30 FPS. The selected combination remains active for subsequent shares in the same app session."
+      "behavior": "All nine combinations map to LiveKit capture parameters, encoder maximum frame rate and an estimated maximum bitrate. Android defaults to 720p/15 FPS; desktop defaults to 1080p/30 FPS. Android MediaProjection supplies system display dimensions, so actual resolution/FPS effects still require physical-device verification. The selected combination remains active for subsequent shares in the same app session."
     },
     "source_picker": "Replaces the plain SDK dialog with a responsive dark-themed screen/window picker, live thumbnails, selected state, refresh, empty/error/retry states, Android system-permission guidance and a bandwidth hint."
   },
@@ -16,7 +16,7 @@
       "name": "Quality mapping and picker selection",
       "command": "flutter test test/screen_share_quality_test.dart",
       "status": "PASS",
-      "observation": "All nine resolution/frame-rate combinations map to the requested capture dimensions and encoding caps; widget test selects 1440p/60 FPS and verifies it is returned to the launch flow."
+      "observation": "All nine resolution/frame-rate combinations map to the requested LiveKit capture parameters and encoding caps; widget test selects 1440p/60 FPS and verifies it is returned to the launch flow. Android's system MediaProjection output dimensions and remote playback were not measured."
     },
     {
       "name": "Full Flutter suite and analysis",

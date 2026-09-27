@@ -6,6 +6,7 @@ export interface ScreenViewerTrack {
 
 export interface ScreenViewerPublication {
   isMuted?: boolean
+  name?: string
   setSubscribed?(subscribed: boolean): void
   track?: ScreenViewerTrack
 }
@@ -18,9 +19,10 @@ export interface ScreenViewerStream {
   isLocal?: boolean
   participantId: string
   participantName: string
+  targetProfile?: string
   video: ScreenViewerPublication
 }
 
-export type ScreenViewerCard = Pick<ScreenViewerStream, 'accountId' | 'hasAudio' | 'id' | 'isLocal' | 'participantId' | 'participantName'> & {
+export type ScreenViewerCard = Pick<ScreenViewerStream, 'accountId' | 'hasAudio' | 'id' | 'isLocal' | 'participantId' | 'participantName' | 'targetProfile'> & {
   readReceiverStats?: () => Promise<import('./screen_receiver_diagnostics').ScreenReceiverSnapshot | undefined>
 }

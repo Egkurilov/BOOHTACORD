@@ -3445,24 +3445,20 @@ class _VoiceRoomState extends State<_VoiceRoom> {
               (participant) => participant.identity == _selectedScreenIdentity,
             )
             .firstOrNull;
-        final selectedTrack =
-            selectedScreen?.videoTrackPublications
-                    .where(
-                      (publication) =>
-                          publication.source == TrackSource.screenShareVideo,
-                    )
-                    .firstOrNull
-                    ?.track
-                as VideoTrack?;
-        final localScreenTrack =
+        final selectedScreenPublication = selectedScreen?.videoTrackPublications
+            .where(
+              (publication) =>
+                  publication.source == TrackSource.screenShareVideo,
+            )
+            .firstOrNull;
+        final selectedTrack = selectedScreenPublication?.track as VideoTrack?;
+        final localScreenPublication =
             state.screenSharePhase == ScreenSharePhase.sharing
-            ? room?.localParticipant
-                      ?.getTrackPublicationBySource(
-                        TrackSource.screenShareVideo,
-                      )
-                      ?.track
-                  as VideoTrack?
+            ? room?.localParticipant?.getTrackPublicationBySource(
+                TrackSource.screenShareVideo,
+              )
             : null;
+        final localScreenTrack = localScreenPublication?.track as VideoTrack?;
         final selectedAudioPublication = selectedScreen?.audioTrackPublications
             .where(
               (publication) =>
@@ -3544,6 +3540,9 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                             receiverTrack: selectedTrack is RemoteVideoTrack
                                 ? selectedTrack
                                 : null,
+                            sourceTrackName: showingLocalScreen
+                                ? localScreenPublication?.name
+                                : selectedScreenPublication?.name,
                             localName:
                                 state.profile?.displayName.trim().isNotEmpty ==
                                     true
@@ -4011,6 +4010,7 @@ class _VoiceScreenViewer extends StatelessWidget {
     required this.localScreenAvailable,
     required this.showingLocalScreen,
     required this.receiverTrack,
+    required this.sourceTrackName,
     required this.localName,
     required this.localMuted,
     required this.localSpeaking,
@@ -4032,6 +4032,7 @@ class _VoiceScreenViewer extends StatelessWidget {
   final bool localScreenAvailable;
   final bool showingLocalScreen;
   final RemoteVideoTrack? receiverTrack;
+  final String? sourceTrackName;
   final String localName;
   final bool localMuted;
   final bool localSpeaking;
@@ -4124,6 +4125,7 @@ class _VoiceScreenViewer extends StatelessWidget {
           track: receiverTrack,
           isLocal: showingLocalScreen,
           hasAudio: screenAudioAvailable,
+          sourceTrackName: sourceTrackName,
         ),
       ),
       if (showingLocalScreen)
