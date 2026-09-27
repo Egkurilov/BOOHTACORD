@@ -39,6 +39,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   расчёты, API и подписанный APK прошли локальную проверку — [QA-19](../evidence/flutter/qa19-android-sender-metrics-2026-09-27-001.json).
 - [ ] На устройстве подтвердить остановку отчётов при OS share stop/leave/disconnect
   и сопоставить sender с двумя receiver snapshots в QA-07.
+- [x] Устранить Android screen-share retry leak: публиковать созданный track под
+  контролем клиента, очищать его при publish failure, снизить Android профиль
+  до 720p/15 FPS и сохранять текст исходной ошибки — [QA-23](../evidence/flutter/qa23-android-ime-screen-share-2026-09-27-001.json).
+- [ ] На Samsung с Gboard проверить ввод нескольких символов в логине без
+  закрытия IME; на Android проверить разрешение, успешную публикацию, stop и
+  повторный запуск screen share с удалённым участником.
 
 ## P1 — Admin и переписка
 

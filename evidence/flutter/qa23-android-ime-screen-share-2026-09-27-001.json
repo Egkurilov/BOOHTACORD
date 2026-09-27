@@ -1,0 +1,48 @@
+{
+  "id": "qa23-android-ime-screen-share-2026-09-27-001",
+  "kind": "android-login-ime-and-screen-share-retry",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "implementation": {
+    "authentication": "Login and password fields now keep explicit stable focus nodes and keys. Login text disables autocorrect and suggestions and advances to password with an explicit next action.",
+    "screen_share": "Android capture requests 720p/15 FPS. The app creates and publishes the capture track explicitly and stops the pending local track if publication fails. UI now shows the underlying String, StateError or SDK exception text instead of only its runtime type."
+  },
+  "checks": [
+    {
+      "name": "Login focus regression",
+      "command": "flutter test test/auth_screen_test.dart",
+      "status": "PASS",
+      "observation": "Widget test enters the first character, triggers an app-state rebuild and confirms text and focus are preserved. Physical Gboard behavior is not emulated."
+    },
+    {
+      "name": "Screen-share failure detail",
+      "command": "flutter test test/app_state_test.dart",
+      "status": "PASS",
+      "observation": "Tests verify String, StateError and Exception details remain available to the user."
+    },
+    {
+      "name": "Full Flutter suite and analysis",
+      "command": "flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "All 131 Flutter tests passed; analyzer reported no issues."
+    },
+    {
+      "name": "Android debug build",
+      "command": "flutter build apk --debug",
+      "status": "PASS",
+      "observation": "Debug APK built. Existing Kotlin Gradle Plugin migration warning for flutter_background/flutter_webrtc/livekit_client remains."
+    },
+    {
+      "name": "macOS debug build",
+      "command": "flutter build macos --debug",
+      "status": "PASS",
+      "observation": "Shared LiveKit publishing changes compile for the desktop platform."
+    },
+    {
+      "name": "Samsung/Gboard and live screen-share acceptance",
+      "status": "NOT_RUN",
+      "reason": "No Samsung/Gboard device or live remote participant was attached to this run."
+    }
+  ],
+  "remaining": "Install the build on the affected Samsung device; enter multiple login characters without reopening the keyboard; then grant MediaProjection, publish to a real peer, stop from the app and OS, and retry a second share. Capture the surfaced SDK detail if publication still fails."
+}

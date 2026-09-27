@@ -40,6 +40,16 @@ enum MessageEditStatus { saved, conflict, error, stale }
 
 typedef MessageEditOutcome = ({MessageEditStatus kind, String? message});
 
+String screenShareFailureDetail(Object cause) {
+  if (cause is String && cause.trim().isNotEmpty) return cause.trim();
+  if (cause is StateError) return cause.message;
+  final detail = cause.toString().trim();
+  if (detail.isNotEmpty && detail != cause.runtimeType.toString()) {
+    return detail;
+  }
+  return cause.runtimeType.toString();
+}
+
 class AppState extends ChangeNotifier {
   AppState(
     this.api, {
@@ -2275,6 +2285,7 @@ class AppState extends ChangeNotifier {
     screenShareError = null;
     notifyListeners();
     var androidBackgroundEnabled = false;
+    LocalVideoTrack? pendingScreenShareTrack;
     try {
       if (defaultTargetPlatform == TargetPlatform.android) {
         final permitted = await rtc.Helper.requestCapturePermission();
@@ -2292,27 +2303,32 @@ class AppState extends ChangeNotifier {
         }
         androidBackgroundEnabled = true;
       }
-      final publication = await participant.setScreenShareEnabled(
-        true,
-        captureScreenAudio: false,
-        screenShareCaptureOptions: ScreenShareCaptureOptions(
-          sourceId: sourceId,
-          maxFrameRate: 30,
-          params: VideoParametersPresets.screenShareH1080FPS30,
-        ),
+      final captureOptions = ScreenShareCaptureOptions(
+        sourceId: sourceId,
+        maxFrameRate: defaultTargetPlatform == TargetPlatform.android ? 15 : 30,
+        params: defaultTargetPlatform == TargetPlatform.android
+            ? VideoParametersPresets.screenShareH720FPS15
+            : VideoParametersPresets.screenShareH1080FPS30,
       );
-      if (publication == null) throw StateError('Источник экрана не создан.');
+      pendingScreenShareTrack = await LocalVideoTrack.createScreenShareTrack(
+        captureOptions,
+      );
+      await participant.publishVideoTrack(pendingScreenShareTrack);
+      // Ownership transfers to the participant after a successful publish.
+      pendingScreenShareTrack = null;
       screenSharePhase = ScreenSharePhase.sharing;
       notifyListeners();
     } catch (cause) {
       _stopScreenShareMetrics();
+      try {
+        await pendingScreenShareTrack?.stop();
+      } catch (_) {}
       if (androidBackgroundEnabled) {
         await _disableAndroidScreenShareBackground();
       }
       screenSharePhase = ScreenSharePhase.error;
-      screenShareError = cause is StateError
-          ? cause.message
-          : 'Не удалось начать демонстрацию экрана: ${cause.runtimeType}.';
+      screenShareError =
+          'Не удалось начать демонстрацию экрана: ${screenShareFailureDetail(cause)}';
       notifyListeners();
     }
   }
@@ -2332,7 +2348,7 @@ class AppState extends ChangeNotifier {
     } catch (cause) {
       screenSharePhase = ScreenSharePhase.error;
       screenShareError =
-          'Не удалось остановить демонстрацию: ${cause.runtimeType}.';
+          'Не удалось остановить демонстрацию: ${screenShareFailureDetail(cause)}';
     }
     notifyListeners();
   }

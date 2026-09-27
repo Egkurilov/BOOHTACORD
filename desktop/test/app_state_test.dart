@@ -74,6 +74,21 @@ void main() {
     );
   });
 
+  test('screen-share errors keep the native failure detail', () {
+    expect(
+      screenShareFailureDetail('permission was denied'),
+      'permission was denied',
+    );
+    expect(
+      screenShareFailureDetail(StateError('capture service unavailable')),
+      'capture service unavailable',
+    );
+    expect(
+      screenShareFailureDetail(Exception('encoder negotiation failed')),
+      contains('encoder negotiation failed'),
+    );
+  });
+
   test('updates audio devices when a headset is connected', () async {
     final changes = StreamController<List<MediaDevice>>.broadcast();
     final state = AppState(
