@@ -20,6 +20,7 @@ import '../widgets/voice_connection_badge.dart';
 import 'profile_screen.dart';
 import 'admin_screen.dart';
 import 'voice_screen_selection_rail.dart';
+import 'screen_receiver_diagnostics.dart';
 
 class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({super.key, required this.state});
@@ -3358,6 +3359,9 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                             selectedIdentity: _selectedScreenIdentity,
                             localScreenAvailable: localScreenTrack != null,
                             showingLocalScreen: showingLocalScreen,
+                            receiverTrack: selectedTrack is RemoteVideoTrack
+                                ? selectedTrack
+                                : null,
                             localName:
                                 state.profile?.displayName.trim().isNotEmpty ==
                                     true
@@ -3731,6 +3735,7 @@ class _VoiceScreenViewer extends StatelessWidget {
     required this.selectedIdentity,
     required this.localScreenAvailable,
     required this.showingLocalScreen,
+    required this.receiverTrack,
     required this.localName,
     required this.localMuted,
     required this.localSpeaking,
@@ -3750,6 +3755,7 @@ class _VoiceScreenViewer extends StatelessWidget {
   final String? selectedIdentity;
   final bool localScreenAvailable;
   final bool showingLocalScreen;
+  final RemoteVideoTrack? receiverTrack;
   final String localName;
   final bool localMuted;
   final bool localSpeaking;
@@ -3825,6 +3831,11 @@ class _VoiceScreenViewer extends StatelessWidget {
             ],
           ),
         ),
+      ),
+      ScreenReceiverDiagnostics(
+        track: receiverTrack,
+        isLocal: showingLocalScreen,
+        hasAudio: screenAudioAvailable,
       ),
       if (showingLocalScreen)
         const Padding(

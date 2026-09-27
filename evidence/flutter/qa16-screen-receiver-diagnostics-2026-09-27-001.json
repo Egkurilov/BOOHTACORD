@@ -1,0 +1,36 @@
+{
+  "id": "qa16-screen-receiver-diagnostics-2026-09-27-001",
+  "kind": "integration-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "environment": {
+    "host_os": "macOS arm64",
+    "apk": "desktop/build/app/outputs/flutter-apk/app-release.apk"
+  },
+  "checks": [
+    {
+      "name": "Flutter analyzer and full test suite",
+      "command": "flutter test --reporter compact && flutter analyze",
+      "status": "PASS",
+      "observation": "All 109 tests passed and analyzer reported no issues. New tests cover rate/delta calculations, invalid or missing counter baselines, and the explicit local-preview/no-audio state when receiver stats are unavailable."
+    },
+    {
+      "name": "macOS debug and signed Android release builds",
+      "command": "flutter build macos --debug && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Both builds completed. Android APK SHA-256: 8e3da7af11ff01ca8e48b40ce246cf88a8154c41b1762ba3d4e990c11ceb19a9."
+    },
+    {
+      "name": "Android APK signature",
+      "command": "apksigner verify --verbose --print-certs desktop/build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified with one signer; certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b matches the upload JKS."
+    },
+    {
+      "name": "Live receiver stats across screen-share peers and platforms",
+      "status": "NOT_RUN",
+      "reason": "No connected real peer or physical Windows/Android test device was available. Unit/widget tests do not prove that native LiveKit receiver stats are populated or comparable across platforms."
+    }
+  ],
+  "remaining": "Run screen sharing with two real peers on macOS, Windows, and Android; confirm receiver stats cadence/units, OS-level stop, fullscreen, permission handling, audio gain/state, and matched web screenshots."
+}
