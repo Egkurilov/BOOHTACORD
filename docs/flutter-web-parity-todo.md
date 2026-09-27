@@ -140,6 +140,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
 
 ## P2 — Identity и delivery
 
+- [x] Выровнять auth-card с вебом: eyebrow/title/copy, max-width 440 px,
+  адаптивный 24–40 px padding, labels над полями и web-sized inputs/submit;
+  сохранить нативные server/reset actions и стабильные focus nodes —
+  [QA-42](../evidence/flutter/qa42-auth-layout-web-parity-2026-09-28-001.json).
+  Android Gboard и matched screenshots остаются отдельной device-проверкой.
 - [ ] Завершить parity login/register/profile loading, validation, error и focus.
 - [ ] Настроить signed platform/domain association до обещания автоматического открытия password-reset URL.
 - [ ] Определить native эквиваленты browser-only notification preferences; не показывать неработающий toggle.

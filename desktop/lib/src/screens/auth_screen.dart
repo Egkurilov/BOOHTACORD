@@ -128,194 +128,241 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: Stack(
-      children: [
-        Positioned.fill(child: CustomPaint(painter: _GridPainter())),
-        Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(32),
-            child: Container(
-              width: 460,
-              padding: const EdgeInsets.all(36),
-              decoration: BoxDecoration(
-                color: GcColors.sidebar,
-                border: Border.all(color: GcColors.border),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black38,
-                    blurRadius: 50,
-                    offset: Offset(0, 20),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final cardWidth = (constraints.maxWidth - 48)
+          .clamp(0.0, 440.0)
+          .toDouble();
+      final cardPadding = (constraints.maxWidth * .06)
+          .clamp(24.0, 40.0)
+          .toDouble();
+      return Scaffold(
+        body: Stack(
+          children: [
+            Positioned.fill(child: CustomPaint(painter: _GridPainter())),
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Container(
+                  key: const ValueKey('auth-card'),
+                  width: cardWidth,
+                  padding: EdgeInsets.all(cardPadding),
+                  decoration: BoxDecoration(
+                    color: GcColors.content,
+                    border: Border.all(color: GcColors.border),
+                    borderRadius: BorderRadius.circular(GcRadii.lg),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x24000000),
+                        blurRadius: 70,
+                        offset: Offset(0, 20),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: AutofillGroup(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Row(
+                  child: AutofillGroup(
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _AuthMark(),
-                          SizedBox(width: 14),
-                          Text(
-                            'BOOHTACORD',
+                          const Text(
+                            'На своём сервере · одна гильдия',
                             style: TextStyle(
-                              fontSize: 19,
+                              color: GcColors.muted,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              height: 16 / 12,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Voice Platform',
+                            style: TextStyle(
+                              fontSize: 24,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: .5,
+                              height: 32 / 24,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Голосовые каналы, демонстрация экрана и общий чат для своей компании.',
+                            style: TextStyle(
+                              color: GcColors.textSecondary,
+                              fontSize: 14,
+                              height: 20 / 14,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          SegmentedButton<bool>(
+                            segments: const [
+                              ButtonSegment(value: false, label: Text('Войти')),
+                              ButtonSegment(
+                                value: true,
+                                label: Text('Регистрация'),
+                              ),
+                            ],
+                            selected: {_register},
+                            onSelectionChanged: (value) =>
+                                setState(() => _register = value.first),
+                          ),
+                          const SizedBox(height: 24),
+                          _AuthFieldLabel('Логин'),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            key: const ValueKey('auth-login-field'),
+                            controller: _login,
+                            focusNode: _loginFocus,
+                            autofocus: _focusLogin,
+                            keyboardType: TextInputType.text,
+                            textCapitalization: TextCapitalization.none,
+                            textInputAction: TextInputAction.next,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                            enableIMEPersonalizedLearning: false,
+                            autofillHints: const [AutofillHints.username],
+                            onFieldSubmitted: (_) =>
+                                _passwordFocus.requestFocus(),
+                            decoration: _authFieldDecoration(),
+                            validator: (value) =>
+                                value != null &&
+                                    RegExp(r'^[A-Za-z0-9_.-]{3,32}$')
+                                        .hasMatch(value)
+                                ? null
+                                : 'От 3 до 32 символов: A–Z, 0–9, _, . или -',
+                          ),
+                          const SizedBox(height: 16),
+                          _AuthFieldLabel('Пароль'),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            key: const ValueKey('auth-password-field'),
+                            controller: _password,
+                            focusNode: _passwordFocus,
+                            obscureText: true,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                            enableIMEPersonalizedLearning: false,
+                            autofillHints: [
+                              _register
+                                  ? AutofillHints.newPassword
+                                  : AutofillHints.password,
+                            ],
+                            decoration: _authFieldDecoration(),
+                            onFieldSubmitted: (_) => _submit(),
+                            validator: (value) =>
+                                (value?.length ?? 0) >= 12 ? null : 'Пароль должен содержать не менее 12 символов',
+                          ),
+                          if (_register) ...[
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Логин: 3–32 символа A–Z, 0–9, `_`, `.`, `-`. Пароль — от 12 символов.',
+                              style: TextStyle(
+                                color: GcColors.muted,
+                                fontSize: 12,
+                                height: 16 / 12,
+                              ),
+                            ),
+                          ],
+                          if (widget.state.error != null) ...[
+                            const SizedBox(height: 8),
+                            Semantics(
+                              liveRegion: true,
+                              child: Text(
+                                widget.state.error!,
+                                style: const TextStyle(
+                                  color: GcColors.danger,
+                                  fontSize: 12,
+                                  height: 16 / 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: _pending ? null : _submit,
+                              child: Text(
+                                _pending
+                                    ? 'Подождите…'
+                                    : _register
+                                    ? 'Создать аккаунт'
+                                    : 'Войти',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextButton.icon(
+                            onPressed: _pending ? null : _usePasswordResetLink,
+                            icon: const Icon(Icons.password_outlined, size: 18),
+                            label: const Text('Есть ссылка для сброса пароля?'),
+                          ),
+                          TextButton.icon(
+                            onPressed: _pending ? null : _changeServer,
+                            icon: const Icon(Icons.dns_outlined, size: 18),
+                            label: Text(
+                              widget.state.serverUrl,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 32),
-                      Text(
-                        _register ? 'Создать аккаунт' : 'С возвращением',
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Одна приватная гильдия. Ваши люди, каналы и голос.',
-                        style: TextStyle(
-                          color: GcColors.textSecondary,
-                          height: 1.45,
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      SegmentedButton<bool>(
-                        segments: const [
-                          ButtonSegment(value: false, label: Text('Войти')),
-                          ButtonSegment(
-                            value: true,
-                            label: Text('Регистрация'),
-                          ),
-                        ],
-                        selected: {_register},
-                        onSelectionChanged: (value) =>
-                            setState(() => _register = value.first),
-                      ),
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        key: const ValueKey('auth-login-field'),
-                        controller: _login,
-                        focusNode: _loginFocus,
-                        autofocus: _focusLogin,
-                        keyboardType: TextInputType.text,
-                        textCapitalization: TextCapitalization.none,
-                        textInputAction: TextInputAction.next,
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        enableIMEPersonalizedLearning: false,
-                        autofillHints: const [AutofillHints.username],
-                        onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
-                        decoration: const InputDecoration(
-                          labelText: 'Логин',
-                          prefixIcon: Icon(Icons.person_outline),
-                        ),
-                        validator: (value) =>
-                            value != null &&
-                                RegExp(r'^[A-Za-z0-9_.-]{3,32}$')
-                                    .hasMatch(value)
-                            ? null
-                            : 'От 3 до 32 символов: A–Z, 0–9, _, . или -',
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        key: const ValueKey('auth-password-field'),
-                        controller: _password,
-                        focusNode: _passwordFocus,
-                        obscureText: true,
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        enableIMEPersonalizedLearning: false,
-                        autofillHints: [
-                          _register
-                              ? AutofillHints.newPassword
-                              : AutofillHints.password,
-                        ],
-                        decoration: const InputDecoration(
-                          labelText: 'Пароль',
-                          prefixIcon: Icon(Icons.lock_outline),
-                        ),
-                        onFieldSubmitted: (_) => _submit(),
-                        validator: (value) => (value?.length ?? 0) >= 12
-                            ? null
-                            : 'Пароль должен содержать не менее 12 символов',
-                      ),
-                      if (widget.state.error != null) ...[
-                        const SizedBox(height: 14),
-                        Text(
-                          widget.state.error!,
-                          style: const TextStyle(color: GcColors.danger),
-                        ),
-                      ],
-                      const SizedBox(height: 24),
-                      FilledButton.icon(
-                        onPressed: _pending ? null : _submit,
-                        icon: _pending
-                            ? const SizedBox.square(
-                                dimension: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.arrow_forward),
-                        label: Text(
-                          _pending
-                              ? 'Подождите…'
-                              : _register
-                              ? 'Создать аккаунт'
-                              : 'Войти',
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      TextButton.icon(
-                        onPressed: _pending ? null : _usePasswordResetLink,
-                        icon: const Icon(Icons.password_outlined, size: 18),
-                        label: const Text('Есть ссылка для сброса пароля?'),
-                      ),
-                      TextButton.icon(
-                        onPressed: _pending ? null : _changeServer,
-                        icon: const Icon(Icons.dns_outlined, size: 18),
-                        label: Text(
-                          widget.state.serverUrl,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
-      ],
+      );
+    },
+  );
+}
+
+class _AuthFieldLabel extends StatelessWidget {
+  const _AuthFieldLabel(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: label,
+    child: Text(
+      label,
+      style: const TextStyle(
+        color: GcColors.textSecondary,
+        fontSize: 13,
+        height: 18 / 13,
+      ),
     ),
   );
 }
 
-class _AuthMark extends StatelessWidget {
-  const _AuthMark();
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 42,
-    height: 42,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: GcColors.accent,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: const Text(
-      'B',
-      style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
-    ),
-  );
-}
+InputDecoration _authFieldDecoration() => const InputDecoration(
+  isDense: true,
+  filled: true,
+  fillColor: GcColors.surface,
+  constraints: BoxConstraints(minHeight: GcLayout.control),
+  contentPadding: EdgeInsets.symmetric(horizontal: 12),
+  border: OutlineInputBorder(
+    borderRadius: BorderRadius.all(Radius.circular(GcRadii.md)),
+    borderSide: BorderSide(color: GcColors.control),
+  ),
+  enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.all(Radius.circular(GcRadii.md)),
+    borderSide: BorderSide(color: GcColors.control),
+  ),
+  focusedBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.all(Radius.circular(GcRadii.md)),
+    borderSide: BorderSide(color: GcColors.focus, width: 2),
+  ),
+  errorBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.all(Radius.circular(GcRadii.md)),
+    borderSide: BorderSide(color: GcColors.danger),
+  ),
+  focusedErrorBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.all(Radius.circular(GcRadii.md)),
+    borderSide: BorderSide(color: GcColors.danger, width: 2),
+  ),
+);
 
 class _GridPainter extends CustomPainter {
   @override
