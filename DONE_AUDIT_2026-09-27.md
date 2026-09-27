@@ -1,0 +1,26 @@
+# Подтверждённые результаты, вынесенные из активного TODO
+
+Срез 27.09.2026. Это перечень завершённой реализации и закрытых проверок. Полные BE/FE/DES записи уже находятся в [DONE.md](DONE.md), [DONE_MEDIA.md](DONE_MEDIA.md), [DONE_RECENT.md](DONE_RECENT.md) и [истории дизайна](docs/design/GUILDCHAT_V1_STATUS.md). Частичный результат внутри открытого QA-гейта не означает, что весь гейт завершён.
+
+## Закрытые QA-гейты
+
+- [x] **QA-01:** migration-backed PostgreSQL integration, no-skip Go CI и `go vet` — [trusted CI evidence](evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json).
+- [x] **QA-02:** конкурентные auth/admin/reset/topology/voice-lease сценарии — [PostgreSQL evidence](evidence/qa/qa02-auth-admin-concurrency-2026-09-25-001.json).
+- [x] **QA-04:** поиск, GIN-планы, миграции и CI — [trusted CI evidence](evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json).
+- [x] **QA-11:** [ADR-010](docs/adr/ADR-010-gitverse-delivery.md) закрепил GitVerse `master`; [trusted run](evidence/release/qa11-gitverse-oci-2026-09-26-001.json) подтвердил digest, SBOM, provenance, guarded deploy и health. Совместимый live rollback остаётся QA-12.
+
+## Реализованные BE/FE и локальные дизайн-результаты
+
+- [x] **BE-01…18:** конкурентная идемпотентность, приватные DM-события/файлы, topology/voice ACL и revocation, read cursors, поиск, realtime replay и voice roster — [подробности](DONE.md) и [BE-18](DONE_RECENT.md). Текущая backend-задача BE-19/20 относится к новому требованию отправлять вложение без текста.
+- [x] **FE-01…51:** чат, DM, вложения, голос, screen viewer, измерения и объяснение отсутствующего захвата в Android Chrome — [основной список](DONE.md), [media leaves](DONE_MEDIA.md), [последние leaves](DONE_RECENT.md). Защищённый PNG preview уже существует, но открытие карточки скачивает файл; полноценный просмотр в чате ещё не сделан.
+- [x] **DES-01 и завершённые части DES-02…08:** матрица 40 компонентов, чат-хронология, responsive/admin/focus исправления и отдельные совпадения геометрии — [матрица](docs/design/GUILDCHAT_COMPONENT_MATRIX.md), [результаты](DONE.md) и [история](docs/design/GUILDCHAT_V1_STATUS.md). Общая visual/screen-reader приёмка остаётся открытой.
+- [x] **Части QA-03/05/07/08/12/13:** серверная DM/file ACL, controlled PNG preview и retry 507→201, два browser-зрителя с 14–15 FPS, восстановленный idle запас attachment volume, fake-Docker rollback и подписанный APK подтверждены [evidence](evidence/). Соответствующие физические, browser и нагрузочные критерии остаются в активном [списке](backlog/VERIFICATION_TODO.md).
+
+## Реализованные Flutter leaves, ранее отмеченные `[x]` в parity checklist
+
+- [x] Админ-топология: reorder/move, TEXT archive/VOICE close, revision/409 recovery, confirmations, API и widget-тесты — [evidence](evidence/flutter/qa13-admin-topology-widget-2026-09-26-001.json).
+- [x] Админ-аккаунты: pagination, role/block save, reset links/copy/expiry, voice kick, audit pagination/presentation и role-gated вкладки; локальные widget-тесты есть. Live REST ACL остаётся открытым.
+- [x] TEXT/DM: optimistic send/retry, reconciliation по `client_message_id`, edit 409 recovery, сохранение истории и tombstone после delete; live/device-проверка остаётся открытой.
+- [x] Приватный Android upload keystore и подписанный release APK; сертификат проверен [release evidence](evidence/android/qa13-release-signing-2026-09-26-002.json). Внешнее хранение ключа и device-приёмка остаются открытыми.
+
+Из активных файлов убраны эти закрытые пункты и повторяющие их отчёты; точные проверки и ограничения остаются доступны по ссылкам на evidence и в истории Git.
