@@ -105,6 +105,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] Завершить focus trap/return и keyboard reachability для admin/profile/dialogs; responsive modal search и drawer traps, начальный/возвращаемый фокус реализованы. Открыты device screen-reader приёмка и matched screenshots.
 - [ ] Проверить responsive breakpoints, resize, accessibility labels и узкие layouts на macOS, Windows и Android.
 - [ ] Сравнить navigation voice roster order, spacing, avatars и indicators с web client.
+- [x] Выровнять приоритет статусов участников и speaking-индикаторы voice roster,
+  strip и cards с `VoiceParticipantStatus.vue`; целевые тесты, analyzer и полный
+  Flutter suite прошли — [QA-35](../evidence/flutter/qa35-voice-participant-status-web-parity-2026-09-28-001.json).
+  Порядок, отступы, аватары и matched screenshots остаются открытыми.
 
 ## P2 — Identity и delivery
 

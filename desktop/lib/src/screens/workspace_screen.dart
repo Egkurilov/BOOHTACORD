@@ -12,6 +12,7 @@ import '../models.dart';
 import '../theme.dart';
 import '../services/message_presentation.dart';
 import '../services/api_client.dart';
+import '../services/voice_participant_presentation.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
@@ -942,7 +943,8 @@ class _VoiceNavigationMembers extends StatelessWidget {
           accountId: state.user?.accountId,
           muted: state.microphoneMuted,
           microphoneUnavailable: state.microphoneUnavailable,
-          speaking: localParticipant.isSpeaking && !state.microphoneMuted,
+          deafened: state.deafened,
+          speaking: localParticipant.isSpeaking,
           screenSharing: state.screenSharePhase == ScreenSharePhase.sharing,
         ),
         for (final participant in remoteParticipants)
@@ -1053,6 +1055,7 @@ class _VoiceNavigationMemberRow extends StatelessWidget {
     required this.speaking,
     required this.screenSharing,
     this.microphoneUnavailable = false,
+    this.deafened = false,
   });
 
   final AppState state;
@@ -1060,11 +1063,18 @@ class _VoiceNavigationMemberRow extends StatelessWidget {
   final String? accountId;
   final bool muted;
   final bool microphoneUnavailable;
+  final bool deafened;
   final bool speaking;
   final bool screenSharing;
 
   @override
   Widget build(BuildContext context) {
+    final presentation = VoiceParticipantPresentation.resolve(
+      muted: muted,
+      microphoneUnavailable: microphoneUnavailable,
+      deafened: deafened,
+      speaking: speaking,
+    );
     final member = accountId == null
         ? null
         : state.members.where((item) => item.id == accountId).firstOrNull;
@@ -1086,9 +1096,13 @@ class _VoiceNavigationMemberRow extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: speaking ? GcColors.success : GcColors.textSecondary,
+                color: presentation.isSpeaking
+                    ? GcColors.success
+                    : GcColors.textSecondary,
                 fontSize: 11,
-                fontWeight: speaking ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: presentation.isSpeaking
+                    ? FontWeight.w600
+                    : FontWeight.w400,
               ),
             ),
           ),
@@ -1107,17 +1121,19 @@ class _VoiceNavigationMemberRow extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 4),
             child: Tooltip(
-              message: microphoneUnavailable
-                  ? 'Микрофон недоступен'
-                  : muted
-                  ? 'Микрофон выключен'
-                  : 'Микрофон включён',
+              message: presentation.label,
               child: Icon(
-                muted || microphoneUnavailable
+                deafened
+                    ? Icons.headset_off
+                    : presentation.isSpeaking
+                    ? Icons.graphic_eq
+                    : muted || microphoneUnavailable
                     ? Icons.mic_off_outlined
                     : Icons.mic_none,
                 size: 13,
-                color: microphoneUnavailable
+                color: deafened
+                    ? GcColors.danger
+                    : microphoneUnavailable
                     ? GcColors.warning
                     : muted
                     ? GcColors.muted
@@ -3981,6 +3997,7 @@ class _VoiceParticipantRoom extends StatelessWidget {
                 avatarUrl: state.profile?.avatarUrl,
                 muted: state.microphoneMuted,
                 microphoneUnavailable: state.microphoneUnavailable,
+                deafened: state.deafened,
                 speaking: room?.localParticipant?.isSpeaking ?? false,
                 isLocal: true,
                 hasScreen: state.screenSharePhase == ScreenSharePhase.sharing,
@@ -4308,6 +4325,7 @@ class _VoiceParticipantStrip extends StatelessWidget {
                 muted: localMuted,
                 speaking: localSpeaking,
                 microphoneUnavailable: state.microphoneUnavailable,
+                deafened: state.deafened,
               ),
               for (final participant in participants)
                 _VoiceStripPerson(
@@ -4333,6 +4351,7 @@ class _VoiceStripPerson extends StatelessWidget {
     required this.muted,
     required this.speaking,
     this.microphoneUnavailable = false,
+    this.deafened = false,
   });
 
   final AppState state;
@@ -4341,48 +4360,70 @@ class _VoiceStripPerson extends StatelessWidget {
   final bool muted;
   final bool speaking;
   final bool microphoneUnavailable;
+  final bool deafened;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: 148,
-    margin: const EdgeInsets.only(right: 8),
-    padding: const EdgeInsets.symmetric(horizontal: 10),
-    decoration: BoxDecoration(
-      color: GcColors.surface,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: speaking ? GcColors.success : GcColors.border),
-    ),
-    child: Row(
-      children: [
-        AuthenticatedAvatar(
-          state: state,
-          name: name,
-          avatarUrl: avatarUrl,
-          radius: 15,
-          borderColor: speaking ? GcColors.success : null,
-          borderWidth: speaking ? 2 : 0,
+  Widget build(BuildContext context) {
+    final presentation = VoiceParticipantPresentation.resolve(
+      muted: muted,
+      microphoneUnavailable: microphoneUnavailable,
+      deafened: deafened,
+      speaking: speaking,
+    );
+    return Container(
+      width: 148,
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: GcColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: presentation.isSpeaking ? GcColors.success : GcColors.border,
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+      child: Row(
+        children: [
+          AuthenticatedAvatar(
+            state: state,
+            name: name,
+            avatarUrl: avatarUrl,
+            radius: 15,
+            borderColor: presentation.isSpeaking ? GcColors.success : null,
+            borderWidth: presentation.isSpeaking ? 2 : 0,
           ),
-        ),
-        Icon(
-          muted || microphoneUnavailable ? Icons.mic_off : Icons.mic,
-          size: 15,
-          color: microphoneUnavailable
-              ? GcColors.warning
-              : muted
-              ? GcColors.danger
-              : GcColors.muted,
-        ),
-      ],
-    ),
-  );
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ),
+          Tooltip(
+            message: presentation.label,
+            child: Icon(
+              deafened
+                  ? Icons.headset_off
+                  : muted || microphoneUnavailable
+                  ? Icons.mic_off
+                  : presentation.isSpeaking
+                  ? Icons.graphic_eq
+                  : Icons.mic,
+              size: 15,
+              color: deafened
+                  ? GcColors.danger
+                  : microphoneUnavailable
+                  ? GcColors.warning
+                  : muted
+                  ? GcColors.danger
+                  : GcColors.muted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _VoiceParticipantCard extends StatelessWidget {
@@ -4398,6 +4439,7 @@ class _VoiceParticipantCard extends StatelessWidget {
     this.isLocal = false,
     this.onScreenTap,
     this.microphoneUnavailable = false,
+    this.deafened = false,
   });
   final AppState state;
   final String name;
@@ -4410,101 +4452,114 @@ class _VoiceParticipantCard extends StatelessWidget {
   final bool isLocal;
   final VoidCallback? onScreenTap;
   final bool microphoneUnavailable;
+  final bool deafened;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: GcColors.surface,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: speaking ? GcColors.success : GcColors.border,
-        width: speaking ? 2 : 1,
-      ),
-    ),
-    child: Stack(
-      children: [
-        Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AuthenticatedAvatar(
-                state: state,
-                name: name,
-                avatarUrl: avatarUrl,
-                radius: 31,
-                borderColor: speaking
-                    ? GcColors.success
-                    : const Color(0x44365ACA),
-                borderWidth: speaking ? 3 : 1,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      isLocal ? '$name (вы)' : name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                  const SizedBox(width: 7),
-                  Icon(
-                    muted || microphoneUnavailable ? Icons.mic_off : Icons.mic,
-                    size: 16,
-                    color: microphoneUnavailable
-                        ? GcColors.warning
-                        : muted
-                        ? GcColors.danger
-                        : GcColors.textSecondary,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
-              Text(
-                speaking
-                    ? 'Говорит'
-                    : microphoneUnavailable
-                    ? 'Микрофон недоступен'
-                    : muted
-                    ? 'Микрофон выключен'
-                    : 'Микрофон включён',
-                style: TextStyle(
-                  color: speaking ? GcColors.success : GcColors.muted,
-                  fontSize: 12,
-                ),
-              ),
-              if (hasScreen)
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: OutlinedButton.icon(
-                    onPressed: onScreenTap,
-                    icon: const Icon(Icons.monitor_outlined, size: 16),
-                    label: const Text('Смотреть'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: GcColors.accentText,
-                      minimumSize: const Size(0, 34),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+  Widget build(BuildContext context) {
+    final presentation = VoiceParticipantPresentation.resolve(
+      muted: muted,
+      microphoneUnavailable: microphoneUnavailable,
+      deafened: deafened,
+      speaking: speaking,
+    );
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: GcColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: presentation.isSpeaking ? GcColors.success : GcColors.border,
+          width: presentation.isSpeaking ? 2 : 1,
         ),
-        if (volume != null && onVolumeChanged != null)
-          Positioned(
-            top: -12,
-            right: -12,
-            child: _VoiceVolumeMenu(
-              name: name,
-              volume: volume!,
-              onChanged: onVolumeChanged!,
+      ),
+      child: Stack(
+        children: [
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AuthenticatedAvatar(
+                  state: state,
+                  name: name,
+                  avatarUrl: avatarUrl,
+                  radius: 31,
+                  borderColor: presentation.isSpeaking
+                      ? GcColors.success
+                      : const Color(0x44365ACA),
+                  borderWidth: presentation.isSpeaking ? 3 : 1,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        isLocal ? '$name (вы)' : name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    Icon(
+                      deafened
+                          ? Icons.headset_off
+                          : muted || microphoneUnavailable
+                          ? Icons.mic_off
+                          : presentation.isSpeaking
+                          ? Icons.graphic_eq
+                          : Icons.mic,
+                      size: 16,
+                      color: deafened
+                          ? GcColors.danger
+                          : microphoneUnavailable
+                          ? GcColors.warning
+                          : muted
+                          ? GcColors.danger
+                          : GcColors.textSecondary,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  presentation.label,
+                  style: TextStyle(
+                    color: presentation.isSpeaking
+                        ? GcColors.success
+                        : GcColors.muted,
+                    fontSize: 12,
+                  ),
+                ),
+                if (hasScreen)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: OutlinedButton.icon(
+                      onPressed: onScreenTap,
+                      icon: const Icon(Icons.monitor_outlined, size: 16),
+                      label: const Text('Смотреть'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: GcColors.accentText,
+                        minimumSize: const Size(0, 34),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-      ],
-    ),
-  );
+          if (volume != null && onVolumeChanged != null)
+            Positioned(
+              top: -12,
+              right: -12,
+              child: _VoiceVolumeMenu(
+                name: name,
+                volume: volume!,
+                onChanged: onVolumeChanged!,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 class _VoiceVolumeMenu extends StatefulWidget {

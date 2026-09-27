@@ -1,0 +1,33 @@
+{
+  "id": "qa35-voice-participant-status-web-parity-2026-09-28-001",
+  "kind": "voice-participant-status-web-parity",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Flutter navigation roster, participant strip and participant cards now use a shared presentation rule matching VoiceParticipantStatus.vue: deafened, microphone unavailable, muted, speaking, then in-channel. Speaking indicators are suppressed for muted, unavailable and deafened participants.",
+  "checks": [
+    {
+      "name": "Participant status priority and speaking suppression",
+      "command": "flutter test test/voice_participant_presentation_test.dart",
+      "status": "PASS",
+      "observation": "Verified status precedence and that mute, unavailable capture or deafen suppresses the speaking state."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 147 Flutter tests passed."
+    },
+    {
+      "name": "Live voice room and matched screenshots",
+      "status": "NOT_RUN",
+      "reason": "No Android device or live peer session was available; matched runtime screenshots were not captured."
+    }
+  ],
+  "remaining": "Verify actual participant transitions and matched roster screenshots on macOS, Windows and Android; order, spacing and avatar comparison remain open."
+}
