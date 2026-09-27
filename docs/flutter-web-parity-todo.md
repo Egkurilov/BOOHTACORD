@@ -2,6 +2,13 @@
 
 Source of truth: [parity map](flutter-web-parity.md). Реализованные admin, conversation и release APK leaves перенесены в [DONE_AUDIT_2026-09-27.md](../DONE_AUDIT_2026-09-27.md). Этот checklist входит в QA-13; local widget/source checks не закрывают device acceptance.
 
+## P0 — Запуск приложения
+
+- [ ] Разобраться, почему свежий macOS debug-клиент после запуска остаётся на
+  «Подключаемся к гильдии…», хотя веб-сервер и анонимный endpoint сессии
+  отвечают; проверить startup до экрана логина —
+  [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
+
 ## P0 — Голосовые каналы и демонстрация экрана
 
 Критический пользовательский путь на всех клиентах. Сначала закрываем возврат к

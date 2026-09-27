@@ -1,0 +1,38 @@
+{
+  "id": "qa40-macos-startup-loading-2026-09-28-001",
+  "kind": "macos-runtime-startup-smoke",
+  "status": "FAIL",
+  "executed_at": "2026-09-28",
+  "checks": [
+    {
+      "name": "macOS debug build and launch",
+      "command": "flutter run -d macos",
+      "status": "PASS",
+      "observation": "Flutter built and launched the debug app."
+    },
+    {
+      "name": "startup reaches signed-out or ready state",
+      "status": "FAIL",
+      "observation": "After more than 30 seconds, the window still displayed ‘Подключаемся к гильдии…’."
+    },
+    {
+      "name": "web server reachability",
+      "command": "curl -I --max-time 8 https://v.bootybay.ru/",
+      "status": "PASS",
+      "observation": "The web server returned HTTP 200."
+    },
+    {
+      "name": "anonymous session endpoint reachability",
+      "command": "curl -sS --max-time 8 -D - -o /dev/null -H 'Origin: https://v.bootybay.ru' https://v.bootybay.ru/api/v1/auth/session",
+      "status": "PASS",
+      "observation": "The endpoint returned HTTP 200 without a session cookie."
+    },
+    {
+      "name": "client external socket during loading",
+      "command": "lsof -nP -a -p 81067 -i",
+      "status": "PASS",
+      "observation": "At observation time only the local Flutter VM service socket was present; this is a point-in-time observation, not a root-cause diagnosis."
+    }
+  ],
+  "remaining": "Find why AppState.initialize does not leave its loading phase in the macOS runtime, then repeat startup smoke through the login screen."
+}

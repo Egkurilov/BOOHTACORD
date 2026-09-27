@@ -262,6 +262,11 @@ the implementation.
 
 ### 8. Parity gate and release
 
+- A fresh macOS debug launch currently stays on the initial
+  “Подключаемся к гильдии…” screen; the server and anonymous session endpoint
+  respond to direct HTTP checks, but the client process had no external socket
+  during the observation. Investigate app startup before treating macOS runtime
+  smoke as passed [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
 - Compare reference and Flutter screenshots at the same viewport and data;
   track geometry/color/type deviations per screen.
 - Exercise every control and non-happy state against the same backend contracts.
