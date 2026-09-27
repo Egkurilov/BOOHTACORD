@@ -18,6 +18,7 @@ import '../widgets/message_attachment_list.dart';
 import '../widgets/screen_share_setup_dialog.dart';
 import '../widgets/formatted_message_body.dart';
 import '../widgets/voice_connection_badge.dart';
+import '../widgets/voice_microphone_unavailable_notice.dart';
 import 'profile_screen.dart';
 import 'admin_screen.dart';
 import 'voice_screen_selection_rail.dart';
@@ -940,6 +941,7 @@ class _VoiceNavigationMembers extends StatelessWidget {
               : 'Вы',
           accountId: state.user?.accountId,
           muted: state.microphoneMuted,
+          microphoneUnavailable: state.microphoneUnavailable,
           speaking: localParticipant.isSpeaking && !state.microphoneMuted,
           screenSharing: state.screenSharePhase == ScreenSharePhase.sharing,
         ),
@@ -1050,12 +1052,14 @@ class _VoiceNavigationMemberRow extends StatelessWidget {
     required this.muted,
     required this.speaking,
     required this.screenSharing,
+    this.microphoneUnavailable = false,
   });
 
   final AppState state;
   final String name;
   final String? accountId;
   final bool muted;
+  final bool microphoneUnavailable;
   final bool speaking;
   final bool screenSharing;
 
@@ -1103,11 +1107,21 @@ class _VoiceNavigationMemberRow extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 4),
             child: Tooltip(
-              message: muted ? 'Микрофон выключен' : 'Микрофон включён',
+              message: microphoneUnavailable
+                  ? 'Микрофон недоступен'
+                  : muted
+                  ? 'Микрофон выключен'
+                  : 'Микрофон включён',
               child: Icon(
-                muted ? Icons.mic_off_outlined : Icons.mic_none,
+                muted || microphoneUnavailable
+                    ? Icons.mic_off_outlined
+                    : Icons.mic_none,
                 size: 13,
-                color: muted ? GcColors.muted : GcColors.textSecondary,
+                color: microphoneUnavailable
+                    ? GcColors.warning
+                    : muted
+                    ? GcColors.muted
+                    : GcColors.textSecondary,
               ),
             ),
           ),
@@ -3928,6 +3942,14 @@ class _VoiceParticipantRoom extends StatelessWidget {
             const SizedBox(height: 18),
             _ErrorBanner(message: state.error!),
           ],
+          if (state.microphoneUnavailable) ...[
+            const SizedBox(height: 14),
+            VoiceMicrophoneUnavailableNotice(
+              onRetry: state.audioActivationMode == AudioActivationMode.ptt
+                  ? null
+                  : () => unawaited(state.toggleMicrophone()),
+            ),
+          ],
           const SizedBox(height: 24),
           GridView.count(
             crossAxisCount: constraints.maxWidth < 460
@@ -3958,6 +3980,7 @@ class _VoiceParticipantRoom extends StatelessWidget {
                     : 'Вы',
                 avatarUrl: state.profile?.avatarUrl,
                 muted: state.microphoneMuted,
+                microphoneUnavailable: state.microphoneUnavailable,
                 speaking: room?.localParticipant?.isSpeaking ?? false,
                 isLocal: true,
                 hasScreen: state.screenSharePhase == ScreenSharePhase.sharing,
@@ -4284,6 +4307,7 @@ class _VoiceParticipantStrip extends StatelessWidget {
                 avatarUrl: localAvatarUrl,
                 muted: localMuted,
                 speaking: localSpeaking,
+                microphoneUnavailable: state.microphoneUnavailable,
               ),
               for (final participant in participants)
                 _VoiceStripPerson(
@@ -4308,6 +4332,7 @@ class _VoiceStripPerson extends StatelessWidget {
     required this.avatarUrl,
     required this.muted,
     required this.speaking,
+    this.microphoneUnavailable = false,
   });
 
   final AppState state;
@@ -4315,6 +4340,7 @@ class _VoiceStripPerson extends StatelessWidget {
   final String? avatarUrl;
   final bool muted;
   final bool speaking;
+  final bool microphoneUnavailable;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -4346,9 +4372,13 @@ class _VoiceStripPerson extends StatelessWidget {
           ),
         ),
         Icon(
-          muted ? Icons.mic_off : Icons.mic,
+          muted || microphoneUnavailable ? Icons.mic_off : Icons.mic,
           size: 15,
-          color: muted ? GcColors.danger : GcColors.muted,
+          color: microphoneUnavailable
+              ? GcColors.warning
+              : muted
+              ? GcColors.danger
+              : GcColors.muted,
         ),
       ],
     ),
@@ -4367,6 +4397,7 @@ class _VoiceParticipantCard extends StatelessWidget {
     this.hasScreen = false,
     this.isLocal = false,
     this.onScreenTap,
+    this.microphoneUnavailable = false,
   });
   final AppState state;
   final String name;
@@ -4378,6 +4409,7 @@ class _VoiceParticipantCard extends StatelessWidget {
   final bool hasScreen;
   final bool isLocal;
   final VoidCallback? onScreenTap;
+  final bool microphoneUnavailable;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -4420,9 +4452,13 @@ class _VoiceParticipantCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 7),
                   Icon(
-                    muted ? Icons.mic_off : Icons.mic,
+                    muted || microphoneUnavailable ? Icons.mic_off : Icons.mic,
                     size: 16,
-                    color: muted ? GcColors.danger : GcColors.textSecondary,
+                    color: microphoneUnavailable
+                        ? GcColors.warning
+                        : muted
+                        ? GcColors.danger
+                        : GcColors.textSecondary,
                   ),
                 ],
               ),
@@ -4430,6 +4466,8 @@ class _VoiceParticipantCard extends StatelessWidget {
               Text(
                 speaking
                     ? 'Говорит'
+                    : microphoneUnavailable
+                    ? 'Микрофон недоступен'
                     : muted
                     ? 'Микрофон выключен'
                     : 'Микрофон включён',
@@ -4839,7 +4877,9 @@ class _VoiceDock extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _VoiceDockButton(
-              tooltip: state.audioActivationMode == AudioActivationMode.ptt
+              tooltip: state.microphoneUnavailable
+                  ? 'Микрофон недоступен · повторить включение'
+                  : state.audioActivationMode == AudioActivationMode.ptt
                   ? 'Микрофон управляется push-to-talk'
                   : state.microphoneMuted
                   ? 'Включить микрофон'

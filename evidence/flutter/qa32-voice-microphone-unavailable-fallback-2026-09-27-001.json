@@ -1,0 +1,39 @@
+{
+  "id": "qa32-voice-microphone-unavailable-fallback-2026-09-27-001",
+  "kind": "voice-microphone-unavailable-listener-fallback",
+  "status": "PASS",
+  "executed_at": "2026-09-27",
+  "implementation": "Flutter now exposes microphone capture failure after falling back to listener mode, marks the local microphone unavailable in participant UI, and provides a retry action in VAD mode. In PTT mode the notice instructs the user to hold the assigned key and does not bypass the PTT gesture.",
+  "checks": [
+    {
+      "name": "Microphone fallback notice and PTT behavior",
+      "command": "flutter test test/voice_microphone_unavailable_notice_test.dart",
+      "status": "PASS",
+      "observation": "Widget tests verify listener-mode explanation, accessible retry, retry callback, and the PTT-specific instruction with no unguarded retry button."
+    },
+    {
+      "name": "Voice participant workspace integration",
+      "command": "flutter test test/workspace_screen_test.dart --plain-name \"shows a retryable microphone-unavailable listener state\"",
+      "status": "PASS",
+      "observation": "Workspace test verifies the joined listener state presents the notice, local unavailable status, and retry action without layout exceptions."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 144 Flutter tests passed."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    },
+    {
+      "name": "Microphone permission denial on native devices",
+      "status": "NOT_RUN",
+      "reason": "Requires verifying platform-specific permission errors and retry after granting access on Android, macOS and Windows hardware."
+    }
+  ],
+  "remaining": "Verify denied permission and post-grant retry on native devices; broader permission-denied copy/accessibility acceptance remains open in the parity checklist."
+}

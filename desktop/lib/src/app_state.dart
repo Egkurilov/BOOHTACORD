@@ -127,6 +127,7 @@ class AppState extends ChangeNotifier {
   VoicePhase voicePhase = VoicePhase.idle;
   GuildChannel? voiceChannel;
   bool microphoneMuted = false;
+  bool microphoneUnavailable = false;
   bool deafened = false;
   ScreenSharePhase screenSharePhase = ScreenSharePhase.idle;
   String? screenShareError;
@@ -277,6 +278,7 @@ class AppState extends ChangeNotifier {
     voiceChannel = null;
     _leaseId = null;
     microphoneMuted = false;
+    microphoneUnavailable = false;
     deafened = false;
     _listenerOnly = false;
     _voiceVolumePreferences = null;
@@ -792,10 +794,14 @@ class AppState extends ChangeNotifier {
         audioCaptureOptions: _audioCaptureOptions,
       );
       microphoneMuted = muted;
-      if (!muted) _refreshAudioDevicesAfterMicrophoneCapture();
+      if (!muted) {
+        _refreshAudioDevicesAfterMicrophoneCapture();
+        microphoneUnavailable = false;
+      }
       return true;
     } catch (cause) {
       microphoneMuted = true;
+      if (!muted) microphoneUnavailable = true;
       audioActivationError = 'Не удалось изменить микрофон: ${_message(cause)}';
       return false;
     }
@@ -1659,6 +1665,7 @@ class AppState extends ChangeNotifier {
     voiceChannel = null;
     voicePhase = VoicePhase.error;
     microphoneMuted = false;
+    microphoneUnavailable = false;
     deafened = false;
     pushToTalkPressed = false;
     _listenerOnly = false;
@@ -2043,6 +2050,7 @@ class AppState extends ChangeNotifier {
     if (channel.admissionClosed) return;
     voicePhase = VoicePhase.joining;
     _voiceAdmissionPending = true;
+    microphoneUnavailable = false;
     error = null;
     transferRequired = false;
     notifyListeners();
@@ -2098,6 +2106,7 @@ class AppState extends ChangeNotifier {
       if (listenerOnly) {
         _listenerOnly = true;
         microphoneMuted = true;
+        microphoneUnavailable = false;
         voicePhase = VoicePhase.listener;
       } else if (audioActivationMode == AudioActivationMode.ptt) {
         _microphoneMutedBeforePtt = false;
@@ -2114,11 +2123,13 @@ class AppState extends ChangeNotifier {
           if (room.localParticipant != null) {
             _refreshAudioDevicesAfterMicrophoneCapture();
           }
+          microphoneUnavailable = false;
           _listenerOnly = false;
           voicePhase = VoicePhase.connected;
         } catch (_) {
           _listenerOnly = true;
           microphoneMuted = true;
+          microphoneUnavailable = true;
           voicePhase = VoicePhase.listener;
         }
       }
@@ -2181,6 +2192,7 @@ class AppState extends ChangeNotifier {
     if (_leaseId == leaseId) _leaseId = null;
     voiceChannel = null;
     microphoneMuted = false;
+    microphoneUnavailable = false;
     deafened = false;
     pushToTalkPressed = false;
     _listenerOnly = false;
@@ -2610,6 +2622,7 @@ class AppState extends ChangeNotifier {
     screenShareError = null;
     await _disableAndroidScreenShareBackground();
     microphoneMuted = false;
+    microphoneUnavailable = false;
     deafened = false;
     pushToTalkPressed = false;
     _mutedBeforeDeafen = false;
@@ -2646,6 +2659,8 @@ class AppState extends ChangeNotifier {
       );
       if (!microphoneMuted) {
         _refreshAudioDevicesAfterMicrophoneCapture();
+        error = null;
+        microphoneUnavailable = false;
         _listenerOnly = false;
         if (voicePhase == VoicePhase.listener) {
           voicePhase = VoicePhase.connected;
@@ -2653,6 +2668,7 @@ class AppState extends ChangeNotifier {
       }
     } catch (cause) {
       microphoneMuted = true;
+      microphoneUnavailable = true;
       error = _message(cause);
     }
     notifyListeners();
@@ -2715,6 +2731,7 @@ class AppState extends ChangeNotifier {
     voiceChannel = null;
     transferRequired = false;
     microphoneMuted = false;
+    microphoneUnavailable = false;
     deafened = false;
     _listenerOnly = false;
     _mutedBeforeDeafen = false;

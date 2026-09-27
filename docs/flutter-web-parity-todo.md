@@ -26,6 +26,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   voice lease на macOS, Windows и Android.
 - [ ] Сверить permission-denied/prejoin/dock copy, focus и screen-reader
   announcements на устройствах.
+- [x] Явно показывать после отказа/сбоя microphone capture, что пользователь
+  остался слушателем; дать безопасный retry для VAD и PTT-инструкцию без
+  обхода удерживаемой клавиши — [QA-32](../evidence/flutter/qa32-voice-microphone-unavailable-fallback-2026-09-27-001.json).
 - [ ] На физических устройствах проверить receiver metrics/audio states,
   fullscreen/share permissions и переключение rail/viewer; локальный fullscreen
   и исправления диагностики, отступов и мобильного возврата — [QA-17](../evidence/flutter/qa17-voice-viewer-mobile-navigation-2026-09-27-001.json).

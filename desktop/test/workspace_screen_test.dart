@@ -103,6 +103,33 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('shows a retryable microphone-unavailable listener state', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    state.selectedChannel = _PortraitApi.voiceChannel;
+    state.voiceChannel = _PortraitApi.voiceChannel;
+    state.voicePhase = VoicePhase.listener;
+    state.microphoneMuted = true;
+    state.microphoneUnavailable = true;
+    state.audioActivationMode = AudioActivationMode.vad;
+
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Микрофон недоступен'), findsNWidgets(2));
+    expect(find.textContaining('подключены как слушатель'), findsOneWidget);
+    expect(find.byTooltip('Повторить включение микрофона'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('shows the voice roster before joining the room', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1440, 900);
