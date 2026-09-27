@@ -1,0 +1,37 @@
+{
+  "id": "qa30-native-debug-builds-2026-09-27-001",
+  "kind": "native-debug-build-smoke",
+  "status": "PASS",
+  "executed_at": "2026-09-27",
+  "source_revision": "70ff51d",
+  "checks": [
+    {
+      "name": "macOS Debug application",
+      "command": "flutter build macos --debug",
+      "status": "PASS",
+      "observation": "Built desktop/build/macos/Build/Products/Debug/BOOHTACORD.app with Xcode 27 on arm64 macOS."
+    },
+    {
+      "name": "Android Debug APK",
+      "command": "flutter build apk --debug",
+      "status": "PASS",
+      "observation": "Built desktop/build/app/outputs/flutter-apk/app-debug.apk. Gradle emitted a Kotlin Gradle Plugin migration warning for flutter_background, flutter_webrtc and livekit_client; see the open toolchain checklist item."
+    },
+    {
+      "name": "Connected Android device runtime",
+      "status": "NOT_RUN",
+      "reason": "flutter devices listed only macOS and Chrome; no Android device or emulator is available."
+    },
+    {
+      "name": "Windows native build and launch",
+      "status": "NOT_RUN",
+      "reason": "A Windows runner is required and is not available in this environment."
+    },
+    {
+      "name": "Signed macOS and Android release builds",
+      "status": "NOT_RUN",
+      "reason": "This smoke check built Debug targets only; release packaging, signing and installation acceptance remain open."
+    }
+  ],
+  "remaining": "Build and launch on a Windows runner, verify signed release packaging on macOS and Android, and exercise the Android APK on a physical device."
+}
