@@ -82,8 +82,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Применять guild presence snapshot/change к списку и сбрасывать статусы
   в unknown при недоступности realtime, как в web
   [QA-28](../evidence/flutter/qa28-guild-presence-realtime-2026-09-27-001.json).
-- [ ] Проверить live-переходы статусов двумя аккаунтами на backend; заменить
-  центрированный профиль участника на anchored popover.
+- [x] Заменить центрированный профиль участника на anchored popover с loading,
+  error/retry, DM, same-voice volume и admin voice kick
+  [QA-29](../evidence/flutter/qa29-member-profile-popover-2026-09-27-001.json).
+- [ ] Проверить live-переходы presence двумя аккаунтами на backend.
 - [ ] Сохранить matched web/Flutter screenshots 1440×900, 1280×800, 1024×768 и Android portrait для auth, chat, DM, search, members, voice, screen share, profile, audio и admin; зафиксировать отличия по экранам.
 - [ ] Завершить focus trap/return и keyboard reachability для admin/profile/dialogs; responsive modal search и drawer traps, начальный/возвращаемый фокус реализованы. Открыты device screen-reader приёмка и matched screenshots.
 - [ ] Проверить responsive breakpoints, resize, accessibility labels и узкие layouts на macOS, Windows и Android.

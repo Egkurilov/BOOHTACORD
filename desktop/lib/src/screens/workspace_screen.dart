@@ -5028,10 +5028,66 @@ class _UserFooter extends StatelessWidget {
   );
 }
 
-class _MembersPanel extends StatelessWidget {
+class _MembersPanel extends StatefulWidget {
   const _MembersPanel({required this.state, this.onClose});
   final AppState state;
   final VoidCallback? onClose;
+
+  @override
+  State<_MembersPanel> createState() => _MembersPanelState();
+}
+
+class _MembersPanelState extends State<_MembersPanel> {
+  AppState get state => widget.state;
+  VoidCallback? get onClose => widget.onClose;
+
+  final OverlayPortalController _profilePortal = OverlayPortalController();
+  final LayerLink _profileLink = LayerLink();
+  final FocusNode _profileTriggerFocus = FocusNode(
+    debugLabel: 'member-profile-trigger',
+  );
+  String? _profileMemberId;
+  String? _profileTriggerMemberId;
+
+  @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_handleHardwareKey);
+  }
+
+  bool _handleHardwareKey(KeyEvent event) {
+    if (_profileMemberId != null &&
+        event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape) {
+      _closeMemberProfile();
+      return true;
+    }
+    return false;
+  }
+
+  void _showMemberProfile(GuildMember member) {
+    _profileTriggerMemberId = member.id;
+    _profileTriggerFocus.requestFocus();
+    setState(() => _profileMemberId = member.id);
+    _profilePortal.show();
+  }
+
+  void _closeMemberProfile() {
+    _profilePortal.hide();
+    setState(() => _profileMemberId = null);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _profileTriggerFocus.canRequestFocus) {
+        _profileTriggerFocus.requestFocus();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleHardwareKey);
+    _profileTriggerFocus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
@@ -5069,114 +5125,160 @@ class _MembersPanel extends StatelessWidget {
       ),
     ];
 
-    return ColoredBox(
-      key: const ValueKey('members-panel'),
-      color: GcColors.sidebar,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'УЧАСТНИКИ',
-                    style: TextStyle(
-                      color: GcColors.muted,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: .7,
+    return OverlayPortal(
+      controller: _profilePortal,
+      overlayChildBuilder: (context) {
+        final memberId = _profileMemberId;
+        if (memberId == null) return const SizedBox.shrink();
+        return Focus(
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent &&
+                event.logicalKey == LogicalKeyboardKey.escape) {
+              _closeMemberProfile();
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
+          },
+          child: CompositedTransformFollower(
+            link: _profileLink,
+            showWhenUnlinked: false,
+            targetAnchor: Alignment.topRight,
+            followerAnchor: Alignment.topRight,
+            offset: const Offset(-12, 8),
+            child: _MemberProfilePopover(
+              key: ValueKey(memberId),
+              state: state,
+              memberId: memberId,
+              onClose: _closeMemberProfile,
+              onOpenDirectMessage: (member) async {
+                _closeMemberProfile();
+                await state.createDirectConversation(
+                  DirectCandidate(
+                    id: member.id,
+                    displayName: member.displayName,
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+      child: ColoredBox(
+        key: const ValueKey('members-panel'),
+        color: GcColors.sidebar,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'УЧАСТНИКИ',
+                      style: TextStyle(
+                        color: GcColors.muted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: .7,
+                      ),
                     ),
                   ),
-                ),
-                if (onClose != null)
-                  IconButton(
-                    tooltip: 'Закрыть участников',
-                    onPressed: onClose,
-                    icon: const Icon(Icons.close),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: state.refreshMembers,
-                child: ListView(
-                  children: [
-                    if (state.membersError != null)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Semantics(
-                              liveRegion: true,
-                              child: Text(
-                                state.membersError!,
-                                style: const TextStyle(color: GcColors.danger),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: state.membersLoading
-                                  ? null
-                                  : state.refreshMembers,
-                              child: Text(
-                                state.membersLoading
-                                    ? 'Загружаем…'
-                                    : 'Повторить',
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else if (state.membersLoading && state.members.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Text(
-                          'Загружаем участников…',
-                          style: TextStyle(color: GcColors.muted),
-                        ),
-                      )
-                    else if (state.members.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Text(
-                          'В гильдии пока нет участников.',
-                          style: TextStyle(color: GcColors.muted),
-                        ),
-                      ),
-                    for (final group in groups)
-                      if (group.members.isNotEmpty) ...[
+                  if (onClose != null)
+                    IconButton(
+                      tooltip: 'Закрыть участников',
+                      onPressed: onClose,
+                      icon: const Icon(Icons.close),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: state.refreshMembers,
+                  child: ListView(
+                    children: [
+                      if (state.membersError != null)
                         Padding(
-                          padding: const EdgeInsets.only(top: 20, bottom: 8),
-                          child: Semantics(
-                            header: true,
-                            child: Text(
-                              '${group.title} — ${group.members.length}',
-                              style: const TextStyle(
-                                color: GcColors.muted,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Semantics(
+                                liveRegion: true,
+                                child: Text(
+                                  state.membersError!,
+                                  style: const TextStyle(
+                                    color: GcColors.danger,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: state.membersLoading
+                                    ? null
+                                    : state.refreshMembers,
+                                child: Text(
+                                  state.membersLoading
+                                      ? 'Загружаем…'
+                                      : 'Повторить',
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else if (state.membersLoading && state.members.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            'Загружаем участников…',
+                            style: TextStyle(color: GcColors.muted),
+                          ),
+                        )
+                      else if (state.members.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            'В гильдии пока нет участников.',
+                            style: TextStyle(color: GcColors.muted),
+                          ),
+                        ),
+                      for (final group in groups)
+                        if (group.members.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(top: 20, bottom: 8),
+                            child: Semantics(
+                              header: true,
+                              child: Text(
+                                '${group.title} — ${group.members.length}',
+                                style: const TextStyle(
+                                  color: GcColors.muted,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        for (final member in group.members)
-                          _memberTile(
-                            context,
-                            member,
-                            state.memberPresence(member),
-                          ),
-                      ],
-                  ],
+                          for (final member in group.members)
+                            _memberRow(context, member),
+                        ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _memberRow(BuildContext context, GuildMember member) {
+    final tile = _memberTile(context, member, state.memberPresence(member));
+    if (_profileTriggerMemberId != member.id) return tile;
+    return CompositedTransformTarget(
+      link: _profileLink,
+      child: Focus(focusNode: _profileTriggerFocus, child: tile),
     );
   }
 
@@ -5194,7 +5296,7 @@ class _MembersPanel extends StatelessWidget {
       color: GcColors.sidebar,
       child: ListTile(
         contentPadding: EdgeInsets.zero,
-        onTap: () => _showMemberDialog(context, state, member),
+        onTap: () => _showMemberProfile(member),
         leading: Stack(
           children: [
             AuthenticatedAvatar(
@@ -5232,89 +5334,269 @@ class _MembersPanel extends StatelessWidget {
   }
 }
 
-Future<void> _showMemberDialog(
-  BuildContext context,
-  AppState state,
-  GuildMember member,
-) async {
-  final voiceParticipant = state.voiceParticipantForAccount(member.id);
-  var volume = voiceParticipant == null
-      ? 100
-      : state.participantVolume(voiceParticipant) ?? 100;
-  await showDialog<void>(
-    context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (dialogContext, updateDialog) => AlertDialog(
-        title: Row(
-          children: [
-            AuthenticatedAvatar(
-              state: state,
-              name: member.displayName,
-              avatarUrl: member.avatarUrl,
-              radius: 28,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(member.displayName),
-                  Text(
-                    member.login,
-                    style: const TextStyle(color: GcColors.muted, fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(member.role == 'ADMINISTRATOR' ? 'Администратор' : 'Участник'),
-            if (voiceParticipant != null) ...[
-              const SizedBox(height: 18),
-              Text('Громкость участника · $volume%'),
-              Slider(
-                value: volume.toDouble(),
-                min: 0,
-                max: 200,
-                divisions: 200,
-                semanticFormatterCallback: (value) =>
-                    '${value.round()} процентов',
-                onChanged: (value) {
-                  updateDialog(() => volume = value.round());
-                  unawaited(
-                    state.setParticipantVolume(voiceParticipant, volume),
-                  );
-                },
-              ),
-            ],
-          ],
-        ),
+class _MemberProfilePopover extends StatefulWidget {
+  const _MemberProfilePopover({
+    super.key,
+    required this.state,
+    required this.memberId,
+    required this.onClose,
+    required this.onOpenDirectMessage,
+  });
+
+  final AppState state;
+  final String memberId;
+  final VoidCallback onClose;
+  final ValueChanged<GuildMember> onOpenDirectMessage;
+
+  @override
+  State<_MemberProfilePopover> createState() => _MemberProfilePopoverState();
+}
+
+class _MemberProfilePopoverState extends State<_MemberProfilePopover> {
+  GuildMember? _member;
+  String? _error;
+  String? _status;
+  bool _loading = true;
+  bool _kicking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final member = await widget.state.api.memberProfile(widget.memberId);
+      if (mounted) setState(() => _member = member);
+    } catch (cause) {
+      if (mounted) setState(() => _error = cause.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _kick(RemoteParticipant participant) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Отключить от голоса?'),
+        content: const Text('Отключить участника от голосового канала?'),
         actions: [
-          if (member.id != state.user?.accountId)
-            FilledButton.icon(
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-                await state.createDirectConversation(
-                  DirectCandidate(
-                    id: member.id,
-                    displayName: member.displayName,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.chat_bubble_outline),
-              label: const Text('Написать'),
-            ),
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Закрыть'),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Отмена'),
+          ),
+          FilledButton.tonal(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Отключить'),
           ),
         ],
       ),
-    ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() {
+      _kicking = true;
+      _error = null;
+      _status = null;
+    });
+    try {
+      final revoked = await widget.state.api.kickAdminVoiceParticipant(
+        widget.memberId,
+      );
+      if (mounted) {
+        setState(
+          () => _status = revoked > 0
+              ? 'Подключение отозвано.'
+              : 'Активное голосовое подключение не найдено.',
+        );
+      }
+    } catch (cause) {
+      if (mounted) setState(() => _error = cause.toString());
+    } finally {
+      if (mounted) setState(() => _kicking = false);
+    }
+  }
+
+  Widget _buildPopover(BuildContext context) {
+    final participant = widget.state.voiceParticipantForAccount(
+      widget.memberId,
+    );
+    return Material(
+      key: const ValueKey('member-profile-popover'),
+      color: GcColors.raised,
+      elevation: 16,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        width: 288,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Профиль участника',
+                      style: TextStyle(color: GcColors.muted, fontSize: 12),
+                    ),
+                  ),
+                  IconButton(
+                    autofocus: true,
+                    tooltip: 'Закрыть профиль',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: widget.onClose,
+                    icon: const Icon(Icons.close, size: 18),
+                  ),
+                ],
+              ),
+              if (_loading)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Semantics(
+                    liveRegion: true,
+                    child: Text('Загружаем профиль…'),
+                  ),
+                )
+              else if (_error != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(color: GcColors.danger),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: _load,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Повторить'),
+                    ),
+                  ],
+                )
+              else if (_member case final member?) ...[
+                Row(
+                  children: [
+                    AuthenticatedAvatar(
+                      state: widget.state,
+                      name: member.displayName,
+                      avatarUrl: member.avatarUrl,
+                      radius: 32,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            member.displayName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            '@${member.login}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: GcColors.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            member.role == 'ADMINISTRATOR'
+                                ? 'Администратор'
+                                : 'Участник',
+                            style: const TextStyle(
+                              color: GcColors.muted,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (member.id != widget.state.user?.accountId ||
+                    (participant != null &&
+                        widget.state.user?.isAdmin == true)) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: member.id == widget.state.user?.accountId
+                        ? null
+                        : () => widget.onOpenDirectMessage(member),
+                    child: const Text('Сообщение'),
+                  ),
+                  if (participant != null && widget.state.user?.isAdmin == true)
+                    OutlinedButton.icon(
+                      onPressed: _kicking ? null : () => _kick(participant),
+                      icon: const Icon(Icons.call_end, size: 18),
+                      label: Text(
+                        _kicking ? 'Отключаем…' : 'Отключить от голоса',
+                      ),
+                    ),
+                ],
+                if (participant != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Громкость участника · ${widget.state.participantVolume(participant) ?? 100}%',
+                  ),
+                  Slider(
+                    value: (widget.state.participantVolume(participant) ?? 100)
+                        .toDouble(),
+                    min: 0,
+                    max: 200,
+                    divisions: 200,
+                    semanticFormatterCallback: (value) =>
+                        '${value.round()} процентов',
+                    onChanged: (value) => unawaited(
+                      widget.state.setParticipantVolume(
+                        participant,
+                        value.round(),
+                      ),
+                    ),
+                  ),
+                ],
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: GcColors.danger),
+                    ),
+                  ),
+                if (_status != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        _status!,
+                        style: const TextStyle(color: GcColors.success),
+                      ),
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: widget.state,
+    builder: (context, _) => _buildPopover(context),
   );
 }
 

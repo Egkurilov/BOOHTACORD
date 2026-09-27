@@ -743,6 +743,22 @@ class ApiClient {
     return result;
   }
 
+  Future<GuildMember> memberProfile(String accountId) async {
+    if (accountId.isEmpty) {
+      throw const ApiFailure('Не выбран участник гильдии.');
+    }
+    final data = await _checked(
+      await _client.get(
+        _uri('/members/${Uri.encodeComponent(accountId)}'),
+        headers: await _headers(),
+      ),
+    );
+    if (data is! Map<String, dynamic>) {
+      throw const ApiFailure('Сервер вернул некорректные данные участника.');
+    }
+    return GuildMember.fromJson(data);
+  }
+
   Future<List<DirectConversation>> directMessages() async {
     final data = await _checked(
       await _client.get(_uri('/direct-messages'), headers: await _headers()),

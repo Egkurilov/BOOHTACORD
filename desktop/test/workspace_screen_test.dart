@@ -943,7 +943,11 @@ void main() {
         presence: MemberPresence.unknown,
       ),
     ];
-    final api = _PortraitApi(membersResult: members, membersFailures: 1);
+    final api = _PortraitApi(
+      membersResult: members,
+      membersFailures: 1,
+      memberProfileFailures: 1,
+    );
     final state = AppState(api);
     await state.initialize();
     await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
@@ -1017,6 +1021,41 @@ void main() {
       find.descendant(of: membersPanel, matching: find.text('В сети — 1')),
       findsOneWidget,
     );
+    await tester.tap(find.text('Неизвестен'));
+    await tester.pumpAndSettle();
+    final profilePopover = find.byKey(const ValueKey('member-profile-popover'));
+    expect(
+      find.text('Не удалось загрузить профиль участника.'),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.descendant(of: profilePopover, matching: find.text('Повторить')),
+    );
+    await tester.pumpAndSettle();
+    expect(profilePopover, findsOneWidget);
+    expect(find.text('@unknown'), findsOneWidget);
+    final memberRow = find.ancestor(
+      of: find.text('Неизвестен'),
+      matching: find.byType(ListTile),
+    );
+    final rowRect = tester.getRect(memberRow);
+    final popoverRect = tester.getRect(profilePopover);
+    expect((popoverRect.top - rowRect.top).abs(), lessThan(16));
+    expect(
+      popoverRect.right,
+      lessThanOrEqualTo(tester.view.physicalSize.width),
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(profilePopover, findsNothing);
+    final profileTrigger = tester.widget<Focus>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Focus &&
+            widget.focusNode?.debugLabel == 'member-profile-trigger',
+      ),
+    );
+    expect(profileTrigger.focusNode!.hasFocus, isTrue);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -1031,6 +1070,7 @@ class _PortraitApi extends ApiClient {
     this.includeDirectMessage = false,
     this.voiceRosters = const [],
     this.membersFailures = 0,
+    this.memberProfileFailures = 0,
     this.membersResult = const [
       GuildMember(
         id: 'account-1',
@@ -1053,6 +1093,7 @@ class _PortraitApi extends ApiClient {
   final bool includeDirectMessage;
   final List<VoiceRoomRoster> voiceRosters;
   int membersFailures;
+  int memberProfileFailures;
   final List<GuildMember> membersResult;
   final advancedMessageIds = <String>[];
   String? sentReplyToId;
@@ -1139,6 +1180,15 @@ class _PortraitApi extends ApiClient {
       throw const ApiFailure('Список участников временно недоступен.');
     }
     return membersResult;
+  }
+
+  @override
+  Future<GuildMember> memberProfile(String accountId) async {
+    if (memberProfileFailures > 0) {
+      memberProfileFailures--;
+      throw const ApiFailure('Не удалось загрузить профиль участника.');
+    }
+    return membersResult.firstWhere((member) => member.id == accountId);
   }
 
   @override

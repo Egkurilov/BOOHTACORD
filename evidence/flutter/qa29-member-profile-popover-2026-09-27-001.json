@@ -1,0 +1,39 @@
+{
+  "id": "qa29-member-profile-popover-2026-09-27-001",
+  "kind": "member-profile-anchored-popover",
+  "status": "PASS",
+  "executed_at": "2026-09-27",
+  "implementation": "The centered Flutter member dialog is replaced with a web-like anchored profile popover. It loads authenticated member details, keeps retryable loading errors local to the popover, restores focus on close, handles Escape, and preserves the DM, same-voice volume and administrator voice-kick actions.",
+  "checks": [
+    {
+      "name": "Authenticated member profile contract",
+      "command": "flutter test test/avatar_api_test.dart",
+      "status": "PASS",
+      "observation": "API test verifies GET /members/{user_id}, path encoding, session cookie and parsed profile fields."
+    },
+    {
+      "name": "Anchored popover and retry behavior",
+      "command": "flutter test test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "Widget test verifies inline profile failure/retry, loaded identity, anchor alignment with the selected member row, viewport containment, Escape dismissal and focus return to the trigger row."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 140 Flutter tests passed."
+    },
+    {
+      "name": "Matched visual and physical-device acceptance",
+      "status": "NOT_RUN",
+      "reason": "Requires matched web/Flutter screenshots and device keyboard/screen-reader review on macOS, Windows and Android."
+    }
+  ],
+  "remaining": "Complete matched screenshots and device accessibility acceptance; live two-account presence transitions remain open under QA-28."
+}

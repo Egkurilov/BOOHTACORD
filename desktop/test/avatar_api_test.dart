@@ -35,6 +35,33 @@ void main() {
     expect(request.headers['accept'], 'image/png');
   });
 
+  test(
+    'loads a member profile through the authenticated profile endpoint',
+    () async {
+      late http.Request request;
+      final api = ApiClient(
+        client: MockClient((value) async {
+          request = value;
+          return http.Response.bytes(
+            utf8.encode(
+              '{"user_id":"member/one","login":"member","display_name":"Участник","role":"MEMBER","presence":"online"}',
+            ),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }),
+      );
+
+      final member = await api.memberProfile('member/one');
+
+      expect(request.method, 'GET');
+      expect(request.url.path, '/api/v1/members/member%2Fone');
+      expect(request.headers['cookie'], 'session=test-session');
+      expect(member.displayName, 'Участник');
+      expect(member.presence.name, 'online');
+    },
+  );
+
   test('rejects a cross-origin avatar before sending credentials', () async {
     var requested = false;
     final api = ApiClient(
