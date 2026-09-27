@@ -59,6 +59,8 @@ class AppState extends ChangeNotifier {
   final Stream<List<MediaDevice>>? _audioDeviceChanges;
   StreamSubscription<List<MediaDevice>>? _audioDeviceSubscription;
   int _audioDeviceRevision = 0;
+  bool _audioDeviceRefreshQueued = false;
+  bool _audioDeviceRefreshAfterCaptureRequested = false;
   final Uuid _uuid = const Uuid();
   AppPhase phase = AppPhase.loading;
   SessionUser? user;
@@ -465,7 +467,10 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> refreshAudioDevices() async {
-    if (audioDevicesLoading) return;
+    if (audioDevicesLoading) {
+      _audioDeviceRefreshQueued = true;
+      return;
+    }
     final revision = _audioDeviceRevision;
     audioDevicesLoading = true;
     audioSettingsError = null;
@@ -479,7 +484,17 @@ class AppState extends ChangeNotifier {
     } finally {
       audioDevicesLoading = false;
       notifyListeners();
+      if (_audioDeviceRefreshQueued) {
+        _audioDeviceRefreshQueued = false;
+        unawaited(refreshAudioDevices());
+      }
     }
+  }
+
+  void _refreshAudioDevicesAfterMicrophoneCapture() {
+    if (_audioDeviceRefreshAfterCaptureRequested) return;
+    _audioDeviceRefreshAfterCaptureRequested = true;
+    unawaited(refreshAudioDevices());
   }
 
   void _applyAudioDevices(List<MediaDevice> devices) {
@@ -697,6 +712,7 @@ class AppState extends ChangeNotifier {
         audioCaptureOptions: _audioCaptureOptions,
       );
       microphoneMuted = muted;
+      if (!muted) _refreshAudioDevicesAfterMicrophoneCapture();
       return true;
     } catch (cause) {
       microphoneMuted = true;
@@ -2021,6 +2037,9 @@ class AppState extends ChangeNotifier {
             true,
             audioCaptureOptions: _audioCaptureOptions,
           );
+          if (room.localParticipant != null) {
+            _refreshAudioDevicesAfterMicrophoneCapture();
+          }
           _listenerOnly = false;
           voicePhase = VoicePhase.connected;
         } catch (_) {
@@ -2448,6 +2467,7 @@ class AppState extends ChangeNotifier {
         audioCaptureOptions: _audioCaptureOptions,
       );
       if (!microphoneMuted) {
+        _refreshAudioDevicesAfterMicrophoneCapture();
         _listenerOnly = false;
         if (voicePhase == VoicePhase.listener) {
           voicePhase = VoicePhase.connected;

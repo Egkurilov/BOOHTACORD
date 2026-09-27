@@ -1,0 +1,37 @@
+{
+  "id": "qa14-audio-device-refresh-2026-09-27-001",
+  "kind": "integration-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "environment": {
+    "host_os": "macOS arm64",
+    "apk": "desktop/build/app/outputs/flutter-apk/app-release.apk"
+  },
+  "checks": [
+    {
+      "name": "Flutter analyzer and full test suite",
+      "command": "flutter test --reporter compact && flutter analyze",
+      "status": "PASS",
+      "observation": "All 105 tests passed; analyzer reported no issues. Added coverage verifies a refresh requested during an active device scan is queued and its newer device list is retained."
+    },
+    {
+      "name": "macOS debug and signed Android release builds",
+      "command": "flutter build macos --debug && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Both builds completed. Android APK SHA-256: 23c49e09301681220db3c7d848bdfab7a7be5db8713e28c2f3cde634d8c2b258."
+    },
+    {
+      "name": "Android APK signature",
+      "command": "apksigner verify --verbose --print-certs desktop/build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified with one signer; certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b matches the upload JKS."
+    },
+    {
+      "name": "Physical audio device enumeration and route switching",
+      "command": "system_profiler SPAudioDataType -json",
+      "status": "NOT_RUN",
+      "reason": "The build host exposed no CoreAudio devices (_items was empty), and no physical Windows or Android test device was available. This cannot validate device labels, permission-gated enumeration, hotplug, or audible switching."
+    }
+  ],
+  "remaining": "Install the release APK and test microphone grant/re-enumeration, named devices, hotplug, switching, PTT, and local/remote screen-share return with real peers on macOS, Windows, and Android."
+}

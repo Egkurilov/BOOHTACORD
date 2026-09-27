@@ -15,7 +15,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   карточки после возврата к roster; отдельно проверить, что завершившаяся чужая
   трансляция не подменяется локальной.
 - [ ] Исправить и проверить перечисление/смену именованных микрофонов и outputs,
-  включая permission state, hotplug и устаревший результат сканирования.
+  включая повторное перечисление после permission grant, hotplug и устаревший
+  результат сканирования; повторный запрос после первого mic capture реализован,
+  локальная проверка — [QA-14](../evidence/flutter/qa14-audio-device-refresh-2026-09-27-001.json),
+  но физическая проверка на macOS/Windows/Android остаётся открытой.
 - [ ] На каждой платформе проверить разрешение screen share, OS-level stop,
   Android 14+ MediaProjection service и реальный захват у peer.
 - [ ] На реальных peers проверить microphone/screen-audio gain, mute/deafen/PTT,

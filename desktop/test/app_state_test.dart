@@ -130,6 +130,41 @@ void main() {
     expect(state.audioDevicesLoading, isFalse);
   });
 
+  test('queues a device refresh requested during an active scan', () async {
+    final firstScan = Completer<List<MediaDevice>>();
+    final secondScan = Completer<List<MediaDevice>>();
+    var scanCount = 0;
+    final state = AppState(
+      _FakeApi(topology),
+      audioDeviceLoader: () {
+        scanCount++;
+        return scanCount == 1 ? firstScan.future : secondScan.future;
+      },
+    );
+    addTearDown(state.dispose);
+    await state.initialize();
+
+    final initialRefresh = state.refreshAudioDevices();
+    await Future<void>.delayed(Duration.zero);
+    await state.refreshAudioDevices();
+    firstScan.complete(const [
+      MediaDevice('default-input', 'System default', 'audioinput', null),
+    ]);
+    await initialRefresh;
+    await Future<void>.delayed(Duration.zero);
+
+    expect(scanCount, 2);
+    secondScan.complete(const [
+      MediaDevice('usb-input', 'USB microphone', 'audioinput', null),
+      MediaDevice('usb-output', 'USB headphones', 'audiooutput', null),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(state.audioInputDevices.single.deviceId, 'usb-input');
+    expect(state.audioOutputDevices.single.deviceId, 'usb-output');
+    expect(state.audioDevicesLoading, isFalse);
+  });
+
   test(
     'persists PTT mode and refuses to unmute without an active room',
     () async {
