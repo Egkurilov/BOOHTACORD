@@ -1,0 +1,154 @@
+class ScreenShareSenderStats {
+  const ScreenShareSenderStats({
+    required this.timestampMs,
+    this.frameWidth,
+    this.frameHeight,
+    this.bytesSent,
+    this.framesSent,
+    this.framesPerSecond,
+    this.roundTripTimeSeconds,
+  });
+
+  final double timestampMs;
+  final num? frameWidth;
+  final num? frameHeight;
+  final num? bytesSent;
+  final num? framesSent;
+  final num? framesPerSecond;
+  final num? roundTripTimeSeconds;
+}
+
+class ScreenShareSenderSnapshot {
+  const ScreenShareSenderSnapshot({
+    required this.timestampMs,
+    this.bytesSent,
+    this.framesSent,
+    this.framesPerSecond,
+    this.roundTripTimeSeconds,
+  });
+
+  final double timestampMs;
+  final double? bytesSent;
+  final double? framesSent;
+  final double? framesPerSecond;
+  final double? roundTripTimeSeconds;
+}
+
+ScreenShareSenderSnapshot? screenShareSenderSnapshotFromStats(
+  List<ScreenShareSenderStats> stats,
+) {
+  if (stats.isEmpty) return null;
+  final selected = stats.reduce((best, candidate) {
+    final bestPixels = (best.frameWidth ?? 0) * (best.frameHeight ?? 0);
+    final candidatePixels =
+        (candidate.frameWidth ?? 0) * (candidate.frameHeight ?? 0);
+    return candidatePixels > bestPixels ? candidate : best;
+  });
+  final byteCounters = stats
+      .map((item) => item.bytesSent)
+      .where((value) => value != null && value.isFinite && value >= 0)
+      .cast<num>()
+      .toList(growable: false);
+  return ScreenShareSenderSnapshot(
+    timestampMs: selected.timestampMs,
+    bytesSent: byteCounters.isEmpty
+        ? null
+        : byteCounters.fold<double>(0, (sum, value) => sum + value),
+    framesSent: _validCounter(selected.framesSent),
+    framesPerSecond: _validCounter(selected.framesPerSecond),
+    roundTripTimeSeconds: _validCounter(selected.roundTripTimeSeconds),
+  );
+}
+
+class ScreenShareSenderReport {
+  const ScreenShareSenderReport({
+    required this.state,
+    this.encodedFps,
+    this.bitrateKbps,
+    this.roundTripTimeMs,
+  });
+
+  final String state;
+  final double? encodedFps;
+  final double? bitrateKbps;
+  final double? roundTripTimeMs;
+
+  Map<String, Object> toJson() => {
+    'platform': 'android_native',
+    'direction': 'sender',
+    'state': state,
+    'encoded_fps': ?encodedFps,
+    'bitrate_kbps': ?bitrateKbps,
+    'rtt_ms': ?roundTripTimeMs,
+  };
+}
+
+ScreenShareSenderReport buildScreenShareSenderReport({
+  required ScreenShareSenderSnapshot? previous,
+  required ScreenShareSenderSnapshot? current,
+}) {
+  if (current == null) {
+    return const ScreenShareSenderReport(state: 'waiting_first_frame');
+  }
+  final elapsedMs = previous == null
+      ? null
+      : current.timestampMs - previous.timestampMs;
+  final encodedFps =
+      _bounded(current.framesPerSecond, 240) ??
+      _rate(previous?.framesSent, current.framesSent, elapsedMs, 1000, 240);
+  final bitrateKbps =
+      current.bytesSent == null ||
+          !current.bytesSent!.isFinite ||
+          current.bytesSent! < 0
+      ? null
+      : _rate(previous?.bytesSent, current.bytesSent, elapsedMs, 8, 100000);
+  final roundTripTimeMs = current.roundTripTimeSeconds == null
+      ? null
+      : _bounded(current.roundTripTimeSeconds! * 1000, 60000);
+  final fps = encodedFps == null ? null : _round(encodedFps, 1);
+  final bitrate = bitrateKbps == null ? null : _round(bitrateKbps, 1);
+  final rtt = roundTripTimeMs == null ? null : _round(roundTripTimeMs, 1);
+  return ScreenShareSenderReport(
+    state: fps == null && bitrate == null
+        ? 'waiting_first_frame'
+        : fps == 0
+        ? 'stalled'
+        : 'playing',
+    encodedFps: fps,
+    bitrateKbps: bitrate,
+    roundTripTimeMs: rtt,
+  );
+}
+
+double? _bounded(double? value, double maximum) =>
+    value != null && value.isFinite && value >= 0 && value <= maximum
+    ? value
+    : null;
+
+double? _validCounter(num? value) =>
+    value != null && value.isFinite && value >= 0 ? value.toDouble() : null;
+
+double? _rate(
+  double? previous,
+  double? current,
+  double? elapsedMs,
+  double multiplier,
+  double maximum,
+) {
+  if (previous == null ||
+      current == null ||
+      elapsedMs == null ||
+      !previous.isFinite ||
+      !current.isFinite ||
+      !elapsedMs.isFinite ||
+      elapsedMs <= 0 ||
+      current < previous) {
+    return null;
+  }
+  return _bounded((current - previous) * multiplier / elapsedMs, maximum);
+}
+
+double _round(double value, int places) {
+  final multiplier = places == 0 ? 1.0 : 10.0;
+  return (value * multiplier).round() / multiplier;
+}

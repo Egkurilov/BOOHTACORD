@@ -12,6 +12,7 @@ import 'models.dart';
 import 'services/api_client.dart';
 import 'services/audio_preferences.dart';
 import 'services/password_reset_link.dart';
+import 'services/screen_share_metrics.dart';
 import 'services/voice_lease_revocation.dart';
 import 'services/voice_volume_preferences.dart';
 
@@ -142,6 +143,11 @@ class AppState extends ChangeNotifier {
   Timer? _realtimeRetry;
   Timer? _maintenanceTimer;
   Timer? _voiceRosterTimer;
+  Timer? _screenShareMetricsTimer;
+  LocalVideoTrack? _screenShareMetricsTrack;
+  ScreenShareSenderSnapshot? _previousScreenShareMetrics;
+  int _screenShareMetricsRevision = 0;
+  bool _screenShareMetricsBusy = false;
   int _voiceRosterRevision = 0;
   bool _voiceRosterLoading = false;
   int _realtimeAttempt = 0;
@@ -1634,6 +1640,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> _handleVoiceLeaseRevoked(String leaseId, String reason) async {
     if (_leaseId != leaseId || _room == null) return;
+    _stopScreenShareMetrics();
     voicePhase = VoicePhase.leaving;
     notifyListeners();
     try {
@@ -1701,6 +1708,7 @@ class AppState extends ChangeNotifier {
     _realtimeRetry?.cancel();
     _maintenanceTimer?.cancel();
     _stopVoiceRosterPolling();
+    _stopScreenShareMetrics();
     unawaited(_audioDeviceSubscription?.cancel());
     api.onUnauthorized = null;
     unawaited(_realtimeSubscription?.cancel());
@@ -2150,6 +2158,7 @@ class AppState extends ChangeNotifier {
     String reason,
   ) async {
     _voiceAdmissionPending = false;
+    _stopScreenShareMetrics();
     await _disableAndroidScreenShareBackground();
     screenSharePhase = ScreenSharePhase.idle;
     screenShareError = null;
@@ -2222,6 +2231,11 @@ class AppState extends ChangeNotifier {
       }
       screenSharePhase = ScreenSharePhase.sharing;
       screenShareError = null;
+      final track = event.publication.track;
+      if (defaultTargetPlatform == TargetPlatform.android &&
+          track is LocalVideoTrack) {
+        _startScreenShareMetrics(track);
+      }
       notifyListeners();
     });
     listener.on<LocalTrackUnpublishedEvent>((event) {
@@ -2230,6 +2244,7 @@ class AppState extends ChangeNotifier {
         return;
       }
       screenSharePhase = ScreenSharePhase.idle;
+      _stopScreenShareMetrics();
       unawaited(_disableAndroidScreenShareBackground());
       notifyListeners();
     });
@@ -2290,6 +2305,7 @@ class AppState extends ChangeNotifier {
       screenSharePhase = ScreenSharePhase.sharing;
       notifyListeners();
     } catch (cause) {
+      _stopScreenShareMetrics();
       if (androidBackgroundEnabled) {
         await _disableAndroidScreenShareBackground();
       }
@@ -2307,6 +2323,7 @@ class AppState extends ChangeNotifier {
       return;
     }
     screenSharePhase = ScreenSharePhase.stopping;
+    _stopScreenShareMetrics();
     notifyListeners();
     try {
       await participant.setScreenShareEnabled(false);
@@ -2318,6 +2335,76 @@ class AppState extends ChangeNotifier {
           'Не удалось остановить демонстрацию: ${cause.runtimeType}.';
     }
     notifyListeners();
+  }
+
+  void _startScreenShareMetrics(LocalVideoTrack track) {
+    _stopScreenShareMetrics();
+    final revision = _screenShareMetricsRevision;
+    _screenShareMetricsTrack = track;
+    _screenShareMetricsTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      unawaited(_sampleScreenShareMetrics(track, revision));
+    });
+    unawaited(_sampleScreenShareMetrics(track, revision));
+  }
+
+  void _stopScreenShareMetrics() {
+    _screenShareMetricsRevision++;
+    _screenShareMetricsTimer?.cancel();
+    _screenShareMetricsTimer = null;
+    _screenShareMetricsTrack = null;
+    _previousScreenShareMetrics = null;
+  }
+
+  Future<void> _sampleScreenShareMetrics(
+    LocalVideoTrack track,
+    int revision,
+  ) async {
+    if (_screenShareMetricsBusy ||
+        revision != _screenShareMetricsRevision ||
+        !identical(track, _screenShareMetricsTrack) ||
+        screenSharePhase != ScreenSharePhase.sharing ||
+        voicePhase == VoicePhase.leaving) {
+      return;
+    }
+    _screenShareMetricsBusy = true;
+    try {
+      final stats = await track.getSenderStats();
+      final current = screenShareSenderSnapshotFromStats(
+        stats
+            .map(
+              (item) => ScreenShareSenderStats(
+                timestampMs: item.timestamp.toDouble(),
+                frameWidth: item.frameWidth,
+                frameHeight: item.frameHeight,
+                bytesSent: item.bytesSent,
+                framesSent: item.framesSent,
+                framesPerSecond: item.framesPerSecond,
+                roundTripTimeSeconds: item.roundTripTime,
+              ),
+            )
+            .toList(growable: false),
+      );
+      if (revision != _screenShareMetricsRevision ||
+          !identical(track, _screenShareMetricsTrack) ||
+          screenSharePhase != ScreenSharePhase.sharing ||
+          current == null) {
+        return;
+      }
+      final report = buildScreenShareSenderReport(
+        previous: _previousScreenShareMetrics,
+        current: current,
+      );
+      _previousScreenShareMetrics = current;
+      try {
+        await api.reportScreenShareMetrics(report.toJson());
+      } catch (_) {
+        // Diagnostic telemetry is best-effort and must not interrupt sharing.
+      }
+    } catch (_) {
+      // Some platform WebRTC implementations do not expose sender stats.
+    } finally {
+      _screenShareMetricsBusy = false;
+    }
   }
 
   Future<void> _disableAndroidScreenShareBackground() async {
@@ -2479,6 +2566,7 @@ class AppState extends ChangeNotifier {
     RoomDisconnectedEvent event,
   ) async {
     if (!identical(_room, room) || voicePhase == VoicePhase.leaving) return;
+    _stopScreenShareMetrics();
     final leaseId = _leaseId;
     _room = null;
     _leaseId = null;

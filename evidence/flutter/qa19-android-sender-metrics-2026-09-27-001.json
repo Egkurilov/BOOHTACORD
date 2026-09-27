@@ -1,0 +1,51 @@
+{
+  "id": "qa19-android-sender-metrics-2026-09-27-001",
+  "kind": "android-screen-share-sender-metrics",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "environment": {
+    "host_os": "macOS arm64",
+    "flutter_project": "desktop",
+    "android_device": "not connected",
+    "android_sdk_build_tools": "36.0.0"
+  },
+  "checks": [
+    {
+      "name": "Screen sender rate, layer selection and privacy tests",
+      "command": "flutter test test/screen_share_metrics_test.dart",
+      "status": "PASS",
+      "observation": "Unit tests validate largest-resolution sender layer selection, summed simulcast bytes, 5-second FPS/bitrate/RTT calculations, baseline/reset behavior, bounded values, waiting/stalled states, and an exact anonymous report schema."
+    },
+    {
+      "name": "Authenticated screen metrics API request",
+      "command": "flutter test test/avatar_api_test.dart --plain-name 'posts anonymous sender metrics with the authenticated origin'",
+      "status": "PASS",
+      "observation": "A fake HTTP client confirms POST /api/v1/voice/screen-metrics with the configured same-origin Origin, session cookie and only fixed report fields."
+    },
+    {
+      "name": "Full Flutter suite and analyzer",
+      "command": "flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "All 120 tests passed; analyzer reported no issues."
+    },
+    {
+      "name": "Platform compile checks",
+      "command": "flutter build apk --release && flutter build macos --debug",
+      "status": "PASS",
+      "observation": "Both release Android and macOS debug app builds completed. Windows build remains unavailable on this host."
+    },
+    {
+      "name": "Android release signature",
+      "command": "apksigner verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified. Certificate SHA-256: 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b. APK SHA-256: a3a0a83ec8eb8dc9bf4c105c2c5fa82e1c386cfdff4e495db4aa6bd4da92ba73."
+    },
+    {
+      "name": "Live sender/receiver correlation and lifecycle",
+      "status": "NOT_RUN",
+      "reason": "No Android device or concurrent browser receiver was connected. Confirm OS-level stop/leave/disconnect reporting cessation and collect matching sender plus two receiver snapshots in QA-07."
+    }
+  ],
+  "privacy": "The Android reporter sends only android_native, sender, a fixed state and bounded encoded_fps/bitrate_kbps/rtt_ms values. It includes no account, channel, track, SDP, ICE, IP, token or content fields. Reports are best-effort and do not affect screen sharing.",
+  "remaining": "Install/run this signed build on an Android device during a live screen share and verify the latest anonymous admin sender sample alongside two receiver samples in QA-07."
+}

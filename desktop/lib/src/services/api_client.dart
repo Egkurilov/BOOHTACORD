@@ -163,6 +163,16 @@ class ApiClient {
     return data['active'] as bool;
   }
 
+  Future<void> reportScreenShareMetrics(Map<String, Object> report) async {
+    await _checked(
+      await _client.post(
+        _uri('/voice/screen-metrics'),
+        headers: await _headers(jsonBody: true),
+        body: jsonEncode(report),
+      ),
+    );
+  }
+
   Future<void> authenticate(
     String login,
     String password, {
