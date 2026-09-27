@@ -51,11 +51,13 @@ the implementation.
 - Match shell columns and frame geometry at wide, medium and compact widths.
 - Implement web-equivalent responsive navigation/member/search drawers,
   scrim, escape/close behavior, focus return and keyboard reachability. Navigation
-  and member drawers now preserve the active channel/voice view behind a scrim;
+  and member drawers preserve the active channel/voice view behind a scrim;
   compact and medium widths use overlays while wide layouts retain the member
-  aside. Search panel, Ctrl/Cmd+K launch, Escape close and focus restoration to
-  the launcher are implemented. Focus trapping and screenshot comparison
-  remain open.
+  aside. Drawer overlays now own a closed-loop focus scope, exclude the covered
+  workspace from keyboard traversal and restore the opening focus on close.
+  Search panel, Ctrl/Cmd+K launch, Escape close and focus restoration to the
+  launcher are implemented. Search/admin/profile/dialog focus trapping and
+  screenshot comparison remain open.
 - Match header, channel navigation, selected/hover/focus states, user footer,
   member aside and voice dock sizes and copy.
 

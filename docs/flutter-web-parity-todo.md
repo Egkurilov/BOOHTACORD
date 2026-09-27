@@ -27,7 +27,7 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
 
 - [ ] Сравнить compact maintenance notice с web banner при desktop и Android portrait размерах.
 - [ ] Сохранить matched web/Flutter screenshots 1440×900, 1280×800, 1024×768 и Android portrait для auth, chat, DM, members, voice, screen share, profile, audio и admin; зафиксировать отличия по экранам.
-- [ ] Завершить focus trap/return, keyboard reachability и loading/error semantics для drawer, search, admin, profile и dialogs.
+- [ ] Завершить focus trap/return и keyboard reachability для search/admin/profile/dialogs; drawer trap, фокус на открытой панели и возврат фокуса реализованы и покрыты [widget/evidence](../evidence/flutter/qa13-drawer-focus-2026-09-27-001.json).
 - [ ] Проверить responsive breakpoints, resize, accessibility labels и узкие layouts на macOS, Windows и Android.
 - [ ] Сравнить navigation voice roster order, spacing, avatars и indicators с web client.
 

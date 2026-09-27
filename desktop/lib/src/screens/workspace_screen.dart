@@ -33,6 +33,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   bool _showMobileSidebar = false;
   bool _showMembersDrawer = false;
   bool _capturingPttKey = false;
+  FocusNode? _drawerReturnFocus;
   final _searchTriggerFocus = FocusNode(debugLabel: 'workspace-search-trigger');
   WorkspacePanel? _lastWorkspacePanel;
 
@@ -166,9 +167,19 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
 
   void _closeDrawers() {
     if (!_showMobileSidebar && !_showMembersDrawer) return;
+    final returnFocus = _drawerReturnFocus;
+    _drawerReturnFocus = null;
     setState(() {
       _showMobileSidebar = false;
       _showMembersDrawer = false;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          returnFocus?.context == null ||
+          !returnFocus!.canRequestFocus) {
+        return;
+      }
+      returnFocus.requestFocus();
     });
   }
 
@@ -185,6 +196,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   void _toggleNavigation() {
+    if (!_showMobileSidebar && !_showMembersDrawer) {
+      _drawerReturnFocus = FocusManager.instance.primaryFocus;
+    }
     setState(() {
       _showMobileSidebar = !_showMobileSidebar;
       _showMembersDrawer = false;
@@ -192,6 +206,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   void _toggleMembers() {
+    if (!_showMobileSidebar && !_showMembersDrawer) {
+      _drawerReturnFocus = FocusManager.instance.primaryFocus;
+    }
     setState(() {
       _showMembersDrawer = !_showMembersDrawer;
       _showMobileSidebar = false;
@@ -233,12 +250,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
               ? Stack(
                   children: [
                     Positioned.fill(
-                      child: _MainSurface(
-                        state: widget.state,
-                        onToggleNavigation: _toggleNavigation,
-                        onOpenMembers: showMemberToggle ? _toggleMembers : null,
-                        onCapturePttKey: _beginPttKeyCapture,
-                        capturingPttKey: _capturingPttKey,
+                      child: ExcludeFocus(
+                        excluding: _showMobileSidebar || _showMembersDrawer,
+                        child: _MainSurface(
+                          state: widget.state,
+                          onToggleNavigation: _toggleNavigation,
+                          onOpenMembers: showMemberToggle
+                              ? _toggleMembers
+                              : null,
+                          onCapturePttKey: _beginPttKeyCapture,
+                          capturingPttKey: _capturingPttKey,
+                        ),
                       ),
                     ),
                     if (_showMobileSidebar || _showMembersDrawer)
@@ -282,41 +304,44 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                 )
               : Stack(
                   children: [
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: wide
-                              ? GcLayout.navWide
-                              : medium
-                              ? GcLayout.navMedium
-                              : GcLayout.navSmall,
-                          child: _Sidebar(
-                            state: widget.state,
-                            onSearch: _toggleSearch,
-                            searchFocusNode: _searchTriggerFocus,
-                          ),
-                        ),
-                        const VerticalDivider(width: 1),
-                        Expanded(
-                          child: _MainSurface(
-                            state: widget.state,
-                            onOpenMembers: showMemberToggle
-                                ? _toggleMembers
-                                : null,
-                            onCapturePttKey: _beginPttKeyCapture,
-                            capturingPttKey: _capturingPttKey,
-                          ),
-                        ),
-                        if (showPermanentMembers) ...[
-                          const VerticalDivider(width: 1),
+                    ExcludeFocus(
+                      excluding: _showMembersDrawer,
+                      child: Row(
+                        children: [
                           SizedBox(
                             width: wide
-                                ? GcLayout.asideWide
-                                : GcLayout.asideMedium,
-                            child: _MembersPanel(state: widget.state),
+                                ? GcLayout.navWide
+                                : medium
+                                ? GcLayout.navMedium
+                                : GcLayout.navSmall,
+                            child: _Sidebar(
+                              state: widget.state,
+                              onSearch: _toggleSearch,
+                              searchFocusNode: _searchTriggerFocus,
+                            ),
                           ),
+                          const VerticalDivider(width: 1),
+                          Expanded(
+                            child: _MainSurface(
+                              state: widget.state,
+                              onOpenMembers: showMemberToggle
+                                  ? _toggleMembers
+                                  : null,
+                              onCapturePttKey: _beginPttKeyCapture,
+                              capturingPttKey: _capturingPttKey,
+                            ),
+                          ),
+                          if (showPermanentMembers) ...[
+                            const VerticalDivider(width: 1),
+                            SizedBox(
+                              width: wide
+                                  ? GcLayout.asideWide
+                                  : GcLayout.asideMedium,
+                              child: _MembersPanel(state: widget.state),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                     if (_showMembersDrawer)
                       Positioned.fill(
@@ -379,16 +404,36 @@ class _DrawerScrim extends StatelessWidget {
   );
 }
 
-class _DrawerSurface extends StatelessWidget {
+class _DrawerSurface extends StatefulWidget {
   const _DrawerSurface({required this.child});
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: GcColors.sidebar,
-    elevation: 20,
-    shadowColor: const Color(0x40000000),
-    child: child,
+  State<_DrawerSurface> createState() => _DrawerSurfaceState();
+}
+
+class _DrawerSurfaceState extends State<_DrawerSurface> {
+  late final FocusScopeNode _focusScope = FocusScopeNode(
+    debugLabel: 'workspace-drawer',
+    traversalEdgeBehavior: TraversalEdgeBehavior.closedLoop,
+  );
+
+  @override
+  void dispose() {
+    _focusScope.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FocusScope(
+    node: _focusScope,
+    autofocus: true,
+    child: Material(
+      color: GcColors.sidebar,
+      elevation: 20,
+      shadowColor: const Color(0x40000000),
+      child: widget.child,
+    ),
   );
 }
 

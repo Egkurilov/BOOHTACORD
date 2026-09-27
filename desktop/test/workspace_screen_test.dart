@@ -764,7 +764,28 @@ void main() {
     expect(find.byTooltip('Открыть навигацию'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Открыть навигацию'));
+    final returnFocus = FocusManager.instance.primaryFocus;
     await tester.pumpAndSettle();
+
+    final drawerScope = tester
+        .widgetList<FocusScope>(find.byType(FocusScope))
+        .firstWhere((scope) => scope.debugLabel == 'workspace-drawer');
+    final drawerFocusScope = drawerScope.focusNode! as FocusScopeNode;
+    expect(drawerFocusScope.hasFocus, isTrue);
+    expect(
+      drawerFocusScope.traversalEdgeBehavior,
+      TraversalEdgeBehavior.closedLoop,
+    );
+    final drawerFocusables = drawerFocusScope.traversalDescendants
+        .where((node) => node.context != null)
+        .toList();
+    expect(drawerFocusables, isNotEmpty);
+    drawerFocusables.last.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(drawerFocusScope.hasFocus, isTrue);
+    expect(drawerFocusables, contains(FocusManager.instance.primaryFocus));
 
     expect(find.text('Каналы'), findsOneWidget);
     expect(find.text('4'), findsOneWidget);
@@ -777,6 +798,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Добро пожаловать в #общий'), findsOneWidget);
+    expect(FocusManager.instance.primaryFocus, same(returnFocus));
     await tester.tap(find.byTooltip('Открыть участников'));
     await tester.pumpAndSettle();
     expect(find.text('УЧАСТНИКИ'), findsOneWidget);

@@ -1,0 +1,36 @@
+{
+  "id": "qa13-drawer-focus-2026-09-27-001",
+  "kind": "integration-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "environment": {
+    "host_os": "macOS arm64",
+    "apk": "desktop/build/app/outputs/flutter-apk/app-release.apk"
+  },
+  "checks": [
+    {
+      "name": "Flutter analyzer and full test suite",
+      "command": "flutter analyze && flutter test --reporter compact",
+      "status": "PASS",
+      "observation": "No analyzer issues; all 103 tests passed. Workspace widget coverage opens the portrait navigation drawer, verifies its closed-loop focus scope, tabs at the boundary, confirms focus remains in the drawer and verifies focus restoration after close."
+    },
+    {
+      "name": "macOS debug and signed Android release builds",
+      "command": "flutter build macos --debug && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Both builds completed. Android APK SHA-256: 6b41b54c7cfc3d992507f2ce8204bf6c5acd9b3db7d05f475a871731d5930eba."
+    },
+    {
+      "name": "Android APK signature",
+      "command": "apksigner verify --verbose --print-certs desktop/build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified with one signer; certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b matches the private upload JKS."
+    },
+    {
+      "name": "Windows and physical-device keyboard/screen-reader acceptance",
+      "status": "NOT_RUN",
+      "reason": "No Windows runner or physical-device session was available in this local check."
+    }
+  ],
+  "remaining": "QA-13 remains open for Windows/device acceptance and focus behavior in search, admin, profile and dialogs."
+}
