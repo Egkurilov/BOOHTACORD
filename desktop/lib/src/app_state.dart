@@ -9,6 +9,7 @@ import 'package:flutter_background/flutter_background.dart';
 import 'package:livekit_client/livekit_client.dart' hide ChatMessage;
 import 'package:uuid/uuid.dart';
 
+import 'guild_presence_state.dart';
 import 'models.dart';
 import 'services/api_client.dart';
 import 'services/audio_preferences.dart';
@@ -80,6 +81,7 @@ class AppState extends ChangeNotifier {
   OwnProfile? profile;
   ChannelTopology? topology;
   List<GuildMember> members = const [];
+  final GuildPresenceState guildPresence = GuildPresenceState();
   bool membersLoading = false;
   String? membersError;
   List<VoiceRoomRoster>? voiceRosters;
@@ -902,6 +904,9 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  MemberPresence memberPresence(GuildMember member) =>
+      guildPresence.resolve(member.id, member.presence);
+
   Future<void> refreshDirectMessages() async {
     try {
       directMessages = await api.directMessages();
@@ -1596,30 +1601,9 @@ class AppState extends ChangeNotifier {
         case 'connection.ready':
           realtimeConnected = true;
         case 'presence.snapshot':
-          final online =
-              ((payload['online_user_ids'] as List<dynamic>? ?? const []))
-                  .whereType<String>()
-                  .toSet();
-          members = members
-              .map(
-                (member) => member.withPresence(
-                  online.contains(member.id)
-                      ? MemberPresence.online
-                      : MemberPresence.offline,
-                ),
-              )
-              .toList(growable: false);
+          guildPresence.acceptSnapshot(payload['online_user_ids']);
         case 'presence.changed':
-          final id = payload['user_id'] as String?;
-          final value = payload['presence'] == 'online'
-              ? MemberPresence.online
-              : MemberPresence.offline;
-          members = members
-              .map(
-                (member) =>
-                    member.id == id ? member.withPresence(value) : member,
-              )
-              .toList(growable: false);
+          guildPresence.acceptChange(payload['user_id'], payload['presence']);
         case 'message.created':
           if (selectedChannel?.id == payload['channel_id']) {
             unawaited(selectChannel(selectedChannel!));
@@ -1686,6 +1670,7 @@ class AppState extends ChangeNotifier {
   void _handleRealtimeClosed() {
     _realtimeSocket = null;
     realtimeConnected = false;
+    guildPresence.invalidate();
     notifyListeners();
     unawaited(_checkSessionAfterRealtimeClose());
   }
@@ -1708,6 +1693,8 @@ class AppState extends ChangeNotifier {
 
   void _scheduleRealtimeRetry() {
     if (phase != AppPhase.ready || _realtimeRetry != null) return;
+    guildPresence.invalidate();
+    notifyListeners();
     final seconds = 1 << _realtimeAttempt.clamp(0, 5);
     _realtimeAttempt++;
     _realtimeRetry = Timer(Duration(seconds: seconds), () {
@@ -1724,6 +1711,7 @@ class AppState extends ChangeNotifier {
     await _realtimeSocket?.close();
     _realtimeSocket = null;
     realtimeConnected = false;
+    guildPresence.invalidate();
   }
 
   @override

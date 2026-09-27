@@ -1,0 +1,39 @@
+{
+  "id": "qa28-guild-presence-realtime-2026-09-27-001",
+  "kind": "guild-presence-realtime-state",
+  "status": "PASS",
+  "executed_at": "2026-09-27",
+  "implementation": "Flutter member groups now resolve presence from the REST fallback plus authenticated realtime snapshots and per-member changes. When the realtime feed disconnects, fails, or supplies a malformed presence payload, all roster statuses resolve to unknown until the next complete valid snapshot.",
+  "checks": [
+    {
+      "name": "Guild presence resolver",
+      "command": "flutter test test/guild_presence_state_test.dart",
+      "status": "PASS",
+      "observation": "Three unit tests cover REST fallback, authoritative snapshots, per-user change precedence, disconnect invalidation, recovery from a new snapshot, and malformed payload handling."
+    },
+    {
+      "name": "Visible roster regrouping",
+      "command": "flutter test test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "Widget test verifies roster counts regroup to unknown after invalidation and restore online/offline sections after a fresh snapshot."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 139 Flutter tests passed."
+    },
+    {
+      "name": "Live two-account presence transitions",
+      "status": "NOT_RUN",
+      "reason": "Requires a live deployment and two authenticated accounts; runtime/device acceptance remains open in the parity checklist."
+    }
+  ],
+  "remaining": "Verify join/leave transitions and reconnect snapshot timing on the live backend with two accounts; anchored member-profile parity remains open."
+}

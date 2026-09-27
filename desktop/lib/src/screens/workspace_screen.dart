@@ -5043,23 +5043,28 @@ class _MembersPanel extends StatelessWidget {
     final groups = [
       (
         title: 'В сети',
-        presence: MemberPresence.online,
         members: state.members
-            .where((member) => member.presence == MemberPresence.online)
+            .where(
+              (member) => state.memberPresence(member) == MemberPresence.online,
+            )
             .toList(),
       ),
       (
         title: 'Не в сети',
-        presence: MemberPresence.offline,
         members: state.members
-            .where((member) => member.presence == MemberPresence.offline)
+            .where(
+              (member) =>
+                  state.memberPresence(member) == MemberPresence.offline,
+            )
             .toList(),
       ),
       (
         title: 'Статус неизвестен',
-        presence: MemberPresence.unknown,
         members: state.members
-            .where((member) => member.presence == MemberPresence.unknown)
+            .where(
+              (member) =>
+                  state.memberPresence(member) == MemberPresence.unknown,
+            )
             .toList(),
       ),
     ];
@@ -5159,7 +5164,11 @@ class _MembersPanel extends StatelessWidget {
                           ),
                         ),
                         for (final member in group.members)
-                          _memberTile(context, member, group.presence),
+                          _memberTile(
+                            context,
+                            member,
+                            state.memberPresence(member),
+                          ),
                       ],
                   ],
                 ),

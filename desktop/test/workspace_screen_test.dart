@@ -922,21 +922,21 @@ void main() {
     addTearDown(tester.view.reset);
     const members = [
       GuildMember(
-        id: 'online',
+        id: '11111111-1111-4111-8111-111111111111',
         login: 'online',
         displayName: 'В сети',
         role: 'MEMBER',
         presence: MemberPresence.online,
       ),
       GuildMember(
-        id: 'offline',
+        id: '22222222-2222-4222-8222-222222222222',
         login: 'offline',
         displayName: 'Не в сети',
         role: 'MEMBER',
         presence: MemberPresence.offline,
       ),
       GuildMember(
-        id: 'unknown',
+        id: '33333333-3333-4333-8333-333333333333',
         login: 'unknown',
         displayName: 'Неизвестен',
         role: 'MEMBER',
@@ -990,6 +990,31 @@ void main() {
     );
     expect(
       find.descendant(of: membersPanel, matching: find.text('Неизвестен')),
+      findsOneWidget,
+    );
+
+    state.guildPresence.invalidate();
+    state.notifyListeners();
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: membersPanel,
+        matching: find.text('Статус неизвестен — 3'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: membersPanel, matching: find.text('В сети — 1')),
+      findsNothing,
+    );
+
+    state.guildPresence.acceptSnapshot([
+      '11111111-1111-4111-8111-111111111111',
+    ]);
+    state.notifyListeners();
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: membersPanel, matching: find.text('В сети — 1')),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
