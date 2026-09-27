@@ -2,6 +2,61 @@ enum ChannelKind { text, voice }
 
 enum SearchMessageKind { channel, directMessage }
 
+class VoiceRosterMember {
+  const VoiceRosterMember({
+    required this.accountId,
+    required this.displayName,
+    required this.screenSharing,
+  });
+
+  final String accountId;
+  final String displayName;
+  final bool screenSharing;
+
+  factory VoiceRosterMember.fromJson(Map<String, dynamic> json) {
+    final accountId = json['account_id'];
+    final displayName = json['display_name'];
+    final screenSharing = json['screen_sharing'];
+    if (accountId is! String ||
+        accountId.trim().isEmpty ||
+        displayName is! String ||
+        displayName.trim().isEmpty ||
+        screenSharing is! bool) {
+      throw const FormatException('Invalid voice roster member.');
+    }
+    return VoiceRosterMember(
+      accountId: accountId,
+      displayName: displayName,
+      screenSharing: screenSharing,
+    );
+  }
+}
+
+class VoiceRoomRoster {
+  const VoiceRoomRoster({required this.channelId, required this.participants});
+
+  final String channelId;
+  final List<VoiceRosterMember> participants;
+
+  factory VoiceRoomRoster.fromJson(Map<String, dynamic> json) {
+    final channelId = json['channel_id'];
+    final members = json['participants'];
+    if (channelId is! String || channelId.trim().isEmpty || members is! List) {
+      throw const FormatException('Invalid voice room roster.');
+    }
+    final participants = members
+        .map(
+          (value) => VoiceRosterMember.fromJson(value as Map<String, dynamic>),
+        )
+        .toList(growable: false);
+    if (participants.map((item) => item.accountId).toSet().length !=
+        participants.length) {
+      throw const FormatException('Duplicate voice roster member.');
+    }
+    return VoiceRoomRoster(channelId: channelId, participants: participants);
+  }
+}
+
 bool _isUuid(Object? value) =>
     value is String &&
     RegExp(

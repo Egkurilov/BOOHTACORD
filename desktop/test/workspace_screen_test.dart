@@ -103,6 +103,41 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('shows the voice roster before joining the room', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final api = _PortraitApi(
+      voiceRosters: const [
+        VoiceRoomRoster(
+          channelId: 'voice-1',
+          participants: [
+            VoiceRosterMember(
+              accountId: 'account-2',
+              displayName: 'Мика',
+              screenSharing: true,
+            ),
+          ],
+        ),
+      ],
+    );
+    final state = AppState(api);
+    await state.initialize();
+    state.selectedChannel = _PortraitApi.voiceChannel;
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Сейчас в канале: 1'), findsOneWidget);
+    expect(find.text('Мика'), findsNWidgets(2));
+    expect(find.byTooltip('Показывает экран'), findsNWidgets(2));
+    expect(find.text('Идёт трансляция'), findsOneWidget);
+    expect(state.voicePhase, VoicePhase.idle);
+    expect(state.voiceChannel, isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('shows channel administration only for administrators', (
     tester,
   ) async {
@@ -885,10 +920,12 @@ class _PortraitApi extends ApiClient {
     this.withHistory = false,
     this.historyCount = 1,
     this.includeDirectMessage = false,
+    this.voiceRosters = const [],
   });
   final bool withHistory;
   final int historyCount;
   final bool includeDirectMessage;
+  final List<VoiceRoomRoster> voiceRosters;
   final advancedMessageIds = <String>[];
   String? sentReplyToId;
   String? sentDirectReplyToId;
@@ -963,6 +1000,9 @@ class _PortraitApi extends ApiClient {
       ),
     ],
   );
+
+  @override
+  Future<List<VoiceRoomRoster>> voiceParticipants() async => voiceRosters;
 
   @override
   Future<List<GuildMember>> members() async => const [

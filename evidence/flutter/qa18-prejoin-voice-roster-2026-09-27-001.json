@@ -1,0 +1,44 @@
+{
+  "id": "qa18-prejoin-voice-roster-2026-09-27-001",
+  "kind": "integration-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "environment": {
+    "host_os": "macOS arm64",
+    "flutter_project": "desktop",
+    "android_device": "not connected",
+    "windows_runner": "not available"
+  },
+  "checks": [
+    {
+      "name": "Flutter voice roster API contract",
+      "command": "flutter test --reporter expanded test/voice_roster_api_test.dart",
+      "status": "PASS",
+      "observation": "Three tests verify authenticated GET /api/v1/voice/participants with Cache-Control: no-store, valid populated and empty rosters, duplicate rejection, and truthful 503 propagation."
+    },
+    {
+      "name": "Prejoin voice room roster",
+      "command": "flutter test --reporter expanded test/workspace_screen_test.dart --plain-name 'shows the voice roster before joining the room'",
+      "status": "PASS",
+      "observation": "The screen shows the participant name/count and active screen-share indicator before joining; the widget test confirms no voice session or lease is created."
+    },
+    {
+      "name": "Full Flutter tests and analyzer",
+      "command": "flutter test --reporter compact && flutter analyze",
+      "status": "PASS",
+      "observation": "All 115 tests passed and analyzer reported no issues."
+    },
+    {
+      "name": "macOS debug and signed Android release builds",
+      "command": "flutter build macos --debug && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Both builds completed. Android APK SHA-256: fb28ff4820cc4755a7bb86f454fde4c2664ffb4c80250578126eb61af68555c7; APK Signature Scheme v2 verified with certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b."
+    },
+    {
+      "name": "Real presence refresh and device acceptance",
+      "status": "NOT_RUN",
+      "reason": "No connected Android device or second real account/peer was available. Ten-second refresh lifecycle, live room changes, Windows build, and matched web screenshots need device acceptance."
+    }
+  ],
+  "remaining": "Run the complete Flutter suite, analyzer and platform builds; then confirm room membership changes and private-presence failure states against the live server with two accounts on Android/macOS and a Windows runner."
+}

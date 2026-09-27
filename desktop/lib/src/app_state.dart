@@ -67,6 +67,8 @@ class AppState extends ChangeNotifier {
   OwnProfile? profile;
   ChannelTopology? topology;
   List<GuildMember> members = const [];
+  List<VoiceRoomRoster>? voiceRosters;
+  String? voiceRosterError;
   List<DirectConversation> directMessages = const [];
   List<DirectCandidate> directMessageCandidates = const [];
   DirectConversation? selectedDirectMessage;
@@ -139,6 +141,9 @@ class AppState extends ChangeNotifier {
   StreamSubscription<dynamic>? _realtimeSubscription;
   Timer? _realtimeRetry;
   Timer? _maintenanceTimer;
+  Timer? _voiceRosterTimer;
+  int _voiceRosterRevision = 0;
+  bool _voiceRosterLoading = false;
   int _realtimeAttempt = 0;
   final Set<String> _realtimeEventIds = <String>{};
   final Map<String, String> _sendRetryIds = <String, String>{};
@@ -217,11 +222,14 @@ class AppState extends ChangeNotifier {
   Future<void> _expireSession() async {
     if (phase != AppPhase.ready || _expiringSession) return;
     _expiringSession = true;
+    _stopVoiceRosterPolling();
     phase = AppPhase.signedOut;
     user = null;
     profile = null;
     topology = null;
     members = const [];
+    voiceRosters = null;
+    voiceRosterError = null;
     directMessages = const [];
     directMessageCandidates = const [];
     selectedDirectMessage = null;
@@ -292,7 +300,9 @@ class AppState extends ChangeNotifier {
           refreshMembers(),
           refreshDirectMessages(),
           refreshProfile(),
+          refreshVoiceRosters(),
         ]);
+        _startVoiceRosterPolling();
         unawaited(_connectRealtime());
       }
     } catch (cause) {
@@ -303,6 +313,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> setServer(String value) async {
+    _stopVoiceRosterPolling();
     await leaveVoice();
     await _closeRealtime();
     await api.setBaseUrl(value);
@@ -317,6 +328,8 @@ class AppState extends ChangeNotifier {
     user = null;
     topology = null;
     selectedChannel = null;
+    voiceRosters = null;
+    voiceRosterError = null;
     phase = AppPhase.signedOut;
     error = null;
     notifyListeners();
@@ -339,7 +352,9 @@ class AppState extends ChangeNotifier {
         refreshMembers(),
         refreshDirectMessages(),
         refreshProfile(),
+        refreshVoiceRosters(),
       ]);
+      _startVoiceRosterPolling();
       unawaited(_connectRealtime());
     } catch (cause) {
       error = _message(cause);
@@ -365,6 +380,9 @@ class AppState extends ChangeNotifier {
     }
     user = null;
     profile = null;
+    _stopVoiceRosterPolling();
+    voiceRosters = null;
+    voiceRosterError = null;
     _voiceVolumePreferences = null;
     _audioPreferences = null;
     audioActivationMode = AudioActivationMode.vad;
@@ -419,6 +437,42 @@ class AppState extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  Future<void> refreshVoiceRosters() async {
+    if (phase != AppPhase.ready || user == null || _voiceRosterLoading) return;
+    _voiceRosterLoading = true;
+    final revision = ++_voiceRosterRevision;
+    try {
+      final rosters = await api.voiceParticipants();
+      if (revision != _voiceRosterRevision || phase != AppPhase.ready) return;
+      voiceRosters = rosters;
+      voiceRosterError = null;
+    } catch (cause) {
+      if (revision != _voiceRosterRevision || phase != AppPhase.ready) return;
+      voiceRosters = null;
+      voiceRosterError = _message(cause);
+    } finally {
+      if (revision == _voiceRosterRevision) {
+        _voiceRosterLoading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  void _startVoiceRosterPolling() {
+    if (user == null || _voiceRosterTimer != null) return;
+    _voiceRosterTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => unawaited(refreshVoiceRosters()),
+    );
+  }
+
+  void _stopVoiceRosterPolling() {
+    _voiceRosterTimer?.cancel();
+    _voiceRosterTimer = null;
+    _voiceRosterRevision++;
+    _voiceRosterLoading = false;
   }
 
   void toggleWorkspacePanel(WorkspacePanel panel) {
@@ -1646,6 +1700,7 @@ class AppState extends ChangeNotifier {
   void dispose() {
     _realtimeRetry?.cancel();
     _maintenanceTimer?.cancel();
+    _stopVoiceRosterPolling();
     unawaited(_audioDeviceSubscription?.cancel());
     api.onUnauthorized = null;
     unawaited(_realtimeSubscription?.cancel());

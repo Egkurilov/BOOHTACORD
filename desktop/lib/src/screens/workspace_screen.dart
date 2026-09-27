@@ -772,8 +772,11 @@ class _Category extends StatelessWidget {
                   ? state.room
                   : null;
               final localParticipant = room?.localParticipant;
+              final roster = state.voiceRosters
+                  ?.where((item) => item.channelId == channel.id)
+                  .firstOrNull;
               final memberCount = localParticipant == null
-                  ? null
+                  ? roster?.participants.length
                   : room!.remoteParticipants.length + 1;
               return Column(
                 children: [
@@ -792,7 +795,11 @@ class _Category extends StatelessWidget {
                       state: state,
                       localParticipant: localParticipant,
                       remoteParticipants: room!.remoteParticipants.values,
-                    ),
+                    )
+                  else if (channel.kind == ChannelKind.voice &&
+                      roster != null &&
+                      roster.participants.isNotEmpty)
+                    _VoiceRosterNavigationMembers(roster: roster),
                 ],
               );
             },
@@ -952,6 +959,87 @@ class _VoiceNavigationMembers extends StatelessWidget {
     ),
   );
 }
+
+class _VoiceRosterNavigationMembers extends StatelessWidget {
+  const _VoiceRosterNavigationMembers({required this.roster});
+
+  final VoiceRoomRoster roster;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(left: 31, bottom: 5),
+    child: Column(
+      children: [
+        for (final participant in roster.participants)
+          _VoiceRosterMemberRow(participant: participant, compact: true),
+      ],
+    ),
+  );
+}
+
+class _VoiceRosterMemberRow extends StatelessWidget {
+  const _VoiceRosterMemberRow({
+    required this.participant,
+    this.compact = false,
+  });
+
+  final VoiceRosterMember participant;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.symmetric(vertical: compact ? 2 : 5),
+    child: Row(
+      children: [
+        CircleAvatar(
+          radius: compact ? 10 : 17,
+          backgroundColor: _voiceAvatarColor(participant.accountId),
+          child: Text(
+            _initial(participant.displayName),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: compact ? 10 : 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        SizedBox(width: compact ? 7 : 10),
+        Expanded(
+          child: Text(
+            participant.displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: compact ? 12 : 14),
+          ),
+        ),
+        if (participant.screenSharing)
+          Tooltip(
+            message: 'Показывает экран',
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.screen_share_outlined,
+                  size: compact ? 14 : 17,
+                  color: GcColors.accentText,
+                ),
+                if (!compact) ...[
+                  const SizedBox(width: 5),
+                  const Text(
+                    'Идёт трансляция',
+                    style: TextStyle(color: GcColors.accentText, fontSize: 11),
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+String _initial(String value) =>
+    value.trim().isEmpty ? 'У' : value.trim().characters.first.toUpperCase();
 
 class _VoiceNavigationMemberRow extends StatelessWidget {
   const _VoiceNavigationMemberRow({
@@ -3580,9 +3668,16 @@ class _VoicePrejoinCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Подключитесь, чтобы увидеть участников комнаты и статусы микрофонов.',
+                  'Посмотрите, кто уже в комнате, и подключитесь к разговору.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: GcColors.textSecondary, height: 1.45),
+                ),
+                const SizedBox(height: 20),
+                _VoiceRosterPreview(
+                  roster: state.voiceRosters
+                      ?.where((item) => item.channelId == channel.id)
+                      .firstOrNull,
+                  error: state.voiceRosterError,
                 ),
                 if (state.error != null) ...[
                   const SizedBox(height: 20),
@@ -3658,6 +3753,54 @@ class _VoicePrejoinCard extends StatelessWidget {
           ),
         ),
       ),
+    ),
+  );
+}
+
+class _VoiceRosterPreview extends StatelessWidget {
+  const _VoiceRosterPreview({required this.roster, required this.error});
+
+  final VoiceRoomRoster? roster;
+  final String? error;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: GcColors.raised,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: GcColors.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          roster == null
+              ? 'Участники голосового канала'
+              : 'Сейчас в канале: ${roster!.participants.length}',
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        if (roster == null)
+          Text(
+            error == null
+                ? 'Проверяем, кто сейчас в комнате…'
+                : 'Не удалось обновить состав комнаты. Повторяем попытку.',
+            style: TextStyle(
+              color: error == null ? GcColors.muted : GcColors.warning,
+              fontSize: 12,
+            ),
+          )
+        else if (roster!.participants.isEmpty)
+          const Text(
+            'Пока никого нет.',
+            style: TextStyle(color: GcColors.muted, fontSize: 12),
+          )
+        else
+          for (final participant in roster!.participants)
+            _VoiceRosterMemberRow(participant: participant),
+      ],
     ),
   );
 }

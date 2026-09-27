@@ -301,6 +301,26 @@ class ApiClient {
     return ChannelTopology.fromJson(data);
   }
 
+  Future<List<VoiceRoomRoster>> voiceParticipants() async {
+    final data = await _checked(
+      await _client.get(
+        _uri('/voice/participants'),
+        headers: {...await _headers(), 'cache-control': 'no-store'},
+      ),
+    );
+    if (data is! Map<String, dynamic> || data['channels'] is! List) {
+      throw const ApiFailure('Некорректный состав голосовых каналов.');
+    }
+    final rosters = (data['channels'] as List)
+        .map((value) => VoiceRoomRoster.fromJson(value as Map<String, dynamic>))
+        .toList(growable: false);
+    if (rosters.map((item) => item.channelId).toSet().length !=
+        rosters.length) {
+      throw const ApiFailure('Сервер вернул повторный голосовой канал.');
+    }
+    return rosters;
+  }
+
   Future<void> createCategory(String name) async {
     final normalized = name.trim();
     if (normalized.isEmpty || normalized.runes.length > 80) {
