@@ -168,6 +168,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   void _closeDrawers() {
     if (!_showMobileSidebar && !_showMembersDrawer) return;
     final returnFocus = _drawerReturnFocus;
+    final restoreFocus = widget.state.workspacePanel == WorkspacePanel.none;
     _drawerReturnFocus = null;
     setState(() {
       _showMobileSidebar = false;
@@ -175,12 +176,20 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted ||
+          !restoreFocus ||
           returnFocus?.context == null ||
           !returnFocus!.canRequestFocus) {
         return;
       }
       returnFocus.requestFocus();
     });
+  }
+
+  void _closeScrim() {
+    _closeDrawers();
+    if (widget.state.workspacePanel == WorkspacePanel.search) {
+      widget.state.closeSearchPanel();
+    }
   }
 
   bool _handleEscape() {
@@ -237,6 +246,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
           final wide = constraints.maxWidth >= GcLayout.wideBreakpoint;
           final voiceStageWide =
               wide && widget.state.selectedChannel?.kind == ChannelKind.voice;
+          final searchPanelActive =
+              widget.state.workspacePanel == WorkspacePanel.search;
+          final searchPanelModal =
+              searchPanelActive && (!medium || voiceStageWide);
+          final modalOverlayActive = _showMembersDrawer || searchPanelModal;
           final showPermanentMembers =
               medium &&
               widget.state.workspacePanel == WorkspacePanel.none &&
@@ -251,7 +265,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                   children: [
                     Positioned.fill(
                       child: ExcludeFocus(
-                        excluding: _showMobileSidebar || _showMembersDrawer,
+                        excluding:
+                            _showMobileSidebar ||
+                            _showMembersDrawer ||
+                            searchPanelModal,
                         child: _MainSurface(
                           state: widget.state,
                           onToggleNavigation: _toggleNavigation,
@@ -263,10 +280,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                         ),
                       ),
                     ),
-                    if (_showMobileSidebar || _showMembersDrawer)
-                      Positioned.fill(
-                        child: _DrawerScrim(onTap: _closeDrawers),
-                      ),
+                    if (_showMobileSidebar ||
+                        _showMembersDrawer ||
+                        searchPanelModal)
+                      Positioned.fill(child: _DrawerScrim(onTap: _closeScrim)),
                     if (_showMobileSidebar)
                       Positioned(
                         top: 0,
@@ -300,12 +317,25 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                           ),
                         ),
                       ),
+                    if (searchPanelModal)
+                      Positioned(
+                        top: 0,
+                        bottom: 0,
+                        right: 0,
+                        width: (constraints.maxWidth - 40)
+                            .clamp(0.0, 320.0)
+                            .toDouble(),
+                        child: _DrawerSurface(
+                          debugLabel: 'workspace-search',
+                          child: _WorkspaceSearchPanel(state: widget.state),
+                        ),
+                      ),
                   ],
                 )
               : Stack(
                   children: [
                     ExcludeFocus(
-                      excluding: _showMembersDrawer,
+                      excluding: modalOverlayActive,
                       child: Row(
                         children: [
                           SizedBox(
@@ -340,13 +370,20 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                               child: _MembersPanel(state: widget.state),
                             ),
                           ],
+                          if (searchPanelActive && !searchPanelModal) ...[
+                            const VerticalDivider(width: 1),
+                            SizedBox(
+                              width: wide
+                                  ? GcLayout.asideWide
+                                  : GcLayout.asideMedium,
+                              child: _WorkspaceSearchPanel(state: widget.state),
+                            ),
+                          ],
                         ],
                       ),
                     ),
-                    if (_showMembersDrawer)
-                      Positioned.fill(
-                        child: _DrawerScrim(onTap: _closeDrawers),
-                      ),
+                    if (_showMembersDrawer || searchPanelModal)
+                      Positioned.fill(child: _DrawerScrim(onTap: _closeScrim)),
                     if (_showMembersDrawer)
                       Positioned(
                         top: 0,
@@ -360,6 +397,19 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                             state: widget.state,
                             onClose: _closeDrawers,
                           ),
+                        ),
+                      ),
+                    if (searchPanelModal)
+                      Positioned(
+                        top: 0,
+                        bottom: 0,
+                        right: 0,
+                        width: (constraints.maxWidth - 32)
+                            .clamp(0.0, 320.0)
+                            .toDouble(),
+                        child: _DrawerSurface(
+                          debugLabel: 'workspace-search',
+                          child: _WorkspaceSearchPanel(state: widget.state),
                         ),
                       ),
                   ],
@@ -405,8 +455,12 @@ class _DrawerScrim extends StatelessWidget {
 }
 
 class _DrawerSurface extends StatefulWidget {
-  const _DrawerSurface({required this.child});
+  const _DrawerSurface({
+    required this.child,
+    this.debugLabel = 'workspace-drawer',
+  });
   final Widget child;
+  final String debugLabel;
 
   @override
   State<_DrawerSurface> createState() => _DrawerSurfaceState();
@@ -414,7 +468,7 @@ class _DrawerSurface extends StatefulWidget {
 
 class _DrawerSurfaceState extends State<_DrawerSurface> {
   late final FocusScopeNode _focusScope = FocusScopeNode(
-    debugLabel: 'workspace-drawer',
+    debugLabel: widget.debugLabel,
     traversalEdgeBehavior: TraversalEdgeBehavior.closedLoop,
   );
 
@@ -1039,9 +1093,6 @@ class _MainSurface extends StatelessWidget {
   final bool capturingPttKey;
   @override
   Widget build(BuildContext context) {
-    if (state.workspacePanel == WorkspacePanel.search) {
-      return _WorkspaceSearchPanel(state: state);
-    }
     if (state.workspacePanel == WorkspacePanel.searchContext) {
       return _SearchMessageContext(state: state);
     }
@@ -2315,14 +2366,38 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
     if (_scope == 'current' && current == null) _scope = 'all';
     return Column(
       children: [
-        _Header(
-          icon: Icons.search,
-          title: 'Поиск сообщений',
-          subtitle: 'По общим каналам и личным диалогам, доступным аккаунту',
-          trailing: IconButton(
-            tooltip: 'Закрыть поиск',
-            onPressed: state.closeSearchPanel,
-            icon: const Icon(Icons.close),
+        SizedBox(
+          height: 64,
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: GcColors.border)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.search, color: GcColors.muted, size: 20),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Поиск сообщений',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: GcColors.text,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Закрыть поиск',
+                    onPressed: state.closeSearchPanel,
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
         Padding(
@@ -2423,9 +2498,12 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                error,
-                style: const TextStyle(color: GcColors.danger),
+              child: Semantics(
+                liveRegion: true,
+                child: Text(
+                  error,
+                  style: const TextStyle(color: GcColors.danger),
+                ),
               ),
             ),
           ),
@@ -2443,11 +2521,21 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
         Expanded(
           child: _results.isEmpty
               ? Center(
-                  child: Text(
-                    _searched
+                  child: Semantics(
+                    liveRegion: true,
+                    label: _loading
+                        ? 'Ищем сообщения…'
+                        : _searched
                         ? 'Совпадений нет.'
                         : 'Введите запрос и нажмите «Найти».',
-                    style: const TextStyle(color: GcColors.muted),
+                    child: Text(
+                      _loading
+                          ? 'Ищем сообщения…'
+                          : _searched
+                          ? 'Совпадений нет.'
+                          : 'Введите запрос и нажмите «Найти».',
+                      style: const TextStyle(color: GcColors.muted),
+                    ),
                   ),
                 )
               : ListView.separated(
@@ -2473,49 +2561,65 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
                             .firstOrNull
                             ?.displayName ??
                         message.authorId;
-                    return Card(
-                      color: GcColors.surface,
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final narrow = constraints.maxWidth < 400;
+                        final metadata = Text(
+                          '${_searchDateTime(message.createdAt)} · $author',
+                          maxLines: narrow ? 2 : 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: GcColors.muted,
+                            fontSize: 12,
+                          ),
+                        );
+                        final conversation = Text(
+                          _conversationLabel(message),
+                          maxLines: narrow ? 1 : 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        );
+                        return Card(
+                          color: GcColors.surface,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Text(
-                                    _conversationLabel(message),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                if (narrow) ...[
+                                  conversation,
+                                  const SizedBox(height: 4),
+                                  metadata,
+                                ] else
+                                  Row(
+                                    children: [
+                                      Expanded(child: conversation),
+                                      const SizedBox(width: 8),
+                                      Flexible(child: metadata),
+                                    ],
                                   ),
+                                const SizedBox(height: 8),
+                                FormattedMessageBody(
+                                  body: message.body,
+                                  color: GcColors.text,
                                 ),
-                                Text(
-                                  '${_searchDateTime(message.createdAt)} · $author',
-                                  style: const TextStyle(
-                                    color: GcColors.muted,
-                                    fontSize: 12,
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton.icon(
+                                    onPressed: () =>
+                                        state.openSearchContext(message),
+                                    icon: const Icon(
+                                      Icons.open_in_new,
+                                      size: 17,
+                                    ),
+                                    label: const Text('Открыть сообщение'),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            FormattedMessageBody(
-                              body: message.body,
-                              color: GcColors.text,
-                            ),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton.icon(
-                                onPressed: () =>
-                                    state.openSearchContext(message),
-                                icon: const Icon(Icons.open_in_new, size: 17),
-                                label: const Text('Открыть сообщение'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -3185,7 +3289,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
         final showingLocalScreen =
             selectedTrack == null &&
             localScreenTrack != null &&
-            _selectedScreenIdentity != '';
+            _selectedScreenIdentity == null;
         final viewerTrack =
             selectedTrack ?? (showingLocalScreen ? localScreenTrack : null);
         final selectedName = selectedScreen != null

@@ -1,0 +1,41 @@
+{
+  "id": "qa13-responsive-search-2026-09-27-001",
+  "kind": "integration-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-27",
+  "environment": {
+    "host_os": "macOS arm64",
+    "apk": "desktop/build/app/outputs/flutter-apk/app-release.apk"
+  },
+  "checks": [
+    {
+      "name": "Flutter analyzer and full test suite",
+      "command": "flutter analyze && flutter test --reporter compact",
+      "status": "PASS",
+      "observation": "No analyzer issues; all 104 tests passed. Widget tests cover compact modal search with scrim/focus trap, wide search beside the active conversation, query/context navigation and focus restoration."
+    },
+    {
+      "name": "macOS debug and signed Android release builds",
+      "command": "flutter build macos --debug && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Both builds completed. Android APK SHA-256: f68b6c115342f999b01c79c66d0ef1aa7413fbdd1696fe975826c948651b5e7a."
+    },
+    {
+      "name": "Android APK signature",
+      "command": "apksigner verify --verbose --print-certs desktop/build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified with one signer; certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b matches the private upload JKS."
+    },
+    {
+      "name": "Matched web/Flutter search screenshots and device accessibility",
+      "status": "NOT_RUN",
+      "reason": "This check used widget/layout assertions, not paired web screenshots or physical screen-reader acceptance."
+    },
+    {
+      "name": "Windows build and responsive search acceptance",
+      "status": "NOT_RUN",
+      "reason": "No Windows runner was available in this check."
+    }
+  ],
+  "remaining": "QA-13 remains open for matched screenshots, physical-device accessibility acceptance and Windows build verification."
+}

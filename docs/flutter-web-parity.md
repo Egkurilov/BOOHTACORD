@@ -18,7 +18,7 @@ the implementation.
 | Area | Web reference | Flutter now | Remaining gap |
 | --- | --- | --- | --- |
 | Authentication and maintenance | `identity/AuthenticationLanding.vue`, `maintenance/MaintenanceBanner.vue`, `identity/PasswordResetCompletion.vue` | Login/register, server URL and secure session; compact maintenance banner; protected 401 clears private workspace; reset completion from pasted same-origin link | Automatic HTTPS app-link association, full focus/error and screenshot parity |
-| Workspace shell | `workspace/WorkspaceApp.vue`, `WorkspaceMain.vue`, `useWorkspaceDrawers.ts` | Sidebar/member drawers and scrim on compact layouts; medium member overlay; wide member aside; Escape/close behavior; search panel; search focus restoration | Focus trapping, exact breakpoint behavior and screenshot comparison |
+| Workspace shell | `workspace/WorkspaceApp.vue`, `WorkspaceMain.vue`, `useWorkspaceDrawers.ts` | Sidebar/member drawers and scrim on compact layouts; medium member overlay; wide member aside; search stays beside the active conversation; modal search overlay below 1280 px and in wide voice-stage layout; drawer/search focus scopes, Escape/close behavior and focus return | Exact breakpoint behavior, admin/profile/dialog focus, accessibility announcements and screenshot comparison |
 | Profile | `identity/ProfileSettings.vue`, `workspace/WorkspaceUserFooter.vue` | Display name/password, authenticated private avatar rendering, PNG/JPEG upload/remove, logout flow with pending/error state | Exact loading/error/focus parity, notification settings |
 | Channels | `channel/ChannelNavigation.vue`, `conversation/TextConversation.vue`, `text_read_gate.ts`, `voice_navigation_presence.ts` | Ordered categories, text/voice selection, caller-local unread/mention badges, newest visible message cursor advancement; active voice channel now shows live member count, mic/speaking status and screen-share indicators | Visual comparison of the expanded voice roster; admin topology controls are tracked under Administration |
 | Text chat | `conversation/TextConversation.vue`, `TextHistoryList.vue`, `MessageItem.vue`, `MessageBody.vue` | Chronological cursor-paged history with scroll restoration; local-date dividers and same-author grouping; formatted bodies and safe HTTP(S) links; mention picker/sending/name display; send, reply target/preview, edit/delete and visible read cursor; optimistic/failed rows with explicit exact-payload retry reusing `client_message_id`, reconciled against server history; edit draft/mention preservation and targeted revision refresh after `409`; delete keeps the loaded window; deleted-during-edit and stale-conversation widget/state coverage | Native notification equivalent, live backend mutation/retry check and visual QA |
@@ -28,7 +28,7 @@ the implementation.
 | Voice connection | `voice/VoicePrejoin.vue`, `VoiceDock.vue`, `connection_store.ts`, `VoiceParticipantVolumes.vue` | Join/transfer, listener-only join, mic mute, deafen, leave, participant status cards, visible reconnect state and lease-specific revocation reasons; per-participant microphone volume 0–200% with account-scoped local preferences; PTT holds mic open and releases safely on key-up/focus loss/teardown | Real-peer gain and PTT verification on each platform, bounded reconnect parity, permission-denied parity and exact dock state/copy |
 | Audio settings | `voice/AudioSettings.vue`, `activation_store.ts`, `audio_settings_store.ts` | Account settings panel with input/output device selection, account-scoped persistence, VAD/PTT and key assignment, AGC/echo/noise controls; native device labels remain visible even without a `default` entry, and the panel follows device-change events without stale scans; avoids claiming native effective state that SDK does not expose | Verify actual device enumeration, hotplug and switching/processing audibly on macOS/Windows/Android; PTT hold/release and focus/state visual comparison |
 | Screen sharing | `voice/ScreenViewer.vue`, `ScreenDiagnosticsPanel.vue`, `screen_viewer_controller.ts` | Remote stream selection/viewer basics; screen-audio level 0–200% with account-scoped local preference and truthful no-audio/deafened states; local desktop picker/publish/stop and Android MediaProjection foreground service; own published screen can be reopened from the participant card | Verify reopen and OS-level stop with a real share, permissions and real-peer capture; rail/fullscreen parity, quality controls, diagnostics and playback/gain verification on each platform |
-| Search | `search/WorkspaceSearchPanel.vue`, `SearchPanel.vue`, chat search components | Global/channel/DM search with cursor pagination; opens server-centered message context, highlights the hit and returns to the originating conversation; refreshes stale channel topology; Ctrl/Cmd+K, Escape and search-focus restoration | Focus trapping, screenshot comparison and parity for less common loading/error states |
+| Search | `search/WorkspaceSearchPanel.vue`, `SearchPanel.vue`, chat search components | Global/channel/DM search in a responsive side panel while preserving the active conversation; modal overlay below 1280 px with scrim and closed-loop keyboard focus; cursor pagination; server-centered context and return to origin; stale topology refresh; Ctrl/Cmd+K, Escape and search-focus restoration; loading/error/empty announcements | Matched web screenshots, device screen-reader acceptance and parity for less common loading/error states |
 | Administration | `workspace/AdminPanel.vue`, `channel/AdminTopologyControls.vue`, `AdminMembersSection.vue`, `AdminAuditSection.vue` | Admin-only Members/Channels/Audit tabs; cursor-paginated directory with preserved role/block drafts and save; per-row focus restoration and accessible error/success; expiring reset-link result/copy/close; same-voice admin kick; category/channel mutations and confirmations; cursor-paged audit without message content; widget coverage for member pagination/save failures, reset-link lifecycle and audit empty/error/refresh | Loading-state accessibility/visual parity, conflict recovery, live REST ACL verification, overall screenshot comparison |
 
 ## Delivery sequence
@@ -55,8 +55,10 @@ the implementation.
   compact and medium widths use overlays while wide layouts retain the member
   aside. Drawer overlays now own a closed-loop focus scope, exclude the covered
   workspace from keyboard traversal and restore the opening focus on close.
-  Search panel, Ctrl/Cmd+K launch, Escape close and focus restoration to the
-  launcher are implemented. Search/admin/profile/dialog focus trapping and
+  Search remains beside the conversation on wide layouts and uses a trapped,
+  scrim-backed right panel below 1280 px and over wide voice stages. Search
+  Ctrl/Cmd+K launch, Escape close, focus return and live loading/error/empty
+  announcements are implemented. Exact breakpoints, other panel focus and
   screenshot comparison remain open.
 - Match header, channel navigation, selected/hover/focus states, user footer,
   member aside and voice dock sizes and copy.
@@ -151,10 +153,12 @@ the implementation.
   Verify the existing 24-hour server-side unattached cleanup, live 507 handling,
   attachment ACL and visual comparison on devices.
 - Channel/DM search, result context and return-to-origin are implemented with
-  cursor pagination and an `at=<messageId>` history request. Continue with
-  focus trapping and screenshot comparison. Ctrl/Cmd+K is ignored while an
-  editable text field owns focus; Escape closes the search panel and restores
-  focus to the launcher (reopening compact navigation when necessary).
+  cursor pagination and an `at=<messageId>` history request. The search panel
+  now keeps the conversation visible, follows responsive modal/aside behavior,
+  traps focus only when modal, and announces loading/error/empty states. Compare
+  its screenshots and screen-reader output on devices. Ctrl/Cmd+K is ignored
+  while an editable text field owns focus; Escape closes the search panel and
+  restores focus to the launcher (reopening compact navigation when necessary).
 
 ### 5. Direct messages and unified search
 
@@ -165,7 +169,9 @@ the implementation.
   add per-file retry/progress and send/conflict recovery.
 - Global search and conversation-scoped context navigation are implemented;
   Ctrl/Cmd+K, Escape and launcher focus restoration are implemented and covered
-  by a widget test; focus trapping and visual comparison remain.
+  by widget tests; responsive modal search traps focus below 1280 px, while the
+  wide side panel leaves the conversation and navigation available. Visual and
+  screen-reader comparison remain.
 
 ### 6. Members and voice lifecycle
 
@@ -242,9 +248,9 @@ the implementation.
 The shell pass ports the design tokens and aligns geometry with
 `frontend/src/design/shell.css` and `responsive_shell.css`: wide navigation and
 member columns, medium widths, frame inset, border and shell radius. Responsive
-drawers and scrim are implemented, including the search panel; focus
-trapping/restoration, exact typography and per-screen screenshot comparison
-remain open in phase 1.
+drawers and search panel are implemented, including scrim, modal focus trapping
+and restoration; exact breakpoints, typography and per-screen screenshot
+comparison remain open in phase 1.
 The identity slice adds caller-only avatar upload/delete, logout failure
 semantics, maintenance status and pasted one-use password-reset links. Channel
 navigation now carries text-only unread/mention counts and a foreground read
@@ -256,11 +262,12 @@ native picking, authenticated upload, sending, protected preview and saving.
 Voice prejoin now includes a listener-only action and explicit
 transfer action; active rooms render participant cards/status and remote screen
 viewing. Search now spans all conversations or the active channel/DM, opens
-server-centered context and returns to the originating conversation. Screenshot
-comparison, real-peer voice/screen-audio gain and PTT verification, bounded
-reconnect retry policy, native notification behavior, attachment retry/cleanup,
-search focus trapping, admin member actions and Windows-native build
-verification remain open. Local screen publishing now has desktop/Android controls and
+server-centered context and returns to the originating conversation in a
+responsive side panel that preserves the active conversation. Screenshot and
+device screen-reader comparison, real-peer voice/screen-audio gain and PTT
+verification, bounded reconnect retry policy, native notification behavior,
+attachment cleanup, admin member actions and Windows-native build verification
+remain open. Local screen publishing now has desktop/Android controls and
 Android foreground-service plumbing, but still needs OS-level and real-peer
 verification. Live voice navigation refreshes its roster from participant,
 track and speaker events. Lease-specific revocation and visible reconnect

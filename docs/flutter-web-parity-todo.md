@@ -2,6 +2,32 @@
 
 Source of truth: [parity map](flutter-web-parity.md). Реализованные admin, conversation и release APK leaves перенесены в [DONE_AUDIT_2026-09-27.md](../DONE_AUDIT_2026-09-27.md). Этот checklist входит в QA-13; local widget/source checks не закрывают device acceptance.
 
+## P0 — Голосовые каналы и демонстрация экрана
+
+Критический пользовательский путь на всех клиентах. Сначала закрываем возврат к
+своей/чужой трансляции и базовые проблемы устройств; затем проводим реальные
+peer/platform-проверки и выравниваем viewer с вебом.
+
+- [ ] На macOS, Windows и Android пройти полный путь: подключение, mute/deafen,
+  запуск screen share, возврат к roster, повторное открытие из карточки, выбор
+  другой трансляции и корректное завершение локально/из OS.
+- [ ] На macOS и Android открыть локальную трансляцию повторно из собственной
+  карточки после возврата к roster; отдельно проверить, что завершившаяся чужая
+  трансляция не подменяется локальной.
+- [ ] Исправить и проверить перечисление/смену именованных микрофонов и outputs,
+  включая permission state, hotplug и устаревший результат сканирования.
+- [ ] На каждой платформе проверить разрешение screen share, OS-level stop,
+  Android 14+ MediaProjection service и реальный захват у peer.
+- [ ] На реальных peers проверить microphone/screen-audio gain, mute/deafen/PTT,
+  смену устройств и ограниченный reconnect без параллельных loops/дублирующих
+  voice lease на macOS, Windows и Android.
+- [ ] Сверить permission-denied/prejoin/dock copy, focus и screen-reader
+  announcements на устройствах.
+- [ ] Довести stream rail, fullscreen, quality/diagnostics и audio states
+  зрителя до web reference и проверить на устройстве.
+- [ ] Реализовать FE-52: ограниченные анонимные Android sender encoded FPS/bitrate/RTT
+  и сопоставить их с двумя receiver snapshots в QA-07.
+
 ## P1 — Admin и переписка
 
 - [ ] Проверить administrator REST ACL на работающем backend: роль, блокировка, topology, reset-link, voice kick и audit через два аккаунта.
@@ -12,22 +38,11 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
 - [ ] Сверить нативный защищённый просмотр изображений TEXT/DM с DES-09; проверить ACL, loading/error/deleted состояния, масштабирование и отдельное скачивание на deployment и устройствах.
 - [ ] Для Android и desktop Flutter определить и реализовать вставку изображения из clipboard/OS share в TEXT и DM с подготовкой, лимитами, retry и attachment-only отправкой после BE-19/20; сохранить обычную вставку текста.
 
-## P1 — Voice и screen share
-
-- [ ] На macOS и Android открыть локальную трансляцию повторно из собственной карточки после возврата к roster; проверить реальный LiveKit и компактную раскладку.
-- [ ] На macOS, Windows и Android проверить перечисление/смену именованных микрофонов и outputs, включая hotplug и устаревший результат сканирования.
-- [ ] Сверить permission-denied/prejoin/dock copy, focus и screen-reader announcements на устройствах.
-- [ ] Определить и проверить ограниченный reconnect с учётом retry LiveKit; исключить параллельные loops и дубли voice lease.
-- [ ] На реальных peers проверить microphone/screen-audio gain, mute/deafen/PTT и смену устройств на macOS, Windows и Android.
-- [ ] На каждой платформе проверить разрешение screen share, OS-level stop, Android 14+ MediaProjection service и реальный захват у peer.
-- [ ] Реализовать FE-52: ограниченные анонимные Android sender encoded FPS/bitrate/RTT и сопоставить их с двумя receiver snapshots в QA-07.
-- [ ] Довести stream rail, fullscreen, quality/diagnostics и audio states зрителя до web reference и проверить на устройстве.
-
 ## P2 — Visual, keyboard и accessibility
 
 - [ ] Сравнить compact maintenance notice с web banner при desktop и Android portrait размерах.
-- [ ] Сохранить matched web/Flutter screenshots 1440×900, 1280×800, 1024×768 и Android portrait для auth, chat, DM, members, voice, screen share, profile, audio и admin; зафиксировать отличия по экранам.
-- [ ] Завершить focus trap/return и keyboard reachability для search/admin/profile/dialogs; drawer trap, фокус на открытой панели и возврат фокуса реализованы и покрыты [widget/evidence](../evidence/flutter/qa13-drawer-focus-2026-09-27-001.json).
+- [ ] Сохранить matched web/Flutter screenshots 1440×900, 1280×800, 1024×768 и Android portrait для auth, chat, DM, search, members, voice, screen share, profile, audio и admin; зафиксировать отличия по экранам.
+- [ ] Завершить focus trap/return и keyboard reachability для admin/profile/dialogs; responsive modal search и drawer traps, начальный/возвращаемый фокус реализованы. Открыты device screen-reader приёмка и matched screenshots.
 - [ ] Проверить responsive breakpoints, resize, accessibility labels и узкие layouts на macOS, Windows и Android.
 - [ ] Сравнить navigation voice roster order, spacing, avatars и indicators с web client.
 

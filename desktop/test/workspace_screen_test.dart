@@ -671,8 +671,21 @@ void main() {
     await tester.tap(find.byTooltip('Поиск сообщений'));
     await tester.pumpAndSettle();
     expect(find.text('Область поиска'), findsOneWidget);
+    expect(find.text('Последнее сообщение'), findsOneWidget);
+    expect(
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorWidgetOfExactType<EditableText>(),
+      isNotNull,
+    );
 
-    await tester.enterText(find.byType(TextField).first, 'найденный текст');
+    await tester.enterText(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            widget.decoration?.hintText == 'Слова или «точная фраза»',
+      ),
+      'найденный текст',
+    );
     await tester.tap(find.text('Найти'));
     await tester.pumpAndSettle();
     expect(api.lastSearchQuery, 'найденный текст');
@@ -718,6 +731,15 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
     expect(state.workspacePanel, WorkspacePanel.search);
+    expect(find.text('Последнее сообщение'), findsOneWidget);
+    final searchScope =
+        tester
+                .widgetList<FocusScope>(find.byType(FocusScope))
+                .firstWhere((scope) => scope.debugLabel == 'workspace-search')
+                .focusNode!
+            as FocusScopeNode;
+    expect(searchScope.hasFocus, isTrue);
+    expect(searchScope.traversalEdgeBehavior, TraversalEdgeBehavior.closedLoop);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
@@ -744,6 +766,42 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
     expect(state.workspacePanel, WorkspacePanel.none);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('wide search keeps the active conversation beside the panel', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi(withHistory: true, historyCount: 1));
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Поиск сообщений'));
+    await tester.pumpAndSettle();
+
+    expect(state.workspacePanel, WorkspacePanel.search);
+    expect(find.text('Область поиска'), findsOneWidget);
+    expect(find.text('Последнее сообщение'), findsOneWidget);
+    expect(find.bySemanticsLabel('Закрыть панель'), findsNothing);
+    expect(
+      tester
+          .widgetList<FocusScope>(find.byType(FocusScope))
+          .where((scope) => scope.debugLabel == 'workspace-search'),
+      isEmpty,
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
