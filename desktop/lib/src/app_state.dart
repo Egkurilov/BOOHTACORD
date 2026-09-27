@@ -80,6 +80,8 @@ class AppState extends ChangeNotifier {
   OwnProfile? profile;
   ChannelTopology? topology;
   List<GuildMember> members = const [];
+  bool membersLoading = false;
+  String? membersError;
   List<VoiceRoomRoster>? voiceRosters;
   String? voiceRosterError;
   List<DirectConversation> directMessages = const [];
@@ -887,12 +889,17 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> refreshMembers() async {
+    membersLoading = true;
+    membersError = null;
+    notifyListeners();
     try {
       members = await api.members();
     } catch (cause) {
-      error = _message(cause);
+      membersError = _message(cause);
+    } finally {
+      membersLoading = false;
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   Future<void> refreshDirectMessages() async {

@@ -1,0 +1,39 @@
+{
+  "id": "qa27-member-presence-groups-2026-09-27-001",
+  "kind": "member-roster-presence-groups",
+  "status": "PASS",
+  "executed_at": "2026-09-27",
+  "implementation": "Flutter guild-member roster now matches the web section order and labels: online, offline, unknown. Each non-empty section has a semantic header with its member count, member rows retain status dots and profile actions, empty rosters have explicit copy, and member loading failures are shown inline with a retry action.",
+  "checks": [
+    {
+      "name": "Presence groups and counts",
+      "command": "flutter test test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "Widget test renders one member in each presence section and verifies the three matching labels/counts and no layout exception."
+    },
+    {
+      "name": "Member-list error and retry",
+      "command": "flutter test test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "Widget test verifies inline failure and retry action, then confirms the error clears and presence groups render after a successful retry."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 136 Flutter tests passed, including the new member-presence grouping widget test."
+    },
+    {
+      "name": "Live presence refresh and anchored profile",
+      "status": "NOT_RUN",
+      "reason": "Manual live-backend/device presence updates and the anchored member-profile design remain unverified."
+    }
+  ],
+  "remaining": "Verify dynamic presence changes and anchored member-profile behavior against the web client; matched screenshot and screen-reader acceptance remain open."
+}

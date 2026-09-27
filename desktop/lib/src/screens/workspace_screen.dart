@@ -5032,105 +5032,195 @@ class _MembersPanel extends StatelessWidget {
   const _MembersPanel({required this.state, this.onClose});
   final AppState state;
   final VoidCallback? onClose;
+
   @override
-  Widget build(BuildContext context) => ColoredBox(
-    color: GcColors.sidebar,
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'УЧАСТНИКИ',
-                  style: TextStyle(
-                    color: GcColors.muted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: .7,
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: state,
+    builder: (context, _) => _buildPanel(context),
+  );
+
+  Widget _buildPanel(BuildContext context) {
+    final groups = [
+      (
+        title: 'В сети',
+        presence: MemberPresence.online,
+        members: state.members
+            .where((member) => member.presence == MemberPresence.online)
+            .toList(),
+      ),
+      (
+        title: 'Не в сети',
+        presence: MemberPresence.offline,
+        members: state.members
+            .where((member) => member.presence == MemberPresence.offline)
+            .toList(),
+      ),
+      (
+        title: 'Статус неизвестен',
+        presence: MemberPresence.unknown,
+        members: state.members
+            .where((member) => member.presence == MemberPresence.unknown)
+            .toList(),
+      ),
+    ];
+
+    return ColoredBox(
+      key: const ValueKey('members-panel'),
+      color: GcColors.sidebar,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'УЧАСТНИКИ',
+                    style: TextStyle(
+                      color: GcColors.muted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: .7,
+                    ),
                   ),
                 ),
-              ),
-              if (onClose != null)
-                IconButton(
-                  tooltip: 'Закрыть участников',
-                  onPressed: onClose,
-                  icon: const Icon(Icons.close),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: state.refreshMembers,
-              child: ListView.builder(
-                itemCount: state.members.length,
-                itemBuilder: (context, index) {
-                  final member = state.members[index];
-                  final presence = switch (member.presence) {
-                    MemberPresence.online => ('В сети', GcColors.success),
-                    MemberPresence.offline => ('Не в сети', GcColors.muted),
-                    MemberPresence.unknown => (
-                      'Статус неизвестен',
-                      GcColors.warning,
-                    ),
-                  };
-                  return Material(
-                    color: GcColors.sidebar,
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      onTap: () => _showMemberDialog(context, state, member),
-                      leading: Stack(
-                        children: [
-                          AuthenticatedAvatar(
-                            state: state,
-                            name: member.displayName,
-                            avatarUrl: member.avatarUrl,
-                            radius: 20,
-                          ),
-                          Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: Container(
-                              width: 11,
-                              height: 11,
-                              decoration: BoxDecoration(
-                                color: presence.$2,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: GcColors.sidebar,
-                                  width: 2,
-                                ),
+                if (onClose != null)
+                  IconButton(
+                    tooltip: 'Закрыть участников',
+                    onPressed: onClose,
+                    icon: const Icon(Icons.close),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: state.refreshMembers,
+                child: ListView(
+                  children: [
+                    if (state.membersError != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Semantics(
+                              liveRegion: true,
+                              child: Text(
+                                state.membersError!,
+                                style: const TextStyle(color: GcColors.danger),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: state.membersLoading
+                                  ? null
+                                  : state.refreshMembers,
+                              child: Text(
+                                state.membersLoading
+                                    ? 'Загружаем…'
+                                    : 'Повторить',
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (state.membersLoading && state.members.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          'Загружаем участников…',
+                          style: TextStyle(color: GcColors.muted),
+                        ),
+                      )
+                    else if (state.members.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          'В гильдии пока нет участников.',
+                          style: TextStyle(color: GcColors.muted),
+                        ),
+                      ),
+                    for (final group in groups)
+                      if (group.members.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20, bottom: 8),
+                          child: Semantics(
+                            header: true,
+                            child: Text(
+                              '${group.title} — ${group.members.length}',
+                              style: const TextStyle(
+                                color: GcColors.muted,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                      title: Text(
-                        member.displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Text(
-                        presence.$1,
-                        style: const TextStyle(
-                          color: GcColors.muted,
-                          fontSize: 11,
                         ),
-                      ),
-                    ),
-                  );
-                },
+                        for (final member in group.members)
+                          _memberTile(context, member, group.presence),
+                      ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
+
+  Widget _memberTile(
+    BuildContext context,
+    GuildMember member,
+    MemberPresence memberPresence,
+  ) {
+    final presence = switch (memberPresence) {
+      MemberPresence.online => ('В сети', GcColors.success),
+      MemberPresence.offline => ('Не в сети', GcColors.muted),
+      MemberPresence.unknown => ('Статус неизвестен', GcColors.warning),
+    };
+    return Material(
+      color: GcColors.sidebar,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        onTap: () => _showMemberDialog(context, state, member),
+        leading: Stack(
+          children: [
+            AuthenticatedAvatar(
+              state: state,
+              name: member.displayName,
+              avatarUrl: member.avatarUrl,
+              radius: 20,
+            ),
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Container(
+                width: 11,
+                height: 11,
+                decoration: BoxDecoration(
+                  color: presence.$2,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: GcColors.sidebar, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+        title: Text(
+          member.displayName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          presence.$1,
+          style: const TextStyle(color: GcColors.muted, fontSize: 11),
+        ),
+      ),
+    );
+  }
 }
 
 Future<void> _showMemberDialog(

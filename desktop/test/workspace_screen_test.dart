@@ -913,6 +913,90 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
   });
+
+  testWidgets('groups guild members by presence with web-equivalent counts', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    const members = [
+      GuildMember(
+        id: 'online',
+        login: 'online',
+        displayName: 'В сети',
+        role: 'MEMBER',
+        presence: MemberPresence.online,
+      ),
+      GuildMember(
+        id: 'offline',
+        login: 'offline',
+        displayName: 'Не в сети',
+        role: 'MEMBER',
+        presence: MemberPresence.offline,
+      ),
+      GuildMember(
+        id: 'unknown',
+        login: 'unknown',
+        displayName: 'Неизвестен',
+        role: 'MEMBER',
+        presence: MemberPresence.unknown,
+      ),
+    ];
+    final api = _PortraitApi(membersResult: members, membersFailures: 1);
+    final state = AppState(api);
+    await state.initialize();
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    final membersPanel = find.byKey(const ValueKey('members-panel'));
+    expect(
+      find.descendant(
+        of: membersPanel,
+        matching: find.text('Список участников временно недоступен.'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: membersPanel, matching: find.text('Повторить')),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Повторить'));
+    await tester.pumpAndSettle();
+
+    expect(api.membersFailures, 0);
+    expect(state.membersError, isNull);
+    expect(
+      find.descendant(
+        of: membersPanel,
+        matching: find.text('Список участников временно недоступен.'),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: membersPanel, matching: find.text('В сети — 1')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: membersPanel, matching: find.text('Не в сети — 1')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: membersPanel,
+        matching: find.text('Статус неизвестен — 1'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: membersPanel, matching: find.text('Неизвестен')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
 }
 
 class _PortraitApi extends ApiClient {
@@ -921,11 +1005,30 @@ class _PortraitApi extends ApiClient {
     this.historyCount = 1,
     this.includeDirectMessage = false,
     this.voiceRosters = const [],
+    this.membersFailures = 0,
+    this.membersResult = const [
+      GuildMember(
+        id: 'account-1',
+        login: 'member',
+        displayName: 'Участник',
+        role: 'MEMBER',
+        presence: MemberPresence.online,
+      ),
+      GuildMember(
+        id: 'account-2',
+        login: 'peer',
+        displayName: 'Собеседник',
+        role: 'MEMBER',
+        presence: MemberPresence.online,
+      ),
+    ],
   });
   final bool withHistory;
   final int historyCount;
   final bool includeDirectMessage;
   final List<VoiceRoomRoster> voiceRosters;
+  int membersFailures;
+  final List<GuildMember> membersResult;
   final advancedMessageIds = <String>[];
   String? sentReplyToId;
   String? sentDirectReplyToId;
@@ -1005,22 +1108,13 @@ class _PortraitApi extends ApiClient {
   Future<List<VoiceRoomRoster>> voiceParticipants() async => voiceRosters;
 
   @override
-  Future<List<GuildMember>> members() async => const [
-    GuildMember(
-      id: 'account-1',
-      login: 'member',
-      displayName: 'Участник',
-      role: 'MEMBER',
-      presence: MemberPresence.online,
-    ),
-    GuildMember(
-      id: 'account-2',
-      login: 'peer',
-      displayName: 'Собеседник',
-      role: 'MEMBER',
-      presence: MemberPresence.online,
-    ),
-  ];
+  Future<List<GuildMember>> members() async {
+    if (membersFailures > 0) {
+      membersFailures--;
+      throw const ApiFailure('Список участников временно недоступен.');
+    }
+    return membersResult;
+  }
 
   @override
   Future<SearchMessagePage> searchMessages(

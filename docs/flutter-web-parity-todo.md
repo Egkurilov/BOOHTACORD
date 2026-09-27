@@ -74,6 +74,13 @@ peer/platform-проверки и выравниваем viewer с вебом.
 ## P2 — Visual, keyboard и accessibility
 
 - [ ] Сравнить compact maintenance notice с web banner при desktop и Android portrait размерах.
+- [x] Сгруппировать список участников по статусу online/offline/unknown и показывать
+  количество в заголовке каждой группы как в web; проверено виджет-тестом
+  [QA-27](../evidence/flutter/qa27-member-presence-groups-2026-09-27-001.json).
+- [x] Добавить web-эквивалентные loading/error/retry для списка участников
+  [QA-27](../evidence/flutter/qa27-member-presence-groups-2026-09-27-001.json).
+- [ ] Проверять и отображать динамические изменения presence; заменить
+  центрированный профиль участника на anchored popover.
 - [ ] Сохранить matched web/Flutter screenshots 1440×900, 1280×800, 1024×768 и Android portrait для auth, chat, DM, search, members, voice, screen share, profile, audio и admin; зафиксировать отличия по экранам.
 - [ ] Завершить focus trap/return и keyboard reachability для admin/profile/dialogs; responsive modal search и drawer traps, начальный/возвращаемый фокус реализованы. Открыты device screen-reader приёмка и matched screenshots.
 - [ ] Проверить responsive breakpoints, resize, accessibility labels и узкие layouts на macOS, Windows и Android.
