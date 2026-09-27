@@ -17,6 +17,9 @@ void main() {
   testWidgets('shows maintenance banner without blocking the client', (
     tester,
   ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
     final state = AppState(ApiClient())..maintenanceActive = true;
     await tester.pumpWidget(BoohtacordApp(state: state));
 
@@ -26,12 +29,16 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('maintenance-banner'))).height,
+      44,
+    );
     expect(find.text('Подключаемся к гильдии…'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
   });
 
-  testWidgets('keeps maintenance notice compact on a narrow screen', (
+  testWidgets('matches web maintenance banner geometry on mobile width', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -42,9 +49,14 @@ void main() {
 
     final notice = find.textContaining('Идёт обновление:');
     final text = tester.widget<Text>(notice);
-    expect(text.style?.fontSize, 12);
-    expect(text.maxLines, 2);
-    expect(tester.getSize(notice).height, lessThan(50));
+    expect(text.style?.fontSize, 14);
+    expect(text.style?.height, 20 / 14);
+    expect(text.maxLines, isNull);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('maintenance-banner'))).height,
+      greaterThan(44),
+    );
+    expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();

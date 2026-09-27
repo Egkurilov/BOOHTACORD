@@ -43,19 +43,20 @@ class _MaintenanceBanner extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     liveRegion: true,
     child: Container(
+      key: const ValueKey('maintenance-banner'),
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      constraints: const BoxConstraints(minHeight: 44),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       color: GcColors.warningBackground,
       child: const Text(
         'Идёт обновление: новые входы и подключения к голосу временно приостановлены.',
         textAlign: TextAlign.center,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: GcColors.warning,
-          fontSize: 12,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
-          height: 1.25,
+          height: 20 / 14,
         ),
       ),
     ),

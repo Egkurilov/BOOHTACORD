@@ -1,0 +1,34 @@
+{
+  "id": "qa41-maintenance-banner-web-geometry-2026-09-28-001",
+  "kind": "maintenance-banner-web-geometry",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Flutter maintenance notice now matches frontend/src/design/foundation.css: minimum height 44 px, 12 px vertical and 16 px horizontal padding, 14 px text with 20 px line height, semibold weight, centered layout, and natural wrapping without an ellipsis cap.",
+  "checks": [
+    {
+      "name": "Desktop banner geometry",
+      "command": "flutter test test/widget_test.dart --plain-name \"shows maintenance banner without blocking the client\"",
+      "status": "PASS",
+      "observation": "At a 1440×900 viewport the banner is exactly 44 px high and remains visible above the loading client."
+    },
+    {
+      "name": "Mobile-width wrapping",
+      "command": "flutter test test/widget_test.dart --plain-name \"matches web maintenance banner geometry on mobile width\"",
+      "status": "PASS",
+      "observation": "At a 390×800 viewport the 14/20 px text wraps naturally, grows beyond the one-line 44 px minimum, and produces no layout exception."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 151 tests passed."
+    }
+  ],
+  "remaining": "Capture matched browser/Flutter screenshots on desktop and Android devices; viewport widget checks do not prove pixel parity on physical platforms."
+}

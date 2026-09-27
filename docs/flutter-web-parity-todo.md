@@ -103,7 +103,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
 
 ## P2 — Visual, keyboard и accessibility
 
-- [ ] Сравнить compact maintenance notice с web banner при desktop и Android portrait размерах.
+- [x] Выровнять maintenance banner по web CSS: минимум 44 px, текст 14/20 px,
+  поля 12/16 px и естественный перенос без обрезания; desktop/mobile viewport
+  проверены виджет-тестами —
+  [QA-41](../evidence/flutter/qa41-maintenance-banner-web-geometry-2026-09-28-001.json).
+  Matched screenshots на реальных платформах остаются в общем screenshot gate.
 - [x] Сгруппировать список участников по статусу online/offline/unknown и показывать
   количество в заголовке каждой группы как в web; проверено виджет-тестом
   [QA-27](../evidence/flutter/qa27-member-presence-groups-2026-09-27-001.json).
