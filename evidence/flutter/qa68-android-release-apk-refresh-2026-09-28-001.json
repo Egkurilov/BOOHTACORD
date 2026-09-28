@@ -1,0 +1,33 @@
+{
+  "id": "QA-68",
+  "date": "2026-09-28",
+  "status": "PASS_WITH_PHYSICAL_INSTALL_ACCEPTANCE_OPEN",
+  "summary": "Rebuilt the tracked Android release APK from the current master source after the compact voice dock change.",
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+    "source_revision": "907ca43",
+    "size_bytes": 95914072,
+    "sha256": "4a02b224b052a2b5b15c4b2959fe787a956e05eebec34864a9851c1282f193b8",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b"
+  },
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build apk --release",
+      "observation": "Release APK built successfully with version 1.0.0+1 and upload signing configuration."
+    },
+    {
+      "result": "PASS",
+      "command": "apksigner verify --verbose --print-certs artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+      "observation": "APK Signature Scheme v2 verified; upload certificate fingerprint matches the configured BOOHTACORD signing certificate."
+    },
+    {
+      "result": "PASS",
+      "observation": "The old APK file was replaced at the same repository path; only one current APK is tracked in the working tree. Existing Git history still contains the previous binary."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Install and verify the updated voice controls on a physical Android device."
+    }
+  ]
+}

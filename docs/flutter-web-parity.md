@@ -304,6 +304,8 @@ the implementation.
   Android release APK also builds with the configured upload key, passes APK
   Signature Scheme v2 verification and contains notification/MediaProjection
   permissions [QA-47](../evidence/flutter/qa47-android-release-apk-signing-2026-09-28-001.json).
+  The current tracked release artifact was rebuilt from `907ca43` and its upload
+  signature, SHA-256 and size were verified [QA-68](../evidence/flutter/qa68-android-release-apk-refresh-2026-09-28-001.json).
   Signed macOS release persistence and Android install/runtime acceptance on a
   physical device remain open.
   Windows still requires a native Windows build runner; do not infer it from
