@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, master]
   workflow_dispatch:
 
 permissions:
@@ -19,9 +19,12 @@ jobs:
   frontend:
     uses: ./.github/workflows/ci-frontend.yml
 
+  flutter-windows:
+    uses: ./.github/workflows/ci-flutter-windows.yml
+
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [contracts, backend, frontend]
+    needs: [contracts, backend, frontend, flutter-windows]
     runs-on: ubuntu-24.04
     permissions:
       contents: read

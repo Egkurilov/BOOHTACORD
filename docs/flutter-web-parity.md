@@ -340,12 +340,14 @@ portrait and landscape Android share is checked in both web and Flutter viewers.
   Android release APK also builds with the configured upload key, passes APK
   Signature Scheme v2 verification and contains notification/MediaProjection
   permissions [QA-47](../evidence/flutter/qa47-android-release-apk-signing-2026-09-28-001.json).
-  The current tracked release artifact was rebuilt from `2b1f867` and its upload
-  signature, SHA-256 and size were verified [QA-73](../evidence/flutter/qa73-application-icon-2026-09-28-001.json).
+  The current tracked release artifact was rebuilt from `8bd3c7f` and its upload
+  signature, SHA-256 and size were verified [QA-80](../evidence/flutter/qa80-android-empty-channel-320dp-2026-09-28-001.json).
   Signed macOS release persistence and Android install/runtime acceptance on a
   physical device remain open.
-  Windows still requires a native Windows build runner; do not infer it from
-  analyzer/tests or generated plugin registration.
+  A native Windows CI job is configured on `windows-2022` with Flutter 3.47.5
+  to run the Flutter tests/analyzer and compile a release build. It is the new
+  Windows build gate; verify its first green runner execution before closing
+  the build gap. Runtime and screenshot parity still require a Windows host.
 - Android debug build succeeds but reports that `flutter_webrtc` and
   `livekit_client` currently apply the Kotlin Gradle Plugin, which Flutter warns
   will become incompatible with a future Flutter release. Track their upstream
