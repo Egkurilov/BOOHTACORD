@@ -1,7 +1,7 @@
 {
   "id": "qa40-macos-startup-loading-2026-09-28-001",
   "kind": "macos-runtime-startup-smoke",
-  "status": "PASS",
+  "status": "PARTIAL",
   "implementation": "macOS now uses the Data Protection Keychain. On the original legacy Keychain path, flutter_secure_storage blocked inside SecItemCopyMatching while Security.framework waited in CSSM_DecryptDataFinal. With the Data Protection Keychain, the same read completed and startup reached the signed-out flow.",
   "executed_at": "2026-09-28",
   "checks": [
@@ -45,8 +45,14 @@
       "name": "macOS release build",
       "command": "flutter build macos --release",
       "status": "PASS",
-      "observation": "Release app built successfully (82.8 MB). Xcode emitted existing file_selector_macos API deprecation and linker warnings."
+      "observation": "The current source rebuilt successfully via `flutter run -d macos --release` as an 84.7 MB app; the runner launched its process without an immediate crash. The resulting app is ad-hoc signed, not Developer ID signed."
+    },
+    {
+      "name": "Signed macOS release startup and login screen",
+      "command": "security find-identity -v -p codesigning; inspect app UI after release launch",
+      "status": "NOT_RUN",
+      "observation": "This host has zero valid code-signing identities and was locked, so the UI could not be inspected. CUA reported that the Mac must be unlocked manually; no unlock or account login was attempted."
     }
   ],
-  "remaining": "Run the signed macOS release build and verify Keychain write/read persistence across app restart; confirm the expected re-login behavior for sessions previously stored in the legacy Keychain."
+  "remaining": "Unlock the Mac and provide a valid Apple Developer signing identity, then run the signed macOS release, verify Keychain write/read persistence across app restart, and confirm the expected re-login behavior for sessions previously stored in the legacy Keychain. The latest ad-hoc launch only proves that the process stayed alive briefly, not that the login UI loaded."
 }

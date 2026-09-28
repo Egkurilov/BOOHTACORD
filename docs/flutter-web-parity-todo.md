@@ -11,7 +11,9 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
 - [ ] На подписанной macOS release-сборке проверить запуск и сохранение сессии
   через перезапуск; подтвердить ожидаемый повторный вход для cookies, ранее
-  сохранённых в legacy Keychain — [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
+  сохранённых в legacy Keychain. Текущий Mac заблокирован и не имеет valid
+  signing identities; нужны разблокированный host и Apple Developer identity —
+  [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
 
 ## P0 — Голосовые каналы и демонстрация экрана
 
