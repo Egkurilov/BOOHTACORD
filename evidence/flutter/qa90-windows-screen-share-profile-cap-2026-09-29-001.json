@@ -1,0 +1,46 @@
+{
+  "id": "QA-90",
+  "kind": "windows-screen-share-profile-cap",
+  "status": "PASS_IMPLEMENTATION_RUNTIME_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "1d0476b",
+  "summary": "Windows screen/window shares now derive the selected source dimensions from the native-size JPEG preview and pass them into LiveKit's aspect-preserving RTP resolution cap. The setup waits for the preview dimensions instead of allowing an uncapped start.",
+  "checks": [
+    {
+      "name": "Pinned libwebrtc preview dimensions",
+      "status": "PASS_SOURCE_REVIEW",
+      "observation": "The pinned libwebrtc.m150.7871.02 source-list implementation captures each new source for a JPEG thumbnail. SaveCaptureResult encodes the frame using its original width and height, so JPEG SOF dimensions recover the selected source size for screens and windows.",
+      "source": "https://github.com/webrtc-sdk/libwebrtc/blob/libwebrtc.m150.7871.02/src/rtc_desktop_media_list_impl.cc#L180-L228"
+    },
+    {
+      "name": "JPEG dimensions and aspect-preserving profile scale",
+      "status": "PASS_UNIT_TEST",
+      "command": "cd desktop && flutter test test/screen_share_quality_test.dart",
+      "observation": "All 8 tests pass, including native JPEG dimension extraction and selected-profile scaling without cropping or upscaling. Windows blocks Start until the selected preview reports valid dimensions."
+    },
+    {
+      "name": "Preview event / getSources ordering",
+      "status": "PASS_UNIT_TEST",
+      "command": "cd desktop && flutter test packages/flutter_webrtc/test/desktop_capturer_thumbnail_test.dart",
+      "observation": "The regression test passes when a thumbnail event arrives after getSources clears its cache but before the source-list method response is merged."
+    },
+    {
+      "name": "Flutter application regression suite",
+      "status": "PASS",
+      "command": "cd desktop && flutter test",
+      "observation": "All 226 application tests passed."
+    },
+    {
+      "name": "Flutter analyzer and diff check",
+      "status": "PASS",
+      "command": "cd desktop && flutter analyze && git diff --check",
+      "observation": "No analyzer issues; diff check passed."
+    },
+    {
+      "name": "Windows runtime sender verification",
+      "status": "OPEN",
+      "observation": "A Windows host is still needed to verify the nine resolution/FPS profiles against outbound sender dimensions and bandwidth for both full-screen and window sources."
+    }
+  ],
+  "remaining": "Run 720p, 1080p and 1440p profiles at 15, 30 and 60 FPS for Windows screen and window sources; compare outbound sender dimensions/FPS/bitrate with web and Flutter viewers and confirm no source edges are cropped."
+}
