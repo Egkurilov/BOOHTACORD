@@ -1,0 +1,28 @@
+{
+  "id": "QA-81",
+  "kind": "gitverse-flutter-windows-ci",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-28",
+  "summary": "Added and observed the GitVerse-native Windows Flutter CI workflow. The workflow is discovered and dispatched; its Windows job has not run because no matching self-hosted Windows x64 runner picked it up.",
+  "source_revision": "6ded14c",
+  "checks": [
+    {
+      "name": "Flutter client test suite and analyzer",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "All 223 Flutter unit/widget tests passed and flutter analyze reported no issues."
+    },
+    {
+      "name": "GitVerse/GitHub workflow YAML syntax",
+      "command": "ruby -e 'require \"yaml\"; ARGV.each { |f| YAML.load_file(f) }'",
+      "status": "PASS",
+      "observation": "The GitVerse workflow and the matching GitHub reusable workflow/dispatcher files parse as YAML."
+    },
+    {
+      "name": "GitVerse Windows runner execution",
+      "status": "WAITING",
+      "observation": "GitVerse workflow run 1673098 discovered .gitverse/workflows/flutter-windows.yaml and created job windows, but at observation it remained in Waiting with no runner-assigned steps or logs."
+    }
+  ],
+  "remaining": "Register and bring online a GitVerse self-hosted Windows x64 runner, then verify the Flutter 3.47.5 dependency, tests, analyzer and Windows release build complete successfully. Windows runtime and visual acceptance still require a Windows host."
+}
