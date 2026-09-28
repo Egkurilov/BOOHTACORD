@@ -101,10 +101,20 @@ NSArray<RTCDesktopSource*>* _captureSources;
   NSString* sourceId = nil;
   BOOL useDefaultScreen = NO;
   NSInteger fps = 30;
+  NSInteger maximumResolution = 0;
   id videoConstraints = constraints[@"video"];
   if ([videoConstraints isKindOfClass:[NSNumber class]] && [videoConstraints boolValue] == YES) {
     useDefaultScreen = YES;
   } else if ([videoConstraints isKindOfClass:[NSDictionary class]]) {
+    id requestedWidth = videoConstraints[@"width"];
+    id requestedHeight = videoConstraints[@"height"];
+    NSInteger width = [requestedWidth respondsToSelector:@selector(integerValue)]
+                          ? [requestedWidth integerValue]
+                          : 0;
+    NSInteger height = [requestedHeight respondsToSelector:@selector(integerValue)]
+                           ? [requestedHeight integerValue]
+                           : 0;
+    maximumResolution = MAX(width, height);
     NSDictionary* deviceId = videoConstraints[@"deviceId"];
     if (deviceId != nil && [deviceId isKindOfClass:[NSDictionary class]]) {
       if (deviceId[@"exact"] != nil) {
@@ -154,6 +164,7 @@ NSArray<RTCDesktopSource*>* _captureSources;
       screenCaptureKitCapturer =
           [[FlutterScreenCaptureKitCapturer alloc] initWithDelegate:videoProcessingAdapter];
       [screenCaptureKitCapturer startCaptureWithFPS:fps
+                                 maximumResolution:maximumResolution
                                            sourceId:sourceId
                                           onStarted:^(NSError * _Nullable error) {
                                             if (error != nil) {

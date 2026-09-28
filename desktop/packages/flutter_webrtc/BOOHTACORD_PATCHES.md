@@ -15,6 +15,15 @@ The related LiveKit encoding support and Flutter profile logic live in
 `desktop/packages/livekit_client` and `desktop/lib/src/services/screen_share_quality.dart`.
 See [QA-88](../../../evidence/flutter/qa88-android-screen-share-resolution-cap-2026-09-29-001.json).
 
+## macOS ScreenCaptureKit screen profile
+
+The macOS 13+ full-display capture path reads the requested width/height
+profile, caps ScreenCaptureKit's output by its longer edge, and rounds both
+output edges down to even pixels. It preserves the selected display's aspect
+ratio instead of forcing a 16:9 buffer. The custom window-source and macOS 12
+fallback paths still need equivalent enforcement and physical runtime
+acceptance.
+
 ## MediaProjection stop propagation
 
 The Android capturer forwards the OS `MediaProjection.Callback.onStop` event to

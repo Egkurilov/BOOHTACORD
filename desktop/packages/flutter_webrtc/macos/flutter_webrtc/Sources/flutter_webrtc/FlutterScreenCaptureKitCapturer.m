@@ -32,6 +32,7 @@
 }
 
 - (void)startCaptureWithFPS:(NSInteger)fps
+         maximumResolution:(NSInteger)maximumResolution
                    sourceId:(NSString* _Nullable)sourceId
                   onStarted:(void (^)(NSError * _Nullable error))onStarted {
 #if __has_include(<ScreenCaptureKit/ScreenCaptureKit.h>)
@@ -53,8 +54,16 @@
 
       SCContentFilter *filter = [[SCContentFilter alloc] initWithDisplay:display excludingWindows:@[]];
       SCStreamConfiguration *config = [SCStreamConfiguration new];
-      config.width = display.width;
-      config.height = display.height;
+      CGFloat scale = 1.0;
+      NSInteger sourceLongEdge = MAX(display.width, display.height);
+      if (maximumResolution > 0 && sourceLongEdge > maximumResolution) {
+        scale = (CGFloat)maximumResolution / sourceLongEdge;
+      }
+      // Preserve the source aspect ratio. ScreenCaptureKit scales its output
+      // buffer to this size; never force the profile's 16:9 dimensions onto a
+      // portrait or non-16:9 display.
+      config.width = MAX(2, ((NSInteger)(display.width * scale)) & ~1);
+      config.height = MAX(2, ((NSInteger)(display.height * scale)) & ~1);
       config.minimumFrameInterval = CMTimeMake(1, (int32_t)MAX(1, fps));
       config.pixelFormat = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange;
       if (@available(macOS 13.0, *)) {
@@ -62,6 +71,9 @@
       }
 
       self.stream = [[SCStream alloc] initWithFilter:filter configuration:config delegate:nil];
+      NSLog(@"ScreenCaptureKit output: %ldx%ld (source %ldx%ld, profile long edge %ld)",
+            (long)config.width, (long)config.height, (long)display.width,
+            (long)display.height, (long)maximumResolution);
       NSError *addOutputError = nil;
       [self.stream addStreamOutput:self
                               type:SCStreamOutputTypeScreen

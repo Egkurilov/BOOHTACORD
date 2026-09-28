@@ -8,6 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithDelegate:(id<RTCVideoCapturerDelegate>)delegate;
 
 - (void)startCaptureWithFPS:(NSInteger)fps
+         maximumResolution:(NSInteger)maximumResolution
                    sourceId:(NSString* _Nullable)sourceId
                   onStarted:(void (^ _Nonnull)(NSError * _Nullable error))onStarted;
 
