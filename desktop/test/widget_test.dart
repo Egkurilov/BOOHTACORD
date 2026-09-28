@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('mobile opens the navigation drawer for chat or voice choice', (
+  testWidgets('mobile drawer lists General text and voice without filters', (
     tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
@@ -37,7 +37,7 @@ void main() {
         categories: [
           ChannelCategory(
             id: 'category-1',
-            name: 'Каналы',
+            name: 'General',
             channels: [textChannel, voiceChannel],
           ),
         ],
@@ -48,15 +48,20 @@ void main() {
     final drawer = find.byKey(const ValueKey('mobile-sidebar'));
     expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
     expect(
-      find.descendant(of: drawer, matching: find.text('Куда пойдём?')),
+      find.descendant(of: drawer, matching: find.text('GENERAL')),
       findsOneWidget,
     );
-    await tester.tap(find.descendant(of: drawer, matching: find.text('Голос')));
-    await tester.pumpAndSettle();
     expect(
       find.descendant(of: drawer, matching: find.text('общий')),
-      findsNothing,
+      findsOneWidget,
     );
+    expect(
+      find.descendant(of: drawer, matching: find.text('Комната команды')),
+      findsOneWidget,
+    );
+    expect(find.text('Куда пойдём?'), findsNothing);
+    expect(find.text('Чаты'), findsNothing);
+    expect(find.text('Голос'), findsNothing);
     await tester.tap(find.text('Комната команды'));
     await tester.pumpAndSettle();
     expect(state.selectedChannel?.id, voiceChannel.id);
@@ -68,15 +73,25 @@ void main() {
     await tester.dragFrom(const Offset(180, 240), const Offset(110, 28));
     await tester.pumpAndSettle();
     expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+    await tester.tap(find.text('общий'));
+    await tester.pumpAndSettle();
+    expect(state.selectedChannel?.id, textChannel.id);
+    expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+
+    await tester.dragFrom(const Offset(30, 240), const Offset(110, 28));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+    await tester.tap(find.text('Личные'));
+    await tester.pumpAndSettle();
+    expect(find.text('ЛИЧНЫЕ СООБЩЕНИЯ'), findsOneWidget);
+    expect(find.text('GENERAL'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
     debugDefaultTargetPlatformOverride = null;
   });
 
-  testWidgets('mobile drawer choice fits 320 dp with no voice rooms', (
-    tester,
-  ) async {
+  testWidgets('mobile drawer fits 320 dp with no channels', (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     addTearDown(() => debugDefaultTargetPlatformOverride = null);
     tester.view.devicePixelRatio = 1;
@@ -89,10 +104,10 @@ void main() {
     await tester.pumpWidget(BoohtacordApp(state: state));
     await tester.pumpAndSettle();
 
-    expect(find.text('Куда пойдём?'), findsOneWidget);
-    await tester.tap(find.text('Голос'));
-    await tester.pumpAndSettle();
-    expect(find.text('Голосовых каналов пока нет.'), findsOneWidget);
+    expect(find.text('Каналы пока не созданы.'), findsOneWidget);
+    expect(find.text('Куда пойдём?'), findsNothing);
+    expect(find.text('Чаты'), findsNothing);
+    expect(find.text('Голос'), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
@@ -204,6 +219,19 @@ void main() {
 
 class _VoiceEntryApi extends ApiClient {
   int voiceCredentialCalls = 0;
+
+  @override
+  Future<ChatMessagePage> messagePage(
+    String channelId, {
+    String? before,
+    String? at,
+  }) async => const ChatMessagePage(messages: []);
+
+  @override
+  Future<List<DirectConversation>> directMessages() async => const [];
+
+  @override
+  Future<List<DirectCandidate>> directMessageCandidates() async => const [];
 
   @override
   Future<(String, VoiceCredential)> voiceCredential(

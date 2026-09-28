@@ -1,0 +1,45 @@
+{
+  "id": "ios-unified-general-channels-2026-09-28-001",
+  "kind": "mobile-navigation-build-and-wired-install",
+  "status": "PASS_STATIC_BUILD_INSTALL_LAUNCH_WITH_MANUAL_UI_QA_OPEN",
+  "executed_at": "2026-09-28",
+  "source_revision": "commit containing the unified mobile channel list after fedcb06",
+  "environment": {
+    "device": "iPhone 17, iOS 27.0, connected by cable",
+    "bundle_id": "ru.boohtacord.app",
+    "build_mode": "ios-release"
+  },
+  "scenario": {
+    "objective": "Show text and voice channels together in each server category without Chat/Voice filter buttons.",
+    "expected": "General lists text and voice rooms together; tapping a voice room starts admission directly, and direct messages remain accessible."
+  },
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter analyze --no-pub && flutter test",
+      "observation": "No analyzer issues; all 218 Flutter tests passed. Widget tests cover the shared General list, absence of filter buttons, direct voice selection, direct messages and narrow width."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build ios --release && codesign --verify --deep --strict build/ios/iphoneos/Runner.app",
+      "observation": "Signed release build and strict signature verification completed."
+    },
+    {
+      "result": "PASS",
+      "command": "xcrun devicectl device install app --device <connected iPhone> desktop/build/ios/iphoneos/Runner.app",
+      "observation": "Installed ru.boohtacord.app in place without uninstalling it."
+    },
+    {
+      "result": "PASS",
+      "command": "xcrun devicectl device process launch --device <connected iPhone> ru.boohtacord.app",
+      "observation": "CoreDevice reported successful launch."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "desktop/build/ios/iphoneos/Runner.app/Runner (local ignored build output)",
+      "sha256": "811d13b97401f9c2196157bdaa271fc355e5d38d19424a5a0df16b6d78ab298f"
+    }
+  ],
+  "limitations": "The actual drawer appearance was verified by widget tests, not manually observed on the iPhone. Login state and private app data were not inspected."
+}

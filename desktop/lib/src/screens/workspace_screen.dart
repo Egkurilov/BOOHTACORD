@@ -634,7 +634,7 @@ class _DrawerSurfaceState extends State<_DrawerSurface> {
   );
 }
 
-class _Sidebar extends StatefulWidget {
+class _Sidebar extends StatelessWidget {
   const _Sidebar({
     super.key,
     required this.state,
@@ -650,24 +650,6 @@ class _Sidebar extends StatefulWidget {
   final VoidCallback? onClose;
   final VoidCallback? onSearch;
   final FocusNode? searchFocusNode;
-
-  @override
-  State<_Sidebar> createState() => _SidebarState();
-}
-
-class _SidebarState extends State<_Sidebar> {
-  ChannelKind? _channelFilter;
-  AppState get state => widget.state;
-  bool get showVoiceDock => widget.showVoiceDock;
-  VoidCallback? get onChannelSelected => widget.onChannelSelected;
-  VoidCallback? get onClose => widget.onClose;
-  VoidCallback? get onSearch => widget.onSearch;
-  FocusNode? get searchFocusNode => widget.searchFocusNode;
-
-  void _choose(ChannelKind kind) {
-    setState(() => _channelFilter = kind);
-    state.showChannels();
-  }
 
   @override
   Widget build(BuildContext context) => ColoredBox(
@@ -704,51 +686,6 @@ class _SidebarState extends State<_Sidebar> {
             ),
           ),
         ),
-        if (onClose != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 2, 12, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(8, 0, 8, 10),
-                  child: Text(
-                    'Куда пойдём?',
-                    style: TextStyle(
-                      color: GcColors.text,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: _Tab(
-                          label: 'Чаты',
-                          selected: _channelFilter == ChannelKind.text,
-                          onTap: () => _choose(ChannelKind.text),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: _Tab(
-                          label: 'Голос',
-                          selected: _channelFilter == ChannelKind.voice,
-                          onTap: () => _choose(ChannelKind.voice),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           child: Row(
@@ -785,21 +722,16 @@ class _SidebarState extends State<_Sidebar> {
                     children: [
                       if (state.navigationSection == NavigationSection.channels)
                         for (final category in state.topology!.categories)
-                          if (_channelFilter == null ||
-                              category.channels.any(
-                                (channel) => channel.kind == _channelFilter,
-                              ))
-                            _Category(
-                              state: state,
-                              category: category,
-                              filterKind: _channelFilter,
-                              onChannelSelected: onChannelSelected,
-                            )
-                          else
-                            _DirectMessageNavigation(
-                              state: state,
-                              onSelected: onChannelSelected,
-                            ),
+                          _Category(
+                            state: state,
+                            category: category,
+                            onChannelSelected: onChannelSelected,
+                          )
+                      else
+                        _DirectMessageNavigation(
+                          state: state,
+                          onSelected: onChannelSelected,
+                        ),
                       if (state.navigationSection ==
                               NavigationSection.channels &&
                           state.topology!.categories.isEmpty)
@@ -808,23 +740,6 @@ class _SidebarState extends State<_Sidebar> {
                           child: Text(
                             'Каналы пока не созданы.',
                             style: TextStyle(color: GcColors.muted),
-                          ),
-                        ),
-                      if (state.navigationSection ==
-                              NavigationSection.channels &&
-                          _channelFilter != null &&
-                          !state.topology!.categories.any(
-                            (category) => category.channels.any(
-                              (channel) => channel.kind == _channelFilter,
-                            ),
-                          ))
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Text(
-                            _channelFilter == ChannelKind.voice
-                                ? 'Голосовых каналов пока нет.'
-                                : 'Текстовых каналов пока нет.',
-                            style: const TextStyle(color: GcColors.muted),
                           ),
                         ),
                     ],
@@ -966,12 +881,10 @@ class _Category extends StatelessWidget {
   const _Category({
     required this.state,
     required this.category,
-    this.filterKind,
     this.onChannelSelected,
   });
   final AppState state;
   final ChannelCategory category;
-  final ChannelKind? filterKind;
   final VoidCallback? onChannelSelected;
   @override
   Widget build(BuildContext context) => Padding(
@@ -999,9 +912,7 @@ class _Category extends StatelessWidget {
               style: TextStyle(color: GcColors.muted, fontSize: 12),
             ),
           ),
-        for (final channel in category.channels.where(
-          (channel) => filterKind == null || channel.kind == filterKind,
-        )) ...[
+        for (final channel in category.channels) ...[
           Builder(
             builder: (context) {
               final room = state.voiceChannel?.id == channel.id
