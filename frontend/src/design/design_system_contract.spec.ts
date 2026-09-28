@@ -94,7 +94,7 @@ describe('GuildChat design-system foundation', () => {
   })
 
   it('keeps settings and administration in the central workspace', () => {
-    expect(workspace).toContain("'no-aside': activePanel !== 'search' && (voiceStageWide || selectedDirectMessage || activePanel !== 'none')")
+    expect(workspace).toContain("'no-aside': (activePanel === 'search' && voiceStageWide) || (activePanel !== 'search' && (voiceStageWide || selectedDirectMessage || activePanel !== 'none'))")
     expect(workspace).toContain('<template #admin>')
     expect(workspace).toContain('<template #audio>')
     expect(workspace).toContain('<template #profile>')

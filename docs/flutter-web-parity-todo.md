@@ -96,9 +96,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] Проверить prejoin roster на реальном сервере с двумя аккаунтами: вход/выход,
   смену демонстрации, 10-секундное обновление и поведение при недоступности
   private presence — реализация и целевые тесты в [QA-18](../evidence/flutter/qa18-prejoin-voice-roster-2026-09-27-001.json).
-- [ ] Сравнить search в текстовом и голосовом контекстах на matched screenshots;
-  узкая desktop-панель расширена с 240/248 до 360/400 px, но визуальная
-  device-приёмка остаётся открытой.
+- [x] Синхронизировать desktop search drawer Vue и Flutter: 360 px при 1280–1439
+  и 400 px от 1440; широкий voice stage остаётся 320 px modal. CSS contract,
+  Flutter widget tests, полный web suite и production build прошли —
+  [QA-61](../evidence/flutter/qa61-search-drawer-width-parity-2026-09-28-001.json).
+- [ ] Сравнить search на matched screenshots в текстовом и голосовом контекстах;
+  точная визуальная/device-приёмка остаётся открытой.
 - [x] Реализовать FE-52: ограниченные анонимные Android sender encoded FPS/bitrate/RTT;
   расчёты, API и подписанный APK прошли локальную проверку — [QA-19](../evidence/flutter/qa19-android-sender-metrics-2026-09-27-001.json).
 - [x] Добавить bounded фактические размеры закодированного кадра в анонимные

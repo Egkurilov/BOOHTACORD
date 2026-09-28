@@ -1,0 +1,50 @@
+{
+  "id": "QA-61",
+  "date": "2026-09-28",
+  "status": "PASS_WITH_VISUAL_ACCEPTANCE_OPEN",
+  "summary": "Vue and Flutter now use the same desktop search drawer widths while preserving the wide voice-stage modal width.",
+  "geometry": {
+    "medium_desktop": {
+      "viewport_width_px": 1280,
+      "search_panel_width_px": 360
+    },
+    "wide_desktop": {
+      "viewport_width_px": 1440,
+      "search_panel_width_px": 400
+    },
+    "wide_voice_stage": {
+      "viewport_width_px": 1440,
+      "search_drawer_width_px": 320
+    }
+  },
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd frontend && npm test",
+      "observation": "All 630 tests in 213 files passed, including the CSS contract for 360/400 px desktop widths and unchanged voice-stage drawer behavior."
+    },
+    {
+      "result": "PASS",
+      "command": "cd frontend && npm run build",
+      "observation": "vue-tsc and Vite production build completed successfully."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "observation": "All 184 Flutter tests passed and analyzer reported no issues."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart",
+      "observation": "All 29 workspace widget tests passed, including 1280 px text search at 360 px, 1440 px text search at 400 px, and 1440 px wide voice search as a 320 px modal drawer."
+    },
+    {
+      "result": "PASS",
+      "observation": "Wide voice-stage search removes the unused grid aside column so its 320 px panel overlays rather than shrinking the voice stage."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Matched screenshots and physical-device visual acceptance were not captured in this run."
+    }
+  ]
+}

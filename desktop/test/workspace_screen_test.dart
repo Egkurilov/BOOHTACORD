@@ -1247,6 +1247,79 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('medium desktop search uses the widened 360 px panel', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 800);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi(withHistory: true, historyCount: 1));
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Поиск сообщений'));
+    await tester.pumpAndSettle();
+
+    expect(state.workspacePanel, WorkspacePanel.search);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is SizedBox && widget.width == 360,
+      ),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('wide voice search keeps its 320 px modal drawer', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi(withHistory: true, historyCount: 1));
+    await state.initialize();
+    await state.selectChannel(_PortraitApi.voiceChannel);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Поиск сообщений'));
+    await tester.pumpAndSettle();
+
+    expect(state.workspacePanel, WorkspacePanel.search);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is Positioned && widget.width == 320,
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is SizedBox && widget.width == 400,
+      ),
+      findsNothing,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('portrait layout keeps the channel open behind drawers', (
     tester,
   ) async {
