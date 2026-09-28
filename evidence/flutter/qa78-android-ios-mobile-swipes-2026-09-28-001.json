@@ -36,10 +36,23 @@
       "observation": "221 widget/unit tests passed and flutter analyze reported no issues."
     },
     {
+      "name": "Release APK build and signature",
+      "command": "cd desktop && flutter build apk --release && cd .. && /opt/homebrew/share/android-commandlinetools/build-tools/36.0.0/apksigner verify --verbose --print-certs artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+      "status": "PASS",
+      "observation": "The release APK was rebuilt from source revision 3bee888, verified with APK Signature Scheme v2 and the configured upload certificate, and replaced the previous tracked APK at the same path."
+    },
+    {
       "name": "Physical Android gesture-navigation acceptance",
       "status": "OPEN",
       "observation": "No Android device was attached for checking edge-swipe interaction with the device's system gesture navigation."
     }
   ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+    "source_revision": "3bee888",
+    "size_bytes": 107622022,
+    "sha256": "a031ebec30574e7a6fd5349fd181e2f8cca3dd95a28940c311fbb176ef3512c6",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b"
+  },
   "remaining": "Install/run on an Android phone and verify left/right edge drawer gestures alongside the device's system back/home gestures."
 }
