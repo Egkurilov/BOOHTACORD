@@ -4401,6 +4401,7 @@ Future<void> _showScreenShareSetup(BuildContext context, AppState state) async {
   await state.startScreenShare(
     sourceId: selection.sourceId,
     quality: selection.quality,
+    sourceDimensions: selection.sourceDimensions,
   );
 }
 

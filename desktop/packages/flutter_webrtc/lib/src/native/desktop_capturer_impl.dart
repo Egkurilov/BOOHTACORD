@@ -157,6 +157,10 @@ class DesktopCapturerNative extends DesktopCapturer {
     }
     for (var source in response['sources']) {
       var desktopSource = DesktopCapturerSourceNative.fromMap(source);
+      // A thumbnail event can arrive while getSources is awaiting its method
+      // response. Preserve it instead of replacing the event-populated source
+      // with the thumbnail-less snapshot returned by the method call.
+      desktopSource.thumbnail ??= _sources[desktopSource.id]?.thumbnail;
       _sources[desktopSource.id] = desktopSource;
     }
     return _sources.values.toList();

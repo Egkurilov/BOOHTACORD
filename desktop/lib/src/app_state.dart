@@ -2604,6 +2604,7 @@ class AppState extends ChangeNotifier {
   Future<void> startScreenShare({
     String? sourceId,
     ScreenShareQuality? quality,
+    VideoDimensions? sourceDimensions,
   }) async {
     final room = _room;
     final participant = room?.localParticipant;
@@ -2670,7 +2671,11 @@ class AppState extends ChangeNotifier {
           // clipping reported across Flutter and web viewers. Verify on-device
           // before deciding whether the bandwidth trade-off is acceptable.
           simulcast: defaultTargetPlatform != TargetPlatform.android,
-          sourceDimensions: captureDimensions,
+          sourceDimensions:
+              captureDimensions ??
+              (defaultTargetPlatform == TargetPlatform.windows
+                  ? sourceDimensions
+                  : null),
         ),
       );
       // Ownership transfers to the participant after a successful publish.

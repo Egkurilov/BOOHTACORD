@@ -98,6 +98,27 @@ void main() {
     );
   });
 
+  test('reads native dimensions from the JPEG source preview', () {
+    final preview = Uint8List.fromList([
+      0xff, 0xd8, // SOI
+      0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, // APP0
+      0xff, 0xc0, 0x00, 0x11, 0x08, 0x04, 0x38, 0x07, 0x80, 0x03,
+      0x01, 0x11, 0x00, 0x02, 0x11, 0x00, 0x03, 0x11, 0x00, // SOF0
+      0xff, 0xd9, // EOI
+    ]);
+
+    final dimensions = ScreenShareQuality.sourceDimensionsFromJpeg(preview);
+    expect(dimensions?.width, 1920);
+    expect(dimensions?.height, 1080);
+    expect(
+      ScreenShareQuality.sourceDimensionsFromJpeg(
+        Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]),
+      ),
+      isNull,
+    );
+    expect(ScreenShareQuality.sourceDimensionsFromJpeg(null), isNull);
+  });
+
   testWidgets('Android setup returns selected resolution and FPS', (
     tester,
   ) async {

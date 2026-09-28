@@ -31,3 +31,11 @@ the Dart track-ended dispatcher. The Dart dispatcher buffers an early native
 event until LiveKit attaches its `onEnded` callback and delivers it at most
 once. This allows a system-level stop to unpublish the local screen track.
 Physical Android receiver and OS-stop acceptance remain open; see [QA-26](../../../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
+
+## Desktop source thumbnail race
+
+The native desktop capturer can emit a source preview while the asynchronous
+`getSources` method response is still pending. Preserve that preview when
+merging the response snapshot so callers can use its JPEG dimensions before
+publishing. The ordering regression is covered by
+`test/desktop_capturer_thumbnail_test.dart`.

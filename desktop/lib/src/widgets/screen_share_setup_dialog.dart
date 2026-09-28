@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:livekit_client/livekit_client.dart' show VideoDimensions;
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 
 import '../services/screen_share_quality.dart';
@@ -12,10 +13,12 @@ class ScreenShareSetupSelection {
   const ScreenShareSetupSelection({
     required this.sourceId,
     required this.quality,
+    this.sourceDimensions,
   });
 
   final String? sourceId;
   final ScreenShareQuality quality;
+  final VideoDimensions? sourceDimensions;
 }
 
 class ScreenShareSetupDialog extends StatefulWidget {
@@ -165,13 +168,30 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
     Navigator.of(context).pop(selection);
   }
 
+  ScreenShareSetupSelection _selection() {
+    final source = _sources[_selectedSourceId];
+    return ScreenShareSetupSelection(
+      sourceId: _selectedSourceId,
+      quality: _quality,
+      sourceDimensions: ScreenShareQuality.sourceDimensionsFromJpeg(
+        source?.thumbnail,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.sizeOf(context);
     final compact = media.width < 640;
     final height = math.min(760.0, media.height * .9);
+    final selectedSource = _sources[_selectedSourceId];
+    final selectedSourceDimensions =
+        ScreenShareQuality.sourceDimensionsFromJpeg(selectedSource?.thumbnail);
     final canStart =
-        !widget.allowSourceSelection || _sources.containsKey(_selectedSourceId);
+        !widget.allowSourceSelection ||
+        (selectedSource != null &&
+            (defaultTargetPlatform != TargetPlatform.windows ||
+                selectedSourceDimensions != null));
     return Dialog(
       insetPadding: const EdgeInsets.all(20),
       backgroundColor: Colors.transparent,
@@ -233,7 +253,11 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
                     ),
                   ),
                 ],
-                _buildFooter(canStart, compact: compact),
+                _buildFooter(
+                  canStart,
+                  compact: compact,
+                  sourceDimensions: selectedSourceDimensions,
+                ),
               ],
             ),
           ),
@@ -537,74 +561,83 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
     );
   }
 
-  Widget _buildFooter(bool canStart, {required bool compact}) => Container(
-    padding: EdgeInsets.fromLTRB(compact ? 12 : 24, 14, compact ? 12 : 24, 18),
-    decoration: const BoxDecoration(
-      border: Border(top: BorderSide(color: GcColors.border)),
-    ),
-    child: compact
-        ? OverflowBar(
-            alignment: MainAxisAlignment.end,
-            spacing: 10,
-            overflowSpacing: 4,
-            children: [
-              TextButton(
-                onPressed: () => _close(),
-                child: const Text('Отмена'),
-              ),
-              FilledButton.icon(
-                key: const ValueKey('start-screen-share'),
-                onPressed: canStart
-                    ? () => _close(
-                        ScreenShareSetupSelection(
-                          sourceId: _selectedSourceId,
-                          quality: _quality,
-                        ),
-                      )
-                    : null,
-                icon: const Icon(Icons.screen_share_outlined),
-                label: const Text('Начать трансляцию'),
-              ),
-            ],
-          )
-        : Row(
-            children: [
-              if (widget.allowSourceSelection)
-                Expanded(
-                  child: Text(
-                    canStart
-                        ? 'Выбрано: ${_sources[_selectedSourceId]?.name ?? ''}'
-                        : 'Сначала выберите экран или окно',
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: GcColors.textSecondary,
-                      fontSize: 13,
+  Widget _buildFooter(
+    bool canStart, {
+    required bool compact,
+    required VideoDimensions? sourceDimensions,
+  }) {
+    final selectedSource = _sources[_selectedSourceId];
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        compact ? 12 : 24,
+        14,
+        compact ? 12 : 24,
+        18,
+      ),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: GcColors.border)),
+      ),
+      child: compact
+          ? OverflowBar(
+              alignment: MainAxisAlignment.end,
+              spacing: 10,
+              overflowSpacing: 4,
+              children: [
+                TextButton(
+                  onPressed: () => _close(),
+                  child: const Text('Отмена'),
+                ),
+                FilledButton.icon(
+                  key: const ValueKey('start-screen-share'),
+                  onPressed: canStart
+                      ? () => _close(
+                          ScreenShareSetupSelection(
+                            sourceId: _selectedSourceId,
+                            quality: _quality,
+                            sourceDimensions: sourceDimensions,
+                          ),
+                        )
+                      : null,
+                  icon: const Icon(Icons.screen_share_outlined),
+                  label: const Text('Начать трансляцию'),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                if (widget.allowSourceSelection)
+                  Expanded(
+                    child: Text(
+                      canStart
+                          ? 'Выбрано: ${_sources[_selectedSourceId]?.name ?? ''}'
+                          : selectedSource != null &&
+                                defaultTargetPlatform == TargetPlatform.windows
+                          ? 'Получаем размер источника…'
+                          : 'Сначала выберите экран или окно',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: GcColors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
-                  ),
-                )
-              else
-                const Spacer(),
-              TextButton(
-                onPressed: () => _close(),
-                child: const Text('Отмена'),
-              ),
-              const SizedBox(width: 10),
-              FilledButton.icon(
-                key: const ValueKey('start-screen-share'),
-                onPressed: canStart
-                    ? () => _close(
-                        ScreenShareSetupSelection(
-                          sourceId: _selectedSourceId,
-                          quality: _quality,
-                        ),
-                      )
-                    : null,
-                icon: const Icon(Icons.screen_share_outlined),
-                label: const Text('Начать трансляцию'),
-              ),
-            ],
-          ),
-  );
+                  )
+                else
+                  const Spacer(),
+                TextButton(
+                  onPressed: () => _close(),
+                  child: const Text('Отмена'),
+                ),
+                const SizedBox(width: 10),
+                FilledButton.icon(
+                  key: const ValueKey('start-screen-share'),
+                  onPressed: canStart ? () => _close(_selection()) : null,
+                  icon: const Icon(Icons.screen_share_outlined),
+                  label: const Text('Начать трансляцию'),
+                ),
+              ],
+            ),
+    );
+  }
 }
 
 class _SourceCard extends StatelessWidget {
