@@ -186,10 +186,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   macOS 13+ по выбранному 720/1080/1440p профилю, сохраняя aspect ratio и чётные
   размеры кадра; macOS Release build, codesign integrity, 225 тестов и analyzer
   прошли — [QA-89](../evidence/flutter/qa89-macos-screen-share-profile-cap-2026-09-29-001.json).
-- [ ] Распространить resolution cap на macOS window capture/macOS 12 fallback и
-  Windows: общий Windows C++ path принимает source/FPS/cursor, но игнорирует
-  top-level width/height. Нужны реализация, build и runtime acceptance; Android
-  QA-88 и macOS build-only QA-89 не заменяют их.
+- [x] Применить выбранный resolution cap в macOS window capture/macOS 12 fallback
+  через frame processor, а в Windows — через выбранные source preview dimensions
+  и LiveKit encoder scale. macOS Release build, Windows profile tests и source
+  race tests прошли; runtime sender dimensions/FPS и отсутствие crop остаются
+  открытыми — [QA-90](../evidence/flutter/qa90-windows-screen-share-profile-cap-2026-09-29-001.json),
+  [QA-92](../evidence/flutter/qa92-macos-legacy-and-window-screen-share-profile-cap-2026-09-29-001.json).
 - [x] Проверить picker на минимальной Android-ширине 320 dp: обе настройки качества
   достижимы прокруткой, а закреплённая кнопка запуска остаётся видимой; все пять
   screen-share тестов проходят — [QA-76](../evidence/flutter/qa76-android-screen-share-picker-320dp-2026-09-28-001.json).
