@@ -137,7 +137,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 28),
           if (widget.state.profileLoading)
-            const Center(child: CircularProgressIndicator())
+            Semantics(liveRegion: true, child: Text('Загружаем профиль…'))
+          else if (widget.state.profileLoadError != null)
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                widget.state.profileLoadError!,
+                style: const TextStyle(color: GcColors.danger),
+              ),
+            )
           else if (profile != null) ...[
             Row(
               children: [

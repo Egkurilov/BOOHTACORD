@@ -42,6 +42,27 @@ void main() {
     expect(state.messages, hasLength(1));
   });
 
+  test('keeps profile load errors separate and clears them on retry', () async {
+    final api = _FakeApi(topology)
+      ..profileFailure = const ApiFailure('Профиль временно недоступен.');
+    final state = AppState(api);
+    addTearDown(state.dispose);
+
+    await state.refreshProfile();
+
+    expect(state.profile, isNull);
+    expect(state.profileLoading, isFalse);
+    expect(state.profileLoadError, 'Профиль временно недоступен.');
+    expect(state.error, isNull);
+
+    api.profileFailure = null;
+    await state.refreshProfile();
+
+    expect(state.profileLoadError, isNull);
+    expect(state.profile?.displayName, 'Участник');
+    expect(state.profileLoading, isFalse);
+  });
+
   test(
     'clears the selected channel when refreshed topology archives it',
     () async {
@@ -743,6 +764,7 @@ class _FakeApi extends ApiClient {
   String? uploadedTextChannelId;
   String? uploadedDirectMessageId;
   bool passwordResetCompleted = false;
+  Object? profileFailure;
   String? sentReplyToId;
   String? sentDirectReplyToId;
   List<String> sentMentionIds = const [];
@@ -771,12 +793,16 @@ class _FakeApi extends ApiClient {
       const SessionUser(accountId: 'account-1', role: 'MEMBER');
 
   @override
-  Future<OwnProfile> ownProfile() async => const OwnProfile(
-    accountId: 'account-1',
-    login: 'member',
-    displayName: 'Участник',
-    role: 'MEMBER',
-  );
+  Future<OwnProfile> ownProfile() async {
+    final failure = profileFailure;
+    if (failure != null) throw failure;
+    return const OwnProfile(
+      accountId: 'account-1',
+      login: 'member',
+      displayName: 'Участник',
+      role: 'MEMBER',
+    );
+  }
 
   @override
   Future<void> completePasswordReset(String token, String password) async {

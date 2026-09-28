@@ -154,6 +154,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Очищать предыдущую auth-ошибку при переключении между login и registration,
   как делает web `chooseMode`; переход покрыт widget test —
   [QA-44](../evidence/flutter/qa44-auth-mode-error-reset-2026-09-28-001.json).
+- [x] Отделить сбой загрузки собственного профиля от общей ошибки workspace;
+  показывать доступные loading/error live-region статусы как на web и снимать
+  load error при успешном повторном запросе — [QA-45](../evidence/flutter/qa45-profile-loading-error-web-parity-2026-09-28-001.json).
 - [ ] Настроить signed platform/domain association до обещания автоматического открытия password-reset URL.
 - [ ] Определить native эквиваленты browser-only notification preferences; не показывать неработающий toggle.
 - [ ] Собрать/запустить Windows-клиент на Windows runner; проверить macOS/Android release builds и signing перед выпуском. macOS Debug app и Android Debug APK собраны локально — [QA-30](../evidence/flutter/qa30-native-debug-builds-2026-09-27-001.json); Windows runner и Android device недоступны в текущем окружении, release/signing acceptance остаётся открыта.

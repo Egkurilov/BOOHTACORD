@@ -113,6 +113,7 @@ class AppState extends ChangeNotifier {
   bool realtimeConnected = false;
   bool maintenanceActive = false;
   bool profileLoading = false;
+  String? profileLoadError;
   bool profileSaving = false;
   bool logoutBusy = false;
   String? logoutError;
@@ -260,6 +261,7 @@ class AppState extends ChangeNotifier {
     phase = AppPhase.signedOut;
     user = null;
     profile = null;
+    profileLoadError = null;
     topology = null;
     members = const [];
     voiceRosters = null;
@@ -281,6 +283,7 @@ class AppState extends ChangeNotifier {
     loadingDirectMessages = false;
     sending = false;
     profileLoading = false;
+    profileLoadError = null;
     profileSaving = false;
     voiceChannel = null;
     _leaseId = null;
@@ -361,6 +364,8 @@ class AppState extends ChangeNotifier {
     selectedAudioOutputId = null;
     audioProcessing = const AudioProcessingPreferences();
     user = null;
+    profile = null;
+    profileLoadError = null;
     topology = null;
     selectedChannel = null;
     voiceRosters = null;
@@ -415,6 +420,7 @@ class AppState extends ChangeNotifier {
     }
     user = null;
     profile = null;
+    profileLoadError = null;
     _stopVoiceRosterPolling();
     voiceRosters = null;
     voiceRosterError = null;
@@ -448,11 +454,12 @@ class AppState extends ChangeNotifier {
 
   Future<void> refreshProfile() async {
     profileLoading = true;
+    profileLoadError = null;
     notifyListeners();
     try {
       profile = await api.ownProfile();
     } catch (cause) {
-      error = _message(cause);
+      profileLoadError = _message(cause);
     } finally {
       profileLoading = false;
       notifyListeners();

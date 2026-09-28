@@ -1,0 +1,40 @@
+{
+  "id": "qa45-profile-loading-error-web-parity-2026-09-28-001",
+  "kind": "profile-loading-error-web-parity",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Own-profile loading failures are stored separately from workspace errors. Profile loading and load errors are surfaced as accessible live regions, matching the web profile page's loading/error states. A successful repeat request clears the prior load error and restores the profile.",
+  "checks": [
+    {
+      "name": "Profile load failure is isolated and retry recovers",
+      "command": "flutter test test/app_state_test.dart --plain-name \"keeps profile load errors separate and clears them on retry\"",
+      "status": "PASS",
+      "observation": "Failure populates profileLoadError without setting the general workspace error; a subsequent successful refresh clears it and restores the profile."
+    },
+    {
+      "name": "Profile loading is announced as a live region",
+      "command": "flutter test test/profile_screen_test.dart --plain-name \"announces profile loading status\"",
+      "status": "PASS",
+      "observation": "Loading copy is visible and carries the semantics liveRegion flag."
+    },
+    {
+      "name": "Profile load error is announced and hides unavailable form",
+      "command": "flutter test test/profile_screen_test.dart --plain-name \"announces profile loading errors accessibly\"",
+      "status": "PASS",
+      "observation": "Error copy is visible as a live region, and profile mutation controls are not shown when no profile could be loaded."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 159 tests passed."
+    }
+  ],
+  "remaining": "Physical platform and matched-screen visual acceptance for profile remains open in the parity checklist."
+}
