@@ -23,106 +23,110 @@ void main() {
   SharedPreferences.setMockInitialValues({});
   setUp(ComposerDraftMemory.clear);
 
-  testWidgets('mobile edge swipes open and close both workspace panels', (
-    tester,
-  ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-    addTearDown(() => debugDefaultTargetPlatformOverride = null);
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
-    addTearDown(tester.view.reset);
-    final state = AppState(_PortraitApi());
-    await state.initialize();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AnimatedBuilder(
-          animation: state,
-          builder: (_, _) => WorkspaceScreen(state: state),
-        ),
-      ),
+  for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
+    testWidgets(
+      'mobile edge swipes open and close both workspace panels (${platform.name})',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = platform;
+        addTearDown(() => debugDefaultTargetPlatformOverride = null);
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(390, 844);
+        addTearDown(tester.view.reset);
+        final state = AppState(_PortraitApi());
+        await state.initialize();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AnimatedBuilder(
+              animation: state,
+              builder: (_, _) => WorkspaceScreen(state: state),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.dragFrom(const Offset(36, 220), const Offset(140, 0));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+
+        await tester.dragFrom(const Offset(180, 220), const Offset(-120, 0));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+
+        await tester.dragFrom(const Offset(354, 220), const Offset(-140, 0));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть участников'), findsOneWidget);
+
+        await tester.dragFrom(const Offset(220, 220), const Offset(120, 0));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть участников'), findsNothing);
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        state.dispose();
+        debugDefaultTargetPlatformOverride = null;
+      },
     );
-    await tester.pumpAndSettle();
 
-    await tester.dragFrom(const Offset(36, 220), const Offset(140, 0));
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+    testWidgets(
+      'mobile message swipes reply and pull down refreshes history (${platform.name})',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = platform;
+        addTearDown(() => debugDefaultTargetPlatformOverride = null);
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(390, 844);
+        addTearDown(tester.view.reset);
+        final api = _PortraitApi(
+          withHistory: true,
+          historyCount: 2,
+          includeDirectMessage: true,
+        );
+        final state = AppState(api);
+        await state.initialize();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AnimatedBuilder(
+              animation: state,
+              builder: (_, _) => WorkspaceScreen(state: state),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-    await tester.dragFrom(const Offset(180, 220), const Offset(-120, 0));
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+        final textRow = find.text('Последнее сообщение');
+        await tester.dragFrom(tester.getCenter(textRow), const Offset(95, 0));
+        await tester.pumpAndSettle();
+        expect(find.text('Ответ для @Участник'), findsOneWidget);
+        expect(find.byTooltip('Закрыть навигацию'), findsNothing);
 
-    await tester.dragFrom(const Offset(354, 220), const Offset(-140, 0));
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Закрыть участников'), findsOneWidget);
+        final beforeTextRefresh = api.messagePageCalls;
+        await tester.drag(
+          find.byKey(const ValueKey('text-channel-messages')),
+          const Offset(0, 280),
+        );
+        await tester.pumpAndSettle();
+        expect(api.messagePageCalls, greaterThan(beforeTextRefresh));
 
-    await tester.dragFrom(const Offset(220, 220), const Offset(120, 0));
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Закрыть участников'), findsNothing);
+        await state.openDirectConversation(state.directMessages.single);
+        await tester.pumpAndSettle();
+        await tester.dragFrom(
+          tester.getCenter(find.text('Исходное личное сообщение')),
+          const Offset(95, 0),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Ответ для Собеседник'), findsOneWidget);
+        final beforeDirectRefresh = api.directMessagePageCalls;
+        await tester.drag(
+          find.text('Исходное личное сообщение'),
+          const Offset(0, 280),
+        );
+        await tester.pumpAndSettle();
+        expect(api.directMessagePageCalls, greaterThan(beforeDirectRefresh));
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    state.dispose();
-    debugDefaultTargetPlatformOverride = null;
-  });
-
-  testWidgets('mobile message swipes reply and pull down refreshes history', (
-    tester,
-  ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-    addTearDown(() => debugDefaultTargetPlatformOverride = null);
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
-    addTearDown(tester.view.reset);
-    final api = _PortraitApi(
-      withHistory: true,
-      historyCount: 2,
-      includeDirectMessage: true,
+        await tester.pumpWidget(const SizedBox.shrink());
+        state.dispose();
+        debugDefaultTargetPlatformOverride = null;
+      },
     );
-    final state = AppState(api);
-    await state.initialize();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AnimatedBuilder(
-          animation: state,
-          builder: (_, _) => WorkspaceScreen(state: state),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final textRow = find.text('Последнее сообщение');
-    await tester.dragFrom(tester.getCenter(textRow), const Offset(95, 0));
-    await tester.pumpAndSettle();
-    expect(find.text('Ответ для @Участник'), findsOneWidget);
-    expect(find.byTooltip('Закрыть навигацию'), findsNothing);
-
-    final beforeTextRefresh = api.messagePageCalls;
-    await tester.drag(
-      find.byKey(const ValueKey('text-channel-messages')),
-      const Offset(0, 280),
-    );
-    await tester.pumpAndSettle();
-    expect(api.messagePageCalls, greaterThan(beforeTextRefresh));
-
-    await state.openDirectConversation(state.directMessages.single);
-    await tester.pumpAndSettle();
-    await tester.dragFrom(
-      tester.getCenter(find.text('Исходное личное сообщение')),
-      const Offset(95, 0),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Ответ для Собеседник'), findsOneWidget);
-    final beforeDirectRefresh = api.directMessagePageCalls;
-    await tester.drag(
-      find.text('Исходное личное сообщение'),
-      const Offset(0, 280),
-    );
-    await tester.pumpAndSettle();
-    expect(api.directMessagePageCalls, greaterThan(beforeDirectRefresh));
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    state.dispose();
-    debugDefaultTargetPlatformOverride = null;
-  });
+  }
 
   testWidgets('restores a text-channel draft after switching channels', (
     tester,

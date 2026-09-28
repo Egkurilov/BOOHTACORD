@@ -1,0 +1,33 @@
+{
+  "id": "QA-78",
+  "kind": "android-ios-mobile-swipe-parity",
+  "status": "PASS_WITH_PHYSICAL_DEVICE_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-28",
+  "summary": "Confirmed and regression-tested that Android supports the same compact mobile swipe interactions as iOS: opening/closing workspace drawers, replying to text and direct messages, pulling to refresh conversation history, expanding/collapsing the voice dock, and exiting fullscreen viewing.",
+  "checks": [
+    {
+      "name": "Workspace drawer and conversation swipes on Android and iOS",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart --name 'mobile .*swipes'",
+      "status": "PASS",
+      "observation": "All four widget cases passed: edge swipes open and close navigation/member panels, message swipes open reply compose, and pull-down refresh requests another text/DM history page on both iOS and Android."
+    },
+    {
+      "name": "Fullscreen viewer downward swipe on Android and iOS",
+      "command": "cd desktop && flutter test test/screen_fullscreen_overlay_test.dart --name 'mobile downward swipe'",
+      "status": "PASS",
+      "observation": "Both platform cases passed; a downward gesture closes the viewer exactly once."
+    },
+    {
+      "name": "Android compact voice dock expand/collapse swipes",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart --plain-name 'keeps voice controls in a compact bottom dock on Android'",
+      "status": "PASS",
+      "observation": "The Android widget test passed; vertical swipes expand and collapse the dock while preserving the active voice connection."
+    },
+    {
+      "name": "Physical Android gesture-navigation acceptance",
+      "status": "OPEN",
+      "observation": "No Android device was attached for checking edge-swipe interaction with the device's system gesture navigation."
+    }
+  ],
+  "remaining": "Install/run on an Android phone and verify left/right edge drawer gestures alongside the device's system back/home gestures."
+}
