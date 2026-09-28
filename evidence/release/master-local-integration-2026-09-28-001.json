@@ -1,0 +1,21 @@
+{
+  "id": "master-local-integration-2026-09-28-001",
+  "kind": "branch-sync-source-validation",
+  "status": "PASS_SOURCE_ONLY",
+  "observed_at_utc": "2026-09-28T09:51:30Z",
+  "base_revision": "a26f0abede805cfe838a269e03b22ba7b0ce3250",
+  "scope": "Unique local Go, web, contract, backlog and evidence changes were integrated over current origin/master in an isolated checkout; every named feature branch was already an ancestor of origin/master.",
+  "checks": [
+    { "name": "backend_test_vet_build", "result": "PASS", "detail": "go test ./..., go vet ./..., go build ./cmd/api" },
+    { "name": "frontend_test_build", "result": "PASS", "detail": "Vitest 219 files and 647 tests; vue-tsc and Vite production build" },
+    { "name": "contract_traceability", "result": "PASS", "detail": "verify-contracts.ps1 and verify-spec-traceability.ps1" },
+    { "name": "browser_postgresql_device", "result": "NOT_RUN", "detail": "No authenticated live browser, PostgreSQL integration candidate or physical media devices were exercised in this branch-sync packet." }
+  ],
+  "excluded_unfinished_draft": [
+    "backend/internal/admin/settings/postgres/pool_database.go",
+    "backend/internal/admin/settings/postgres/repository.go",
+    "backend/internal/admin/settings/service.go",
+    "backend/internal/database/migrate/migrations/0040_admin_server_name_change.sql"
+  ],
+  "exclusion_reason": "The draft has no API/UI integration or focused tests and fails Go compilation; retained unchanged in the primary local checkout for a later complete feature packet."
+}

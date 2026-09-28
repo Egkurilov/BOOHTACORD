@@ -37,9 +37,9 @@ describe('channel topology client', () => {
   })
 
   it('parses caller-local TEXT counters and rejects missing or negative values', () => {
-    const textChannel = { id: 'text-1', name: 'Общий', kind: 'TEXT', position: 0, admission_closed: false, unread_count: 4, mention_count: 2 }
+    const textChannel = { id: 'text-1', name: 'Общий', kind: 'TEXT', position: 0, admission_closed: false, unread_count: 4, mention_count: 2, first_unread_message_id: 'first-1' }
     const source = { revision: 4, categories: [{ id: 'cat-1', name: 'Игры', position: 0, channels: [textChannel] }] }
-    expect(parseTopology(source).categories[0]?.channels[0]).toMatchObject({ unreadCount: 4, mentionCount: 2 })
+    expect(parseTopology(source).categories[0]?.channels[0]).toMatchObject({ unreadCount: 4, mentionCount: 2, firstUnreadMessageId: 'first-1' })
     expect(() => parseTopology({ ...source, categories: [{ ...source.categories[0], channels: [{ ...textChannel, mention_count: -1 }] }] })).toThrow('некорректную')
     expect(() => parseTopology({ ...source, categories: [{ ...source.categories[0], channels: [{ ...textChannel, unread_count: undefined }] }] })).toThrow('некорректную')
   })

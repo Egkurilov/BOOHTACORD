@@ -8,6 +8,7 @@ export interface DirectMessageListItem {
   createdAt: string
   unreadCount: number
   mentionCount: number
+  firstUnreadMessageId?: string
 }
 
 function invalid(): never { throw new Error('Сервер вернул некорректный список личных сообщений.') }
@@ -23,6 +24,7 @@ function item(value: unknown): DirectMessageListItem {
     id: requiredText(source.id), otherParticipantId: requiredText(source.other_participant_id),
     otherParticipantDisplayName: requiredText(source.other_participant_display_name), createdAt,
     unreadCount: count(source.unread_count), mentionCount: count(source.mention_count),
+    ...(typeof source.first_unread_message_id === 'string' && source.first_unread_message_id ? { firstUnreadMessageId: source.first_unread_message_id } : {}),
   }
 }
 

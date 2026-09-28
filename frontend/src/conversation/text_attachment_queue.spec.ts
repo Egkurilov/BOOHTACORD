@@ -3,6 +3,13 @@ import { describe, expect, it, vi } from 'vitest'
 import { useTextAttachmentQueue } from './text_attachment_queue'
 
 describe('TEXT attachment queue', () => {
+  it('hydrates only prepared IDs for the reopened channel', () => {
+    const prepared = [{ id: 'saved-id', originalName: 'image.png', sizeBytes: 4 }]
+    const queue = useTextAttachmentQueue(() => 'text-1', () => false, vi.fn(), vi.fn(), prepared)
+    expect(queue.attachments.value).toEqual(prepared)
+    queue.clear()
+    expect(queue.attachments.value).toEqual([])
+  })
   it('retains the failed file after 507 and retries that same file once after capacity returns', async () => {
     const file = new File(['safe'], 'safe.txt', { type: 'text/plain' })
     const upload = vi.fn().mockRejectedValueOnce(new Error('507: INSUFFICIENT_STORAGE'))

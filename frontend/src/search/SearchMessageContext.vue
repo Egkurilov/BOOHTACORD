@@ -8,7 +8,7 @@ import { loadDirectMessageHistory, type DirectMessageHistoryItem } from '../dire
 import { useAuthorDirectory } from '../identity/author_directory'
 import { createSearchContextController } from './search_context_controller'
 
-const props = defineProps<{ kind: 'CHANNEL' | 'DIRECT_MESSAGE'; conversationId: string; messageId: string }>()
+const props = defineProps<{ kind: 'CHANNEL' | 'DIRECT_MESSAGE'; conversationId: string; messageId: string; heading?: string }>()
 const emit = defineEmits<{ close: [] }>()
 const authors = useAuthorDirectory()
 const root = ref<HTMLElement | null>(null)
@@ -26,7 +26,7 @@ onBeforeUnmount(context.clear)
 <template>
   <section ref="root" class="search-message-context" aria-labelledby="search-context-title" data-testid="search-message-context">
     <header class="search-context-header">
-      <h3 id="search-context-title">Контекст найденного сообщения</h3>
+      <h3 id="search-context-title">{{ props.heading ?? 'Контекст найденного сообщения' }}</h3>
       <button type="button" @click="emit('close')">К последним сообщениям</button>
     </header>
     <p v-if="status === 'loading'" role="status">Открываем сообщение…</p>

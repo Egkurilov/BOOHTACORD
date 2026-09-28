@@ -12,6 +12,8 @@ type VoiceConnection = ReturnType<typeof useVoiceConnectionStore>
 type WorkspaceVoiceControls = ReturnType<typeof useWorkspaceVoiceControls>
 
 defineProps<{
+  accountId: string
+  activeVoiceChannel: TopologyChannel | null
   panel: 'none' | 'admin' | 'audio' | 'profile'
   channel: TopologyChannel | null
   directMessage: DirectMessageListItem | null
@@ -27,7 +29,7 @@ defineProps<{
   voiceRoster?: VoiceRoomRoster | null
   voiceRosterError?: string | null
 }>()
-const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
+const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
 </script>
 
 <template>
@@ -44,7 +46,10 @@ const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
     <slot name="profile" />
   </div>
   <ConversationPane
-    v-else
+    v-show="panel === 'none'"
+    :account-id="accountId"
+    :active-voice-channel="activeVoiceChannel"
+    :visible="panel === 'none'"
     :channel="channel"
     :activation-mode="activationMode"
     :direct-message="directMessage"
@@ -78,6 +83,7 @@ const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
     @join="joinVoice"
     @leave="leaveVoice"
     @refresh-screen="voiceConnection.refreshScreenDiagnostics"
+    @return-voice="emit('returnVoice', $event)"
     @select-screen-stream="voiceConnection.selectScreenStream"
     @set-participant-volume="voiceConnection.setParticipantVolume"
     @set-screen-volume="voiceConnection.setScreenVolume"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useTopologyStore } from '../channel/topology_store'
 import { loadCurrentSession, type CurrentSession } from '../identity/current_session'
 import { useAuthorDirectory } from '../identity/author_directory'
@@ -12,71 +12,53 @@ import MentionPicker from './MentionPicker.vue'
 import ConversationOverflowMenu from './ConversationOverflowMenu.vue'
 import type { TextAttachmentUpload } from './text_attachment_upload_client'
 import { advanceTextReadIfVisible } from './text_read_gate'
-import { newestVisibleServerMessageId, shouldAdvanceVisibleRead } from './read_visibility'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
-import { useComposerScope } from './composer_scope'
+import { useSavedComposer } from './use_saved_composer'
 import { submitOnComposerEnter } from './composer_enter'
 import SearchMessageContext from '../search/SearchMessageContext.vue'
 import { useSearchTargetStore } from '../search/search_target_store'
 import { pasteClipboardImages } from './clipboard_images'
+import { useUnreadBoundary } from './use_unread_boundary'
+import { useScopedSend } from './use_scoped_send'
+import { useVisibleRead } from './use_visible_read'
 
-const props = defineProps<{ channelId: string; channelName: string; navOpen: boolean; membersOpen: boolean; showMembers: boolean }>()
+const props = defineProps<{ accountId: string; active: boolean; channelId: string; channelName: string; navOpen: boolean; membersOpen: boolean; showMembers: boolean }>()
 const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
 const store = useMessageStore()
 const topology = useTopologyStore()
 const searchTarget = useSearchTargetStore()
 const contextTarget = computed(() => searchTarget.target?.kind === 'CHANNEL' && searchTarget.target.conversationId === props.channelId ? searchTarget.target : null)
+const firstUnread = computed(() => topology.topology?.categories.flatMap(({ channels }) => channels).find(({ id }) => id === props.channelId)?.firstUnreadMessageId)
+const { unreadBoundary, unreadContextOpen, readUnlocked, showUnread, continueAtLatest } = useUnreadBoundary(() => props.channelId, firstUnread, () => queueVisibleRead())
 const authors = useAuthorDirectory()
 const session = ref<CurrentSession | null>(null)
-const composer = useComposerScope<TextMessage, TextAttachmentUpload>()
+const composer = useSavedComposer<TextMessage, TextAttachmentUpload>(props.accountId, 'CHANNEL', () => props.channelId)
 const { draft, replyTarget, attachments, mentionUserIds, attachmentPending, attachmentClearToken } = composer
 const searchOpen = ref(false)
 const searchTrigger = ref<HTMLButtonElement | null>(null)
-const readRoot = ref<HTMLElement | null>(null)
 const composerTextarea = ref<HTMLTextAreaElement | null>(null)
 const attachmentPicker = ref<{ addPastedFiles: (files: File[]) => void } | null>(null)
 const emojiOpen = ref(false)
 const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
-const readPending = new Set<string>()
-let lastReadKey = ''
-
-async function markVisibleRead(): Promise<void> {
-  const messageId = newestVisibleServerMessageId(readRoot.value?.querySelector<HTMLElement>('.message-list') ?? null, store.messages)
-  if (!messageId) return
-  const key = `${props.channelId}:${messageId}`
-  if (!shouldAdvanceVisibleRead(store.messages, lastReadKey, props.channelId, messageId) || readPending.has(key)) return
-  readPending.add(key)
-  try {
-    const advanced = await advanceTextReadIfVisible({ activeChannelId: store.channelId, renderedChannelId: props.channelId,
-      newestDisplayedMessageId: messageId, visibilityState: document.visibilityState })
-    if (advanced) { if (shouldAdvanceVisibleRead(store.messages, lastReadKey, props.channelId, messageId)) lastReadKey = key; void topology.refresh() }
-  } catch { /* Keep counters until a later visible retry. */ }
-  finally { readPending.delete(key) }
-}
-
-function queueVisibleRead(): void { void markVisibleRead() }
+const { readRoot, queueVisibleRead } = useVisibleRead({
+  conversationId: () => props.channelId, loadedConversationId: () => store.channelId, messages: () => store.messages,
+  canRead: () => props.active && Boolean(topology.topology) && (!unreadBoundary.value || readUnlocked.value),
+  advance: (id, messageId) => advanceTextReadIfVisible({ activeChannelId: store.channelId, renderedChannelId: id,
+    newestDisplayedMessageId: messageId, visibilityState: document.visibilityState }),
+  refreshCounters: () => { void topology.refresh() },
+})
 watch(() => props.channelId, (channelId) => {
-  composer.reset()
-  lastReadKey = ''
   void store.open(channelId)
   void loadSession()
 }, { immediate: true })
-watch([() => props.channelId, () => store.channelId, () => store.messages], queueVisibleRead, { flush: 'post' })
-onMounted(() => { document.addEventListener('visibilitychange', queueVisibleRead); window.addEventListener('resize', queueVisibleRead); queueVisibleRead() })
-onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVisibleRead); window.removeEventListener('resize', queueVisibleRead); searchTarget.clearFor('CHANNEL', props.channelId) })
+onBeforeUnmount(() => searchTarget.clearFor('CHANNEL', props.channelId))
 
-async function send(): Promise<void> {
-  if (attachmentPending.value || store.channelId !== props.channelId) return
-  const saved = composer.snapshot(props.channelId)
-  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id, attachments.value, session.value?.accountId, mentionUserIds.value)
-    && composer.unchanged(saved, props.channelId) && store.channelId === props.channelId) composer.clear()
-}
-
-async function retry(message: TextMessage): Promise<void> {
-  const saved = composer.snapshot(props.channelId)
-  if (await store.retry(message.clientMessageId) && composer.unchanged(saved, props.channelId)
-    && store.channelId === props.channelId && composer.matchesMessage(message)) composer.clear()
-}
+const { send, retry } = useScopedSend<TextMessage, TextAttachmentUpload, TextMessage>(
+  props.accountId, 'CHANNEL', () => props.channelId, composer,
+  () => !attachmentPending.value && store.channelId === props.channelId,
+  () => store.send(draft.value, undefined, undefined, replyTarget.value?.id, attachments.value, session.value?.accountId, mentionUserIds.value),
+  (id) => store.retry(id),
+)
 
 async function loadSession(): Promise<void> {
   try { session.value = await loadCurrentSession() } catch { session.value = null }
@@ -101,12 +83,18 @@ function onComposerPaste(event: ClipboardEvent): void {
     <div v-if="searchOpen" class="conversation-tools"><TextMessageSearch :channel-id="props.channelId" @close="closeSearch" /></div>
     <p v-if="store.loading" class="state" aria-live="polite">Загружаем историю…</p>
     <p v-if="store.error" id="text-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refresh()">Повторить загрузку</button></p>
+    <div v-if="unreadBoundary && !readUnlocked" class="unread-boundary-actions" role="status">
+      <span>Есть непрочитанные сообщения.</span>
+      <button type="button" @click="showUnread">К первому непрочитанному</button>
+      <button type="button" @click="continueAtLatest">Остаться у последних</button>
+    </div>
     <SearchMessageContext v-if="contextTarget" kind="CHANNEL" :conversation-id="props.channelId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
+    <SearchMessageContext v-else-if="unreadContextOpen" kind="CHANNEL" :conversation-id="props.channelId" :message-id="unreadBoundary" heading="Первое непрочитанное сообщение" @close="continueAtLatest" />
     <TextHistoryList :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @retry="retry" @viewport-change="queueVisibleRead" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
-        <TextMessageAttachmentPicker ref="attachmentPicker" :channel-id="props.channelId" :disabled="store.sending || attachmentPending"
+        <TextMessageAttachmentPicker ref="attachmentPicker" :channel-id="props.channelId" :initial-attachments="attachments" :disabled="store.sending || attachmentPending"
           :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" />
         <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" />
         <label class="gc-sr-only" for="message-body">Сообщение</label>

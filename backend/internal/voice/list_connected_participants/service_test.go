@@ -4,9 +4,15 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	snapshotlivekitpresence "voice-platform/backend/internal/media/snapshot_livekit_presence"
 )
+
+type snapshotObserver struct { calls int; rooms int; failed bool }
+func (observer *snapshotObserver) ObserveVoiceRosterSnapshot(_ time.Duration, rooms int, failed bool) {
+	observer.calls++; observer.rooms = rooms; observer.failed = failed
+}
 
 const (
 	actorID   = "11111111-1111-4111-8111-111111111111"
@@ -95,4 +101,12 @@ func TestListRechecksLeaseAfterLiveKitSnapshot(t *testing.T) {
 	if err != nil || repository.calls != 2 || len(result.Channels[0].Participants) != 0 {
 		t.Fatalf("revoked lease leaked: result=%+v calls=%d err=%v", result, repository.calls, err)
 	}
+}
+
+func TestListReportsSnapshotLoadWithoutActorOrRoomIDs(t *testing.T) {
+	secondRoom := "66666666-6666-4666-8666-666666666666"
+	observer := &snapshotObserver{}
+	service := New(&repositoryStub{channels: []Channel{{ID: channelID}, {ID: secondRoom}}}, &presenceStub{connected: map[string][]snapshotlivekitpresence.ConnectedLease{}}, observer)
+	if _, err := service.List(context.Background(), actorID); err != nil { t.Fatal(err) }
+	if observer.calls != 1 || observer.rooms != 2 || observer.failed { t.Fatalf("observer = %+v", observer) }
 }

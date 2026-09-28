@@ -4,11 +4,11 @@ import { ref, watch } from 'vue'
 import type { TextAttachmentUpload } from './text_attachment_upload_client'
 import { useTextAttachmentQueue } from './text_attachment_queue'
 
-const props = defineProps<{ channelId: string; disabled: boolean; clearToken: number }>()
+const props = defineProps<{ channelId: string; disabled: boolean; clearToken: number; initialAttachments?: TextAttachmentUpload[] }>()
 const emit = defineEmits<{ change: [attachments: TextAttachmentUpload[]]; pending: [value: boolean] }>()
 const fileInput = ref<HTMLInputElement | null>(null)
-const { attachments, failed, pending, error, clear, upload, addFiles, retry } = useTextAttachmentQueue(
-  () => props.channelId, () => props.disabled, emit,
+const { attachments, failed, pending, error, clear, restore, upload, addFiles, retry } = useTextAttachmentQueue(
+  () => props.channelId, () => props.disabled, emit, undefined, props.initialAttachments,
 )
 const numberFormat = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 })
 
@@ -19,7 +19,7 @@ function byteLabel(sizeBytes: number): string {
 }
 
 watch(() => props.clearToken, clear)
-watch(() => props.channelId, clear)
+watch(() => props.channelId, () => restore(props.initialAttachments ?? []))
 
 function addPastedFiles(files: File[]): void { void upload(files) }
 defineExpose({ addPastedFiles })

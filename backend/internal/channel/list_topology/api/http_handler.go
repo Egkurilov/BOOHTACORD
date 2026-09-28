@@ -46,13 +46,14 @@ type category struct {
 	Channels []channel `json:"channels"`
 }
 type channel struct {
-	ID              string `json:"id"`
-	Name            string `json:"name"`
-	Kind            string `json:"kind"`
-	Position        int    `json:"position"`
-	AdmissionClosed bool   `json:"admission_closed"`
-	UnreadCount     *int64 `json:"unread_count,omitempty"`
-	MentionCount    *int64 `json:"mention_count,omitempty"`
+	ID                   string `json:"id"`
+	Name                 string `json:"name"`
+	Kind                 string `json:"kind"`
+	Position             int    `json:"position"`
+	AdmissionClosed      bool   `json:"admission_closed"`
+	UnreadCount          *int64 `json:"unread_count,omitempty"`
+	MentionCount         *int64 `json:"mention_count,omitempty"`
+	FirstUnreadMessageID string `json:"first_unread_message_id,omitempty"`
 }
 
 func categories(source []listtopology.Category) []category {
@@ -64,6 +65,7 @@ func categories(source []listtopology.Category) []category {
 			if item.Kind == "TEXT" {
 				value.UnreadCount = &item.UnreadCount
 				value.MentionCount = &item.MentionCount
+				value.FirstUnreadMessageID = item.FirstUnreadMessageID
 			}
 			current.Channels = append(current.Channels, value)
 		}

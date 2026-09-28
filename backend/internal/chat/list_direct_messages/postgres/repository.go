@@ -28,7 +28,17 @@ SELECT pair.id::text, pair.other_participant_id::text, account.display_name, pai
              AND message.deleted_at IS NULL
              AND $1::uuid = ANY(message.mention_user_ids)
              AND (cursor.message_id IS NULL OR (message.created_at, message.id) > (cursor.message_created_at, cursor.message_id))
-       ) AS mention_count
+       ) AS mention_count,
+       COALESCE((
+           SELECT unread.id::text
+           FROM direct_message_messages unread
+           WHERE unread.direct_message_id = pair.id
+             AND unread.deleted_at IS NULL
+             AND unread.author_id <> $1::uuid
+             AND (cursor.message_id IS NULL OR (unread.created_at, unread.id) > (cursor.message_created_at, cursor.message_id))
+           ORDER BY unread.created_at, unread.id
+           LIMIT 1
+       ), '') AS first_unread_message_id
 FROM pair
 JOIN users account ON account.id = pair.other_participant_id
 LEFT JOIN direct_message_read_cursors cursor
@@ -36,7 +46,7 @@ LEFT JOIN direct_message_read_cursors cursor
  AND cursor.direct_message_id = pair.id
 LEFT JOIN direct_message_messages message
   ON message.direct_message_id = pair.id
-GROUP BY pair.id, pair.other_participant_id, account.display_name, pair.created_at
+GROUP BY pair.id, pair.other_participant_id, account.display_name, pair.created_at, cursor.message_id, cursor.message_created_at
 ORDER BY pair.created_at DESC, pair.id DESC`
 
 type Rows interface {
@@ -60,7 +70,7 @@ func (repository Repository) List(context context.Context, request listdirectmes
 	result := make([]listdirectmessages.DirectMessage, 0)
 	for rows.Next() {
 		var directMessage listdirectmessages.DirectMessage
-		if err := rows.Scan(&directMessage.ID, &directMessage.OtherParticipantID, &directMessage.OtherParticipantDisplayName, &directMessage.CreatedAt, &directMessage.UnreadCount, &directMessage.MentionCount); err != nil {
+		if err := rows.Scan(&directMessage.ID, &directMessage.OtherParticipantID, &directMessage.OtherParticipantDisplayName, &directMessage.CreatedAt, &directMessage.UnreadCount, &directMessage.MentionCount, &directMessage.FirstUnreadMessageID); err != nil {
 			return nil, fmt.Errorf("scan direct message: %w", err)
 		}
 		result = append(result, directMessage)

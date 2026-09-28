@@ -21,6 +21,9 @@
 .workspace-main-panel--admin .admin-topology-controls select { width: 100%; min-height: var(--gc-size-control); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-3); color: var(--gc-text-primary); background: var(--gc-input); }
 .workspace-main-panel--audio .audio-settings fieldset { display: grid; gap: var(--gc-space-3); border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-md); padding: var(--gc-space-4); }
 .workspace-main-panel--audio .audio-settings legend { padding: 0 var(--gc-space-2); color: var(--gc-text-secondary); font-size: var(--gc-text-small); }
+.audio-device-check__actions { display: flex; flex-wrap: wrap; gap: var(--gc-space-2); }
+.audio-device-check__actions button { min-height: var(--gc-size-control-sm); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-3); color: var(--gc-text-primary); background: var(--gc-surface-raised); }
+.audio-device-check meter { display: block; width: 100%; height: 18px; accent-color: var(--gc-success); }
 .admin-topology-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: var(--gc-space-4); border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-md); padding: var(--gc-space-4); background: var(--gc-surface); }
 .admin-topology-form--rename { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .admin-topology-form--channel { grid-template-columns: repeat(4, minmax(0, 1fr)); }

@@ -18,6 +18,7 @@ type Recorder struct {
 	registry                       *prometheus.Registry
 	requests                       *prometheus.CounterVec
 	realtime                       *realtimeConnections
+	roster                         *voiceRosterMetrics
 	uploadFailures                 *uploadFailureMetrics
 	voiceSFURevocations            *prometheus.CounterVec
 }
@@ -41,8 +42,9 @@ func New() *Recorder {
 	eventDeliveryLatency := newRealtimeEventDeliveryLatency()
 	uploadFailures := newUploadFailureMetrics()
 	clientScreen := newClientScreenMetrics()
-	registry.MustRegister(requests, duration, voiceSFURevocations, realtime.active, realtime.total, realtime.ready, reconnectOutcomes, eventDeliveryLatency, uploadFailures.total, clientScreen.total, clientScreen.fps, clientScreen.bitrate)
-	return &Recorder{clientScreen: clientScreen, duration: duration, eventDeliveryLatency: eventDeliveryLatency, handler: promhttp.HandlerFor(registry, promhttp.HandlerOpts{}), reconnectOutcomes: reconnectOutcomes, realtime: realtime, registry: registry, requests: requests, uploadFailures: uploadFailures, voiceSFURevocations: voiceSFURevocations}
+	roster := newVoiceRosterMetrics()
+	registry.MustRegister(requests, duration, voiceSFURevocations, realtime.active, realtime.total, realtime.ready, reconnectOutcomes, eventDeliveryLatency, uploadFailures.total, clientScreen.total, clientScreen.fps, clientScreen.bitrate, roster.snapshots, roster.duration, roster.rooms)
+	return &Recorder{clientScreen: clientScreen, duration: duration, eventDeliveryLatency: eventDeliveryLatency, handler: promhttp.HandlerFor(registry, promhttp.HandlerOpts{}), reconnectOutcomes: reconnectOutcomes, realtime: realtime, roster: roster, registry: registry, requests: requests, uploadFailures: uploadFailures, voiceSFURevocations: voiceSFURevocations}
 }
 
 func (recorder *Recorder) Handler() http.Handler { return recorder.handler }

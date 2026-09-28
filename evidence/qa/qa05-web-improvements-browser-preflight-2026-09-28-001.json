@@ -1,0 +1,14 @@
+{
+  "id": "qa05-web-improvements-browser-preflight-2026-09-28-001",
+  "task": "QA-05/FE-53/FE-54/FE-55/IMP-07/IMP-08/IMP-22/IMP-28",
+  "kind": "browser-preflight",
+  "status": "NOT_RUN_BROWSER",
+  "observed_at_utc": "2026-09-27T21:53:01Z",
+  "source_base_revision": "079445ba5c59974c4d11c6a807b908ad1cf612d3",
+  "checks": [
+    { "name": "frontend_unit_suite", "result": "PASS_LOCAL", "detail": "219 files, 644 tests; TypeScript/Vite build passed." },
+    { "name": "browser_inventory", "result": "UNAVAILABLE", "detail": "Unified browser provider twice returned Unable to load browser request-header policy and no browser tabs. Local app ports 5173 and 18796 were not serving in this packet." },
+    { "name": "real_image_preview_paste_draft_unread_audio_mini", "result": "NOT_RUN", "detail": "No authenticated interactive web session was available; source checks do not prove browser focus, clipboard, protected preview, media continuity or device routing." }
+  ],
+  "next": "Restore an authenticated disposable browser candidate, then check protected TEXT/DM PNG viewer and clipboard paste, A-to-B-to-A drafts, first unread anchor, output selection, and full-to-mini-to-full with one subscription at 320px and zoom."
+}

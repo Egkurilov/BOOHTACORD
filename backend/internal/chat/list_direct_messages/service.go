@@ -16,6 +16,7 @@ type DirectMessage struct {
 	CreatedAt                                           time.Time
 	UnreadCount                                         int64
 	MentionCount                                        int64
+	FirstUnreadMessageID                                string
 }
 type Result struct{ DirectMessages []DirectMessage }
 type Store interface {

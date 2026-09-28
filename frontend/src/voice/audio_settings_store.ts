@@ -15,14 +15,19 @@ export const useAudioSettingsStore = defineStore('audio-settings', () => {
   const processingControls = createAudioProcessingControls()
   const processing = processingControls.processing
   const state = ref<AudioSettingsState>('IDLE')
+  let scanSequence = 0
 
-  async function load(): Promise<void> {
+  async function load(scan: typeof listAudioDevices = listAudioDevices): Promise<void> {
+    const sequence = ++scanSequence
     state.value = 'LOADING'
     error.value = null
     try {
-      devices.value = await listAudioDevices()
+      const found = await scan()
+      if (sequence !== scanSequence) return
+      devices.value = found
       state.value = 'READY'
     } catch {
+      if (sequence !== scanSequence) return
       state.value = 'ERROR'
       error.value = 'Не удалось прочитать список аудиоустройств.'
     }

@@ -23,7 +23,7 @@ export const useMessageStore = defineStore('text-messages', () => {
     try {
       const created = await createTextMessage(targetChannelId, clientMessageId, draft.body, request, draft.replyToId, draft.attachments.map(({ id }) => id), draft.mentionUserIds)
       pending.delete(clientMessageId)
-      if (channelId.value !== targetChannelId) return false
+      if (channelId.value !== targetChannelId) return true
       for (const [key, id] of retries) if (id === clientMessageId) retries.delete(key)
       messages.value = [{ ...created, attachments: [...draft.attachments] }, ...messages.value.filter((message) => message.id !== created.id && message.clientMessageId !== clientMessageId)]
       return true

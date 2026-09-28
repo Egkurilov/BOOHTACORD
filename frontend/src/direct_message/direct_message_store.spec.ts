@@ -127,7 +127,7 @@ describe('direct-message store', () => {
     await store.open('dm-b', request)
     resolveSend?.(new Response(JSON.stringify({ id: 'message-a', direct_message_id: 'dm-a', author_id: 'user-1', client_message_id: 'client-a', body: 'A', revision: 1, created_at: '2026-09-18T10:00:00Z', mention_user_ids: [] })))
 
-    await expect(sending).resolves.toBe(false)
+    await expect(sending).resolves.toBe(true)
     expect(store.directMessageId).toBe('dm-b')
     expect(store.messages).toMatchObject([{ id: 'message-b' }])
   })

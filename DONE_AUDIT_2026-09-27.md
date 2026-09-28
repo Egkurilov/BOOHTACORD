@@ -11,7 +11,7 @@
 
 ## Реализованные BE/FE и локальные дизайн-результаты
 
-- [x] **BE-01…18:** конкурентная идемпотентность, приватные DM-события/файлы, topology/voice ACL и revocation, read cursors, поиск, realtime replay и voice roster — [подробности](DONE.md) и [BE-18](DONE_RECENT.md). Текущая backend-задача BE-19/20 относится к новому требованию отправлять вложение без текста.
+- [x] **BE-01…20:** конкурентная идемпотентность, приватные DM-события/файлы, topology/voice ACL и revocation, read cursors, поиск, realtime replay, voice roster и отправка TEXT/DM-вложения без подписи — [подробности](DONE.md) и [BE-18…20](DONE_RECENT.md). BE-19/20 закрыты после этого исторического среза; их PostgreSQL и deploy evidence указаны в последнем файле.
 - [x] **FE-01…51:** чат, DM, вложения, голос, screen viewer, измерения и объяснение отсутствующего захвата в Android Chrome — [основной список](DONE.md), [media leaves](DONE_MEDIA.md), [последние leaves](DONE_RECENT.md). Защищённый PNG preview существует; Flutter image-viewer добавлен в отдельном QA-13 leaf ниже.
 - [x] **DES-01 и завершённые части DES-02…08:** матрица 40 компонентов, чат-хронология, responsive/admin/focus исправления и отдельные совпадения геометрии — [матрица](docs/design/GUILDCHAT_COMPONENT_MATRIX.md), [результаты](DONE.md) и [история](docs/design/GUILDCHAT_V1_STATUS.md). Общая visual/screen-reader приёмка остаётся открытой.
 - [x] **Части QA-03/05/07/08/12/13:** серверная DM/file ACL, controlled PNG preview и retry 507→201, два browser-зрителя с 14–15 FPS, восстановленный idle запас attachment volume, fake-Docker rollback и подписанный APK подтверждены [evidence](evidence/). Соответствующие физические, browser и нагрузочные критерии остаются в активном [списке](backlog/VERIFICATION_TODO.md).

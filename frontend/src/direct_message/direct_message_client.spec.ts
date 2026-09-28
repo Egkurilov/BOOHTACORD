@@ -4,7 +4,7 @@ import { advanceDirectMessageReadCursor, loadDirectMessageHistory, loadDirectMes
 
 const directMessage = {
   id: 'dm-1', other_participant_id: 'user-2', other_participant_display_name: 'Лера',
-  created_at: '2026-09-18T10:00:00Z', unread_count: 3, mention_count: 2,
+  created_at: '2026-09-18T10:00:00Z', unread_count: 3, mention_count: 2, first_unread_message_id: 'message-1',
 }
 
 const deletedHistoryItem = {
@@ -17,7 +17,7 @@ describe('direct-message client', () => {
   it('reads the caller-local navigation count through a same-origin GET', async () => {
     const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ direct_messages: [directMessage] })))
 
-    await expect(loadDirectMessages(request)).resolves.toMatchObject([{ id: 'dm-1', unreadCount: 3, mentionCount: 2 }])
+    await expect(loadDirectMessages(request)).resolves.toMatchObject([{ id: 'dm-1', unreadCount: 3, mentionCount: 2, firstUnreadMessageId: 'message-1' }])
     expect(request).toHaveBeenCalledWith('/api/v1/direct-messages', expect.objectContaining({ method: 'GET', credentials: 'same-origin' }))
   })
 

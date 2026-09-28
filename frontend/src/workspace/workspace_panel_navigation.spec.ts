@@ -8,7 +8,7 @@ describe('workspace panel navigation', () => {
   it.each(['admin', 'audio', 'profile'] as const)('offers a drawer trigger in the %s panel', async (panel) => {
     const html = await renderToString(createSSRApp({
       render: () => h(WorkspaceMain, {
-        panel, channel: null, directMessage: null, navOpen: false,
+        accountId: 'account-a', activeVoiceChannel: null, panel, channel: null, directMessage: null, navOpen: false,
         membersOpen: false, showMembers: false, selfDisplayName: null,
         joinVoice: async () => {}, leaveVoice: async () => {}, startScreen: async () => {},
         activationMode: 'VAD' as const, voiceConnection: {} as never,

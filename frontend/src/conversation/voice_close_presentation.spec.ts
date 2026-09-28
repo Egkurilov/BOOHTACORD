@@ -7,12 +7,13 @@ import ConversationPane from './ConversationPane.vue'
 describe('VOICE closed-admission presentation', () => {
   it('shows the server reason and safe exit while a participant still has an active lease', async () => {
     const html = await renderToString(createSSRApp(ConversationPane, {
+      accountId: 'user-1', activeVoiceChannel: null, visible: true,
       channel: { id: 'voice-1', name: 'Команда', kind: 'VOICE', position: 0, admissionClosed: true },
       directMessage: null, navOpen: false, membersOpen: false, showMembers: false, selfDisplayName: 'Участник', selfDeafened: false,
       voiceError: 'Голосовой канал закрыт администратором.', voiceIsActive: true, voiceState: 'CONNECTED',
       activationMode: 'VAD', voiceTransferRequired: false, screenError: null, screenViewerCards: [],
       screenViewerEnded: false, screenViewerError: null, screenDiagnostics: {}, screenProfile: null,
-      screenState: 'IDLE', selectedScreenStreamId: null, selectedScreenAudioVolume: 100,
+      screenState: 'IDLE', selectedScreenStreamId: null, selectedScreenAudioVolume: 100, screenAudioMuted: false,
       selfMicrophoneMuted: false, selfMicrophoneUnavailable: false, selfSpeaking: false,
       voiceVolumeError: null, voiceVolumeParticipants: [],
     }))

@@ -5,7 +5,8 @@ import type { VoiceActivationMode } from './activation_store'
 import { audioProcessingStatus, type AudioProcessingDiagnostics } from './audio_processing_diagnostics'
 import { capturePttAssignment } from './ptt_key_capture'
 import type { AudioProcessingOptions } from './livekit_gateway'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import AudioDeviceCheck from './AudioDeviceCheck.vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
   activationError: string | null
@@ -16,6 +17,7 @@ const props = defineProps<{
   pttKey: string | null
   processing: AudioProcessingOptions
   state: AudioSettingsState
+  connected: boolean
 }>()
 
 const emit = defineEmits<{
@@ -27,9 +29,31 @@ const emit = defineEmits<{
 }>()
 const recordingPttKey = ref(false)
 const entry = ref<HTMLElement | null>(null)
+const selectedInput = ref('default')
+const selectedOutput = ref('default')
+const deviceWarning = ref('')
 let focusFrame: number | null = null
-onMounted(() => { focusFrame = window.requestAnimationFrame(() => entry.value?.focus()) })
-onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(focusFrame) })
+function refreshDevices(): void { emit('load') }
+onMounted(() => { focusFrame = window.requestAnimationFrame(() => entry.value?.focus()); refreshDevices(); navigator.mediaDevices?.addEventListener?.('devicechange', refreshDevices) })
+onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(focusFrame); navigator.mediaDevices?.removeEventListener?.('devicechange', refreshDevices) })
+watch(() => props.devices, ({ inputs, outputs }) => {
+  if (inputs.length && !inputs.some(({ id }) => id === selectedInput.value)) {
+    if (selectedInput.value !== 'default') deviceWarning.value = 'Выбранный микрофон отключён. Выберите доступное устройство и проверьте звук.'
+    selectedInput.value = inputs[0].id
+  }
+  if (outputs.length && !outputs.some(({ id }) => id === selectedOutput.value)) {
+    if (selectedOutput.value !== 'default') deviceWarning.value = 'Выбранный динамик отключён. Выберите доступное устройство и проверьте звук.'
+    selectedOutput.value = outputs[0].id
+  }
+}, { immediate: true })
+
+function choose(kind: AudioDeviceKind, event: Event): void {
+  const id = (event.target as HTMLSelectElement).value
+  if (kind === 'audioinput') selectedInput.value = id
+  else selectedOutput.value = id
+  deviceWarning.value = ''
+  if (props.connected) emit('select', kind, id)
+}
 
 function capturePttKey(event: KeyboardEvent): void {
   if (!recordingPttKey.value) return
@@ -47,6 +71,7 @@ function setProcessing(key: keyof AudioProcessingOptions, event: Event): void {
       {{ state === 'LOADING' ? 'Ищем устройства…' : 'Настройки аудио' }}
     </button>
     <p v-if="error" class="state state-error" role="alert">{{ error }}</p>
+    <p v-if="deviceWarning" class="state state-error" role="status">{{ deviceWarning }}</p>
     <label>
       Активация микрофона
       <select :value="activationMode" @change="emit('setActivation', ($event.target as HTMLSelectElement).value as VoiceActivationMode)">
@@ -70,16 +95,18 @@ function setProcessing(key: keyof AudioProcessingOptions, event: Event): void {
     <template v-if="state === 'READY'">
       <label>
         Микрофон
-        <select @change="emit('select', 'audioinput', ($event.target as HTMLSelectElement).value)">
+        <select :value="selectedInput" @change="choose('audioinput', $event)">
           <option v-for="device in devices.inputs" :key="device.id" :value="device.id">{{ device.label }}</option>
         </select>
       </label>
       <label>
         Динамик
-        <select @change="emit('select', 'audiooutput', ($event.target as HTMLSelectElement).value)">
+        <select :value="selectedOutput" @change="choose('audiooutput', $event)">
           <option v-for="device in devices.outputs" :key="device.id" :value="device.id">{{ device.label }}</option>
         </select>
       </label>
+      <p v-if="!connected" class="state">До подключения выбор устройства используется для локальной проверки; устройство звонка можно переключить после входа.</p>
+      <AudioDeviceCheck :input-id="selectedInput" :output-id="selectedOutput" />
     </template>
   </section>
 </template>

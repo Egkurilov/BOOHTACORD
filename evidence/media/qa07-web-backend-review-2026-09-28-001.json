@@ -1,0 +1,16 @@
+{
+  "id": "qa07-web-backend-review-2026-09-28-001",
+  "task": "QA-07/QA-10",
+  "kind": "source-and-evidence-review",
+  "status": "NOT_RUN_PHYSICAL",
+  "observed_at_utc": "2026-09-27T21:42:04Z",
+  "source_base_revision": "079445ba5c59974c4d11c6a807b908ad1cf612d3",
+  "previous_observation": "evidence/media/qa07-live-browser-observation-2026-09-26-001.json",
+  "finding": "Earlier two receiver snapshots were approximately 14-15 presented FPS. The sender build/capture/encoded counters were absent from that run, so capture, encoder, transport and decoder cannot be distinguished. No new Android client or physical LiveKit run was performed in this backend/web-only packet.",
+  "checks": [
+    { "name": "android_sender_vs_two_viewers", "result": "NOT_RUN" },
+    { "name": "game_audio_track_and_peer_audibility", "result": "NOT_RUN" },
+    { "name": "connected_media_revocation", "result": "NOT_RUN" }
+  ],
+  "next": "With two live receivers and the installed sender build recorded, capture aligned sender FPS/bitrate/RTT and receiver decoded/presented FPS, verify an actual screen-audio track and peer audibility, then revoke a connected participant and observe transport/track termination. Do not infer a 30/60 FPS or game-audio capability from source tests."
+}

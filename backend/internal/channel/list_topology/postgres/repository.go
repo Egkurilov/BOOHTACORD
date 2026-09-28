@@ -34,7 +34,20 @@ SELECT category.id::text, category.name, category.position,
              AND $1::uuid = ANY(message.mention_user_ids)
              AND (cursor.message_id IS NULL OR
                   (message.created_at, message.id) > (cursor.message_created_at, cursor.message_id))
-       ) END AS mention_count
+       ) END AS mention_count,
+       CASE WHEN channel.kind = 'TEXT' THEN (
+           SELECT message.id::text
+           FROM messages AS message
+           LEFT JOIN channel_read_cursors AS cursor
+             ON cursor.account_id = $1::uuid AND cursor.channel_id = channel.id
+           WHERE message.channel_id = channel.id
+             AND message.deleted_at IS NULL
+             AND message.author_id <> $1::uuid
+             AND (cursor.message_id IS NULL OR
+                  (message.created_at, message.id) > (cursor.message_created_at, cursor.message_id))
+           ORDER BY message.created_at, message.id
+           LIMIT 1
+       ) END AS first_unread_message_id
 FROM categories AS category
 LEFT JOIN channels AS channel ON channel.category_id = category.id AND channel.archived_at IS NULL
 ORDER BY category.position, channel.position`
@@ -70,7 +83,8 @@ func (repository Repository) List(context context.Context, request listtopology.
 		var admissionClosed pgtype.Bool
 		var unreadCount pgtype.Int8
 		var mentionCount pgtype.Int8
-		if err := rows.Scan(&category.ID, &category.Name, &category.Position, &channelID, &channelName, &channelKind, &channelPosition, &admissionClosed, &unreadCount, &mentionCount); err != nil {
+		var firstUnreadID pgtype.Text
+		if err := rows.Scan(&category.ID, &category.Name, &category.Position, &channelID, &channelName, &channelKind, &channelPosition, &admissionClosed, &unreadCount, &mentionCount, &firstUnreadID); err != nil {
 			return result, fmt.Errorf("scan channel topology: %w", err)
 		}
 		if len(result.Categories) == 0 || result.Categories[len(result.Categories)-1].ID != category.ID {
@@ -78,7 +92,7 @@ func (repository Repository) List(context context.Context, request listtopology.
 		}
 		if channelID.Valid {
 			last := &result.Categories[len(result.Categories)-1]
-			last.Channels = append(last.Channels, listtopology.Channel{ID: channelID.String, Name: channelName.String, Kind: channelKind.String, Position: int(channelPosition.Int32), AdmissionClosed: admissionClosed.Bool, UnreadCount: unreadCount.Int64, MentionCount: mentionCount.Int64})
+			last.Channels = append(last.Channels, listtopology.Channel{ID: channelID.String, Name: channelName.String, Kind: channelKind.String, Position: int(channelPosition.Int32), AdmissionClosed: admissionClosed.Bool, UnreadCount: unreadCount.Int64, MentionCount: mentionCount.Int64, FirstUnreadMessageID: firstUnreadID.String})
 		}
 	}
 	if err := rows.Err(); err != nil {

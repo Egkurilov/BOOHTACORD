@@ -77,7 +77,7 @@ describe('voice-room visual status and screen presentation', () => {
     expect(viewer).toContain('update:expanded')
     expect(viewer).toContain('Escape')
     expect(source('../conversation/ConversationPane.vue')).toContain('voice-room--screen-expanded')
-    expect(source('../conversation/ConversationPane.vue')).toContain('<Teleport to="body" :disabled="!screenExpanded">')
+    expect(source('../conversation/ConversationPane.vue')).toContain('<Teleport to="body" :disabled="!screenExpanded && !miniVisible">')
   })
 
   it('sizes video to the stage without cropping and preserves compact roster access', () => {

@@ -10,66 +10,47 @@ import DirectMessageHistoryList from './DirectMessageHistoryList.vue'
 import DirectMessageSearch from './DirectMessageSearch.vue'
 import type { DirectMessageHistoryItem } from './direct_message_client'
 import { advanceReadIfVisible } from './direct_message_read_gate'
-import { newestVisibleServerMessageId, shouldAdvanceVisibleRead } from '../conversation/read_visibility'
 import { useDirectMessageStore } from './direct_message_store'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
-import { useComposerScope } from '../conversation/composer_scope'
+import { useSavedComposer } from '../conversation/use_saved_composer'
 import { submitOnComposerEnter } from '../conversation/composer_enter'
 import SearchMessageContext from '../search/SearchMessageContext.vue'
 import { useSearchTargetStore } from '../search/search_target_store'
 import { pasteClipboardImages } from '../conversation/clipboard_images'
-const props = defineProps<{ directMessageId: string; otherParticipantId: string; otherParticipantDisplayName: string; navOpen: boolean }>()
+import { useUnreadBoundary } from '../conversation/use_unread_boundary'
+import { useScopedSend } from '../conversation/use_scoped_send'
+import { useVisibleRead } from '../conversation/use_visible_read'
+const props = defineProps<{ accountId: string; active: boolean; directMessageId: string; otherParticipantId: string; otherParticipantDisplayName: string; navOpen: boolean }>()
 const emit = defineEmits<{ toggleNav: [] }>()
 const store = useDirectMessageStore()
+const firstUnread = computed(() => store.directMessages.find(({ id }) => id === props.directMessageId)?.firstUnreadMessageId)
+const { unreadBoundary, unreadContextOpen, readUnlocked, showUnread, continueAtLatest } = useUnreadBoundary(() => props.directMessageId, firstUnread, () => queueVisibleRead())
 const searchTarget = useSearchTargetStore()
 const contextTarget = computed(() => searchTarget.target?.kind === 'DIRECT_MESSAGE' && searchTarget.target.conversationId === props.directMessageId ? searchTarget.target : null)
 const authors = useAuthorDirectory()
 const session = ref<CurrentSession | null>(null)
-const composer = useComposerScope<DirectMessageHistoryItem, TextMessageAttachment>()
+const composer = useSavedComposer<DirectMessageHistoryItem, TextMessageAttachment>(props.accountId, 'DIRECT_MESSAGE', () => props.directMessageId)
 const { draft, replyTarget, mentionUserIds, attachments, attachmentPending, attachmentClearToken } = composer
 const searchOpen = ref(false)
 const searchTrigger = ref<HTMLButtonElement | null>(null)
-const readRoot = ref<HTMLElement | null>(null)
 const composerTextarea = ref<HTMLTextAreaElement | null>(null)
 const attachmentPicker = ref<{ addPastedFiles: (files: File[]) => void } | null>(null)
 const emojiOpen = ref(false)
 const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
-const readPending = new Set<string>()
-let lastReadKey = ''
+const { readRoot, queueVisibleRead } = useVisibleRead({
+  conversationId: () => props.directMessageId, loadedConversationId: () => store.directMessageId, messages: () => store.messages,
+  canRead: () => props.active && store.directMessages.some(({ id }) => id === props.directMessageId) && (!unreadBoundary.value || readUnlocked.value),
+  advance: (id, messageId) => advanceReadIfVisible({ activeDirectMessageId: store.directMessageId,
+    renderedDirectMessageId: id, newestDisplayedMessageId: messageId, visibilityState: document.visibilityState }),
+  refreshCounters: () => { void store.refreshNavigation() },
+})
 
-async function markVisibleRead(): Promise<void> {
-  const messageId = newestVisibleServerMessageId(readRoot.value?.querySelector<HTMLElement>('.message-list') ?? null, store.messages)
-  if (!messageId) return
-  const key = `${props.directMessageId}:${messageId}`
-  if (!shouldAdvanceVisibleRead(store.messages, lastReadKey, props.directMessageId, messageId) || readPending.has(key)) return
-  readPending.add(key)
-  try {
-    const advanced = await advanceReadIfVisible({
-      activeDirectMessageId: store.directMessageId,
-      renderedDirectMessageId: props.directMessageId,
-      newestDisplayedMessageId: messageId,
-      visibilityState: document.visibilityState,
-    })
-    if (advanced) { if (shouldAdvanceVisibleRead(store.messages, lastReadKey, props.directMessageId, messageId)) lastReadKey = key; void store.refreshNavigation() }
-  } catch {
-    return
-  } finally { readPending.delete(key) }
-}
-function queueVisibleRead(): void { void markVisibleRead() }
-
-async function send(): Promise<void> {
-  if (attachmentPending.value || store.directMessageId !== props.directMessageId) return
-  const target = store.directMessageId
-  const saved = composer.snapshot(target)
-  if (await store.send(draft.value, undefined, undefined, replyTarget.value?.id, session.value?.accountId, mentionUserIds.value, attachments.value)
-    && composer.unchanged(saved, props.directMessageId) && store.directMessageId === target) composer.clear()
-}
-
-async function retry(message: DirectMessageHistoryItem): Promise<void> {
-  const saved = composer.snapshot(props.directMessageId)
-  if (await store.retry(message.clientMessageId) && store.directMessageId === message.directMessageId
-    && composer.unchanged(saved, props.directMessageId) && composer.matchesMessage(message)) composer.clear()
-}
+const { send, retry } = useScopedSend<DirectMessageHistoryItem, TextMessageAttachment, DirectMessageHistoryItem>(
+  props.accountId, 'DIRECT_MESSAGE', () => props.directMessageId, composer,
+  () => !attachmentPending.value && store.directMessageId === props.directMessageId,
+  () => store.send(draft.value, undefined, undefined, replyTarget.value?.id, session.value?.accountId, mentionUserIds.value, attachments.value),
+  (id) => store.retry(id),
+)
 
 async function loadSession(): Promise<void> {
   try { session.value = await loadCurrentSession() } catch { session.value = null }
@@ -81,15 +62,10 @@ function onComposerPaste(event: ClipboardEvent): void {
   if (composerTextarea.value) pasteClipboardImages(event, composerTextarea.value, (files) => attachmentPicker.value?.addPastedFiles(files))
 }
 
-watch([() => props.directMessageId, () => store.directMessageId, () => store.messages], queueVisibleRead, { flush: 'post' })
-watch(() => props.directMessageId, () => { composer.reset(); lastReadKey = '' })
 onMounted(() => {
-  document.addEventListener('visibilitychange', queueVisibleRead)
-  window.addEventListener('resize', queueVisibleRead)
   void loadSession()
-  queueVisibleRead()
 })
-onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVisibleRead); window.removeEventListener('resize', queueVisibleRead); searchTarget.clearFor('DIRECT_MESSAGE', props.directMessageId) })
+onBeforeUnmount(() => searchTarget.clearFor('DIRECT_MESSAGE', props.directMessageId))
 </script>
 
 <template>
@@ -105,12 +81,18 @@ onBeforeUnmount(() => { document.removeEventListener('visibilitychange', queueVi
     <div v-if="searchOpen" class="conversation-tools"><DirectMessageSearch :direct-message-id="props.directMessageId" @close="closeSearch" /></div>
     <p v-if="store.loadingHistory" class="state" aria-live="polite">Загружаем историю…</p>
     <p v-if="store.error" id="direct-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refreshHistory()">Повторить загрузку</button></p>
+    <div v-if="unreadBoundary && !readUnlocked" class="unread-boundary-actions" role="status">
+      <span>Есть непрочитанные сообщения.</span>
+      <button type="button" @click="showUnread">К первому непрочитанному</button>
+      <button type="button" @click="continueAtLatest">Остаться у последних</button>
+    </div>
     <SearchMessageContext v-if="contextTarget" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
+    <SearchMessageContext v-else-if="unreadContextOpen" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="unreadBoundary" heading="Первое непрочитанное сообщение" @close="continueAtLatest" />
     <DirectMessageHistoryList :direct-message-id="props.directMessageId" :session="session" :other-participant-id="props.otherParticipantId" :other-participant-display-name="props.otherParticipantDisplayName" @reply="replyTarget = $event" @retry="retry" @viewport-change="queueVisibleRead" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
-        <DirectMessageAttachmentPicker ref="attachmentPicker" :direct-message-id="props.directMessageId" :disabled="store.sending || attachmentPending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" />
+        <DirectMessageAttachmentPicker ref="attachmentPicker" :direct-message-id="props.directMessageId" :initial-attachments="attachments" :disabled="store.sending || attachmentPending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" />
         <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" />
         <label class="gc-sr-only" for="direct-message-body">Сообщение</label>
         <textarea id="direct-message-body" ref="composerTextarea" v-model="draft" rows="1" :disabled="store.sending" :aria-describedby="store.error ? 'direct-conversation-error direct-composer-help' : 'direct-composer-help'" placeholder="Написать сообщение…" @keydown="submitOnComposerEnter($event, send)" @paste="onComposerPaste" />

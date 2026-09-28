@@ -50,6 +50,22 @@ func TestRecorderPublishesAggregatedSFURevocationMetrics(t *testing.T) {
 	}
 }
 
+func TestRecorderPublishesRosterSnapshotRateAndLatencyWithoutIdentity(t *testing.T) {
+	recorder := New()
+	recorder.ObserveVoiceRosterSnapshot(42*time.Millisecond, 3, false)
+	scrape := httptest.NewRecorder()
+	recorder.Handler().ServeHTTP(scrape, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	metrics := scrape.Body.String()
+	for _, want := range []string{
+		`voice_platform_voice_roster_snapshots_total{outcome="success"} 1`,
+		`voice_platform_voice_roster_snapshot_seconds_count 1`,
+		`voice_platform_voice_roster_requested_rooms_count 1`,
+	} {
+		if !strings.Contains(metrics, want) { t.Fatalf("metrics lack %q", want) }
+	}
+	if strings.Contains(metrics, "voice:22222222") { t.Fatal("room ID leaked") }
+}
+
 func TestRecorderPublishesRealtimeConnectionMetrics(t *testing.T) {
 	recorder := New()
 	recorder.RealtimeConnectionOpened()

@@ -4,9 +4,9 @@ import type { TextMessageAttachment } from '../conversation/message_client'
 import { uploadDirectMessageAttachment } from './direct_message_attachment_upload_client'
 import { exceedsAttachmentCount } from '../conversation/attachment_limits'
 
-const props = defineProps<{ directMessageId: string; disabled: boolean; clearToken: number }>()
+const props = defineProps<{ directMessageId: string; disabled: boolean; clearToken: number; initialAttachments?: TextMessageAttachment[] }>()
 const emit = defineEmits<{ change: [attachments: TextMessageAttachment[]]; pending: [value: boolean] }>()
-const attachments = ref<TextMessageAttachment[]>([])
+const attachments = ref<TextMessageAttachment[]>([...(props.initialAttachments ?? [])])
 const fileInput = ref<HTMLInputElement | null>(null)
 const failed = ref<File[]>([])
 const pending = ref(false)
@@ -65,7 +65,12 @@ function retry(): void {
 }
 
 watch(() => props.clearToken, clear)
-watch(() => props.directMessageId, clear)
+watch(() => props.directMessageId, () => {
+  const saved = [...(props.initialAttachments ?? [])]
+  clear()
+  attachments.value = saved
+  emit('change', saved)
+})
 
 function addPastedFiles(files: File[]): void { void upload(files) }
 defineExpose({ addPastedFiles })

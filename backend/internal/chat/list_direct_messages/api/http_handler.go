@@ -47,12 +47,13 @@ type directMessage struct {
 	CreatedAt                   time.Time `json:"created_at"`
 	UnreadCount                 int64     `json:"unread_count"`
 	MentionCount                int64     `json:"mention_count"`
+	FirstUnreadMessageID        string    `json:"first_unread_message_id,omitempty"`
 }
 
 func directMessages(source []listdirectmessages.DirectMessage) []directMessage {
 	result := make([]directMessage, 0, len(source))
 	for _, value := range source {
-		result = append(result, directMessage{ID: value.ID, OtherParticipantID: value.OtherParticipantID, OtherParticipantDisplayName: value.OtherParticipantDisplayName, CreatedAt: value.CreatedAt, UnreadCount: value.UnreadCount, MentionCount: value.MentionCount})
+		result = append(result, directMessage{ID: value.ID, OtherParticipantID: value.OtherParticipantID, OtherParticipantDisplayName: value.OtherParticipantDisplayName, CreatedAt: value.CreatedAt, UnreadCount: value.UnreadCount, MentionCount: value.MentionCount, FirstUnreadMessageID: value.FirstUnreadMessageID})
 	}
 	return result
 }

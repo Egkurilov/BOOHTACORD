@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"time"
 
 	snapshotlivekitpresence "voice-platform/backend/internal/media/snapshot_livekit_presence"
 )
@@ -35,13 +36,21 @@ type Repository interface {
 type Presence interface {
 	SnapshotRooms(context.Context, []string) (map[string][]snapshotlivekitpresence.ConnectedLease, error)
 }
+type SnapshotObserver interface {
+	ObserveVoiceRosterSnapshot(time.Duration, int, bool)
+}
 type Service struct {
 	repository Repository
 	presence   Presence
+	observer   SnapshotObserver
 }
 
-func New(repository Repository, presence Presence) Service {
-	return Service{repository: repository, presence: presence}
+func New(repository Repository, presence Presence, observers ...SnapshotObserver) Service {
+	service := Service{repository: repository, presence: presence}
+	if len(observers) > 0 {
+		service.observer = observers[0]
+	}
+	return service
 }
 
 func (service Service) List(ctx context.Context, actorID string) (Result, error) {
@@ -54,7 +63,11 @@ func (service Service) List(ctx context.Context, actorID string) (Result, error)
 	for _, channel := range channels {
 		ids = append(ids, channel.ID)
 	}
+	started := time.Now()
 	connected, err := service.presence.SnapshotRooms(ctx, ids)
+	if service.observer != nil {
+		service.observer.ObserveVoiceRosterSnapshot(time.Since(started), len(ids), err != nil)
+	}
 	if err != nil {
 		return Result{}, fmt.Errorf("%w: %v", ErrPresenceUnavailable, err)
 	}

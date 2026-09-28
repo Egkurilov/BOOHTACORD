@@ -1,0 +1,18 @@
+{
+  "id": "qa08-readonly-reassessment-2026-09-28-001",
+  "task": "QA-08",
+  "kind": "source-and-access-reassessment",
+  "status": "PARTIAL",
+  "observed_at_utc": "2026-09-27T21:42:04Z",
+  "source_base_revision": "079445ba5c59974c4d11c6a807b908ad1cf612d3",
+  "scope": "Read-only reassessment; no production files, database rows or attachment history changed.",
+  "checks": [
+    { "name": "reservation_and_stage_upload_unit_tests", "result": "PASS_LOCAL", "detail": "go test -count=1 ./internal/storage/reserve_upload_space ./internal/storage/stage_upload" },
+    { "name": "reservation_race_detector", "result": "NOT_RUN", "detail": "This Windows Go toolchain has CGO_ENABLED=0 and no gcc; go test -race cannot run here. The eight-goroutine admission test passed under the normal runner." },
+    { "name": "active_sampler_fixture", "result": "PASS_LOCAL", "detail": "bash scripts/qa08_capacity/sample_active_uploads.test.sh" },
+    { "name": "current_production_attachment_volume", "result": "NOT_RUN", "detail": "No local deploy SSH identity and no live volume-management access in this workspace. Public /api/v1/health returned 200 but does not expose volume headroom or in-flight reservations." },
+    { "name": "concurrent_in_flight_reservations", "result": "NOT_RUN", "detail": "Manual trusted sampler requires a controlled upload concurrently in progress and an operator workflow session; none was available." },
+    { "name": "isolated_507_then_retry", "result": "NOT_RUN_THIS_PACKET", "detail": "Existing isolated evidence is separate; this reassessment did not start an upload or force production storage pressure." }
+  ],
+  "next": "Run the existing trusted qa08-active-upload workflow on the exact deployed master revision during controlled simultaneous uploads, retain available/required/reserved samples and upload HTTP outcomes, then check isolated 507-to-retry. Keep QA-08 open until current volume and concurrency evidence passes."
+}

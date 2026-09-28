@@ -62,7 +62,7 @@
       },
       "get": {
         "operationId": "listDirectMessages",
-        "description": "Authenticated caller only. Returns canonical DM pairs containing caller, paired account display name, caller-local unread_count and mention_count derived from the monotonic cursor and current live messages; administrator role grants no exception. A pre-existing pair remains visible to reach retained history after a block.",
+        "description": "Authenticated caller only. Returns canonical DM pairs containing caller, paired account display name, caller-local unread_count, mention_count and optional first_unread_message_id derived from the monotonic cursor and current live messages; administrator role grants no exception. A pre-existing pair remains visible to reach retained history after a block.",
         "responses": {
           "200": { "description": "Caller direct-message navigation list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DirectMessageList" } } } },
           "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
@@ -271,7 +271,7 @@
     "/api/v1/channels": {
       "get": {
         "operationId": "getChannelTopology",
-        "description": "Authenticated member only. Returns ordered categories and non-archived channels; each TEXT channel includes caller-local unread_count and mention_count from current live messages after that caller's monotonic cursor, excluding their own messages. VOICE channels omit both counters; a VOICE channel with closed admission remains visible with admission_closed:true until confirmed finalization.",
+        "description": "Authenticated member only. Returns ordered categories and non-archived channels; each TEXT channel includes caller-local unread_count, mention_count and optional first_unread_message_id from current live messages after that caller's monotonic cursor, excluding their own messages. VOICE channels omit these fields; a VOICE channel with closed admission remains visible with admission_closed:true until confirmed finalization.",
         "responses": {
           "200": { "description": "Current readable channel topology", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChannelTopology" } } } },
           "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
@@ -1280,7 +1280,10 @@
           "name": { "type": "string" },
           "kind": { "type": "string", "enum": ["TEXT", "VOICE"] },
           "position": { "type": "integer", "minimum": 0 },
-          "admission_closed": { "type": "boolean" }
+          "admission_closed": { "type": "boolean" },
+          "unread_count": { "type": "integer", "minimum": 0 },
+          "mention_count": { "type": "integer", "minimum": 0 },
+          "first_unread_message_id": { "type": "string", "format": "uuid", "description": "Caller-local earliest live message after the read cursor, omitted when no unread message exists." }
         }
       },
       "DirectMessageOpenRequest": {
@@ -1318,7 +1321,8 @@
           "other_participant_display_name": { "type": "string" },
           "created_at": { "type": "string", "format": "date-time" },
           "unread_count": { "type": "integer", "minimum": 0 },
-          "mention_count": { "type": "integer", "minimum": 0, "description": "Caller-local live mentions after this caller's DM read cursor." }
+          "mention_count": { "type": "integer", "minimum": 0, "description": "Caller-local live mentions after this caller's DM read cursor." },
+          "first_unread_message_id": { "type": "string", "format": "uuid", "description": "Caller-local earliest live message after the read cursor, omitted when no unread message exists." }
         }
       },
       "DirectMessageCandidateList": {

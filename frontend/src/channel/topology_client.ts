@@ -10,6 +10,7 @@ export interface TopologyChannel {
   admissionClosed: boolean
   unreadCount?: number
   mentionCount?: number
+  firstUnreadMessageId?: string
 }
 
 export interface TopologyCategory {
@@ -65,7 +66,8 @@ function readChannel(value: unknown): TopologyChannel {
     kind,
     position: asPosition(channel.position),
     admissionClosed: channel.admission_closed,
-    ...(kind === 'TEXT' ? { unreadCount: asPosition(channel.unread_count), mentionCount: asPosition(channel.mention_count) } : {}),
+    ...(kind === 'TEXT' ? { unreadCount: asPosition(channel.unread_count), mentionCount: asPosition(channel.mention_count),
+      ...(typeof channel.first_unread_message_id === 'string' && channel.first_unread_message_id ? { firstUnreadMessageId: channel.first_unread_message_id } : {}) } : {}),
   }
 }
 

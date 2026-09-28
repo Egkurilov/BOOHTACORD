@@ -27,7 +27,7 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
     try {
       const created = await createDirectMessage(draft.directMessageId, clientMessageId, draft.body, request, draft.replyToId, draft.mentionUserIds, draft.attachments.map(({ id }) => id))
       state.acknowledge(clientMessageId)
-      if (state.directMessageId.value !== draft.directMessageId) return false
+      if (state.directMessageId.value !== draft.directMessageId) return true
       state.messages.value = [{ ...created, attachments: [...draft.attachments] }, ...state.messages.value.filter((message) => message.id !== created.id && message.clientMessageId !== clientMessageId)]
       return true
     } catch (cause) {

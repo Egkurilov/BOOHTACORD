@@ -49,6 +49,7 @@ const voiceStageWide = computed(() => selectedChannel.value?.kind === 'VOICE' &&
 const memberHeaderExpandedState = useMemberHeaderExpanded(voiceStageWide, membersOpen, closeDrawers)
 const voiceNavigationPresence = computed(() => buildVoiceNavigationPresence(activeVoiceChannel.value?.id ?? null, profile.value, voiceConnection))
 function selectChannel(channel: TopologyChannel): void { closeDrawers(); activePanel.value = 'none'; sidebarSection.value = 'channels'; directMessageStore.close(); selectWorkspaceChannel(channel) }
+function returnToVoice(channelId: string): void { const channel = topologyStore.topology?.categories.flatMap(({ channels }) => channels).find(({ id, kind }) => id === channelId && kind === 'VOICE'); if (channel) selectChannel(channel) }
 function selectDirectMessage(directMessageId: string): void { closeDrawers(); activePanel.value = 'none'; sidebarSection.value = 'messages'; selectWorkspaceDirectMessage(directMessageId); void directMessageStore.open(directMessageId) }
 async function selectOpenedDirectMessage(directMessageId: string): Promise<void> { await directMessageStore.refreshNavigation(); selectDirectMessage(directMessageId) }
 async function openDirectMessageFromMember(userID: string): Promise<void> {
@@ -97,21 +98,20 @@ onMounted(() => { void topologyStore.refresh(); void directMessageStore.refreshN
         <WorkspaceUserFooter :role="props.role" :display-name="profile?.display_name" :avatar-u-r-l="profile?.avatar_url" @open-profile="togglePanel('profile')" @open-settings="togglePanel('audio')" />
       </aside>
       <main id="main-region" class="main" data-testid="main-region">
-        <WorkspaceMain :panel="activePanel === 'search' ? 'none' : activePanel" :channel="selectedChannel" :direct-message="selectedDirectMessage" :join-voice="joinVoice" :leave-voice="leaveVoice" :activation-mode="voiceActivation.mode" :start-screen="startScreen"
+        <WorkspaceMain :account-id="props.accountId" :active-voice-channel="activeVoiceChannel" :panel="activePanel === 'search' ? 'none' : activePanel" :channel="selectedChannel" :direct-message="selectedDirectMessage" :join-voice="joinVoice" :leave-voice="leaveVoice" :activation-mode="voiceActivation.mode" :start-screen="startScreen"
           :self-display-name="profile?.display_name ?? null" :nav-open="navOpen" :members-open="memberHeaderExpandedState" :show-members="!selectedDirectMessage && activePanel === 'none'" :voice-connection="voiceConnection" :voice-roster="voiceRoster.channels.value?.find((room) => room.channelId === selectedChannel?.id) ?? null" :voice-roster-error="voiceRoster.error.value"
-          @toggle-nav="toggleNavigation" @toggle-members="toggleMembers">
+          @return-voice="returnToVoice" @toggle-nav="toggleNavigation" @toggle-members="toggleMembers">
           <template #admin>
             <AdminPanel v-if="props.role === 'ADMINISTRATOR'" :categories="topologyStore.topology?.categories ?? []" :revision="topologyStore.topology?.revision ?? 0" @topology-changed="refreshTopology" />
           </template>
           <template #profile><ProfileSettings :profile="profile" :loading="profileLoading" :load-error="profileError" :logout-busy="logoutBusy" :logout-error="logoutError" @saved="setProfile" @logout="signOut" /></template>
           <template #audio>
-            <AudioSettings :activation-error="voiceActivation.error" :activation-mode="voiceActivation.mode" :devices="audioSettings.devices" :error="audioSettings.error" :processing="audioSettings.processing"
+            <AudioSettings :activation-error="voiceActivation.error" :activation-mode="voiceActivation.mode" :connected="Boolean(voiceConnection.active)" :devices="audioSettings.devices" :error="audioSettings.error" :processing="audioSettings.processing"
               :processing-diagnostics="voiceConnection.audioProcessingDiagnostics" :ptt-key="voiceActivation.pttKey" :state="audioSettings.state" @load="audioSettings.load" @select="selectAudioDevice" @set-activation="voiceActivation.setMode"
               @set-processing="audioSettings.setProcessing($event, voiceConnection.setAudioProcessing)" @set-ptt-key="voiceActivation.setPttKey" />
           </template>
         </WorkspaceMain>
       </main>
-
       <WorkspaceMembersPanel v-if="!selectedDirectMessage && activePanel === 'none'" :open="membersOpen" :active-voice-channel="activeVoiceChannel" :selected-voice-channel="selectedChannel?.kind === 'VOICE' ? selectedChannel : null" :participants="voiceConnection.voiceVolumeParticipants" :presence-resolver="guildPresence.resolve" :role="props.role" :account-i-d="profile?.account_id" :self-name="profile?.display_name ?? null" :self-microphone-muted="voiceConnection.microphoneMuted" :self-microphone-unavailable="voiceConnection.microphonePermissionDenied" :modal="modalDrawer === 'members'" @open-d-m="openDirectMessageFromMember" @set-volume="setParticipantVolume" />
       <aside v-else-if="activePanel === 'search'" id="search-aside-panel" class="members search-aside" :class="{ 'is-open': activePanel === 'search' }" :role="modalDrawer === 'search' ? 'dialog' : undefined" :aria-modal="modalDrawer === 'search' ? 'true' : undefined" aria-label="Поиск сообщений" tabindex="-1" data-testid="search-aside-panel"><WorkspaceSearchPanel @open-channel="selectChannel" @open-direct-message="selectDirectMessage" @close="activePanel = 'none'" /></aside>
       <button v-if="navOpen || membersOpen || activePanel === 'search'" class="drawer-scrim" type="button" aria-label="Закрыть навигацию и участников" @click="closeDrawers(); activePanel = 'none'" />

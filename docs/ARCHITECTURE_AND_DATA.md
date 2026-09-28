@@ -35,7 +35,7 @@ cleanup; they do not trust `Content-Length`, evict history or coordinate across
 processes. The Linux `Filesystem` adapter samples the configured private path
 with `statfs`, using `Bavail` rather than `Bfree` so blocks unavailable to the
 API user are not admitted. `cmd/api/storage_routes.go` connects this adapter,
-ledger and writer to the TEXT upload endpoint; real storage/DB acceptance remains QA-03.
+ledger and writer to the TEXT and DM upload endpoints; live capacity acceptance remains QA-08.
 
 `stage_upload` now composes the private writer and reservation ledger: it takes
 the maximum reservation before accepting a source, confirms current capacity
@@ -64,14 +64,14 @@ error, the final object is removed. A process crash may leave an unreferenced
 private candidate, but it is neither downloadable nor visible in history and
 is eligible only for the permitted 24-hour unattached-object cleanup.
 
-`message_attachments` is the text-message-only relation used by the
-text-message create command. Its unique attachment key prevents the same object
+`message_attachments` and `direct_message_attachments` are the scoped
+link relations used by TEXT and DM send commands. Their unique attachment keys prevent an object
 from being linked to another message, and its per-message ordinal is constrained
 to zero through nine. For a new message, one CTE locks and validates every
-requested attachment as owned by the author, targeted to that channel, and
+requested attachment as owned by the author, targeted to that conversation, and
 `UNATTACHED`, then creates all links and updates all of their states to
 `ATTACHED`. A missing, duplicated, wrong-channel, unowned, or already-attached
-ID rejects the entire new-message path without a partial link. Idempotent retry
+ID rejects the entire new-message path without a partial link. Empty-body send is allowed only with at least one attachment. Idempotent retry
 returns the existing message without changing its links. The relation does not
 grant download rights or bypass the later download ACL.
 
@@ -80,7 +80,8 @@ ingress: it accepts one streamed multipart `file`, applies a dedicated rate
 limit, reserves and rechecks private-volume capacity, and returns only the
 unattached attachment metadata. The API creates `staging` and `unattached`
 siblings under `ATTACHMENTS_DIRECTORY`; neither directory nor a storage key is
-published. There is intentionally no DM upload path in this stage.
+published. `POST /api/v1/direct-messages/{directMessageID}/attachments` applies
+the same limits and reservations with pair-only ACL and no administrator bypass.
 
 `GET /api/v1/channels/{channelID}/attachments/{attachmentID}` re-authorizes
 each text attachment read with one PostgreSQL predicate: its caller remains
@@ -91,7 +92,9 @@ stored byte count. The response is `application/octet-stream` with
 `Content-Disposition: attachment` and `X-Content-Type-Options: nosniff`; it
 does not expose an inline active format, filesystem path, storage key, or
 public URL. A separate protected TEXT preview route already normalizes bounded
-raster images into PNG. DM access and physical collection remain BE-10/12.
+raster images into PNG. DM download and preview repeat pair-only ACL for each
+request; bounded operator commands collect stale staging, unattached and hidden
+objects only after rechecking live links. QA-03/05/08 still require live acceptance.
 
 Text-message history aggregates only the attached files of each non-deleted
 message, in their stored message position order. Its metadata projection is

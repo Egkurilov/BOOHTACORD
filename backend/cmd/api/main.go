@@ -87,7 +87,7 @@ func main() {
 		os.Exit(1)
 	}
 	configureVoiceLeaseRoutes(mux, database, sessionService, maintenanceService)
-	configureVoiceParticipantRoutes(mux, database, sessionService, configuration.mediaSnapshot)
+	configureVoiceParticipantRoutes(mux, database, sessionService, configuration.mediaSnapshot, metrics)
 	configureClientScreenRoutes(mux, sessionService, metrics)
 	configureAdminVoiceRoutes(mux, database, sessionService)
 	configureMediaCredentialRoutes(mux, database, sessionService, configuration.credentialSigner)

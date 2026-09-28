@@ -1,0 +1,40 @@
+{
+  "id": "qa08-production-build-cache-prune-2026-09-28-001",
+  "task": "QA-08",
+  "kind": "production-storage-recovery",
+  "status": "PASS_OPERATION_QA08_GATE_OPEN",
+  "observed_at_utc": "2026-09-28T05:20:00Z",
+  "final_observed_at_utc": "2026-09-28T05:22:35Z",
+  "environment": "production; attachment volume and Docker root on /dev/vda2 ext4",
+  "initial_deployed_api_revision": "25137b5c90334d78682932426f87311d9d3c0b51",
+  "operator": "Codex using the existing deployment SSH identity",
+  "action": "sudo docker builder prune --all --force; unused build cache only; no image, container, volume, database or attachment deletion",
+  "before": {
+    "attachment_filesystem_available_bytes": 8715124736,
+    "attachment_filesystem_total_bytes": 31591473152,
+    "docker_build_cache_entries": 653,
+    "docker_build_cache_reported_size": "7.799GB"
+  },
+  "after": {
+    "attachment_filesystem_available_bytes": 16120512512,
+    "attachment_filesystem_total_bytes": 31591473152,
+    "actual_available_bytes_increase": 7405387776,
+    "required_headroom_bytes": 6343294632,
+    "oci_build_minimum_bytes": 9000000000,
+    "docker_build_cache_entries": 0,
+    "api_reported_available_bytes": 15807086592,
+    "api_reported_upload_reserved_bytes": 0,
+    "api_health": "ok",
+    "voice_platform_containers": "api, web, proxy, postgres and livekit running; postgres healthy"
+  },
+  "after_concurrent_rollout": {
+    "deployed_api_revision": "a0355563751225776eb7a2064f59c75435ab5cba",
+    "attachment_filesystem_available_bytes": 14509907968,
+    "net_available_bytes_above_initial_sample": 5794783232,
+    "api_reported_available_bytes": 14509928448,
+    "api_reported_upload_reserved_bytes": 0,
+    "api_health": "ok",
+    "current_release_headroom_guard": "PASS; 14509907968 available versus 6343294632 required"
+  },
+  "limitations": "A new deployment began after cache pruning and consumed some recovered space; host and API snapshots were sampled at different times. This proves restored storage headroom for this operation and a passing current-release guard, not QA-08 concurrent-upload admission, 507 retry, future build consumption or a complete release gate."
+}

@@ -6,8 +6,8 @@ import { exceedsAttachmentCount } from './attachment_limits'
 type Emit = ((event: 'change', attachments: TextAttachmentUpload[]) => void) & ((event: 'pending', value: boolean) => void)
 type Upload = typeof uploadTextAttachment
 
-export function useTextAttachmentQueue(channelId: () => string, disabled: () => boolean, emit: Emit, uploadFile: Upload = uploadTextAttachment) {
-  const attachments = ref<TextAttachmentUpload[]>([])
+export function useTextAttachmentQueue(channelId: () => string, disabled: () => boolean, emit: Emit, uploadFile: Upload = uploadTextAttachment, initial: TextAttachmentUpload[] = []) {
+  const attachments = ref<TextAttachmentUpload[]>([...initial])
   const failed = ref<File[]>([])
   const pending = ref(false)
   const error = ref<string | null>(null)
@@ -21,6 +21,12 @@ export function useTextAttachmentQueue(channelId: () => string, disabled: () => 
     pending.value = false
     emit('change', [])
     emit('pending', false)
+  }
+
+  function restore(prepared: TextAttachmentUpload[]): void {
+    clear()
+    attachments.value = [...prepared]
+    emit('change', [...attachments.value])
   }
 
   async function upload(files: File[]): Promise<void> {
@@ -69,5 +75,5 @@ export function useTextAttachmentQueue(channelId: () => string, disabled: () => 
     await upload(files)
   }
 
-  return { attachments, failed, pending, error, clear, upload, addFiles, retry }
+  return { attachments, failed, pending, error, clear, restore, upload, addFiles, retry }
 }

@@ -16,7 +16,7 @@ func TestHandlerListsOnlyCurrentPrincipalsDirectMessagesWithoutRoleBypass(t *tes
 	var input listdirectmessages.Input
 	handler := NewHandler(listerFunc(func(_ context.Context, value listdirectmessages.Input) (listdirectmessages.Result, error) {
 		input = value
-		return listdirectmessages.Result{DirectMessages: []listdirectmessages.DirectMessage{{ID: "22222222-2222-4222-8222-222222222222", OtherParticipantID: "33333333-3333-4333-8333-333333333333", OtherParticipantDisplayName: "Собеседник", UnreadCount: 3}}}, nil
+		return listdirectmessages.Result{DirectMessages: []listdirectmessages.DirectMessage{{ID: "22222222-2222-4222-8222-222222222222", OtherParticipantID: "33333333-3333-4333-8333-333333333333", OtherParticipantDisplayName: "Собеседник", UnreadCount: 3, FirstUnreadMessageID: "first-1"}}}, nil
 	}))
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/direct-messages", nil)
 	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: "11111111-1111-4111-8111-111111111111", Role: "ADMINISTRATOR"}))
@@ -24,7 +24,7 @@ func TestHandlerListsOnlyCurrentPrincipalsDirectMessagesWithoutRoleBypass(t *tes
 
 	handler.ServeHTTP(recorder, request)
 
-	if recorder.Code != http.StatusOK || input.ActorID != "11111111-1111-4111-8111-111111111111" || !strings.Contains(recorder.Body.String(), `"other_participant_display_name":"Собеседник"`) || !strings.Contains(recorder.Body.String(), `"unread_count":3`) {
+	if recorder.Code != http.StatusOK || input.ActorID != "11111111-1111-4111-8111-111111111111" || !strings.Contains(recorder.Body.String(), `"other_participant_display_name":"Собеседник"`) || !strings.Contains(recorder.Body.String(), `"unread_count":3`) || !strings.Contains(recorder.Body.String(), `"first_unread_message_id":"first-1"`) {
 		t.Fatalf("status=%d input=%#v body=%q", recorder.Code, input, recorder.Body.String())
 	}
 }
