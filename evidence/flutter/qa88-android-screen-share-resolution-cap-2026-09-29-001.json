@@ -37,6 +37,18 @@
       "observation": "APK Signature Scheme v2 verification passed with one RSA-4096 signer. Certificate SHA-256 is 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b."
     },
     {
+      "name": "macOS release cross-target compile",
+      "command": "cd desktop && flutter build macos --release",
+      "status": "PASS",
+      "observation": "Built BOOHTACORD.app (92.4 MB). Xcode emitted an ld address/target-atom warning, but the release build completed successfully."
+    },
+    {
+      "name": "macOS release bundle signature integrity",
+      "command": "codesign --verify --deep --strict --verbose=2 desktop/build/macos/Build/Products/Release/BOOHTACORD.app",
+      "status": "PASS",
+      "observation": "All nested frameworks and the app bundle are valid on disk and satisfy their designated requirement. This is local integrity verification, not Developer ID notarization or signed-Keychain acceptance."
+    },
+    {
       "name": "Physical sender profile and receiver playback",
       "status": "OPEN",
       "observation": "adb devices reports no connected Android device. Actual encoded dimensions/FPS across selected profiles and full-edge playback on web and Flutter receivers were not observed. This change does not claim to fix the previously reported receiver crop."
