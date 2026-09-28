@@ -1,0 +1,45 @@
+{
+  "id": "QA-73",
+  "date": "2026-09-28",
+  "source_revision": "2b1f867",
+  "status": "PASS_WITH_NATIVE_PLATFORM_ACCEPTANCE_OPEN",
+  "summary": "Applied the provided BOOHTACORD artwork as the Android, macOS, and Windows launcher/application icon while retaining the original image as the asset source.",
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "sips -g pixelWidth -g pixelHeight desktop/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png desktop/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "observation": "The macOS AppIcon includes a 1024x1024 image and Android's xxxhdpi launcher image is 192x192; all configured density variants were generated from the supplied square artwork."
+    },
+    {
+      "result": "PASS",
+      "command": "file desktop/windows/runner/resources/app_icon.ico",
+      "observation": "Windows ICO resource contains seven PNG-backed sizes: 16, 24, 32, 48, 64, 128 and 256 pixels."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build macos --debug",
+      "observation": "macOS application built successfully with the refreshed AppIcon asset catalog."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build apk --release",
+      "observation": "Android release APK built successfully as ru.boohtacord.app version 1.0.0+1 and packages launcher icon resources."
+    },
+    {
+      "result": "PASS",
+      "command": "apksigner verify --verbose --print-certs artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+      "observation": "APK Signature Scheme v2 verified with the configured upload certificate."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Windows native build and installed-icon visual acceptance on Windows, macOS and Android were not run on this host."
+    }
+  ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+    "version": "1.0.0+1",
+    "size_bytes": 107076594,
+    "sha256": "5522767d06ec90f08f220bbb028abae9c1ec76ac57cb01a6bf9642cb046d749a",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b"
+  }
+}
