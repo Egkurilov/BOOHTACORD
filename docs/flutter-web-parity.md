@@ -222,6 +222,10 @@ the implementation.
   verify reconnect runtime behavior on real peers; permission-denied and
   remaining dock/device states also need platform acceptance.
 - Match dock/prejoin/active/reconnecting/error states and their accessible labels.
+  Voice prejoin now uses the web's viewport-clamped page inset and card padding,
+  compact 16×24 px padding and bordered raised icon. A 390 px mobile test caught
+  a two-line channel header overflowing its 72 px slot; title/subtitle now ellipsize
+  [QA-62](../evidence/flutter/qa62-voice-prejoin-responsive-web-parity-2026-09-28-001.json).
   Voice dock mic, deafen and stream-alert controls now expose web-equivalent
   action labels and pressed/toggled semantics [QA-58](../evidence/flutter/qa58-voice-dock-accessible-toggle-state-2026-09-28-001.json);
   verify their announcements with VoiceOver, NVDA and TalkBack on native devices.

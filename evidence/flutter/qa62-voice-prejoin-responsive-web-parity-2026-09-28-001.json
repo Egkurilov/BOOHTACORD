@@ -1,0 +1,43 @@
+{
+  "id": "QA-62",
+  "date": "2026-09-28",
+  "status": "PASS_WITH_VISUAL_ACCEPTANCE_OPEN",
+  "summary": "Flutter voice prejoin geometry now follows the web clamp rules, and a narrow-screen header overflow found during responsive testing is fixed.",
+  "geometry": {
+    "desktop_1280": {
+      "page_inset_px": 72,
+      "card_padding_px": 44
+    },
+    "mobile_390": {
+      "page_inset_px": 16,
+      "card_padding_horizontal_px": 16,
+      "card_padding_vertical_px": 24
+    }
+  },
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart",
+      "observation": "Prejoin tests verify desktop/mobile outer and card padding, icon treatment, 24 px title type, and no mobile header overflow at 390×844."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "observation": "All 186 Flutter tests passed and analyzer reported no issues."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build macos --debug",
+      "observation": "Built build/macos/Build/Products/Debug/BOOHTACORD.app."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build apk --debug",
+      "observation": "Built build/app/outputs/flutter-apk/app-debug.apk. Gradle reports the existing Kotlin Gradle Plugin migration warning for flutter_background, flutter_webrtc and livekit_client."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Matched web/Flutter screenshots, native keyboard/screen-reader checks, and Windows build/device acceptance remain open."
+    }
+  ]
+}

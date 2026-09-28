@@ -1393,6 +1393,8 @@ class _Header extends StatelessWidget {
                 children: [
                   Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -1400,6 +1402,8 @@ class _Header extends StatelessWidget {
                   ),
                   Text(
                     subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: GcColors.muted, fontSize: 12),
                   ),
                 ],
@@ -3775,163 +3779,175 @@ class _VoicePrejoinCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) => SingleChildScrollView(
-      padding: EdgeInsets.symmetric(
-        horizontal: constraints.maxWidth < 600 ? 16 : 32,
-        vertical: constraints.maxWidth < 600 ? 24 : 56,
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(constraints.maxWidth < 600 ? 24 : 36),
-            decoration: BoxDecoration(
-              color: GcColors.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: GcColors.border),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x33000000),
-                  blurRadius: 32,
-                  offset: Offset(0, 16),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: const BoxDecoration(
-                    color: Color(0x265C5FE8),
-                    shape: BoxShape.circle,
+    builder: (context, _) {
+      final viewportWidth = MediaQuery.sizeOf(context).width;
+      final compact = viewportWidth <= 600;
+      final pageInset = compact
+          ? 16.0
+          : (viewportWidth * 0.06).clamp(24.0, 72.0).toDouble();
+      final cardPadding = compact
+          ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
+          : EdgeInsets.all((viewportWidth * 0.04).clamp(28.0, 44.0).toDouble());
+      return SingleChildScrollView(
+        padding: EdgeInsets.all(pageInset),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Container(
+              key: const ValueKey('voice-prejoin-card'),
+              width: double.infinity,
+              padding: cardPadding,
+              decoration: BoxDecoration(
+                color: GcColors.surface,
+                borderRadius: BorderRadius.circular(GcRadii.shell),
+                border: Border.all(color: GcColors.border),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 32,
+                    offset: Offset(0, 16),
                   ),
-                  child: const Icon(
-                    Icons.headset_mic_outlined,
-                    size: 30,
-                    color: GcColors.accentText,
-                  ),
-                ),
-                const SizedBox(height: 22),
-                const Text(
-                  'ГОЛОСОВАЯ КОМНАТА',
-                  style: TextStyle(
-                    color: GcColors.accentText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Semantics(
-                  container: true,
-                  liveRegion: true,
-                  label: _title,
-                  child: Text(
-                    _title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.w700,
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    key: const ValueKey('voice-prejoin-icon'),
+                    width: 64,
+                    height: 64,
+                    decoration: const BoxDecoration(
+                      color: GcColors.raised,
+                      shape: BoxShape.circle,
+                      border: Border.fromBorderSide(
+                        BorderSide(color: GcColors.control),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.headset_mic_outlined,
+                      size: 28,
+                      color: GcColors.accentText,
                     ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  _joining ? 'Соединение устанавливается.' : 'Посмотрите, кто сейчас в комнате, и выберите удобный способ подключения.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: GcColors.textSecondary,
-                    height: 1.45,
+                  const SizedBox(height: 16),
+                  const Text(
+                    'ГОЛОСОВАЯ КОМНАТА',
+                    style: TextStyle(
+                      color: GcColors.accentText,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                _VoiceRosterPreview(
-                  roster: state.voiceRosters
-                      ?.where((item) => item.channelId == channel.id)
-                      .firstOrNull,
-                  error: state.voiceRosterError,
-                ),
-                if (state.error != null) ...[
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   Semantics(
+                    container: true,
                     liveRegion: true,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF422830),
-                        borderRadius: BorderRadius.circular(10),
+                    label: _title,
+                    child: Text(
+                      _title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
                       ),
-                      child: Text(
-                        state.error!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: GcColors.danger,
-                          fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _joining ? 'Соединение устанавливается.' : 'Посмотрите, кто сейчас в комнате, и выберите удобный способ подключения.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: GcColors.textSecondary,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _VoiceRosterPreview(
+                    roster: state.voiceRosters
+                        ?.where((item) => item.channelId == channel.id)
+                        .firstOrNull,
+                    error: state.voiceRosterError,
+                  ),
+                  if (state.error != null) ...[
+                    const SizedBox(height: 16),
+                    Semantics(
+                      liveRegion: true,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF422830),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          state.error!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: GcColors.danger,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ),
+                  ],
+                  const SizedBox(height: 24),
+                  if (state.transferRequired) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: state.voicePhase == VoicePhase.joining
+                            ? null
+                            : () => state.joinVoice(channel, transfer: true),
+                        icon: const Icon(Icons.move_up_outlined),
+                        label: const Text('Перенести подключение'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed:
+                          channel.admissionClosed ||
+                              state.voicePhase == VoicePhase.joining
+                          ? null
+                          : () => state.joinVoice(channel),
+                      icon: state.voicePhase == VoicePhase.joining
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.login),
+                      label: Text(
+                        channel.admissionClosed
+                            ? 'Вход временно закрыт'
+                            : state.voicePhase == VoicePhase.joining
+                            ? 'Подключаемся…'
+                            : 'Подключиться к голосу',
+                      ),
+                    ),
                   ),
-                ],
-                const SizedBox(height: 24),
-                if (state.transferRequired) ...[
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: state.voicePhase == VoicePhase.joining
+                      onPressed:
+                          channel.admissionClosed ||
+                              state.voicePhase == VoicePhase.joining
                           ? null
-                          : () => state.joinVoice(channel, transfer: true),
-                      icon: const Icon(Icons.move_up_outlined),
-                      label: const Text('Перенести подключение'),
+                          : () => state.joinVoice(channel, listenerOnly: true),
+                      icon: const Icon(Icons.headset_outlined),
+                      label: const Text('Подключиться без микрофона'),
                     ),
                   ),
-                  const SizedBox(height: 10),
                 ],
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed:
-                        channel.admissionClosed ||
-                            state.voicePhase == VoicePhase.joining
-                        ? null
-                        : () => state.joinVoice(channel),
-                    icon: state.voicePhase == VoicePhase.joining
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.login),
-                    label: Text(
-                      channel.admissionClosed
-                          ? 'Вход временно закрыт'
-                          : state.voicePhase == VoicePhase.joining
-                          ? 'Подключаемся…'
-                          : 'Подключиться к голосу',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed:
-                        channel.admissionClosed ||
-                            state.voicePhase == VoicePhase.joining
-                        ? null
-                        : () => state.joinVoice(channel, listenerOnly: true),
-                    icon: const Icon(Icons.headset_outlined),
-                    label: const Text('Подключиться без микрофона'),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 

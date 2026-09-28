@@ -331,6 +331,77 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('voice prejoin matches web desktop spacing and card padding', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 800);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    await state.selectChannel(_PortraitApi.voiceChannel);
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    final cardFinder = find.byKey(const ValueKey('voice-prejoin-card'));
+    expect(
+      tester.widget<Container>(cardFinder).padding,
+      const EdgeInsets.all(44),
+    );
+    final scrollFinder = find
+        .ancestor(of: cardFinder, matching: find.byType(SingleChildScrollView))
+        .first;
+    expect(
+      tester.widget<SingleChildScrollView>(scrollFinder).padding,
+      const EdgeInsets.all(72),
+    );
+    final icon = tester.widget<Container>(
+      find.byKey(const ValueKey('voice-prejoin-icon')),
+    );
+    final iconDecoration = icon.decoration! as BoxDecoration;
+    expect(iconDecoration.color, GcColors.raised);
+    expect(
+      iconDecoration.border,
+      Border.fromBorderSide(const BorderSide(color: GcColors.control)),
+    );
+    expect(
+      tester.widget<Text>(find.text('Вы не подключены')).style?.fontSize,
+      24,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('voice prejoin matches mobile padding without header overflow', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    await state.selectChannel(_PortraitApi.voiceChannel);
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    final cardFinder = find.byKey(const ValueKey('voice-prejoin-card'));
+    expect(
+      tester.widget<Container>(cardFinder).padding,
+      const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+    );
+    final scrollFinder = find
+        .ancestor(of: cardFinder, matching: find.byType(SingleChildScrollView))
+        .first;
+    expect(
+      tester.widget<SingleChildScrollView>(scrollFinder).padding,
+      const EdgeInsets.all(16),
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('voice dock announces reconnect and deafen transition states', (
     tester,
   ) async {
