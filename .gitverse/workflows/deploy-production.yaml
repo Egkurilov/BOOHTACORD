@@ -3,6 +3,15 @@ name: Deploy production
 on:
   push:
     branches: [master, 'codex/**']
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'contracts/**'
+      - 'docker/**'
+      - 'scripts/**'
+      - 'compose.yaml'
+      - '.env.example'
+      - '.gitverse/workflows/deploy-production.yaml'
   workflow_dispatch:
 
 permissions:
