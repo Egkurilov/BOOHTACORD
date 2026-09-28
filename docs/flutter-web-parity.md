@@ -314,6 +314,11 @@ portrait and landscape Android share is checked in both web and Flutter viewers.
   Sender-stat confirmation across Android profiles and receiver-edge/crop
   acceptance remain open; this encoder cap is not evidence that the reported
   receiver crop is fixed.
+- Cross-target profile enforcement is still open: source inspection shows the
+  macOS `flutter_webrtc` capture path reads the requested FPS but ignores the
+  requested width/height and returns no source dimensions in track settings.
+  Windows native capture must also be audited before claiming that the nine
+  profiles constrain encoded resolution on all clients.
 - Match viewer stream rail, explicit selection, fullscreen, screen audio/volume,
   quality controls and diagnostics. The web and Flutter clients now share the
   720/1080/1440p × 15/30/60 FPS capture matrix, bitrate policy, and track labels;

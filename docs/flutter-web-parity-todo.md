@@ -178,6 +178,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   подписывать трек выбранным профилем: MediaProjection track metadata содержит
   фактический source size, sender получает aspect-preserving scale cap с чётными
   output edges; unit tests и Android release сборка — [QA-88](../evidence/flutter/qa88-android-screen-share-resolution-cap-2026-09-29-001.json).
+- [ ] Распространить фактический resolution cap на macOS/Windows: на macOS native
+  capture сейчас читает FPS, игнорирует requested width/height и не возвращает
+  source dimensions в track settings; Windows путь ещё требует source audit и
+  сборочной/runtime проверки. Не считать Android QA-88 подтверждением desktop.
 - [x] Проверить picker на минимальной Android-ширине 320 dp: обе настройки качества
   достижимы прокруткой, а закреплённая кнопка запуска остаётся видимой; все пять
   screen-share тестов проходят — [QA-76](../evidence/flutter/qa76-android-screen-share-picker-320dp-2026-09-28-001.json).
