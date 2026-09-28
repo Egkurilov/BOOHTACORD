@@ -1,0 +1,49 @@
+{
+  "id": "QA-72",
+  "date": "2026-09-28",
+  "source_revision": "d0017c1",
+  "status": "PASS_WITH_HARDWARE_ACCEPTANCE_OPEN",
+  "summary": "Ported the web's local audio-device check into Flutter settings: selected microphone level meter and selected speaker signal, with no recording, persistence, or media upload.",
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter analyze",
+      "observation": "No issues found."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test",
+      "observation": "All 204 tests passed, including service device resolution, dBFS meter conversion, local microphone/speaker lifecycle, selected-device propagation, input-device change cleanup, and audio settings integration."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build macos --debug",
+      "observation": "macOS debug app built with the new recorder and speaker-test plugins. The dependency emitted compiler precision/VLA warnings; the build succeeded."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build apk --release",
+      "observation": "Android release APK built successfully as ru.boohtacord.app version 1.0.0+1."
+    },
+    {
+      "result": "PASS",
+      "command": "apksigner verify --verbose --print-certs artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+      "observation": "APK Signature Scheme v2 verified using the configured upload certificate."
+    },
+    {
+      "result": "PASS",
+      "observation": "Replaced the existing tracked APK in place; it is the only current APK artifact in the repository. Prior Git history still contains the old blob."
+    },
+    {
+      "result": "OPEN",
+      "observation": "No physical Android, macOS, or Windows audio hardware acceptance was run. Verify mic permission/meter, speaker audibility, hotplug, and selected input/output routes on devices; Windows native build also requires a Windows runner."
+    }
+  ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+    "version": "1.0.0+1",
+    "size_bytes": 107006662,
+    "sha256": "7d3c9b146f69c5116778225239d89d92ef2a50b5568361d0e25646a2a2c3b9db",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b"
+  }
+}
