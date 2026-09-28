@@ -1,10 +1,10 @@
 {
   "id": "QA-77",
   "kind": "android-adaptive-launcher-icon",
-  "status": "PASS_WITH_PIXEL_VISUAL_ACCEPTANCE_OPEN",
-  "executed_at": "2026-09-28",
-  "source_revision": "0de9937",
-  "summary": "Android 8+ now receives an adaptive launcher icon with the supplied artwork as its foreground and an explicit dark background. Existing density-specific PNGs remain available for pre-API 26 devices.",
+  "status": "IMPLEMENTED_PIXEL_VISUAL_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "8b00521",
+  "summary": "Android 8+ now draws the exact supplied composite artwork as a full-bleed adaptive background with a transparent foreground. This avoids shrinking the artwork's built-in rounded square into the safe-zone and producing a second inner frame. Existing density-specific PNGs remain unchanged for pre-API 26 devices.",
   "checks": [
     {
       "name": "Android release build and adaptive resource packaging",
@@ -15,33 +15,39 @@
     {
       "name": "APK signature verification",
       "command": "apksigner verify --verbose --print-certs artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
-      "status": "PASS",
-      "observation": "APK Signature Scheme v2 verified with the configured upload certificate 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b."
+      "status": "OPEN",
+      "observation": "The earlier tracked release was verified with APK Signature Scheme v2 and upload certificate 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b. apksigner is unavailable on this host, so the refreshed artifact's signature has not been independently verified."
     },
     {
       "name": "Compiled adaptive icon layer references",
       "command": "aapt2 dump xmltree artifacts/android/BOOHTACORD-1.0.0+1-release.apk --file res/BW.xml",
       "status": "PASS",
-      "observation": "The compiled API 26+ launcher drawable is an adaptive-icon whose background references color/ic_launcher_background and whose foreground references drawable/ic_launcher_foreground."
+      "observation": "The earlier release used a color background and image foreground. The current full-bleed layer mapping is verified below in the refreshed build."
+    },
+    {
+      "name": "Full-bleed artwork layer packaging",
+      "command": "aapt2 dump xmltree desktop/build/app/outputs/flutter-apk/app-release.apk --file res/BW.xml",
+      "status": "PASS",
+      "observation": "The release APK's adaptive icon background resource resolves to drawable/ic_launcher_foreground (the supplied 1024x1024 composite artwork), while the foreground resolves to fully transparent color/ic_launcher_transparent. Density-specific legacy mipmaps are unchanged."
     },
     {
       "name": "Release artifact hash and size",
       "command": "shasum -a 256 artifacts/android/BOOHTACORD-1.0.0+1-release.apk && stat -f '%z' artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
       "status": "PASS",
-      "observation": "SHA-256 d0daf58b67dee19a45a68de61e9dedd7034d7d4b23d83d454899e9a2ba03fb7c; 107589030 bytes."
+      "observation": "SHA-256 169b97c4a3147fda87240044aaa0433a13a16062b23523dc929cf310ad4e0087; 107622034 bytes."
     },
     {
       "name": "Google Pixel launcher visual acceptance",
       "status": "OPEN",
-      "observation": "No physical Pixel is attached to this host, so the reported white-frame appearance has not been visually verified after installing this APK."
+      "observation": "The Android 17 Pixel 7 had appeared on ADB earlier, but the ADB server subsequently failed with Operation not permitted. This APK was not installed on the device, so the reported white-frame appearance and standard/themed icon rendering remain unverified."
     }
   ],
   "artifact": {
     "path": "artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
     "version": "1.0.0+1",
-    "size_bytes": 107589030,
-    "sha256": "d0daf58b67dee19a45a68de61e9dedd7034d7d4b23d83d454899e9a2ba03fb7c",
-    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b"
+    "size_bytes": 107622034,
+    "sha256": "169b97c4a3147fda87240044aaa0433a13a16062b23523dc929cf310ad4e0087",
+    "source_revision": "8b00521"
   },
-  "remaining": "Install the refreshed APK on a Google Pixel, compare the launcher icon against the Samsung rendering, and confirm the extra white border is gone."
+  "remaining": "Independently verify the refreshed APK signature; install it on a Google Pixel; compare normal and themed launcher modes against Samsung; confirm the extra inner frame is gone without clipping the supplied artwork."
 }
