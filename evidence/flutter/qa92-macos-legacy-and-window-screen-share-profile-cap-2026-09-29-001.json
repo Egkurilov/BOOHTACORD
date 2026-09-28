@@ -1,0 +1,39 @@
+{
+  "id": "QA-92",
+  "kind": "macos-legacy-and-window-screen-share-profile-cap",
+  "status": "PASS_BUILD_RUNTIME_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "7c7ae8f",
+  "summary": "Selected resolution profiles now cap oversized macOS screen/window frames before they enter the WebRTC source. Scaling preserves aspect ratio and keeps output dimensions even; frames already within the cap are passed through unchanged.",
+  "checks": [
+    {
+      "name": "Processor reaches legacy and window capture",
+      "status": "PASS_SOURCE_REVIEW",
+      "observation": "The processor is registered on VideoProcessingAdapter before capture starts. RTCDesktopCapturer window frames and the macOS 12 screen fallback therefore use the same frame-level cap; ScreenCaptureKit frames already within the limit are unchanged."
+    },
+    {
+      "name": "macOS release build",
+      "command": "cd desktop && flutter build macos --release",
+      "status": "PASS",
+      "observation": "Built build/macos/Build/Products/Release/BOOHTACORD.app (92.4 MB)."
+    },
+    {
+      "name": "Screen-share profile tests",
+      "command": "cd desktop && flutter test test/screen_share_quality_test.dart",
+      "status": "PASS",
+      "observation": "All 8 profile, source-dimension, and picker tests passed."
+    },
+    {
+      "name": "Flutter static analysis",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Physical legacy display and window capture",
+      "status": "OPEN",
+      "observation": "No macOS 12 runtime or physical multi-display/window capture session was available in this verification. Sender dimensions, aspect ratio, and every profile still need device acceptance."
+    }
+  ],
+  "remaining": "On macOS 12 and a supported modern macOS host, test a selected secondary display and selected window at all nine resolution/frame-rate profiles; verify sender dimensions, aspect ratio, frame rate, and that in-profile frames are not needlessly converted."
+}

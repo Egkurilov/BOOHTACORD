@@ -317,10 +317,13 @@ portrait and landscape Android share is checked in both web and Flutter viewers.
 - macOS 13+ full-display ScreenCaptureKit now consumes the selected profile's
   resolution ceiling and frame rate, preserving the display aspect ratio in
   its output buffer [QA-89](../evidence/flutter/qa89-macos-screen-share-profile-cap-2026-09-29-001.json).
-  Window capture and the macOS 12 fallback still use `RTCDesktopCapturer` and
-  have not been bounded or physically accepted. The macOS 12 screen fallback
-  now retains the display chosen in the source picker instead of reverting to
-  the primary display [QA-91](../evidence/flutter/qa91-macos-legacy-selected-screen-source-2026-09-29-001.json).
+  Custom window capture and the macOS 12 screen fallback now pass frames
+  through an aspect-preserving long-edge cap before the WebRTC source; frames
+  already within the profile are left intact [QA-92](../evidence/flutter/qa92-macos-legacy-and-window-screen-share-profile-cap-2026-09-29-001.json).
+  The macOS 12 fallback also retains the display chosen in the source picker
+  instead of reverting to the primary display [QA-91](../evidence/flutter/qa91-macos-legacy-selected-screen-source-2026-09-29-001.json).
+  Verify real source dimensions, edges, and all nine profiles on both legacy
+  display and window capture before marking runtime acceptance complete.
 - Windows source previews are native-sized JPEG frames in the pinned
   `libwebrtc.m150.7871.02` wrapper. The selected preview's JPEG SOF dimensions
   now feed LiveKit's existing aspect-preserving `scaleResolutionDownBy` profile
