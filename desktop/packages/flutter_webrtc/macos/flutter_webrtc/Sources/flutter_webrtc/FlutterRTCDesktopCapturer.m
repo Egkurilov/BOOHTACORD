@@ -176,8 +176,17 @@ NSArray<RTCDesktopSource*>* _captureSources;
                                           }];
     } else {
       NSLog(@"ScreenCaptureKit unavailable or unsupported, falling back to RTCDesktopCapturer");
-      desktopCapturer = [[RTCDesktopCapturer alloc] initWithDefaultScreen:self
-                                                          captureDelegate:videoProcessingAdapter];
+      if (source != nil) {
+        // Retain the source selected in the Flutter chooser on macOS versions
+        // where ScreenCaptureKit's frame path cannot be used. In particular,
+        // do not silently replace a secondary display with the primary one.
+        desktopCapturer = [[RTCDesktopCapturer alloc] initWithSource:source
+                                                             delegate:self
+                                                      captureDelegate:videoProcessingAdapter];
+      } else {
+        desktopCapturer = [[RTCDesktopCapturer alloc] initWithDefaultScreen:self
+                                                              captureDelegate:videoProcessingAdapter];
+      }
     }
   }
 
