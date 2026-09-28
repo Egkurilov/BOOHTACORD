@@ -1,0 +1,28 @@
+{
+  "id": "QA-74",
+  "date": "2026-09-28",
+  "source_revision": "3aada8b",
+  "status": "PASS_WITH_BROWSER_VISUAL_ACCEPTANCE_OPEN",
+  "summary": "Added the supplied BOOHTACORD artwork as the web favicon so browser branding matches the Android, macOS, and Windows application icon. The existing Voice Platform page title and related login/notification copy are intentionally unchanged pending a product naming decision.",
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd frontend && npm test -- --run src/design/ui_copy_consistency.spec.ts",
+      "observation": "All three focused UI name, favicon and media-copy tests passed."
+    },
+    {
+      "result": "PASS",
+      "command": "cd frontend && npm run build",
+      "observation": "vue-tsc and Vite production build passed; favicon is copied to the production output. Existing bundle-size advisory remains."
+    },
+    {
+      "result": "PASS",
+      "command": "sips -g pixelWidth -g pixelHeight frontend/public/favicon.png",
+      "observation": "Favicon is a 32x32 PNG generated from the retained source artwork."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Browser-tab and pinned-tab rendering have not been visually checked at runtime; decide whether the web page title should be renamed from Voice Platform to BOOHTACORD."
+    }
+  ]
+}
