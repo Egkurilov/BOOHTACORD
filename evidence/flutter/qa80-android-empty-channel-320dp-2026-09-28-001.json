@@ -16,7 +16,20 @@
       "command": "cd desktop && flutter test && flutter analyze",
       "status": "PASS",
       "observation": "223 widget/unit tests passed; flutter analyze reported no issues."
+    },
+    {
+      "name": "Android release APK build and signature",
+      "command": "cd desktop && flutter build apk --release && cd .. && /opt/homebrew/share/android-commandlinetools/build-tools/36.0.0/apksigner verify --verbose --print-certs artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+      "status": "PASS",
+      "observation": "The APK was rebuilt from source revision 8bd3c7f, APK Signature Scheme v2 verification passed, and the existing tracked release artifact was replaced at the same path."
     }
   ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+    "source_revision": "8bd3c7f",
+    "size_bytes": 107622022,
+    "sha256": "303910ef03be5f5f1e59bdfcbd385df641a9e019433f4db3e3ca8192c271db0e",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b"
+  },
   "remaining": "Compare the 320 dp empty-channel layout with a real Android screenshot; other responsive breakpoints and platforms remain open in the parity checklist."
 }
