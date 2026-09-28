@@ -36,6 +36,38 @@ Future<AppState> _openChannels(WidgetTester tester, TopologyTestApi api) async {
 }
 
 void main() {
+  testWidgets('admin panel focuses and announces its semantic heading', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 900);
+    addTearDown(tester.view.reset);
+    final api = TopologyTestApi();
+    final state = AppState(api)..topology = api.current;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: AdminScreen(state: state)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final headingFocus = tester
+        .widget<Focus>(find.byKey(const ValueKey('admin-screen-title-focus')))
+        .focusNode!;
+    expect(headingFocus.hasFocus, isTrue);
+    expect(
+      tester
+          .getSemantics(find.text('Администрирование'))
+          .flagsCollection
+          .isHeader,
+      isTrue,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('locks topology controls until reorder and refresh finish', (
     tester,
   ) async {

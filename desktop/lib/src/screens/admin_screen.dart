@@ -24,6 +24,7 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> {
+  final _titleFocus = FocusNode(debugLabel: 'admin-screen-title');
   final _categoryName = TextEditingController();
   final _categoryRename = TextEditingController();
   final _channelName = TextEditingController();
@@ -58,12 +59,16 @@ class _AdminScreenState extends State<AdminScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _loadAccounts();
+      if (mounted) {
+        _titleFocus.requestFocus();
+        _loadAccounts();
+      }
     });
   }
 
   @override
   void dispose() {
+    _titleFocus.dispose();
     _categoryName.dispose();
     _categoryRename.dispose();
     _channelName.dispose();
@@ -580,11 +585,11 @@ class _AdminScreenState extends State<AdminScreen> {
                         widget.state.toggleWorkspacePanel(WorkspacePanel.none),
                     icon: const Icon(Icons.arrow_back),
                   ),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'УПРАВЛЕНИЕ ГИЛЬДИЕЙ',
                         style: TextStyle(
                           color: GcColors.muted,
@@ -592,12 +597,19 @@ class _AdminScreenState extends State<AdminScreen> {
                           letterSpacing: .8,
                         ),
                       ),
-                      SizedBox(height: 5),
-                      Text(
-                        'Администрирование',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
+                      const SizedBox(height: 5),
+                      Focus(
+                        key: const ValueKey('admin-screen-title-focus'),
+                        focusNode: _titleFocus,
+                        child: Semantics(
+                          header: true,
+                          child: const Text(
+                            'Администрирование',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
                     ],

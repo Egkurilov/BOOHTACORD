@@ -1,0 +1,22 @@
+{
+  "id": "QA-64",
+  "date": "2026-09-28",
+  "status": "PASS_WITH_NATIVE_SCREEN_READER_ACCEPTANCE_OPEN",
+  "summary": "The Flutter administration panel moves keyboard focus to its title and exposes that title as a semantic heading when the panel opens.",
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test test/admin_topology_widget_test.dart --plain-name 'admin panel focuses and announces its semantic heading'",
+      "observation": "Widget test confirms the title FocusNode owns focus after first frame and the title semantics carry the header flag."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "observation": "All 188 Flutter tests passed; analyzer reported no issues."
+    },
+    {
+      "result": "OPEN",
+      "observation": "VoiceOver, NVDA and TalkBack announcement and focus behavior still require acceptance on native devices."
+    }
+  ]
+}
