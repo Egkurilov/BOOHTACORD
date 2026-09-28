@@ -20,11 +20,12 @@ jobs:
     uses: ./.github/workflows/ci-frontend.yml
 
   flutter-windows:
+    if: ${{ vars.WINDOWS_RUNNER_ENABLED == 'true' }}
     uses: ./.github/workflows/ci-flutter-windows.yml
 
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [contracts, backend, frontend, flutter-windows]
+    needs: [contracts, backend, frontend]
     runs-on: ubuntu-24.04
     permissions:
       contents: read
