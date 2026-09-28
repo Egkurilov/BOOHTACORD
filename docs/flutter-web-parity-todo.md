@@ -65,6 +65,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] На физических устройствах проверить receiver metrics/audio states,
   fullscreen/share permissions и переключение rail/viewer; локальный fullscreen
   и исправления диагностики, отступов и мобильного возврата — [QA-17](../evidence/flutter/qa17-voice-viewer-mobile-navigation-2026-09-27-001.json).
+- [x] Привести receiver diagnostics к веб-паттерну: компактная кнопка-summary и
+  popover до 288 px вместо inline `ExpansionTile`, с прокруткой, размещением
+  вверх при нехватке места снизу, закрытием по Escape и проверкой Android-width
+  360 dp — [QA-57](../evidence/flutter/qa57-screen-diagnostics-popover-web-parity-2026-09-28-001.json).
+  Фактические populated receiver metrics и matched screenshots на устройствах
+  остаются открытыми в пункте выше.
 - [x] Добавить dock-объявление о новой чужой демонстрации экрана и отключаемый
   локальный звуковой сигнал; не объявлять исходные публикации при входе и
   восстановленные дорожки при reconnect — локальная логика/виджет покрыты

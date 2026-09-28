@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../theme.dart';
@@ -138,12 +140,17 @@ class ScreenReceiverDiagnostics extends StatefulWidget {
 }
 
 class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
+  final OverlayPortalController _popoverController = OverlayPortalController();
+  final LayerLink _summaryLink = LayerLink();
+  final GlobalKey _summaryKey = GlobalKey();
+  final FocusNode _focusNode = FocusNode(debugLabel: 'Статистика трансляции');
   Timer? _timer;
   ScreenReceiverSnapshot? _previous;
   ScreenReceiverSnapshot? _current;
   ScreenReceiverMetrics? _metrics;
   DateTime? _sampledAt;
   bool _sampling = false;
+  bool _popoverOpen = false;
   String _sampleStatus = 'Ожидание статистики приёмника';
 
   @override
@@ -161,7 +168,24 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
   @override
   void dispose() {
     _timer?.cancel();
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  void _togglePopover() {
+    setState(() => _popoverOpen = !_popoverOpen);
+    if (_popoverOpen) {
+      _popoverController.show();
+      _focusNode.requestFocus();
+    } else {
+      _popoverController.hide();
+    }
+  }
+
+  void _closePopover() {
+    if (!_popoverOpen) return;
+    setState(() => _popoverOpen = false);
+    _popoverController.hide();
   }
 
   void _restartSampling() {
@@ -225,70 +249,204 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
   @override
   Widget build(BuildContext context) {
     final sampledAt = _sampledAt;
-    return ExpansionTile(
-      tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-      childrenPadding: const EdgeInsets.symmetric(horizontal: 12),
-      title: const Text('Статистика'),
-      subtitle: Text(_sampleStatus),
-      children: [
-        SizedBox(
-          height: 240,
-          child: ListView(
-            padding: const EdgeInsets.only(bottom: 10),
-            children: [
-              _DiagnosticRow(
-                label: 'Профиль источника',
-                value: _screenShareTargetProfile(widget.sourceTrackName),
-              ),
-              _DiagnosticRow(
-                label: 'Сейчас у зрителя',
-                value: _formatResolution(_current),
-              ),
-              _DiagnosticRow(
-                label: 'Декодировано',
-                value: _formatMetric(
-                  _metrics?.decodedFps ?? _current?.framesPerSecond,
-                  'FPS',
+    final compact = MediaQuery.sizeOf(context).width <= 1100;
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: (_, event) {
+        if (_popoverOpen &&
+            event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.escape) {
+          _closePopover();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: OverlayPortal(
+        controller: _popoverController,
+        overlayChildBuilder: (context) {
+          final media = MediaQuery.sizeOf(context);
+          final panelWidth = math.min(288.0, media.width - 32);
+          final summaryBox =
+              _summaryKey.currentContext?.findRenderObject() as RenderBox?;
+          final summaryTop = summaryBox?.localToGlobal(Offset.zero).dy ?? 0;
+          final summaryBottom = summaryTop + (summaryBox?.size.height ?? 36);
+          final spaceBelow = media.height - summaryBottom - 32;
+          final spaceAbove = summaryTop - 32;
+          final openAbove = spaceBelow < 360 && spaceAbove > spaceBelow;
+          final availableHeight = openAbove ? spaceAbove : spaceBelow;
+          return SizedBox.expand(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _closePopover,
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+                CompositedTransformFollower(
+                  link: _summaryLink,
+                  showWhenUnlinked: false,
+                  targetAnchor: openAbove
+                      ? (compact ? Alignment.topLeft : Alignment.topRight)
+                      : (compact
+                            ? Alignment.bottomLeft
+                            : Alignment.bottomRight),
+                  followerAnchor: openAbove
+                      ? (compact ? Alignment.bottomLeft : Alignment.bottomRight)
+                      : (compact ? Alignment.topLeft : Alignment.topRight),
+                  offset: Offset(0, openAbove ? -8 : 8),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {},
+                    child: Container(
+                      key: const ValueKey(
+                        'screen-receiver-diagnostics-popover',
+                      ),
+                      width: panelWidth,
+                      constraints: BoxConstraints(
+                        maxHeight: math.max(
+                          160.0,
+                          math.min(media.height - 32, availableHeight),
+                        ),
+                      ),
+                      decoration: BoxDecoration(
+                        color: GcColors.raised,
+                        border: Border.all(color: GcColors.border),
+                        borderRadius: BorderRadius.circular(GcRadii.md),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x66000000),
+                            blurRadius: 24,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _DiagnosticRow(
+                              label: 'Профиль источника',
+                              value: _screenShareTargetProfile(
+                                widget.sourceTrackName,
+                              ),
+                            ),
+                            _DiagnosticRow(
+                              label: 'Сейчас у зрителя',
+                              value: _formatResolution(_current),
+                            ),
+                            _DiagnosticRow(
+                              label: 'Декодировано',
+                              value: _formatMetric(
+                                _metrics?.decodedFps ??
+                                    _current?.framesPerSecond,
+                                'FPS',
+                              ),
+                            ),
+                            _DiagnosticRow(
+                              label: 'Получено',
+                              value: _formatMetric(
+                                _metrics?.bitrateKbps,
+                                'кбит/с',
+                              ),
+                            ),
+                            _DiagnosticRow(
+                              label: 'Потеряно пакетов',
+                              value: _formatMetric(_metrics?.packetsLost),
+                            ),
+                            _DiagnosticRow(
+                              label: 'Пропущено кадров за интервал',
+                              value: _formatMetric(_metrics?.droppedFrames),
+                            ),
+                            _DiagnosticRow(
+                              label: 'Jitter',
+                              value: _formatMetric(_metrics?.jitterMs, 'мс'),
+                            ),
+                            const _DiagnosticRow(
+                              label: 'RTT',
+                              value: 'Нет данных от приёмника',
+                            ),
+                            _DiagnosticRow(
+                              label: 'Аудиодорожка',
+                              value: widget.isLocal
+                                  ? 'Предпросмотр без звука'
+                                  : widget.hasAudio
+                                  ? 'Аудиодорожка есть'
+                                  : 'Аудиодорожки нет',
+                            ),
+                            _DiagnosticRow(
+                              label: 'Последнее измерение',
+                              value: sampledAt == null
+                                  ? 'Нет свежих данных'
+                                  : _formatTime(sampledAt),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+        child: Align(
+          alignment: compact ? Alignment.centerLeft : Alignment.centerRight,
+          child: CompositedTransformTarget(
+            key: _summaryKey,
+            link: _summaryLink,
+            child: Tooltip(
+              message: _sampleStatus,
+              child: Semantics(
+                button: true,
+                expanded: _popoverOpen,
+                label: 'Статистика',
+                hint: _sampleStatus,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _togglePopover,
+                    borderRadius: BorderRadius.circular(GcRadii.sm),
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: GcColors.border),
+                        borderRadius: BorderRadius.circular(GcRadii.sm),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(
+                            width: 8,
+                            height: 8,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: GcColors.warning,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Статистика',
+                            style: TextStyle(
+                              color: GcColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              _DiagnosticRow(
-                label: 'Получено',
-                value: _formatMetric(_metrics?.bitrateKbps, 'кбит/с'),
-              ),
-              _DiagnosticRow(
-                label: 'Потеряно пакетов',
-                value: _formatMetric(_metrics?.packetsLost),
-              ),
-              _DiagnosticRow(
-                label: 'Пропущено кадров за интервал',
-                value: _formatMetric(_metrics?.droppedFrames),
-              ),
-              _DiagnosticRow(
-                label: 'Jitter',
-                value: _formatMetric(_metrics?.jitterMs, 'мс'),
-              ),
-              const _DiagnosticRow(
-                label: 'RTT',
-                value: 'Нет данных от приёмника',
-              ),
-              _DiagnosticRow(
-                label: 'Аудиодорожка',
-                value: widget.isLocal
-                    ? 'Предпросмотр без звука'
-                    : widget.hasAudio
-                    ? 'Аудиодорожка есть'
-                    : 'Аудиодорожки нет',
-              ),
-              _DiagnosticRow(
-                label: 'Последнее измерение',
-                value: sampledAt == null
-                    ? 'Нет свежих данных'
-                    : _formatTime(sampledAt),
-              ),
-            ],
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -309,17 +467,31 @@ class _DiagnosticRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 3),
+    padding: const EdgeInsets.symmetric(vertical: 6),
     child: Row(
       children: [
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(color: GcColors.textSecondary),
+            style: const TextStyle(
+              color: GcColors.muted,
+              fontSize: 12,
+              height: 1.3,
+            ),
           ),
         ),
         const SizedBox(width: 12),
-        Flexible(child: Text(value, textAlign: TextAlign.end)),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: const TextStyle(
+              color: GcColors.textSecondary,
+              fontSize: 12,
+              height: 1.3,
+            ),
+          ),
+        ),
       ],
     ),
   );

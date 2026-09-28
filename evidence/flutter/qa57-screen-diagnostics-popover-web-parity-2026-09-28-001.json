@@ -1,0 +1,28 @@
+{
+  "id": "qa57-screen-diagnostics-popover-web-parity-2026-09-28-001",
+  "kind": "receiver-diagnostics-popover-layout-web-parity",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Replaced the inline Flutter ExpansionTile/240 px list with the web-style compact bordered summary and anchored raised popover. The popover is 288 px wide (viewport minus 32 px on smaller screens), scrollable and viewport-height constrained; it flips above the trigger when bottom space is limited. It closes on outside tap or Escape, while the trigger exposes button/expanded/status semantics.",
+  "checks": [
+    {
+      "name": "Diagnostics calculations and popover interactions/layout",
+      "command": "flutter test test/screen_receiver_diagnostics_test.dart",
+      "status": "PASS",
+      "observation": "All five tests passed, including observed-stat formatting, local no-audio state, source profile, close by Escape/outside tap, and a 360 dp viewport with popover bounds constrained to 288 px and no layout exceptions."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 181 Flutter tests passed."
+    }
+  ],
+  "remaining": "Verify visual placement against web at matched desktop/Android screenshots and confirm receiver metrics on a live remote screen share."
+}
