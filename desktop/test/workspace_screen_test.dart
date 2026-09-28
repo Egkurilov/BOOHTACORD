@@ -9,6 +9,7 @@ import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:boohtacord_desktop/src/services/composer_draft_memory.dart';
 import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
+import 'package:boohtacord_desktop/src/widgets/audio_device_check.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -88,6 +89,21 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('Настройки аудио'), findsOneWidget);
+    final audioList = find.byKey(const ValueKey('audio-settings-list'));
+    final audioScrollable = find.descendant(
+      of: audioList,
+      matching: find.byType(Scrollable),
+    );
+    await tester.scrollUntilVisible(
+      find.text('Микрофон'),
+      160,
+      scrollable: audioScrollable,
+    );
+    await tester.scrollUntilVisible(
+      find.text('Динамик'),
+      160,
+      scrollable: audioScrollable,
+    );
     expect(find.text('Микрофон'), findsOneWidget);
     expect(find.text('Динамик'), findsOneWidget);
     expect(find.text('Ищем устройства…'), findsNWidgets(2));
@@ -95,6 +111,16 @@ void main() {
     scan.complete(const []);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
+    await tester.scrollUntilVisible(
+      find.text('Микрофоны не найдены'),
+      160,
+      scrollable: audioScrollable,
+    );
+    await tester.scrollUntilVisible(
+      find.text('Динамики не найдены'),
+      160,
+      scrollable: audioScrollable,
+    );
     expect(find.text('Ищем устройства…'), findsNothing);
     expect(find.text('Микрофоны не найдены'), findsOneWidget);
     expect(find.text('Динамики не найдены'), findsOneWidget);
@@ -128,6 +154,8 @@ void main() {
     expect(state.audioDeviceScanFailed, isTrue);
     expect(find.text('Список недоступен'), findsNWidgets(2));
     expect(find.text('Микрофоны не найдены'), findsNothing);
+    await tester.drag(audioList, const Offset(0, 640));
+    await tester.pumpAndSettle();
     expect(find.text('Активация микрофона'), findsOneWidget);
     expect(find.text('Назначить PTT-клавишу'), findsOneWidget);
     expect(find.text('Подавление эха'), findsOneWidget);
@@ -156,6 +184,51 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('audio settings test the devices shown in their selectors', (
+    tester,
+  ) async {
+    final state = AppState(
+      _PortraitApi(),
+      audioDeviceLoader: () async => const [
+        MediaDevice('input-1', 'USB microphone', 'audioinput', null),
+        MediaDevice('output-1', 'USB speakers', 'audiooutput', null),
+      ],
+    );
+    await state.initialize();
+    state.toggleWorkspacePanel(WorkspacePanel.audio);
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    final audioList = find.byKey(const ValueKey('audio-settings-list'));
+    final audioScrollable = find.descendant(
+      of: audioList,
+      matching: find.byType(Scrollable),
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('audio-device-check')),
+      160,
+      scrollable: audioScrollable,
+    );
+    final check = tester.widget<AudioDeviceCheck>(
+      find.byKey(const ValueKey('audio-device-check')),
+    );
+    expect(check.inputDeviceId, 'input-1');
+    expect(check.inputDeviceLabel, 'USB microphone');
+    expect(check.outputDeviceId, 'output-1');
+    expect(check.outputDeviceLabel, 'USB speakers');
+    expect(find.text('Проверить микрофон'), findsOneWidget);
+    expect(find.text('Проверить динамик'), findsOneWidget);
+    expect(
+      find.text(
+        'Проверка локальная: она не подтверждает слышимость у другого участника.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('shows named audio devices when the SDK has no default entry', (
     tester,
   ) async {
@@ -172,6 +245,21 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
     await tester.pumpAndSettle();
 
+    final audioList = find.byKey(const ValueKey('audio-settings-list'));
+    final audioScrollable = find.descendant(
+      of: audioList,
+      matching: find.byType(Scrollable),
+    );
+    await tester.scrollUntilVisible(
+      find.text('USB Microphone'),
+      160,
+      scrollable: audioScrollable,
+    );
+    await tester.scrollUntilVisible(
+      find.text('Bluetooth headphones'),
+      160,
+      scrollable: audioScrollable,
+    );
     expect(find.text('USB Microphone'), findsOneWidget);
     expect(find.text('Bluetooth headphones'), findsOneWidget);
     expect(find.textContaining('Системный выбор'), findsNothing);

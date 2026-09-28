@@ -118,3 +118,8 @@ tasks:
     requirements: [REQ-QUALITY-01, REQ-QUALITY-02, REQ-CAPACITY-01, REQ-DEPLOY-01]
     depends_on: [T-007, T-030, T-044, T-050, T-052, T-054]
     evidence: [evidence/release]
+  - id: T-061
+    title: Local native audio device checks
+    requirements: [REQ-AUDIO-01]
+    depends_on: [T-022]
+    evidence: [flutter-audio-device-check-tests, native-audio-builds, physical-audio-device-acceptance]

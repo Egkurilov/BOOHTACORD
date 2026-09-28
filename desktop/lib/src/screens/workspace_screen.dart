@@ -16,6 +16,7 @@ import '../services/api_client.dart';
 import '../services/voice_avatar_palette.dart';
 import '../services/voice_participant_presentation.dart';
 import '../widgets/authenticated_avatar.dart';
+import '../widgets/audio_device_check.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
 import '../widgets/screen_share_setup_dialog.dart';
@@ -5142,160 +5143,195 @@ class _AudioSettingsScreen extends StatelessWidget {
       },
       child: AnimatedBuilder(
         animation: state,
-        builder: (context, _) => Column(
-          children: [
-            _Header(
-              icon: Icons.tune,
-              title: 'Настройки аудио',
-              subtitle: 'Устройства и обработка микрофона',
-              onBack: compact ? onBack : null,
-              trailing: IconButton(
-                tooltip: 'Обновить список устройств',
-                onPressed: state.audioDevicesLoading
-                    ? null
-                    : state.refreshAudioDevices,
-                icon: state.audioDevicesLoading
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh),
+        builder: (context, _) {
+          final inputDevice = _audioDeviceShownByDropdown(
+            state.audioInputDevices,
+            state.selectedAudioInputId,
+          );
+          final outputDevice = _audioDeviceShownByDropdown(
+            state.audioOutputDevices,
+            state.selectedAudioOutputId,
+          );
+          return Column(
+            children: [
+              _Header(
+                icon: Icons.tune,
+                title: 'Настройки аудио',
+                subtitle: 'Устройства и обработка микрофона',
+                onBack: compact ? onBack : null,
+                trailing: IconButton(
+                  tooltip: 'Обновить список устройств',
+                  onPressed: state.audioDevicesLoading
+                      ? null
+                      : state.refreshAudioDevices,
+                  icon: state.audioDevicesLoading
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh),
+                ),
               ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(24),
-                children: [
-                  _AudioDeviceDropdown(
-                    label: 'Микрофон',
-                    icon: Icons.mic_none,
-                    devices: state.audioInputDevices,
-                    selectedId: state.selectedAudioInputId,
-                    emptyLabel: state.audioDevicesLoading
-                        ? 'Ищем устройства…'
-                        : state.audioDeviceScanFailed
-                        ? 'Список недоступен'
-                        : 'Микрофоны не найдены',
-                    onChanged: state.selectAudioInput,
-                  ),
-                  const SizedBox(height: 16),
-                  _AudioDeviceDropdown(
-                    label: 'Динамик',
-                    icon: Icons.volume_up_outlined,
-                    devices: state.audioOutputDevices,
-                    selectedId: state.selectedAudioOutputId,
-                    emptyLabel: state.audioDevicesLoading
-                        ? 'Ищем устройства…'
-                        : state.audioDeviceScanFailed
-                        ? 'Список недоступен'
-                        : 'Динамики не найдены',
-                    onChanged: state.selectAudioOutput,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Активация микрофона',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<AudioActivationMode>(
-                    initialValue: state.audioActivationMode,
-                    decoration: const InputDecoration(
-                      labelText: 'Режим',
-                      border: OutlineInputBorder(),
+              Expanded(
+                child: ListView(
+                  key: const ValueKey('audio-settings-list'),
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    Text(
+                      'Активация микрофона',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: AudioActivationMode.vad,
-                        child: Text('Голосовая активность'),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<AudioActivationMode>(
+                      initialValue: state.audioActivationMode,
+                      decoration: const InputDecoration(
+                        labelText: 'Режим',
+                        border: OutlineInputBorder(),
                       ),
-                      DropdownMenuItem(
-                        value: AudioActivationMode.ptt,
-                        child: Text('Push-to-talk'),
+                      items: const [
+                        DropdownMenuItem(
+                          value: AudioActivationMode.vad,
+                          child: Text('Голосовая активность'),
+                        ),
+                        DropdownMenuItem(
+                          value: AudioActivationMode.ptt,
+                          child: Text('Push-to-talk'),
+                        ),
+                      ],
+                      onChanged: (mode) {
+                        if (mode != null) {
+                          unawaited(state.setAudioActivationMode(mode));
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: onCapturePttKey,
+                      icon: Icon(
+                        capturingPttKey
+                            ? Icons.keyboard
+                            : Icons.keyboard_alt_outlined,
+                      ),
+                      label: Text(
+                        capturingPttKey
+                            ? 'Нажмите клавишу… · Esc — отмена'
+                            : state.pushToTalkKeyLabel == null
+                            ? 'Назначить PTT-клавишу'
+                            : 'Клавиша PTT · ${state.pushToTalkKeyLabel}',
+                      ),
+                    ),
+                    if (state.audioActivationMode == AudioActivationMode.ptt)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Удерживайте назначенную клавишу, чтобы говорить. При потере фокуса микрофон выключается.',
+                          style: TextStyle(color: GcColors.muted, fontSize: 12),
+                        ),
+                      ),
+                    if (state.audioActivationError != null) ...[
+                      const SizedBox(height: 8),
+                      _ErrorBanner(message: state.audioActivationError!),
+                    ],
+                    const SizedBox(height: 24),
+                    Text(
+                      'Обработка микрофона',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Параметры передаются LiveKit. Нативный SDK не сообщает, '
+                      'какие эффекты фактически применены устройством.',
+                      style: TextStyle(color: GcColors.muted, fontSize: 12),
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Автоматическая регулировка усиления'),
+                      value: state.audioProcessing.autoGainControl,
+                      onChanged: (value) => state.setAudioProcessing(
+                        state.audioProcessing.copyWith(autoGainControl: value),
+                      ),
+                    ),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Подавление эха'),
+                      value: state.audioProcessing.echoCancellation,
+                      onChanged: (value) => state.setAudioProcessing(
+                        state.audioProcessing.copyWith(echoCancellation: value),
+                      ),
+                    ),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Подавление шума'),
+                      value: state.audioProcessing.noiseSuppression,
+                      onChanged: (value) => state.setAudioProcessing(
+                        state.audioProcessing.copyWith(noiseSuppression: value),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _AudioDeviceDropdown(
+                      label: 'Микрофон',
+                      icon: Icons.mic_none,
+                      devices: state.audioInputDevices,
+                      selectedId: state.selectedAudioInputId,
+                      emptyLabel: state.audioDevicesLoading
+                          ? 'Ищем устройства…'
+                          : state.audioDeviceScanFailed
+                          ? 'Список недоступен'
+                          : 'Микрофоны не найдены',
+                      onChanged: state.selectAudioInput,
+                    ),
+                    const SizedBox(height: 16),
+                    _AudioDeviceDropdown(
+                      label: 'Динамик',
+                      icon: Icons.volume_up_outlined,
+                      devices: state.audioOutputDevices,
+                      selectedId: state.selectedAudioOutputId,
+                      emptyLabel: state.audioDevicesLoading
+                          ? 'Ищем устройства…'
+                          : state.audioDeviceScanFailed
+                          ? 'Список недоступен'
+                          : 'Динамики не найдены',
+                      onChanged: state.selectAudioOutput,
+                    ),
+                    if (!state.audioDevicesLoading &&
+                        !state.audioDeviceScanFailed) ...[
+                      const SizedBox(height: 8),
+                      if (state.voiceChannel == null)
+                        const Text(
+                          'До подключения выбор устройства используется для локальной проверки; устройство звонка можно переключить после входа.',
+                          style: TextStyle(color: GcColors.muted, fontSize: 12),
+                        ),
+                      const SizedBox(height: 16),
+                      AudioDeviceCheck(
+                        key: const ValueKey('audio-device-check'),
+                        inputDeviceId: inputDevice?.deviceId,
+                        inputDeviceLabel: inputDevice?.label,
+                        outputDeviceId: outputDevice?.deviceId,
+                        outputDeviceLabel: outputDevice?.label,
                       ),
                     ],
-                    onChanged: (mode) {
-                      if (mode != null) {
-                        unawaited(state.setAudioActivationMode(mode));
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: onCapturePttKey,
-                    icon: Icon(
-                      capturingPttKey
-                          ? Icons.keyboard
-                          : Icons.keyboard_alt_outlined,
-                    ),
-                    label: Text(
-                      capturingPttKey
-                          ? 'Нажмите клавишу… · Esc — отмена'
-                          : state.pushToTalkKeyLabel == null
-                          ? 'Назначить PTT-клавишу'
-                          : 'Клавиша PTT · ${state.pushToTalkKeyLabel}',
-                    ),
-                  ),
-                  if (state.audioActivationMode == AudioActivationMode.ptt)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 4),
-                      child: Text(
-                        'Удерживайте назначенную клавишу, чтобы говорить. При потере фокуса микрофон выключается.',
-                        style: TextStyle(color: GcColors.muted, fontSize: 12),
-                      ),
-                    ),
-                  if (state.audioActivationError != null) ...[
-                    const SizedBox(height: 8),
-                    _ErrorBanner(message: state.audioActivationError!),
+                    if (state.audioSettingsError != null) ...[
+                      const SizedBox(height: 12),
+                      _ErrorBanner(message: state.audioSettingsError!),
+                    ],
                   ],
-                  const SizedBox(height: 24),
-                  Text(
-                    'Обработка микрофона',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Параметры передаются LiveKit. Нативный SDK не сообщает, '
-                    'какие эффекты фактически применены устройством.',
-                    style: TextStyle(color: GcColors.muted, fontSize: 12),
-                  ),
-                  const SizedBox(height: 8),
-                  SwitchListTile.adaptive(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Автоматическая регулировка усиления'),
-                    value: state.audioProcessing.autoGainControl,
-                    onChanged: (value) => state.setAudioProcessing(
-                      state.audioProcessing.copyWith(autoGainControl: value),
-                    ),
-                  ),
-                  SwitchListTile.adaptive(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Подавление эха'),
-                    value: state.audioProcessing.echoCancellation,
-                    onChanged: (value) => state.setAudioProcessing(
-                      state.audioProcessing.copyWith(echoCancellation: value),
-                    ),
-                  ),
-                  SwitchListTile.adaptive(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Подавление шума'),
-                    value: state.audioProcessing.noiseSuppression,
-                    onChanged: (value) => state.setAudioProcessing(
-                      state.audioProcessing.copyWith(noiseSuppression: value),
-                    ),
-                  ),
-                  if (state.audioSettingsError != null) ...[
-                    const SizedBox(height: 12),
-                    _ErrorBanner(message: state.audioSettingsError!),
-                  ],
-                ],
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
   }
 }
+
+MediaDevice? _audioDeviceShownByDropdown(
+  List<MediaDevice> devices,
+  String? selectedId,
+) =>
+    devices.where((device) => device.deviceId == selectedId).firstOrNull ??
+    devices.firstOrNull;
 
 class _AudioDeviceDropdown extends StatelessWidget {
   const _AudioDeviceDropdown({
