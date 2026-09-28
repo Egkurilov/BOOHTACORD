@@ -1,0 +1,37 @@
+{
+  "id": "QA-71",
+  "title": "Flutter TEXT/DM composer draft memory parity",
+  "date": "2026-09-28",
+  "source_revision": "6f67f05",
+  "status": "implemented-and-locally-verified",
+  "behavior": {
+    "scope": "authenticated account + conversation kind + conversation id",
+    "restored_fields": [
+      "body",
+      "reply target",
+      "uploaded attachments",
+      "mention user ids"
+    ],
+    "cleared_on": ["successful logout", "session expiry/unauthorized"],
+    "restart_persistence": false
+  },
+  "verification": {
+    "flutter_analyze": "passed; no issues found",
+    "flutter_test": "passed; 197 tests",
+    "regression_coverage": [
+      "draft storage isolation by account, kind, and conversation",
+      "defensive list copies, empty-draft removal, and session clear epoch",
+      "TEXT composer restores body after switching channels"
+    ],
+    "android_release_build": "passed",
+    "apk_signature": "APK Signature Scheme v2 verified",
+    "apk_signer_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b",
+    "apk_sha256": "73f6f9262c49b222d03fd52f24f01e86c37d10d3e14e7c1251e6673060127c2c",
+    "apk_size_bytes": 95914072,
+    "physical_android_acceptance": "not run; no Android device connected"
+  },
+  "remaining": [
+    "Verify TEXT and DM draft switch/restore on physical Android and desktop.",
+    "Compare matched web/Flutter composer behavior and layout screenshots."
+  ]
+}
