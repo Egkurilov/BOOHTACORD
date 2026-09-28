@@ -3,7 +3,7 @@
   "kind": "android-adaptive-launcher-icon",
   "status": "PASS_WITH_PIXEL_VISUAL_ACCEPTANCE_OPEN",
   "executed_at": "2026-09-28",
-  "source_revision": "3faae43",
+  "source_revision": "0de9937",
   "summary": "Android 8+ now receives an adaptive launcher icon with the supplied artwork as its foreground and an explicit dark background. Existing density-specific PNGs remain available for pre-API 26 devices.",
   "checks": [
     {
