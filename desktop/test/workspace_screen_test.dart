@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show Tristate;
 
 import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
@@ -8,6 +9,7 @@ import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart' show MediaDevice;
@@ -356,17 +358,42 @@ void main() {
       find.text('Вы можете открыть другой канал: голос останется активным.'),
       findsOneWidget,
     );
-    expect(find.byTooltip('Выключить удалённый звук'), findsOneWidget);
-    expect(find.byTooltip('Звук начала трансляций включён'), findsOneWidget);
+    final microphoneButton = tester.getSemantics(
+      find.bySemanticsLabel('Выключить микрофон').first,
+    );
+    expect(microphoneButton.label, 'Выключить микрофон');
+    expect(microphoneButton.flagsCollection.isToggled, Tristate.isTrue);
+    final deafenSemantics = tester.getSemantics(
+      find.byTooltip('Выключить удалённый звук'),
+    );
+    expect(deafenSemantics.label, 'Выключить удалённый звук');
+    expect(deafenSemantics.flagsCollection.isToggled, Tristate.isFalse);
+    final enabledSoundButton = find.byTooltip(
+      'Выключить сигнал новых трансляций',
+    );
+    expect(enabledSoundButton, findsOneWidget);
+    final enabledSoundSemantics = tester.getSemantics(enabledSoundButton);
+    expect(enabledSoundSemantics.label, 'Звук начала трансляций включён');
+    expect(enabledSoundSemantics.flagsCollection.isToggled, Tristate.isTrue);
+    expect(
+      enabledSoundSemantics.getSemanticsData().hasAction(SemanticsAction.tap),
+      isTrue,
+    );
 
     state.voiceStreamStartNotice = true;
     state.notifyListeners();
     await tester.pump();
     expect(find.text('В канале началась демонстрация экрана'), findsOneWidget);
-    await tester.tap(find.byTooltip('Звук начала трансляций включён'));
+    await tester.tap(enabledSoundButton);
     await tester.pump();
     expect(state.voiceStreamSoundEnabled, isFalse);
-    expect(find.byTooltip('Звук начала трансляций выключен'), findsOneWidget);
+    final disabledSoundButton = find.byTooltip(
+      'Включить сигнал новых трансляций',
+    );
+    expect(disabledSoundButton, findsOneWidget);
+    final disabledSoundSemantics = tester.getSemantics(disabledSoundButton);
+    expect(disabledSoundSemantics.label, 'Звук начала трансляций выключен');
+    expect(disabledSoundSemantics.flagsCollection.isToggled, Tristate.isFalse);
     expect(
       (await SharedPreferences.getInstance()).getBool(
         'voice-screen-start-sound:v1',
@@ -406,6 +433,11 @@ void main() {
     state.deafened = true;
     state.notifyListeners();
     await tester.pump();
+    final deafenedButton = tester.getSemantics(
+      find.byTooltip('Включить удалённый звук'),
+    );
+    expect(deafenedButton.label, 'Включить удалённый звук');
+    expect(deafenedButton.flagsCollection.isToggled, Tristate.isTrue);
     expect(
       find.text(
         'Удалённый звук и микрофон выключены. Показ экрана этой кнопкой не отключается.',

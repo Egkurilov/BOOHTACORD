@@ -1,0 +1,33 @@
+{
+  "id": "qa58-voice-dock-accessible-toggle-state-2026-09-28-001",
+  "kind": "voice-dock-accessible-action-and-toggle-semantics",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Flutter voice-dock buttons now expose a single semantic button with enabled/tap state. Microphone and deafen labels and toggled state, and the stream-alert action label versus current setting state, match VoiceDock.vue aria-label/aria-pressed behavior.",
+  "checks": [
+    {
+      "name": "Web reference comparison",
+      "status": "PASS",
+      "observation": "frontend/src/voice/VoiceDock.vue uses aria-label for each control action and aria-pressed for microphone, deafen and stream-alert state. Flutter now exposes matching labels and toggle state without duplicating the visual tooltip in the semantics tree."
+    },
+    {
+      "name": "Voice dock accessibility widget coverage",
+      "command": "flutter test test/workspace_screen_test.dart --plain-name \"voice dock announces reconnect and deafen transition states\"",
+      "status": "PASS",
+      "observation": "Checks microphone and deafen labels/state, stream-alert action label/current state/tap action and state changes, and deafen becoming toggled after the transition."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 181 Flutter tests passed."
+    }
+  ],
+  "remaining": "Verify spoken names, pressed-state announcements, keyboard/switch access and focus behavior with VoiceOver on macOS, NVDA on Windows, and TalkBack on Android."
+}

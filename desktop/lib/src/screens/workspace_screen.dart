@@ -5164,8 +5164,12 @@ class _VoiceDock extends StatelessWidget {
                   : state.microphoneMuted
                   ? 'Включить микрофон'
                   : 'Выключить микрофон',
+              semanticsLabel: state.microphoneMuted
+                  ? 'Включить микрофон'
+                  : 'Выключить микрофон',
               icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
               danger: state.microphoneMuted,
+              toggled: !state.microphoneMuted,
               enabled:
                   state.audioActivationMode != AudioActivationMode.ptt &&
                   !state.deafened,
@@ -5177,6 +5181,7 @@ class _VoiceDock extends StatelessWidget {
                   : 'Выключить удалённый звук',
               icon: state.deafened ? Icons.headset_off : Icons.headphones,
               danger: state.deafened,
+              toggled: state.deafened,
               enabled:
                   !state.deafenChanging &&
                   state.voicePhase != VoicePhase.leaving,
@@ -5207,12 +5212,16 @@ class _VoiceDock extends StatelessWidget {
             ),
             _VoiceDockButton(
               tooltip: state.voiceStreamSoundEnabled
+                  ? 'Выключить сигнал новых трансляций'
+                  : 'Включить сигнал новых трансляций',
+              semanticsLabel: state.voiceStreamSoundEnabled
                   ? 'Звук начала трансляций включён'
                   : 'Звук начала трансляций выключен',
               icon: state.voiceStreamSoundEnabled
                   ? Icons.notifications_active_outlined
                   : Icons.notifications_off_outlined,
               danger: false,
+              toggled: state.voiceStreamSoundEnabled,
               onTap: () => unawaited(
                 state.setVoiceStreamSoundEnabled(
                   !state.voiceStreamSoundEnabled,
@@ -5242,27 +5251,41 @@ class _VoiceDockButton extends StatelessWidget {
     required this.danger,
     required this.onTap,
     this.enabled = true,
+    this.semanticsLabel,
+    this.toggled,
   });
   final IconData icon;
   final String tooltip;
   final bool danger;
   final VoidCallback onTap;
   final bool enabled;
+  final String? semanticsLabel;
+  final bool? toggled;
   @override
-  Widget build(BuildContext context) => Tooltip(
-    message: tooltip,
-    child: Material(
-      color: danger ? const Color(0x33422830) : GcColors.raised,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(10),
-        child: SizedBox.square(
-          dimension: 42,
-          child: Icon(
-            icon,
-            size: 19,
-            color: danger ? GcColors.danger : GcColors.textSecondary,
+  Widget build(BuildContext context) => Semantics(
+    container: true,
+    button: true,
+    enabled: enabled,
+    toggled: toggled,
+    label: semanticsLabel ?? tooltip,
+    onTap: enabled ? onTap : null,
+    child: Tooltip(
+      message: tooltip,
+      child: ExcludeSemantics(
+        child: Material(
+          color: danger ? const Color(0x33422830) : GcColors.raised,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            onTap: enabled ? onTap : null,
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox.square(
+              dimension: 42,
+              child: Icon(
+                icon,
+                size: 19,
+                color: danger ? GcColors.danger : GcColors.textSecondary,
+              ),
+            ),
           ),
         ),
       ),
