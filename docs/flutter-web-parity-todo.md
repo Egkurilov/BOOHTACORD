@@ -16,11 +16,13 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
 - [ ] Устранить `PlatformException` при сохранении сессии на macOS: screenshot
   показывает Security.framework `errSecMissingEntitlement` (`-34018`) при
-  Data Protection Keychain. У текущей конфигурации ad-hoc signing нет
-  `keychain-access-groups`; добавление entitlement требует development
-  certificate и сейчас блокирует сборку. Выбрать и проверить подписанный
-  вариант с Apple Developer identity, не возвращаясь вслепую к legacy
-  Keychain, который зависал на чтении — [QA-60](../evidence/flutter/qa60-macos-keychain-entitlement-2026-09-28-001.json).
+  Data Protection Keychain. На macOS переключено на поддерживаемый legacy
+  Keychain с отдельным service name: это не требует Keychain Sharing
+  entitlement и не читает старую зависавшую запись; ad-hoc сборка и запуск
+  проходят без ошибки Keychain. Записи прежнего service не удаляются, поэтому
+  нужен повторный вход. Проверить успешную запись cookie и восстановление
+  сессии после перезапуска на этом Mac —
+  [QA-60](../evidence/flutter/qa60-macos-keychain-entitlement-2026-09-28-001.json).
 
 ## P0 — Голосовые каналы и демонстрация экрана
 

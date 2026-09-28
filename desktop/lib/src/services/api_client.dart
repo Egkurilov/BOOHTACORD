@@ -35,10 +35,16 @@ class ApiClient {
   static const _cookieKey = 'boohtacord_session_cookie';
   final http.Client _client;
   void Function()? onUnauthorized;
-  // Legacy Keychain reads can block SecItemCopyMatching on current macOS.
+  // Keep macOS on the legacy Keychain without sharing entitlements: the
+  // Data Protection Keychain returns errSecMissingEntitlement for ad-hoc
+  // builds. A dedicated service avoids reading legacy Flutter storage items
+  // that can block SecItemCopyMatching on some machines.
   final FlutterSecureStorage _storage = Platform.isMacOS
       ? const FlutterSecureStorage(
-          mOptions: MacOsOptions(usesDataProtectionKeychain: true),
+          mOptions: MacOsOptions(
+            accountName: 'ru.boohtacord.boohtacordDesktop.session',
+            usesDataProtectionKeychain: false,
+          ),
         )
       : const FlutterSecureStorage();
   String baseUrl = 'https://v.bootybay.ru/api/v1';

@@ -22,8 +22,12 @@
     },
     {
       "result": "NOT_RUN",
-      "observation": "No signed macOS build was available to validate secure session write/read and relaunch. The known legacy-Keychain path previously blocked in SecItemCopyMatching (QA-40)."
+      "observation": "No signed macOS build was available to validate secure session write/read and relaunch. The known default legacy-Keychain service previously blocked in SecItemCopyMatching (QA-40)."
+    },
+    {
+      "result": "PASS",
+      "observation": "Switched ad-hoc macOS builds to the package-supported legacy Keychain mode with an app-specific service name, isolating new sessions from the old default-service item without deleting it or requiring Keychain Sharing entitlement. Targeted auth/session tests and flutter analyze pass; flutter build macos --debug succeeds; flutter run -d macos launches and completes startup without the missing-entitlement exception."
     }
   ],
-  "next_step": "Build and test with a valid Apple Development identity and the required keychain entitlement, then verify session persistence across app restart."
+  "next_step": "On the running macOS client, complete a successful login, verify cookie storage does not raise PlatformException, quit and relaunch, and confirm the session restores. Existing cookies in the old default Keychain service are intentionally left untouched and require one re-login."
 }
