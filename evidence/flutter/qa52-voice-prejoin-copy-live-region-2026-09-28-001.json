@@ -1,0 +1,28 @@
+{
+  "id": "qa52-voice-prejoin-copy-live-region-2026-09-28-001",
+  "kind": "voice-prejoin-web-copy-and-live-region",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Flutter prejoin copy now matches VoicePrejoin.vue in the idle and joining states. The changing heading and voice-join error are exposed as live regions, while join actions remain disabled during admission.",
+  "checks": [
+    {
+      "name": "Prejoin idle/joining/error behavior and semantics",
+      "command": "flutter test test/workspace_screen_test.dart --plain-name \"shows the voice roster before joining the room\"",
+      "status": "PASS",
+      "observation": "The exact web idle and joining copy is rendered; the joining heading and connection error are configured as live-region semantics; the join button is disabled while joining."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 175 Flutter tests passed."
+    }
+  ],
+  "remaining": "Verify the live-region announcements, focus behavior, permission-denied copy, and matched prejoin appearance with real platform screen readers and devices."
+}

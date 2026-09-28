@@ -53,7 +53,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Flutter LiveKit SDK пока задаёт собственные интервалы backoff; их точное
   выравнивание с web и проверка на реальном peer остаются открытыми.
 - [ ] Сверить permission-denied/prejoin/dock copy, focus и screen-reader
-  announcements на устройствах.
+  announcements на устройствах. Обычный и joining copy prejoin приведён к вебу,
+  состояния подключения и ошибки помечены live-region и покрыты локальным тестом;
+  проверка реальных screen readers/focus на устройствах остаётся открытой —
+  [QA-52](../evidence/flutter/qa52-voice-prejoin-copy-live-region-2026-09-28-001.json).
 - [x] Явно показывать после отказа/сбоя microphone capture, что пользователь
   остался слушателем; дать безопасный retry для VAD и PTT-инструкцию без
   обхода удерживаемой клавиши — [QA-32](../evidence/flutter/qa32-voice-microphone-unavailable-fallback-2026-09-27-001.json).

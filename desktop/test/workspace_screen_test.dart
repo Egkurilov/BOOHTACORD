@@ -229,6 +229,7 @@ void main() {
   });
 
   testWidgets('shows the voice roster before joining the room', (tester) async {
+    final semantics = tester.ensureSemantics();
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1440, 900);
     addTearDown(tester.view.reset);
@@ -252,6 +253,13 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
     await tester.pumpAndSettle();
 
+    expect(find.text('Вы не подключены'), findsOneWidget);
+    expect(
+      find.text(
+        'Посмотрите, кто сейчас в комнате, и выберите удобный способ подключения.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Сейчас в канале: 1'), findsOneWidget);
     expect(find.text('Мика'), findsNWidgets(2));
     expect(find.byTooltip('Показывает экран'), findsNWidgets(2));
@@ -275,6 +283,48 @@ void main() {
     expect(state.voicePhase, VoicePhase.idle);
     expect(state.voiceChannel, isNull);
 
+    state.voicePhase = VoicePhase.joining;
+    state.notifyListeners();
+    await tester.pump();
+
+    expect(find.text('Подключаемся к голосовой комнате'), findsOneWidget);
+    final joiningTitle = find.ancestor(
+      of: find.text('Подключаемся к голосовой комнате'),
+      matching: find.byWidgetPredicate(
+        (widget) => widget is Semantics && widget.properties.liveRegion == true,
+      ),
+    );
+    expect(joiningTitle, findsOneWidget);
+    expect(
+      tester.widget<Semantics>(joiningTitle).properties.label,
+      'Подключаемся к голосовой комнате',
+    );
+    expect(find.text('Соединение устанавливается.'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Подключаемся…'),
+          )
+          .onPressed,
+      isNull,
+    );
+
+    state.error = 'Не удалось подключиться к голосовому каналу';
+    state.notifyListeners();
+    await tester.pump();
+    expect(find.text(state.error!), findsOneWidget);
+    expect(
+      find.ancestor(
+        of: find.text(state.error!),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics && widget.properties.liveRegion == true,
+        ),
+      ),
+      findsOneWidget,
+    );
+
+    semantics.dispose();
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
   });

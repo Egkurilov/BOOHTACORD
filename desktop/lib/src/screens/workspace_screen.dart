@@ -3782,6 +3782,10 @@ class _VoicePrejoinCard extends StatelessWidget {
   final AppState state;
   final GuildChannel channel;
 
+  bool get _joining => state.voicePhase == VoicePhase.joining;
+  String get _title =>
+      _joining ? 'Подключаемся к голосовой комнате' : 'Вы не подключены';
+
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) => SingleChildScrollView(
@@ -3834,16 +3838,27 @@ class _VoicePrejoinCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  'Вы не подключены',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.w700),
+                Semantics(
+                  container: true,
+                  liveRegion: true,
+                  label: _title,
+                  child: Text(
+                    _title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 25,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  'Посмотрите, кто уже в комнате, и подключитесь к разговору.',
+                Text(
+                  _joining ? 'Соединение устанавливается.' : 'Посмотрите, кто сейчас в комнате, и выберите удобный способ подключения.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: GcColors.textSecondary, height: 1.45),
+                  style: const TextStyle(
+                    color: GcColors.textSecondary,
+                    height: 1.45,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 _VoiceRosterPreview(
@@ -3854,19 +3869,22 @@ class _VoicePrejoinCard extends StatelessWidget {
                 ),
                 if (state.error != null) ...[
                   const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF422830),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      state.error!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: GcColors.danger,
-                        fontSize: 13,
+                  Semantics(
+                    liveRegion: true,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF422830),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        state.error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: GcColors.danger,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ),
