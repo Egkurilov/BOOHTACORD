@@ -6,6 +6,7 @@ import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/workspace_screen.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
+import 'package:boohtacord_desktop/src/services/composer_draft_memory.dart';
 import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,54 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
+  setUp(ComposerDraftMemory.clear);
+
+  testWidgets('restores a text-channel draft after switching channels', (
+    tester,
+  ) async {
+    final secondChannel = GuildChannel(
+      id: 'channel-2',
+      name: 'второй',
+      kind: ChannelKind.text,
+      admissionClosed: false,
+      unreadCount: 0,
+      mentionCount: 0,
+    );
+    final state = AppState(_PortraitApi(extraVoiceChannels: [secondChannel]));
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (context, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final composer = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Написать сообщение…',
+    );
+    await tester.enterText(composer, 'неотправленный текст');
+    await tester.pump();
+    await state.selectChannel(secondChannel);
+    await tester.pumpAndSettle();
+    expect(state.selectedChannel?.id, 'channel-2');
+    expect(find.text('второй'), findsOneWidget);
+    expect(tester.widget<TextField>(composer).controller!.text, isEmpty);
+
+    await state.selectChannel(_PortraitApi.channel);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(composer).controller!.text,
+      'неотправленный текст',
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
 
   testWidgets('opens native audio settings and processing controls', (
     tester,

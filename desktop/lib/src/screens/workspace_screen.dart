@@ -11,6 +11,7 @@ import '../app_state.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../services/message_presentation.dart';
+import '../services/composer_draft_memory.dart';
 import '../services/api_client.dart';
 import '../services/voice_avatar_palette.dart';
 import '../services/voice_participant_presentation.dart';
@@ -1493,27 +1494,106 @@ class _ConversationState extends State<_Conversation>
   bool _latestLayoutConfirmed = false;
   String? _observedChannelId;
   List<ChatMessage>? _observedMessages;
+  String? _draftAccountId;
+  int _draftEpoch = 0;
+  bool _restoringDraft = false;
 
   @override
   void initState() {
     super.initState();
+    _draftAccountId = widget.state.user?.accountId;
+    _draftEpoch = ComposerDraftMemory.epoch;
+    _controller.addListener(_rememberDraft);
+    _restoreDraft(widget.channel.id);
     WidgetsBinding.instance.addObserver(this);
     _scroll.addListener(_onScroll);
+  }
+
+  void _rememberDraft() {
+    final accountId = _draftAccountId;
+    if (_restoringDraft ||
+        accountId == null ||
+        _draftEpoch != ComposerDraftMemory.epoch) {
+      return;
+    }
+    ComposerDraftMemory.save(
+      accountId,
+      ComposerDraftKind.channel,
+      widget.channel.id,
+      ComposerDraft<ChatMessage>(
+        body: _controller.text,
+        replyTarget: _replyTarget,
+        attachments: _attachments,
+        mentionUserIds: _mentionUserIds.toList(growable: false),
+      ),
+    );
+  }
+
+  void _restoreDraft(String channelId) {
+    _restoringDraft = true;
+    final accountId = _draftAccountId;
+    final draft = accountId == null || _draftEpoch != ComposerDraftMemory.epoch
+        ? null
+        : ComposerDraftMemory.load<ChatMessage>(
+            accountId,
+            ComposerDraftKind.channel,
+            channelId,
+          );
+    _controller.value = TextEditingValue(text: draft?.body ?? '');
+    _replyTarget = draft?.replyTarget;
+    _mentionUserIds
+      ..clear()
+      ..addAll(draft?.mentionUserIds ?? const []);
+    _attachments = draft?.attachments ?? const [];
+    _attachmentsPending = false;
+    _restoringDraft = false;
   }
 
   @override
   void didUpdateWidget(covariant _Conversation oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.channel.id != widget.channel.id) {
+      _rememberDraftFor(oldWidget.channel.id);
+    }
+    final currentAccountId = widget.state.user?.accountId;
+    if (_draftEpoch != ComposerDraftMemory.epoch) {
+      _draftEpoch = ComposerDraftMemory.epoch;
+      _draftAccountId = currentAccountId;
+      _restoreDraft(widget.channel.id);
+    } else if (currentAccountId != _draftAccountId) {
+      if (_draftAccountId != null) {
+        _rememberDraftFor(oldWidget.channel.id);
+      }
+      _draftAccountId = currentAccountId;
+      _restoreDraft(widget.channel.id);
+    }
+    if (oldWidget.channel.id != widget.channel.id) {
       _followLatest = true;
       _latestLayoutConfirmed = false;
-      _replyTarget = null;
-      _mentionUserIds.clear();
-      _attachments = const [];
-      _attachmentsPending = false;
+      _restoreDraft(widget.channel.id);
       _observedChannelId = null;
       _observedMessages = null;
     }
+  }
+
+  void _rememberDraftFor(String channelId) {
+    final accountId = _draftAccountId;
+    if (_restoringDraft ||
+        accountId == null ||
+        _draftEpoch != ComposerDraftMemory.epoch) {
+      return;
+    }
+    ComposerDraftMemory.save(
+      accountId,
+      ComposerDraftKind.channel,
+      channelId,
+      ComposerDraft<ChatMessage>(
+        body: _controller.text,
+        replyTarget: _replyTarget,
+        attachments: _attachments,
+        mentionUserIds: _mentionUserIds.toList(growable: false),
+      ),
+    );
   }
 
   void _onScroll() {
@@ -1591,6 +1671,8 @@ class _ConversationState extends State<_Conversation>
 
   @override
   void dispose() {
+    _rememberDraft();
+    _controller.removeListener(_rememberDraft);
     WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     _composerFocus.dispose();
@@ -1630,6 +1712,7 @@ class _ConversationState extends State<_Conversation>
       _mentionUserIds.clear();
       _attachments = const [];
     });
+    _rememberDraft();
     _followLatest = true;
     await Future<void>.delayed(const Duration(milliseconds: 80));
     if (mounted && _scroll.hasClients) {
@@ -1672,10 +1755,12 @@ class _ConversationState extends State<_Conversation>
       _mentionUserIds.clear();
       _attachments = const [];
     });
+    _rememberDraft();
   }
 
   void _replyTo(ChatMessage message) {
     setState(() => _replyTarget = message);
+    _rememberDraft();
     _composerFocus.requestFocus();
   }
 
@@ -1847,7 +1932,10 @@ class _ConversationState extends State<_Conversation>
                 _ReplyTargetBanner(
                   text:
                       'Ответ для ${_mentionDisplayName(widget.state, _replyTarget!.authorId)}',
-                  onCancel: () => setState(() => _replyTarget = null),
+                  onCancel: () {
+                    setState(() => _replyTarget = null);
+                    _rememberDraft();
+                  },
                 ),
               _MentionPicker(
                 options: widget.state.members
@@ -1855,11 +1943,14 @@ class _ConversationState extends State<_Conversation>
                     .toList(growable: false),
                 selfId: widget.state.user?.accountId ?? '',
                 selectedIds: _mentionUserIds,
-                onChanged: (ids) => setState(() {
-                  _mentionUserIds
-                    ..clear()
-                    ..addAll(ids);
-                }),
+                onChanged: (ids) {
+                  setState(() {
+                    _mentionUserIds
+                      ..clear()
+                      ..addAll(ids);
+                  });
+                  _rememberDraft();
+                },
               ),
               MessageAttachmentComposer(
                 key: _attachmentComposerKey,
@@ -1868,9 +1959,10 @@ class _ConversationState extends State<_Conversation>
                 textController: _controller,
                 focusNode: _composerFocus,
                 attachments: _attachments,
-                onChanged: (attachments) => setState(() {
-                  _attachments = attachments;
-                }),
+                onChanged: (attachments) {
+                  setState(() => _attachments = attachments);
+                  _rememberDraft();
+                },
                 onPending: (pending) => setState(() {
                   _attachmentsPending = pending;
                 }),
@@ -3089,6 +3181,60 @@ class _DirectConversationState extends State<_DirectConversation> {
   final Set<String> _mentionUserIds = {};
   List<MessageAttachment> _attachments = const [];
   bool _attachmentsPending = false;
+  String? _draftAccountId;
+  int _draftEpoch = 0;
+  bool _restoringDraft = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _draftAccountId = widget.state.user?.accountId;
+    _draftEpoch = ComposerDraftMemory.epoch;
+    _controller.addListener(_rememberDraft);
+    _restoreDraft(widget.conversation.id);
+  }
+
+  void _rememberDraft() => _rememberDraftFor(widget.conversation.id);
+
+  void _rememberDraftFor(String conversationId) {
+    final accountId = _draftAccountId;
+    if (_restoringDraft ||
+        accountId == null ||
+        _draftEpoch != ComposerDraftMemory.epoch) {
+      return;
+    }
+    ComposerDraftMemory.save(
+      accountId,
+      ComposerDraftKind.directMessage,
+      conversationId,
+      ComposerDraft<DirectChatMessage>(
+        body: _controller.text,
+        replyTarget: _replyTarget,
+        attachments: _attachments,
+        mentionUserIds: _mentionUserIds.toList(growable: false),
+      ),
+    );
+  }
+
+  void _restoreDraft(String conversationId) {
+    _restoringDraft = true;
+    final accountId = _draftAccountId;
+    final draft = accountId == null || _draftEpoch != ComposerDraftMemory.epoch
+        ? null
+        : ComposerDraftMemory.load<DirectChatMessage>(
+            accountId,
+            ComposerDraftKind.directMessage,
+            conversationId,
+          );
+    _controller.value = TextEditingValue(text: draft?.body ?? '');
+    _replyTarget = draft?.replyTarget;
+    _mentionUserIds
+      ..clear()
+      ..addAll(draft?.mentionUserIds ?? const []);
+    _attachments = draft?.attachments ?? const [];
+    _attachmentsPending = false;
+    _restoringDraft = false;
+  }
 
   Future<void> _pasteFromClipboard() async {
     await _attachmentComposerKey.currentState?.pasteFromClipboard();
@@ -3098,15 +3244,29 @@ class _DirectConversationState extends State<_DirectConversation> {
   void didUpdateWidget(covariant _DirectConversation oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.conversation.id != widget.conversation.id) {
-      _replyTarget = null;
-      _mentionUserIds.clear();
-      _attachments = const [];
-      _attachmentsPending = false;
+      _rememberDraftFor(oldWidget.conversation.id);
+    }
+    final currentAccountId = widget.state.user?.accountId;
+    if (_draftEpoch != ComposerDraftMemory.epoch) {
+      _draftEpoch = ComposerDraftMemory.epoch;
+      _draftAccountId = currentAccountId;
+      _restoreDraft(widget.conversation.id);
+    } else if (currentAccountId != _draftAccountId) {
+      if (_draftAccountId != null) {
+        _rememberDraftFor(oldWidget.conversation.id);
+      }
+      _draftAccountId = currentAccountId;
+      _restoreDraft(widget.conversation.id);
+    }
+    if (oldWidget.conversation.id != widget.conversation.id) {
+      _restoreDraft(widget.conversation.id);
     }
   }
 
   @override
   void dispose() {
+    _rememberDraft();
+    _controller.removeListener(_rememberDraft);
     _controller.dispose();
     _composerFocus.dispose();
     _scroll.dispose();
@@ -3162,6 +3322,7 @@ class _DirectConversationState extends State<_DirectConversation> {
       _mentionUserIds.clear();
       _attachments = const [];
     });
+    _rememberDraft();
   }
 
   Future<void> _retry(DirectChatMessage message) async {
@@ -3195,6 +3356,7 @@ class _DirectConversationState extends State<_DirectConversation> {
       _mentionUserIds.clear();
       _attachments = const [];
     });
+    _rememberDraft();
   }
 
   String _directAuthorName(String accountId) {
@@ -3225,6 +3387,7 @@ class _DirectConversationState extends State<_DirectConversation> {
 
   void _replyToDirect(DirectChatMessage message) {
     setState(() => _replyTarget = message);
+    _rememberDraft();
     _composerFocus.requestFocus();
   }
 
@@ -3430,7 +3593,10 @@ class _DirectConversationState extends State<_DirectConversation> {
                 _ReplyTargetBanner(
                   text:
                       'Ответ для ${_directAuthorName(_replyTarget!.authorId)}',
-                  onCancel: () => setState(() => _replyTarget = null),
+                  onCancel: () {
+                    setState(() => _replyTarget = null);
+                    _rememberDraft();
+                  },
                 ),
               _MentionPicker(
                 options: [
@@ -3441,11 +3607,14 @@ class _DirectConversationState extends State<_DirectConversation> {
                 ],
                 selfId: widget.state.user?.accountId ?? '',
                 selectedIds: _mentionUserIds,
-                onChanged: (ids) => setState(() {
-                  _mentionUserIds
-                    ..clear()
-                    ..addAll(ids);
-                }),
+                onChanged: (ids) {
+                  setState(() {
+                    _mentionUserIds
+                      ..clear()
+                      ..addAll(ids);
+                  });
+                  _rememberDraft();
+                },
               ),
               MessageAttachmentComposer(
                 key: _attachmentComposerKey,
@@ -3454,9 +3623,10 @@ class _DirectConversationState extends State<_DirectConversation> {
                 textController: _controller,
                 focusNode: _composerFocus,
                 directMessageId: widget.conversation.id,
-                onChanged: (attachments) => setState(() {
-                  _attachments = attachments;
-                }),
+                onChanged: (attachments) {
+                  setState(() => _attachments = attachments);
+                  _rememberDraft();
+                },
                 onPending: (pending) => setState(() {
                   _attachmentsPending = pending;
                 }),

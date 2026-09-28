@@ -13,6 +13,7 @@ import 'package:uuid/uuid.dart';
 import 'guild_presence_state.dart';
 import 'models.dart';
 import 'services/api_client.dart';
+import 'services/composer_draft_memory.dart';
 import 'services/audio_preferences.dart';
 import 'services/android_audio_devices.dart';
 import 'services/password_reset_link.dart';
@@ -310,6 +311,7 @@ class AppState extends ChangeNotifier {
   Future<void> _expireSession() async {
     if (phase != AppPhase.ready || _expiringSession) return;
     _expiringSession = true;
+    ComposerDraftMemory.clear();
     _stopVoiceRosterPolling();
     phase = AppPhase.signedOut;
     user = null;
@@ -553,6 +555,7 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    ComposerDraftMemory.clear();
     user = null;
     profile = null;
     profileLoadError = null;

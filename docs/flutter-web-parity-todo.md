@@ -163,6 +163,13 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] Проверить серверную очистку `UNATTACHED` вложений через 24 часа и восстановление после сбоя на реальном deployment; клиентского DELETE-контракта нет. Пройти live 507/partial-upload UX на TEXT/DM и устройствах.
 - [ ] Проверить edit/delete 409 и idempotent send retry с реальным backend и физическим устройством, включая удаление во время редактирования и смену диалога.
 - [ ] Проверить reply context, pagination/scroll anchoring и read cursors на границах страниц и при realtime updates.
+- [x] Сохранять несданный TEXT/DM черновик при переключении бесед и восстановить
+  тело, ответ, упоминания и уже загруженные вложения отдельно по аккаунту;
+  очищать память при logout/session expiry. Service isolation/clear и TEXT
+  channel-switch покрыты тестами; полный Flutter suite и analyzer прошли —
+  [QA-71](../evidence/flutter/qa71-composer-draft-memory-web-parity-2026-09-28-001.json).
+  Проверить restore на реальном Android/desktop и уточнить поведение после
+  перезапуска остаётся открытым (как в web — черновики только в памяти).
 - [x] Реализовать native opt-in notifications для macOS, Windows и Android: generic preview без текста сообщения, разрешения ОС, foreground suppression, рост unread-счётчика и event deduplication, отдельная настройка на аккаунт — [QA-46](../evidence/flutter/qa46-native-notifications-web-parity-2026-09-28-001.json).
 - [ ] Проверить системное разрешение/отказ, доставку в фоне и deduplication на реальном macOS; Windows toast/AppUserModelID на Windows runner; Android 13+ prompt и background delivery на Samsung/Gboard. Локальные macOS release startup и Android debug build/merged permission прошли, но это не заменяет device acceptance — [QA-46](../evidence/flutter/qa46-native-notifications-web-parity-2026-09-28-001.json).
 - [ ] Сверить нативный защищённый просмотр изображений TEXT/DM с DES-09; проверить ACL, loading/error/deleted состояния, масштабирование и отдельное скачивание на deployment и устройствах.
