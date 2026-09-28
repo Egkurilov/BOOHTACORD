@@ -60,6 +60,20 @@ String screenShareFailureDetail(Object cause) {
   return cause.runtimeType.toString();
 }
 
+VideoDimensions? _screenShareCaptureDimensions(LocalVideoTrack track) {
+  try {
+    final settings = track.mediaStreamTrack.getSettings();
+    final width = settings['width'];
+    final height = settings['height'];
+    if (width is num && height is num && width > 0 && height > 0) {
+      return VideoDimensions(width.round(), height.round());
+    }
+  } catch (_) {
+    // Some platform implementations don't expose capture settings.
+  }
+  return null;
+}
+
 class AppState extends ChangeNotifier {
   static const _voiceStreamSoundPreferenceKey = 'voice-screen-start-sound:v1';
 
@@ -2646,6 +2660,9 @@ class AppState extends ChangeNotifier {
       pendingScreenShareTrack = await LocalVideoTrack.createScreenShareTrack(
         captureOptions,
       );
+      final captureDimensions = _screenShareCaptureDimensions(
+        pendingScreenShareTrack,
+      );
       await participant.publishVideoTrack(
         pendingScreenShareTrack,
         publishOptions: screenShareQuality.publishOptions(
@@ -2653,6 +2670,7 @@ class AppState extends ChangeNotifier {
           // clipping reported across Flutter and web viewers. Verify on-device
           // before deciding whether the bandwidth trade-off is acceptable.
           simulcast: defaultTargetPlatform != TargetPlatform.android,
+          sourceDimensions: captureDimensions,
         ),
       );
       // Ownership transfers to the participant after a successful publish.

@@ -594,6 +594,16 @@ public class GetUserMediaImpl {
             track_.putString("readyState", displayTrack.state().toString());
             track_.putBoolean("remote", false);
 
+            // Preserve the MediaProjection source dimensions so LiveKit can
+            // apply the selected screen-share resolution profile to the
+            // outgoing RTP encoding instead of assuming the requested 16:9
+            // dimensions were used by getDisplayMedia.
+            ConstraintsMap settings = new ConstraintsMap();
+            settings.putInt("width", info.width);
+            settings.putInt("height", info.height);
+            settings.putInt("frameRate", info.fps);
+            track_.putMap("settings", settings.toMap());
+
             videoTracks.pushMap(track_);
             mediaStream.addTrack(displayTrack);
         }

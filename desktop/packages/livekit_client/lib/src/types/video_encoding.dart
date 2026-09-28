@@ -26,6 +26,10 @@ class VideoEncoding implements Comparable<VideoEncoding> {
   /// Maximum bitrate for the video track.
   final int maxBitrate;
 
+  /// Scale factor applied to the encoded resolution. Values greater than 1
+  /// reduce the captured frame while preserving its aspect ratio.
+  final double? scaleResolutionDownBy;
+
   /// Priority for bandwidth allocation.
   final Priority? bitratePriority;
 
@@ -35,6 +39,7 @@ class VideoEncoding implements Comparable<VideoEncoding> {
   const VideoEncoding({
     required this.maxFramerate,
     required this.maxBitrate,
+    this.scaleResolutionDownBy,
     this.bitratePriority,
     this.networkPriority,
   });
@@ -42,18 +47,20 @@ class VideoEncoding implements Comparable<VideoEncoding> {
   VideoEncoding copyWith({
     int? maxFramerate,
     int? maxBitrate,
+    double? scaleResolutionDownBy,
     Priority? bitratePriority,
     Priority? networkPriority,
   }) => VideoEncoding(
     maxFramerate: maxFramerate ?? this.maxFramerate,
     maxBitrate: maxBitrate ?? this.maxBitrate,
+    scaleResolutionDownBy: scaleResolutionDownBy ?? this.scaleResolutionDownBy,
     bitratePriority: bitratePriority ?? this.bitratePriority,
     networkPriority: networkPriority ?? this.networkPriority,
   );
 
   @override
   String toString() =>
-      '${runtimeType}(maxFramerate: ${maxFramerate}, maxBitrate: ${maxBitrate}, bitratePriority: ${bitratePriority}, networkPriority: ${networkPriority})';
+      '${runtimeType}(maxFramerate: ${maxFramerate}, maxBitrate: ${maxBitrate}, scaleResolutionDownBy: ${scaleResolutionDownBy}, bitratePriority: ${bitratePriority}, networkPriority: ${networkPriority})';
 
   // ----------------------------------------------------------------------
   // equality
@@ -64,11 +71,18 @@ class VideoEncoding implements Comparable<VideoEncoding> {
       other is VideoEncoding &&
           maxFramerate == other.maxFramerate &&
           maxBitrate == other.maxBitrate &&
+          scaleResolutionDownBy == other.scaleResolutionDownBy &&
           bitratePriority == other.bitratePriority &&
           networkPriority == other.networkPriority;
 
   @override
-  int get hashCode => Object.hash(maxFramerate, maxBitrate, bitratePriority, networkPriority);
+  int get hashCode => Object.hash(
+    maxFramerate,
+    maxBitrate,
+    scaleResolutionDownBy,
+    bitratePriority,
+    networkPriority,
+  );
 
   // ----------------------------------------------------------------------
   // Comparable
@@ -83,6 +97,11 @@ class VideoEncoding implements Comparable<VideoEncoding> {
     result = maxFramerate.compareTo(other.maxFramerate);
     if (result != 0) return result;
 
+    result = (scaleResolutionDownBy ?? 1).compareTo(
+      other.scaleResolutionDownBy ?? 1,
+    );
+    if (result != 0) return result;
+
     // compare by priority fields for consistency with == and hashCode
     result = (bitratePriority?.index ?? -1).compareTo(other.bitratePriority?.index ?? -1);
     if (result != 0) return result;
@@ -95,11 +114,11 @@ class VideoEncoding implements Comparable<VideoEncoding> {
 extension VideoEncodingExt on VideoEncoding {
   rtc.RTCRtpEncoding toRTCRtpEncoding({
     String? rid,
-    double? scaleResolutionDownBy = 1.0,
+    double? scaleResolutionDownBy,
     int? numTemporalLayers,
   }) => rtc.RTCRtpEncoding(
     rid: rid,
-    scaleResolutionDownBy: scaleResolutionDownBy,
+    scaleResolutionDownBy: scaleResolutionDownBy ?? this.scaleResolutionDownBy ?? 1.0,
     maxFramerate: maxFramerate,
     maxBitrate: maxBitrate,
     numTemporalLayers: numTemporalLayers,

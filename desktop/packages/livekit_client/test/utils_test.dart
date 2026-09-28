@@ -223,6 +223,18 @@ void main() {
   });
 
   group('screen share simulcast encodings', () {
+    test('single-layer screen encoding keeps its resolution scale', () {
+      const selected = VideoEncoding(
+        maxBitrate: 2500000,
+        maxFramerate: 15,
+        scaleResolutionDownBy: 2.5,
+      );
+
+      final encoding = selected.toRTCRtpEncoding();
+
+      expect(encoding.scaleResolutionDownBy, 2.5);
+    });
+
     test('screen share preset bitrates match common SDK presets', () {
       expect(VideoParametersPresets.screenShareH720FPS5.encoding?.maxBitrate, 800000);
       expect(VideoParametersPresets.screenShareH1080FPS30.encoding?.maxBitrate, 5000000);

@@ -45,13 +45,42 @@ class ScreenShareQuality {
     ),
   );
 
-  VideoPublishOptions publishOptions({required bool simulcast}) =>
-      VideoPublishOptions(
-        name: trackName,
-        screenShareEncoding: parameters.encoding,
-        degradationPreference: DegradationPreference.maintainFramerate,
-        simulcast: simulcast,
-      );
+  /// Caps the longer source edge at the selected profile without changing
+  /// orientation or stretching portrait captures.
+  double scaleResolutionDownBy(VideoDimensions source) {
+    final sourceMax = source.max();
+    final targetMax = parameters.dimensions.max();
+    if (source.width <= 0 || source.height <= 0 || sourceMax <= targetMax) {
+      return 1;
+    }
+
+    // WebRTC's native encoder truncates scaled dimensions to integers. Pick a
+    // nearby scale which keeps both output edges even, as required by common
+    // hardware encoders.
+    for (var offset = 0; offset <= 30; offset++) {
+      final scale = sourceMax / (targetMax + offset);
+      final scaledWidth = source.width ~/ scale;
+      final scaledHeight = source.height ~/ scale;
+      if (scaledWidth.isEven && scaledHeight.isEven) return scale;
+    }
+    return sourceMax / targetMax;
+  }
+
+  VideoPublishOptions publishOptions({
+    required bool simulcast,
+    VideoDimensions? sourceDimensions,
+  }) {
+    final encoding = parameters.encoding!;
+    final scale = sourceDimensions == null
+        ? 1.0
+        : scaleResolutionDownBy(sourceDimensions);
+    return VideoPublishOptions(
+      name: trackName,
+      screenShareEncoding: encoding.copyWith(scaleResolutionDownBy: scale),
+      degradationPreference: DegradationPreference.maintainFramerate,
+      simulcast: simulcast,
+    );
+  }
 
   static const balanced = ScreenShareQuality(resolution: 720, frameRate: 15);
   static const desktopDefault = ScreenShareQuality(

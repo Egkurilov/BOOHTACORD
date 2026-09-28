@@ -3,6 +3,7 @@ import 'package:boohtacord_desktop/src/widgets/screen_share_setup_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:livekit_client/livekit_client.dart';
 
 void main() {
   test(
@@ -51,6 +52,51 @@ void main() {
       }
     },
   );
+
+  test('resolution profile scales source without cropping or upscaling', () {
+    for (final resolution in ScreenShareQuality.resolutions) {
+      final quality = ScreenShareQuality(resolution: resolution, frameRate: 30);
+      final source = const VideoDimensions(3840, 2160);
+      final scale = quality.scaleResolutionDownBy(source);
+      final encoding = quality
+          .publishOptions(simulcast: false, sourceDimensions: source)
+          .screenShareEncoding!;
+      final encodedWidth = source.width ~/ scale;
+      final encodedHeight = source.height ~/ scale;
+
+      expect(encoding.scaleResolutionDownBy, scale);
+      expect(scale, greaterThanOrEqualTo(1));
+      expect(
+        encodedWidth,
+        lessThanOrEqualTo(quality.parameters.dimensions.width),
+      );
+      expect(
+        encodedHeight,
+        lessThanOrEqualTo(quality.parameters.dimensions.height),
+      );
+      expect(encodedWidth.isEven, isTrue);
+      expect(encodedHeight.isEven, isTrue);
+    }
+
+    final portraitSource = const VideoDimensions(1440, 3120);
+    final portrait720 = const ScreenShareQuality(
+      resolution: 720,
+      frameRate: 30,
+    );
+    final portraitScale = portrait720.scaleResolutionDownBy(portraitSource);
+    expect(
+      portraitSource.width ~/ portraitScale,
+      lessThan(portraitSource.width),
+    );
+    expect(portraitSource.height ~/ portraitScale, lessThanOrEqualTo(1280));
+    expect(
+      const ScreenShareQuality(
+        resolution: 1080,
+        frameRate: 30,
+      ).scaleResolutionDownBy(const VideoDimensions(540, 1170)),
+      1,
+    );
+  });
 
   testWidgets('Android setup returns selected resolution and FPS', (
     tester,
