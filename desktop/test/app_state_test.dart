@@ -202,6 +202,35 @@ void main() {
     expect(state.audioDevicesLoading, isFalse);
   });
 
+  test(
+    'does not show a stale scan error after a newer hotplug event',
+    () async {
+      final changes = StreamController<List<MediaDevice>>.broadcast();
+      final oldScan = Completer<List<MediaDevice>>();
+      final state = AppState(
+        _FakeApi(topology),
+        audioDeviceLoader: () => oldScan.future,
+        audioDeviceChanges: changes.stream,
+      );
+      addTearDown(() async {
+        state.dispose();
+        await changes.close();
+      });
+      await state.initialize();
+      state.toggleWorkspacePanel(WorkspacePanel.audio);
+      changes.add(const [
+        MediaDevice('usb-mic', 'USB microphone', 'audioinput', null),
+      ]);
+      await Future<void>.delayed(Duration.zero);
+      oldScan.completeError(StateError('obsolete scan failed'));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(state.audioInputDevices.single.deviceId, 'usb-mic');
+      expect(state.audioSettingsError, isNull);
+      expect(state.audioDevicesLoading, isFalse);
+    },
+  );
+
   test('queues a device refresh requested during an active scan', () async {
     final firstScan = Completer<List<MediaDevice>>();
     final secondScan = Completer<List<MediaDevice>>();

@@ -614,8 +614,10 @@ class AppState extends ChangeNotifier {
       final devices = await _audioDeviceLoader();
       if (revision == _audioDeviceRevision) _applyAudioDevices(devices);
     } catch (cause) {
-      audioSettingsError =
-          'Не удалось получить список аудиоустройств: ${cause.runtimeType}.';
+      if (revision == _audioDeviceRevision) {
+        audioSettingsError =
+            'Не удалось получить список аудиоустройств: ${cause.runtimeType}.';
+      }
     } finally {
       audioDevicesLoading = false;
       notifyListeners();

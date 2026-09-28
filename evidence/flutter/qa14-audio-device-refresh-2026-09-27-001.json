@@ -2,7 +2,7 @@
   "id": "qa14-audio-device-refresh-2026-09-27-001",
   "kind": "integration-parity",
   "status": "PARTIAL",
-  "executed_at": "2026-09-27",
+  "executed_at": "2026-09-28",
   "environment": {
     "host_os": "macOS arm64",
     "apk": "desktop/build/app/outputs/flutter-apk/app-release.apk"
@@ -10,9 +10,15 @@
   "checks": [
     {
       "name": "Flutter analyzer and full test suite",
-      "command": "flutter test --reporter compact && flutter analyze",
+      "command": "flutter test && flutter analyze",
       "status": "PASS",
-      "observation": "All 105 tests passed; analyzer reported no issues. Added coverage verifies a refresh requested during an active device scan is queued and its newer device list is retained."
+      "observation": "All 174 tests passed; analyzer reported no issues. Audio coverage verifies refresh queuing, stale successful scan rejection, stale failed scan suppression after hotplug, and error/loading cleanup."
+    },
+    {
+      "name": "Hotplug supersedes an obsolete scan failure",
+      "command": "flutter test test/app_state_test.dart --plain-name 'does not show a stale scan error after a newer hotplug event'",
+      "status": "PASS",
+      "observation": "A newer hotplug snapshot remains selected and the obsolete asynchronous scan failure does not replace it with an error."
     },
     {
       "name": "macOS debug and signed Android release builds",
