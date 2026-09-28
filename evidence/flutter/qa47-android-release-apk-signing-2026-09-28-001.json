@@ -1,0 +1,29 @@
+{
+  "id": "qa47-android-release-apk-signing-2026-09-28-001",
+  "kind": "android-release-apk-signing",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "artifact": "desktop/build/app/outputs/flutter-apk/app-release.apk",
+  "implementation": "Android release build uses the existing configured upload keystore; no signing credentials or keystore material are stored in the repository.",
+  "checks": [
+    {
+      "name": "Android release APK build",
+      "command": "flutter build apk --release",
+      "status": "PASS",
+      "observation": "Built app-release.apk successfully (95.9 MB)."
+    },
+    {
+      "name": "APK signature verification",
+      "command": "apksigner verify --verbose build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "One signer; APK Signature Scheme v2 verified."
+    },
+    {
+      "name": "Release APK required permissions",
+      "command": "aapt dump permissions build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "APK declares android.permission.POST_NOTIFICATIONS, android.permission.FOREGROUND_SERVICE and android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION."
+    }
+  ],
+  "remaining": "Install/update and exercise this release on a physical Android device, including Android 14+ MediaProjection foreground service, notification permission/background delivery and share stop/retry. This artifact has not been uploaded or distributed."
+}

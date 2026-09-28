@@ -275,9 +275,12 @@ the implementation.
 - Exercise every control and non-happy state against the same backend contracts.
 - Check keyboard/focus, accessibility labels, narrow layouts and window resize
   behavior on macOS, Windows and Android.
-- Current local verification now covers macOS debug and Android debug builds.
-  macOS release build also succeeds after the Keychain change, but release
-  runtime/session persistence still needs a signed install and restart check.
+- Local verification covers macOS debug/release builds and Android debug; the
+  Android release APK also builds with the configured upload key, passes APK
+  Signature Scheme v2 verification and contains notification/MediaProjection
+  permissions [QA-47](../evidence/flutter/qa47-android-release-apk-signing-2026-09-28-001.json).
+  Signed macOS release persistence and Android install/runtime acceptance on a
+  physical device remain open.
   Windows still requires a native Windows build runner; do not infer it from
   analyzer/tests or generated plugin registration.
 - Android debug build succeeds but reports that `flutter_webrtc` and
