@@ -1,0 +1,29 @@
+{
+  "id": "qa56-android-battery-permission-minimization-2026-09-28-001",
+  "kind": "android-release-manifest-battery-optimization-permission-removal",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "The flutter_background plugin declared REQUEST_IGNORE_BATTERY_OPTIMIZATIONS even though the app config used shouldRequestBatteryOptimizationsOff=false and the product does not request battery exemption. The app manifest now removes that dependency permission at merge time while preserving MediaProjection foreground service declarations.",
+  "artifact": "desktop/build/app/outputs/flutter-apk/app-release.apk",
+  "checks": [
+    {
+      "name": "Signed Android release build",
+      "command": "flutter build apk --release",
+      "status": "PASS",
+      "observation": "The updated 95.9 MB release APK built successfully."
+    },
+    {
+      "name": "APK signature verification",
+      "command": "apksigner verify --verbose build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "One signer; APK Signature Scheme v2 verifies."
+    },
+    {
+      "name": "Merged release permissions",
+      "command": "aapt dump permissions build/app/outputs/flutter-apk/app-release.apk",
+      "status": "PASS",
+      "observation": "FOREGROUND_SERVICE and FOREGROUND_SERVICE_MEDIA_PROJECTION remain; REQUEST_IGNORE_BATTERY_OPTIMIZATIONS is absent. Existing notification/audio/network permissions remain."
+    }
+  ],
+  "remaining": "No Android device/emulator is connected. Install the artifact on Android 14+ and verify the system MediaProjection consent, foreground service lifetime, stop/retry, and that no battery-optimization prompt or exemption flow is invoked."
+}

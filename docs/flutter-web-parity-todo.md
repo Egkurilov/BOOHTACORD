@@ -109,8 +109,13 @@ peer/platform-проверки и выравниваем viewer с вебом.
   проверка остаётся открытой — [QA-51](../evidence/flutter/qa51-android-ime-multichar-regression-2026-09-28-001.json).
 - [ ] На Android 14+ установить свежий release APK и повторить MediaProjection:
   APK содержит `FOREGROUND_SERVICE_MEDIA_PROJECTION` и объявляет сервис как
-  `mediaProjection`, но подключённого устройства для runtime-проверки нет
-  [QA-26](../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
+  `mediaProjection`, подключённого устройства для runtime-проверки нет; лишний
+  plugin-added `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` удалён из merged release
+  manifest и проверен в [QA-56](../evidence/flutter/qa56-android-battery-permission-minimization-2026-09-28-001.json).
+  Runtime-проверка Android 14+ остаётся открытой — [QA-26](../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
+- [x] Не запрашивать Android battery-optimization exemption: удалить
+  неиспользуемое plugin-added разрешение из итогового APK, оставив разрешения
+  foreground MediaProjection service — [QA-56](../evidence/flutter/qa56-android-battery-permission-minimization-2026-09-28-001.json).
 - [x] Добавить выбор screen-share resolution `720/1080/1440p` и `15/30/60 FPS`,
   собственный оформленный picker для экранов/окон с preview, обновлением списка
   и явными error/empty/retry состояниями; Android получает мобильный вариант
