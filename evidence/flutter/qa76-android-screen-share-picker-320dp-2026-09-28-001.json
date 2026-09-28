@@ -1,0 +1,21 @@
+{
+  "id": "QA-76",
+  "kind": "android-screen-share-picker-minimum-width",
+  "status": "PASS_WITH_DEVICE_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-28",
+  "summary": "Verified the compact screen-share setup at the application's minimum 320 dp width and a short 640 dp viewport. The quality section remains scrollable and the primary start action stays available in the fixed footer.",
+  "checks": [
+    {
+      "name": "Screen-share quality picker widget tests",
+      "command": "cd desktop && flutter test test/screen_share_quality_test.dart",
+      "status": "PASS",
+      "observation": "All 5 tests passed. At 320×640 dp, resolution and frame-rate selectors are scroll-reachable, labels remain single-line, the start action stays inside the viewport, and Flutter reports no layout exceptions."
+    },
+    {
+      "name": "Physical Android acceptance",
+      "status": "OPEN",
+      "observation": "The narrow layout has not been visually compared on the reported Samsung device; source picker, permission flow and real capture still require an Android runtime check."
+    }
+  ],
+  "remaining": "Confirm the 320 dp scroll experience on a physical Android device while keeping the fixed start action visible, then continue screen-capture and peer acceptance."
+}

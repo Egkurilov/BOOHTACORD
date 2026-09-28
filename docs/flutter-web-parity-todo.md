@@ -153,6 +153,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   настройки качества; исправить перенос значений качества в узком Android
   портрете — [QA-24](../evidence/flutter/qa24-screen-share-quality-picker-2026-09-27-001.json),
   [QA-31](../evidence/flutter/qa31-android-share-quality-compact-layout-2026-09-27-001.json).
+- [x] Проверить picker на минимальной Android-ширине 320 dp: обе настройки качества
+  достижимы прокруткой, а закреплённая кнопка запуска остаётся видимой; все пять
+  screen-share тестов проходят — [QA-76](../evidence/flutter/qa76-android-screen-share-picker-320dp-2026-09-28-001.json).
 - [ ] На macOS и Windows принять системный список экранов/окон и thumbnail
   обновления; измерить качество/битрейт на реальных устройствах и сетях для
   выбранных комбинаций.

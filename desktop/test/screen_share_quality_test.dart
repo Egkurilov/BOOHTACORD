@@ -143,4 +143,80 @@ void main() {
     expect(frameRateLabel.bottom, lessThan(frameRateSegments.top));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('keeps Android picker usable at the minimum 320 dp width', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 640);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => ScreenShareSetupDialog.show(
+                context,
+                initialQuality: ScreenShareQuality.balanced,
+                allowSourceSelection: false,
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    final start = tester.getRect(
+      find.byKey(const ValueKey('start-screen-share')),
+    );
+    for (final label in [
+      '720p',
+      '1080p',
+      '1440p',
+      '15 FPS',
+      '30 FPS',
+      '60 FPS',
+    ]) {
+      final text = tester.widget<Text>(find.text(label));
+      expect(text.maxLines, 1);
+      expect(text.softWrap, isFalse);
+    }
+    expect(start.bottom, lessThanOrEqualTo(640));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('resolution-segments')),
+    );
+    await tester.pumpAndSettle();
+    final visibleResolution = tester.getRect(
+      find.byKey(const ValueKey('resolution-segments')),
+    );
+    expect(visibleResolution.top, greaterThanOrEqualTo(0));
+    expect(visibleResolution.bottom, lessThanOrEqualTo(640));
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('frame-rate-segments')),
+    );
+    await tester.pumpAndSettle();
+    final visibleFrameRate = tester.getRect(
+      find.byKey(const ValueKey('frame-rate-segments')),
+    );
+    expect(visibleFrameRate.top, greaterThanOrEqualTo(0));
+    expect(visibleFrameRate.bottom, lessThanOrEqualTo(640));
+    expect(
+      tester.getRect(find.byKey(const ValueKey('start-screen-share'))).bottom,
+      lessThanOrEqualTo(640),
+    );
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const ValueKey('start-screen-share')),
+          )
+          .onPressed,
+      isNotNull,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }
