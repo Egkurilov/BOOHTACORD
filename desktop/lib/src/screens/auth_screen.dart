@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsRole;
+
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
@@ -193,17 +195,10 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ),
                           const SizedBox(height: 24),
-                          SegmentedButton<bool>(
-                            segments: const [
-                              ButtonSegment(value: false, label: Text('Войти')),
-                              ButtonSegment(
-                                value: true,
-                                label: Text('Регистрация'),
-                              ),
-                            ],
-                            selected: {_register},
-                            onSelectionChanged: (value) {
-                              setState(() => _register = value.first);
+                          _AuthenticationModeTabs(
+                            registerSelected: _register,
+                            onSelected: (register) {
+                              setState(() => _register = register);
                               widget.state.clearError();
                             },
                           ),
@@ -328,6 +323,96 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
       );
     },
+  );
+}
+
+class _AuthenticationModeTabs extends StatelessWidget {
+  const _AuthenticationModeTabs({
+    required this.registerSelected,
+    required this.onSelected,
+  });
+
+  final bool registerSelected;
+  final ValueChanged<bool> onSelected;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    key: const ValueKey('auth-mode-tablist-semantics'),
+    container: true,
+    explicitChildNodes: true,
+    role: SemanticsRole.tabBar,
+    label: 'Действие с аккаунтом',
+    child: Container(
+      key: const ValueKey('auth-mode-switcher'),
+      padding: const EdgeInsets.all(GcSpacing.x1),
+      decoration: BoxDecoration(
+        color: GcColors.surface,
+        borderRadius: BorderRadius.circular(GcRadii.md),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _AuthenticationModeTab(
+              label: 'Войти',
+              selected: !registerSelected,
+              onPressed: () => onSelected(false),
+            ),
+          ),
+          const SizedBox(width: GcSpacing.x1),
+          Expanded(
+            child: _AuthenticationModeTab(
+              label: 'Регистрация',
+              selected: registerSelected,
+              onPressed: () => onSelected(true),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _AuthenticationModeTab extends StatelessWidget {
+  const _AuthenticationModeTab({
+    required this.label,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    key: ValueKey('auth-mode-tab-$label'),
+    button: true,
+    selected: selected,
+    role: SemanticsRole.tab,
+    onTap: onPressed,
+    child: SizedBox(
+      height: GcLayout.control,
+      child: Material(
+        color: selected ? GcColors.raised : Colors.transparent,
+        borderRadius: BorderRadius.circular(GcRadii.sm),
+        child: InkWell(
+          excludeFromSemantics: true,
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(GcRadii.sm),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? GcColors.text : GcColors.textSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                height: 20 / 14,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
   );
 }
 

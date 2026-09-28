@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui' show SemanticsRole, Tristate;
 
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/screens/auth_screen.dart';
@@ -59,6 +60,50 @@ void main() {
 
     expect(tester.getSize(find.byKey(const ValueKey('auth-card'))).width, 440);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('auth mode tabs match web sizing and tab semantics', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(ApiClient())..phase = AppPhase.signedOut;
+    addTearDown(state.dispose);
+    final semantics = tester.ensureSemantics();
+
+    await tester.pumpWidget(MaterialApp(home: AuthScreen(state: state)));
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('auth-mode-switcher'))).height,
+      48,
+    );
+    final tabList = tester.getSemantics(
+      find.byKey(const ValueKey('auth-mode-tablist-semantics')),
+    );
+    expect(tabList.getSemanticsData().role, SemanticsRole.tabBar);
+
+    final loginTab = tester.getSemantics(
+      find.byKey(const ValueKey('auth-mode-tab-Войти')),
+    );
+    expect(loginTab.getSemanticsData().role, SemanticsRole.tab);
+    expect(
+      loginTab.getSemanticsData().flagsCollection.isSelected,
+      Tristate.isTrue,
+    );
+
+    await tester.tap(find.text('Регистрация'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .getSemantics(find.byKey(const ValueKey('auth-mode-tab-Регистрация')))
+          .getSemanticsData()
+          .flagsCollection
+          .isSelected,
+      Tristate.isTrue,
+    );
+    expect(tester.takeException(), isNull);
+    semantics.dispose();
   });
 
   testWidgets('login keeps focus and entered text through app-state rebuilds', (

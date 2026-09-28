@@ -1,0 +1,38 @@
+{
+  "id": "QA-82",
+  "kind": "auth-tabs-web-parity",
+  "status": "PASS_LOCAL_WITH_VISUAL_DEVICE_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-28",
+  "source_revision": "working-tree-after-41561a2",
+  "summary": "Replaced Flutter's default Material auth SegmentedButton with the web-authentication.css tablist geometry, colors, and explicit tab semantics.",
+  "reference": {
+    "source": "frontend/src/design/authentication.css",
+    "contract": "48 px tablist height (4 px inset + 40 px tabs), 4 px gap, 10 px outer radius, 6 px selected radius; frontend/src/identity/AuthenticationLanding.vue exposes role=tablist and role=tab with aria-selected."
+  },
+  "checks": [
+    {
+      "name": "Web auth structure",
+      "status": "PASS",
+      "observation": "Opened https://v.bootybay.ru/ in the in-app browser; the accessibility tree exposes the account action as a tab group with Войти selected and Регистрация available."
+    },
+    {
+      "name": "Flutter auth geometry and semantics",
+      "command": "cd desktop && flutter test test/auth_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 9 auth widget tests passed. New regression verifies 48 px outer selector height, tabBar/tab roles, and selected state changing to Регистрация."
+    },
+    {
+      "name": "Full Flutter regression suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "All 224 Flutter unit/widget tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "remaining": "Capture matched browser/Flutter screenshots and verify the selector visually on physical Android, macOS and Windows."
+}

@@ -238,6 +238,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   сохранить нативные server/reset actions и стабильные focus nodes —
   [QA-42](../evidence/flutter/qa42-auth-layout-web-parity-2026-09-28-001.json).
   Android Gboard и matched screenshots остаются отдельной device-проверкой.
+- [x] Заменить Material `SegmentedButton` на web-эквивалент auth tablist: 48 px
+  outer control, 4 px inset/gap, 40 px tabs, selected colors и явные
+  `tablist`/`tab` semantics; целевой auth suite и analyzer прошли —
+  [QA-82](../evidence/flutter/qa82-auth-tabs-web-parity-2026-09-28-001.json).
+  Matched screenshots остаются в общем visual gate.
 - [x] Выровнять own-profile mutation с web/backend: display name валидируется по Unicode code points без trim/графемного maxLength, оба password поля используют диапазон 12–128, feedback объявляется как live region, при открытии focus переходит на семантический заголовок — [QA-48](../evidence/flutter/qa48-profile-mutation-validation-focus-web-parity-2026-09-28-001.json).
 - [ ] Завершить оставшуюся auth/profile acceptance на Samsung/Gboard и реальных screen readers; matched screenshots и keyboard/focus проверка остаются открытыми.
 - [x] Разделить password validation по режимам: login принимает любое непустое
