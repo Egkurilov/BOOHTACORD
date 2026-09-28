@@ -1,0 +1,43 @@
+{
+  "id": "QA-69",
+  "date": "2026-09-28",
+  "status": "PASS_WITH_PHYSICAL_DEVICE_ACCEPTANCE_OPEN",
+  "summary": "Added Android USB microphone enumeration and Android 12+ USB communication-output routing to native audio settings, while preserving existing LiveKit routes and clearing USB overrides when voice ends.",
+  "source_revision": "f800d12",
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test",
+      "observation": "All 194 Flutter tests passed, including USB method-channel mapping, output route selection/clear, hotplug enrichment, and existing audio scan race coverage."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter analyze",
+      "observation": "No issues found."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build apk --release",
+      "observation": "Android release APK built successfully as ru.boohtacord.app version 1.0.0 (versionCode 1); Kotlin native USB enumeration and routing code compiled."
+    },
+    {
+      "result": "PASS",
+      "command": "apksigner verify --verbose --print-certs artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+      "observation": "APK Signature Scheme v2 verified with signing certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b."
+    },
+    {
+      "result": "PASS",
+      "observation": "The generated APK replaced the previous binary at the same tracked path; only one current APK is tracked. The previous binary remains in Git history."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Connect physical USB microphone/headset devices on Android; verify names, hotplug, capture input, Android 12+ output route switching, reconnect and audible output. Desktop device enumeration/switching acceptance also remains open."
+    }
+  ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+    "size_bytes": 95914072,
+    "sha256": "0dea9a0058602eec20bb2bc5f3d65ac21a8eb0940dc62b3350f362933212b66d",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b"
+  }
+}
