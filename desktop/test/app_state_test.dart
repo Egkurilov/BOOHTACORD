@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart' show MediaDevice;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -174,6 +175,65 @@ void main() {
     expect(state.audioOutputDevices.single.deviceId, 'usb-speaker');
     expect(state.selectedAudioInputId, isNull);
   });
+
+  test(
+    'retains Android USB routes after a WebRTC device-change event',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      const audioChannel = MethodChannel('boohtacord/audio_devices');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(audioChannel, (call) async {
+            if (call.method == 'enumerateUsb') {
+              return [
+                {
+                  'deviceId': '41',
+                  'kind': 'audioinput',
+                  'label': 'USB microphone',
+                  'groupId': 'usb:41',
+                },
+                {
+                  'deviceId': 'android-usb-route:42',
+                  'kind': 'audiooutput',
+                  'label': 'USB headset',
+                  'groupId': 'usb:42',
+                },
+              ];
+            }
+            return null;
+          });
+      final changes = StreamController<List<MediaDevice>>.broadcast();
+      final state = AppState(
+        _FakeApi(topology),
+        audioDeviceLoader: () async => const [],
+        audioDeviceChanges: changes.stream,
+      );
+      addTearDown(() async {
+        debugDefaultTargetPlatformOverride = null;
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(audioChannel, null);
+        state.dispose();
+        await changes.close();
+      });
+      await state.initialize();
+      state.toggleWorkspacePanel(WorkspacePanel.audio);
+
+      changes.add(const [
+        MediaDevice('default-mic', 'Microphone', 'audioinput', null),
+        MediaDevice('default-speaker', 'Speaker', 'audiooutput', null),
+      ]);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        state.audioInputDevices.map((device) => device.deviceId),
+        contains('41'),
+      );
+      expect(
+        state.audioOutputDevices.map((device) => device.deviceId),
+        contains('android-usb-route:42'),
+      );
+    },
+  );
 
   test('does not replace a hotplug event with a stale device scan', () async {
     final changes = StreamController<List<MediaDevice>>.broadcast();

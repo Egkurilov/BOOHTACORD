@@ -3,7 +3,10 @@ package ru.boohtacord.app
 import android.app.Activity
 import android.app.ActivityManager
 import android.content.Intent
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -14,6 +17,8 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     private val channelName = "boohtacord/download"
     private val screenShareChannelName = "boohtacord/screen_share"
+    private val audioDevicesChannelName = "boohtacord/audio_devices"
+    private val usbOutputRoutePrefix = "android-usb-route:"
     private val backgroundServiceClassName =
         "de.julianassmann.flutter_background.IsolateHolderService"
     private val requestCode = 7641
@@ -86,6 +91,72 @@ class MainActivity : FlutterActivity() {
                 }
 
                 checkForegroundState()
+            }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, audioDevicesChannelName)
+            .setMethodCallHandler { call, result ->
+                val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+                when (call.method) {
+                    "enumerateUsb" -> {
+                        val usbTypes = setOf(
+                            AudioDeviceInfo.TYPE_USB_DEVICE,
+                            AudioDeviceInfo.TYPE_USB_HEADSET,
+                        )
+                        val devices = mutableListOf<Map<String, String>>()
+
+                        val inputs = audioManager
+                            .getDevices(AudioManager.GET_DEVICES_INPUTS)
+                            .filter { it.type in usbTypes }
+                        inputs.forEachIndexed { index, device ->
+                            devices += mapOf(
+                                "deviceId" to device.id.toString(),
+                                "kind" to "audioinput",
+                                "label" to device.productName.toString().ifBlank {
+                                    "USB-микрофон ${index + 1}"
+                                },
+                                "groupId" to "usb:${device.id}",
+                            )
+                        }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            audioManager.availableCommunicationDevices
+                                .filter { it.type in usbTypes }
+                                .forEachIndexed { index, device ->
+                                    devices += mapOf(
+                                        "deviceId" to usbOutputRoutePrefix + device.id,
+                                        "kind" to "audiooutput",
+                                        "label" to device.productName.toString().ifBlank {
+                                            "USB-аудиоустройство ${index + 1}"
+                                        },
+                                        "groupId" to "usb:${device.id}",
+                                    )
+                                }
+                        }
+                        result.success(devices)
+                    }
+                    "selectUsbOutput" -> {
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                            result.success(false)
+                            return@setMethodCallHandler
+                        }
+                        val requestedId = call.argument<String>("deviceId")
+                            ?.toIntOrNull()
+                        val route = audioManager.availableCommunicationDevices
+                            .firstOrNull {
+                                it.id == requestedId &&
+                                    (it.type == AudioDeviceInfo.TYPE_USB_DEVICE ||
+                                        it.type == AudioDeviceInfo.TYPE_USB_HEADSET)
+                            }
+                        result.success(route != null && audioManager.setCommunicationDevice(route))
+                    }
+                    "clearUsbOutput" -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            audioManager.clearCommunicationDevice()
+                        }
+                        result.success(null)
+                    }
+                    else -> result.notImplemented()
+                }
             }
     }
 

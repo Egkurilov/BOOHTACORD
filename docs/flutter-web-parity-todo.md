@@ -46,9 +46,14 @@ peer/platform-проверки и выравниваем viewer с вебом.
   подавление старой ошибки после hotplug, а также distinct loading/empty/error
   состояния панели и работа ручной кнопки обновления после завершения scan
   покрыты локальными тестами. Повторный запрос после первого
-  mic capture реализован,
-  локальная проверка — [QA-14](../evidence/flutter/qa14-audio-device-refresh-2026-09-27-001.json),
-  но физическая проверка на macOS/Windows/Android остаётся открытой.
+  mic capture реализован; Android теперь дополняет WebRTC-список именованными
+  USB-входами и Android 12+ USB-выходами, применяет системный communication
+  route только во время голосовой сессии и снимает его при leave/disconnect.
+  Локальная регрессия для refresh/hotplug —
+  [QA-14](../evidence/flutter/qa14-audio-device-refresh-2026-09-27-001.json),
+  [QA-69](../evidence/flutter/qa69-android-usb-audio-routes-2026-09-28-001.json);
+  проверка именованных устройств, hotplug и слышимого переключения на Android
+  12+ с физическими USB-аудиоустройствами остаётся открытой.
 - [ ] На каждой платформе проверить разрешение screen share, OS-level stop,
   Android 14+ MediaProjection service и реальный захват у peer.
 - [ ] На реальных peers проверить microphone/screen-audio gain, mute/deafen/PTT,

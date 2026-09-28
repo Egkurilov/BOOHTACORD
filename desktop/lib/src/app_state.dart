@@ -14,6 +14,7 @@ import 'guild_presence_state.dart';
 import 'models.dart';
 import 'services/api_client.dart';
 import 'services/audio_preferences.dart';
+import 'services/android_audio_devices.dart';
 import 'services/password_reset_link.dart';
 import 'services/screen_share_quality.dart';
 import 'services/screen_share_metrics.dart';
@@ -74,8 +75,19 @@ class AppState extends ChangeNotifier {
     api.onUnauthorized = _handleUnauthorized;
   }
 
-  static Future<List<MediaDevice>> _enumerateAudioDevices() =>
-      Hardware.instance.enumerateDevices();
+  static Future<List<MediaDevice>> _enumerateAudioDevices() async {
+    final devices = await Hardware.instance.enumerateDevices();
+    final additional = await AndroidAudioDevices.enumerateAdditionalDevices();
+    final knownIds = devices
+        .map((device) => '${device.kind}:${device.deviceId}')
+        .toSet();
+    return [
+      ...devices,
+      ...additional.where(
+        (device) => !knownIds.contains('${device.kind}:${device.deviceId}'),
+      ),
+    ];
+  }
 
   final ApiClient api;
   final Future<List<MediaDevice>> Function() _audioDeviceLoader;
@@ -648,10 +660,11 @@ class AppState extends ChangeNotifier {
       _audioDeviceSubscription ??=
           (_audioDeviceChanges ?? Hardware.instance.onDeviceChange.stream)
               .listen((devices) {
-                _audioDeviceRevision++;
+                final revision = ++_audioDeviceRevision;
                 audioDeviceScanFailed = false;
                 _applyAudioDevices(devices);
                 notifyListeners();
+                unawaited(_applyAndroidAudioDeviceAdditions(devices, revision));
               });
       unawaited(refreshAudioDevices());
     }
@@ -717,6 +730,24 @@ class AppState extends ChangeNotifier {
         unawaited(refreshAudioDevices());
       }
     }
+  }
+
+  Future<void> _applyAndroidAudioDeviceAdditions(
+    List<MediaDevice> baseDevices,
+    int revision,
+  ) async {
+    final additional = await AndroidAudioDevices.enumerateAdditionalDevices();
+    if (revision != _audioDeviceRevision || additional.isEmpty) return;
+    final knownIds = baseDevices
+        .map((device) => '${device.kind}:${device.deviceId}')
+        .toSet();
+    _applyAudioDevices([
+      ...baseDevices,
+      ...additional.where(
+        (device) => !knownIds.contains('${device.kind}:${device.deviceId}'),
+      ),
+    ]);
+    notifyListeners();
   }
 
   void _refreshAudioDevicesAfterMicrophoneCapture() {
@@ -789,9 +820,16 @@ class AppState extends ChangeNotifier {
     if (device == null) return;
     final previous = selectedAudioOutputId;
     try {
-      if (_room != null) {
+      if (AndroidAudioDevices.isUsbOutput(device.deviceId)) {
+        if (_room != null &&
+            !await AndroidAudioDevices.selectUsbOutput(device.deviceId)) {
+          throw StateError('Android не смог переключить USB-аудиовыход.');
+        }
+      } else if (_room != null) {
+        await AndroidAudioDevices.clearUsbOutput();
         await _room!.setAudioOutputDevice(device);
       } else {
+        await AndroidAudioDevices.clearUsbOutput();
         await Hardware.instance.selectAudioOutput(device);
       }
       selectedAudioOutputId = device.deviceId;
@@ -2300,7 +2338,9 @@ class AppState extends ChangeNotifier {
           dynacast: true,
           defaultAudioCaptureOptions: _audioCaptureOptions,
           defaultAudioOutputOptions: AudioOutputOptions(
-            deviceId: selectedAudioOutputId,
+            deviceId: AndroidAudioDevices.isUsbOutput(selectedAudioOutputId)
+                ? null
+                : selectedAudioOutputId,
           ),
         ),
       );
@@ -2316,6 +2356,15 @@ class AppState extends ChangeNotifier {
       pendingRoom = room;
       _bindVoiceRoomEvents(room);
       await room.connect(result.$2.url, result.$2.token);
+      if (AndroidAudioDevices.isUsbOutput(selectedAudioOutputId)) {
+        if (!await AndroidAudioDevices.selectUsbOutput(
+          selectedAudioOutputId!,
+        )) {
+          throw StateError(
+            'Android не смог выбрать сохранённый USB-аудиовыход.',
+          );
+        }
+      }
       final revokedReason = _revokedVoiceLeasesDuringJoin.remove(result.$1);
       if (revokedReason != null) {
         await _finishRevokedVoiceAdmission(room, result.$1, revokedReason);
@@ -2377,6 +2426,9 @@ class AppState extends ChangeNotifier {
       try {
         await pendingRoom?.disconnect();
       } catch (_) {}
+      try {
+        await AndroidAudioDevices.clearUsbOutput();
+      } catch (_) {}
       await _disposeVoiceEvents();
       final leaseId = _leaseId;
       if (leaseId != null) {
@@ -2412,6 +2464,9 @@ class AppState extends ChangeNotifier {
       await room.disconnect();
     } catch (_) {}
     await _disposeVoiceEvents();
+    try {
+      await AndroidAudioDevices.clearUsbOutput();
+    } catch (_) {}
     if (identical(_room, room)) _room = null;
     if (_leaseId == leaseId) _leaseId = null;
     voiceChannel = null;
@@ -2877,6 +2932,9 @@ class AppState extends ChangeNotifier {
       _ => 'Связь с голосовым каналом потеряна. Подключитесь ещё раз.',
     };
     await _disposeVoiceEvents();
+    try {
+      await AndroidAudioDevices.clearUsbOutput();
+    } catch (_) {}
     if (leaseId != null) {
       try {
         await api.releaseVoice(leaseId);
@@ -2997,6 +3055,9 @@ class AppState extends ChangeNotifier {
     final leaseId = _leaseId;
     try {
       await _room?.disconnect();
+    } catch (_) {}
+    try {
+      await AndroidAudioDevices.clearUsbOutput();
     } catch (_) {}
     await _disposeVoiceEvents();
     if (leaseId != null) {
