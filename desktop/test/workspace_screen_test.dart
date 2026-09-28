@@ -373,12 +373,24 @@ void main() {
       ),
       isFalse,
     );
+    expect(find.byTooltip('Начать демонстрацию экрана'), findsNWidgets(2));
+    await tester.tap(find.byTooltip('Начать демонстрацию экрана').first);
+    await tester.pump();
+    expect(find.text('Демонстрация экрана'), findsOneWidget);
+    expect(find.text('Качество трансляции'), findsOneWidget);
+    await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
 
     state.voicePhase = VoicePhase.joining;
     state.notifyListeners();
     await tester.pump();
     expect(find.text('Подключаемся к голосовому каналу'), findsOneWidget);
     expect(find.text('Соединяемся с голосовой комнатой.'), findsOneWidget);
+    final dockShareAction = find.descendant(
+      of: find.byTooltip('Начать демонстрацию экрана').first,
+      matching: find.byType(InkWell),
+    );
+    expect(tester.widget<InkWell>(dockShareAction).onTap, isNull);
 
     state.deafenChanging = true;
     state.notifyListeners();

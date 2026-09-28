@@ -3709,20 +3709,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
   }
 
   Future<void> _toggleLocalScreenShare(AppState state) async {
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      await state.startScreenShare();
-      return;
-    }
-    final selection = await ScreenShareSetupDialog.show(
-      context,
-      initialQuality: state.screenShareQuality,
-      allowSourceSelection: defaultTargetPlatform != TargetPlatform.android,
-    );
-    if (!mounted || selection == null) return;
-    await state.startScreenShare(
-      sourceId: selection.sourceId,
-      quality: selection.quality,
-    );
+    await _showScreenShareSetup(context, state);
   }
 
   Future<void> _openScreenFullscreen({
@@ -4000,6 +3987,23 @@ class _VoiceRosterPreview extends StatelessWidget {
         ],
       ],
     ),
+  );
+}
+
+Future<void> _showScreenShareSetup(BuildContext context, AppState state) async {
+  if (defaultTargetPlatform == TargetPlatform.iOS) {
+    await state.startScreenShare();
+    return;
+  }
+  final selection = await ScreenShareSetupDialog.show(
+    context,
+    initialQuality: state.screenShareQuality,
+    allowSourceSelection: defaultTargetPlatform != TargetPlatform.android,
+  );
+  if (!context.mounted || selection == null) return;
+  await state.startScreenShare(
+    sourceId: selection.sourceId,
+    quality: selection.quality,
   );
 }
 
@@ -5177,6 +5181,29 @@ class _VoiceDock extends StatelessWidget {
                   !state.deafenChanging &&
                   state.voicePhase != VoicePhase.leaving,
               onTap: state.toggleDeafen,
+            ),
+            _VoiceDockButton(
+              tooltip: switch (state.screenSharePhase) {
+                ScreenSharePhase.starting => 'Запускаем демонстрацию экрана…',
+                ScreenSharePhase.stopping => 'Останавливаем демонстрацию…',
+                ScreenSharePhase.sharing => 'Остановить демонстрацию экрана',
+                _ => 'Начать демонстрацию экрана',
+              },
+              icon: state.screenSharePhase == ScreenSharePhase.sharing
+                  ? Icons.stop_screen_share_outlined
+                  : Icons.screen_share_outlined,
+              danger: state.screenSharePhase == ScreenSharePhase.sharing,
+              enabled: switch (state.screenSharePhase) {
+                ScreenSharePhase.starting || ScreenSharePhase.stopping => false,
+                ScreenSharePhase.sharing =>
+                  state.voicePhase != VoicePhase.leaving,
+                _ =>
+                  state.voicePhase == VoicePhase.connected ||
+                      state.voicePhase == VoicePhase.listener,
+              },
+              onTap: state.screenSharePhase == ScreenSharePhase.sharing
+                  ? state.stopScreenShare
+                  : () => unawaited(_showScreenShareSetup(context, state)),
             ),
             _VoiceDockButton(
               tooltip: state.voiceStreamSoundEnabled

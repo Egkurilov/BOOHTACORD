@@ -71,6 +71,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-54](../evidence/flutter/qa54-voice-stream-start-alert-web-parity-2026-09-28-001.json).
   Слышимость системного сигнала и реальные LiveKit события на macOS/Windows/
   Android остаются открытой device-приёмкой.
+- [x] Добавить в постоянный voice dock start/stop демонстрации с тем же picker
+  качества и источника, что и в voice viewer; блокировать запуск во время
+  joining/reconnecting и переходных состояний публикации — локальная проверка
+  [QA-55](../evidence/flutter/qa55-voice-dock-screen-share-control-2026-09-28-001.json).
+  OS permission, публикация и stop должны быть приняты на физических устройствах
+  в незакрытом P0 full-path пункте выше.
 - [x] Вынести rail выбора трансляции из наложения на видеокадр под stage,
   выровнять stream cards с web и показывать selected/audio состояния с
   screen-reader подсказкой — [QA-37](../evidence/flutter/qa37-voice-viewer-rail-web-parity-2026-09-28-001.json).
