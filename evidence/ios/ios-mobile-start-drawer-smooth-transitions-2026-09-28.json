@@ -1,0 +1,47 @@
+{
+  "id": "ios-mobile-start-drawer-smooth-transitions-2026-09-28",
+  "kind": "mobile-navigation-build-and-wired-install",
+  "status": "PASS_STATIC_BUILD_INSTALL_WITH_DEVICE_LAUNCH_LOCKED",
+  "executed_at": "2026-09-28",
+  "source_revision": "commit containing the mobile start drawer, transitions and direct voice entry changes after synchronization with origin/master",
+  "environment": {
+    "xcode": "27.0 (27A266a)",
+    "device": "iPhone 17, iOS 27.0, connected by cable",
+    "bundle_id": "ru.boohtacord.app",
+    "build_mode": "ios-release"
+  },
+  "observer": "Local Flutter tests, Xcode build and CoreDevice installation",
+  "scenario": {
+    "objective": "Open the existing navigation drawer on mobile entry with chat and voice choices, join a tapped voice room directly, and smooth swipe transitions.",
+    "expected": "Choosing a section only filters channels; tapping a voice room starts admission and retries once with transfer after ACTIVE_VOICE_LEASE. Drawers, voice dock and fullscreen viewer animate."
+  },
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter analyze --no-pub && flutter test",
+      "observation": "No analyzer issues; all 217 Flutter tests passed, including startup drawer, direct voice admission, single transfer retry and transition tests."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build ios --release && codesign --verify --deep --strict build/ios/iphoneos/Runner.app",
+      "observation": "Signed release build and strict signature verification completed."
+    },
+    {
+      "result": "PASS",
+      "command": "xcrun devicectl device install app --device <connected iPhone> desktop/build/ios/iphoneos/Runner.app",
+      "observation": "Installed ru.boohtacord.app in place without uninstalling it."
+    },
+    {
+      "result": "BLOCKED_DEVICE_LOCKED",
+      "command": "xcrun devicectl device process launch --device <connected iPhone> ru.boohtacord.app",
+      "observation": "CoreDevice denied launch because the iPhone was locked after successful in-place installation. A retry is pending device unlock."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "desktop/build/ios/iphoneos/Runner.app/Runner (local ignored build output)",
+      "sha256": "1163beca5c4a6727a335d5d9b155dac8fe126ca6e50a6f67eba0768eb013d945"
+    }
+  ],
+  "limitations": "The drawer, gestures and real voice transfer were covered by automated tests only, not manually observed on the phone. The final build installed but could not launch while the phone was locked. Login state and private app data were not inspected."
+}

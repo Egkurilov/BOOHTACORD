@@ -944,8 +944,14 @@ void main() {
     expect(find.byTooltip('Выйти из голосового канала'), findsOneWidget);
     expect(tester.getRect(dock).bottom, lessThanOrEqualTo(844));
 
+    final collapsedHeight = tester.getRect(dock).height;
     await tester.drag(dock, const Offset(0, -90));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final animatingHeight = tester.getRect(dock).height;
+    expect(animatingHeight, greaterThan(collapsedHeight));
     await tester.pumpAndSettle();
+    expect(tester.getRect(dock).height, greaterThan(animatingHeight));
     expect(find.byTooltip('Свернуть голосовую панель'), findsOneWidget);
     expect(
       find.textContaining('Вы можете открыть другой канал'),

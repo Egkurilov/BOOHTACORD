@@ -177,7 +177,6 @@ class AppState extends ChangeNotifier {
   String? pushToTalkKeyLabel;
   String? audioActivationError;
   bool pushToTalkPressed = false;
-  bool transferRequired = false;
   bool _mutedBeforeDeafen = false;
   bool _microphoneMutedBeforePtt = false;
   Room? _room;
@@ -355,7 +354,6 @@ class AppState extends ChangeNotifier {
     pushToTalkKeyLabel = null;
     pushToTalkPressed = false;
     audioActivationError = null;
-    transferRequired = false;
     voicePhase = VoicePhase.idle;
     _clearVoiceStreamNotice(resetTracker: true, notify: false);
     error = null;
@@ -1683,6 +1681,16 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<void> enterVoiceChannel(GuildChannel channel) async {
+    await selectChannel(channel);
+    if (channel.kind != ChannelKind.voice || channel.admissionClosed) return;
+    if (voiceChannel?.id == channel.id || voicePhase == VoicePhase.joining) {
+      return;
+    }
+    if (voiceChannel != null) await leaveVoice();
+    await joinVoice(channel);
+  }
+
   Future<bool> loadOlderMessages() async {
     final channel = selectedChannel;
     final cursor = nextMessageCursor;
@@ -1935,7 +1943,6 @@ class AppState extends ChangeNotifier {
     deafened = false;
     pushToTalkPressed = false;
     _listenerOnly = false;
-    transferRequired = false;
     error = VoiceLeaseRevocation(leaseId: leaseId, reason: reason).message;
     notifyListeners();
   }
@@ -2311,19 +2318,24 @@ class AppState extends ChangeNotifier {
 
   Future<void> joinVoice(
     GuildChannel channel, {
-    bool transfer = false,
     bool listenerOnly = false,
   }) async {
     if (channel.admissionClosed) return;
+    if (voiceChannel?.id == channel.id && _room != null) return;
     voicePhase = VoicePhase.joining;
     _voiceAdmissionPending = true;
     microphoneUnavailable = false;
     error = null;
-    transferRequired = false;
     notifyListeners();
     Room? pendingRoom;
     try {
-      final result = await api.voiceCredential(channel.id, transfer: transfer);
+      late final (String, VoiceCredential) result;
+      try {
+        result = await api.voiceCredential(channel.id);
+      } on ApiFailure catch (cause) {
+        if (cause.code != 'ACTIVE_VOICE_LEASE') rethrow;
+        result = await api.voiceCredential(channel.id, transfer: true);
+      }
       _leaseId = result.$1;
       final revocationDuringAdmission = _revokedVoiceLeasesDuringJoin.remove(
         result.$1,
@@ -2447,11 +2459,7 @@ class AppState extends ChangeNotifier {
       _leaseId = null;
       voiceChannel = null;
       voicePhase = VoicePhase.error;
-      transferRequired =
-          cause is ApiFailure && cause.code == 'ACTIVE_VOICE_LEASE';
-      error = transferRequired
-          ? 'Голос уже подключён в другом окне. Перенесите подключение сюда или выйдите из того окна.'
-          : _message(cause);
+      error = _message(cause);
     }
     notifyListeners();
   }
@@ -3077,7 +3085,6 @@ class AppState extends ChangeNotifier {
     _room = null;
     _leaseId = null;
     voiceChannel = null;
-    transferRequired = false;
     microphoneMuted = false;
     microphoneUnavailable = false;
     deafened = false;

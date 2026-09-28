@@ -67,7 +67,7 @@ Each long-running runtime container uses JSON log rotation (10 MiB × 3 files). 
 
 1. Browser obtains an opaque session through login.
 2. Protected REST and same-origin WebSocket use that cookie; the WebSocket sends `connection.ready`, requires refresh on `connection.resync_required`, and periodically rechecks the session.
-3. A user explicitly requests a voice lease. `ACTIVE_VOICE_LEASE` requires an explicit transfer choice.
+3. A user explicitly requests a voice lease. The browser asks for an explicit transfer choice on `ACTIVE_VOICE_LEASE`. The mobile Flutter client treats a tap on a specific voice channel as authorization for one transfer attempt under [ADR-012](../../adr/ADR-012-mobile-voice-direct-entry.md).
 4. The API issues a short-lived LiveKit credential for the active lease. The credential exists only in the in-memory media client.
 5. Caddy asks the private API to admit every `/rtc` signal connection or reconnect. The API verifies the token and current lease/session/channel/account state.
 6. Logout, block, kick or closed admission revoke logical leases, record a durable SFU-revocation request and stop future signal admission. POC-03 is still required to prove connected-media/replay results.

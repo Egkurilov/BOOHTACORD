@@ -20,6 +20,10 @@ void main() {
     );
     await tester.dragFrom(const Offset(300, 300), const Offset(0, 120));
     await tester.pump();
+    expect(closes, 0);
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(closes, 0);
+    await tester.pumpAndSettle();
     expect(closes, 1);
     await tester.tap(find.byTooltip('Выйти из полноэкранного режима'));
     expect(closes, 1);

@@ -1,10 +1,100 @@
 import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
+import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('mobile opens the navigation drawer for chat or voice choice', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    const textChannel = GuildChannel(
+      id: 'text-1',
+      name: 'общий',
+      kind: ChannelKind.text,
+      admissionClosed: false,
+    );
+    const voiceChannel = GuildChannel(
+      id: 'voice-1',
+      name: 'Комната команды',
+      kind: ChannelKind.voice,
+      admissionClosed: false,
+    );
+    final api = _VoiceEntryApi();
+    final state = AppState(api)
+      ..phase = AppPhase.ready
+      ..user = const SessionUser(accountId: 'account-1', role: 'MEMBER')
+      ..selectedChannel = textChannel
+      ..topology = const ChannelTopology(
+        revision: 1,
+        categories: [
+          ChannelCategory(
+            id: 'category-1',
+            name: 'Каналы',
+            channels: [textChannel, voiceChannel],
+          ),
+        ],
+      );
+    await tester.pumpWidget(BoohtacordApp(state: state));
+    await tester.pumpAndSettle();
+
+    final drawer = find.byKey(const ValueKey('mobile-sidebar'));
+    expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+    expect(
+      find.descendant(of: drawer, matching: find.text('Куда пойдём?')),
+      findsOneWidget,
+    );
+    await tester.tap(find.descendant(of: drawer, matching: find.text('Голос')));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: drawer, matching: find.text('общий')),
+      findsNothing,
+    );
+    await tester.tap(find.text('Комната команды'));
+    await tester.pumpAndSettle();
+    expect(state.selectedChannel?.id, voiceChannel.id);
+    expect(api.voiceCredentialCalls, 1);
+    expect(state.voicePhase, VoicePhase.error);
+    expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+    expect(find.byKey(const ValueKey('workspace-header')), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('mobile drawer choice fits 320 dp with no voice rooms', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 640);
+    addTearDown(tester.view.reset);
+    final state = AppState(ApiClient())
+      ..phase = AppPhase.ready
+      ..user = const SessionUser(accountId: 'account-1', role: 'MEMBER')
+      ..topology = const ChannelTopology(revision: 1, categories: []);
+    await tester.pumpWidget(BoohtacordApp(state: state));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Куда пойдём?'), findsOneWidget);
+    await tester.tap(find.text('Голос'));
+    await tester.pumpAndSettle();
+    expect(find.text('Голосовых каналов пока нет.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   testWidgets('shows a branded loading state while session is restored', (
     tester,
   ) async {
@@ -106,4 +196,17 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
   });
+}
+
+class _VoiceEntryApi extends ApiClient {
+  int voiceCredentialCalls = 0;
+
+  @override
+  Future<(String, VoiceCredential)> voiceCredential(
+    String channelId, {
+    bool transfer = false,
+  }) async {
+    voiceCredentialCalls++;
+    throw const ApiFailure('Проверочный отказ подключения');
+  }
 }

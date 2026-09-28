@@ -31,6 +31,7 @@ class BoohtacordApp extends StatelessWidget {
               AppPhase.ready => WorkspaceScreen(
                 state: state,
                 maintenanceBannerVisible: state.maintenanceActive,
+                openNavigationInitially: true,
               ),
             },
           ),

@@ -675,7 +675,7 @@ void main() {
     },
   );
 
-  test('offers an explicit transfer for an existing voice lease', () async {
+  test('retries an existing voice lease with transfer once', () async {
     final api = _FakeApi(
       topology,
       voiceFailure: const ApiFailure(
@@ -683,6 +683,7 @@ void main() {
         status: 409,
         code: 'ACTIVE_VOICE_LEASE',
       ),
+      transferFailure: const ApiFailure('Перенос недоступен', status: 503),
     );
     final state = AppState(api);
     addTearDown(state.dispose);
@@ -696,8 +697,28 @@ void main() {
     await state.joinVoice(voiceChannel);
 
     expect(state.voicePhase, VoicePhase.error);
-    expect(state.transferRequired, isTrue);
-    expect(state.error, contains('Перенесите подключение'));
+    expect(api.voiceTransferAttempts, [false, true]);
+    expect(state.error, contains('Перенос недоступен'));
+  });
+
+  test('does not transfer for an unrelated voice admission failure', () async {
+    final api = _FakeApi(
+      topology,
+      voiceFailure: const ApiFailure('Вход закрыт', status: 403),
+    );
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    const voiceChannel = GuildChannel(
+      id: 'voice-1',
+      name: 'Лобби',
+      kind: ChannelKind.voice,
+      admissionClosed: false,
+    );
+
+    await state.joinVoice(voiceChannel);
+
+    expect(api.voiceTransferAttempts, [false]);
+    expect(state.error, 'Вход закрыт');
   });
 
   test('loads a direct message and advances cursor after rendering', () async {
@@ -909,11 +930,14 @@ class _FakeApi extends ApiClient {
   _FakeApi(
     this.value, {
     this.voiceFailure,
+    this.transferFailure,
     this.includeDirectMessage = false,
     this.paginated = false,
   });
   ChannelTopology value;
   final ApiFailure? voiceFailure;
+  final ApiFailure? transferFailure;
+  final List<bool> voiceTransferAttempts = [];
   final bool includeDirectMessage;
   final bool paginated;
   int olderPageRequests = 0;
@@ -1301,7 +1325,12 @@ class _FakeApi extends ApiClient {
     String channelId, {
     bool transfer = false,
   }) async {
-    if (voiceFailure case final failure?) throw failure;
+    voiceTransferAttempts.add(transfer);
+    if (transfer) {
+      if (transferFailure case final failure?) throw failure;
+    } else if (voiceFailure case final failure?) {
+      throw failure;
+    }
     return (
       'lease-1',
       const VoiceCredential(url: 'wss://voice.example.test', token: 'token'),

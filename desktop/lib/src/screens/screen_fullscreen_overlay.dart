@@ -90,14 +90,37 @@ class ScreenFullscreenOverlay extends StatefulWidget {
       _ScreenFullscreenOverlayState();
 }
 
-class _ScreenFullscreenOverlayState extends State<ScreenFullscreenOverlay> {
+class _ScreenFullscreenOverlayState extends State<ScreenFullscreenOverlay>
+    with SingleTickerProviderStateMixin {
   double _verticalTravel = 0;
   bool _closing = false;
+  bool _dismissing = false;
+  late final AnimationController _dismissController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+  );
+  late final Animation<Offset> _dismissOffset =
+      Tween<Offset>(begin: Offset.zero, end: const Offset(0, 0.35)).animate(
+        CurvedAnimation(parent: _dismissController, curve: Curves.easeInCubic),
+      );
+
+  @override
+  void dispose() {
+    _dismissController.dispose();
+    super.dispose();
+  }
 
   void _close() {
     if (_closing) return;
     _closing = true;
     widget.onClose();
+  }
+
+  Future<void> _dismissBySwipe() async {
+    if (_closing || _dismissing) return;
+    _dismissing = true;
+    await _dismissController.forward();
+    if (mounted) _close();
   }
 
   @override
@@ -113,80 +136,86 @@ class _ScreenFullscreenOverlayState extends State<ScreenFullscreenOverlay> {
         }
         return KeyEventResult.ignored;
       },
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onVerticalDragStart:
-                defaultTargetPlatform == TargetPlatform.iOS ||
-                    defaultTargetPlatform == TargetPlatform.android
-                ? (_) => _verticalTravel = 0
-                : null,
-            onVerticalDragUpdate:
-                defaultTargetPlatform == TargetPlatform.iOS ||
-                    defaultTargetPlatform == TargetPlatform.android
-                ? (details) => _verticalTravel += details.delta.dy
-                : null,
-            onVerticalDragEnd:
-                defaultTargetPlatform == TargetPlatform.iOS ||
-                    defaultTargetPlatform == TargetPlatform.android
-                ? (_) {
-                    if (_verticalTravel > 80) _close();
-                    _verticalTravel = 0;
-                  }
-                : null,
-            child: ColoredBox(color: Colors.black, child: widget.video),
-          ),
-          Positioned(
-            left: 20,
-            top: 16,
-            child: SafeArea(
-              child: Semantics(
-                liveRegion: true,
-                label: 'Полноэкранный просмотр: ${widget.publisherName}',
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: const Color(0xCC141922),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0x446D7C94)),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.monitor_outlined, size: 17),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Экран ${widget.publisherName}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
+      child: SlideTransition(
+        position: _dismissOffset,
+        child: FadeTransition(
+          opacity: ReverseAnimation(_dismissController),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onVerticalDragStart:
+                    defaultTargetPlatform == TargetPlatform.iOS ||
+                        defaultTargetPlatform == TargetPlatform.android
+                    ? (_) => _verticalTravel = 0
+                    : null,
+                onVerticalDragUpdate:
+                    defaultTargetPlatform == TargetPlatform.iOS ||
+                        defaultTargetPlatform == TargetPlatform.android
+                    ? (details) => _verticalTravel += details.delta.dy
+                    : null,
+                onVerticalDragEnd:
+                    defaultTargetPlatform == TargetPlatform.iOS ||
+                        defaultTargetPlatform == TargetPlatform.android
+                    ? (_) {
+                        if (_verticalTravel > 80) _dismissBySwipe();
+                        _verticalTravel = 0;
+                      }
+                    : null,
+                child: ColoredBox(color: Colors.black, child: widget.video),
+              ),
+              Positioned(
+                left: 20,
+                top: 16,
+                child: SafeArea(
+                  child: Semantics(
+                    liveRegion: true,
+                    label: 'Полноэкранный просмотр: ${widget.publisherName}',
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xCC141922),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0x446D7C94)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.monitor_outlined, size: 17),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Экран ${widget.publisherName}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
-          Positioned(
-            right: 20,
-            top: 16,
-            child: SafeArea(
-              child: IconButton.filledTonal(
-                tooltip: 'Выйти из полноэкранного режима',
-                onPressed: _close,
-                icon: const Icon(Icons.fullscreen_exit_outlined),
+              Positioned(
+                right: 20,
+                top: 16,
+                child: SafeArea(
+                  child: IconButton.filledTonal(
+                    tooltip: 'Выйти из полноэкранного режима',
+                    onPressed: _close,
+                    icon: const Icon(Icons.fullscreen_exit_outlined),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     ),
   );

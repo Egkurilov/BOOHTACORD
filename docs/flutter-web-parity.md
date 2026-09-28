@@ -221,7 +221,9 @@ portrait and landscape Android share is checked in both web and Flutter viewers.
   and offers a retry. Push-to-talk mode instead asks for the assigned key to be
   held, so retry never opens the microphone outside the user's PTT gesture
   [QA-32](../evidence/flutter/qa32-voice-microphone-unavailable-fallback-2026-09-27-001.json).
-  Explicit transfer is a separate action. LiveKit reconnect/resume events now
+  Web keeps transfer as a separate action. In mobile Flutter navigation, tapping
+  a voice channel starts admission and retries once with transfer after
+  `ACTIVE_VOICE_LEASE` ([ADR-012](adr/ADR-012-mobile-voice-direct-entry.md)). LiveKit reconnect/resume events now
   surface a reconnecting state, preserve the current mic state and temporarily
   disable mic/deafen controls. Terminal disconnects clear local state and
   release the lease. The Flutter client now ends active-room recovery after
@@ -348,8 +350,8 @@ same-author messages, inserts local-date dividers and renders web-compatible
 body formatting, member-name mention picker and mention IDs in TEXT/DM history;
 HTTP(S) links open through the platform. TEXT and DM attachments now support
 native picking, authenticated upload, sending, protected preview and saving.
-Voice prejoin now includes a listener-only action and explicit
-transfer action; active rooms render participant cards/status and remote screen
+Voice prejoin retains a listener-only action, while mobile channel taps join
+directly and transfer an existing lease once when needed; active rooms render participant cards/status and remote screen
 viewing. Search now spans all conversations or the active channel/DM, opens
 server-centered context and returns to the originating conversation in a
 responsive side panel that preserves the active conversation. Screenshot and

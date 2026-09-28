@@ -46,7 +46,7 @@ All public REST routes are under `/api/v1`; JSON errors use `{ error: { code, me
 
 ### Voice and screen participant
 
-1. On an explicit join action, the client acquires a voice lease. A second active lease results in a visible transfer decision.
+1. On an explicit join action, the client acquires a voice lease. The browser presents a visible transfer decision for a second active lease. In the mobile Flutter client, tapping a specific voice channel also authorizes one automatic transfer attempt after `ACTIVE_VOICE_LEASE`, as defined by [ADR-012](../../adr/ADR-012-mobile-voice-direct-entry.md).
 2. The client obtains a credential immediately before LiveKit join and keeps token/url only in memory.
 3. Microphone and screen permissions are requested only from user actions. Permission denial can leave a listener connected where the SDK allows it.
 4. The viewer subscribes to only one chosen remote screen source; remote room voice remains separately attached. Deafen mutes local playout and local microphone without stopping a local screen share.

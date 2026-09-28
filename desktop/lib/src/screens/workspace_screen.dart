@@ -22,6 +22,7 @@ import '../widgets/message_attachment_list.dart';
 import '../widgets/screen_share_setup_dialog.dart';
 import '../widgets/formatted_message_body.dart';
 import '../widgets/horizontal_swipe_region.dart';
+import '../widgets/sliding_drawer_layer.dart';
 import '../widgets/voice_connection_badge.dart';
 import '../widgets/voice_microphone_unavailable_notice.dart';
 import 'profile_screen.dart';
@@ -37,9 +38,11 @@ class WorkspaceScreen extends StatefulWidget {
     super.key,
     required this.state,
     this.maintenanceBannerVisible = false,
+    this.openNavigationInitially = false,
   });
   final AppState state;
   final bool maintenanceBannerVisible;
+  final bool openNavigationInitially;
 
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -48,6 +51,7 @@ class WorkspaceScreen extends StatefulWidget {
 class _WorkspaceScreenState extends State<WorkspaceScreen>
     with WidgetsBindingObserver, WindowListener {
   bool _showMobileSidebar = false;
+  bool _initialNavigationApplied = false;
   bool _showMembersDrawer = false;
   bool _capturingPttKey = false;
   FocusNode? _drawerReturnFocus;
@@ -66,6 +70,19 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
         defaultTargetPlatform == TargetPlatform.windows) {
       windowManager.addListener(this);
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialNavigationApplied) return;
+    _initialNavigationApplied = true;
+    final mobile =
+        MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint &&
+        (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.android);
+    _showMobileSidebar =
+        widget.openNavigationInitially && widget.state.user != null && mobile;
   }
 
   @override
@@ -338,50 +355,68 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                         ),
                       ),
                     ),
-                    if (_showMobileSidebar ||
-                        _showMembersDrawer ||
-                        searchPanelModal)
-                      Positioned.fill(child: _DrawerScrim(onTap: _closeScrim)),
-                    if (_showMobileSidebar)
-                      Positioned(
-                        top: 0,
-                        bottom: 0,
-                        left: 0,
-                        width: (constraints.maxWidth - 40)
-                            .clamp(0.0, 320.0)
-                            .toDouble(),
-                        child: HorizontalSwipeRegion(
-                          onSwipeLeft: _closeDrawers,
-                          child: _DrawerSurface(
-                            child: _Sidebar(
-                              state: widget.state,
-                              showVoiceDock: false,
-                              onChannelSelected: _closeDrawers,
-                              onClose: _closeDrawers,
-                              onSearch: _toggleSearch,
-                              searchFocusNode: _searchTriggerFocus,
-                            ),
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        ignoring:
+                            !_showMobileSidebar &&
+                            !_showMembersDrawer &&
+                            !searchPanelModal,
+                        child: ExcludeSemantics(
+                          excluding:
+                              !_showMobileSidebar &&
+                              !_showMembersDrawer &&
+                              !searchPanelModal,
+                          child: AnimatedOpacity(
+                            opacity:
+                                _showMobileSidebar ||
+                                    _showMembersDrawer ||
+                                    searchPanelModal
+                                ? 1
+                                : 0,
+                            duration: const Duration(milliseconds: 240),
+                            curve: Curves.easeOutCubic,
+                            child: _DrawerScrim(onTap: _closeScrim),
                           ),
                         ),
                       ),
-                    if (_showMembersDrawer)
-                      Positioned(
-                        top: 0,
-                        bottom: 0,
-                        right: 0,
-                        width: (constraints.maxWidth - 40)
-                            .clamp(0.0, 320.0)
-                            .toDouble(),
-                        child: HorizontalSwipeRegion(
-                          onSwipeRight: _closeDrawers,
-                          child: _DrawerSurface(
-                            child: _MembersPanel(
-                              state: widget.state,
-                              onClose: _closeDrawers,
-                            ),
+                    ),
+                    SlidingDrawerLayer(
+                      visible: _showMobileSidebar,
+                      side: SlidingDrawerSide.left,
+                      width: (constraints.maxWidth - 40)
+                          .clamp(0.0, 320.0)
+                          .toDouble(),
+                      child: HorizontalSwipeRegion(
+                        onSwipeLeft: _closeDrawers,
+                        child: _DrawerSurface(
+                          child: _Sidebar(
+                            key: const ValueKey('mobile-sidebar'),
+                            state: widget.state,
+                            showVoiceDock: false,
+                            onChannelSelected: _closeDrawers,
+                            onClose: _closeDrawers,
+                            onSearch: _toggleSearch,
+                            searchFocusNode: _searchTriggerFocus,
                           ),
                         ),
                       ),
+                    ),
+                    SlidingDrawerLayer(
+                      visible: _showMembersDrawer,
+                      side: SlidingDrawerSide.right,
+                      width: (constraints.maxWidth - 40)
+                          .clamp(0.0, 320.0)
+                          .toDouble(),
+                      child: HorizontalSwipeRegion(
+                        onSwipeRight: _closeDrawers,
+                        child: _DrawerSurface(
+                          child: _MembersPanel(
+                            state: widget.state,
+                            onClose: _closeDrawers,
+                          ),
+                        ),
+                      ),
+                    ),
                     if (searchPanelModal)
                       Positioned(
                         top: 0,
@@ -593,8 +628,9 @@ class _DrawerSurfaceState extends State<_DrawerSurface> {
   );
 }
 
-class _Sidebar extends StatelessWidget {
+class _Sidebar extends StatefulWidget {
   const _Sidebar({
+    super.key,
     required this.state,
     this.showVoiceDock = true,
     this.onChannelSelected,
@@ -608,6 +644,25 @@ class _Sidebar extends StatelessWidget {
   final VoidCallback? onClose;
   final VoidCallback? onSearch;
   final FocusNode? searchFocusNode;
+
+  @override
+  State<_Sidebar> createState() => _SidebarState();
+}
+
+class _SidebarState extends State<_Sidebar> {
+  ChannelKind? _channelFilter;
+  AppState get state => widget.state;
+  bool get showVoiceDock => widget.showVoiceDock;
+  VoidCallback? get onChannelSelected => widget.onChannelSelected;
+  VoidCallback? get onClose => widget.onClose;
+  VoidCallback? get onSearch => widget.onSearch;
+  FocusNode? get searchFocusNode => widget.searchFocusNode;
+
+  void _choose(ChannelKind kind) {
+    setState(() => _channelFilter = kind);
+    state.showChannels();
+  }
+
   @override
   Widget build(BuildContext context) => ColoredBox(
     color: GcColors.sidebar,
@@ -643,6 +698,51 @@ class _Sidebar extends StatelessWidget {
             ),
           ),
         ),
+        if (onClose != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 2, 12, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(8, 0, 8, 10),
+                  child: Text(
+                    'Куда пойдём?',
+                    style: TextStyle(
+                      color: GcColors.text,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: _Tab(
+                          label: 'Чаты',
+                          selected: _channelFilter == ChannelKind.text,
+                          onTap: () => _choose(ChannelKind.text),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: _Tab(
+                          label: 'Голос',
+                          selected: _channelFilter == ChannelKind.voice,
+                          onTap: () => _choose(ChannelKind.voice),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           child: Row(
@@ -679,16 +779,21 @@ class _Sidebar extends StatelessWidget {
                     children: [
                       if (state.navigationSection == NavigationSection.channels)
                         for (final category in state.topology!.categories)
-                          _Category(
-                            state: state,
-                            category: category,
-                            onChannelSelected: onChannelSelected,
-                          )
-                      else
-                        _DirectMessageNavigation(
-                          state: state,
-                          onSelected: onChannelSelected,
-                        ),
+                          if (_channelFilter == null ||
+                              category.channels.any(
+                                (channel) => channel.kind == _channelFilter,
+                              ))
+                            _Category(
+                              state: state,
+                              category: category,
+                              filterKind: _channelFilter,
+                              onChannelSelected: onChannelSelected,
+                            )
+                          else
+                            _DirectMessageNavigation(
+                              state: state,
+                              onSelected: onChannelSelected,
+                            ),
                       if (state.navigationSection ==
                               NavigationSection.channels &&
                           state.topology!.categories.isEmpty)
@@ -697,6 +802,23 @@ class _Sidebar extends StatelessWidget {
                           child: Text(
                             'Каналы пока не созданы.',
                             style: TextStyle(color: GcColors.muted),
+                          ),
+                        ),
+                      if (state.navigationSection ==
+                              NavigationSection.channels &&
+                          _channelFilter != null &&
+                          !state.topology!.categories.any(
+                            (category) => category.channels.any(
+                              (channel) => channel.kind == _channelFilter,
+                            ),
+                          ))
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            _channelFilter == ChannelKind.voice
+                                ? 'Голосовых каналов пока нет.'
+                                : 'Текстовых каналов пока нет.',
+                            style: const TextStyle(color: GcColors.muted),
                           ),
                         ),
                     ],
@@ -838,10 +960,12 @@ class _Category extends StatelessWidget {
   const _Category({
     required this.state,
     required this.category,
+    this.filterKind,
     this.onChannelSelected,
   });
   final AppState state;
   final ChannelCategory category;
+  final ChannelKind? filterKind;
   final VoidCallback? onChannelSelected;
   @override
   Widget build(BuildContext context) => Padding(
@@ -869,7 +993,9 @@ class _Category extends StatelessWidget {
               style: TextStyle(color: GcColors.muted, fontSize: 12),
             ),
           ),
-        for (final channel in category.channels) ...[
+        for (final channel in category.channels.where(
+          (channel) => filterKind == null || channel.kind == filterKind,
+        )) ...[
           Builder(
             builder: (context) {
               final room = state.voiceChannel?.id == channel.id
@@ -890,7 +1016,12 @@ class _Category extends StatelessWidget {
                     voiceConnected: state.voiceChannel?.id == channel.id,
                     voiceParticipantCount: memberCount,
                     onTap: () {
-                      state.selectChannel(channel);
+                      if (onChannelSelected != null &&
+                          channel.kind == ChannelKind.voice) {
+                        state.enterVoiceChannel(channel);
+                      } else {
+                        state.selectChannel(channel);
+                      }
                       onChannelSelected?.call();
                     },
                   ),
@@ -4237,19 +4368,6 @@ class _VoicePrejoinCard extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 24),
-                  if (state.transferRequired) ...[
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: state.voicePhase == VoicePhase.joining
-                            ? null
-                            : () => state.joinVoice(channel, transfer: true),
-                        icon: const Icon(Icons.move_up_outlined),
-                        label: const Text('Перенести подключение'),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
@@ -5542,208 +5660,215 @@ class _VoiceDockState extends State<_VoiceDock> {
   };
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onVerticalDragStart: compact ? (_) => _verticalTravel = 0 : null,
-    onVerticalDragUpdate: compact
-        ? (details) => _verticalTravel += details.delta.dy
-        : null,
-    onVerticalDragEnd: compact
-        ? (_) {
-            if (_verticalTravel < -48 && !_expanded) {
-              setState(() => _expanded = true);
-            } else if (_verticalTravel > 48 && _expanded) {
-              setState(() => _expanded = false);
+  Widget build(BuildContext context) => AnimatedSize(
+    key: compact ? const ValueKey('mobile-voice-dock') : null,
+    duration: const Duration(milliseconds: 260),
+    curve: Curves.easeOutCubic,
+    alignment: Alignment.bottomCenter,
+    child: GestureDetector(
+      onVerticalDragStart: compact ? (_) => _verticalTravel = 0 : null,
+      onVerticalDragUpdate: compact
+          ? (details) => _verticalTravel += details.delta.dy
+          : null,
+      onVerticalDragEnd: compact
+          ? (_) {
+              if (_verticalTravel < -48 && !_expanded) {
+                setState(() => _expanded = true);
+              } else if (_verticalTravel > 48 && _expanded) {
+                setState(() => _expanded = false);
+              }
+              _verticalTravel = 0;
             }
-            _verticalTravel = 0;
-          }
-        : null,
-    child: Container(
-      key: compact ? const ValueKey('mobile-voice-dock') : null,
-      padding: compact
-          ? const EdgeInsets.fromLTRB(12, 8, 12, 8)
-          : const EdgeInsets.fromLTRB(14, 12, 14, 14),
-      decoration: const BoxDecoration(
-        color: GcColors.surface,
-        border: Border(top: BorderSide(color: GcColors.border)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 0),
-            child: Semantics(
-              container: true,
-              liveRegion: true,
-              label: '$_status · ${state.voiceChannel!.name}',
-              child: Row(
-                children: [
-                  _StatusDot(
-                    color: state.voicePhase == VoicePhase.reconnecting
-                        ? GcColors.warning
-                        : GcColors.success,
-                  ),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _status,
-                          style: TextStyle(
-                            color: state.voicePhase == VoicePhase.reconnecting
-                                ? GcColors.warning
-                                : GcColors.success,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          state.voiceChannel!.name,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: GcColors.textSecondary,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
+          : null,
+      child: Container(
+        padding: compact
+            ? const EdgeInsets.fromLTRB(12, 8, 12, 8)
+            : const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        decoration: const BoxDecoration(
+          color: GcColors.surface,
+          border: Border(top: BorderSide(color: GcColors.border)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 0),
+              child: Semantics(
+                container: true,
+                liveRegion: true,
+                label: '$_status · ${state.voiceChannel!.name}',
+                child: Row(
+                  children: [
+                    _StatusDot(
+                      color: state.voicePhase == VoicePhase.reconnecting
+                          ? GcColors.warning
+                          : GcColors.success,
                     ),
-                  ),
-                  if (compact)
-                    IconButton(
-                      tooltip: _expanded
-                          ? 'Свернуть голосовую панель'
-                          : 'Развернуть голосовую панель',
-                      onPressed: () => setState(() => _expanded = !_expanded),
-                      icon: Icon(
-                        _expanded
-                            ? Icons.keyboard_arrow_down_rounded
-                            : Icons.keyboard_arrow_up_rounded,
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _status,
+                            style: TextStyle(
+                              color: state.voicePhase == VoicePhase.reconnecting
+                                  ? GcColors.warning
+                                  : GcColors.success,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            state.voiceChannel!.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: GcColors.textSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                ],
-              ),
-            ),
-          ),
-          if (!compact || _expanded) ...[
-            const SizedBox(height: 4),
-            Text(
-              _hint,
-              style: const TextStyle(
-                color: GcColors.muted,
-                fontSize: 11,
-                height: 1.3,
-              ),
-            ),
-          ],
-          if (state.voiceStreamStartNotice) ...[
-            const SizedBox(height: 8),
-            Semantics(
-              liveRegion: true,
-              child: const Text(
-                'В канале началась демонстрация экрана',
-                style: TextStyle(
-                  color: GcColors.accent,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                    if (compact)
+                      IconButton(
+                        tooltip: _expanded
+                            ? 'Свернуть голосовую панель'
+                            : 'Развернуть голосовую панель',
+                        onPressed: () => setState(() => _expanded = !_expanded),
+                        icon: Icon(
+                          _expanded
+                              ? Icons.keyboard_arrow_down_rounded
+                              : Icons.keyboard_arrow_up_rounded,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
-          ],
-          SizedBox(height: compact ? 8 : 11),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _VoiceDockButton(
-                compact: compact,
-                tooltip: state.microphoneUnavailable
-                    ? 'Микрофон недоступен · повторить включение'
-                    : state.audioActivationMode == AudioActivationMode.ptt
-                    ? 'Микрофон управляется push-to-talk'
-                    : state.microphoneMuted
-                    ? 'Включить микрофон'
-                    : 'Выключить микрофон',
-                semanticsLabel: state.microphoneMuted
-                    ? 'Включить микрофон'
-                    : 'Выключить микрофон',
-                icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
-                danger: state.microphoneMuted,
-                toggled: !state.microphoneMuted,
-                enabled:
-                    state.audioActivationMode != AudioActivationMode.ptt &&
-                    !state.deafened,
-                onTap: state.toggleMicrophone,
+            if (!compact || _expanded) ...[
+              const SizedBox(height: 4),
+              Text(
+                _hint,
+                style: const TextStyle(
+                  color: GcColors.muted,
+                  fontSize: 11,
+                  height: 1.3,
+                ),
               ),
-              _VoiceDockButton(
-                compact: compact,
-                tooltip: state.deafened
-                    ? 'Включить удалённый звук'
-                    : 'Выключить удалённый звук',
-                icon: state.deafened ? Icons.headset_off : Icons.headphones,
-                danger: state.deafened,
-                toggled: state.deafened,
-                enabled:
-                    !state.deafenChanging &&
-                    state.voicePhase != VoicePhase.leaving,
-                onTap: state.toggleDeafen,
-              ),
-              _VoiceDockButton(
-                compact: compact,
-                tooltip: switch (state.screenSharePhase) {
-                  ScreenSharePhase.starting => 'Запускаем демонстрацию экрана…',
-                  ScreenSharePhase.stopping => 'Останавливаем демонстрацию…',
-                  ScreenSharePhase.sharing => 'Остановить демонстрацию экрана',
-                  _ => 'Начать демонстрацию экрана',
-                },
-                icon: state.screenSharePhase == ScreenSharePhase.sharing
-                    ? Icons.stop_screen_share_outlined
-                    : Icons.screen_share_outlined,
-                danger: state.screenSharePhase == ScreenSharePhase.sharing,
-                enabled: switch (state.screenSharePhase) {
-                  ScreenSharePhase.starting ||
-                  ScreenSharePhase.stopping => false,
-                  ScreenSharePhase.sharing =>
-                    state.voicePhase != VoicePhase.leaving,
-                  _ =>
-                    state.voicePhase == VoicePhase.connected ||
-                        state.voicePhase == VoicePhase.listener,
-                },
-                onTap: state.screenSharePhase == ScreenSharePhase.sharing
-                    ? state.stopScreenShare
-                    : () => unawaited(_showScreenShareSetup(context, state)),
-              ),
-              _VoiceDockButton(
-                compact: compact,
-                tooltip: state.voiceStreamSoundEnabled
-                    ? 'Выключить сигнал новых трансляций'
-                    : 'Включить сигнал новых трансляций',
-                semanticsLabel: state.voiceStreamSoundEnabled
-                    ? 'Звук начала трансляций включён'
-                    : 'Звук начала трансляций выключен',
-                icon: state.voiceStreamSoundEnabled
-                    ? Icons.notifications_active_outlined
-                    : Icons.notifications_off_outlined,
-                danger: false,
-                toggled: state.voiceStreamSoundEnabled,
-                onTap: () => unawaited(
-                  state.setVoiceStreamSoundEnabled(
-                    !state.voiceStreamSoundEnabled,
+            ],
+            if (state.voiceStreamStartNotice) ...[
+              const SizedBox(height: 8),
+              Semantics(
+                liveRegion: true,
+                child: const Text(
+                  'В канале началась демонстрация экрана',
+                  style: TextStyle(
+                    color: GcColors.accent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-              _VoiceDockButton(
-                compact: compact,
-                tooltip: state.voicePhase == VoicePhase.leaving
-                    ? 'Выходим…'
-                    : 'Выйти из голосового канала',
-                icon: Icons.call_end,
-                danger: true,
-                enabled: state.voicePhase != VoicePhase.leaving,
-                onTap: state.leaveVoice,
-              ),
             ],
-          ),
-        ],
+            SizedBox(height: compact ? 8 : 11),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _VoiceDockButton(
+                  compact: compact,
+                  tooltip: state.microphoneUnavailable
+                      ? 'Микрофон недоступен · повторить включение'
+                      : state.audioActivationMode == AudioActivationMode.ptt
+                      ? 'Микрофон управляется push-to-talk'
+                      : state.microphoneMuted
+                      ? 'Включить микрофон'
+                      : 'Выключить микрофон',
+                  semanticsLabel: state.microphoneMuted
+                      ? 'Включить микрофон'
+                      : 'Выключить микрофон',
+                  icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
+                  danger: state.microphoneMuted,
+                  toggled: !state.microphoneMuted,
+                  enabled:
+                      state.audioActivationMode != AudioActivationMode.ptt &&
+                      !state.deafened,
+                  onTap: state.toggleMicrophone,
+                ),
+                _VoiceDockButton(
+                  compact: compact,
+                  tooltip: state.deafened
+                      ? 'Включить удалённый звук'
+                      : 'Выключить удалённый звук',
+                  icon: state.deafened ? Icons.headset_off : Icons.headphones,
+                  danger: state.deafened,
+                  toggled: state.deafened,
+                  enabled:
+                      !state.deafenChanging &&
+                      state.voicePhase != VoicePhase.leaving,
+                  onTap: state.toggleDeafen,
+                ),
+                _VoiceDockButton(
+                  compact: compact,
+                  tooltip: switch (state.screenSharePhase) {
+                    ScreenSharePhase.starting =>
+                      'Запускаем демонстрацию экрана…',
+                    ScreenSharePhase.stopping => 'Останавливаем демонстрацию…',
+                    ScreenSharePhase.sharing =>
+                      'Остановить демонстрацию экрана',
+                    _ => 'Начать демонстрацию экрана',
+                  },
+                  icon: state.screenSharePhase == ScreenSharePhase.sharing
+                      ? Icons.stop_screen_share_outlined
+                      : Icons.screen_share_outlined,
+                  danger: state.screenSharePhase == ScreenSharePhase.sharing,
+                  enabled: switch (state.screenSharePhase) {
+                    ScreenSharePhase.starting ||
+                    ScreenSharePhase.stopping => false,
+                    ScreenSharePhase.sharing =>
+                      state.voicePhase != VoicePhase.leaving,
+                    _ =>
+                      state.voicePhase == VoicePhase.connected ||
+                          state.voicePhase == VoicePhase.listener,
+                  },
+                  onTap: state.screenSharePhase == ScreenSharePhase.sharing
+                      ? state.stopScreenShare
+                      : () => unawaited(_showScreenShareSetup(context, state)),
+                ),
+                _VoiceDockButton(
+                  compact: compact,
+                  tooltip: state.voiceStreamSoundEnabled
+                      ? 'Выключить сигнал новых трансляций'
+                      : 'Включить сигнал новых трансляций',
+                  semanticsLabel: state.voiceStreamSoundEnabled
+                      ? 'Звук начала трансляций включён'
+                      : 'Звук начала трансляций выключен',
+                  icon: state.voiceStreamSoundEnabled
+                      ? Icons.notifications_active_outlined
+                      : Icons.notifications_off_outlined,
+                  danger: false,
+                  toggled: state.voiceStreamSoundEnabled,
+                  onTap: () => unawaited(
+                    state.setVoiceStreamSoundEnabled(
+                      !state.voiceStreamSoundEnabled,
+                    ),
+                  ),
+                ),
+                _VoiceDockButton(
+                  compact: compact,
+                  tooltip: state.voicePhase == VoicePhase.leaving
+                      ? 'Выходим…'
+                      : 'Выйти из голосового канала',
+                  icon: Icons.call_end,
+                  danger: true,
+                  enabled: state.voicePhase != VoicePhase.leaving,
+                  onTap: state.leaveVoice,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     ),
   );
