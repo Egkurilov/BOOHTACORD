@@ -12,7 +12,8 @@ func TestClientScreenReportIsBoundedAndExpires(t *testing.T) {
 	now := time.Date(2026, 9, 26, 13, 0, 0, 0, time.UTC)
 	recorder.clientScreen.now = func() time.Time { return now }
 	presented, decoded, bitrate := 0.0, 26.5, 1100.0
-	report := ClientScreenReport{Platform: "ios_web", Direction: "receiver", State: "waiting_first_frame", PresentedFPS: &presented, DecodedFPS: &decoded, BitrateKbps: &bitrate}
+	width, height := 540, 1170
+	report := ClientScreenReport{Platform: "ios_web", Direction: "receiver", State: "waiting_first_frame", FrameWidth: &width, FrameHeight: &height, PresentedFPS: &presented, DecodedFPS: &decoded, BitrateKbps: &bitrate}
 	if err := recorder.ObserveClientScreen(report); err != nil {
 		t.Fatal(err)
 	}
@@ -42,12 +43,15 @@ func TestClientScreenReportRejectsUnknownAndInvalidValues(t *testing.T) {
 	recorder := New()
 	bad := -1.0
 	tooHigh := 241.0
+	width, tooHighDimension := 540, 8193
 	for _, report := range []ClientScreenReport{
 		{Platform: "private-account", Direction: "receiver", State: "playing"},
 		{Platform: "ios_web", Direction: "private-direction", State: "playing"},
 		{Platform: "ios_web", Direction: "receiver", State: "private-state"},
 		{Platform: "ios_web", Direction: "receiver", State: "playing", PresentedFPS: &bad},
 		{Platform: "ios_web", Direction: "receiver", State: "playing", EncodedFPS: &tooHigh},
+		{Platform: "ios_web", Direction: "receiver", State: "playing", FrameWidth: &width},
+		{Platform: "ios_web", Direction: "receiver", State: "playing", FrameWidth: &width, FrameHeight: &tooHighDimension},
 	} {
 		if err := recorder.ObserveClientScreen(report); err == nil {
 			t.Fatalf("accepted invalid report: %+v", report)

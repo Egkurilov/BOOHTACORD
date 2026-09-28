@@ -13,6 +13,8 @@ type ClientScreenReport struct {
 	Platform      string   `json:"platform"`
 	Direction     string   `json:"direction"`
 	State         string   `json:"state"`
+	FrameWidth    *int     `json:"frame_width,omitempty"`
+	FrameHeight   *int     `json:"frame_height,omitempty"`
 	EncodedFPS    *float64 `json:"encoded_fps,omitempty"`
 	DecodedFPS    *float64 `json:"decoded_fps,omitempty"`
 	PresentedFPS  *float64 `json:"presented_fps,omitempty"`
@@ -60,6 +62,12 @@ func (report ClientScreenReport) validate() error {
 		return ErrInvalidClientScreenReport
 	}
 	if report.Direction == "receiver" && report.EncodedFPS != nil {
+		return ErrInvalidClientScreenReport
+	}
+	if (report.FrameWidth == nil) != (report.FrameHeight == nil) {
+		return ErrInvalidClientScreenReport
+	}
+	if report.FrameWidth != nil && (*report.FrameWidth < 1 || *report.FrameWidth > 8192 || *report.FrameHeight < 1 || *report.FrameHeight > 8192) {
 		return ErrInvalidClientScreenReport
 	}
 	return nil

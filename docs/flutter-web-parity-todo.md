@@ -65,6 +65,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   device-приёмка остаётся открытой.
 - [x] Реализовать FE-52: ограниченные анонимные Android sender encoded FPS/bitrate/RTT;
   расчёты, API и подписанный APK прошли локальную проверку — [QA-19](../evidence/flutter/qa19-android-sender-metrics-2026-09-27-001.json).
+- [x] Добавить bounded фактические размеры закодированного кадра в анонимные
+  sender/receiver reports и admin diagnostics; исходный screen-share clipping
+  теперь можно сопоставлять по размерам на Android sender и web peers —
+  [QA-50](../evidence/flutter/qa50-screen-share-frame-dimensions-2026-09-28-001.json).
 - [ ] На устройстве подтвердить остановку отчётов при OS share stop/leave/disconnect
   и сопоставить sender с двумя receiver snapshots в QA-07.
 - [x] Устранить Android screen-share retry leak: публиковать созданный track под

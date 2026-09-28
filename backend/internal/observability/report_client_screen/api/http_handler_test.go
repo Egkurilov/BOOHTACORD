@@ -24,10 +24,11 @@ func (fake *fakeRecorder) ClientScreenSnapshot() []httpmetrics.ClientScreenSampl
 }
 
 func TestSubmitAcceptsOnlyStrictBoundedMeasurements(t *testing.T) {
-	recorder := &fakeRecorder{}
+	recorder := httpmetrics.New()
 	handler := NewSubmitHandler(recorder)
 	for _, body := range []string{
 		`{"platform":"ios_web","direction":"receiver","state":"playing","account_id":"private"}`,
+		`{"platform":"ios_web","direction":"receiver","state":"playing","frame_width":540}`,
 		`{"platform":"ios_web","direction":"receiver","state":"playing"}{"extra":true}`,
 		strings.Repeat(" ", 2049),
 	} {
@@ -38,9 +39,10 @@ func TestSubmitAcceptsOnlyStrictBoundedMeasurements(t *testing.T) {
 		}
 	}
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(`{"platform":"ios_web","direction":"receiver","state":"waiting_first_frame"}`)))
-	if response.Code != http.StatusNoContent || len(recorder.reports) != 1 {
-		t.Fatalf("valid report status=%d count=%d", response.Code, len(recorder.reports))
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(`{"platform":"ios_web","direction":"receiver","state":"waiting_first_frame","frame_width":540,"frame_height":1170}`)))
+	samples := recorder.ClientScreenSnapshot()
+	if response.Code != http.StatusNoContent || len(samples) != 1 || samples[0].Report.FrameWidth == nil || *samples[0].Report.FrameWidth != 540 {
+		t.Fatalf("valid report status=%d samples=%+v", response.Code, samples)
 	}
 }
 

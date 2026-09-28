@@ -7,6 +7,8 @@ export interface ScreenClientReport {
   platform: WebPlatform
   direction: 'sender' | 'receiver'
   state: 'waiting_subscription' | 'waiting_first_frame' | 'playing' | 'stalled'
+  frame_width?: number
+  frame_height?: number
   presented_fps?: number
   encoded_fps?: number
   decoded_fps?: number
@@ -23,6 +25,8 @@ export interface ScreenClientReportInput {
   videoReady: boolean
   playbackFps: number | null
   receiverMetrics: ScreenReceiverMetrics | null
+  frameWidth?: number
+  frameHeight?: number
 }
 
 export function webPlatform(userAgent: string): WebPlatform {
@@ -35,6 +39,10 @@ function bounded(value: number | null | undefined, maximum: number): number | un
   return value !== null && value !== undefined && Number.isFinite(value) && value >= 0 && value <= maximum ? value : undefined
 }
 
+function pixelDimension(value: number | undefined): number | undefined {
+  return value !== undefined && Number.isFinite(value) && value >= 1 && value <= 8192 ? Math.round(value) : undefined
+}
+
 export function buildScreenClientReport(input: ScreenClientReportInput): ScreenClientReport | null {
   if (!input.selected) return null
   const presented = bounded(input.playbackFps, 240)
@@ -43,9 +51,12 @@ export function buildScreenClientReport(input: ScreenClientReportInput): ScreenC
   const jitter = bounded(input.receiverMetrics?.jitterMs, 60000)
   const lost = bounded(input.receiverMetrics?.packetsLost, 1000000000)
   const dropped = bounded(input.receiverMetrics?.droppedFrames, 1000000000)
+  const frameWidth = pixelDimension(input.frameWidth)
+  const frameHeight = pixelDimension(input.frameHeight)
   const state = !input.hasTrack ? 'waiting_subscription' : !input.videoReady ? 'waiting_first_frame' : presented === 0 ? 'stalled' : 'playing'
   return {
     platform: input.platform, direction: 'receiver', state,
+    ...(frameWidth === undefined || frameHeight === undefined ? {} : { frame_width: frameWidth, frame_height: frameHeight }),
     ...(presented === undefined ? {} : { presented_fps: presented }),
     ...(decoded === undefined ? {} : { decoded_fps: decoded }),
     ...(bitrate === undefined ? {} : { bitrate_kbps: bitrate }),
@@ -60,8 +71,11 @@ export function buildSenderScreenReport(platform: WebPlatform, diagnostics: Scre
   const encoded = bounded(diagnostics.measured?.framesPerSecond, 240)
   const bitrate = bounded(diagnostics.bitrateBps === undefined ? undefined : diagnostics.bitrateBps / 1000, 100000)
   const rtt = bounded(diagnostics.roundTripTimeMs, 60000)
+  const frameWidth = pixelDimension(diagnostics.measured?.width)
+  const frameHeight = pixelDimension(diagnostics.measured?.height)
   return {
     platform, direction: 'sender', state: diagnostics.source === 'ACTIVE' ? 'playing' : 'waiting_first_frame',
+    ...(frameWidth === undefined || frameHeight === undefined ? {} : { frame_width: frameWidth, frame_height: frameHeight }),
     ...(encoded === undefined ? {} : { encoded_fps: encoded }),
     ...(bitrate === undefined ? {} : { bitrate_kbps: Math.round(bitrate * 10) / 10 }),
     ...(rtt === undefined ? {} : { rtt_ms: rtt }),

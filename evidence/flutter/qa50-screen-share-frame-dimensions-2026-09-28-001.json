@@ -1,0 +1,46 @@
+{
+  "id": "qa50-screen-share-frame-dimensions-2026-09-28-001",
+  "kind": "anonymous-screen-share-frame-dimension-diagnostics",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Android native and web sender/receiver reports now retain bounded actual frame width and height. The strict API validates paired dimensions in the range 1–8192, and admin diagnostics display the observed frame size without identity fields.",
+  "checks": [
+    {
+      "name": "Android sender measurement",
+      "command": "flutter test test/screen_share_metrics_test.dart",
+      "status": "PASS",
+      "observation": "The highest-resolution sender stats sample preserves frame dimensions and reports them with bounded FPS, bitrate and RTT."
+    },
+    {
+      "name": "Web sender/receiver reporting and admin parsing",
+      "command": "pnpm test && pnpm run build",
+      "status": "PASS",
+      "observation": "All 629 frontend tests passed; Vue/TypeScript check and production build passed. Web reports actual dimensions; admin parser accepts paired integer dimensions only and drops unrelated identity fields."
+    },
+    {
+      "name": "Backend contract and retention",
+      "command": "go test ./internal/observability/...",
+      "status": "PASS",
+      "observation": "Bounded dimensions survive anonymous in-memory retention; incomplete and out-of-range dimensions are rejected."
+    },
+    {
+      "name": "Flutter regression and analyzer",
+      "command": "flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "All 173 Flutter tests passed and analyzer reported no issues."
+    },
+    {
+      "name": "OpenAPI schema syntax",
+      "command": "ruby -e 'require \"yaml\"; YAML.load_file(\"contracts/openapi.yaml\")'",
+      "status": "PASS",
+      "observation": "OpenAPI YAML parses and both dimensions have positive 1–8192 bounds."
+    },
+    {
+      "name": "Real Android sender plus remote receiver comparison",
+      "status": "NOT_RUN",
+      "reason": "No Android device or live remote peer is connected in this environment."
+    }
+  ],
+  "privacy": "Only fixed platform/direction/state enums and bounded numeric frame dimensions are reported; no user, room, track, network-address, token or media-content fields are added.",
+  "remaining": "Repeat Android share with simultaneous web and Flutter receivers, then compare fresh sender and receiver dimensions. Frame-size telemetry improves diagnosis but does not prove the cropping defect is fixed."
+}

@@ -4,6 +4,8 @@ export interface AdminScreenSample {
   platform: 'ios_web' | 'android_web' | 'desktop_web' | 'android_native' | 'desktop_native'
   direction: 'sender' | 'receiver'
   state: 'waiting_subscription' | 'waiting_first_frame' | 'playing' | 'stalled'
+  frame_width?: number
+  frame_height?: number
   sampled_at_utc: string
   encoded_fps?: number
   decoded_fps?: number
@@ -28,6 +30,11 @@ function optionalNumber(value: unknown, maximum: number): number | undefined {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > maximum) throw new Error('Некорректные показатели медиа.')
   return value
 }
+function optionalPixelDimension(value: unknown): number | undefined {
+  if (value === undefined || value === null) return undefined
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 8192) throw new Error('Некорректные показатели медиа.')
+  return value
+}
 function sample(value: unknown): AdminScreenSample {
   const outer = record(value); const report = record(outer.report)
   if (typeof outer.sampled_at_utc !== 'string' || !Number.isFinite(Date.parse(outer.sampled_at_utc))) throw new Error('Некорректные показатели медиа.')
@@ -40,6 +47,13 @@ function sample(value: unknown): AdminScreenSample {
   for (const [field, maximum] of [['encoded_fps', 240], ['decoded_fps', 240], ['presented_fps', 240], ['bitrate_kbps', 100000], ['jitter_ms', 60000], ['rtt_ms', 60000], ['packets_lost', 1000000000], ['dropped_frames', 1000000000]] as const) {
     const number = optionalNumber(report[field], maximum)
     if (number !== undefined) parsed[field] = number
+  }
+  const frameWidth = optionalPixelDimension(report.frame_width)
+  const frameHeight = optionalPixelDimension(report.frame_height)
+  if ((frameWidth === undefined) !== (frameHeight === undefined)) throw new Error('Некорректные показатели медиа.')
+  if (frameWidth !== undefined && frameHeight !== undefined) {
+    parsed.frame_width = frameWidth
+    parsed.frame_height = frameHeight
   }
   return parsed
 }

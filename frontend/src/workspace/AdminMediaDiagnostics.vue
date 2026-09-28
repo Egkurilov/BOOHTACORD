@@ -31,13 +31,14 @@ onBeforeUnmount(() => { if (timer) clearInterval(timer) })
 <template>
   <section class="admin-audit" aria-labelledby="admin-media-title">
     <header class="admin-section-heading"><div><h2 id="admin-media-title">Показатели трансляций</h2><p>Последние 60 секунд · без имён и идентификаторов участников</p></div><button type="button" :disabled="loading" @click="load()">Обновить</button></header>
-    <p class="state">Сравните FPS отправки, декодирования и показа: это помогает найти участок потери кадров. Данные сообщают сами клиенты и они не подтверждают аппаратный профиль.</p>
+    <p class="state">Сравните размеры кадра и FPS отправки, приёма и показа: так проще найти участок потери разрешения или кадров. Данные сообщают сами клиенты; они не подтверждают содержимое кадра или аппаратный профиль.</p>
     <p v-if="error" class="admin-error" role="alert">{{ error }}</p>
     <p v-else-if="!samples.length" class="state" role="status">Свежих показателей пока нет. Откройте демонстрацию у зрителя.</p>
     <ol v-else class="audit-event-list">
       <li v-for="sample in samples" :key="`${sample.platform}:${sample.direction}`">
         <div><strong>{{ platforms[sample.platform] }} · {{ sample.direction === 'sender' ? 'отправка' : 'приём' }}</strong><time :datetime="sample.sampled_at_utc">{{ new Date(sample.sampled_at_utc).toLocaleTimeString('ru-RU') }}</time></div>
         <small>Состояние · {{ states[sample.state] }}</small>
+        <small>Размер кадра · {{ sample.frame_width && sample.frame_height ? `${sample.frame_width} × ${sample.frame_height}` : 'Нет данных' }}</small>
         <small>Отправлено · {{ value(sample.encoded_fps, 'FPS') }} · Декодировано · {{ value(sample.decoded_fps, 'FPS') }} · Показано · {{ value(sample.presented_fps, 'FPS') }}</small>
         <small>Битрейт · {{ value(sample.bitrate_kbps, 'кбит/с') }} · Потеряно пакетов · {{ sample.packets_lost ?? 'Нет данных' }} · Пропущено кадров · {{ sample.dropped_frames ?? 'Нет данных' }} · Jitter · {{ value(sample.jitter_ms, 'мс') }} · RTT · {{ value(sample.rtt_ms, 'мс') }}</small>
       </li>

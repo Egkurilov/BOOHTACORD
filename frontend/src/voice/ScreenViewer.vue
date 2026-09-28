@@ -53,6 +53,7 @@ onMounted(() => {
     platform, selected: Boolean(selectedStream.value && !selectedStream.value.isLocal && !props.ended),
     hasTrack: Boolean(selectedStream.value?.readReceiverStats), videoReady: videoReady.value,
     playbackFps: playbackFps.value, receiverMetrics: receiverMetrics.value,
+    frameWidth: video.value?.videoWidth, frameHeight: video.value?.videoHeight,
   }), () => document.visibilityState === 'visible')
   window.addEventListener('keydown', handleKeydown)
 })

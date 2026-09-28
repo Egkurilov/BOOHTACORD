@@ -21,6 +21,8 @@ class ScreenShareSenderStats {
 class ScreenShareSenderSnapshot {
   const ScreenShareSenderSnapshot({
     required this.timestampMs,
+    this.frameWidth,
+    this.frameHeight,
     this.bytesSent,
     this.framesSent,
     this.framesPerSecond,
@@ -28,6 +30,8 @@ class ScreenShareSenderSnapshot {
   });
 
   final double timestampMs;
+  final int? frameWidth;
+  final int? frameHeight;
   final double? bytesSent;
   final double? framesSent;
   final double? framesPerSecond;
@@ -49,8 +53,12 @@ ScreenShareSenderSnapshot? screenShareSenderSnapshotFromStats(
       .where((value) => value != null && value.isFinite && value >= 0)
       .cast<num>()
       .toList(growable: false);
+  final frameWidth = _pixelDimension(selected.frameWidth);
+  final frameHeight = _pixelDimension(selected.frameHeight);
   return ScreenShareSenderSnapshot(
     timestampMs: selected.timestampMs,
+    frameWidth: frameWidth == null || frameHeight == null ? null : frameWidth,
+    frameHeight: frameWidth == null || frameHeight == null ? null : frameHeight,
     bytesSent: byteCounters.isEmpty
         ? null
         : byteCounters.fold<double>(0, (sum, value) => sum + value),
@@ -63,12 +71,16 @@ ScreenShareSenderSnapshot? screenShareSenderSnapshotFromStats(
 class ScreenShareSenderReport {
   const ScreenShareSenderReport({
     required this.state,
+    this.frameWidth,
+    this.frameHeight,
     this.encodedFps,
     this.bitrateKbps,
     this.roundTripTimeMs,
   });
 
   final String state;
+  final int? frameWidth;
+  final int? frameHeight;
   final double? encodedFps;
   final double? bitrateKbps;
   final double? roundTripTimeMs;
@@ -77,6 +89,8 @@ class ScreenShareSenderReport {
     'platform': 'android_native',
     'direction': 'sender',
     'state': state,
+    'frame_width': ?frameWidth,
+    'frame_height': ?frameHeight,
     'encoded_fps': ?encodedFps,
     'bitrate_kbps': ?bitrateKbps,
     'rtt_ms': ?roundTripTimeMs,
@@ -114,6 +128,8 @@ ScreenShareSenderReport buildScreenShareSenderReport({
         : fps == 0
         ? 'stalled'
         : 'playing',
+    frameWidth: current.frameWidth,
+    frameHeight: current.frameHeight,
     encodedFps: fps,
     bitrateKbps: bitrate,
     roundTripTimeMs: rtt,
@@ -127,6 +143,11 @@ double? _bounded(double? value, double maximum) =>
 
 double? _validCounter(num? value) =>
     value != null && value.isFinite && value >= 0 ? value.toDouble() : null;
+
+int? _pixelDimension(num? value) =>
+    value != null && value.isFinite && value >= 1 && value <= 8192
+    ? value.round()
+    : null;
 
 double? _rate(
   double? previous,

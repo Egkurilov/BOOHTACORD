@@ -11,6 +11,8 @@ describe('anonymous screen client reports', () => {
     expect(buildScreenClientReport({ ...base, hasTrack: true, videoReady: true, playbackFps: 26.5, receiverMetrics: { decodedFps: 29.7, bitrateKbps: 1100, packetsLost: 2, droppedFrames: 1, jitterMs: 4 } })).toEqual({
       platform: 'ios_web', direction: 'receiver', state: 'playing', presented_fps: 26.5, decoded_fps: 29.7, bitrate_kbps: 1100, packets_lost: 2, dropped_frames: 1, jitter_ms: 4,
     })
+    expect(buildScreenClientReport({ ...base, hasTrack: true, videoReady: true, playbackFps: 26, receiverMetrics: null, frameWidth: 540, frameHeight: 1170 })).toMatchObject({ frame_width: 540, frame_height: 1170 })
+    expect(buildScreenClientReport({ ...base, hasTrack: true, videoReady: true, playbackFps: 26, receiverMetrics: null, frameWidth: 9000, frameHeight: 1170 })).not.toHaveProperty('frame_width')
     expect(buildScreenClientReport({ ...base, selected: false })).toBeNull()
   })
 
@@ -28,10 +30,10 @@ describe('anonymous screen client reports', () => {
 
   it('reports measured sender FPS without substituting the selected target', () => {
     expect(buildSenderScreenReport('desktop_web', { source: 'ACTIVE', audioTrack: 'ABSENT', connectionQuality: 'GOOD', measured: { width: 1920, height: 1080, framesPerSecond: 27 }, bitrateBps: 1800000, roundTripTimeMs: 45 })).toEqual({
-      platform: 'desktop_web', direction: 'sender', state: 'playing', encoded_fps: 27, bitrate_kbps: 1800, rtt_ms: 45,
+      platform: 'desktop_web', direction: 'sender', state: 'playing', frame_width: 1920, frame_height: 1080, encoded_fps: 27, bitrate_kbps: 1800, rtt_ms: 45,
     })
     expect(buildSenderScreenReport('desktop_web', { source: 'ACTIVE', audioTrack: 'ABSENT', connectionQuality: 'GOOD', measured: { width: 1920, height: 1080 } })).toEqual({
-      platform: 'desktop_web', direction: 'sender', state: 'playing',
+      platform: 'desktop_web', direction: 'sender', state: 'playing', frame_width: 1920, frame_height: 1080,
     })
   })
 })
