@@ -20,9 +20,15 @@ void main() {
   testWidgets('opens native audio settings and processing controls', (
     tester,
   ) async {
+    final scan = Completer<List<MediaDevice>>();
+    var scanCount = 0;
     final state = AppState(
       _PortraitApi(),
-      audioDeviceLoader: () async => const [],
+      audioDeviceLoader: () {
+        scanCount++;
+        if (scanCount == 1) return scan.future;
+        return Future<List<MediaDevice>>.error(StateError('scan failed'));
+      },
     );
     await state.initialize();
     state.toggleWorkspacePanel(WorkspacePanel.audio);
@@ -32,6 +38,20 @@ void main() {
     expect(find.text('Настройки аудио'), findsOneWidget);
     expect(find.text('Микрофон'), findsOneWidget);
     expect(find.text('Динамик'), findsOneWidget);
+    expect(find.text('Ищем устройства…'), findsNWidgets(2));
+    expect(find.text('Микрофоны не найдены'), findsNothing);
+    scan.complete(const []);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Ищем устройства…'), findsNothing);
+    expect(find.text('Микрофоны не найдены'), findsOneWidget);
+    expect(find.text('Динамики не найдены'), findsOneWidget);
+    await state.refreshAudioDevices();
+    await tester.pump();
+    expect(scanCount, 2);
+    expect(state.audioDeviceScanFailed, isTrue);
+    expect(find.text('Список недоступен'), findsNWidgets(2));
+    expect(find.text('Микрофоны не найдены'), findsNothing);
     expect(find.text('Активация микрофона'), findsOneWidget);
     expect(find.text('Назначить PTT-клавишу'), findsOneWidget);
     expect(find.text('Подавление эха'), findsOneWidget);

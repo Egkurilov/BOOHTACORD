@@ -4841,7 +4841,11 @@ class _AudioSettingsScreen extends StatelessWidget {
                     icon: Icons.mic_none,
                     devices: state.audioInputDevices,
                     selectedId: state.selectedAudioInputId,
-                    emptyLabel: 'Микрофоны не найдены',
+                    emptyLabel: state.audioDevicesLoading
+                        ? 'Ищем устройства…'
+                        : state.audioDeviceScanFailed
+                        ? 'Список недоступен'
+                        : 'Микрофоны не найдены',
                     onChanged: state.selectAudioInput,
                   ),
                   const SizedBox(height: 16),
@@ -4850,7 +4854,11 @@ class _AudioSettingsScreen extends StatelessWidget {
                     icon: Icons.volume_up_outlined,
                     devices: state.audioOutputDevices,
                     selectedId: state.selectedAudioOutputId,
-                    emptyLabel: 'Динамики не найдены',
+                    emptyLabel: state.audioDevicesLoading
+                        ? 'Ищем устройства…'
+                        : state.audioDeviceScanFailed
+                        ? 'Список недоступен'
+                        : 'Динамики не найдены',
                     onChanged: state.selectAudioOutput,
                   ),
                   const SizedBox(height: 24),

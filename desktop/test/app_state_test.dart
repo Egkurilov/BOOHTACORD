@@ -227,7 +227,27 @@ void main() {
 
       expect(state.audioInputDevices.single.deviceId, 'usb-mic');
       expect(state.audioSettingsError, isNull);
+      expect(state.audioDeviceScanFailed, isFalse);
       expect(state.audioDevicesLoading, isFalse);
+    },
+  );
+
+  test(
+    'marks a current audio device scan failure separately from empty',
+    () async {
+      final state = AppState(
+        _FakeApi(topology),
+        audioDeviceLoader: () async => throw StateError('enumeration failed'),
+      );
+      addTearDown(state.dispose);
+      await state.initialize();
+
+      await state.refreshAudioDevices();
+
+      expect(state.audioDeviceScanFailed, isTrue);
+      expect(state.audioSettingsError, contains('Не удалось получить список'));
+      expect(state.audioInputDevices, isEmpty);
+      expect(state.audioOutputDevices, isEmpty);
     },
   );
 

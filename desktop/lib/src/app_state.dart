@@ -149,6 +149,7 @@ class AppState extends ChangeNotifier {
   AudioProcessingPreferences audioProcessing =
       const AudioProcessingPreferences();
   bool audioDevicesLoading = false;
+  bool audioDeviceScanFailed = false;
   String? audioSettingsError;
   AudioActivationMode audioActivationMode = AudioActivationMode.vad;
   int? pushToTalkKeyId;
@@ -564,6 +565,7 @@ class AppState extends ChangeNotifier {
           (_audioDeviceChanges ?? Hardware.instance.onDeviceChange.stream)
               .listen((devices) {
                 _audioDeviceRevision++;
+                audioDeviceScanFailed = false;
                 _applyAudioDevices(devices);
                 notifyListeners();
               });
@@ -608,13 +610,18 @@ class AppState extends ChangeNotifier {
     }
     final revision = _audioDeviceRevision;
     audioDevicesLoading = true;
+    audioDeviceScanFailed = false;
     audioSettingsError = null;
     notifyListeners();
     try {
       final devices = await _audioDeviceLoader();
-      if (revision == _audioDeviceRevision) _applyAudioDevices(devices);
+      if (revision == _audioDeviceRevision) {
+        audioDeviceScanFailed = false;
+        _applyAudioDevices(devices);
+      }
     } catch (cause) {
       if (revision == _audioDeviceRevision) {
+        audioDeviceScanFailed = true;
         audioSettingsError =
             'Не удалось получить список аудиоустройств: ${cause.runtimeType}.';
       }
