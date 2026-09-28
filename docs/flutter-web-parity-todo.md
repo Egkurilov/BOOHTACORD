@@ -113,6 +113,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Локальный IME regression test дополнительно сохраняет ввод следующего символа
   через тот же text-input connection после двух перестроений; физическая Samsung
   проверка остаётся открытой — [QA-51](../evidence/flutter/qa51-android-ime-multichar-regression-2026-09-28-001.json).
+- [ ] Воспроизвести ошибку входа `PlatformException` на Android/Samsung и
+  установить точный источник по sanitized logcat. Auth UI теперь показывает
+  ограниченные code/message, скрывает credential-like значения и не выводит
+  plugin `details`; эта диагностика покрыта локально, но реальный вход и причина
+  сбоя не подтверждены — [QA-59](../evidence/flutter/qa59-android-auth-platform-exception-diagnostics-2026-09-28-001.json).
 - [ ] На Android 14+ установить свежий release APK и повторить MediaProjection:
   APK содержит `FOREGROUND_SERVICE_MEDIA_PROJECTION` и объявляет сервис как
   `mediaProjection`, подключённого устройства для runtime-проверки нет; лишний

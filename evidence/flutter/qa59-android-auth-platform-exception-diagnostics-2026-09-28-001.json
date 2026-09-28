@@ -1,0 +1,33 @@
+{
+  "id": "qa59-android-auth-platform-exception-diagnostics-2026-09-28-001",
+  "kind": "android-auth-platform-exception-diagnostics",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-28",
+  "implementation": "Unknown PlatformException failures no longer collapse to the runtime type in auth UI. The Flutter client shows a bounded, single-line platform code/message, redacts common credential-shaped values, and does not display PlatformException.details or a stack trace.",
+  "checks": [
+    {
+      "name": "Auth PlatformException widget regression",
+      "command": "flutter test test/auth_screen_test.dart --plain-name \"login explains platform errors without exposing plugin details\"",
+      "status": "PASS",
+      "observation": "The login error shows the plugin code and useful message, redacts a cookie-shaped value, omits PlatformException.details containing a password-shaped value, and does not show the generic PlatformException type."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 182 Flutter tests passed."
+    },
+    {
+      "name": "Reproduction on physical Android",
+      "status": "NOT_RUN",
+      "observation": "No Samsung device or sanitized logcat trace was available; the underlying PlatformException source and successful real login remain unknown."
+    }
+  ],
+  "remaining": "On the affected Samsung device, capture the sanitized PlatformException code/message and stack location from Android logcat, determine whether secure storage, notifications, or another platform channel fails, then verify sign-in and session persistence after the root cause is fixed."
+}

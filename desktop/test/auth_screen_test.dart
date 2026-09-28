@@ -4,6 +4,7 @@ import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/screens/auth_screen.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -64,9 +65,7 @@ void main() {
 
     // Keep using the same simulated IME connection after the rebuild, as a
     // mobile keyboard does when it sends the next composing/editing update.
-    tester.testTextInput.updateEditingValue(
-      const TextEditingValue(text: 'pi'),
-    );
+    tester.testTextInput.updateEditingValue(const TextEditingValue(text: 'pi'));
     state.notifyListeners();
     await tester.pump();
 
@@ -121,6 +120,49 @@ void main() {
       'shortpass',
     );
   });
+
+  testWidgets(
+    'login explains platform errors without exposing plugin details',
+    (tester) async {
+      final state = AppState(
+        _FailingAuthenticationApi(
+          PlatformException(
+            code: 'secure_storage_read',
+            message: 'Keystore operation failed; cookie=session-secret',
+            details: 'password=do-not-show-this',
+          ),
+        ),
+      )..phase = AppPhase.signedOut;
+      addTearDown(state.dispose);
+
+      await tester.pumpWidget(MaterialApp(home: AuthScreen(state: state)));
+      await tester.enterText(
+        find.byKey(const ValueKey('auth-login-field')),
+        'existing_user',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('auth-password-field')),
+        'shortpass',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Войти'));
+      await tester.pumpAndSettle();
+
+      expect(
+        state.error,
+        'Ошибка системного API: secure_storage_read — '
+        'Keystore operation failed; cookie=[скрыто]',
+      );
+      expect(
+        find.text(
+          'Ошибка системного API: secure_storage_read — '
+          'Keystore operation failed; cookie=[скрыто]',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('do-not-show-this'), findsNothing);
+      expect(find.textContaining('PlatformException'), findsNothing);
+    },
+  );
 
   testWidgets('switching auth mode clears the previous error', (tester) async {
     final state = AppState(ApiClient())..phase = AppPhase.signedOut;
@@ -183,4 +225,19 @@ void main() {
       findsOneWidget,
     );
   });
+}
+
+class _FailingAuthenticationApi extends ApiClient {
+  _FailingAuthenticationApi(this.failure);
+
+  final Object failure;
+
+  @override
+  Future<void> authenticate(
+    String login,
+    String password, {
+    required bool register,
+  }) async {
+    throw failure;
+  }
 }
