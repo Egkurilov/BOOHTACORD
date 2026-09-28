@@ -25,7 +25,7 @@ import 'services/voice_volume_preferences.dart';
 import 'services/voice_reconnect_policy.dart';
 import 'services/voice_stream_start_tracker.dart';
 
-enum AppPhase { loading, signedOut, ready }
+enum AppPhase { loading, connectionError, signedOut, ready }
 
 enum VoicePhase {
   idle,
@@ -159,7 +159,8 @@ class AppState extends ChangeNotifier {
   ScreenSharePhase screenSharePhase = ScreenSharePhase.idle;
   String? screenShareError;
   ScreenShareQuality screenShareQuality =
-      defaultTargetPlatform == TargetPlatform.android
+      defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS
       ? ScreenShareQuality.balanced
       : ScreenShareQuality.desktopDefault;
   List<MediaDevice> audioInputDevices = const [];
@@ -377,6 +378,9 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> initialize() async {
+    phase = AppPhase.loading;
+    error = null;
+    notifyListeners();
     try {
       await api.initialize();
       await _loadVoiceStreamSoundPreference();
@@ -405,7 +409,7 @@ class AppState extends ChangeNotifier {
         unawaited(_connectRealtime());
       }
     } catch (cause) {
-      phase = AppPhase.signedOut;
+      phase = AppPhase.connectionError;
       error = _message(cause);
     }
     notifyListeners();

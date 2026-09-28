@@ -27,6 +27,27 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('login and password fields keep a usable mobile height', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(ApiClient())..phase = AppPhase.signedOut;
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(MaterialApp(home: AuthScreen(state: state)));
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('auth-login-field'))).height,
+      greaterThanOrEqualTo(48),
+    );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('auth-password-field'))).height,
+      greaterThanOrEqualTo(48),
+    );
+  });
+
   testWidgets('auth card uses web maximum width on desktop', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1440, 900);
@@ -204,6 +225,9 @@ void main() {
       find.byKey(const ValueKey('auth-password-field')),
       'shortpass12',
     );
+    await tester.ensureVisible(
+      find.widgetWithText(FilledButton, 'Создать аккаунт'),
+    );
     await tester.tap(find.widgetWithText(FilledButton, 'Создать аккаунт'));
     await tester.pumpAndSettle();
 
@@ -216,6 +240,9 @@ void main() {
     await tester.enterText(
       find.byKey(const ValueKey('auth-password-field')),
       'x' * 129,
+    );
+    await tester.ensureVisible(
+      find.widgetWithText(FilledButton, 'Создать аккаунт'),
     );
     await tester.tap(find.widgetWithText(FilledButton, 'Создать аккаунт'));
     await tester.pumpAndSettle();

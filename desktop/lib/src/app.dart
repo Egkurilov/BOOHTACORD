@@ -23,6 +23,7 @@ class BoohtacordApp extends StatelessWidget {
           Expanded(
             child: switch (state.phase) {
               AppPhase.loading => const _LoadingScreen(),
+              AppPhase.connectionError => _ConnectionErrorScreen(state: state),
               AppPhase.signedOut =>
                 state.resetRoute
                     ? PasswordResetScreen(state: state)
@@ -34,6 +35,43 @@ class BoohtacordApp extends StatelessWidget {
             },
           ),
         ],
+      ),
+    ),
+  );
+}
+
+class _ConnectionErrorScreen extends StatelessWidget {
+  const _ConnectionErrorScreen({required this.state});
+  final AppState state;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.wifi_off_rounded, size: 48, color: GcColors.muted),
+            const SizedBox(height: 16),
+            const Text(
+              'Не удалось проверить сессию',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Проверьте соединение с сервером и повторите попытку. Повторный вход пока не требуется.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: GcColors.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: state.initialize,
+              child: const Text('Повторить подключение'),
+            ),
+          ],
+        ),
       ),
     ),
   );

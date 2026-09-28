@@ -1,43 +1,36 @@
 # Разработка iOS-клиента
 
-Документ описывает будущую реализацию в существующем Flutter-проекте, а не наличие готового iOS-приложения. [ADR-006](../../docs/adr/ADR-006-android-client.md) разрешил Android, но не iOS; до начала iOS release work нужно зафиксировать новое продуктовое решение. Web остаётся эталоном поведения; мобильная компоновка и системные разрешения проверяются отдельно.
+iOS runner создан в существующем Flutter-проекте [`desktop/`](../../desktop/). Общие функции Android и iOS находятся в `desktop/lib/`; iOS AppIcon сгенерирован из того же [`app_icon.jpg`](../../desktop/assets/branding/app_icon.jpg), что используется для Android/macOS/Windows. Web остаётся эталоном поведения; системные разрешения, компоновка и медиа проверяются на iPhone отдельно.
 
-## 1. Подготовка проекта на macOS
+## Инструменты и сборка
 
-Используйте macOS с установленным Xcode, Flutter iOS toolchain, CocoaPods и физическим iPhone для media-проверок. На Windows можно менять общий Dart-код, но нельзя считать iOS build проверенным. [Flutter iOS setup](https://docs.flutter.dev/platform-integration/ios/setup) описывает требования среды.
-
-В рабочей ветке на Mac после проверки `flutter doctor -v`:
+Нужны macOS, Xcode, Flutter с iOS toolchain и физический iPhone для проверки медиа. Текущий Xcode-проект подключает Flutter-плагины через генерируемый Swift Package; в `desktop/ios/` нет `Podfile`. [Flutter iOS setup](https://docs.flutter.dev/platform-integration/ios/setup) описывает настройку среды.
 
 ```bash
 cd desktop
 flutter pub get
-flutter create --platforms=ios .
 flutter analyze
 flutter test
 flutter build ios --no-codesign
+flutter build ios --release
 ```
 
-Команда генерации создаст `desktop/ios/`; до коммита просмотрите diff всех платформенных файлов и не перезаписывайте существующие Android/macOS/Windows настройки. Укажите утверждённый bundle ID, signing team и deployment target по совместимости закреплённых `livekit_client`, `flutter_webrtc` и других plugins. На устройстве: `flutter run -d <ios-device-id>`. Release archive/IPA собирайте только после проверки signing и [acceptance](ACCEPTANCE.md); Flutter описывает архивирование в [iOS deployment](https://docs.flutter.dev/deployment/ios).
+Для подписи откройте `ios/Runner.xcworkspace` в Xcode и выберите свой Team в Runner → Signing & Capabilities. Bundle ID: `ru.boohtacord.app`. Локально использован Personal Team с бесплатной учётной записью Apple и автоматическим provisioning. Подписанная release-сборка позволяет запускать приложение с домашнего экрана; debug-сборку iOS 14+ нужно запускать из Xcode или Flutter tooling. Для повторной установки по кабелю можно использовать Xcode Run с конфигурацией Release либо `xcrun devicectl device install app --device <device-id> <path-to-Runner.app>` и `xcrun devicectl device process launch --device <device-id> ru.boohtacord.app`.
 
-## 2. Минимальные платформенные интеграции
+На данном Mac каталог `desktop/` управляется FileProvider, который добавляет метаданные к build artifacts и может нарушать code signing. Локальный игнорируемый `desktop/build` направлен в `~/Library/Caches/boohtacord-ios-build`; это настройка рабочей машины, не часть проекта. После `flutter build ios --release` подписанный `.app` находится в `build/ios/iphoneos/Runner.app` (промежуточный Xcode output — `build/ios/Release-iphoneos/Runner.app`). Не добавляйте provisioning profile, сертификаты или локальный build cache в Git.
 
-| Срез | Реализация и критерий |
+## Платформенная реализация и открытые проверки
+
+| Срез | Текущее состояние и критерий |
 | --- | --- |
-| Идентичность | Использовать текущий [`ApiClient`](../../desktop/lib/src/services/api_client.dart) и secure session cookie. Проверить iOS Keychain-поведение `flutter_secure_storage`, logout/401, `SameSite`/CSRF/Origin на живом API; без bearer/OAuth и без ослабления TLS. Если native headers не проходят backend policy, оформить контрактное решение и тесты, а не обход. |
-| Навигация | Привести размеры, safe areas, клавиатуру, системный Back/gesture, VoiceOver и Dynamic Type к web сценариям с мобильной компоновкой. Проверить вложения, защищённый preview и picker разрешений в TEXT/DM. |
-| Ссылки восстановления | Сначала поддержать безопасное ручное открытие одноразовой ссылки в приложении; автоматические universal links потребуют Associated Domains, серверного association-файла и отдельного e2e. Не помещать reset token в логи/аналитику. |
-| Realtime | Same-origin authenticated WebSocket, durable resume cursor, duplicate dedupe и `resync_required` по [контракту](../../contracts/mobile-client-contract.md). В общем Flutter-коде пока есть переподключение/dedupe и обработка `resync_required`, но `after` cursor не передаётся: это отдельная доработка, которую нельзя считать готовой из Android-исходников. Reconnect WebSocket не должен сбрасывать здоровый voice call. |
-| Voice | Voice lease → short-lived LiveKit credential → room. Проверить mic permission, mute/deafen, аудиомаршруты (speaker/earpiece/Bluetooth), interruption, background/foreground и отзыв lease. Добавлять лишь необходимые `Info.plist` privacy descriptions/background capabilities. |
-| Screen viewing | Подписка только на выбранный stream, защищённые participant labels, полноэкранный просмотр, no-audio и receiver diagnostics. Проверить поведение на iPhone и, если выбран, iPad. |
-| Screen publishing | Отдельный технический spike: подтвердить поддержку закреплёнными Flutter/LiveKit plugins и версиями iOS, выбрать in-app или full-device capture, системный permission flow и нужную extension/App Group только если она действительно требуется. Проверить остановку ОС, отзыв track/lease и отсутствие утечки кадра после stop. [LiveKit screen-share guidance](https://docs.livekit.io/transport/media/screenshare/) описывает различия типов захвата. Системный звук не обещать без реализованного пути и измерений. |
-| Администрирование | Показывать функции только по роли и всё равно полагаться на server-side ACL. Не добавлять admin bypass для DM. |
+| Идентичность | Общий `ApiClient` и secure session cookie. На устройстве показан экран входа; login/logout, iOS Keychain, 401, CSRF/Origin и reset link требуют проверки на тестовом аккаунте и живом API. Не вводить bearer/OAuth и не ослаблять TLS. |
+| Навигация | Общие Flutter-экраны собираются для iOS. Safe areas, клавиатура, VoiceOver, Dynamic Type, вложения и preview требуют физической приёмки. |
+| Жесты | [Список свайпов](GESTURES.md) реализован в общем мобильном интерфейсе и покрыт widget-тестами. Ручная проверка на iPhone, включая конфликт с системными жестами и клавиатурой, остаётся открытой. |
+| Realtime | В общем коде есть reconnect/dedupe и `resync_required`; durable `after` cursor ещё не передаётся. Нужно проверить privacy адресных DM событий и сохранение здорового voice call при reconnect. |
+| Voice | `Info.plist` содержит описание доступа к микрофону и background audio. Фактическое разрешение, слышимость, маршруты, interruption, background/foreground и отзыв lease не проверены. |
+| Screen viewing | Общий UI подписки на выбранный stream, fullscreen и diagnostics собран; first frame/FPS/звук на iPhone не проверены. |
+| Screen publishing | Flutter/LiveKit использует in-app capture с iOS preset 720p/15. Диалог заранее объясняет, что другие приложения и системный звук не захватываются. Full-device capture потребует Broadcast Extension и App Group после отдельного решения. Фактический start/stop/revocation пока не проверен. [LiveKit guidance](https://docs.livekit.io/transport/media/screenshare/). |
+| Уведомления | Локальные iOS-уведомления и запрос разрешения добавлены в общий сервис; доставка на физическом устройстве не проверена. Push notifications не входят в scope. |
+| Администрирование | UI в общем Flutter-коде зависит от роли; серверный ACL остаётся обязательным. Сценарии ролей и отказа в доступе на iPhone не проверены. |
 
-## 3. Порядок реализации
-
-1. Создать и зафиксировать iOS runner, signing/permissions baseline и сборку на Mac; CI должен явно проверять iOS source build, когда доступен macOS runner.
-2. Довести auth/cookie, topology, TEXT и DM до живого API с отрицательными ACL/401/CSRF сценариями.
-3. Довести voice receive/send, route changes, reconnect/revocation и interruption на двух физических клиентах.
-4. Подтвердить screen viewing, затем отдельно решать screen publishing после SDK spike.
-5. Провести визуальную/доступную приёмку, замеры медиа и релизный gate по [ACCEPTANCE.md](ACCEPTANCE.md); обновить [parity map](../../docs/flutter-web-parity.md) и версию только после доказательств.
-
-Не добавляйте push notifications, camera, recording, group DM, federation или собственный media proxy в рамках этого плана. API, storage и LiveKit management остаются приватными; содержимое DM, cookies и media credentials не попадают в diagnostic/evidence.
+Публичный архив/IPA, TestFlight и App Store не создавались. До выпуска выполните [матрицу приёмки](ACCEPTANCE.md) и зафиксируйте отдельное продуктовое решение. Не добавляйте camera, recording, group DM, federation или собственный media proxy в рамках этого клиента; cookies, содержимое DM и media credentials не должны попадать в diagnostics/evidence.

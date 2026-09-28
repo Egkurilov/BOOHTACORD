@@ -353,8 +353,8 @@ InputDecoration _authFieldDecoration() => const InputDecoration(
   isDense: true,
   filled: true,
   fillColor: GcColors.surface,
-  constraints: BoxConstraints(minHeight: GcLayout.control),
-  contentPadding: EdgeInsets.symmetric(horizontal: 12),
+  constraints: BoxConstraints(minHeight: GcLayout.controlLarge),
+  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
   border: OutlineInputBorder(
     borderRadius: BorderRadius.all(Radius.circular(GcRadii.md)),
     borderSide: BorderSide(color: GcColors.control),

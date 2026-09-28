@@ -1,0 +1,54 @@
+{
+  "id": "ios-session-retry-input-height-2026-09-28-001",
+  "kind": "ios-correction-build-and-install",
+  "status": "PASS_STATIC_BUILD_INSTALL_LAUNCH_WITH_SESSION_STATE_OPEN",
+  "executed_at": "2026-09-28",
+  "source_revision": "426ec29 plus uncommitted iOS corrections",
+  "environment": {
+    "host_os": "macOS 27.0 arm64",
+    "xcode": "27.0 (27A266a)",
+    "flutter": "3.47.5 stable",
+    "device": "iPhone 17, iOS 27.0, connected by cable",
+    "bundle_id": "ru.boohtacord.app",
+    "version": "1.0.0+1"
+  },
+  "observer": "Local source, tests, Xcode build and connected-device installation",
+  "scenario": {
+    "objective": "Keep login fields usable on iOS and avoid presenting a transient session-check failure as logout.",
+    "expected": [
+      "Login and password fields measure at least 48 logical pixels in a mobile viewport.",
+      "A TLS failure during startup offers a retry rather than showing the login form.",
+      "The secure session cookie remains available for the next session request after a TLS failure.",
+      "The signed release app installs over the existing app without uninstalling it."
+    ]
+  },
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter analyze && flutter test",
+      "observation": "No analysis issues; 208 Flutter tests passed, including field height, startup retry and cookie reuse checks."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build ios --release && codesign --verify --deep --strict build/ios/iphoneos/Runner.app",
+      "observation": "Signed Xcode release build completed and strict signature verification passed."
+    },
+    {
+      "result": "PASS",
+      "command": "xcrun devicectl device install app --device <connected iPhone> desktop/build/ios/iphoneos/Runner.app",
+      "observation": "Updated ru.boohtacord.app in place; no uninstall command was used."
+    },
+    {
+      "result": "PASS",
+      "command": "xcrun devicectl device process launch --device <connected iPhone> ru.boohtacord.app",
+      "observation": "The initial launch was denied while the phone was locked. After unlock, CoreDevice launched the updated app and confirmed its Runner process running. The session state was not inspected."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "desktop/build/ios/iphoneos/Runner.app/Runner (local ignored build output)",
+      "sha256": "5d449c308cb2cda494f301033c82dce0aba173019423eb1fe59c9f51cb422a82"
+    }
+  ],
+  "limitations": "The previous login state cannot be inferred from install and process checks. No cookie, private app data or user screenshots were read or saved. The new field height and retry flow have automated coverage but were not visually checked on the physical phone."
+}

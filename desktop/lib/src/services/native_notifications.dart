@@ -58,6 +58,11 @@ class FlutterLocalNotificationDriver implements NativeNotificationDriver {
     await _plugin.initialize(
       settings: const InitializationSettings(
         android: AndroidInitializationSettings('ic_stat_notification'),
+        iOS: DarwinInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        ),
         macOS: DarwinInitializationSettings(
           requestAlertPermission: false,
           requestBadgePermission: false,
@@ -74,6 +79,18 @@ class FlutterLocalNotificationDriver implements NativeNotificationDriver {
 
   @override
   Future<NativeNotificationPermission> permission() async {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final enabled = await _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >()
+          ?.checkPermissions();
+      return enabled == null
+          ? NativeNotificationPermission.unavailable
+          : enabled.isEnabled
+          ? NativeNotificationPermission.granted
+          : NativeNotificationPermission.denied;
+    }
     if (defaultTargetPlatform == TargetPlatform.android) {
       final enabled = await _plugin
           .resolvePlatformSpecificImplementation<
@@ -106,6 +123,18 @@ class FlutterLocalNotificationDriver implements NativeNotificationDriver {
 
   @override
   Future<NativeNotificationPermission> requestPermission() async {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final enabled = await _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >()
+          ?.requestPermissions(alert: true, sound: true);
+      return enabled == null
+          ? NativeNotificationPermission.unavailable
+          : enabled
+          ? NativeNotificationPermission.granted
+          : NativeNotificationPermission.denied;
+    }
     if (defaultTargetPlatform == TargetPlatform.android) {
       final enabled = await _plugin
           .resolvePlatformSpecificImplementation<
@@ -155,6 +184,7 @@ class FlutterLocalNotificationDriver implements NativeNotificationDriver {
           priority: Priority.defaultPriority,
           visibility: NotificationVisibility.private,
         ),
+        iOS: DarwinNotificationDetails(),
         macOS: DarwinNotificationDetails(),
         windows: WindowsNotificationDetails(),
       ),
@@ -197,7 +227,11 @@ class NativeNotificationService {
   final Set<String> _deliveriesInFlight = <String>{};
 
   bool get supported =>
-      !kIsWeb && (Platform.isAndroid || Platform.isMacOS || Platform.isWindows);
+      !kIsWeb &&
+      (Platform.isIOS ||
+          Platform.isAndroid ||
+          Platform.isMacOS ||
+          Platform.isWindows);
 
   Future<void> initialize() async {
     if (!supported || _initialized) return;
@@ -284,7 +318,7 @@ class NativeNotificationService {
       if (seen.contains(eventId)) return;
       await _driver.show(
         id: _notificationId(eventId),
-        title: 'Voice Platform',
+        title: 'BOOHTACORD',
         body: body,
       );
       await _preferences.setStringList(

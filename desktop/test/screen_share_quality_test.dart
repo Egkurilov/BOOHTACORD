@@ -1,5 +1,6 @@
 import 'package:boohtacord_desktop/src/services/screen_share_quality.dart';
 import 'package:boohtacord_desktop/src/widgets/screen_share_setup_dialog.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -86,6 +87,41 @@ void main() {
     expect(result?.sourceId, isNull);
     expect(result?.quality.resolution, 1440);
     expect(result?.quality.frameRate, 60);
+  });
+
+  testWidgets('iOS setup explains app-only capture before starting', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    ScreenShareSetupSelection? result;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async {
+                result = await ScreenShareSetupDialog.show(
+                  context,
+                  initialQuality: ScreenShareQuality.balanced,
+                  allowSourceSelection: false,
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('только содержимое BOOHTACORD'), findsOneWidget);
+    expect(find.text('Весь экран'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('start-screen-share')));
+    await tester.pumpAndSettle();
+    expect(result?.quality, ScreenShareQuality.balanced);
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('keeps quality options on one line in Android portrait', (

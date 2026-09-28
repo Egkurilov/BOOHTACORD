@@ -1,0 +1,46 @@
+{
+  "id": "ios-swipe-gestures-2026-09-28-001",
+  "kind": "mobile-gesture-implementation-and-wired-install",
+  "status": "PASS_STATIC_BUILD_INSTALL_LAUNCH_WITH_GESTURE_DEVICE_QA_OPEN",
+  "executed_at": "2026-09-28",
+  "source_revision": "426ec29 plus uncommitted iOS corrections and mobile gestures",
+  "environment": {
+    "device": "iPhone 17, iOS 27.0, connected by cable",
+    "bundle_id": "ru.boohtacord.app",
+    "build_mode": "ios-release"
+  },
+  "observer": "Local source, Flutter tests, Xcode build and CoreDevice installation",
+  "scenario": {
+    "objective": "Implement mobile swipes for drawers, replies, history refresh, voice dock and fullscreen viewer.",
+    "expected": "Gestures preserve existing controls, vertical scrolling, system edge gestures and voice connection state."
+  },
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter analyze --no-pub && flutter test",
+      "observation": "No analyzer issues; all 212 Flutter tests passed, including mobile gesture behavior."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build ios --release && codesign --verify --deep --strict build/ios/iphoneos/Runner.app",
+      "observation": "Signed release build and strict signature verification completed."
+    },
+    {
+      "result": "PASS",
+      "command": "xcrun devicectl device install app --device <connected iPhone> desktop/build/ios/iphoneos/Runner.app",
+      "observation": "Installed ru.boohtacord.app in place; no uninstall was performed."
+    },
+    {
+      "result": "PASS",
+      "command": "xcrun devicectl device process launch --device <connected iPhone> ru.boohtacord.app",
+      "observation": "The initial launch was denied while the iPhone was locked. After unlock, CoreDevice reported successful launch of ru.boohtacord.app."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "desktop/build/ios/iphoneos/Runner.app/Runner (local ignored build output)",
+      "sha256": "0a05a0b9de65250212c26cf5245e4f37fe82104cb0cc1a24705cdf748e8df1b8"
+    }
+  ],
+  "limitations": "Gestures were tested in Flutter widget tests, not physically exercised on the iPhone. App session state and private user content were not inspected."
+}

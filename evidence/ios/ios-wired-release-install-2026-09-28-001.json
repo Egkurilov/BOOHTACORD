@@ -1,0 +1,55 @@
+{
+  "id": "ios-wired-release-install-2026-09-28-001",
+  "kind": "physical-device-build-and-launch",
+  "status": "PASS_WITH_FUNCTIONAL_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-28",
+  "source_revision": "426ec29 plus uncommitted iOS runner and platform changes",
+  "environment": {
+    "host_os": "macOS 27.0 arm64",
+    "xcode": "27.0 (27A266a)",
+    "flutter": "3.47.5 stable",
+    "device": "iPhone 17, iOS 27.0, connected by cable",
+    "signing": "Apple Development, Personal Team, Xcode automatic provisioning",
+    "bundle_id": "ru.boohtacord.app",
+    "version": "1.0.0+1"
+  },
+  "observer": "Local Xcode and physical-device verification",
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter analyze && flutter test",
+      "observation": "No analysis issues; 205 Flutter tests passed after GitVerse sync."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build ios --release && codesign --verify --deep --strict build/ios/iphoneos/Runner.app",
+      "observation": "Xcode completed the signed release build and strict code-signature verification passed."
+    },
+    {
+      "result": "PASS",
+      "command": "xcrun devicectl device install app .../Runner.app && xcrun devicectl device process launch ... ru.boohtacord.app",
+      "observation": "Installed bundle ru.boohtacord.app, version 1.0.0 build 1, and launched it on the connected iPhone. The app displayed its Flutter interface without the debug-launch warning."
+    },
+    {
+      "result": "PASS",
+      "command": "xcrun devicectl device info appIcon --app-bundle-id ru.boohtacord.app --destination <local temporary file>",
+      "observation": "The installed device returned a non-placeholder 1024x1024 BOOHTACORD brand icon; the icon was also observed on the home screen. No device screenshots with personal content were saved to the repository."
+    },
+    {
+      "result": "OPEN",
+      "observation": "One cellular-network launch displayed a HandshakeException. A later HTTPS health request opened successfully in the device browser; the cause of the earlier TLS failure was not established. Auth, messaging, voice, screen sharing, accessibility and release acceptance were not systematically tested."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "desktop/build/ios/iphoneos/Runner.app/Runner (local ignored build output)",
+      "size_bytes": 1822352,
+      "sha256": "9d816b2fdf2c01c293bcff544cca3695efab5c9b70df62a62467549a33a65e55"
+    },
+    {
+      "path": "desktop/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png",
+      "sha256": "aff9efdb33d2bce37a032f4fd9f9eafae08dd2e74573097d18af7054da5e1071"
+    }
+  ],
+  "failure_or_blocker": null
+}

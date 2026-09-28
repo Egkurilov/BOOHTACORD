@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 
@@ -225,7 +225,7 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
                       child: Column(
                         children: [
                           SizedBox(height: compact ? 12 : 20),
-                          _buildAndroidCaptureNotice(),
+                          _buildMobileCaptureNotice(),
                           SizedBox(height: compact ? 8 : 20),
                           _buildQualityPicker(),
                         ],
@@ -259,18 +259,23 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
           ),
         ),
         const SizedBox(width: 14),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Демонстрация экрана',
                 style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
               ),
-              SizedBox(height: 3),
+              const SizedBox(height: 3),
               Text(
-                'Выберите источник и качество трансляции',
-                style: TextStyle(color: GcColors.textSecondary, fontSize: 13),
+                defaultTargetPlatform == TargetPlatform.iOS
+                    ? 'Выберите качество трансляции приложения'
+                    : 'Выберите источник и качество трансляции',
+                style: const TextStyle(
+                  color: GcColors.textSecondary,
+                  fontSize: 13,
+                ),
               ),
             ],
           ),
@@ -358,7 +363,7 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
     );
   }
 
-  Widget _buildAndroidCaptureNotice() => Container(
+  Widget _buildMobileCaptureNotice() => Container(
     margin: EdgeInsets.symmetric(
       horizontal: MediaQuery.sizeOf(context).width < 640 ? 16 : 28,
     ),
@@ -369,14 +374,20 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
       border: Border.all(color: GcColors.border),
       borderRadius: BorderRadius.circular(GcRadii.lg),
     ),
-    child: const Row(
+    child: Row(
       children: [
-        Icon(Icons.privacy_tip_outlined, color: GcColors.accentText, size: 28),
-        SizedBox(width: 16),
+        const Icon(
+          Icons.privacy_tip_outlined,
+          color: GcColors.accentText,
+          size: 28,
+        ),
+        const SizedBox(width: 16),
         Expanded(
           child: Text(
-            'После продолжения Android покажет системный запрос на запись экрана. Вы сможете остановить трансляцию в любой момент.',
-            style: TextStyle(color: GcColors.textSecondary, height: 1.45),
+            defaultTargetPlatform == TargetPlatform.iOS
+                ? 'На iPhone транслируется только содержимое BOOHTACORD. Другие приложения и системный звук не передаются. Остановить трансляцию можно в голосовом канале.'
+                : 'После продолжения Android покажет системный запрос на запись экрана. Вы сможете остановить трансляцию в любой момент.',
+            style: const TextStyle(color: GcColors.textSecondary, height: 1.45),
           ),
         ),
       ],

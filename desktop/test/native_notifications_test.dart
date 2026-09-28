@@ -74,7 +74,7 @@ void main() {
       ]);
 
       expect(driver.shown, hasLength(1));
-      expect(driver.shown.single.title, 'Voice Platform');
+      expect(driver.shown.single.title, 'BOOHTACORD');
       expect(driver.shown.single.body, 'Новое личное сообщение.');
       expect(driver.shown.single.body, isNot(contains('секрет')));
 

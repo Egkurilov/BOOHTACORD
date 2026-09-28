@@ -21,6 +21,7 @@ import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
 import '../widgets/screen_share_setup_dialog.dart';
 import '../widgets/formatted_message_body.dart';
+import '../widgets/horizontal_swipe_region.dart';
 import '../widgets/voice_connection_badge.dart';
 import '../widgets/voice_microphone_unavailable_notice.dart';
 import 'profile_screen.dart';
@@ -260,6 +261,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
     });
   }
 
+  bool get _textInputFocused {
+    final focus = FocusManager.instance.primaryFocus?.context;
+    return focus?.widget is EditableText ||
+        focus?.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
+
   void _beginPttKeyCapture() => setState(() => _capturingPttKey = true);
 
   @override
@@ -343,14 +350,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                         width: (constraints.maxWidth - 40)
                             .clamp(0.0, 320.0)
                             .toDouble(),
-                        child: _DrawerSurface(
-                          child: _Sidebar(
-                            state: widget.state,
-                            showVoiceDock: false,
-                            onChannelSelected: _closeDrawers,
-                            onClose: _closeDrawers,
-                            onSearch: _toggleSearch,
-                            searchFocusNode: _searchTriggerFocus,
+                        child: HorizontalSwipeRegion(
+                          onSwipeLeft: _closeDrawers,
+                          child: _DrawerSurface(
+                            child: _Sidebar(
+                              state: widget.state,
+                              showVoiceDock: false,
+                              onChannelSelected: _closeDrawers,
+                              onClose: _closeDrawers,
+                              onSearch: _toggleSearch,
+                              searchFocusNode: _searchTriggerFocus,
+                            ),
                           ),
                         ),
                       ),
@@ -362,10 +372,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                         width: (constraints.maxWidth - 40)
                             .clamp(0.0, 320.0)
                             .toDouble(),
-                        child: _DrawerSurface(
-                          child: _MembersPanel(
-                            state: widget.state,
-                            onClose: _closeDrawers,
+                        child: HorizontalSwipeRegion(
+                          onSwipeRight: _closeDrawers,
+                          child: _DrawerSurface(
+                            child: _MembersPanel(
+                              state: widget.state,
+                              onClose: _closeDrawers,
+                            ),
                           ),
                         ),
                       ),
@@ -473,6 +486,36 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                   ],
                 )
               : content;
+          final mobileGestures =
+              compact &&
+              (defaultTargetPlatform == TargetPlatform.iOS ||
+                  defaultTargetPlatform == TargetPlatform.android);
+          final drawerSwipeEnabled =
+              mobileGestures &&
+              widget.state.workspacePanel == WorkspacePanel.none &&
+              !_showMobileSidebar &&
+              !_showMembersDrawer &&
+              !searchPanelModal;
+          final swipeContent = mobileGestures
+              ? HorizontalSwipeRegion(
+                  enabled: drawerSwipeEnabled,
+                  canStart: (position, size) =>
+                      position.dx >= 16 && position.dx <= 72,
+                  onSwipeRight: () {
+                    if (!_textInputFocused) _toggleNavigation();
+                  },
+                  child: HorizontalSwipeRegion(
+                    enabled: drawerSwipeEnabled && showMemberToggle,
+                    canStart: (position, size) =>
+                        position.dx >= size.width - 72 &&
+                        position.dx <= size.width - 16,
+                    onSwipeLeft: () {
+                      if (!_textInputFocused) _toggleMembers();
+                    },
+                    child: shellContent,
+                  ),
+                )
+              : shellContent;
           final flushShell = constraints.maxWidth >= GcLayout.wideBreakpoint;
           return Padding(
             padding: compact || flushShell
@@ -488,7 +531,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                       ? null
                       : Border.all(color: GcColors.border),
                 ),
-                child: shellContent,
+                child: swipeContent,
               ),
             ),
           );
@@ -1858,84 +1901,112 @@ class _ConversationState extends State<_Conversation>
           child: widget.state.loadingMessages
               ? const Center(child: CircularProgressIndicator())
               : widget.state.messages.isEmpty
-              ? _EmptyConversation(channel: widget.channel.name)
-              : ListView.separated(
-                  key: const ValueKey('text-channel-messages'),
-                  controller: _scroll,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 24,
+              ? RefreshIndicator(
+                  onRefresh: () => widget.state.selectChannel(widget.channel),
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.sizeOf(context).height * 0.45,
+                        child: _EmptyConversation(channel: widget.channel.name),
+                      ),
+                    ],
                   ),
-                  itemCount:
-                      timeline.length +
-                      (widget.state.nextMessageCursor == null ? 0 : 1),
-                  separatorBuilder: (context, index) {
-                    if (widget.state.nextMessageCursor != null && index == 0) {
-                      return const SizedBox(height: 12);
-                    }
-                    final timelineIndex =
-                        index -
-                        (widget.state.nextMessageCursor == null ? 0 : 1);
-                    final current = timeline[timelineIndex];
-                    final next = timeline[timelineIndex + 1];
-                    if (current.message == null) {
-                      return const SizedBox(height: 12);
-                    }
-                    return SizedBox(
-                      height: next.message != null && next.grouped ? 4 : 24,
-                    );
-                  },
-                  itemBuilder: (context, index) {
-                    if (widget.state.nextMessageCursor != null && index == 0) {
-                      return Center(
-                        child: TextButton.icon(
-                          onPressed: widget.state.loadingOlderMessages
-                              ? null
-                              : _loadOlder,
-                          icon: widget.state.loadingOlderMessages
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.history),
-                          label: Text(
-                            widget.state.loadingOlderMessages
-                                ? 'Загружаем…'
-                                : 'Загрузить предыдущие сообщения',
+                )
+              : RefreshIndicator(
+                  onRefresh: () => widget.state.selectChannel(widget.channel),
+                  child: ListView.separated(
+                    key: const ValueKey('text-channel-messages'),
+                    controller: _scroll,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 24,
+                    ),
+                    itemCount:
+                        timeline.length +
+                        (widget.state.nextMessageCursor == null ? 0 : 1),
+                    separatorBuilder: (context, index) {
+                      if (widget.state.nextMessageCursor != null &&
+                          index == 0) {
+                        return const SizedBox(height: 12);
+                      }
+                      final timelineIndex =
+                          index -
+                          (widget.state.nextMessageCursor == null ? 0 : 1);
+                      final current = timeline[timelineIndex];
+                      final next = timeline[timelineIndex + 1];
+                      if (current.message == null) {
+                        return const SizedBox(height: 12);
+                      }
+                      return SizedBox(
+                        height: next.message != null && next.grouped ? 4 : 24,
+                      );
+                    },
+                    itemBuilder: (context, index) {
+                      if (widget.state.nextMessageCursor != null &&
+                          index == 0) {
+                        return Center(
+                          child: TextButton.icon(
+                            onPressed: widget.state.loadingOlderMessages
+                                ? null
+                                : _loadOlder,
+                            icon: widget.state.loadingOlderMessages
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.history),
+                            label: Text(
+                              widget.state.loadingOlderMessages
+                                  ? 'Загружаем…'
+                                  : 'Загрузить предыдущие сообщения',
+                            ),
+                          ),
+                        );
+                      }
+                      final timelineIndex =
+                          index -
+                          (widget.state.nextMessageCursor == null ? 0 : 1);
+                      final entry = timeline[timelineIndex];
+                      if (entry.message == null) {
+                        return _HistoryDateDivider(label: entry.dateLabel!);
+                      }
+                      final message = entry.message!;
+                      final key = '${widget.channel.id}:${message.id}';
+                      return KeyedSubtree(
+                        key: _messageKeys.putIfAbsent(
+                          key,
+                          () => GlobalKey(debugLabel: key),
+                        ),
+                        child: HorizontalSwipeRegion(
+                          enabled:
+                              (defaultTargetPlatform == TargetPlatform.iOS ||
+                                  defaultTargetPlatform ==
+                                      TargetPlatform.android) &&
+                              MediaQuery.sizeOf(context).width < 1024 &&
+                              !message.deleted &&
+                              message.sendStatus == null,
+                          canStart: (position, _) => position.dx >= 72,
+                          onSwipeRight: () => _replyTo(message),
+                          child: _MessageRow(
+                            state: widget.state,
+                            message: message,
+                            grouped: entry.grouped,
+                            replyPreview: _replyPreview(message),
+                            onReply: _replyTo,
+                            onJumpToReply: () => _jumpToReply(message),
+                            onRetry: message.clientMessageId == null
+                                ? null
+                                : () => _retry(message),
                           ),
                         ),
                       );
-                    }
-                    final timelineIndex =
-                        index -
-                        (widget.state.nextMessageCursor == null ? 0 : 1);
-                    final entry = timeline[timelineIndex];
-                    if (entry.message == null) {
-                      return _HistoryDateDivider(label: entry.dateLabel!);
-                    }
-                    final message = entry.message!;
-                    final key = '${widget.channel.id}:${message.id}';
-                    return KeyedSubtree(
-                      key: _messageKeys.putIfAbsent(
-                        key,
-                        () => GlobalKey(debugLabel: key),
-                      ),
-                      child: _MessageRow(
-                        state: widget.state,
-                        message: message,
-                        grouped: entry.grouped,
-                        replyPreview: _replyPreview(message),
-                        onReply: _replyTo,
-                        onJumpToReply: () => _jumpToReply(message),
-                        onRetry: message.clientMessageId == null
-                            ? null
-                            : () => _retry(message),
-                      ),
-                    );
-                  },
+                    },
+                  ),
                 ),
         ),
         Padding(
@@ -3436,167 +3507,208 @@ class _DirectConversationState extends State<_DirectConversation> {
           child: widget.state.loadingDirectMessages
               ? const Center(child: CircularProgressIndicator())
               : widget.state.directMessageHistory.isEmpty
-              ? Center(
-                  child: Text(
-                    'Начните диалог с ${widget.conversation.displayName}',
-                    style: const TextStyle(color: GcColors.muted),
+              ? RefreshIndicator(
+                  onRefresh: () =>
+                      widget.state.openDirectConversation(widget.conversation),
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.sizeOf(context).height * 0.45,
+                        child: Center(
+                          child: Text(
+                            'Начните диалог с ${widget.conversation.displayName}',
+                            style: const TextStyle(color: GcColors.muted),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 )
-              : ListView.builder(
-                  controller: _scroll,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 24,
-                  ),
-                  itemCount:
-                      widget.state.directMessageHistory.length +
-                      (widget.state.nextDirectMessageCursor == null ? 0 : 1),
-                  itemBuilder: (context, index) {
-                    if (widget.state.nextDirectMessageCursor != null &&
-                        index == 0) {
-                      return Center(
-                        child: TextButton.icon(
-                          onPressed: widget.state.loadingOlderDirectMessages
-                              ? null
-                              : _loadOlderDirect,
-                          icon: widget.state.loadingOlderDirectMessages
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.history),
-                          label: Text(
-                            widget.state.loadingOlderDirectMessages
-                                ? 'Загружаем…'
-                                : 'Загрузить предыдущие сообщения',
+              : RefreshIndicator(
+                  onRefresh: () =>
+                      widget.state.openDirectConversation(widget.conversation),
+                  child: ListView.builder(
+                    controller: _scroll,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 24,
+                    ),
+                    itemCount:
+                        widget.state.directMessageHistory.length +
+                        (widget.state.nextDirectMessageCursor == null ? 0 : 1),
+                    itemBuilder: (context, index) {
+                      if (widget.state.nextDirectMessageCursor != null &&
+                          index == 0) {
+                        return Center(
+                          child: TextButton.icon(
+                            onPressed: widget.state.loadingOlderDirectMessages
+                                ? null
+                                : _loadOlderDirect,
+                            icon: widget.state.loadingOlderDirectMessages
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.history),
+                            label: Text(
+                              widget.state.loadingOlderDirectMessages
+                                  ? 'Загружаем…'
+                                  : 'Загрузить предыдущие сообщения',
+                            ),
                           ),
+                        );
+                      }
+                      final messageIndex =
+                          index -
+                          (widget.state.nextDirectMessageCursor == null
+                              ? 0
+                              : 1);
+                      final message =
+                          widget.state.directMessageHistory[messageIndex];
+                      final own =
+                          message.authorId == widget.state.user?.accountId;
+                      return HorizontalSwipeRegion(
+                        enabled:
+                            (defaultTargetPlatform == TargetPlatform.iOS ||
+                                defaultTargetPlatform ==
+                                    TargetPlatform.android) &&
+                            MediaQuery.sizeOf(context).width < 1024 &&
+                            !message.deleted &&
+                            message.sendStatus == null,
+                        canStart: (position, _) => position.dx >= 72,
+                        onSwipeRight: () => _replyToDirect(message),
+                        child: Row(
+                          mainAxisAlignment: own
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Flexible(
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 560,
+                                ),
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 11,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: own
+                                      ? GcColors.selected
+                                      : GcColors.surface,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (_directReplyLabel(message)
+                                        case final label?)
+                                      _ReplyPreview(label: label),
+                                    if (message.deleted)
+                                      const Text(
+                                        'Сообщение удалено',
+                                        style: TextStyle(
+                                          color: GcColors.muted,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      )
+                                    else
+                                      FormattedMessageBody(
+                                        body: message.body,
+                                        color: GcColors.text,
+                                        fontSize: 14,
+                                        lineHeight: 1.4,
+                                      ),
+                                    if (message.sendStatus ==
+                                        MessageSendStatus.sending)
+                                      const Text(
+                                        'Отправляется…',
+                                        style: TextStyle(
+                                          color: GcColors.muted,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    if (message.sendStatus ==
+                                        MessageSendStatus.failed)
+                                      TextButton.icon(
+                                        onPressed: widget.state.sending
+                                            ? null
+                                            : () => _retry(message),
+                                        icon: const Icon(
+                                          Icons.refresh,
+                                          size: 16,
+                                        ),
+                                        label: const Text(
+                                          'Не отправлено · Повторить отправку',
+                                        ),
+                                      ),
+                                    if (!message.deleted &&
+                                        message.sendStatus == null &&
+                                        message.attachments.isNotEmpty)
+                                      MessageAttachmentList(
+                                        state: widget.state,
+                                        parentPath:
+                                            '/direct-messages/${Uri.encodeComponent(message.directMessageId)}',
+                                        attachments: message.attachments,
+                                      ),
+                                    if (message.mentionUserIds.isNotEmpty &&
+                                        !message.deleted) ...[
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        'Упомянуты: ${message.mentionUserIds.map((id) => _mentionDisplayName(widget.state, id)).join(' ')}',
+                                        style: const TextStyle(
+                                          color: GcColors.muted,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (!message.deleted && message.sendStatus == null)
+                              _DirectMessageActionMenu(
+                                message: message,
+                                canEdit: own,
+                                onReply: _replyToDirect,
+                                mentionOptions: [
+                                  (
+                                    widget.conversation.participantId,
+                                    widget.conversation.displayName,
+                                  ),
+                                ],
+                                selfId: widget.state.user?.accountId ?? '',
+                                onEdit: (body, revision, ids) =>
+                                    widget.state.editDirectWithResult(
+                                      message,
+                                      body,
+                                      revision,
+                                      mentionUserIds: ids,
+                                    ),
+                                onRefresh: () async {
+                                  final latest = await widget.state
+                                      .refreshDirectMessageRevision(message);
+                                  return latest == null
+                                      ? null
+                                      : (
+                                          revision: latest.revision,
+                                          deleted: latest.deleted,
+                                        );
+                                },
+                                onDelete: () =>
+                                    widget.state.deleteDirect(message),
+                              ),
+                          ],
                         ),
                       );
-                    }
-                    final messageIndex =
-                        index -
-                        (widget.state.nextDirectMessageCursor == null ? 0 : 1);
-                    final message =
-                        widget.state.directMessageHistory[messageIndex];
-                    final own =
-                        message.authorId == widget.state.user?.accountId;
-                    return Row(
-                      mainAxisAlignment: own
-                          ? MainAxisAlignment.end
-                          : MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          constraints: const BoxConstraints(maxWidth: 560),
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 11,
-                          ),
-                          decoration: BoxDecoration(
-                            color: own ? GcColors.selected : GcColors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (_directReplyLabel(message) case final label?)
-                                _ReplyPreview(label: label),
-                              if (message.deleted)
-                                const Text(
-                                  'Сообщение удалено',
-                                  style: TextStyle(
-                                    color: GcColors.muted,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                )
-                              else
-                                FormattedMessageBody(
-                                  body: message.body,
-                                  color: GcColors.text,
-                                  fontSize: 14,
-                                  lineHeight: 1.4,
-                                ),
-                              if (message.sendStatus ==
-                                  MessageSendStatus.sending)
-                                const Text(
-                                  'Отправляется…',
-                                  style: TextStyle(
-                                    color: GcColors.muted,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              if (message.sendStatus ==
-                                  MessageSendStatus.failed)
-                                TextButton.icon(
-                                  onPressed: widget.state.sending
-                                      ? null
-                                      : () => _retry(message),
-                                  icon: const Icon(Icons.refresh, size: 16),
-                                  label: const Text(
-                                    'Не отправлено · Повторить отправку',
-                                  ),
-                                ),
-                              if (!message.deleted &&
-                                  message.sendStatus == null &&
-                                  message.attachments.isNotEmpty)
-                                MessageAttachmentList(
-                                  state: widget.state,
-                                  parentPath:
-                                      '/direct-messages/${Uri.encodeComponent(message.directMessageId)}',
-                                  attachments: message.attachments,
-                                ),
-                              if (message.mentionUserIds.isNotEmpty &&
-                                  !message.deleted) ...[
-                                const SizedBox(height: 5),
-                                Text(
-                                  'Упомянуты: ${message.mentionUserIds.map((id) => _mentionDisplayName(widget.state, id)).join(' ')}',
-                                  style: const TextStyle(
-                                    color: GcColors.muted,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        if (!message.deleted && message.sendStatus == null)
-                          _DirectMessageActionMenu(
-                            message: message,
-                            canEdit: own,
-                            onReply: _replyToDirect,
-                            mentionOptions: [
-                              (
-                                widget.conversation.participantId,
-                                widget.conversation.displayName,
-                              ),
-                            ],
-                            selfId: widget.state.user?.accountId ?? '',
-                            onEdit: (body, revision, ids) =>
-                                widget.state.editDirectWithResult(
-                                  message,
-                                  body,
-                                  revision,
-                                  mentionUserIds: ids,
-                                ),
-                            onRefresh: () async {
-                              final latest = await widget.state
-                                  .refreshDirectMessageRevision(message);
-                              return latest == null
-                                  ? null
-                                  : (
-                                      revision: latest.revision,
-                                      deleted: latest.deleted,
-                                    );
-                            },
-                            onDelete: () => widget.state.deleteDirect(message),
-                          ),
-                      ],
-                    );
-                  },
+                    },
+                  ),
                 ),
         ),
         Padding(
@@ -4240,14 +4352,13 @@ class _VoiceRosterPreview extends StatelessWidget {
 }
 
 Future<void> _showScreenShareSetup(BuildContext context, AppState state) async {
-  if (defaultTargetPlatform == TargetPlatform.iOS) {
-    await state.startScreenShare();
-    return;
-  }
+  final mobile =
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
   final selection = await ScreenShareSetupDialog.show(
     context,
     initialQuality: state.screenShareQuality,
-    allowSourceSelection: defaultTargetPlatform != TargetPlatform.android,
+    allowSourceSelection: !mobile,
   );
   if (!context.mounted || selection == null) return;
   await state.startScreenShare(
@@ -5398,10 +5509,20 @@ class _AudioDeviceDropdown extends StatelessWidget {
   }
 }
 
-class _VoiceDock extends StatelessWidget {
+class _VoiceDock extends StatefulWidget {
   const _VoiceDock({required this.state, this.compact = false});
   final AppState state;
   final bool compact;
+
+  @override
+  State<_VoiceDock> createState() => _VoiceDockState();
+}
+
+class _VoiceDockState extends State<_VoiceDock> {
+  bool _expanded = false;
+  double _verticalTravel = 0;
+  AppState get state => widget.state;
+  bool get compact => widget.compact;
 
   String get _status => switch (state.voicePhase) {
     VoicePhase.joining => 'Подключаемся к голосовому каналу',
@@ -5421,180 +5542,209 @@ class _VoiceDock extends StatelessWidget {
   };
 
   @override
-  Widget build(BuildContext context) => Container(
-    key: compact ? const ValueKey('mobile-voice-dock') : null,
-    padding: compact
-        ? const EdgeInsets.fromLTRB(12, 8, 12, 8)
-        : const EdgeInsets.fromLTRB(14, 12, 14, 14),
-    decoration: const BoxDecoration(
-      color: GcColors.surface,
-      border: Border(top: BorderSide(color: GcColors.border)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 0),
-          child: Semantics(
-            container: true,
-            liveRegion: true,
-            label: '$_status · ${state.voiceChannel!.name}',
-            child: Row(
-              children: [
-                _StatusDot(
-                  color: state.voicePhase == VoicePhase.reconnecting
-                      ? GcColors.warning
-                      : GcColors.success,
-                ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _status,
-                        style: TextStyle(
-                          color: state.voicePhase == VoicePhase.reconnecting
-                              ? GcColors.warning
-                              : GcColors.success,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        state.voiceChannel!.name,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: GcColors.textSecondary,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
+  Widget build(BuildContext context) => GestureDetector(
+    onVerticalDragStart: compact ? (_) => _verticalTravel = 0 : null,
+    onVerticalDragUpdate: compact
+        ? (details) => _verticalTravel += details.delta.dy
+        : null,
+    onVerticalDragEnd: compact
+        ? (_) {
+            if (_verticalTravel < -48 && !_expanded) {
+              setState(() => _expanded = true);
+            } else if (_verticalTravel > 48 && _expanded) {
+              setState(() => _expanded = false);
+            }
+            _verticalTravel = 0;
+          }
+        : null,
+    child: Container(
+      key: compact ? const ValueKey('mobile-voice-dock') : null,
+      padding: compact
+          ? const EdgeInsets.fromLTRB(12, 8, 12, 8)
+          : const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: const BoxDecoration(
+        color: GcColors.surface,
+        border: Border(top: BorderSide(color: GcColors.border)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 0),
+            child: Semantics(
+              container: true,
+              liveRegion: true,
+              label: '$_status · ${state.voiceChannel!.name}',
+              child: Row(
+                children: [
+                  _StatusDot(
+                    color: state.voicePhase == VoicePhase.reconnecting
+                        ? GcColors.warning
+                        : GcColors.success,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _status,
+                          style: TextStyle(
+                            color: state.voicePhase == VoicePhase.reconnecting
+                                ? GcColors.warning
+                                : GcColors.success,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          state.voiceChannel!.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: GcColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (compact)
+                    IconButton(
+                      tooltip: _expanded
+                          ? 'Свернуть голосовую панель'
+                          : 'Развернуть голосовую панель',
+                      onPressed: () => setState(() => _expanded = !_expanded),
+                      icon: Icon(
+                        _expanded
+                            ? Icons.keyboard_arrow_down_rounded
+                            : Icons.keyboard_arrow_up_rounded,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
-        if (!compact) ...[
-          const SizedBox(height: 4),
-          Text(
-            _hint,
-            style: const TextStyle(
-              color: GcColors.muted,
-              fontSize: 11,
-              height: 1.3,
-            ),
-          ),
-        ],
-        if (state.voiceStreamStartNotice) ...[
-          const SizedBox(height: 8),
-          Semantics(
-            liveRegion: true,
-            child: const Text(
-              'В канале началась демонстрация экрана',
-              style: TextStyle(
-                color: GcColors.accent,
+          if (!compact || _expanded) ...[
+            const SizedBox(height: 4),
+            Text(
+              _hint,
+              style: const TextStyle(
+                color: GcColors.muted,
                 fontSize: 11,
-                fontWeight: FontWeight.w600,
+                height: 1.3,
               ),
-            ),
-          ),
-        ],
-        SizedBox(height: compact ? 8 : 11),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _VoiceDockButton(
-              compact: compact,
-              tooltip: state.microphoneUnavailable
-                  ? 'Микрофон недоступен · повторить включение'
-                  : state.audioActivationMode == AudioActivationMode.ptt
-                  ? 'Микрофон управляется push-to-talk'
-                  : state.microphoneMuted
-                  ? 'Включить микрофон'
-                  : 'Выключить микрофон',
-              semanticsLabel: state.microphoneMuted
-                  ? 'Включить микрофон'
-                  : 'Выключить микрофон',
-              icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
-              danger: state.microphoneMuted,
-              toggled: !state.microphoneMuted,
-              enabled:
-                  state.audioActivationMode != AudioActivationMode.ptt &&
-                  !state.deafened,
-              onTap: state.toggleMicrophone,
-            ),
-            _VoiceDockButton(
-              compact: compact,
-              tooltip: state.deafened
-                  ? 'Включить удалённый звук'
-                  : 'Выключить удалённый звук',
-              icon: state.deafened ? Icons.headset_off : Icons.headphones,
-              danger: state.deafened,
-              toggled: state.deafened,
-              enabled:
-                  !state.deafenChanging &&
-                  state.voicePhase != VoicePhase.leaving,
-              onTap: state.toggleDeafen,
-            ),
-            _VoiceDockButton(
-              compact: compact,
-              tooltip: switch (state.screenSharePhase) {
-                ScreenSharePhase.starting => 'Запускаем демонстрацию экрана…',
-                ScreenSharePhase.stopping => 'Останавливаем демонстрацию…',
-                ScreenSharePhase.sharing => 'Остановить демонстрацию экрана',
-                _ => 'Начать демонстрацию экрана',
-              },
-              icon: state.screenSharePhase == ScreenSharePhase.sharing
-                  ? Icons.stop_screen_share_outlined
-                  : Icons.screen_share_outlined,
-              danger: state.screenSharePhase == ScreenSharePhase.sharing,
-              enabled: switch (state.screenSharePhase) {
-                ScreenSharePhase.starting || ScreenSharePhase.stopping => false,
-                ScreenSharePhase.sharing =>
-                  state.voicePhase != VoicePhase.leaving,
-                _ =>
-                  state.voicePhase == VoicePhase.connected ||
-                      state.voicePhase == VoicePhase.listener,
-              },
-              onTap: state.screenSharePhase == ScreenSharePhase.sharing
-                  ? state.stopScreenShare
-                  : () => unawaited(_showScreenShareSetup(context, state)),
-            ),
-            _VoiceDockButton(
-              compact: compact,
-              tooltip: state.voiceStreamSoundEnabled
-                  ? 'Выключить сигнал новых трансляций'
-                  : 'Включить сигнал новых трансляций',
-              semanticsLabel: state.voiceStreamSoundEnabled
-                  ? 'Звук начала трансляций включён'
-                  : 'Звук начала трансляций выключен',
-              icon: state.voiceStreamSoundEnabled
-                  ? Icons.notifications_active_outlined
-                  : Icons.notifications_off_outlined,
-              danger: false,
-              toggled: state.voiceStreamSoundEnabled,
-              onTap: () => unawaited(
-                state.setVoiceStreamSoundEnabled(
-                  !state.voiceStreamSoundEnabled,
-                ),
-              ),
-            ),
-            _VoiceDockButton(
-              compact: compact,
-              tooltip: state.voicePhase == VoicePhase.leaving
-                  ? 'Выходим…'
-                  : 'Выйти из голосового канала',
-              icon: Icons.call_end,
-              danger: true,
-              enabled: state.voicePhase != VoicePhase.leaving,
-              onTap: state.leaveVoice,
             ),
           ],
-        ),
-      ],
+          if (state.voiceStreamStartNotice) ...[
+            const SizedBox(height: 8),
+            Semantics(
+              liveRegion: true,
+              child: const Text(
+                'В канале началась демонстрация экрана',
+                style: TextStyle(
+                  color: GcColors.accent,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+          SizedBox(height: compact ? 8 : 11),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _VoiceDockButton(
+                compact: compact,
+                tooltip: state.microphoneUnavailable
+                    ? 'Микрофон недоступен · повторить включение'
+                    : state.audioActivationMode == AudioActivationMode.ptt
+                    ? 'Микрофон управляется push-to-talk'
+                    : state.microphoneMuted
+                    ? 'Включить микрофон'
+                    : 'Выключить микрофон',
+                semanticsLabel: state.microphoneMuted
+                    ? 'Включить микрофон'
+                    : 'Выключить микрофон',
+                icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
+                danger: state.microphoneMuted,
+                toggled: !state.microphoneMuted,
+                enabled:
+                    state.audioActivationMode != AudioActivationMode.ptt &&
+                    !state.deafened,
+                onTap: state.toggleMicrophone,
+              ),
+              _VoiceDockButton(
+                compact: compact,
+                tooltip: state.deafened
+                    ? 'Включить удалённый звук'
+                    : 'Выключить удалённый звук',
+                icon: state.deafened ? Icons.headset_off : Icons.headphones,
+                danger: state.deafened,
+                toggled: state.deafened,
+                enabled:
+                    !state.deafenChanging &&
+                    state.voicePhase != VoicePhase.leaving,
+                onTap: state.toggleDeafen,
+              ),
+              _VoiceDockButton(
+                compact: compact,
+                tooltip: switch (state.screenSharePhase) {
+                  ScreenSharePhase.starting => 'Запускаем демонстрацию экрана…',
+                  ScreenSharePhase.stopping => 'Останавливаем демонстрацию…',
+                  ScreenSharePhase.sharing => 'Остановить демонстрацию экрана',
+                  _ => 'Начать демонстрацию экрана',
+                },
+                icon: state.screenSharePhase == ScreenSharePhase.sharing
+                    ? Icons.stop_screen_share_outlined
+                    : Icons.screen_share_outlined,
+                danger: state.screenSharePhase == ScreenSharePhase.sharing,
+                enabled: switch (state.screenSharePhase) {
+                  ScreenSharePhase.starting ||
+                  ScreenSharePhase.stopping => false,
+                  ScreenSharePhase.sharing =>
+                    state.voicePhase != VoicePhase.leaving,
+                  _ =>
+                    state.voicePhase == VoicePhase.connected ||
+                        state.voicePhase == VoicePhase.listener,
+                },
+                onTap: state.screenSharePhase == ScreenSharePhase.sharing
+                    ? state.stopScreenShare
+                    : () => unawaited(_showScreenShareSetup(context, state)),
+              ),
+              _VoiceDockButton(
+                compact: compact,
+                tooltip: state.voiceStreamSoundEnabled
+                    ? 'Выключить сигнал новых трансляций'
+                    : 'Включить сигнал новых трансляций',
+                semanticsLabel: state.voiceStreamSoundEnabled
+                    ? 'Звук начала трансляций включён'
+                    : 'Звук начала трансляций выключен',
+                icon: state.voiceStreamSoundEnabled
+                    ? Icons.notifications_active_outlined
+                    : Icons.notifications_off_outlined,
+                danger: false,
+                toggled: state.voiceStreamSoundEnabled,
+                onTap: () => unawaited(
+                  state.setVoiceStreamSoundEnabled(
+                    !state.voiceStreamSoundEnabled,
+                  ),
+                ),
+              ),
+              _VoiceDockButton(
+                compact: compact,
+                tooltip: state.voicePhase == VoicePhase.leaving
+                    ? 'Выходим…'
+                    : 'Выйти из голосового канала',
+                icon: Icons.call_end,
+                danger: true,
+                enabled: state.voicePhase != VoicePhase.leaving,
+                onTap: state.leaveVoice,
+              ),
+            ],
+          ),
+        ],
+      ),
     ),
   );
 }

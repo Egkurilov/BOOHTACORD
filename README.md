@@ -20,16 +20,18 @@ Self-hosted веб-платформа в логике лёгкого Discord: г
 | --- | --- | --- | --- | --- |
 | Web | [Web](clients/web/README.md) | [`frontend/`](frontend/) | `0.1.0` | Исходники и production pipeline есть; релизные gates проверяются отдельно |
 | Android | [Android](clients/android/README.md) | [`desktop/`](desktop/) + [`desktop/android/`](desktop/android/) | `1.0.0+1` | Flutter runner и функции есть; физическая media/visual приёмка открыта |
-| iOS | [iOS](clients/ios/README.md) | Общий [`desktop/lib/`](desktop/lib/) | Нет iOS-сборки | Документация и план; `desktop/ios/` ещё не создан |
+| iOS | [iOS](clients/ios/README.md) | [`desktop/`](desktop/) + [`desktop/ios/`](desktop/ios/) | `1.0.0+1` | Подписанная локальная сборка установлена и открыта на iPhone; функциональная приёмка открыта |
 
 Код web и Flutter остаётся в существующих build roots, чтобы не ломать CI и поставку. Отдельные папки `clients/web`, `clients/android` и `clients/ios` собирают платформенные инструкции. [Правила версионности и матрица реализованных функций](docs/CLIENT_VERSIONING.md) отличают наличие кода от подтверждённой приёмки; [Flutter ↔ web parity](docs/flutter-web-parity.md) содержит подробные пробелы.
+
+Для iOS и Android описаны [мобильные жесты](clients/ios/GESTURES.md). Их автоматические проверки и локальная установка iOS-сборки отражены в [evidence](evidence/ios/ios-swipe-gestures-2026-09-28-001.json); ручная проверка на устройстве остаётся частью приёмки.
 
 ## Архитектура
 
 | Слой | Технологии и зона ответственности |
 | --- | --- |
 | Браузерный клиент | Vue 3, TypeScript, Vite, Pinia, LiveKit Client |
-| Flutter-клиент | Общий Dart-код и Android/macOS/Windows runners; iOS пока в подготовке |
+| Flutter-клиент | Общий Dart-код и Android/iOS/macOS/Windows runners |
 | API | Go modular monolith, HTTP API, WebSocket, server-side ACL и выдача media credentials |
 | Данные | PostgreSQL и private filesystem volume для attachments |
 | Медиа | Self-hosted LiveKit/WebRTC; Go не проксирует RTP, RTCP или audio/video payload |

@@ -10,6 +10,7 @@ import 'package:boohtacord_desktop/src/services/composer_draft_memory.dart';
 import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:boohtacord_desktop/src/widgets/audio_device_check.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -21,6 +22,107 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
   setUp(ComposerDraftMemory.clear);
+
+  testWidgets('mobile edge swipes open and close both workspace panels', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.dragFrom(const Offset(36, 220), const Offset(140, 0));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+
+    await tester.dragFrom(const Offset(180, 220), const Offset(-120, 0));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+
+    await tester.dragFrom(const Offset(354, 220), const Offset(-140, 0));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Закрыть участников'), findsOneWidget);
+
+    await tester.dragFrom(const Offset(220, 220), const Offset(120, 0));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Закрыть участников'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('mobile message swipes reply and pull down refreshes history', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final api = _PortraitApi(
+      withHistory: true,
+      historyCount: 2,
+      includeDirectMessage: true,
+    );
+    final state = AppState(api);
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final textRow = find.text('Последнее сообщение');
+    await tester.dragFrom(tester.getCenter(textRow), const Offset(95, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('Ответ для @Участник'), findsOneWidget);
+    expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+
+    final beforeTextRefresh = api.messagePageCalls;
+    await tester.drag(
+      find.byKey(const ValueKey('text-channel-messages')),
+      const Offset(0, 280),
+    );
+    await tester.pumpAndSettle();
+    expect(api.messagePageCalls, greaterThan(beforeTextRefresh));
+
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpAndSettle();
+    await tester.dragFrom(
+      tester.getCenter(find.text('Исходное личное сообщение')),
+      const Offset(95, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Ответ для Собеседник'), findsOneWidget);
+    final beforeDirectRefresh = api.directMessagePageCalls;
+    await tester.drag(
+      find.text('Исходное личное сообщение'),
+      const Offset(0, 280),
+    );
+    await tester.pumpAndSettle();
+    expect(api.directMessagePageCalls, greaterThan(beforeDirectRefresh));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
 
   testWidgets('restores a text-channel draft after switching channels', (
     tester,
@@ -841,6 +943,18 @@ void main() {
     );
     expect(find.byTooltip('Выйти из голосового канала'), findsOneWidget);
     expect(tester.getRect(dock).bottom, lessThanOrEqualTo(844));
+
+    await tester.drag(dock, const Offset(0, -90));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Свернуть голосовую панель'), findsOneWidget);
+    expect(
+      find.textContaining('Вы можете открыть другой канал'),
+      findsOneWidget,
+    );
+    await tester.drag(dock, const Offset(0, 90));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Развернуть голосовую панель'), findsOneWidget);
+    expect(state.voiceChannel, isNotNull);
 
     await tester.tap(find.byTooltip('Открыть навигацию'));
     await tester.pumpAndSettle();
@@ -1966,6 +2080,8 @@ class _PortraitApi extends ApiClient {
   int memberProfileFailures;
   final List<GuildMember> membersResult;
   final advancedMessageIds = <String>[];
+  int messagePageCalls = 0;
+  int directMessagePageCalls = 0;
   String? sentReplyToId;
   String? sentDirectReplyToId;
   List<String> sentMentionIds = const [];
@@ -2205,7 +2321,10 @@ class _PortraitApi extends ApiClient {
     String id, {
     String? before,
     String? at,
-  }) async => DirectChatMessagePage(messages: await directMessageHistory(id));
+  }) async {
+    directMessagePageCalls++;
+    return DirectChatMessagePage(messages: await directMessageHistory(id));
+  }
 
   @override
   Future<DirectChatMessage> sendDirectMessage(
@@ -2260,7 +2379,10 @@ class _PortraitApi extends ApiClient {
     String channelId, {
     String? before,
     String? at,
-  }) async => ChatMessagePage(messages: await messages(channelId));
+  }) async {
+    messagePageCalls++;
+    return ChatMessagePage(messages: await messages(channelId));
+  }
 
   @override
   Future<ChatMessage> sendMessage(

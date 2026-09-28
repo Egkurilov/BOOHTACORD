@@ -73,7 +73,7 @@ class ScreenFullscreenPresentation {
   }
 }
 
-class ScreenFullscreenOverlay extends StatelessWidget {
+class ScreenFullscreenOverlay extends StatefulWidget {
   const ScreenFullscreenOverlay({
     super.key,
     required this.publisherName,
@@ -86,6 +86,21 @@ class ScreenFullscreenOverlay extends StatelessWidget {
   final VoidCallback onClose;
 
   @override
+  State<ScreenFullscreenOverlay> createState() =>
+      _ScreenFullscreenOverlayState();
+}
+
+class _ScreenFullscreenOverlayState extends State<ScreenFullscreenOverlay> {
+  double _verticalTravel = 0;
+  bool _closing = false;
+
+  void _close() {
+    if (_closing) return;
+    _closing = true;
+    widget.onClose();
+  }
+
+  @override
   Widget build(BuildContext context) => Material(
     color: Colors.black,
     child: Focus(
@@ -93,7 +108,7 @@ class ScreenFullscreenOverlay extends StatelessWidget {
       onKeyEvent: (_, event) {
         if (event is KeyDownEvent &&
             event.logicalKey == LogicalKeyboardKey.escape) {
-          onClose();
+          _close();
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
@@ -101,14 +116,35 @@ class ScreenFullscreenOverlay extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          ColoredBox(color: Colors.black, child: video),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onVerticalDragStart:
+                defaultTargetPlatform == TargetPlatform.iOS ||
+                    defaultTargetPlatform == TargetPlatform.android
+                ? (_) => _verticalTravel = 0
+                : null,
+            onVerticalDragUpdate:
+                defaultTargetPlatform == TargetPlatform.iOS ||
+                    defaultTargetPlatform == TargetPlatform.android
+                ? (details) => _verticalTravel += details.delta.dy
+                : null,
+            onVerticalDragEnd:
+                defaultTargetPlatform == TargetPlatform.iOS ||
+                    defaultTargetPlatform == TargetPlatform.android
+                ? (_) {
+                    if (_verticalTravel > 80) _close();
+                    _verticalTravel = 0;
+                  }
+                : null,
+            child: ColoredBox(color: Colors.black, child: widget.video),
+          ),
           Positioned(
             left: 20,
             top: 16,
             child: SafeArea(
               child: Semantics(
                 liveRegion: true,
-                label: 'Полноэкранный просмотр: $publisherName',
+                label: 'Полноэкранный просмотр: ${widget.publisherName}',
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: const Color(0xCC141922),
@@ -126,7 +162,7 @@ class ScreenFullscreenOverlay extends StatelessWidget {
                         const Icon(Icons.monitor_outlined, size: 17),
                         const SizedBox(width: 8),
                         Text(
-                          'Экран $publisherName',
+                          'Экран ${widget.publisherName}',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -145,7 +181,7 @@ class ScreenFullscreenOverlay extends StatelessWidget {
             child: SafeArea(
               child: IconButton.filledTonal(
                 tooltip: 'Выйти из полноэкранного режима',
-                onPressed: onClose,
+                onPressed: _close,
                 icon: const Icon(Icons.fullscreen_exit_outlined),
               ),
             ),

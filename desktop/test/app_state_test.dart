@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
@@ -41,6 +43,27 @@ void main() {
     expect(state.user?.accountId, 'account-1');
     expect(state.selectedChannel?.id, textChannel.id);
     expect(state.messages, hasLength(1));
+  });
+
+  testWidgets('a temporary TLS failure offers retry without showing login', (
+    tester,
+  ) async {
+    final api = _FakeApi(topology)
+      ..sessionFailure = const HandshakeException('temporary TLS failure');
+    final state = AppState(api);
+
+    await state.initialize();
+    expect(state.phase, AppPhase.connectionError);
+    await tester.pumpWidget(BoohtacordApp(state: state));
+    expect(find.text('Повторить подключение'), findsOneWidget);
+    expect(find.text('Войти'), findsNothing);
+
+    api.sessionFailure = null;
+    await tester.tap(find.text('Повторить подключение'));
+    await tester.pumpAndSettle();
+    expect(state.phase, AppPhase.ready);
+    expect(state.user?.accountId, 'account-1');
+    state.dispose();
   });
 
   test('keeps profile load errors separate and clears them on retry', () async {
@@ -910,6 +933,7 @@ class _FakeApi extends ApiClient {
   String? uploadedDirectMessageId;
   bool passwordResetCompleted = false;
   Object? profileFailure;
+  Object? sessionFailure;
   String? updatedDisplayName;
   int passwordChangeRequests = 0;
   String? sentReplyToId;
@@ -936,8 +960,11 @@ class _FakeApi extends ApiClient {
   Future<bool> maintenanceActive() async => false;
 
   @override
-  Future<SessionUser?> currentSession() async =>
-      const SessionUser(accountId: 'account-1', role: 'MEMBER');
+  Future<SessionUser?> currentSession() async {
+    final failure = sessionFailure;
+    if (failure != null) throw failure;
+    return const SessionUser(accountId: 'account-1', role: 'MEMBER');
+  }
 
   @override
   Future<OwnProfile> ownProfile() async {
