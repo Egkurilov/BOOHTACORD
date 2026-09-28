@@ -136,6 +136,7 @@ class AppState extends ChangeNotifier {
   bool microphoneMuted = false;
   bool microphoneUnavailable = false;
   bool deafened = false;
+  bool deafenChanging = false;
   ScreenSharePhase screenSharePhase = ScreenSharePhase.idle;
   String? screenShareError;
   ScreenShareQuality screenShareQuality =
@@ -2822,33 +2823,72 @@ class AppState extends ChangeNotifier {
 
   Future<void> toggleDeafen() async {
     final room = _room;
-    if (room == null) return;
-    if (!deafened) {
-      _mutedBeforeDeafen = microphoneMuted;
-      deafened = true;
-      if (audioActivationMode == AudioActivationMode.ptt || !microphoneMuted) {
-        await _applyMicrophoneMuted(true);
-      }
-      for (final participant in room.remoteParticipants.values) {
-        for (final publication in participant.audioTrackPublications) {
-          await publication.disable();
-        }
-      }
-    } else {
-      deafened = false;
-      for (final participant in room.remoteParticipants.values) {
-        for (final publication in participant.audioTrackPublications) {
-          await publication.enable();
-        }
-      }
-      final shouldUnmute = audioActivationMode == AudioActivationMode.ptt
-          ? pushToTalkPressed
-          : !_mutedBeforeDeafen;
-      if (shouldUnmute) {
-        await _applyMicrophoneMuted(false);
-      }
+    if (room == null || deafenChanging || voicePhase == VoicePhase.leaving) {
+      return;
     }
+    final wasDeafened = deafened;
+    final wasMicrophoneMuted = microphoneMuted;
+    final nextDeafened = !wasDeafened;
+    deafenChanging = true;
+    error = null;
     notifyListeners();
+    try {
+      if (nextDeafened) {
+        _mutedBeforeDeafen = wasMicrophoneMuted;
+        if (audioActivationMode == AudioActivationMode.ptt ||
+            !microphoneMuted) {
+          if (!await _applyMicrophoneMuted(true)) {
+            throw StateError(
+              audioActivationError ?? 'Не удалось выключить микрофон.',
+            );
+          }
+        }
+        for (final participant in room.remoteParticipants.values) {
+          for (final publication in participant.audioTrackPublications) {
+            await publication.disable();
+          }
+        }
+        deafened = true;
+      } else {
+        for (final participant in room.remoteParticipants.values) {
+          for (final publication in participant.audioTrackPublications) {
+            await publication.enable();
+          }
+        }
+        final shouldUnmute = audioActivationMode == AudioActivationMode.ptt
+            ? pushToTalkPressed
+            : !_mutedBeforeDeafen;
+        if (shouldUnmute && !await _applyMicrophoneMuted(false)) {
+          throw StateError(
+            audioActivationError ?? 'Не удалось включить микрофон.',
+          );
+        }
+        deafened = false;
+        _mutedBeforeDeafen = false;
+      }
+    } catch (cause) {
+      if (identical(_room, room) && voicePhase != VoicePhase.leaving) {
+        for (final participant in room.remoteParticipants.values) {
+          for (final publication in participant.audioTrackPublications) {
+            try {
+              if (wasDeafened) {
+                await publication.disable();
+              } else {
+                await publication.enable();
+              }
+            } catch (_) {}
+          }
+        }
+        if (microphoneMuted != wasMicrophoneMuted) {
+          await _applyMicrophoneMuted(wasMicrophoneMuted);
+        }
+      }
+      deafened = wasDeafened;
+      error = _message(cause);
+    } finally {
+      deafenChanging = false;
+      notifyListeners();
+    }
   }
 
   Future<void> leaveVoice() async {

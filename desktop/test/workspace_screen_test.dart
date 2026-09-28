@@ -329,6 +329,116 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('voice dock announces reconnect and deafen transition states', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    state.selectedChannel = _PortraitApi.voiceChannel;
+    state.voiceChannel = _PortraitApi.voiceChannel;
+    state.voicePhase = VoicePhase.connected;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (context, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('В голосовом канале'), findsOneWidget);
+    expect(
+      find.text('Вы можете открыть другой канал: голос останется активным.'),
+      findsOneWidget,
+    );
+    expect(find.byTooltip('Выключить удалённый звук'), findsOneWidget);
+
+    state.voicePhase = VoicePhase.joining;
+    state.notifyListeners();
+    await tester.pump();
+    expect(find.text('Подключаемся к голосовому каналу'), findsOneWidget);
+    expect(find.text('Соединяемся с голосовой комнатой.'), findsOneWidget);
+
+    state.deafenChanging = true;
+    state.notifyListeners();
+    await tester.pump();
+    final deafenButton = find.descendant(
+      of: find.byTooltip('Выключить удалённый звук'),
+      matching: find.byType(InkWell),
+    );
+    expect(tester.widget<InkWell>(deafenButton).onTap, isNull);
+
+    state.deafenChanging = false;
+    state.voicePhase = VoicePhase.connected;
+    state.deafened = true;
+    state.notifyListeners();
+    await tester.pump();
+    expect(
+      find.text(
+        'Удалённый звук и микрофон выключены. Показ экрана этой кнопкой не отключается.',
+      ),
+      findsOneWidget,
+    );
+
+    state.voicePhase = VoicePhase.reconnecting;
+    state.notifyListeners();
+    await tester.pump();
+    expect(find.text('Восстанавливаем голосовое соединение'), findsOneWidget);
+    expect(find.text('Ручной выход отменит ожидание.'), findsOneWidget);
+    expect(
+      find.ancestor(
+        of: find.text('Восстанавливаем голосовое соединение'),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics && widget.properties.liveRegion == true,
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Удалённый звук и микрофон выключены. Показ экрана этой кнопкой не отключается.',
+      ),
+      findsNothing,
+    );
+
+    state.voicePhase = VoicePhase.leaving;
+    state.notifyListeners();
+    await tester.pump();
+    expect(find.text('Завершаем голосовое подключение'), findsOneWidget);
+    expect(find.text('Ожидаем завершения голосовой сессии.'), findsOneWidget);
+    expect(find.byTooltip('Выходим…'), findsOneWidget);
+    final leaveButton = find.descendant(
+      of: find.byTooltip('Выходим…'),
+      matching: find.byType(InkWell),
+    );
+    expect(tester.widget<InkWell>(leaveButton).onTap, isNull);
+
+    state.error = 'Голосовая сессия завершилась с ошибкой';
+    state.notifyListeners();
+    await tester.pump();
+    expect(find.text(state.error!), findsOneWidget);
+    expect(
+      find.ancestor(
+        of: find.text(state.error!),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics && widget.properties.liveRegion == true,
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets(
     'resets viewer state through app rebuild on voice channel change',
     (tester) async {

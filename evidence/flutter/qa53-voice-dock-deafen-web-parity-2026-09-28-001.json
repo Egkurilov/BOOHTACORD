@@ -1,0 +1,28 @@
+{
+  "id": "qa53-voice-dock-deafen-web-parity-2026-09-28-001",
+  "kind": "voice-dock-state-copy-and-deafen-serialization",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Flutter voice dock now matches the web copy for reconnecting/leaving and the connected, reconnecting, leaving, deafened and microphone-unavailable hints. Status and voice errors use live-region semantics. Deafen transitions are serialized, failures keep the prior deafen state and attempt to restore microphone/remote playback, and the UI disables duplicate deafen and leave actions while pending.",
+  "checks": [
+    {
+      "name": "Voice dock transition copy, announcements and pending controls",
+      "command": "flutter test test/workspace_screen_test.dart --plain-name \"voice dock announces reconnect and deafen transition states\"",
+      "status": "PASS",
+      "observation": "Widget coverage checks exact joining/connected/reconnecting/leaving hints, the remote-audio action label, a live-region reconnect status, pending deafen disabled state, a single live-region voice error, and disabled leave action while leaving."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 176 Flutter tests passed."
+    }
+  ],
+  "remaining": "Exercise actual microphone and remote-audio mute transitions, rapid taps, failure recovery, and screen-reader announcements against LiveKit peers on macOS, Windows, and Android."
+}

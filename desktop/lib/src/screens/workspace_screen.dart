@@ -4059,7 +4059,10 @@ class _VoiceParticipantRoom extends StatelessWidget {
           ),
           if (state.error != null) ...[
             const SizedBox(height: 18),
-            _ErrorBanner(message: state.error!),
+            Semantics(
+              liveRegion: true,
+              child: _ErrorBanner(message: state.error!),
+            ),
           ],
           if (state.microphoneUnavailable) ...[
             const SizedBox(height: 14),
@@ -5053,6 +5056,24 @@ class _AudioDeviceDropdown extends StatelessWidget {
 class _VoiceDock extends StatelessWidget {
   const _VoiceDock({required this.state});
   final AppState state;
+
+  String get _status => switch (state.voicePhase) {
+    VoicePhase.joining => 'Подключаемся к голосовому каналу',
+    VoicePhase.reconnecting => 'Восстанавливаем голосовое соединение',
+    VoicePhase.leaving => 'Завершаем голосовое подключение',
+    _ => 'В голосовом канале',
+  };
+
+  String get _hint => switch (state.voicePhase) {
+    VoicePhase.joining => 'Соединяемся с голосовой комнатой.',
+    VoicePhase.reconnecting => 'Ручной выход отменит ожидание.',
+    VoicePhase.leaving => 'Ожидаем завершения голосовой сессии.',
+    _ when state.deafened => 'Удалённый звук и микрофон выключены. Показ экрана этой кнопкой не отключается.',
+    _ when state.microphoneUnavailable =>
+      'Микрофон недоступен: вы остаётесь слушателем.',
+    _ => 'Вы можете открыть другой канал: голос останется активным.',
+  };
+
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -5063,43 +5084,55 @@ class _VoiceDock extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            _StatusDot(
-              color: state.voicePhase == VoicePhase.reconnecting
-                  ? GcColors.warning
-                  : GcColors.success,
-            ),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    state.voicePhase == VoicePhase.reconnecting
-                        ? 'Восстанавливаем голосовое соединение'
-                        : 'В голосовом канале',
-                    style: TextStyle(
-                      color: state.voicePhase == VoicePhase.reconnecting
-                          ? GcColors.warning
-                          : GcColors.success,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    state.voiceChannel!.name,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: GcColors.textSecondary,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
+        Semantics(
+          container: true,
+          liveRegion: true,
+          label: '$_status · ${state.voiceChannel!.name}',
+          child: Row(
+            children: [
+              _StatusDot(
+                color: state.voicePhase == VoicePhase.reconnecting
+                    ? GcColors.warning
+                    : GcColors.success,
               ),
-            ),
-          ],
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _status,
+                      style: TextStyle(
+                        color: state.voicePhase == VoicePhase.reconnecting
+                            ? GcColors.warning
+                            : GcColors.success,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      state.voiceChannel!.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: GcColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _hint,
+          style: const TextStyle(
+            color: GcColors.muted,
+            fontSize: 11,
+            height: 1.3,
+          ),
         ),
         const SizedBox(height: 11),
         Row(
@@ -5116,21 +5149,28 @@ class _VoiceDock extends StatelessWidget {
               icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
               danger: state.microphoneMuted,
               enabled:
-                  state.voicePhase != VoicePhase.reconnecting &&
-                  state.audioActivationMode != AudioActivationMode.ptt,
+                  state.audioActivationMode != AudioActivationMode.ptt &&
+                  !state.deafened,
               onTap: state.toggleMicrophone,
             ),
             _VoiceDockButton(
-              tooltip: state.deafened ? 'Включить звук' : 'Заглушить звук',
+              tooltip: state.deafened
+                  ? 'Включить удалённый звук'
+                  : 'Выключить удалённый звук',
               icon: state.deafened ? Icons.headset_off : Icons.headphones,
               danger: state.deafened,
-              enabled: state.voicePhase != VoicePhase.reconnecting,
+              enabled:
+                  !state.deafenChanging &&
+                  state.voicePhase != VoicePhase.leaving,
               onTap: state.toggleDeafen,
             ),
             _VoiceDockButton(
-              tooltip: 'Отключиться',
+              tooltip: state.voicePhase == VoicePhase.leaving
+                  ? 'Выходим…'
+                  : 'Выйти из голосового канала',
               icon: Icons.call_end,
               danger: true,
+              enabled: state.voicePhase != VoicePhase.leaving,
               onTap: state.leaveVoice,
             ),
           ],
