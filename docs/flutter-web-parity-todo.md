@@ -185,6 +185,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] Проверить live-переходы presence двумя аккаунтами на backend.
 - [ ] Сохранить matched web/Flutter screenshots 1440×900, 1280×800, 1024×768 и Android portrait для auth, chat, DM, search, members, voice, screen share, profile, audio и admin; зафиксировать отличия по экранам. Profile widget tests теперь фиксируют точную max-width/inset geometry — [QA-49](../evidence/flutter/qa49-profile-geometry-web-parity-2026-09-28-001.json).
 - [ ] Завершить focus trap/return и keyboard reachability для admin/profile/dialogs; responsive modal search и drawer traps, начальный/возвращаемый фокус реализованы. Открыты device screen-reader приёмка и matched screenshots.
+- [x] Возвращать keyboard focus к исходному элементу после закрытия настроек профиля, аудио или администрирования; регрессионный widget-тест проверяет переход фокуса на заголовок профиля и обратно к opener — [QA-63](../evidence/flutter/qa63-settings-panel-focus-return-2026-09-28-001.json).
 - [ ] Проверить responsive breakpoints, resize, accessibility labels и узкие layouts на macOS, Windows и Android.
 - [x] Выровнять voice prejoin с web clamp-геометрией: viewport inset 24–72 px,
   desktop card padding 28–44 px и mobile 16×24 px; иконка и заголовок тоже

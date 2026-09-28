@@ -43,6 +43,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   bool _showMembersDrawer = false;
   bool _capturingPttKey = false;
   FocusNode? _drawerReturnFocus;
+  FocusNode? _workspacePanelReturnFocus;
   final _searchTriggerFocus = FocusNode(debugLabel: 'workspace-search-trigger');
   WorkspacePanel? _lastWorkspacePanel;
 
@@ -77,6 +78,25 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
     final previous = _lastWorkspacePanel;
     final current = widget.state.workspacePanel;
     _lastWorkspacePanel = current;
+    const returnFocusPanels = {
+      WorkspacePanel.profile,
+      WorkspacePanel.audio,
+      WorkspacePanel.admin,
+    };
+    if (previous == WorkspacePanel.none &&
+        returnFocusPanels.contains(current)) {
+      _workspacePanelReturnFocus = FocusManager.instance.primaryFocus;
+    }
+    if (returnFocusPanels.contains(previous) &&
+        current == WorkspacePanel.none) {
+      final returnFocus = _workspacePanelReturnFocus;
+      _workspacePanelReturnFocus = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && returnFocus?.canRequestFocus == true) {
+          returnFocus!.requestFocus();
+        }
+      });
+    }
     if ((previous == WorkspacePanel.search ||
             previous == WorkspacePanel.searchContext) &&
         current == WorkspacePanel.none) {

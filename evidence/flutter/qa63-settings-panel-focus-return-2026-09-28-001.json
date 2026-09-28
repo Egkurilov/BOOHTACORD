@@ -1,0 +1,22 @@
+{
+  "id": "QA-63",
+  "date": "2026-09-28",
+  "status": "PASS_WITH_NATIVE_ACCESSIBILITY_ACCEPTANCE_OPEN",
+  "summary": "Closing profile, audio, or admin workspace settings returns keyboard focus to the control that opened the panel, when that control remains available.",
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart --plain-name 'profile panel restores the opening keyboard focus on close'",
+      "observation": "Widget test moves focus from a known opener to the profile heading, closes the panel, and verifies focus returns to the exact opener FocusNode."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "observation": "All 187 Flutter tests passed; analyzer reported no issues."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Native keyboard/screen-reader verification on macOS, Windows and Android and matched screenshots remain part of the broader accessibility acceptance."
+    }
+  ]
+}

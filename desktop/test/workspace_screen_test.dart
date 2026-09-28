@@ -181,6 +181,50 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('profile panel restores the opening keyboard focus on close', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi());
+    final openingFocus = FocusNode(debugLabel: 'workspace-panel-opener');
+    addTearDown(openingFocus.dispose);
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Focus(
+          focusNode: openingFocus,
+          child: AnimatedBuilder(
+            animation: state,
+            builder: (context, _) => WorkspaceScreen(state: state),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    openingFocus.requestFocus();
+    await tester.pump();
+    expect(FocusManager.instance.primaryFocus, same(openingFocus));
+
+    state.toggleWorkspacePanel(WorkspacePanel.profile);
+    await tester.pumpAndSettle();
+    final profileFocus = tester
+        .widget<Focus>(find.byKey(const ValueKey('profile-screen-title-focus')))
+        .focusNode!;
+    profileFocus.requestFocus();
+    await tester.pump();
+    expect(FocusManager.instance.primaryFocus, same(profileFocus));
+
+    state.toggleWorkspacePanel(WorkspacePanel.none);
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus, same(openingFocus));
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('offers to reopen a local screen from the participant view', (
     tester,
   ) async {
