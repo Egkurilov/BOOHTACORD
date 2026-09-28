@@ -4113,63 +4113,80 @@ class _VoiceParticipantRoom extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 24),
-          GridView.count(
-            crossAxisCount: constraints.maxWidth < 460
-                ? 1
-                : constraints.maxWidth < 760
-                ? 2
-                : constraints.maxWidth < 1080
-                ? 3
-                : 4,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio:
-                screens.isNotEmpty ||
-                    state.screenSharePhase == ScreenSharePhase.sharing
-                ? constraints.maxWidth < 460
-                      ? 1.65
-                      : 1.2
-                : constraints.maxWidth < 460
-                ? 2.25
-                : 1.45,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _VoiceParticipantCard(
-                state: state,
-                name: state.profile?.displayName.trim().isNotEmpty == true
-                    ? state.profile!.displayName
-                    : 'Вы',
-                avatarUrl: state.profile?.avatarUrl,
-                muted: state.microphoneMuted,
-                microphoneUnavailable: state.microphoneUnavailable,
-                deafened: state.deafened,
-                speaking: room?.localParticipant?.isSpeaking ?? false,
-                isLocal: true,
-                hasScreen: state.screenSharePhase == ScreenSharePhase.sharing,
-                onScreenTap: state.screenSharePhase == ScreenSharePhase.sharing
-                    ? () => onScreenSelected(null)
-                    : null,
-              ),
-              for (final participant in participants)
-                _VoiceParticipantCard(
-                  state: state,
-                  name: _participantName(participant),
-                  avatarUrl: _participantMember(state, participant)?.avatarUrl,
-                  muted: _participantMuted(participant),
-                  speaking: participant.isSpeaking,
-                  volume: state.participantVolume(participant),
-                  onVolumeChanged: state.participantVolume(participant) == null
-                      ? null
-                      : (level) => unawaited(
-                          state.setParticipantVolume(participant, level),
-                        ),
-                  hasScreen: screens.contains(participant),
-                  onScreenTap: screens.contains(participant)
-                      ? () => onScreenSelected(participant.identity)
-                      : null,
+          LayoutBuilder(
+            builder: (context, gridConstraints) {
+              final calculatedColumns =
+                  ((gridConstraints.maxWidth + 12) / (160 + 12)).floor();
+              final crossAxisCount = calculatedColumns < 1
+                  ? 1
+                  : calculatedColumns;
+              final hasScreenShare =
+                  screens.isNotEmpty ||
+                  state.screenSharePhase == ScreenSharePhase.sharing;
+              // The native button keeps Material's 48 dp touch target; the
+              // web share action is 30 px tall, so shared cards need the
+              // additional vertical room rather than squeezing their content.
+              final cardHeight = hasScreenShare ? 208.0 : 176.0;
+              return GridView.builder(
+                key: const ValueKey('voice-participant-grid'),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  mainAxisExtent: cardHeight,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
                 ),
-            ],
+                itemCount: participants.length + 1,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return _VoiceParticipantCard(
+                      key: const ValueKey('voice-participant-card:self'),
+                      state: state,
+                      name: state.profile?.displayName.trim().isNotEmpty == true
+                          ? state.profile!.displayName
+                          : 'Вы',
+                      avatarUrl: state.profile?.avatarUrl,
+                      muted: state.microphoneMuted,
+                      microphoneUnavailable: state.microphoneUnavailable,
+                      deafened: state.deafened,
+                      speaking: room?.localParticipant?.isSpeaking ?? false,
+                      isLocal: true,
+                      hasScreen:
+                          state.screenSharePhase == ScreenSharePhase.sharing,
+                      onScreenTap:
+                          state.screenSharePhase == ScreenSharePhase.sharing
+                          ? () => onScreenSelected(null)
+                          : null,
+                    );
+                  }
+                  final participant = participants[index - 1];
+                  final volume = state.participantVolume(participant);
+                  final hasScreen = screens.contains(participant);
+                  return _VoiceParticipantCard(
+                    key: ValueKey('voice-participant-card:${participant.sid}'),
+                    state: state,
+                    name: _participantName(participant),
+                    avatarUrl: _participantMember(
+                      state,
+                      participant,
+                    )?.avatarUrl,
+                    muted: _participantMuted(participant),
+                    speaking: participant.isSpeaking,
+                    volume: volume,
+                    onVolumeChanged: volume == null
+                        ? null
+                        : (level) => unawaited(
+                            state.setParticipantVolume(participant, level),
+                          ),
+                    hasScreen: hasScreen,
+                    onScreenTap: hasScreen
+                        ? () => onScreenSelected(participant.identity)
+                        : null,
+                  );
+                },
+              );
+            },
           ),
         ],
       ),
@@ -4602,6 +4619,7 @@ class _VoiceStripPerson extends StatelessWidget {
 
 class _VoiceParticipantCard extends StatelessWidget {
   const _VoiceParticipantCard({
+    super.key,
     required this.state,
     required this.name,
     required this.avatarUrl,
@@ -4637,65 +4655,69 @@ class _VoiceParticipantCard extends StatelessWidget {
       speaking: speaking,
     );
     return Container(
-      padding: const EdgeInsets.all(18),
+      constraints: const BoxConstraints(minHeight: 176),
+      padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
       decoration: BoxDecoration(
         color: GcColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: presentation.isSpeaking ? GcColors.success : GcColors.border,
-          width: presentation.isSpeaking ? 2 : 1,
+          color: presentation.isSpeaking
+              ? GcColors.success
+              : Colors.transparent,
+          width: 2,
         ),
       ),
       child: Stack(
         children: [
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AuthenticatedAvatar(
-                  state: state,
-                  name: name,
-                  avatarUrl: avatarUrl,
-                  radius: 31,
-                  borderColor: presentation.isSpeaking
-                      ? GcColors.success
-                      : const Color(0x44365ACA),
-                  borderWidth: presentation.isSpeaking ? 3 : 1,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        isLocal ? '$name (вы)' : name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              AuthenticatedAvatar(
+                state: state,
+                name: name,
+                avatarUrl: avatarUrl,
+                radius: 32,
+                fallbackFontSize: 26,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      isLocal ? '$name (вы)' : name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(width: 7),
-                    Icon(
-                      deafened
-                          ? Icons.headset_off
-                          : muted || microphoneUnavailable
-                          ? Icons.mic_off
-                          : presentation.isSpeaking
-                          ? Icons.graphic_eq
-                          : Icons.mic,
-                      size: 16,
-                      color: deafened
-                          ? GcColors.danger
-                          : microphoneUnavailable
-                          ? GcColors.warning
-                          : muted
-                          ? GcColors.danger
-                          : GcColors.textSecondary,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(
+                  ),
+                  const SizedBox(width: 7),
+                  Icon(
+                    deafened
+                        ? Icons.headset_off
+                        : muted || microphoneUnavailable
+                        ? Icons.mic_off
+                        : presentation.isSpeaking
+                        ? Icons.graphic_eq
+                        : Icons.mic,
+                    size: 16,
+                    color: deafened
+                        ? GcColors.danger
+                        : microphoneUnavailable
+                        ? GcColors.warning
+                        : muted
+                        ? GcColors.danger
+                        : GcColors.textSecondary,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 16,
+                child: Text(
                   presentation.label,
                   style: TextStyle(
                     color: presentation.isSpeaking
@@ -4704,26 +4726,52 @@ class _VoiceParticipantCard extends StatelessWidget {
                     fontSize: 12,
                   ),
                 ),
-                if (hasScreen)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: OutlinedButton.icon(
-                      onPressed: onScreenTap,
-                      icon: const Icon(Icons.monitor_outlined, size: 16),
-                      label: const Text('Смотреть'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: GcColors.accentText,
-                        minimumSize: const Size(0, 34),
-                      ),
+              ),
+              if (hasScreen) ...[
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  key: const ValueKey('voice-participant-watch-screen'),
+                  onPressed: onScreenTap,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: GcColors.accentText,
+                    minimumSize: const Size(0, 34),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                  child: const Text('Смотреть экран'),
+                ),
+              ],
+            ],
+          ),
+          if (hasScreen)
+            Positioned(
+              top: -12,
+              left: -4,
+              child: Semantics(
+                label: 'Участник показывает экран',
+                image: true,
+                child: ExcludeSemantics(
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: GcColors.raised,
+                      border: Border.all(color: GcColors.border),
+                      borderRadius: BorderRadius.circular(GcRadii.sm),
+                    ),
+                    child: const Icon(
+                      Icons.desktop_windows_outlined,
+                      size: 16,
+                      color: GcColors.accentText,
                     ),
                   ),
-              ],
+                ),
+              ),
             ),
-          ),
           if (volume != null && onVolumeChanged != null)
             Positioned(
               top: -12,
-              right: -12,
+              right: -4,
               child: _VoiceVolumeMenu(
                 name: name,
                 volume: volume!,

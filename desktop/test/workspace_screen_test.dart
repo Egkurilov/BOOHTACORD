@@ -229,7 +229,7 @@ void main() {
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.reset);
     final state = AppState(_PortraitApi());
     await state.initialize();
@@ -241,7 +241,41 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Все в сборе'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, 'Смотреть'), findsOneWidget);
+    expect(
+      find.widgetWithText(OutlinedButton, 'Смотреть экран'),
+      findsOneWidget,
+    );
+    expect(find.bySemanticsLabel('Участник показывает экран'), findsOneWidget);
+    final grid = tester.widget<GridView>(
+      find.byKey(const ValueKey('voice-participant-grid')),
+    );
+    expect(
+      (grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount)
+          .crossAxisCount,
+      2,
+    );
+    final selfCard = find.byKey(const ValueKey('voice-participant-card:self'));
+    expect(tester.getSize(selfCard).height, 208);
+    expect(tester.getSize(selfCard).width, greaterThanOrEqualTo(160));
+
+    tester.view.physicalSize = const Size(1440, 900);
+    await tester.pumpAndSettle();
+    final desktopGrid = tester.widget<GridView>(
+      find.byKey(const ValueKey('voice-participant-grid')),
+    );
+    expect(
+      (desktopGrid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount)
+          .crossAxisCount,
+      ((tester
+                      .getSize(
+                        find.byKey(const ValueKey('voice-participant-grid')),
+                      )
+                      .width +
+                  12) /
+              172)
+          .floor(),
+    );
+    expect(tester.getSize(selfCard).height, 208);
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();

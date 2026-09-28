@@ -1,0 +1,35 @@
+{
+  "id": "QA-65",
+  "date": "2026-09-28",
+  "status": "PASS_WITH_NATIVE_VISUAL_ACCEPTANCE_OPEN",
+  "summary": "The connected Flutter voice room now sizes its participant grid using the web auto-fill/minimum-card-width rule and retains web-aligned participant card geometry and screen-share affordances.",
+  "layout": {
+    "minimum_card_width_px": 160,
+    "grid_gap_px": 12,
+    "minimum_card_height_px": 176,
+    "avatar_diameter_px": 64,
+    "screen_share_card_height_px": 208,
+    "screen_share_card_height_note": "The native outlined action retains Material's minimum touch target and adds height instead of overflowing or shrinking the card."
+  },
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart --plain-name 'offers to reopen a local screen from the participant view'",
+      "observation": "At 390×844 the grid auto-fills two columns at >=160 px per card, preserves the 208 px screen-share card height, exposes the accessible share badge and screen action; resizing to 1440×900 recomputes columns from available grid width without changing card height."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "observation": "All 188 Flutter tests passed; analyzer reported no issues."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build apk --debug && flutter build macos --debug",
+      "observation": "Android debug APK and macOS debug app both built. Gradle still reports the existing Kotlin Gradle Plugin migration warning for flutter_background, flutter_webrtc and livekit_client."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Matched runtime screenshots and device screen-reader/touch acceptance remain open; a Windows runner is still required for a native Windows build."
+    }
+  ]
+}

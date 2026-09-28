@@ -96,6 +96,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] Проверить prejoin roster на реальном сервере с двумя аккаунтами: вход/выход,
   смену демонстрации, 10-секундное обновление и поведение при недоступности
   private presence — реализация и целевые тесты в [QA-18](../evidence/flutter/qa18-prejoin-voice-roster-2026-09-27-001.json).
+- [x] Выровнять active voice participant grid с CSS `auto-fill/minmax(160px, 1fr)`:
+  вычислять число колонок по доступной ширине, сохранять 176 px минимальную высоту,
+  web-порядок карточки и 64 px avatar; добавить screen-share badge и доступную кнопку
+  просмотра, не теряя Material touch target. Android portrait и desktop resize,
+  Flutter suite/analyzer, Android и macOS debug builds прошли — [QA-65](../evidence/flutter/qa65-active-voice-grid-web-parity-2026-09-28-001.json).
 - [x] Синхронизировать desktop search drawer Vue и Flutter: 360 px при 1280–1439
   и 400 px от 1440; широкий voice stage остаётся 320 px modal. CSS contract,
   Flutter widget tests, полный web suite и production build прошли —
