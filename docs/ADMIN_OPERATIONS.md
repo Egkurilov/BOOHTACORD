@@ -34,6 +34,27 @@ unset RECOVERY_PASSWORD
 
 ## Входные параметры GitVerse Actions
 
+### Linux CI на Hetzner
+
+Задания `backend`, `frontend` и `release_guard` в `deploy-production.yaml`
+закреплены меткой `boohtacord-hetzner` за локальным раннером репозитория на
+`167.233.56.32`. Его ёмкость равна одному заданию: проверки выполняются
+последовательно, а при недоступности раннера ожидают его восстановления без
+перехода на облачный раннер. Задание `deploy`, ручные операторские проверки и
+Flutter Windows CI сохраняют свои отдельные маршруты.
+
+Для `backend` на Hetzner служит отдельный контейнер `boohtacord-ci-postgres`
+с тестовой БД. Он слушает только `127.0.0.1:15432`, хранит данные в `tmpfs` и
+не связан с production PostgreSQL. Перед проверкой Go workflow выполняет
+аутентифицированный запрос `SELECT 1` к этой БД. На хосте раннера также должны
+быть доступны `psql` и PowerShell 7.6.6. Состояние раннера проверяйте на
+странице настроек GitVerse, а состояние тестовой БД — через Docker health.
+
+Сборка OCI-образов API и web при production-доставке пока выполняется на
+release-хосте `176.108.242.211` по принятому в ADR-010 маршруту. Перенос
+этого этапа на Hetzner потребует отдельной проверки передачи OCI-архивов,
+digest, SBOM и provenance.
+
 Workflow [`.gitverse/workflows/deploy-production.yaml`](../.gitverse/workflows/deploy-production.yaml) запускается только после успешных Go и Vue checks на trusted `push` в `master` или вручную из `master`. Для запуска требуется один repository secret: `DEPLOY_SSH_PRIVATE_KEY`. Он должен соответствовать публичному ключу, уже установленному в `authorized_keys` пользователя `shaneque` на утверждённом production-хосте `176.108.242.211`. Адрес, пользователь и host key зафиксированы в workflow для этого единственного окружения; PostgreSQL, LiveKit и файл `.env` не передаются в CI.
 
 Workflow закрепляет проверенный ED25519 host key deployment-сервера в `known_hosts`; он не использует `ssh-keyscan`, `StrictHostKeyChecking=accept-new` или интерактивный SSH. Изменение host key намеренно останавливает поставку до отдельной owner-проверки и обновления workflow.
