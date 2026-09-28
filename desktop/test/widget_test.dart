@@ -129,6 +129,65 @@ void main() {
     debugDefaultTargetPlatformOverride = null;
   });
 
+  testWidgets('Android mixed channel drawer fits long names at 320 dp', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 640);
+    addTearDown(tester.view.reset);
+    const textName = 'объявления-и-обновления-команды-очень-длинное-название';
+    const voiceName = 'Голосовая-комната-команды-с-очень-длинным-названием';
+    const textChannel = GuildChannel(
+      id: 'text-320',
+      name: textName,
+      kind: ChannelKind.text,
+      admissionClosed: false,
+    );
+    const voiceChannel = GuildChannel(
+      id: 'voice-320',
+      name: voiceName,
+      kind: ChannelKind.voice,
+      admissionClosed: false,
+    );
+    final state = AppState(_VoiceEntryApi())
+      ..phase = AppPhase.ready
+      ..user = const SessionUser(accountId: 'account-1', role: 'MEMBER')
+      ..selectedChannel = textChannel
+      ..topology = const ChannelTopology(
+        revision: 1,
+        categories: [
+          ChannelCategory(
+            id: 'general-320',
+            name: 'General',
+            channels: [textChannel, voiceChannel],
+          ),
+        ],
+      );
+    await tester.pumpWidget(BoohtacordApp(state: state));
+    await tester.pumpAndSettle();
+
+    final drawer = find.byKey(const ValueKey('mobile-sidebar'));
+    expect(drawer, findsOneWidget);
+    expect(tester.getRect(drawer).width, lessThanOrEqualTo(320));
+    for (final name in [textName, voiceName]) {
+      final rowLabel = find.descendant(of: drawer, matching: find.text(name));
+      expect(rowLabel, findsOneWidget);
+      expect(tester.widget<Text>(rowLabel).overflow, TextOverflow.ellipsis);
+    }
+    final welcome = find.text('Добро пожаловать в #$textName');
+    expect(welcome, findsOneWidget);
+    await tester.ensureVisible(welcome);
+    await tester.pumpAndSettle();
+    expect(tester.getRect(welcome).bottom, lessThanOrEqualTo(640));
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   testWidgets('shows a branded loading state while session is restored', (
     tester,
   ) async {

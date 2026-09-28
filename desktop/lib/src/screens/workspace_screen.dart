@@ -1954,8 +1954,10 @@ class _ConversationState extends State<_Conversation>
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: [
-                      SizedBox(
-                        height: MediaQuery.sizeOf(context).height * 0.45,
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: MediaQuery.sizeOf(context).height * 0.45,
+                        ),
                         child: _EmptyConversation(channel: widget.channel.name),
                       ),
                     ],

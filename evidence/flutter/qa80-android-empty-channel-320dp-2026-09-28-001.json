@@ -1,0 +1,22 @@
+{
+  "id": "QA-80",
+  "kind": "android-empty-channel-narrow-layout",
+  "status": "PASS_WITH_DEVICE_VISUAL_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-28",
+  "summary": "Fixed a 210 px bottom RenderFlex overflow in the empty text-channel welcome state at a 320 dp Android viewport. The text content can now grow beyond its minimum visual height and remain vertically scrollable.",
+  "checks": [
+    {
+      "name": "Android mixed channel navigation and long names at 320×640",
+      "command": "cd desktop && flutter test test/widget_test.dart --plain-name 'Android mixed channel drawer fits long names at 320 dp'",
+      "status": "PASS",
+      "observation": "A real text and voice channel are present in the mobile drawer. Both long navigation labels use ellipsis; the long text-channel welcome remains available by scrolling; no RenderFlex overflow or other layout exception is reported. This test failed before the fix with an overflow of 210 px."
+    },
+    {
+      "name": "Full Flutter suite and static analysis",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "223 widget/unit tests passed; flutter analyze reported no issues."
+    }
+  ],
+  "remaining": "Compare the 320 dp empty-channel layout with a real Android screenshot; other responsive breakpoints and platforms remain open in the parity checklist."
+}

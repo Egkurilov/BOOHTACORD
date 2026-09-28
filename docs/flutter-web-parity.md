@@ -57,6 +57,12 @@ returning to text, and opening DMs. The Android 320 dp empty-drawer case remains
 covered as well —
 [QA-79](../evidence/flutter/qa79-android-unified-channel-drawer-2026-09-28-001.json).
 
+At 320 dp, an Android test exposed and now prevents a bottom overflow in the
+empty text-channel welcome state when the channel name wraps across several
+lines. The empty state retains its minimum visual height but can grow and scroll
+with its content —
+[QA-80](../evidence/flutter/qa80-android-empty-channel-320dp-2026-09-28-001.json).
+
 The reported Android-to-viewer crop remains unresolved. Source inspection shows
 the web viewer uses `object-fit: contain`, and Flutter's LiveKit renderer
 defaults to `VideoViewFit.contain`; this rules out neither an encoded-frame
