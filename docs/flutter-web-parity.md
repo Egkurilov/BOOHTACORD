@@ -306,6 +306,14 @@ portrait and landscape Android share is checked in both web and Flutter viewers.
   supported by the current capture API, so local screen shares are video-only.
   Verify OS-level stop, Android 14+ permission/service behavior, and real-peer
   capture on macOS, Windows and Android.
+- Android now includes the real MediaProjection source dimensions in the
+  Flutter WebRTC track settings. Flutter passes those dimensions to the selected
+  quality profile, which applies an even, aspect-preserving RTP scale cap
+  (720/1080/1440p) instead of treating bitrate/FPS as the only effective
+  profile settings [QA-88](../evidence/flutter/qa88-android-screen-share-resolution-cap-2026-09-29-001.json).
+  Sender-stat confirmation across Android profiles and receiver-edge/crop
+  acceptance remain open; this encoder cap is not evidence that the reported
+  receiver crop is fixed.
 - Match viewer stream rail, explicit selection, fullscreen, screen audio/volume,
   quality controls and diagnostics. The web and Flutter clients now share the
   720/1080/1440p × 15/30/60 FPS capture matrix, bitrate policy, and track labels;
@@ -360,9 +368,9 @@ portrait and landscape Android share is checked in both web and Flutter viewers.
   there is no Developer ID team signature and signed-release Keychain
   persistence has not been tested [QA-85](../evidence/flutter/qa85-macos-release-bundle-2026-09-29-001.json).
   Local verification covers macOS debug/release builds and Android debug; the
-  tracked Android 1.0.0+2 release APK was rebuilt from `ffb2967`, passes APK
+  tracked Android 1.0.0+3 release APK was rebuilt from `f162973`, passes APK
   Signature Scheme v2 verification, and has a recorded upload-certificate
-  fingerprint, SHA-256 and size [QA-87](../evidence/flutter/qa87-android-release-reconnect-2026-09-29-001.json).
+  fingerprint, SHA-256 and size [QA-88](../evidence/flutter/qa88-android-screen-share-resolution-cap-2026-09-29-001.json).
   Signed macOS release persistence and Android install/runtime acceptance on a
   physical device remain open.
   The GitVerse workflow in `.gitverse/workflows/flutter-windows.yaml` now routes

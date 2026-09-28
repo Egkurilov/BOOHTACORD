@@ -174,6 +174,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   настройки качества; исправить перенос значений качества в узком Android
   портрете — [QA-24](../evidence/flutter/qa24-screen-share-quality-picker-2026-09-27-001.json),
   [QA-31](../evidence/flutter/qa31-android-share-quality-compact-layout-2026-09-27-001.json).
+- [x] Применять выбранный Android resolution profile к RTP encoder, а не только
+  подписывать трек выбранным профилем: MediaProjection track metadata содержит
+  фактический source size, sender получает aspect-preserving scale cap с чётными
+  output edges; unit tests и Android release сборка — [QA-88](../evidence/flutter/qa88-android-screen-share-resolution-cap-2026-09-29-001.json).
 - [x] Проверить picker на минимальной Android-ширине 320 dp: обе настройки качества
   достижимы прокруткой, а закреплённая кнопка запуска остаётся видимой; все пять
   screen-share тестов проходят — [QA-76](../evidence/flutter/qa76-android-screen-share-picker-320dp-2026-09-28-001.json).

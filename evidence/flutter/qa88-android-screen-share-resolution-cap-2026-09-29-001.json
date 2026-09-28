@@ -1,0 +1,55 @@
+{
+  "id": "QA-88",
+  "kind": "android-screen-share-resolution-cap",
+  "status": "PASS_WITH_DEVICE_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "f1629739c2a9e7d536ac0322b389ebfe8a6709ea",
+  "summary": "Android MediaProjection now reports its actual source dimensions to LiveKit, and the selected resolution profile is applied to the single RTP encoding with an aspect-preserving scale. The 1.0.0+3 release APK is signed and verified. Physical sender-stat/receiver playback acceptance remains open because no Android device is connected.",
+  "checks": [
+    {
+      "name": "Selected screen profile scale and portrait geometry",
+      "command": "cd desktop && flutter test test/screen_share_quality_test.dart packages/livekit_client/test/utils_test.dart",
+      "status": "PASS",
+      "observation": "21 tests passed. The tests cover all three resolution ceilings, landscape scaling, portrait source scaling, no upscaling for a source below the selected ceiling, and propagation of scaleResolutionDownBy to RTCRtpEncoding."
+    },
+    {
+      "name": "Full Flutter regression suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "225 tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android signed release",
+      "command": "cd desktop && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Built from f1629739c2a9e7d536ac0322b389ebfe8a6709ea. aapt reports package ru.boohtacord.app, versionName 1.0.0 and versionCode 3."
+    },
+    {
+      "name": "APK signing and certificate",
+      "command": "apksigner verify --verbose --print-certs artifacts/android/BOOHTACORD-1.0.0+3-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verification passed with one RSA-4096 signer. Certificate SHA-256 is 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b."
+    },
+    {
+      "name": "Physical sender profile and receiver playback",
+      "status": "OPEN",
+      "observation": "adb devices reports no connected Android device. Actual encoded dimensions/FPS across selected profiles and full-edge playback on web and Flutter receivers were not observed. This change does not claim to fix the previously reported receiver crop."
+    }
+  ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.0+3-release.apk",
+    "source_revision": "f1629739c2a9e7d536ac0322b389ebfe8a6709ea",
+    "version_name": "1.0.0",
+    "version_code": 3,
+    "size_bytes": 107622038,
+    "sha256": "6ec5181bfa55ec2f2b690b6fb6d4d6740c54f64c646c8746cd311efbf3b2993b",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b"
+  },
+  "remaining": "Install 1.0.0+3 on a physical Android device, run 720/1080/1440p profiles against two remote receivers, confirm portrait/landscape source edges and rotation/fullscreen playback, and compare actual sender/receiver dimensions and frame rate."
+}
