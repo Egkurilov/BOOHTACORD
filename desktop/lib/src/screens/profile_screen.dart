@@ -129,229 +129,283 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final profile = widget.state.profile;
     return ColoredBox(
       color: GcColors.content,
-      child: ListView(
-        padding: const EdgeInsets.all(32),
-        children: [
-          Focus(
-            key: const ValueKey('profile-screen-title-focus'),
-            focusNode: _titleFocus,
-            child: Semantics(
-              header: true,
-              child: const Text(
-                'Профиль',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Настройки вашей учётной записи',
-            style: TextStyle(color: GcColors.textSecondary),
-          ),
-          const SizedBox(height: 28),
-          if (widget.state.profileLoading)
-            Semantics(liveRegion: true, child: Text('Загружаем профиль…'))
-          else if (widget.state.profileLoadError != null)
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                widget.state.profileLoadError!,
-                style: const TextStyle(color: GcColors.danger),
-              ),
-            )
-          else if (profile != null) ...[
-            Row(
-              children: [
-                AuthenticatedAvatar(
-                  state: widget.state,
-                  name: profile.displayName,
-                  avatarUrl: profile.avatarUrl,
-                  radius: 36,
-                ),
-                const SizedBox(width: 16),
-                OutlinedButton(
-                  onPressed: widget.state.profileSaving ? null : _selectAvatar,
-                  child: const Text('Загрузить аватар'),
-                ),
-                if (profile.avatarUrl != null) ...[
-                  const SizedBox(width: 8),
-                  TextButton(
-                    onPressed: widget.state.profileSaving
-                        ? null
-                        : _removeAvatar,
-                    child: const Text('Удалить'),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth <= 720;
+          final inset = compact ? 16.0 : 24.0;
+          final contentWidth = (constraints.maxWidth - inset * 2)
+              .clamp(0.0, 720.0)
+              .toDouble();
+          return ListView(
+            padding: EdgeInsets.all(inset),
+            children: [
+              Center(
+                child: SizedBox(
+                  key: const ValueKey('profile-settings-content'),
+                  width: contentWidth,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Focus(
+                        key: const ValueKey('profile-screen-title-focus'),
+                        focusNode: _titleFocus,
+                        child: Semantics(
+                          header: true,
+                          child: const Text(
+                            'Профиль',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Настройки вашей учётной записи',
+                        style: TextStyle(color: GcColors.textSecondary),
+                      ),
+                      const SizedBox(height: 32),
+                      if (widget.state.profileLoading)
+                        Semantics(
+                          liveRegion: true,
+                          child: Text('Загружаем профиль…'),
+                        )
+                      else if (widget.state.profileLoadError != null)
+                        Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            widget.state.profileLoadError!,
+                            style: const TextStyle(color: GcColors.danger),
+                          ),
+                        )
+                      else if (profile != null) ...[
+                        Row(
+                          children: [
+                            AuthenticatedAvatar(
+                              state: widget.state,
+                              name: profile.displayName,
+                              avatarUrl: profile.avatarUrl,
+                              radius: 32,
+                            ),
+                            const SizedBox(width: 16),
+                            OutlinedButton(
+                              onPressed: widget.state.profileSaving
+                                  ? null
+                                  : _selectAvatar,
+                              child: const Text('Загрузить аватар'),
+                            ),
+                            if (profile.avatarUrl != null) ...[
+                              const SizedBox(width: 8),
+                              TextButton(
+                                onPressed: widget.state.profileSaving
+                                    ? null
+                                    : _removeAvatar,
+                                child: const Text('Удалить'),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        ConstrainedBox(
+                          key: const ValueKey('profile-name-form-width'),
+                          constraints: const BoxConstraints(maxWidth: 480),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              TextField(
+                                controller: _displayName,
+                                decoration: const InputDecoration(
+                                  labelText: 'Имя пользователя',
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                initialValue: profile.login,
+                                readOnly: true,
+                                decoration: const InputDecoration(
+                                  labelText: 'Логин',
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: FilledButton(
+                                  onPressed: widget.state.profileSaving
+                                      ? null
+                                      : _saveName,
+                                  child: const Text('Сохранить изменения'),
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              const Divider(height: 1, color: GcColors.border),
+                              const SizedBox(height: 32),
+                              const Text(
+                                'Изменить пароль',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              TextField(
+                                controller: _currentPassword,
+                                obscureText: true,
+                                decoration: const InputDecoration(
+                                  labelText: 'Текущий пароль',
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              TextField(
+                                controller: _newPassword,
+                                obscureText: true,
+                                decoration: const InputDecoration(
+                                  labelText: 'Новый пароль',
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: FilledButton(
+                                  onPressed: widget.state.profileSaving
+                                      ? null
+                                      : _savePassword,
+                                  child: const Text('Обновить пароль'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      if (_status != null) ...[
+                        const SizedBox(height: 20),
+                        Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            _status!,
+                            style: const TextStyle(color: GcColors.success),
+                          ),
+                        ),
+                      ],
+                      if (widget.state.error != null) ...[
+                        const SizedBox(height: 12),
+                        Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            widget.state.error!,
+                            style: const TextStyle(color: GcColors.danger),
+                          ),
+                        ),
+                      ],
+                      if (widget.state.notificationsSupported) ...[
+                        const SizedBox(height: 32),
+                        const Divider(height: 1, color: GcColors.border),
+                        const SizedBox(height: 32),
+                        const Text(
+                          'Уведомления',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Показываем общий текст нового сообщения, пока приложение неактивно. Содержимое личных сообщений не отображается.',
+                          style: TextStyle(color: GcColors.textSecondary),
+                        ),
+                        const SizedBox(height: 8),
+                        Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            switch (widget.state.notificationPermission) {
+                              NativeNotificationPermission.unavailable =>
+                                'Системные уведомления недоступны.',
+                              NativeNotificationPermission.denied =>
+                                'Уведомления запрещены в настройках системы.',
+                              NativeNotificationPermission.granted =>
+                                widget.state.notificationsEnabled
+                                    ? 'Уведомления включены.'
+                                    : 'Уведомления выключены.',
+                            },
+                          ),
+                        ),
+                        if (widget.state.notificationError != null) ...[
+                          const SizedBox(height: 8),
+                          Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              widget.state.notificationError!,
+                              style: const TextStyle(color: GcColors.danger),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton(
+                            onPressed:
+                                widget.state.notificationPermission ==
+                                    NativeNotificationPermission.unavailable
+                                ? null
+                                : widget.state.notificationsEnabled
+                                ? widget.state.disableNotifications
+                                : widget.state.enableNotifications,
+                            child: Text(
+                              widget.state.notificationsEnabled
+                                  ? 'Отключить уведомления'
+                                  : 'Включить уведомления',
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 32),
+                      const Divider(height: 1, color: GcColors.border),
+                      const SizedBox(height: 32),
+                      const Text(
+                        'Выход из аккаунта',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Голосовое подключение завершится, а личные данные исчезнут с этого экрана.',
+                        style: TextStyle(color: GcColors.textSecondary),
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton(
+                          onPressed:
+                              widget.state.logoutBusy ||
+                                  widget.state.profileSaving
+                              ? null
+                              : widget.state.logout,
+                          child: Text(
+                            widget.state.logoutBusy
+                                ? 'Выходим…'
+                                : 'Выйти из аккаунта',
+                          ),
+                        ),
+                      ),
+                      if (widget.state.logoutError != null) ...[
+                        const SizedBox(height: 8),
+                        Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            widget.state.logoutError!,
+                            style: const TextStyle(color: GcColors.danger),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 28),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: _displayName,
-                    decoration: const InputDecoration(
-                      labelText: 'Имя пользователя',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    initialValue: profile.login,
-                    readOnly: true,
-                    decoration: const InputDecoration(labelText: 'Логин'),
-                  ),
-                  const SizedBox(height: 14),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FilledButton(
-                      onPressed: widget.state.profileSaving ? null : _saveName,
-                      child: const Text('Сохранить изменения'),
-                    ),
-                  ),
-                  const SizedBox(height: 36),
-                  const Text(
-                    'Изменить пароль',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _currentPassword,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Текущий пароль',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _newPassword,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Новый пароль',
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FilledButton(
-                      onPressed: widget.state.profileSaving
-                          ? null
-                          : _savePassword,
-                      child: const Text('Обновить пароль'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          if (_status != null) ...[
-            const SizedBox(height: 20),
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                _status!,
-                style: const TextStyle(color: GcColors.success),
-              ),
-            ),
-          ],
-          if (widget.state.error != null) ...[
-            const SizedBox(height: 12),
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                widget.state.error!,
-                style: const TextStyle(color: GcColors.danger),
-              ),
-            ),
-          ],
-          const SizedBox(height: 36),
-          if (widget.state.notificationsSupported) ...[
-            const Text(
-              'Уведомления',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Показываем общий текст нового сообщения, пока приложение неактивно. Содержимое личных сообщений не отображается.',
-              style: TextStyle(color: GcColors.textSecondary),
-            ),
-            const SizedBox(height: 8),
-            Semantics(
-              liveRegion: true,
-              child: Text(switch (widget.state.notificationPermission) {
-                NativeNotificationPermission.unavailable =>
-                  'Системные уведомления недоступны.',
-                NativeNotificationPermission.denied =>
-                  'Уведомления запрещены в настройках системы.',
-                NativeNotificationPermission.granted =>
-                  widget.state.notificationsEnabled
-                      ? 'Уведомления включены.'
-                      : 'Уведомления выключены.',
-              }),
-            ),
-            if (widget.state.notificationError != null) ...[
-              const SizedBox(height: 8),
-              Semantics(
-                liveRegion: true,
-                child: Text(
-                  widget.state.notificationError!,
-                  style: const TextStyle(color: GcColors.danger),
                 ),
               ),
             ],
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton(
-                onPressed:
-                    widget.state.notificationPermission ==
-                        NativeNotificationPermission.unavailable
-                    ? null
-                    : widget.state.notificationsEnabled
-                    ? widget.state.disableNotifications
-                    : widget.state.enableNotifications,
-                child: Text(
-                  widget.state.notificationsEnabled
-                      ? 'Отключить уведомления'
-                      : 'Включить уведомления',
-                ),
-              ),
-            ),
-            const SizedBox(height: 28),
-          ],
-          const Text(
-            'Выход из аккаунта',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Голосовое подключение завершится, а личные данные исчезнут с этого экрана.',
-            style: TextStyle(color: GcColors.textSecondary),
-          ),
-          const SizedBox(height: 14),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton(
-              onPressed: widget.state.logoutBusy || widget.state.profileSaving
-                  ? null
-                  : widget.state.logout,
-              child: Text(
-                widget.state.logoutBusy ? 'Выходим…' : 'Выйти из аккаунта',
-              ),
-            ),
-          ),
-          if (widget.state.logoutError != null) ...[
-            const SizedBox(height: 8),
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                widget.state.logoutError!,
-                style: const TextStyle(color: GcColors.danger),
-              ),
-            ),
-          ],
-        ],
+          );
+        },
       ),
     );
   }

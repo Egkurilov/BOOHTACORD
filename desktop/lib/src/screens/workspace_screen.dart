@@ -1258,12 +1258,8 @@ class _MainSurface extends StatelessWidget {
         },
         child: Column(
           children: [
-            _Header(
-              icon: Icons.person_outline,
-              title: 'Профиль',
-              subtitle: 'Настройки вашей учётной записи',
+            _ProfilePanelToolbar(
               onToggleNavigation: onToggleNavigation,
-              onOpenMembers: onOpenMembers,
               onBack: compact ? leaveWorkspacePanel : null,
             ),
             Expanded(child: ProfileScreen(state: state)),
@@ -4756,6 +4752,41 @@ class _StatusDot extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _ProfilePanelToolbar extends StatelessWidget {
+  const _ProfilePanelToolbar({this.onToggleNavigation, this.onBack});
+
+  final VoidCallback? onToggleNavigation;
+  final VoidCallback? onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final inset = MediaQuery.sizeOf(context).width <= 720 ? 16.0 : 24.0;
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: inset),
+      child: SizedBox(
+        height: GcLayout.control,
+        child: Row(
+          children: [
+            if (onBack != null)
+              IconButton(
+                tooltip: 'Назад',
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back),
+              ),
+            const Spacer(),
+            if (onToggleNavigation != null)
+              IconButton(
+                tooltip: 'Открыть навигацию',
+                onPressed: onToggleNavigation,
+                icon: const Icon(Icons.menu),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _AudioSettingsScreen extends StatelessWidget {

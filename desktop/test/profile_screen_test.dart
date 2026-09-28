@@ -2,6 +2,7 @@ import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/profile_screen.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
+import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -77,7 +78,69 @@ void main() {
       tester.widget<TextField>(find.byType(TextField).first).maxLength,
       isNull,
     );
+    expect(
+      tester
+          .widget<AuthenticatedAvatar>(find.byType(AuthenticatedAvatar))
+          .radius,
+      32,
+    );
+    expect(
+      tester
+          .widget<ConstrainedBox>(
+            find.byKey(const ValueKey('profile-name-form-width')),
+          )
+          .constraints
+          .maxWidth,
+      480,
+    );
   });
+
+  testWidgets('centers profile content at web desktop max width', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final state = AppState(ApiClient());
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+
+    final content = tester.getRect(
+      find.byKey(const ValueKey('profile-settings-content')),
+    );
+    expect(content.width, 720);
+    expect(content.left, 360);
+  });
+
+  testWidgets(
+    'uses web compact inset and full profile width on Android sizes',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 844);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final state = AppState(ApiClient());
+      addTearDown(state.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: ProfileScreen(state: state)),
+        ),
+      );
+
+      final content = tester.getRect(
+        find.byKey(const ValueKey('profile-settings-content')),
+      );
+      expect(content.width, 358);
+      expect(content.left, 16);
+    },
+  );
 
   testWidgets('moves keyboard focus to the profile heading like web', (
     tester,

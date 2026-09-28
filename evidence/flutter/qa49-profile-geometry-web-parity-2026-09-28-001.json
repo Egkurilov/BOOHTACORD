@@ -1,0 +1,46 @@
+{
+  "id": "qa49-profile-geometry-web-parity-2026-09-28-001",
+  "kind": "profile-geometry-web-parity",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Flutter profile panel now follows frontend/src/design/settings.css: centered 720 px settings column, 480 px forms, 64 px avatar, 24 px desktop and 16 px compact page insets, 16 px page title, and separated password/notifications/logout sections. The panel uses the web's responsive action toolbar rather than a second title header; its visible Back/navigation actions follow the same breakpoints.",
+  "checks": [
+    {
+      "name": "Profile desktop/compact geometry, form/avatar sizes and focus widgets",
+      "command": "flutter test test/profile_screen_test.dart",
+      "status": "PASS",
+      "observation": "Geometry checks assert a centered 720 px column at 1440 px and 358 px content with 16 px insets at 390 px; form max width is 480 px and avatar radius 32 px. Header semantics/focus and live mutation state are also covered."
+    },
+    {
+      "name": "Workspace profile route toolbar and unique heading",
+      "command": "flutter test test/workspace_screen_test.dart --plain-name \"profile panel matches web toolbar without a duplicate heading\"",
+      "status": "PASS",
+      "observation": "Desktop route renders one Profile heading, hides the navigation/menu, participant and Back actions that web CSS hides at this breakpoint. Android-width route exposes Back/navigation (not participant actions), and Back returns to the workspace."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test --reporter=compact",
+      "status": "PASS",
+      "observation": "All 172 tests passed."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "macOS release compile",
+      "command": "flutter build macos --release",
+      "status": "PASS",
+      "observation": "Release app built successfully (83.1 MB)."
+    },
+    {
+      "name": "Android release compile",
+      "command": "flutter build apk --release",
+      "status": "PASS",
+      "observation": "Release APK built successfully (95.9 MB)."
+    }
+  ],
+  "remaining": "Matched web/Flutter screenshots at desktop breakpoints and Android portrait, physical keyboard/screen-reader acceptance, Android Gboard, and Windows-native build remain open in the parity checklist."
+}
