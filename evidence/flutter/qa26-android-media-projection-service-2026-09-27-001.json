@@ -3,7 +3,7 @@
   "kind": "android-media-projection-foreground-service",
   "status": "PARTIAL",
   "executed_at": "2026-09-28",
-  "source_revision": "3847fb9",
+  "source_revision": "d33f268",
   "runtime_test_apk": {
     "path": "desktop/build/app/outputs/flutter-apk/app-release.apk (local build artifact)",
     "sha256": "64523525ea042f18624874eb9ab8218e17280e9a20101973ee1412dc862b543b",
@@ -42,9 +42,11 @@
     },
     {
       "name": "Android OS-level stop and peer receiver verification",
-      "status": "NOT_RUN",
-      "reason": "The device was stopped from inside the app. A second web/mobile receiver and Android OS notification-stop path were not tested; receiver aspect-fit, encoded profile, and peer metrics remain unverified."
+      "status": "PARTIAL",
+      "device": "Google Pixel 7, Android 17 / API 37",
+      "observation": "Started whole-display capture again with the microphone muted. Android confirmed TYPE_SCREEN_CAPTURE and RECORD_CONTENT_DISPLAY; IsolateHolderService was foreground with type 0x00000020 (MEDIA_PROJECTION). The app's foreground-service notification channel is disabled on this device (importance=NONE), and no BOOHTACORD stop notification was available in the notification shade. After opening and dismissing system Quick Settings, dumpsys media_projection became null, but the app still showed a black local preview and stale active-share UI until its in-app stop control was tapped. That control cleared the share UI; leaving the room returned the app to prejoin. Final checks showed no active projection and no active microphone AppOp. No second receiver was present, so peer rendering/metrics remain unverified.",
+      "reason": "System-stop behavior cannot be conclusively accepted while the app's foreground-service notification channel is disabled and no receiver is available. The capture ended at OS level but stale local sharing UI remained until manual app stop."
     }
   ],
-  "remaining": "Repeat with a separate web/mobile peer to validate receiver aspect-fit, decoded frame dimensions/FPS/bitrate and metrics; separately stop from Android's media-projection notification and confirm the publisher/metrics terminate. Verify the intended microphone-muted prejoin path on Samsung/Gboard."
+  "remaining": "With the user's approval, enable the BOOHTACORD foreground-service notification on the test device and repeat the OS Stop action; verify the published track and all local UI/metrics stop immediately without tapping the app. Repeat with a separate web/mobile peer to validate receiver aspect-fit, decoded frame dimensions/FPS/bitrate and metrics. Verify the intended microphone-muted prejoin path on Samsung/Gboard."
 }
