@@ -1,0 +1,45 @@
+{
+  "id": "QA-89",
+  "kind": "macos-screen-share-profile-cap",
+  "status": "PASS_WITH_CAPTURE_RUNTIME_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "28a8645aafc0b1f43520e86fe7e0eda36bff4b15",
+  "summary": "macOS 13+ full-display ScreenCaptureKit now applies the selected screen profile as a maximum long-edge resolution while preserving the display aspect ratio and selected frame rate. The macOS release bundle builds and passes local code-signature integrity checks. Actual share/viewer runtime, window capture, and pre-macOS-13 fallback remain open.",
+  "checks": [
+    {
+      "name": "Profile constraints reach ScreenCaptureKit",
+      "status": "PASS_SOURCE_REVIEW",
+      "observation": "The Flutter profile supplies width/height plus desktop mandatory frameRate. FlutterRTCDesktopCapturer extracts the requested long-edge ceiling and passes it to FlutterScreenCaptureKitCapturer. ScreenCaptureKit bounds its configured output dimensions by min(1, profileLongEdge/sourceLongEdge), preserves source aspect ratio, and rounds both dimensions down to even pixel sizes. This applies to the macOS 13+ full-display ScreenCaptureKit branch only."
+    },
+    {
+      "name": "macOS release build",
+      "command": "cd desktop && flutter build macos --release",
+      "status": "PASS",
+      "observation": "Built BOOHTACORD.app (92.4 MB) from 28a8645aafc0b1f43520e86fe7e0eda36bff4b15. Xcode emitted its existing ld address/target-atom warning; build succeeded."
+    },
+    {
+      "name": "macOS bundle signature integrity",
+      "command": "codesign --verify --deep --strict --verbose=2 desktop/build/macos/Build/Products/Release/BOOHTACORD.app",
+      "status": "PASS",
+      "observation": "The app bundle and nested frameworks are valid on disk and satisfy their designated requirements. This does not constitute Developer ID notarization."
+    },
+    {
+      "name": "Flutter regression suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "225 tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Physical capture and receiver acceptance",
+      "status": "OPEN",
+      "observation": "No live screen-share run was performed. Source enumeration, user consent, frame edge/aspect preservation, actual sender dimensions/FPS, window capture, and macOS 12 fallback still need device/runtime verification."
+    }
+  ],
+  "remaining": "Run 720/1080/1440p full-display profiles with a macOS 13+ sender and remote web/Flutter viewers, confirm all four edges and source aspect through resize/fullscreen, then implement and verify matching caps for window capture, the macOS 12 fallback, and Windows."
+}

@@ -178,10 +178,14 @@ peer/platform-проверки и выравниваем viewer с вебом.
   подписывать трек выбранным профилем: MediaProjection track metadata содержит
   фактический source size, sender получает aspect-preserving scale cap с чётными
   output edges; unit tests и Android release сборка — [QA-88](../evidence/flutter/qa88-android-screen-share-resolution-cap-2026-09-29-001.json).
-- [ ] Распространить фактический resolution cap на macOS/Windows: на macOS native
-  capture сейчас читает FPS, игнорирует requested width/height и не возвращает
-  source dimensions в track settings; Windows путь ещё требует source audit и
-  сборочной/runtime проверки. Не считать Android QA-88 подтверждением desktop.
+- [x] Ограничивать длинную сторону полноэкранного ScreenCaptureKit output на
+  macOS 13+ по выбранному 720/1080/1440p профилю, сохраняя aspect ratio и чётные
+  размеры кадра; macOS Release build, codesign integrity, 225 тестов и analyzer
+  прошли — [QA-89](../evidence/flutter/qa89-macos-screen-share-profile-cap-2026-09-29-001.json).
+- [ ] Распространить resolution cap на macOS window capture/macOS 12 fallback и
+  Windows: общий Windows C++ path принимает source/FPS/cursor, но игнорирует
+  top-level width/height. Нужны реализация, build и runtime acceptance; Android
+  QA-88 и macOS build-only QA-89 не заменяют их.
 - [x] Проверить picker на минимальной Android-ширине 320 dp: обе настройки качества
   достижимы прокруткой, а закреплённая кнопка запуска остаётся видимой; все пять
   screen-share тестов проходят — [QA-76](../evidence/flutter/qa76-android-screen-share-picker-320dp-2026-09-28-001.json).

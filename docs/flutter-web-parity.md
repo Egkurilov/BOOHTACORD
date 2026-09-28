@@ -314,11 +314,15 @@ portrait and landscape Android share is checked in both web and Flutter viewers.
   Sender-stat confirmation across Android profiles and receiver-edge/crop
   acceptance remain open; this encoder cap is not evidence that the reported
   receiver crop is fixed.
-- Cross-target profile enforcement is still open: source inspection shows the
-  macOS `flutter_webrtc` capture path reads the requested FPS but ignores the
-  requested width/height and returns no source dimensions in track settings.
-  Windows native capture must also be audited before claiming that the nine
-  profiles constrain encoded resolution on all clients.
+- macOS 13+ full-display ScreenCaptureKit now consumes the selected profile's
+  resolution ceiling and frame rate, preserving the display aspect ratio in
+  its output buffer [QA-89](../evidence/flutter/qa89-macos-screen-share-profile-cap-2026-09-29-001.json).
+  Window capture and the macOS 12 fallback still use `RTCDesktopCapturer` and
+  have not been bounded or physically accepted.
+- Windows' shared native desktop-capture path reads the selected source,
+  mandatory FPS and cursor setting, but ignores top-level width/height. Apply
+  the profile ceiling there and verify screen/window capture before claiming
+  that all nine profiles constrain encoded resolution on every client.
 - Match viewer stream rail, explicit selection, fullscreen, screen audio/volume,
   quality controls and diagnostics. The web and Flutter clients now share the
   720/1080/1440p × 15/30/60 FPS capture matrix, bitrate policy, and track labels;
