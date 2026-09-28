@@ -3,6 +3,7 @@ import type { TopologyChannel } from '../channel/topology_client'
 import ConversationPane from '../conversation/ConversationPane.vue'
 import type { DirectMessageListItem } from '../direct_message/direct_message_client'
 import type { VoiceActivationMode } from '../voice/activation_store'
+import type { ScreenProfile } from '../voice/livekit_gateway'
 import { useVoiceConnectionStore } from '../voice/connection_store'
 import type { VoiceRoomRoster } from '../voice/voice_roster_client'
 import WorkspaceHeaderActions from './WorkspaceHeaderActions.vue'
@@ -21,6 +22,7 @@ defineProps<{
   leaveVoice: WorkspaceVoiceControls['leaveVoice']
   activationMode: VoiceActivationMode
   startScreen: WorkspaceVoiceControls['startScreen']
+  selectedScreenProfile: ScreenProfile
   navOpen: boolean
   membersOpen: boolean
   showMembers: boolean
@@ -29,7 +31,7 @@ defineProps<{
   voiceRoster?: VoiceRoomRoster | null
   voiceRosterError?: string | null
 }>()
-const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
+const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; toggleMembers: []; updateScreenProfile: [profile: ScreenProfile] }>()
 </script>
 
 <template>
@@ -60,6 +62,7 @@ const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; togg
     :screen-diagnostics="voiceConnection.screenDiagnostics"
     :screen-error="voiceConnection.screenError"
     :screen-profile="voiceConnection.screenProfile"
+    :selected-screen-profile="selectedScreenProfile"
     :screen-state="voiceConnection.screenState"
     :screen-viewer-cards="voiceConnection.screenViewerCards"
     :screen-viewer-ended="voiceConnection.screenViewerEnded"
@@ -89,6 +92,7 @@ const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; togg
     @set-screen-volume="voiceConnection.setScreenVolume"
     @toggle-screen-audio="voiceConnection.toggleScreenAudio"
     @start-screen="startScreen"
+    @update-screen-profile="emit('updateScreenProfile', $event)"
     @stop-screen="voiceConnection.stopScreen"
     @transfer="joinVoice($event, true)"
     @toggle-nav="emit('toggleNav')"

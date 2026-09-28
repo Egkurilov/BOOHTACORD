@@ -8,7 +8,9 @@ const props = defineProps<{ diagnostics: ScreenDiagnostics; profile: ScreenProfi
 const emit = defineEmits<{ refresh: [] }>()
 
 const target = computed(() => ({
-  P720_30: '720p · 30 FPS', P720_60: '720p · 60 FPS', P1080_30: '1080p · 30 FPS', P1080_60: '1080p · 60 FPS',
+  P720_15: '720p · 15 FPS', P720_30: '720p · 30 FPS', P720_60: '720p · 60 FPS',
+  P1080_15: '1080p · 15 FPS', P1080_30: '1080p · 30 FPS', P1080_60: '1080p · 60 FPS',
+  P1440_15: '1440p · 15 FPS', P1440_30: '1440p · 30 FPS', P1440_60: '1440p · 60 FPS',
 }[props.profile ?? 'P1080_60']))
 const measured = computed(() => props.diagnostics.measured
   ? `${props.diagnostics.measured.width} × ${props.diagnostics.measured.height}${props.diagnostics.measured.framesPerSecond ? ` · ${props.diagnostics.measured.framesPerSecond} FPS` : ''}`

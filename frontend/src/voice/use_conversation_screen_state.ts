@@ -3,7 +3,6 @@ import type { TopologyChannel } from '../channel/topology_client'
 import { miniPlayerVisible, screenViewerMounted } from './mini_player_policy'
 import { screenCaptureSupported, screenCaptureUnavailableMessage } from './screen_capture_support'
 import type { ScreenViewerCard } from './screen_viewer_controller'
-import type { ScreenProfile } from './livekit_gateway'
 
 interface ConversationScreenProps {
   visible: boolean
@@ -15,7 +14,6 @@ interface ConversationScreenProps {
 }
 
 export function useConversationScreenState(props: ConversationScreenProps) {
-  const selectedScreenProfile = ref<ScreenProfile>('P1080_60')
   const screenCaptureAvailable = screenCaptureSupported()
   const captureUnavailableMessage = screenCaptureUnavailableMessage()
   const screenExpanded = ref(false)
@@ -29,6 +27,6 @@ export function useConversationScreenState(props: ConversationScreenProps) {
   watch(() => props.selectedScreenStreamId, (id) => { if (!id) screenPinned.value = false })
   watch(miniVisible, (visible) => { if (visible) screenExpanded.value = false })
   function watchScreen(id: string): void { screenViewerRef.value?.selectStream(id) }
-  return { selectedScreenProfile, screenCaptureAvailable, captureUnavailableMessage, screenExpanded, screenPinned,
+  return { screenCaptureAvailable, captureUnavailableMessage, screenExpanded, screenPinned,
     voiceChannel, miniVisible, keepVoiceRoom, selectedScreenName, screenViewerRef, watchScreen }
 }

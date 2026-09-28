@@ -2,7 +2,10 @@ import type { VoiceRoom } from './livekit_gateway'
 import { unknownScreenDiagnostics, type ScreenDiagnostics } from './screen_diagnostics'
 
 export type MicrophoneState = 'PUBLISHED' | 'MUTED' | 'LISTENER_PERMISSION_DENIED'
-export type ScreenProfile = 'P720_30' | 'P720_60' | 'P1080_30' | 'P1080_60'
+export type ScreenProfile =
+  | 'P720_15' | 'P720_30' | 'P720_60'
+  | 'P1080_15' | 'P1080_30' | 'P1080_60'
+  | 'P1440_15' | 'P1440_30' | 'P1440_60'
 export interface AudioProcessingOptions {
   autoGainControl: boolean
   echoCancellation: boolean
@@ -28,14 +31,20 @@ export interface ScreenSharePublishOptions {
 export const defaultAudioProcessing: AudioProcessingOptions = { autoGainControl: true, echoCancellation: true, noiseSuppression: true }
 export const adaptiveMediaRoomOptions = Object.freeze({ adaptiveStream: true, dynacast: true })
 const microphonePublishOptions: MicrophonePublishOptions = { audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false }
-// Pinned LiveKit 2.22.3 ScreenSharePresets.h720fps30/h1080fps30 bitrates.
-const screenSharePresetBitrates = { P720: 2_000_000, P1080: 5_000_000 } as const
-const screenProfiles: Record<ScreenProfile, ScreenShareOptions> = {
-  P720_30: { audio: true, resolution: { width: 1280, height: 720, frameRate: 30 } },
-  P720_60: { audio: true, resolution: { width: 1280, height: 720, frameRate: 60 } },
-  P1080_30: { audio: true, resolution: { width: 1920, height: 1080, frameRate: 30 } },
-  P1080_60: { audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 } },
+const screenResolutions = { 720: 1280, 1080: 1920, 1440: 2560 } as const
+const screenBitrates: Record<720 | 1080 | 1440, Record<15 | 30 | 60, number>> = {
+  720: { 15: 1_500_000, 30: 2_500_000, 60: 4_000_000 },
+  1080: { 15: 2_500_000, 30: 5_000_000, 60: 8_000_000 },
+  1440: { 15: 5_000_000, 30: 8_000_000, 60: 12_000_000 },
 }
+const screenProfiles = Object.fromEntries(
+  ([720, 1080, 1440] as const).flatMap((height) =>
+    ([15, 30, 60] as const).map((frameRate) => [
+      `P${height}_${frameRate}`,
+      { audio: true, resolution: { width: screenResolutions[height], height, frameRate } },
+    ]),
+  ),
+) as Record<ScreenProfile, ScreenShareOptions>
 
 export function microphoneConstraints(processing: AudioProcessingOptions = defaultAudioProcessing): MediaTrackConstraints {
   return { ...processing, channelCount: { ideal: 1 }, sampleRate: { ideal: 48_000 } }
@@ -61,12 +70,15 @@ export async function readScreenShareDiagnostics(room: VoiceRoom): Promise<Scree
 
 export async function startScreenShare(room: VoiceRoom, profile: ScreenProfile): Promise<ScreenDiagnostics> {
   const capture = screenProfiles[profile]
+  const height = capture.resolution.height
+  const resolution = height as 720 | 1080 | 1440
+  const frameRate = capture.resolution.frameRate as 15 | 30 | 60
   const screenSharePublishOptions: ScreenSharePublishOptions = {
-    name: `screenshare-${profile.startsWith('P720') ? 720 : 1080}p-${capture.resolution.frameRate}fps`,
+    name: `screenshare-${height}p-${frameRate}fps`,
     degradationPreference: 'maintain-framerate',
     screenShareEncoding: {
-      maxBitrate: profile.startsWith('P720') ? screenSharePresetBitrates.P720 : screenSharePresetBitrates.P1080,
-      maxFramerate: capture.resolution.frameRate,
+      maxBitrate: screenBitrates[resolution][frameRate],
+      maxFramerate: frameRate,
       priority: 'medium',
     },
   }

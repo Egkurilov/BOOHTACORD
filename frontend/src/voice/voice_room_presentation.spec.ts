@@ -80,6 +80,19 @@ describe('voice-room visual status and screen presentation', () => {
     expect(source('../conversation/ConversationPane.vue')).toContain('<Teleport to="body" :disabled="!screenExpanded && !miniVisible">')
   })
 
+  it('uses one selected screen profile from the room settings and persistent voice dock', () => {
+    const pane = source('../conversation/ConversationPane.vue')
+    const workspace = source('../workspace/WorkspaceApp.vue')
+    const main = source('../workspace/WorkspaceMain.vue')
+
+    expect(pane).toContain('@change="updateScreenProfile"')
+    expect(pane).toContain('emit(\'updateScreenProfile\'')
+    expect(main).toContain(':selected-screen-profile="selectedScreenProfile"')
+    expect(main).toContain('@update-screen-profile="emit(\'updateScreenProfile\', $event)"')
+    expect(workspace).toContain('@start-screen="startScreen(selectedScreenProfile)"')
+    expect(workspace).toContain('@update-screen-profile="selectedScreenProfile = $event"')
+  })
+
   it('sizes video to the stage without cropping and preserves compact roster access', () => {
     const styles = source('../design/voice.css')
     const shell = source('../design/responsive_shell.css')

@@ -1,0 +1,40 @@
+{
+  "id": "QA-83",
+  "kind": "screen-share-profile-web-parity",
+  "status": "PASS_LOCAL_PROFILE_POLICY_VISUAL_DEVICE_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "working-tree",
+  "summary": "Aligned web screen-share profile choices and encoder policy with Flutter's 720/1080/1440p by 15/30/60 FPS matrix. The web's in-room selection now also controls its persistent voice-dock start action.",
+  "checks": [
+    {
+      "name": "Web profile matrix and LiveKit capture/encoding mapping",
+      "command": "cd frontend && npm test -- src/voice/livekit_screen_publishing.spec.ts",
+      "status": "PASS",
+      "observation": "13 tests passed. Every profile maps to the expected 16:9 capture dimensions, FPS, bitrate, and track label; the component exposes all nine choices."
+    },
+    {
+      "name": "Web profile propagation and voice presentation",
+      "command": "cd frontend && npm test -- src/voice/voice_room_presentation.spec.ts src/conversation/voice_close_presentation.spec.ts src/workspace/workspace_panel_navigation.spec.ts",
+      "status": "PASS",
+      "observation": "12 tests passed. The selected profile is passed from the workspace to the conversation settings and reused by the persistent voice dock."
+    },
+    {
+      "name": "Flutter profile matrix",
+      "command": "cd desktop && flutter test test/screen_share_quality_test.dart",
+      "status": "PASS",
+      "observation": "6 tests passed, including all 9 resolution/frame-rate combinations and Android picker layout constraints."
+    },
+    {
+      "name": "Web typecheck and production build",
+      "command": "cd frontend && npm run build",
+      "status": "PASS_WITH_CHUNK_SIZE_WARNING",
+      "observation": "vue-tsc and Vite production build succeeded. Vite retains its existing warning that the minified LiveKit chunk is larger than 500 kB."
+    },
+    {
+      "name": "Physical capture/visual acceptance",
+      "status": "OPEN",
+      "observation": "ADB returned an empty device list, so real browser/native capture, negotiated dimensions/bitrate, picker layout screenshots and network-load behavior were not exercised on hardware."
+    }
+  ],
+  "remaining": "Compare the Flutter source/quality dialog with the web quality controls and viewer at matched viewports; exercise all profile choices against real capture on macOS, Windows and Android and inspect negotiated sender/receiver statistics."
+}

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { TopologyChannel } from '../channel/topology_client'
 import DirectMessageConversation from '../direct_message/DirectMessageConversation.vue'
 import type { DirectMessageListItem } from '../direct_message/direct_message_client'
@@ -19,7 +20,7 @@ import { useConversationScreenState } from '../voice/use_conversation_screen_sta
 import TextConversation from './TextConversation.vue'
 import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   accountId: string
   activeVoiceChannel: TopologyChannel | null
   visible: boolean
@@ -40,6 +41,7 @@ const props = defineProps<{
   screenViewerError: string | null
   screenDiagnostics: ScreenDiagnostics
   screenProfile: ScreenProfile | null
+  selectedScreenProfile?: ScreenProfile
   screenState: ScreenShareState
   selectedScreenStreamId: string | null
   selectedScreenAudioVolume: number
@@ -51,10 +53,14 @@ const props = defineProps<{
   voiceVolumeParticipants: VoiceVolumeParticipant[]
   voiceRoster?: VoiceRoomRoster | null
   voiceRosterError?: string | null
-}>()
-const emit = defineEmits<{ clearScreenStream: []; join: [channelId: string, transfer?: boolean, joinMode?: VoiceJoinMode]; leave: []; refreshScreen: []; returnVoice: [channelId: string]; selectScreenStream: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setParticipantVolume: [id: string, percent: number]; setScreenVolume: [percent: number]; toggleScreenAudio: []; startScreen: [profile: ScreenProfile]; stopScreen: []; transfer: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
-const { selectedScreenProfile, screenCaptureAvailable, captureUnavailableMessage, screenExpanded, screenPinned,
+}>(), { selectedScreenProfile: 'P1080_60' })
+const emit = defineEmits<{ clearScreenStream: []; join: [channelId: string, transfer?: boolean, joinMode?: VoiceJoinMode]; leave: []; refreshScreen: []; returnVoice: [channelId: string]; selectScreenStream: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setParticipantVolume: [id: string, percent: number]; setScreenVolume: [percent: number]; toggleScreenAudio: []; startScreen: [profile: ScreenProfile]; stopScreen: []; transfer: [channelId: string]; toggleNav: []; toggleMembers: []; updateScreenProfile: [profile: ScreenProfile] }>()
+const selectedScreenProfile = computed(() => props.selectedScreenProfile)
+const { screenCaptureAvailable, captureUnavailableMessage, screenExpanded, screenPinned,
   voiceChannel, miniVisible, keepVoiceRoom, selectedScreenName, screenViewerRef, watchScreen } = useConversationScreenState(props)
+function updateScreenProfile(event: Event): void {
+  emit('updateScreenProfile', (event.target as HTMLSelectElement).value as ScreenProfile)
+}
 </script>
 <template>
   <section class="conversation-pane" aria-live="polite">
@@ -105,7 +111,7 @@ const { selectedScreenProfile, screenCaptureAvailable, captureUnavailableMessage
               <p v-if="!screenCaptureAvailable" class="state" role="status">{{ captureUnavailableMessage }}</p>
               <p v-if="screenError" class="state state-error" role="alert">{{ screenError }}</p>
               <VoiceParticipantVolumes :error="voiceVolumeError" :participants="voiceVolumeParticipants" :screen-streams="screenViewerCards" :selected-screen-stream-id="selectedScreenStreamId" :self-name="selfDisplayName" :self-deafened="selfDeafened" :self-microphone-muted="selfMicrophoneMuted" :self-microphone-unavailable="selfMicrophoneUnavailable" :self-speaking="selfSpeaking" @set-volume="(id, percent) => emit('setParticipantVolume', id, percent)" @watch-screen="watchScreen" />
-              <details class="voice-advanced"><summary>Параметры демонстрации</summary><ScreenDiagnosticsPanel v-if="screenState === 'SHARING'" :diagnostics="screenDiagnostics" :profile="screenProfile" @refresh="emit('refreshScreen')" /><label class="screen-settings">Целевой профиль<select v-model="selectedScreenProfile" :disabled="screenState === 'STARTING' || screenState === 'SHARING'"><option value="P720_30">720p · 30 FPS</option><option value="P720_60">720p · 60 FPS</option><option value="P1080_30">1080p · 30 FPS</option><option value="P1080_60">1080p · 60 FPS</option></select></label></details>
+              <details class="voice-advanced"><summary>Параметры демонстрации</summary><ScreenDiagnosticsPanel v-if="screenState === 'SHARING'" :diagnostics="screenDiagnostics" :profile="screenProfile" @refresh="emit('refreshScreen')" /><label class="screen-settings">Целевой профиль<select :value="selectedScreenProfile" :disabled="screenState === 'STARTING' || screenState === 'SHARING'" @change="updateScreenProfile"><option value="P720_15">720p · 15 FPS</option><option value="P720_30">720p · 30 FPS</option><option value="P720_60">720p · 60 FPS</option><option value="P1080_15">1080p · 15 FPS</option><option value="P1080_30">1080p · 30 FPS</option><option value="P1080_60">1080p · 60 FPS</option><option value="P1440_15">1440p · 15 FPS</option><option value="P1440_30">1440p · 30 FPS</option><option value="P1440_60">1440p · 60 FPS</option></select></label></details>
             </template>
             <VoicePrejoin v-else-if="!voiceChannel.admissionClosed" :channel-id="voiceChannel.id" :voice-error="voiceError" :voice-state="voiceState" :voice-transfer-required="voiceTransferRequired" :roster="voiceRoster ?? null" :roster-error="voiceRosterError ?? null" @join="(id, transfer, mode) => emit('join', id, transfer, mode)" @transfer="emit('transfer', $event)" />
           </div>

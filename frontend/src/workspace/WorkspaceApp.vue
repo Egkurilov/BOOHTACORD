@@ -8,6 +8,7 @@ import DirectMessageNavigation from '../direct_message/DirectMessageNavigation.v
 import { useDirectMessageStore } from '../direct_message/direct_message_store'
 import { useDirectMessageCandidateStore } from '../direct_message/direct_message_candidate_store'
 import VoiceDock from '../voice/VoiceDock.vue'
+import type { ScreenProfile } from '../voice/livekit_gateway'
 import AudioSettings from '../voice/AudioSettings.vue'
 import { useMessageStore } from '../conversation/message_store'
 import { useRealtimeStore } from '../realtime/realtime_store'
@@ -31,6 +32,7 @@ import { useMemberHeaderExpanded } from './member_header_expanded'
 const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string }>()
 const emit = defineEmits<{ sessionExpired: []; loggedOut: [] }>()
 const { activeVoiceChannel, audioSettings, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls()
+const selectedScreenProfile = ref<ScreenProfile>('P1080_60')
 const directMessageStore = useDirectMessageStore()
 const directMessageCandidateStore = useDirectMessageCandidateStore()
 const messageStore = useMessageStore()
@@ -93,14 +95,14 @@ onMounted(() => { void topologyStore.refresh(); void directMessageStore.refreshN
           </div>
         </div>
         <VoiceDock class="mobile-voice-dock" :activation-mode="voiceActivation.mode" :channel="activeVoiceChannel" :active-session="voiceConnection.active !== null" :error="voiceConnection.error" :deafen-changing="voiceConnection.deafenChanging" :deafened="voiceConnection.deafened"
-          :microphone-muted="voiceConnection.microphoneMuted" :microphone-permission-denied="voiceConnection.microphonePermissionDenied" :state="voiceConnection.state" @leave="leaveVoice" @start-screen="startScreen('P1080_60')"
+          :microphone-muted="voiceConnection.microphoneMuted" :microphone-permission-denied="voiceConnection.microphonePermissionDenied" :state="voiceConnection.state" @leave="leaveVoice" @start-screen="startScreen(selectedScreenProfile)"
           @toggle-deafen="voiceConnection.toggleDeafen" @toggle-microphone="voiceConnection.toggleMicrophone" />
         <WorkspaceUserFooter :role="props.role" :display-name="profile?.display_name" :avatar-u-r-l="profile?.avatar_url" @open-profile="togglePanel('profile')" @open-settings="togglePanel('audio')" />
       </aside>
       <main id="main-region" class="main" data-testid="main-region">
-        <WorkspaceMain :account-id="props.accountId" :active-voice-channel="activeVoiceChannel" :panel="activePanel === 'search' ? 'none' : activePanel" :channel="selectedChannel" :direct-message="selectedDirectMessage" :join-voice="joinVoice" :leave-voice="leaveVoice" :activation-mode="voiceActivation.mode" :start-screen="startScreen"
+        <WorkspaceMain :account-id="props.accountId" :active-voice-channel="activeVoiceChannel" :panel="activePanel === 'search' ? 'none' : activePanel" :channel="selectedChannel" :direct-message="selectedDirectMessage" :join-voice="joinVoice" :leave-voice="leaveVoice" :activation-mode="voiceActivation.mode" :start-screen="startScreen" :selected-screen-profile="selectedScreenProfile"
           :self-display-name="profile?.display_name ?? null" :nav-open="navOpen" :members-open="memberHeaderExpandedState" :show-members="!selectedDirectMessage && activePanel === 'none'" :voice-connection="voiceConnection" :voice-roster="voiceRoster.channels.value?.find((room) => room.channelId === selectedChannel?.id) ?? null" :voice-roster-error="voiceRoster.error.value"
-          @return-voice="returnToVoice" @toggle-nav="toggleNavigation" @toggle-members="toggleMembers">
+          @return-voice="returnToVoice" @toggle-nav="toggleNavigation" @toggle-members="toggleMembers" @update-screen-profile="selectedScreenProfile = $event">
           <template #admin>
             <AdminPanel v-if="props.role === 'ADMINISTRATOR'" :categories="topologyStore.topology?.categories ?? []" :revision="topologyStore.topology?.revision ?? 0" @topology-changed="refreshTopology" />
           </template>

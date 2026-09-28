@@ -11,6 +11,7 @@ describe('workspace panel navigation', () => {
         accountId: 'account-a', activeVoiceChannel: null, panel, channel: null, directMessage: null, navOpen: false,
         membersOpen: false, showMembers: false, selfDisplayName: null,
         joinVoice: async () => {}, leaveVoice: async () => {}, startScreen: async () => {},
+        selectedScreenProfile: 'P1080_60' as const,
         activationMode: 'VAD' as const, voiceConnection: {} as never,
       }, { [panel]: () => h('h1', panel) }),
     }))
