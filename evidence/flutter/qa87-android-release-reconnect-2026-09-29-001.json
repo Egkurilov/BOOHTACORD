@@ -1,0 +1,37 @@
+{
+  "id": "QA-87",
+  "kind": "android-release-reconnect-policy",
+  "status": "PASS_WITH_PHYSICAL_INSTALL_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "ffb29673447762b3819543d6ee63c5d81fe8b03",
+  "summary": "Built and verified Android release version 1.0.0+2 with the web-parity reconnect policy. The existing tracked release artifact was replaced by the new version; physical installation and runtime voice acceptance remain open because no Android device is connected.",
+  "checks": [
+    {
+      "name": "Android release build from tracked version",
+      "command": "cd desktop && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Built from master revision ffb2967 using desktop/pubspec.yaml version 1.0.0+2; aapt reports package ru.boohtacord.app, versionName 1.0.0 and versionCode 2."
+    },
+    {
+      "name": "APK signature verification",
+      "command": "apksigner verify --verbose --print-certs artifacts/android/BOOHTACORD-1.0.0+2-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verification passed with one RSA-4096 upload signer. Certificate SHA-256 is 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b."
+    },
+    {
+      "name": "Physical install and voice reconnect acceptance",
+      "status": "OPEN",
+      "observation": "adb devices currently reports no connected devices, so installation, upgrade-over-previous-version and peer-driven voice reconnect could not be checked."
+    }
+  ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.0+2-release.apk",
+    "source_revision": "ffb29673447762b3819543d6ee63c5d81fe8b03",
+    "version_name": "1.0.0",
+    "version_code": 2,
+    "size_bytes": 107622038,
+    "sha256": "d634766d78823f56b916e8ea30054a8e41c089698475dc9250a8a8bc6fcec9bb",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b"
+  },
+  "remaining": "Install as an update on a physical Android device, join a room with a second peer, exercise reconnect and exhaustion, and confirm the matching error copy and voice-lease release."
+}

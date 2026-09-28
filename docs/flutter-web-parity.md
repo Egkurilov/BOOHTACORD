@@ -360,11 +360,9 @@ portrait and landscape Android share is checked in both web and Flutter viewers.
   there is no Developer ID team signature and signed-release Keychain
   persistence has not been tested [QA-85](../evidence/flutter/qa85-macos-release-bundle-2026-09-29-001.json).
   Local verification covers macOS debug/release builds and Android debug; the
-  Android release APK also builds with the configured upload key, passes APK
-  Signature Scheme v2 verification and contains notification/MediaProjection
-  permissions [QA-47](../evidence/flutter/qa47-android-release-apk-signing-2026-09-28-001.json).
-  The current tracked release artifact was rebuilt from `8bd3c7f` and its upload
-  signature, SHA-256 and size were verified [QA-80](../evidence/flutter/qa80-android-empty-channel-320dp-2026-09-28-001.json).
+  tracked Android 1.0.0+2 release APK was rebuilt from `ffb2967`, passes APK
+  Signature Scheme v2 verification, and has a recorded upload-certificate
+  fingerprint, SHA-256 and size [QA-87](../evidence/flutter/qa87-android-release-reconnect-2026-09-29-001.json).
   Signed macOS release persistence and Android install/runtime acceptance on a
   physical device remain open.
   The GitVerse workflow in `.gitverse/workflows/flutter-windows.yaml` now routes

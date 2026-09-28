@@ -1,12 +1,12 @@
 # Версии клиентов и статус возможностей
 
-**Срез:** 2026-09-28. Таблица фиксирует значения нативных манифестов и состояние исходников на дату проверки, а не опубликованный релиз. Для точного состава сборки используйте commit SHA и evidence конкретной выкладки.
+**Срез:** 2026-09-29. Таблица фиксирует значения нативных манифестов и состояние исходников на дату проверки, а не опубликованный релиз. Для точного состава сборки используйте commit SHA и evidence конкретной выкладки.
 
 | Клиент | Источник версии | Значение | Что оно означает |
 | --- | --- | --- | --- |
 | Web | [`frontend/package.json`](../frontend/package.json) | `0.1.0` | Версия npm-пакета; production образ и проверенный deploy идентифицируются точным commit SHA/OCI digest |
-| Android | [`desktop/pubspec.yaml`](../desktop/pubspec.yaml) | `1.0.0+1` | Flutter `versionName=1.0.0`, `versionCode=1`; APK/build metadata |
-| iOS | [`desktop/pubspec.yaml`](../desktop/pubspec.yaml) | `1.0.0+1` | Локальный iPhone build `CFBundleShortVersionString=1.0.0`, `CFBundleVersion=1`; публикации нет |
+| Android | [`desktop/pubspec.yaml`](../desktop/pubspec.yaml) | `1.0.0+2` | Flutter `versionName=1.0.0`, `versionCode=2`; подписанный APK v2 проверен [QA-87](../evidence/flutter/qa87-android-release-reconnect-2026-09-29-001.json) |
+| iOS | [`desktop/pubspec.yaml`](../desktop/pubspec.yaml) | `1.0.0+2` | Локальный iPhone build `CFBundleShortVersionString=1.0.0`, `CFBundleVersion=2`; публикации нет |
 
 `/api/v1` — версия серверного HTTP-контракта, не версия приложения. Совместимость проверяется вместе с [`openapi.yaml`](../contracts/openapi.yaml), [`realtime.schema.json`](../contracts/realtime.schema.json) и [mobile contract](../contracts/mobile-client-contract.md). Не выводите номер релиза из даты или одного зелёного CI.
 
@@ -15,7 +15,7 @@
 1. Сохраняйте один проверяемый источник версии на build root: `package.json` для web, `pubspec.yaml` для Flutter. Android и iOS runners используют общий Dart-код, но их публикации и приёмка независимы.
 2. При пользовательском релизе записывайте commit SHA, версию, платформу/архитектуру, hash артефакта, контрактную ревизию и ссылку на evidence. Для web сохраняйте OCI digest; для Android — подписанный APK/AAB, для iOS — подписанный archive/IPA после утверждения платформы.
 3. Меняйте build number при новой Android/iOS сборке, распространяемой тестировщикам или пользователям; release name меняйте при согласованном изменении продукта. Не переписывайте уже выпущенный артефакт тем же номером.
-4. `1.0.0+1` в Flutter пока не является заявлением о полной Flutter ↔ web parity. Открытые gaps и проверки поддерживаются в [parity map](flutter-web-parity.md) и [TODO](../TODO.md).
+4. `1.0.0+2` в Flutter пока не является заявлением о полной Flutter ↔ web parity. Открытые gaps и проверки поддерживаются в [parity map](flutter-web-parity.md) и [TODO](../TODO.md).
 
 ## Что реализовано в исходниках
 
