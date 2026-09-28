@@ -1,0 +1,40 @@
+{
+  "id": "qa46-native-notifications-web-parity-2026-09-28-001",
+  "kind": "native-notifications-web-parity",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Flutter adds opt-in, account-scoped native notifications on macOS, Windows and Android for new unread TEXT/DM events while the app is hidden. Notification previews are generic and never include message content. OS permission state is handled where the platform exposes a runtime permission; duplicate events are suppressed locally and across app launches.",
+  "checks": [
+    {
+      "name": "Notification policy, deduplication, account preference and denied permission tests",
+      "command": "flutter test test/native_notifications_test.dart test/profile_screen_test.dart test/app_state_test.dart",
+      "status": "PASS",
+      "observation": "All 37 targeted tests passed, including generic preview policy, hidden/enabled gating, duplicate event suppression, per-account preferences and permission denial."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 163 tests passed."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "macOS release build and startup smoke",
+      "command": "flutter build macos --release && flutter run -d macos --release",
+      "status": "PASS",
+      "observation": "Release app built successfully (83.1 MB), launched through native plugin initialization and was shut down normally. Notification permission was not requested automatically at startup."
+    },
+    {
+      "name": "Android debug build and notification permission merge",
+      "command": "flutter build apk --debug && rg POST_NOTIFICATIONS build/app/intermediates/merged_manifests/debug/processDebugManifest/AndroidManifest.xml",
+      "status": "PASS",
+      "observation": "Debug APK built successfully after enabling the plugin-required core library desugaring; merged Android manifest contains android.permission.POST_NOTIFICATIONS."
+    }
+  ],
+  "remaining": "Physical OS acceptance remains open: macOS permission grant/denial and background delivery; Windows toast registration/delivery on a Windows runner; Android 13+ permission prompt and background delivery on a device."
+}

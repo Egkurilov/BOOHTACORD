@@ -28,4 +28,17 @@ void main() {
     expect(tester.getSemantics(error).flagsCollection.isLiveRegion, isTrue);
     expect(find.text('Изменить пароль'), findsNothing);
   });
+
+  testWidgets('explains generic native notification privacy', (tester) async {
+    final state = AppState(ApiClient());
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(MaterialApp(home: ProfileScreen(state: state)));
+
+    expect(find.text('Уведомления'), findsOneWidget);
+    expect(
+      find.textContaining('Содержимое личных сообщений не отображается.'),
+      findsOneWidget,
+    );
+  });
 }

@@ -16,6 +16,7 @@ import 'services/audio_preferences.dart';
 import 'services/password_reset_link.dart';
 import 'services/screen_share_quality.dart';
 import 'services/screen_share_metrics.dart';
+import 'services/native_notifications.dart';
 import 'services/voice_lease_revocation.dart';
 import 'services/voice_volume_preferences.dart';
 import 'services/voice_reconnect_policy.dart';
@@ -59,10 +60,13 @@ class AppState extends ChangeNotifier {
     this.api, {
     Future<List<MediaDevice>> Function()? audioDeviceLoader,
     Stream<List<MediaDevice>>? audioDeviceChanges,
+    NativeNotificationService? nativeNotifications,
   }) : _audioDeviceLoader = audioDeviceLoader ?? _enumerateAudioDevices,
        // Public constructor parameter, private stored stream.
        // ignore: prefer_initializing_formals
-       _audioDeviceChanges = audioDeviceChanges {
+       _audioDeviceChanges = audioDeviceChanges,
+       _nativeNotifications =
+           nativeNotifications ?? NativeNotificationService() {
     api.onUnauthorized = _handleUnauthorized;
   }
 
@@ -72,6 +76,7 @@ class AppState extends ChangeNotifier {
   final ApiClient api;
   final Future<List<MediaDevice>> Function() _audioDeviceLoader;
   final Stream<List<MediaDevice>>? _audioDeviceChanges;
+  final NativeNotificationService _nativeNotifications;
   StreamSubscription<List<MediaDevice>>? _audioDeviceSubscription;
   int _audioDeviceRevision = 0;
   bool _audioDeviceRefreshQueued = false;
@@ -173,6 +178,7 @@ class AppState extends ChangeNotifier {
   bool _screenShareMetricsBusy = false;
   int _voiceRosterRevision = 0;
   bool _voiceRosterLoading = false;
+  bool _notificationAppIsForeground = true;
   int _realtimeAttempt = 0;
   final Set<String> _realtimeEventIds = <String>{};
   final Map<String, String> _sendRetryIds = <String, String>{};
@@ -187,6 +193,30 @@ class AppState extends ChangeNotifier {
 
   String get serverUrl => api.baseUrl;
   Room? get room => _room;
+  bool get notificationsSupported => _nativeNotifications.supported;
+  bool get notificationsEnabled => _nativeNotifications.enabled;
+  NativeNotificationPermission get notificationPermission =>
+      _nativeNotifications.permission;
+  String? get notificationError => _nativeNotifications.error;
+
+  Future<void> enableNotifications() async {
+    await _nativeNotifications.enable();
+    notifyListeners();
+  }
+
+  Future<void> disableNotifications() async {
+    await _nativeNotifications.disable();
+    notifyListeners();
+  }
+
+  Future<void> refreshNotificationStatus() async {
+    await _nativeNotifications.refreshStatus();
+    notifyListeners();
+  }
+
+  void setNotificationAppForeground(bool foreground) {
+    _notificationAppIsForeground = foreground;
+  }
 
   void reportError(String message) {
     error = message;
@@ -262,6 +292,7 @@ class AppState extends ChangeNotifier {
     user = null;
     profile = null;
     profileLoadError = null;
+    unawaited(_nativeNotifications.useAccount(null));
     topology = null;
     members = const [];
     voiceRosters = null;
@@ -322,6 +353,7 @@ class AppState extends ChangeNotifier {
   Future<void> initialize() async {
     try {
       await api.initialize();
+      await _nativeNotifications.initialize();
       unawaited(refreshMaintenance());
       _maintenanceTimer ??= Timer.periodic(
         const Duration(seconds: 5),
@@ -329,8 +361,10 @@ class AppState extends ChangeNotifier {
       );
       user = await api.currentSession();
       if (user == null) {
+        await _nativeNotifications.useAccount(null);
         phase = AppPhase.signedOut;
       } else {
+        await _nativeNotifications.useAccount(user!.accountId);
         await _loadAudioPreferences(user!.accountId);
         phase = AppPhase.ready;
         await Future.wait([
@@ -366,6 +400,7 @@ class AppState extends ChangeNotifier {
     user = null;
     profile = null;
     profileLoadError = null;
+    await _nativeNotifications.useAccount(null);
     topology = null;
     selectedChannel = null;
     voiceRosters = null;
@@ -385,7 +420,10 @@ class AppState extends ChangeNotifier {
     try {
       await api.authenticate(login, password, register: register);
       user = await api.currentSession();
-      if (user != null) await _loadAudioPreferences(user!.accountId);
+      if (user != null) {
+        await _nativeNotifications.useAccount(user!.accountId);
+        await _loadAudioPreferences(user!.accountId);
+      }
       phase = AppPhase.ready;
       await Future.wait([
         refreshTopology(),
@@ -421,6 +459,7 @@ class AppState extends ChangeNotifier {
     user = null;
     profile = null;
     profileLoadError = null;
+    await _nativeNotifications.useAccount(null);
     _stopVoiceRosterPolling();
     voiceRosters = null;
     voiceRosterError = null;
@@ -1625,9 +1664,28 @@ class AppState extends ChangeNotifier {
         case 'presence.changed':
           guildPresence.acceptChange(payload['user_id'], payload['presence']);
         case 'message.created':
+          final previousUnread = _addressedUnreadCount(kind!, payload);
           if (selectedChannel?.id == payload['channel_id']) {
             unawaited(selectChannel(selectedChannel!));
           }
+          unawaited(
+            _refreshAndDeliverMessageNotification(
+              eventId: eventId,
+              kind: kind,
+              payload: payload,
+              previousUnread: previousUnread,
+            ),
+          );
+        case 'direct_message.message_created':
+          final previousUnread = _addressedUnreadCount(kind!, payload) ?? 0;
+          unawaited(
+            _refreshAndDeliverMessageNotification(
+              eventId: eventId,
+              kind: kind,
+              payload: payload,
+              previousUnread: previousUnread,
+            ),
+          );
         case 'channel.updated':
           unawaited(refreshTopology());
         case 'connection.resync_required':
@@ -1662,6 +1720,61 @@ class AppState extends ChangeNotifier {
       notifyListeners();
     } catch (_) {
       // Unknown or malformed future events are ignored and grant no authority.
+    }
+  }
+
+  int? _addressedUnreadCount(String? kind, Map<String, dynamic> payload) {
+    if (kind == 'direct_message.message_created') {
+      final id = payload['direct_message_id'];
+      if (id is! String) return null;
+      return directMessages
+          .where((conversation) => conversation.id == id)
+          .firstOrNull
+          ?.unreadCount;
+    }
+    if (kind == 'message.created') {
+      final id = payload['channel_id'];
+      if (id is! String) return null;
+      return topology?.categories
+          .expand((category) => category.channels)
+          .where(
+            (channel) => channel.id == id && channel.kind == ChannelKind.text,
+          )
+          .firstOrNull
+          ?.unreadCount;
+    }
+    return null;
+  }
+
+  Future<void> _refreshAndDeliverMessageNotification({
+    required String? eventId,
+    required String? kind,
+    required Map<String, dynamic> payload,
+    required int? previousUnread,
+  }) async {
+    if (eventId == null || kind == null || user == null) return;
+    try {
+      if (kind == 'message.created') {
+        await refreshTopology();
+      } else if (kind == 'direct_message.message_created') {
+        await refreshDirectMessages();
+      }
+      final body = notificationBodyForUnreadIncrease(
+        kind: kind,
+        previousUnread: previousUnread,
+        currentUnread:
+            _addressedUnreadCount(kind, payload) ??
+            (kind == 'direct_message.message_created' ? 0 : null),
+      );
+      if (body == null) return;
+      await _nativeNotifications.deliver(
+        eventId: eventId,
+        body: body,
+        appIsForeground: _notificationAppIsForeground,
+      );
+      if (_nativeNotifications.error != null) notifyListeners();
+    } catch (_) {
+      // Native alerts must not interfere with message or realtime recovery.
     }
   }
 

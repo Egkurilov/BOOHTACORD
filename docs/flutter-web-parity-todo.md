@@ -97,7 +97,8 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] Проверить серверную очистку `UNATTACHED` вложений через 24 часа и восстановление после сбоя на реальном deployment; клиентского DELETE-контракта нет. Пройти live 507/partial-upload UX на TEXT/DM и устройствах.
 - [ ] Проверить edit/delete 409 и idempotent send retry с реальным backend и физическим устройством, включая удаление во время редактирования и смену диалога.
 - [ ] Проверить reply context, pagination/scroll anchoring и read cursors на границах страниц и при realtime updates.
-- [ ] Спроектировать native notifications для каждой платформы с permission denial, generic preview и deduplication до показа настройки пользователю.
+- [x] Реализовать native opt-in notifications для macOS, Windows и Android: generic preview без текста сообщения, разрешения ОС, foreground suppression, рост unread-счётчика и event deduplication, отдельная настройка на аккаунт — [QA-46](../evidence/flutter/qa46-native-notifications-web-parity-2026-09-28-001.json).
+- [ ] Проверить системное разрешение/отказ, доставку в фоне и deduplication на реальном macOS; Windows toast/AppUserModelID на Windows runner; Android 13+ prompt и background delivery на Samsung/Gboard. Локальные macOS release startup и Android debug build/merged permission прошли, но это не заменяет device acceptance — [QA-46](../evidence/flutter/qa46-native-notifications-web-parity-2026-09-28-001.json).
 - [ ] Сверить нативный защищённый просмотр изображений TEXT/DM с DES-09; проверить ACL, loading/error/deleted состояния, масштабирование и отдельное скачивание на deployment и устройствах.
 - [x] Реализовать native image clipboard support в Flutter TEXT/DM через нативный clipboard plugin, scoped queue, plain-text fallback, retry/лимиты и attachment-only отправку — [FE-56](../backlog/FRONTEND_TODO.md), [QA-22](../evidence/flutter/qa22-native-clipboard-image-paste-2026-09-27-001.json). Фактическая вставка и Windows-native build всё ещё требуют platform acceptance.
 
@@ -158,7 +159,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
   показывать доступные loading/error live-region статусы как на web и снимать
   load error при успешном повторном запросе — [QA-45](../evidence/flutter/qa45-profile-loading-error-web-parity-2026-09-28-001.json).
 - [ ] Настроить signed platform/domain association до обещания автоматического открытия password-reset URL.
-- [ ] Определить native эквиваленты browser-only notification preferences; не показывать неработающий toggle.
+- [x] Определить и реализовать native эквиваленты browser-only notification preferences; настройка не показывается на web/неподдерживаемых платформах и включает только generic previews — [QA-46](../evidence/flutter/qa46-native-notifications-web-parity-2026-09-28-001.json).
 - [ ] Собрать/запустить Windows-клиент на Windows runner; проверить macOS/Android release builds и signing перед выпуском. macOS Debug app и Android Debug APK собраны локально — [QA-30](../evidence/flutter/qa30-native-debug-builds-2026-09-27-001.json); Windows runner и Android device недоступны в текущем окружении, release/signing acceptance остаётся открыта.
 - [ ] Сохранить защищённую копию Android upload JKS/credentials вне сборочного host; установить/обновить release APK на физическом Android и пройти QA-13.
 - [ ] Проверить совместимость Kotlin Gradle Plugin с `flutter_webrtc`, `livekit_client` и `flutter_background` перед обновлением Flutter toolchain.

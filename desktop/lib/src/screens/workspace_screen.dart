@@ -237,13 +237,27 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    widget.state.setNotificationAppForeground(
+      state == AppLifecycleState.resumed,
+    );
     if (state != AppLifecycleState.resumed) {
       unawaited(widget.state.setPushToTalkPressed(false));
+    } else {
+      unawaited(widget.state.refreshNotificationStatus());
     }
   }
 
   @override
-  void onWindowBlur() => unawaited(widget.state.setPushToTalkPressed(false));
+  void onWindowFocus() {
+    widget.state.setNotificationAppForeground(true);
+    unawaited(widget.state.refreshNotificationStatus());
+  }
+
+  @override
+  void onWindowBlur() {
+    widget.state.setNotificationAppForeground(false);
+    unawaited(widget.state.setPushToTalkPressed(false));
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
