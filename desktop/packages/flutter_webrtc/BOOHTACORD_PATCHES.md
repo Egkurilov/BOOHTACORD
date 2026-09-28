@@ -21,8 +21,8 @@ The macOS 13+ full-display capture path reads the requested width/height
 profile, caps ScreenCaptureKit's output by its longer edge, and rounds both
 output edges down to even pixels. It preserves the selected display's aspect
 ratio instead of forcing a 16:9 buffer. The custom window-source and macOS 12
-fallback paths still need equivalent enforcement and physical runtime
-acceptance.
+fallback paths use the frame processor described below; physical runtime
+acceptance remains open.
 
 ## macOS legacy and window screen profile
 
@@ -32,6 +32,15 @@ frame aspect ratio, rounds output edges down to even pixels, and leaves frames
 already within the profile untouched. This covers custom window capture and
 the pre-macOS-13 screen fallback; physical source/profile acceptance remains
 open.
+
+## Android encoder dimension changes
+
+The Android stream encoder wrapper now compares both input frame dimensions
+with the encoder's configured dimensions before passing a frame through. A
+height-only change (for example, during a portrait/landscape resize with a
+stable width) is adapted to the full configured frame instead of being encoded
+at a stale height. JVM tests cover matching dimensions and independent width
+and height changes; real-peer crop acceptance remains open.
 
 ## MediaProjection stop propagation
 

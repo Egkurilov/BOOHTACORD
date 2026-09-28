@@ -125,7 +125,12 @@ internal class SimulcastVideoEncoderFactoryWrapper(
                 //        "[${Thread.currentThread().id}]" }
                 if (streamSettings == null) {
                     return@Callable encoder.encode(frame, encodeInfo)
-                } else if (frame.buffer.width == streamSettings!!.width) {
+                } else if (VideoFrameDimensions.matchesEncoderSettings(
+                        frame.buffer.width,
+                        frame.buffer.height,
+                        streamSettings!!.width,
+                        streamSettings!!.height
+                    )) {
                     return@Callable encoder.encode(frame, encodeInfo)
                 } else {
                     // The incoming buffer is different than the streamSettings received in initEncode()
