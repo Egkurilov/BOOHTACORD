@@ -1,0 +1,27 @@
+{
+  "id": "QA-81",
+  "kind": "gitverse-flutter-windows-ci",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "source_revision": "1fa405a176ef03f3d28161e656634687e41772a3",
+  "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1674856",
+  "summary": "The registered boohtacord-win-station now executes the GitVerse Windows job. Sparse checkout, pinned Flutter 3.47.5, locked dependency resolution, 224 tests and analysis passed. Windows release build is blocked by the missing Visual Studio C++ toolchain on the host.",
+  "checks": [
+    {
+      "name": "GitVerse Windows runner routing and checkout",
+      "status": "PASS",
+      "observation": "The job was assigned after 2 seconds. Sparse checkout completed in 5 seconds with Git long paths enabled; the previous checkout attempt took 14 seconds and failed."
+    },
+    {
+      "name": "Flutter dependencies, tests and analyzer",
+      "status": "PASS",
+      "observation": "The runner verified Flutter 3.47.5, resolved the existing lockfile with dart pub get --enforce-lockfile, completed the Flutter test step in 25 seconds and analysis in 11 seconds. Local verification reported 224 passing tests; analysis has two non-fatal info diagnostics in the vendored flutter_webrtc package."
+    },
+    {
+      "name": "Windows release build",
+      "status": "BLOCKED",
+      "observation": "The CI build step exits in 2 seconds: Unable to find suitable Visual Studio toolchain. Local flutter doctor -v also reports that Visual Studio is not installed. Installing the Desktop development with C++ workload requires host administration."
+    }
+  ],
+  "remaining": "Install Visual Studio 2022 Build Tools with Desktop development with C++ on boohtacord-win-station, then rerun the Windows workflow and record a successful release build. Developer Mode should also be enabled so Flutter can create plugin symlinks in fresh local checkouts."
+}
