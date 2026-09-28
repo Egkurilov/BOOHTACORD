@@ -1,0 +1,58 @@
+{
+  "id": "QA-86",
+  "kind": "voice-reconnect-policy-web-parity",
+  "status": "PASS_WITH_NATIVE_RUNTIME_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "94cbb6fc1952cdbbab00c1c616ed8367cdb1d4e7",
+  "summary": "Flutter's local LiveKit SDK fork now uses the web client's six-attempt exponential reconnect schedule with the same 0.8–1.2 jitter multiplier. Flutter and macOS/Android builds pass; peer-driven native reconnect timing remains unverified.",
+  "checks": [
+    {
+      "name": "Web reconnect schedule reference",
+      "command": "npm --prefix frontend test -- --run src/voice/livekit_gateway.spec.ts",
+      "status": "PASS",
+      "observation": "The web suite passed 9 tests. BoundedVoiceReconnectPolicy yields base delays [250, 500, 1000, 2000, 4000, 4000] multiplied by a uniformly sampled 0.8–1.2 jitter factor, then stops after six attempts."
+    },
+    {
+      "name": "LiveKit SDK fork reconnect policy",
+      "command": "cd desktop && flutter test packages/livekit_client/test/core/voice_reconnect_policy_test.dart",
+      "status": "PASS",
+      "observation": "Three focused tests passed for all six base delays, lower/upper jitter boundaries, and rejection outside the attempt budget. The engine schedules from this tested helper and uses its attempt limit."
+    },
+    {
+      "name": "Flutter app regression and full suite",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "All 224 Flutter app tests passed and flutter analyze reported no issues."
+    },
+    {
+      "name": "Android debug and macOS release compilation",
+      "command": "cd desktop && flutter build apk --debug && flutter build macos --release",
+      "status": "PASS",
+      "observation": "Both builds passed against the local livekit_client 2.13.0 path override. Flutter emitted the existing Kotlin Gradle Plugin migration warning for Android and Xcode 27 emitted its x86_64 guidance; neither blocked compilation."
+    },
+    {
+      "name": "Native peer-driven reconnect runtime",
+      "status": "OPEN",
+      "observation": "No Android device is currently visible in adb, and no two-peer network interruption was performed on macOS/Android. The computed delays match source-level web policy, but wall-clock runtime acceptance remains pending."
+    }
+  ],
+  "artifact": {
+    "sdk": "livekit_client 2.13.0",
+    "path_override": "desktop/packages/livekit_client",
+    "policy_source": "frontend/src/voice/bounded_voice_reconnect_policy.ts",
+    "base_delays_ms": [
+      250,
+      500,
+      1000,
+      2000,
+      4000,
+      4000
+    ],
+    "jitter_multiplier": [
+      0.8,
+      1.2
+    ],
+    "attempt_limit": 6
+  },
+  "remaining": "With a second peer available, induce and restore network loss on macOS and Android and verify observed retry timing, participant/media restoration, exhaustion message, and lease release."
+}
