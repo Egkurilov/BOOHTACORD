@@ -1400,68 +1400,83 @@ class _Header extends StatelessWidget {
   final VoidCallback? onBack;
   final Widget? trailing;
   @override
-  Widget build(BuildContext context) => SizedBox(
-    key: const ValueKey('workspace-header'),
-    height: 72,
-    child: DecoratedBox(
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: GcColors.border)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Row(
-          children: [
-            if (onBack != null)
-              IconButton(
-                tooltip: 'Назад',
-                onPressed: onBack,
-                icon: const Icon(Icons.arrow_back),
-              ),
-            if (onToggleNavigation != null) ...[
-              IconButton(
-                tooltip: 'Открыть навигацию',
-                onPressed: onToggleNavigation,
-                icon: const Icon(Icons.menu),
-              ),
-              const SizedBox(width: 4),
-            ],
-            Icon(icon, color: GcColors.muted),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+  Widget build(BuildContext context) {
+    final compact =
+        MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint;
+    final leadingButtonConstraints = BoxConstraints.tightFor(
+      width: compact ? 40 : 48,
+      height: 48,
+    );
+    return SizedBox(
+      key: const ValueKey('workspace-header'),
+      height: 72,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: GcColors.border)),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 24),
+          child: Row(
+            children: [
+              if (onBack != null)
+                IconButton(
+                  tooltip: 'Назад',
+                  constraints: leadingButtonConstraints,
+                  padding: EdgeInsets.zero,
+                  onPressed: onBack,
+                  icon: const Icon(Icons.arrow_back),
+                ),
+              if (onToggleNavigation != null) ...[
+                IconButton(
+                  tooltip: 'Открыть навигацию',
+                  constraints: leadingButtonConstraints,
+                  padding: EdgeInsets.zero,
+                  onPressed: onToggleNavigation,
+                  icon: const Icon(Icons.menu),
+                ),
+                SizedBox(width: compact ? 0 : 4),
+              ],
+              Icon(icon, color: GcColors.muted),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: GcColors.muted, fontSize: 12),
-                  ),
-                ],
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: GcColors.muted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            ?trailing,
-            if (onOpenMembers != null)
-              IconButton(
-                tooltip: 'Открыть участников',
-                onPressed: onOpenMembers,
-                icon: const Icon(Icons.people_outline),
-              ),
-          ],
+              ?trailing,
+              if (onOpenMembers != null)
+                IconButton(
+                  tooltip: 'Открыть участников',
+                  onPressed: onOpenMembers,
+                  icon: const Icon(Icons.people_outline),
+                ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _Conversation extends StatefulWidget {
@@ -4941,8 +4956,8 @@ class _VoiceParticipantCard extends StatelessWidget {
           ),
           if (hasScreen)
             Positioned(
-              top: -12,
-              left: -4,
+              top: 0,
+              left: 0,
               child: Semantics(
                 label: 'Участник показывает экран',
                 image: true,
@@ -4967,8 +4982,8 @@ class _VoiceParticipantCard extends StatelessWidget {
             ),
           if (volume != null && onVolumeChanged != null)
             Positioned(
-              top: -12,
-              right: -4,
+              top: 0,
+              right: 0,
               child: _VoiceVolumeMenu(
                 name: name,
                 volume: volume!,
@@ -5068,7 +5083,12 @@ class _ProfilePanelToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inset = MediaQuery.sizeOf(context).width <= 720 ? 16.0 : 24.0;
+    final compact = MediaQuery.sizeOf(context).width <= 720;
+    final inset = compact ? 8.0 : 24.0;
+    final buttonConstraints = BoxConstraints.tightFor(
+      width: compact ? 40 : 48,
+      height: 48,
+    );
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: inset),
       child: SizedBox(
@@ -5078,6 +5098,8 @@ class _ProfilePanelToolbar extends StatelessWidget {
             if (onBack != null)
               IconButton(
                 tooltip: 'Назад',
+                constraints: buttonConstraints,
+                padding: EdgeInsets.zero,
                 onPressed: onBack,
                 icon: const Icon(Icons.arrow_back),
               ),
@@ -5085,6 +5107,8 @@ class _ProfilePanelToolbar extends StatelessWidget {
             if (onToggleNavigation != null)
               IconButton(
                 tooltip: 'Открыть навигацию',
+                constraints: buttonConstraints,
+                padding: EdgeInsets.zero,
                 onPressed: onToggleNavigation,
                 icon: const Icon(Icons.menu),
               ),
@@ -5373,45 +5397,48 @@ class _VoiceDock extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Semantics(
-          container: true,
-          liveRegion: true,
-          label: '$_status · ${state.voiceChannel!.name}',
-          child: Row(
-            children: [
-              _StatusDot(
-                color: state.voicePhase == VoicePhase.reconnecting
-                    ? GcColors.warning
-                    : GcColors.success,
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _status,
-                      style: TextStyle(
-                        color: state.voicePhase == VoicePhase.reconnecting
-                            ? GcColors.warning
-                            : GcColors.success,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      state.voiceChannel!.name,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: GcColors.textSecondary,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 0),
+          child: Semantics(
+            container: true,
+            liveRegion: true,
+            label: '$_status · ${state.voiceChannel!.name}',
+            child: Row(
+              children: [
+                _StatusDot(
+                  color: state.voicePhase == VoicePhase.reconnecting
+                      ? GcColors.warning
+                      : GcColors.success,
                 ),
-              ),
-            ],
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _status,
+                        style: TextStyle(
+                          color: state.voicePhase == VoicePhase.reconnecting
+                              ? GcColors.warning
+                              : GcColors.success,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        state.voiceChannel!.name,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: GcColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         if (!compact) ...[

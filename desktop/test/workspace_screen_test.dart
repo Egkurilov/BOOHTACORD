@@ -219,6 +219,11 @@ void main() {
     expect(find.text('Профиль'), findsOneWidget);
     expect(find.byTooltip('Назад'), findsOneWidget);
     expect(find.byTooltip('Открыть навигацию'), findsOneWidget);
+    expect(tester.getRect(find.byTooltip('Назад')).left, lessThan(24));
+    expect(
+      tester.getRect(find.byTooltip('Открыть навигацию')).left,
+      greaterThan(330),
+    );
     expect(find.byTooltip('Открыть участников'), findsNothing);
 
     await tester.tap(find.byTooltip('Назад'));
@@ -306,6 +311,12 @@ void main() {
     final selfCard = find.byKey(const ValueKey('voice-participant-card:self'));
     expect(tester.getSize(selfCard).height, 208);
     expect(tester.getSize(selfCard).width, greaterThanOrEqualTo(160));
+    final selfCardRect = tester.getRect(selfCard);
+    final screenShareBadgeRect = tester.getRect(
+      find.bySemanticsLabel('Участник показывает экран'),
+    );
+    expect(selfCardRect.contains(screenShareBadgeRect.topLeft), isTrue);
+    expect(selfCardRect.contains(screenShareBadgeRect.bottomRight), isTrue);
 
     tester.view.physicalSize = const Size(1440, 900);
     await tester.pumpAndSettle();
@@ -723,6 +734,14 @@ void main() {
 
     final dock = find.byKey(const ValueKey('mobile-voice-dock'));
     expect(dock, findsOneWidget);
+    expect(
+      tester.getRect(find.byTooltip('Открыть навигацию')).left,
+      lessThan(24),
+    );
+    expect(
+      tester.getRect(find.text('В голосовом канале')).left,
+      greaterThan(tester.getRect(dock).left + 32),
+    );
     expect(find.byTooltip('Выключить микрофон'), findsOneWidget);
     expect(find.byTooltip('Выключить удалённый звук'), findsOneWidget);
     expect(
