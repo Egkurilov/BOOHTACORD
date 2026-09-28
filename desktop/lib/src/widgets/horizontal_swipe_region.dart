@@ -29,6 +29,9 @@ class HorizontalSwipeRegion extends StatefulWidget {
 class _HorizontalSwipeRegionState extends State<HorizontalSwipeRegion> {
   Offset? _start;
   Offset _delta = Offset.zero;
+  int? _observedPointer;
+  Offset? _observedStart;
+  bool _swipeDispatched = false;
 
   bool _canStart(PointerDownEvent event) {
     if (!widget.enabled ||
@@ -38,6 +41,47 @@ class _HorizontalSwipeRegionState extends State<HorizontalSwipeRegion> {
     final size = context.size;
     return size != null &&
         (widget.canStart?.call(event.localPosition, size) ?? true);
+  }
+
+  void _observeDown(PointerDownEvent event) {
+    if (!_canStart(event)) {
+      _observedPointer = null;
+      _observedStart = null;
+      return;
+    }
+    _observedPointer = event.pointer;
+    _observedStart = event.localPosition;
+    _swipeDispatched = false;
+  }
+
+  void _observeUp(PointerUpEvent event) {
+    if (event.pointer != _observedPointer) return;
+    final start = _observedStart;
+    _observedPointer = null;
+    _observedStart = null;
+    if (start != null) _dispatchSwipe(event.localPosition - start);
+  }
+
+  void _observeCancel(PointerCancelEvent event) {
+    if (event.pointer == _observedPointer) {
+      _observedPointer = null;
+      _observedStart = null;
+    }
+  }
+
+  void _dispatchSwipe(Offset delta) {
+    if (_swipeDispatched ||
+        !widget.enabled ||
+        delta.dx.abs() < widget.minimumDistance ||
+        delta.dx.abs() < delta.dy.abs() * 1.5) {
+      return;
+    }
+    _swipeDispatched = true;
+    if (delta.dx > 0) {
+      widget.onSwipeRight?.call();
+    } else {
+      widget.onSwipeLeft?.call();
+    }
   }
 
   void _down(DragDownDetails details) {
@@ -54,16 +98,7 @@ class _HorizontalSwipeRegionState extends State<HorizontalSwipeRegion> {
     final delta = _delta;
     _start = null;
     _delta = Offset.zero;
-    if (!widget.enabled ||
-        delta.dx.abs() < widget.minimumDistance ||
-        delta.dx.abs() < delta.dy.abs() * 1.5) {
-      return;
-    }
-    if (delta.dx > 0) {
-      widget.onSwipeRight?.call();
-    } else {
-      widget.onSwipeLeft?.call();
-    }
+    _dispatchSwipe(delta);
   }
 
   void _cancel() {
@@ -72,22 +107,27 @@ class _HorizontalSwipeRegionState extends State<HorizontalSwipeRegion> {
   }
 
   @override
-  Widget build(BuildContext context) => RawGestureDetector(
-    gestures: {
-      _GuardedHorizontalDragGestureRecognizer:
-          GestureRecognizerFactoryWithHandlers<
-            _GuardedHorizontalDragGestureRecognizer
-          >(
-            () => _GuardedHorizontalDragGestureRecognizer(debugOwner: this),
-            (recognizer) => recognizer
-              ..canStart = _canStart
-              ..onDown = _down
-              ..onUpdate = _update
-              ..onEnd = _end
-              ..onCancel = _cancel,
-          ),
-    },
-    child: widget.child,
+  Widget build(BuildContext context) => Listener(
+    onPointerDown: _observeDown,
+    onPointerUp: _observeUp,
+    onPointerCancel: _observeCancel,
+    child: RawGestureDetector(
+      gestures: {
+        _GuardedHorizontalDragGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<
+              _GuardedHorizontalDragGestureRecognizer
+            >(
+              () => _GuardedHorizontalDragGestureRecognizer(debugOwner: this),
+              (recognizer) => recognizer
+                ..canStart = _canStart
+                ..onDown = _down
+                ..onUpdate = _update
+                ..onEnd = _end
+                ..onCancel = _cancel,
+            ),
+      },
+      child: widget.child,
+    ),
   );
 }
 

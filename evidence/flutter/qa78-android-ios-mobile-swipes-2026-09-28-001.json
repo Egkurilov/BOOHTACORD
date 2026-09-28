@@ -12,6 +12,12 @@
       "observation": "All four widget cases passed: edge swipes open and close navigation/member panels, message swipes open reply compose, and pull-down refresh requests another text/DM history page on both iOS and Android."
     },
     {
+      "name": "Swipe-to-reply with Android selectable message text",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart --plain-name 'mobile message swipes reply and pull down refreshes history (android)'",
+      "status": "PASS",
+      "observation": "Android text selection's horizontal-drag recognizer could win the gesture arena before swipe-to-reply. HorizontalSwipeRegion now retains its scroll-aware recognizer and observes pointer completion as a fallback; the test passes without weakening vertical-scroll filtering."
+    },
+    {
       "name": "Fullscreen viewer downward swipe on Android and iOS",
       "command": "cd desktop && flutter test test/screen_fullscreen_overlay_test.dart --name 'mobile downward swipe'",
       "status": "PASS",
@@ -22,6 +28,12 @@
       "command": "cd desktop && flutter test test/workspace_screen_test.dart --plain-name 'keeps voice controls in a compact bottom dock on Android'",
       "status": "PASS",
       "observation": "The Android widget test passed; vertical swipes expand and collapse the dock while preserving the active voice connection."
+    },
+    {
+      "name": "Full Flutter regression and static analysis",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "221 widget/unit tests passed and flutter analyze reported no issues."
     },
     {
       "name": "Physical Android gesture-navigation acceptance",
