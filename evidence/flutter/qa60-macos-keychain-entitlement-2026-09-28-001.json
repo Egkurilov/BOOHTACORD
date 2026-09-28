@@ -1,0 +1,29 @@
+{
+  "id": "QA-60",
+  "date": "2026-09-28",
+  "status": "PARTIAL",
+  "summary": "The login error is macOS Security.framework errSecMissingEntitlement (-34018) from Data Protection Keychain access.",
+  "checks": [
+    {
+      "result": "PASS",
+      "observation": "The screenshot reports error code -34018 and 'A required entitlement isn't present', matching the macOS missing-entitlement error."
+    },
+    {
+      "result": "PASS",
+      "observation": "ApiClient configures flutter_secure_storage with usesDataProtectionKeychain: true on macOS."
+    },
+    {
+      "result": "PASS",
+      "observation": "The app is ad-hoc signed and this host has no valid Apple code-signing identity."
+    },
+    {
+      "result": "BLOCKED",
+      "observation": "Adding keychain-access-groups to both macOS entitlement files makes Xcode reject the build because this entitlement requires a development signing certificate. The temporary entitlement edits were reverted."
+    },
+    {
+      "result": "NOT_RUN",
+      "observation": "No signed macOS build was available to validate secure session write/read and relaunch. The known legacy-Keychain path previously blocked in SecItemCopyMatching (QA-40)."
+    }
+  ],
+  "next_step": "Build and test with a valid Apple Development identity and the required keychain entitlement, then verify session persistence across app restart."
+}

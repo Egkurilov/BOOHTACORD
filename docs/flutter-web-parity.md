@@ -277,6 +277,12 @@ the implementation.
   Keychain; debug startup reaches the signed-out login screen. Verify signed
   release persistence and the one-time re-login behavior for legacy cookies
   [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
+- A later login screenshot exposed `errSecMissingEntitlement` (`-34018`) from
+  the Data Protection Keychain. The local app is ad-hoc signed; adding the
+  package-documented keychain access-group entitlement makes Xcode require a
+  development signing certificate, which is not installed on this host. Keep
+  this open until the signed macOS configuration can be built and session
+  read/write/restart behavior is verified [QA-60](../evidence/flutter/qa60-macos-keychain-entitlement-2026-09-28-001.json).
 - Compare reference and Flutter screenshots at the same viewport and data;
   track geometry/color/type deviations per screen.
 - Exercise every control and non-happy state against the same backend contracts.
