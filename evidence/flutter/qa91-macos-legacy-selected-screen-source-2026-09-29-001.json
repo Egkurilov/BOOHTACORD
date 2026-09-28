@@ -1,0 +1,32 @@
+{
+  "id": "QA-91",
+  "kind": "macos-legacy-selected-screen-source",
+  "status": "PASS_BUILD_RUNTIME_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "a5d2bcc",
+  "summary": "The macOS 12 screen-capture fallback now starts RTCDesktopCapturer with the RTCDesktopSource selected in the Flutter source picker instead of silently creating a default-screen capturer.",
+  "checks": [
+    {
+      "name": "Selected source reaches legacy capturer",
+      "status": "PASS_SOURCE_REVIEW",
+      "observation": "When ScreenCaptureKit is unavailable and a source was selected, getDisplayMedia now initializes RTCDesktopCapturer with that source. initWithDefaultScreen remains only for calls that provide no source."
+    },
+    {
+      "name": "macOS release build",
+      "command": "cd desktop && flutter build macos --release",
+      "status": "PASS",
+      "observation": "Built BOOHTACORD.app (92.4 MB). Xcode emitted its existing ld address/target-atom ambiguity warning; build succeeded."
+    },
+    {
+      "name": "Runtime source selection",
+      "status": "OPEN",
+      "observation": "A macOS 12 device with multiple displays is needed to confirm the chosen secondary display is the captured source and that its complete frame is preserved."
+    },
+    {
+      "name": "Profile resolution cap",
+      "status": "OPEN",
+      "observation": "This source-selection fix does not bound resolution in the legacy fallback or custom macOS window capture; verify and implement those paths separately."
+    }
+  ],
+  "remaining": "Test macOS 12 with a non-primary display selected. Add an aspect-preserving source-resolution cap for the macOS 12 fallback and selected windows, then validate sender dimensions and all nine quality profiles on device."
+}
