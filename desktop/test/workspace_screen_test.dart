@@ -21,13 +21,14 @@ void main() {
     tester,
   ) async {
     final scan = Completer<List<MediaDevice>>();
+    final refreshScan = Completer<List<MediaDevice>>();
     var scanCount = 0;
     final state = AppState(
       _PortraitApi(),
       audioDeviceLoader: () {
         scanCount++;
         if (scanCount == 1) return scan.future;
-        return Future<List<MediaDevice>>.error(StateError('scan failed'));
+        return refreshScan.future;
       },
     );
     await state.initialize();
@@ -46,9 +47,33 @@ void main() {
     expect(find.text('Ищем устройства…'), findsNothing);
     expect(find.text('Микрофоны не найдены'), findsOneWidget);
     expect(find.text('Динамики не найдены'), findsOneWidget);
-    await state.refreshAudioDevices();
+    expect(state.audioDevicesLoading, isFalse);
+    expect(
+      tester
+          .widgetList<IconButton>(find.byType(IconButton))
+          .singleWhere(
+            (button) => button.tooltip == 'Обновить список устройств',
+          )
+          .onPressed,
+      isNotNull,
+    );
+    await tester.tap(find.byTooltip('Обновить список устройств'));
     await tester.pump();
     expect(scanCount, 2);
+    expect(state.audioDevicesLoading, isTrue);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(
+      tester
+          .widgetList<IconButton>(find.byType(IconButton))
+          .singleWhere(
+            (button) => button.tooltip == 'Обновить список устройств',
+          )
+          .onPressed,
+      isNull,
+    );
+    refreshScan.completeError(StateError('scan failed'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(state.audioDeviceScanFailed, isTrue);
     expect(find.text('Список недоступен'), findsNWidgets(2));
     expect(find.text('Микрофоны не найдены'), findsNothing);

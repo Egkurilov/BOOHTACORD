@@ -24,7 +24,7 @@
       "name": "Audio device panel loading, empty and failed states",
       "command": "flutter test test/workspace_screen_test.dart --plain-name 'opens native audio settings and processing controls'",
       "status": "PASS",
-      "observation": "Both selectors show searching while enumeration is pending, a not-found message after a successful empty result, and unavailable after a failed refresh."
+      "observation": "Both selectors show searching while enumeration is pending and not-found after a successful empty result. The header refresh button re-enables after the first scan, starts a second enumeration, shows a spinner and disables itself while pending, then shows unavailable after that scan fails."
     },
     {
       "name": "macOS debug and signed Android release builds",

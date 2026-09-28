@@ -4810,30 +4810,30 @@ class _AudioSettingsScreen extends StatelessWidget {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) onBack();
       },
-      child: Column(
-        children: [
-          _Header(
-            icon: Icons.tune,
-            title: 'Настройки аудио',
-            subtitle: 'Устройства и обработка микрофона',
-            onBack: compact ? onBack : null,
-            trailing: IconButton(
-              tooltip: 'Обновить список устройств',
-              onPressed: state.audioDevicesLoading
-                  ? null
-                  : state.refreshAudioDevices,
-              icon: state.audioDevicesLoading
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.refresh),
+      child: AnimatedBuilder(
+        animation: state,
+        builder: (context, _) => Column(
+          children: [
+            _Header(
+              icon: Icons.tune,
+              title: 'Настройки аудио',
+              subtitle: 'Устройства и обработка микрофона',
+              onBack: compact ? onBack : null,
+              trailing: IconButton(
+                tooltip: 'Обновить список устройств',
+                onPressed: state.audioDevicesLoading
+                    ? null
+                    : state.refreshAudioDevices,
+                icon: state.audioDevicesLoading
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+              ),
             ),
-          ),
-          Expanded(
-            child: AnimatedBuilder(
-              animation: state,
-              builder: (context, _) => ListView(
+            Expanded(
+              child: ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
                   _AudioDeviceDropdown(
@@ -4960,8 +4960,8 @@ class _AudioSettingsScreen extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
