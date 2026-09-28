@@ -1,0 +1,48 @@
+{
+  "id": "QA-70",
+  "date": "2026-09-28",
+  "status": "PASS_WITH_PHYSICAL_DEVICE_ACCEPTANCE_OPEN",
+  "summary": "Fixed Android TEXT touch scrolling: a slow downward drag near the latest message no longer gets snapped back to the bottom by visible-read bookkeeping.",
+  "source_revision": "b37ef0a",
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart --plain-name 'opens text history at latest and advances its read cursor'",
+      "observation": "At an Android Material platform theme and 390×844 logical viewport, eight 4 px touch moves now reduce the list offset and reveal older history. Before the fix, the same slow gesture left the offset at maxScrollExtent."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test",
+      "observation": "All 194 Flutter tests passed."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter analyze",
+      "observation": "No issues found."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build apk --release",
+      "observation": "Release APK built successfully as ru.boohtacord.app version 1.0.0 (versionCode 1)."
+    },
+    {
+      "result": "PASS",
+      "command": "apksigner verify --verbose --print-certs artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+      "observation": "APK Signature Scheme v2 verified with upload certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b."
+    },
+    {
+      "result": "PASS",
+      "observation": "The new APK replaced the existing binary at the single tracked artifact path. The previous binary remains in Git history."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Install the APK on physical Android hardware and verify slow/fast touch scroll, keyboard-open viewport resizing, older-history loading, and visible-read behavior against the live server."
+    }
+  ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+    "size_bytes": 95914072,
+    "sha256": "8303387d8007327edad27557699cc391d0f7c1ef8a40c607367adb1f6bd1c4a3",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b"
+  }
+}
