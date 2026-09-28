@@ -1,0 +1,39 @@
+{
+  "id": "QA-75",
+  "kind": "android-profile-notification-icon-resource",
+  "status": "PASS_WITH_DEVICE_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-28",
+  "implementation_revision": "0f5cd91",
+  "summary": "The Android notification initializer no longer refers to the absent ic_launcher drawable. It uses a dedicated monochrome drawable, and the release shrinker is instructed to retain that resource.",
+  "checks": [
+    {
+      "name": "Notification service regression tests",
+      "command": "cd desktop && flutter test test/native_notifications_test.dart",
+      "status": "PASS",
+      "observation": "All 4 tests passed, including the case that maps Android invalid_icon PlatformException details to a bounded user-facing message."
+    },
+    {
+      "name": "Source resource and initialization configuration",
+      "status": "PASS",
+      "observation": "desktop/lib/src/services/native_notifications.dart initializes Android with ic_stat_notification; desktop/android/app/src/main/res/drawable/ic_stat_notification.xml defines it, and desktop/android/app/src/main/res/raw/keep.xml retains it through shrinking."
+    },
+    {
+      "name": "Release resource packaging",
+      "command": "unzip -p artifacts/android/BOOHTACORD-1.0.0+1-release.apk resources.arsc | strings | rg ic_stat_notification",
+      "status": "PASS",
+      "observation": "The current signed release APK resource table contains the ic_stat_notification symbol. The same APK's Gradle release packaged_res output contains drawable/ic_stat_notification.xml and raw/keep.xml."
+    },
+    {
+      "name": "Release artifact identity",
+      "command": "shasum -a 256 artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+      "status": "PASS",
+      "observation": "SHA-256 is 5522767d06ec90f08f220bbb028abae9c1ec76ac57cb01a6bf9642cb046d749a, matching the recorded APK metadata."
+    },
+    {
+      "name": "System notification delivery on the affected Samsung device",
+      "status": "OPEN",
+      "observation": "The release resource is present, but notification permission grant/denial and background delivery still require runtime acceptance on the affected Android device."
+    }
+  ],
+  "remaining": "Install this APK on the affected Samsung/Gboard device, open profile settings, enable notifications, and verify no invalid_icon PlatformException appears and a generic notification is delivered while the app is hidden."
+}
