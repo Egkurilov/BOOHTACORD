@@ -61,6 +61,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 dependency_overrides:
+  livekit_client:
+    path: packages/livekit_client
   flutter_webrtc:
     path: packages/flutter_webrtc
 

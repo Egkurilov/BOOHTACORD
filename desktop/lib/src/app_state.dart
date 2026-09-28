@@ -6,7 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:flutter_background/flutter_background.dart';
-import 'package:livekit_client/livekit_client.dart' hide ChatMessage;
+import 'package:livekit_client/livekit_client.dart'
+    hide ChatMessage, voiceReconnectAttemptLimit;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -2944,6 +2945,8 @@ class AppState extends ChangeNotifier {
       DisconnectReason.participantRemoved =>
         'Администратор отключил вас от голосового канала.',
       DisconnectReason.roomDeleted => 'Голосовая комната была закрыта.',
+      DisconnectReason.reconnectAttemptsExceeded =>
+        'Не удалось восстановить голосовое соединение после $voiceReconnectAttemptLimit попыток. Подключитесь ещё раз.',
       _ => 'Связь с голосовым каналом потеряна. Подключитесь ещё раз.',
     };
     await _disposeVoiceEvents();
