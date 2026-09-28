@@ -4,92 +4,107 @@ import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('mobile drawer lists General text and voice without filters', (
-    tester,
-  ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-    addTearDown(() => debugDefaultTargetPlatformOverride = null);
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
-    addTearDown(tester.view.reset);
-    const textChannel = GuildChannel(
-      id: 'text-1',
-      name: 'общий',
-      kind: ChannelKind.text,
-      admissionClosed: false,
-    );
-    const voiceChannel = GuildChannel(
-      id: 'voice-1',
-      name: 'Комната команды',
-      kind: ChannelKind.voice,
-      admissionClosed: false,
-    );
-    final api = _VoiceEntryApi();
-    final state = AppState(api)
-      ..phase = AppPhase.ready
-      ..user = const SessionUser(accountId: 'account-1', role: 'MEMBER')
-      ..selectedChannel = textChannel
-      ..topology = const ChannelTopology(
-        revision: 1,
-        categories: [
-          ChannelCategory(
-            id: 'category-1',
-            name: 'General',
-            channels: [textChannel, voiceChannel],
-          ),
-        ],
-      );
-    await tester.pumpWidget(BoohtacordApp(state: state));
-    await tester.pumpAndSettle();
+  for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
+    testWidgets(
+      'mobile drawer lists General text and voice without filters (${platform.name})',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = platform;
+        addTearDown(() => debugDefaultTargetPlatformOverride = null);
+        const audioDeviceChannel = MethodChannel('boohtacord/audio_devices');
+        if (platform == TargetPlatform.android) {
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            audioDeviceChannel,
+            (_) async => null,
+          );
+          addTearDown(
+            () => tester.binding.defaultBinaryMessenger
+                .setMockMethodCallHandler(audioDeviceChannel, null),
+          );
+        }
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(390, 844);
+        addTearDown(tester.view.reset);
+        const textChannel = GuildChannel(
+          id: 'text-1',
+          name: 'общий',
+          kind: ChannelKind.text,
+          admissionClosed: false,
+        );
+        const voiceChannel = GuildChannel(
+          id: 'voice-1',
+          name: 'Комната команды',
+          kind: ChannelKind.voice,
+          admissionClosed: false,
+        );
+        final api = _VoiceEntryApi();
+        final state = AppState(api)
+          ..phase = AppPhase.ready
+          ..user = const SessionUser(accountId: 'account-1', role: 'MEMBER')
+          ..selectedChannel = textChannel
+          ..topology = const ChannelTopology(
+            revision: 1,
+            categories: [
+              ChannelCategory(
+                id: 'category-1',
+                name: 'General',
+                channels: [textChannel, voiceChannel],
+              ),
+            ],
+          );
+        await tester.pumpWidget(BoohtacordApp(state: state));
+        await tester.pumpAndSettle();
 
-    final drawer = find.byKey(const ValueKey('mobile-sidebar'));
-    expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
-    expect(
-      find.descendant(of: drawer, matching: find.text('GENERAL')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: drawer, matching: find.text('общий')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: drawer, matching: find.text('Комната команды')),
-      findsOneWidget,
-    );
-    expect(find.text('Куда пойдём?'), findsNothing);
-    expect(find.text('Чаты'), findsNothing);
-    expect(find.text('Голос'), findsNothing);
-    await tester.tap(find.text('Комната команды'));
-    await tester.pumpAndSettle();
-    expect(state.selectedChannel?.id, voiceChannel.id);
-    expect(api.voiceCredentialCalls, 1);
-    expect(state.voicePhase, VoicePhase.error);
-    expect(find.byTooltip('Закрыть навигацию'), findsNothing);
-    expect(find.byKey(const ValueKey('workspace-header')), findsOneWidget);
+        final drawer = find.byKey(const ValueKey('mobile-sidebar'));
+        expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+        expect(
+          find.descendant(of: drawer, matching: find.text('GENERAL')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: drawer, matching: find.text('общий')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: drawer, matching: find.text('Комната команды')),
+          findsOneWidget,
+        );
+        expect(find.text('Куда пойдём?'), findsNothing);
+        expect(find.text('Чаты'), findsNothing);
+        expect(find.text('Голос'), findsNothing);
+        await tester.tap(find.text('Комната команды'));
+        await tester.pumpAndSettle();
+        expect(state.selectedChannel?.id, voiceChannel.id);
+        expect(api.voiceCredentialCalls, 1);
+        expect(state.voicePhase, VoicePhase.error);
+        expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+        expect(find.byKey(const ValueKey('workspace-header')), findsOneWidget);
 
-    await tester.dragFrom(const Offset(180, 240), const Offset(110, 28));
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
-    await tester.tap(find.text('общий'));
-    await tester.pumpAndSettle();
-    expect(state.selectedChannel?.id, textChannel.id);
-    expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+        await tester.dragFrom(const Offset(180, 240), const Offset(110, 28));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+        await tester.tap(find.text('общий'));
+        await tester.pumpAndSettle();
+        expect(state.selectedChannel?.id, textChannel.id);
+        expect(find.byTooltip('Закрыть навигацию'), findsNothing);
 
-    await tester.dragFrom(const Offset(30, 240), const Offset(110, 28));
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
-    await tester.tap(find.text('Личные'));
-    await tester.pumpAndSettle();
-    expect(find.text('ЛИЧНЫЕ СООБЩЕНИЯ'), findsOneWidget);
-    expect(find.text('GENERAL'), findsNothing);
+        await tester.dragFrom(const Offset(30, 240), const Offset(110, 28));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+        await tester.tap(find.text('Личные'));
+        await tester.pumpAndSettle();
+        expect(find.text('ЛИЧНЫЕ СООБЩЕНИЯ'), findsOneWidget);
+        expect(find.text('GENERAL'), findsNothing);
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    state.dispose();
-    debugDefaultTargetPlatformOverride = null;
-  });
+        await tester.pumpWidget(const SizedBox.shrink());
+        state.dispose();
+        debugDefaultTargetPlatformOverride = null;
+      },
+    );
+  }
 
   testWidgets('mobile drawer fits 320 dp with no channels', (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;

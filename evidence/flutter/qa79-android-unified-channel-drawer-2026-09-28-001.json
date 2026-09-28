@@ -1,0 +1,22 @@
+{
+  "id": "QA-79",
+  "kind": "android-ios-unified-mobile-channel-drawer",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "summary": "Verified that compact Android and iOS navigation show text and voice channels together under their General category and preserve direct channel selection and DM navigation.",
+  "checks": [
+    {
+      "name": "Mixed text/voice drawer and navigation on Android and iOS",
+      "command": "cd desktop && flutter test test/widget_test.dart --name 'mobile drawer lists General text and voice'",
+      "status": "PASS",
+      "observation": "Both 390×844 widget cases pass. Each checks the General category, one text channel and one voice channel appear without separate Chats/Voice filters; voice selection starts direct admission and closes the drawer, text selection returns to the conversation, and the DM control opens the direct-message panel. The Android case supplies a mock response for the native USB audio route cleanup used after the intentionally rejected voice admission."
+    },
+    {
+      "name": "Android empty drawer at 320 dp",
+      "command": "cd desktop && flutter test test/widget_test.dart --plain-name 'mobile drawer fits 320 dp with no channels'",
+      "status": "PASS",
+      "observation": "The empty-state copy fits at 320×640 without rendering the obsolete Chats/Voice filters or producing layout exceptions."
+    }
+  ],
+  "remaining": "Manual Android/iOS navigation and visual comparison on devices remain part of the broader parity acceptance."
+}

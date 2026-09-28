@@ -51,6 +51,12 @@ widget coverage now exercises the platform-gated cases; physical Android gesture
 navigation remains an acceptance check —
 [QA-78](../evidence/flutter/qa78-android-ios-mobile-swipes-2026-09-28-001.json).
 
+The compact mobile navigation drawer now has Android/iOS widget coverage for a
+mixed `General` category containing text and voice channels, direct voice entry,
+returning to text, and opening DMs. The Android 320 dp empty-drawer case remains
+covered as well —
+[QA-79](../evidence/flutter/qa79-android-unified-channel-drawer-2026-09-28-001.json).
+
 The reported Android-to-viewer crop remains unresolved. Source inspection shows
 the web viewer uses `object-fit: contain`, and Flutter's LiveKit renderer
 defaults to `VideoViewFit.contain`; this rules out neither an encoded-frame
