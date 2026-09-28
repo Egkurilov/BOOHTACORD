@@ -1,0 +1,54 @@
+{
+  "id": "QA-93",
+  "kind": "android-screen-share-encoder-height-resize",
+  "status": "PASS_BUILD_RUNTIME_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "db53dbd",
+  "summary": "The Android stream encoder wrapper previously bypassed frame adaptation whenever input width matched the configured width, even if height had changed. It now compares both dimensions and adapts mismatched frames using the complete source rectangle. This closes a concrete orientation/resize gap but does not prove the reported receiver crop was caused by it or is now fixed.",
+  "checks": [
+    {
+      "name": "Android WebRTC plugin unit tests",
+      "command": "cd desktop/android && ./gradlew -Dorg.gradle.java.home=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home :flutter_webrtc:testDebugUnitTest",
+      "status": "PASS",
+      "observation": "Gradle completed successfully. Regression tests cover unchanged portrait dimensions, a height-only change with stable width, and a width-only change."
+    },
+    {
+      "name": "Full Flutter regression suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "All 226 tests passed."
+    },
+    {
+      "name": "Flutter static analysis",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android release build",
+      "command": "cd desktop && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Built the signed 107,622,038-byte 1.0.1+4 release APK from revision db53dbd."
+    },
+    {
+      "name": "APK metadata, signature, and checksum",
+      "status": "PASS",
+      "observation": "Package ru.boohtacord.app reports versionName 1.0.1 and versionCode 4. APK Signature Scheme v2 verification passed with the existing RSA-4096 upload certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b. APK SHA-256 is 71bc597731b733bba8b6bafe11fd40e169a98f76ce6d1fb14f3cb2dffcef7e22."
+    },
+    {
+      "name": "Physical sender and remote receiver playback",
+      "status": "OPEN",
+      "observation": "adb devices -l reported no attached Android device. The source/encoder change has not been tested with an Android sender and simultaneous web and Flutter receivers; the original all-viewers upper-frame crop therefore remains unverified."
+    }
+  ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.1+4-release.apk",
+    "source_revision": "db53dbd",
+    "version_name": "1.0.1",
+    "version_code": 4,
+    "size_bytes": 107622038,
+    "sha256": "71bc597731b733bba8b6bafe11fd40e169a98f76ce6d1fb14f3cb2dffcef7e22",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b"
+  },
+  "remaining": "Install 1.0.1+4 on the affected Android phone; capture portrait and landscape at each relevant resolution, and inspect all four source edges in simultaneous web and Flutter receivers before deciding whether the encoder resize fix resolves the original crop."
+}

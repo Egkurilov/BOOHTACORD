@@ -67,8 +67,13 @@ The reported Android-to-viewer crop remains unresolved. Source inspection shows
 the web viewer uses `object-fit: contain`, and Flutter's LiveKit renderer
 defaults to `VideoViewFit.contain`; this rules out neither an encoded-frame
 problem nor a device-specific native texture issue. Receiver dimensions are not
-proof that all four source edges arrive. Keep the item open until a real
-portrait and landscape Android share is checked in both web and Flutter viewers.
+proof that all four source edges arrive. The Android encoder wrapper also
+previously compared only frame width with configured encoder dimensions; it now
+adapts on a mismatch in either axis, with a regression test for a height-only
+resize [QA-93](../evidence/flutter/qa93-android-encoder-height-resize-2026-09-29-001.json).
+That fixes a concrete orientation/resize adaptation gap but does not prove it
+caused the original static portrait crop. Keep the crop item open until real
+portrait and landscape Android shares are checked in both web and Flutter viewers.
 
 ## Delivery sequence
 

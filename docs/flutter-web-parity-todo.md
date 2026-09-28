@@ -149,6 +149,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Для проверки добавлен
   Android single-layer publish fallback; сравнить кадр, разрешение, FPS и bitrate
   у двух зрителей и подтвердить приемлемую нагрузку сети [QA-25](../evidence/flutter/qa25-android-screen-share-receiver-clipping-2026-09-27-001.json).
+  Encoder wrapper теперь сравнивает ширину и высоту с настройками и адаптирует
+  height-only resize; JVM test и release APK 1.0.1+4 прошли. Это не закрывает
+  исходную обрезку без проверки устройства и двух зрителей —
+  [QA-93](../evidence/flutter/qa93-android-encoder-height-resize-2026-09-29-001.json).
   Локальный IME regression test дополнительно сохраняет ввод следующего символа
   через тот же text-input connection после двух перестроений; физическая Samsung
   проверка остаётся открытой — [QA-51](../evidence/flutter/qa51-android-ime-multichar-regression-2026-09-28-001.json).
