@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# GitVerse cloud jobs have no Docker socket. Start PostgreSQL inside the job.
+# A dedicated test database is provided on the Hetzner runner. Check that it
+# accepts authenticated queries before starting tests.
+if [[ "${CI_POSTGRES_EXTERNAL:-}" == true ]]; then
+  [[ "${CI_POSTGRES_PORT:-}" =~ ^[0-9]+$ ]]
+  PGPASSWORD=test-only-password psql -h 127.0.0.1 -p "$CI_POSTGRES_PORT" \
+    -U voice_platform_test -d voice_platform_test -v ON_ERROR_STOP=1 \
+    -Atqc 'SELECT 1' | grep -qx 1
+  exit 0
+fi
+
+# Cloud jobs have no Docker socket. Start PostgreSQL inside the job.
 as_root() {
   if (( EUID == 0 )); then
     "$@"
