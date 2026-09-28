@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$workflow = Get-Content -LiteralPath (Join-Path $projectRoot '.github/workflows/ci.yml') -Raw
+$workflow = Get-Content -LiteralPath (Join-Path $projectRoot '.github/workflows/ci.yaml') -Raw
 $publisherSteps = @()
 
 if ($workflow -match '(?m)^  deploy:') {
