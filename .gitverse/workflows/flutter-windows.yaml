@@ -16,23 +16,35 @@ jobs:
     runs-on: boohtacord-windows
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Flutter 3.47.5
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: 3.47.5
-          cache: true
-      - name: Verify Flutter toolchain
-        run: flutter --version
+      - name: Verify installed Flutter 3.47.5
+        shell: powershell
+        run: |
+          $flutter = Join-Path $env:USERPROFILE 'develop\flutter\bin\flutter.bat'
+          if (-not (Test-Path -LiteralPath $flutter)) { throw "Flutter SDK missing: $flutter" }
+          $version = (& $flutter --version --machine | ConvertFrom-Json).frameworkVersion
+          if ($LASTEXITCODE -ne 0 -or $version -ne '3.47.5') { throw "Expected Flutter 3.47.5, got $version" }
       - name: Resolve locked Flutter dependencies
         working-directory: desktop
-        run: flutter pub get
+        shell: powershell
+        run: |
+          $env:FLUTTER_ROOT = Join-Path $env:USERPROFILE 'develop\flutter'
+          & "$env:FLUTTER_ROOT\bin\dart.bat" pub get --enforce-lockfile
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run Flutter tests
         working-directory: desktop
-        run: flutter test
+        shell: powershell
+        run: |
+          & "$env:USERPROFILE\develop\flutter\bin\flutter.bat" test --no-pub
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Analyze Flutter client
         working-directory: desktop
-        run: flutter analyze
+        shell: powershell
+        run: |
+          & "$env:USERPROFILE\develop\flutter\bin\flutter.bat" analyze --no-pub --no-fatal-infos
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build Windows release client
         working-directory: desktop
-        run: flutter build windows --release
+        shell: powershell
+        run: |
+          & "$env:USERPROFILE\develop\flutter\bin\flutter.bat" build windows --release --no-pub
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

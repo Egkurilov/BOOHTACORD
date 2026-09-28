@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:boohtacord_desktop/src/app_state.dart';
@@ -9,6 +10,9 @@ import 'package:boohtacord_desktop/src/widgets/message_attachment_composer.dart'
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+String _fixturePath(String name) =>
+    '${Directory.systemTemp.path}${Platform.pathSeparator}$name';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -258,11 +262,11 @@ void main() {
               filePicker: () async => [
                 XFile.fromData(
                   Uint8List.fromList([1]),
-                  path: '/private/tmp/one.txt',
+                  path: _fixturePath('one.txt'),
                 ),
                 XFile.fromData(
                   Uint8List.fromList([2]),
-                  path: '/private/tmp/two.txt',
+                  path: _fixturePath('two.txt'),
                 ),
               ],
               onChanged: (value) => rebuild(() => attachments = value),
@@ -334,7 +338,7 @@ void main() {
     await tester.tap(find.text('Другой канал'));
     await tester.pump();
     selected.complete([
-      XFile.fromData(Uint8List.fromList([1]), path: '/private/tmp/old.txt'),
+      XFile.fromData(Uint8List.fromList([1]), path: _fixturePath('old.txt')),
     ]);
     await tester.pumpAndSettle();
 
@@ -365,7 +369,7 @@ void main() {
               filePicker: () async => [
                 XFile.fromData(
                   Uint8List.fromList([1]),
-                  path: '/private/tmp/progress.txt',
+                  path: _fixturePath('progress.txt'),
                 ),
               ],
               onChanged: (value) => rebuild(() => attachments = value),
