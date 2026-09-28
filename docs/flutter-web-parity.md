@@ -294,9 +294,13 @@ portrait and landscape Android share is checked in both web and Flutter viewers.
   intended to be reflected by LiveKit's track-unpublished event. The latest
   Pixel 7 check found the app's `flutter_background` notification channel
   disabled (`importance=NONE`); after system projection ended, the black local
-  preview/share UI remained until the in-app stop control was tapped. Enable
-  that notification with the user's approval and repeat, verifying the track
-  and UI clear immediately on OS stop [QA-26](../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
+  preview/share UI remained until the in-app stop control was tapped. The
+  pinned `flutter_webrtc` source had an empty Android `MediaProjection.Callback`
+  and did not forward capture-ended to Dart; the local fork now releases the
+  capturer and dispatches the ended event to LiveKit. Unit tests and release
+  compilation pass, but the device regression still needs a repeat with the
+  notification enabled by the user, confirming UI/metrics clear immediately
+  after OS stop [QA-26](../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
   Native screen audio is not
   supported by the current capture API, so local screen shares are video-only.
   Verify OS-level stop, Android 14+ permission/service behavior, and real-peer
