@@ -648,6 +648,58 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('keeps voice controls in a compact bottom dock on Android', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    state.selectedChannel = _PortraitApi.voiceChannel;
+    state.voiceChannel = _PortraitApi.voiceChannel;
+    state.voicePhase = VoicePhase.connected;
+    state.microphoneMuted = false;
+    state.microphoneUnavailable = false;
+    state.deafened = false;
+    state.audioActivationMode = AudioActivationMode.vad;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(platform: TargetPlatform.android),
+        home: WorkspaceScreen(state: state),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final dock = find.byKey(const ValueKey('mobile-voice-dock'));
+    expect(dock, findsOneWidget);
+    expect(find.byTooltip('Выключить микрофон'), findsOneWidget);
+    expect(find.byTooltip('Выключить удалённый звук'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: dock,
+        matching: find.byTooltip('Начать демонстрацию экрана'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byTooltip('Выйти из голосового канала'), findsOneWidget);
+    expect(tester.getRect(dock).bottom, lessThanOrEqualTo(844));
+
+    await tester.tap(find.byTooltip('Открыть навигацию'));
+    await tester.pumpAndSettle();
+    expect(dock, findsOneWidget);
+    expect(tester.getRect(dock).bottom, lessThanOrEqualTo(844));
+
+    tester.view.physicalSize = const Size(320, 640);
+    await tester.pumpAndSettle();
+    expect(tester.getRect(dock).bottom, lessThanOrEqualTo(640));
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets(
     'resets viewer state through app rebuild on voice channel change',
     (tester) async {

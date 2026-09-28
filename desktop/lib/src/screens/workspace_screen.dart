@@ -338,6 +338,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                         child: _DrawerSurface(
                           child: _Sidebar(
                             state: widget.state,
+                            showVoiceDock: false,
                             onChannelSelected: _closeDrawers,
                             onClose: _closeDrawers,
                             onSearch: _toggleSearch,
@@ -389,6 +390,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                                 : GcLayout.navSmall,
                             child: _Sidebar(
                               state: widget.state,
+                              showVoiceDock: true,
                               onSearch: _toggleSearch,
                               searchFocusNode: _searchTriggerFocus,
                             ),
@@ -455,6 +457,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                       ),
                   ],
                 );
+          final shellContent = compact && widget.state.voiceChannel != null
+              ? Column(
+                  children: [
+                    Expanded(child: content),
+                    _VoiceDock(state: widget.state, compact: true),
+                  ],
+                )
+              : content;
           final flushShell = constraints.maxWidth >= GcLayout.wideBreakpoint;
           return Padding(
             padding: compact || flushShell
@@ -470,7 +480,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                       ? null
                       : Border.all(color: GcColors.border),
                 ),
-                child: content,
+                child: shellContent,
               ),
             ),
           );
@@ -535,12 +545,14 @@ class _DrawerSurfaceState extends State<_DrawerSurface> {
 class _Sidebar extends StatelessWidget {
   const _Sidebar({
     required this.state,
+    this.showVoiceDock = true,
     this.onChannelSelected,
     this.onClose,
     this.onSearch,
     this.searchFocusNode,
   });
   final AppState state;
+  final bool showVoiceDock;
   final VoidCallback? onChannelSelected;
   final VoidCallback? onClose;
   final VoidCallback? onSearch;
@@ -640,7 +652,8 @@ class _Sidebar extends StatelessWidget {
                   ),
                 ),
         ),
-        if (state.voiceChannel != null) _VoiceDock(state: state),
+        if (showVoiceDock && state.voiceChannel != null)
+          _VoiceDock(state: state),
         const Divider(height: 1),
         _UserFooter(state: state, onNavigate: onClose),
       ],
@@ -5142,8 +5155,9 @@ class _AudioDeviceDropdown extends StatelessWidget {
 }
 
 class _VoiceDock extends StatelessWidget {
-  const _VoiceDock({required this.state});
+  const _VoiceDock({required this.state, this.compact = false});
   final AppState state;
+  final bool compact;
 
   String get _status => switch (state.voicePhase) {
     VoicePhase.joining => 'Подключаемся к голосовому каналу',
@@ -5164,7 +5178,10 @@ class _VoiceDock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+    key: compact ? const ValueKey('mobile-voice-dock') : null,
+    padding: compact
+        ? const EdgeInsets.fromLTRB(12, 8, 12, 8)
+        : const EdgeInsets.fromLTRB(14, 12, 14, 14),
     decoration: const BoxDecoration(
       color: GcColors.surface,
       border: Border(top: BorderSide(color: GcColors.border)),
@@ -5213,15 +5230,17 @@ class _VoiceDock extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          _hint,
-          style: const TextStyle(
-            color: GcColors.muted,
-            fontSize: 11,
-            height: 1.3,
+        if (!compact) ...[
+          const SizedBox(height: 4),
+          Text(
+            _hint,
+            style: const TextStyle(
+              color: GcColors.muted,
+              fontSize: 11,
+              height: 1.3,
+            ),
           ),
-        ),
+        ],
         if (state.voiceStreamStartNotice) ...[
           const SizedBox(height: 8),
           Semantics(
@@ -5236,11 +5255,12 @@ class _VoiceDock extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 11),
+        SizedBox(height: compact ? 8 : 11),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _VoiceDockButton(
+              compact: compact,
               tooltip: state.microphoneUnavailable
                   ? 'Микрофон недоступен · повторить включение'
                   : state.audioActivationMode == AudioActivationMode.ptt
@@ -5260,6 +5280,7 @@ class _VoiceDock extends StatelessWidget {
               onTap: state.toggleMicrophone,
             ),
             _VoiceDockButton(
+              compact: compact,
               tooltip: state.deafened
                   ? 'Включить удалённый звук'
                   : 'Выключить удалённый звук',
@@ -5272,6 +5293,7 @@ class _VoiceDock extends StatelessWidget {
               onTap: state.toggleDeafen,
             ),
             _VoiceDockButton(
+              compact: compact,
               tooltip: switch (state.screenSharePhase) {
                 ScreenSharePhase.starting => 'Запускаем демонстрацию экрана…',
                 ScreenSharePhase.stopping => 'Останавливаем демонстрацию…',
@@ -5295,6 +5317,7 @@ class _VoiceDock extends StatelessWidget {
                   : () => unawaited(_showScreenShareSetup(context, state)),
             ),
             _VoiceDockButton(
+              compact: compact,
               tooltip: state.voiceStreamSoundEnabled
                   ? 'Выключить сигнал новых трансляций'
                   : 'Включить сигнал новых трансляций',
@@ -5313,6 +5336,7 @@ class _VoiceDock extends StatelessWidget {
               ),
             ),
             _VoiceDockButton(
+              compact: compact,
               tooltip: state.voicePhase == VoicePhase.leaving
                   ? 'Выходим…'
                   : 'Выйти из голосового канала',
@@ -5334,6 +5358,7 @@ class _VoiceDockButton extends StatelessWidget {
     required this.tooltip,
     required this.danger,
     required this.onTap,
+    this.compact = false,
     this.enabled = true,
     this.semanticsLabel,
     this.toggled,
@@ -5342,6 +5367,7 @@ class _VoiceDockButton extends StatelessWidget {
   final String tooltip;
   final bool danger;
   final VoidCallback onTap;
+  final bool compact;
   final bool enabled;
   final String? semanticsLabel;
   final bool? toggled;
@@ -5363,7 +5389,7 @@ class _VoiceDockButton extends StatelessWidget {
             onTap: enabled ? onTap : null,
             borderRadius: BorderRadius.circular(10),
             child: SizedBox.square(
-              dimension: 42,
+              dimension: compact ? 48 : 42,
               child: Icon(
                 icon,
                 size: 19,

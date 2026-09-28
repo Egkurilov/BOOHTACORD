@@ -1,0 +1,34 @@
+{
+  "id": "QA-66",
+  "date": "2026-09-28",
+  "status": "PASS_WITH_PHYSICAL_DEVICE_ACCEPTANCE_OPEN",
+  "summary": "Compact Android workspace keeps connected voice controls in a reserved bottom dock instead of hiding them in the navigation drawer.",
+  "layout": {
+    "primary_viewport_px": "390x844",
+    "narrow_viewport_px": "320x640",
+    "touch_target_px": 48,
+    "controls": [
+      "microphone",
+      "deafen",
+      "screen_share",
+      "stream_alert_sound",
+      "leave_voice"
+    ]
+  },
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart --plain-name 'keeps voice controls in a compact bottom dock on Android'",
+      "observation": "The dock remains inside the safe viewport at 390x844 and 320x640, exposes the voice actions, and remains present when the navigation drawer is opened."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "observation": "All 189 Flutter tests passed; analyzer reported no issues."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Verify touch targets and live microphone/deafen/share/leave state transitions on a physical Android device."
+    }
+  ]
+}
