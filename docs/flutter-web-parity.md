@@ -363,13 +363,13 @@ portrait and landscape Android share is checked in both web and Flutter viewers.
   signature, SHA-256 and size were verified [QA-80](../evidence/flutter/qa80-android-empty-channel-320dp-2026-09-28-001.json).
   Signed macOS release persistence and Android install/runtime acceptance on a
   physical device remain open.
-  A GitVerse Windows CI workflow lives in `.gitverse/workflows/`; GitVerse uses
-  this directory for runs, while the matching GitHub workflow is in
-  `.github/workflows/`. Both target a self-hosted `[self-hosted, windows, x64]`
-  runner with Flutter 3.47.5 and run tests/analyzer plus a release compile when
-  `WINDOWS_RUNNER_ENABLED=true`. GitVerse-hosted runners are Ubuntu containers,
-  so a Windows runner must be registered before the first green execution.
-  Windows runtime and screenshot parity still require that host.
+  The GitVerse workflow in `.gitverse/workflows/flutter-windows.yaml` now routes
+  to the registered `boohtacord-win-station`. Sparse checkout, Flutter 3.47.5,
+  all 224 tests and analyzer passed on that host, but the Windows release build
+  stops because Visual Studio's C++ toolchain is missing [QA-81](../evidence/flutter/qa81-gitverse-windows-runner-ci-2026-09-29-002.json).
+  Install Visual Studio 2022 Build Tools with Desktop development with C++ and
+  enable Developer Mode for Flutter plugin symlinks, then rerun the workflow.
+  Windows runtime and screenshot parity remain open after that build gate.
 - Android debug build succeeds but reports that `flutter_webrtc` and
   `livekit_client` currently apply the Kotlin Gradle Plugin, which Flutter warns
   will become incompatible with a future Flutter release. Track their upstream
