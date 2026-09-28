@@ -197,6 +197,7 @@ class AppState extends ChangeNotifier {
   Room? _room;
   EventsListener<RoomEvent>? _voiceEvents;
   VoiceVolumePreferences? _voiceVolumePreferences;
+  final Set<String> _mutedScreenShareAudioIdentities = <String>{};
   AudioPreferences? _audioPreferences;
   String? _leaseId;
   bool _listenerOnly = false;
@@ -357,6 +358,7 @@ class AppState extends ChangeNotifier {
     profileLoadError = null;
     profileSaving = false;
     voiceChannel = null;
+    _mutedScreenShareAudioIdentities.clear();
     _leaseId = null;
     microphoneMuted = false;
     microphoneUnavailable = false;
@@ -1952,6 +1954,7 @@ class AppState extends ChangeNotifier {
     _room = null;
     _leaseId = null;
     voiceChannel = null;
+    _mutedScreenShareAudioIdentities.clear();
     voicePhase = VoicePhase.error;
     microphoneMuted = false;
     microphoneUnavailable = false;
@@ -2473,6 +2476,7 @@ class AppState extends ChangeNotifier {
       _room = null;
       _leaseId = null;
       voiceChannel = null;
+      _mutedScreenShareAudioIdentities.clear();
       voicePhase = VoicePhase.error;
       error = _message(cause);
     }
@@ -2500,6 +2504,7 @@ class AppState extends ChangeNotifier {
     if (identical(_room, room)) _room = null;
     if (_leaseId == leaseId) _leaseId = null;
     voiceChannel = null;
+    _mutedScreenShareAudioIdentities.clear();
     microphoneMuted = false;
     microphoneUnavailable = false;
     deafened = false;
@@ -2830,6 +2835,44 @@ class AppState extends ChangeNotifier {
         : _voiceVolumePreferences?.screen(accountId) ?? 100;
   }
 
+  bool screenShareAudioMuted(RemoteParticipant participant) =>
+      _mutedScreenShareAudioIdentities.contains(participant.identity);
+
+  Future<void> setScreenShareAudioMuted(
+    RemoteParticipant participant,
+    bool muted,
+  ) async {
+    final room = _room;
+    if (room == null || !room.remoteParticipants.values.contains(participant)) {
+      return;
+    }
+    final identity = participant.identity;
+    if (muted) {
+      _mutedScreenShareAudioIdentities.add(identity);
+    } else {
+      _mutedScreenShareAudioIdentities.remove(identity);
+    }
+    final accountId = _voiceAccountId(participant);
+    final savedVolume = accountId == null
+        ? 100
+        : _voiceVolumePreferences?.screen(accountId) ?? 100;
+    try {
+      await _applyParticipantVolume(
+        participant,
+        muted ? 0 : savedVolume,
+        TrackSource.screenShareAudio,
+      );
+    } catch (_) {
+      if (muted) {
+        _mutedScreenShareAudioIdentities.remove(identity);
+      } else {
+        _mutedScreenShareAudioIdentities.add(identity);
+      }
+      error = 'Не удалось изменить звук демонстрации.';
+    }
+    notifyListeners();
+  }
+
   Future<void> setParticipantVolume(
     RemoteParticipant participant,
     num percent,
@@ -2875,7 +2918,7 @@ class AppState extends ChangeNotifier {
         preferences.setScreen(accountId, level),
         _applyParticipantVolume(
           participant,
-          level,
+          screenShareAudioMuted(participant) ? 0 : level,
           TrackSource.screenShareAudio,
         ),
       ]);
@@ -2900,10 +2943,15 @@ class AppState extends ChangeNotifier {
     RemoteParticipant participant,
     TrackSource source,
   ) async {
-    final accountId = _voiceAccountId(participant);
-    final preferences = _voiceVolumePreferences;
-    if (accountId == null || preferences == null) return;
     try {
+      if (source == TrackSource.screenShareAudio &&
+          screenShareAudioMuted(participant)) {
+        await _applyParticipantVolume(participant, 0, source);
+        return;
+      }
+      final accountId = _voiceAccountId(participant);
+      final preferences = _voiceVolumePreferences;
+      if (accountId == null || preferences == null) return;
       await _applyParticipantVolume(
         participant,
         source == TrackSource.screenShareAudio
@@ -2952,6 +3000,7 @@ class AppState extends ChangeNotifier {
     _room = null;
     _leaseId = null;
     voiceChannel = null;
+    _mutedScreenShareAudioIdentities.clear();
     screenSharePhase = ScreenSharePhase.idle;
     screenShareError = null;
     await _disableAndroidScreenShareBackground();
@@ -3111,6 +3160,7 @@ class AppState extends ChangeNotifier {
     _room = null;
     _leaseId = null;
     voiceChannel = null;
+    _mutedScreenShareAudioIdentities.clear();
     microphoneMuted = false;
     microphoneUnavailable = false;
     deafened = false;

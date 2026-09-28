@@ -12,6 +12,7 @@ import '../models.dart';
 import '../theme.dart';
 import '../services/message_presentation.dart';
 import '../services/composer_draft_memory.dart';
+import '../services/pinned_screen_mini_player_policy.dart';
 import '../services/api_client.dart';
 import '../services/voice_avatar_palette.dart';
 import '../services/voice_participant_presentation.dart';
@@ -54,6 +55,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   bool _initialNavigationApplied = false;
   bool _showMembersDrawer = false;
   bool _capturingPttKey = false;
+  String? _selectedScreenIdentity;
+  String? _pinnedScreenIdentity;
+  String? _screenSelectionVoiceChannelId;
+  String? get _visibleVoiceScreenIdentity =>
+      widget.state.selectedChannel?.id == widget.state.voiceChannel?.id
+      ? _selectedScreenIdentity
+      : null;
+  String? get _visiblePinnedScreenIdentity =>
+      widget.state.selectedChannel?.id == widget.state.voiceChannel?.id
+      ? _pinnedScreenIdentity
+      : null;
   FocusNode? _drawerReturnFocus;
   FocusNode? _workspacePanelReturnFocus;
   final _searchTriggerFocus = FocusNode(debugLabel: 'workspace-search-trigger');
@@ -100,6 +112,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   void _workspaceChanged() {
+    final activeVoiceChannelId = widget.state.voiceChannel?.id;
+    if ((_selectedScreenIdentity != null || _pinnedScreenIdentity != null) &&
+        !screenSelectionBelongsToVoiceChannel(
+          selectionVoiceChannelId: _screenSelectionVoiceChannelId,
+          activeVoiceChannelId: activeVoiceChannelId,
+        )) {
+      setState(() {
+        _selectedScreenIdentity = null;
+        _pinnedScreenIdentity = null;
+        _screenSelectionVoiceChannelId = null;
+      });
+    }
     final previous = _lastWorkspacePanel;
     final current = widget.state.workspacePanel;
     _lastWorkspacePanel = current;
@@ -136,6 +160,37 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
         }
       });
     }
+  }
+
+  void _selectVoiceScreen(String? identity) {
+    setState(() {
+      _screenSelectionVoiceChannelId = widget.state.voiceChannel?.id;
+      _selectedScreenIdentity = identity;
+      if (identity == null || identity.isEmpty) {
+        _pinnedScreenIdentity = null;
+      } else if (_pinnedScreenIdentity != null) {
+        _pinnedScreenIdentity = identity;
+      }
+    });
+  }
+
+  void _toggleVoiceScreenPin(String? identity) {
+    if (identity == null) return;
+    setState(() {
+      _screenSelectionVoiceChannelId = widget.state.voiceChannel?.id;
+      _pinnedScreenIdentity = _pinnedScreenIdentity == identity
+          ? null
+          : identity;
+      _selectedScreenIdentity = identity;
+    });
+  }
+
+  void _stopWatchingPinnedScreen() {
+    setState(() {
+      _screenSelectionVoiceChannelId = widget.state.voiceChannel?.id;
+      _selectedScreenIdentity = '';
+      _pinnedScreenIdentity = null;
+    });
   }
 
   bool _handleHardwareKey(KeyEvent event) {
@@ -346,6 +401,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                             searchPanelModal,
                         child: _MainSurface(
                           state: widget.state,
+                          selectedScreenIdentity: _visibleVoiceScreenIdentity,
+                          onSelectScreen: _selectVoiceScreen,
+                          pinnedScreenIdentity: _visiblePinnedScreenIdentity,
+                          onToggleScreenPin: _toggleVoiceScreenPin,
                           onToggleNavigation: _toggleNavigation,
                           onOpenMembers: showMemberToggle
                               ? _toggleMembers
@@ -455,6 +514,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                           Expanded(
                             child: _MainSurface(
                               state: widget.state,
+                              selectedScreenIdentity:
+                                  _visibleVoiceScreenIdentity,
+                              onSelectScreen: _selectVoiceScreen,
+                              pinnedScreenIdentity:
+                                  _visiblePinnedScreenIdentity,
+                              onToggleScreenPin: _toggleVoiceScreenPin,
                               onOpenMembers: showMemberToggle
                                   ? _toggleMembers
                                   : null,
@@ -557,6 +622,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                   ),
                 )
               : shellContent;
+          final activeVoiceChannel = widget.state.voiceChannel;
+          final pinnedMiniVisible = pinnedScreenMiniPlayerVisible(
+            pinnedScreenIdentity: _pinnedScreenIdentity,
+            activeVoiceChannelId: activeVoiceChannel?.id,
+            selectedChannelId: widget.state.selectedChannel?.id,
+            directMessageOpen: widget.state.selectedDirectMessage != null,
+            workspacePanelOpen:
+                widget.state.workspacePanel != WorkspacePanel.none,
+          );
           final flushShell = constraints.maxWidth >= GcLayout.wideBreakpoint;
           return Padding(
             padding: compact || flushShell
@@ -572,7 +646,28 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                       ? null
                       : Border.all(color: GcColors.border),
                 ),
-                child: swipeContent,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    swipeContent,
+                    if (pinnedMiniVisible)
+                      Positioned(
+                        right: 12,
+                        bottom: compact ? 104 : 16,
+                        width: (constraints.maxWidth - 24)
+                            .clamp(0.0, 360.0)
+                            .toDouble(),
+                        child: _PinnedScreenMiniPlayer(
+                          state: widget.state,
+                          identity: _pinnedScreenIdentity!,
+                          onReturnToVoice: () => unawaited(
+                            widget.state.selectChannel(activeVoiceChannel!),
+                          ),
+                          onStopWatching: _stopWatchingPinnedScreen,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           );
@@ -1361,12 +1456,20 @@ class _ChannelStateBadge extends StatelessWidget {
 class _MainSurface extends StatelessWidget {
   const _MainSurface({
     required this.state,
+    required this.selectedScreenIdentity,
+    required this.onSelectScreen,
+    required this.pinnedScreenIdentity,
+    required this.onToggleScreenPin,
     this.onToggleNavigation,
     this.onOpenMembers,
     this.onCapturePttKey,
     this.capturingPttKey = false,
   });
   final AppState state;
+  final String? selectedScreenIdentity;
+  final ValueChanged<String?> onSelectScreen;
+  final String? pinnedScreenIdentity;
+  final ValueChanged<String?> onToggleScreenPin;
   final VoidCallback? onToggleNavigation;
   final VoidCallback? onOpenMembers;
   final VoidCallback? onCapturePttKey;
@@ -1467,6 +1570,10 @@ class _MainSurface extends StatelessWidget {
               key: ValueKey('voice-room:${channel.id}'),
               state: state,
               channel: channel,
+              selectedScreenIdentity: selectedScreenIdentity,
+              onSelectScreen: onSelectScreen,
+              pinnedScreenIdentity: pinnedScreenIdentity,
+              onToggleScreenPin: onToggleScreenPin,
               onToggleNavigation: onToggleNavigation,
               onOpenMembers: onOpenMembers,
             ),
@@ -3860,11 +3967,19 @@ class _VoiceRoom extends StatefulWidget {
     super.key,
     required this.state,
     required this.channel,
+    required this.selectedScreenIdentity,
+    required this.onSelectScreen,
+    required this.pinnedScreenIdentity,
+    required this.onToggleScreenPin,
     this.onToggleNavigation,
     this.onOpenMembers,
   });
   final AppState state;
   final GuildChannel channel;
+  final String? selectedScreenIdentity;
+  final ValueChanged<String?> onSelectScreen;
+  final String? pinnedScreenIdentity;
+  final ValueChanged<String?> onToggleScreenPin;
   final VoidCallback? onToggleNavigation;
   final VoidCallback? onOpenMembers;
 
@@ -3873,8 +3988,6 @@ class _VoiceRoom extends StatefulWidget {
 }
 
 class _VoiceRoomState extends State<_VoiceRoom> {
-  String? _selectedScreenIdentity;
-
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
@@ -3897,7 +4010,8 @@ class _VoiceRoomState extends State<_VoiceRoom> {
             .toList(growable: false);
         final selectedScreen = screens
             .where(
-              (participant) => participant.identity == _selectedScreenIdentity,
+              (participant) =>
+                  participant.identity == widget.selectedScreenIdentity,
             )
             .firstOrNull;
         final selectedScreenPublication = selectedScreen?.videoTrackPublications
@@ -3924,7 +4038,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
         final showingLocalScreen =
             selectedTrack == null &&
             localScreenTrack != null &&
-            _selectedScreenIdentity == null;
+            widget.selectedScreenIdentity == null;
         final viewerTrack =
             selectedTrack ?? (showingLocalScreen ? localScreenTrack : null);
         final selectedName = selectedScreen != null
@@ -3989,7 +4103,11 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                             track: viewerTrack,
                             publisherName: selectedName!,
                             screens: screens,
-                            selectedIdentity: _selectedScreenIdentity,
+                            selectedIdentity: widget.selectedScreenIdentity,
+                            pinned:
+                                widget.pinnedScreenIdentity != null &&
+                                widget.pinnedScreenIdentity ==
+                                    widget.selectedScreenIdentity,
                             localScreenAvailable: localScreenTrack != null,
                             showingLocalScreen: showingLocalScreen,
                             receiverTrack: selectedTrack is RemoteVideoTrack
@@ -4016,7 +4134,23 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                                     selectedScreen == null
                                 ? null
                                 : state.screenShareVolume(selectedScreen),
+                            screenAudioMuted:
+                                selectedScreen != null &&
+                                state.screenShareAudioMuted(selectedScreen),
                             deafened: state.deafened,
+                            onTogglePin: () => widget.onToggleScreenPin(
+                              widget.selectedScreenIdentity,
+                            ),
+                            onToggleScreenAudio: selectedScreen == null
+                                ? null
+                                : () => unawaited(
+                                    state.setScreenShareAudioMuted(
+                                      selectedScreen,
+                                      !state.screenShareAudioMuted(
+                                        selectedScreen,
+                                      ),
+                                    ),
+                                  ),
                             onScreenAudioVolumeChanged:
                                 selectedScreen == null || showingLocalScreen
                                 ? null
@@ -4032,13 +4166,10 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                                 publisherName: selectedName,
                               ),
                             ),
-                            onClose: () =>
-                                setState(() => _selectedScreenIdentity = ''),
-                            onScreenSelected: (identity) => setState(
-                              () => _selectedScreenIdentity = identity,
-                            ),
+                            onClose: () => widget.onSelectScreen(''),
+                            onScreenSelected: widget.onSelectScreen,
                           )
-                        : _selectedScreenIdentity?.isNotEmpty == true
+                        : widget.selectedScreenIdentity?.isNotEmpty == true
                         ? VoiceScreenEndedView(
                             choices: [
                               if (localScreenTrack != null)
@@ -4084,20 +4215,16 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                                   room?.localParticipant?.isSpeaking ?? false,
                               participants: participants,
                             ),
-                            onScreenSelected: (identity) => setState(
-                              () => _selectedScreenIdentity = identity,
-                            ),
+                            onScreenSelected: widget.onSelectScreen,
                             onReturnToParticipants: () =>
-                                setState(() => _selectedScreenIdentity = ''),
+                                widget.onSelectScreen(''),
                           )
                         : _VoiceParticipantRoom(
                             state: state,
                             room: room,
                             participants: participants,
                             screens: screens,
-                            onScreenSelected: (identity) => setState(
-                              () => _selectedScreenIdentity = identity,
-                            ),
+                            onScreenSelected: widget.onSelectScreen,
                           )
                   : _VoicePrejoinCard(state: state, channel: channel),
             ),
@@ -4572,6 +4699,7 @@ class _VoiceScreenViewer extends StatelessWidget {
     required this.publisherName,
     required this.screens,
     required this.selectedIdentity,
+    required this.pinned,
     required this.localScreenAvailable,
     required this.showingLocalScreen,
     required this.receiverTrack,
@@ -4582,7 +4710,10 @@ class _VoiceScreenViewer extends StatelessWidget {
     required this.participants,
     required this.screenAudioAvailable,
     required this.screenAudioVolume,
+    required this.screenAudioMuted,
     required this.deafened,
+    required this.onTogglePin,
+    required this.onToggleScreenAudio,
     required this.onScreenAudioVolumeChanged,
     required this.onFullscreen,
     required this.onClose,
@@ -4594,6 +4725,7 @@ class _VoiceScreenViewer extends StatelessWidget {
   final String publisherName;
   final List<RemoteParticipant> screens;
   final String? selectedIdentity;
+  final bool pinned;
   final bool localScreenAvailable;
   final bool showingLocalScreen;
   final RemoteVideoTrack? receiverTrack;
@@ -4604,7 +4736,10 @@ class _VoiceScreenViewer extends StatelessWidget {
   final List<RemoteParticipant> participants;
   final bool screenAudioAvailable;
   final int? screenAudioVolume;
+  final bool screenAudioMuted;
   final bool deafened;
+  final VoidCallback onTogglePin;
+  final VoidCallback? onToggleScreenAudio;
   final ValueChanged<int>? onScreenAudioVolumeChanged;
   final VoidCallback onFullscreen;
   final VoidCallback onClose;
@@ -4645,6 +4780,21 @@ class _VoiceScreenViewer extends StatelessWidget {
               icon: const Icon(Icons.fullscreen_outlined),
             ),
           ),
+          if (selectedIdentity != null)
+            Positioned(
+              right: 124,
+              top: 28,
+              child: IconButton.filledTonal(
+                tooltip: pinned
+                    ? 'Открепить демонстрацию'
+                    : 'Закрепить демонстрацию',
+                onPressed: onTogglePin,
+                icon: Icon(
+                  pinned ? Icons.push_pin : Icons.push_pin_outlined,
+                  size: 20,
+                ),
+              ),
+            ),
           Positioned(
             right: 28,
             top: 28,
@@ -4704,14 +4854,28 @@ class _VoiceScreenViewer extends StatelessWidget {
       );
     }
     if (screenAudioVolume == null) {
-      return const Padding(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            'Аудиодорожка есть; личная настройка громкости недоступна.',
-            style: TextStyle(color: GcColors.muted, fontSize: 12),
-          ),
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Row(
+          children: [
+            IconButton(
+              tooltip: screenAudioMuted
+                  ? 'Включить звук демонстрации'
+                  : 'Выключить звук демонстрации',
+              onPressed: deafened ? null : onToggleScreenAudio,
+              icon: Icon(
+                screenAudioMuted || deafened
+                    ? Icons.volume_off_outlined
+                    : Icons.volume_up_outlined,
+              ),
+            ),
+            const Expanded(
+              child: Text(
+                'Личная настройка громкости недоступна.',
+                style: TextStyle(color: GcColors.muted, fontSize: 12),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -4719,6 +4883,17 @@ class _VoiceScreenViewer extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
       child: Row(
         children: [
+          IconButton(
+            tooltip: screenAudioMuted
+                ? 'Включить звук демонстрации'
+                : 'Выключить звук демонстрации',
+            onPressed: deafened ? null : onToggleScreenAudio,
+            icon: Icon(
+              screenAudioMuted || deafened
+                  ? Icons.volume_off_outlined
+                  : Icons.volume_up_outlined,
+            ),
+          ),
           SizedBox(
             width: 220,
             child: Text(
@@ -4819,6 +4994,139 @@ class _ViewerLabel extends StatelessWidget {
         ),
       ],
     ),
+  );
+}
+
+class _PinnedScreenMiniPlayer extends StatelessWidget {
+  const _PinnedScreenMiniPlayer({
+    required this.state,
+    required this.identity,
+    required this.onReturnToVoice,
+    required this.onStopWatching,
+  });
+
+  final AppState state;
+  final String identity;
+  final VoidCallback onReturnToVoice;
+  final VoidCallback onStopWatching;
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: state.room ?? state,
+    builder: (context, _) {
+      final participant = state.room?.remoteParticipants[identity];
+      final publication = participant?.videoTrackPublications
+          .where((item) => item.source == TrackSource.screenShareVideo)
+          .firstOrNull;
+      final track = publication?.track as VideoTrack?;
+      final hasAudio =
+          participant?.audioTrackPublications.any(
+            (item) =>
+                item.source == TrackSource.screenShareAudio &&
+                item.track != null,
+          ) ??
+          false;
+      final name = participant == null
+          ? 'Демонстрация'
+          : _participantName(participant);
+
+      return Material(
+        color: GcColors.surface,
+        elevation: 16,
+        shadowColor: const Color(0x70000000),
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: GcColors.border),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 44,
+              child: Row(
+                children: [
+                  const SizedBox(width: 12),
+                  const Icon(Icons.monitor_outlined, size: 17),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: GcColors.text,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'К голосу',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: onReturnToVoice,
+                    icon: const Icon(Icons.graphic_eq_outlined, size: 18),
+                  ),
+                  if (hasAudio && participant != null)
+                    IconButton(
+                      tooltip: state.screenShareAudioMuted(participant)
+                          ? 'Включить звук'
+                          : 'Выключить звук',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: state.deafened
+                          ? null
+                          : () => unawaited(
+                              state.setScreenShareAudioMuted(
+                                participant,
+                                !state.screenShareAudioMuted(participant),
+                              ),
+                            ),
+                      icon: Icon(
+                        state.deafened ||
+                                state.screenShareAudioMuted(participant)
+                            ? Icons.volume_off_outlined
+                            : Icons.volume_up_outlined,
+                        size: 18,
+                      ),
+                    ),
+                  IconButton(
+                    tooltip: 'Остановить просмотр',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: onStopWatching,
+                    icon: const Icon(Icons.close, size: 18),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+              ),
+            ),
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: ColoredBox(
+                color: Colors.black,
+                child: track == null
+                    ? Center(
+                        child: Text(
+                          participant == null
+                              ? 'Демонстрация завершена'
+                              : 'Ожидаем кадр демонстрации…',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: GcColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      )
+                    : VideoTrackRenderer(
+                        track,
+                        fit: VideoViewFit.contain,
+                        renderMode: VideoRenderMode.auto,
+                      ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
   );
 }
 
