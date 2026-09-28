@@ -6,9 +6,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import '../helper.dart';
-import 'utils.dart';
 import 'event_channel.dart';
 import 'track_ended_event_dispatcher.dart';
+import 'utils.dart';
 
 final TrackEndedEventDispatcher _trackEndedEvents = TrackEndedEventDispatcher(
   FlutterWebRTCEventChannel.instance.handleEvents.stream,
@@ -35,9 +35,31 @@ class MediaStreamTrackNative extends MediaStreamTrack {
   bool _enabled;
 
   bool _muted = false;
+  bool _nativeTrackEnded = false;
+  bool _endedCallbackDelivered = false;
+  StreamTrackCallback? _onEnded;
+
+  @override
+  set onEnded(StreamTrackCallback? callback) {
+    _onEnded = callback;
+    _dispatchEndedCallbackIfReady();
+  }
+
+  @override
+  StreamTrackCallback? get onEnded => _onEnded;
 
   void _handleTrackEnded() {
-    onEnded?.call();
+    _nativeTrackEnded = true;
+    _dispatchEndedCallbackIfReady();
+  }
+
+  void _dispatchEndedCallbackIfReady() {
+    final callback = _onEnded;
+    if (!_nativeTrackEnded || _endedCallbackDelivered || callback == null) {
+      return;
+    }
+    _endedCallbackDelivered = true;
+    callback();
   }
 
   String get peerConnectionId => _peerConnectionId;

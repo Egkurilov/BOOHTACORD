@@ -47,6 +47,21 @@ void main() {
       expect(ended, 1);
     });
 
+    test('remembers an ended event that arrives before track registration', () {
+      var ended = 0;
+      events.add({
+        'onTrackEnded': {'event': 'onTrackEnded', 'trackId': 'screen-1'},
+      });
+      events.add({
+        'onTrackEnded': {'event': 'onTrackEnded', 'trackId': 'screen-1'},
+      });
+
+      return Future<void>.delayed(Duration.zero, () {
+        dispatcher.register('screen-1', () => ended++);
+        expect(ended, 1);
+      });
+    });
+
     test('unregistering prevents later ended callbacks', () async {
       var ended = 0;
       void onEnded() => ended++;

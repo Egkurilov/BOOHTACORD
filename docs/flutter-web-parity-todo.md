@@ -68,7 +68,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Android `MediaProjection.Callback.onStop` теперь останавливает capturer,
   освобождает virtual display/surface и отправляет ended-событие только треку
   захвата; локальный WebRTC-пакет передаёт его LiveKit для снятия публикации.
-  Три dispatcher-регрессии, все 224 Flutter-теста и Android release compile
+  Dispatcher сохраняет ранний/дублированный event до регистрации Dart-трека
+  и доставляет `onEnded`, даже если LiveKit назначает callback после stop.
+  Четыре dispatcher-регрессии, все 224 app-теста и Android release compile
   прошли. Физический OS-stop ретест и второй peer остаются открытыми —
   [QA-26](../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
 - [ ] На реальных peers проверить microphone/screen-audio gain, mute/deafen/PTT,
