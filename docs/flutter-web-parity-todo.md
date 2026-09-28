@@ -86,6 +86,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   было выдано для всего экрана, а локальный preview полный. Для проверки добавлен
   Android single-layer publish fallback; сравнить кадр, разрешение, FPS и bitrate
   у двух зрителей и подтвердить приемлемую нагрузку сети [QA-25](../evidence/flutter/qa25-android-screen-share-receiver-clipping-2026-09-27-001.json).
+  Локальный IME regression test дополнительно сохраняет ввод следующего символа
+  через тот же text-input connection после двух перестроений; физическая Samsung
+  проверка остаётся открытой — [QA-51](../evidence/flutter/qa51-android-ime-multichar-regression-2026-09-28-001.json).
 - [ ] На Android 14+ установить свежий release APK и повторить MediaProjection:
   APK содержит `FOREGROUND_SERVICE_MEDIA_PROJECTION` и объявляет сервис как
   `mediaProjection`, но подключённого устройства для runtime-проверки нет

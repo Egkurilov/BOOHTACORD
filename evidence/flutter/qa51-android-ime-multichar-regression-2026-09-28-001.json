@@ -1,0 +1,28 @@
+{
+  "id": "qa51-android-ime-multichar-regression-2026-09-28-001",
+  "kind": "android-ime-multi-character-widget-regression",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "The login IME regression test now enters a first character, rebuilds the auth screen, continues with a second editing update through the same simulated text-input connection, and verifies the text, focus, and IME visibility survive another app-state rebuild. This increases widget-level coverage only; it does not emulate Samsung Gboard or Android window lifecycle.",
+  "checks": [
+    {
+      "name": "Login IME survives continued multi-character input and rebuilds",
+      "command": "flutter test test/auth_screen_test.dart --plain-name \"login keeps focus and entered text through app-state rebuilds\"",
+      "status": "PASS",
+      "observation": "The same test input connection remains visible and focused after the first character and two app-state rebuilds; the second character update is retained, and login autocorrect/suggestions stay disabled."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test",
+      "status": "PASS",
+      "observation": "All 175 Flutter tests passed."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    }
+  ],
+  "remaining": "On the affected Samsung/Gboard device, enter multiple login characters without reopening the keyboard and verify IME visibility/focus across the real Android lifecycle."
+}

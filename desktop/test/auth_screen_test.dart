@@ -62,10 +62,18 @@ void main() {
     state.notifyListeners();
     await tester.pump();
 
+    // Keep using the same simulated IME connection after the rebuild, as a
+    // mobile keyboard does when it sends the next composing/editing update.
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(text: 'pi'),
+    );
+    state.notifyListeners();
+    await tester.pump();
+
     final field = tester.widget<EditableText>(
       find.descendant(of: login, matching: find.byType(EditableText)),
     );
-    expect(field.controller.text, 'p');
+    expect(field.controller.text, 'pi');
     expect(field.focusNode.hasFocus, isTrue);
     expect(field.autocorrect, isFalse);
     expect(field.enableSuggestions, isFalse);
