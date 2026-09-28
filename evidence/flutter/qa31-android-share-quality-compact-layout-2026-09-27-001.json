@@ -2,14 +2,14 @@
   "id": "qa31-android-share-quality-compact-layout-2026-09-27-001",
   "kind": "android-screen-share-quality-compact-layout",
   "status": "PASS",
-  "executed_at": "2026-09-27",
-  "implementation": "In compact layouts the resolution and frame-rate labels now sit above full-width selectors. Quality values are forced to one line, preventing 720p and 15 FPS from wrapping in Android portrait.",
+  "executed_at": "2026-09-28",
+  "implementation": "Compact Android layouts omit the selected-segment icon to preserve label width; the dialog body scrolls while the start action remains fixed, and the footer wraps safely at phone widths.",
   "checks": [
     {
       "name": "Android portrait screen-share quality picker",
       "command": "flutter test test/screen_share_quality_test.dart",
       "status": "PASS",
-      "observation": "At 576×1280, all 720p/1080p/1440p and 15/30/60 FPS options remain on one line; the selectors span the available width and fit without layout exceptions."
+      "observation": "At 360×800 logical pixels (576×1280 physical pixels at DPR 1.6), all 720p/1080p/1440p and 15/30/60 FPS options remain on one line; selectors fit, content scrolls, the primary action stays available, and no layout exceptions occur."
     },
     {
       "name": "Flutter analysis",
@@ -21,7 +21,7 @@
       "name": "Full Flutter suite",
       "command": "flutter test",
       "status": "PASS",
-      "observation": "All 141 Flutter tests passed."
+      "observation": "All 172 Flutter tests passed."
     },
     {
       "name": "Samsung device screenshot acceptance",

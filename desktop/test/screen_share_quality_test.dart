@@ -91,7 +91,10 @@ void main() {
   testWidgets('keeps quality options on one line in Android portrait', (
     tester,
   ) async {
-    tester.view.devicePixelRatio = 1;
+    // 576 physical pixels at a typical Android density is a 360 logical-pixel
+    // viewport, matching the narrow phone layout rather than a tablet-sized
+    // 576 logical-pixel canvas.
+    tester.view.devicePixelRatio = 1.6;
     tester.view.physicalSize = const Size(576, 1280);
     addTearDown(tester.view.reset);
 
@@ -134,7 +137,8 @@ void main() {
     final frameRateSegments = tester.getRect(
       find.byKey(const ValueKey('frame-rate-segments')),
     );
-    expect(resolutionSegments.width, greaterThan(440));
+    expect(resolutionSegments.width, greaterThan(230));
+    expect(resolutionSegments.width, lessThan(300));
     expect(resolutionLabel.bottom, lessThan(resolutionSegments.top));
     expect(frameRateLabel.bottom, lessThan(frameRateSegments.top));
     expect(tester.takeException(), isNull);

@@ -168,6 +168,7 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.sizeOf(context);
+    final compact = media.width < 640;
     final height = math.min(760.0, media.height * .9);
     final canStart =
         !widget.allowSourceSelection || _sources.containsKey(_selectedSourceId);
@@ -217,13 +218,22 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
                     ),
                   ),
                   Expanded(child: _buildSourceGrid()),
+                  _buildQualityPicker(),
                 ] else ...[
-                  const Spacer(),
-                  _buildAndroidCaptureNotice(),
-                  const Spacer(),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          SizedBox(height: compact ? 12 : 20),
+                          _buildAndroidCaptureNotice(),
+                          SizedBox(height: compact ? 8 : 20),
+                          _buildQualityPicker(),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
-                _buildQualityPicker(),
-                _buildFooter(canStart),
+                _buildFooter(canStart, compact: compact),
               ],
             ),
           ),
@@ -349,8 +359,10 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
   }
 
   Widget _buildAndroidCaptureNotice() => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 28),
-    padding: const EdgeInsets.all(24),
+    margin: EdgeInsets.symmetric(
+      horizontal: MediaQuery.sizeOf(context).width < 640 ? 16 : 28,
+    ),
+    padding: EdgeInsets.all(MediaQuery.sizeOf(context).width < 640 ? 16 : 24),
     constraints: const BoxConstraints(maxWidth: 520),
     decoration: BoxDecoration(
       color: GcColors.surface,
@@ -374,17 +386,29 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
   Widget _buildQualityPicker() {
     final compact = MediaQuery.sizeOf(context).width < 640;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+      padding: EdgeInsets.fromLTRB(
+        compact ? 16 : 24,
+        12,
+        compact ? 16 : 24,
+        16,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(Icons.tune, size: 17, color: GcColors.textSecondary),
               SizedBox(width: 8),
-              Text(
-                'Качество трансляции',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              Flexible(
+                child: Text(
+                  'Качество трансляции',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: compact ? 13 : 14,
+                  ),
+                ),
               ),
             ],
           ),
@@ -464,7 +488,10 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
       key: selectorKey,
       width: double.infinity,
       child: SegmentedButton<int>(
-        showSelectedIcon: true,
+        // On phone-width dialogs, the selected icon competes with short labels
+        // (for example, "720p" and "15 FPS") for each segment's limited width.
+        // The selected background and semantics still indicate the active value.
+        showSelectedIcon: !compact,
         style: ButtonStyle(
           textStyle: WidgetStatePropertyAll(
             TextStyle(fontSize: compact ? 13 : 14),
@@ -499,45 +526,73 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
     );
   }
 
-  Widget _buildFooter(bool canStart) => Container(
-    padding: const EdgeInsets.fromLTRB(24, 14, 24, 18),
+  Widget _buildFooter(bool canStart, {required bool compact}) => Container(
+    padding: EdgeInsets.fromLTRB(compact ? 12 : 24, 14, compact ? 12 : 24, 18),
     decoration: const BoxDecoration(
       border: Border(top: BorderSide(color: GcColors.border)),
     ),
-    child: Row(
-      children: [
-        if (widget.allowSourceSelection)
-          Expanded(
-            child: Text(
-              canStart
-                  ? 'Выбрано: ${_sources[_selectedSourceId]?.name ?? ''}'
-                  : 'Сначала выберите экран или окно',
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: GcColors.textSecondary,
-                fontSize: 13,
+    child: compact
+        ? OverflowBar(
+            alignment: MainAxisAlignment.end,
+            spacing: 10,
+            overflowSpacing: 4,
+            children: [
+              TextButton(
+                onPressed: () => _close(),
+                child: const Text('Отмена'),
               ),
-            ),
+              FilledButton.icon(
+                key: const ValueKey('start-screen-share'),
+                onPressed: canStart
+                    ? () => _close(
+                        ScreenShareSetupSelection(
+                          sourceId: _selectedSourceId,
+                          quality: _quality,
+                        ),
+                      )
+                    : null,
+                icon: const Icon(Icons.screen_share_outlined),
+                label: const Text('Начать трансляцию'),
+              ),
+            ],
           )
-        else
-          const Spacer(),
-        TextButton(onPressed: () => _close(), child: const Text('Отмена')),
-        const SizedBox(width: 10),
-        FilledButton.icon(
-          key: const ValueKey('start-screen-share'),
-          onPressed: canStart
-              ? () => _close(
-                  ScreenShareSetupSelection(
-                    sourceId: _selectedSourceId,
-                    quality: _quality,
+        : Row(
+            children: [
+              if (widget.allowSourceSelection)
+                Expanded(
+                  child: Text(
+                    canStart
+                        ? 'Выбрано: ${_sources[_selectedSourceId]?.name ?? ''}'
+                        : 'Сначала выберите экран или окно',
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: GcColors.textSecondary,
+                      fontSize: 13,
+                    ),
                   ),
                 )
-              : null,
-          icon: const Icon(Icons.screen_share_outlined),
-          label: const Text('Начать трансляцию'),
-        ),
-      ],
-    ),
+              else
+                const Spacer(),
+              TextButton(
+                onPressed: () => _close(),
+                child: const Text('Отмена'),
+              ),
+              const SizedBox(width: 10),
+              FilledButton.icon(
+                key: const ValueKey('start-screen-share'),
+                onPressed: canStart
+                    ? () => _close(
+                        ScreenShareSetupSelection(
+                          sourceId: _selectedSourceId,
+                          quality: _quality,
+                        ),
+                      )
+                    : null,
+                icon: const Icon(Icons.screen_share_outlined),
+                label: const Text('Начать трансляцию'),
+              ),
+            ],
+          ),
   );
 }
 
