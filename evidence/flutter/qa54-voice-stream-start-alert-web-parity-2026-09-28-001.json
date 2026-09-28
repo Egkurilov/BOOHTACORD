@@ -1,0 +1,28 @@
+{
+  "id": "qa54-voice-stream-start-alert-web-parity-2026-09-28-001",
+  "kind": "remote-screen-share-start-notice-and-sound-preference",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Flutter tracks remote screen-share publishers after the initial room snapshot, preserves the baseline over reconnect, displays a six-second live-region voice-dock notice for a newly started remote share, and exposes a persisted local sound toggle. Android uses the platform click sound because Flutter does not support its alert sound type there; desktop uses the alert sound type.",
+  "checks": [
+    {
+      "name": "Tracker initial baseline, new shares, reconnect restoration, and leave reset",
+      "command": "flutter test test/voice_stream_start_tracker_test.dart",
+      "status": "PASS",
+      "observation": "All four tracker tests passed, including initial baseline suppression, a new remote publisher, known-track reconnect restoration, and baseline reset after leave."
+    },
+    {
+      "name": "Voice dock notice and persisted sound toggle",
+      "command": "flutter test test/workspace_screen_test.dart --plain-name \"voice dock announces reconnect and deafen transition states\"",
+      "status": "PASS",
+      "observation": "Widget test confirms the six-second notice is rendered as a live region, the sound control exposes enabled/disabled state, and the disabled preference persists through SharedPreferences."
+    },
+    {
+      "name": "Flutter analysis and full suite",
+      "command": "flutter analyze && flutter test",
+      "status": "PASS",
+      "observation": "flutter analyze reported no issues; the full Flutter suite passed all 180 tests."
+    }
+  ],
+  "remaining": "Verify LiveKit publisher/track events and audible platform system sound on macOS, Windows, and Android against real participants. The native sound is platform-adapted rather than the exact WebAudio chime used by web."
+}

@@ -5134,6 +5134,20 @@ class _VoiceDock extends StatelessWidget {
             height: 1.3,
           ),
         ),
+        if (state.voiceStreamStartNotice) ...[
+          const SizedBox(height: 8),
+          Semantics(
+            liveRegion: true,
+            child: const Text(
+              'В канале началась демонстрация экрана',
+              style: TextStyle(
+                color: GcColors.accent,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 11),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -5163,6 +5177,20 @@ class _VoiceDock extends StatelessWidget {
                   !state.deafenChanging &&
                   state.voicePhase != VoicePhase.leaving,
               onTap: state.toggleDeafen,
+            ),
+            _VoiceDockButton(
+              tooltip: state.voiceStreamSoundEnabled
+                  ? 'Звук начала трансляций включён'
+                  : 'Звук начала трансляций выключен',
+              icon: state.voiceStreamSoundEnabled
+                  ? Icons.notifications_active_outlined
+                  : Icons.notifications_off_outlined,
+              danger: false,
+              onTap: () => unawaited(
+                state.setVoiceStreamSoundEnabled(
+                  !state.voiceStreamSoundEnabled,
+                ),
+              ),
             ),
             _VoiceDockButton(
               tooltip: state.voicePhase == VoicePhase.leaving

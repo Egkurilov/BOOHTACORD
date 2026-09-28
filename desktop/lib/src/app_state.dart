@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:flutter_background/flutter_background.dart';
 import 'package:livekit_client/livekit_client.dart' hide ChatMessage;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import 'guild_presence_state.dart';
@@ -20,6 +21,7 @@ import 'services/native_notifications.dart';
 import 'services/voice_lease_revocation.dart';
 import 'services/voice_volume_preferences.dart';
 import 'services/voice_reconnect_policy.dart';
+import 'services/voice_stream_start_tracker.dart';
 
 enum AppPhase { loading, signedOut, ready }
 
@@ -56,6 +58,8 @@ String screenShareFailureDetail(Object cause) {
 }
 
 class AppState extends ChangeNotifier {
+  static const _voiceStreamSoundPreferenceKey = 'voice-screen-start-sound:v1';
+
   AppState(
     this.api, {
     Future<List<MediaDevice>> Function()? audioDeviceLoader,
@@ -137,6 +141,8 @@ class AppState extends ChangeNotifier {
   bool microphoneUnavailable = false;
   bool deafened = false;
   bool deafenChanging = false;
+  bool voiceStreamSoundEnabled = true;
+  bool voiceStreamStartNotice = false;
   ScreenSharePhase screenSharePhase = ScreenSharePhase.idle;
   String? screenShareError;
   ScreenShareQuality screenShareQuality =
@@ -173,6 +179,9 @@ class AppState extends ChangeNotifier {
   Timer? _realtimeRetry;
   Timer? _maintenanceTimer;
   Timer? _voiceRosterTimer;
+  Timer? _voiceStreamNoticeTimer;
+  final VoiceStreamStartTracker _voiceStreamStartTracker =
+      VoiceStreamStartTracker();
   Timer? _screenShareMetricsTimer;
   LocalVideoTrack? _screenShareMetricsTrack;
   ScreenShareSenderSnapshot? _previousScreenShareMetrics;
@@ -333,6 +342,7 @@ class AppState extends ChangeNotifier {
     audioActivationError = null;
     transferRequired = false;
     voicePhase = VoicePhase.idle;
+    _clearVoiceStreamNotice(resetTracker: true, notify: false);
     error = null;
     logoutError = null;
     _realtimeEventIds.clear();
@@ -355,6 +365,7 @@ class AppState extends ChangeNotifier {
   Future<void> initialize() async {
     try {
       await api.initialize();
+      await _loadVoiceStreamSoundPreference();
       await _nativeNotifications.initialize();
       unawaited(refreshMaintenance());
       _maintenanceTimer ??= Timer.periodic(
@@ -384,6 +395,78 @@ class AppState extends ChangeNotifier {
       error = _message(cause);
     }
     notifyListeners();
+  }
+
+  Future<void> _loadVoiceStreamSoundPreference() async {
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      voiceStreamSoundEnabled =
+          preferences.getBool(_voiceStreamSoundPreferenceKey) ?? true;
+    } catch (_) {
+      // The in-memory default remains enabled when preferences are unavailable.
+    }
+  }
+
+  Future<void> setVoiceStreamSoundEnabled(bool enabled) async {
+    if (voiceStreamSoundEnabled == enabled) return;
+    voiceStreamSoundEnabled = enabled;
+    notifyListeners();
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setBool(_voiceStreamSoundPreferenceKey, enabled);
+    } catch (_) {
+      // Keep the current-session preference even if persistence fails.
+    }
+  }
+
+  void _observeVoiceStreamStarts(Room room) {
+    final connected =
+        voicePhase == VoicePhase.connected || voicePhase == VoicePhase.listener;
+    final reconnecting = voicePhase == VoicePhase.reconnecting;
+    if (!connected && !reconnecting) {
+      _clearVoiceStreamNotice(resetTracker: true, notify: false);
+      return;
+    }
+
+    final remoteScreenSharers = room.remoteParticipants.values
+        .where(
+          (participant) => participant.videoTrackPublications.any(
+            (publication) => publication.source == TrackSource.screenShareVideo,
+          ),
+        )
+        .map((participant) => participant.identity);
+    final startedBy = _voiceStreamStartTracker.observe(
+      remoteScreenSharers,
+      connected: connected,
+      reconnecting: reconnecting,
+    );
+    if (startedBy == null) return;
+
+    _voiceStreamNoticeTimer?.cancel();
+    voiceStreamStartNotice = true;
+    _voiceStreamNoticeTimer = Timer(const Duration(seconds: 6), () {
+      _voiceStreamNoticeTimer = null;
+      voiceStreamStartNotice = false;
+      notifyListeners();
+    });
+    if (voiceStreamSoundEnabled) {
+      final sound = defaultTargetPlatform == TargetPlatform.android
+          ? SystemSoundType.click
+          : SystemSoundType.alert;
+      unawaited(SystemSound.play(sound).catchError((Object _) {}));
+    }
+  }
+
+  void _clearVoiceStreamNotice({
+    required bool resetTracker,
+    required bool notify,
+  }) {
+    _voiceStreamNoticeTimer?.cancel();
+    _voiceStreamNoticeTimer = null;
+    final changed = voiceStreamStartNotice;
+    voiceStreamStartNotice = false;
+    if (resetTracker) _voiceStreamStartTracker.reset();
+    if (notify && changed) notifyListeners();
   }
 
   Future<void> setServer(String value) async {
@@ -1790,6 +1873,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> _handleVoiceLeaseRevoked(String leaseId, String reason) async {
     if (_leaseId != leaseId || _room == null) return;
+    _clearVoiceStreamNotice(resetTracker: true, notify: false);
     _stopScreenShareMetrics();
     voicePhase = VoicePhase.leaving;
     notifyListeners();
@@ -1863,6 +1947,7 @@ class AppState extends ChangeNotifier {
     _realtimeRetry?.cancel();
     _maintenanceTimer?.cancel();
     _stopVoiceRosterPolling();
+    _voiceStreamNoticeTimer?.cancel();
     _stopScreenShareMetrics();
     unawaited(_audioDeviceSubscription?.cancel());
     api.onUnauthorized = null;
@@ -2282,6 +2367,7 @@ class AppState extends ChangeNotifier {
         notifyListeners();
         return;
       }
+      _observeVoiceStreamStarts(room);
       _voiceAdmissionPending = false;
     } catch (cause) {
       _voiceAdmissionPending = false;
@@ -2316,6 +2402,7 @@ class AppState extends ChangeNotifier {
     String leaseId,
     String reason,
   ) async {
+    _clearVoiceStreamNotice(resetTracker: true, notify: false);
     _voiceAdmissionPending = false;
     _stopScreenShareMetrics();
     await _disableAndroidScreenShareBackground();
@@ -2353,16 +2440,19 @@ class AppState extends ChangeNotifier {
     listener.on<RoomReconnectingEvent>((_) {
       if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
       voicePhase = VoicePhase.reconnecting;
+      _observeVoiceStreamStarts(room);
       notifyListeners();
     });
     listener.on<RoomResumingEvent>((_) {
       if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
       voicePhase = VoicePhase.reconnecting;
+      _observeVoiceStreamStarts(room);
       notifyListeners();
     });
     listener.on<RoomReconnectedEvent>((_) {
       if (!identical(_room, room)) return;
       voicePhase = _listenerOnly ? VoicePhase.listener : VoicePhase.connected;
+      _observeVoiceStreamStarts(room);
       unawaited(_applySavedVoiceVolumes(room));
       if (deafened) unawaited(_deafenRemoteAudio(room));
       if (audioActivationMode == AudioActivationMode.ptt) {
@@ -2382,7 +2472,9 @@ class AppState extends ChangeNotifier {
       );
     });
     void refreshVoiceNavigation() {
-      if (identical(_room, room)) notifyListeners();
+      if (!identical(_room, room)) return;
+      _observeVoiceStreamStarts(room);
+      notifyListeners();
     }
 
     listener.on<ParticipantConnectedEvent>((_) => refreshVoiceNavigation());
@@ -2760,6 +2852,7 @@ class AppState extends ChangeNotifier {
     RoomDisconnectedEvent event,
   ) async {
     if (!identical(_room, room) || voicePhase == VoicePhase.leaving) return;
+    _clearVoiceStreamNotice(resetTracker: true, notify: false);
     _stopScreenShareMetrics();
     final leaseId = _leaseId;
     _room = null;
@@ -2894,6 +2987,7 @@ class AppState extends ChangeNotifier {
   Future<void> leaveVoice() async {
     if (_room == null && _leaseId == null) return;
     voicePhase = VoicePhase.leaving;
+    _clearVoiceStreamNotice(resetTracker: true, notify: false);
     pushToTalkPressed = false;
     notifyListeners();
     if (screenSharePhase == ScreenSharePhase.sharing ||

@@ -65,6 +65,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] На физических устройствах проверить receiver metrics/audio states,
   fullscreen/share permissions и переключение rail/viewer; локальный fullscreen
   и исправления диагностики, отступов и мобильного возврата — [QA-17](../evidence/flutter/qa17-voice-viewer-mobile-navigation-2026-09-27-001.json).
+- [x] Добавить dock-объявление о новой чужой демонстрации экрана и отключаемый
+  локальный звуковой сигнал; не объявлять исходные публикации при входе и
+  восстановленные дорожки при reconnect — локальная логика/виджет покрыты
+  [QA-54](../evidence/flutter/qa54-voice-stream-start-alert-web-parity-2026-09-28-001.json).
+  Слышимость системного сигнала и реальные LiveKit события на macOS/Windows/
+  Android остаются открытой device-приёмкой.
 - [x] Вынести rail выбора трансляции из наложения на видеокадр под stage,
   выровнять stream cards с web и показывать selected/audio состояния с
   screen-reader подсказкой — [QA-37](../evidence/flutter/qa37-voice-viewer-rail-web-parity-2026-09-28-001.json).

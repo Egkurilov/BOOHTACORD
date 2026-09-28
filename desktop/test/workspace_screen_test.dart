@@ -357,6 +357,22 @@ void main() {
       findsOneWidget,
     );
     expect(find.byTooltip('Выключить удалённый звук'), findsOneWidget);
+    expect(find.byTooltip('Звук начала трансляций включён'), findsOneWidget);
+
+    state.voiceStreamStartNotice = true;
+    state.notifyListeners();
+    await tester.pump();
+    expect(find.text('В канале началась демонстрация экрана'), findsOneWidget);
+    await tester.tap(find.byTooltip('Звук начала трансляций включён'));
+    await tester.pump();
+    expect(state.voiceStreamSoundEnabled, isFalse);
+    expect(find.byTooltip('Звук начала трансляций выключен'), findsOneWidget);
+    expect(
+      (await SharedPreferences.getInstance()).getBool(
+        'voice-screen-start-sound:v1',
+      ),
+      isFalse,
+    );
 
     state.voicePhase = VoicePhase.joining;
     state.notifyListeners();
