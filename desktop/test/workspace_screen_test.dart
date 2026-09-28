@@ -1056,11 +1056,16 @@ void main() {
     final api = _PortraitApi(withHistory: true, historyCount: 40);
     final state = AppState(api);
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(900, 800);
+    tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.reset);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await state.initialize();
-    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(platform: TargetPlatform.android),
+        home: WorkspaceScreen(state: state),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Последнее сообщение'), findsOneWidget);
@@ -1068,8 +1073,22 @@ void main() {
 
     await tester.pump(const Duration(milliseconds: 150));
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView), const Offset(0, 480));
+    final messageList = find.byKey(const ValueKey('text-channel-messages'));
+    final scrollController = tester.widget<ListView>(messageList).controller!;
+    final initialOffset = scrollController.position.pixels;
+    expect(initialOffset, greaterThan(0));
+    final gesture = await tester.startGesture(tester.getCenter(messageList));
+    for (var step = 0; step < 8; step++) {
+      await gesture.moveBy(const Offset(0, 4));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await gesture.up();
     await tester.pumpAndSettle();
+    expect(
+      scrollController.position.pixels,
+      lessThan(initialOffset),
+      reason: 'a downward touch drag should reveal older channel messages',
+    );
     expect(api.advancedMessageIds, ['message-39']);
 
     await tester.pumpWidget(const SizedBox.shrink());

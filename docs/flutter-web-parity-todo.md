@@ -206,6 +206,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-62](../evidence/flutter/qa62-voice-prejoin-responsive-web-parity-2026-09-28-001.json).
 - [ ] Сравнить active/prejoin voice roster на matched screenshots при desktop
   breakpoints и Android portrait; проверить реальный список активных участников.
+- [x] Исправить Android-скролл TEXT: медленный свайп от конца истории не должен
+  прыгать обратно к последнему сообщению; автокорректировка привязана к смене
+  истории, а Android-портретный виджетный тест двигает список короткими шагами
+  и проверяет scroll offset — [QA-70](../evidence/flutter/qa70-android-text-scroll-2026-09-28-001.json).
+  Проверка на физическом Android и на очень короткой истории остаётся открытой.
 - [x] Выровнять prejoin и navigation roster по вебовым размерам аватаров/текста,
   отступам и интервалам; синхронизировать FNV avatar palette и screen-share badge —
   [QA-36](../evidence/flutter/qa36-voice-roster-web-geometry-2026-09-28-001.json).

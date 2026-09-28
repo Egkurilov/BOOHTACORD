@@ -1522,7 +1522,10 @@ class _ConversationState extends State<_Conversation>
     _scheduleVisibleRead(widget.state.messages);
   }
 
-  void _scheduleVisibleRead(List<ChatMessage> renderedMessages) {
+  void _scheduleVisibleRead(
+    List<ChatMessage> renderedMessages, {
+    bool correctLatestLayout = false,
+  }) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted ||
           widget.state.loadingMessages ||
@@ -1531,14 +1534,16 @@ class _ConversationState extends State<_Conversation>
           !_scroll.hasClients) {
         return;
       }
-      if (_followLatest && _scroll.position.extentAfter > 1) {
+      if (correctLatestLayout &&
+          _followLatest &&
+          _scroll.position.extentAfter > 1) {
         _scroll.jumpTo(_scroll.position.maxScrollExtent);
-        _scheduleVisibleRead(renderedMessages);
+        _scheduleVisibleRead(renderedMessages, correctLatestLayout: true);
         return;
       }
-      if (_followLatest && !_latestLayoutConfirmed) {
+      if (correctLatestLayout && _followLatest && !_latestLayoutConfirmed) {
         _latestLayoutConfirmed = true;
-        _scheduleVisibleRead(renderedMessages);
+        _scheduleVisibleRead(renderedMessages, correctLatestLayout: true);
         return;
       }
       if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
@@ -1725,11 +1730,12 @@ class _ConversationState extends State<_Conversation>
         !identical(_observedMessages, renderedMessages)) {
       _observedChannelId = widget.channel.id;
       _observedMessages = renderedMessages;
+      _latestLayoutConfirmed = false;
       final renderedKeys = renderedMessages
           .map((message) => '${widget.channel.id}:${message.id}')
           .toSet();
       _messageKeys.removeWhere((key, _) => !renderedKeys.contains(key));
-      _scheduleVisibleRead(renderedMessages);
+      _scheduleVisibleRead(renderedMessages, correctLatestLayout: true);
     }
     return Column(
       children: [
@@ -1753,6 +1759,7 @@ class _ConversationState extends State<_Conversation>
               : widget.state.messages.isEmpty
               ? _EmptyConversation(channel: widget.channel.name)
               : ListView.separated(
+                  key: const ValueKey('text-channel-messages'),
                   controller: _scroll,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 28,
