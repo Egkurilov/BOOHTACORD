@@ -2,7 +2,7 @@
 
 Self-hosted веб-платформа в логике лёгкого Discord: голосовые и текстовые каналы, личные сообщения, демонстрация экрана/игры и передача звука через LiveKit. Один deployment обслуживает ровно одну изолированную гильдию.
 
-> Статус: [trusted master run #1649611](evidence/capacity/qa08-active-upload-preflight-2026-09-25-001.json) успешно проверил backend, frontend и release guards и развернул `0eed259` после повторной сборки без cache-prune. Post-rollout audit подтвердил здоровый API и **20 366 057 472 байта** на точном attachment volume при пороге **6 343 294 632**. Полный продуктовый release **ещё не принят**: QA-08 требует измерения при активных загрузках, а media POC, browser/design-приёмка и delivery/rollback gates остаются открытыми. См. [TODO](TODO.md) и [реализовано](DONE.md).
+> Историческое evidence: [trusted master run #1649611](evidence/capacity/qa08-active-upload-preflight-2026-09-25-001.json) проверил backend, frontend и release guards и развернул `0eed259`. Post-rollout audit на тот момент показал здоровый API и **20 366 057 472 байта** на attachment volume при пороге **6 343 294 632**. Это не текущее измерение диска и не подтверждение полного product release; актуальные открытые gates и результаты — в [TODO](TODO.md) и [evidence](evidence/README.md).
 
 ## Возможности
 
@@ -14,11 +14,22 @@ Self-hosted веб-платформа в логике лёгкого Discord: г
 - Voice lifecycle: `voice lease → short-lived LiveKit credential → WebRTC`; есть явный transfer подключения, mute/deafen, выбор устройств и bounded reconnect.
 - Демонстрация экрана через browser picker и просмотр одного выбранного remote stream без лишних подписок.
 
+## Клиенты и версии
+
+| Клиент | Раздел разработки | Исходники | Версия в манифесте | Статус |
+| --- | --- | --- | --- | --- |
+| Web | [Web](clients/web/README.md) | [`frontend/`](frontend/) | `0.1.0` | Исходники и production pipeline есть; релизные gates проверяются отдельно |
+| Android | [Android](clients/android/README.md) | [`desktop/`](desktop/) + [`desktop/android/`](desktop/android/) | `1.0.0+1` | Flutter runner и функции есть; физическая media/visual приёмка открыта |
+| iOS | [iOS](clients/ios/README.md) | Общий [`desktop/lib/`](desktop/lib/) | Нет iOS-сборки | Документация и план; `desktop/ios/` ещё не создан |
+
+Код web и Flutter остаётся в существующих build roots, чтобы не ломать CI и поставку. Отдельные папки `clients/web`, `clients/android` и `clients/ios` собирают платформенные инструкции. [Правила версионности и матрица реализованных функций](docs/CLIENT_VERSIONING.md) отличают наличие кода от подтверждённой приёмки; [Flutter ↔ web parity](docs/flutter-web-parity.md) содержит подробные пробелы.
+
 ## Архитектура
 
 | Слой | Технологии и зона ответственности |
 | --- | --- |
 | Браузерный клиент | Vue 3, TypeScript, Vite, Pinia, LiveKit Client |
+| Flutter-клиент | Общий Dart-код и Android/macOS/Windows runners; iOS пока в подготовке |
 | API | Go modular monolith, HTTP API, WebSocket, server-side ACL и выдача media credentials |
 | Данные | PostgreSQL и private filesystem volume для attachments |
 | Медиа | Self-hosted LiveKit/WebRTC; Go не проксирует RTP, RTCP или audio/video payload |
@@ -82,6 +93,7 @@ docker compose --env-file .env.example -f compose.yaml config --quiet
 | Изучить компоненты, state machines и trust boundaries | [Архитектура](docs/specs/spec-voice-platform/architecture.md) и [границы данных](docs/ARCHITECTURE_AND_DATA.md) |
 | Реализовать или интегрировать HTTP/WebSocket | [OpenAPI](contracts/openapi.yaml), [realtime schema](contracts/realtime.schema.json) и [правила API/realtime](docs/API_AND_REALTIME.md) |
 | Подключить мобильный клиент | [Контракт backend для мобильного клиента](contracts/mobile-client-contract.md) |
+| Разрабатывать платформенный клиент | [Web](clients/web/README.md), [Android](clients/android/README.md), [iOS](clients/ios/README.md) и [версии](docs/CLIENT_VERSIONING.md) |
 | Выполнить bootstrap, recovery и maintenance | [Операции администратора](docs/ADMIN_OPERATIONS.md) |
 | Настроить и проверить автоматическую поставку | [GitVerse Actions deployment](.gitverse/workflows/deploy-production.yaml) и [операционные требования](docs/ADMIN_OPERATIONS.md) |
 | Провести реальную проверку game capture/audio | [Media prototype](docs/MEDIA_PROTOTYPE.md) и [POC-01 runbook](docs/POC_01_OPERATOR_RUNBOOK.md) |
@@ -93,18 +105,7 @@ docker compose --env-file .env.example -f compose.yaml config --quiet
 
 ## Текущий статус доказательств
 
-Production smoke и runtime traces подтверждают доступность сервисов, HTTPS routing, сетевую изоляцию, один voice connection и reported voice/screen usage. Это не заменяет аппаратные POC.
-
-Обязательные открытые gates:
-
-1. POC-01: отдельные прогоны с Windows и Apple-Silicon macOS, каждый с физическим наблюдателем, реальной игрой, game audio, voice и проверкой отсутствия цифровой петли.
-2. POC-02: измерения 720p/1080p × 30/60 FPS на движущемся content.
-3. POC-03: kick, ban, logout, revocation и replay ранее выданных API/SDK credentials на подключённом media.
-4. Нагрузочный профиль: 100 voice participants в гильдии, до 20 в room и утверждённый screen-publisher profile.
-5. Финальные ACL/privacy, browser E2E, accessibility и authenticated visual checks.
-6. CI/CD: PostgreSQL/no-skip, frontend, release guards и production deploy прошли в [GitVerse run #1653749](evidence/release/qa11-gitverse-oci-2026-09-26-001.json). Принятый [ADR-010](docs/adr/ADR-010-gitverse-delivery.md) закрепил GitVerse `master`; API/web имеют retained OCI digests, SBOM/provenance и digest-pinned Compose. Live rollback и общий release gate остаются [QA-12/14](backlog/VERIFICATION_TODO.md).
-
-Подробный статус, границы evidence и условия выпуска — в [delivery-and-verification](docs/specs/spec-voice-platform/delivery-and-verification.md).
+Production smoke и runtime traces подтверждают доступность сервисов, HTTPS routing и отдельные media-сценарии, но не заменяют аппаратные POC, нагрузку и release gate. Подробные условия и результаты — в [delivery-and-verification](docs/specs/spec-voice-platform/delivery-and-verification.md), [verification backlog](backlog/VERIFICATION_TODO.md) и [evidence](evidence/README.md). Принятый [ADR-010](docs/adr/ADR-010-gitverse-delivery.md) закрепляет GitVerse `master` как маршрут поставки.
 
 ## Правила безопасности
 

@@ -1,49 +1,32 @@
-# BOOHTACORD Flutter Client
+# BOOHTACORD Flutter client
 
-Flutter/Dart-клиент для self-hosted BOOHTACORD. Проект создаёт нативные приложения для Android, macOS и Windows и использует существующие `/api/v1` и LiveKit-контракты серверной части.
+Общий Flutter/Dart-проект для Android, macOS и Windows. Dart-код находится в `lib/`, платформенные runners — в `android/`, `macos/` и `windows/`. iOS runner **ещё не создан**; его план и критерии находятся в [разделе iOS](../clients/ios/README.md). Платформенные инструкции: [Android](../clients/android/README.md), [версии](../docs/CLIENT_VERSIONING.md).
 
-## Реализовано
+## Версия и статус
 
-- выбор HTTPS-сервера гильдии;
-- вход и регистрация, session cookie хранится в системном secure storage;
-- topology категорий, текстовых и голосовых каналов;
-- история и отправка сообщений с UUID idempotency key;
-- каталог участников с `online` / `offline` / `unknown` presence;
-- личные диалоги, unread-счётчики и read cursor после фактического показа сообщения;
-- authenticated realtime WebSocket: presence, topology refresh, новые сообщения и отзыв voice lease;
-- Voice lease, краткоживущий LiveKit credential и подключение микрофона;
-- mute, deafen, карточки участников, просмотр выбранной удалённой демонстрации и корректное освобождение lease;
-- адаптивный тёмный desktop shell по GuildChat v1;
-- Android/macOS/Windows runners; desktop-окно имеет минимальный размер 1024×680.
-- адаптивная Android-навигация: в portrait-режиме список каналов и выбранный канал открываются на всю ширину.
+`pubspec.yaml` объявляет `1.0.0+1`. Android использует build name/number как `versionName`/`versionCode`. Это значение манифеста, а не свидетельство о готовности функций на каждом устройстве. [ADR-006](../docs/adr/ADR-006-android-client.md) утверждает Android; iOS до нового продуктового решения остаётся подготовкой.
 
-## Запуск
+## Реализовано в общем Dart-коде
+
+- Выбор HTTPS-сервера, регистрация/вход, безопасное хранение session cookie, профиль, аватар, выход и завершение сброса пароля.
+- Категории и каналы, TEXT/DM с cursor-историей, unread/read cursor, поиском, ответами, правкой/удалением, упоминаниями и защищёнными вложениями.
+- Realtime presence/topology/message hints, переподключение WebSocket, обработка `resync_required` и адресный отзыв voice lease. Durable replay cursor для Flutter ещё нужно реализовать по [mobile contract](../contracts/mobile-client-contract.md).
+- Voice join/transfer, mute/deafen, PTT, prejoin roster, локальные уровни участников, настройки устройств и ограниченное восстановление соединения.
+- Просмотр выбранной демонстрации, fullscreen/receiver diagnostics и локальная публикация экрана на поддержанных runners; административные разделы по роли.
+
+Точная карта состояния, расхождений с web и остающихся испытаний: [flutter-web-parity](../docs/flutter-web-parity.md). Физическое качество аудио/видео, системное поведение и screenshot parity не следуют из наличия исходников.
+
+## Локальная разработка
+
+Из `desktop/`:
 
 ```bash
 flutter pub get
-flutter run -d macos
-```
-
-На Android выполните `flutter run -d <device-id>`, на Windows — `flutter run -d windows`. По умолчанию клиент подключается к production deployment `https://v.bootybay.ru/api/v1`. Адрес можно изменить на экране входа; суффикс `/api/v1` добавляется автоматически.
-
-## Проверки и сборка
-
-```bash
 flutter analyze
 flutter test
-flutter build apk --release
-flutter build macos --release
-flutter build windows --release
+flutter run -d <device-id>
 ```
 
-Структура целевых платформ:
+Android release APK: `flutter build apk --release` с локально настроенной подписью. Для macOS и Windows запускайте сборки на соответствующих ОС. Имена поддержанных устройств покажет `flutter devices`; Xcode/macOS обязательны для будущей iOS-сборки.
 
-- android/
-- macos/
-- windows/
-
-Windows release следует собирать на Windows с установленным Visual Studio Desktop development with C++. macOS впервые запросит разрешение на микрофон при входе в голосовой канал.
-
-## Границы текущей версии
-
-Backend не определяет отдельный native auth transport: клиент следует существующему secure-cookie + Origin контракту. Приложение не ослабляет TLS и не принимает self-signed сертификаты. Загрузка вложений, публикация собственной демонстрации и административные операции пока не реализованы; UI не имитирует их как работающие функции. Camera, recording, group DM, push notifications и custom SFU не поддерживаются по контракту.
+Клиент работает с публичным HTTPS `/api/v1` и LiveKit через выданный backend credential; backend проверяет ACL. Native HTTP не должен обходить secure-cookie, CSRF и Origin policy. Контракт: [mobile-client-contract](../contracts/mobile-client-contract.md). Camera, recording, group DM, push notifications и custom SFU не входят в текущий клиент.
