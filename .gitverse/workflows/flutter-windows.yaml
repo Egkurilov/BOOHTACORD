@@ -15,7 +15,12 @@ jobs:
   windows:
     runs-on: boohtacord-windows
     steps:
+      - name: Enable long paths for Windows checkout
+        shell: powershell
+        run: git config --global core.longpaths true
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: desktop
       - name: Verify installed Flutter 3.47.5
         shell: powershell
         run: |
