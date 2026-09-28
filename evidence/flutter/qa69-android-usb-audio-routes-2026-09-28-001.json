@@ -3,7 +3,7 @@
   "date": "2026-09-28",
   "status": "PASS_WITH_PHYSICAL_DEVICE_ACCEPTANCE_OPEN",
   "summary": "Added Android USB microphone enumeration and Android 12+ USB communication-output routing to native audio settings, while preserving existing LiveKit routes and clearing USB overrides when voice ends.",
-  "source_revision": "f800d12",
+  "source_revision": "b5b9435",
   "checks": [
     {
       "result": "PASS",
