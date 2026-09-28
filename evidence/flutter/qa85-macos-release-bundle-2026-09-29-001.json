@@ -1,0 +1,38 @@
+{
+  "id": "QA-85",
+  "kind": "macos-release-bundle-build-and-integrity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "source_revision": "4fcffbb32a198d595b856a4bf30b99ed279ac0ab",
+  "summary": "The macOS release bundle builds and passes strict deep code-signature integrity verification as an ad-hoc universal app. No Developer ID team signature is configured, so signed-release Keychain persistence and installed-app acceptance remain unverified.",
+  "checks": [
+    {
+      "name": "macOS release build",
+      "command": "cd desktop && flutter build macos --release",
+      "status": "PASS",
+      "observation": "Built desktop/build/macos/Build/Products/Release/BOOHTACORD.app with Flutter 3.47.5 and Xcode 27.0; the bundle contains x86_64 and arm64 slices and occupies 90,384 KiB. Third-party deprecation/precision warnings were emitted, but the build succeeded."
+    },
+    {
+      "name": "Release bundle signature integrity",
+      "command": "codesign --verify --deep --strict --verbose=2 desktop/build/macos/Build/Products/Release/BOOHTACORD.app",
+      "status": "PASS",
+      "observation": "All nested frameworks and the app bundle are valid on disk and satisfy the ad-hoc designated requirement. Bundle identifier is ru.boohtacord.boohtacordDesktop. Signature has no TeamIdentifier."
+    },
+    {
+      "name": "Developer ID persistence and installed-app acceptance",
+      "status": "OPEN",
+      "observation": "This machine produced an ad-hoc signature only. Successful login/session write and read after relaunch in a Developer ID-signed release remains unverified."
+    }
+  ],
+  "artifact": {
+    "path": "desktop/build/macos/Build/Products/Release/BOOHTACORD.app",
+    "bundle_identifier": "ru.boohtacord.boohtacordDesktop",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "size_kib": 90384,
+    "signature_type": "ad-hoc"
+  },
+  "remaining": "Configure or use the macOS Developer ID signing identity, then verify authenticated session persistence across relaunch and runtime behavior from the signed release app."
+}

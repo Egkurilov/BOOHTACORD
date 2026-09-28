@@ -9,8 +9,8 @@ states are not.
 
 ## Current parity map
 
-Status below reflects the Flutter and web source as of 2026-09-28, including native
-identity/reset, audio/PTT, local screen publishing, and live voice navigation
+Status below reflects the Flutter and web source as of 2026-09-29, including native
+identity/reset, audio/PTT, local screen publishing, web screen-share setup, and live voice navigation
 slices. Reconcile this table
 when a feature lands; do not use the old summary as a substitute for reading
 the implementation.
@@ -355,7 +355,10 @@ portrait and landscape Android share is checked in both web and Flutter viewers.
 - Exercise every control and non-happy state against the same backend contracts.
 - Check keyboard/focus, accessibility labels, narrow layouts and window resize
   behavior on macOS, Windows and Android.
-- Local verification covers macOS debug/release builds and Android debug; the
+- Local macOS release builds and verifies as an ad-hoc universal bundle, but
+  there is no Developer ID team signature and signed-release Keychain
+  persistence has not been tested [QA-85](../evidence/flutter/qa85-macos-release-bundle-2026-09-29-001.json).
+  Local verification covers macOS debug/release builds and Android debug; the
   Android release APK also builds with the configured upload key, passes APK
   Signature Scheme v2 verification and contains notification/MediaProjection
   permissions [QA-47](../evidence/flutter/qa47-android-release-apk-signing-2026-09-28-001.json).
