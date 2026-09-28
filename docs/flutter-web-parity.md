@@ -37,6 +37,13 @@ the implementation.
 | Search | `search/WorkspaceSearchPanel.vue`, `SearchPanel.vue`, chat search components | Global/channel/DM search in a responsive side panel while preserving the active conversation; 360 px panel at 1280–1439 and 400 px at 1440+ in Vue and Flutter; wide voice stage retains a 320 px modal; modal overlay below 1280 px with scrim and closed-loop keyboard focus; cursor pagination; server-centered context and return to origin; stale topology refresh; Ctrl/Cmd+K, Escape and search-focus restoration; loading/error/empty announcements [QA-61](../evidence/flutter/qa61-search-drawer-width-parity-2026-09-28-001.json) | Matched web/Flutter screenshots, device screen-reader acceptance and parity for less common loading/error states |
 | Administration | `workspace/AdminPanel.vue`, `channel/AdminTopologyControls.vue`, `AdminMembersSection.vue`, `AdminAuditSection.vue` | Admin-only Members/Channels/Audit tabs; cursor-paginated directory with preserved role/block drafts and save; per-row focus restoration and accessible error/success; the native panel initially focuses its semantic heading [QA-64](../evidence/flutter/qa64-admin-heading-focus-accessibility-2026-09-28-001.json); expiring reset-link result/copy/close; same-voice admin kick; category/channel mutations and confirmations; cursor-paged audit without message content; widget coverage for member pagination/save failures, reset-link lifecycle and audit empty/error/refresh | Loading-state accessibility/visual parity, conflict recovery, live REST ACL verification, overall screenshot comparison |
 
+On Android 8+, `@mipmap/ic_launcher` now resolves to an adaptive icon built
+from the supplied BOOHTACORD art with an explicit dark background; density PNGs
+remain as the pre-API 26 fallback. The release APK packages the adaptive
+resources and has a verified v2 signature. Check the rendered result on a
+physical Pixel before closing icon visual acceptance —
+[QA-77](../evidence/flutter/qa77-android-adaptive-launcher-icon-2026-09-28-001.json).
+
 The reported Android-to-viewer crop remains unresolved. Source inspection shows
 the web viewer uses `object-fit: contain`, and Flutter's LiveKit renderer
 defaults to `VideoViewFit.contain`; this rules out neither an encoded-frame

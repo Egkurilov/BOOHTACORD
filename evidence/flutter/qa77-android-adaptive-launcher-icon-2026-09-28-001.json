@@ -1,0 +1,47 @@
+{
+  "id": "QA-77",
+  "kind": "android-adaptive-launcher-icon",
+  "status": "PASS_WITH_PIXEL_VISUAL_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-28",
+  "source_revision": "3faae43",
+  "summary": "Android 8+ now receives an adaptive launcher icon with the supplied artwork as its foreground and an explicit dark background. Existing density-specific PNGs remain available for pre-API 26 devices.",
+  "checks": [
+    {
+      "name": "Android release build and adaptive resource packaging",
+      "command": "cd desktop && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Release build completed. Gradle release packaged_res contains mipmap-anydpi-v26/ic_launcher.xml and drawable-nodpi-v4/ic_launcher_foreground.png; APK resources.arsc contains ic_launcher_background, ic_launcher_foreground and ic_launcher."
+    },
+    {
+      "name": "APK signature verification",
+      "command": "apksigner verify --verbose --print-certs artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified with the configured upload certificate 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b."
+    },
+    {
+      "name": "Compiled adaptive icon layer references",
+      "command": "aapt2 dump xmltree artifacts/android/BOOHTACORD-1.0.0+1-release.apk --file res/BW.xml",
+      "status": "PASS",
+      "observation": "The compiled API 26+ launcher drawable is an adaptive-icon whose background references color/ic_launcher_background and whose foreground references drawable/ic_launcher_foreground."
+    },
+    {
+      "name": "Release artifact hash and size",
+      "command": "shasum -a 256 artifacts/android/BOOHTACORD-1.0.0+1-release.apk && stat -f '%z' artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+      "status": "PASS",
+      "observation": "SHA-256 d0daf58b67dee19a45a68de61e9dedd7034d7d4b23d83d454899e9a2ba03fb7c; 107589030 bytes."
+    },
+    {
+      "name": "Google Pixel launcher visual acceptance",
+      "status": "OPEN",
+      "observation": "No physical Pixel is attached to this host, so the reported white-frame appearance has not been visually verified after installing this APK."
+    }
+  ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
+    "version": "1.0.0+1",
+    "size_bytes": 107589030,
+    "sha256": "d0daf58b67dee19a45a68de61e9dedd7034d7d4b23d83d454899e9a2ba03fb7c",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b"
+  },
+  "remaining": "Install the refreshed APK on a Google Pixel, compare the launcher icon against the Samsung rendering, and confirm the extra white border is gone."
+}
