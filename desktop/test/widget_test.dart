@@ -51,11 +51,38 @@ void main() {
     final text = tester.widget<Text>(notice);
     expect(text.style?.fontSize, 14);
     expect(text.style?.height, 20 / 14);
+    expect(text.style?.decoration, TextDecoration.none);
     expect(text.maxLines, isNull);
     expect(
       tester.getSize(find.byKey(const ValueKey('maintenance-banner'))).height,
       greaterThan(44),
     );
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('maintenance banner has no safe-area gap before workspace', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 800);
+    tester.view.viewPadding = const FakeViewPadding(top: 48);
+    addTearDown(tester.view.reset);
+    final state = AppState(ApiClient())
+      ..maintenanceActive = true
+      ..phase = AppPhase.ready;
+    await tester.pumpWidget(BoohtacordApp(state: state));
+    await tester.pumpAndSettle();
+
+    final banner = tester.getRect(
+      find.byKey(const ValueKey('maintenance-banner')),
+    );
+    final header = tester.getRect(
+      find.byKey(const ValueKey('workspace-header')),
+    );
+    expect(header.top, banner.bottom);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());

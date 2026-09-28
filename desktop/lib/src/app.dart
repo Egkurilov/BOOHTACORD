@@ -27,7 +27,10 @@ class BoohtacordApp extends StatelessWidget {
                 state.resetRoute
                     ? PasswordResetScreen(state: state)
                     : AuthScreen(state: state),
-              AppPhase.ready => WorkspaceScreen(state: state),
+              AppPhase.ready => WorkspaceScreen(
+                state: state,
+                maintenanceBannerVisible: state.maintenanceActive,
+              ),
             },
           ),
         ],
@@ -57,6 +60,7 @@ class _MaintenanceBanner extends StatelessWidget {
           fontSize: 14,
           fontWeight: FontWeight.w600,
           height: 20 / 14,
+          decoration: TextDecoration.none,
         ),
       ),
     ),

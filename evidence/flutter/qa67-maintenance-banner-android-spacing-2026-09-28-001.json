@@ -1,0 +1,27 @@
+{
+  "id": "QA-67",
+  "date": "2026-09-28",
+  "status": "PASS_WITH_PHYSICAL_SCREENSHOT_ACCEPTANCE_OPEN",
+  "summary": "Maintenance text has no underline and the workspace header starts directly after the banner rather than repeating the top safe-area inset.",
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test test/widget_test.dart",
+      "observation": "The banner Text uses TextDecoration.none; with a simulated 48 dp top system inset, the workspace header top equals the maintenance banner bottom."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "observation": "All 190 Flutter tests passed; analyzer reported no issues."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build apk --debug",
+      "observation": "Android debug APK built successfully."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Compare maintenance banner and first workspace header on a physical Android device, including status-bar/cutout behavior."
+    }
+  ]
+}

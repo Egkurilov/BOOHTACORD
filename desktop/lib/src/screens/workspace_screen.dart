@@ -30,8 +30,13 @@ import 'screen_receiver_diagnostics.dart';
 import 'screen_fullscreen_overlay.dart';
 
 class WorkspaceScreen extends StatefulWidget {
-  const WorkspaceScreen({super.key, required this.state});
+  const WorkspaceScreen({
+    super.key,
+    required this.state,
+    this.maintenanceBannerVisible = false,
+  });
   final AppState state;
+  final bool maintenanceBannerVisible;
 
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -282,6 +287,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   @override
   Widget build(BuildContext context) => Scaffold(
     body: SafeArea(
+      top: !widget.maintenanceBannerVisible,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < GcLayout.mobileBreakpoint;
@@ -1394,6 +1400,7 @@ class _Header extends StatelessWidget {
   final Widget? trailing;
   @override
   Widget build(BuildContext context) => SizedBox(
+    key: const ValueKey('workspace-header'),
     height: 72,
     child: DecoratedBox(
       decoration: const BoxDecoration(
