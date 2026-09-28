@@ -344,7 +344,8 @@ portrait and landscape Android share is checked in both web and Flutter viewers.
   signature, SHA-256 and size were verified [QA-80](../evidence/flutter/qa80-android-empty-channel-320dp-2026-09-28-001.json).
   Signed macOS release persistence and Android install/runtime acceptance on a
   physical device remain open.
-  A native Windows CI job is configured for a GitVerse self-hosted
+  A native Windows CI job is configured in a `.yaml` workflow recognized by
+  GitVerse and GitHub, for a GitVerse self-hosted
   `[self-hosted, windows, x64]` runner with Flutter 3.47.5; it is enabled by
   the repository variable `WINDOWS_RUNNER_ENABLED=true` and runs tests/analyzer
   plus a release compile. GitVerse-hosted runners are Ubuntu containers, so a

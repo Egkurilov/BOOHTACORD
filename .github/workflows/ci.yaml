@@ -11,17 +11,17 @@ permissions:
 
 jobs:
   contracts:
-    uses: ./.github/workflows/ci-contracts.yml
+    uses: ./.github/workflows/ci-contracts.yaml
 
   backend:
-    uses: ./.github/workflows/ci-backend.yml
+    uses: ./.github/workflows/ci-backend.yaml
 
   frontend:
-    uses: ./.github/workflows/ci-frontend.yml
+    uses: ./.github/workflows/ci-frontend.yaml
 
   flutter-windows:
     if: ${{ vars.WINDOWS_RUNNER_ENABLED == 'true' }}
-    uses: ./.github/workflows/ci-flutter-windows.yml
+    uses: ./.github/workflows/ci-flutter-windows.yaml
 
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
