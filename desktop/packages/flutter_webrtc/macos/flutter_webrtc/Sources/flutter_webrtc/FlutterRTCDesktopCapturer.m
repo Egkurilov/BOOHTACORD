@@ -11,6 +11,7 @@
 #import "LocalVideoTrack.h"
 #if TARGET_OS_OSX
 #import "FlutterScreenCaptureKitCapturer.h"
+#import "FlutterScreenShareResolutionProcessor.h"
 #endif
 
 #if TARGET_OS_OSX
@@ -157,6 +158,14 @@ NSArray<RTCDesktopSource*>* _captureSources;
                                                    captureDelegate:videoProcessingAdapter];
     }
   }
+
+  if (maximumResolution > 0) {
+    FlutterScreenShareResolutionProcessor *resolutionProcessor =
+        [[FlutterScreenShareResolutionProcessor alloc]
+            initWithMaximumResolution:maximumResolution];
+    [videoProcessingAdapter addProcessing:resolutionProcessor];
+  }
+
   if (useScreenCaptureKit) {
     // ScreenCaptureKit can create a live track without delivering frames on
     // macOS Monterey. Use the legacy WebRTC capturer on macOS 12.x.

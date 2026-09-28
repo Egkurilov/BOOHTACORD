@@ -24,6 +24,15 @@ ratio instead of forcing a 16:9 buffer. The custom window-source and macOS 12
 fallback paths still need equivalent enforcement and physical runtime
 acceptance.
 
+## macOS legacy and window screen profile
+
+`FlutterScreenShareResolutionProcessor` applies the selected maximum long edge
+to each captured frame before it enters the WebRTC video source. It preserves
+frame aspect ratio, rounds output edges down to even pixels, and leaves frames
+already within the profile untouched. This covers custom window capture and
+the pre-macOS-13 screen fallback; physical source/profile acceptance remains
+open.
+
 ## MediaProjection stop propagation
 
 The Android capturer forwards the OS `MediaProjection.Callback.onStop` event to
