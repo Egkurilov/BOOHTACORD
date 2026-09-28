@@ -70,8 +70,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   захвата; локальный WebRTC-пакет передаёт его LiveKit для снятия публикации.
   Dispatcher сохраняет ранний/дублированный event до регистрации Dart-трека
   и доставляет `onEnded`, даже если LiveKit назначает callback после stop.
-  Четыре dispatcher-регрессии, все 224 app-теста и Android release compile
-  прошли. Физический OS-stop ретест и второй peer остаются открытыми —
+  Пять package-регрессий, включая EventChannel → LiveKit callback ordering,
+  все 224 app-теста и Android release compile прошли. Физический OS-stop ретест
+  и второй peer остаются открытыми —
   [QA-26](../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
 - [ ] На реальных peers проверить microphone/screen-audio gain, mute/deafen/PTT,
   смену устройств и ограниченный reconnect без параллельных loops/дублирующих
