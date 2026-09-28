@@ -146,7 +146,8 @@ peer/platform-проверки и выравниваем viewer с вебом.
   сохранить нативные server/reset actions и стабильные focus nodes —
   [QA-42](../evidence/flutter/qa42-auth-layout-web-parity-2026-09-28-001.json).
   Android Gboard и matched screenshots остаются отдельной device-проверкой.
-- [ ] Завершить parity login/register/profile loading, validation, error и focus.
+- [x] Выровнять own-profile mutation с web/backend: display name валидируется по Unicode code points без trim/графемного maxLength, оба password поля используют диапазон 12–128, feedback объявляется как live region, при открытии focus переходит на семантический заголовок — [QA-48](../evidence/flutter/qa48-profile-mutation-validation-focus-web-parity-2026-09-28-001.json).
+- [ ] Завершить оставшуюся auth/profile acceptance на Samsung/Gboard и реальных screen readers; matched screenshots и keyboard/focus проверка остаются открытыми.
 - [x] Разделить password validation по режимам: login принимает любое непустое
   значение (как web/API), registration проверяет 12–128 Unicode code points по
   backend contract; проверены короткий существующий пароль и обе границы —

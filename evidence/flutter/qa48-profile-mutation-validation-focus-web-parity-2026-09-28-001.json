@@ -1,0 +1,40 @@
+{
+  "id": "qa48-profile-mutation-validation-focus-web-parity-2026-09-28-001",
+  "kind": "profile-mutation-validation-focus-web-parity",
+  "status": "PASS",
+  "executed_at": "2026-09-28",
+  "implementation": "Flutter own-profile edits now preserve display-name input exactly and enforce the same 1–64 Unicode code-point rule as web/backend. Password change enforces 12–128 code points for both current and new passwords. The profile heading is a semantic header and receives keyboard focus when the screen opens; mutation and logout status/error copy is exposed as a live region.",
+  "checks": [
+    {
+      "name": "Profile mutation contract and widget focus/accessibility tests",
+      "command": "flutter test test/app_state_test.dart test/profile_screen_test.dart",
+      "status": "PASS",
+      "observation": "Covered exact whitespace-preserving display-name submission, supplementary-plane Unicode boundaries, current/new password maximum, no grapheme-count UI cap, semantic heading focus and live mutation error announcements."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "flutter test --reporter=compact",
+      "status": "PASS",
+      "observation": "All 168 tests passed."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "macOS release compile",
+      "command": "flutter build macos --release",
+      "status": "PASS",
+      "observation": "Release app built successfully (83.1 MB); local ad-hoc build is not signed for distribution."
+    },
+    {
+      "name": "Android signed release compile",
+      "command": "flutter build apk --release",
+      "status": "PASS",
+      "observation": "Release APK built and APK Signature Scheme v2 verified; POST_NOTIFICATIONS and foreground MediaProjection permissions are present."
+    }
+  ],
+  "remaining": "Physical keyboard and screen-reader acceptance, Samsung/Gboard first-character entry, and matched visual screenshots remain open in the parity checklist."
+}

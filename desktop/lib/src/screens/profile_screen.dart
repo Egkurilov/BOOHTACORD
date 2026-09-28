@@ -15,6 +15,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final _titleFocus = FocusNode(debugLabel: 'profile-screen-title');
   final _displayName = TextEditingController();
   final _currentPassword = TextEditingController();
   final _newPassword = TextEditingController();
@@ -24,6 +25,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _displayName.text = widget.state.profile?.displayName ?? '';
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _titleFocus.requestFocus();
+    });
   }
 
   @override
@@ -37,6 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
+    _titleFocus.dispose();
     _displayName.dispose();
     _currentPassword.dispose();
     _newPassword.dispose();
@@ -127,9 +132,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: ListView(
         padding: const EdgeInsets.all(32),
         children: [
-          const Text(
-            'Профиль',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+          Focus(
+            key: const ValueKey('profile-screen-title-focus'),
+            focusNode: _titleFocus,
+            child: Semantics(
+              header: true,
+              child: const Text(
+                'Профиль',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+              ),
+            ),
           ),
           const SizedBox(height: 4),
           const Text(
@@ -180,7 +192,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   TextField(
                     controller: _displayName,
-                    maxLength: 64,
                     decoration: const InputDecoration(
                       labelText: 'Имя пользователя',
                     ),
@@ -236,13 +247,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
           if (_status != null) ...[
             const SizedBox(height: 20),
-            Text(_status!, style: const TextStyle(color: GcColors.success)),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                _status!,
+                style: const TextStyle(color: GcColors.success),
+              ),
+            ),
           ],
           if (widget.state.error != null) ...[
             const SizedBox(height: 12),
-            Text(
-              widget.state.error!,
-              style: const TextStyle(color: GcColors.danger),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                widget.state.error!,
+                style: const TextStyle(color: GcColors.danger),
+              ),
             ),
           ],
           const SizedBox(height: 36),
@@ -323,9 +343,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           if (widget.state.logoutError != null) ...[
             const SizedBox(height: 8),
-            Text(
-              widget.state.logoutError!,
-              style: const TextStyle(color: GcColors.danger),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                widget.state.logoutError!,
+                style: const TextStyle(color: GcColors.danger),
+              ),
             ),
           ],
         ],

@@ -861,8 +861,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<bool> saveDisplayName(String value) async {
-    final displayName = value.trim();
-    if (displayName.isEmpty || displayName.runes.length > 64) {
+    if (value.runes.isEmpty || value.runes.length > 64) {
       error = 'Имя должно содержать от 1 до 64 символов.';
       notifyListeners();
       return false;
@@ -871,7 +870,7 @@ class AppState extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      profile = await api.updateOwnProfile(displayName);
+      profile = await api.updateOwnProfile(value);
       await refreshMembers();
       return true;
     } catch (cause) {
@@ -885,6 +884,7 @@ class AppState extends ChangeNotifier {
 
   Future<bool> updatePassword(String current, String next) async {
     if (current.runes.length < 12 ||
+        current.runes.length > 128 ||
         next.runes.length < 12 ||
         next.runes.length > 128) {
       error = 'Пароль должен содержать от 12 до 128 символов.';

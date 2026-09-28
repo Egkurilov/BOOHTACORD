@@ -64,6 +64,42 @@ void main() {
   });
 
   test(
+    'profile display name validation matches web code points exactly',
+    () async {
+      final api = _FakeApi(topology);
+      final state = AppState(api);
+      addTearDown(state.dispose);
+
+      const displayName = '  😀  ';
+      expect(await state.saveDisplayName(displayName), isTrue);
+      expect(api.updatedDisplayName, displayName);
+
+      final tooLong = List.filled(65, '😀').join();
+      expect(await state.saveDisplayName(tooLong), isFalse);
+      expect(api.updatedDisplayName, displayName);
+      expect(state.error, 'Имя должно содержать от 1 до 64 символов.');
+    },
+  );
+
+  test(
+    'profile password validation matches web 12–128 code point limits',
+    () async {
+      final api = _FakeApi(topology);
+      final state = AppState(api);
+      addTearDown(state.dispose);
+      final valid = List.filled(12, '😀').join();
+      final tooLong = List.filled(129, '😀').join();
+
+      expect(await state.updatePassword(tooLong, valid), isFalse);
+      expect(await state.updatePassword(valid, tooLong), isFalse);
+      expect(api.passwordChangeRequests, 0);
+
+      expect(await state.updatePassword(valid, valid), isTrue);
+      expect(api.passwordChangeRequests, 1);
+    },
+  );
+
+  test(
     'clears the selected channel when refreshed topology archives it',
     () async {
       final api = _FakeApi(topology);
@@ -765,6 +801,8 @@ class _FakeApi extends ApiClient {
   String? uploadedDirectMessageId;
   bool passwordResetCompleted = false;
   Object? profileFailure;
+  String? updatedDisplayName;
+  int passwordChangeRequests = 0;
   String? sentReplyToId;
   String? sentDirectReplyToId;
   List<String> sentMentionIds = const [];
@@ -802,6 +840,25 @@ class _FakeApi extends ApiClient {
       displayName: 'Участник',
       role: 'MEMBER',
     );
+  }
+
+  @override
+  Future<OwnProfile> updateOwnProfile(String displayName) async {
+    updatedDisplayName = displayName;
+    return OwnProfile(
+      accountId: 'account-1',
+      login: 'member',
+      displayName: displayName,
+      role: 'MEMBER',
+    );
+  }
+
+  @override
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    passwordChangeRequests++;
   }
 
   @override
