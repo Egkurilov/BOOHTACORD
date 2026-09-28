@@ -21,7 +21,7 @@ defineProps<{
   joinVoice: WorkspaceVoiceControls['joinVoice']
   leaveVoice: WorkspaceVoiceControls['leaveVoice']
   activationMode: VoiceActivationMode
-  startScreen: WorkspaceVoiceControls['startScreen']
+  startScreen: (profile: ScreenProfile) => void
   selectedScreenProfile: ScreenProfile
   navOpen: boolean
   membersOpen: boolean
@@ -31,7 +31,7 @@ defineProps<{
   voiceRoster?: VoiceRoomRoster | null
   voiceRosterError?: string | null
 }>()
-const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; toggleMembers: []; updateScreenProfile: [profile: ScreenProfile] }>()
+const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
 </script>
 
 <template>
@@ -92,7 +92,6 @@ const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; togg
     @set-screen-volume="voiceConnection.setScreenVolume"
     @toggle-screen-audio="voiceConnection.toggleScreenAudio"
     @start-screen="startScreen"
-    @update-screen-profile="emit('updateScreenProfile', $event)"
     @stop-screen="voiceConnection.stopScreen"
     @transfer="joinVoice($event, true)"
     @toggle-nav="emit('toggleNav')"

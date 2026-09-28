@@ -1,0 +1,34 @@
+{
+  "id": "QA-84",
+  "kind": "web-screen-share-setup-parity",
+  "status": "PASS_LOCAL_FLOW_VISUAL_RUNTIME_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "working-tree-after-6c69057",
+  "summary": "Web now opens an accessible pre-capture quality dialog from both the voice room and persistent voice dock, matching the Flutter setup flow while retaining the browser's native screen/window chooser. The dock exposes stop while sharing and locks transitions during join/reconnect/capture changes.",
+  "checks": [
+    {
+      "name": "Full frontend regression suite",
+      "command": "cd frontend && npm test",
+      "status": "PASS",
+      "observation": "All 220 test files and 658 tests passed, including the nine capture-profile mappings, setup-dialog choices, initial profile restoration, both entry points, dock toggle semantics, and Android-browser capture fallback."
+    },
+    {
+      "name": "Web typecheck and production bundle",
+      "command": "cd frontend && npm run build",
+      "status": "PASS_WITH_CHUNK_SIZE_WARNING",
+      "observation": "vue-tsc and Vite production build succeeded. Vite reports its existing warning that the minified LiveKit chunk exceeds 500 kB."
+    },
+    {
+      "name": "Flutter quality flow regression",
+      "command": "cd desktop && flutter test test/screen_share_quality_test.dart",
+      "status": "PASS",
+      "observation": "6 Flutter tests passed for all nine profiles and the native Android picker layout. No Flutter files were changed by this web parity slice."
+    },
+    {
+      "name": "Matched screenshots and real browser capture",
+      "status": "OPEN",
+      "observation": "No authenticated voice-room browser session or connected Android device was available in this check. The dialog rendering has SSR and layout-contract coverage, but matched viewport screenshots and an actual browser getDisplayMedia → LiveKit publication/stop cycle have not been exercised."
+    }
+  ],
+  "remaining": "Capture matched Flutter/web setup-dialog and voice-dock screenshots, test the native browser source chooser and start/stop path on macOS and Windows, and verify the Android app still matches its device-specific permission and capture behavior."
+}

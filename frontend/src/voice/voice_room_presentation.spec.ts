@@ -80,17 +80,20 @@ describe('voice-room visual status and screen presentation', () => {
     expect(source('../conversation/ConversationPane.vue')).toContain('<Teleport to="body" :disabled="!screenExpanded && !miniVisible">')
   })
 
-  it('uses one selected screen profile from the room settings and persistent voice dock', () => {
+  it('uses one setup dialog and selected profile from the room and persistent voice dock', () => {
     const pane = source('../conversation/ConversationPane.vue')
     const workspace = source('../workspace/WorkspaceApp.vue')
     const main = source('../workspace/WorkspaceMain.vue')
+    const dock = source('./VoiceDock.vue')
 
-    expect(pane).toContain('@change="updateScreenProfile"')
-    expect(pane).toContain('emit(\'updateScreenProfile\'')
+    expect(pane).toContain('@click="emit(\'startScreen\', selectedScreenProfile)"')
     expect(main).toContain(':selected-screen-profile="selectedScreenProfile"')
-    expect(main).toContain('@update-screen-profile="emit(\'updateScreenProfile\', $event)"')
-    expect(workspace).toContain('@start-screen="startScreen(selectedScreenProfile)"')
-    expect(workspace).toContain('@update-screen-profile="selectedScreenProfile = $event"')
+    expect(workspace).toContain('@start-screen="openScreenShareSetup"')
+    expect(workspace).toContain('@start="confirmScreenShare"')
+    expect(workspace).toContain(':screen-share-state="voiceConnection.screenState"')
+    expect(workspace).toContain('@stop-screen="voiceConnection.stopScreen"')
+    expect(dock).toContain("screenShareState === 'SHARING' ? emit('stopScreen') : emit('startScreen')")
+    expect(dock).toContain('screenShareBusy || state === \'JOINING\' || state === \'RECONNECTING\' || state === \'LEAVING\'')
   })
 
   it('sizes video to the stage without cropping and preserves compact roster access', () => {

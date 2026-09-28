@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest'
-import conversationPane from '../conversation/ConversationPane.vue?raw'
 
 import {
   adaptiveMediaRoomOptions,
@@ -19,17 +18,6 @@ function screenRoom(readScreenDiagnostics?: VoiceRoom['readScreenDiagnostics']):
 }
 
 describe('LiveKit screen publishing policy', () => {
-  it('offers the same 720/1080/1440p and 15/30/60 FPS matrix as Flutter', () => {
-    const profiles = [...conversationPane.matchAll(/<option value="(P(?:720|1080|1440)_(?:15|30|60))">/g)]
-      .map((match) => match[1])
-
-    expect(profiles).toEqual([
-      'P720_15', 'P720_30', 'P720_60',
-      'P1080_15', 'P1080_30', 'P1080_60',
-      'P1440_15', 'P1440_30', 'P1440_60',
-    ])
-  })
-
   it.each([
     ['P720_15', 1280, 720, 15, 1_500_000],
     ['P720_30', 1280, 720, 30, 2_500_000],

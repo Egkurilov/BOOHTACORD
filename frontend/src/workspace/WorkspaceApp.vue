@@ -8,6 +8,7 @@ import DirectMessageNavigation from '../direct_message/DirectMessageNavigation.v
 import { useDirectMessageStore } from '../direct_message/direct_message_store'
 import { useDirectMessageCandidateStore } from '../direct_message/direct_message_candidate_store'
 import VoiceDock from '../voice/VoiceDock.vue'
+import ScreenShareSetupDialog from '../voice/ScreenShareSetupDialog.vue'
 import type { ScreenProfile } from '../voice/livekit_gateway'
 import AudioSettings from '../voice/AudioSettings.vue'
 import { useMessageStore } from '../conversation/message_store'
@@ -32,7 +33,8 @@ import { useMemberHeaderExpanded } from './member_header_expanded'
 const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string }>()
 const emit = defineEmits<{ sessionExpired: []; loggedOut: [] }>()
 const { activeVoiceChannel, audioSettings, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls()
-const selectedScreenProfile = ref<ScreenProfile>('P1080_60')
+const selectedScreenProfile = ref<ScreenProfile>('P1080_30')
+const screenShareSetupOpen = ref(false)
 const directMessageStore = useDirectMessageStore()
 const directMessageCandidateStore = useDirectMessageCandidateStore()
 const messageStore = useMessageStore()
@@ -61,6 +63,16 @@ async function openDirectMessageFromMember(userID: string): Promise<void> {
   else directMessageStore.error = directMessageCandidateStore.error ?? 'Не удалось открыть личное сообщение.'
 }
 function setParticipantVolume(participantID: string, volume: number): void { voiceConnection.setParticipantVolume(participantID, volume) }
+function openScreenShareSetup(profile = selectedScreenProfile.value): void {
+  if (voiceConnection.screenState === 'STARTING' || voiceConnection.screenState === 'SHARING' || voiceConnection.screenState === 'STOPPING') return
+  selectedScreenProfile.value = profile
+  screenShareSetupOpen.value = true
+}
+function confirmScreenShare(profile: ScreenProfile): void {
+  selectedScreenProfile.value = profile
+  screenShareSetupOpen.value = false
+  void startScreen(profile)
+}
 function refreshTopology(): void { void topologyStore.refresh() }
 function togglePanel(panel: 'admin' | 'audio' | 'profile' | 'search'): void { closeDrawers(); activePanel.value = activePanel.value === panel ? 'none' : panel }
 function openGuildPanel(): void { if (props.role === 'ADMINISTRATOR') togglePanel('admin') }
@@ -95,14 +107,14 @@ onMounted(() => { void topologyStore.refresh(); void directMessageStore.refreshN
           </div>
         </div>
         <VoiceDock class="mobile-voice-dock" :activation-mode="voiceActivation.mode" :channel="activeVoiceChannel" :active-session="voiceConnection.active !== null" :error="voiceConnection.error" :deafen-changing="voiceConnection.deafenChanging" :deafened="voiceConnection.deafened"
-          :microphone-muted="voiceConnection.microphoneMuted" :microphone-permission-denied="voiceConnection.microphonePermissionDenied" :state="voiceConnection.state" @leave="leaveVoice" @start-screen="startScreen(selectedScreenProfile)"
+          :microphone-muted="voiceConnection.microphoneMuted" :microphone-permission-denied="voiceConnection.microphonePermissionDenied" :screen-share-state="voiceConnection.screenState" :state="voiceConnection.state" @leave="leaveVoice" @start-screen="openScreenShareSetup" @stop-screen="voiceConnection.stopScreen"
           @toggle-deafen="voiceConnection.toggleDeafen" @toggle-microphone="voiceConnection.toggleMicrophone" />
         <WorkspaceUserFooter :role="props.role" :display-name="profile?.display_name" :avatar-u-r-l="profile?.avatar_url" @open-profile="togglePanel('profile')" @open-settings="togglePanel('audio')" />
       </aside>
       <main id="main-region" class="main" data-testid="main-region">
-        <WorkspaceMain :account-id="props.accountId" :active-voice-channel="activeVoiceChannel" :panel="activePanel === 'search' ? 'none' : activePanel" :channel="selectedChannel" :direct-message="selectedDirectMessage" :join-voice="joinVoice" :leave-voice="leaveVoice" :activation-mode="voiceActivation.mode" :start-screen="startScreen" :selected-screen-profile="selectedScreenProfile"
+        <WorkspaceMain :account-id="props.accountId" :active-voice-channel="activeVoiceChannel" :panel="activePanel === 'search' ? 'none' : activePanel" :channel="selectedChannel" :direct-message="selectedDirectMessage" :join-voice="joinVoice" :leave-voice="leaveVoice" :activation-mode="voiceActivation.mode" :start-screen="openScreenShareSetup" :selected-screen-profile="selectedScreenProfile"
           :self-display-name="profile?.display_name ?? null" :nav-open="navOpen" :members-open="memberHeaderExpandedState" :show-members="!selectedDirectMessage && activePanel === 'none'" :voice-connection="voiceConnection" :voice-roster="voiceRoster.channels.value?.find((room) => room.channelId === selectedChannel?.id) ?? null" :voice-roster-error="voiceRoster.error.value"
-          @return-voice="returnToVoice" @toggle-nav="toggleNavigation" @toggle-members="toggleMembers" @update-screen-profile="selectedScreenProfile = $event">
+          @return-voice="returnToVoice" @toggle-nav="toggleNavigation" @toggle-members="toggleMembers">
           <template #admin>
             <AdminPanel v-if="props.role === 'ADMINISTRATOR'" :categories="topologyStore.topology?.categories ?? []" :revision="topologyStore.topology?.revision ?? 0" @topology-changed="refreshTopology" />
           </template>
@@ -118,5 +130,6 @@ onMounted(() => { void topologyStore.refresh(); void directMessageStore.refreshN
       <aside v-else-if="activePanel === 'search'" id="search-aside-panel" class="members search-aside" :class="{ 'is-open': activePanel === 'search' }" :role="modalDrawer === 'search' ? 'dialog' : undefined" :aria-modal="modalDrawer === 'search' ? 'true' : undefined" aria-label="Поиск сообщений" tabindex="-1" data-testid="search-aside-panel"><WorkspaceSearchPanel @open-channel="selectChannel" @open-direct-message="selectDirectMessage" @close="activePanel = 'none'" /></aside>
       <button v-if="navOpen || membersOpen || activePanel === 'search'" class="drawer-scrim" type="button" aria-label="Закрыть навигацию и участников" @click="closeDrawers(); activePanel = 'none'" />
     </div>
+    <ScreenShareSetupDialog v-if="screenShareSetupOpen" :initial-profile="selectedScreenProfile" @cancel="screenShareSetupOpen = false" @start="confirmScreenShare" />
   </div>
 </template>

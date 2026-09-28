@@ -21,7 +21,7 @@ describe('browser screen capture availability', () => {
       error: null, activationMode: 'VAD', deafened: false, deafenChanging: false,
       microphoneMuted: true, microphonePermissionDenied: false, state: 'CONNECTED',
     }))
-    expect(html).toMatch(/aria-label="[^"]*Android-приложении[^"]*" disabled/)
+    expect(html).toMatch(/aria-label="[^"]*Android-приложении[^"]*"[^>]* disabled/)
   })
 
   it('allows browsers that expose display capture outside unsupported mobile Chrome', () => {

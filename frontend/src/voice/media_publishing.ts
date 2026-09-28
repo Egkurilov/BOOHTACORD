@@ -6,6 +6,8 @@ export type ScreenProfile =
   | 'P720_15' | 'P720_30' | 'P720_60'
   | 'P1080_15' | 'P1080_30' | 'P1080_60'
   | 'P1440_15' | 'P1440_30' | 'P1440_60'
+export type ScreenResolution = 720 | 1080 | 1440
+export type ScreenFrameRate = 15 | 30 | 60
 export interface AudioProcessingOptions {
   autoGainControl: boolean
   echoCancellation: boolean
@@ -32,10 +34,13 @@ export const defaultAudioProcessing: AudioProcessingOptions = { autoGainControl:
 export const adaptiveMediaRoomOptions = Object.freeze({ adaptiveStream: true, dynacast: true })
 const microphonePublishOptions: MicrophonePublishOptions = { audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false }
 const screenResolutions = { 720: 1280, 1080: 1920, 1440: 2560 } as const
-const screenBitrates: Record<720 | 1080 | 1440, Record<15 | 30 | 60, number>> = {
+const screenBitrates: Record<ScreenResolution, Record<ScreenFrameRate, number>> = {
   720: { 15: 1_500_000, 30: 2_500_000, 60: 4_000_000 },
   1080: { 15: 2_500_000, 30: 5_000_000, 60: 8_000_000 },
   1440: { 15: 5_000_000, 30: 8_000_000, 60: 12_000_000 },
+}
+export function screenShareMaxBitrate(resolution: ScreenResolution, frameRate: ScreenFrameRate): number {
+  return screenBitrates[resolution][frameRate]
 }
 const screenProfiles = Object.fromEntries(
   ([720, 1080, 1440] as const).flatMap((height) =>
@@ -71,13 +76,13 @@ export async function readScreenShareDiagnostics(room: VoiceRoom): Promise<Scree
 export async function startScreenShare(room: VoiceRoom, profile: ScreenProfile): Promise<ScreenDiagnostics> {
   const capture = screenProfiles[profile]
   const height = capture.resolution.height
-  const resolution = height as 720 | 1080 | 1440
-  const frameRate = capture.resolution.frameRate as 15 | 30 | 60
+  const resolution = height as ScreenResolution
+  const frameRate = capture.resolution.frameRate as ScreenFrameRate
   const screenSharePublishOptions: ScreenSharePublishOptions = {
     name: `screenshare-${height}p-${frameRate}fps`,
     degradationPreference: 'maintain-framerate',
     screenShareEncoding: {
-      maxBitrate: screenBitrates[resolution][frameRate],
+      maxBitrate: screenShareMaxBitrate(resolution, frameRate),
       maxFramerate: frameRate,
       priority: 'medium',
     },
