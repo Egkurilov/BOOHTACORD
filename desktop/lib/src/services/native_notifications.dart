@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -56,7 +57,7 @@ class FlutterLocalNotificationDriver implements NativeNotificationDriver {
   Future<void> initialize() async {
     await _plugin.initialize(
       settings: const InitializationSettings(
-        android: AndroidInitializationSettings('ic_launcher'),
+        android: AndroidInitializationSettings('ic_stat_notification'),
         macOS: DarwinInitializationSettings(
           requestAlertPermission: false,
           requestBadgePermission: false,
@@ -312,6 +313,9 @@ class NativeNotificationService {
   }
 
   static String _message(Object cause) {
+    if (cause is PlatformException && cause.code == 'invalid_icon') {
+      return 'Не удалось подготовить значок системного уведомления.';
+    }
     if (cause is Exception && cause.toString().startsWith('Exception: ')) {
       return cause.toString().substring('Exception: '.length);
     }

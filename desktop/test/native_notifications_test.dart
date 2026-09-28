@@ -1,4 +1,5 @@
 import 'package:boohtacord_desktop/src/services/native_notifications.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -104,6 +105,29 @@ void main() {
     expect(service.permission, NativeNotificationPermission.denied);
     expect(driver.permissionRequests, 1);
   });
+
+  test(
+    'explains an invalid Android notification icon without plugin details',
+    () async {
+      final driver = _FakeNotificationDriver()
+        ..initializationFailure = PlatformException(
+          code: 'invalid_icon',
+          message: 'ic_launcher drawable is missing',
+        );
+      final service = NativeNotificationService(
+        driver: driver,
+        preferences: _MemoryNotificationPreferences(),
+      );
+
+      await service.initialize();
+
+      expect(service.permission, NativeNotificationPermission.unavailable);
+      expect(
+        service.error,
+        'Не удалось подготовить значок системного уведомления.',
+      );
+    },
+  );
 }
 
 class _MemoryNotificationPreferences implements NativeNotificationPreferences {
@@ -130,10 +154,13 @@ class _FakeNotificationDriver implements NativeNotificationDriver {
   NativeNotificationPermission nextPermission =
       NativeNotificationPermission.granted;
   int permissionRequests = 0;
+  Object? initializationFailure;
   final shown = <({int id, String title, String body})>[];
 
   @override
-  Future<void> initialize() async {}
+  Future<void> initialize() async {
+    if (initializationFailure case final failure?) throw failure;
+  }
 
   @override
   Future<NativeNotificationPermission> permission() async => currentPermission;
