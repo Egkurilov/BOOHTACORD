@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_webrtc/src/native/media_stream_track_impl.dart';
 import 'package:flutter_webrtc/src/native/track_ended_event_dispatcher.dart';
 
 void main() {
@@ -75,5 +77,35 @@ void main() {
 
       expect(ended, 0);
     });
+  });
+
+  test('delivers a stop event received before LiveKit assigns onEnded',
+      () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    final sinks = <MockStreamHandlerEventSink>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockStreamHandler(
+      const EventChannel('FlutterWebRTC.Event'),
+      MockStreamHandler.inline(
+        onListen: (_, events) => sinks.add(events),
+      ),
+    );
+
+    final track = MediaStreamTrackNative(
+      'screen-early',
+      'Screen capture',
+      'video',
+      true,
+      'local',
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(sinks, hasLength(1));
+
+    sinks.single.success({'event': 'onTrackEnded', 'trackId': 'screen-early'});
+    await Future<void>.delayed(Duration.zero);
+
+    var ended = 0;
+    track.onEnded = () => ended++;
+    expect(ended, 1);
   });
 }
