@@ -4,12 +4,12 @@
   "status": "PARTIAL",
   "executed_at": "2026-09-28",
   "source_revision": "d33f268",
-  "latest_implementation_revision": "9aa6712",
+  "latest_implementation_revision": "b6053e1",
   "release_artifact": {
     "path": "artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
-    "sha256": "3ca46201458c5c9c04900c610afaaa128fb79727425385c3d566661cd0138b6a",
+    "sha256": "5cfecd08f7cc28245a2ac32e57fbe03443ffe0632cb8eeb0a32a65e9b5ecea82",
     "size_bytes": 107622022,
-    "source_revision": "9aa6712",
+    "source_revision": "b6053e1",
     "device_verified": false
   },
   "runtime_test_apk": {
@@ -58,9 +58,9 @@
     {
       "name": "MediaProjection stop event propagation (automated)",
       "status": "PASS",
-      "source_revision": "9aa6712",
-      "command": "flutter test && flutter analyze && flutter build apk --release",
-      "observation": "The local flutter_webrtc fork now cleans up the Android screen capturer on MediaProjection.Callback.onStop and forwards an onTrackEnded event for the matching track ID to Dart. Three dispatcher tests and all 224 application tests passed; Flutter analyze reported only two pre-existing info-level notices in untouched upstream files; Android release compilation succeeded. This automated result does not replace a physical-device OS-stop retest."
+      "source_revision": "b6053e1",
+      "command": "flutter test; flutter test packages/flutter_webrtc/test/track_ended_event_dispatcher_test.dart; flutter analyze; flutter build apk --release",
+      "observation": "The local flutter_webrtc fork now cleans up the Android screen capturer on MediaProjection.Callback.onStop and forwards an onTrackEnded event for the matching track ID to Dart. The Dart bridge buffers early events until track registration and preserves ended state until LiveKit attaches its onEnded callback; four dispatcher tests and all 224 application tests passed. Flutter analyze reported only two pre-existing info-level notices in untouched upstream files. Android release compilation succeeded; the tracked artifact is SHA-256 5cfecd08f7cc28245a2ac32e57fbe03443ffe0632cb8eeb0a32a65e9b5ecea82 (107622022 bytes). This automated result does not replace a physical-device OS-stop retest."
     }
   ],
   "remaining": "With the user's approval, enable the BOOHTACORD foreground-service notification on the test device and repeat the OS Stop action; verify the published track and all local UI/metrics stop immediately without tapping the app. Repeat with a separate web/mobile peer to validate receiver aspect-fit, decoded frame dimensions/FPS/bitrate and metrics. Verify the intended microphone-muted prejoin path on Samsung/Gboard."
