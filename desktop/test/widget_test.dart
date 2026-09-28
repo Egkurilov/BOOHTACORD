@@ -65,6 +65,10 @@ void main() {
     expect(find.byTooltip('Закрыть навигацию'), findsNothing);
     expect(find.byKey(const ValueKey('workspace-header')), findsOneWidget);
 
+    await tester.dragFrom(const Offset(180, 240), const Offset(110, 28));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
     debugDefaultTargetPlatformOverride = null;

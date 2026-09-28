@@ -1,0 +1,45 @@
+{
+  "id": "ios-voice-drawer-drag-scroll-2026-09-28-001",
+  "kind": "mobile-gesture-fix-build-and-wired-install",
+  "status": "PASS_STATIC_BUILD_INSTALL_LAUNCH_WITH_MANUAL_GESTURE_QA_OPEN",
+  "executed_at": "2026-09-28",
+  "source_revision": "commit containing the voice drawer drag fix after 66832ec",
+  "environment": {
+    "device": "iPhone 17, iOS 27.0, connected by cable",
+    "bundle_id": "ru.boohtacord.app",
+    "build_mode": "ios-release"
+  },
+  "scenario": {
+    "objective": "Open the navigation drawer with a mostly horizontal drag from the voice screen without scrolling the content.",
+    "expected": "A slightly diagonal right drag opens the drawer and leaves the scroll position unchanged; a mostly vertical drag still scrolls."
+  },
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter analyze --no-pub && flutter test",
+      "observation": "No analyzer issues; all 218 Flutter tests passed. The regression test first reproduced a simultaneous 28 dp scroll during drawer opening, then passed after the recognizer fix."
+    },
+    {
+      "result": "PASS",
+      "command": "cd desktop && flutter build ios --release && codesign --verify --deep --strict build/ios/iphoneos/Runner.app",
+      "observation": "Signed release build and strict signature verification completed."
+    },
+    {
+      "result": "PASS",
+      "command": "xcrun devicectl device install app --device <connected iPhone> desktop/build/ios/iphoneos/Runner.app",
+      "observation": "Installed ru.boohtacord.app in place without uninstalling it."
+    },
+    {
+      "result": "PASS",
+      "command": "xcrun devicectl device process launch --device <connected iPhone> ru.boohtacord.app",
+      "observation": "CoreDevice reported successful launch."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "desktop/build/ios/iphoneos/Runner.app/Runner (local ignored build output)",
+      "sha256": "1ac3aaeeffc9cfa1f9c300fd8324c2e807e53822fd1a200f0962d1d608749ff7"
+    }
+  ],
+  "limitations": "The actual hand gesture and scroll position were verified by Flutter widget tests, not manually observed on the iPhone. Login state and private app data were not inspected."
+}

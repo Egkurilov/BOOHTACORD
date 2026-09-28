@@ -535,7 +535,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
               ? HorizontalSwipeRegion(
                   enabled: drawerSwipeEnabled,
                   canStart: (position, size) =>
-                      position.dx >= 16 && position.dx <= 72,
+                      position.dx >= 16 &&
+                      position.dx <=
+                          (widget.state.selectedDirectMessage == null &&
+                                  widget.state.selectedChannel?.kind ==
+                                      ChannelKind.voice
+                              ? size.width - 72
+                              : 72),
                   onSwipeRight: () {
                     if (!_textInputFocused) _toggleNavigation();
                   },

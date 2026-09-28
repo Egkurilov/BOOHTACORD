@@ -53,4 +53,47 @@ void main() {
       expect(left, 1);
     },
   );
+
+  testWidgets('horizontal edge swipe wins over a vertical scroll view', (
+    tester,
+  ) async {
+    var opened = 0;
+    final controller = ScrollController(initialScrollOffset: 100);
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 300,
+            height: 300,
+            child: HorizontalSwipeRegion(
+              canStart: (position, size) => position.dx <= 72,
+              onSwipeRight: () => opened++,
+              child: ListView(
+                controller: controller,
+                children: const [SizedBox(height: 900)],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final rect = tester.getRect(find.byType(HorizontalSwipeRegion));
+    await tester.dragFrom(
+      rect.topLeft + const Offset(30, 150),
+      const Offset(110, 28),
+    );
+    await tester.pumpAndSettle();
+    expect(opened, 1);
+    expect(controller.offset, 100);
+
+    await tester.dragFrom(
+      rect.topLeft + const Offset(30, 150),
+      const Offset(8, -80),
+    );
+    await tester.pumpAndSettle();
+    expect(opened, 1);
+    expect(controller.offset, greaterThan(100));
+  });
 }

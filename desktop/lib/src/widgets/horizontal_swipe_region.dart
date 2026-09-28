@@ -1,8 +1,9 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
 typedef SwipeStartGuard = bool Function(Offset position, Size size);
 
-/// Observes a horizontal swipe without taking pointers away from child widgets.
+/// Claims deliberate horizontal drags before a child vertical scroll can move.
 class HorizontalSwipeRegion extends StatefulWidget {
   const HorizontalSwipeRegion({
     super.key,
@@ -26,31 +27,35 @@ class HorizontalSwipeRegion extends StatefulWidget {
 }
 
 class _HorizontalSwipeRegionState extends State<HorizontalSwipeRegion> {
-  int? _pointer;
   Offset? _start;
+  Offset _delta = Offset.zero;
 
-  void _down(PointerDownEvent event) {
-    if (!widget.enabled || _pointer != null) {
-      _start = null;
-      return;
+  bool _canStart(PointerDownEvent event) {
+    if (!widget.enabled ||
+        (widget.onSwipeRight == null && widget.onSwipeLeft == null)) {
+      return false;
     }
     final size = context.size;
-    if (size == null ||
-        !(widget.canStart?.call(event.localPosition, size) ?? true)) {
-      return;
-    }
-    _pointer = event.pointer;
-    _start = event.localPosition;
+    return size != null &&
+        (widget.canStart?.call(event.localPosition, size) ?? true);
   }
 
-  void _up(PointerUpEvent event) {
-    if (event.pointer != _pointer) return;
+  void _down(DragDownDetails details) {
+    _start = details.localPosition;
+    _delta = Offset.zero;
+  }
+
+  void _update(DragUpdateDetails details) {
     final start = _start;
-    _pointer = null;
+    if (start != null) _delta = details.localPosition - start;
+  }
+
+  void _end(DragEndDetails details) {
+    final delta = _delta;
     _start = null;
-    if (!widget.enabled || start == null) return;
-    final delta = event.localPosition - start;
-    if (delta.dx.abs() < widget.minimumDistance ||
+    _delta = Offset.zero;
+    if (!widget.enabled ||
+        delta.dx.abs() < widget.minimumDistance ||
         delta.dx.abs() < delta.dy.abs() * 1.5) {
       return;
     }
@@ -61,18 +66,39 @@ class _HorizontalSwipeRegionState extends State<HorizontalSwipeRegion> {
     }
   }
 
-  void _cancel(PointerCancelEvent event) {
-    if (event.pointer == _pointer) {
-      _pointer = null;
-      _start = null;
-    }
+  void _cancel() {
+    _start = null;
+    _delta = Offset.zero;
   }
 
   @override
-  Widget build(BuildContext context) => Listener(
-    onPointerDown: _down,
-    onPointerUp: _up,
-    onPointerCancel: _cancel,
+  Widget build(BuildContext context) => RawGestureDetector(
+    gestures: {
+      _GuardedHorizontalDragGestureRecognizer:
+          GestureRecognizerFactoryWithHandlers<
+            _GuardedHorizontalDragGestureRecognizer
+          >(
+            () => _GuardedHorizontalDragGestureRecognizer(debugOwner: this),
+            (recognizer) => recognizer
+              ..canStart = _canStart
+              ..onDown = _down
+              ..onUpdate = _update
+              ..onEnd = _end
+              ..onCancel = _cancel,
+          ),
+    },
     child: widget.child,
   );
+}
+
+class _GuardedHorizontalDragGestureRecognizer
+    extends HorizontalDragGestureRecognizer {
+  _GuardedHorizontalDragGestureRecognizer({super.debugOwner});
+
+  bool Function(PointerDownEvent event)? canStart;
+
+  @override
+  void addPointer(PointerDownEvent event) {
+    if (canStart?.call(event) ?? true) super.addPointer(event);
+  }
 }
