@@ -57,7 +57,13 @@ peer/platform-проверки и выравниваем viewer с вебом.
   проверка именованных устройств, hotplug и слышимого переключения на Android
   12+ с физическими USB-аудиоустройствами остаётся открытой.
 - [ ] На каждой платформе проверить разрешение screen share, OS-level stop,
-  Android 14+ MediaProjection service и реальный захват у peer.
+  Android 14+ MediaProjection service и реальный захват у peer. На Pixel 7
+  (Android 17/API 37) полный захват экрана прошёл: foreground service имел тип
+  `MEDIA_PROJECTION`, virtual display — 1080×2400, локальный viewer показал
+  весь portrait-экран; ошибка `Unable to getDisplayMedia` не повторилась. App-level
+  stop снял активную проекцию и освобождение voice lease прошло. Проверка
+  OS-level stop, второго peer, receiver crop/metrics и остальных платформ остаётся
+  открытой — [QA-26](../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
 - [ ] На реальных peers проверить microphone/screen-audio gain, mute/deafen/PTT,
   смену устройств и ограниченный reconnect без параллельных loops/дублирующих
   voice lease на macOS, Windows и Android.
@@ -128,8 +134,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] На Samsung с Gboard проверить ввод нескольких символов в логине без
   закрытия IME; на Android проверить разрешение, успешную публикацию, stop и
   повторный запуск screen share с удалённым участником. Отдельно проверить
-  receiver-side обрезку Android-трансляции на web и Flutter: согласие MediaProjection
-  было выдано для всего экрана, а локальный preview полный. Для проверки добавлен
+  receiver-side обрезку Android-трансляции на web и Flutter: на Pixel 7 подтверждён
+  только полный 1080×2400 захват у отправителя; отдельный receiver пока не проверен.
+  Для проверки добавлен
   Android single-layer publish fallback; сравнить кадр, разрешение, FPS и bitrate
   у двух зрителей и подтвердить приемлемую нагрузку сети [QA-25](../evidence/flutter/qa25-android-screen-share-receiver-clipping-2026-09-27-001.json).
   Локальный IME regression test дополнительно сохраняет ввод следующего символа
@@ -141,11 +148,13 @@ peer/platform-проверки и выравниваем viewer с вебом.
   plugin `details`; эта диагностика покрыта локально, но реальный вход и причина
   сбоя не подтверждены — [QA-59](../evidence/flutter/qa59-android-auth-platform-exception-diagnostics-2026-09-28-001.json).
 - [ ] На Android 14+ установить свежий release APK и повторить MediaProjection:
-  APK содержит `FOREGROUND_SERVICE_MEDIA_PROJECTION` и объявляет сервис как
-  `mediaProjection`, подключённого устройства для runtime-проверки нет; лишний
+  на Pixel 7 Android 17/API 37 APK, обновлённый тем же сертификатом, прошёл
+  full-screen capture с `FOREGROUND_SERVICE_MEDIA_PROJECTION` и сервисом
+  `mediaProjection`; app-level stop снимает проекцию. Не проверены receiver и
+  OS-level stop. Лишний
   plugin-added `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` удалён из merged release
   manifest и проверен в [QA-56](../evidence/flutter/qa56-android-battery-permission-minimization-2026-09-28-001.json).
-  Runtime-проверка Android 14+ остаётся открытой — [QA-26](../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
+  Проверка receiver и OS-level stop остаётся открытой — [QA-26](../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
 - [x] Не запрашивать Android battery-optimization exemption: удалить
   неиспользуемое plugin-added разрешение из итогового APK, оставив разрешения
   foreground MediaProjection service — [QA-56](../evidence/flutter/qa56-android-battery-permission-minimization-2026-09-28-001.json).
@@ -211,7 +220,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Возвращать keyboard focus к исходному элементу после закрытия настроек профиля, аудио или администрирования; регрессионный widget-тест проверяет переход фокуса на заголовок профиля и обратно к opener — [QA-63](../evidence/flutter/qa63-settings-panel-focus-return-2026-09-28-001.json).
 - [x] При открытии admin панели переводить фокус на семантический заголовок «Администрирование», чтобы клавиатурная и screen-reader навигация сразу обозначала текущий раздел — [QA-64](../evidence/flutter/qa64-admin-heading-focus-accessibility-2026-09-28-001.json).
 - [ ] Проверить responsive breakpoints, resize, accessibility labels и узкие layouts на macOS, Windows и Android. Android empty TEXT welcome теперь растёт и прокручивается на 320 dp вместо RenderFlex overflow — [QA-80](../evidence/flutter/qa80-android-empty-channel-320dp-2026-09-28-001.json); остальные viewport/device сравнения остаются открыты.
-- [ ] На физических Android/iOS проверить объединённый mobile drawer (General с TEXT/VOICE, direct voice entry, возврат в TEXT/DM) и убедиться, что открытие от краёв не мешает системным жестам Back/Home; локальные Android/iOS widget tests пройдены — [QA-78](../evidence/flutter/qa78-android-ios-mobile-swipes-2026-09-28-001.json), [QA-79](../evidence/flutter/qa79-android-unified-channel-drawer-2026-09-28-001.json).
+- [ ] На физических Android/iOS проверить объединённый mobile drawer (General с TEXT/VOICE, direct voice entry, возврат в TEXT/DM) и убедиться, что открытие от краёв не мешает системным жестам Back/Home. На Pixel 7 левый app-owned swipe открыл drawer, а gesture из системной edge-зоны отдал Back системе; правый members gesture, возврат в TEXT/DM и полный набор dock gestures ещё не проверены — [QA-78](../evidence/flutter/qa78-android-ios-mobile-swipes-2026-09-28-001.json), [QA-79](../evidence/flutter/qa79-android-unified-channel-drawer-2026-09-28-001.json).
 - [x] Выровнять voice prejoin с web clamp-геометрией: viewport inset 24–72 px,
   desktop card padding 28–44 px и mobile 16×24 px; иконка и заголовок тоже
   используют web tokens. Narrow mobile regression test поймал и устранил
@@ -224,7 +233,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   прыгать обратно к последнему сообщению; автокорректировка привязана к смене
   истории, а Android-портретный виджетный тест двигает список короткими шагами
   и проверяет scroll offset — [QA-70](../evidence/flutter/qa70-android-text-scroll-2026-09-28-001.json).
-  Проверка на физическом Android и на очень короткой истории остаётся открытой.
+  На Pixel 7 (Android 17) физически проверены медленный и быстрый свайп,
+  сохранение позиции, загрузка предыдущей страницы и прокрутка с открытой
+  Gboard; остаются короткая история и точные read-cursor updates.
 - [x] Выровнять prejoin и navigation roster по вебовым размерам аватаров/текста,
   отступам и интервалам; синхронизировать FNV avatar palette и screen-share badge —
   [QA-36](../evidence/flutter/qa36-voice-roster-web-geometry-2026-09-28-001.json).

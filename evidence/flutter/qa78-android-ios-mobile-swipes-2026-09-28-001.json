@@ -43,8 +43,9 @@
     },
     {
       "name": "Physical Android gesture-navigation acceptance",
-      "status": "OPEN",
-      "observation": "No Android device was attached for checking edge-swipe interaction with the device's system gesture navigation."
+      "device": "Google Pixel 7, Android 17 / API 37",
+      "status": "PARTIAL",
+      "observation": "On the live TEXT screen, a rightward swipe beginning 100 physical px (about 33 dp) from the left edge opened the workspace drawer. Starting at 8 physical px (outside the app's 16 dp guard) invoked Android's system Back and returned to the launcher rather than opening the drawer. This confirms the tested left navigation gesture is separated from the system edge zone. The corresponding right-edge members-panel gesture and voice-dock/fullscreen swipes were not exercised."
     }
   ],
   "artifact": {
@@ -54,5 +55,5 @@
     "sha256": "a031ebec30574e7a6fd5349fd181e2f8cca3dd95a28940c311fbb176ef3512c6",
     "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b"
   },
-  "remaining": "Install/run on an Android phone and verify left/right edge drawer gestures alongside the device's system back/home gestures."
+  "remaining": "On a physical Android phone, verify the right-edge members-panel gesture and voice-dock/fullscreen swipes alongside system Back/Home."
 }

@@ -2,7 +2,13 @@
   "id": "qa26-android-media-projection-service-2026-09-27-001",
   "kind": "android-media-projection-foreground-service",
   "status": "PARTIAL",
-  "executed_at": "2026-09-27",
+  "executed_at": "2026-09-28",
+  "source_revision": "3847fb9",
+  "runtime_test_apk": {
+    "path": "desktop/build/app/outputs/flutter-apk/app-release.apk (local build artifact)",
+    "sha256": "64523525ea042f18624874eb9ab8218e17280e9a20101973ee1412dc862b543b",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b"
+  },
   "reported_error": "Unable to getDisplayMedia: Media projections require a foreground service of type ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION",
   "implementation": {
     "manifest": "The app manifest declares FOREGROUND_SERVICE and FOREGROUND_SERVICE_MEDIA_PROJECTION and assigns foregroundServiceType=mediaProjection to flutter_background IsolateHolderService.",
@@ -29,9 +35,16 @@
     },
     {
       "name": "Android 14+ live capture",
+      "device": "Google Pixel 7, Android 17 / API 37",
+      "command": "flutter build apk --release; adb install -r; run full-screen MediaProjection in SHARE_TEST",
+      "status": "PASS",
+      "observation": "Fresh release APK updated the existing signed install in place, preserving the authenticated session. Selected Android's whole-screen source and completed capture: MediaProjectionManager started, the app IsolateHolderService was foreground with type 0x00000020 (MEDIA_PROJECTION), and Android created a successful 1080×2400 virtual display. The app published its own screen-share track and rendered the full portrait screen in the viewer preview; no Unable to getDisplayMedia, TrackPublishException, or fatal app exception appeared in filtered logcat. The SHARE_TEST roster showed only the local participant, so receiver behavior was not tested. In-app stop returned the control to 'Начать демонстрацию экрана' and dumpsys media_projection had no active projection; leaving the room ended the voice lease. The drawer's direct voice entry enabled the default microphone before the dock rendered; it was muted as soon as the connected screen appeared. No other participant was present, and the app left the room after the test."
+    },
+    {
+      "name": "Android OS-level stop and peer receiver verification",
       "status": "NOT_RUN",
-      "reason": "No Android device is connected. Runtime capture cannot be confirmed until this fresh release APK is installed and tested."
+      "reason": "The device was stopped from inside the app. A second web/mobile receiver and Android OS notification-stop path were not tested; receiver aspect-fit, encoded profile, and peer metrics remain unverified."
     }
   ],
-  "remaining": "Install the fresh APK on the affected Android device and repeat MediaProjection. If the same error persists, collect device API level and logcat from screen-share start; verify IsolateHolderService reaches foreground state with MEDIA_PROJECTION before getDisplayMedia calls MediaProjectionManager.getMediaProjection."
+  "remaining": "Repeat with a separate web/mobile peer to validate receiver aspect-fit, decoded frame dimensions/FPS/bitrate and metrics; separately stop from Android's media-projection notification and confirm the publisher/metrics terminate. Verify the intended microphone-muted prejoin path on Samsung/Gboard."
 }

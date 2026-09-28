@@ -32,11 +32,22 @@
     },
     {
       "result": "PASS",
+      "device": "Google Pixel 7, Android 17 / API 37",
+      "observation": "Updated the existing installation in place with the same signing certificate; app data and authenticated session were preserved. On the live TEXT history, a slow drag from the recent end revealed older messages and stayed at the chosen position after 3 seconds; another drag reached the previous page (25 September 2026), and a fast reverse drag returned to 28 September. With Gboard open, the resized history also moved under a vertical swipe and the keyboard remained visible. No message was sent."
+    },
+    {
+      "result": "PASS",
+      "artifact_sha256": "64523525ea042f18624874eb9ab8218e17280e9a20101973ee1412dc862b543b",
+      "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b",
+      "observation": "The on-device check used the fresh release APK built from current source revision 3847fb9."
+    },
+    {
+      "result": "PASS",
       "observation": "The new APK replaced the existing binary at the single tracked artifact path. The previous binary remains in Git history."
     },
     {
       "result": "OPEN",
-      "observation": "Install the APK on physical Android hardware and verify slow/fast touch scroll, keyboard-open viewport resizing, older-history loading, and visible-read behavior against the live server."
+      "observation": "Verify very short-history behavior and confirm exact visible-read cursor updates against the live server. Samsung/Gboard login-field behavior remains a separate device check; Pixel 7 is not a substitute for the reported Samsung model."
     }
   ],
   "artifact": {
