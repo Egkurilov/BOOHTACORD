@@ -1,0 +1,28 @@
+{
+  "id": "QA-96",
+  "kind": "pinned-screen-overlay-layering-web-parity",
+  "status": "PASS_LOCAL_LAYOUT_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "5a56078",
+  "summary": "The pinned screen mini-player is now composed between the workspace content and scrim/drawer/search overlays, matching the web z-order. In compact layouts it is anchored to the expanded content area directly above the voice dock. Hidden mini-player controls are excluded from focus and semantics while navigation/search overlays are open.",
+  "checks": [
+    {
+      "name": "Workspace responsive overlay tests",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart test/pinned_screen_mini_player_policy_test.dart",
+      "status": "PASS",
+      "observation": "All 45 workspace and mini-player policy tests passed, including compact drawer/search and voice-dock responsive cases."
+    },
+    {
+      "name": "Flutter static analysis",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Matched visual layering screenshots",
+      "status": "OPEN",
+      "observation": "The drawer/search z-order was reconciled against web CSS and widget suites pass, but matched screenshots on Android, macOS, and Windows remain outstanding."
+    }
+  ],
+  "remaining": "Capture and compare the mini-player with navigation, member drawer, and search open at compact and desktop breakpoints on physical/native clients."
+}

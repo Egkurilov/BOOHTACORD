@@ -178,6 +178,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   screen-share publication закрыть mini-player, оставить ended-состояние в
   открытой voice-комнате, не путать отсутствующий видеокадр с завершённой
   публикацией — [QA-95](../evidence/flutter/qa95-pinned-screen-ended-lifecycle-2026-09-29-001.json).
+- [x] Выровнять layering mini-player: он находится над содержимым, но под
+  scrim/drawers/search overlays, недоступен по фокусу и accessibility tree при
+  открытом drawer, а на Android располагается над voice dock — [QA-96](../evidence/flutter/qa96-pinned-screen-overlay-layering-2026-09-29-001.json).
 - [x] Не запрашивать Android battery-optimization exemption: удалить
   неиспользуемое plugin-added разрешение из итогового APK, оставив разрешения
   foreground MediaProjection service — [QA-56](../evidence/flutter/qa56-android-battery-permission-minimization-2026-09-28-001.json).

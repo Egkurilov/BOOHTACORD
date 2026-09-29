@@ -365,6 +365,9 @@ portrait and landscape Android shares are checked in both web and Flutter viewer
   When the selected screen publication is removed, Flutter now closes the
   pinned mini-player but preserves the ended state in the visible voice room;
   a temporarily missing frame remains a waiting state [QA-95](../evidence/flutter/qa95-pinned-screen-ended-lifecycle-2026-09-29-001.json).
+  Mini-player layering also matches the web stack: above content but beneath
+  scrims/drawers/search, excluded from hidden-overlay focus/semantics, and
+  positioned just above the compact voice dock [QA-96](../evidence/flutter/qa96-pinned-screen-overlay-layering-2026-09-29-001.json).
   Verify actual playback/gain and matched viewer screenshots on each target
   platform. For the previously reported Android receiver crop, explicitly
   compare portrait and landscape captures in web and Flutter, confirming all
