@@ -54,10 +54,16 @@
       "observation": "The registered boohtacord-win-station completed checkout, dependency resolution, plugin junction setup, Flutter tests, analysis and flutter build windows --release --no-pub successfully."
     },
     {
-      "name": "Live admin ACL and screenshot comparison",
+      "name": "Admin metrics route role authorization",
+      "command": "cd backend && go test ./cmd/api",
+      "status": "PASS",
+      "observation": "The composed route test confirms anonymous access returns 401, MEMBER returns 403, ADMINISTRATOR returns 200, while an authenticated member may submit its own screen sample."
+    },
+    {
+      "name": "Live endpoint and screenshot comparison",
       "status": "OPEN",
-      "observation": "Widget tests verify behavior and narrow layout. Administrator/member REST ACL and matched screenshots across macOS, Windows and Android remain to be accepted against the live backend."
+      "observation": "Backend route tests cover role middleware. The deployed endpoint has not been verified through a real administrator and member session; matched screenshots across macOS, Windows and Android also remain open."
     }
   ],
-  "remaining": "Verify the GitVerse Windows runner after push, then validate the administrator-only endpoint with the live service and compare the four-tab panel visually against web on macOS, Windows and Android."
+  "remaining": "Validate the administrator-only endpoint through real sessions on the live service and compare the four-tab panel visually against web on macOS, Windows and Android."
 }
