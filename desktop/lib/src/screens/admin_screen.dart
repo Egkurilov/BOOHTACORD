@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -6,7 +8,7 @@ import '../models.dart';
 import '../services/api_client.dart';
 import '../theme.dart';
 
-enum _AdminSection { members, channels, audit }
+enum _AdminSection { members, channels, audit, media }
 
 class _AdminAccountDraft {
   _AdminAccountDraft({required this.role, required this.blocked});
@@ -23,7 +25,7 @@ class AdminScreen extends StatefulWidget {
   State<AdminScreen> createState() => _AdminScreenState();
 }
 
-class _AdminScreenState extends State<AdminScreen> {
+class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   final _titleFocus = FocusNode(debugLabel: 'admin-screen-title');
   final _categoryName = TextEditingController();
   final _categoryRename = TextEditingController();
@@ -54,10 +56,15 @@ class _AdminScreenState extends State<AdminScreen> {
   String? _auditCursor;
   bool _auditLoading = false;
   String? _auditError;
+  Timer? _mediaRefreshTimer;
+  bool _mediaLoading = false;
+  List<AdminScreenSample> _mediaSamples = const [];
+  String? _mediaError;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _titleFocus.requestFocus();
@@ -68,6 +75,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _mediaRefreshTimer?.cancel();
     _titleFocus.dispose();
     _categoryName.dispose();
     _categoryRename.dispose();
@@ -77,6 +86,32 @@ class _AdminScreenState extends State<AdminScreen> {
       focusNode.dispose();
     }
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        _selectedAdminSection == _AdminSection.media) {
+      unawaited(_loadMediaMetrics());
+    }
+  }
+
+  Future<void> _loadMediaMetrics() async {
+    if (_mediaLoading) return;
+    setState(() {
+      _mediaLoading = true;
+      _mediaError = null;
+    });
+    try {
+      final samples = await widget.state.api.listAdminScreenMetrics();
+      if (!mounted) return;
+      setState(() => _mediaSamples = samples);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _mediaError = 'Не удалось загрузить показатели.');
+    } finally {
+      if (mounted) setState(() => _mediaLoading = false);
+    }
   }
 
   Future<void> _createCategory() async {
@@ -267,11 +302,22 @@ class _AdminScreenState extends State<AdminScreen> {
 
   void _selectSection(_AdminSection section) {
     setState(() => _selectedAdminSection = section);
+    _mediaRefreshTimer?.cancel();
+    _mediaRefreshTimer = null;
     if (section == _AdminSection.members && _adminAccounts.isEmpty) {
       _loadAccounts();
     }
     if (section == _AdminSection.audit && _auditEvents.isEmpty) {
       _loadAudit();
+    }
+    if (section == _AdminSection.media) {
+      unawaited(_loadMediaMetrics());
+      _mediaRefreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+        if (WidgetsBinding.instance.lifecycleState ==
+            AppLifecycleState.resumed) {
+          unawaited(_loadMediaMetrics());
+        }
+      });
     }
   }
 
@@ -625,7 +671,9 @@ class _AdminScreenState extends State<AdminScreen> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-            child: Row(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 ChoiceChip(
                   label: const Text('Участники'),
@@ -644,12 +692,19 @@ class _AdminScreenState extends State<AdminScreen> {
                   selected: _selectedAdminSection == _AdminSection.audit,
                   onSelected: (_) => _selectSection(_AdminSection.audit),
                 ),
+                ChoiceChip(
+                  label: const Text('Медиа'),
+                  selected: _selectedAdminSection == _AdminSection.media,
+                  onSelected: (_) => _selectSection(_AdminSection.media),
+                ),
               ],
             ),
           ),
           Expanded(
             child: _selectedAdminSection == _AdminSection.audit
                 ? _buildAuditPanel()
+                : _selectedAdminSection == _AdminSection.media
+                ? _buildMediaPanel()
                 : _selectedAdminSection == _AdminSection.members
                 ? _buildMembersPanel()
                 : ListView(
@@ -1113,6 +1168,172 @@ class _AdminScreenState extends State<AdminScreen> {
       ],
     ),
   );
+
+  Widget _buildMediaPanel() => Column(
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+        child: Row(
+          children: [
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Показатели трансляций',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    'Последние 60 секунд · без имён и идентификаторов участников',
+                    style: TextStyle(
+                      color: GcColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _mediaLoading ? null : _loadMediaMetrics,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Обновить'),
+            ),
+          ],
+        ),
+      ),
+      Expanded(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          children: [
+            Text(
+              'Сравните размер кадра и FPS отправки, приёма и показа: так проще найти участок потери разрешения или кадров. Данные сообщают сами клиенты; они не подтверждают содержимое кадра или аппаратный профиль.',
+              style: const TextStyle(
+                color: GcColors.textSecondary,
+                fontSize: 13,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (_mediaLoading && _mediaSamples.isEmpty && _mediaError == null)
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_mediaError != null)
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _mediaError!,
+                  style: const TextStyle(color: GcColors.danger),
+                ),
+              )
+            else if (_mediaSamples.isEmpty)
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  'Свежих показателей пока нет. Откройте демонстрацию у зрителя.',
+                ),
+              )
+            else ...[
+              if (_mediaLoading) const LinearProgressIndicator(minHeight: 2),
+              for (final sample in _mediaSamples) _mediaSampleCard(sample),
+            ],
+          ],
+        ),
+      ),
+    ],
+  );
+
+  Widget _mediaSampleCard(AdminScreenSample sample) => Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: GcColors.surface,
+      border: Border.all(color: GcColors.border),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '${_screenPlatformLabel(sample.platform)} · ${sample.direction == 'sender' ? 'отправка' : 'приём'}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            Text(
+              TimeOfDay.fromDateTime(sample.sampledAtUtc.toLocal())
+                  .format(context),
+              style: const TextStyle(
+                color: GcColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 18,
+          runSpacing: 8,
+          children: [
+            _mediaMetric('Состояние', _screenStateLabel(sample.state)),
+            _mediaMetric(
+              'Размер кадра',
+              sample.frameWidth == null
+                  ? 'Нет данных'
+                  : '${sample.frameWidth} × ${sample.frameHeight}',
+            ),
+            _mediaMetric('Отправлено', _mediaValue(sample.encodedFps, 'FPS')),
+            _mediaMetric('Декодировано', _mediaValue(sample.decodedFps, 'FPS')),
+            _mediaMetric('Показано', _mediaValue(sample.presentedFps, 'FPS')),
+            _mediaMetric('Битрейт', _mediaValue(sample.bitrateKbps, 'кбит/с')),
+            _mediaMetric(
+              'Потеряно пакетов',
+              _integerMetric(sample.packetsLost),
+            ),
+            _mediaMetric(
+              'Пропущено кадров',
+              _integerMetric(sample.droppedFrames),
+            ),
+            _mediaMetric('Jitter', _mediaValue(sample.jitterMs, 'мс')),
+            _mediaMetric('RTT', _mediaValue(sample.rttMs, 'мс')),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  Widget _mediaMetric(String label, String value) =>
+      SizedBox(width: 220, child: Text('$label · $value'));
+
+  String _screenPlatformLabel(String platform) => switch (platform) {
+    'ios_web' => 'iPhone/iPad · браузер',
+    'android_web' => 'Android · браузер',
+    'desktop_web' => 'ПК · браузер',
+    'android_native' => 'Android · приложение',
+    'desktop_native' => 'ПК · приложение',
+    _ => 'Неизвестная платформа',
+  };
+
+  String _screenStateLabel(String state) => switch (state) {
+    'waiting_subscription' => 'Ожидает видеодорожку',
+    'waiting_first_frame' => 'Ожидает первый кадр',
+    'playing' => 'Воспроизводит',
+    'stalled' => 'Кадры остановились',
+    _ => 'Неизвестное состояние',
+  };
+
+  String _mediaValue(double? value, String unit) {
+    if (value == null) return 'Нет данных';
+    final formatted = value == value.roundToDouble()
+        ? value.toStringAsFixed(0)
+        : value.toStringAsFixed(1);
+    return '$formatted $unit';
+  }
+
+  String _integerMetric(int? value) => value?.toString() ?? 'Нет данных';
 
   Widget _buildAuditPanel() => Column(
     children: [

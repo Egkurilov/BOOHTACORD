@@ -1,0 +1,56 @@
+{
+  "id": "QA-100",
+  "kind": "flutter-admin-screen-media-diagnostics-web-parity",
+  "status": "PASS_LOCAL_WINDOWS_CI_PENDING",
+  "executed_at": "2026-09-29",
+  "summary": "Flutter administration now has the web AdminMediaDiagnostics tab. It reads the authenticated, administrator-protected anonymous /admin/screen-metrics contract, validates bounded fixed-enum samples, displays recent sender/receiver dimensions and media/network metrics, and refreshes every five seconds only while the tab is selected and the app is foregrounded.",
+  "checks": [
+    {
+      "name": "Admin screen metrics API contract",
+      "command": "cd desktop && flutter test test/admin_api_test.dart",
+      "status": "PASS",
+      "observation": "The client requests /api/v1/admin/screen-metrics with the session cookie and no-store cache policy, parses valid receiver dimensions/FPS/bitrate/RTT, and rejects malformed or excessive samples."
+    },
+    {
+      "name": "Media tab widget behavior",
+      "command": "cd desktop && flutter test test/admin_media_widget_test.dart",
+      "status": "PASS",
+      "observation": "Covers empty and populated states, 390 dp mobile width, periodic refresh, stopping refresh after leaving the tab, generic accessible error copy, and retry."
+    },
+    {
+      "name": "Full Flutter regression suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "All 242 Flutter tests passed."
+    },
+    {
+      "name": "Flutter static analysis",
+      "command": "cd desktop && flutter analyze --no-fatal-infos",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS debug build",
+      "command": "cd desktop && flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "Built BOOHTACORD.app successfully."
+    },
+    {
+      "name": "Android debug build",
+      "command": "cd desktop && flutter build apk --debug --no-pub",
+      "status": "PASS",
+      "observation": "Built the Android debug APK. Existing Kotlin Gradle Plugin migration warning for flutter_background, flutter_webrtc and livekit_client remains."
+    },
+    {
+      "name": "Windows runner validation",
+      "status": "PENDING",
+      "observation": "Push this desktop change to run the GitVerse Flutter Windows CI workflow on boohtacord-windows; tests, analyzer and Windows Release compilation must pass before closing this point."
+    },
+    {
+      "name": "Live admin ACL and screenshot comparison",
+      "status": "OPEN",
+      "observation": "Widget tests verify behavior and narrow layout. Administrator/member REST ACL and matched screenshots across macOS, Windows and Android remain to be accepted against the live backend."
+    }
+  ],
+  "remaining": "Verify the GitVerse Windows runner after push, then validate the administrator-only endpoint with the live service and compare the four-tab panel visually against web on macOS, Windows and Android."
+}

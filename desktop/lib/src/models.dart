@@ -206,6 +206,134 @@ class AdminAuditPage {
   final String? nextCursor;
 }
 
+class AdminScreenSample {
+  const AdminScreenSample({
+    required this.platform,
+    required this.direction,
+    required this.state,
+    required this.sampledAtUtc,
+    this.frameWidth,
+    this.frameHeight,
+    this.encodedFps,
+    this.decodedFps,
+    this.presentedFps,
+    this.bitrateKbps,
+    this.jitterMs,
+    this.packetsLost,
+    this.droppedFrames,
+    this.rttMs,
+  });
+
+  static const platforms = {
+    'ios_web',
+    'android_web',
+    'desktop_web',
+    'android_native',
+    'desktop_native',
+  };
+  static const directions = {'sender', 'receiver'};
+  static const states = {
+    'waiting_subscription',
+    'waiting_first_frame',
+    'playing',
+    'stalled',
+  };
+
+  final String platform;
+  final String direction;
+  final String state;
+  final DateTime sampledAtUtc;
+  final int? frameWidth;
+  final int? frameHeight;
+  final double? encodedFps;
+  final double? decodedFps;
+  final double? presentedFps;
+  final double? bitrateKbps;
+  final double? jitterMs;
+  final int? packetsLost;
+  final int? droppedFrames;
+  final double? rttMs;
+
+  factory AdminScreenSample.fromJson(Map<String, dynamic> json) {
+    final report = json['report'];
+    final sampledAt = json['sampled_at_utc'];
+    if (report is! Map<String, dynamic> || sampledAt is! String) {
+      throw const FormatException('Invalid admin screen sample.');
+    }
+    final platform = report['platform'];
+    final direction = report['direction'];
+    final state = report['state'];
+    DateTime parsedSampledAt;
+    try {
+      parsedSampledAt = DateTime.parse(sampledAt).toUtc();
+    } on FormatException {
+      throw const FormatException('Invalid admin screen sample.');
+    }
+    if (!parsedSampledAt.isUtc ||
+        platform is! String ||
+        !platforms.contains(platform) ||
+        direction is! String ||
+        !directions.contains(direction) ||
+        state is! String ||
+        !states.contains(state)) {
+      throw const FormatException('Invalid admin screen sample.');
+    }
+
+    double? optionalNumber(String key, double maximum) {
+      final value = report[key];
+      if (value == null) return null;
+      if (value is! num || !value.isFinite || value < 0 || value > maximum) {
+        throw const FormatException('Invalid admin screen sample.');
+      }
+      return value.toDouble();
+    }
+
+    int? optionalInteger(String key, int maximum) {
+      final value = report[key];
+      if (value == null) return null;
+      if (value is! int || value < 0 || value > maximum) {
+        throw const FormatException('Invalid admin screen sample.');
+      }
+      return value;
+    }
+
+    int? optionalDimension(String key) {
+      final value = report[key];
+      if (value == null) return null;
+      if (value is! int || value < 1 || value > 8192) {
+        throw const FormatException('Invalid admin screen sample.');
+      }
+      return value;
+    }
+
+    final frameWidth = optionalDimension('frame_width');
+    final frameHeight = optionalDimension('frame_height');
+    final encodedFps = optionalNumber('encoded_fps', 240);
+    final decodedFps = optionalNumber('decoded_fps', 240);
+    if ((frameWidth == null) != (frameHeight == null) ||
+        (direction == 'sender' && decodedFps != null) ||
+        (direction == 'receiver' && encodedFps != null)) {
+      throw const FormatException('Invalid admin screen sample.');
+    }
+    return AdminScreenSample(
+      platform: platform,
+      direction: direction,
+      state: state,
+      sampledAtUtc: parsedSampledAt,
+      frameWidth: frameWidth,
+      frameHeight: frameHeight,
+      encodedFps: encodedFps,
+      decodedFps: decodedFps,
+      presentedFps: optionalNumber('presented_fps', 240),
+      bitrateKbps: optionalNumber('bitrate_kbps', 100000),
+      jitterMs: optionalNumber('jitter_ms', 60000),
+      packetsLost: optionalInteger('packets_lost', 1000000000),
+      droppedFrames: optionalInteger('dropped_frames', 1000000000),
+      rttMs: optionalNumber('rtt_ms', 60000),
+    );
+  }
+}
+
 class AdminAccount {
   const AdminAccount({
     required this.accountId,

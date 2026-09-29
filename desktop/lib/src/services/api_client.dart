@@ -604,6 +604,32 @@ class ApiClient {
     );
   }
 
+  Future<List<AdminScreenSample>> listAdminScreenMetrics() async {
+    final data = await _checked(
+      await _client.get(
+        _uri('/admin/screen-metrics'),
+        headers: {...await _headers(), 'cache-control': 'no-store'},
+      ),
+    );
+    if (data is! Map<String, dynamic> || data['samples'] is! List) {
+      throw const ApiFailure('Сервер вернул некорректные показатели медиа.');
+    }
+    final samples = data['samples'] as List;
+    if (samples.length > 10) {
+      throw const ApiFailure('Сервер вернул некорректные показатели медиа.');
+    }
+    try {
+      return samples
+          .map(
+            (value) =>
+                AdminScreenSample.fromJson(value as Map<String, dynamic>),
+          )
+          .toList(growable: false);
+    } on Object {
+      throw const ApiFailure('Сервер вернул некорректные показатели медиа.');
+    }
+  }
+
   Future<AdminAccountPage> listAdminAccounts({
     String? cursor,
     int limit = 100,

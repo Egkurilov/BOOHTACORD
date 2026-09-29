@@ -18,12 +18,22 @@ class TopologyTestApi extends ApiClient {
   Completer<void>? pending;
   bool conflictOnce = false;
   final revisions = <int>[];
+  List<AdminScreenSample> screenMetrics = const [];
+  Object? screenMetricsFailure;
+  int screenMetricsLoads = 0;
 
   @override
   Future<AdminAccountPage> listAdminAccounts({
     String? cursor,
     int limit = 100,
   }) async => const AdminAccountPage(accounts: []);
+
+  @override
+  Future<List<AdminScreenSample>> listAdminScreenMetrics() async {
+    screenMetricsLoads++;
+    if (screenMetricsFailure case final failure?) throw failure;
+    return screenMetrics;
+  }
 
   @override
   Future<ChannelTopology> topology() async => current;

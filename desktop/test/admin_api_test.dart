@@ -338,4 +338,63 @@ void main() {
       expect(kicked, 1);
     },
   );
+
+  test(
+    'loads anonymous recent screen metrics from the admin contract',
+    () async {
+      late http.Request request;
+      final api = ApiClient(
+        client: MockClient((value) async {
+          request = value;
+          return http.Response(
+            '{"samples":[{"sampled_at_utc":"2026-09-29T18:30:00Z","report":{"platform":"android_native","direction":"receiver","state":"playing","frame_width":540,"frame_height":1170,"decoded_fps":14.5,"presented_fps":12,"bitrate_kbps":109.5,"jitter_ms":4,"packets_lost":2,"dropped_frames":1,"rtt_ms":36}}]}',
+            200,
+          );
+        }),
+      );
+
+      final samples = await api.listAdminScreenMetrics();
+
+      expect(request.method, 'GET');
+      expect(request.url.path, '/api/v1/admin/screen-metrics');
+      expect(request.headers['cache-control'], 'no-store');
+      expect(request.headers['cookie'], 'session=admin-test');
+      expect(samples, hasLength(1));
+      expect(samples.single.platform, 'android_native');
+      expect(samples.single.direction, 'receiver');
+      expect(samples.single.frameWidth, 540);
+      expect(samples.single.frameHeight, 1170);
+      expect(samples.single.decodedFps, 14.5);
+      expect(samples.single.presentedFps, 12);
+      expect(samples.single.rttMs, 36);
+    },
+  );
+
+  test('rejects malformed or excessive admin screen metrics', () async {
+    final invalid = ApiClient(
+      client: MockClient(
+        (_) async => http.Response(
+          '{"samples":[{"sampled_at_utc":"2026-09-29T18:30:00Z","report":{"platform":"android_native","direction":"receiver","state":"playing","frame_width":540}}]}',
+          200,
+        ),
+      ),
+    );
+    await expectLater(
+      invalid.listAdminScreenMetrics(),
+      throwsA(isA<ApiFailure>()),
+    );
+
+    final excessive = ApiClient(
+      client: MockClient(
+        (_) async => http.Response(
+          '{"samples":[${List.filled(11, '{}').join(',')}]}',
+          200,
+        ),
+      ),
+    );
+    await expectLater(
+      excessive.listAdminScreenMetrics(),
+      throwsA(isA<ApiFailure>()),
+    );
+  });
 }
