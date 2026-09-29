@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ChannelTopology, TopologyChannel } from './topology_client'
 import { avatarBackground } from '../design/avatar_color'
+import { watch } from 'vue'
+import { useAuthorDirectory } from '../identity/author_directory'
 import VoiceParticipantStatus from '../voice/VoiceParticipantStatus.vue'
 import VoiceRoomRoster from '../voice/VoiceRoomRoster.vue'
 import type { VoiceRoomRoster as RoomRoster } from '../voice/voice_roster_client'
@@ -15,6 +17,10 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{ select: [channel: TopologyChannel] }>()
+const authors = useAuthorDirectory()
+watch(() => props.voicePresence?.members.map((member) => member.id) ?? [], (ids) => {
+  ids.filter((id) => id !== 'self').forEach((id) => { void authors.ensure(id) })
+}, { immediate: true })
 
 function isConnectedVoice(channel: TopologyChannel): boolean { return channel.kind === 'VOICE' && channel.id === props.activeVoiceChannelId }
 function rosterFor(channelId: string): RoomRoster | undefined { return props.voiceRosters?.find((room) => room.channelId === channelId) }
@@ -46,7 +52,7 @@ function initial(name: string): string { return Array.from(name.trim())[0]?.toLo
         </button>
         <ul v-if="props.voicePresence && props.voicePresence.channelId === channel.id" class="voice-member-list" aria-label="Участники подключённого голосового канала" data-testid="voice-member-rows">
           <li v-for="member in props.voicePresence.members" :key="member.id" class="voice-member-row" :class="{ 'is-speaking': member.isSpeaking }">
-            <span class="voice-member-avatar" :style="{ backgroundColor: avatarBackground(member.id) }" aria-hidden="true">{{ initial(member.name) }}</span>
+            <span class="voice-member-avatar" :style="{ backgroundColor: avatarBackground(member.id) }" aria-hidden="true"><img v-if="authors.avatarUrl(member.id)" :src="authors.avatarUrl(member.id)" alt=""><template v-else>{{ initial(member.name) }}</template></span>
             <span class="voice-member-name">{{ member.name }}</span>
             <span v-if="member.screenSharing" class="voice-member-share" role="img" aria-label="Показывает экран" title="Показывает экран"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4zM9 20h6m-3-4v4" /></svg></span>
             <VoiceParticipantStatus compact :microphone-muted="member.microphoneMuted" :microphone-unavailable="member.microphoneUnavailable" :speaking="member.speaking" />

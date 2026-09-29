@@ -114,6 +114,13 @@ jobs:
           body: |
             Signed Android APKs for version ${{ github.ref_name }}.
 
+            Voice and screen sharing updates:
+            - Live voice roster with avatars and microphone status; empty rooms hide the zero count.
+            - Direct voice-channel switching without a transfer prompt.
+            - Stream thumbnails and automatic viewing when a stopped stream restarts.
+            - Quality and FPS changes during an active stream.
+            - Viewer closes automatically when the broadcaster stops streaming.
+
             Download exactly one APK matching your device:
             - arm64-v8a: most modern Android phones and tablets
             - armeabi-v7a: older 32-bit ARM devices
