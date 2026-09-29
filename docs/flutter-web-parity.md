@@ -59,10 +59,11 @@ empty state — [QA-116](../evidence/flutter/qa116-search-live-status-web-parity
 [QA-117](../evidence/flutter/qa117-search-submit-web-parity-2026-09-29-001.json).
 
 On Android 8+, `@mipmap/ic_launcher` now resolves to an adaptive icon built
-from the supplied BOOHTACORD art with an explicit dark background; density PNGs
-remain as the pre-API 26 fallback. The release APK packages the adaptive
-resources and has a verified v2 signature. Check the rendered result on a
-physical Pixel before closing icon visual acceptance —
+from the supplied BOOHTACORD art with a transparent foreground; density PNGs
+remain as the pre-API 26 fallback. The verified release APK renders on Pixel 7
+in the default circular launcher style without an extra white inner frame.
+Themed-icon behavior remains open because the adaptive resource has no
+monochrome layer; macOS and Windows installed-icon acceptance is also open —
 [QA-77](../evidence/flutter/qa77-android-adaptive-launcher-icon-2026-09-28-001.json).
 
 Mobile swipe behavior is enabled on both Android and iOS: edge navigation/member
