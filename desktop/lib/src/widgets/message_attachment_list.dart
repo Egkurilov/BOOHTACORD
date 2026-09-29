@@ -268,6 +268,7 @@ class _ProtectedImagePreviewState extends State<_ProtectedImagePreview> {
                   ),
                   IconButton(
                     tooltip: 'Закрыть просмотр изображения',
+                    autofocus: true,
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close),
                   ),

@@ -1,0 +1,28 @@
+{
+  "id": "QA-108",
+  "kind": "protected-image-viewer-initial-focus",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "summary": "Opening the Flutter protected image viewer now autofocuses its close action, matching the web viewer's explicit focus placement. A widget test verifies the first focused control immediately after the route opens.",
+  "checks": [
+    {
+      "name": "Initial focus targets the close action",
+      "command": "cd desktop && flutter test test/message_attachment_list_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "Immediately after the protected preview Dialog opens and settles, the primary FocusNode belongs to the IconButton with tooltip 'Закрыть просмотр изображения'; no Tab key is sent before this assertion."
+    },
+    {
+      "name": "Flutter test suite",
+      "command": "cd desktop && flutter test --reporter expanded",
+      "status": "PASS",
+      "observation": "All 246 widget and unit tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "remaining": "Verify initial focus with VoiceOver, NVDA, and TalkBack on native platforms; this local widget test does not establish OS screen-reader announcement timing."
+}

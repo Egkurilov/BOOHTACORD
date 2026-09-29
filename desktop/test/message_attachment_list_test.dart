@@ -128,6 +128,12 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byType(Dialog), findsOneWidget);
+    expect(
+      tester.binding.focusManager.primaryFocus?.context
+          ?.findAncestorWidgetOfExactType<IconButton>()
+          ?.tooltip,
+      'Закрыть просмотр изображения',
+    );
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.pump();
     final dialogControlFocus = tester.binding.focusManager.primaryFocus;
