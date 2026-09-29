@@ -1,0 +1,52 @@
+{
+  "id": "voice-experience-web-android-ios-2026-09-30-001",
+  "kind": "cross-platform-release-audit",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-29T21:15:20Z",
+  "observer": "Codex",
+  "environment": "Windows host; GitVerse CI with Windows, Linux and cloud runners",
+  "revisions": {
+    "feature_and_android_release": "d626bdf7091115bf5d590e0520fb3adc35963bf4",
+    "master_analyzer_fix": "19db89e3c0cab672fc2062d1c46df0b693910cd3",
+    "android_tag": "android-v1.0.12"
+  },
+  "scenario": "Audit six voice roster and screen sharing changes in web, Android and iOS source, then verify deployment and release artifacts.",
+  "results": [
+    {
+      "platform": "web",
+      "status": "PASS_BUILD_DEPLOY",
+      "observations": [
+        "673 Vitest tests passed and Vite production build passed locally.",
+        "GitVerse production run 1685206 reported success for backend, frontend, release_guard and deploy against d626bdf."
+      ],
+      "artifacts": [
+        "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1685206"
+      ]
+    },
+    {
+      "platform": "Android",
+      "status": "PASS_BUILD_PUBLISH",
+      "observations": [
+        "270 Flutter tests passed locally; flutter analyze lib test reported no issues.",
+        "GitVerse Android release run 1685209 passed after retrying publication against the release record created by the first attempt.",
+        "Release android-v1.0.12 contains signed arm64-v8a, armeabi-v7a and x86_64 APKs."
+      ],
+      "artifacts": [
+        "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1685209",
+        "https://gitverse.ru/egkurilov/BOOHTACORD/releases/tag/android-v1.0.12"
+      ]
+    },
+    {
+      "platform": "iOS",
+      "status": "NOT_RUN",
+      "observations": [
+        "The six changes use shared Flutter source and passed Flutter unit/widget tests.",
+        "No macOS runner or iOS archive/IPA publication workflow was available in GitVerse during this audit."
+      ],
+      "artifacts": [
+        "clients/ios/ACCEPTANCE.md"
+      ]
+    }
+  ],
+  "limits": "Source tests and release builds do not prove two-client realtime behavior, stream quality, or iOS device acceptance. iOS signed release and physical-device verification remain open."
+}
