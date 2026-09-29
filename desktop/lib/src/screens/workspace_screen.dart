@@ -2884,6 +2884,10 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
 
   bool get _canLoadMore =>
       _nextCursor != null && !_loading && _query.text.trim() == _activeQuery;
+  bool get _canSubmit =>
+      !_loading &&
+      _query.text.trim().isNotEmpty &&
+      !(_scope == 'current' && _currentConversation() == null);
 
   AppState get state => widget.state;
 
@@ -2911,10 +2915,7 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
 
   Future<void> _search({String? before}) async {
     final query = (before == null ? _query.text : _activeQuery).trim();
-    if (query.isEmpty) {
-      setState(() => _error = 'Введите поисковый запрос.');
-      return;
-    }
+    if (query.isEmpty) return;
     if (query.runes.length > 256) {
       setState(() => _error = 'Запрос должен содержать до 256 символов.');
       return;
@@ -3052,7 +3053,9 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
                   required isFocused,
                   maxLength,
                 }) => null,
-                onSubmitted: (_) => _search(),
+                onSubmitted: (_) {
+                  if (_canSubmit) _search();
+                },
                 decoration: InputDecoration(
                   hintText: 'Слова или «точная фраза»',
                   prefixIcon: const Icon(Icons.search),
@@ -3092,7 +3095,7 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
                       },
               );
               final searchButton = FilledButton.icon(
-                onPressed: _loading ? null : () => _search(),
+                onPressed: _canSubmit ? () => _search() : null,
                 icon: _loading
                     ? const SizedBox(
                         width: 16,

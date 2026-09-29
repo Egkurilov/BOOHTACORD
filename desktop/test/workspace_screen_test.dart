@@ -1627,6 +1627,12 @@ void main() {
     await tester.tap(find.byTooltip('Поиск сообщений'));
     await tester.pumpAndSettle();
     expect(find.text('Область поиска'), findsOneWidget);
+    final submitButton = find.widgetWithText(FilledButton, 'Найти');
+    expect(tester.widget<FilledButton>(submitButton).onPressed, isNull);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(api.lastSearchQuery, isNull);
+    expect(find.text('Введите поисковый запрос.'), findsNothing);
     expect(
       tester
           .widget<DropdownButtonFormField<String>>(
@@ -1650,6 +1656,8 @@ void main() {
       ),
       'найденный текст',
     );
+    await tester.pump();
+    expect(tester.widget<FilledButton>(submitButton).onPressed, isNotNull);
     await tester.tap(find.text('Найти'));
     await tester.pumpAndSettle();
     expect(api.lastSearchQuery, 'найденный текст');
@@ -1740,6 +1748,7 @@ void main() {
       ),
       'нет совпадений',
     );
+    await tester.pump();
     await tester.tap(find.text('Найти'));
     await tester.pumpAndSettle();
 
