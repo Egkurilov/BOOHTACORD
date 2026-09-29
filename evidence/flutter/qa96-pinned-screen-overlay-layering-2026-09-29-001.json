@@ -19,6 +19,12 @@
       "observation": "No issues found."
     },
     {
+      "name": "macOS release build",
+      "command": "cd desktop && flutter build macos --release",
+      "status": "PASS",
+      "observation": "Current Flutter source compiled to BOOHTACORD.app (92.5 MB)."
+    },
+    {
       "name": "Matched visual layering screenshots",
       "status": "OPEN",
       "observation": "The drawer/search z-order was reconciled against web CSS and widget suites pass, but matched screenshots on Android, macOS, and Windows remain outstanding."
