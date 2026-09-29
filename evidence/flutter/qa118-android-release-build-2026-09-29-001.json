@@ -1,0 +1,29 @@
+{
+  "id": "QA-118",
+  "kind": "android-release-build",
+  "status": "PASS",
+  "executed_at": "2026-09-29",
+  "source_revision": "9256e6282ee7b3014f6c6d94e918f2cb1344f6af",
+  "summary": "Prepared Android 1.0.5+9 and built three signed ABI-specific release APKs. GitVerse publication has not yet been verified.",
+  "checks": [
+    {
+      "name": "Flutter static analysis",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Flutter test suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "All 253 tests passed."
+    },
+    {
+      "name": "Signed ABI-specific release APKs",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Built arm64-v8a (38,328,957 bytes), armeabi-v7a (29,474,011 bytes), and x86_64 (44,083,194 bytes). All APKs verified with APK Signature Scheme v2 and the configured BOOHTACORD Android Upload certificate (SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b)."
+    }
+  ],
+  "remaining": "Push the android-v1.0.5 tag and verify GitVerse workflow publication; physical-device update/runtime acceptance remains separate."
+}
