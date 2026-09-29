@@ -67,7 +67,7 @@ try {
       tag_name = $Tag
       target_commitish = $Commit
       name = "BOOHTACORD Windows $Tag"
-      body = 'Сборка приложения BOOHTACORD для Windows x64. Включает актуальный общий Flutter-код Android и статистику отправителя в локальном предпросмотре экрана. Распакуйте архив целиком и запустите boohtacord_desktop.exe.'
+      body = 'BOOHTACORD application build for Windows x64. Includes current shared Flutter features and sender statistics in the local screen-share preview. Extract the complete archive and run boohtacord_desktop.exe.'
       draft = $false
       prerelease = $false
     } | ConvertTo-Json -Compress
