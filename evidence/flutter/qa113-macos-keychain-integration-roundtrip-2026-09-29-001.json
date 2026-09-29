@@ -7,13 +7,13 @@
   "checks": [
     {
       "name": "macOS Keychain plugin round-trip",
-      "command": "cd desktop && flutter test integration_test/macos_keychain_roundtrip_test.dart -d macos",
+      "command": "cd desktop/qa/macos_keychain_integration && flutter test integration_test/macos_keychain_roundtrip_test.dart -d macos",
       "status": "PASS",
       "observation": "The macOS app built and launched; the plugin returned null before write, the exact disposable value after write, and null after delete. A finally block deletes the QA key on failure. No login, session cookie, or existing Keychain item was accessed."
     },
     {
       "name": "Focused Dart analysis",
-      "command": "cd desktop && flutter analyze --no-pub integration_test/macos_keychain_roundtrip_test.dart",
+      "command": "cd desktop/qa/macos_keychain_integration && flutter analyze integration_test/macos_keychain_roundtrip_test.dart",
       "status": "PASS",
       "observation": "No issues found."
     }

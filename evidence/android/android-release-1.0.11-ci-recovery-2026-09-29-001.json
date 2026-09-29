@@ -1,0 +1,43 @@
+{
+  "id": "android-release-1.0.11-ci-recovery-2026-09-29-001",
+  "kind": "android-release-gate",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "source": {
+    "failed_tag": "android-v1.0.10",
+    "failed_commit": "ed4866e",
+    "failure": "The Android release registrant included the dev-only integration_test plugin, but release Gradle excluded its implementation, causing GeneratedPluginRegistrant.java compilation to fail."
+  },
+  "fix": "Moved the macOS Keychain integration test into an isolated QA Flutter host and removed integration_test from the production app dependencies.",
+  "checks": [
+    {
+      "name": "Production Android release build",
+      "command": "cd desktop && flutter pub get --enforce-lockfile && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "artifacts": [
+        {"path": "desktop/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk", "size_bytes": 29490979},
+        {"path": "desktop/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk", "size_bytes": 38329541},
+        {"path": "desktop/build/app/outputs/flutter-apk/app-x86_64-release.apk", "size_bytes": 44083774}
+      ],
+      "observation": "Flutter 3.47.5 produced all three ABI APKs after a clean dependency resolution; the generated production Android registrant no longer references integration_test. Local artifacts are not release-published APKs."
+    },
+    {
+      "name": "Flutter client tests",
+      "command": "cd desktop && flutter test --reporter compact",
+      "status": "PASS",
+      "observation": "All 266 tests passed."
+    },
+    {
+      "name": "Isolated macOS Keychain integration test",
+      "command": "cd desktop/qa/macos_keychain_integration && flutter pub get --enforce-lockfile && flutter test integration_test/macos_keychain_roundtrip_test.dart -d macos && flutter analyze integration_test/macos_keychain_roundtrip_test.dart",
+      "status": "PASS",
+      "observation": "The isolated Keychain round-trip passed and the test analyzed without issues."
+    },
+    {
+      "name": "GitVerse signed release publish",
+      "status": "NOT_RUN",
+      "reason": "Must run from the new android-v1.0.11 tag; the failed android-v1.0.10 tag is intentionally left unchanged."
+    }
+  ],
+  "failure_or_blocker": "The GitVerse signed release and physical-device acceptance remain pending."
+}

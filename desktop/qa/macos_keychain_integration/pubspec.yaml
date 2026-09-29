@@ -1,0 +1,23 @@
+name: boohtacord_macos_keychain_integration
+description: Isolated macOS Keychain integration-test host for BOOHTACORD.
+publish_to: none
+version: 1.0.0
+
+environment:
+  sdk: ^3.13.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  boohtacord_desktop:
+    path: ../..
+  flutter_secure_storage: ^11.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
