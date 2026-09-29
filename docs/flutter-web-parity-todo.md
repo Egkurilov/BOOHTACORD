@@ -346,6 +346,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   strip и cards с `VoiceParticipantStatus.vue`; целевые тесты, analyzer и полный
   Flutter suite прошли — [QA-35](../evidence/flutter/qa35-voice-participant-status-web-parity-2026-09-28-001.json).
   Порядок, отступы, аватары и matched screenshots остаются открытыми.
+- [x] Удерживать длинный статус полностью заглушённого участника по центру
+  карточки в одну строку с многоточием; узкий Android portrait widget test,
+  полный `workspace_screen_test.dart` (42 теста) и analyzer прошли —
+  [QA-121](../evidence/flutter/qa121-deafened-participant-status-alignment-2026-09-29-001.json).
 
 ## P2 — Identity и delivery
 

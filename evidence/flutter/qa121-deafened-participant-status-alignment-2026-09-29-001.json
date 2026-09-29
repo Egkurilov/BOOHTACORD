@@ -1,0 +1,29 @@
+{
+  "id": "QA-121",
+  "kind": "deafened-participant-status-alignment",
+  "status": "PASS",
+  "executed_at": "2026-09-29",
+  "source_revision": "7445ac3",
+  "summary": "The full-deafen status in the Android portrait participant card remains centered within the card and truncates to one line rather than wrapping or shifting left.",
+  "checks": [
+    {
+      "name": "Deafened participant status layout regression",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'deafened participant status stays centered on one line'",
+      "status": "PASS",
+      "observation": "At 390×844, the status Text is centered, constrained to one line with ellipsis, and its center matches the participant card center."
+    },
+    {
+      "name": "Workspace screen regression suite",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 42 workspace screen tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "remaining": "Confirm the compact layout visually on a physical Android device."
+}
