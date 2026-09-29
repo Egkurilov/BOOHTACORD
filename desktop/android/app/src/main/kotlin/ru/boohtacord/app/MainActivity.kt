@@ -180,11 +180,14 @@ class MainActivity : FlutterActivity() {
 
     override fun onPostResume() {
         super.onPostResume()
-        val content = findViewById<View>(android.R.id.content)
-        if (gestureExclusionView !== content) {
+        // Use the full-window view so the exclusion rects line up with the
+        // physical display edges even when the content view is inset by the
+        // status/navigation bars or display cutouts.
+        val root = window.decorView
+        if (gestureExclusionView !== root) {
             gestureExclusionView?.removeOnLayoutChangeListener(gestureExclusionLayoutListener)
-            gestureExclusionView = content
-            content.addOnLayoutChangeListener(gestureExclusionLayoutListener)
+            gestureExclusionView = root
+            root.addOnLayoutChangeListener(gestureExclusionLayoutListener)
         }
         updateSystemGestureExclusionRects()
     }
@@ -196,7 +199,7 @@ class MainActivity : FlutterActivity() {
 
     private fun updateSystemGestureExclusionRects() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
-        val view = gestureExclusionView ?: findViewById<View>(android.R.id.content)
+        val view = gestureExclusionView ?: window.decorView
         gestureExclusionView = view
         if (view.width <= 0 || view.height <= 0) return
 

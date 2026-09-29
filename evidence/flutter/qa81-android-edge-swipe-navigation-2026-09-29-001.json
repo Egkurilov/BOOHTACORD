@@ -3,8 +3,8 @@
   "kind": "android-edge-swipe-navigation",
   "status": "PASS_WITH_PHYSICAL_DEVICE_ACCEPTANCE_OPEN",
   "executed_at": "2026-09-29",
-  "source_revision": "61acd63c98e4377a4bacb755bef2c0c54d498f59",
-  "summary": "Workspace navigation/member edge swipes can begin at the Android screen edge in a narrow system-gesture exclusion region, while Android Back remains available outside the declared region.",
+  "source_revision": "a0eec7a",
+  "summary": "Workspace navigation/member edge swipes use a narrow Android system-gesture exclusion aligned to the full-window decor view, while Android Back remains available outside the declared region.",
   "checks": [
     {
       "name": "Android and iOS workspace edge swipe widget coverage",
@@ -17,6 +17,12 @@
       "command": "cd desktop && flutter test test/android_system_gesture_exclusion_test.dart",
       "status": "PASS",
       "observation": "The bridge enables only requested edges, updates when drawer eligibility changes, clears on disposal, and does not claim edge gestures on iOS."
+    },
+    {
+      "name": "Full-window system gesture exclusion alignment",
+      "command": "Review MainActivity.onPostResume and updateSystemGestureExclusionRects",
+      "status": "PASS",
+      "observation": "Exclusion rectangles are now applied in decorView coordinates so inset content bounds cannot leave the physical display edge uncovered. The Android 200 dp vertical cap remains in place."
     },
     {
       "name": "Flutter static analysis",
@@ -41,8 +47,8 @@
       "name": "Physical Android Back/edge gesture acceptance",
       "device": "Google Pixel 7",
       "status": "NOT_RUN",
-      "observation": "ADB could not start in the restricted session, so system Back behavior and actual gesture-exclusion boundaries require device confirmation."
+      "observation": "No Android device is currently attached to ADB, so the reported edge-to-back regression and actual gesture-exclusion boundaries still require confirmation on the Pixel 7."
     }
   ],
-  "remaining": "On a physical Android phone with gesture navigation, verify left/right edge swipes open the intended drawers in the centered exclusion zone, while Back still exits/navigates outside it and drawer-open swipes remain intact."
+  "remaining": "On a physical Android phone with gesture navigation, verify the reported edge-to-back regression is fixed: left/right edge swipes should open the intended drawers inside the centered 200 dp exclusion zone, while Back remains available outside it and drawer-open swipes remain intact. Android only honors up to 200 dp of vertical exclusion per edge."
 }
