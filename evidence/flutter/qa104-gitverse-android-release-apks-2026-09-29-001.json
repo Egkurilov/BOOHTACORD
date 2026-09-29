@@ -1,0 +1,32 @@
+{
+  "id": "QA-104",
+  "kind": "gitverse-android-release-apks",
+  "status": "PASS_LOCAL_BUILD_AND_SIZE_GUARD_REMOTE_RELEASE_PENDING",
+  "executed_at": "2026-09-29",
+  "source_revision": "34d76ba",
+  "summary": "The GitVerse Android release workflow publishes three ABI-specific APKs rather than the universal APK, whose 107,753,250-byte size exceeds GitVerse's 100 MB per-asset limit.",
+  "checks": [
+    {
+      "name": "Signed ABI-split Android release build",
+      "command": "cd desktop && flutter build apk --release --split-per-abi",
+      "status": "PASS",
+      "observation": "Flutter produced app-armeabi-v7a-release.apk, app-arm64-v8a-release.apk, and app-x86_64-release.apk using the configured local upload keystore."
+    },
+    {
+      "name": "GitVerse per-file upload size guard",
+      "status": "PASS",
+      "observation": "The release workflow rejects any APK over 95,000,000 bytes before upload. Current ABI APK sizes: armeabi-v7a 29,473,851 bytes; arm64-v8a 38,263,261 bytes; x86_64 44,083,034 bytes. All are below the 100 MB GitVerse release asset limit."
+    },
+    {
+      "name": "Universal APK comparison",
+      "status": "FAILS_GITVERSE_LIMIT",
+      "observation": "The existing universal app-release.apk is 107,753,250 bytes, so it cannot be attached as one GitVerse release asset."
+    },
+    {
+      "name": "Tag-triggered GitVerse Release upload",
+      "status": "NOT_RUN",
+      "observation": "The workflow requires repository secrets for the GitVerse API key and Android upload keystore. Secrets are not available to inspect or set in this workspace; a matching android-v* tag has not been pushed."
+    }
+  ],
+  "remaining": "Configure GITVERSE_API_KEY and the four BOOHTACORD_ANDROID_* repository secrets, then push a tag matching the version in desktop/pubspec.yaml and confirm the three release assets are downloadable."
+}
