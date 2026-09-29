@@ -60,6 +60,10 @@ include(flutter/generated_plugins.cmake)
 # clipboard 3.0.14 treats its unused headerSize warning as an error under MSVC.
 if(TARGET clipboard_plugin)
   target_compile_options(clipboard_plugin PRIVATE /wd4189)
+  # Resolve the package symlink so MSVC can find clipboard/clipboard_plugin.h.
+  get_filename_component(CLIPBOARD_PACKAGE_DIR
+    "${FLUTTER_MANAGED_DIR}/ephemeral/.plugin_symlinks/clipboard" REALPATH)
+  target_include_directories(${BINARY_NAME} PRIVATE "${CLIPBOARD_PACKAGE_DIR}")
 endif()
 
 
