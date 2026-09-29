@@ -304,13 +304,20 @@ class _ProtectedImagePreviewState extends State<_ProtectedImagePreview> {
                         onRetry: unavailable ? null : _retry,
                       );
                     }
-                    return const Center(
+                    return Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           CircularProgressIndicator(),
                           SizedBox(height: 12),
-                          Text('Загружаем изображение…'),
+                          Semantics(
+                            container: true,
+                            liveRegion: true,
+                            label: 'Загружаем изображение…',
+                            child: ExcludeSemantics(
+                              child: Text('Загружаем изображение…'),
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -332,27 +339,34 @@ class _PreviewUnavailable extends StatelessWidget {
   final VoidCallback? onRetry;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(Icons.broken_image_outlined, size: 42),
-        const SizedBox(height: 10),
-        Text(
-          deleted
-              ? 'Вложение удалено или недоступно.'
-              : 'Не удалось загрузить изображение.',
-          textAlign: TextAlign.center,
-        ),
-        if (onRetry != null) ...[
-          const SizedBox(height: 8),
-          TextButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Повторить'),
+  Widget build(BuildContext context) {
+    final message = deleted
+        ? 'Вложение удалено или недоступно.'
+        : 'Не удалось загрузить изображение.';
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.broken_image_outlined, size: 42),
+          const SizedBox(height: 10),
+          Semantics(
+            container: true,
+            liveRegion: true,
+            label: message,
+            child: ExcludeSemantics(
+              child: Text(message, textAlign: TextAlign.center),
+            ),
           ),
+          if (onRetry != null) ...[
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Повторить'),
+            ),
+          ],
         ],
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }

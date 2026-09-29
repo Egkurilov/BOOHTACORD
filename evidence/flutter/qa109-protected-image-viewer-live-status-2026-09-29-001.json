@@ -1,0 +1,34 @@
+{
+  "id": "QA-109",
+  "kind": "protected-image-viewer-live-status-accessibility",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "summary": "Protected image preview loading and unavailable/deleted text are now exposed as separate polite live-region semantics, matching the web viewer's aria-live loading content and role=status error state. The retry action remains a separate button. Native announcement behavior remains unverified.",
+  "checks": [
+    {
+      "name": "Loading status is a live region",
+      "command": "cd desktop && flutter test test/message_attachment_list_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "The test holds the authenticated preview response pending and verifies a Semantics widget with liveRegion=true and label 'Загружаем изображение…'."
+    },
+    {
+      "name": "Unavailable status is a live region",
+      "command": "cd desktop && flutter test test/message_attachment_list_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "After completing the pending preview request with HTTP 404, the test verifies a live-region Semantics widget labelled 'Вложение удалено или недоступно.'. Existing tests continue to verify deleted state and retry for transient failures."
+    },
+    {
+      "name": "Flutter test suite",
+      "command": "cd desktop && flutter test --reporter expanded",
+      "status": "PASS",
+      "observation": "All 247 widget and unit tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "remaining": "Confirm actual announcements, timing, and retry control accessibility with VoiceOver, NVDA, and TalkBack on macOS, Windows, and Android. This partial evidence is not platform screen-reader acceptance."
+}

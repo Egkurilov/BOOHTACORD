@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:boohtacord_desktop/src/app_state.dart';
@@ -147,6 +148,53 @@ void main() {
 
     expect(find.byType(Dialog), findsNothing);
     expect(tester.binding.focusManager.primaryFocus, same(openerFocus));
+  });
+
+  testWidgets('announces image preview loading and unavailable states', (
+    tester,
+  ) async {
+    final response = Completer<http.Response>();
+    var requestCount = 0;
+    final state = AppState(
+      ApiClient(
+        client: MockClient((_) async {
+          requestCount++;
+          return requestCount == 1 ? httpResponse(404) : response.future;
+        }),
+      ),
+    );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(_app(state));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('attachment-preview-attachment-1')),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.liveRegion == true &&
+            widget.properties.label == 'Загружаем изображение…',
+      ),
+      findsOneWidget,
+    );
+
+    response.complete(httpResponse(404));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.liveRegion == true &&
+            widget.properties.label == 'Вложение удалено или недоступно.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('offers retry for transient protected preview failures', (
