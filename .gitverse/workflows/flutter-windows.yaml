@@ -35,6 +35,31 @@ jobs:
           $env:FLUTTER_ROOT = Join-Path $env:USERPROFILE 'develop\flutter'
           & "$env:FLUTTER_ROOT\bin\flutter.bat" pub get --enforce-lockfile
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Ensure Windows plugin junctions
+        working-directory: desktop
+        shell: powershell
+        run: |
+          $metadata = Get-Content -Raw .flutter-plugins-dependencies | ConvertFrom-Json
+          $linkRoot = Join-Path (Get-Location) 'windows\flutter\ephemeral\.plugin_symlinks'
+          New-Item -ItemType Directory -Force -Path $linkRoot | Out-Null
+
+          foreach ($plugin in $metadata.plugins.windows) {
+            $pluginRoot = [System.IO.Path]::GetFullPath($plugin.path)
+            $pluginCMake = Join-Path $pluginRoot 'windows\CMakeLists.txt'
+            if (-not (Test-Path -LiteralPath $pluginCMake)) { continue }
+
+            $link = Join-Path $linkRoot $plugin.name
+            $linkedCMake = Join-Path $link 'windows\CMakeLists.txt'
+            if (Test-Path -LiteralPath $linkedCMake) { continue }
+            if (Test-Path -LiteralPath $link) {
+              throw "Flutter plugin path exists but is unusable: $link"
+            }
+
+            New-Item -ItemType Junction -Path $link -Target $pluginRoot | Out-Null
+            if (-not (Test-Path -LiteralPath $linkedCMake)) {
+              throw "Could not link Windows Flutter plugin '$($plugin.name)' to '$pluginRoot'"
+            }
+          }
       - name: Run Flutter tests
         working-directory: desktop
         shell: powershell
