@@ -4754,10 +4754,9 @@ class _VoiceParticipantRoom extends StatelessWidget {
               ),
               VoiceConnectionBadge(
                 status: switch (state.voicePhase) {
-                  VoicePhase.connected || VoicePhase.listener =>
-                    VoiceConnectionBadgeStatus.connected,
-                  VoicePhase.joining =>
-                    VoiceConnectionBadgeStatus.connecting,
+                  VoicePhase.connected ||
+                  VoicePhase.listener => VoiceConnectionBadgeStatus.connected,
+                  VoicePhase.joining => VoiceConnectionBadgeStatus.connecting,
                   VoicePhase.reconnecting =>
                     VoiceConnectionBadgeStatus.reconnecting,
                   VoicePhase.leaving => VoiceConnectionBadgeStatus.leaving,
@@ -4997,6 +4996,10 @@ class _VoiceScreenViewer extends StatelessWidget {
         isLocal: showingLocalScreen,
         hasAudio: screenAudioAvailable,
         sourceTrackName: sourceTrackName,
+        senderReport: showingLocalScreen ? state.screenShareSenderReport : null,
+        senderSampledAt: showingLocalScreen
+            ? state.screenShareSenderSampledAt
+            : null,
       ),
     ),
     audioControls: _audioControls,

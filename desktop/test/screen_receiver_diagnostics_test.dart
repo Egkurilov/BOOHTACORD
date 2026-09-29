@@ -1,4 +1,5 @@
 import 'package:boohtacord_desktop/src/screens/screen_receiver_diagnostics.dart';
+import 'package:boohtacord_desktop/src/services/screen_share_metrics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -52,7 +53,7 @@ void main() {
     expect(metrics.packetsLost, isNull);
   });
 
-  testWidgets('reports missing receiver stats and local no-audio preview', (
+  testWidgets('reports missing sender stats and local no-audio preview', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -70,10 +71,7 @@ void main() {
     await tester.tap(find.text('Статистика'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.byTooltip('Метрики приёмника не применимы к предпросмотру'),
-      findsOneWidget,
-    );
+    expect(find.byTooltip('Ожидание статистики отправителя'), findsOneWidget);
     expect(
       tester.widget<Text>(find.text('Профиль источника')).style?.fontSize,
       12,
@@ -84,7 +82,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Предпросмотр без звука'), findsOneWidget);
-    expect(find.text('Нет данных от приёмника'), findsOneWidget);
+    expect(find.text('Сейчас у зрителя'), findsNothing);
+    expect(find.text('Нет данных от приёмника'), findsNothing);
     expect(find.byType(ExpansionTile), findsNothing);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.escape);
@@ -117,6 +116,41 @@ void main() {
     await tester.tap(find.text('Статистика'));
     await tester.pumpAndSettle();
     expect(find.text('1440p · 60 FPS'), findsOneWidget);
+  });
+
+  testWidgets('shows sender measurements in local preview', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ScreenReceiverDiagnostics(
+            track: null,
+            isLocal: true,
+            hasAudio: false,
+            senderReport: const ScreenShareSenderReport(
+              state: 'playing',
+              frameWidth: 2560,
+              frameHeight: 1440,
+              encodedFps: 58.5,
+              bitrateKbps: 4200,
+              roundTripTimeMs: 45,
+            ),
+            senderSampledAt: DateTime(2026, 9, 29, 12, 34, 56),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Статистика'));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Измерено в 12:34:56'), findsOneWidget);
+    expect(find.text('Отправляется'), findsOneWidget);
+    expect(find.text('2560 × 1440'), findsOneWidget);
+    expect(find.text('Кодируется'), findsOneWidget);
+    expect(find.text('58.5 FPS'), findsOneWidget);
+    expect(find.text('4200 кбит/с'), findsOneWidget);
+    expect(find.text('45 мс'), findsOneWidget);
+    expect(find.text('12:34:56'), findsOneWidget);
+    expect(find.text('Сейчас у зрителя'), findsNothing);
+    expect(find.text('Потеряно пакетов'), findsNothing);
   });
 
   testWidgets('keeps the diagnostics popover within a compact viewport', (

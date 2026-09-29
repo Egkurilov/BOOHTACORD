@@ -241,6 +241,8 @@ class AppState extends ChangeNotifier {
   Timer? _screenShareMetricsTimer;
   LocalVideoTrack? _screenShareMetricsTrack;
   ScreenShareSenderSnapshot? _previousScreenShareMetrics;
+  ScreenShareSenderReport? screenShareSenderReport;
+  DateTime? screenShareSenderSampledAt;
   int _screenShareMetricsRevision = 0;
   bool _screenShareMetricsBusy = false;
   int _voiceRosterRevision = 0;
@@ -2642,7 +2644,8 @@ class AppState extends ChangeNotifier {
       screenSharePhase = ScreenSharePhase.sharing;
       screenShareError = null;
       final track = event.publication.track;
-      if (defaultTargetPlatform == TargetPlatform.android &&
+      if ((defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.windows) &&
           track is LocalVideoTrack) {
         _startScreenShareMetrics(track);
       }
@@ -2851,6 +2854,8 @@ class AppState extends ChangeNotifier {
     _screenShareMetricsTimer = null;
     _screenShareMetricsTrack = null;
     _previousScreenShareMetrics = null;
+    screenShareSenderReport = null;
+    screenShareSenderSampledAt = null;
   }
 
   Future<void> _sampleScreenShareMetrics(
@@ -2893,10 +2898,15 @@ class AppState extends ChangeNotifier {
         current: current,
       );
       _previousScreenShareMetrics = current;
-      try {
-        await api.reportScreenShareMetrics(report.toJson());
-      } catch (_) {
-        // Diagnostic telemetry is best-effort and must not interrupt sharing.
+      screenShareSenderReport = report;
+      screenShareSenderSampledAt = DateTime.now();
+      notifyListeners();
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        try {
+          await api.reportScreenShareMetrics(report.toJson());
+        } catch (_) {
+          // Diagnostic telemetry is best-effort and must not interrupt sharing.
+        }
       }
     } catch (_) {
       // Some platform WebRTC implementations do not expose sender stats.

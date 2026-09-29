@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../theme.dart';
+import '../services/screen_share_metrics.dart';
 
 class ScreenReceiverSnapshot {
   const ScreenReceiverSnapshot({
@@ -127,12 +128,16 @@ class ScreenReceiverDiagnostics extends StatefulWidget {
     required this.isLocal,
     required this.hasAudio,
     this.sourceTrackName,
+    this.senderReport,
+    this.senderSampledAt,
   });
 
   final RemoteVideoTrack? track;
   final bool isLocal;
   final bool hasAudio;
   final String? sourceTrackName;
+  final ScreenShareSenderReport? senderReport;
+  final DateTime? senderSampledAt;
 
   @override
   State<ScreenReceiverDiagnostics> createState() =>
@@ -162,7 +167,10 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
   @override
   void didUpdateWidget(covariant ScreenReceiverDiagnostics oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.track != widget.track) _restartSampling();
+    if (oldWidget.track != widget.track ||
+        oldWidget.isLocal != widget.isLocal) {
+      _restartSampling();
+    }
   }
 
   @override
@@ -196,11 +204,11 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
     _sampledAt = null;
     final track = widget.track;
     _sampleStatus = widget.isLocal
-        ? 'Метрики приёмника не применимы к предпросмотру'
+        ? 'Ожидание статистики отправителя'
         : track == null
         ? 'Видеоприёмник недоступен'
         : 'Ожидание статистики приёмника';
-    if (track == null) return;
+    if (track == null || widget.isLocal) return;
     unawaited(_sample(track));
     _timer = Timer.periodic(
       const Duration(seconds: 2),
@@ -248,7 +256,14 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
 
   @override
   Widget build(BuildContext context) {
-    final sampledAt = _sampledAt;
+    final sampledAt = widget.isLocal ? widget.senderSampledAt : _sampledAt;
+    final hasMetrics = widget.isLocal
+        ? widget.senderReport?.state != 'waiting_first_frame' &&
+              widget.senderReport != null
+        : _current != null;
+    final sampleStatus = widget.isLocal && sampledAt != null
+        ? 'Измерено в ${_formatTime(sampledAt)}'
+        : _sampleStatus;
     final compact = MediaQuery.sizeOf(context).width <= 1100;
     return Focus(
       focusNode: _focusNode,
@@ -333,41 +348,45 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
                                 widget.sourceTrackName,
                               ),
                             ),
-                            _DiagnosticRow(
-                              label: 'Сейчас у зрителя',
-                              value: _formatResolution(_current),
-                            ),
-                            _DiagnosticRow(
-                              label: 'Декодировано',
-                              value: _formatMetric(
-                                _metrics?.decodedFps ??
-                                    _current?.framesPerSecond,
-                                'FPS',
+                            if (widget.isLocal)
+                              ..._senderRows(widget.senderReport)
+                            else ...[
+                              _DiagnosticRow(
+                                label: 'Сейчас у зрителя',
+                                value: _formatResolution(_current),
                               ),
-                            ),
-                            _DiagnosticRow(
-                              label: 'Получено',
-                              value: _formatMetric(
-                                _metrics?.bitrateKbps,
-                                'кбит/с',
+                              _DiagnosticRow(
+                                label: 'Декодировано',
+                                value: _formatMetric(
+                                  _metrics?.decodedFps ??
+                                      _current?.framesPerSecond,
+                                  'FPS',
+                                ),
                               ),
-                            ),
-                            _DiagnosticRow(
-                              label: 'Потеряно пакетов',
-                              value: _formatMetric(_metrics?.packetsLost),
-                            ),
-                            _DiagnosticRow(
-                              label: 'Пропущено кадров за интервал',
-                              value: _formatMetric(_metrics?.droppedFrames),
-                            ),
-                            _DiagnosticRow(
-                              label: 'Jitter',
-                              value: _formatMetric(_metrics?.jitterMs, 'мс'),
-                            ),
-                            const _DiagnosticRow(
-                              label: 'RTT',
-                              value: 'Нет данных от приёмника',
-                            ),
+                              _DiagnosticRow(
+                                label: 'Получено',
+                                value: _formatMetric(
+                                  _metrics?.bitrateKbps,
+                                  'кбит/с',
+                                ),
+                              ),
+                              _DiagnosticRow(
+                                label: 'Потеряно пакетов',
+                                value: _formatMetric(_metrics?.packetsLost),
+                              ),
+                              _DiagnosticRow(
+                                label: 'Пропущено кадров за интервал',
+                                value: _formatMetric(_metrics?.droppedFrames),
+                              ),
+                              _DiagnosticRow(
+                                label: 'Jitter',
+                                value: _formatMetric(_metrics?.jitterMs, 'мс'),
+                              ),
+                              const _DiagnosticRow(
+                                label: 'RTT',
+                                value: 'Нет данных от приёмника',
+                              ),
+                            ],
                             _DiagnosticRow(
                               label: 'Аудиодорожка',
                               value: widget.isLocal
@@ -398,12 +417,12 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
             key: _summaryKey,
             link: _summaryLink,
             child: Tooltip(
-              message: _sampleStatus,
+              message: sampleStatus,
               child: Semantics(
                 button: true,
                 expanded: _popoverOpen,
                 label: 'Статистика',
-                hint: _sampleStatus,
+                hint: sampleStatus,
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
@@ -419,12 +438,14 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const SizedBox(
+                          SizedBox(
                             width: 8,
                             height: 8,
                             child: DecoratedBox(
                               decoration: BoxDecoration(
-                                color: GcColors.warning,
+                                color: hasMetrics
+                                    ? GcColors.success
+                                    : GcColors.warning,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -496,6 +517,27 @@ class _DiagnosticRow extends StatelessWidget {
     ),
   );
 }
+
+List<Widget> _senderRows(ScreenShareSenderReport? report) => [
+  _DiagnosticRow(
+    label: 'Отправляется',
+    value: report?.frameWidth == null || report?.frameHeight == null
+        ? 'Нет данных'
+        : '${report!.frameWidth} × ${report.frameHeight}',
+  ),
+  _DiagnosticRow(
+    label: 'Кодируется',
+    value: _formatMetric(report?.encodedFps, 'FPS'),
+  ),
+  _DiagnosticRow(
+    label: 'Отправлено',
+    value: _formatMetric(report?.bitrateKbps, 'кбит/с'),
+  ),
+  _DiagnosticRow(
+    label: 'RTT',
+    value: _formatMetric(report?.roundTripTimeMs, 'мс'),
+  ),
+];
 
 String _formatResolution(ScreenReceiverSnapshot? sample) {
   if (sample == null ||

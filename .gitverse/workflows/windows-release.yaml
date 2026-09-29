@@ -1,0 +1,108 @@
+name: Windows Release
+
+on:
+  push:
+    tags:
+      - 'windows-v*'
+
+permissions:
+  contents: read
+
+jobs:
+  windows-release:
+    runs-on: boohtacord-windows
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v4
+
+      - name: Verify version and Flutter SDK
+        working-directory: desktop
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tagVersion = $env:GITHUB_REF_NAME -replace '^windows-v', ''
+          $versionLine = Select-String -Path pubspec.yaml -Pattern '^version:\s*(\S+)'
+          if ($null -eq $versionLine) { throw 'Could not read app version.' }
+          $pubspecVersion = $versionLine.Matches[0].Groups[1].Value.Split('+')[0]
+          if ($tagVersion -ne $pubspecVersion) {
+            throw "Release tag version $tagVersion differs from $pubspecVersion."
+          }
+          $flutter = Join-Path $env:USERPROFILE 'develop\flutter\bin\flutter.bat'
+          if (-not (Test-Path -LiteralPath $flutter)) { throw 'Flutter SDK missing.' }
+          $version = (& $flutter --version --machine | ConvertFrom-Json).frameworkVersion
+          if ($LASTEXITCODE -ne 0 -or $version -ne '3.47.5') {
+            throw "Expected Flutter 3.47.5, got $version"
+          }
+
+      - name: Resolve locked Flutter dependencies
+        working-directory: desktop
+        shell: powershell
+        run: |
+          $env:FLUTTER_ROOT = Join-Path $env:USERPROFILE 'develop\flutter'
+          & "$env:FLUTTER_ROOT\bin\flutter.bat" pub get --enforce-lockfile
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Ensure Windows plugin junctions
+        working-directory: desktop
+        shell: powershell
+        run: |
+          $metadata = Get-Content -Raw .flutter-plugins-dependencies | ConvertFrom-Json
+          $linkRoot = Join-Path (Get-Location) 'windows\flutter\ephemeral\.plugin_symlinks'
+          New-Item -ItemType Directory -Force -Path $linkRoot | Out-Null
+          foreach ($plugin in $metadata.plugins.windows) {
+            $pluginRoot = [System.IO.Path]::GetFullPath($plugin.path)
+            $pluginCMake = Join-Path $pluginRoot 'windows\CMakeLists.txt'
+            if (-not (Test-Path -LiteralPath $pluginCMake)) { continue }
+            $link = Join-Path $linkRoot $plugin.name
+            if (Test-Path -LiteralPath (Join-Path $link 'windows\CMakeLists.txt')) { continue }
+            if (Test-Path -LiteralPath $link) { throw "Unusable plugin path: $link" }
+            New-Item -ItemType Junction -Path $link -Target $pluginRoot | Out-Null
+            if (-not (Test-Path -LiteralPath (Join-Path $link 'windows\CMakeLists.txt'))) {
+              throw "Could not link Windows plugin: $($plugin.name)"
+            }
+          }
+
+      - name: Test, analyze and build Windows client
+        working-directory: desktop
+        shell: powershell
+        run: |
+          $flutter = Join-Path $env:USERPROFILE 'develop\flutter\bin\flutter.bat'
+          & $flutter test --no-pub
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $flutter analyze --no-pub --no-fatal-infos
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $flutter build windows --release --no-pub
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Package complete Windows x64 application
+        working-directory: desktop
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $release = Join-Path (Get-Location) 'build\windows\x64\runner\Release'
+          if (-not (Test-Path -LiteralPath (Join-Path $release 'boohtacord_desktop.exe'))) {
+            throw 'Windows executable missing.'
+          }
+          $assets = Join-Path (Get-Location) 'build\release-assets'
+          New-Item -ItemType Directory -Force -Path $assets | Out-Null
+          $archive = Join-Path $assets "BOOHTACORD-$($env:GITHUB_REF_NAME)-x64.zip"
+          Compress-Archive -Path (Join-Path $release '*') -DestinationPath $archive -Force
+          if ((Get-Item -LiteralPath $archive).Length -gt 95000000) {
+            throw 'Windows archive exceeds GitVerse asset size limit.'
+          }
+
+      - name: Publish GitVerse Windows release
+        uses: actions/create-release@v1
+        with:
+          api_key: ${{ secrets.RELEASE_API_KEY }}
+          title: BOOHTACORD Windows ${{ github.ref_name }}
+          body: |
+            Сборка приложения BOOHTACORD для Windows x64.
+
+            Включает изменения общего Flutter-клиента из актуальной Android-версии и статистику отправителя в локальном предпросмотре демонстрации экрана. Показатели приёмника отображаются при просмотре чужой трансляции.
+
+            Распакуйте архив целиком и запустите boohtacord_desktop.exe.
+          files: |
+            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-x64.zip
+          draft: false
+          pre_release: false
