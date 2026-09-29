@@ -1,0 +1,34 @@
+{
+  "id": "QA-112",
+  "kind": "voice-quality-accessibility-and-macos-build",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "summary": "Separated the rapidly changing voice ping from Flutter's live-region connection status so screen readers are not prompted every two seconds. Connection status remains announced; quality and ping remain separately accessible. The current app test suite, analyzer, and macOS debug build pass. Native screen-reader/runtime acceptance remains open.",
+  "checks": [
+    {
+      "name": "Voice status and ping use separate semantics",
+      "command": "cd desktop && flutter test --no-pub test/voice_connection_badge_test.dart test/voice_connection_quality_test.dart test/workspace_screen_test.dart --reporter=compact",
+      "status": "PASS",
+      "observation": "Tests verify the connection state is the live region while quality/ping keeps a separate accessible label that is not a live region. The workspace fixture renders compact and regular docks."
+    },
+    {
+      "name": "Flutter test suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 251 Flutter widget and unit tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS debug build",
+      "command": "cd desktop && flutter build macos --debug",
+      "status": "PASS",
+      "observation": "Built build/macos/Build/Products/Debug/BOOHTACORD.app. This validates compilation, not signed release behavior or runtime session persistence."
+    }
+  ],
+  "remaining": "Verify VoiceOver, NVDA and TalkBack behavior with changing ping and actual LiveKit stats on native devices. ADB reported no attached devices, and no live peer test was performed. Signed macOS Release/Keychain persistence and full macOS/Windows/Android voice/screen-share acceptance remain open under P0."
+}

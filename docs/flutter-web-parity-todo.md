@@ -115,6 +115,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Добавить тот же индикатор в web dock, обновлять его раз в две секунды только
   при активном voice-соединении и останавливать polling при reconnect/leave —
   [QA-111](../evidence/flutter/qa111-web-voice-connection-quality-2026-09-29-001.json).
+- [x] Не объявлять каждый ping через Flutter live region: live announcement
+  остаётся только у состояния/канала, а quality/ping имеет отдельную обычную
+  accessible label; полный suite, analyzer и свежая macOS Debug-сборка прошли —
+  [QA-112](../evidence/flutter/qa112-voice-quality-accessibility-macos-build-2026-09-29-001.json).
   Реальное обновление метрик и доступность RTT проверить с подключённым peer на
   Android/macOS/Windows и в браузере; фактический ping зависит от платформенной
   WebRTC-статистики.
