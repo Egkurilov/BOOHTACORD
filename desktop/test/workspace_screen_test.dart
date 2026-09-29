@@ -836,6 +836,8 @@ void main() {
     state.voicePhase = VoicePhase.joining;
     state.notifyListeners();
     await tester.pump();
+    expect(find.text('Подключаемся'), findsOneWidget);
+    expect(find.text('Подключено'), findsNothing);
     expect(find.text('Подключаемся к голосовому каналу'), findsOneWidget);
     expect(find.text('Соединяемся с голосовой комнатой.'), findsOneWidget);
     final dockShareAction = find.descendant(

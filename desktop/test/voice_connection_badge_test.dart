@@ -10,7 +10,11 @@ void main() {
     final semantics = tester.ensureSemantics();
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(body: VoiceConnectionBadge(reconnecting: true)),
+        home: Scaffold(
+          body: VoiceConnectionBadge(
+            status: VoiceConnectionBadgeStatus.reconnecting,
+          ),
+        ),
       ),
     );
 
@@ -21,14 +25,19 @@ void main() {
         (widget) =>
             widget is Semantics &&
             widget.properties.liveRegion == true &&
-            widget.properties.label == 'Восстанавливаем связь',
+            widget.properties.label ==
+                'Восстанавливаем голосовое соединение',
       ),
       findsOneWidget,
     );
 
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(body: VoiceConnectionBadge(reconnecting: false)),
+        home: Scaffold(
+          body: VoiceConnectionBadge(
+            status: VoiceConnectionBadgeStatus.connected,
+          ),
+        ),
       ),
     );
     expect(find.text('Подключено'), findsOneWidget);
@@ -42,7 +51,7 @@ void main() {
       const MaterialApp(
         home: Scaffold(
           body: VoiceConnectionBadge(
-            reconnecting: false,
+            status: VoiceConnectionBadgeStatus.connected,
             quality: ConnectionQuality.excellent,
             pingMs: 42,
           ),
@@ -88,5 +97,54 @@ void main() {
 
     expect(find.text('—'), findsOneWidget);
     expect(find.text('0 мс'), findsNothing);
+  });
+
+  testWidgets('announces joining without claiming connection or quality', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: VoiceConnectionBadge(
+            status: VoiceConnectionBadgeStatus.connecting,
+            quality: ConnectionQuality.excellent,
+            pingMs: 42,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Подключаемся'), findsOneWidget);
+    expect(find.text('Подключено'), findsNothing);
+    expect(find.text('42 мс'), findsNothing);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.liveRegion == true &&
+            widget.properties.label == 'Подключаемся к голосовому каналу',
+      ),
+      findsOneWidget,
+    );
+    semantics.dispose();
+  });
+
+  testWidgets('announces leaving without claiming the room is connected', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: VoiceConnectionBadge(
+            status: VoiceConnectionBadgeStatus.leaving,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Завершаем'), findsOneWidget);
+    expect(find.text('Подключено'), findsNothing);
+    expect(find.byType(VoiceQualityIndicator), findsNothing);
   });
 }

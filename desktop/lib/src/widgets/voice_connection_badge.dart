@@ -4,22 +4,62 @@ import 'package:livekit_client/livekit_client.dart' show ConnectionQuality;
 import '../services/voice_connection_quality.dart';
 import '../theme.dart';
 
+enum VoiceConnectionBadgeStatus {
+  disconnected,
+  connecting,
+  connected,
+  reconnecting,
+  leaving,
+  error,
+}
+
 class VoiceConnectionBadge extends StatelessWidget {
   const VoiceConnectionBadge({
     super.key,
-    required this.reconnecting,
+    required this.status,
     this.quality = ConnectionQuality.unknown,
     this.pingMs,
   });
 
-  final bool reconnecting;
+  final VoiceConnectionBadgeStatus status;
   final ConnectionQuality quality;
   final int? pingMs;
 
   @override
   Widget build(BuildContext context) {
-    final status = reconnecting ? 'Восстанавливаем связь' : 'Подключено';
-    final color = reconnecting ? GcColors.warning : GcColors.success;
+    final (visibleStatus, announcement, color) = switch (status) {
+      VoiceConnectionBadgeStatus.disconnected => (
+        'Не подключено',
+        'Голос не подключён',
+        GcColors.muted,
+      ),
+      VoiceConnectionBadgeStatus.connecting => (
+        'Подключаемся',
+        'Подключаемся к голосовому каналу',
+        GcColors.warning,
+      ),
+      VoiceConnectionBadgeStatus.connected => (
+        'Подключено',
+        'Подключено',
+        GcColors.success,
+      ),
+      VoiceConnectionBadgeStatus.reconnecting => (
+        'Восстанавливаем связь',
+        'Восстанавливаем голосовое соединение',
+        GcColors.warning,
+      ),
+      VoiceConnectionBadgeStatus.leaving => (
+        'Завершаем',
+        'Завершаем голосовое подключение',
+        GcColors.muted,
+      ),
+      VoiceConnectionBadgeStatus.error => (
+        'Ошибка подключения',
+        'Ошибка голосового подключения',
+        GcColors.danger,
+      ),
+    };
+    final connected = status == VoiceConnectionBadgeStatus.connected;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
@@ -32,7 +72,7 @@ class VoiceConnectionBadge extends StatelessWidget {
           Semantics(
             container: true,
             liveRegion: true,
-            label: status,
+            label: announcement,
             child: ExcludeSemantics(
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -44,7 +84,7 @@ class VoiceConnectionBadge extends StatelessWidget {
                   ),
                   const SizedBox(width: 7),
                   Text(
-                    status,
+                    visibleStatus,
                     style: TextStyle(
                       color: color,
                       fontSize: 12,
@@ -55,7 +95,7 @@ class VoiceConnectionBadge extends StatelessWidget {
               ),
             ),
           ),
-          if (!reconnecting) ...[
+          if (connected) ...[
             const SizedBox(width: 10),
             VoiceQualityIndicator(quality: quality, pingMs: pingMs),
           ],
