@@ -535,6 +535,43 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('deafened participant status stays centered on one line', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    state.selectedChannel = _PortraitApi.voiceChannel;
+    state.voiceChannel = _PortraitApi.voiceChannel;
+    state.voicePhase = VoicePhase.connected;
+    state.deafened = true;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final status = find.text('Звук и микрофон выключены');
+    final statusText = tester.widget<Text>(status);
+    final card = find.byKey(const ValueKey('voice-participant-card:self'));
+    expect(statusText.textAlign, TextAlign.center);
+    expect(statusText.maxLines, 1);
+    expect(statusText.overflow, TextOverflow.ellipsis);
+    expect(
+      tester.getRect(status).center.dx,
+      closeTo(tester.getRect(card).center.dx, 0.1),
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('shows a retryable microphone-unavailable listener state', (
     tester,
   ) async {

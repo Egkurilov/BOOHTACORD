@@ -5433,9 +5433,13 @@ class _VoiceParticipantCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               SizedBox(
+                width: double.infinity,
                 height: 16,
                 child: Text(
                   presentation.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     color: presentation.isSpeaking
                         ? GcColors.success
