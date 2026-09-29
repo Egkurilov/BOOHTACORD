@@ -219,8 +219,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-103](../evidence/flutter/qa103-desktop-screen-share-rollback-2026-09-29-001.json).
 - [ ] На GitVerse Windows runner, где Release-сборка теперь проходит, проверить
   захват выбранных screen/window sources, включая свёрнутое/недоступное окно;
-  проверить обновления preview и отсутствие чёрного трека. Runtime Windows C++
+  проверить обновления preview и отсутствие чёрного трека; также вызвать stale
+  source, video capturer/source/track creation и `CS_FAILED` после старта
+  loopback audio, убедившись, что текущий запрос очищен, посторонняя активная
+  дорожка не остановлена и повторный запуск не дублирует ресурсы. Runtime Windows C++
   capture остаётся непроверенным — [QA-98](../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json),
+  [QA-103](../evidence/flutter/qa103-desktop-screen-share-rollback-2026-09-29-001.json),
   [QA-81](../evidence/flutter/qa81-gitverse-windows-runner-ci-2026-09-29-004.json).
 
 ## P1 — Admin и переписка
