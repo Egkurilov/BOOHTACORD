@@ -56,8 +56,18 @@ void main() {
       find.byWidgetPredicate(
         (widget) =>
             widget is Semantics &&
+            widget.properties.liveRegion == true &&
+            widget.properties.label == 'Подключено',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.liveRegion != true &&
             widget.properties.label ==
-                'Подключено · качество соединения: Отличное · ping 42 мс',
+                'Качество соединения: Отличное · ping 42 мс',
       ),
       findsOneWidget,
     );

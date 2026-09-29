@@ -19,47 +19,47 @@ class VoiceConnectionBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = reconnecting ? 'Восстанавливаем связь' : 'Подключено';
-    final qualityLabel = voiceConnectionQualityLabel(quality);
-    final pingLabel = pingMs == null ? '—' : '$pingMs мс';
-    final label = reconnecting
-        ? status
-        : '$status · качество соединения: $qualityLabel · ping $pingLabel';
     final color = reconnecting ? GcColors.warning : GcColors.success;
-    return Semantics(
-      container: true,
-      liveRegion: true,
-      label: label,
-      child: ExcludeSemantics(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Semantics(
+            container: true,
+            liveRegion: true,
+            label: status,
+            child: ExcludeSemantics(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 7),
+                  Text(
+                    status,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 7),
-              Text(
-                status,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (!reconnecting) ...[
-                const SizedBox(width: 10),
-                VoiceQualityIndicator(quality: quality, pingMs: pingMs),
-              ],
-            ],
+            ),
           ),
-        ),
+          if (!reconnecting) ...[
+            const SizedBox(width: 10),
+            VoiceQualityIndicator(quality: quality, pingMs: pingMs),
+          ],
+        ],
       ),
     );
   }

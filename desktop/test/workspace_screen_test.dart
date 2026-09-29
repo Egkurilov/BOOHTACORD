@@ -758,6 +758,28 @@ void main() {
 
     expect(find.text('В голосовом канале'), findsOneWidget);
     expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.liveRegion == true &&
+            widget.properties.label ==
+                'В голосовом канале · ${state.voiceChannel!.name}',
+      ),
+      findsOneWidget,
+    );
+    final qualitySemantics = tester
+        .widgetList<Semantics>(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is Semantics &&
+                widget.properties.label ==
+                    'Качество соединения: Нет данных · ping —',
+          ),
+        )
+        .toList();
+    expect(qualitySemantics, isNotEmpty);
+    expect(qualitySemantics.every((item) => item.properties.liveRegion != true), isTrue);
+    expect(
       find.text('Вы можете открыть другой канал: голос останется активным.'),
       findsOneWidget,
     );

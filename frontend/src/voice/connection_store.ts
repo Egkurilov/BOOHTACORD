@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
 
 import { useAuthorDirectory } from '../identity/author_directory'
 import { VoiceSession, type ActiveVoiceSession } from './voice_session'
@@ -20,6 +20,8 @@ import { voiceLeaseRevocationMessage } from './voice_lease_revocation_reason'
 import { voiceParticipantName } from './voice_participant_name'
 import { observeStreamStarts } from './stream_start_runtime'
 import { installScreenSenderReporting } from './screen_sender_reporting'
+import type { VoiceConnectionQuality } from './voice_connection_quality'
+import { monitorVoiceConnectionStats } from './voice_connection_stats_polling'
 
 export type VoiceConnectionState = 'IDLE' | 'JOINING' | 'RECONNECTING' | 'CONNECTED' | 'LISTENER' | 'LEAVING' | 'ERROR'
 export type { ScreenShareState } from './screen_controls'
@@ -43,7 +45,28 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   const screenViewerEnded = ref(false)
   const selectedScreenStreamId = ref<string | null>(null)
   const state = ref<VoiceConnectionState>('IDLE')
+  const connectionQuality = ref<VoiceConnectionQuality>('UNKNOWN')
+  const pingMs = ref<number | null>(null)
   const canJoin = computed(() => state.value === 'IDLE' || state.value === 'ERROR')
+  let stopVoiceStatsPolling: (() => void) | null = null
+  watch([active, state], ([current, phase]) => {
+    const readStats = current?.room.readVoiceConnectionStats
+    stopVoiceStatsPolling?.()
+    stopVoiceStatsPolling = null
+    connectionQuality.value = 'UNKNOWN'
+    pingMs.value = null
+    if (!current || (phase !== 'CONNECTED' && phase !== 'LISTENER') || !readStats) return
+    stopVoiceStatsPolling = monitorVoiceConnectionStats(readStats.bind(current.room), (stats) => {
+      if (active.value !== current || (state.value !== 'CONNECTED' && state.value !== 'LISTENER')) return
+      connectionQuality.value = stats.quality
+      pingMs.value = stats.pingMs
+    }, () => {
+      if (active.value !== current) return
+      connectionQuality.value = 'UNKNOWN'
+      pingMs.value = null
+    })
+  }, { immediate: true, flush: 'sync' })
+  onScopeDispose(() => stopVoiceStatsPolling?.())
   const { refreshScreenDiagnostics, startScreen, stopScreen } = createScreenControls(session.screen, active, screenError, screenProfile, screenState, screenDiagnostics)
   installScreenSenderReporting(screenState, screenDiagnostics, refreshScreenDiagnostics)
   const screenViewer = createScreenViewerControls(session, rawScreenViewerCards, selectedScreenStreamId, screenViewerError, screenViewerEnded)
@@ -115,5 +138,5 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
     if (reason && active.value) await revocation.revokeLease(active.value.leaseId, reason)
   }
 
-  return { active, audioProcessingDiagnostics, canJoin, clearScreenStream: screenViewer.clear, deafenChanging, deafened, disconnectLocal: revocation.disconnectLocal, error, join, leave, microphoneMuted, microphonePermissionDenied, refreshScreenDiagnostics, revokeLease: revocation.revokeLease, screenDiagnostics, screenError, screenProfile, screenState, screenViewerCards, screenViewerEnded, screenViewerError, selectScreenStream: screenViewer.select, selectedScreenStreamId, screenAudioMuted: screenViewer.audioMuted, setAudioProcessing, setMicrophoneMuted, startScreen, state, stopScreen, switchAudioDevice, toggleDeafen, toggleMicrophone, toggleScreenAudio: () => screenViewer.toggleAudio(volume.selectedScreenVolume.value, volume.setScreenVolume), transferRequired, voiceVolumeError: volume.error, voiceVolumeParticipants, selfSpeaking: volume.selfSpeaking, selectedScreenAudioVolume: volume.selectedScreenVolume, setParticipantVolume: volume.setParticipantVolume, setScreenVolume: volume.setScreenVolume }
+  return { active, audioProcessingDiagnostics, canJoin, clearScreenStream: screenViewer.clear, connectionQuality, deafenChanging, deafened, disconnectLocal: revocation.disconnectLocal, error, join, leave, microphoneMuted, microphonePermissionDenied, pingMs, refreshScreenDiagnostics, revokeLease: revocation.revokeLease, screenDiagnostics, screenError, screenProfile, screenState, screenViewerCards, screenViewerEnded, screenViewerError, selectScreenStream: screenViewer.select, selectedScreenStreamId, screenAudioMuted: screenViewer.audioMuted, setAudioProcessing, setMicrophoneMuted, startScreen, state, stopScreen, switchAudioDevice, toggleDeafen, toggleMicrophone, toggleScreenAudio: () => screenViewer.toggleAudio(volume.selectedScreenVolume.value, volume.setScreenVolume), transferRequired, voiceVolumeError: volume.error, voiceVolumeParticipants, selfSpeaking: volume.selfSpeaking, selectedScreenAudioVolume: volume.selectedScreenVolume, setParticipantVolume: volume.setParticipantVolume, setScreenVolume: volume.setScreenVolume }
 })

@@ -14,6 +14,7 @@ import type { RemoteVoicePlaybackController } from './livekit_screen_viewer_adap
 import type { RemoteParticipantController } from './remote_participant_controller'
 import { ScreenViewerController } from './screen_viewer_controller'
 import type { ScreenDiagnostics } from './screen_diagnostics'
+import type { VoiceConnectionStats } from './voice_connection_quality'
 import { awaitMediaConnection, mediaConnectionTimeoutMs } from './connection_deadline'
 import { defaultLiveKitRoomFactory } from './livekit_room_factory'
 
@@ -39,6 +40,7 @@ export interface VoiceRoom {
   disconnect(): Promise<void>
   on(event: 'reconnecting' | 'reconnected' | 'disconnected', listener: () => void): VoiceRoom
   readScreenDiagnostics?(): Promise<ScreenDiagnostics>
+  readVoiceConnectionStats?(): Promise<VoiceConnectionStats>
   participantCards?: RemoteParticipantController
   remoteVoices?: RemoteVoicePlaybackController
   screenViewer?: ScreenViewerController

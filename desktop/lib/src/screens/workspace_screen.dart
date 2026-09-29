@@ -16,7 +16,6 @@ import '../services/pinned_screen_mini_player_policy.dart';
 import '../services/api_client.dart';
 import '../services/voice_avatar_palette.dart';
 import '../services/voice_participant_presentation.dart';
-import '../services/voice_connection_quality.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
 import '../widgets/message_attachment_composer.dart';
@@ -5951,68 +5950,73 @@ class _VoiceDockState extends State<_VoiceDock> {
           children: [
             Padding(
               padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 0),
-              child: Semantics(
-                container: true,
-                liveRegion: true,
-                label:
-                    '$_status · ${state.voiceChannel!.name} · качество соединения: '
-                    '${voiceConnectionQualityLabel(state.voiceConnectionQuality)} · ping '
-                    '${state.voicePingMs == null ? '—' : '${state.voicePingMs} мс'}',
-                child: Row(
-                  children: [
-                    _StatusDot(
-                      color: state.voicePhase == VoicePhase.reconnecting
-                          ? GcColors.warning
-                          : GcColors.success,
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _status,
-                            style: TextStyle(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      container: true,
+                      liveRegion: true,
+                      label: '$_status · ${state.voiceChannel!.name}',
+                      child: ExcludeSemantics(
+                        child: Row(
+                          children: [
+                            _StatusDot(
                               color: state.voicePhase == VoicePhase.reconnecting
                                   ? GcColors.warning
                                   : GcColors.success,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            state.voiceChannel!.name,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: GcColors.textSecondary,
-                              fontSize: 11,
+                            const SizedBox(width: 9),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _status,
+                                    style: TextStyle(
+                                      color: state.voicePhase == VoicePhase.reconnecting
+                                          ? GcColors.warning
+                                          : GcColors.success,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    state.voiceChannel!.name,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: GcColors.textSecondary,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (state.voicePhase == VoicePhase.connected ||
-                        state.voicePhase == VoicePhase.listener)
-                      VoiceQualityIndicator(
-                        quality: state.voiceConnectionQuality,
-                        pingMs: state.voicePingMs,
-                        compact: compact,
-                      ),
-                    if (compact)
-                      IconButton(
-                        tooltip: _expanded
-                            ? 'Свернуть голосовую панель'
-                            : 'Развернуть голосовую панель',
-                        onPressed: () => setState(() => _expanded = !_expanded),
-                        icon: Icon(
-                          _expanded
-                              ? Icons.keyboard_arrow_down_rounded
-                              : Icons.keyboard_arrow_up_rounded,
+                          ],
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                  ),
+                  if (state.voicePhase == VoicePhase.connected ||
+                      state.voicePhase == VoicePhase.listener)
+                    VoiceQualityIndicator(
+                      quality: state.voiceConnectionQuality,
+                      pingMs: state.voicePingMs,
+                      compact: compact,
+                    ),
+                  if (compact)
+                    IconButton(
+                      tooltip: _expanded
+                          ? 'Свернуть голосовую панель'
+                          : 'Развернуть голосовую панель',
+                      onPressed: () => setState(() => _expanded = !_expanded),
+                      icon: Icon(
+                        _expanded
+                            ? Icons.keyboard_arrow_down_rounded
+                            : Icons.keyboard_arrow_up_rounded,
+                      ),
+                    ),
+                ],
               ),
             ),
             if (!compact || _expanded) ...[

@@ -5,6 +5,7 @@ import type { ScreenShareState, VoiceConnectionState } from './connection_store'
 import type { VoiceActivationMode } from './activation_store'
 import { streamStartChime, streamStartNotice } from './stream_start_runtime'
 import { screenCaptureSupported, screenCaptureUnavailableMessage } from './screen_capture_support'
+import { voiceConnectionQualityLabel, type VoiceConnectionQuality } from './voice_connection_quality'
 
 const props = withDefaults(defineProps<{
   channel: TopologyChannel | null
@@ -16,8 +17,10 @@ const props = withDefaults(defineProps<{
   microphoneMuted: boolean
   microphonePermissionDenied: boolean
   screenShareState?: ScreenShareState
+  connectionQuality?: VoiceConnectionQuality
+  pingMs?: number | null
   state: VoiceConnectionState
-}>(), { screenShareState: 'IDLE' })
+}>(), { screenShareState: 'IDLE', connectionQuality: 'UNKNOWN', pingMs: null })
 const emit = defineEmits<{ leave: []; startScreen: []; stopScreen: []; toggleDeafen: []; toggleMicrophone: [] }>()
 const streamSoundEnabled = streamStartChime.enabled
 const screenCaptureAvailable = screenCaptureSupported()
@@ -28,6 +31,9 @@ function toggleStreamSound(): void {
 }
 const connected = computed(() => (props.channel !== null || props.activeSession) && (props.state === 'CONNECTED' || props.state === 'LISTENER'))
 const screenShareBusy = computed(() => props.screenShareState === 'STARTING' || props.screenShareState === 'STOPPING')
+const connectionQualityLabel = computed(() => voiceConnectionQualityLabel(props.connectionQuality))
+const connectionPingLabel = computed(() => props.pingMs === null ? '—' : `${props.pingMs} мс`)
+const connectionQualityDescription = computed(() => `Качество соединения: ${connectionQualityLabel.value} · ping ${connectionPingLabel.value}`)
 const status = computed(() => {
   if (props.state === 'JOINING') return 'Подключаемся к голосовому каналу'
   if (props.state === 'RECONNECTING') return 'Восстанавливаем голосовое соединение'
@@ -51,6 +57,10 @@ const hint = computed(() => {
     <div class="voice-dock-header">
       <span class="status-dot" :class="{ connected }" aria-hidden="true"></span>
       <p class="voice-status" role="status" aria-atomic="true">{{ status }}<span v-if="channel" class="voice-status-channel"> · {{ channel.name }}</span></p>
+      <span v-if="connected" class="voice-quality" :class="`voice-quality--${connectionQuality.toLowerCase()}`" role="img" :aria-label="connectionQualityDescription" :title="connectionQualityDescription">
+        <svg class="voice-quality-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 13h3v5H2zM7 9h3v9H7zM12 5h3v13h-3zM17 1h2v17h-2z" /></svg>
+        <span>{{ connectionPingLabel }}</span>
+      </span>
     </div>
     <p class="voice-hint">{{ hint }}</p>
     <p v-if="streamStartNotice && activeSession" class="voice-stream-alert-notice" role="status">В канале началась демонстрация экрана</p>

@@ -3,6 +3,7 @@ import type { VoiceRoom } from './livekit_gateway'
 import { adaptiveMediaRoomOptions } from './media_publishing'
 import { BoundedVoiceReconnectPolicy } from './bounded_voice_reconnect_policy'
 import { inspectLiveKitScreenDiagnostics, type LiveKitScreenVideoTrack } from './screen_livekit_diagnostics'
+import { readVoiceConnectionStats } from './voice_connection_quality'
 
 export function wireLiveKitRoom(
   room: VoiceRoom,
@@ -55,6 +56,11 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
     const video = liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.videoTrack as LiveKitScreenVideoTrack | undefined
     const audio = liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShareAudio)?.audioTrack
     return inspectLiveKitScreenDiagnostics(video, Boolean(audio), liveKitRoom.localParticipant.connectionQuality)
+  }
+  room.readVoiceConnectionStats = async () => {
+    const audio = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack
+    const report = await audio?.getRTCStatsReport()
+    return readVoiceConnectionStats(liveKitRoom.localParticipant.connectionQuality, report?.values())
   }
   return room
 }

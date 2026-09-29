@@ -109,11 +109,15 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-54](../evidence/flutter/qa54-voice-stream-start-alert-web-parity-2026-09-28-001.json).
   Слышимость системного сигнала и реальные LiveKit события на macOS/Windows/
   Android остаются открытой device-приёмкой.
-- [x] Показывать в голосовой комнате и постоянном dock цветной индикатор качества
-  LiveKit и измеренный ping по RTT аудиодорожки; при недоступном RTT показывать
-  «—», не подменяя его screen-share статистикой — [QA-110](../evidence/flutter/qa110-voice-connection-quality-2026-09-29-001.json).
-  Реальное обновление метрик и доступность RTT проверить на Android/macOS/Windows
-  с подключённым peer; фактический ping зависит от статистики платформы.
+- [x] Показывать во Flutter voice-room и постоянном dock цветной индикатор
+  качества LiveKit и измеренный ping по RTT аудиодорожки; при недоступном RTT
+  показывать «—», не подменяя его screen-share статистикой — [QA-110](../evidence/flutter/qa110-voice-connection-quality-2026-09-29-001.json).
+- [x] Добавить тот же индикатор в web dock, обновлять его раз в две секунды только
+  при активном voice-соединении и останавливать polling при reconnect/leave —
+  [QA-111](../evidence/flutter/qa111-web-voice-connection-quality-2026-09-29-001.json).
+  Реальное обновление метрик и доступность RTT проверить с подключённым peer на
+  Android/macOS/Windows и в браузере; фактический ping зависит от платформенной
+  WebRTC-статистики.
 - [x] Добавить в постоянный voice dock start/stop демонстрации с тем же picker
   качества и источника, что и в voice viewer; блокировать запуск во время
   joining/reconnecting и переходных состояний публикации — локальная проверка
