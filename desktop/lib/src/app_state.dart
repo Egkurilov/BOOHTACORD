@@ -2656,14 +2656,19 @@ class AppState extends ChangeNotifier {
       }
       _voiceConnectionStatsBusy = true;
       try {
-        final reports = await room.getPublisherConnectionStats();
+        final reports = await room.getPeerConnectionStats();
         if (revision != _voiceConnectionStatsRevision ||
             !identical(_room, room) ||
             (voicePhase != VoicePhase.connected &&
                 voicePhase != VoicePhase.listener)) {
           return;
         }
-        final ping = voiceRttMillisecondsFromReports(reports);
+        final ping = voicePingAfterMeasurement(
+          previousPingMilliseconds: _voicePingMs,
+          measuredPingMilliseconds: voiceRttMillisecondsFromPeerConnections(
+            reports,
+          ),
+        );
         if (_voicePingMs != ping) {
           _voicePingMs = ping;
           notifyListeners();

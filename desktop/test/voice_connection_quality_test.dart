@@ -27,6 +27,30 @@ void main() {
     expect(voiceRttMilliseconds(61), isNull);
   });
 
+  test('retains the latest ping when a connected stats sample has no RTT', () {
+    expect(
+      voicePingAfterMeasurement(
+        previousPingMilliseconds: 42,
+        measuredPingMilliseconds: null,
+      ),
+      42,
+    );
+    expect(
+      voicePingAfterMeasurement(
+        previousPingMilliseconds: 42,
+        measuredPingMilliseconds: 67,
+      ),
+      67,
+    );
+    expect(
+      voicePingAfterMeasurement(
+        previousPingMilliseconds: null,
+        measuredPingMilliseconds: null,
+      ),
+      isNull,
+    );
+  });
+
   test('uses selected ICE-pair RTT when microphone feedback is absent', () {
     final reports = [
       rtc.StatsReport('transport-1', 'transport', 1, {
@@ -45,6 +69,51 @@ void main() {
     ];
 
     expect(voiceRttMillisecondsFromReports(reports), 67);
+  });
+
+  test('reads selected ICE-pair RTT from subscriber connection', () {
+    final subscriberReports = [
+      rtc.StatsReport('transport-sub', 'transport', 1, {
+        'selectedCandidatePairId': 'pair-sub',
+      }),
+      rtc.StatsReport('pair-sub', 'candidate-pair', 1, {
+        'state': 'succeeded',
+        'nominated': true,
+        'currentRoundTripTime': 0.083,
+      }),
+    ];
+
+    expect(
+      voiceRttMillisecondsFromPeerConnections([const [], subscriberReports]),
+      83,
+    );
+  });
+
+  test('prefers audio RTT across peer connections over ICE RTT', () {
+    final publisherReports = [
+      rtc.StatsReport('audio-remote', 'remote-inbound-rtp', 1, {
+        'kind': 'audio',
+        'roundTripTime': 0.041,
+      }),
+    ];
+    final subscriberReports = [
+      rtc.StatsReport('transport-sub', 'transport', 1, {
+        'selectedCandidatePairId': 'pair-sub',
+      }),
+      rtc.StatsReport('pair-sub', 'candidate-pair', 1, {
+        'state': 'succeeded',
+        'nominated': true,
+        'currentRoundTripTime': 0.083,
+      }),
+    ];
+
+    expect(
+      voiceRttMillisecondsFromPeerConnections([
+        publisherReports,
+        subscriberReports,
+      ]),
+      41,
+    );
   });
 
   test('prefers audio remote-inbound RTT and ignores stale ICE pairs', () {

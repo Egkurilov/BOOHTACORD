@@ -17,8 +17,22 @@ int? voiceRttMilliseconds(num? seconds) {
   return (seconds * 1000).round();
 }
 
+int? voicePingAfterMeasurement({
+  required int? previousPingMilliseconds,
+  required int? measuredPingMilliseconds,
+}) => measuredPingMilliseconds ?? previousPingMilliseconds;
+
 int? voiceRttMillisecondsFromReports(Iterable<rtc.StatsReport> reports) {
-  final items = reports.toList(growable: false);
+  return voiceRttMillisecondsFromPeerConnections([reports]);
+}
+
+int? voiceRttMillisecondsFromPeerConnections(
+  Iterable<Iterable<rtc.StatsReport>> peerConnectionReports,
+) {
+  final connections = peerConnectionReports
+      .map((reports) => reports.toList(growable: false))
+      .toList(growable: false);
+  final items = connections.expand((reports) => reports);
   final inboundAudio = items.where(
     (report) =>
         report.type == 'remote-inbound-rtp' &&
@@ -39,6 +53,14 @@ int? voiceRttMillisecondsFromReports(Iterable<rtc.StatsReport> reports) {
     if (rtt != null) return rtt;
   }
 
+  for (final items in connections) {
+    final rtt = _selectedIcePairRtt(items);
+    if (rtt != null) return rtt;
+  }
+  return null;
+}
+
+int? _selectedIcePairRtt(List<rtc.StatsReport> items) {
   final selectedPairIds = items
       .where((report) => report.type == 'transport')
       .map((report) => report.values['selectedCandidatePairId'])

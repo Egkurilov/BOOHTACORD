@@ -75,15 +75,22 @@ class Room extends DisposableChangeNotifier with EventsEmittable<RoomEvent> {
   ConnectOptions get connectOptions => engine.connectOptions;
   RoomOptions get roomOptions => engine.roomOptions;
 
-  /// Returns all stats for the publishing peer connection.
+  /// Returns stats for publisher and subscriber peer connections.
   ///
-  /// Unlike a track-scoped sender report, this includes the selected ICE
-  /// candidate pair, whose RTT remains available when microphone RTP feedback
-  /// is absent (for example, while the microphone is muted).
-  Future<List<rtc.StatsReport>> getPublisherConnectionStats() async {
-    final peerConnection = engine.publisher?.pc;
-    if (peerConnection == null) return const [];
-    return peerConnection.getStats();
+  /// Listener-only and muted sessions may have their active selected ICE pair
+  /// on the subscriber connection. A failure reading one connection does not
+  /// prevent the other connection's stats from being used.
+  Future<List<List<rtc.StatsReport>>> getPeerConnectionStats() async {
+    final peerConnections = [engine.publisher?.pc, engine.subscriber?.pc].whereType<rtc.RTCPeerConnection>();
+    return Future.wait(
+      peerConnections.map((connection) async {
+        try {
+          return await connection.getStats();
+        } catch (_) {
+          return const <rtc.StatsReport>[];
+        }
+      }),
+    );
   }
 
   final ParticipantCollection<RemoteParticipant> _remoteParticipants = ParticipantCollection();
