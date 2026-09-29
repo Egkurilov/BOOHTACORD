@@ -5902,20 +5902,10 @@ class _AudioDeviceDropdown extends StatelessWidget {
   }
 }
 
-class _VoiceDock extends StatefulWidget {
+class _VoiceDock extends StatelessWidget {
   const _VoiceDock({required this.state, this.compact = false});
   final AppState state;
   final bool compact;
-
-  @override
-  State<_VoiceDock> createState() => _VoiceDockState();
-}
-
-class _VoiceDockState extends State<_VoiceDock> {
-  bool _expanded = false;
-  double _verticalTravel = 0;
-  AppState get state => widget.state;
-  bool get compact => widget.compact;
 
   String get _status => switch (state.voicePhase) {
     VoicePhase.joining => 'Подключаемся к голосовому каналу',
@@ -5935,231 +5925,197 @@ class _VoiceDockState extends State<_VoiceDock> {
   };
 
   @override
-  Widget build(BuildContext context) => AnimatedSize(
+  Widget build(BuildContext context) => Container(
     key: compact ? const ValueKey('mobile-voice-dock') : null,
-    duration: const Duration(milliseconds: 260),
-    curve: Curves.easeOutCubic,
-    alignment: Alignment.bottomCenter,
-    child: GestureDetector(
-      onVerticalDragStart: compact ? (_) => _verticalTravel = 0 : null,
-      onVerticalDragUpdate: compact
-          ? (details) => _verticalTravel += details.delta.dy
-          : null,
-      onVerticalDragEnd: compact
-          ? (_) {
-              if (_verticalTravel < -48 && !_expanded) {
-                setState(() => _expanded = true);
-              } else if (_verticalTravel > 48 && _expanded) {
-                setState(() => _expanded = false);
-              }
-              _verticalTravel = 0;
-            }
-          : null,
-      child: Container(
-        padding: compact
-            ? const EdgeInsets.fromLTRB(12, 8, 12, 8)
-            : const EdgeInsets.fromLTRB(14, 12, 14, 14),
-        decoration: const BoxDecoration(
-          color: GcColors.surface,
-          border: Border(top: BorderSide(color: GcColors.border)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Semantics(
-                      container: true,
-                      liveRegion: true,
-                      label: '$_status · ${state.voiceChannel!.name}',
-                      child: ExcludeSemantics(
-                        child: Row(
-                          children: [
-                            _StatusDot(
-                              color: state.voicePhase == VoicePhase.reconnecting
-                                  ? GcColors.warning
-                                  : GcColors.success,
-                            ),
-                            const SizedBox(width: 9),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _status,
-                                    style: TextStyle(
-                                      color: state.voicePhase == VoicePhase.reconnecting
-                                          ? GcColors.warning
-                                          : GcColors.success,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    state.voiceChannel!.name,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: GcColors.textSecondary,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+    padding: compact
+        ? const EdgeInsets.fromLTRB(12, 8, 12, 8)
+        : const EdgeInsets.fromLTRB(14, 12, 14, 14),
+    decoration: const BoxDecoration(
+      color: GcColors.surface,
+      border: Border(top: BorderSide(color: GcColors.border)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Semantics(
+                  container: true,
+                  liveRegion: true,
+                  label: '$_status · ${state.voiceChannel!.name}',
+                  child: ExcludeSemantics(
+                    child: Row(
+                      children: [
+                        _StatusDot(
+                          color: state.voicePhase == VoicePhase.reconnecting
+                              ? GcColors.warning
+                              : GcColors.success,
                         ),
-                      ),
+                        const SizedBox(width: 9),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _status,
+                                style: TextStyle(
+                                  color:
+                                      state.voicePhase ==
+                                          VoicePhase.reconnecting
+                                      ? GcColors.warning
+                                      : GcColors.success,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                state.voiceChannel!.name,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: GcColors.textSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  if (state.voicePhase == VoicePhase.connected ||
-                      state.voicePhase == VoicePhase.listener)
-                    VoiceQualityIndicator(
-                      quality: state.voiceConnectionQuality,
-                      pingMs: state.voicePingMs,
-                      compact: compact,
-                    ),
-                  if (compact)
-                    IconButton(
-                      tooltip: _expanded
-                          ? 'Свернуть голосовую панель'
-                          : 'Развернуть голосовую панель',
-                      onPressed: () => setState(() => _expanded = !_expanded),
-                      icon: Icon(
-                        _expanded
-                            ? Icons.keyboard_arrow_down_rounded
-                            : Icons.keyboard_arrow_up_rounded,
-                      ),
-                    ),
-                ],
+                ),
+              ),
+              if (state.voicePhase == VoicePhase.connected ||
+                  state.voicePhase == VoicePhase.listener)
+                VoiceQualityIndicator(
+                  quality: state.voiceConnectionQuality,
+                  pingMs: state.voicePingMs,
+                  compact: compact,
+                ),
+            ],
+          ),
+        ),
+        if (!compact) ...[
+          const SizedBox(height: 4),
+          Text(
+            _hint,
+            style: const TextStyle(
+              color: GcColors.muted,
+              fontSize: 11,
+              height: 1.3,
+            ),
+          ),
+        ],
+        if (state.voiceStreamStartNotice) ...[
+          const SizedBox(height: 8),
+          Semantics(
+            liveRegion: true,
+            child: const Text(
+              'В канале началась демонстрация экрана',
+              style: TextStyle(
+                color: GcColors.accent,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            if (!compact || _expanded) ...[
-              const SizedBox(height: 4),
-              Text(
-                _hint,
-                style: const TextStyle(
-                  color: GcColors.muted,
-                  fontSize: 11,
-                  height: 1.3,
+          ),
+        ],
+        SizedBox(height: compact ? 8 : 11),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _VoiceDockButton(
+              compact: compact,
+              tooltip: state.microphoneUnavailable
+                  ? 'Микрофон недоступен · повторить включение'
+                  : state.audioActivationMode == AudioActivationMode.ptt
+                  ? 'Микрофон управляется push-to-talk'
+                  : state.microphoneMuted
+                  ? 'Включить микрофон'
+                  : 'Выключить микрофон',
+              semanticsLabel: state.microphoneMuted
+                  ? 'Включить микрофон'
+                  : 'Выключить микрофон',
+              icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
+              danger: state.microphoneMuted,
+              toggled: !state.microphoneMuted,
+              enabled:
+                  state.audioActivationMode != AudioActivationMode.ptt &&
+                  !state.deafened,
+              onTap: state.toggleMicrophone,
+            ),
+            _VoiceDockButton(
+              compact: compact,
+              tooltip: state.deafened
+                  ? 'Включить удалённый звук'
+                  : 'Выключить удалённый звук',
+              icon: state.deafened ? Icons.headset_off : Icons.headphones,
+              danger: state.deafened,
+              toggled: state.deafened,
+              enabled:
+                  !state.deafenChanging &&
+                  state.voicePhase != VoicePhase.leaving,
+              onTap: state.toggleDeafen,
+            ),
+            _VoiceDockButton(
+              compact: compact,
+              tooltip: switch (state.screenSharePhase) {
+                ScreenSharePhase.starting => 'Запускаем демонстрацию экрана…',
+                ScreenSharePhase.stopping => 'Останавливаем демонстрацию…',
+                ScreenSharePhase.sharing => 'Остановить демонстрацию экрана',
+                _ => 'Начать демонстрацию экрана',
+              },
+              icon: state.screenSharePhase == ScreenSharePhase.sharing
+                  ? Icons.stop_screen_share_outlined
+                  : Icons.screen_share_outlined,
+              danger: state.screenSharePhase == ScreenSharePhase.sharing,
+              enabled: switch (state.screenSharePhase) {
+                ScreenSharePhase.starting || ScreenSharePhase.stopping => false,
+                ScreenSharePhase.sharing =>
+                  state.voicePhase != VoicePhase.leaving,
+                _ =>
+                  state.voicePhase == VoicePhase.connected ||
+                      state.voicePhase == VoicePhase.listener,
+              },
+              onTap: state.screenSharePhase == ScreenSharePhase.sharing
+                  ? state.stopScreenShare
+                  : () => unawaited(_showScreenShareSetup(context, state)),
+            ),
+            _VoiceDockButton(
+              compact: compact,
+              tooltip: state.voiceStreamSoundEnabled
+                  ? 'Выключить сигнал новых трансляций'
+                  : 'Включить сигнал новых трансляций',
+              semanticsLabel: state.voiceStreamSoundEnabled
+                  ? 'Звук начала трансляций включён'
+                  : 'Звук начала трансляций выключен',
+              icon: state.voiceStreamSoundEnabled
+                  ? Icons.notifications_active_outlined
+                  : Icons.notifications_off_outlined,
+              danger: false,
+              toggled: state.voiceStreamSoundEnabled,
+              onTap: () => unawaited(
+                state.setVoiceStreamSoundEnabled(
+                  !state.voiceStreamSoundEnabled,
                 ),
               ),
-            ],
-            if (state.voiceStreamStartNotice) ...[
-              const SizedBox(height: 8),
-              Semantics(
-                liveRegion: true,
-                child: const Text(
-                  'В канале началась демонстрация экрана',
-                  style: TextStyle(
-                    color: GcColors.accent,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-            SizedBox(height: compact ? 8 : 11),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _VoiceDockButton(
-                  compact: compact,
-                  tooltip: state.microphoneUnavailable
-                      ? 'Микрофон недоступен · повторить включение'
-                      : state.audioActivationMode == AudioActivationMode.ptt
-                      ? 'Микрофон управляется push-to-talk'
-                      : state.microphoneMuted
-                      ? 'Включить микрофон'
-                      : 'Выключить микрофон',
-                  semanticsLabel: state.microphoneMuted
-                      ? 'Включить микрофон'
-                      : 'Выключить микрофон',
-                  icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
-                  danger: state.microphoneMuted,
-                  toggled: !state.microphoneMuted,
-                  enabled:
-                      state.audioActivationMode != AudioActivationMode.ptt &&
-                      !state.deafened,
-                  onTap: state.toggleMicrophone,
-                ),
-                _VoiceDockButton(
-                  compact: compact,
-                  tooltip: state.deafened
-                      ? 'Включить удалённый звук'
-                      : 'Выключить удалённый звук',
-                  icon: state.deafened ? Icons.headset_off : Icons.headphones,
-                  danger: state.deafened,
-                  toggled: state.deafened,
-                  enabled:
-                      !state.deafenChanging &&
-                      state.voicePhase != VoicePhase.leaving,
-                  onTap: state.toggleDeafen,
-                ),
-                _VoiceDockButton(
-                  compact: compact,
-                  tooltip: switch (state.screenSharePhase) {
-                    ScreenSharePhase.starting =>
-                      'Запускаем демонстрацию экрана…',
-                    ScreenSharePhase.stopping => 'Останавливаем демонстрацию…',
-                    ScreenSharePhase.sharing =>
-                      'Остановить демонстрацию экрана',
-                    _ => 'Начать демонстрацию экрана',
-                  },
-                  icon: state.screenSharePhase == ScreenSharePhase.sharing
-                      ? Icons.stop_screen_share_outlined
-                      : Icons.screen_share_outlined,
-                  danger: state.screenSharePhase == ScreenSharePhase.sharing,
-                  enabled: switch (state.screenSharePhase) {
-                    ScreenSharePhase.starting ||
-                    ScreenSharePhase.stopping => false,
-                    ScreenSharePhase.sharing =>
-                      state.voicePhase != VoicePhase.leaving,
-                    _ =>
-                      state.voicePhase == VoicePhase.connected ||
-                          state.voicePhase == VoicePhase.listener,
-                  },
-                  onTap: state.screenSharePhase == ScreenSharePhase.sharing
-                      ? state.stopScreenShare
-                      : () => unawaited(_showScreenShareSetup(context, state)),
-                ),
-                _VoiceDockButton(
-                  compact: compact,
-                  tooltip: state.voiceStreamSoundEnabled
-                      ? 'Выключить сигнал новых трансляций'
-                      : 'Включить сигнал новых трансляций',
-                  semanticsLabel: state.voiceStreamSoundEnabled
-                      ? 'Звук начала трансляций включён'
-                      : 'Звук начала трансляций выключен',
-                  icon: state.voiceStreamSoundEnabled
-                      ? Icons.notifications_active_outlined
-                      : Icons.notifications_off_outlined,
-                  danger: false,
-                  toggled: state.voiceStreamSoundEnabled,
-                  onTap: () => unawaited(
-                    state.setVoiceStreamSoundEnabled(
-                      !state.voiceStreamSoundEnabled,
-                    ),
-                  ),
-                ),
-                _VoiceDockButton(
-                  compact: compact,
-                  tooltip: state.voicePhase == VoicePhase.leaving
-                      ? 'Выходим…'
-                      : 'Выйти из голосового канала',
-                  icon: Icons.call_end,
-                  danger: true,
-                  enabled: state.voicePhase != VoicePhase.leaving,
-                  onTap: state.leaveVoice,
-                ),
-              ],
+            ),
+            _VoiceDockButton(
+              compact: compact,
+              tooltip: state.voicePhase == VoicePhase.leaving
+                  ? 'Выходим…'
+                  : 'Выйти из голосового канала',
+              icon: Icons.call_end,
+              danger: true,
+              enabled: state.voicePhase != VoicePhase.leaving,
+              onTap: state.leaveVoice,
             ),
           ],
         ),
-      ),
+      ],
     ),
   );
 }
