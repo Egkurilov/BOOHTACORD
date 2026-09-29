@@ -5,4 +5,5 @@
          creates a second visible frame on Pixel launchers. -->
     <background android:drawable="@drawable/ic_launcher_foreground" />
     <foreground android:drawable="@color/ic_launcher_transparent" />
+    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
 </adaptive-icon>
