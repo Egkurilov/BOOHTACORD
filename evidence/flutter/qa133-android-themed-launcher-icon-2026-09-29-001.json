@@ -1,0 +1,40 @@
+{
+  "id": "QA-133",
+  "kind": "android-themed-launcher-icon",
+  "status": "IMPLEMENTED_DEVICE_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "f4c9c5c",
+  "summary": "Added a simple monochrome B mark to the Android adaptive icon for optional system-themed launcher icons. The standard full-color BOOHTACORD icon and pre-API-26 density icons are unchanged.",
+  "checks": [
+    {
+      "name": "Adaptive icon resource contract",
+      "command": "cd desktop && flutter test test/android_launcher_icon_test.dart",
+      "status": "PASS",
+      "observation": "Focused regression test verifies the adaptive monochrome reference, vector viewport, opaque white mask color, and even-odd cutouts."
+    },
+    {
+      "name": "Android release APK resource compilation",
+      "command": "cd desktop && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Gradle assembled app-release.apk (107833098 bytes). AAPT2 dump of res/BW.xml contains background, foreground, and monochrome adaptive-icon layers."
+    },
+    {
+      "name": "Pixel 7 themed launcher rendering",
+      "status": "NOT_RUN",
+      "observation": "The connected Pixel 7 remains on the previously installed 1.0.9+2014 APK; no launcher setting or installed package was changed. The user-visible themed-icon rendering is not yet verified."
+    },
+    {
+      "name": "Installed macOS and Windows icon acceptance",
+      "status": "NOT_RUN",
+      "observation": "No application package or installation state changed on these platforms during this Android-only resource task."
+    }
+  ],
+  "artifact": {
+    "path": "desktop/build/app/outputs/flutter-apk/app-release.apk",
+    "version": "1.0.9+13",
+    "size_bytes": 107833098,
+    "sha256": "9db589225adc7e4112348ee3749bbe09e9ee1c96db0508109c394376ce35bf07",
+    "git_tracked": false
+  },
+  "remaining": "Install a signed release with the same signing identity on Pixel 7, enable themed icons using a reversible user-visible launcher setting, and inspect the generated monochrome icon. Verify the installed macOS/Windows icons in their native launchers."
+}
