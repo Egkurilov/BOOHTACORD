@@ -1,0 +1,28 @@
+{
+  "id": "QA-127",
+  "kind": "flutter-composer-action-menu",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "source_revision": "a1789c6",
+  "summary": "Grouped file attachment and clipboard paste under one compact + action in TEXT and DM composers, keeping mention selection as a compact @ action and preserving keyboard/context-menu paste.",
+  "checks": [
+    {
+      "name": "Composer and attachment widget tests",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart test/message_attachment_composer_test.dart",
+      "status": "PASS",
+      "observation": "All 52 tests passed, including checks that the + menu exposes file picker and clipboard paste and that the mention picker remains available."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub lib/src/screens/workspace_screen.dart",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android and desktop visual acceptance",
+      "status": "NOT_RUN",
+      "observation": "The updated menu has not been opened on a physical Android device or captured on macOS/Windows. Existing QA-124 acceptance covers the prior compact +/@ controls, not this new paste menu."
+    }
+  ],
+  "remaining": "Verify the updated + menu visually and exercise paste on Android, macOS and Windows; continue matched screenshot and keyboard/assistive-technology acceptance."
+}
