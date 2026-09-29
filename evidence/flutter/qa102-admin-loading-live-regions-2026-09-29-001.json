@@ -4,6 +4,7 @@
   "status": "PASS_BUILD_NATIVE_READER_ACCEPTANCE_OPEN",
   "executed_at": "2026-09-29",
   "source_revision": "c9803b8bc174427043d1a648c3c28802dbb4c328",
+  "cross_platform_build_revision": "0a79496f3a94502d99d539db71c111e8867ad933",
   "windows_runner": {
     "name": "boohtacord-win-station",
     "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1679130?job=3295508",
@@ -34,6 +35,18 @@
       "command": "GitVerse Flutter Windows CI run 1679130",
       "status": "PASS",
       "observation": "The boohtacord-win-station completed checkout, Flutter dependency resolution, tests, analysis and Windows Release build successfully in 4m 6s."
+    },
+    {
+      "name": "Android Release build",
+      "command": "cd desktop && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Built build/app/outputs/flutter-apk/app-release.apk (107.8 MB); SHA-256 3eb4186b38fa15fbe3c85e4d73126e780e8ae881026e6891d5fdf2d7168759f1. The generated APK is ignored under build/ and was not added to Git."
+    },
+    {
+      "name": "macOS Release build",
+      "command": "cd desktop && flutter build macos --release",
+      "status": "PASS",
+      "observation": "Built build/macos/Build/Products/Release/BOOHTACORD.app (92.5 MB) successfully with Xcode 27."
     },
     {
       "name": "Native screen-reader acceptance",
