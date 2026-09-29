@@ -100,11 +100,11 @@ class NativeAudioDeviceCheckService implements AudioDeviceCheckService {
       );
     }
     if (AndroidAudioDevices.isAndroid &&
-        AndroidAudioDevices.isUsbOutput(deviceId)) {
-      final selected = await AndroidAudioDevices.selectUsbOutput(deviceId!);
+        AndroidAudioDevices.isNativeOutputRoute(deviceId)) {
+      final selected = await AndroidAudioDevices.selectNativeOutput(deviceId!);
       if (!selected) {
         throw const AudioDeviceCheckFailure(
-          'Не удалось выбрать USB-динамик для проверки. Подключите его и повторите попытку.',
+          'Не удалось выбрать аудиовыход для проверки. Проверьте его подключение и повторите попытку.',
         );
       }
     }
@@ -203,10 +203,10 @@ PlaybackDevice? resolvePlaybackDevice({
     }
     return null;
   }
-  // Android USB outputs use AudioManager's communication route and are not
-  // represented by SoLoud's integer device IDs. The app selects that route
+  // Android communication outputs use AudioManager routes and are not
+  // represented by SoLoud's integer device IDs. The app selects the route
   // before this local check, so SoLoud must use the current system route.
-  if (AndroidAudioDevices.isUsbOutput(id)) return null;
+  if (AndroidAudioDevices.isNativeOutputRoute(id)) return null;
   final parsedId = int.tryParse(id);
   if (parsedId != null) {
     for (final device in available) {

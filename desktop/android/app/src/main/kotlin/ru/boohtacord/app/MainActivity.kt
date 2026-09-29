@@ -22,6 +22,7 @@ class MainActivity : FlutterActivity() {
     private val audioDevicesChannelName = "boohtacord/audio_devices"
     private val systemGesturesChannelName = "boohtacord/system_gestures"
     private val usbOutputRoutePrefix = "android-usb-route:"
+    private val communicationOutputRoutePrefix = "android-communication-route:"
     private val backgroundServiceClassName =
         "de.julianassmann.flutter_background.IsolateHolderService"
     private val requestCode = 7641
@@ -115,7 +116,7 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
                 when (call.method) {
-                    "enumerateUsb" -> {
+                    "enumerateAudioDevices" -> {
                         val usbTypes = setOf(
                             AudioDeviceInfo.TYPE_USB_DEVICE,
                             AudioDeviceInfo.TYPE_USB_HEADSET,
@@ -138,21 +139,24 @@ class MainActivity : FlutterActivity() {
 
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             audioManager.availableCommunicationDevices
-                                .filter { it.type in usbTypes }
+                                .filter { it.isSink }
                                 .forEachIndexed { index, device ->
+                                    val prefix = if (device.type in usbTypes) {
+                                        usbOutputRoutePrefix
+                                    } else {
+                                        communicationOutputRoutePrefix
+                                    }
                                     devices += mapOf(
-                                        "deviceId" to usbOutputRoutePrefix + device.id,
+                                        "deviceId" to prefix + device.id,
                                         "kind" to "audiooutput",
-                                        "label" to device.productName.toString().ifBlank {
-                                            "USB-аудиоустройство ${index + 1}"
-                                        },
-                                        "groupId" to "usb:${device.id}",
+                                        "label" to communicationDeviceLabel(device, index),
+                                        "groupId" to "android:${device.id}",
                                     )
                                 }
                         }
                         result.success(devices)
                     }
-                    "selectUsbOutput" -> {
+                    "selectCommunicationOutput" -> {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
                             result.success(false)
                             return@setMethodCallHandler
@@ -160,14 +164,10 @@ class MainActivity : FlutterActivity() {
                         val requestedId = call.argument<String>("deviceId")
                             ?.toIntOrNull()
                         val route = audioManager.availableCommunicationDevices
-                            .firstOrNull {
-                                it.id == requestedId &&
-                                    (it.type == AudioDeviceInfo.TYPE_USB_DEVICE ||
-                                        it.type == AudioDeviceInfo.TYPE_USB_HEADSET)
-                            }
+                            .firstOrNull { it.id == requestedId && it.isSink }
                         result.success(route != null && audioManager.setCommunicationDevice(route))
                     }
-                    "clearUsbOutput" -> {
+                    "clearCommunicationOutput" -> {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             audioManager.clearCommunicationDevice()
                         }
@@ -246,6 +246,28 @@ class MainActivity : FlutterActivity() {
             result.success(true)
         } catch (error: Exception) {
             result.error("SAVE_FAILED", error.message, null)
+        }
+    }
+
+    private fun communicationDeviceLabel(device: AudioDeviceInfo, index: Int): String {
+        val productName = device.productName.toString().trim()
+        return when (device.type) {
+            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> "Динамик телефона"
+            AudioDeviceInfo.TYPE_BUILTIN_EARPIECE -> "Разговорный динамик"
+            AudioDeviceInfo.TYPE_WIRED_HEADSET -> productName.ifBlank {
+                "Проводная гарнитура"
+            }
+            AudioDeviceInfo.TYPE_WIRED_HEADPHONES -> productName.ifBlank {
+                "Проводные наушники"
+            }
+            AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> productName.ifBlank {
+                "Bluetooth-гарнитура"
+            }
+            AudioDeviceInfo.TYPE_USB_DEVICE,
+            AudioDeviceInfo.TYPE_USB_HEADSET -> productName.ifBlank {
+                "USB-аудиоустройство ${index + 1}"
+            }
+            else -> productName.ifBlank { "Аудиоустройство ${index + 1}" }
         }
     }
 }

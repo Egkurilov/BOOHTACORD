@@ -215,7 +215,7 @@ void main() {
       const audioChannel = MethodChannel('boohtacord/audio_devices');
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(audioChannel, (call) async {
-            if (call.method == 'enumerateUsb') {
+            if (call.method == 'enumerateAudioDevices') {
               return [
                 {
                   'deviceId': '41',

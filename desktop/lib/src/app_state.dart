@@ -104,12 +104,28 @@ class AppState extends ChangeNotifier {
     final knownIds = devices
         .map((device) => '${device.kind}:${device.deviceId}')
         .toSet();
-    return [
+    final allDevices = [
       ...devices,
       ...additional.where(
         (device) => !knownIds.contains('${device.kind}:${device.deviceId}'),
       ),
     ];
+    if (AndroidAudioDevices.isAndroid &&
+        !allDevices.any((device) => device.kind == 'audiooutput')) {
+      // Android may expose its active system output only through the
+      // communication route, while the plugin's enumeration is empty (for
+      // example before API 31). Keep the OS default usable and truthfully
+      // selectable instead of claiming that no speaker exists.
+      allDevices.add(
+        const MediaDevice(
+          'default',
+          'Системный динамик',
+          'audiooutput',
+          'android:default',
+        ),
+      );
+    }
+    return allDevices;
   }
 
   final ApiClient api;
@@ -856,16 +872,19 @@ class AppState extends ChangeNotifier {
     if (device == null) return;
     final previous = selectedAudioOutputId;
     try {
-      if (AndroidAudioDevices.isUsbOutput(device.deviceId)) {
+      if (AndroidAudioDevices.isNativeOutputRoute(device.deviceId)) {
         if (_room != null &&
-            !await AndroidAudioDevices.selectUsbOutput(device.deviceId)) {
-          throw StateError('Android не смог переключить USB-аудиовыход.');
+            !await AndroidAudioDevices.selectNativeOutput(device.deviceId)) {
+          throw StateError('Android не смог переключить аудиовыход.');
         }
+      } else if (AndroidAudioDevices.isAndroid &&
+          device.deviceId == 'default') {
+        await AndroidAudioDevices.clearNativeOutput();
       } else if (_room != null) {
-        await AndroidAudioDevices.clearUsbOutput();
+        await AndroidAudioDevices.clearNativeOutput();
         await _room!.setAudioOutputDevice(device);
       } else {
-        await AndroidAudioDevices.clearUsbOutput();
+        await AndroidAudioDevices.clearNativeOutput();
         await Hardware.instance.selectAudioOutput(device);
       }
       selectedAudioOutputId = device.deviceId;
@@ -2393,7 +2412,12 @@ class AppState extends ChangeNotifier {
           dynacast: true,
           defaultAudioCaptureOptions: _audioCaptureOptions,
           defaultAudioOutputOptions: AudioOutputOptions(
-            deviceId: AndroidAudioDevices.isUsbOutput(selectedAudioOutputId)
+            deviceId:
+                AndroidAudioDevices.isNativeOutputRoute(
+                      selectedAudioOutputId,
+                    ) ||
+                    (AndroidAudioDevices.isAndroid &&
+                        selectedAudioOutputId == 'default')
                 ? null
                 : selectedAudioOutputId,
           ),
@@ -2411,13 +2435,11 @@ class AppState extends ChangeNotifier {
       pendingRoom = room;
       _bindVoiceRoomEvents(room);
       await room.connect(result.$2.url, result.$2.token);
-      if (AndroidAudioDevices.isUsbOutput(selectedAudioOutputId)) {
-        if (!await AndroidAudioDevices.selectUsbOutput(
+      if (AndroidAudioDevices.isNativeOutputRoute(selectedAudioOutputId)) {
+        if (!await AndroidAudioDevices.selectNativeOutput(
           selectedAudioOutputId!,
         )) {
-          throw StateError(
-            'Android не смог выбрать сохранённый USB-аудиовыход.',
-          );
+          throw StateError('Android не смог выбрать сохранённый аудиовыход.');
         }
       }
       final revokedReason = _revokedVoiceLeasesDuringJoin.remove(result.$1);
@@ -2484,7 +2506,7 @@ class AppState extends ChangeNotifier {
         await pendingRoom?.disconnect();
       } catch (_) {}
       try {
-        await AndroidAudioDevices.clearUsbOutput();
+        await AndroidAudioDevices.clearNativeOutput();
       } catch (_) {}
       await _disposeVoiceEvents();
       final leaseId = _leaseId;
@@ -2520,7 +2542,7 @@ class AppState extends ChangeNotifier {
     } catch (_) {}
     await _disposeVoiceEvents();
     try {
-      await AndroidAudioDevices.clearUsbOutput();
+      await AndroidAudioDevices.clearNativeOutput();
     } catch (_) {}
     if (identical(_room, room)) _room = null;
     if (_leaseId == leaseId) _leaseId = null;
@@ -3116,7 +3138,7 @@ class AppState extends ChangeNotifier {
     };
     await _disposeVoiceEvents();
     try {
-      await AndroidAudioDevices.clearUsbOutput();
+      await AndroidAudioDevices.clearNativeOutput();
     } catch (_) {}
     if (leaseId != null) {
       try {
@@ -3241,7 +3263,7 @@ class AppState extends ChangeNotifier {
       await _room?.disconnect();
     } catch (_) {}
     try {
-      await AndroidAudioDevices.clearUsbOutput();
+      await AndroidAudioDevices.clearNativeOutput();
     } catch (_) {}
     await _disposeVoiceEvents();
     if (leaseId != null) {

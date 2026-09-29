@@ -58,7 +58,15 @@ void main() {
     expect(amplitudePercentFromDb(10), 1);
   });
 
-  test('keeps Android USB output on its AudioManager route', () {
+  test('keeps Android communication output on its AudioManager route', () {
+    expect(
+      resolvePlaybackDevice(
+        selectedId: 'android-communication-route:21',
+        selectedLabel: 'Динамик телефона',
+        available: const [],
+      ),
+      isNull,
+    );
     expect(
       resolvePlaybackDevice(
         selectedId: 'android-usb-route:21',
