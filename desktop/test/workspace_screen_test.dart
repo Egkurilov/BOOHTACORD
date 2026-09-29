@@ -44,7 +44,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        await tester.dragFrom(const Offset(36, 220), const Offset(140, 0));
+        await tester.dragFrom(const Offset(0, 220), const Offset(140, 0));
         await tester.pumpAndSettle();
         expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
 
@@ -52,7 +52,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byTooltip('Закрыть навигацию'), findsNothing);
 
-        await tester.dragFrom(const Offset(354, 220), const Offset(-140, 0));
+        await tester.dragFrom(const Offset(389, 220), const Offset(-140, 0));
         await tester.pumpAndSettle();
         expect(find.byTooltip('Закрыть участников'), findsOneWidget);
 

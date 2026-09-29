@@ -48,7 +48,10 @@ Mobile swipe behavior is enabled on both Android and iOS: edge navigation/member
 drawers, swipe-to-reply and pull-to-refresh in text/DM history, the compact voice
 dock expand/collapse, and downward exit from fullscreen viewing. Android/iOS
 widget coverage now exercises the platform-gated cases; physical Android gesture
-navigation remains an acceptance check —
+navigation now grants only the active drawer edge a narrow system-gesture
+exclusion area (Android caps it to 200 dp vertically); the system Back gesture
+remains available outside that precision region. Physical-device validation of
+the new edge behavior remains open —
 [QA-78](../evidence/flutter/qa78-android-ios-mobile-swipes-2026-09-28-001.json).
 
 The compact mobile navigation drawer now has Android/iOS widget coverage for a

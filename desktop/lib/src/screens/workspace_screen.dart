@@ -23,6 +23,7 @@ import '../widgets/message_attachment_list.dart';
 import '../widgets/screen_share_setup_dialog.dart';
 import '../widgets/formatted_message_body.dart';
 import '../widgets/horizontal_swipe_region.dart';
+import '../widgets/android_system_gesture_exclusion.dart';
 import '../widgets/sliding_drawer_layer.dart';
 import '../widgets/voice_connection_badge.dart';
 import '../widgets/voice_microphone_unavailable_notice.dart';
@@ -649,28 +650,32 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
               !_showMembersDrawer &&
               !searchPanelModal;
           final swipeContent = mobileGestures
-              ? HorizontalSwipeRegion(
-                  enabled: drawerSwipeEnabled,
-                  canStart: (position, size) =>
-                      position.dx >= 16 &&
-                      position.dx <=
-                          (widget.state.selectedDirectMessage == null &&
-                                  widget.state.selectedChannel?.kind ==
-                                      ChannelKind.voice
-                              ? size.width - 72
-                              : 72),
-                  onSwipeRight: () {
-                    if (!_textInputFocused) _toggleNavigation();
-                  },
+              ? AndroidSystemGestureExclusion(
+                  left: drawerSwipeEnabled,
+                  right: drawerSwipeEnabled && showMemberToggle,
                   child: HorizontalSwipeRegion(
-                    enabled: drawerSwipeEnabled && showMemberToggle,
+                    enabled: drawerSwipeEnabled,
                     canStart: (position, size) =>
-                        position.dx >= size.width - 72 &&
-                        position.dx <= size.width - 16,
-                    onSwipeLeft: () {
-                      if (!_textInputFocused) _toggleMembers();
+                        position.dx >= 0 &&
+                        position.dx <=
+                            (widget.state.selectedDirectMessage == null &&
+                                    widget.state.selectedChannel?.kind ==
+                                        ChannelKind.voice
+                                ? size.width - 72
+                                : 72),
+                    onSwipeRight: () {
+                      if (!_textInputFocused) _toggleNavigation();
                     },
-                    child: shellContent,
+                    child: HorizontalSwipeRegion(
+                      enabled: drawerSwipeEnabled && showMemberToggle,
+                      canStart: (position, size) =>
+                          position.dx >= size.width - 72 &&
+                          position.dx <= size.width,
+                      onSwipeLeft: () {
+                        if (!_textInputFocused) _toggleMembers();
+                      },
+                      child: shellContent,
+                    ),
                   ),
                 )
               : shellContent;

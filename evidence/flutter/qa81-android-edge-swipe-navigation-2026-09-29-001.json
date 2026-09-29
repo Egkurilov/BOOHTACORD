@@ -1,0 +1,40 @@
+{
+  "id": "QA-81",
+  "kind": "android-edge-swipe-navigation",
+  "status": "PASS_WITH_PHYSICAL_DEVICE_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "summary": "Workspace navigation/member edge swipes can begin at the Android screen edge in a narrow system-gesture exclusion region, while Android Back remains available outside the declared region.",
+  "checks": [
+    {
+      "name": "Android and iOS workspace edge swipe widget coverage",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart test/horizontal_swipe_region_test.dart",
+      "status": "PASS",
+      "observation": "Edge-starting left navigation and right members gestures pass on iOS and Android widget configurations; app gesture guards still reject unrelated start zones and vertical drags."
+    },
+    {
+      "name": "Native Android gesture exclusion bridge coverage",
+      "command": "cd desktop && flutter test test/android_system_gesture_exclusion_test.dart",
+      "status": "PASS",
+      "observation": "The bridge enables only requested edges, updates when drawer eligibility changes, clears on disposal, and does not claim edge gestures on iOS."
+    },
+    {
+      "name": "Flutter static analysis",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "Android debug APK build",
+      "command": "cd desktop && flutter build apk --debug",
+      "status": "PASS",
+      "observation": "Flutter and native Android Kotlin sources compiled successfully."
+    },
+    {
+      "name": "Physical Android Back/edge gesture acceptance",
+      "device": "Google Pixel 7",
+      "status": "NOT_RUN",
+      "observation": "ADB could not start in the restricted session, so system Back behavior and actual gesture-exclusion boundaries require device confirmation."
+    }
+  ],
+  "remaining": "On a physical Android phone with gesture navigation, verify left/right edge swipes open the intended drawers in the centered exclusion zone, while Back still exits/navigates outside it and drawer-open swipes remain intact."
+}

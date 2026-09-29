@@ -3,6 +3,7 @@ package ru.boohtacord.app
 import android.app.Activity
 import android.app.ActivityManager
 import android.content.Intent
+import android.graphics.Rect
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.net.Uri
@@ -10,6 +11,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.view.View
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
@@ -18,6 +20,7 @@ class MainActivity : FlutterActivity() {
     private val channelName = "boohtacord/download"
     private val screenShareChannelName = "boohtacord/screen_share"
     private val audioDevicesChannelName = "boohtacord/audio_devices"
+    private val systemGesturesChannelName = "boohtacord/system_gestures"
     private val usbOutputRoutePrefix = "android-usb-route:"
     private val backgroundServiceClassName =
         "de.julianassmann.flutter_background.IsolateHolderService"
@@ -25,9 +28,24 @@ class MainActivity : FlutterActivity() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var pendingSaveResult: MethodChannel.Result? = null
     private var pendingBytes: ByteArray? = null
+    private var excludeLeftEdgeSwipe = false
+    private var excludeRightEdgeSwipe = false
+    private var gestureExclusionView: View? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, systemGesturesChannelName)
+            .setMethodCallHandler { call, result ->
+                if (call.method != "setEdges") {
+                    result.notImplemented()
+                    return@setMethodCallHandler
+                }
+                excludeLeftEdgeSwipe = call.argument<Boolean>("left") ?: false
+                excludeRightEdgeSwipe = call.argument<Boolean>("right") ?: false
+                updateSystemGestureExclusionRects()
+                result.success(null)
+            }
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
             .setMethodCallHandler { call, result ->
                 if (call.method != "save") {
@@ -158,6 +176,48 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    override fun onPostResume() {
+        super.onPostResume()
+        val content = findViewById<View>(android.R.id.content)
+        if (gestureExclusionView !== content) {
+            gestureExclusionView?.removeOnLayoutChangeListener(gestureExclusionLayoutListener)
+            gestureExclusionView = content
+            content.addOnLayoutChangeListener(gestureExclusionLayoutListener)
+        }
+        updateSystemGestureExclusionRects()
+    }
+
+    private val gestureExclusionLayoutListener =
+        View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            updateSystemGestureExclusionRects()
+        }
+
+    private fun updateSystemGestureExclusionRects() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        val view = gestureExclusionView ?: findViewById<View>(android.R.id.content)
+        gestureExclusionView = view
+        if (view.width <= 0 || view.height <= 0) return
+
+        val density = resources.displayMetrics.density
+        val edgeWidth = (24 * density).toInt().coerceAtLeast(1)
+        val exclusionHeight = (200 * density).toInt().coerceAtMost(view.height)
+        val top = ((view.height - exclusionHeight) / 2).coerceAtLeast(0)
+        val bottom = (top + exclusionHeight).coerceAtMost(view.height)
+        val rects = mutableListOf<Rect>()
+        if (excludeLeftEdgeSwipe) {
+            rects += Rect(0, top, edgeWidth.coerceAtMost(view.width), bottom)
+        }
+        if (excludeRightEdgeSwipe) {
+            rects += Rect(
+                (view.width - edgeWidth).coerceAtLeast(0),
+                top,
+                view.width,
+                bottom,
+            )
+        }
+        view.systemGestureExclusionRects = rects
     }
 
     @Deprecated("Deprecated in Android, retained for Flutter activity result routing")
