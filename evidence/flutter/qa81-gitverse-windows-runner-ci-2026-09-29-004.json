@@ -1,0 +1,37 @@
+{
+  "id": "QA-81",
+  "kind": "gitverse-flutter-windows-ci",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "source_revision": "508359c2ca110ce148e54a0190c064bb8c5c8b9e",
+  "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1678418?job=3293908",
+  "summary": "The registered Windows runner completed the Flutter workflow, including a Windows Release build. The CI setup now creates and validates junctions for Windows plugin packages whose CMake projects are required by Flutter.",
+  "checks": [
+    {
+      "name": "Windows runner dispatch and Flutter setup",
+      "status": "PASS",
+      "observation": "GitVerse assigned the job to boohtacord-win-station, verified Flutter 3.47.5, and resolved dependencies from the committed lockfile."
+    },
+    {
+      "name": "Windows plugin junction preparation",
+      "status": "PASS",
+      "observation": "The workflow completed its plugin-link step, creating Windows junctions from .flutter-plugins-dependencies where a package contains windows/CMakeLists.txt."
+    },
+    {
+      "name": "Flutter tests and analyzer on Windows runner",
+      "status": "PASS",
+      "observation": "The test step completed in 27 seconds and analysis in 9 seconds; neither failed the job."
+    },
+    {
+      "name": "Windows Release build",
+      "status": "PASS",
+      "observation": "The flutter build windows --release step completed and the overall GitVerse job finished successfully in 3 minutes 36 seconds."
+    },
+    {
+      "name": "Windows app runtime and visual acceptance",
+      "status": "NOT_RUN",
+      "observation": "A successful CI build proves compilation only; launching the artifact and comparing native behavior/screenshots against web were not performed."
+    }
+  ],
+  "remaining": "Run the built Windows client and verify key workflows, screen/window capture, attachment clipboard/save, audio devices and matched screenshots against web."
+}
