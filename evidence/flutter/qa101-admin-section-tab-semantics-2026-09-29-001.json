@@ -1,8 +1,14 @@
 {
   "id": "QA-101",
   "kind": "flutter-admin-section-tab-semantics-web-parity",
-  "status": "PASS_LOCAL_WINDOWS_CI_PENDING_HARDWARE_ACCEPTANCE_OPEN",
+  "status": "PASS_BUILD_NATIVE_READER_ACCEPTANCE_OPEN",
   "executed_at": "2026-09-29",
+  "source_revision": "7e6a2128090a5f66039c1bfeac362b3c3e4306ef",
+  "windows_runner": {
+    "name": "boohtacord-win-station",
+    "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1678941?job=3295166",
+    "status": "SUCCESS"
+  },
   "summary": "The Flutter administration section navigation now exposes a named tablist and each of its four choices as a tab with selected state, matching the web AdminPanel nav and aria-current behavior. Pointer interactions continue to select the same sections.",
   "checks": [
     {
@@ -31,8 +37,9 @@
     },
     {
       "name": "Windows runner validation",
-      "status": "PENDING",
-      "observation": "Push this UI code to run Flutter Windows CI on boohtacord-win-station; the test, analysis and Release build steps must pass."
+      "command": "GitVerse Flutter Windows CI run 1678941",
+      "status": "PASS",
+      "observation": "The registered boohtacord-win-station completed checkout, dependency resolution, Flutter tests, analysis and flutter build windows --release --no-pub successfully."
     },
     {
       "name": "Native screen-reader acceptance",
