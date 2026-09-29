@@ -37,8 +37,8 @@
     },
     {
       "name": "GitVerse Android release publication",
-      "status": "NOT_RUN",
-      "observation": "Local release build is ready; tag-triggered workflow and downloadable release assets have not yet been confirmed."
+      "status": "PASS",
+      "observation": "GitVerse workflow 1682148 completed successfully and published release android-v1.0.8 with three ABI APK assets: https://gitverse.ru/egkurilov/BOOHTACORD/releases/tag/android-v1.0.8"
     },
     {
       "name": "Second-participant and deafen acceptance",
@@ -46,5 +46,5 @@
       "observation": "No second participant was present. A deafen-toggle attempt did not complete reliably, so behavior with deafen enabled remains unverified."
     }
   ],
-  "remaining": "Publish android-v1.0.8 on GitVerse; verify RTT with a second participant and deafen enabled, then validate native/browser RTT behavior on macOS, Windows, and web."
+  "remaining": "Verify RTT with a second participant and deafen enabled, then validate native/browser RTT behavior on macOS, Windows, and web."
 }

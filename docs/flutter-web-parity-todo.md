@@ -132,7 +132,8 @@ peer/platform-проверки и выравниваем viewer с вебом.
   удерживать последнее измерение при пустом snapshot. На Pixel 7 после установки
   1.0.8+12 ping показал 92–103 мс в room badge и dock при выключенном микрофоне;
   262 Flutter tests, analyzer и LiveKit package checks прошли. Публикация
-  `android-v1.0.8` и проверка с другим участником/deafen остаются открыты —
+  `android-v1.0.8` прошла в workflow 1682148; проверка с другим участником/deafen
+  остаётся открытой —
   [QA-123](../evidence/flutter/qa123-android-voice-rtt-peer-connections-2026-09-29-001.json).
 - [x] Убрать из компактного voice dock лишнюю стрелку, раскрываемую область и
   пояснение; оставить постоянный ряд voice-действий. Исправить ping: брать RTT
