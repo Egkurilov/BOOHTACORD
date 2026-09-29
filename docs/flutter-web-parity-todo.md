@@ -125,8 +125,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   accessible label; полный suite, analyzer и свежая macOS Debug-сборка прошли —
   [QA-112](../evidence/flutter/qa112-voice-quality-accessibility-macos-build-2026-09-29-001.json).
   Реальное обновление метрик и доступность RTT проверить с подключённым peer на
-  Android/macOS/Windows и в браузере; фактический ping зависит от платформенной
-  WebRTC-статистики.
+  macOS/Windows и в браузере; Pixel 7 показал 10 мс с выключенным микрофоном
+  [QA-131](../evidence/flutter/qa131-android-voice-ping-muted-runtime-2026-09-29-001.json),
+  а проверка с отдельным аккаунтом остаётся открытой; фактический ping зависит
+  от платформенной WebRTC-статистики.
 - [x] В voice-room не объявлять pending LiveKit-сессию как «Подключено»: отличать
   joining/connected/reconnecting/leaving/error/disconnected и показывать ping/quality
   только после фактического подключения; voice/workspace widget tests и analyzer

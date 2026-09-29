@@ -1,0 +1,25 @@
+{
+  "id": "QA-131",
+  "kind": "android-voice-ping-muted-runtime",
+  "status": "PASS",
+  "executed_at": "2026-09-29",
+  "source_revision": "d458033",
+  "summary": "On Pixel 7, the connected voice room and persistent dock both displayed a 10 ms RTT while Push-to-talk kept the microphone muted; leaving disconnected the app and the original Voice Activity setting was restored.",
+  "checks": [
+    {
+      "name": "Pixel 7 real voice RTT and mute state",
+      "device": "Google Pixel 7, Android 17/API 37, 1080x2400, BOOHTACORD 1.0.9+2014",
+      "command": "Temporarily set Push-to-talk; enter SHARE_TEST; inspect only connection, ping and mic labels; leave voice",
+      "status": "PASS",
+      "observation": "Both the voice-room badge and persistent dock exposed 10 ms RTT while connected. The dock accessibility state was 'Включить микрофон', confirming the microphone was muted; no screen share or message action occurred. The user authorized transfer of the existing voice lease before the test."
+    },
+    {
+      "name": "Cleanup and restore user audio preference",
+      "device": "Google Pixel 7",
+      "command": "Leave voice; verify voice dock is absent; restore Voice Activity in Audio Settings",
+      "status": "PASS",
+      "observation": "Voice dock disappeared and the app remained foreground. The previously selected Voice Activity mode was restored and verified."
+    }
+  ],
+  "remaining": "Verify ping/quality updates on macOS, Windows and web, and repeat with a separate account/peer to validate multi-peer behavior."
+}
