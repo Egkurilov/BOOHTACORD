@@ -13,6 +13,8 @@ analyzer:
   exclude:
     - build/**
     - packages/livekit_client/example/**
+    # This is a separate Flutter project with its own pubspec and integration_test dependency.
+    - qa/macos_keychain_integration/**
     - windows/**
     - macos/**
     - android/**
