@@ -1,0 +1,25 @@
+{
+  "id": "QA-130",
+  "kind": "pixel7-mobile-navigation-drawer",
+  "status": "PASS",
+  "executed_at": "2026-09-29",
+  "source_revision": "d458033",
+  "summary": "Physical Android acceptance confirms the unified drawer exposes Channels and Personal tabs, system Back dismisses the drawer, and the members edge gesture remains usable after returning to the workspace.",
+  "checks": [
+    {
+      "name": "Drawer tabs on physical Android",
+      "device": "Google Pixel 7, Android 17/API 37, gesture navigation, 1080x2400",
+      "command": "adb shell input tap 89 231; adb shell input tap 617 372; adb shell input tap 233 372; adb shell uiautomator dump /sdcard/codex-window.xml",
+      "status": "PASS",
+      "observation": "The opened drawer exposed the 'Каналы' and 'Личные' tabs. Both were reachable and switching between them did not open a DM or join a voice channel. No conversation content or participant identities were collected."
+    },
+    {
+      "name": "Back dismissal and members edge gesture after drawer navigation",
+      "device": "Google Pixel 7, Android 17/API 37, gesture navigation, 1080x2400",
+      "command": "adb shell input keyevent 4; adb shell input swipe 980 1200 700 1200 250; adb shell input keyevent 4; adb shell dumpsys activity activities",
+      "status": "PASS",
+      "observation": "System Back closed the channel drawer. The right-edge swipe then opened the members drawer, confirmed by its close label; Back closed it. ru.boohtacord.app remained the top resumed activity. No voice connection or message action occurred."
+    }
+  ],
+  "remaining": "Voice channel entry, switching to a different TEXT channel and returning to a DM, active dock gestures, and iOS physical acceptance remain open in QA-78/QA-79 and the parity checklist."
+}
