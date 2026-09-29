@@ -34,10 +34,17 @@
       "observation": "The isolated Keychain round-trip passed and the test analyzed without issues."
     },
     {
-      "name": "GitVerse signed release publish",
-      "status": "NOT_RUN",
-      "reason": "Must run from the new android-v1.0.11 tag; the failed android-v1.0.10 tag is intentionally left unchanged."
+      "name": "GitVerse Android release assets",
+      "status": "PASS",
+      "run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1684506",
+      "release": "https://gitverse.ru/egkurilov/BOOHTACORD/releases/tag/android-v1.0.11",
+      "observation": "The release page lists all three expected APK attachments: arm64-v8a (36.6 MB), armeabi-v7a (28.1 MB), and x86_64 (42 MB)."
+    },
+    {
+      "name": "GitVerse CI job final status",
+      "status": "FAIL",
+      "observation": "The runner built all three APKs and the publish action logged successful uploads for arm64-v8a and armeabi-v7a, then exited with context deadline exceeded while uploading x86_64. The release page subsequently showed the x86_64 attachment too; no retry was made to avoid duplicate uploads."
     }
   ],
-  "failure_or_blocker": "The GitVerse signed release and physical-device acceptance remain pending."
+  "failure_or_blocker": "All Android APKs are published. GitVerse marked the job failed due an upload API timeout despite the x86_64 asset being present afterward. Physical-device acceptance remains NOT_RUN."
 }
