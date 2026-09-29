@@ -51,6 +51,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   enumeration отсутствует, показывать системный выход по умолчанию вместо
   «Динамики не найдены». Pixel 7 / Android 17 подтвердил в UI оба встроенных
   динамика; release APK 1.0.9+13 установлен без потери данных — [QA-126](../evidence/flutter/qa126-android-communication-audio-routes-2026-09-29-001.json).
+- [x] Исправить локальную проверку микрофона Android: сопоставлять WebRTC ID
+  встроенного микрофона (`microphone-bottom/back`) с числовым `AudioDeviceInfo`
+  ID, который ожидает `record`; проверить речь на Pixel 7 без входа в голосовой
+  канал, затем остановить захват. Полный Flutter suite (265 тестов), analyzer и
+  release-сборка прошли — [QA-128](../evidence/flutter/qa128-android-local-microphone-check-2026-09-29-001.json).
 - [ ] На Android физически проверить USB/Bluetooth microphone/output hotplug,
   смену маршрута в активном звонке и слышимость; на macOS/Windows проверить
   перечисление, hotplug и переключение устройств. Повторное перечисление,

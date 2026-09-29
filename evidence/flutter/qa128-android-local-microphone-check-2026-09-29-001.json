@@ -1,0 +1,35 @@
+{
+  "id": "QA-128",
+  "kind": "android-local-microphone-check",
+  "status": "PASS",
+  "executed_at": "2026-09-29",
+  "source_revision": "6bd5835",
+  "summary": "Mapped the selected WebRTC microphone ID to Android AudioRecord's AudioDeviceInfo ID so the local-only microphone check works for built-in microphones on Pixel.",
+  "checks": [
+    {
+      "name": "Audio-device mapping tests",
+      "command": "cd desktop && flutter test --no-pub test/audio_device_check_test.dart test/android_audio_devices_test.dart",
+      "status": "PASS",
+      "observation": "All 10 targeted tests passed, including Android ID mapping, name fallback, and ensuring the native mapping method is not called on desktop."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 265 tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub lib/src/services/android_audio_devices.dart lib/src/services/audio_device_check.dart",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Release APK and Pixel 7 runtime test",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub; adb install -r build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
+      "status": "PASS",
+      "observation": "Signed arm64 release APK installed in place on Pixel 7 (Android 17/API 37), preserving app data. Local microphone test entered its active state without the previous device-not-found error. The user spoke next to the phone and confirmed that it worked. A later accessibility snapshot, taken after speech ended, showed 0% as the meter had returned to silence. The test was stopped immediately afterward; no voice channel was joined and no audio was sent to LiveKit."
+    }
+  ],
+  "remaining": "Test external microphone hotplug and selected-input switching on Android; verify local test and input switching on macOS and Windows."
+}
