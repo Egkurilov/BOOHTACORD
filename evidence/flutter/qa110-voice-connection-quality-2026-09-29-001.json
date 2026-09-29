@@ -1,0 +1,34 @@
+{
+  "id": "QA-110",
+  "kind": "voice-connection-quality-and-ping-indicator",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "summary": "The active voice-room header and persistent voice dock now show LiveKit's local connection quality and audio sender RTT when the platform reports it. Missing RTT remains explicitly unavailable. Local tests and analysis pass; runtime network metric behavior still needs native peer acceptance.",
+  "checks": [
+    {
+      "name": "Quality labels and bounded RTT conversion",
+      "command": "cd desktop && flutter test --no-pub test/voice_connection_quality_test.dart",
+      "status": "PASS",
+      "observation": "Covers all LiveKit quality states, seconds-to-milliseconds conversion, zero RTT, missing RTT, and rejects negative, non-finite, and out-of-range values."
+    },
+    {
+      "name": "Accessible connection status and visible ping",
+      "command": "cd desktop && flutter test --no-pub test/voice_connection_badge_test.dart",
+      "status": "PASS",
+      "observation": "Verifies connected quality/ping presentation and semantics, reconnect status, and a truthful unavailable RTT placeholder."
+    },
+    {
+      "name": "Flutter test suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 251 widget and unit tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "remaining": "Verify changing LiveKit connection quality and audio RTT availability/accuracy with an actual peer on Android, macOS, and Windows. The indicator is intentionally local to the current participant; no receiver screen-share RTT is used as a substitute."
+}

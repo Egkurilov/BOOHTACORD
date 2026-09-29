@@ -25,6 +25,7 @@ import 'services/voice_lease_revocation.dart';
 import 'services/voice_volume_preferences.dart';
 import 'services/voice_reconnect_policy.dart';
 import 'services/voice_stream_start_tracker.dart';
+import 'services/voice_connection_quality.dart';
 
 enum AppPhase { loading, connectionError, signedOut, ready }
 
@@ -201,6 +202,7 @@ class AppState extends ChangeNotifier {
   bool _mutedBeforeDeafen = false;
   bool _microphoneMutedBeforePtt = false;
   Room? _room;
+  int? _voicePingMs;
   EventsListener<RoomEvent>? _voiceEvents;
   VoiceVolumePreferences? _voiceVolumePreferences;
   final Set<String> _mutedScreenShareAudioIdentities = <String>{};
@@ -239,6 +241,9 @@ class AppState extends ChangeNotifier {
 
   String get serverUrl => api.baseUrl;
   Room? get room => _room;
+  ConnectionQuality get voiceConnectionQuality =>
+      _room?.localParticipant?.connectionQuality ?? ConnectionQuality.unknown;
+  int? get voicePingMs => _voicePingMs;
   bool get notificationsSupported => _nativeNotifications.supported;
   bool get notificationsEnabled => _nativeNotifications.enabled;
   NativeNotificationPermission get notificationPermission =>
@@ -1958,6 +1963,7 @@ class AppState extends ChangeNotifier {
     } catch (_) {}
     await _disposeVoiceEvents();
     _room = null;
+    _voicePingMs = null;
     _leaseId = null;
     voiceChannel = null;
     _mutedScreenShareAudioIdentities.clear();
@@ -2347,6 +2353,7 @@ class AppState extends ChangeNotifier {
     if (channel.admissionClosed) return;
     if (voiceChannel?.id == channel.id && _room != null) return;
     voicePhase = VoicePhase.joining;
+    _voicePingMs = null;
     _voiceAdmissionPending = true;
     microphoneUnavailable = false;
     error = null;
@@ -2523,6 +2530,18 @@ class AppState extends ChangeNotifier {
   void _bindVoiceRoomEvents(Room room) {
     final listener = room.createListener();
     _voiceEvents = listener;
+    listener.on<ParticipantConnectionQualityUpdatedEvent>((event) {
+      if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
+      if (!identical(event.participant, room.localParticipant)) return;
+      notifyListeners();
+    });
+    listener.on<AudioSenderStatsEvent>((event) {
+      if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
+      final ping = voiceRttMilliseconds(event.stats.roundTripTime);
+      if (_voicePingMs == ping) return;
+      _voicePingMs = ping;
+      notifyListeners();
+    });
     listener.on<RoomAttemptReconnectEvent>((event) {
       if (!identical(_room, room) ||
           voicePhase != VoicePhase.reconnecting ||
@@ -2536,12 +2555,14 @@ class AppState extends ChangeNotifier {
     listener.on<RoomReconnectingEvent>((_) {
       if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
       voicePhase = VoicePhase.reconnecting;
+      _voicePingMs = null;
       _observeVoiceStreamStarts(room);
       notifyListeners();
     });
     listener.on<RoomResumingEvent>((_) {
       if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
       voicePhase = VoicePhase.reconnecting;
+      _voicePingMs = null;
       _observeVoiceStreamStarts(room);
       notifyListeners();
     });
@@ -3004,6 +3025,7 @@ class AppState extends ChangeNotifier {
     _stopScreenShareMetrics();
     final leaseId = _leaseId;
     _room = null;
+    _voicePingMs = null;
     _leaseId = null;
     voiceChannel = null;
     _mutedScreenShareAudioIdentities.clear();
@@ -3164,6 +3186,7 @@ class AppState extends ChangeNotifier {
       }
     }
     _room = null;
+    _voicePingMs = null;
     _leaseId = null;
     voiceChannel = null;
     _mutedScreenShareAudioIdentities.clear();

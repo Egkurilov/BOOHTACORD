@@ -16,6 +16,7 @@ import '../services/pinned_screen_mini_player_policy.dart';
 import '../services/api_client.dart';
 import '../services/voice_avatar_palette.dart';
 import '../services/voice_participant_presentation.dart';
+import '../services/voice_connection_quality.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
 import '../widgets/message_attachment_composer.dart';
@@ -4610,6 +4611,8 @@ class _VoiceParticipantRoom extends StatelessWidget {
               ),
               VoiceConnectionBadge(
                 reconnecting: state.voicePhase == VoicePhase.reconnecting,
+                quality: state.voiceConnectionQuality,
+                pingMs: state.voicePingMs,
               ),
             ],
           ),
@@ -5951,7 +5954,10 @@ class _VoiceDockState extends State<_VoiceDock> {
               child: Semantics(
                 container: true,
                 liveRegion: true,
-                label: '$_status · ${state.voiceChannel!.name}',
+                label:
+                    '$_status · ${state.voiceChannel!.name} · качество соединения: '
+                    '${voiceConnectionQualityLabel(state.voiceConnectionQuality)} · ping '
+                    '${state.voicePingMs == null ? '—' : '${state.voicePingMs} мс'}',
                 child: Row(
                   children: [
                     _StatusDot(
@@ -5986,6 +5992,13 @@ class _VoiceDockState extends State<_VoiceDock> {
                         ],
                       ),
                     ),
+                    if (state.voicePhase == VoicePhase.connected ||
+                        state.voicePhase == VoicePhase.listener)
+                      VoiceQualityIndicator(
+                        quality: state.voiceConnectionQuality,
+                        pingMs: state.voicePingMs,
+                        compact: compact,
+                      ),
                     if (compact)
                       IconButton(
                         tooltip: _expanded
