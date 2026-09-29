@@ -4,6 +4,7 @@ export interface ScreenReceiverSnapshot {
   framesDropped: number
   jitter?: number
   packetsLost?: number
+  packetsReceived?: number
   timestamp: number
 }
 
@@ -13,6 +14,7 @@ export interface ScreenReceiverMetrics {
   droppedFrames: number | null
   jitterMs: number | null
   packetsLost: number | null
+  packetLossPercent: number | null
 }
 
 function rate(previous: number | undefined, current: number | undefined, elapsedMs: number, multiplier: number): number | null {
@@ -29,5 +31,6 @@ export function compareScreenReceiverStats(previous: ScreenReceiverSnapshot | nu
     droppedFrames: dropped,
     jitterMs: current.jitter !== undefined && Number.isFinite(current.jitter) && current.jitter >= 0 ? Math.round(current.jitter * 1000) : null,
     packetsLost: current.packetsLost !== undefined && Number.isFinite(current.packetsLost) && current.packetsLost >= 0 ? current.packetsLost : null,
+    packetLossPercent: null,
   }
 }

@@ -13,6 +13,7 @@ const props = defineProps<{
 }>()
 const status = computed(() => props.sampledAt === null ? 'Нет свежих данных' : `Измерено в ${new Date(props.sampledAt).toLocaleTimeString('ru-RU')}`)
 const value = (number: number | null | undefined, suffix: string) => number === null || number === undefined ? 'Нет данных' : `${number} ${suffix}`
+const percent = (number: number | null | undefined) => number === null || number === undefined ? 'Нет данных' : `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(number)} %`
 </script>
 
 <template>
@@ -23,7 +24,7 @@ const value = (number: number | null | undefined, suffix: string) => number === 
       <div><dt>Сейчас у зрителя</dt><dd>{{ actualVideoQuality }}</dd></div>
       <div><dt>Декодировано</dt><dd>{{ value(metrics?.decodedFps, 'FPS') }}</dd></div>
       <div><dt>Получено</dt><dd>{{ value(metrics?.bitrateKbps, 'кбит/с') }}</dd></div>
-      <div><dt>Потеряно пакетов</dt><dd>{{ metrics?.packetsLost ?? 'Нет данных' }}</dd></div>
+      <div><dt>Потери пакетов за 10 с</dt><dd>{{ percent(metrics?.packetLossPercent) }}</dd></div>
       <div><dt>Пропущено кадров за интервал</dt><dd>{{ metrics?.droppedFrames ?? 'Нет данных' }}</dd></div>
       <div><dt>Jitter</dt><dd>{{ value(metrics?.jitterMs, 'мс') }}</dd></div>
       <div><dt>RTT</dt><dd>Нет данных от приёмника</dd></div>

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../theme.dart';
+import 'screen_packet_loss.dart';
 
 class ScreenReceiverSnapshot {
   const ScreenReceiverSnapshot({
@@ -15,6 +16,7 @@ class ScreenReceiverSnapshot {
     this.framesDropped,
     this.jitterSeconds,
     this.packetsLost,
+    this.packetsReceived,
     this.frameWidth,
     this.frameHeight,
     this.framesPerSecond,
@@ -26,6 +28,7 @@ class ScreenReceiverSnapshot {
   final double? framesDropped;
   final double? jitterSeconds;
   final double? packetsLost;
+  final double? packetsReceived;
   final double? frameWidth;
   final double? frameHeight;
   final double? framesPerSecond;
@@ -38,6 +41,7 @@ class ScreenReceiverMetrics {
     this.droppedFrames,
     this.jitterMs,
     this.packetsLost,
+    this.packetLossPercent,
   });
 
   final double? bitrateKbps;
@@ -45,6 +49,7 @@ class ScreenReceiverMetrics {
   final double? droppedFrames;
   final double? jitterMs;
   final double? packetsLost;
+  final double? packetLossPercent;
 }
 
 ScreenReceiverMetrics compareScreenReceiverStats(
@@ -148,6 +153,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
   ScreenReceiverSnapshot? _previous;
   ScreenReceiverSnapshot? _current;
   ScreenReceiverMetrics? _metrics;
+  final ScreenPacketLossWindow _lossWindow = ScreenPacketLossWindow();
   DateTime? _sampledAt;
   bool _sampling = false;
   bool _popoverOpen = false;
@@ -191,6 +197,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
   void _restartSampling() {
     _timer?.cancel();
     _previous = null;
+    _lossWindow.clear();
     _current = null;
     _metrics = null;
     _sampledAt = null;
@@ -215,7 +222,13 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
       final stats = await track.getReceiverStats();
       if (!mounted || !identical(track, widget.track)) return;
       if (stats == null) {
-        setState(() => _sampleStatus = 'Приёмник не вернул статистику');
+        _previous = null;
+        _lossWindow.clear();
+        setState(() {
+          _metrics = null;
+          _sampledAt = null;
+          _sampleStatus = 'Приёмник не вернул статистику';
+        });
         return;
       }
       final next = ScreenReceiverSnapshot(
@@ -225,11 +238,24 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
         framesDropped: stats.framesDropped?.toDouble(),
         jitterSeconds: stats.jitter?.toDouble(),
         packetsLost: stats.packetsLost?.toDouble(),
+        packetsReceived: stats.packetsReceived?.toDouble(),
         frameWidth: stats.frameWidth?.toDouble(),
         frameHeight: stats.frameHeight?.toDouble(),
         framesPerSecond: stats.framesPerSecond?.toDouble(),
       );
-      final metrics = compareScreenReceiverStats(_previous, next);
+      final measured = compareScreenReceiverStats(_previous, next);
+      final metrics = ScreenReceiverMetrics(
+        bitrateKbps: measured.bitrateKbps,
+        decodedFps: measured.decodedFps,
+        droppedFrames: measured.droppedFrames,
+        jitterMs: measured.jitterMs,
+        packetsLost: measured.packetsLost,
+        packetLossPercent: _lossWindow.add(
+          timestampMs: next.timestampMs,
+          packetsReceived: next.packetsReceived,
+          packetsLost: next.packetsLost,
+        ),
+      );
       _previous = next;
       setState(() {
         _current = next;
@@ -239,7 +265,13 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
       });
     } catch (_) {
       if (mounted && identical(track, widget.track)) {
-        setState(() => _sampleStatus = 'Не удалось прочитать статистику');
+        _previous = null;
+        _lossWindow.clear();
+        setState(() {
+          _metrics = null;
+          _sampledAt = null;
+          _sampleStatus = 'Не удалось прочитать статистику';
+        });
       }
     } finally {
       _sampling = false;
@@ -353,8 +385,10 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
                               ),
                             ),
                             _DiagnosticRow(
-                              label: 'Потеряно пакетов',
-                              value: _formatMetric(_metrics?.packetsLost),
+                              label: 'Потери пакетов за 10 с',
+                              value: formatScreenPacketLossPercent(
+                                _metrics?.packetLossPercent,
+                              ),
                             ),
                             _DiagnosticRow(
                               label: 'Пропущено кадров за интервал',

@@ -1,12 +1,14 @@
 import { onBeforeUnmount, ref, watch, type Ref } from 'vue'
 
 import { compareScreenReceiverStats, type ScreenReceiverMetrics, type ScreenReceiverSnapshot } from './screen_receiver_diagnostics'
+import { ScreenPacketLossWindow } from './screen_packet_loss'
 import type { ScreenViewerCard } from './screen_viewer_types'
 
 export function useScreenReceiverDiagnostics(selected: Ref<ScreenViewerCard | null>, ended: () => boolean) {
   const metrics = ref<ScreenReceiverMetrics | null>(null)
   const sampledAt = ref<number | null>(null)
   let previous: ScreenReceiverSnapshot | null = null
+  const lossWindow = new ScreenPacketLossWindow()
   let generation = 0
   let timer: ReturnType<typeof setInterval> | null = null
   let sampling = false
@@ -17,12 +19,12 @@ export function useScreenReceiverDiagnostics(selected: Ref<ScreenViewerCard | nu
     try {
       const current = await card.readReceiverStats()
       if (version !== generation) return
-      if (!current) { metrics.value = null; sampledAt.value = null; previous = null; return }
-      metrics.value = compareScreenReceiverStats(previous, current)
+      if (!current) { metrics.value = null; sampledAt.value = null; previous = null; lossWindow.clear(); return }
+      metrics.value = { ...compareScreenReceiverStats(previous, current), packetLossPercent: lossWindow.add(current) }
       sampledAt.value = Date.now()
       previous = current
     } catch {
-      if (version === generation) { metrics.value = null; sampledAt.value = null; previous = null }
+      if (version === generation) { metrics.value = null; sampledAt.value = null; previous = null; lossWindow.clear() }
     } finally {
       if (version === generation) sampling = false
     }
@@ -34,6 +36,7 @@ export function useScreenReceiverDiagnostics(selected: Ref<ScreenViewerCard | nu
     timer = null
     sampling = false
     previous = null
+    lossWindow.clear()
     metrics.value = null
     sampledAt.value = null
     const card = selected.value

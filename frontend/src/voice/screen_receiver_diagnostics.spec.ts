@@ -8,14 +8,14 @@ describe('selected screen receiver diagnostics', () => {
     const after = { timestamp: 3000, framesDecoded: 140, framesDropped: 4, bytesReceived: 1_100_000, packetsLost: 3, jitter: 0.012 }
 
     expect(compareScreenReceiverStats(before, after)).toEqual({
-      bitrateKbps: 4000, decodedFps: 60, droppedFrames: 3, jitterMs: 12, packetsLost: 3,
+      bitrateKbps: 4000, decodedFps: 60, droppedFrames: 3, jitterMs: 12, packetsLost: 3, packetLossPercent: null,
     })
   })
 
   it('does not report a rate until a valid second sample is available', () => {
     const current = { timestamp: 2000, framesDecoded: 150, framesDropped: 5, bytesReceived: 900, packetsLost: 0 }
     expect(compareScreenReceiverStats(null, current)).toEqual({
-      bitrateKbps: null, decodedFps: null, droppedFrames: null, jitterMs: null, packetsLost: 0,
+      bitrateKbps: null, decodedFps: null, droppedFrames: null, jitterMs: null, packetsLost: 0, packetLossPercent: null,
     })
     expect(compareScreenReceiverStats({ ...current, timestamp: 3000 }, current).decodedFps).toBeNull()
     expect(compareScreenReceiverStats({ ...current, framesDecoded: 200 }, current).decodedFps).toBeNull()

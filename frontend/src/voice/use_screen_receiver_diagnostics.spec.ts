@@ -13,6 +13,27 @@ const renderer = createRenderer<any, any>({
 afterEach(() => vi.useRealTimers())
 
 describe('receiver sampling lifecycle', () => {
+  it('feeds ten-second packet deltas into the visible metrics', async () => {
+    vi.useFakeTimers()
+    let count = 0
+    const readReceiverStats = vi.fn().mockImplementation(async () => {
+      const index = count++
+      return {
+        timestamp: index * 2000, framesDecoded: index * 60, framesDropped: 0,
+        packetsReceived: 1000 + index * 199, packetsLost: 2476 + (index > 0 ? 5 : 0),
+      }
+    })
+    const selected = ref<ScreenViewerCard | null>({ id: 'screen', hasAudio: false, participantId: 'a', participantName: 'A', readReceiverStats })
+    let observed: ReturnType<typeof useScreenReceiverDiagnostics> | undefined
+    const app = renderer.createApp({ setup() { observed = useScreenReceiverDiagnostics(selected, () => false); return () => null } })
+    app.mount({})
+    await vi.advanceTimersByTimeAsync(8000)
+    expect(observed?.metrics.value?.packetLossPercent).toBeNull()
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(observed?.metrics.value?.packetLossPercent).toBe(0.5)
+    app.unmount()
+  })
+
   it('measures consecutive receiver samples and resets when the viewed screen changes', async () => {
     vi.useFakeTimers()
     const first = vi.fn()
