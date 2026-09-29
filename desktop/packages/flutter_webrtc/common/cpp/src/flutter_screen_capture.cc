@@ -226,6 +226,22 @@ void FlutterScreenCapture::GetDisplayMedia(
 
   bool capture_audio = false;
   std::string loopback_track_id;
+  bool loopback_started_for_request = false;
+  const auto cleanup_failed_capture = [&]() {
+    if (!loopback_started_for_request) {
+      return;
+    }
+    if (!loopback_track_id.empty()) {
+      base_->local_tracks_.erase(loopback_track_id);
+      loopback_track_id.clear();
+    }
+    if (loopback_capturer_) {
+      loopback_capturer_->Stop();
+      loopback_capturer_.reset();
+    }
+    loopback_audio_source_ = nullptr;
+    loopback_started_for_request = false;
+  };
   {
     auto audio_it = constraints.find(EncodableValue("audio"));
     if (audio_it != constraints.end()) {
@@ -265,6 +281,7 @@ void FlutterScreenCapture::GetDisplayMedia(
     loopback_capturer_ = CreateLoopbackCapturer(source_id);
 
     if (loopback_capturer_ && loopback_capturer_->Start(loopback_audio_source_)) {
+      loopback_started_for_request = true;
       EncodableMap audio_info;
       audio_info[EncodableValue("id")] =
           EncodableValue(audio_track->id().std_string());
@@ -331,6 +348,7 @@ void FlutterScreenCapture::GetDisplayMedia(
 #endif
 
   if (!source.get()) {
+    cleanup_failed_capture();
     result->Error("Bad Arguments", "source not found!");
     return;
   }
@@ -339,6 +357,7 @@ void FlutterScreenCapture::GetDisplayMedia(
       base_->desktop_device_->CreateDesktopCapturer(source, show_cursor);
 
   if (!desktop_capturer.get()) {
+    cleanup_failed_capture();
     result->Error("Bad Arguments", "CreateDesktopCapturer failed!");
     return;
   }
@@ -352,10 +371,22 @@ void FlutterScreenCapture::GetDisplayMedia(
           desktop_capturer, video_source_label,
           base_->ParseMediaConstraints(video_constraints));
 
+  if (!video_source.get()) {
+    cleanup_failed_capture();
+    result->Error("Capture Failed", "Failed to create video source.");
+    return;
+  }
+
   // TODO: RTCVideoSource -> RTCVideoTrack
 
   scoped_refptr<RTCVideoTrack> track =
       base_->factory_->CreateVideoTrack(video_source, uuid.c_str());
+
+  if (!track.get()) {
+    cleanup_failed_capture();
+    result->Error("Capture Failed", "Failed to create video track.");
+    return;
+  }
 
   EncodableList videoTracks;
   EncodableMap info;
@@ -376,14 +407,7 @@ void FlutterScreenCapture::GetDisplayMedia(
   if (capture_state == RTCDesktopCapturer::CS_FAILED) {
     base_->local_tracks_.erase(track->id().std_string());
     base_->local_streams_.erase(uuid);
-    if (!loopback_track_id.empty()) {
-      base_->local_tracks_.erase(loopback_track_id);
-    }
-    if (loopback_capturer_) {
-      loopback_capturer_->Stop();
-      loopback_capturer_.reset();
-      loopback_audio_source_ = nullptr;
-    }
+    cleanup_failed_capture();
     result->Error("Capture Failed",
                   "Не удалось запустить захват выбранного источника.");
     return;
