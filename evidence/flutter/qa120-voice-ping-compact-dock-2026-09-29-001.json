@@ -4,7 +4,7 @@
   "status": "PARTIAL",
   "executed_at": "2026-09-29",
   "source_revision": "d8f8b6a4be804df7773d9208ce539743de09e18c",
-  "summary": "Audio sender RTT is now read from the paired LiveKit remote-inbound-rtp report, the source that carries the receiver's round-trip-time measurement. The compact mobile voice dock no longer has a redundant expand chevron, hint area or expansion gesture. Automated checks and a signed Android split release pass; live peer RTT and native device acceptance remain open.",
+  "summary": "Audio sender RTT is now read from the paired LiveKit remote-inbound-rtp report, the source that carries the receiver's round-trip-time measurement. The compact mobile voice dock no longer has a redundant expand chevron, hint area or expansion gesture. Automated checks pass, and the signed Android 1.0.6 split release was successfully published to GitVerse; live peer RTT and native device acceptance remain open.",
   "checks": [
     {
       "name": "LiveKit paired remote-inbound RTT tests",
@@ -43,9 +43,9 @@
     },
     {
       "name": "GitVerse Android release workflow",
-      "status": "NOT_RUN",
-      "observation": "The android-v1.0.6 tag has not yet been published for CI during evidence authoring."
+      "status": "PASS",
+      "observation": "Workflow run 1681704 completed successfully for android-v1.0.6. GitVerse published arm64-v8a (36.6 MiB), armeabi-v7a (28.1 MiB) and x86_64 (42 MiB) APK assets."
     }
   ],
-  "remaining": "Publish and confirm the android-v1.0.6 GitVerse release workflow, then validate live audio RTT and compact dock behavior with an Android device and a connected peer."
+  "remaining": "Validate live audio RTT and compact dock behavior with an Android device and a connected peer."
 }

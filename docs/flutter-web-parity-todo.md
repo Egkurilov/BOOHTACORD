@@ -130,7 +130,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
   пояснение; оставить постоянный ряд voice-действий. Исправить ping: брать RTT
   связанного LiveKit `remote-inbound-rtp`, а не outbound report — unit/widget
   tests, полный Flutter suite, analyzer и подписанный Android split release
-  прошли. Peer-проверка реального RTT остаётся открытой —
+  прошли; GitVerse release `android-v1.0.6` опубликован. Peer-проверка реального RTT остаётся открытой —
   [QA-120](../evidence/flutter/qa120-voice-ping-compact-dock-2026-09-29-001.json).
 - [x] Добавить в постоянный voice dock start/stop демонстрации с тем же picker
   качества и источника, что и в voice viewer; блокировать запуск во время
