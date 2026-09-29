@@ -1,0 +1,118 @@
+name: Windows Release
+on:
+  push:
+    tags:
+      - 'windows-v*'
+permissions:
+  contents: read
+jobs:
+  windows-release:
+    runs-on: boohtacord-windows
+    steps:
+      - name: Enable long paths for Windows checkout
+        shell: powershell
+        run: git config --global core.longpaths true
+      - name: Checkout release source
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: desktop
+      - name: Check tag and Flutter toolchain
+        shell: powershell
+        working-directory: desktop
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:GITHUB_REF_NAME -notmatch '^windows-v(\d+\.\d+\.\d+)$') {
+            throw 'Expected a windows-vX.Y.Z release tag.'
+          }
+          $tagVersion = $Matches[1]
+          $pubspecVersion = (Select-String -Path pubspec.yaml -Pattern '^version:\s*(\S+)').Matches[0].Groups[1].Value
+          if ($tagVersion -ne $pubspecVersion.Split('+')[0]) {
+            throw "Tag version $tagVersion does not match pubspec $pubspecVersion"
+          }
+          $flutter = Join-Path $env:USERPROFILE 'develop\flutter\bin\flutter.bat'
+          if (-not (Test-Path -LiteralPath $flutter)) { throw "Flutter SDK missing: $flutter" }
+          $version = (& $flutter --version --machine | ConvertFrom-Json).frameworkVersion
+          if ($LASTEXITCODE -ne 0 -or $version -ne '3.47.5') {
+            throw "Expected Flutter 3.47.5, got $version"
+          }
+      - name: Resolve locked Flutter dependencies
+        working-directory: desktop
+        shell: powershell
+        run: |
+          $env:FLUTTER_ROOT = Join-Path $env:USERPROFILE 'develop\flutter'
+          & "$env:FLUTTER_ROOT\bin\flutter.bat" pub get --enforce-lockfile
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Ensure Windows plugin junctions
+        working-directory: desktop
+        shell: powershell
+        run: |
+          $metadata = Get-Content -Raw .flutter-plugins-dependencies | ConvertFrom-Json
+          $linkRoot = Join-Path (Get-Location) 'windows\flutter\ephemeral\.plugin_symlinks'
+          New-Item -ItemType Directory -Force -Path $linkRoot | Out-Null
+          foreach ($plugin in $metadata.plugins.windows) {
+            $pluginRoot = [System.IO.Path]::GetFullPath($plugin.path)
+            $pluginCMake = Join-Path $pluginRoot 'windows\CMakeLists.txt'
+            if (-not (Test-Path -LiteralPath $pluginCMake)) { continue }
+            $link = Join-Path $linkRoot $plugin.name
+            $linkedCMake = Join-Path $link 'windows\CMakeLists.txt'
+            if (Test-Path -LiteralPath $linkedCMake) { continue }
+            if (Test-Path -LiteralPath $link) { throw "Unusable plugin path: $link" }
+            New-Item -ItemType Junction -Path $link -Target $pluginRoot | Out-Null
+            if (-not (Test-Path -LiteralPath $linkedCMake)) {
+              throw "Could not link Windows Flutter plugin '$($plugin.name)'"
+            }
+          }
+
+      - name: Test, analyze and build Windows Release
+        working-directory: desktop
+        shell: powershell
+        run: |
+          $flutter = Join-Path $env:USERPROFILE 'develop\flutter\bin\flutter.bat'
+          & $flutter test --no-pub
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $flutter analyze --no-pub --no-fatal-infos
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $flutter build windows --release --no-pub
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Package portable Windows bundle
+        working-directory: desktop
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bundle = Join-Path (Get-Location) 'build\windows\x64\runner\Release'
+          foreach ($required in @('boohtacord_desktop.exe', 'flutter_windows.dll', 'libwebrtc.dll', 'data\app.so')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $bundle $required))) {
+              throw "Windows bundle is missing $required"
+            }
+          }
+          $assets = Join-Path (Get-Location) 'build\release-assets'
+          New-Item -ItemType Directory -Force -Path $assets | Out-Null
+          $zipName = "BOOHTACORD-$($env:GITHUB_REF_NAME)-windows-x64.zip"
+          $zip = Join-Path $assets $zipName
+          Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath $zip -CompressionLevel Optimal
+          if ((Get-Item -LiteralPath $zip).Length -gt 95000000) {
+            throw 'Windows ZIP exceeds the 95 MB GitVerse asset safety ceiling.'
+          }
+          $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -LiteralPath (Join-Path $assets ($zipName + '.sha256')) -Encoding ascii -Value "$hash  $zipName"
+
+      - name: Publish GitVerse release
+        uses: actions/create-release@v1
+        with:
+          api_key: ${{ secrets.RELEASE_API_KEY }}
+          title: BOOHTACORD ${{ github.ref_name }} (Windows x64)
+          body: |
+            Сборка приложения BOOHTACORD для Windows x64.
+
+            Скачайте ZIP, распакуйте его целиком и запустите boohtacord_desktop.exe.
+            Оставьте DLL-файлы и папку data рядом с исполняемым файлом.
+            Контрольная сумма SHA-256 опубликована отдельным файлом.
+
+            Сборка проходит Flutter-тесты, анализатор и Windows Release compilation.
+            Голос и демонстрацию экрана необходимо проверить с сервером и вторым клиентом.
+          files: |
+            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-windows-x64.zip
+            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-windows-x64.zip.sha256
+          draft: false
+          pre_release: false

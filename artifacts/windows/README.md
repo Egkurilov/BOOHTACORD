@@ -1,7 +1,7 @@
 # Windows x64 client
 
 The local `BOOHTACORD-1.0.3+7-windows-x64.zip` bundle was built from
-`6cbdf6845971e88d4be6ec8502d6af908c2fc907` with Flutter 3.47.5 and
+`53b4e2d02bd7600da5ba6ae58e71a744bb4062c4` with Flutter 3.47.5 and
 Visual Studio Build Tools 2022. The archive is local and is ignored by Git.
 
 Extract the entire archive to a writable directory, then run
@@ -10,7 +10,7 @@ Extract the entire archive to a writable directory, then run
 guild's HTTPS API and LiveKit service.
 
 SHA-256 of the local ZIP:
-`EC4589BBB0992E1FF11CB69D36F69E9E078BD5DF01A26D53AF8C64015685EB68`
+`AA63147AB08E9C3ADE7C28BE64F69A2BEA295129F6E93A1D3505016BE83B7722`
 
 Build and verification details are recorded in
 [`QA-108`](../../evidence/flutter/qa108-windows-desktop-bundle-2026-09-29-001.json).
