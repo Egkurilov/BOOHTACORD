@@ -41,11 +41,15 @@ describe('screen viewer reference composition', () => {
   it('shows the C-32 overflow affordance only while more rail content remains', () => {
     const viewer = source('./ScreenViewer.vue')
     const styles = source('../design/voice_viewer_reference.css')
+    const tokens = source('../design/tokens.css')
 
     expect(viewer).toContain('observeHorizontalOverflow')
     expect(viewer).toContain('railHasOverflow')
     expect(viewer).toContain(':aria-description=')
     expect(styles).toContain('.screen-cards.stream-rail.has-overflow::after')
+    expect(styles).toContain('var(--gc-surface) 70%')
+    expect(styles).not.toContain('--gc-surface-base')
+    expect(tokens).toContain('--gc-layout-row-voice-member: 24px')
   })
 
   it('labels the owner screen preview and keeps its video muted', () => {

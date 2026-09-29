@@ -86,6 +86,7 @@
   --gc-layout-composer-min: 56px;
   --gc-layout-composer-max: 180px;
   --gc-layout-row-channel: 42px;
+  --gc-layout-row-voice-member: 24px;
   --gc-layout-user-footer: 68px;
   --gc-layout-voice-dock: 116px;
   --gc-layout-frame-wide: 0px;

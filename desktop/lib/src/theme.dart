@@ -6,6 +6,7 @@ abstract final class GcColors {
   static const content = Color(0xFF151A23);
   static const aside = Color(0xFF141922);
   static const surface = Color(0xFF1D2430);
+  static const input = Color(0xFF1D2430);
   static const raised = Color(0xFF242D3B);
   static const hover = Color(0xFF252E3D);
   static const selected = Color(0xFF293345);
@@ -14,11 +15,13 @@ abstract final class GcColors {
   static const muted = Color(0xFF929EB2);
   static const disabled = Color(0xFF6F7B8F);
   static const border = Color(0xFF242D3B);
+  static const borderSubtle = Color(0xFF242D3B);
   static const control = Color(0xFF6D7C94);
   static const accent = Color(0xFF5C5FE8);
   static const accentHover = Color(0xFF5558DB);
   static const accentPressed = Color(0xFF484BBF);
   static const accentText = Color(0xFFB7BAFF);
+  static const onAccent = Color(0xFFFFFFFF);
   static const success = Color(0xFF58D5A2);
   static const successBackground = Color(0xFF19352F);
   static const warning = Color(0xFFF4BD62);
@@ -26,7 +29,9 @@ abstract final class GcColors {
   static const danger = Color(0xFFFF9199);
   static const dangerBackground = Color(0xFF422830);
   static const dangerSolid = Color(0xFFB8273E);
+  static const onDanger = Color(0xFFFFFFFF);
   static const streamCanvas = Color(0xFF090B10);
+  static const overlay = Color(0xA8000000);
   static const focus = Color(0xFFADB8FF);
   static const avatarBlue = Color(0xFF365ACA);
   static const avatarGreen = Color(0xFF137C58);
@@ -46,9 +51,11 @@ abstract final class GcLayout {
   static const asideMedium = 240.0;
   static const asideWide = 248.0;
   static const frameInset = 16.0;
+  static const frameWide = 0.0;
   static const shellRadius = 14.0;
   static const headerHeight = 72.0;
   static const channelRowHeight = 42.0;
+  static const voiceMemberRowHeight = 24.0;
   static const userFooterHeight = 68.0;
   static const voiceDockHeight = 116.0;
   static const composerMinHeight = 56.0;
@@ -56,6 +63,8 @@ abstract final class GcLayout {
   static const controlSmall = 32.0;
   static const control = 40.0;
   static const controlLarge = 48.0;
+  static const iconSize = 20.0;
+  static const iconLarge = 24.0;
 }
 
 abstract final class GcSpacing {
@@ -77,31 +86,130 @@ abstract final class GcRadii {
   static const md = 10.0;
   static const lg = 14.0;
   static const shell = 20.0;
+  static const full = 999.0;
+}
+
+abstract final class GcTypography {
+  static const fontFamily = 'Inter';
+  static const fontMonoFamily = 'monospace';
+
+  static const caption = 12.0;
+  static const small = 13.0;
+  static const body = 14.0;
+  static const message = 15.0;
+  static const title = 16.0;
+  static const section = 20.0;
+  static const page = 24.0;
+
+  static const captionLine = 16.0;
+  static const smallLine = 18.0;
+  static const bodyLine = 20.0;
+  static const messageLine = 22.0;
+  static const titleLine = 24.0;
+  static const sectionLine = 28.0;
+  static const pageLine = 32.0;
+
+  static const regular = FontWeight.w400;
+  static const medium = FontWeight.w500;
+  static const semibold = FontWeight.w600;
+  static const bold = FontWeight.w700;
+}
+
+abstract final class GcMotion {
+  static const fast = Duration(milliseconds: 120);
+  static const base = Duration(milliseconds: 180);
+  static const slow = Duration(milliseconds: 240);
+  static const standardCurve = Cubic(0.2, 0, 0, 1);
+}
+
+abstract final class GcShadows {
+  static const popup = BoxShadow(
+    color: Color(0x40000000),
+    offset: Offset(0, 12),
+    blurRadius: 36,
+  );
+  static const shell = BoxShadow(
+    color: Color(0x24000000),
+    offset: Offset(0, 20),
+    blurRadius: 70,
+  );
 }
 
 ThemeData guildTheme() {
-  final scheme = ColorScheme.fromSeed(
-    seedColor: GcColors.accent,
-    brightness: Brightness.dark,
-    surface: GcColors.surface,
-    error: GcColors.danger,
-  );
+  final scheme =
+      ColorScheme.fromSeed(
+        seedColor: GcColors.accent,
+        brightness: Brightness.dark,
+        surface: GcColors.surface,
+        error: GcColors.danger,
+      ).copyWith(
+        primary: GcColors.accent,
+        onPrimary: GcColors.onAccent,
+        primaryContainer: GcColors.selected,
+        onPrimaryContainer: GcColors.accentText,
+        secondary: GcColors.accentText,
+        onSecondary: GcColors.canvas,
+        secondaryContainer: GcColors.raised,
+        onSecondaryContainer: GcColors.text,
+        tertiary: GcColors.success,
+        onTertiary: GcColors.canvas,
+        tertiaryContainer: GcColors.successBackground,
+        onTertiaryContainer: GcColors.success,
+        surface: GcColors.surface,
+        onSurface: GcColors.text,
+        surfaceTint: GcColors.surface,
+        error: GcColors.danger,
+        onError: GcColors.onDanger,
+        errorContainer: GcColors.dangerBackground,
+        onErrorContainer: GcColors.danger,
+        outline: GcColors.control,
+        outlineVariant: GcColors.borderSubtle,
+        surfaceContainerLowest: GcColors.canvas,
+        surfaceContainerLow: GcColors.content,
+        surfaceContainer: GcColors.surface,
+        surfaceContainerHigh: GcColors.raised,
+        surfaceContainerHighest: GcColors.hover,
+      );
   return ThemeData(
     brightness: Brightness.dark,
     colorScheme: scheme,
     scaffoldBackgroundColor: GcColors.canvas,
-    fontFamily: 'Inter',
+    fontFamily: GcTypography.fontFamily,
     dividerColor: GcColors.border,
     focusColor: GcColors.focus,
     textTheme: const TextTheme(
-      bodySmall: TextStyle(fontSize: 12, height: 16 / 12),
-      labelSmall: TextStyle(fontSize: 12, height: 16 / 12),
-      bodyMedium: TextStyle(fontSize: 14, height: 20 / 14),
-      labelMedium: TextStyle(fontSize: 13, height: 18 / 13),
-      bodyLarge: TextStyle(fontSize: 15, height: 22 / 15),
-      titleMedium: TextStyle(fontSize: 16, height: 24 / 16),
-      titleLarge: TextStyle(fontSize: 20, height: 28 / 20),
-      headlineSmall: TextStyle(fontSize: 24, height: 32 / 24),
+      bodySmall: TextStyle(
+        fontSize: GcTypography.caption,
+        height: GcTypography.captionLine / GcTypography.caption,
+      ),
+      labelSmall: TextStyle(
+        fontSize: GcTypography.caption,
+        height: GcTypography.captionLine / GcTypography.caption,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: GcTypography.body,
+        height: GcTypography.bodyLine / GcTypography.body,
+      ),
+      labelMedium: TextStyle(
+        fontSize: GcTypography.small,
+        height: GcTypography.smallLine / GcTypography.small,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: GcTypography.message,
+        height: GcTypography.messageLine / GcTypography.message,
+      ),
+      titleMedium: TextStyle(
+        fontSize: GcTypography.title,
+        height: GcTypography.titleLine / GcTypography.title,
+      ),
+      titleLarge: TextStyle(
+        fontSize: GcTypography.section,
+        height: GcTypography.sectionLine / GcTypography.section,
+      ),
+      headlineSmall: TextStyle(
+        fontSize: GcTypography.page,
+        height: GcTypography.pageLine / GcTypography.page,
+      ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,

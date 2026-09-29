@@ -483,8 +483,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                                     searchPanelModal
                                 ? 1
                                 : 0,
-                            duration: const Duration(milliseconds: 240),
-                            curve: Curves.easeOutCubic,
+                            duration: GcMotion.slow,
+                            curve: GcMotion.standardCurve,
                             child: _DrawerScrim(onTap: _closeScrim),
                           ),
                         ),
@@ -1266,7 +1266,7 @@ class _VoiceRosterMemberRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: 24,
+    height: GcLayout.voiceMemberRowHeight,
     child: Row(
       children: [
         CircleAvatar(
@@ -1360,7 +1360,7 @@ class _VoiceNavigationMemberRow extends StatelessWidget {
         ? null
         : state.members.where((item) => item.id == accountId).firstOrNull;
     return SizedBox(
-      height: 24,
+      height: GcLayout.voiceMemberRowHeight,
       child: Row(
         children: [
           AuthenticatedAvatar(

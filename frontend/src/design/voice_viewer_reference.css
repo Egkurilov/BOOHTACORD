@@ -28,7 +28,7 @@
 .screen-rail-section { display: grid; gap: var(--gc-space-2); }
 .screen-rail-section h3 { margin: 0; color: var(--gc-text-secondary); font-size: var(--gc-text-small); font-weight: var(--gc-weight-medium); }
 .screen-cards.stream-rail { min-height: 76px; align-items: center; gap: var(--gc-space-2); overflow-x: auto; overflow-y: hidden; }
-.screen-cards.stream-rail.has-overflow::after { position: sticky; right: 0; z-index: 2; display: grid; width: 24px; min-height: 64px; flex: 0 0 24px; place-items: center; margin-left: -24px; color: var(--gc-accent-text); background: linear-gradient(90deg, transparent, var(--gc-surface-base) 70%); content: '›'; pointer-events: none; }
+.screen-cards.stream-rail.has-overflow::after { position: sticky; right: 0; z-index: 2; display: grid; width: 24px; min-height: 64px; flex: 0 0 24px; place-items: center; margin-left: -24px; color: var(--gc-accent-text); background: linear-gradient(90deg, transparent, var(--gc-surface) 70%); content: '›'; pointer-events: none; }
 .screen-cards .stream-option { position: relative; display: flex; min-width: 152px; max-width: 200px; min-height: 64px; align-items: center; gap: var(--gc-space-2); flex: 0 0 auto; border: 1px solid var(--gc-border-subtle); }
 .screen-cards .stream-option.selected { border-color: var(--gc-accent-text); background: var(--gc-surface-selected); }
 .stream-avatar { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border-radius: var(--gc-radius-full); color: var(--gc-on-accent); font-size: var(--gc-text-title); }
