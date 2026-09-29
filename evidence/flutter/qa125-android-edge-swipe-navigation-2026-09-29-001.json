@@ -1,9 +1,9 @@
 {
-  "id": "QA-81",
+  "id": "QA-125",
   "kind": "android-edge-swipe-navigation",
-  "status": "PASS_WITH_PHYSICAL_DEVICE_ACCEPTANCE_OPEN",
+  "status": "PASS",
   "executed_at": "2026-09-29",
-  "source_revision": "951ca72",
+  "source_revision": "d0e76c5",
   "summary": "Workspace navigation/member edge swipes use a narrow Android system-gesture exclusion aligned to the full-window decor view, while Android Back remains available outside the declared region.",
   "checks": [
     {
@@ -37,25 +37,12 @@
       "observation": "Flutter and native Android Kotlin sources compiled successfully."
     },
     {
-      "name": "GitVerse Flutter Windows CI",
-      "run": "1679607",
-      "job": "3296585",
-      "status": "PASS",
-      "observation": "The GitVerse Windows runner passed Flutter tests, static analysis, and Windows Release compilation for the pushed change."
-    },
-    {
-      "name": "GitVerse Flutter Windows CI",
-      "run": "1679355",
-      "job": "3296013",
-      "status": "PASS",
-      "observation": "The Windows runner passed Flutter tests, static analysis, and release build."
-    },
-    {
       "name": "Physical Android Back/edge gesture acceptance",
       "device": "Google Pixel 7",
-      "status": "NOT_RUN",
-      "observation": "No Android device is currently attached to ADB, so the reported edge-to-back regression and actual gesture-exclusion boundaries still require confirmation on the Pixel 7."
+      "command": "adb shell settings get secure navigation_mode; adb shell input swipe 1 1200 520 1200 300; adb shell input swipe 1078 1200 560 1200; adb shell input swipe 0 200 500 200 400; adb shell input swipe 1078 200 580 200 400",
+      "status": "PASS",
+      "observation": "Pixel 7 reports gesture-navigation mode 2 at 1080x2400. A left-edge swipe at vertical center opened the channel drawer and did not invoke Back; a right-edge swipe at vertical center opened the members drawer. Left- and right-edge swipes at y=200 px, outside the centered 200 dp drawer-exclusion zone, invoked Android Back and returned to the prior ChatGPT activity. The app was restored after each Back check; workspace data and messages were not changed."
     }
   ],
-  "remaining": "On a physical Android phone with gesture navigation, verify the reported edge-to-back regression is fixed: left/right edge swipes should open the intended drawers inside the centered 200 dp exclusion zone, while Back remains available outside it and drawer-open swipes remain intact. Android only honors up to 200 dp of vertical exclusion per edge."
+  "remaining": "Android physical edge/Back acceptance is complete. iOS swipe behavior and the remaining unified mobile drawer/dock gesture flows are tracked in QA-78 and QA-79."
 }
