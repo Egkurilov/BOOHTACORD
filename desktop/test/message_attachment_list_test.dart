@@ -53,6 +53,44 @@ void main() {
     expect(find.byTooltip('Закрыть просмотр'), findsOneWidget);
   });
 
+  testWidgets('announces the image viewer route and image alt text', (
+    tester,
+  ) async {
+    const onePixelPng =
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
+    final state = AppState(
+      ApiClient(
+        client: MockClient(
+          (_) async => http.Response.bytes(
+            base64Decode(onePixelPng),
+            200,
+            headers: {'content-type': 'image/png'},
+          ),
+        ),
+      ),
+    );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(_app(state));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('attachment-preview-attachment-1')),
+    );
+    await tester.pumpAndSettle();
+
+    final routeSemantics = tester.widget<Semantics>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.namesRoute == true &&
+            widget.properties.label == 'Просмотр изображения photo.png',
+      ),
+    );
+    expect(routeSemantics.properties.namesRoute, isTrue);
+    final image = tester.widget<Image>(find.byType(Image).last);
+    expect(image.semanticLabel, 'photo.png');
+  });
+
   testWidgets('offers retry for transient protected preview failures', (
     tester,
   ) async {

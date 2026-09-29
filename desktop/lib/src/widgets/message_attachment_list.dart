@@ -238,76 +238,81 @@ class _ProtectedImagePreviewState extends State<_ProtectedImagePreview> {
   }
 
   @override
-  Widget build(BuildContext context) => Dialog(
-    backgroundColor: const Color(0xFF17191D),
-    insetPadding: const EdgeInsets.all(24),
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 1100, maxHeight: 850),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 8, 8, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.attachment.originalName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Закрыть просмотр',
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-          ),
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: FutureBuilder<Uint8List?>(
-                future: _image,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return InteractiveViewer(
-                      minScale: 0.5,
-                      maxScale: 5,
-                      child: Image.memory(
-                        snapshot.data!,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, _, _) =>
-                            _PreviewUnavailable(onRetry: _retry),
-                      ),
-                    );
-                  }
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    final unavailable =
-                        _loadError is ApiFailure &&
-                        ((_loadError! as ApiFailure).status == 404 ||
-                            (_loadError! as ApiFailure).status == 410);
-                    return _PreviewUnavailable(
-                      deleted: unavailable,
-                      onRetry: unavailable ? null : _retry,
-                    );
-                  }
-                  return const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 12),
-                        Text('Загружаем изображение…'),
-                      ],
+  Widget build(BuildContext context) => Semantics(
+    namesRoute: true,
+    label: 'Просмотр изображения ${widget.attachment.originalName}',
+    child: Dialog(
+      backgroundColor: const Color(0xFF17191D),
+      insetPadding: const EdgeInsets.all(24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1100, maxHeight: 850),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 8, 8, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.attachment.originalName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  );
-                },
+                  ),
+                  IconButton(
+                    tooltip: 'Закрыть просмотр',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: FutureBuilder<Uint8List?>(
+                  future: _image,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return InteractiveViewer(
+                        minScale: 0.5,
+                        maxScale: 5,
+                        child: Image.memory(
+                          snapshot.data!,
+                          fit: BoxFit.contain,
+                          semanticLabel: widget.attachment.originalName,
+                          errorBuilder: (_, _, _) =>
+                              _PreviewUnavailable(onRetry: _retry),
+                        ),
+                      );
+                    }
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      final unavailable =
+                          _loadError is ApiFailure &&
+                          ((_loadError! as ApiFailure).status == 404 ||
+                              (_loadError! as ApiFailure).status == 410);
+                      return _PreviewUnavailable(
+                        deleted: unavailable,
+                        onRetry: unavailable ? null : _retry,
+                      );
+                    }
+                    return const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 12),
+                          Text('Загружаем изображение…'),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );

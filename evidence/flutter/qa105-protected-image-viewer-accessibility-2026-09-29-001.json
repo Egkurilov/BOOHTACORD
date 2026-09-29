@@ -1,0 +1,34 @@
+{
+  "id": "QA-105",
+  "kind": "protected-image-viewer-accessibility",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "summary": "Flutter's protected image viewer now exposes a route name and image alternative text derived from the attachment filename. Widget tests verify both metadata values. Native screen-reader/focus behavior, live ACL/download, and full DES-09 acceptance remain open.",
+  "checks": [
+    {
+      "name": "Route accessibility metadata regression test",
+      "command": "cd desktop && flutter test test/message_attachment_list_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "The test opens a successful protected image preview and asserts that the viewer route Semantics has namesRoute=true and label 'Просмотр изображения photo.png'."
+    },
+    {
+      "name": "Image alternative text regression test",
+      "command": "cd desktop && flutter test test/message_attachment_list_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "The same test asserts that Image.memory.semanticLabel is the attachment filename 'photo.png'."
+    },
+    {
+      "name": "Flutter test suite",
+      "command": "cd desktop && flutter test --reporter expanded",
+      "status": "PASS",
+      "observation": "All 245 widget and unit tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "remaining": "Test real screen-reader announcements and focus return on macOS, Windows, and Android; verify protected download ACL and complete the full DES-09 visual, keyboard, loading/error/deleted, zoom, and download acceptance against a live deployment."
+}
