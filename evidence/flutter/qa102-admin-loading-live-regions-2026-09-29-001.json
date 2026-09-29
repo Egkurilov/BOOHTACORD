@@ -1,0 +1,45 @@
+{
+  "id": "QA-102",
+  "kind": "flutter-admin-loading-live-regions-web-parity",
+  "status": "PASS_BUILD_NATIVE_READER_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "c9803b8bc174427043d1a648c3c28802dbb4c328",
+  "windows_runner": {
+    "name": "boohtacord-win-station",
+    "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1679130?job=3295508",
+    "status": "SUCCESS"
+  },
+  "summary": "Flutter Members and Audit initial loading states now show the same copy as the web client and expose it as a polite live region, rather than only rendering an unlabeled progress indicator.",
+  "checks": [
+    {
+      "name": "Admin loading live-region and empty-state widget coverage",
+      "command": "cd desktop && flutter test test/admin_topology_widget_test.dart",
+      "status": "PASS",
+      "observation": "Widget tests hold account and audit requests pending, verify the visible web-equivalent loading copy and live-region semantics, then verify each empty state after the request resolves."
+    },
+    {
+      "name": "Full Flutter regression suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "All 243 Flutter tests passed."
+    },
+    {
+      "name": "Flutter static analysis",
+      "command": "cd desktop && flutter analyze --no-fatal-infos",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "GitVerse Windows runner validation",
+      "command": "GitVerse Flutter Windows CI run 1679130",
+      "status": "PASS",
+      "observation": "The boohtacord-win-station completed checkout, Flutter dependency resolution, tests, analysis and Windows Release build successfully in 4m 6s."
+    },
+    {
+      "name": "Native screen-reader acceptance",
+      "status": "OPEN",
+      "observation": "Widget semantics assert live-region flags; actual spoken output and focus behavior have not been checked with VoiceOver or TalkBack on native devices."
+    }
+  ],
+  "remaining": "Verify native VoiceOver and TalkBack announcements and compare admin loading/empty-state screenshots against web at desktop and compact Android widths."
+}
