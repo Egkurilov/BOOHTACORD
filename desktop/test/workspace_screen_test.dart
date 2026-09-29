@@ -1627,6 +1627,14 @@ void main() {
     await tester.tap(find.byTooltip('Поиск сообщений'));
     await tester.pumpAndSettle();
     expect(find.text('Область поиска'), findsOneWidget);
+    expect(
+      tester
+          .widget<DropdownButtonFormField<String>>(
+            find.byType(DropdownButtonFormField<String>),
+          )
+          .initialValue,
+      'current',
+    );
     expect(find.text('Последнее сообщение'), findsOneWidget);
     expect(
       FocusManager.instance.primaryFocus?.context
@@ -1826,6 +1834,14 @@ void main() {
 
     expect(state.workspacePanel, WorkspacePanel.search);
     expect(
+      tester
+          .widget<DropdownButtonFormField<String>>(
+            find.byType(DropdownButtonFormField<String>),
+          )
+          .initialValue,
+      'all',
+    );
+    expect(
       find.byWidgetPredicate(
         (widget) => widget is Positioned && widget.width == 320,
       ),
@@ -1836,6 +1852,40 @@ void main() {
         (widget) => widget is SizedBox && widget.width == 400,
       ),
       findsNothing,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('search defaults to the active direct-message conversation', (
+    tester,
+  ) async {
+    final state = AppState(_PortraitApi(includeDirectMessage: true));
+    await state.initialize();
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Открыть навигацию'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Поиск сообщений'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<DropdownButtonFormField<String>>(
+            find.byType(DropdownButtonFormField<String>),
+          )
+          .initialValue,
+      'current',
     );
 
     await tester.pumpWidget(const SizedBox.shrink());

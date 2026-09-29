@@ -1,0 +1,22 @@
+{
+  "id": "QA-115",
+  "kind": "flutter-search-default-scope-parity",
+  "status": "PASS_WITH_VISUAL_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "summary": "Flutter search now defaults to the current TEXT or direct-message conversation, matching the Vue search panel; from voice/no text-DM context it defaults to all conversations.",
+  "checks": [
+    {
+      "name": "Search panel scope parity",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart --plain-name 'search'",
+      "status": "PASS",
+      "observation": "All six search widget tests pass. Assertions cover active TEXT defaults to current, active DM defaults to current, and active VOICE defaults to all conversations. The TEXT and DM assertions failed before the implementation change."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "remaining": "Compare matched web/Flutter search screenshots and complete device screen-reader acceptance; loading/error and less common search states remain in the existing parity checklist."
+}

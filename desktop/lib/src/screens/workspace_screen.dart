@@ -2874,6 +2874,7 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
   @override
   void initState() {
     super.initState();
+    _scope = _currentConversation() == null ? 'all' : 'current';
     _query.addListener(_queryChanged);
   }
 

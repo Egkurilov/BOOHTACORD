@@ -143,6 +143,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   и 400 px от 1440; широкий voice stage остаётся 320 px modal. CSS contract,
   Flutter widget tests, полный web suite и production build прошли —
   [QA-61](../evidence/flutter/qa61-search-drawer-width-parity-2026-09-28-001.json).
+- [x] По умолчанию искать в активной TEXT/DM-беседе, как в Vue `SearchPanel`; из VOICE
+  или без активной текстовой беседы оставлять область «Все беседы». Покрыты все три
+  контекста search widget tests и Flutter analyzer —
+  [QA-115](../evidence/flutter/qa115-search-scope-web-parity-2026-09-29-001.json).
 - [ ] Сравнить search на matched screenshots в текстовом и голосовом контекстах;
   точная визуальная/device-приёмка остаётся открытой.
 - [x] Реализовать FE-52: ограниченные анонимные Android sender encoded FPS/bitrate/RTT;
