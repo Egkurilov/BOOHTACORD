@@ -109,41 +109,45 @@ class _MessageAttachmentListState extends State<MessageAttachmentList> {
                   if (_isImage(attachment.originalName))
                     Semantics(
                       button: true,
-                      label: 'Просмотреть ${attachment.originalName}',
-                      child: InkWell(
-                        key: ValueKey('attachment-preview-${attachment.id}'),
-                        onTap: () => _showPreview(attachment),
-                        borderRadius: BorderRadius.circular(6),
-                        child: ClipRRect(
+                      label: 'Открыть изображение ${attachment.originalName}',
+                      child: Tooltip(
+                        message:
+                            'Открыть изображение ${attachment.originalName}',
+                        child: InkWell(
+                          key: ValueKey('attachment-preview-${attachment.id}'),
+                          onTap: () => _showPreview(attachment),
                           borderRadius: BorderRadius.circular(6),
-                          child: SizedBox(
-                            width: 48,
-                            height: 48,
-                            child: FutureBuilder<Uint8List>(
-                              future: _previews.putIfAbsent(
-                                attachment.id,
-                                () => widget.state.api.messageAttachmentBytes(
-                                  widget.parentPath,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: SizedBox(
+                              width: 48,
+                              height: 48,
+                              child: FutureBuilder<Uint8List>(
+                                future: _previews.putIfAbsent(
                                   attachment.id,
-                                  preview: true,
+                                  () => widget.state.api.messageAttachmentBytes(
+                                    widget.parentPath,
+                                    attachment.id,
+                                    preview: true,
+                                  ),
                                 ),
+                                builder: (context, snapshot) => snapshot.hasData
+                                    ? Image.memory(
+                                        snapshot.data!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, _, _) => const Icon(
+                                          Icons.broken_image_outlined,
+                                        ),
+                                      )
+                                    : snapshot.hasError
+                                    ? const Icon(Icons.broken_image_outlined)
+                                    : const Center(
+                                        child: Icon(
+                                          Icons.image_outlined,
+                                          size: 24,
+                                        ),
+                                      ),
                               ),
-                              builder: (context, snapshot) => snapshot.hasData
-                                  ? Image.memory(
-                                      snapshot.data!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, _, _) => const Icon(
-                                        Icons.broken_image_outlined,
-                                      ),
-                                    )
-                                  : snapshot.hasError
-                                  ? const Icon(Icons.broken_image_outlined)
-                                  : const Center(
-                                      child: Icon(
-                                        Icons.image_outlined,
-                                        size: 24,
-                                      ),
-                                    ),
                             ),
                           ),
                         ),
@@ -263,7 +267,7 @@ class _ProtectedImagePreviewState extends State<_ProtectedImagePreview> {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Закрыть просмотр',
+                    tooltip: 'Закрыть просмотр изображения',
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close),
                   ),

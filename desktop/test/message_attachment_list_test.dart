@@ -50,7 +50,7 @@ void main() {
     expect(requests, hasLength(2));
     expect(requests.last, contains('/preview||session=private'));
     expect(find.byTooltip('Скачать photo.png'), findsOneWidget);
-    expect(find.byTooltip('Закрыть просмотр'), findsOneWidget);
+    expect(find.byTooltip('Закрыть просмотр изображения'), findsOneWidget);
   });
 
   testWidgets('announces the image viewer route and image alt text', (
@@ -75,6 +75,11 @@ void main() {
 
       await tester.pumpWidget(_app(state));
       await tester.pumpAndSettle();
+      expect(
+        find.bySemanticsLabel('Открыть изображение photo.png'),
+        findsOneWidget,
+      );
+      expect(find.byTooltip('Открыть изображение photo.png'), findsOneWidget);
       await tester.tap(
         find.byKey(const ValueKey('attachment-preview-attachment-1')),
       );

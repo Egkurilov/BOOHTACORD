@@ -1,0 +1,34 @@
+{
+  "id": "QA-106",
+  "kind": "protected-image-viewer-copy-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "summary": "Flutter protected image open/close labels now match the web viewer's Russian labels. Unit/widget tests verify the semantic open label and the native open/close tooltips; native hover and screen-reader acceptance remain open.",
+  "checks": [
+    {
+      "name": "Open action accessible name and desktop tooltip",
+      "command": "cd desktop && flutter test test/message_attachment_list_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "The viewer opener exposes 'Открыть изображение photo.png' as its semantic label and matching Tooltip message."
+    },
+    {
+      "name": "Close action tooltip parity",
+      "command": "cd desktop && flutter test test/message_attachment_list_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "The close button tooltip is 'Закрыть просмотр изображения', matching the web dialog's accessible close action."
+    },
+    {
+      "name": "Flutter test suite",
+      "command": "cd desktop && flutter test --reporter expanded",
+      "status": "PASS",
+      "observation": "All 245 widget and unit tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "remaining": "Verify hover tooltip behavior and announcements with VoiceOver, NVDA, and TalkBack on macOS, Windows, and Android, as part of the open image-viewer acceptance."
+}
