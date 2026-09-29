@@ -1,0 +1,55 @@
+{
+  "id": "QA-94",
+  "kind": "pinned-screen-mini-player-web-parity",
+  "status": "PASS_BUILD_RUNTIME_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "a3570ef",
+  "summary": "Flutter now supports pinning a remote screen share in a workspace-level mini-player. It remains visible while navigating to another channel, a DM, or workspace panels; users can return to the voice viewer, mute screen audio for the current session without changing saved gain, or stop watching. Viewer selection is scoped to the active voice-channel ID.",
+  "checks": [
+    {
+      "name": "Pinned mini-player and voice-channel policy tests",
+      "command": "cd desktop && flutter test test/pinned_screen_mini_player_policy_test.dart test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 44 targeted tests passed, including visibility and voice-channel selection scoping."
+    },
+    {
+      "name": "Full Flutter regression suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "All 231 tests passed."
+    },
+    {
+      "name": "Flutter static analysis",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS release build",
+      "command": "cd desktop && flutter build macos --release",
+      "status": "PASS",
+      "observation": "Built BOOHTACORD.app (92.5 MB)."
+    },
+    {
+      "name": "Android release build and signature",
+      "command": "cd desktop && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Built version 1.0.2+5. Package/version metadata passed; APK Signature Scheme v2 verified with the existing RSA-4096 upload certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b. SHA-256 522d55f0fd0e84bee858223e7476a5fc903b3e548c37547d5d4080cd0dcfb6e9; size 107654946 bytes."
+    },
+    {
+      "name": "Physical Android and remote playback acceptance",
+      "status": "OPEN",
+      "observation": "adb devices -l reported no attached device. Installing the APK, pinning a real remote stream, navigating across channels/DM/settings, returning to the viewer, and verifying mute behavior with a second participant remain untested. Windows runtime acceptance also remains open."
+    }
+  ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.2+5-release.apk",
+    "source_revision": "a3570ef",
+    "version_name": "1.0.2",
+    "version_code": 5,
+    "size_bytes": 107654946,
+    "sha256": "522d55f0fd0e84bee858223e7476a5fc903b3e548c37547d5d4080cd0dcfb6e9",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b"
+  },
+  "remaining": "Install 1.0.2+5 on Android and verify pin persistence across channel, DM, and workspace-panel navigation with a live remote screen share. Confirm return-to-viewer and transient screen-audio mute with a real participant; repeat equivalent playback checks on macOS and Windows."
+}

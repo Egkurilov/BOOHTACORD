@@ -169,6 +169,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   plugin-added `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` удалён из merged release
   manifest и проверен в [QA-56](../evidence/flutter/qa56-android-battery-permission-minimization-2026-09-28-001.json).
   Проверка receiver и OS-level stop остаётся открытой — [QA-26](../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
+- [x] Добавить web-аналог закреплённой удалённой демонстрации: мини-плеер
+  остаётся поверх другого канала, личных сообщений и панелей workspace; его
+  можно вернуть в voice-viewer, заглушить только для текущего просмотра или
+  остановить. Состояние изолировано ID активного voice-канала, локально
+  проверены 231 Flutter-тест и analyzer — [QA-94](../evidence/flutter/qa94-pinned-screen-mini-player-web-parity-2026-09-29-001.json).
 - [x] Не запрашивать Android battery-optimization exemption: удалить
   неиспользуемое plugin-added разрешение из итогового APK, оставив разрешения
   foreground MediaProjection service — [QA-56](../evidence/flutter/qa56-android-battery-permission-minimization-2026-09-28-001.json).

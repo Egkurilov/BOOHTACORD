@@ -358,6 +358,10 @@ portrait and landscape Android shares are checked in both web and Flutter viewer
   Viewer selection state is keyed to its voice-channel ID, preventing a stream
   identity or ended-state from leaking into another room
   [QA-39](../evidence/flutter/qa39-voice-channel-viewer-scope-2026-09-28-001.json).
+  Remote streams can now be pinned into a workspace mini-player that remains
+  visible over another channel, a DM, or workspace panels; return-to-viewer,
+  transient screen-audio mute, and stop-watching controls match the web
+  conversation mini-player policy [QA-94](../evidence/flutter/qa94-pinned-screen-mini-player-web-parity-2026-09-29-001.json).
   Verify actual playback/gain and matched viewer screenshots on each target
   platform. For the previously reported Android receiver crop, explicitly
   compare portrait and landscape captures in web and Flutter, confirming all
