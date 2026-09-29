@@ -5,6 +5,7 @@ import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:boohtacord_desktop/src/widgets/message_attachment_list.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -101,6 +102,45 @@ void main() {
     } finally {
       semantics.dispose();
     }
+  });
+
+  testWidgets('Escape closes the image viewer and restores opener focus', (
+    tester,
+  ) async {
+    final state = AppState(
+      ApiClient(client: MockClient((_) async => httpResponse(404))),
+    );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(_app(state));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    final openerFocus = tester.binding.focusManager.primaryFocus;
+    expect(openerFocus, isNotNull);
+    expect(
+      openerFocus?.context?.findAncestorWidgetOfExactType<InkWell>()?.key,
+      const ValueKey('attachment-preview-attachment-1'),
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('attachment-preview-attachment-1')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(Dialog), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    final dialogControlFocus = tester.binding.focusManager.primaryFocus;
+    expect(dialogControlFocus, isNotNull);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(tester.binding.focusManager.primaryFocus, same(dialogControlFocus));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Dialog), findsNothing);
+    expect(tester.binding.focusManager.primaryFocus, same(openerFocus));
   });
 
   testWidgets('offers retry for transient protected preview failures', (

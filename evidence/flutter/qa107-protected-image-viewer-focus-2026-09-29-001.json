@@ -1,0 +1,34 @@
+{
+  "id": "QA-107",
+  "kind": "protected-image-viewer-keyboard-focus",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "summary": "Widget-level keyboard acceptance confirms the protected viewer traps Tab traversal on its only available action, closes on Escape, and restores focus to the exact image opener. Native screen-reader behavior remains unverified.",
+  "checks": [
+    {
+      "name": "Modal Tab traversal stays within the image viewer",
+      "command": "cd desktop && flutter test test/message_attachment_list_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "In the unavailable-image state the close button is the only focusable dialog control. Two consecutive Tab presses keep the same focused control inside the route."
+    },
+    {
+      "name": "Escape closes the image viewer and restores focus",
+      "command": "cd desktop && flutter test test/message_attachment_list_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "After Escape removes the dialog, the same primary FocusNode that was associated with the keyed preview InkWell before opening is restored."
+    },
+    {
+      "name": "Flutter test suite",
+      "command": "cd desktop && flutter test --reporter expanded",
+      "status": "PASS",
+      "observation": "All 246 widget and unit tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "remaining": "Verify actual keyboard focus and screen-reader announcements on native macOS, Windows, and Android devices. This does not close full DES-09 visual, protected ACL/download, or attachment-state acceptance."
+}
