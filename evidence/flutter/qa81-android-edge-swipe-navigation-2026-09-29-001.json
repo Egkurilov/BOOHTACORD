@@ -3,7 +3,7 @@
   "kind": "android-edge-swipe-navigation",
   "status": "PASS_WITH_PHYSICAL_DEVICE_ACCEPTANCE_OPEN",
   "executed_at": "2026-09-29",
-  "source_revision": "a0eec7a",
+  "source_revision": "951ca72",
   "summary": "Workspace navigation/member edge swipes use a narrow Android system-gesture exclusion aligned to the full-window decor view, while Android Back remains available outside the declared region.",
   "checks": [
     {
