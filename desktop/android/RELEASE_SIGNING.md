@@ -34,7 +34,7 @@ device; most current phones use `arm64-v8a`.
 
 Configure these repository secrets before pushing a release tag:
 
-- `GITVERSE_API_KEY`: GitVerse Public API key with repository write access,
+- `RELEASE_API_KEY`: GitVerse Public API key with repository write access,
   required by the release action;
 - `BOOHTACORD_ANDROID_KEYSTORE_BASE64`: base64-encoded upload keystore;
 - `BOOHTACORD_ANDROID_KEYSTORE_PASSWORD`;

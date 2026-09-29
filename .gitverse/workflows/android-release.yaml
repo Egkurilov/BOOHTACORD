@@ -108,7 +108,8 @@ jobs:
       - name: Publish GitVerse release
         uses: actions/create-release@v1
         with:
-          api_key: ${{ secrets.GITVERSE_API_KEY }}
+          # GitVerse reserves the GITVERSE_ prefix for platform-defined names.
+          api_key: ${{ secrets.RELEASE_API_KEY }}
           title: BOOHTACORD Android ${{ github.ref_name }}
           body: |
             Signed Android APKs for version ${{ github.ref_name }}.
