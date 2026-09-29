@@ -3,6 +3,7 @@
   "kind": "android-edge-swipe-navigation",
   "status": "PASS_WITH_PHYSICAL_DEVICE_ACCEPTANCE_OPEN",
   "executed_at": "2026-09-29",
+  "source_revision": "61acd63c98e4377a4bacb755bef2c0c54d498f59",
   "summary": "Workspace navigation/member edge swipes can begin at the Android screen edge in a narrow system-gesture exclusion region, while Android Back remains available outside the declared region.",
   "checks": [
     {
@@ -28,6 +29,13 @@
       "command": "cd desktop && flutter build apk --debug",
       "status": "PASS",
       "observation": "Flutter and native Android Kotlin sources compiled successfully."
+    },
+    {
+      "name": "GitVerse Flutter Windows CI",
+      "run": "1679355",
+      "job": "3296013",
+      "status": "PASS",
+      "observation": "The Windows runner passed Flutter tests, static analysis, and release build."
     },
     {
       "name": "Physical Android Back/edge gesture acceptance",
