@@ -1,0 +1,33 @@
+{
+  "id": "QA-124",
+  "kind": "flutter-compact-chat-composer",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "source_revision": "668e45e",
+  "summary": "Text and direct-message composers now use compact in-field attachment and mention icons instead of large labeled controls. Clipboard paste remains available through Ctrl/Cmd+V, Shift+Insert, and the text-edit context menu; attachment status, chips, errors and retries remain in the attachment widget.",
+  "checks": [
+    {
+      "name": "Attachment composer tests",
+      "command": "cd desktop && flutter test --no-pub test/message_attachment_composer_test.dart",
+      "status": "PASS",
+      "observation": "All 9 tests passed. Coverage includes the compact attachment widget without former large labels, file picking/upload, clipboard paste, captured conversation scope, retry, partial success and progress."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub lib/src/screens/workspace_screen.dart lib/src/widgets/message_attachment_composer.dart",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Pixel 7 visual acceptance",
+      "status": "NOT_RUN",
+      "observation": "The connected device currently has BOOHTACORD 1.0.8 installed, which predates source revision 668e45e. No replacement install was attempted, to preserve its app data and signed installation. A matched post-change screenshot remains outstanding."
+    },
+    {
+      "name": "macOS and Windows visual acceptance",
+      "status": "NOT_RUN",
+      "observation": "Matched screenshots, pointer/keyboard traversal and narrow-window behavior have not yet been captured on either desktop platform."
+    }
+  ],
+  "remaining": "Capture matched web/Flutter text and DM composer screenshots on macOS, Windows and Android; verify action tooltips, selected-mention chips and paste access with pointer, keyboard and TalkBack/VoiceOver/NVDA."
+}
