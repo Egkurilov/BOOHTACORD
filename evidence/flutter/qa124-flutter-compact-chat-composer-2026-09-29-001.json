@@ -20,8 +20,9 @@
     },
     {
       "name": "Pixel 7 visual acceptance",
-      "status": "NOT_RUN",
-      "observation": "The connected device currently has BOOHTACORD 1.0.8 installed, which predates source revision 668e45e. No replacement install was attempted, to preserve its app data and signed installation. A matched post-change screenshot remains outstanding."
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub && apksigner verify --print-certs build/app/outputs/flutter-apk/app-arm64-v8a-release.apk && adb install -r build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
+      "status": "PASS",
+      "observation": "Built arm64-v8a release APK (38.3 MB), verified its upload certificate SHA-256 matches the installed release, and updated the Pixel 7 in place without clearing app data. The app resumed the existing text channel. A 1080x2400 screenshot showed + and @ inline with the composer and no large labeled buttons; tapping @ opened the member picker, tapping + opened Android DocumentsUI. No file was selected and no message was sent. The OS still reports versionName 1.0.8/versionCode 2012 because this UI validation rebuild intentionally did not bump or publish a release version."
     },
     {
       "name": "macOS and Windows visual acceptance",
@@ -29,5 +30,5 @@
       "observation": "Matched screenshots, pointer/keyboard traversal and narrow-window behavior have not yet been captured on either desktop platform."
     }
   ],
-  "remaining": "Capture matched web/Flutter text and DM composer screenshots on macOS, Windows and Android; verify action tooltips, selected-mention chips and paste access with pointer, keyboard and TalkBack/VoiceOver/NVDA."
+  "remaining": "Capture matched web/Flutter text and DM composer screenshots on macOS and Windows; verify keyboard/pointer traversal, selected-mention chips and paste access, then complete VoiceOver and NVDA acceptance. Android visual/action acceptance passed; TalkBack acceptance remains open."
 }
