@@ -1,0 +1,34 @@
+{
+  "id": "QA-119",
+  "kind": "voice-connection-transition-state",
+  "status": "PASS",
+  "executed_at": "2026-09-29",
+  "source_revision": "daedce7",
+  "summary": "The Flutter voice-room badge now distinguishes actual connection transitions and never reports a pending LiveKit session as connected.",
+  "checks": [
+    {
+      "name": "Voice badge widget tests",
+      "command": "cd desktop && flutter test test/voice_connection_badge_test.dart",
+      "status": "PASS",
+      "observation": "Five tests pass for reconnecting, connected quality and ping, unavailable RTT, joining without quality, and leaving without a connected claim."
+    },
+    {
+      "name": "Workspace voice transition integration",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "The voice dock transition test confirms the active room switches to joining copy while the connection is pending; no connected label or ping is shown."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Physical peer and screen-reader acceptance",
+      "status": "NOT_RUN",
+      "observation": "No Android device was connected during this turn; native RTT timing and screen-reader behavior still require Android/macOS/Windows peers."
+    }
+  ],
+  "remaining": "Verify live RTT and transition announcements on real peers across Android, macOS, Windows, and browser; compare visual state on matched screens."
+}

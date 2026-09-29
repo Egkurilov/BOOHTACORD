@@ -122,6 +122,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Реальное обновление метрик и доступность RTT проверить с подключённым peer на
   Android/macOS/Windows и в браузере; фактический ping зависит от платформенной
   WebRTC-статистики.
+- [x] В voice-room не объявлять pending LiveKit-сессию как «Подключено»: отличать
+  joining/connected/reconnecting/leaving/error/disconnected и показывать ping/quality
+  только после фактического подключения; voice/workspace widget tests и analyzer
+  прошли — [QA-119](../evidence/flutter/qa119-voice-connection-transition-state-2026-09-29-001.json).
 - [x] Добавить в постоянный voice dock start/stop демонстрации с тем же picker
   качества и источника, что и в voice viewer; блокировать запуск во время
   joining/reconnecting и переходных состояний публикации — локальная проверка
