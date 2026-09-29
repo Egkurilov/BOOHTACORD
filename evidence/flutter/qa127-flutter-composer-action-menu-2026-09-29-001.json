@@ -19,10 +19,16 @@
       "observation": "No issues found."
     },
     {
-      "name": "Android and desktop visual acceptance",
+      "name": "Pixel 7 visual and action-menu acceptance",
+      "command": "adb uiautomator dump /sdcard/window.xml; adb shell screencap -p",
+      "status": "PASS",
+      "observation": "On Pixel 7 / Android 17 (1080×2400), the + menu opened and displayed both 'Прикрепить файл' and 'Вставить из буфера' above the system navigation area. The compact @ and send actions remain inside the composer. Menu was dismissed without choosing an action; no file was selected, clipboard was not read and no message was sent. Installed app version 1.0.9+13."
+    },
+    {
+      "name": "macOS and Windows visual acceptance",
       "status": "NOT_RUN",
-      "observation": "The updated menu has not been opened on a physical Android device or captured on macOS/Windows. Existing QA-124 acceptance covers the prior compact +/@ controls, not this new paste menu."
+      "observation": "Matched screenshots and pointer/keyboard traversal for the updated + menu have not been captured on macOS or Windows."
     }
   ],
-  "remaining": "Verify the updated + menu visually and exercise paste on Android, macOS and Windows; continue matched screenshot and keyboard/assistive-technology acceptance."
+  "remaining": "Verify the updated + menu, paste action and keyboard traversal on macOS and Windows; continue matched screenshot and assistive-technology acceptance."
 }
