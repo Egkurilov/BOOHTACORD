@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsRole, Tristate;
+
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/admin_screen.dart';
@@ -26,12 +28,31 @@ void main() {
     tester,
   ) async {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    final semantics = tester.ensureSemantics();
     final api = TopologyTestApi();
     final state = await _openMedia(tester, api);
     addTearDown(() {
       tester.view.reset();
       state.dispose();
     });
+
+    expect(
+      tester
+          .getSemantics(
+            find.byKey(const ValueKey('admin-section-tabs-semantics')),
+          )
+          .getSemanticsData()
+          .role,
+      SemanticsRole.tabBar,
+    );
+    final mediaTab = tester.getSemantics(
+      find.byKey(const ValueKey('admin-section-tab-media')),
+    );
+    expect(mediaTab.getSemanticsData().role, SemanticsRole.tab);
+    expect(
+      mediaTab.getSemanticsData().flagsCollection.isSelected,
+      Tristate.isTrue,
+    );
 
     expect(api.screenMetricsLoads, 1);
     expect(
@@ -53,6 +74,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 10));
     expect(api.screenMetricsLoads, 2);
+    semantics.dispose();
   });
 
   testWidgets('media tab renders anonymous receiver metrics responsively', (

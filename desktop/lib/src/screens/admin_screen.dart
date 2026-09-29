@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show SemanticsRole;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -319,6 +320,24 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         }
       });
     }
+  }
+
+  Widget _adminSectionTab(String label, _AdminSection section) {
+    final selected = _selectedAdminSection == section;
+    return Semantics(
+      key: ValueKey('admin-section-tab-${section.name}'),
+      button: true,
+      selected: selected,
+      role: SemanticsRole.tab,
+      onTap: () => _selectSection(section),
+      child: ExcludeSemantics(
+        child: ChoiceChip(
+          label: Text(label),
+          selected: selected,
+          onSelected: (_) => _selectSection(section),
+        ),
+      ),
+    );
   }
 
   Future<void> _createChannel() async {
@@ -671,33 +690,22 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ChoiceChip(
-                  label: const Text('Участники'),
-                  selected: _selectedAdminSection == _AdminSection.members,
-                  onSelected: (_) => _selectSection(_AdminSection.members),
-                ),
-                const SizedBox(width: 8),
-                ChoiceChip(
-                  label: const Text('Каналы'),
-                  selected: _selectedAdminSection == _AdminSection.channels,
-                  onSelected: (_) => _selectSection(_AdminSection.channels),
-                ),
-                const SizedBox(width: 8),
-                ChoiceChip(
-                  label: const Text('Аудит'),
-                  selected: _selectedAdminSection == _AdminSection.audit,
-                  onSelected: (_) => _selectSection(_AdminSection.audit),
-                ),
-                ChoiceChip(
-                  label: const Text('Медиа'),
-                  selected: _selectedAdminSection == _AdminSection.media,
-                  onSelected: (_) => _selectSection(_AdminSection.media),
-                ),
-              ],
+            child: Semantics(
+              key: const ValueKey('admin-section-tabs-semantics'),
+              container: true,
+              explicitChildNodes: true,
+              role: SemanticsRole.tabBar,
+              label: 'Разделы администрирования',
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _adminSectionTab('Участники', _AdminSection.members),
+                  _adminSectionTab('Каналы', _AdminSection.channels),
+                  _adminSectionTab('Аудит', _AdminSection.audit),
+                  _adminSectionTab('Медиа', _AdminSection.media),
+                ],
+              ),
             ),
           ),
           Expanded(
