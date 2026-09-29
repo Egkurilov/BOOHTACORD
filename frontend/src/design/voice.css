@@ -118,3 +118,5 @@
   .voice-prejoin-actions { width: 100%; flex-direction: column; }
   .voice-prejoin-actions .gc-button { width: 100%; }
 }
+
+.screen-player { min-width: 0; min-height: 0; }

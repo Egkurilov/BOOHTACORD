@@ -199,9 +199,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   до 720p/15 FPS и сохранять текст исходной ошибки — [QA-23](../evidence/flutter/qa23-android-ime-screen-share-2026-09-27-001.json).
 - [ ] На Samsung с Gboard проверить ввод нескольких символов в логине без
   закрытия IME; на Android проверить разрешение, успешную публикацию, stop и
-  повторный запуск screen share с удалённым участником. Отдельно проверить
-  receiver-side обрезку Android-трансляции на web и Flutter: на Pixel 7 подтверждён
-  только полный 1080×2400 захват у отправителя; отдельный receiver пока не проверен.
+  повторный запуск screen share с удалённым участником. Обрезка receiver-side
+  воспроизведена в web на Pixel 7 (576×1280, в кадре видна только верхняя часть);
+  найденное CSS intrinsic-minimum исправлено и прошло regression test/build,
+  но нужно выложить frontend и подтвердить все четыре края в браузере. Отдельно
+  сравнить portrait/landscape кадр в Flutter receiver и проверить повторный запуск
+  screen share [QA-132](../evidence/flutter/qa132-browser-android-screen-share-crop-2026-09-29-001.json).
   Для проверки добавлен
   Android single-layer publish fallback; сравнить кадр, разрешение, FPS и bitrate
   у двух зрителей и подтвердить приемлемую нагрузку сети [QA-25](../evidence/flutter/qa25-android-screen-share-receiver-clipping-2026-09-27-001.json).

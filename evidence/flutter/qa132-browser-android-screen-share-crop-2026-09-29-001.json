@@ -1,0 +1,38 @@
+{
+  "id": "QA-132",
+  "kind": "browser-android-screen-share-crop",
+  "status": "FIX_IMPLEMENTED_DEPLOYED_RETEST_OPEN",
+  "executed_at": "2026-09-29",
+  "summary": "Reproduced the reported crop on the authenticated web receiver while a Pixel 7 Android 17 device was sharing its screen. The browser displayed a 576×1280 stream in a landscape stage but clipped the portrait frame. The video was already configured with object-fit: contain; the grid item retained its automatic intrinsic minimum size and was cut by the stage's overflow:hidden. Setting min-width and min-height to zero lets the player shrink to the stage and contain the full frame.",
+  "checks": [
+    {
+      "name": "Live browser receiver reproduction",
+      "status": "FAIL_BEFORE_FIX",
+      "observation": "The web client showed the Pixel 7 publication Pistol121_android at 576×1280 and 1.5 FPS. A browser screenshot visibly showed only the upper part of the portrait phone UI filling the landscape stage. The browser and Android client were both connected to SHARE_TEST with microphones disabled."
+    },
+    {
+      "name": "Screen-share lifecycle cleanup",
+      "status": "PASS",
+      "observation": "Tapped the Pixel app's accessibility-labelled Stop screen sharing control. Android dumpsys media_projection then reported Media Projection: null; the browser receiver reported the selected stream ended."
+    },
+    {
+      "name": "Portrait player layout regression test",
+      "command": "cd frontend && npm run test -- src/voice/screen_viewer_reference.spec.ts",
+      "status": "PASS",
+      "observation": "The new regression assertion failed before the CSS fix because the screen player lacked min-width: 0 and min-height: 0; after the fix all 10 focused tests passed."
+    },
+    {
+      "name": "Frontend production build",
+      "command": "cd frontend && npm run build",
+      "status": "PASS",
+      "observation": "vue-tsc and Vite production build passed. Vite emitted its existing informational large-chunk warning for the LiveKit bundle."
+    },
+    {
+      "name": "Full frontend regression suite",
+      "command": "cd frontend && npm test",
+      "status": "PASS",
+      "observation": "223 test files and 666 tests passed."
+    }
+  ],
+  "remaining": "The active browser was served from v.bootybay.ru and did not contain this unpushed CSS change during the retest. Deploy the frontend change, then repeat Pixel portrait screen sharing in a browser and confirm all four source edges after attach, resize/rotation and fullscreen. Also compare the Android stream in the Flutter receiver; sender/receiver dimensions alone do not prove full-frame rendering."
+}

@@ -81,6 +81,17 @@ describe('screen viewer reference composition', () => {
     expect(source('./ScreenViewer.vue')).toContain('@resize="refreshVideoQuality"')
   })
 
+  it('contains portrait video within the grid stage instead of clipping its intrinsic minimum size', () => {
+    const styles = source('../design/voice.css')
+    const playerRules = [...styles.matchAll(/\.screen-player\s*\{([^}]*)\}/g)]
+      .map((match) => match[1])
+      .join(';')
+
+    expect(playerRules).toContain('min-width: 0')
+    expect(playerRules).toContain('min-height: 0')
+    expect(playerRules).toContain('object-fit: contain')
+  })
+
   it('keeps an ended selected stream visible until the user returns or selects another', () => {
     const pane = source('../conversation/ConversationPane.vue')
     const viewer = source('./ScreenViewer.vue')
