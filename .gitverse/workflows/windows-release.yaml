@@ -90,12 +90,11 @@ jobs:
           New-Item -ItemType Directory -Force -Path $assets | Out-Null
           $zipName = "BOOHTACORD-$($env:GITHUB_REF_NAME)-windows-x64.zip"
           $zip = Join-Path $assets $zipName
-          Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath $zip -CompressionLevel Optimal
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [System.IO.Compression.ZipFile]::CreateFromDirectory($bundle, $zip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
           if ((Get-Item -LiteralPath $zip).Length -gt 95000000) {
             throw 'Windows ZIP exceeds the 95 MB GitVerse asset safety ceiling.'
           }
-          $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          Set-Content -LiteralPath (Join-Path $assets ($zipName + '.sha256')) -Encoding ascii -Value "$hash  $zipName"
 
       - name: Publish GitVerse release
         uses: actions/create-release@v1
@@ -107,12 +106,10 @@ jobs:
 
             Скачайте ZIP, распакуйте его целиком и запустите boohtacord_desktop.exe.
             Оставьте DLL-файлы и папку data рядом с исполняемым файлом.
-            Контрольная сумма SHA-256 опубликована отдельным файлом.
 
             Сборка проходит Flutter-тесты, анализатор и Windows Release compilation.
             Голос и демонстрацию экрана необходимо проверить с сервером и вторым клиентом.
           files: |
             desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-windows-x64.zip
-            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-windows-x64.zip.sha256
           draft: false
           pre_release: false
