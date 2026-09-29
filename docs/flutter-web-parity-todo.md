@@ -151,6 +151,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   следующей загрузки; объявлять число строк и пустое состояние как в web. Workspace
   suite и Flutter analyzer прошли —
   [QA-116](../evidence/flutter/qa116-search-live-status-web-parity-2026-09-29-001.json).
+- [x] Отключать «Найти» при пустом запросе и не запускать поиск клавишей Enter, пока
+  запрос не заполнен, как `SearchPanel.canSubmit` в web; покрыто widget test и analyzer —
+  [QA-117](../evidence/flutter/qa117-search-submit-web-parity-2026-09-29-001.json).
 - [ ] Сравнить search на matched screenshots в текстовом и голосовом контекстах;
   точная визуальная/device-приёмка остаётся открытой.
 - [x] Реализовать FE-52: ограниченные анонимные Android sender encoded FPS/bitrate/RTT;

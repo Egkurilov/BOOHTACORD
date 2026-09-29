@@ -42,9 +42,11 @@ conversation selects that conversation, while opening it from VOICE uses all
 conversations. This is covered for all three contexts —
 [QA-115](../evidence/flutter/qa115-search-scope-web-parity-2026-09-29-001.json).
 
-Flutter search keeps a polite visible status while results are displayed or a
-subsequent page is loading, announcing the result count and empty state like the
-web client — [QA-116](../evidence/flutter/qa116-search-live-status-web-parity-2026-09-29-001.json).
+Flutter search submission follows web `canSubmit`: the action and Enter handler
+remain inactive for an empty query. Search keeps a polite visible status while
+results are displayed or a subsequent page is loading, announcing the count and
+empty state — [QA-116](../evidence/flutter/qa116-search-live-status-web-parity-2026-09-29-001.json),
+[QA-117](../evidence/flutter/qa117-search-submit-web-parity-2026-09-29-001.json).
 
 On Android 8+, `@mipmap/ic_launcher` now resolves to an adaptive icon built
 from the supplied BOOHTACORD art with an explicit dark background; density PNGs

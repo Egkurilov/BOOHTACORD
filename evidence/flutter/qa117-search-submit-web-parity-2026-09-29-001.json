@@ -1,0 +1,23 @@
+{
+  "id": "QA-117",
+  "kind": "flutter-search-submit-parity",
+  "status": "PASS_WITH_VISUAL_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "8513e65",
+  "summary": "Flutter now disables search submission while the trimmed query is empty, matching web canSubmit; keyboard Enter also does nothing until there is a valid query and searchable scope.",
+  "checks": [
+    {
+      "name": "Workspace screen widget suite",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 42 tests passed. Search coverage verifies the button is disabled for an empty query, Enter does not send or show an empty-query error, and entering a query enables submission."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "remaining": "Compare search form disabled/loading visuals and keyboard/screen-reader behavior against web on macOS, Windows and Android."
+}
