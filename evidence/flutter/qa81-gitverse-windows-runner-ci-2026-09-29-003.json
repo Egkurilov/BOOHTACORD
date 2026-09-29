@@ -20,7 +20,7 @@
     {
       "name": "Windows release build",
       "status": "BLOCKED",
-      "observation": "The release-build step failed after 1 second. QA-81 run 1674856 on the same runner had already identified the cause as a missing Visual Studio C++ toolchain; installation requires runner administrator access."
+      "observation": "The expanded step log reports: `Unable to find suitable Visual Studio toolchain. Please run flutter doctor for more details.` The source revision is unchanged by this documentation follow-up; installing the required C++ workload needs runner administrator access."
     }
   ],
   "remaining": "Install Visual Studio 2022 Build Tools with the Desktop development with C++ workload on boohtacord-win-station, then rerun and verify the Windows release build and runtime."
