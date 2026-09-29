@@ -217,6 +217,9 @@ class AppState extends ChangeNotifier {
   Timer? _maintenanceTimer;
   Timer? _voiceRosterTimer;
   Timer? _voiceStreamNoticeTimer;
+  Timer? _voiceConnectionStatsTimer;
+  int _voiceConnectionStatsRevision = 0;
+  bool _voiceConnectionStatsBusy = false;
   final VoiceStreamStartTracker _voiceStreamStartTracker =
       VoiceStreamStartTracker();
   Timer? _screenShareMetricsTimer;
@@ -1955,6 +1958,7 @@ class AppState extends ChangeNotifier {
   Future<void> _handleVoiceLeaseRevoked(String leaseId, String reason) async {
     if (_leaseId != leaseId || _room == null) return;
     _clearVoiceStreamNotice(resetTracker: true, notify: false);
+    _stopVoiceConnectionStatsPolling();
     _stopScreenShareMetrics();
     voicePhase = VoicePhase.leaving;
     notifyListeners();
@@ -2030,6 +2034,7 @@ class AppState extends ChangeNotifier {
     _maintenanceTimer?.cancel();
     _stopVoiceRosterPolling();
     _voiceStreamNoticeTimer?.cancel();
+    _stopVoiceConnectionStatsPolling();
     _stopScreenShareMetrics();
     unawaited(_audioDeviceSubscription?.cancel());
     api.onUnauthorized = null;
@@ -2466,9 +2471,11 @@ class AppState extends ChangeNotifier {
         notifyListeners();
         return;
       }
+      _startVoiceConnectionStatsPolling(room);
       _observeVoiceStreamStarts(room);
       _voiceAdmissionPending = false;
     } catch (cause) {
+      _stopVoiceConnectionStatsPolling();
       _voiceAdmissionPending = false;
       if (_leaseId != null) {
         _revokedVoiceLeasesDuringJoin.remove(_leaseId);
@@ -2502,6 +2509,7 @@ class AppState extends ChangeNotifier {
     String reason,
   ) async {
     _clearVoiceStreamNotice(resetTracker: true, notify: false);
+    _stopVoiceConnectionStatsPolling();
     _voiceAdmissionPending = false;
     _stopScreenShareMetrics();
     await _disableAndroidScreenShareBackground();
@@ -2538,6 +2546,7 @@ class AppState extends ChangeNotifier {
     listener.on<AudioSenderStatsEvent>((event) {
       if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
       final ping = voiceRttMilliseconds(event.stats.roundTripTime);
+      if (ping == null) return;
       if (_voicePingMs == ping) return;
       _voicePingMs = ping;
       notifyListeners();
@@ -2631,6 +2640,56 @@ class AppState extends ChangeNotifier {
       if (!identical(_room, room) || voicePhase == VoicePhase.leaving) return;
       unawaited(_handleUnexpectedVoiceDisconnect(room, event));
     });
+  }
+
+  void _startVoiceConnectionStatsPolling(Room room) {
+    _stopVoiceConnectionStatsPolling();
+    final revision = _voiceConnectionStatsRevision;
+
+    Future<void> sample() async {
+      if (_voiceConnectionStatsBusy ||
+          revision != _voiceConnectionStatsRevision ||
+          !identical(_room, room) ||
+          (voicePhase != VoicePhase.connected &&
+              voicePhase != VoicePhase.listener)) {
+        return;
+      }
+      _voiceConnectionStatsBusy = true;
+      try {
+        final reports = await room.getPublisherConnectionStats();
+        if (revision != _voiceConnectionStatsRevision ||
+            !identical(_room, room) ||
+            (voicePhase != VoicePhase.connected &&
+                voicePhase != VoicePhase.listener)) {
+          return;
+        }
+        final ping = voiceRttMillisecondsFromReports(reports);
+        if (_voicePingMs != ping) {
+          _voicePingMs = ping;
+          notifyListeners();
+        }
+      } catch (_) {
+        // Keep voice controls working if this platform can't read connection
+        // stats; track-scoped LiveKit stats can still provide audio RTT.
+      } finally {
+        if (revision == _voiceConnectionStatsRevision) {
+          _voiceConnectionStatsBusy = false;
+        }
+      }
+    }
+
+    _voiceConnectionStatsTimer = Timer.periodic(
+      const Duration(seconds: 2),
+      (_) => unawaited(sample()),
+    );
+    unawaited(sample());
+  }
+
+  void _stopVoiceConnectionStatsPolling() {
+    _voiceConnectionStatsRevision++;
+    _voiceConnectionStatsTimer?.cancel();
+    _voiceConnectionStatsTimer = null;
+    _voiceConnectionStatsBusy = false;
   }
 
   Future<void> startScreenShare({
@@ -3022,6 +3081,7 @@ class AppState extends ChangeNotifier {
   ) async {
     if (!identical(_room, room) || voicePhase == VoicePhase.leaving) return;
     _clearVoiceStreamNotice(resetTracker: true, notify: false);
+    _stopVoiceConnectionStatsPolling();
     _stopScreenShareMetrics();
     final leaseId = _leaseId;
     _room = null;
@@ -3162,6 +3222,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> leaveVoice() async {
     if (_room == null && _leaseId == null) return;
+    _stopVoiceConnectionStatsPolling();
     voicePhase = VoicePhase.leaving;
     _clearVoiceStreamNotice(resetTracker: true, notify: false);
     pushToTalkPressed = false;

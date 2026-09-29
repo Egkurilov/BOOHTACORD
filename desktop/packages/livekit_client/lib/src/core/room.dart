@@ -16,6 +16,7 @@ import 'dart:async';
 import 'dart:typed_data' show Uint8List;
 
 import 'package:collection/collection.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:meta/meta.dart';
 
 import '../audio/audio_manager.dart';
@@ -73,6 +74,17 @@ class Room extends DisposableChangeNotifier with EventsEmittable<RoomEvent> {
   ConnectionState get connectionState => engine.connectionState;
   ConnectOptions get connectOptions => engine.connectOptions;
   RoomOptions get roomOptions => engine.roomOptions;
+
+  /// Returns all stats for the publishing peer connection.
+  ///
+  /// Unlike a track-scoped sender report, this includes the selected ICE
+  /// candidate pair, whose RTT remains available when microphone RTP feedback
+  /// is absent (for example, while the microphone is muted).
+  Future<List<rtc.StatsReport>> getPublisherConnectionStats() async {
+    final peerConnection = engine.publisher?.pc;
+    if (peerConnection == null) return const [];
+    return peerConnection.getStats();
+  }
 
   final ParticipantCollection<RemoteParticipant> _remoteParticipants = ParticipantCollection();
   UnmodifiableMapView<String, RemoteParticipant> get remoteParticipants =>
