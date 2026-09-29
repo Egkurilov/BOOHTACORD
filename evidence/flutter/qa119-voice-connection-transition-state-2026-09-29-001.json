@@ -3,7 +3,7 @@
   "kind": "voice-connection-transition-state",
   "status": "PASS",
   "executed_at": "2026-09-29",
-  "source_revision": "daedce7",
+  "source_revision": "daedce7ea5f3a74dbbb80dceebb1289c45f60880",
   "summary": "The Flutter voice-room badge now distinguishes actual connection transitions and never reports a pending LiveKit session as connected.",
   "checks": [
     {
