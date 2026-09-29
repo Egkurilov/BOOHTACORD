@@ -3,19 +3,19 @@
   "kind": "protected-image-viewer-accessibility",
   "status": "PARTIAL",
   "executed_at": "2026-09-29",
-  "summary": "Flutter's protected image viewer now exposes a route name and image alternative text derived from the attachment filename. Widget tests verify both metadata values. Native screen-reader/focus behavior, live ACL/download, and full DES-09 acceptance remain open.",
+  "summary": "Flutter's protected image viewer now exposes a distinct route name and image alternative text derived from the attachment filename. The route semantic container has explicit child nodes so the route label does not absorb the image's alt text. Widget tests inspect the semantic labels. Native screen-reader/focus behavior, live ACL/download, and full DES-09 acceptance remain open.",
   "checks": [
     {
       "name": "Route accessibility metadata regression test",
       "command": "cd desktop && flutter test test/message_attachment_list_test.dart --reporter expanded",
       "status": "PASS",
-      "observation": "The test opens a successful protected image preview and asserts that the viewer route Semantics has namesRoute=true and label 'Просмотр изображения photo.png'."
+      "observation": "With the semantics tree enabled, the test opens a protected image and finds exactly one route node labelled 'Просмотр изображения photo.png'. The explicit semantic container prevents the image alt text from being folded into the route label."
     },
     {
       "name": "Image alternative text regression test",
       "command": "cd desktop && flutter test test/message_attachment_list_test.dart --reporter expanded",
       "status": "PASS",
-      "observation": "The same test asserts that Image.memory.semanticLabel is the attachment filename 'photo.png'."
+      "observation": "The same semantics-tree test finds the image node labelled 'photo.png' with image semantics, independently of the route label."
     },
     {
       "name": "Flutter test suite",

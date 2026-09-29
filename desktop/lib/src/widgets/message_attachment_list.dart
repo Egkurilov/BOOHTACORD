@@ -239,6 +239,8 @@ class _ProtectedImagePreviewState extends State<_ProtectedImagePreview> {
 
   @override
   Widget build(BuildContext context) => Semantics(
+    container: true,
+    explicitChildNodes: true,
     namesRoute: true,
     label: 'Просмотр изображения ${widget.attachment.originalName}',
     child: Dialog(
