@@ -1,0 +1,51 @@
+{
+  "id": "QA-120",
+  "kind": "voice-ping-remote-rtp-report-and-compact-dock",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "source_revision": "d8f8b6a4be804df7773d9208ce539743de09e18c",
+  "summary": "Audio sender RTT is now read from the paired LiveKit remote-inbound-rtp report, the source that carries the receiver's round-trip-time measurement. The compact mobile voice dock no longer has a redundant expand chevron, hint area or expansion gesture. Automated checks and a signed Android split release pass; live peer RTT and native device acceptance remain open.",
+  "checks": [
+    {
+      "name": "LiveKit paired remote-inbound RTT tests",
+      "command": "cd desktop/packages/livekit_client && flutter test test/track/local_audio_rtt_test.dart",
+      "status": "PASS",
+      "observation": "The matched remote-inbound report provides RTT; an outbound report's unrelated value is ignored, and a missing paired report yields unavailable RTT."
+    },
+    {
+      "name": "Voice badge and compact dock regression tests",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart test/voice_connection_badge_test.dart",
+      "status": "PASS",
+      "observation": "46 tests passed, including measured/unavailable ping semantics and compact dock controls without expandable content."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "All 255 tests passed."
+    },
+    {
+      "name": "Android 1.0.6+10 signed split release",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Built armv7 29,473,895 bytes; arm64 38,328,845 bytes; x86_64 44,083,078 bytes. apksigner verified APK Signature Scheme v2 on all three; certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b. All split APKs are below the GitVerse 100 MB asset limit and remain local build outputs, not Git files."
+    },
+    {
+      "name": "Live peer ping and native device acceptance",
+      "status": "NOT_RUN",
+      "observation": "No physical peer session was used to validate live RTT delivery or the rendered compact dock on-device."
+    },
+    {
+      "name": "GitVerse Android release workflow",
+      "status": "NOT_RUN",
+      "observation": "The android-v1.0.6 tag has not yet been published for CI during evidence authoring."
+    }
+  ],
+  "remaining": "Publish and confirm the android-v1.0.6 GitVerse release workflow, then validate live audio RTT and compact dock behavior with an Android device and a connected peer."
+}
