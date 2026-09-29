@@ -1,8 +1,14 @@
 {
   "id": "QA-100",
   "kind": "flutter-admin-screen-media-diagnostics-web-parity",
-  "status": "PASS_LOCAL_WINDOWS_CI_PENDING",
+  "status": "PASS_BUILD_LIVE_VISUAL_ACCEPTANCE_OPEN",
   "executed_at": "2026-09-29",
+  "source_revision": "847468f512705f9348078011d36f74ee477ed89f",
+  "windows_runner": {
+    "name": "boohtacord-win-station",
+    "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1678878?job=3295024",
+    "status": "SUCCESS"
+  },
   "summary": "Flutter administration now has the web AdminMediaDiagnostics tab. It reads the authenticated, administrator-protected anonymous /admin/screen-metrics contract, validates bounded fixed-enum samples, displays recent sender/receiver dimensions and media/network metrics, and refreshes every five seconds only while the tab is selected and the app is foregrounded.",
   "checks": [
     {
@@ -43,8 +49,9 @@
     },
     {
       "name": "Windows runner validation",
-      "status": "PENDING",
-      "observation": "Push this desktop change to run the GitVerse Flutter Windows CI workflow on boohtacord-windows; tests, analyzer and Windows Release compilation must pass before closing this point."
+      "command": "GitVerse Flutter Windows CI run 1678878",
+      "status": "PASS",
+      "observation": "The registered boohtacord-win-station completed checkout, dependency resolution, plugin junction setup, Flutter tests, analysis and flutter build windows --release --no-pub successfully."
     },
     {
       "name": "Live admin ACL and screenshot comparison",
