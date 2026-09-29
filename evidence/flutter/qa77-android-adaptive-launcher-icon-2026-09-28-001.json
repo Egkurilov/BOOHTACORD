@@ -1,7 +1,7 @@
 {
   "id": "QA-77",
   "kind": "android-adaptive-launcher-icon",
-  "status": "IMPLEMENTED_PIXEL_VISUAL_ACCEPTANCE_OPEN",
+  "status": "PARTIAL",
   "executed_at": "2026-09-29",
   "source_revision": "8b00521",
   "summary": "Android 8+ now draws the exact supplied composite artwork as a full-bleed adaptive background with a transparent foreground. This avoids shrinking the artwork's built-in rounded square into the safe-zone and producing a second inner frame. Existing density-specific PNGs remain unchanged for pre-API 26 devices.",
@@ -13,10 +13,10 @@
       "observation": "Release build completed. Gradle release packaged_res contains mipmap-anydpi-v26/ic_launcher.xml and drawable-nodpi-v4/ic_launcher_foreground.png; APK resources.arsc contains ic_launcher_background, ic_launcher_foreground and ic_launcher."
     },
     {
-      "name": "APK signature verification",
-      "command": "apksigner verify --verbose --print-certs artifacts/android/BOOHTACORD-1.0.0+1-release.apk",
-      "status": "OPEN",
-      "observation": "The earlier tracked release was verified with APK Signature Scheme v2 and upload certificate 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b. apksigner is unavailable on this host, so the refreshed artifact's signature has not been independently verified."
+      "name": "Current arm64 APK signature verification",
+      "command": "apksigner verify --verbose --print-certs desktop/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
+      "status": "PASS",
+      "observation": "The current local arm64 release APK verifies with APK Signature Scheme v2 and upload certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b."
     },
     {
       "name": "Compiled adaptive icon layer references",
@@ -37,9 +37,15 @@
       "observation": "SHA-256 169b97c4a3147fda87240044aaa0433a13a16062b23523dc929cf310ad4e0087; 107622034 bytes."
     },
     {
-      "name": "Google Pixel launcher visual acceptance",
-      "status": "OPEN",
-      "observation": "The Android 17 Pixel 7 had appeared on ADB earlier, but the ADB server subsequently failed with Operation not permitted. This APK was not installed on the device, so the reported white-frame appearance and standard/themed icon rendering remain unverified."
+      "name": "Google Pixel default launcher icon visual acceptance",
+      "command": "adb shell am start -a android.intent.action.MAIN -c android.intent.category.HOME; adb shell screencap -p /sdcard/boohtacord-pixel-home-icon.png",
+      "status": "PASS",
+      "observation": "Installed BOOHTACORD 1.0.8 (versionCode 2012) on Pixel 7 / Android 17. In the default circular launcher style, the full-color artwork has no additional visible white inner frame and is not visibly clipped beyond the expected circle mask. The app was installed in place; data was preserved."
+    },
+    {
+      "name": "Google Pixel themed launcher icon mode",
+      "status": "NOT_RUN",
+      "observation": "The Android 17 Wallpaper & style icon customization UI was inspected. Its presented controls did not expose a distinct themed-icon toggle in this session; no launcher setting was changed. The adaptive icon currently has no monochrome layer, so themed rendering remains unverified."
     }
   ],
   "artifact": {
@@ -49,5 +55,13 @@
     "sha256": "169b97c4a3147fda87240044aaa0433a13a16062b23523dc929cf310ad4e0087",
     "source_revision": "8b00521"
   },
-  "remaining": "Independently verify the refreshed APK signature; install it on a Google Pixel; compare normal and themed launcher modes against Samsung; confirm the extra inner frame is gone without clipping the supplied artwork."
+  "runtime_validation": {
+    "source_revision": "d0e76c5",
+    "artifact": "desktop/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
+    "version": "1.0.8+12",
+    "size_bytes": 38328673,
+    "sha256": "42ae19f356f73a48dc7ee71d3956c8bf0e64a828955b1f924a6a23ed9ca04b91",
+    "themed_icon_resource_present": false
+  },
+  "remaining": "Pixel default/circle launcher icon passed visual acceptance. Decide whether to add an adaptive monochrome layer and verify themed-icon rendering; verify installed icon rendering on macOS and Windows; confirm web page title decision."
 }
