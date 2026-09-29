@@ -52,10 +52,14 @@ class NativeAudioDeviceCheckService implements AudioDeviceCheckService {
     }
 
     final devices = await _recorder.listInputDevices();
+    final recorderDeviceId = await AndroidAudioDevices.recorderInputDeviceId(
+      deviceId,
+    );
     final selectedDevice = resolveInputDevice(
       selectedId: deviceId,
       selectedLabel: deviceLabel,
       available: devices,
+      recorderDeviceId: recorderDeviceId,
     );
 
     try {
@@ -174,7 +178,14 @@ InputDevice? resolveInputDevice({
   required String? selectedId,
   required String? selectedLabel,
   required List<InputDevice> available,
+  String? recorderDeviceId,
 }) {
+  final mappedId = recorderDeviceId?.trim();
+  if (mappedId != null && mappedId.isNotEmpty) {
+    for (final device in available) {
+      if (device.id == mappedId) return device;
+    }
+  }
   final id = selectedId?.trim();
   if (id == null || id.isEmpty || id == 'default') return null;
   for (final device in available) {
@@ -230,4 +241,5 @@ double amplitudePercentFromDb(double db) {
 }
 
 String _normalizeDeviceLabel(String? label) =>
-    label?.trim().toLowerCase() ?? '';
+    label?.trim().toLowerCase().replaceFirst(RegExp(r'\s*\([^)]*\)$'), '') ??
+    '';

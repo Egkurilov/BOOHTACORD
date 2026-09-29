@@ -64,4 +64,20 @@ class AndroidAudioDevices {
     if (!isAndroid) return;
     await _channel.invokeMethod<void>('clearCommunicationOutput');
   }
+
+  /// Resolves a WebRTC input ID to the AudioRecord device ID used by `record`.
+  /// WebRTC names built-in mics by address (for example `microphone-bottom`),
+  /// while `record` expects Android's numeric AudioDeviceInfo ID.
+  static Future<String?> recorderInputDeviceId(String? deviceId) async {
+    if (!isAndroid || deviceId == null || deviceId.isEmpty) return null;
+    try {
+      return await _channel.invokeMethod<String>('mapRecorderInputDevice', {
+        'deviceId': deviceId,
+      });
+    } on PlatformException {
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
+  }
 }

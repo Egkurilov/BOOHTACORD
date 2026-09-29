@@ -32,6 +32,24 @@ void main() {
       ),
       selected,
     );
+    const builtIn = InputDevice(id: '6', label: 'Built-in Microphone');
+    expect(
+      resolveInputDevice(
+        selectedId: 'microphone-bottom',
+        selectedLabel: 'Built-in Microphone (bottom)',
+        available: const [builtIn],
+        recorderDeviceId: '6',
+      ),
+      builtIn,
+    );
+    expect(
+      resolveInputDevice(
+        selectedId: 'microphone-bottom',
+        selectedLabel: 'Built-in Microphone (bottom)',
+        available: const [builtIn],
+      ),
+      builtIn,
+    );
     expect(
       resolveInputDevice(
         selectedId: 'default',

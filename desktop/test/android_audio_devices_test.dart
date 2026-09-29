@@ -99,6 +99,23 @@ void main() {
     expect(calls[1].arguments, {'deviceId': '44'});
   });
 
+  test('maps WebRTC input IDs to Android recorder IDs', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          calls.add(call);
+          expect(call.method, 'mapRecorderInputDevice');
+          return '6';
+        });
+
+    expect(
+      await AndroidAudioDevices.recorderInputDeviceId('microphone-bottom'),
+      '6',
+    );
+    expect(calls.single.arguments, {'deviceId': 'microphone-bottom'});
+  });
+
   test('does not invoke Android routing on desktop', () async {
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -110,6 +127,10 @@ void main() {
     expect(
       await AndroidAudioDevices.selectNativeOutput('android-usb-route:42'),
       isFalse,
+    );
+    expect(
+      await AndroidAudioDevices.recorderInputDeviceId('microphone-bottom'),
+      isNull,
     );
     await AndroidAudioDevices.clearNativeOutput();
   });

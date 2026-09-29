@@ -156,6 +156,13 @@ class MainActivity : FlutterActivity() {
                         }
                         result.success(devices)
                     }
+                    "mapRecorderInputDevice" -> {
+                        val requestedId = call.argument<String>("deviceId")
+                        val input = audioManager
+                            .getDevices(AudioManager.GET_DEVICES_INPUTS)
+                            .firstOrNull { webRtcInputDeviceId(it) == requestedId }
+                        result.success(input?.id?.toString())
+                    }
                     "selectCommunicationOutput" -> {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
                             result.success(false)
@@ -269,5 +276,12 @@ class MainActivity : FlutterActivity() {
             }
             else -> productName.ifBlank { "Аудиоустройство ${index + 1}" }
         }
+    }
+
+    private fun webRtcInputDeviceId(device: AudioDeviceInfo): String = when (device.type) {
+        AudioDeviceInfo.TYPE_BUILTIN_MIC -> "microphone-${device.address}"
+        AudioDeviceInfo.TYPE_WIRED_HEADSET -> "wired-headset"
+        AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> "bluetooth"
+        else -> device.id.toString()
     }
 }
