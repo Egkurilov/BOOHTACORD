@@ -96,20 +96,11 @@ jobs:
             throw 'Windows ZIP exceeds the 95 MB GitVerse asset safety ceiling.'
           }
 
-      - name: Publish GitVerse release
-        uses: actions/create-release@v1
-        with:
-          api_key: ${{ secrets.RELEASE_API_KEY }}
-          title: BOOHTACORD ${{ github.ref_name }} (Windows x64)
-          body: |
-            Сборка приложения BOOHTACORD для Windows x64.
-
-            Скачайте ZIP, распакуйте его целиком и запустите boohtacord_desktop.exe.
-            Оставьте DLL-файлы и папку data рядом с исполняемым файлом.
-
-            Сборка проходит Flutter-тесты, анализатор и Windows Release compilation.
-            Голос и демонстрацию экрана необходимо проверить с сервером и вторым клиентом.
-          files: |
-            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-windows-x64.zip
-          draft: false
-          pre_release: false
+      - name: Publish GitVerse Windows asset
+        working-directory: desktop
+        shell: powershell
+        env:
+          RELEASE_API_KEY: ${{ secrets.RELEASE_API_KEY }}
+        run: |
+          & ./windows/release/publish-gitverse-asset.ps1 -Tag $env:GITHUB_REF_NAME -Archive "build/release-assets/BOOHTACORD-$($env:GITHUB_REF_NAME)-windows-x64.zip"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
