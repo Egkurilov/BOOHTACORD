@@ -3,7 +3,7 @@
   "kind": "macos-keychain-startup-recovery",
   "status": "PARTIAL",
   "executed_at": "2026-09-29",
-  "source_revision": "57e459f2e5a3f56e3acdc2b7bbf5464f52b6e525",
+  "source_revision": "55a47a2",
   "windows_ci_run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1678534?job=3294212",
   "summary": "A fresh macOS debug launch reproduced the indefinite startup screen. A process sample located the wait in flutter_secure_storage's legacy Keychain lookup; moving the session cookie to a versioned service allowed startup to reach login without deleting old Keychain items.",
   "checks": [
@@ -28,15 +28,22 @@
       "observation": "flutter build macos --debug --no-pub succeeded. A fresh flutter run reached the signed-out login/register screen and showed the configured API endpoint; no account login or mutating API action was performed."
     },
     {
+      "name": "Existing session restored by a fresh debug process",
+      "command": "flutter run -d macos; inspect the newly launched app window",
+      "status": "PASS",
+      "observation": "The Debug app was not running before this launch. After startup it loaded the authenticated workspace without re-entering credentials. Flutter reported 'Failed to foreground app; open returned 1', but the app window was available for accessibility inspection. No credentials, cookies, or message bodies were inspected. This verifies session-cookie read/restore through the versioned Keychain service, but not a new login write cycle."
+    },
+    {
       "name": "Windows cross-platform tests, analysis and Release build",
       "status": "PASS",
       "observation": "GitVerse run 1678534 on the same source revision passed all 236 Flutter tests, analysis and flutter build windows --release."
     },
     {
       "name": "Cookie persistence across successful login and relaunch",
-      "status": "NOT_RUN",
-      "observation": "This smoke test intentionally stopped at the login screen. Keychain write/read following successful authentication and restoration after app restart remain unverified."
+      "status": "PARTIAL",
+      "command": "flutter test test/api_client_storage_options_test.dart --reporter expanded",
+      "observation": "The focused storage-options test passed, and a fresh debug process restored an existing signed-in session. A new successful login/write cycle and one-time re-login for cookies held under the previous Keychain service were not exercised."
     }
   ],
-  "remaining": "Verify a successful macOS login, session-cookie persistence across relaunch, and the one-time re-login behavior for cookies stored under previous Keychain service names; separately validate a Developer ID-signed release."
+  "remaining": "Verify a new successful macOS login/write cycle and the one-time re-login behavior for cookies stored under previous Keychain service names; separately validate a Developer ID-signed release."
 }

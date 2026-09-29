@@ -11,17 +11,19 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
 - [ ] На подписанной macOS release-сборке проверить запуск и сохранение сессии
   через перезапуск; подтвердить ожидаемый повторный вход для cookies, ранее
-  сохранённых в legacy Keychain. Текущий Mac заблокирован и не имеет valid
-  signing identities; нужны разблокированный host и Apple Developer identity —
+  сохранённых в legacy Keychain. Debug-клиент после свежего запуска восстановил
+  существующую авторизованную сессию; Developer ID-сборка всё ещё недоступна,
+  поскольку на этом Mac нет valid signing identity —
   [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
 - [ ] Устранить `PlatformException` при сохранении сессии на macOS: screenshot
   показывает Security.framework `errSecMissingEntitlement` (`-34018`) при
   Data Protection Keychain. На macOS переключено на поддерживаемый legacy
   Keychain с отдельным service name: это не требует Keychain Sharing
   entitlement и не читает старую зависавшую запись; ad-hoc сборка и запуск
-  проходят без ошибки Keychain. Записи прежнего service не удаляются, поэтому
-  нужен повторный вход. Проверить успешную запись cookie и восстановление
-  сессии после перезапуска на этом Mac —
+  проходят без ошибки Keychain; свежий Debug-процесс восстановил существующую
+  авторизованную сессию через новый service. Записи прежнего service не удаляются,
+  поэтому для них нужен повторный вход. Проверить новую запись cookie после
+  входа и повторный вход для старой сессии —
   [QA-60](../evidence/flutter/qa60-macos-keychain-entitlement-2026-09-28-001.json).
 
 ## P0 — Голосовые каналы и демонстрация экрана
