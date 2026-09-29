@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,21 +31,21 @@ class VoiceAdmissionCloseResult {
 
 class ApiClient {
   ApiClient({http.Client? client}) : _client = client ?? http.Client();
+  @visibleForTesting
+  static const MacOsOptions macOsSessionOptions = MacOsOptions(
+    accountName: 'ru.boohtacord.boohtacordDesktop.session.v2',
+    usesDataProtectionKeychain: false,
+  );
   static const _serverKey = 'server_url';
   static const _cookieKey = 'boohtacord_session_cookie';
   final http.Client _client;
   void Function()? onUnauthorized;
   // Keep macOS on the legacy Keychain without sharing entitlements: the
   // Data Protection Keychain returns errSecMissingEntitlement for ad-hoc
-  // builds. A dedicated service avoids reading legacy Flutter storage items
-  // that can block SecItemCopyMatching on some machines.
+  // builds. A versioned service isolates new sessions from existing items
+  // that can block legacy SecItemCopyMatching during startup.
   final FlutterSecureStorage _storage = Platform.isMacOS
-      ? const FlutterSecureStorage(
-          mOptions: MacOsOptions(
-            accountName: 'ru.boohtacord.boohtacordDesktop.session',
-            usesDataProtectionKeychain: false,
-          ),
-        )
+      ? const FlutterSecureStorage(mOptions: macOsSessionOptions)
       : const FlutterSecureStorage();
   String baseUrl = 'https://v.bootybay.ru/api/v1';
   bool get realtimeEnabled => true;
