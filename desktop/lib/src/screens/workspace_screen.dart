@@ -2993,6 +2993,13 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
   Widget build(BuildContext context) {
     final current = _currentConversation();
     if (_scope == 'current' && current == null) _scope = 'all';
+    final statusMessage = _loading
+        ? 'Ищем сообщения…'
+        : _searched
+        ? _results.isEmpty
+              ? 'Совпадений нет.'
+              : 'Результатов: ${_results.length}.'
+        : 'Введите запрос и нажмите «Найти».';
     return Column(
       children: [
         SizedBox(
@@ -3136,6 +3143,20 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
               ),
             ),
           ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Semantics(
+              liveRegion: true,
+              label: statusMessage,
+              child: Text(
+                statusMessage,
+                style: const TextStyle(color: GcColors.muted, fontSize: 13),
+              ),
+            ),
+          ),
+        ),
         if (_nextCursor != null && !_canLoadMore)
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24),
@@ -3149,24 +3170,7 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
           ),
         Expanded(
           child: _results.isEmpty
-              ? Center(
-                  child: Semantics(
-                    liveRegion: true,
-                    label: _loading
-                        ? 'Ищем сообщения…'
-                        : _searched
-                        ? 'Совпадений нет.'
-                        : 'Введите запрос и нажмите «Найти».',
-                    child: Text(
-                      _loading
-                          ? 'Ищем сообщения…'
-                          : _searched
-                          ? 'Совпадений нет.'
-                          : 'Введите запрос и нажмите «Найти».',
-                      style: const TextStyle(color: GcColors.muted),
-                    ),
-                  ),
-                )
+              ? const SizedBox.shrink()
               : ListView.separated(
                   controller: _scroll,
                   padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),

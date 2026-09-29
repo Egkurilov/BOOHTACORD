@@ -1654,6 +1654,47 @@ void main() {
     await tester.pumpAndSettle();
     expect(api.lastSearchQuery, 'найденный текст');
     expect(find.text('Открыть сообщение'), findsOneWidget);
+    final resultStatus = find.text('Результатов: 1.');
+    expect(resultStatus, findsOneWidget);
+    expect(
+      tester.getSemantics(resultStatus).flagsCollection.isLiveRegion,
+      isTrue,
+    );
+
+    api.searchGate = Completer<SearchMessagePage>();
+    await tester.enterText(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            widget.decoration?.hintText == 'Слова или «точная фраза»',
+      ),
+      'следующий запрос',
+    );
+    await tester.tap(find.text('Найти'));
+    await tester.pump();
+    final loadingStatus = find.text('Ищем сообщения…');
+    expect(loadingStatus, findsOneWidget);
+    expect(
+      tester.getSemantics(loadingStatus).flagsCollection.isLiveRegion,
+      isTrue,
+    );
+    api.searchGate!.complete(
+      SearchMessagePage(
+        messages: [
+          SearchMessage(
+            id: 'message-1',
+            kind: SearchMessageKind.channel,
+            conversationId: _PortraitApi.channel.id,
+            authorId: 'account-1',
+            body: 'Найденный текст',
+            createdAt: DateTime.utc(2026, 9, 25),
+            revision: 1,
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Результатов: 1.'), findsOneWidget);
 
     await tester.tap(find.text('Открыть сообщение'));
     await tester.pumpAndSettle();
@@ -1666,6 +1707,48 @@ void main() {
     expect(state.workspacePanel, WorkspacePanel.none);
     expect(state.selectedChannel?.id, _PortraitApi.channel.id);
     expect(find.text('Последнее сообщение'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('search announces an empty result state as a live region', (
+    tester,
+  ) async {
+    final api = _PortraitApi(withHistory: true)..emptySearchResults = true;
+    final state = AppState(api);
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Открыть навигацию'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Поиск сообщений'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            widget.decoration?.hintText == 'Слова или «точная фраза»',
+      ),
+      'нет совпадений',
+    );
+    await tester.tap(find.text('Найти'));
+    await tester.pumpAndSettle();
+
+    final emptyStatus = find.text('Совпадений нет.');
+    expect(emptyStatus, findsOneWidget);
+    expect(
+      tester.getSemantics(emptyStatus).flagsCollection.isLiveRegion,
+      isTrue,
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
@@ -2179,6 +2262,8 @@ class _PortraitApi extends ApiClient {
   final textEditRevisions = <int>[];
   final textEditMentionIds = <List<String>>[];
   String? lastSearchQuery;
+  Completer<SearchMessagePage>? searchGate;
+  bool emptySearchResults = false;
   bool failAdminUpdate = false;
   bool failResetLink = false;
   bool failAudit = false;
@@ -2276,18 +2361,22 @@ class _PortraitApi extends ApiClient {
     int limit = 20,
   }) async {
     lastSearchQuery = query;
+    final gate = searchGate;
+    if (gate != null) return gate.future;
     return SearchMessagePage(
-      messages: [
-        SearchMessage(
-          id: 'message-1',
-          kind: SearchMessageKind.channel,
-          conversationId: channelId ?? channel.id,
-          authorId: 'account-1',
-          body: 'Найденный текст',
-          createdAt: DateTime.utc(2026, 9, 25),
-          revision: 1,
-        ),
-      ],
+      messages: emptySearchResults
+          ? const []
+          : [
+              SearchMessage(
+                id: 'message-1',
+                kind: SearchMessageKind.channel,
+                conversationId: channelId ?? channel.id,
+                authorId: 'account-1',
+                body: 'Найденный текст',
+                createdAt: DateTime.utc(2026, 9, 25),
+                revision: 1,
+              ),
+            ],
     );
   }
 
