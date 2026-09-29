@@ -1,0 +1,125 @@
+name: Android Release
+
+on:
+  push:
+    tags:
+      - 'android-v*'
+
+permissions:
+  contents: read
+
+jobs:
+  android-release:
+    runs-on: boohtacord-windows
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v4
+
+      - name: Build signed ABI-specific APKs
+        working-directory: desktop
+        shell: powershell
+        env:
+          BOOHTACORD_ANDROID_KEYSTORE_BASE64: ${{ secrets.BOOHTACORD_ANDROID_KEYSTORE_BASE64 }}
+          BOOHTACORD_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.BOOHTACORD_ANDROID_KEYSTORE_PASSWORD }}
+          BOOHTACORD_ANDROID_KEY_ALIAS: ${{ secrets.BOOHTACORD_ANDROID_KEY_ALIAS }}
+          BOOHTACORD_ANDROID_KEY_PASSWORD: ${{ secrets.BOOHTACORD_ANDROID_KEY_PASSWORD }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $requiredSecrets = @(
+            'BOOHTACORD_ANDROID_KEYSTORE_BASE64',
+            'BOOHTACORD_ANDROID_KEYSTORE_PASSWORD',
+            'BOOHTACORD_ANDROID_KEY_ALIAS',
+            'BOOHTACORD_ANDROID_KEY_PASSWORD'
+          )
+          foreach ($name in $requiredSecrets) {
+            if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
+              throw "Required repository secret is missing: $name"
+            }
+          }
+
+          $tagVersion = $env:GITHUB_REF_NAME -replace '^android-v', ''
+          $versionLine = Select-String -Path pubspec.yaml -Pattern '^version:\s*(\S+)'
+          if ($null -eq $versionLine) { throw 'Could not read app version from pubspec.yaml' }
+          $pubspecVersion = $versionLine.Matches[0].Groups[1].Value.Split('+')[0]
+          if ($tagVersion -ne $pubspecVersion) {
+            throw "Release tag android-v$tagVersion does not match pubspec version $pubspecVersion"
+          }
+
+          $flutterRoot = Join-Path $env:USERPROFILE 'develop\flutter'
+          $flutter = Join-Path $flutterRoot 'bin\flutter.bat'
+          if (-not (Test-Path -LiteralPath $flutter)) { throw "Flutter SDK missing: $flutter" }
+          $env:FLUTTER_ROOT = $flutterRoot
+          $flutterVersion = (& $flutter --version --machine | ConvertFrom-Json).frameworkVersion
+          if ($LASTEXITCODE -ne 0 -or $flutterVersion -ne '3.47.5') {
+            throw "Expected Flutter 3.47.5, got $flutterVersion"
+          }
+
+          $androidSdk = $env:ANDROID_SDK_ROOT
+          if ([string]::IsNullOrWhiteSpace($androidSdk)) { $androidSdk = $env:ANDROID_HOME }
+          if ([string]::IsNullOrWhiteSpace($androidSdk) -and $env:LOCALAPPDATA) {
+            $androidSdk = Join-Path $env:LOCALAPPDATA 'Android\Sdk'
+          }
+          if ([string]::IsNullOrWhiteSpace($androidSdk) -or
+              -not (Test-Path -LiteralPath (Join-Path $androidSdk 'platform-tools\adb.exe'))) {
+            throw 'Android SDK is missing on the boohtacord-windows runner.'
+          }
+          $env:ANDROID_SDK_ROOT = $androidSdk
+          $env:ANDROID_HOME = $androidSdk
+
+          if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP)) {
+            throw 'RUNNER_TEMP is not configured; refusing to write the release keystore into the checkout.'
+          }
+          $keystore = Join-Path $env:RUNNER_TEMP 'boohtacord-android-upload.jks'
+          $outputDirectory = Join-Path (Get-Location) 'build\app\outputs\flutter-apk'
+          $releaseAssets = Join-Path (Get-Location) 'build\release-assets'
+          try {
+            $keystoreBytes = [Convert]::FromBase64String($env:BOOHTACORD_ANDROID_KEYSTORE_BASE64)
+            [IO.File]::WriteAllBytes($keystore, $keystoreBytes)
+            $env:BOOHTACORD_ANDROID_KEYSTORE_FILE = $keystore
+
+            & $flutter pub get --enforce-lockfile
+            if ($LASTEXITCODE -ne 0) { throw 'Flutter dependency resolution failed.' }
+            & $flutter build apk --release --split-per-abi --no-pub
+            if ($LASTEXITCODE -ne 0) { throw 'Signed ABI-split APK build failed.' }
+
+            New-Item -ItemType Directory -Force -Path $releaseAssets | Out-Null
+            $abiApks = @(
+              @{ Source = 'app-arm64-v8a-release.apk'; Abi = 'arm64-v8a' },
+              @{ Source = 'app-armeabi-v7a-release.apk'; Abi = 'armeabi-v7a' },
+              @{ Source = 'app-x86_64-release.apk'; Abi = 'x86_64' }
+            )
+            foreach ($apk in $abiApks) {
+              $source = Join-Path $outputDirectory $apk.Source
+              if (-not (Test-Path -LiteralPath $source)) { throw "Expected split APK missing: $source" }
+              $file = Get-Item -LiteralPath $source
+              if ($file.Length -gt 95000000) {
+                throw "APK exceeds the 95 MB safety ceiling for GitVerse release assets: $($file.Name) ($($file.Length) bytes)"
+              }
+              $destination = Join-Path $releaseAssets "BOOHTACORD-$($env:GITHUB_REF_NAME)-$($apk.Abi).apk"
+              Copy-Item -LiteralPath $source -Destination $destination -Force
+              Write-Host "Prepared $($apk.Abi) APK ($([math]::Round($file.Length / 1MB, 1)) MiB)"
+            }
+          } finally {
+            Remove-Item -LiteralPath $keystore -Force -ErrorAction SilentlyContinue
+            Remove-Item Env:\BOOHTACORD_ANDROID_KEYSTORE_FILE -ErrorAction SilentlyContinue
+          }
+
+      - name: Publish GitVerse release
+        uses: actions/create-release@v1
+        with:
+          api_key: ${{ secrets.GITVERSE_API_KEY }}
+          title: BOOHTACORD Android ${{ github.ref_name }}
+          body: |
+            Signed Android APKs for version ${{ github.ref_name }}.
+
+            Download exactly one APK matching your device:
+            - arm64-v8a: most modern Android phones and tablets
+            - armeabi-v7a: older 32-bit ARM devices
+            - x86_64: Android emulators and x86-64 devices
+          files: |
+            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-arm64-v8a.apk
+            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-armeabi-v7a.apk
+            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-x86_64.apk
+          draft: false
+          pre_release: false

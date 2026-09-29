@@ -22,4 +22,28 @@ keyPassword=<private value>
 
 `storeFile` may be absolute or relative to `desktop/android/`. The file, `.jks`, and `.keystore` files are ignored by `desktop/android/.gitignore`. Keep the upload key for future updates; a different key cannot update an installed app signed with the original key.
 
+## GitVerse Releases
+
+The workflow [`.gitverse/workflows/android-release.yaml`](../../.gitverse/workflows/android-release.yaml)
+starts when a tag like `android-v1.0.3` is pushed. The version before `+` in
+`desktop/pubspec.yaml` must match the tag. It builds and publishes three
+signed, ABI-specific APKs instead of the universal APK, which currently
+exceeds GitVerse's 100 MB per-file asset limit. Each APK is checked against a
+95 MB safety ceiling before upload. Install only the variant matching the
+device; most current phones use `arm64-v8a`.
+
+Configure these repository secrets before pushing a release tag:
+
+- `GITVERSE_API_KEY`: GitVerse Public API key with repository write access,
+  required by the release action;
+- `BOOHTACORD_ANDROID_KEYSTORE_BASE64`: base64-encoded upload keystore;
+- `BOOHTACORD_ANDROID_KEYSTORE_PASSWORD`;
+- `BOOHTACORD_ANDROID_KEY_ALIAS`;
+- `BOOHTACORD_ANDROID_KEY_PASSWORD`.
+
+The runner decodes the keystore only into `RUNNER_TEMP` and removes it after
+the build. Never commit the keystore or its base64 contents. After configuring
+the secrets, bump `version` in `pubspec.yaml` and push the matching tag, for
+example `android-v1.0.3`.
+
 Before distributing an APK, run `flutter analyze`, `flutter test`, and `flutter build apk --release` from `desktop/` on a host with the Flutter and Android SDKs. Inspect the APK signer certificate and verify it is the intended non-debug upload key. Physical-device install/update, secure-cookie authentication, microphone permission, reconnect, voice, and viewer checks are separate QA-13 acceptance evidence.
