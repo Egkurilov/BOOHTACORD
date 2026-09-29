@@ -15,16 +15,18 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   существующую авторизованную сессию; Developer ID-сборка всё ещё недоступна,
   поскольку на этом Mac нет valid signing identity —
   [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
-- [ ] Устранить `PlatformException` при сохранении сессии на macOS: screenshot
-  показывает Security.framework `errSecMissingEntitlement` (`-34018`) при
-  Data Protection Keychain. На macOS переключено на поддерживаемый legacy
-  Keychain с отдельным service name: это не требует Keychain Sharing
-  entitlement и не читает старую зависавшую запись; ad-hoc сборка и запуск
-  проходят без ошибки Keychain; свежий Debug-процесс восстановил существующую
-  авторизованную сессию через новый service. Записи прежнего service не удаляются,
-  поэтому для них нужен повторный вход. Проверить новую запись cookie после
-  входа и повторный вход для старой сессии —
-  [QA-60](../evidence/flutter/qa60-macos-keychain-entitlement-2026-09-28-001.json).
+- [x] Устранить `PlatformException` при сохранении сессии на macOS: screenshot
+  показывал Security.framework `errSecMissingEntitlement` (`-34018`) при
+  Data Protection Keychain. На macOS используется поддерживаемый legacy
+  Keychain с отдельным service name: это не требует Keychain Sharing entitlement
+  и не читает старую зависавшую запись; ad-hoc сборка и запуск проходят без
+  ошибки Keychain, Debug-процесс восстановил существующую авторизованную сессию,
+  а реальный plugin integration test подтвердил запись, чтение и удаление
+  отдельного QA-значения — [QA-60](../evidence/flutter/qa60-macos-keychain-entitlement-2026-09-28-001.json),
+  [QA-99](../evidence/flutter/qa99-macos-keychain-service-rotation-2026-09-29-001.json),
+  [QA-113](../evidence/flutter/qa113-macos-keychain-integration-roundtrip-2026-09-29-001.json).
+  Вход с записью новой session cookie и повторный вход для старого service всё
+  ещё нужно проверить по предыдущему пункту; existing Keychain записи не удалялись.
 
 ## P0 — Голосовые каналы и демонстрация экрана
 
