@@ -64,4 +64,30 @@ void main() {
       );
     });
   });
+
+  group('pinned screen publication lifecycle', () {
+    test('distinguishes a missing frame from a removed publication', () {
+      expect(
+        pinnedScreenPublicationEnded(
+          participantPresent: true,
+          publicationPresent: true,
+        ),
+        isFalse,
+      );
+      expect(
+        pinnedScreenPublicationEnded(
+          participantPresent: true,
+          publicationPresent: false,
+        ),
+        isTrue,
+      );
+      expect(
+        pinnedScreenPublicationEnded(
+          participantPresent: false,
+          publicationPresent: false,
+        ),
+        isTrue,
+      );
+    });
+  });
 }

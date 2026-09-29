@@ -124,6 +124,24 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
         _screenSelectionVoiceChannelId = null;
       });
     }
+    final pinnedIdentity = _pinnedScreenIdentity;
+    final pinnedParticipant = pinnedIdentity == null
+        ? null
+        : widget.state.room?.remoteParticipants[pinnedIdentity];
+    final room = widget.state.room;
+    final pinnedPublicationPresent =
+        pinnedParticipant?.videoTrackPublications.any(
+          (item) => item.source == TrackSource.screenShareVideo,
+        ) ??
+        false;
+    if (pinnedIdentity != null &&
+        room != null &&
+        pinnedScreenPublicationEnded(
+          participantPresent: pinnedParticipant != null,
+          publicationPresent: pinnedPublicationPresent,
+        )) {
+      setState(() => _pinnedScreenIdentity = null);
+    }
     final previous = _lastWorkspacePanel;
     final current = widget.state.workspacePanel;
     _lastWorkspacePanel = current;
@@ -5106,7 +5124,7 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
                 child: track == null
                     ? Center(
                         child: Text(
-                          participant == null
+                          participant == null || publication == null
                               ? 'Демонстрация завершена'
                               : 'Ожидаем кадр демонстрации…',
                           textAlign: TextAlign.center,

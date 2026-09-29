@@ -19,3 +19,8 @@ bool screenSelectionBelongsToVoiceChannel({
 }) =>
     selectionVoiceChannelId != null &&
     selectionVoiceChannelId == activeVoiceChannelId;
+
+bool pinnedScreenPublicationEnded({
+  required bool participantPresent,
+  required bool publicationPresent,
+}) => !participantPresent || !publicationPresent;
