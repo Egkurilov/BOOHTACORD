@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../services/voice_avatar_palette.dart';
@@ -13,6 +15,7 @@ class VoiceScreenChoice {
     this.avatarLabel,
     this.accountId,
     this.hasAudio = false,
+    this.thumbnail,
   }) : assert(isLocal ? identity == null : identity != null);
 
   final String? identity;
@@ -23,6 +26,7 @@ class VoiceScreenChoice {
   final String? avatarLabel;
   final String? accountId;
   final bool hasAudio;
+  final Uint8List? thumbnail;
 }
 
 class VoiceScreenSelectionRail extends StatelessWidget {
@@ -100,19 +104,34 @@ class VoiceScreenSelectionRail extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: Row(
                               children: [
-                                CircleAvatar(
-                                  radius: 18,
-                                  backgroundColor: voiceAvatarColor(identity),
-                                  child: Text(
-                                    identityInitial(
-                                      choice.avatarLabel ?? choice.label,
-                                    ),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
+                                choice.thumbnail == null
+                                    ? CircleAvatar(
+                                        radius: 18,
+                                        backgroundColor: voiceAvatarColor(
+                                          identity,
+                                        ),
+                                        child: Text(
+                                          identityInitial(
+                                            choice.avatarLabel ?? choice.label,
+                                          ),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      )
+                                    : ClipRRect(
+                                        borderRadius: BorderRadius.circular(5),
+                                        child: SizedBox(
+                                          width: 52,
+                                          height: 40,
+                                          child: Image.memory(
+                                            choice.thumbnail!,
+                                            fit: BoxFit.cover,
+                                            gaplessPlayback: true,
+                                          ),
+                                        ),
+                                      ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(

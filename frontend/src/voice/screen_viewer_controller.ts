@@ -2,6 +2,7 @@ import { AudioMixer, normalizeAudioVolume, type AudioGainHandle } from './audio_
 import { createScreenReceiverReader } from './screen_receiver_reader'
 import { ScreenTrackAttachment } from './screen_track_attachment'
 import type { ScreenViewerCard, ScreenViewerStream } from './screen_viewer_types'
+import { validScreenThumbnail } from './screen_thumbnail'
 export type { ScreenViewerCard, ScreenViewerPublication, ScreenViewerStream, ScreenViewerTrack } from './screen_viewer_types'
 
 export class ScreenViewerController {
@@ -15,6 +16,8 @@ export class ScreenViewerController {
   private hasEnded = false
   private readonly listeners = new Set<() => void>()
   private readonly receiverReader = createScreenReceiverReader()
+  private resumeParticipantId: string | null = null
+  private readonly thumbnailUrls = new Map<string, string>()
   private selected: ScreenViewerStream | null = null
   private video: HTMLVideoElement | null = null
 
@@ -28,6 +31,7 @@ export class ScreenViewerController {
   cards(): ScreenViewerCard[] {
     return this.source().map(({ accountId, hasAudio, id, isLocal, participantId, participantName, targetProfile, video }) => ({
       accountId, hasAudio, id, isLocal, participantId, participantName, targetProfile,
+      ...(this.thumbnailUrls.get(participantId) ? { thumbnailUrl: this.thumbnailUrls.get(participantId) } : {}),
       ...(!isLocal && video.track?.getReceiverStats ? { readReceiverStats: this.receiverReader(video.track) } : {}),
     }))
   }
@@ -54,7 +58,26 @@ export class ScreenViewerController {
   }
 
   clear(): void {
+    this.resumeParticipantId = null
+    for (const url of this.thumbnailUrls.values()) URL.revokeObjectURL(url)
+    this.thumbnailUrls.clear()
     this.select(null, this.video, this.audio)
+  }
+
+  setThumbnail(participantId: string, bytes: Uint8Array): void {
+    if (!participantId || !validScreenThumbnail(bytes)) return
+    const previous = this.thumbnailUrls.get(participantId)
+    if (previous) URL.revokeObjectURL(previous)
+    this.thumbnailUrls.set(participantId, URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'image/jpeg' })))
+    this.notify()
+  }
+
+  removeThumbnail(participantId: string): void {
+    const previous = this.thumbnailUrls.get(participantId)
+    if (!previous) return
+    URL.revokeObjectURL(previous)
+    this.thumbnailUrls.delete(participantId)
+    this.notify()
   }
 
   reconcile(): void {
@@ -63,6 +86,12 @@ export class ScreenViewerController {
       this.detachAndUnsubscribe()
       this.selected = null
       this.hasEnded = true
+    } else if (!this.selected && this.resumeParticipantId) {
+      const restarted = this.source().find((stream) => stream.participantId === this.resumeParticipantId)
+      if (restarted) {
+        this.select(restarted.id, this.video, this.audio)
+        return
+      }
     } else if (current && (current.video !== this.selected?.video || current.audio !== this.selected?.audio)) {
       this.select(current.id, this.video, this.audio)
       return
@@ -79,6 +108,7 @@ export class ScreenViewerController {
     this.detachAndUnsubscribe()
     this.hasEnded = false
     this.selected = next ?? null
+    this.resumeParticipantId = next?.participantId ?? null
     this.video = video
     this.audio = audio
     if (this.selected?.audio && this.audio) {

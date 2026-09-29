@@ -7,3 +7,7 @@ rtc:
   use_external_ip: true
 keys:
   __LIVEKIT_API_KEY__: __LIVEKIT_API_SECRET__
+webhook:
+  api_key: __LIVEKIT_API_KEY__
+  urls:
+    - http://api:8080/internal/livekit/roster

@@ -107,6 +107,12 @@ class ScreenShareQuality {
     ),
   );
 
+  // The native capturer cannot raise its frame cap with applyConstraints.
+  // Keep the source at the highest supported ceiling and tune the encoder.
+  int get captureFrameRate => 60;
+  VideoParameters get captureParameters =>
+      const ScreenShareQuality(resolution: 1440, frameRate: 60).parameters;
+
   /// Caps the longer source edge at the selected profile without changing
   /// orientation or stretching portrait captures.
   double scaleResolutionDownBy(VideoDimensions source) {

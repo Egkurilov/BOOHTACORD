@@ -39,6 +39,10 @@ services:
             replaced = 1
             next
           }
+          $0 == "  api_key: __LIVEKIT_API_KEY__" {
+            print "  api_key: " key
+            next
+          }
           { print }
           END { if (!replaced) exit 1 }
         ' /etc/livekit-template.yaml > /tmp/livekit.yaml

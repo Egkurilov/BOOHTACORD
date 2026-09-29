@@ -13,7 +13,8 @@ describe('disconnected voice-room presentation', () => {
     const styles = source('../design/voice.css')
 
     expect(pane).toContain('<VoicePrejoin')
-    for (const text of ['voice-prejoin-title', 'Подключиться к голосу', 'Подключиться без микрофона', 'Перенести подключение', 'voiceError', "voiceState === 'JOINING'"]) expect(prejoin).toContain(text)
+    for (const text of ['voice-prejoin-title', 'Подключиться к голосу', 'Подключиться без микрофона', 'voiceError', "voiceState === 'JOINING'"]) expect(prejoin).toContain(text)
+    expect(prejoin).not.toContain('Перенести подключение')
     expect(styles).toContain('.voice-prejoin {')
     expect(styles).toContain('.voice-prejoin-card {')
   })

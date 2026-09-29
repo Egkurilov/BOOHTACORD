@@ -26,21 +26,25 @@ class ScreenShareSetupDialog extends StatefulWidget {
     super.key,
     required this.initialQuality,
     required this.allowSourceSelection,
+    this.updating = false,
   });
 
   final ScreenShareQuality initialQuality;
   final bool allowSourceSelection;
+  final bool updating;
 
   static Future<ScreenShareSetupSelection?> show(
     BuildContext context, {
     required ScreenShareQuality initialQuality,
     required bool allowSourceSelection,
+    bool updating = false,
   }) => showDialog<ScreenShareSetupSelection>(
     context: context,
     barrierDismissible: false,
     builder: (_) => ScreenShareSetupDialog(
       initialQuality: initialQuality,
       allowSourceSelection: allowSourceSelection,
+      updating: updating,
     ),
   );
 
@@ -293,7 +297,9 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
               ),
               const SizedBox(height: 3),
               Text(
-                defaultTargetPlatform == TargetPlatform.iOS
+                widget.updating
+                    ? 'Изменить качество и FPS без перезапуска'
+                    : defaultTargetPlatform == TargetPlatform.iOS
                     ? 'Выберите качество трансляции приложения'
                     : 'Выберите источник и качество трансляции',
                 style: const TextStyle(
@@ -599,7 +605,11 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
                         )
                       : null,
                   icon: const Icon(Icons.screen_share_outlined),
-                  label: const Text('Начать трансляцию'),
+                  label: Text(
+                    widget.updating
+                        ? 'Применить качество'
+                        : 'Начать трансляцию',
+                  ),
                 ),
               ],
             )
@@ -632,7 +642,11 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
                   key: const ValueKey('start-screen-share'),
                   onPressed: canStart ? () => _close(_selection()) : null,
                   icon: const Icon(Icons.screen_share_outlined),
-                  label: const Text('Начать трансляцию'),
+                  label: Text(
+                    widget.updating
+                        ? 'Применить качество'
+                        : 'Начать трансляцию',
+                  ),
                 ),
               ],
             ),

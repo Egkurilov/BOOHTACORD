@@ -9,9 +9,16 @@ import (
 	snapshotlivekitpresence "voice-platform/backend/internal/media/snapshot_livekit_presence"
 )
 
-type snapshotObserver struct { calls int; rooms int; failed bool }
+type snapshotObserver struct {
+	calls  int
+	rooms  int
+	failed bool
+}
+
 func (observer *snapshotObserver) ObserveVoiceRosterSnapshot(_ time.Duration, rooms int, failed bool) {
-	observer.calls++; observer.rooms = rooms; observer.failed = failed
+	observer.calls++
+	observer.rooms = rooms
+	observer.failed = failed
 }
 
 const (
@@ -61,14 +68,14 @@ func TestListIntersectsLiveKitActiveWithCurrentLeaseAndIncludesEmptyRooms(t *tes
 		{ID: secondRoom, Leases: []Lease{{ID: otherID, AccountID: otherID, DisplayName: "Не подключён"}}},
 	}}
 	presence := &presenceStub{connected: map[string][]snapshotlivekitpresence.ConnectedLease{
-		channelID: {{LeaseID: leaseID, ScreenSharing: true}, {LeaseID: otherID}},
+		channelID: {{LeaseID: leaseID, ScreenSharing: true, MicrophoneMuted: true}, {LeaseID: otherID}},
 	}}
 	result, err := New(listed, presence).List(context.Background(), actorID)
 	if err != nil || len(result.Channels) != 2 {
 		t.Fatalf("result=%+v err=%v", result, err)
 	}
 	first := result.Channels[0]
-	if first.ChannelID != channelID || len(first.Participants) != 1 || first.Participants[0] != (Participant{AccountID: memberID, DisplayName: "Мария", ScreenSharing: true}) {
+	if first.ChannelID != channelID || len(first.Participants) != 1 || first.Participants[0] != (Participant{AccountID: memberID, DisplayName: "Мария", ScreenSharing: true, MicrophoneMuted: true}) {
 		t.Fatalf("unexpected joined room: %+v", first)
 	}
 	if result.Channels[1].ChannelID != secondRoom || len(result.Channels[1].Participants) != 0 {
@@ -107,6 +114,10 @@ func TestListReportsSnapshotLoadWithoutActorOrRoomIDs(t *testing.T) {
 	secondRoom := "66666666-6666-4666-8666-666666666666"
 	observer := &snapshotObserver{}
 	service := New(&repositoryStub{channels: []Channel{{ID: channelID}, {ID: secondRoom}}}, &presenceStub{connected: map[string][]snapshotlivekitpresence.ConnectedLease{}}, observer)
-	if _, err := service.List(context.Background(), actorID); err != nil { t.Fatal(err) }
-	if observer.calls != 1 || observer.rooms != 2 || observer.failed { t.Fatalf("observer = %+v", observer) }
+	if _, err := service.List(context.Background(), actorID); err != nil {
+		t.Fatal(err)
+	}
+	if observer.calls != 1 || observer.rooms != 2 || observer.failed {
+		t.Fatalf("observer = %+v", observer)
+	}
 }

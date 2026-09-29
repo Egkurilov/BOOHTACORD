@@ -44,7 +44,7 @@ describe('voice-room visual status and screen presentation', () => {
     const viewer = source('./ScreenViewer.vue')
     const members = source('../workspace/WorkspaceMembersPanel.vue')
     expect(pane).toContain('<template v-if="screenViewerCards.length || selectedScreenStreamId || screenViewerEnded">')
-    expect(pane).toContain('<div v-if="!selectedScreenStreamId && !screenViewerEnded" class="room-wrap">')
+    expect(pane).toContain('<div v-if="!selectedScreenStreamId" class="room-wrap">')
     expect(pane).not.toContain('<VoiceParticipantStrip')
     expect(pane).toContain('voiceVolumeParticipants.length + 1')
     expect(pane).toContain('voiceRoomSummary(voiceVolumeParticipants.length + 1, screenViewerCards.length)')

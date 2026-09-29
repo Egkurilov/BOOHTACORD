@@ -11,8 +11,8 @@ describe('voice participant screen actions', () => {
     const pane = source('../conversation/ConversationPane.vue')
 
     expect(pane).toContain('screenViewerCards.length || selectedScreenStreamId || screenViewerEnded')
-    expect(pane).toContain('v-show="selectedScreenStreamId !== null || screenViewerEnded"')
-    expect(pane).toContain('<div v-if="!selectedScreenStreamId && !screenViewerEnded" class="room-wrap">')
+    expect(pane).toContain('v-show="selectedScreenStreamId !== null"')
+    expect(pane).toContain('<div v-if="!selectedScreenStreamId" class="room-wrap">')
     expect(pane).toContain('@watch-screen="watchScreen"')
     expect(pane).toContain('ref="screenViewerRef"')
   })

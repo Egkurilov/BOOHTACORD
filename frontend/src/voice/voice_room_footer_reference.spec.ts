@@ -30,7 +30,7 @@ describe('connected voice-room reference footer', () => {
   })
 
   it('wires the existing leave action and only displays the bar for the open connected room', () => {
-    expect(source('../conversation/ConversationPane.vue')).toContain('<VoiceRoomFooter v-if="voiceIsActive && !selectedScreenStreamId && !screenViewerEnded"')
+    expect(source('../conversation/ConversationPane.vue')).toContain('<VoiceRoomFooter v-if="voiceIsActive && !selectedScreenStreamId"')
     expect(source('../workspace/WorkspaceMain.vue')).toContain('@leave="leaveVoice"')
     expect(source('../workspace/WorkspaceApp.vue')).toContain(':leave-voice="leaveVoice"')
     expect(source('../style.css')).toContain("@import './design/voice_room_footer.css';")

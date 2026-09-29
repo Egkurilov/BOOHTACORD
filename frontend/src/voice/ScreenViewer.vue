@@ -98,7 +98,7 @@ async function toggleFullscreen(): Promise<void> {
     </div>
     <audio ref="audio" autoplay></audio>
     <div v-if="selectedStream" class="stream-quality-row">
-      <div class="stream-quality"><span class="stream-target">Цель: {{ selectedStream.targetProfile ?? 'нет данных' }}</span><span class="stream-actual">Сейчас: {{ actualVideoQuality }}</span></div>
+      <div class="stream-quality"><span class="stream-target">При запуске: {{ selectedStream.targetProfile ?? 'нет данных' }}</span><span class="stream-actual">Сейчас: {{ actualVideoQuality }}</span></div>
       <ScreenReceiverDiagnosticsPanel :actual-video-quality="actualVideoQuality" :has-audio="selectedStream.hasAudio" :is-local="Boolean(selectedStream.isLocal)" :metrics="receiverMetrics" :sampled-at="receiverSampledAt" :target-profile="selectedStream.targetProfile" />
       <ScreenViewerAudioControl v-if="selectedStream.hasAudio && !selectedStream.isLocal" :adjustable="adjustable" :deafened="deafened" :muted="audioMuted" :volume="selectedAudioVolume" @toggle="emit('toggleAudio')" @set-volume="emit('setAudioVolume', $event)" />
       <p v-if="audioMessage" class="stream-audio-status" role="status">{{ audioMessage }}</p>
@@ -107,7 +107,8 @@ async function toggleFullscreen(): Promise<void> {
         <h3>Демонстрации в канале</h3>
         <div ref="rail" class="screen-cards stream-rail" :class="{ 'has-overflow': railHasOverflow }" data-testid="stream-rail" aria-label="Выбор демонстрации" :aria-description="railHasOverflow ? 'Есть ещё демонстрации справа. Прокрутите список по горизонтали.' : undefined">
           <button v-for="stream in cards" :key="stream.id" data-testid="stream-select" class="screen-card stream-option" :class="{ selected: stream.id === selectedId }" type="button" :aria-pressed="stream.id === selectedId" @click="select(stream.id)">
-          <span class="stream-avatar" :style="{ backgroundColor: avatarBackground(stream.accountId ?? stream.participantId) }" aria-hidden="true">{{ streamInitial(stream) }}</span>
+          <img v-if="stream.thumbnailUrl" class="stream-thumbnail" :src="stream.thumbnailUrl" alt="Предпросмотр демонстрации">
+          <span v-else class="stream-avatar" :style="{ backgroundColor: avatarBackground(stream.accountId ?? stream.participantId) }" aria-hidden="true">{{ streamInitial(stream) }}</span>
           <span class="stream-option-copy"><span>{{ stream.isLocal ? 'Ваш экран' : (stream.participantName || 'Участник') }}</span><small>{{ stream.id === selectedId ? 'Вы смотрите' : 'Нажмите, чтобы смотреть' }}</small><span class="gc-sr-only">{{ stream.isLocal ? 'Собственный экран без звука' : stream.hasAudio ? 'Звуковая дорожка есть' : 'Звуковой дорожки нет' }}</span></span>
           <svg class="stream-audio-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9H3Z" /><path v-if="stream.hasAudio" d="M16 9a4 4 0 0 1 0 6m2.5-8.5a8 8 0 0 1 0 11" /><path v-else d="m16 9 5 6m0-6-5 6" /></svg>
           <span v-if="stream.id === selectedId" class="stream-selected-marker" aria-hidden="true">✓</span>

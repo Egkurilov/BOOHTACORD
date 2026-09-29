@@ -92,14 +92,14 @@ describe('screen viewer reference composition', () => {
     expect(playerRules).toContain('object-fit: contain')
   })
 
-  it('keeps an ended selected stream visible until the user returns or selects another', () => {
+  it('closes an ended selected stream while retaining its watcher for a restart', () => {
     const pane = source('../conversation/ConversationPane.vue')
     const viewer = source('./ScreenViewer.vue')
 
     expect(pane).toContain('screenViewerEnded')
     expect(pane).toContain('screenViewerCards.length || selectedScreenStreamId || screenViewerEnded')
     expect(pane).toContain(':ended="screenViewerEnded"')
-    expect(pane).toContain('selectedScreenStreamId !== null || screenViewerEnded')
+    expect(pane).toContain('v-show="selectedScreenStreamId !== null"')
     expect(viewer).toContain('Демонстрация завершена.')
   })
 

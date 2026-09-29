@@ -1,9 +1,11 @@
 import { bindLiveKitScreenViewer, type LiveKitScreenViewerRoom } from './livekit_screen_viewer_adapter'
 import type { VoiceRoom } from './livekit_gateway'
-import { adaptiveMediaRoomOptions } from './media_publishing'
+import { adaptiveMediaRoomOptions, screenShareMaxBitrate, type ScreenProfile, type ScreenResolution, type ScreenFrameRate } from './media_publishing'
 import { BoundedVoiceReconnectPolicy } from './bounded_voice_reconnect_policy'
 import { inspectLiveKitScreenDiagnostics, type LiveKitScreenVideoTrack } from './screen_livekit_diagnostics'
 import { readVoiceConnectionStats } from './voice_connection_quality'
+import { accountIdFromMetadata } from './participant_identity'
+import { publishScreenThumbnails, screenThumbnailTopic, validScreenThumbnail } from './screen_thumbnail'
 
 export function wireLiveKitRoom(
   room: VoiceRoom,
@@ -43,6 +45,31 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
     screenAudio: Track.Source.ScreenShareAudio,
     screenVideo: Track.Source.ScreenShare,
   })
+  let stopThumbnails: (() => void) | null = null
+  liveKitRoom.on(RoomEvent.LocalTrackPublished, (publication) => {
+    if (publication.source !== Track.Source.ScreenShare || !publication.videoTrack) return
+    stopThumbnails?.()
+    const local = liveKitRoom.localParticipant
+    const participantId = accountIdFromMetadata(local.metadata) ?? local.identity
+    stopThumbnails = publishScreenThumbnails(publication.videoTrack, local, (bytes) => viewer.viewer.setThumbnail(participantId, bytes))
+  })
+  liveKitRoom.on(RoomEvent.LocalTrackUnpublished, (publication) => {
+    if (publication.source !== Track.Source.ScreenShare) return
+    stopThumbnails?.()
+    stopThumbnails = null
+    const local = liveKitRoom.localParticipant
+    viewer.viewer.removeThumbnail(accountIdFromMetadata(local.metadata) ?? local.identity)
+  })
+  liveKitRoom.on(RoomEvent.Disconnected, () => { stopThumbnails?.(); stopThumbnails = null })
+  liveKitRoom.on(RoomEvent.DataReceived, (bytes, participant, _kind, topic) => {
+    if (topic !== screenThumbnailTopic || !participant || !validScreenThumbnail(bytes)) return
+    viewer.viewer.setThumbnail(accountIdFromMetadata(participant.metadata) ?? participant.identity, bytes)
+  })
+  liveKitRoom.on(RoomEvent.TrackUnpublished, (publication, participant) => {
+    if (publication.source === Track.Source.ScreenShare) {
+      viewer.viewer.removeThumbnail(accountIdFromMetadata(participant.metadata) ?? participant.identity)
+    }
+  })
   const room = wireLiveKitRoom(liveKitRoom as unknown as VoiceRoom, viewer)
   room.screenViewer = viewer.viewer
   room.participantCards = viewer.participants
@@ -61,6 +88,30 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
     const audio = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack
     const report = await audio?.getRTCStatsReport()
     return readVoiceConnectionStats(liveKitRoom.localParticipant.connectionQuality, report?.values())
+  }
+  room.localParticipant.updateScreenShareProfile = async (profile: ScreenProfile) => {
+    const match = /^P(720|1080|1440)_(15|30|60)$/.exec(profile)
+    if (!match) throw new Error('Некорректный профиль демонстрации.')
+    const resolution = Number(match[1]) as ScreenResolution
+    const frameRate = Number(match[2]) as ScreenFrameRate
+    const track = liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.videoTrack
+    const sender = track?.sender
+    if (!sender) throw new Error('Активная видеодорожка демонстрации недоступна.')
+    const settings = track.mediaStreamTrack.getSettings()
+    const sourceEdge = Math.max(settings.width ?? 0, settings.height ?? 0)
+    const targetEdge = resolution === 720 ? 1280 : resolution === 1080 ? 1920 : 2560
+    const scale = Math.max(1, sourceEdge / targetEdge)
+    const parameters = sender.getParameters()
+    if (!parameters.encodings?.length) throw new Error('Видеоэнкодер не предоставил параметры качества.')
+    const baseScale = Math.min(...parameters.encodings.map((encoding) => encoding.scaleResolutionDownBy ?? 1))
+    const bitrate = screenShareMaxBitrate(resolution, frameRate)
+    parameters.encodings.forEach((encoding) => {
+      const relativeScale = (encoding.scaleResolutionDownBy ?? 1) / baseScale
+      encoding.maxBitrate = Math.max(200_000, Math.round(bitrate / (relativeScale * relativeScale)))
+      encoding.maxFramerate = frameRate
+      encoding.scaleResolutionDownBy = scale * relativeScale
+    })
+    await sender.setParameters(parameters)
   }
   return room
 }

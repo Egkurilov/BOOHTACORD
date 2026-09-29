@@ -23,7 +23,7 @@ func New(value string) (Middleware, error) {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			if mutatesState(request.Method) && request.Header.Get("Origin") != expected {
+			if mutatesState(request.Method) && !(request.Method == http.MethodPost && request.URL.Path == "/internal/livekit/roster") && request.Header.Get("Origin") != expected {
 				writeForbidden(writer, request)
 				return
 			}

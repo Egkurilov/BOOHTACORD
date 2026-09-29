@@ -17,7 +17,7 @@ describe('voice session', () => {
     const session = new VoiceSession(api, async () => ({ room: room as never, microphone: 'PUBLISHED' }))
 
     await expect(session.join('voice-1')).resolves.toMatchObject({ leaseId: 'lease-1', channelId: 'voice-1' })
-    expect(api.acquire).toHaveBeenCalledWith('voice-1', false)
+    expect(api.acquire).toHaveBeenCalledWith('voice-1', true)
     expect(api.credential).toHaveBeenCalledWith('lease-1')
   })
 
@@ -30,6 +30,17 @@ describe('voice session', () => {
     expect(api.release).toHaveBeenCalledWith('lease-1')
     expect(session.active).toBeNull()
   })
+})
+
+it('takes over an existing voice lease in the first admission request', async () => {
+  const api = admission()
+  const room = { disconnect: vi.fn().mockResolvedValue(undefined), on: vi.fn() }
+  const session = new VoiceSession(api, async () => ({ room: room as never, microphone: 'MUTED' }))
+
+  await session.join('voice-next')
+
+  expect(api.acquire).toHaveBeenCalledTimes(1)
+  expect(api.acquire).toHaveBeenCalledWith('voice-next', true)
 })
 
 it('reports SDK reconnect state and clears a permanently disconnected lease', async () => {

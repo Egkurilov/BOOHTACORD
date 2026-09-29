@@ -338,6 +338,20 @@ class ApiClient {
     return rosters;
   }
 
+  Future<http.StreamedResponse> voiceRosterEvents() async {
+    final request = http.Request('GET', _uri('/voice/rosters/events'));
+    request.headers.addAll(await _headers(accept: 'text/event-stream'));
+    final response = await _client.send(request);
+    if (response.statusCode != 200) {
+      await response.stream.drain<void>();
+      throw ApiFailure(
+        'Нет связи со списком голосовых каналов.',
+        status: response.statusCode,
+      );
+    }
+    return response;
+  }
+
   Future<void> createCategory(String name) async {
     final normalized = name.trim();
     if (normalized.isEmpty || normalized.runes.length > 80) {

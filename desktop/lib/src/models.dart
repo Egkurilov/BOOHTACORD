@@ -7,27 +7,32 @@ class VoiceRosterMember {
     required this.accountId,
     required this.displayName,
     required this.screenSharing,
+    this.microphoneMuted = true,
   });
 
   final String accountId;
   final String displayName;
   final bool screenSharing;
+  final bool microphoneMuted;
 
   factory VoiceRosterMember.fromJson(Map<String, dynamic> json) {
     final accountId = json['account_id'];
     final displayName = json['display_name'];
     final screenSharing = json['screen_sharing'];
+    final microphoneMuted = json['microphone_muted'];
     if (accountId is! String ||
         accountId.trim().isEmpty ||
         displayName is! String ||
         displayName.trim().isEmpty ||
-        screenSharing is! bool) {
+        screenSharing is! bool ||
+        (microphoneMuted != null && microphoneMuted is! bool)) {
       throw const FormatException('Invalid voice roster member.');
     }
     return VoiceRosterMember(
       accountId: accountId,
       displayName: displayName,
       screenSharing: screenSharing,
+      microphoneMuted: microphoneMuted is bool ? microphoneMuted : true,
     );
   }
 }

@@ -46,9 +46,8 @@ export function useWorkspaceVoiceControls() {
     voiceNavigation.selectDirectMessage(directMessageId)
   }
 
-  async function joinVoice(channelId: string, transfer = false, joinMode: VoiceJoinMode = 'with-microphone'): Promise<void> {
+  async function joinVoice(channelId: string, transfer = true, joinMode: VoiceJoinMode = 'with-microphone'): Promise<void> {
     const activeChannelId = voiceConnection.active?.channelId
-    if (activeChannelId && activeChannelId !== channelId && !window.confirm('Выйти из текущего голосового канала и перейти в другой?')) return
     streamStartChime.activate()
     if (activeChannelId && activeChannelId !== channelId) await leaveVoice()
     await audioSettings.loadProcessing(voiceConnection.setAudioProcessing)

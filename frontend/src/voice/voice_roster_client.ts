@@ -4,6 +4,7 @@ export interface VoiceRosterMember {
   accountId: string
   displayName: string
   screenSharing: boolean
+  microphoneMuted?: boolean
 }
 
 export interface VoiceRoomRoster {
@@ -38,7 +39,9 @@ export function parseVoiceRosters(value: unknown): VoiceRoomRoster[] {
       const accountId = nonempty(member.account_id)
       if (members.has(accountId) || typeof member.screen_sharing !== 'boolean') throw new Error('Некорректный состав голосовых каналов.')
       members.add(accountId)
-      return { accountId, displayName: nonempty(member.display_name), screenSharing: member.screen_sharing }
+      if (member.microphone_muted !== undefined && typeof member.microphone_muted !== 'boolean') throw new Error('Некорректный состав голосовых каналов.')
+      return { accountId, displayName: nonempty(member.display_name), screenSharing: member.screen_sharing,
+        ...(typeof member.microphone_muted === 'boolean' ? { microphoneMuted: member.microphone_muted } : {}) }
     })
     return { channelId, participants }
   })

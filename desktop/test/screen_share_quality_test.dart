@@ -18,6 +18,8 @@ void main() {
 
           expect(quality.parameters.dimensions.height, resolution);
           expect(quality.parameters.encoding?.maxFramerate, frameRate);
+          expect(quality.captureParameters.dimensions.height, 1440);
+          expect(quality.captureFrameRate, 60);
           expect(quality.parameters.encoding!.maxBitrate, greaterThan(0));
           expect(
             quality.trackName,

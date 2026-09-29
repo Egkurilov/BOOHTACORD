@@ -1,4 +1,5 @@
 import { readScreenShareDiagnostics, startScreenShare, stopScreenShare, type ScreenProfile, type VoiceRoom } from './livekit_gateway'
+import { updateScreenShare } from './media_publishing'
 import type { ScreenDiagnostics } from './screen_diagnostics'
 
 export interface ScreenVoiceSession {
@@ -21,6 +22,14 @@ export class VoiceScreenSession {
     if (!current || !current.screenProfile) return
     await stopScreenShare(current.room)
     current.screenProfile = null
+  }
+
+  async updateScreenProfile(profile: ScreenProfile): Promise<ScreenDiagnostics> {
+    const current = this.requireCurrent()
+    if (!current.screenProfile) throw new Error('Демонстрация экрана не запущена.')
+    const diagnostics = await updateScreenShare(current.room, profile)
+    current.screenProfile = profile
+    return diagnostics
   }
 
   async readScreenDiagnostics(): Promise<ScreenDiagnostics> {

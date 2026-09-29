@@ -75,7 +75,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      tester.widget<Text>(find.text('Профиль источника')).style?.fontSize,
+      tester.widget<Text>(find.text('Профиль при запуске')).style?.fontSize,
       12,
     );
     await tester.drag(

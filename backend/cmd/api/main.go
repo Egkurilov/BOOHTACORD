@@ -87,7 +87,7 @@ func main() {
 		os.Exit(1)
 	}
 	configureVoiceLeaseRoutes(mux, database, sessionService, maintenanceService)
-	configureVoiceParticipantRoutes(mux, database, sessionService, configuration.mediaSnapshot, metrics)
+	configureVoiceParticipantRoutes(mux, database, sessionService, configuration.mediaSnapshot, metrics, os.Getenv("LIVEKIT_API_KEY"), os.Getenv("LIVEKIT_API_SECRET"))
 	configureClientScreenRoutes(mux, sessionService, metrics)
 	configureAdminVoiceRoutes(mux, database, sessionService)
 	configureMediaCredentialRoutes(mux, database, sessionService, configuration.credentialSigner)

@@ -23,3 +23,4 @@
   font-size: var(--gc-text-caption);
 }
 .participant-watch:hover, .participant-watch[aria-pressed="true"] { border-color: var(--gc-accent); color: var(--gc-text-primary); background: var(--gc-surface-selected); }
+.participant-stream-thumbnail { width: 64px; height: 64px; border-radius: var(--gc-radius-sm); object-fit: cover; background: var(--gc-stream-canvas); }

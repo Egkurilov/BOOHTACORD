@@ -50,7 +50,7 @@ export class VoiceSession {
   remoteVoices() { return this.current?.room.remoteVoices ?? null }
   participantCards() { return this.current?.room.participantCards ?? null }
 
-  async join(channelId: string, transfer = false, joinMode: VoiceJoinMode = 'with-microphone'): Promise<ActiveVoiceSession> {
+  async join(channelId: string, transfer = true, joinMode: VoiceJoinMode = 'with-microphone'): Promise<ActiveVoiceSession> {
     if (this.current) throw new Error('Сначала завершите текущее голосовое подключение.')
 
     let lease: VoiceLease | null = null
@@ -108,6 +108,8 @@ export class VoiceSession {
       throw new Error('Браузер не смог переключить выбранное аудиоустройство.')
     }
   }
+
+  async updateScreenProfile(profile: ScreenProfile) { return this.screen.updateScreenProfile(profile) }
 
   private async handleDisconnected(room: JoinedVoiceRoom['room']): Promise<void> {
     const current = this.current

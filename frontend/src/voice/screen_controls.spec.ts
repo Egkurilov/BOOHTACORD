@@ -39,6 +39,23 @@ describe('screen controls', () => {
     expect(screenState.value).toBe('SHARING')
   })
 
+  it('changes the active profile without starting a second capture', async () => {
+    const profile = ref<'P720_15' | 'P1080_30' | null>('P720_15')
+    const state = ref<ScreenShareState>('SHARING')
+    const session = {
+      readScreenDiagnostics: vi.fn(), startScreen: vi.fn(), stopScreen: vi.fn(),
+      updateScreenProfile: vi.fn().mockResolvedValue(unknownScreenDiagnostics()),
+    }
+    const controls = createScreenControls(session, ref({}), ref(null), profile, state, ref(unknownScreenDiagnostics()))
+
+    await controls.startScreen('P1080_30')
+
+    expect(session.updateScreenProfile).toHaveBeenCalledWith('P1080_30')
+    expect(session.startScreen).not.toHaveBeenCalled()
+    expect(state.value).toBe('SHARING')
+    expect(profile.value).toBe('P1080_30')
+  })
+
   it('reports a finished source after an explicit measurement refresh', async () => {
     const screenDiagnostics = ref(unknownScreenDiagnostics())
     const screenError = ref<string | null>(null)

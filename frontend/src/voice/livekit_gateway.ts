@@ -8,6 +8,7 @@ import {
   type MicrophonePublishOptions,
   type MicrophoneState,
   type ScreenShareOptions,
+  type ScreenProfile,
   type ScreenSharePublishOptions,
 } from './media_publishing'
 import type { RemoteVoicePlaybackController } from './livekit_screen_viewer_adapter'
@@ -51,6 +52,7 @@ export interface VoiceRoom {
   localParticipant: {
     setMicrophoneEnabled(enabled: boolean, options: MediaTrackConstraints, publishOptions?: MicrophonePublishOptions): Promise<unknown>
     setScreenShareEnabled(enabled: boolean, options?: ScreenShareOptions, publishOptions?: ScreenSharePublishOptions): Promise<unknown>
+    updateScreenShareProfile?(profile: ScreenProfile): Promise<void>
   }
 }
 

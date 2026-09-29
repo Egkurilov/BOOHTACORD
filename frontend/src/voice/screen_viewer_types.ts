@@ -24,5 +24,6 @@ export interface ScreenViewerStream {
 }
 
 export type ScreenViewerCard = Pick<ScreenViewerStream, 'accountId' | 'hasAudio' | 'id' | 'isLocal' | 'participantId' | 'participantName' | 'targetProfile'> & {
+  thumbnailUrl?: string
   readReceiverStats?: () => Promise<import('./screen_receiver_diagnostics').ScreenReceiverSnapshot | undefined>
 }

@@ -59,6 +59,26 @@ describe('screen viewer controller', () => {
     expect(controller.ended).toBe(false)
   })
 
+  it('reattaches a restarted share from the selected participant without another click', () => {
+    const initial = stream('alice-old')
+    const streams: ScreenViewerStream[] = [initial]
+    const controller = new ScreenViewerController(() => streams)
+    const video = {} as HTMLVideoElement
+    const audio = {} as HTMLAudioElement
+    controller.select(initial.id, video, audio)
+
+    streams.splice(0)
+    controller.reconcile()
+    const restarted = stream('alice-new')
+    restarted.participantId = initial.participantId
+    streams.push(restarted)
+    controller.reconcile()
+
+    expect(controller.selectedId).toBe(restarted.id)
+    expect(controller.ended).toBe(false)
+    expect(restarted.video.track?.attach).toHaveBeenCalledWith(video)
+  })
+
   it('rejects a stream not reported by the current room', () => {
     const controller = new ScreenViewerController(() => [])
 

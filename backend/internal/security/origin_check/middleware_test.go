@@ -48,3 +48,18 @@ func TestMiddlewareRejectsMissingOrForeignOriginForMutation(t *testing.T) {
 		}
 	}
 }
+
+func TestMiddlewarePassesOnlyPrivateWebhookWithoutBrowserOrigin(t *testing.T) {
+	middleware, _ := New("https://voice.example.test")
+	next := http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) { writer.WriteHeader(http.StatusNoContent) })
+	for _, path := range []string{"/internal/livekit/roster", "/internal/livekit/other"} {
+		recorder := httptest.NewRecorder()
+		middleware(next).ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, path, nil))
+		if path == "/internal/livekit/roster" && recorder.Code != http.StatusNoContent {
+			t.Fatalf("webhook status=%d", recorder.Code)
+		}
+		if path != "/internal/livekit/roster" && recorder.Code != http.StatusForbidden {
+			t.Fatalf("other status=%d", recorder.Code)
+		}
+	}
+}

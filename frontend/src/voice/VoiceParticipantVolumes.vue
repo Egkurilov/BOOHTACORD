@@ -27,7 +27,8 @@ function watchParticipantScreen(participantId: string): void { const screen = sc
         <summary :aria-label="`Настройки громкости ${participant.name || 'участника'}`" title="Настройки участника">•••</summary>
         <label>Громкость · {{ participant.volume }}%<input :aria-label="`Громкость микрофона ${participant.name || 'участника'}`" type="range" min="0" max="200" step="1" :value="participant.volume" @input="emit('setVolume', participant.id, Number(($event.target as HTMLInputElement).value))"></label>
       </details>
-      <span class="avatar lg" :style="{ backgroundColor: avatarBackground(participant.accountId ?? participant.id) }" aria-hidden="true">{{ initial(participant.name) }}</span>
+      <img v-if="screenForParticipant(participant.id)?.thumbnailUrl" class="participant-stream-thumbnail" :src="screenForParticipant(participant.id)!.thumbnailUrl" alt="Предпросмотр демонстрации">
+      <span v-else class="avatar lg" :style="{ backgroundColor: avatarBackground(participant.accountId ?? participant.id) }" aria-hidden="true">{{ initial(participant.name) }}</span>
       <span class="participant-name">{{ participant.name || 'Участник' }}</span>
       <VoiceParticipantStatus class="participant-status" :microphone-muted="participant.microphoneMuted" :speaking="participant.speaking" />
       <span v-if="screenForParticipant(participant.id)" class="participant-share-badge" aria-label="Участник показывает экран" title="Показывает экран"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4zM9 20h6m-3-4v4" /></svg><b aria-hidden="true">ЭФИР</b></span>

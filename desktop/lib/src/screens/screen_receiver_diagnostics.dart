@@ -328,7 +328,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             _DiagnosticRow(
-                              label: 'Профиль источника',
+                              label: 'Профиль при запуске',
                               value: _screenShareTargetProfile(
                                 widget.sourceTrackName,
                               ),

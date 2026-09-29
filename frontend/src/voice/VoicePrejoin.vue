@@ -20,9 +20,8 @@ const emit = defineEmits<{ join: [channelId: string, transfer?: boolean, joinMod
       <p v-else class="state" role="status">Проверяем, кто сейчас в комнате…</p>
       <p v-if="voiceError" class="state state-error" role="alert">{{ voiceError }}</p>
       <div class="voice-prejoin-actions">
-        <button v-if="voiceTransferRequired" class="gc-button gc-button--secondary" type="button" @click="emit('transfer', channelId)">Перенести подключение</button>
         <button class="gc-button gc-button--primary" type="button" :disabled="voiceState === 'JOINING'" @click="emit('join', channelId)">{{ voiceState === 'JOINING' ? 'Подключаемся…' : 'Подключиться к голосу' }}</button>
-        <button class="gc-button gc-button--secondary" type="button" :disabled="voiceState === 'JOINING'" @click="emit('join', channelId, false, 'listener')">Подключиться без микрофона</button>
+        <button class="gc-button gc-button--secondary" type="button" :disabled="voiceState === 'JOINING'" @click="emit('join', channelId, true, 'listener')">Подключиться без микрофона</button>
       </div>
     </article>
   </div>

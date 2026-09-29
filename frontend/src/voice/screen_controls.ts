@@ -8,6 +8,7 @@ export type ScreenShareState = 'IDLE' | 'STARTING' | 'SHARING' | 'STOPPING' | 'E
 export interface ScreenSession {
   readScreenDiagnostics(): Promise<ScreenDiagnostics>
   startScreen(profile: ScreenProfile): Promise<ScreenDiagnostics>
+  updateScreenProfile?(profile: ScreenProfile): Promise<ScreenDiagnostics>
   stopScreen(): Promise<void>
 }
 
@@ -21,7 +22,18 @@ export function createScreenControls(
 ) {
   let refreshingDiagnostics = false
   async function startScreen(profile: ScreenProfile): Promise<void> {
-    if (!active.value || screenState.value === 'STARTING') return
+    if (!active.value || screenState.value === 'STARTING' || screenState.value === 'STOPPING') return
+    if (screenState.value === 'SHARING') {
+      try {
+        if (!session.updateScreenProfile) throw new Error('Изменение качества во время трансляции недоступно.')
+        screenDiagnostics.value = await session.updateScreenProfile(profile)
+        screenProfile.value = profile
+        screenError.value = screenDiagnosticMessage(screenDiagnostics.value)
+      } catch (cause) {
+        screenError.value = screenFailureMessage(cause)
+      }
+      return
+    }
     screenState.value = 'STARTING'
     screenError.value = null
     try {

@@ -10,8 +10,9 @@ import (
 )
 
 type ConnectedLease struct {
-	LeaseID       string
-	ScreenSharing bool
+	LeaseID         string
+	ScreenSharing   bool
+	MicrophoneMuted bool
 }
 
 // SnapshotRooms returns ICE-connected lease identities in current VOICE rooms.
@@ -73,11 +74,13 @@ func (client Client) SnapshotRooms(ctx context.Context, channelIDs []string) (ma
 			if uuid.Validate(leaseID) != nil {
 				continue
 			}
-			connected := ConnectedLease{LeaseID: leaseID}
+			connected := ConnectedLease{LeaseID: leaseID, MicrophoneMuted: true}
 			for _, track := range participant.GetTracks() {
+				if track != nil && track.GetType() == livekit.TrackType_AUDIO && track.GetSource() == livekit.TrackSource_MICROPHONE && !track.GetMuted() {
+					connected.MicrophoneMuted = false
+				}
 				if track != nil && !track.GetMuted() && track.GetType() == livekit.TrackType_VIDEO && track.GetSource() == livekit.TrackSource_SCREEN_SHARE {
 					connected.ScreenSharing = true
-					break
 				}
 			}
 			result[id] = append(result[id], connected)

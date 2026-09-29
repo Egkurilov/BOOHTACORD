@@ -4,7 +4,6 @@ import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
 import { useAuthorDirectory } from '../identity/author_directory'
 import { VoiceSession, type ActiveVoiceSession } from './voice_session'
 import type { AudioDeviceKind } from './audio_devices'
-import { VoiceRequestError } from './admission_client'
 import type { AudioProcessingOptions, ScreenProfile, VoiceJoinMode } from './livekit_gateway'
 import { createScreenControls, type ScreenShareState } from './screen_controls'
 import { unknownScreenDiagnostics, type ScreenDiagnostics } from './screen_diagnostics'
@@ -98,7 +97,7 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
 
   installVoiceConnectionLifecycle(session, active, state, error, microphoneMuted, microphonePermissionDenied, deafened, screenDiagnostics, screenProfile, screenState, screenViewer, volume, refreshAudioProcessingDiagnostics)
 
-  async function join(channelId: string, transfer = false, joinMode: VoiceJoinMode = 'with-microphone'): Promise<void> {
+  async function join(channelId: string, transfer = true, joinMode: VoiceJoinMode = 'with-microphone'): Promise<void> {
     if (!canJoin.value) return
 
     state.value = 'JOINING'
@@ -122,7 +121,7 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
       microphoneMuted.value = false
       microphonePermissionDenied.value = false
       state.value = 'ERROR'
-      transferRequired.value = cause instanceof VoiceRequestError && cause.code === 'ACTIVE_VOICE_LEASE'
+      transferRequired.value = false
       error.value = cancelledReason ? voiceLeaseRevocationMessage(cancelledReason) : cause instanceof Error ? cause.message : 'Не удалось подключиться к голосовому каналу.'
     }
   }

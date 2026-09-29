@@ -9,3 +9,4 @@
 .voice-roster-preview--compact .voice-roster-heading { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .voice-roster-preview--compact .voice-roster-members { max-height: 160px; overflow: auto; }
 .voice-roster-preview--compact .voice-roster-live span { display: none; }
+.voice-roster-member .voice-member-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }

@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { ScreenProfile } from './livekit_gateway'
 import { screenShareMaxBitrate, type ScreenFrameRate, type ScreenResolution } from './media_publishing'
 
-const props = defineProps<{ initialProfile: ScreenProfile }>()
+const props = defineProps<{ initialProfile: ScreenProfile; updating?: boolean }>()
 const emit = defineEmits<{ cancel: []; start: [profile: ScreenProfile] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
 const opener = ref<HTMLElement | null>(null)
@@ -83,7 +83,7 @@ function start(): void {
     <div class="screen-share-setup__body">
       <div id="screen-share-setup-guidance" class="screen-share-setup__notice" role="note">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 21 7v5c0 5-3.7 8-9 10-5.3-2-9-5-9-10V7zm0 5v5m0 3h.01" /></svg>
-        <p>После продолжения браузер покажет системный запрос на выбор экрана или окна. Вы сможете остановить трансляцию в любой момент.</p>
+        <p>{{ updating ? 'Качество и FPS изменятся в текущей трансляции без выбора экрана заново.' : 'После продолжения браузер покажет системный запрос на выбор экрана или окна. Вы сможете остановить трансляцию в любой момент.' }}</p>
       </div>
 
       <section class="screen-share-quality" aria-labelledby="screen-share-quality-title">
@@ -123,7 +123,7 @@ function start(): void {
       <button class="screen-share-setup__cancel" type="button" @click="emit('cancel')">Отмена</button>
       <button class="screen-share-setup__start" type="button" @click="start">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v13H3zM8 21h8m-4-4v4M12 8v6m-3-3 3-3 3 3" /></svg>
-        Начать трансляцию
+        {{ updating ? 'Применить качество' : 'Начать трансляцию' }}
       </button>
     </footer>
   </dialog>

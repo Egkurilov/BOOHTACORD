@@ -26,6 +26,8 @@ import 'services/voice_volume_preferences.dart';
 import 'services/voice_reconnect_policy.dart';
 import 'services/voice_stream_start_tracker.dart';
 import 'services/voice_connection_quality.dart';
+import 'services/voice_roster_events.dart';
+import 'services/screen_thumbnail.dart';
 
 enum AppPhase { loading, connectionError, signedOut, ready }
 
@@ -196,6 +198,7 @@ class AppState extends ChangeNotifier {
   bool voiceStreamStartNotice = false;
   ScreenSharePhase screenSharePhase = ScreenSharePhase.idle;
   String? screenShareError;
+  final Map<String, Uint8List> screenThumbnails = {};
   ScreenShareQuality screenShareQuality =
       defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS
@@ -231,7 +234,12 @@ class AppState extends ChangeNotifier {
   StreamSubscription<dynamic>? _realtimeSubscription;
   Timer? _realtimeRetry;
   Timer? _maintenanceTimer;
-  Timer? _voiceRosterTimer;
+  StreamSubscription<String>? _voiceRosterSubscription;
+  Completer<void>? _voiceRosterStreamDone;
+  Timer? _voiceRosterRetryTimer;
+  Completer<void>? _voiceRosterRetryDone;
+  bool _voiceRosterWatching = false;
+  DateTime? _voiceRosterLastSnapshotAt;
   Timer? _voiceStreamNoticeTimer;
   Timer? _voiceConnectionStatsTimer;
   int _voiceConnectionStatsRevision = 0;
@@ -239,6 +247,8 @@ class AppState extends ChangeNotifier {
   final VoiceStreamStartTracker _voiceStreamStartTracker =
       VoiceStreamStartTracker();
   Timer? _screenShareMetricsTimer;
+  Timer? _screenThumbnailTimer;
+  bool _screenThumbnailBusy = false;
   LocalVideoTrack? _screenShareMetricsTrack;
   ScreenShareSenderSnapshot? _previousScreenShareMetrics;
   int _screenShareMetricsRevision = 0;
@@ -358,7 +368,7 @@ class AppState extends ChangeNotifier {
     if (phase != AppPhase.ready || _expiringSession) return;
     _expiringSession = true;
     ComposerDraftMemory.clear();
-    _stopVoiceRosterPolling();
+    _stopVoiceRosterEvents();
     phase = AppPhase.signedOut;
     user = null;
     profile = null;
@@ -448,9 +458,8 @@ class AppState extends ChangeNotifier {
           refreshMembers(),
           refreshDirectMessages(),
           refreshProfile(),
-          refreshVoiceRosters(),
         ]);
-        _startVoiceRosterPolling();
+        _startVoiceRosterEvents();
         unawaited(_connectRealtime());
       }
     } catch (cause) {
@@ -533,7 +542,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> setServer(String value) async {
-    _stopVoiceRosterPolling();
+    _stopVoiceRosterEvents();
     await leaveVoice();
     await _closeRealtime();
     await api.setBaseUrl(value);
@@ -578,9 +587,8 @@ class AppState extends ChangeNotifier {
         refreshMembers(),
         refreshDirectMessages(),
         refreshProfile(),
-        refreshVoiceRosters(),
       ]);
-      _startVoiceRosterPolling();
+      _startVoiceRosterEvents();
       unawaited(_connectRealtime());
     } catch (cause) {
       error = _message(cause);
@@ -609,7 +617,7 @@ class AppState extends ChangeNotifier {
     profile = null;
     profileLoadError = null;
     await _nativeNotifications.useAccount(null);
-    _stopVoiceRosterPolling();
+    _stopVoiceRosterEvents();
     voiceRosters = null;
     voiceRosterError = null;
     _voiceVolumePreferences = null;
@@ -690,17 +698,97 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  void _startVoiceRosterPolling() {
-    if (user == null || _voiceRosterTimer != null) return;
-    _voiceRosterTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => unawaited(refreshVoiceRosters()),
-    );
+  void _startVoiceRosterEvents() {
+    if (user == null || _voiceRosterWatching) return;
+    _voiceRosterWatching = true;
+    unawaited(_watchVoiceRosterEvents(++_voiceRosterRevision));
   }
 
-  void _stopVoiceRosterPolling() {
-    _voiceRosterTimer?.cancel();
-    _voiceRosterTimer = null;
+  Future<void> _watchVoiceRosterEvents(int revision) async {
+    while (_voiceRosterWatching &&
+        revision == _voiceRosterRevision &&
+        phase == AppPhase.ready) {
+      try {
+        final response = await api.voiceRosterEvents();
+        if (!_voiceRosterWatching || revision != _voiceRosterRevision) {
+          await response.stream.listen(null).cancel();
+          return;
+        }
+        final done = Completer<void>();
+        _voiceRosterStreamDone = done;
+        _voiceRosterSubscription = response.stream
+            .transform(utf8.decoder)
+            .transform(const LineSplitter())
+            .listen(
+              (line) {
+                if (revision != _voiceRosterRevision) return;
+                try {
+                  final rooms = parseVoiceRosterEvent(line);
+                  if (rooms == null) return;
+                  voiceRosters = rooms;
+                  _voiceRosterLastSnapshotAt = DateTime.now();
+                  voiceRosterError = null;
+                  notifyListeners();
+                } catch (cause) {
+                  voiceRosters = null;
+                  voiceRosterError = _message(cause);
+                  notifyListeners();
+                }
+              },
+              onError: (Object _) {
+                if (!done.isCompleted) done.complete();
+              },
+              onDone: () {
+                if (!done.isCompleted) done.complete();
+              },
+            );
+        await done.future;
+        _voiceRosterSubscription = null;
+        _voiceRosterStreamDone = null;
+      } catch (cause) {
+        if (revision == _voiceRosterRevision) {
+          if (cause is ApiFailure &&
+              (cause.status == 401 || cause.status == 403)) {
+            voiceRosters = null;
+          }
+          if (voiceRosters == null) voiceRosterError = _message(cause);
+          notifyListeners();
+        }
+      }
+      if (!_voiceRosterWatching || revision != _voiceRosterRevision) return;
+      final lastSnapshot = _voiceRosterLastSnapshotAt;
+      if (lastSnapshot != null &&
+          DateTime.now().difference(lastSnapshot) >
+              const Duration(seconds: 20)) {
+        voiceRosters = null;
+        voiceRosterError = 'Нет связи со списком голосовых каналов.';
+        notifyListeners();
+      }
+      final retry = Completer<void>();
+      _voiceRosterRetryDone = retry;
+      _voiceRosterRetryTimer = Timer(const Duration(seconds: 2), () {
+        if (!retry.isCompleted) retry.complete();
+      });
+      await retry.future;
+      _voiceRosterRetryTimer = null;
+      _voiceRosterRetryDone = null;
+    }
+  }
+
+  void _stopVoiceRosterEvents() {
+    _voiceRosterWatching = false;
+    _voiceRosterLastSnapshotAt = null;
+    _voiceRosterRetryTimer?.cancel();
+    _voiceRosterRetryTimer = null;
+    final retry = _voiceRosterRetryDone;
+    if (retry != null && !retry.isCompleted) retry.complete();
+    _voiceRosterRetryDone = null;
+    final subscription = _voiceRosterSubscription;
+    if (subscription != null) unawaited(subscription.cancel());
+    _voiceRosterSubscription = null;
+    final done = _voiceRosterStreamDone;
+    if (done != null && !done.isCompleted) done.complete();
+    _voiceRosterStreamDone = null;
     _voiceRosterRevision++;
     _voiceRosterLoading = false;
   }
@@ -2051,7 +2139,7 @@ class AppState extends ChangeNotifier {
   void dispose() {
     _realtimeRetry?.cancel();
     _maintenanceTimer?.cancel();
-    _stopVoiceRosterPolling();
+    _stopVoiceRosterEvents();
     _voiceStreamNoticeTimer?.cancel();
     _stopVoiceConnectionStatsPolling();
     _stopScreenShareMetrics();
@@ -2376,6 +2464,7 @@ class AppState extends ChangeNotifier {
   }) async {
     if (channel.admissionClosed) return;
     if (voiceChannel?.id == channel.id && _room != null) return;
+    screenThumbnails.clear();
     voicePhase = VoicePhase.joining;
     _voicePingMs = null;
     _voiceAdmissionPending = true;
@@ -2384,13 +2473,10 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     Room? pendingRoom;
     try {
-      late final (String, VoiceCredential) result;
-      try {
-        result = await api.voiceCredential(channel.id);
-      } on ApiFailure catch (cause) {
-        if (cause.code != 'ACTIVE_VOICE_LEASE') rethrow;
-        result = await api.voiceCredential(channel.id, transfer: true);
-      }
+      final (String, VoiceCredential) result = await api.voiceCredential(
+        channel.id,
+        transfer: true,
+      );
       _leaseId = result.$1;
       final revocationDuringAdmission = _revokedVoiceLeasesDuringJoin.remove(
         result.$1,
@@ -2626,14 +2712,33 @@ class AppState extends ChangeNotifier {
     }
 
     listener.on<ParticipantConnectedEvent>((_) => refreshVoiceNavigation());
-    listener.on<ParticipantDisconnectedEvent>((_) => refreshVoiceNavigation());
+    listener.on<ParticipantDisconnectedEvent>((event) {
+      screenThumbnails.remove(event.participant.identity);
+      refreshVoiceNavigation();
+    });
     listener.on<ActiveSpeakersChangedEvent>((_) => refreshVoiceNavigation());
     listener.on<TrackPublishedEvent>((_) => refreshVoiceNavigation());
-    listener.on<TrackUnpublishedEvent>((_) => refreshVoiceNavigation());
+    listener.on<TrackUnpublishedEvent>((event) {
+      if (event.publication.source == TrackSource.screenShareVideo) {
+        screenThumbnails.remove(event.participant.identity);
+      }
+      refreshVoiceNavigation();
+    });
     listener.on<TrackMutedEvent>((_) => refreshVoiceNavigation());
     listener.on<TrackUnmutedEvent>((_) => refreshVoiceNavigation());
     listener.on<TrackSubscribedEvent>((_) => refreshVoiceNavigation());
     listener.on<TrackUnsubscribedEvent>((_) => refreshVoiceNavigation());
+    listener.on<DataReceivedEvent>((event) {
+      if (!identical(_room, room) ||
+          event.topic != screenThumbnailTopic ||
+          event.participant == null) {
+        return;
+      }
+      final bytes = Uint8List.fromList(event.data);
+      if (!validScreenThumbnail(bytes)) return;
+      screenThumbnails[event.participant!.identity] = bytes;
+      notifyListeners();
+    });
     listener.on<LocalTrackPublishedEvent>((event) {
       if (!identical(_room, room) ||
           event.publication.source != TrackSource.screenShareVideo) {
@@ -2646,6 +2751,9 @@ class AppState extends ChangeNotifier {
           track is LocalVideoTrack) {
         _startScreenShareMetrics(track);
       }
+      if (track is LocalVideoTrack) {
+        _startScreenThumbnailPublishing(room, track);
+      }
       notifyListeners();
     });
     listener.on<LocalTrackUnpublishedEvent>((event) {
@@ -2655,6 +2763,7 @@ class AppState extends ChangeNotifier {
       }
       screenSharePhase = ScreenSharePhase.idle;
       _stopScreenShareMetrics();
+      _stopScreenThumbnailPublishing();
       unawaited(_disableAndroidScreenShareBackground());
       notifyListeners();
     });
@@ -2773,8 +2882,8 @@ class AppState extends ChangeNotifier {
       }
       final captureOptions = ScreenShareCaptureOptions(
         sourceId: sourceId,
-        maxFrameRate: screenShareQuality.frameRate.toDouble(),
-        params: screenShareQuality.parameters,
+        maxFrameRate: screenShareQuality.captureFrameRate.toDouble(),
+        params: screenShareQuality.captureParameters,
       );
       pendingScreenShareTrack = await LocalVideoTrack.createScreenShareTrack(
         captureOptions,
@@ -2822,6 +2931,7 @@ class AppState extends ChangeNotifier {
     }
     screenSharePhase = ScreenSharePhase.stopping;
     _stopScreenShareMetrics();
+    _stopScreenThumbnailPublishing();
     notifyListeners();
     try {
       await participant.setScreenShareEnabled(false);
@@ -2831,6 +2941,96 @@ class AppState extends ChangeNotifier {
       screenSharePhase = ScreenSharePhase.error;
       screenShareError =
           'Не удалось остановить демонстрацию: ${screenShareFailureDetail(cause)}';
+    }
+    notifyListeners();
+  }
+
+  void _startScreenThumbnailPublishing(Room room, LocalVideoTrack track) {
+    _stopScreenThumbnailPublishing();
+    _screenThumbnailTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      unawaited(_publishScreenThumbnail(room, track));
+    });
+    unawaited(_publishScreenThumbnail(room, track));
+  }
+
+  Future<void> _publishScreenThumbnail(Room room, LocalVideoTrack track) async {
+    if (_screenThumbnailBusy ||
+        !identical(_room, room) ||
+        screenSharePhase != ScreenSharePhase.sharing) {
+      return;
+    }
+    _screenThumbnailBusy = true;
+    try {
+      final frame = (await track.mediaStreamTrack.captureFrame()).asUint8List();
+      final thumbnail = await compute(encodeScreenThumbnail, frame);
+      if (thumbnail != null &&
+          identical(_room, room) &&
+          screenSharePhase == ScreenSharePhase.sharing) {
+        final localIdentity = room.localParticipant?.identity;
+        if (localIdentity != null) {
+          screenThumbnails[localIdentity] = thumbnail;
+          notifyListeners();
+        }
+        await room.localParticipant?.publishData(
+          thumbnail,
+          topic: screenThumbnailTopic,
+          reliable: true,
+        );
+      }
+    } catch (_) {
+      // A missing native frame must never interrupt the media publication.
+    } finally {
+      _screenThumbnailBusy = false;
+    }
+  }
+
+  void _stopScreenThumbnailPublishing() {
+    _screenThumbnailTimer?.cancel();
+    _screenThumbnailTimer = null;
+  }
+
+  Future<void> updateScreenShareQuality(ScreenShareQuality quality) async {
+    if (screenSharePhase != ScreenSharePhase.sharing) return;
+    final track = _room?.localParticipant
+        ?.getTrackPublicationBySource(TrackSource.screenShareVideo)
+        ?.track;
+    if (track is! LocalVideoTrack || track.sender == null) {
+      screenShareError = 'Активная видеодорожка демонстрации недоступна.';
+      notifyListeners();
+      return;
+    }
+    try {
+      final sender = track.sender!;
+      final parameters = sender.parameters;
+      final encodings = parameters.encodings;
+      if (encodings == null || encodings.isEmpty) {
+        throw StateError('Видеоэнкодер не предоставил параметры качества.');
+      }
+      final source = _screenShareCaptureDimensions(track);
+      final baseScale = encodings
+          .map((encoding) => encoding.scaleResolutionDownBy ?? 1.0)
+          .reduce((left, right) => left < right ? left : right);
+      for (final encoding in encodings) {
+        final relativeScale =
+            (encoding.scaleResolutionDownBy ?? 1.0) / baseScale;
+        encoding.maxBitrate = (quality.maxBitrate * 1000 /
+                (relativeScale * relativeScale))
+            .round()
+            .clamp(200000, quality.maxBitrate * 1000);
+        encoding.maxFramerate = quality.frameRate;
+        encoding.scaleResolutionDownBy = source == null
+            ? relativeScale
+            : quality.scaleResolutionDownBy(source) * relativeScale;
+      }
+      final applied = await sender.setParameters(parameters);
+      if (applied == false) {
+        throw StateError('Энкодер отклонил новые параметры.');
+      }
+      screenShareQuality = quality;
+      screenShareError = null;
+    } catch (cause) {
+      screenShareError =
+          'Не удалось изменить качество: ${screenShareFailureDetail(cause)}';
     }
     notifyListeners();
   }
@@ -2846,6 +3046,7 @@ class AppState extends ChangeNotifier {
   }
 
   void _stopScreenShareMetrics() {
+    _stopScreenThumbnailPublishing();
     _screenShareMetricsRevision++;
     _screenShareMetricsTimer?.cancel();
     _screenShareMetricsTimer = null;

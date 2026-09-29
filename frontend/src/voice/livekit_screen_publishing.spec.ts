@@ -28,22 +28,22 @@ describe('LiveKit screen publishing policy', () => {
     ['P1440_15', 2560, 1440, 15, 5_000_000],
     ['P1440_30', 2560, 1440, 30, 8_000_000],
     ['P1440_60', 2560, 1440, 60, 12_000_000],
-  ] as const)('passes the selected %s FPS through capture and encoder', async (profile, width, height, frameRate, maxBitrate) => {
+  ] as const)('keeps capture upgradeable while applying the selected %s encoder profile', async (profile, _width, height, frameRate, maxBitrate) => {
     const fakeRoom = screenRoom()
     await startScreenShare(fakeRoom, profile)
     expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenCalledWith(true, {
-      audio: true, resolution: { width, height, frameRate },
+      audio: true, resolution: { width: 2560, height: 1440, frameRate: 60 },
     }, { name: `screenshare-${height}p-${frameRate}fps`, degradationPreference: 'maintain-framerate', screenShareEncoding: { maxBitrate, maxFramerate: frameRate, priority: 'medium' } })
   })
 
-  it('keeps the selected capture profile and passes degradation preference as publish options', async () => {
+  it('keeps the capture ceiling and passes degradation preference as publish options', async () => {
     const fakeRoom = screenRoom()
 
     await startScreenShare(fakeRoom, 'P1080_60')
     await stopScreenShare(fakeRoom)
 
     expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenNthCalledWith(1, true, {
-      audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 },
+      audio: true, resolution: { width: 2560, height: 1440, frameRate: 60 },
     }, { name: 'screenshare-1080p-60fps', degradationPreference: 'maintain-framerate', screenShareEncoding: { maxBitrate: 8_000_000, maxFramerate: 60, priority: 'medium' } })
     expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenNthCalledWith(2, false)
   })
@@ -59,7 +59,7 @@ describe('LiveKit screen publishing policy', () => {
 
     await expect(startScreenShare(fakeRoom, 'P1080_60')).resolves.toEqual(diagnostics)
     expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenCalledWith(true, {
-      audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 },
+      audio: true, resolution: { width: 2560, height: 1440, frameRate: 60 },
     }, { name: 'screenshare-1080p-60fps', degradationPreference: 'maintain-framerate', screenShareEncoding: { maxBitrate: 8_000_000, maxFramerate: 60, priority: 'medium' } })
   })
 

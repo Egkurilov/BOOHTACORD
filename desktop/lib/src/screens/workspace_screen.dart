@@ -57,6 +57,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   bool _showMembersDrawer = false;
   bool _capturingPttKey = false;
   String? _selectedScreenIdentity;
+  String? _screenWaitingToRestart;
   String? _pinnedScreenIdentity;
   String? _screenSelectionVoiceChannelId;
   String? get _visibleVoiceScreenIdentity =>
@@ -123,6 +124,36 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
         _selectedScreenIdentity = null;
         _pinnedScreenIdentity = null;
         _screenSelectionVoiceChannelId = null;
+        _screenWaitingToRestart = null;
+      });
+    }
+    final roomForSelection = widget.state.room;
+    final selectedIdentity = _selectedScreenIdentity;
+    if (selectedIdentity != null &&
+        selectedIdentity.isNotEmpty &&
+        roomForSelection != null &&
+        !(roomForSelection
+                .remoteParticipants[selectedIdentity]
+                ?.videoTrackPublications
+                .any((item) => item.source == TrackSource.screenShareVideo) ??
+            false)) {
+      setState(() {
+        _screenWaitingToRestart = selectedIdentity;
+        _selectedScreenIdentity = '';
+        _pinnedScreenIdentity = null;
+      });
+    }
+    final waitingIdentity = _screenWaitingToRestart;
+    if (waitingIdentity != null &&
+        roomForSelection != null &&
+        (roomForSelection
+                .remoteParticipants[waitingIdentity]
+                ?.videoTrackPublications
+                .any((item) => item.source == TrackSource.screenShareVideo) ??
+            false)) {
+      setState(() {
+        _selectedScreenIdentity = waitingIdentity;
+        _screenWaitingToRestart = null;
       });
     }
     final pinnedIdentity = _pinnedScreenIdentity;
@@ -183,6 +214,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
 
   void _selectVoiceScreen(String? identity) {
     setState(() {
+      _screenWaitingToRestart = null;
       _screenSelectionVoiceChannelId = widget.state.voiceChannel?.id;
       _selectedScreenIdentity = identity;
       if (identity == null || identity.isEmpty) {
@@ -196,6 +228,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   void _toggleVoiceScreenPin(String? identity) {
     if (identity == null) return;
     setState(() {
+      _screenWaitingToRestart = null;
       _screenSelectionVoiceChannelId = widget.state.voiceChannel?.id;
       _pinnedScreenIdentity = _pinnedScreenIdentity == identity
           ? null
@@ -206,6 +239,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
 
   void _stopWatchingPinnedScreen() {
     setState(() {
+      _screenWaitingToRestart = null;
       _screenSelectionVoiceChannelId = widget.state.voiceChannel?.id;
       _selectedScreenIdentity = '';
       _pinnedScreenIdentity = null;
@@ -1079,7 +1113,7 @@ class _Category extends StatelessWidget {
                   else if (channel.kind == ChannelKind.voice &&
                       roster != null &&
                       roster.participants.isNotEmpty)
-                    _VoiceRosterNavigationMembers(roster: roster),
+                    _VoiceRosterNavigationMembers(roster: roster, state: state),
                 ],
               );
             },
@@ -1168,7 +1202,7 @@ class _ChannelRow extends StatelessWidget {
                     color: GcColors.warning,
                   ),
                 ),
-              if (voiceParticipantCount != null)
+              if (voiceParticipantCount != null && voiceParticipantCount! > 0)
                 Padding(
                   padding: const EdgeInsets.only(right: 9),
                   child: Tooltip(
@@ -1245,9 +1279,13 @@ class _VoiceNavigationMembers extends StatelessWidget {
 }
 
 class _VoiceRosterNavigationMembers extends StatelessWidget {
-  const _VoiceRosterNavigationMembers({required this.roster});
+  const _VoiceRosterNavigationMembers({
+    required this.roster,
+    required this.state,
+  });
 
   final VoiceRoomRoster roster;
+  final AppState state;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -1258,6 +1296,7 @@ class _VoiceRosterNavigationMembers extends StatelessWidget {
           if (index > 0) const SizedBox(height: 4),
           _VoiceRosterMemberRow(
             participant: roster.participants[index],
+            state: state,
             compact: true,
           ),
         ],
@@ -1269,74 +1308,94 @@ class _VoiceRosterNavigationMembers extends StatelessWidget {
 class _VoiceRosterMemberRow extends StatelessWidget {
   const _VoiceRosterMemberRow({
     required this.participant,
+    required this.state,
     this.compact = false,
   });
 
   final VoiceRosterMember participant;
+  final AppState state;
   final bool compact;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: GcLayout.voiceMemberRowHeight,
-    child: Row(
-      children: [
-        CircleAvatar(
-          radius: 12,
-          backgroundColor: _voiceAvatarColor(participant.accountId),
-          child: Text(
-            _initial(participant.displayName),
-            style: TextStyle(color: Colors.white, fontSize: 12),
+  Widget build(BuildContext context) {
+    final member = state.members
+        .where((item) => item.id == participant.accountId)
+        .firstOrNull;
+    return SizedBox(
+      height: GcLayout.voiceMemberRowHeight,
+      child: Row(
+        children: [
+          AuthenticatedAvatar(
+            state: state,
+            name: participant.displayName,
+            avatarUrl: member?.avatarUrl,
+            radius: 12,
+            backgroundColor: _voiceAvatarColor(participant.accountId),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            participant.displayName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
-          ),
-        ),
-        if (participant.screenSharing)
-          Tooltip(
-            message: 'Показывает экран',
-            child: Container(
-              decoration: BoxDecoration(
-                color: GcColors.selected,
-                border: Border.all(color: GcColors.accent),
-                borderRadius: BorderRadius.circular(GcRadii.sm),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.desktop_windows_outlined,
-                    size: 16,
-                    color: GcColors.accentText,
-                  ),
-                  if (!compact) ...[
-                    const SizedBox(width: 4),
-                    const Text(
-                      'Идёт трансляция',
-                      style: TextStyle(
-                        color: GcColors.accentText,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ],
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              participant.displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: GcColors.textSecondary,
+                fontSize: 12,
               ),
             ),
           ),
-      ],
-    ),
-  );
+          if (participant.screenSharing)
+            Tooltip(
+              message: 'Показывает экран',
+              child: Container(
+                decoration: BoxDecoration(
+                  color: GcColors.selected,
+                  border: Border.all(color: GcColors.accent),
+                  borderRadius: BorderRadius.circular(GcRadii.sm),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.desktop_windows_outlined,
+                      size: 16,
+                      color: GcColors.accentText,
+                    ),
+                    if (!compact) ...[
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Идёт трансляция',
+                        style: TextStyle(
+                          color: GcColors.accentText,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          Tooltip(
+            message: participant.microphoneMuted
+                ? 'Микрофон выключен'
+                : 'Микрофон включён',
+            child: Icon(
+              participant.microphoneMuted
+                  ? Icons.mic_off_outlined
+                  : Icons.mic_none_outlined,
+              size: 16,
+              color: participant.microphoneMuted
+                  ? GcColors.muted
+                  : GcColors.success,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
-
-String _initial(String value) =>
-    value.trim().isEmpty ? 'У' : value.trim().characters.first.toUpperCase();
 
 class _VoiceNavigationMemberRow extends StatelessWidget {
   const _VoiceNavigationMemberRow({
@@ -4234,30 +4293,47 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                   ? 'Вход временно закрыт'
                   : 'Голосовой канал · подключитесь, чтобы увидеть участников',
               trailing: active
-                  ? IconButton(
-                      tooltip:
-                          state.screenSharePhase == ScreenSharePhase.sharing
-                          ? 'Остановить демонстрацию экрана'
-                          : 'Начать демонстрацию экрана',
-                      onPressed: switch (state.screenSharePhase) {
-                        ScreenSharePhase.starting ||
-                        ScreenSharePhase.stopping => null,
-                        ScreenSharePhase.sharing => state.stopScreenShare,
-                        _ => () => _toggleLocalScreenShare(state),
-                      },
-                      icon:
-                          state.screenSharePhase == ScreenSharePhase.starting ||
-                              state.screenSharePhase ==
-                                  ScreenSharePhase.stopping
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Icon(
-                              state.screenSharePhase == ScreenSharePhase.sharing
-                                  ? Icons.stop_screen_share_outlined
-                                  : Icons.screen_share_outlined,
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (state.screenSharePhase == ScreenSharePhase.sharing)
+                          IconButton(
+                            tooltip: 'Изменить качество и FPS',
+                            onPressed: () => unawaited(
+                              _showScreenShareSetup(context, state),
                             ),
+                            icon: const Icon(Icons.tune),
+                          ),
+                        IconButton(
+                          tooltip:
+                              state.screenSharePhase == ScreenSharePhase.sharing
+                              ? 'Остановить демонстрацию экрана'
+                              : 'Начать демонстрацию экрана',
+                          onPressed: switch (state.screenSharePhase) {
+                            ScreenSharePhase.starting ||
+                            ScreenSharePhase.stopping => null,
+                            ScreenSharePhase.sharing => state.stopScreenShare,
+                            _ => () => _toggleLocalScreenShare(state),
+                          },
+                          icon:
+                              state.screenSharePhase ==
+                                      ScreenSharePhase.starting ||
+                                  state.screenSharePhase ==
+                                      ScreenSharePhase.stopping
+                              ? const SizedBox.square(
+                                  dimension: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Icon(
+                                  state.screenSharePhase ==
+                                          ScreenSharePhase.sharing
+                                      ? Icons.stop_screen_share_outlined
+                                      : Icons.screen_share_outlined,
+                                ),
+                        ),
+                      ],
                     )
                   : null,
             ),
@@ -4335,6 +4411,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                               _openScreenFullscreen(
                                 track: viewerTrack,
                                 publisherName: selectedName,
+                                publisherIdentity: selectedScreen?.identity,
                               ),
                             ),
                             onClose: () => widget.onSelectScreen(''),
@@ -4412,22 +4489,52 @@ class _VoiceRoomState extends State<_VoiceRoom> {
   Future<void> _openScreenFullscreen({
     required VideoTrack track,
     required String publisherName,
+    required String? publisherIdentity,
   }) async {
     ScreenFullscreenPresentation? presentation;
+    BuildContext? overlayContext;
+    var closing = false;
+    bool stillPublished() {
+      if (publisherIdentity == null) {
+        return widget.state.screenSharePhase == ScreenSharePhase.sharing;
+      }
+      return widget
+              .state
+              .room
+              ?.remoteParticipants[publisherIdentity]
+              ?.videoTrackPublications
+              .any((item) => item.source == TrackSource.screenShareVideo) ??
+          false;
+    }
+
+    void closeWhenEnded() {
+      final target = overlayContext;
+      if (closing || target == null || !target.mounted || stillPublished()) {
+        return;
+      }
+      closing = true;
+      Navigator.of(target).pop();
+    }
+
     try {
       presentation = await ScreenFullscreenPresentation.enter();
       if (!mounted) return;
+      widget.state.addListener(closeWhenEnded);
       await showGeneralDialog<void>(
         context: context,
         barrierDismissible: true,
         barrierLabel: 'Закрыть полноэкранный режим',
         barrierColor: Colors.black,
         transitionDuration: const Duration(milliseconds: 160),
-        pageBuilder: (dialogContext, _, _) => ScreenFullscreenOverlay(
-          publisherName: publisherName,
-          video: VideoTrackRenderer(track, renderMode: VideoRenderMode.auto),
-          onClose: () => Navigator.of(dialogContext).pop(),
-        ),
+        pageBuilder: (dialogContext, _, _) {
+          overlayContext = dialogContext;
+          WidgetsBinding.instance.addPostFrameCallback((_) => closeWhenEnded());
+          return ScreenFullscreenOverlay(
+            publisherName: publisherName,
+            video: VideoTrackRenderer(track, renderMode: VideoRenderMode.auto),
+            onClose: () => Navigator.of(dialogContext).pop(),
+          );
+        },
       );
     } catch (_) {
       if (mounted) {
@@ -4438,6 +4545,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
         );
       }
     } finally {
+      widget.state.removeListener(closeWhenEnded);
       await presentation?.restore();
     }
   }
@@ -4557,6 +4665,7 @@ class _VoicePrejoinCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _VoiceRosterPreview(
+                    state: state,
                     roster: state.voiceRosters
                         ?.where((item) => item.channelId == channel.id)
                         .firstOrNull,
@@ -4632,8 +4741,13 @@ class _VoicePrejoinCard extends StatelessWidget {
 }
 
 class _VoiceRosterPreview extends StatelessWidget {
-  const _VoiceRosterPreview({required this.roster, required this.error});
+  const _VoiceRosterPreview({
+    required this.state,
+    required this.roster,
+    required this.error,
+  });
 
+  final AppState state;
   final VoiceRoomRoster? roster;
   final String? error;
 
@@ -4651,6 +4765,8 @@ class _VoiceRosterPreview extends StatelessWidget {
       children: [
         Text(
           roster == null
+              ? 'Участники голосового канала'
+              : roster!.participants.isEmpty
               ? 'Участники голосового канала'
               : 'Сейчас в канале: ${roster!.participants.length}',
           style: const TextStyle(
@@ -4678,7 +4794,10 @@ class _VoiceRosterPreview extends StatelessWidget {
         else ...[
           for (var index = 0; index < roster!.participants.length; index++) ...[
             if (index > 0) const SizedBox(height: 8),
-            _VoiceRosterMemberRow(participant: roster!.participants[index]),
+            _VoiceRosterMemberRow(
+              participant: roster!.participants[index],
+              state: state,
+            ),
           ],
         ],
       ],
@@ -4687,15 +4806,21 @@ class _VoiceRosterPreview extends StatelessWidget {
 }
 
 Future<void> _showScreenShareSetup(BuildContext context, AppState state) async {
+  final updating = state.screenSharePhase == ScreenSharePhase.sharing;
   final mobile =
       defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS;
   final selection = await ScreenShareSetupDialog.show(
     context,
     initialQuality: state.screenShareQuality,
-    allowSourceSelection: !mobile,
+    allowSourceSelection: !mobile && !updating,
+    updating: updating,
   );
   if (!context.mounted || selection == null) return;
+  if (updating) {
+    await state.updateScreenShareQuality(selection.quality);
+    return;
+  }
   await state.startScreenShare(
     sourceId: selection.sourceId,
     quality: selection.quality,
@@ -4754,10 +4879,9 @@ class _VoiceParticipantRoom extends StatelessWidget {
               ),
               VoiceConnectionBadge(
                 status: switch (state.voicePhase) {
-                  VoicePhase.connected || VoicePhase.listener =>
-                    VoiceConnectionBadgeStatus.connected,
-                  VoicePhase.joining =>
-                    VoiceConnectionBadgeStatus.connecting,
+                  VoicePhase.connected ||
+                  VoicePhase.listener => VoiceConnectionBadgeStatus.connected,
+                  VoicePhase.joining => VoiceConnectionBadgeStatus.connecting,
                   VoicePhase.reconnecting =>
                     VoiceConnectionBadgeStatus.reconnecting,
                   VoicePhase.leaving => VoiceConnectionBadgeStatus.leaving,
@@ -4852,6 +4976,9 @@ class _VoiceParticipantRoom extends StatelessWidget {
                             state.setParticipantVolume(participant, level),
                           ),
                     hasScreen: hasScreen,
+                    thumbnail: hasScreen
+                        ? state.screenThumbnails[participant.identity]
+                        : null,
                     onScreenTap: hasScreen
                         ? () => onScreenSelected(participant.identity)
                         : null,
@@ -5121,6 +5248,7 @@ class _VoiceScreenViewer extends StatelessWidget {
           identity: participant.identity,
           label: _participantName(participant),
           selected: participant.identity == selectedIdentity,
+          thumbnail: state.screenThumbnails[participant.identity],
           accountId: _voiceParticipantAccountId(participant),
           avatarLabel: _participantName(participant),
           hasAudio: participant.audioTrackPublications.any(
@@ -5481,6 +5609,7 @@ class _VoiceParticipantCard extends StatelessWidget {
     this.volume,
     this.onVolumeChanged,
     this.hasScreen = false,
+    this.thumbnail,
     this.isLocal = false,
     this.onScreenTap,
     this.microphoneUnavailable = false,
@@ -5494,6 +5623,7 @@ class _VoiceParticipantCard extends StatelessWidget {
   final int? volume;
   final ValueChanged<int>? onVolumeChanged;
   final bool hasScreen;
+  final Uint8List? thumbnail;
   final bool isLocal;
   final VoidCallback? onScreenTap;
   final bool microphoneUnavailable;
@@ -5525,13 +5655,26 @@ class _VoiceParticipantCard extends StatelessWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              AuthenticatedAvatar(
-                state: state,
-                name: name,
-                avatarUrl: avatarUrl,
-                radius: 32,
-                fallbackFontSize: 26,
-              ),
+              thumbnail == null
+                  ? AuthenticatedAvatar(
+                      state: state,
+                      name: name,
+                      avatarUrl: avatarUrl,
+                      radius: 32,
+                      fallbackFontSize: 26,
+                    )
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        width: 80,
+                        height: 64,
+                        child: Image.memory(
+                          thumbnail!,
+                          fit: BoxFit.cover,
+                          gaplessPlayback: true,
+                        ),
+                      ),
+                    ),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

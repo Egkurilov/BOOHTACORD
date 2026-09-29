@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui' show Tristate;
 
 import 'package:boohtacord_desktop/src/app.dart';
@@ -17,6 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart' show MediaDevice;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -645,16 +647,13 @@ void main() {
     expect(find.text('Мика'), findsNWidgets(2));
     expect(find.byTooltip('Показывает экран'), findsNWidgets(2));
     expect(find.text('Идёт трансляция'), findsOneWidget);
+    final avatars = tester
+        .widgetList<AuthenticatedAvatar>(find.byType(AuthenticatedAvatar))
+        .where((avatar) => avatar.name == 'Мика');
+    expect(avatars, hasLength(2));
+    expect(avatars.map((avatar) => avatar.radius), everyElement(12));
     expect(
-      tester
-          .widgetList<CircleAvatar>(find.byType(CircleAvatar))
-          .map((avatar) => avatar.radius),
-      everyElement(12),
-    );
-    expect(
-      tester
-          .widgetList<CircleAvatar>(find.byType(CircleAvatar))
-          .map((avatar) => avatar.backgroundColor),
+      avatars.map((avatar) => avatar.backgroundColor),
       everyElement(GcColors.avatarBlue),
     );
     expect(
@@ -2407,6 +2406,33 @@ class _PortraitApi extends ApiClient {
 
   @override
   Future<List<VoiceRoomRoster>> voiceParticipants() async => voiceRosters;
+
+  @override
+  Future<http.StreamedResponse> voiceRosterEvents() async {
+    final payload = jsonEncode({
+      'channels': voiceRosters
+          .map(
+            (room) => {
+              'channel_id': room.channelId,
+              'participants': room.participants
+                  .map(
+                    (member) => {
+                      'account_id': member.accountId,
+                      'display_name': member.displayName,
+                      'screen_sharing': member.screenSharing,
+                      'microphone_muted': member.microphoneMuted,
+                    },
+                  )
+                  .toList(),
+            },
+          )
+          .toList(),
+    });
+    return http.StreamedResponse(
+      Stream.value(utf8.encode('data: $payload\n\n')),
+      200,
+    );
+  }
 
   @override
   Future<List<GuildMember>> members() async {

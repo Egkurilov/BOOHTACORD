@@ -684,7 +684,7 @@ void main() {
     },
   );
 
-  test('retries an existing voice lease with transfer once', () async {
+  test('requests an existing voice lease transfer immediately', () async {
     final api = _FakeApi(
       topology,
       voiceFailure: const ApiFailure(
@@ -706,14 +706,14 @@ void main() {
     await state.joinVoice(voiceChannel);
 
     expect(state.voicePhase, VoicePhase.error);
-    expect(api.voiceTransferAttempts, [false, true]);
+    expect(api.voiceTransferAttempts, [true]);
     expect(state.error, contains('Перенос недоступен'));
   });
 
-  test('does not transfer for an unrelated voice admission failure', () async {
+  test('reports an unrelated voice admission failure without retry', () async {
     final api = _FakeApi(
       topology,
-      voiceFailure: const ApiFailure('Вход закрыт', status: 403),
+      transferFailure: const ApiFailure('Вход закрыт', status: 403),
     );
     final state = AppState(api);
     addTearDown(state.dispose);
@@ -726,7 +726,7 @@ void main() {
 
     await state.joinVoice(voiceChannel);
 
-    expect(api.voiceTransferAttempts, [false]);
+    expect(api.voiceTransferAttempts, [true]);
     expect(state.error, 'Вход закрыт');
   });
 

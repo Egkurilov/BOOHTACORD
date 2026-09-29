@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ChannelNavigation from '../channel/ChannelNavigation.vue'
 import { buildVoiceNavigationPresence } from '../channel/voice_navigation_presence'
-import { createVoiceRosterPolling } from '../voice/voice_roster_polling'
+import { createVoiceRosterRealtime } from '../voice/voice_roster_realtime'
 import type { TopologyChannel } from '../channel/topology_client'
 import DirectMessageNavigation from '../direct_message/DirectMessageNavigation.vue'
 import { useDirectMessageStore } from '../direct_message/direct_message_store'
@@ -38,11 +38,11 @@ const screenShareSetupOpen = ref(false)
 const directMessageStore = useDirectMessageStore()
 const directMessageCandidateStore = useDirectMessageCandidateStore()
 const messageStore = useMessageStore()
-const realtimeStore = useRealtimeStore(), voiceRoster = createVoiceRosterPolling()
+const realtimeStore = useRealtimeStore(), voiceRoster = createVoiceRosterRealtime()
 const { busy: logoutBusy, error: logoutError, signOut } = bindWorkspaceLogout(voiceConnection, leaveVoice, realtimeStore, () => emit('loggedOut'))
 const guildPresence = useGuildPresence()
 const workspaceRealtime = createWorkspaceRealtime({ topology: topologyStore, messages: messageStore, directMessages: directMessageStore }, realtimeStore, guildPresence, voiceConnection, props.accountId, () => expireWorkspaceSession(voiceConnection, () => emit('sessionExpired')))
-watch(() => realtimeStore.state, (state) => { if (state === 'ERROR' || state === 'DISCONNECTED') guildPresence.invalidate(); if (state === 'CONNECTED') void voiceRoster.refresh() })
+watch(() => realtimeStore.state, (state) => { if (state === 'ERROR' || state === 'DISCONNECTED') guildPresence.invalidate(); if (state === 'CONNECTED') voiceRoster.reconnect() })
 const sidebarSection = ref<'channels' | 'messages'>('channels')
 const activePanel = ref<'none' | 'admin' | 'audio' | 'profile' | 'search'>('none')
 const { navOpen, membersOpen, modalDrawer, closeDrawers, toggleNavigation, toggleMembers } = useWorkspaceDrawers(activePanel)
@@ -64,7 +64,7 @@ async function openDirectMessageFromMember(userID: string): Promise<void> {
 }
 function setParticipantVolume(participantID: string, volume: number): void { voiceConnection.setParticipantVolume(participantID, volume) }
 function openScreenShareSetup(profile = selectedScreenProfile.value): void {
-  if (voiceConnection.screenState === 'STARTING' || voiceConnection.screenState === 'SHARING' || voiceConnection.screenState === 'STOPPING') return
+  if (voiceConnection.screenState === 'STARTING' || voiceConnection.screenState === 'STOPPING') return
   selectedScreenProfile.value = profile
   screenShareSetupOpen.value = true
 }
@@ -130,6 +130,6 @@ onMounted(() => { void topologyStore.refresh(); void directMessageStore.refreshN
       <aside v-else-if="activePanel === 'search'" id="search-aside-panel" class="members search-aside" :class="{ 'is-open': activePanel === 'search' }" :role="modalDrawer === 'search' ? 'dialog' : undefined" :aria-modal="modalDrawer === 'search' ? 'true' : undefined" aria-label="Поиск сообщений" tabindex="-1" data-testid="search-aside-panel"><WorkspaceSearchPanel @open-channel="selectChannel" @open-direct-message="selectDirectMessage" @close="activePanel = 'none'" /></aside>
       <button v-if="navOpen || membersOpen || activePanel === 'search'" class="drawer-scrim" type="button" aria-label="Закрыть навигацию и участников" @click="closeDrawers(); activePanel = 'none'" />
     </div>
-    <ScreenShareSetupDialog v-if="screenShareSetupOpen" :initial-profile="selectedScreenProfile" @cancel="screenShareSetupOpen = false" @start="confirmScreenShare" />
+    <ScreenShareSetupDialog v-if="screenShareSetupOpen" :initial-profile="voiceConnection.screenProfile ?? selectedScreenProfile" :updating="voiceConnection.screenState === 'SHARING'" @cancel="screenShareSetupOpen = false" @start="confirmScreenShare" />
   </div>
 </template>

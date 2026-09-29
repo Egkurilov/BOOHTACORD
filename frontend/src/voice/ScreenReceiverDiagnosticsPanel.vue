@@ -19,7 +19,7 @@ const value = (number: number | null | undefined, suffix: string) => number === 
   <details class="stream-diagnostics">
     <summary :title="status"><span class="stream-diagnostics-badge" aria-hidden="true"></span><span>Статистика</span><span class="gc-sr-only">{{ status }}</span></summary>
     <div class="stream-diagnostics-panel"><dl>
-      <div><dt>Целевой профиль</dt><dd>{{ targetProfile ?? 'Нет данных от источника' }}</dd></div>
+      <div><dt>Профиль при запуске</dt><dd>{{ targetProfile ?? 'Нет данных от источника' }}</dd></div>
       <div><dt>Сейчас у зрителя</dt><dd>{{ actualVideoQuality }}</dd></div>
       <div><dt>Декодировано</dt><dd>{{ value(metrics?.decodedFps, 'FPS') }}</dd></div>
       <div><dt>Получено</dt><dd>{{ value(metrics?.bitrateKbps, 'кбит/с') }}</dd></div>
