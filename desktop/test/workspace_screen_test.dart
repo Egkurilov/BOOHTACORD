@@ -48,6 +48,11 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
 
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+        expect(find.byType(WorkspaceScreen), findsOneWidget);
+        expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+
         await tester.dragFrom(const Offset(180, 220), const Offset(-120, 0));
         await tester.pumpAndSettle();
         expect(find.byTooltip('Закрыть навигацию'), findsNothing);
@@ -55,6 +60,11 @@ void main() {
         await tester.dragFrom(const Offset(389, 220), const Offset(-140, 0));
         await tester.pumpAndSettle();
         expect(find.byTooltip('Закрыть участников'), findsOneWidget);
+
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+        expect(find.byType(WorkspaceScreen), findsOneWidget);
+        expect(find.byTooltip('Закрыть участников'), findsNothing);
 
         await tester.dragFrom(const Offset(220, 220), const Offset(120, 0));
         await tester.pumpAndSettle();

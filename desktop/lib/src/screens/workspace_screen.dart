@@ -680,21 +680,27 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                 )
               : shellContent;
           final flushShell = constraints.maxWidth >= GcLayout.wideBreakpoint;
-          return Padding(
-            padding: compact || flushShell
-                ? EdgeInsets.zero
-                : const EdgeInsets.all(GcLayout.frameInset),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(
-                compact || flushShell ? 0 : GcLayout.shellRadius,
-              ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  border: compact || flushShell
-                      ? null
-                      : Border.all(color: GcColors.border),
+          return PopScope<Object?>(
+            canPop: !_showMobileSidebar && !_showMembersDrawer,
+            onPopInvokedWithResult: (didPop, _) {
+              if (!didPop) _closeDrawers();
+            },
+            child: Padding(
+              padding: compact || flushShell
+                  ? EdgeInsets.zero
+                  : const EdgeInsets.all(GcLayout.frameInset),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(
+                  compact || flushShell ? 0 : GcLayout.shellRadius,
                 ),
-                child: swipeContent,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: compact || flushShell
+                        ? null
+                        : Border.all(color: GcColors.border),
+                  ),
+                  child: swipeContent,
+                ),
               ),
             ),
           );

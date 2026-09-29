@@ -1,0 +1,42 @@
+{
+  "id": "QA-129",
+  "kind": "android-workspace-drawer-system-back",
+  "status": "PASS",
+  "executed_at": "2026-09-29",
+  "source_revision": "fc354fb",
+  "summary": "Android system Back now dismisses an open mobile navigation or members drawer instead of popping the workspace route and sending the app to the launcher.",
+  "checks": [
+    {
+      "name": "Regression widget tests on Android and iOS configurations",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart --plain-name 'mobile edge swipes open and close both workspace panels'",
+      "status": "PASS",
+      "observation": "Both platform cases open each drawer, dispatch system Back, and verify the drawer closes while WorkspaceScreen remains mounted."
+    },
+    {
+      "name": "Flutter static analysis",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 265 tests passed."
+    },
+    {
+      "name": "Release APK build",
+      "command": "cd desktop && flutter build apk --release --build-name=1.0.9 --build-number=2014",
+      "status": "PASS",
+      "observation": "Signed 107.8 MB APK built. Build-number override was used only to update the already installed CI build 1.0.9+2013; repository version was not changed."
+    },
+    {
+      "name": "Pixel 7 drawer and system Back acceptance",
+      "device": "Google Pixel 7, Android 17/API 37, gesture navigation, 1080x2400",
+      "command": "adb install -r build/app/outputs/flutter-apk/app-release.apk; adb shell input tap 200 220; adb shell input keyevent 4; adb shell input swipe 980 1200 700 1200 250; adb shell input keyevent 4",
+      "status": "PASS",
+      "observation": "The channel drawer opened from its visible menu control; Android Back closed it and the app remained foreground. A right-edge swipe opened the members drawer; Android Back closed it and the app remained foreground. Accessibility snapshots confirmed the expected drawer labels before each Back. No channel, voice, or message state was changed."
+    }
+  ],
+  "remaining": "Physical acceptance on iOS and broader Android combined drawer/channel/dock flows remain open in QA-78 and QA-79."
+}
