@@ -1,7 +1,7 @@
 # Android release APK
 
 - File: `BOOHTACORD-1.0.3+7-release.apk`
-- Source revision: pending (`master`)
+- Source revision: `dc96230` (`master`)
 - Version: `versionName=1.0.3`, `versionCode=7`
 - Signing: Android upload certificate, APK Signature Scheme v2 verified
 - Signing certificate SHA-256: `394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b`

@@ -3,7 +3,7 @@
   "kind": "windows-screen-capture-start-failure",
   "status": "PASS_IMPLEMENTATION_WINDOWS_BUILD_AND_RUNTIME_OPEN",
   "executed_at": "2026-09-29",
-  "source_revision": "pending",
+  "source_revision": "dc96230",
   "summary": "The native desktop getDisplayMedia path now checks whether the selected capture source actually starts. A CS_FAILED result removes the unpublished video/audio tracks and stream, stops loopback capture, and returns an actionable platform error instead of allowing a dead screen track to be published. Flutter now prefers the platform error message over the PlatformException wrapper.",
   "checks": [
     {
