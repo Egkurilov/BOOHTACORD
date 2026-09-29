@@ -147,6 +147,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   или без активной текстовой беседы оставлять область «Все беседы». Покрыты все три
   контекста search widget tests и Flutter analyzer —
   [QA-115](../evidence/flutter/qa115-search-scope-web-parity-2026-09-29-001.json).
+- [x] Держать polite live status поиска видимым при найденных результатах и во время
+  следующей загрузки; объявлять число строк и пустое состояние как в web. Workspace
+  suite и Flutter analyzer прошли —
+  [QA-116](../evidence/flutter/qa116-search-live-status-web-parity-2026-09-29-001.json).
 - [ ] Сравнить search на matched screenshots в текстовом и голосовом контекстах;
   точная визуальная/device-приёмка остаётся открытой.
 - [x] Реализовать FE-52: ограниченные анонимные Android sender encoded FPS/bitrate/RTT;

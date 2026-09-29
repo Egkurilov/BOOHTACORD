@@ -1,0 +1,23 @@
+{
+  "id": "QA-116",
+  "kind": "flutter-search-live-status-parity",
+  "status": "PASS_WITH_SCREEN_READER_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "04b6dc0",
+  "summary": "Flutter search now keeps the same visible polite status as web for the initial prompt, loading, empty results and result count, including while prior rows remain visible during a subsequent request.",
+  "checks": [
+    {
+      "name": "Workspace screen widget suite",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 42 tests passed. Search coverage checks result count and loading announcements as live regions while prior results remain visible, plus empty-result live-region behavior."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "remaining": "Verify search status announcements with VoiceOver, NVDA and TalkBack, and compare the search status placement against matched web screenshots on desktop and Android."
+}
