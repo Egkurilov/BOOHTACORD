@@ -1376,7 +1376,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         ),
       ),
       if (_auditLoading && _auditEvents.isEmpty)
-        const Expanded(child: Center(child: CircularProgressIndicator()))
+        _adminLoadingState('Загружаем аудит…', 'admin-audit-loading')
       else if (!_auditLoading && _auditEvents.isEmpty && _auditError == null)
         const Expanded(child: Center(child: Text('Записей пока нет.')))
       else
@@ -1444,7 +1444,10 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         ),
       ),
       if (_accountsLoading && _adminAccounts.isEmpty)
-        const Expanded(child: Center(child: CircularProgressIndicator()))
+        _adminLoadingState(
+          'Загружаем список участников…',
+          'admin-members-loading',
+        )
       else if (!_accountsLoading &&
           _adminAccounts.isEmpty &&
           _accountsError == null)
@@ -1495,6 +1498,21 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
           ),
         ),
     ],
+  );
+
+  Widget _adminLoadingState(String message, String key) => Expanded(
+    child: Center(
+      child: Semantics(
+        key: ValueKey(key),
+        liveRegion: true,
+        label: message,
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: GcColors.textSecondary),
+        ),
+      ),
+    ),
   );
 
   Widget _buildAdminAccountCard(AdminAccount account) {

@@ -16,6 +16,8 @@ class TopologyTestApi extends ApiClient {
     categories: [_first, _second],
   );
   Completer<void>? pending;
+  Completer<AdminAccountPage>? pendingAccounts;
+  Completer<AdminAuditPage>? pendingAudit;
   bool conflictOnce = false;
   final revisions = <int>[];
   List<AdminScreenSample> screenMetrics = const [];
@@ -26,7 +28,13 @@ class TopologyTestApi extends ApiClient {
   Future<AdminAccountPage> listAdminAccounts({
     String? cursor,
     int limit = 100,
-  }) async => const AdminAccountPage(accounts: []);
+  }) =>
+      pendingAccounts?.future ??
+      Future.value(const AdminAccountPage(accounts: []));
+
+  @override
+  Future<AdminAuditPage> listAdminAudit({String? before, int limit = 100}) =>
+      pendingAudit?.future ?? Future.value(const AdminAuditPage(events: []));
 
   @override
   Future<List<AdminScreenSample>> listAdminScreenMetrics() async {

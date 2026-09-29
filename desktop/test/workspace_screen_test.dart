@@ -1250,7 +1250,7 @@ void main() {
     api.auditGate = Completer<void>();
     await tester.tap(find.widgetWithText(ChoiceChip, 'Аудит'));
     await tester.pump();
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Загружаем аудит…'), findsOneWidget);
     api.auditGate!.complete();
     await tester.pumpAndSettle();
     expect(find.text('Создан канал'), findsOneWidget);
