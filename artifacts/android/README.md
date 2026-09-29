@@ -1,15 +1,11 @@
-# Android release APK
+# Android release downloads
 
-- File: `BOOHTACORD-1.0.3+7-release.apk`
-- Source revision: `dc96230` (`master`)
-- Version: `versionName=1.0.3`, `versionCode=7`
-- Signing: Android upload certificate, APK Signature Scheme v2 verified
-- Signing certificate SHA-256: `394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b`
-- SHA-256: `30def846ad9e99bbf207ad44df8744df6defd50c780bba4a5fcf05c8dcf4371a`
-- Size: 107,654,946 bytes
+APK binaries are not stored in this repository. Download the current signed
+ABI-specific APKs from the [BOOHTACORD Android v1.0.3 GitVerse release](https://gitverse.ru/egkurilov/BOOHTACORD/releases/tag/android-v1.0.3):
 
-The APK is rebuilt for the screen-share error handling and its user-facing
-message; package, version, and v2 signature are verified in
-[QA-98](../../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json).
-The previous APK is removed from the current tree; prior Git history is not
-rewritten.
+- `arm64-v8a` — most modern Android phones and tablets
+- `armeabi-v7a` — older 32-bit ARM devices
+- `x86_64` — Android emulators and x86-64 devices
+
+The previous universal APK was 107,654,946 bytes and exceeded GitVerse's
+per-asset limit. Its build and signing details remain in [QA-98](../../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json); the binary has been removed from the current tree, but the Git history is unchanged.
