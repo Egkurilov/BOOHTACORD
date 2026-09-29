@@ -152,7 +152,10 @@ class LocalAudioTrack extends LocalTrack with AudioTrack, LocalAudioManagementMi
         senderStats.packetsSent = getNumValFromReport(v.values, 'packetsSent');
         senderStats.packetsLost = getNumValFromReport(v.values, 'packetsLost');
         senderStats.bytesSent = getNumValFromReport(v.values, 'bytesSent');
-        senderStats.roundTripTime = getNumValFromReport(v.values, 'roundTripTime');
+        senderStats.roundTripTime = remoteRoundTripTimeForOutboundReport(
+          stats,
+          v.values,
+        );
         senderStats.jitter = getNumValFromReport(v.values, 'jitter');
 
         final c = stats.firstWhereOrNull((element) => element.type == 'codec');

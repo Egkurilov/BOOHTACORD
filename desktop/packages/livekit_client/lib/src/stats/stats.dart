@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 
 import 'audio_source_stats.dart';
 
@@ -199,6 +200,20 @@ num? getNumValFromReport(Map<dynamic, dynamic> values, String key) {
 String? getStringValFromReport(Map<dynamic, dynamic> values, String key) {
   if (values.containsKey(key)) {
     return values[key] as String;
+  }
+  return null;
+}
+
+num? remoteRoundTripTimeForOutboundReport(
+  Iterable<rtc.StatsReport> reports,
+  Map<dynamic, dynamic> outboundValues,
+) {
+  final remoteId = getStringValFromReport(outboundValues, 'remoteId');
+  if (remoteId == null) return null;
+  for (final report in reports) {
+    if (report.id == remoteId && report.type == 'remote-inbound-rtp') {
+      return getNumValFromReport(report.values, 'roundTripTime');
+    }
   }
   return null;
 }
