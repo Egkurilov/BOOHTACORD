@@ -4,7 +4,7 @@
 
 ## Версия и статус
 
-`pubspec.yaml` объявляет `1.0.0+1`. Android использует build name/number как `versionName`/`versionCode`, iOS — как `CFBundleShortVersionString`/`CFBundleVersion`. Это значение манифеста, а не свидетельство о готовности функций на каждом устройстве. [ADR-006](../docs/adr/ADR-006-android-client.md) утверждает Android; локальная разработка и установка iOS выполнены по запросу владельца, публичный выпуск требует отдельной приёмки.
+`pubspec.yaml` объявляет `1.0.3+7`. Android использует build name/number как `versionName`/`versionCode`, iOS — как `CFBundleShortVersionString`/`CFBundleVersion`; Windows включает эту версию в метаданные сборки. Это значение манифеста, а не свидетельство о готовности функций на каждом устройстве. [ADR-006](../docs/adr/ADR-006-android-client.md) утверждает Android; локальная разработка и установка iOS выполнены по запросу владельца, публичный выпуск требует отдельной приёмки.
 
 ## Реализовано в общем Dart-коде
 
@@ -27,6 +27,6 @@ flutter test
 flutter run -d <device-id>
 ```
 
-Android release APK: `flutter build apk --release` с локально настроенной подписью. iOS: `flutter build ios --release` с локальной командой подписи Xcode, затем установка подписанного `.app` через Xcode или `xcrun devicectl`. Для macOS и Windows запускайте сборки на соответствующих ОС. Имена поддержанных устройств покажет `flutter devices`; текущая iOS-сборка требует macOS, Xcode и генерируемый Flutter Swift Package.
+Android release APK: `flutter build apk --release` с локально настроенной подписью. iOS: `flutter build ios --release` с локальной командой подписи Xcode, затем установка подписанного `.app` через Xcode или `xcrun devicectl`. Windows: `flutter build windows --release`; запускаемый каталог — `build/windows/x64/runner/Release`, локальный ZIP и инструкция — в [artifacts/windows](../artifacts/windows/README.md). Для macOS и Windows запускайте сборки на соответствующих ОС. Имена поддержанных устройств покажет `flutter devices`; текущая iOS-сборка требует macOS, Xcode и генерируемый Flutter Swift Package.
 
 Клиент работает с публичным HTTPS `/api/v1` и LiveKit через выданный backend credential; backend проверяет ACL. Native HTTP не должен обходить secure-cookie, CSRF и Origin policy. Контракт: [mobile-client-contract](../contracts/mobile-client-contract.md). Camera, recording, group DM, push notifications и custom SFU не входят в текущий клиент.
