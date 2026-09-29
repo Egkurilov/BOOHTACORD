@@ -218,6 +218,10 @@ void FlutterScreenCapture::GetDisplayMedia(
 
   scoped_refptr<RTCMediaStream> stream =
       base_->factory_->CreateStream(uuid.c_str());
+  if (!stream.get()) {
+    result->Error("Capture Failed", "Failed to create media stream.");
+    return;
+  }
 
   EncodableMap params;
   params[EncodableValue("streamId")] = EncodableValue(uuid);
@@ -273,36 +277,47 @@ void FlutterScreenCapture::GetDisplayMedia(
       loopback_source_label.c_str(), RTCAudioSource::SourceType::kCustom,
         loopback_opts);
 
-    std::string audio_uuid = base_->GenerateUUID();
-    scoped_refptr<RTCAudioTrack> audio_track =
-        base_->factory_->CreateAudioTrack(loopback_audio_source_,
-                                          audio_uuid.c_str());
+    if (loopback_audio_source_.get()) {
+      std::string audio_uuid = base_->GenerateUUID();
+      scoped_refptr<RTCAudioTrack> audio_track =
+          base_->factory_->CreateAudioTrack(loopback_audio_source_,
+                                            audio_uuid.c_str());
 
-    loopback_capturer_ = CreateLoopbackCapturer(source_id);
+      if (audio_track.get()) {
+        loopback_capturer_ = CreateLoopbackCapturer(source_id);
 
-    if (loopback_capturer_ && loopback_capturer_->Start(loopback_audio_source_)) {
-      loopback_started_for_request = true;
-      EncodableMap audio_info;
-      audio_info[EncodableValue("id")] =
-          EncodableValue(audio_track->id().std_string());
-      audio_info[EncodableValue("label")] =
-          EncodableValue(audio_track->id().std_string());
-      audio_info[EncodableValue("kind")] =
-          EncodableValue(audio_track->kind().std_string());
-      audio_info[EncodableValue("enabled")] =
-          EncodableValue(audio_track->enabled());
+        if (loopback_capturer_ &&
+            loopback_capturer_->Start(loopback_audio_source_)) {
+          loopback_started_for_request = true;
+          EncodableMap audio_info;
+          audio_info[EncodableValue("id")] =
+              EncodableValue(audio_track->id().std_string());
+          audio_info[EncodableValue("label")] =
+              EncodableValue(audio_track->id().std_string());
+          audio_info[EncodableValue("kind")] =
+              EncodableValue(audio_track->kind().std_string());
+          audio_info[EncodableValue("enabled")] =
+              EncodableValue(audio_track->enabled());
 
-      EncodableList audioTracks;
-      audioTracks.push_back(EncodableValue(audio_info));
-      params[EncodableValue("audioTracks")] = EncodableValue(audioTracks);
+          EncodableList audio_tracks;
+          audio_tracks.push_back(EncodableValue(audio_info));
+          params[EncodableValue("audioTracks")] = EncodableValue(audio_tracks);
 
-      stream->AddTrack(audio_track);
-      loopback_track_id = audio_track->id().std_string();
-      base_->local_tracks_[loopback_track_id] = audio_track;
+          stream->AddTrack(audio_track);
+          loopback_track_id = audio_track->id().std_string();
+          base_->local_tracks_[loopback_track_id] = audio_track;
+        } else {
+          // Loopback init failed or is not supported: continue without audio.
+          loopback_capturer_.reset();
+          loopback_audio_source_ = nullptr;
+        }
+      } else {
+        loopback_audio_source_ = nullptr;
+      }
     } else {
-      // Loopback init failed or not supported — continue without audio.
-      loopback_capturer_.reset();
       loopback_audio_source_ = nullptr;
+    }
+    if (!loopback_started_for_request) {
       params[EncodableValue("audioTracks")] = EncodableValue(EncodableList());
     }
   } else {
