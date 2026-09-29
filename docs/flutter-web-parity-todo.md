@@ -129,8 +129,8 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Исправить пустой Android ping при выключенных микрофоне и удалённом звуке:
   кроме audio `remote-inbound-rtp`, опрашивать publisher connection stats и
   использовать RTT только выбранной ICE-пары. Все 259 Flutter tests, анализатор,
-  LiveKit package tests и подписанный split APK 1.0.7+11 прошли; физическая
-  проверка peer и GitVerse workflow остаются открыты —
+  LiveKit package tests и подписанный split APK 1.0.7+11 прошли; GitVerse workflow
+  1681893 опубликовал три ABI APK. Физическая проверка peer остаётся открытой —
   [QA-122](../evidence/flutter/qa122-android-voice-ice-rtt-fallback-2026-09-29-001.json).
 - [x] Убрать из компактного voice dock лишнюю стрелку, раскрываемую область и
   пояснение; оставить постоянный ряд voice-действий. Исправить ping: брать RTT

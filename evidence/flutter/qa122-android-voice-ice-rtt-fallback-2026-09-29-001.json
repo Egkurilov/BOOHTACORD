@@ -49,9 +49,9 @@
     },
     {
       "name": "GitVerse Android release workflow",
-      "status": "NOT_RUN",
-      "observation": "The android-v1.0.7 tag has not yet been published."
+      "status": "PASS",
+      "observation": "GitVerse workflow 1681893 completed successfully and published signed APK assets for arm64-v8a (36.6 MiB), armeabi-v7a (28.1 MiB), and x86_64 (42 MiB): https://gitverse.ru/egkurilov/BOOHTACORD/releases/tag/android-v1.0.7"
     }
   ],
-  "remaining": "Publish and confirm android-v1.0.7, then validate live ping with a physical Android device connected to a voice peer while muted and deafened."
+  "remaining": "Validate live ping with a physical Android device connected to a voice peer while muted and deafened."
 }
