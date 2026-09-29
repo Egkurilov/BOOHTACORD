@@ -1,0 +1,55 @@
+{
+  "id": "QA-97",
+  "kind": "flutter-web-design-token-parity",
+  "status": "PASS_BUILD_VISUAL_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "53b2256",
+  "summary": "Flutter's shared theme now centrally mirrors the web semantic colors/contrast, Material ColorScheme palette, typography and line heights, radii, icon/control dimensions, layout values, motion/easing, and popup/shell elevation. The missing voice-member row-height CSS token was declared, and an undefined web stream-rail surface variable was replaced with the existing surface token.",
+  "checks": [
+    {
+      "name": "Flutter design token contract tests",
+      "command": "cd desktop && flutter test test/theme_tokens_test.dart",
+      "status": "PASS",
+      "observation": "Three tests verify semantic colors, layout dimensions, Material ColorScheme, typography/line-height, motion/easing, and shadow values."
+    },
+    {
+      "name": "Full Flutter regression suite and analyzer",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "All 235 tests passed; analyzer reported no issues."
+    },
+    {
+      "name": "Full web regression suite",
+      "command": "cd frontend && npm test -- --reporter=dot",
+      "status": "PASS",
+      "observation": "All 658 tests passed, including the stream-rail CSS token contract."
+    },
+    {
+      "name": "macOS release compile",
+      "command": "cd desktop && flutter build macos --release",
+      "status": "PASS",
+      "observation": "Built BOOHTACORD.app (92.5 MB)."
+    },
+    {
+      "name": "Android release APK metadata and signature",
+      "command": "cd desktop && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Package ru.boohtacord.app, version 1.0.3+6. APK Signature Scheme v2 verified with the existing RSA-4096 upload certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b. SHA-256 1fcabe14ded73bf701cd49e83dd11c242c1135b853e87c21b3126fef26db59cd; size 107654946 bytes."
+    },
+    {
+      "name": "Matched visual comparisons and physical clients",
+      "status": "OPEN",
+      "observation": "No Android device is currently connected. Matched screenshots and Windows native runtime verification remain open; the available macOS build proves compilation, not visual equivalence."
+    }
+  ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.3+6-release.apk",
+    "source_revision": "53b2256",
+    "version_name": "1.0.3",
+    "version_code": 6,
+    "size_bytes": 107654946,
+    "sha256": "1fcabe14ded73bf701cd49e83dd11c242c1135b853e87c21b3126fef26db59cd",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b"
+  },
+  "remaining": "Capture matched web/Flutter screenshots at the required desktop and Android portrait viewports, validate Material overlays and focus colors on native clients, and build/run the Windows release on a host with Visual Studio C++ tooling."
+}

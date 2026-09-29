@@ -90,8 +90,14 @@ portrait and landscape Android shares are checked in both web and Flutter viewer
 
 ### 1. Design foundation and workspace shell — in progress
 
-- Port every value from `frontend/src/design/tokens.css` into Flutter colors,
-  spacing, typography, radii, control sizes and layout breakpoints.
+- The Flutter theme now mirrors the web semantic palette/contrast, Material
+  ColorScheme surfaces, full typography and line-height scale, radii, icon and
+  control sizes, layout tokens, motion/easing and popup/shell shadows; tests pin
+  those values to the CSS contract [QA-97](../evidence/flutter/qa97-flutter-web-design-token-parity-2026-09-29-001.json).
+  The missing 24 px voice-member row token is now explicit in CSS and Flutter,
+  and the web stream-rail fade uses a declared semantic surface color instead
+  of an undefined custom property. Matched screenshot/device validation remains
+  open.
 - Match shell columns and frame geometry at wide, medium and compact widths.
 - Implement web-equivalent responsive navigation/member/search drawers,
   scrim, escape/close behavior, focus return and keyboard reachability. Navigation

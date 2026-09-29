@@ -232,6 +232,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
 
 ## P2 — Visual, keyboard и accessibility
 
+- [x] Централизовать оставшиеся web design tokens во Flutter theme: семантические
+  цвета/контраст, Material ColorScheme, typography/line-height, радиусы, размеры,
+  motion и elevation; добавить отсутствовавшую высоту voice-member row в CSS и
+  Flutter и исправить несуществующий `--gc-surface-base` в web rail —
+  [QA-97](../evidence/flutter/qa97-flutter-web-design-token-parity-2026-09-29-001.json).
+  Общий matched-screenshot/device gate остаётся открытым.
 - [x] Выровнять профиль по web CSS: centered 720 px content, 480 px form, 64 px avatar, responsive 24/16 px insets, 16 px page title, section dividers и toolbar без дублированного заголовка; desktop/mobile геометрия и route покрыты widget tests — [QA-49](../evidence/flutter/qa49-profile-geometry-web-parity-2026-09-28-001.json).
 - [x] Выровнять maintenance banner по web CSS: минимум 44 px, текст 14/20 px,
   поля 12/16 px и естественный перенос без обрезания; desktop/mobile viewport
