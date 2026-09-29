@@ -33,7 +33,7 @@ jobs:
         shell: powershell
         run: |
           $env:FLUTTER_ROOT = Join-Path $env:USERPROFILE 'develop\flutter'
-          & "$env:FLUTTER_ROOT\bin\dart.bat" pub get --enforce-lockfile
+          & "$env:FLUTTER_ROOT\bin\flutter.bat" pub get --enforce-lockfile
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run Flutter tests
         working-directory: desktop
