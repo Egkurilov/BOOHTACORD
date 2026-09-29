@@ -1,0 +1,27 @@
+{
+  "id": "QA-81",
+  "kind": "gitverse-flutter-windows-ci",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "source_revision": "f3b51f49c9a3290feb5f47e7224164856b22d31a",
+  "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1675956?job=3288143",
+  "summary": "The registered Windows runner executed the workflow for the current master revision. Flutter setup/dependency resolution, tests and analysis completed; the Windows release build failed immediately.",
+  "checks": [
+    {
+      "name": "Windows runner dispatch and Flutter setup",
+      "status": "PASS",
+      "observation": "The windows job was assigned to the registered runner, selected Flutter 3.47.5 and completed dependency resolution."
+    },
+    {
+      "name": "Flutter tests and analyzer on Windows runner",
+      "status": "PASS",
+      "observation": "Both workflow steps completed (tests in 25 seconds and analyzer in 11 seconds); no step failure was reported before native build."
+    },
+    {
+      "name": "Windows release build",
+      "status": "BLOCKED",
+      "observation": "The release-build step failed after 1 second. QA-81 run 1674856 on the same runner had already identified the cause as a missing Visual Studio C++ toolchain; installation requires runner administrator access."
+    }
+  ],
+  "remaining": "Install Visual Studio 2022 Build Tools with the Desktop development with C++ workload on boohtacord-win-station, then rerun and verify the Windows release build and runtime."
+}
