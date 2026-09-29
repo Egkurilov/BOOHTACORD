@@ -1,0 +1,59 @@
+{
+  "id": "QA-126",
+  "kind": "android-communication-audio-routes",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "source_revision": "cd1895c",
+  "summary": "Android 12+ audio settings now enumerate all system communication outputs, not just USB. On a Pixel 7, both the earpiece and phone speaker appeared where the previous build incorrectly said no speakers were found.",
+  "checks": [
+    {
+      "name": "Android communication output mapping and selection tests",
+      "command": "cd desktop && flutter test --no-pub test/android_audio_devices_test.dart test/audio_device_check_test.dart test/app_state_test.dart test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 88 targeted tests passed, including native communication route ID mapping, selection/clear method calls, legacy USB route compatibility, playback-route resolution, scan state and audio settings UI."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 263 Flutter tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Signed Android 1.0.9+13 split release build",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Built arm64-v8a (38,328,669 bytes; SHA-256 1f465b80b3aaa6b9107bab3a0d1bcd787bd1e2b7401290022e4c690914a08e82), armeabi-v7a (29,490,103 bytes; SHA-256 ee4c7059ffa0ede335714dd9c3a5c4c42285c8469dc54e235f3bd6995f244096) and x86_64 (44,082,902 bytes; SHA-256 1c71c1e59a7704f5bafa4ebb93030455763cb73fe10c3c2fcd23295055b7399f) APKs."
+    },
+    {
+      "name": "Arm64 APK signature verification",
+      "command": "apksigner verify --verbose --print-certs desktop/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
+      "status": "PASS",
+      "observation": "APK Signature Scheme v2 verified with upload certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b."
+    },
+    {
+      "name": "Pixel 7 audio output enumeration visual acceptance",
+      "command": "adb install -r desktop/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk; adb shell dumpsys package ru.boohtacord.app",
+      "status": "PASS",
+      "observation": "Installed versionName 1.0.9/versionCode 2013 over the existing app without clearing data. On Pixel 7 / Android 17 (API 37), audio settings changed from 'Динамики не найдены' to a selector with 'Разговорный динамик' and 'Динамик телефона'. No route was selected, no audio test was played, and the user session/preferences were not intentionally changed."
+    },
+    {
+      "name": "USB/Bluetooth hotplug and active-call route switching",
+      "status": "NOT_RUN",
+      "observation": "No external USB or Bluetooth audio device was attached for this check. Audible route switching while connected to a voice room remains unverified."
+    }
+  ],
+  "artifact": {
+    "path": "desktop/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
+    "version": "1.0.9+13",
+    "size_bytes": 38328669,
+    "sha256": "1f465b80b3aaa6b9107bab3a0d1bcd787bd1e2b7401290022e4c690914a08e82",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b"
+  },
+  "remaining": "Test physical USB/Bluetooth input/output hotplug and audible route switching in an active Android voice call; verify device changes and route switching on macOS and Windows; exercise the no-native-route fallback on an Android version below API 31."
+}

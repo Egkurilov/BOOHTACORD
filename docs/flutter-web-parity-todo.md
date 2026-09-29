@@ -44,20 +44,20 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Привязать transient viewer selection к ID голосового канала, чтобы при
   переходе в другую комнату не наследовались remote identity и ended-state —
   [QA-39](../evidence/flutter/qa39-voice-channel-viewer-scope-2026-09-28-001.json).
-- [ ] Исправить и проверить перечисление/смену именованных микрофонов и outputs,
-  включая повторное перечисление после permission grant, hotplug и устаревший
-  результат сканирования; очередность refresh, отбрасывание старого результата
-  подавление старой ошибки после hotplug, а также distinct loading/empty/error
-  состояния панели и работа ручной кнопки обновления после завершения scan
-  покрыты локальными тестами. Повторный запрос после первого
-  mic capture реализован; Android теперь дополняет WebRTC-список именованными
-  USB-входами и Android 12+ USB-выходами, применяет системный communication
-  route только во время голосовой сессии и снимает его при leave/disconnect.
-  Локальная регрессия для refresh/hotplug —
-  [QA-14](../evidence/flutter/qa14-audio-device-refresh-2026-09-27-001.json),
-  [QA-69](../evidence/flutter/qa69-android-usb-audio-routes-2026-09-28-001.json);
-  проверка именованных устройств, hotplug и слышимого переключения на Android
-  12+ с физическими USB-аудиоустройствами остаётся открытой.
+- [x] На Android 12+ перечислять не только USB, но и доступные системные
+  communication outputs (разговорный/основной динамик, проводные и Bluetooth
+  выходы), выбирать их через `AudioManager.setCommunicationDevice` только в
+  активной voice-сессии и снимать override при leave/disconnect. Если native
+  enumeration отсутствует, показывать системный выход по умолчанию вместо
+  «Динамики не найдены». Pixel 7 / Android 17 подтвердил в UI оба встроенных
+  динамика; release APK 1.0.9+13 установлен без потери данных — [QA-126](../evidence/flutter/qa126-android-communication-audio-routes-2026-09-29-001.json).
+- [ ] На Android физически проверить USB/Bluetooth microphone/output hotplug,
+  смену маршрута в активном звонке и слышимость; на macOS/Windows проверить
+  перечисление, hotplug и переключение устройств. Повторное перечисление,
+  stale-scan protection, distinct loading/empty/error и ручное обновление
+  покрыты локальными тестами — [QA-14](../evidence/flutter/qa14-audio-device-refresh-2026-09-27-001.json),
+  [QA-69](../evidence/flutter/qa69-android-usb-audio-routes-2026-09-28-001.json),
+  [QA-126](../evidence/flutter/qa126-android-communication-audio-routes-2026-09-29-001.json).
 - [ ] На каждой платформе проверить разрешение screen share, OS-level stop,
   Android 14+ MediaProjection service и реальный захват у peer. На Pixel 7
   (Android 17/API 37) полный захват экрана прошёл: foreground service имел тип
