@@ -1,0 +1,34 @@
+{
+  "id": "QA-95",
+  "kind": "pinned-screen-ended-lifecycle-web-parity",
+  "status": "PASS_LOCAL_RUNTIME_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "68c1e76",
+  "summary": "Pinned screen-share lifecycle now follows the web viewer: removing a selected publication clears the mini-player pin while the visible voice room retains its explicit ended state. A participant/publication that still exists without a frame remains a waiting state.",
+  "checks": [
+    {
+      "name": "Pinned screen publication lifecycle regression",
+      "command": "cd desktop && flutter test test/pinned_screen_mini_player_policy_test.dart test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 45 targeted policy/workspace tests passed, including participant/publication removal versus temporary missing-frame distinction."
+    },
+    {
+      "name": "Full Flutter regression suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "All 232 tests passed."
+    },
+    {
+      "name": "Flutter static analysis",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Live remote screen unpublish",
+      "status": "OPEN",
+      "observation": "No Android device or remote voice peer is currently available. Verify that unpublishing a real remote screen closes the mini-player and preserves the ended state in the visible voice room."
+    }
+  ],
+  "remaining": "Repeat the unpublish/ended transition with a real peer on macOS, Windows, and Android."
+}

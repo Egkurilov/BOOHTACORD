@@ -174,6 +174,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   можно вернуть в voice-viewer, заглушить только для текущего просмотра или
   остановить. Состояние изолировано ID активного voice-канала, локально
   проверены 231 Flutter-тест и analyzer — [QA-94](../evidence/flutter/qa94-pinned-screen-mini-player-web-parity-2026-09-29-001.json).
+- [x] Синхронизировать завершение закреплённой трансляции с web: при удалении
+  screen-share publication закрыть mini-player, оставить ended-состояние в
+  открытой voice-комнате, не путать отсутствующий видеокадр с завершённой
+  публикацией — [QA-95](../evidence/flutter/qa95-pinned-screen-ended-lifecycle-2026-09-29-001.json).
 - [x] Не запрашивать Android battery-optimization exemption: удалить
   неиспользуемое plugin-added разрешение из итогового APK, оставив разрешения
   foreground MediaProjection service — [QA-56](../evidence/flutter/qa56-android-battery-permission-minimization-2026-09-28-001.json).
