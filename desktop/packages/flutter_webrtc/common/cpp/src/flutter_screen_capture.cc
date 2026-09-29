@@ -225,6 +225,7 @@ void FlutterScreenCapture::GetDisplayMedia(
   // AUDIO
 
   bool capture_audio = false;
+  std::string loopback_track_id;
   {
     auto audio_it = constraints.find(EncodableValue("audio"));
     if (audio_it != constraints.end()) {
@@ -279,7 +280,8 @@ void FlutterScreenCapture::GetDisplayMedia(
       params[EncodableValue("audioTracks")] = EncodableValue(audioTracks);
 
       stream->AddTrack(audio_track);
-      base_->local_tracks_[audio_track->id().std_string()] = audio_track;
+      loopback_track_id = audio_track->id().std_string();
+      base_->local_tracks_[loopback_track_id] = audio_track;
     } else {
       // Loopback init failed or not supported — continue without audio.
       loopback_capturer_.reset();
@@ -370,7 +372,22 @@ void FlutterScreenCapture::GetDisplayMedia(
 
   base_->local_streams_[uuid] = stream;
 
-  desktop_capturer->Start(uint32_t(fps));
+  const auto capture_state = desktop_capturer->Start(uint32_t(fps));
+  if (capture_state == RTCDesktopCapturer::CS_FAILED) {
+    base_->local_tracks_.erase(track->id().std_string());
+    base_->local_streams_.erase(uuid);
+    if (!loopback_track_id.empty()) {
+      base_->local_tracks_.erase(loopback_track_id);
+    }
+    if (loopback_capturer_) {
+      loopback_capturer_->Stop();
+      loopback_capturer_.reset();
+      loopback_audio_source_ = nullptr;
+    }
+    result->Error("Capture Failed",
+                  "Не удалось запустить захват выбранного источника.");
+    return;
+  }
 
   result->Success(EncodableValue(params));
 }

@@ -1,0 +1,52 @@
+{
+  "id": "QA-98",
+  "kind": "windows-screen-capture-start-failure",
+  "status": "PASS_IMPLEMENTATION_WINDOWS_BUILD_AND_RUNTIME_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "pending",
+  "summary": "The native desktop getDisplayMedia path now checks whether the selected capture source actually starts. A CS_FAILED result removes the unpublished video/audio tracks and stream, stops loopback capture, and returns an actionable platform error instead of allowing a dead screen track to be published. Flutter now prefers the platform error message over the PlatformException wrapper.",
+  "checks": [
+    {
+      "name": "Native desktop capturer start failure cleanup",
+      "status": "PASS_SOURCE_REVIEW",
+      "observation": "The capturer Start() result is checked. On CS_FAILED, the implementation erases the video track, loopback track, and local stream; stops and resets loopback capture; and returns a Capture Failed platform error."
+    },
+    {
+      "name": "Flutter error detail regression test",
+      "command": "cd desktop && flutter test test/app_state_test.dart",
+      "status": "PASS",
+      "observation": "The test verifies PlatformException.message is surfaced as the screen-share failure detail."
+    },
+    {
+      "name": "Flutter regression suite and analyzer",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "All 235 Flutter tests passed and flutter analyze reported no issues."
+    },
+    {
+      "name": "Android release artifact",
+      "command": "cd desktop && flutter build apk --release",
+      "status": "PASS",
+      "observation": "Built package ru.boohtacord.app, versionName 1.0.3, versionCode 7. APK Signature Scheme v2 verified. Signing certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b; APK SHA-256 30def846ad9e99bbf207ad44df8744df6defd50c780bba4a5fcf05c8dcf4371a; size 107654946 bytes. This validates the Flutter/Android application build, not Windows C++ compilation."
+    },
+    {
+      "name": "Windows native build",
+      "status": "BLOCKED_RUNNER_TOOLCHAIN",
+      "observation": "The latest Windows GitVerse runner job 1675956 failed before native compilation because no suitable Visual Studio C++ toolchain was installed. The current common desktop C++ change has not been compiled on Windows."
+    },
+    {
+      "name": "Windows screen/window capture runtime",
+      "status": "OPEN",
+      "observation": "No Windows host is currently available to verify a valid source, a minimized or inaccessible window, error propagation, and absence of a black published track. The upstream flutter_webrtc issue #2137 was a discovery lead, not reproduction evidence: https://github.com/flutter-webrtc/flutter-webrtc/issues/2137"
+    }
+  ],
+  "artifact": {
+    "path": "artifacts/android/BOOHTACORD-1.0.3+7-release.apk",
+    "version_name": "1.0.3",
+    "version_code": 7,
+    "size_bytes": 107654946,
+    "sha256": "30def846ad9e99bbf207ad44df8744df6defd50c780bba4a5fcf05c8dcf4371a",
+    "signing_certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0a811212b"
+  },
+  "remaining": "Build the Windows Release with MSVC, then verify valid screen/window capture and start failures for minimized or inaccessible windows, including that failure cleanup leaves no published black track."
+}

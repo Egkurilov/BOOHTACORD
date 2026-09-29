@@ -207,9 +207,16 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Проверить picker на минимальной Android-ширине 320 dp: обе настройки качества
   достижимы прокруткой, а закреплённая кнопка запуска остаётся видимой; все пять
   screen-share тестов проходят — [QA-76](../evidence/flutter/qa76-android-screen-share-picker-320dp-2026-09-28-001.json).
-- [ ] На macOS и Windows принять системный список экранов/окон и thumbnail
-  обновления; измерить качество/битрейт на реальных устройствах и сетях для
-  выбранных комбинаций.
+- [x] Native desktop `getDisplayMedia` теперь проверяет результат `Start()`;
+  при `CS_FAILED` возвращает ошибку и очищает video/audio tracks и stream,
+  вместо «успешного» чёрного трека. Flutter показывает исходное platform
+  message, а не `PlatformException(...)` — реализация и 235 Flutter-тестов
+  зафиксированы в [QA-98](../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json).
+- [ ] Собрать Windows Release с MSVC и проверить захват выбранных screen/window
+  sources, включая свёрнутое/недоступное окно; проверить обновления preview и
+  отсутствие чёрного трека. Текущий runner не имеет Visual Studio C++ toolchain;
+  Android APK проверяет только общую Flutter-часть, не этот Windows C++ код —
+  [QA-98](../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json).
 
 ## P1 — Admin и переписка
 

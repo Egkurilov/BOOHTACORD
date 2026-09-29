@@ -165,6 +165,15 @@ void main() {
       'capture service unavailable',
     );
     expect(
+      screenShareFailureDetail(
+        PlatformException(
+          code: 'Capture Failed',
+          message: 'Не удалось запустить захват выбранного источника.',
+        ),
+      ),
+      'Не удалось запустить захват выбранного источника.',
+    );
+    expect(
       screenShareFailureDetail(Exception('encoder negotiation failed')),
       contains('encoder negotiation failed'),
     );

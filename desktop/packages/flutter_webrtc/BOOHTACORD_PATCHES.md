@@ -57,3 +57,13 @@ The native desktop capturer can emit a source preview while the asynchronous
 merging the response snapshot so callers can use its JPEG dimensions before
 publishing. The ordering regression is covered by
 `test/desktop_capturer_thumbnail_test.dart`.
+
+## Desktop screen-capture start failure
+
+`FlutterScreenCapture::GetDisplayMedia` checks the native capturer's start
+state. When it returns `CS_FAILED`, the plugin removes the unpublished video
+track/stream and any loopback-audio track, stops loopback capture, and rejects
+the method call so Flutter cannot publish a healthy-looking but permanently
+black track. Flutter displays the native error message rather than the
+`PlatformException` wrapper. Windows compilation and window-source runtime
+acceptance remain open; see [QA-98](../../../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json).
