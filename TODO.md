@@ -36,7 +36,7 @@
 - [ ] **QA-09 · P1:** аппаратный load profile 100 участников и до 20 в VOICE-комнате.
 - [ ] **QA-10 · P1:** connected-media revocation и replay старых credentials на реальном LiveKit.
 - [ ] **QA-12 · P1:** совместимый digest-only rollback с двумя browser-наблюдателями и сверкой volumes.
-- [ ] **QA-13 · P1:** Flutter parity, сохранение upload key вне host и физическая Android APK-приёмка.
+- [ ] **QA-13 · P1:** Flutter parity, сохранение upload key вне host и физическая Android APK-приёмка; проверить вход двух разных аккаунтов с одного IP и убедиться, что `ACTIVE_VOICE_LEASE`/автоперенос затрагивает только аккаунт-владелец аренды.
 - [ ] **QA-14 · P1:** матрица 39 требований, latency/capacity/security evidence и решение о выпуске после остальных PASS.
 
 Порядок: DES-09 → FE-53…55 → QA-05; FE-52 → QA-07; QA-08 вести параллельно как P0; затем физические QA-06/09/10/13, rollback QA-12 и решение QA-14. Успешная сборка или `PASS_SOURCE_ONLY` не закрывает физический/visual гейт.
