@@ -1,0 +1,27 @@
+{
+  "id": "QA-114",
+  "kind": "gitverse-android-release-apks",
+  "status": "PASS",
+  "executed_at": "2026-09-29",
+  "source_revision": "f4d3a6695b78977b1334b83b0c95f9697c67460f",
+  "release_url": "https://gitverse.ru/egkurilov/BOOHTACORD/releases/tag/android-v1.0.4",
+  "summary": "GitVerse published the Android v1.0.4 release with three signed ABI-specific APKs. No APK binaries were added to Git.",
+  "checks": [
+    {
+      "name": "Tag-triggered Android release",
+      "status": "PASS",
+      "observation": "The public GitVerse release page lists BOOHTACORD-android-v1.0.4-arm64-v8a.apk (36.6 MiB), BOOHTACORD-android-v1.0.4-armeabi-v7a.apk (28.1 MiB), and BOOHTACORD-android-v1.0.4-x86_64.apk (42 MiB)."
+    },
+    {
+      "name": "Git release asset size limit",
+      "status": "PASS",
+      "observation": "All three APK assets are below the workflow's 95,000,000-byte pre-upload limit and are downloadable from GitVerse Releases."
+    },
+    {
+      "name": "APK binaries excluded from repository history",
+      "status": "PASS",
+      "observation": "The release consists of GitVerse release assets; the release source revision contains only the app version bump and no APK files."
+    }
+  ],
+  "remaining": "Install the appropriate ABI APK on a physical Android device and complete device acceptance; this evidence verifies publication, not runtime behavior."
+}
