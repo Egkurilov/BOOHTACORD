@@ -53,6 +53,8 @@ class MessageAttachmentComposerState extends State<MessageAttachmentComposer> {
   bool _isCurrent(int generation, String scope) =>
       mounted && _generation == generation && _scope == scope;
 
+  Future<void> pickFiles() => _pick();
+
   @override
   void didUpdateWidget(covariant MessageAttachmentComposer oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -314,43 +316,32 @@ class MessageAttachmentComposerState extends State<MessageAttachmentComposer> {
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [
-      Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: 8,
-        runSpacing: 4,
-        children: [
-          TextButton.icon(
-            onPressed: _pending || widget.state.sending ? null : _pick,
-            icon: const Icon(Icons.attach_file, size: 18),
-            label: const Text('Прикрепить файлы'),
-          ),
-          TextButton.icon(
-            onPressed: widget.state.sending ? null : pasteFromClipboard,
-            icon: const Icon(Icons.content_paste, size: 18),
-            label: const Text('Вставить'),
-          ),
-          const Text(
-            'До 10 файлов · 25 МБ каждый',
-            style: TextStyle(color: Color(0xFF9AA0AA), fontSize: 11),
-          ),
-          if (_pending) ...[
-            SizedBox(
-              width: 80,
-              child: LinearProgressIndicator(
-                value: _activePercent == null ? null : _activePercent! / 100,
+      if (_pending)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 80,
+                child: LinearProgressIndicator(
+                  value: _activePercent == null ? null : _activePercent! / 100,
+                ),
               ),
-            ),
-            Text(
-              _activeName == null
-                  ? 'Загружаем…'
-                  : _activePercent == 100
-                  ? '${_activeName!} · обрабатываем…'
-                  : '${_activeName!} · ${_activePercent ?? 0}%',
-              style: const TextStyle(fontSize: 12),
-            ),
-          ],
-        ],
-      ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  _activeName == null
+                      ? 'Загружаем…'
+                      : _activePercent == 100
+                      ? '${_activeName!} · обрабатываем…'
+                      : '${_activeName!} · ${_activePercent ?? 0}%',
+                  style: const TextStyle(fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
       if (_error case final error?)
         Padding(
           padding: const EdgeInsets.only(bottom: 6),

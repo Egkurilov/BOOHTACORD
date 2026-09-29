@@ -17,6 +17,49 @@ String _fixturePath(String name) =>
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  testWidgets('keeps attachment controls compact and file picking available', (
+    tester,
+  ) async {
+    final state = _UploadState();
+    addTearDown(state.dispose);
+    final controller = TextEditingController();
+    final focusNode = FocusNode();
+    final key = GlobalKey<MessageAttachmentComposerState>();
+    final selectedFile = XFile.fromData(
+      Uint8List.fromList([1, 2, 3]),
+      path: _fixturePath('note.txt'),
+    );
+    addTearDown(controller.dispose);
+    addTearDown(focusNode.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MessageAttachmentComposer(
+            key: key,
+            state: state,
+            channelId: 'text-a',
+            textController: controller,
+            focusNode: focusNode,
+            attachments: const [],
+            filePicker: () async => [selectedFile],
+            onChanged: (_) {},
+            onPending: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Прикрепить файлы'), findsNothing);
+    expect(find.text('Вставить'), findsNothing);
+    expect(find.text('До 10 файлов · 25 МБ каждый'), findsNothing);
+
+    await key.currentState!.pickFiles();
+    await tester.pumpAndSettle();
+
+    expect(state.uploadedNames, ['note.txt']);
+  });
+
   testWidgets('pastes clipboard text at the selection and uploads its image', (
     tester,
   ) async {
@@ -246,6 +289,7 @@ void main() {
     addTearDown(state.dispose);
     final controller = TextEditingController();
     final focusNode = FocusNode();
+    final key = GlobalKey<MessageAttachmentComposerState>();
     addTearDown(controller.dispose);
     addTearDown(focusNode.dispose);
     var attachments = <MessageAttachment>[];
@@ -254,6 +298,7 @@ void main() {
         home: Scaffold(
           body: StatefulBuilder(
             builder: (context, rebuild) => MessageAttachmentComposer(
+              key: key,
               state: state,
               channelId: 'text-a',
               textController: controller,
@@ -277,7 +322,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Прикрепить файлы'));
+    await key.currentState!.pickFiles();
     await tester.pumpAndSettle();
     expect(attachments.map((item) => item.originalName), ['one.txt']);
     expect(state.uploadedNames, ['one.txt', 'two.txt']);
@@ -306,6 +351,7 @@ void main() {
     addTearDown(controller.dispose);
     addTearDown(focusNode.dispose);
     var target = 'text-a';
+    final key = GlobalKey<MessageAttachmentComposerState>();
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -317,6 +363,7 @@ void main() {
                   child: const Text('Другой канал'),
                 ),
                 MessageAttachmentComposer(
+                  key: key,
                   state: state,
                   channelId: target,
                   textController: controller,
@@ -333,13 +380,14 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Прикрепить файлы'));
+    final picking = key.currentState!.pickFiles();
     await tester.pump();
     await tester.tap(find.text('Другой канал'));
     await tester.pump();
     selected.complete([
       XFile.fromData(Uint8List.fromList([1]), path: _fixturePath('old.txt')),
     ]);
+    await picking;
     await tester.pumpAndSettle();
 
     expect(state.uploadedNames, isEmpty);
@@ -353,6 +401,7 @@ void main() {
     addTearDown(state.dispose);
     final controller = TextEditingController();
     final focusNode = FocusNode();
+    final key = GlobalKey<MessageAttachmentComposerState>();
     addTearDown(controller.dispose);
     addTearDown(focusNode.dispose);
     var attachments = <MessageAttachment>[];
@@ -361,6 +410,7 @@ void main() {
         home: Scaffold(
           body: StatefulBuilder(
             builder: (context, rebuild) => MessageAttachmentComposer(
+              key: key,
               state: state,
               directMessageId: 'dm-a',
               textController: controller,
@@ -380,12 +430,13 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Прикрепить файлы'));
+    final picking = key.currentState!.pickFiles();
     await tester.pump();
     await tester.pump();
     expect(find.text('progress.txt · 50%'), findsOneWidget);
     expect(attachments, isEmpty);
     gate.complete();
+    await picking;
     await tester.pumpAndSettle();
     expect(attachments.single.originalName, 'progress.txt');
     expect(state.targetChannels, ['dm-a']);
@@ -402,6 +453,7 @@ void main() {
     addTearDown(controller.dispose);
     addTearDown(focusNode.dispose);
     var target = 'text-a';
+    final key = GlobalKey<MessageAttachmentComposerState>();
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -413,6 +465,7 @@ void main() {
                   child: const Text('Другой канал'),
                 ),
                 MessageAttachmentComposer(
+                  key: key,
                   state: state,
                   channelId: target,
                   textController: controller,
@@ -429,12 +482,13 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Прикрепить файлы'));
+    final picking = key.currentState!.pickFiles();
     await tester.pump();
     await tester.pump();
     await tester.tap(find.text('Другой канал'));
     await tester.pump();
     readGate.complete();
+    await picking;
     await tester.pumpAndSettle();
 
     expect(state.uploadedNames, isEmpty);
