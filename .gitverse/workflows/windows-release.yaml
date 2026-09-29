@@ -88,32 +88,12 @@ jobs:
           }
 
       - name: Publish GitVerse Windows release
-        id: publish_initial
-        continue-on-error: true
-        uses: actions/create-release@v1
-        with:
-          api_key: ${{ secrets.RELEASE_API_KEY }}
-          title: BOOHTACORD Windows ${{ github.ref_name }}
-          body: |
-            Сборка приложения BOOHTACORD для Windows x64.
-            Включает изменения общего Flutter-клиента из актуальной Android-версии и статистику отправителя в локальном предпросмотре демонстрации экрана. Показатели приёмника отображаются при просмотре чужой трансляции.
-            Распакуйте архив целиком и запустите boohtacord_desktop.exe.
-          files: |
-            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-x64.zip
-          draft: false
-          pre_release: false
-
-      - name: Retry GitVerse Windows release after API failure
-        if: ${{ steps.publish_initial.outcome == 'failure' }}
-        uses: actions/create-release@v1
-        with:
-          api_key: ${{ secrets.RELEASE_API_KEY }}
-          title: BOOHTACORD Windows ${{ github.ref_name }}
-          body: |
-            Сборка приложения BOOHTACORD для Windows x64.
-            Включает изменения общего Flutter-клиента из актуальной Android-версии и статистику отправителя в локальном предпросмотре демонстрации экрана. Показатели приёмника отображаются при просмотре чужой трансляции.
-            Распакуйте архив целиком и запустите boohtacord_desktop.exe.
-          files: |
-            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-x64.zip
-          draft: false
-          pre_release: false
+        shell: powershell
+        env:
+          RELEASE_API_KEY: ${{ secrets.RELEASE_API_KEY }}
+        run: |
+          & .\.gitverse\actions\windows-release\publish.ps1 `
+            -Tag $env:GITHUB_REF_NAME `
+            -Commit $env:GITHUB_SHA `
+            -Archive "desktop\build\release-assets\BOOHTACORD-$($env:GITHUB_REF_NAME)-x64.zip"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
