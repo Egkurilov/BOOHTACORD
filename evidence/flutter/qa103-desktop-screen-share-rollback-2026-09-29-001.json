@@ -1,0 +1,29 @@
+{
+  "id": "QA-103",
+  "kind": "desktop-screen-share-partial-start-rollback",
+  "status": "PASS_WITH_RUNTIME_FAILURE_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "source_revision": "40b3441e952f37c9e86ebae6fa27500e2be75993",
+  "summary": "Desktop screen-share setup now rolls back system-audio capture started by the same request when later video setup fails, without stopping another active capture.",
+  "checks": [
+    {
+      "name": "Rollback path review",
+      "status": "PASS",
+      "source": "desktop/packages/flutter_webrtc/common/cpp/src/flutter_screen_capture.cc",
+      "observation": "Missing/stale source, desktop capturer creation failure, video source/track creation failure, and CS_FAILED all clean up the request-owned loopback track/capturer after loopback audio starts. The guard leaves pre-existing loopback capture alone when this request did not start it."
+    },
+    {
+      "name": "GitVerse Windows Flutter CI",
+      "run": "1679490",
+      "job": "3296326",
+      "status": "PASS",
+      "observation": "The Windows runner completed Flutter tests, analyzer, and Release build with the changed native C++ plugin."
+    },
+    {
+      "name": "Injected Windows runtime failure and retry acceptance",
+      "status": "NOT_RUN",
+      "observation": "CI compile does not exercise native failure injection, active-audio preservation, source disappearance or a subsequent retry on a running Windows client."
+    }
+  ],
+  "remaining": "On Windows, test a stale/closed source after system-audio capture begins, each native creation failure, and CS_FAILED; confirm loopback resources are released, an unrelated active track is preserved, errors are surfaced, and a retry does not duplicate audio or tracks."
+}

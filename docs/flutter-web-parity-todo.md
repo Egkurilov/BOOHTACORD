@@ -209,9 +209,14 @@ peer/platform-проверки и выравниваем viewer с вебом.
   screen-share тестов проходят — [QA-76](../evidence/flutter/qa76-android-screen-share-picker-320dp-2026-09-28-001.json).
 - [x] Native desktop `getDisplayMedia` теперь проверяет результат `Start()`;
   при `CS_FAILED` возвращает ошибку и очищает video/audio tracks и stream,
+  тот же rollback очищает loopback только текущего запроса при отсутствующем
+  источнике или ошибке создания video capturer/source/track, не останавливая
+  чужую активную аудиодорожку;
   вместо «успешного» чёрного трека. Flutter показывает исходное platform
-  message, а не `PlatformException(...)` — реализация и 235 Flutter-тестов
-  зафиксированы в [QA-98](../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json).
+  message, а не `PlatformException(...)`; GitVerse Windows tests/analyzer и
+  Release compile прошли. Runtime failure injection остаётся открытой —
+  [QA-98](../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json),
+  [QA-103](../evidence/flutter/qa103-desktop-screen-share-rollback-2026-09-29-001.json).
 - [ ] На GitVerse Windows runner, где Release-сборка теперь проходит, проверить
   захват выбранных screen/window sources, включая свёрнутое/недоступное окно;
   проверить обновления preview и отсутствие чёрного трека. Runtime Windows C++

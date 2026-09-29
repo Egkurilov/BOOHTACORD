@@ -64,6 +64,10 @@ publishing. The ordering regression is covered by
 state. When it returns `CS_FAILED`, the plugin removes the unpublished video
 track/stream and any loopback-audio track, stops loopback capture, and rejects
 the method call so Flutter cannot publish a healthy-looking but permanently
-black track. Flutter displays the native error message rather than the
-`PlatformException` wrapper. Windows compilation and window-source runtime
-acceptance remain open; see [QA-98](../../../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json).
+black track. The same rollback now covers stale/missing sources and video
+capturer/source/track creation failures after this request started loopback
+audio; it does not stop an unrelated active capture. Flutter displays the
+native error message rather than the `PlatformException` wrapper. Windows
+compilation passes, while injected-failure runtime and window-source
+acceptance remain open; see [QA-98](../../../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json)
+and [QA-103](../../../evidence/flutter/qa103-desktop-screen-share-rollback-2026-09-29-001.json).
