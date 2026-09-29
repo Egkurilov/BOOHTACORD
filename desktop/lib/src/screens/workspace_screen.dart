@@ -408,6 +408,38 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
               !showPermanentMembers &&
               widget.state.workspacePanel == WorkspacePanel.none &&
               widget.state.selectedDirectMessage == null;
+          final activeVoiceChannel = widget.state.voiceChannel;
+          final pinnedMiniVisible = pinnedScreenMiniPlayerVisible(
+            pinnedScreenIdentity: _pinnedScreenIdentity,
+            activeVoiceChannelId: activeVoiceChannel?.id,
+            selectedChannelId: widget.state.selectedChannel?.id,
+            directMessageOpen: widget.state.selectedDirectMessage != null,
+            workspacePanelOpen:
+                widget.state.workspacePanel != WorkspacePanel.none,
+          );
+          Widget pinnedMiniLayer() => Positioned(
+            right: compact ? 12 : 16,
+            bottom: 16,
+            child: SizedBox(
+              width: (constraints.maxWidth - (compact ? 24 : 32))
+                  .clamp(0.0, 360.0)
+                  .toDouble(),
+              child: ExcludeFocus(
+                excluding: _showMobileSidebar || modalOverlayActive,
+                child: ExcludeSemantics(
+                  excluding: _showMobileSidebar || modalOverlayActive,
+                  child: _PinnedScreenMiniPlayer(
+                    state: widget.state,
+                    identity: _pinnedScreenIdentity!,
+                    onReturnToVoice: () => unawaited(
+                      widget.state.selectChannel(activeVoiceChannel!),
+                    ),
+                    onStopWatching: _stopWatchingPinnedScreen,
+                  ),
+                ),
+              ),
+            ),
+          );
           final content = compact
               ? Stack(
                   children: [
@@ -432,6 +464,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                         ),
                       ),
                     ),
+                    if (pinnedMiniVisible) pinnedMiniLayer(),
                     Positioned.fill(
                       child: IgnorePointer(
                         ignoring:
@@ -564,6 +597,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                         ],
                       ),
                     ),
+                    if (pinnedMiniVisible) pinnedMiniLayer(),
                     if (_showMembersDrawer || searchPanelModal)
                       Positioned.fill(child: _DrawerScrim(onTap: _closeScrim)),
                     if (_showMembersDrawer)
@@ -640,15 +674,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                   ),
                 )
               : shellContent;
-          final activeVoiceChannel = widget.state.voiceChannel;
-          final pinnedMiniVisible = pinnedScreenMiniPlayerVisible(
-            pinnedScreenIdentity: _pinnedScreenIdentity,
-            activeVoiceChannelId: activeVoiceChannel?.id,
-            selectedChannelId: widget.state.selectedChannel?.id,
-            directMessageOpen: widget.state.selectedDirectMessage != null,
-            workspacePanelOpen:
-                widget.state.workspacePanel != WorkspacePanel.none,
-          );
           final flushShell = constraints.maxWidth >= GcLayout.wideBreakpoint;
           return Padding(
             padding: compact || flushShell
@@ -664,28 +689,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                       ? null
                       : Border.all(color: GcColors.border),
                 ),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    swipeContent,
-                    if (pinnedMiniVisible)
-                      Positioned(
-                        right: 12,
-                        bottom: compact ? 104 : 16,
-                        width: (constraints.maxWidth - 24)
-                            .clamp(0.0, 360.0)
-                            .toDouble(),
-                        child: _PinnedScreenMiniPlayer(
-                          state: widget.state,
-                          identity: _pinnedScreenIdentity!,
-                          onReturnToVoice: () => unawaited(
-                            widget.state.selectChannel(activeVoiceChannel!),
-                          ),
-                          onStopWatching: _stopWatchingPinnedScreen,
-                        ),
-                      ),
-                  ],
-                ),
+                child: swipeContent,
               ),
             ),
           );
