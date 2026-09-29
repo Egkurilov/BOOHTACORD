@@ -4,6 +4,7 @@
   "status": "PARTIAL",
   "executed_at": "2026-09-29",
   "source_revision": "57e459f2e5a3f56e3acdc2b7bbf5464f52b6e525",
+  "windows_ci_run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1678534?job=3294212",
   "summary": "A fresh macOS debug launch reproduced the indefinite startup screen. A process sample located the wait in flutter_secure_storage's legacy Keychain lookup; moving the session cookie to a versioned service allowed startup to reach login without deleting old Keychain items.",
   "checks": [
     {
@@ -25,6 +26,11 @@
       "name": "Fresh macOS debug startup",
       "status": "PASS",
       "observation": "flutter build macos --debug --no-pub succeeded. A fresh flutter run reached the signed-out login/register screen and showed the configured API endpoint; no account login or mutating API action was performed."
+    },
+    {
+      "name": "Windows cross-platform tests, analysis and Release build",
+      "status": "PASS",
+      "observation": "GitVerse run 1678534 on the same source revision passed all 236 Flutter tests, analysis and flutter build windows --release."
     },
     {
       "name": "Cookie persistence across successful login and relaunch",
