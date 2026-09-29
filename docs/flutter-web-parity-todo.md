@@ -212,11 +212,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   вместо «успешного» чёрного трека. Flutter показывает исходное platform
   message, а не `PlatformException(...)` — реализация и 235 Flutter-тестов
   зафиксированы в [QA-98](../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json).
-- [ ] Собрать Windows Release с MSVC и проверить захват выбранных screen/window
-  sources, включая свёрнутое/недоступное окно; проверить обновления preview и
-  отсутствие чёрного трека. Текущий runner не имеет Visual Studio C++ toolchain;
-  Android APK проверяет только общую Flutter-часть, не этот Windows C++ код —
-  [QA-98](../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json).
+- [ ] На GitVerse Windows runner, где Release-сборка теперь проходит, проверить
+  захват выбранных screen/window sources, включая свёрнутое/недоступное окно;
+  проверить обновления preview и отсутствие чёрного трека. Runtime Windows C++
+  capture остаётся непроверенным — [QA-98](../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json),
+  [QA-81](../evidence/flutter/qa81-gitverse-windows-runner-ci-2026-09-29-004.json).
 
 ## P1 — Admin и переписка
 
