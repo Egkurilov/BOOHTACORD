@@ -1,10 +1,12 @@
 {
   "id": "QA-104",
   "kind": "gitverse-android-release-apks",
-  "status": "PASS_LOCAL_BUILD_AND_SIZE_GUARD_REMOTE_RELEASE_PENDING",
+  "status": "PASS",
   "executed_at": "2026-09-29",
-  "source_revision": "34d76ba",
-  "summary": "The GitVerse Android release workflow publishes three ABI-specific APKs rather than the universal APK, whose 107,753,250-byte size exceeds GitVerse's 100 MB per-asset limit.",
+  "source_revision": "db3eea4b7fbf76d7dba724f3d33b32660d152de9",
+  "run_url": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1679869",
+  "release_url": "https://gitverse.ru/egkurilov/BOOHTACORD/releases/tag/android-v1.0.3",
+  "summary": "The tag-triggered GitVerse workflow completed successfully and published three signed ABI-specific APKs to the android-v1.0.3 release, without adding binaries to Git.",
   "checks": [
     {
       "name": "Signed ABI-split Android release build",
@@ -23,10 +25,11 @@
       "observation": "The existing universal app-release.apk is 107,753,250 bytes, so it cannot be attached as one GitVerse release asset."
     },
     {
-      "name": "Tag-triggered GitVerse Release upload",
-      "status": "NOT_RUN",
-      "observation": "The workflow requires repository secrets for the GitVerse API key and Android upload keystore. Secrets are not available to inspect or set in this workspace; a matching android-v* tag has not been pushed."
+      "name": "Tag-triggered GitVerse Release build and upload",
+      "command": "GitVerse Android Release run 1679869",
+      "status": "PASS",
+      "observation": "The Windows runner completed the signed split-ABI release build and publication. Public release page lists BOOHTACORD-android-v1.0.3-arm64-v8a.apk (36.5 MiB), BOOHTACORD-android-v1.0.3-armeabi-v7a.apk (28.1 MiB), and BOOHTACORD-android-v1.0.3-x86_64.apk (42 MiB)."
     }
   ],
-  "remaining": "Configure GITVERSE_API_KEY and the four BOOHTACORD_ANDROID_* repository secrets, then push a tag matching the version in desktop/pubspec.yaml and confirm the three release assets are downloadable."
+  "remaining": "Install the appropriate ABI APK on a physical Android device and complete device acceptance; this evidence verifies build and public release assets, not runtime behavior."
 }
