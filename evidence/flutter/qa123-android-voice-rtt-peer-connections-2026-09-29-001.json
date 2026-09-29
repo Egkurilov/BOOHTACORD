@@ -1,0 +1,50 @@
+{
+  "id": "QA-123",
+  "kind": "android-voice-rtt-peer-connections",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "source_revision": "3d82f80",
+  "summary": "Android now reads voice RTT from both LiveKit publisher and subscriber peer connections. This fixed the reproduced blank ping on Pixel 7 when the local microphone was disabled; the room badge and persistent dock showed 92–103 ms.",
+  "checks": [
+    {
+      "name": "Voice connection RTT selection regression tests",
+      "command": "cd desktop && flutter test --no-pub test/voice_connection_quality_test.dart",
+      "status": "PASS",
+      "observation": "All 8 tests passed, including subscriber ICE-pair RTT, cross-connection audio RTT priority, and retaining a previous value when a connected stats sample has no RTT."
+    },
+    {
+      "name": "Full Flutter test suite and analyzer",
+      "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 262 tests passed and analyzer reported no issues."
+    },
+    {
+      "name": "LiveKit package tests and analyzer",
+      "command": "cd desktop/packages/livekit_client && flutter test --no-pub test/track/local_audio_rtt_test.dart && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "Both package tests passed and analyzer reported no issues. Stats retrieval isolates a failed peer connection so the other connection remains usable."
+    },
+    {
+      "name": "Android 1.0.8+12 signed split APK build",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Built arm64-v8a 38,328,845 bytes (SHA-256 5219541af4642b54fc2dde9fb1ee84160a057a398484d066d1c3f4c7d816946e), armeabi-v7a 29,490,275 bytes (SHA-256 3369f5ff9d2f9aafcbe974a3fa28080ae7d638b10c3242081111eab667febacb), and x86_64 44,083,078 bytes (SHA-256 a75dab697c294054f48ab4c5c6947b487f7fc0380e00268ce6461c86b133f968)."
+    },
+    {
+      "name": "Pixel 7 voice RTT acceptance",
+      "status": "PASS",
+      "observation": "Installed Android 1.0.8+12, joined SHARE_TEST with the microphone disabled, and observed a live 92–103 ms ping in both the connected-room badge and persistent dock. The room had only the local participant, so this verifies the active ICE path to the server but not a second participant's media path."
+    },
+    {
+      "name": "GitVerse Android release publication",
+      "status": "NOT_RUN",
+      "observation": "Local release build is ready; tag-triggered workflow and downloadable release assets have not yet been confirmed."
+    },
+    {
+      "name": "Second-participant and deafen acceptance",
+      "status": "NOT_RUN",
+      "observation": "No second participant was present. A deafen-toggle attempt did not complete reliably, so behavior with deafen enabled remains unverified."
+    }
+  ],
+  "remaining": "Publish android-v1.0.8 on GitVerse; verify RTT with a second participant and deafen enabled, then validate native/browser RTT behavior on macOS, Windows, and web."
+}

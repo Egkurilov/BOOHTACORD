@@ -42,6 +42,16 @@ conversation selects that conversation, while opening it from VOICE uses all
 conversations. This is covered for all three contexts —
 [QA-115](../evidence/flutter/qa115-search-scope-web-parity-2026-09-29-001.json).
 
+Android voice RTT was still blank in a physical Pixel 7 check because the
+listener/muted path can expose its selected ICE pair on the subscriber peer
+connection, not only the publisher. Flutter now samples both peer connections,
+prefers audio `remote-inbound-rtp` RTT when available, and retains the last
+measurement through an empty stats sample. Pixel 7 showed 92–103 ms in both the
+room badge and persistent dock with the microphone disabled —
+[QA-123](../evidence/flutter/qa123-android-voice-rtt-peer-connections-2026-09-29-001.json).
+Second-peer/deafen behavior and macOS, Windows and browser measurements remain
+open.
+
 Flutter search submission follows web `canSubmit`: the action and Enter handler
 remain inactive for an empty query. Search keeps a polite visible status while
 results are displayed or a subsequent page is loading, announcing the count and

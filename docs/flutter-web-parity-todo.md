@@ -127,16 +127,20 @@ peer/platform-проверки и выравниваем viewer с вебом.
   только после фактического подключения; voice/workspace widget tests и analyzer
   прошли — [QA-119](../evidence/flutter/qa119-voice-connection-transition-state-2026-09-29-001.json).
 - [x] Исправить пустой Android ping при выключенных микрофоне и удалённом звуке:
-  кроме audio `remote-inbound-rtp`, опрашивать publisher connection stats и
-  использовать RTT только выбранной ICE-пары. Все 259 Flutter tests, анализатор,
-  LiveKit package tests и подписанный split APK 1.0.7+11 прошли; GitVerse workflow
-  1681893 опубликовал три ABI APK. Физическая проверка peer остаётся открытой —
-  [QA-122](../evidence/flutter/qa122-android-voice-ice-rtt-fallback-2026-09-29-001.json).
+  собирать stats publisher и subscriber peer connections, приоритизировать audio
+  `remote-inbound-rtp`, выбирать ICE RTT отдельно внутри каждого соединения и
+  удерживать последнее измерение при пустом snapshot. На Pixel 7 после установки
+  1.0.8+12 ping показал 92–103 мс в room badge и dock при выключенном микрофоне;
+  262 Flutter tests, analyzer и LiveKit package checks прошли. Публикация
+  `android-v1.0.8` и проверка с другим участником/deafen остаются открыты —
+  [QA-123](../evidence/flutter/qa123-android-voice-rtt-peer-connections-2026-09-29-001.json).
 - [x] Убрать из компактного voice dock лишнюю стрелку, раскрываемую область и
   пояснение; оставить постоянный ряд voice-действий. Исправить ping: брать RTT
   связанного LiveKit `remote-inbound-rtp`, а не outbound report — unit/widget
   tests, полный Flutter suite, analyzer и подписанный Android split release
-  прошли; GitVerse release `android-v1.0.6` опубликован. Peer-проверка реального RTT остаётся открытой —
+  прошли; GitVerse release `android-v1.0.6` опубликован. Реальный Android RTT
+  теперь подтверждён на Pixel 7; другие платформы и проверка со вторым участником
+  остаются открыты —
   [QA-120](../evidence/flutter/qa120-voice-ping-compact-dock-2026-09-29-001.json).
 - [x] Добавить в постоянный voice dock start/stop демонстрации с тем же picker
   качества и источника, что и в voice viewer; блокировать запуск во время
