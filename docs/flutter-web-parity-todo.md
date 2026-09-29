@@ -126,6 +126,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   joining/connected/reconnecting/leaving/error/disconnected и показывать ping/quality
   только после фактического подключения; voice/workspace widget tests и analyzer
   прошли — [QA-119](../evidence/flutter/qa119-voice-connection-transition-state-2026-09-29-001.json).
+- [x] Исправить пустой Android ping при выключенных микрофоне и удалённом звуке:
+  кроме audio `remote-inbound-rtp`, опрашивать publisher connection stats и
+  использовать RTT только выбранной ICE-пары. Все 259 Flutter tests, анализатор,
+  LiveKit package tests и подписанный split APK 1.0.7+11 прошли; физическая
+  проверка peer и GitVerse workflow остаются открыты —
+  [QA-122](../evidence/flutter/qa122-android-voice-ice-rtt-fallback-2026-09-29-001.json).
 - [x] Убрать из компактного voice dock лишнюю стрелку, раскрываемую область и
   пояснение; оставить постоянный ряд voice-действий. Исправить ping: брать RTT
   связанного LiveKit `remote-inbound-rtp`, а не outbound report — unit/widget

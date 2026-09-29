@@ -1,0 +1,57 @@
+{
+  "id": "QA-122",
+  "kind": "android-voice-connection-ice-rtt-fallback",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "source_revision": "d8767f4",
+  "summary": "When microphone audio feedback is unavailable (including while muted), Flutter now polls the full publisher peer-connection stats and falls back to currentRoundTripTime from the selected ICE candidate pair. Audio remote-inbound RTT retains priority; stale/unselected candidate pairs are ignored. A signed Android 1.0.7+11 release was built locally.",
+  "checks": [
+    {
+      "name": "Voice connection RTT report selection tests",
+      "command": "cd desktop && flutter test --no-pub test/voice_connection_quality_test.dart",
+      "status": "PASS",
+      "observation": "Tests cover muted-microphone ICE RTT fallback, audio remote-inbound priority, ignoring unselected pairs and bounded conversion."
+    },
+    {
+      "name": "Voice UI integration tests",
+      "command": "cd desktop && flutter test --no-pub test/voice_connection_quality_test.dart test/voice_connection_badge_test.dart test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 52 tests passed."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 259 tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "LiveKit package audio RTT tests and analyzer",
+      "command": "cd desktop/packages/livekit_client && flutter test --no-pub test/track/local_audio_rtt_test.dart && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "Both package tests passed and analyzer reported no issues."
+    },
+    {
+      "name": "Android 1.0.7+11 signed split release",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "arm64 38,328,845 bytes; armeabi-v7a 29,490,275 bytes; x86_64 44,083,078 bytes. apksigner verified v2 on all three with the existing release certificate SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b."
+    },
+    {
+      "name": "Physical Android peer RTT validation",
+      "status": "NOT_RUN",
+      "observation": "No connected peer session was available to confirm that the device's selected ICE-pair report exposes currentRoundTripTime while both local microphone and playback are disabled."
+    },
+    {
+      "name": "GitVerse Android release workflow",
+      "status": "NOT_RUN",
+      "observation": "The android-v1.0.7 tag has not yet been published."
+    }
+  ],
+  "remaining": "Publish and confirm android-v1.0.7, then validate live ping with a physical Android device connected to a voice peer while muted and deafened."
+}
