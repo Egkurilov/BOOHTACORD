@@ -1462,6 +1462,27 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('message composer groups attachment and paste actions', (
+    tester,
+  ) async {
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Вложение и вставка'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Прикрепить файл'), findsOneWidget);
+    expect(find.text('Вставить из буфера'), findsOneWidget);
+    expect(find.byTooltip('Выбрать упоминание'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('shows a failed text send and retries the same client ID', (
     tester,
   ) async {

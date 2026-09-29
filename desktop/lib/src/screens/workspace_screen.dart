@@ -2269,13 +2269,40 @@ class _ConversationState extends State<_Conversation>
                     prefixIcon: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          tooltip: 'Прикрепить файл',
-                          onPressed: widget.state.sending || _attachmentsPending
-                              ? null
-                              : () => _attachmentComposerKey.currentState
-                                    ?.pickFiles(),
-                          icon: const Icon(Icons.add_circle_outline),
+                        PopupMenuButton<String>(
+                          tooltip: 'Вложение и вставка',
+                          enabled:
+                              !widget.state.sending && !_attachmentsPending,
+                          onSelected: (action) {
+                            if (action == 'file') {
+                              _attachmentComposerKey.currentState?.pickFiles();
+                            } else if (action == 'paste') {
+                              _pasteFromClipboard();
+                            }
+                          },
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(
+                              value: 'file',
+                              child: ListTile(
+                                dense: true,
+                                leading: Icon(Icons.attach_file),
+                                title: Text('Прикрепить файл'),
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'paste',
+                              child: ListTile(
+                                dense: true,
+                                leading: Icon(Icons.content_paste),
+                                title: Text('Вставить из буфера'),
+                              ),
+                            ),
+                          ],
+                          child: const SizedBox(
+                            width: 44,
+                            height: 48,
+                            child: Icon(Icons.add_circle_outline),
+                          ),
                         ),
                         _MentionPicker(
                           options: widget.state.members
@@ -4025,13 +4052,40 @@ class _DirectConversationState extends State<_DirectConversation> {
                     prefixIcon: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          tooltip: 'Прикрепить файл',
-                          onPressed: widget.state.sending || _attachmentsPending
-                              ? null
-                              : () => _attachmentComposerKey.currentState
-                                    ?.pickFiles(),
-                          icon: const Icon(Icons.add_circle_outline),
+                        PopupMenuButton<String>(
+                          tooltip: 'Вложение и вставка',
+                          enabled:
+                              !widget.state.sending && !_attachmentsPending,
+                          onSelected: (action) {
+                            if (action == 'file') {
+                              _attachmentComposerKey.currentState?.pickFiles();
+                            } else if (action == 'paste') {
+                              _pasteFromClipboard();
+                            }
+                          },
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(
+                              value: 'file',
+                              child: ListTile(
+                                dense: true,
+                                leading: Icon(Icons.attach_file),
+                                title: Text('Прикрепить файл'),
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'paste',
+                              child: ListTile(
+                                dense: true,
+                                leading: Icon(Icons.content_paste),
+                                title: Text('Вставить из буфера'),
+                              ),
+                            ),
+                          ],
+                          child: const SizedBox(
+                            width: 44,
+                            height: 48,
+                            child: Icon(Icons.add_circle_outline),
+                          ),
                         ),
                         _MentionPicker(
                           options: [
