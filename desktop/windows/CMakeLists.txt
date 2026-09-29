@@ -57,6 +57,11 @@ add_subdirectory("runner")
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# clipboard 3.0.14 treats its unused headerSize warning as an error under MSVC.
+if(TARGET clipboard_plugin)
+  target_compile_options(clipboard_plugin PRIVATE /wd4189)
+endif()
+
 
 # === Installation ===
 # Support files are copied into place next to the executable, so that it can
