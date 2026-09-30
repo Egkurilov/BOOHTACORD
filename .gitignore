@@ -5,6 +5,7 @@ dist/
 coverage/
 *.log
 *.exe
+artifacts/android/*.apk
 data/
 attachments/
 evidence/design/artifacts/

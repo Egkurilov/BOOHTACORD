@@ -91,7 +91,7 @@ sources: []
 
 ## Assumptions
 
-- Для маршрута доставки действует ADR-010 от 2026-09-26: GitVerse `master` — единственный production writer; QA-11 подтверждён доверенным run #1653749. Остальные runtime-evidence имеют собственные даты и пределы доказательства.
+- Для будущей доставки действует ADR-011 от 2026-09-30: GitHub `master` — единственный production writer. Доверенный GitHub run ещё нужен; GitVerse run #1653749 подтверждает только прежний маршрут. Остальные runtime-evidence имеют собственные даты и пределы доказательства.
 - Владелец продолжает владеть production secret material и выполняет bootstrap/recovery только в защищённом терминале согласно операторской документации.
 
 ## Open Questions

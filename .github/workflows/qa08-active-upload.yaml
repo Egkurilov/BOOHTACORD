@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   sample:
-    if: ${{ gitverse.ref_name == 'master' }}
+    if: ${{ github.ref_name == 'master' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:

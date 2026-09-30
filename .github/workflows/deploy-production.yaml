@@ -2,7 +2,7 @@ name: Deploy production
 
 on:
   push:
-    branches: [master, 'codex/**']
+    branches: [master]
     paths:
       - 'backend/**'
       - 'frontend/**'
@@ -11,7 +11,7 @@ on:
       - 'scripts/**'
       - 'compose.yaml'
       - '.env.example'
-      - '.gitverse/workflows/deploy-production.yaml'
+      - '.github/workflows/deploy-production.yaml'
   workflow_dispatch:
 
 permissions:
@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   backend:
-    runs-on: boohtacord-hetzner-db
+    runs-on: [self-hosted, linux, x64, boohtacord-hetzner-db]
     timeout-minutes: 15
     env:
       VOICE_PLATFORM_TEST_DATABASE_URL: postgres://voice_platform_test:test-only-password@127.0.0.1:15432/voice_platform_test?sslmode=disable
@@ -54,7 +54,7 @@ jobs:
           go vet ./...
 
   frontend:
-    runs-on: boohtacord-hetzner
+    runs-on: [self-hosted, linux, x64, boohtacord-hetzner]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -71,7 +71,7 @@ jobs:
           npm run build
 
   release_guard:
-    runs-on: boohtacord-hetzner
+    runs-on: [self-hosted, linux, x64, boohtacord-hetzner]
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -80,8 +80,9 @@ jobs:
         run: bash scripts/verify-release-guards.sh
 
   deploy:
-    if: ${{ gitverse.ref_name == 'master' }}
+    if: ${{ github.ref_name == 'master' }}
     needs: [backend, frontend, release_guard]
+    environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -103,9 +104,9 @@ jobs:
           [[ "$git_sha" =~ ^[0-9a-f]{40}$ ]]
           archive="${RUNNER_TEMP:?}/voice-platform-${git_sha}.tar.gz"
           git archive --format=tar HEAD | gzip -n > "$archive"
-          printf 'git_sha=%s\n' "$git_sha" >> "$GITVERSE_OUTPUT"
-          printf 'archive=%s\n' "$archive" >> "$GITVERSE_OUTPUT"
-          printf 'archive_sha256=%s\n' "$(sha256sum "$archive" | awk '{print $1}')" >> "$GITVERSE_OUTPUT"
+          printf 'git_sha=%s\n' "$git_sha" >> "$GITHUB_OUTPUT"
+          printf 'archive=%s\n' "$archive" >> "$GITHUB_OUTPUT"
+          printf 'archive_sha256=%s\n' "$(sha256sum "$archive" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
 
       - name: Transfer, build and perform guarded release
         shell: bash

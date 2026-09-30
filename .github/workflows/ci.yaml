@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, master]
+    branches: [master]
   workflow_dispatch:
 
 permissions:
@@ -19,12 +19,8 @@ jobs:
   frontend:
     uses: ./.github/workflows/ci-frontend.yaml
 
-  flutter-windows:
-    if: ${{ vars.WINDOWS_RUNNER_ENABLED == 'true' }}
-    uses: ./.github/workflows/ci-flutter-windows.yaml
-
   publish:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: [contracts, backend, frontend]
     runs-on: ubuntu-24.04
     permissions:
@@ -49,7 +45,7 @@ jobs:
           push: true
           sbom: true
           provenance: mode=max
-          tags: ghcr.io/${{ github.repository_owner }}/voice-platform-api:${{ github.sha }}
+          tags: ghcr.io/egkurilov/voice-platform-api:${{ github.sha }}
       - name: Build and push web image
         id: web-image
         uses: docker/build-push-action@v6
@@ -58,9 +54,9 @@ jobs:
           push: true
           sbom: true
           provenance: mode=max
-          tags: ghcr.io/${{ github.repository_owner }}/voice-platform-web:${{ github.sha }}
+          tags: ghcr.io/egkurilov/voice-platform-web:${{ github.sha }}
       - name: Publish digest-qualified release references
         id: image-refs
         run: |
-          echo "api_image=ghcr.io/${{ github.repository_owner }}/voice-platform-api@${{ steps.api-image.outputs.digest }}" >> "$GITHUB_OUTPUT"
-          echo "web_image=ghcr.io/${{ github.repository_owner }}/voice-platform-web@${{ steps.web-image.outputs.digest }}" >> "$GITHUB_OUTPUT"
+          echo "api_image=ghcr.io/egkurilov/voice-platform-api@${{ steps.api-image.outputs.digest }}" >> "$GITHUB_OUTPUT"
+          echo "web_image=ghcr.io/egkurilov/voice-platform-web@${{ steps.web-image.outputs.digest }}" >> "$GITHUB_OUTPUT"

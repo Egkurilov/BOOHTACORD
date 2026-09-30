@@ -97,7 +97,7 @@ docker compose --env-file .env.example -f compose.yaml config --quiet
 | Подключить мобильный клиент | [Контракт backend для мобильного клиента](contracts/mobile-client-contract.md) |
 | Разрабатывать платформенный клиент | [Web](clients/web/README.md), [Android](clients/android/README.md), [iOS](clients/ios/README.md) и [версии](docs/CLIENT_VERSIONING.md) |
 | Выполнить bootstrap, recovery и maintenance | [Операции администратора](docs/ADMIN_OPERATIONS.md) |
-| Настроить и проверить автоматическую поставку | [GitVerse Actions deployment](.gitverse/workflows/deploy-production.yaml) и [операционные требования](docs/ADMIN_OPERATIONS.md) |
+| Настроить и проверить автоматическую поставку | [GitHub Actions deployment](.github/workflows/deploy-production.yaml) и [операционные требования](docs/ADMIN_OPERATIONS.md) |
 | Провести реальную проверку game capture/audio | [Media prototype](docs/MEDIA_PROTOTYPE.md) и [POC-01 runbook](docs/POC_01_OPERATOR_RUNBOOK.md) |
 | Проверить интерфейс | [Спецификация UI](docs/UI_SPEC.md) |
 | Понять GuildChat design system и её фактический статус | [GuildChat v1: дизайн, планы и evidence](docs/design/GUILDCHAT_V1_STATUS.md) |
@@ -107,7 +107,7 @@ docker compose --env-file .env.example -f compose.yaml config --quiet
 
 ## Текущий статус доказательств
 
-Production smoke и runtime traces подтверждают доступность сервисов, HTTPS routing и отдельные media-сценарии, но не заменяют аппаратные POC, нагрузку и release gate. Подробные условия и результаты — в [delivery-and-verification](docs/specs/spec-voice-platform/delivery-and-verification.md), [verification backlog](backlog/VERIFICATION_TODO.md) и [evidence](evidence/README.md). Принятый [ADR-010](docs/adr/ADR-010-gitverse-delivery.md) закрепляет GitVerse `master` как маршрут поставки.
+Production smoke и runtime traces подтверждают доступность сервисов, HTTPS routing и отдельные media-сценарии, но не заменяют аппаратные POC, нагрузку и release gate. Подробные условия и результаты — в [delivery-and-verification](docs/specs/spec-voice-platform/delivery-and-verification.md), [verification backlog](backlog/VERIFICATION_TODO.md) и [evidence](evidence/README.md). [ADR-011](docs/adr/ADR-011-github-delivery.md) закрепляет GitHub `master` как маршрут поставки; доверенный GitHub run ещё требуется.
 
 ## Правила безопасности
 

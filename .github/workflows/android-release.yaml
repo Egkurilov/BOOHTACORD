@@ -6,21 +6,21 @@ on:
       - 'android-v*'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   android-release:
-    runs-on: boohtacord-windows
+    runs-on: [self-hosted, windows, x64, boohtacord-windows]
     steps:
       - name: Checkout release source
         uses: actions/checkout@v4
 
-      - name: Test idempotent GitVerse release publisher
+      - name: Test idempotent GitHub release publisher
         shell: powershell
         run: |
           node --version
           if ($LASTEXITCODE -ne 0) { throw 'Node.js is required for the release publisher.' }
-          node --test scripts/android_release/publish.test.mjs
+          node --test scripts/android_release/publish.test.mjs scripts/android_release/publish_retries.test.mjs scripts/android_release/publish_conflicts.test.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build signed ABI-specific APKs
@@ -70,7 +70,7 @@ jobs:
           }
           if ([string]::IsNullOrWhiteSpace($androidSdk) -or
               -not (Test-Path -LiteralPath (Join-Path $androidSdk 'platform-tools\adb.exe'))) {
-            throw 'Android SDK is missing on the boohtacord-windows runner.'
+            throw 'Android SDK is missing on the Windows runner.'
           }
           $env:ANDROID_SDK_ROOT = $androidSdk
           $env:ANDROID_HOME = $androidSdk
@@ -102,7 +102,7 @@ jobs:
               if (-not (Test-Path -LiteralPath $source)) { throw "Expected split APK missing: $source" }
               $file = Get-Item -LiteralPath $source
               if ($file.Length -gt 95000000) {
-                throw "APK exceeds the 95 MB safety ceiling for GitVerse release assets: $($file.Name) ($($file.Length) bytes)"
+                throw "APK exceeds the 95 MB release safety ceiling: $($file.Name) ($($file.Length) bytes)"
               }
               $destination = Join-Path $releaseAssets "BOOHTACORD-$($env:GITHUB_REF_NAME)-$($apk.Abi).apk"
               Copy-Item -LiteralPath $source -Destination $destination -Force
@@ -113,10 +113,10 @@ jobs:
             Remove-Item Env:\BOOHTACORD_ANDROID_KEYSTORE_FILE -ErrorAction SilentlyContinue
           }
 
-      - name: Publish GitVerse release and APK assets
+      - name: Publish GitHub release and APK assets
         shell: powershell
         env:
-          RELEASE_API_KEY: ${{ secrets.RELEASE_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $tag = $env:GITHUB_REF_NAME
           $assetRoot = 'desktop/build/release-assets'

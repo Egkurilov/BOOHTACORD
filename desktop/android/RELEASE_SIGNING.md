@@ -22,20 +22,19 @@ keyPassword=<private value>
 
 `storeFile` may be absolute or relative to `desktop/android/`. The file, `.jks`, and `.keystore` files are ignored by `desktop/android/.gitignore`. Keep the upload key for future updates; a different key cannot update an installed app signed with the original key.
 
-## GitVerse Releases
+## GitHub Releases
 
-The workflow [`.gitverse/workflows/android-release.yaml`](../../.gitverse/workflows/android-release.yaml)
+The workflow [`.github/workflows/android-release.yaml`](../../.github/workflows/android-release.yaml)
 starts when a tag like `android-v1.0.3` is pushed. The version before `+` in
 `desktop/pubspec.yaml` must match the tag. It builds and publishes three
 signed, ABI-specific APKs instead of the universal APK, which currently
-exceeds GitVerse's 100 MB per-file asset limit. Each APK is checked against a
-95 MB safety ceiling before upload. Install only the variant matching the
+is larger than the established per-asset safety ceiling. Each APK is checked
+against a 95 MB safety ceiling before upload. Install only the variant matching the
 device; most current phones use `arm64-v8a`.
 
 Configure these repository secrets before pushing a release tag:
 
-- `RELEASE_API_KEY`: GitVerse Public API key with repository write access,
-  required by the release action;
+- `GITHUB_TOKEN` is supplied automatically by GitHub Actions with `contents: write`;
 - `BOOHTACORD_ANDROID_KEYSTORE_BASE64`: base64-encoded upload keystore;
 - `BOOHTACORD_ANDROID_KEYSTORE_PASSWORD`;
 - `BOOHTACORD_ANDROID_KEY_ALIAS`;

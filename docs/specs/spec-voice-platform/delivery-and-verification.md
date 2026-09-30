@@ -2,7 +2,7 @@
 
 ## Current delivery baseline
 
-The source tree contains Go API, Vue client, Docker Compose topology, contracts, tests, operator documentation and evidence records. It has been published to the owner-controlled GitVerse remote `master`. This status is not a declaration that all product acceptance gates are closed.
+The source tree contains Go API, Vue client, Docker Compose topology, contracts, tests, operator documentation and evidence records. GitHub `master` is the selected source and delivery route under ADR-011; its first trusted deployment is not yet evidenced. This status is not a declaration that all product acceptance gates are closed.
 
 ## Validation commands
 
@@ -38,7 +38,7 @@ Other evidence records must be read individually with their stated scope. `PASS_
 3. **POC-03:** with real connected media, verify kick, ban, logout, session revocation and voice-channel close against reconnection plus previously issued API/SDK credentials.
 4. **Capacity:** run the approved load profile on selected infrastructure for 100 guild voice participants, up to 20 per room and the specified stream-publisher profile. Network quota and CPU scheduling must be measured, not inferred.
 5. **Security and UX:** finish negative ACL/privacy regression coverage, authenticated browser E2E and accessibility/screenshot acceptance at required desktop zooms.
-6. **CI/CD · QA-11 PASS:** Принятый ADR-010 определяет GitVerse `master` единственным production writer. [Trusted run #1653749](../../../evidence/release/qa11-gitverse-oci-2026-09-26-001.json) подтвердил PostgreSQL/no-skip, frontend/release guards, hash-verified `git archive HEAD`, retained API/web OCI index digests с SPDX SBOM и SLSA provenance, digest-pinned Compose, API health и post-rollout volume audit. GitHub/GHCR остаётся CI-only историческим маршрутом; live rollback QA-12 и общий release verdict QA-14 открыты.
+6. **CI/CD · миграция GitHub NOT_RUN:** ADR-011 определяет GitHub `master` production writer. [GitVerse run #1653749](../../../evidence/release/qa11-gitverse-oci-2026-09-26-001.json) подтвердил PostgreSQL/no-skip, frontend/release guards, hash-verified source archive, OCI digests с SBOM/provenance, digest-pinned Compose и health для прежнего маршрута. Новый GitHub route требует отдельного trusted run и evidence. GHCR workflow публикует образы по SHA, но production release пока использует локальную OCI-сборку. Live rollback QA-12 и общий release verdict QA-14 открыты.
 
 ## Release decision rule
 

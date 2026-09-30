@@ -32,36 +32,40 @@ unset RECOVERY_PASSWORD
 
 Владелец сервера обязан передавать password через controlled channel. Эти owner-operated commands не предоставляют backup, account discovery или обычный administration workflow.
 
-## Входные параметры GitVerse Actions
+## Входные параметры GitHub Actions
 
 ### Linux CI на Hetzner
 
 Задания `backend`, `frontend` и `release_guard` в `deploy-production.yaml`
-закреплены за двумя локальными раннерами репозитория на `167.233.56.32`:
-`hetzner-boohtacord` (GitVerse №11666, systemd
-`gitverse-runner-boohtacord.service`) и `boohtacord-hetzner-2` (№11667,
-`gitverse-runner-boohtacord-2.service`). Оба имеют метку
-`boohtacord-hetzner` и ёмкость в одно задание, поэтому `frontend` и
-`release_guard` могут выполняться параллельно на любом свободном раннере.
-При недоступности обоих задания ожидают восстановления без перехода на
-облачный раннер. Задание `deploy`, ручные операторские проверки и Flutter
-Windows CI сохраняют свои отдельные маршруты.
+требуют self-hosted GitHub runners на `167.233.56.32`. Зарегистрируйте оба
+хоста в **GitHub repository → Settings → Actions → Runners → New self-hosted
+runner**. На первом задайте метки `boohtacord-hetzner` и
+`boohtacord-hetzner-db`, на втором — `boohtacord-hetzner`; стандартные метки
+`self-hosted`, `linux`, `x64` добавляются runner автоматически. Установите
+runner как сервис под отдельным непривилегированным account, проверьте статус
+обоих сервисов и их `Idle` в GitHub. Токен регистрации GitHub одноразовый;
+не сохраняйте его в Git, журнале или evidence. Остановите прежние GitVerse
+runner services после регистрации, чтобы не выполнять задания из двух систем.
+Каждый runner выполняет одно задание; `frontend` и `release_guard` могут
+работать параллельно. При недоступности обоих задания ждут восстановления.
 
 `backend` использует дополнительную метку `boohtacord-hetzner-db`, которая
-есть только у №11666: так параллельные сборки не меняют одну тестовую БД.
+должна быть только у первого runner: так параллельные сборки не меняют одну тестовую БД.
 Для `backend` на Hetzner служит отдельный контейнер `boohtacord-ci-postgres`
 с тестовой БД. Он слушает только `127.0.0.1:15432`, хранит данные в `tmpfs` и
 не связан с production PostgreSQL. Перед проверкой Go workflow выполняет
 аутентифицированный запрос `SELECT 1` к этой БД. На хосте раннера также должны
-быть доступны `psql` и PowerShell 7.6.6. Состояние раннера проверяйте на
-странице настроек GitVerse, а состояние тестовой БД — через Docker health.
+быть доступны `psql` и PowerShell 7.6.6. Состояние runners проверяйте на
+странице настроек GitHub, а состояние тестовой БД — через Docker health.
 
 Сборка OCI-образов API и web при production-доставке пока выполняется на
-release-хосте `176.108.242.211` по принятому в ADR-010 маршруту. Перенос
+release-хосте `176.108.242.211` по принятому в ADR-011 маршруту. Перенос
 этого этапа на Hetzner потребует отдельной проверки передачи OCI-архивов,
 digest, SBOM и provenance.
 
-Workflow [`.gitverse/workflows/deploy-production.yaml`](../.gitverse/workflows/deploy-production.yaml) запускается только после успешных Go и Vue checks на trusted `push` в `master` или вручную из `master`. Для запуска требуется один repository secret: `DEPLOY_SSH_PRIVATE_KEY`. Он должен соответствовать публичному ключу, уже установленному в `authorized_keys` пользователя `shaneque` на утверждённом production-хосте `176.108.242.211`. Адрес, пользователь и host key зафиксированы в workflow для этого единственного окружения; PostgreSQL, LiveKit и файл `.env` не передаются в CI.
+Workflow [`.github/workflows/deploy-production.yaml`](../.github/workflows/deploy-production.yaml) запускается только после успешных Go и Vue checks на trusted `push` в `master` или вручную из `master`. Создайте GitHub environment `production`; включите требуемую владельцем защиту ветки `master` и ограничьте environment этой веткой. В GitHub Actions создайте `DEPLOY_SSH_PRIVATE_KEY` как repository или `production` environment secret: это существующий приватный ключ к `authorized_keys` пользователя `shaneque` на утверждённом production-хосте `176.108.242.211`. Значение из GitVerse автоматически не переносится; берите его только из защищённого хранилища владельца. Адрес, пользователь и host key зафиксированы в workflow для этого единственного окружения; PostgreSQL, LiveKit и файл `.env` не передаются в CI.
+
+Windows runner зарегистрируйте в том же GitHub-репозитории с меткой `boohtacord-windows` и стандартными `self-hosted`, `windows`, `x64`. Требуются Flutter 3.47.5 по `%USERPROFILE%\develop\flutter`, Android SDK, Node.js и разрешённые long paths; после регистрации выполните ручной `Flutter Windows CI` и проверьте tests/analyze/build. Для подписанного Android release перенесите в GitHub четыре `BOOHTACORD_ANDROID_*` secrets из защищённого хранилища, затем запустите tag workflow. Встроенный `GITHUB_TOKEN` публикует assets с `contents: write`; отдельный `RELEASE_API_KEY` не нужен. macOS workflows остаются ручными до регистрации macOS GitHub runner с `self-hosted`, `macos`.
 
 Workflow закрепляет проверенный ED25519 host key deployment-сервера в `known_hosts`; он не использует `ssh-keyscan`, `StrictHostKeyChecking=accept-new` или интерактивный SSH. Изменение host key намеренно останавливает поставку до отдельной owner-проверки и обновления workflow.
 

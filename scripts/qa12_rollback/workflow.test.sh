@@ -2,7 +2,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-workflow="$root/.gitverse/workflows/rehearse-compatible-rollback.yaml"
+workflow="$root/.github/workflows/rehearse-compatible-rollback.yaml"
 [[ -r "$workflow" ]]
 grep -Fq 'workflow_dispatch:' "$workflow"
 grep -Fq 'current_sha:' "$workflow"

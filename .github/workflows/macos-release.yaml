@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   macos-release:
@@ -64,11 +64,10 @@ jobs:
             "$RELEASE_TAG" \
             desktop/build/release-assets
 
-      - name: Publish GitVerse release
-        uses: actions/create-release@v1
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v3
         with:
-          api_key: ${{ secrets.RELEASE_API_KEY }}
-          title: BOOHTACORD macOS ${{ github.ref_name }}
+          name: BOOHTACORD macOS ${{ github.ref_name }}
           body: |
             Universal macOS app for version ${{ github.ref_name }} (Apple Silicon and Intel).
 
@@ -79,4 +78,4 @@ jobs:
             desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}.zip
             desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}.zip.sha256
           draft: false
-          pre_release: false
+          prerelease: false

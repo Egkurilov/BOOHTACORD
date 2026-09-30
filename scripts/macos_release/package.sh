@@ -44,6 +44,6 @@ checksum="$archive.sha256"
 
 "$ditto" -c -k --sequesterRsrc --keepParent "$app" "$archive"
 archive_size="$("$stat" -f '%z' "$archive")"
-[[ "$archive_size" -le 95000000 ]] || fail "ZIP exceeds the 95 MB GitVerse asset safety ceiling ($archive_size bytes)"
+[[ "$archive_size" -le 95000000 ]] || fail "ZIP exceeds the 95 MB release asset safety ceiling ($archive_size bytes)"
 (cd "$output_dir" && "$shasum" -a 256 "$archive_name") > "$checksum"
 printf 'Prepared %s (%s bytes)\n' "$archive" "$archive_size"

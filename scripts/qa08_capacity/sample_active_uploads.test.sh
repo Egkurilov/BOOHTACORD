@@ -43,10 +43,10 @@ if bash "$root/scripts/qa08_capacity/sample_active_uploads.sh" invalid > "$fixtu
   printf 'expected invalid revision to fail\n' >&2
   exit 1
 fi
-workflow="$root/.gitverse/workflows/qa08-active-upload.yaml"
+workflow="$root/.github/workflows/qa08-active-upload.yaml"
 grep -Fq 'workflow_dispatch:' "$workflow"
 grep -Fq 'operator_ready:' "$workflow"
-grep -Fq "gitverse.ref_name == 'master'" "$workflow"
+grep -Fq "github.ref_name == 'master'" "$workflow"
 grep -Fq 'scripts/qa08_capacity/sample_active_uploads.sh' "$workflow"
 if grep -Eq '^  push:|^  pull_request:' "$workflow"; then
   printf 'sampler workflow must be manual only\n' >&2

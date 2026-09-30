@@ -1,7 +1,6 @@
 name: Flutter macOS CI
 
-# Temporary: automatic runs stay off until a macOS runner is provisioned.
-# Keep manual dispatch available for an intentional run after the runner returns.
+# Keep manual dispatch until a GitHub macOS runner is provisioned.
 on:
   workflow_dispatch:
 

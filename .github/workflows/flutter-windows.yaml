@@ -5,7 +5,7 @@ on:
     branches: [master]
     paths:
       - 'desktop/**'
-      - '.gitverse/workflows/flutter-windows.yaml'
+      - '.github/workflows/flutter-windows.yaml'
       - 'scripts/android_release/**'
   workflow_dispatch:
 
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   windows:
-    runs-on: boohtacord-windows
+    runs-on: [self-hosted, windows, x64, boohtacord-windows]
     steps:
       - name: Enable long paths for Windows checkout
         shell: powershell
@@ -71,12 +71,12 @@ jobs:
         run: |
           & "$env:USERPROFILE\develop\flutter\bin\flutter.bat" test --no-pub
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Test GitVerse Android release publisher
+      - name: Test GitHub Android release publisher
         shell: powershell
         run: |
           node --version
           if ($LASTEXITCODE -ne 0) { throw 'Node.js is required for the release publisher tests.' }
-          node --test scripts/android_release/publish.test.mjs
+          node --test scripts/android_release/publish.test.mjs scripts/android_release/publish_retries.test.mjs scripts/android_release/publish_conflicts.test.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Analyze Flutter client
         working-directory: desktop

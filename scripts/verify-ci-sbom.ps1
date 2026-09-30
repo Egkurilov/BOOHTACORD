@@ -6,7 +6,10 @@ $workflow = Get-Content -LiteralPath (Join-Path $projectRoot '.github/workflows/
 $publisherSteps = @()
 
 if ($workflow -match '(?m)^  deploy:') {
-    throw 'GitHub CI must not be a second production writer; see ADR-010.'
+    throw 'CI publisher must not be a second production writer; see ADR-011.'
+}
+if ($workflow -notmatch "github\.ref == 'refs/heads/master'") {
+    throw 'GHCR publisher must run on GitHub master.'
 }
 
 foreach ($name in @('API', 'web')) {
@@ -25,8 +28,8 @@ foreach ($name in @('API', 'web')) {
 }
 
 foreach ($reference in @(
-    'api_image=ghcr.io/${{ github.repository_owner }}/voice-platform-api@${{ steps.api-image.outputs.digest }}',
-    'web_image=ghcr.io/${{ github.repository_owner }}/voice-platform-web@${{ steps.web-image.outputs.digest }}'
+    'api_image=ghcr.io/egkurilov/voice-platform-api@${{ steps.api-image.outputs.digest }}',
+    'web_image=ghcr.io/egkurilov/voice-platform-web@${{ steps.web-image.outputs.digest }}'
 )) {
     if (-not $workflow.Contains($reference)) {
         throw "Missing digest-qualified release reference: $reference"
