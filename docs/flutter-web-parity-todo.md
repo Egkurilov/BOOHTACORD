@@ -12,9 +12,11 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
 - [ ] На подписанной macOS release-сборке проверить запуск и сохранение сессии
   через перезапуск; подтвердить ожидаемый повторный вход для cookies, ранее
   сохранённых в legacy Keychain. Debug-клиент после свежего запуска восстановил
-  существующую авторизованную сессию; universal macOS Release 1.0.12 теперь
-  локально собирается и упаковывается с валидной ad-hoc подписью, но Developer
-  ID/notarization и runtime-проверка запуска/сессии остаются открытыми —
+  существующую авторизованную сессию; universal macOS Release 1.0.13 (18)
+  локально собран из текущего source, обе архитектуры и ad-hoc подпись прошли
+  проверку — [QA-151](../evidence/flutter/qa151-macos-release-current-source-build-2026-09-30-001.json).
+  Developer ID/notarization и runtime-проверка запуска/сессии остаются открытыми;
+  предыдущая release-упаковка проходит asset-limit gate —
   [QA-135](../evidence/release/macos-v1.0.12-local-2026-09-30-001.json).
   На этом Mac нет valid Developer ID signing identity —
   [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
