@@ -40,39 +40,28 @@ jobs:
           $env:FLUTTER_ROOT = Join-Path $env:USERPROFILE 'develop\flutter'
           & "$env:FLUTTER_ROOT\bin\flutter.bat" pub get --enforce-lockfile
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Materialize Windows plugins for CMake
+      - name: Point CMake at Windows plugin sources
         working-directory: desktop
         shell: powershell
         run: |
-          # This host's CMake cannot read Flutter plugin files through reparse points.
+          # Flutter creates plugin links; this host's CMake cannot read through them.
           $metadata = Get-Content -Raw .flutter-plugins-dependencies | ConvertFrom-Json
-          $linkRoot = Join-Path (Get-Location) 'windows\flutter\ephemeral\.plugin_symlinks'
-          New-Item -ItemType Directory -Force -Path $linkRoot | Out-Null
-
+          $cmakeFile = Join-Path (Get-Location) 'windows\flutter\generated_plugins.cmake'
+          $content = [System.IO.File]::ReadAllText($cmakeFile)
+          $sourceLines = @()
           foreach ($plugin in $metadata.plugins.windows) {
             $pluginRoot = [System.IO.Path]::GetFullPath($plugin.path)
             $pluginCMake = Join-Path $pluginRoot 'windows\CMakeLists.txt'
             if (-not (Test-Path -LiteralPath $pluginCMake)) { continue }
-
-            $link = Join-Path $linkRoot $plugin.name
-            $linkedCMake = Join-Path $link 'windows\CMakeLists.txt'
-            $existing = Get-Item -LiteralPath $link -Force -ErrorAction SilentlyContinue
-            if ($existing -and $existing.LinkType) {
-              $savedLink = Join-Path $linkRoot ("$($plugin.name).original-link")
-              if (Test-Path -LiteralPath $savedLink) {
-                throw "Flutter plugin link backup already exists: $savedLink"
-              }
-              Rename-Item -LiteralPath $link -NewName (Split-Path -Leaf $savedLink)
-              $existing = $null
-            }
-            if ($existing -and -not (Test-Path -LiteralPath $linkedCMake)) {
-              throw "Flutter plugin package is incomplete: $link"
-            }
-            if (-not $existing) { Copy-Item -LiteralPath $pluginRoot -Destination $link -Recurse }
-            if (-not (Test-Path -LiteralPath $linkedCMake)) {
-              throw "Could not copy Windows Flutter plugin '$($plugin.name)' from '$pluginRoot'"
-            }
+            if ($plugin.name -notmatch '^[a-z0-9_]+$' -or $pluginRoot -match '[";`r`n]') { throw 'Unsupported plugin name or path' }
+            $sourceLines += "set(BOOHTACORD_PLUGIN_SOURCE_$($plugin.name) `"$($pluginRoot.Replace('\','/'))`")"
           }
+          $pluginPath = 'flutter/ephemeral/.plugin_symlinks/${plugin}/windows'
+          $ffiPath = 'flutter/ephemeral/.plugin_symlinks/${ffi_plugin}/windows'
+          if (-not $content.Contains($pluginPath) -or -not $content.Contains($ffiPath)) { throw 'Unexpected generated CMake file' }
+          $content = $content.Replace($pluginPath, '"${BOOHTACORD_PLUGIN_SOURCE_${plugin}}/windows"')
+          $content = $content.Replace($ffiPath, '"${BOOHTACORD_PLUGIN_SOURCE_${ffi_plugin}}/windows"')
+          [System.IO.File]::WriteAllText($cmakeFile, (($sourceLines -join "`n") + "`n" + $content), [System.Text.UTF8Encoding]::new($false))
       - name: Run Flutter tests
         working-directory: desktop
         shell: powershell
