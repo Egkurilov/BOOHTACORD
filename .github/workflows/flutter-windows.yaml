@@ -28,8 +28,10 @@ jobs:
       - name: Verify installed Flutter 3.47.5
         shell: powershell
         run: |
-          $version = (flutter --version --machine | ConvertFrom-Json).frameworkVersion
-          if ($LASTEXITCODE -ne 0 -or $version -ne '3.47.5') { throw "Expected Flutter 3.47.5, got $version" }
+          $versionOutput = @(flutter --version)
+          if ($LASTEXITCODE -ne 0 -or (($versionOutput -join "`n") -notmatch '(?m)^Flutter 3\.47\.5\b')) {
+            throw "Expected Flutter 3.47.5, got $($versionOutput -join ' ')"
+          }
       - name: Resolve locked Flutter dependencies
         working-directory: desktop
         shell: powershell
