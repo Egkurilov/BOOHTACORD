@@ -1,0 +1,56 @@
+{
+  "id": "user-media-telemetry-2026-10-01",
+  "kind": "observability-integration",
+  "status": "PASS_STATIC_PARTIAL_RUNTIME",
+  "executed_at": "2026-09-30T21:25:17.148609+00:00",
+  "revision": "ccdcfe3655c103e9f0ac8369ee0f031a1622384b",
+  "observer": "Codex",
+  "environment": {
+    "validation_host": "Windows amd64",
+    "tempo": "2.10.3 on private monitoring host",
+    "grafana": "13.0.2, existing boohtacord-traces dashboard",
+    "clients": "Vue web and shared Flutter source"
+  },
+  "scenario": {
+    "expected": [
+      "Server-authenticated account/session attached to bounded fresh media.sample spans",
+      "RTT, bitrate, FPS, ten-second interval packet loss, target and measured stream dimensions",
+      "Readable profile name with stable UUID selection in Grafana"
+    ]
+  },
+  "results": {
+    "go_full": "PASS: go test -count=1 ./... after display-name change",
+    "web": "PASS: full Vitest suite and production build; additional connection/admin compatibility tests; production CI 36776427616",
+    "flutter": "PASS: 305 full-suite tests, then focused receiver/platform/admin regression tests; flutter analyze lib test",
+    "android_build": "PASS: local debug APK; no signed release published for this change",
+    "windows_build": "PASS: GitHub Flutter Windows CI 36776426932 including release build",
+    "contracts": "PASS: scripts/verify-contracts.ps1",
+    "dashboard_contracts": "PASS: 7 Python tests, including duplicate names, rename, special characters, UUID extraction and grouping",
+    "tempo_queries": "PASS: all 13 dashboard queries return HTTP 200 against deployed Tempo",
+    "media_production_deploy": "PASS: 57cb4a36, production workflow 36776427051",
+    "name_production_deploy": "PASS: ccdcfe36, production workflow 36778042044",
+    "grafana_import": "PASS: final b8a4843d dashboard saved under existing UID; real profile names in dropdown and summary. Selecting one name leaves only that UUID in URL and session rows.",
+    "live_media": "PASS_PARTIAL: 16 real Android sender traces with verified account/session; 15 RTT, 14 bitrate, 15 encoded FPS samples",
+    "live_names": "PASS: 34 fresh production spans had non-empty profile name; all 34 readable labels matched the verified account ID. Grafana dropdown and session summary display real profile names.",
+    "name_ci": "PASS: all required jobs completed, workflow 36778042301",
+    "latest_delivery": "PASS: b8a4843d; production workflow 36778640373 and full CI including image publication 36778640759 both completed successfully."
+  },
+  "artifacts": [
+    "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36776427051",
+    "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36776427616",
+    "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36776426932",
+    "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36778042044",
+    "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36778042301",
+    "docker/observability/dashboards/traces.json",
+    "docs/OBSERVABILITY_TRACES.md",
+    "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36778640373",
+    "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36778640759"
+  ],
+  "limitations": [
+    "Physical iOS/macOS/Windows media and native iOS build NOT_RUN on this Windows host.",
+    "Updated native app required for new packet-loss and target-profile fields; existing installed Android client sends the old numeric subset.",
+    "NOT_RUN: live receiver and new percent/window/target-profile fields on updated clients; requested fresh web test did not arrive during verification. Numeric ingestion and client reporting covered by native tests.",
+    "This record does not close hardware media capacity or signed application release gates.",
+    "No private user names, account/session identifiers, tokens or media payload are stored in this evidence."
+  ]
+}

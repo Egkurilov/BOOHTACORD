@@ -54,7 +54,7 @@ Files: `docker/observability/dashboards/traces.json`, `scripts/observability/tes
 - [x] Add a dedicated media samples table and keep routine samples out of the user-action panels. Explain sender vs receiver, missing values, sample age and bounded search.
 - [x] Validate TraceQL against private deployed Tempo and dashboard response field names in Grafana.
 - [x] Inspect status/diff/file sizes, commit exact files, integrate current master and push. Wait for CI/deploy, update Grafana and verify stored sample attributes.
-- [ ] Record live evidence and any unsupported platform/device checks without claiming unmeasured media capacity.
+- [x] Record live evidence and any unsupported platform/device checks without claiming unmeasured media capacity.
 
 ## Packet 5 — readable authenticated profile names (user follow-up)
 
@@ -62,4 +62,4 @@ Files: `docker/observability/dashboards/traces.json`, `scripts/observability/tes
 - [x] Test forged headers, missing identities, renames and duplicate names. Keep the session hash unchanged.
 - [x] Show name plus ID in the user dropdown with UUID as its value; retain stable grouping, old ID links and unnamed history.
 - [x] Add name columns to summaries and history, validate TraceQL on deployed Tempo.
-- [ ] Deploy and verify real profile names and media sample attributes; record evidence.
+- [x] Deploy and verify real profile names and available media sample attributes; record partial runtime limits in evidence/observability/2026-10-01-user-media.json.
