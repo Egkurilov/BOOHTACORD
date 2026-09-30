@@ -1,0 +1,67 @@
+{
+  "id": "otel-session-correlation-2026-09-30-001",
+  "kind": "observability-integration-release",
+  "status": "PASS",
+  "observed_at": "2026-09-30T20:35:00Z",
+  "observer": "Codex",
+  "environment": "Production API, Tempo 2.10.3, Grafana 13.0.2; Windows development host",
+  "revisions": {
+    "authenticated_correlation": "36770a86d97c152d43e4b0f4e17501b4aa3444b6",
+    "deployed_dashboard": "fe9f815dfea8f1a37967f035867df665c00f8c82"
+  },
+  "scenario": "Correlate independent authenticated API traces by verified account and session; group requests into navigable sessions in Grafana.",
+  "results": [
+    {
+      "check": "Server identity and preservation",
+      "status": "PASS",
+      "observations": [
+        "Focused tests were written first and failed before implementation.",
+        "Require and Optional attach verified user.id and a domain-separated session.id without exporting the session token or digest.",
+        "Tests cover stable/distinct session identifiers, anonymous/zero-digest cases, failed authentication and forged identity headers.",
+        "Focused Go tests, affected-package go vet and the full local go test -count=1 ./... command passed. CI also passed the PostgreSQL-backed backend gate."
+      ]
+    },
+    {
+      "check": "Dashboard contracts and real Tempo responses",
+      "status": "PASS",
+      "observations": [
+        "All five Python dashboard tests passed; the workflow validation script passed.",
+        "All 11 dashboard TraceQL queries returned HTTP 200 from deployed Tempo.",
+        "Tempo returned unscoped response keys user.id and session.id; Grafana groupBy uses these exact keys while TraceQL uses span.user.id and span.session.id.",
+        "Native service filters include web, android, ios, windows and macos. Background workers are separated; WebSocket lifetime is excluded from slow HTTP requests."
+      ]
+    },
+    {
+      "check": "Saved Grafana UI and drilldown",
+      "status": "PASS",
+      "observations": [
+        "Updated the existing boohtacord-traces dashboard and verified the saved view in the authenticated browser.",
+        "13 independent request traces grouped into one session row: mean duration 5.18 ms, maximum 25.2 ms.",
+        "Clicking the session set both user and session filters; the request timeline exposed valid trace/span links.",
+        "A subsequent private Tempo check returned 22 correlated request traces and confirmed expected attribute names without printing identifier values."
+      ],
+      "artifacts": [
+        "https://grafana.fa.shaneque.ru/d/boohtacord-traces/boohtacord-7c-traces"
+      ]
+    },
+    {
+      "check": "GitHub delivery",
+      "status": "PASS",
+      "observations": [
+        "Both implementation commits were integrated into GitHub master.",
+        "Production deployment succeeded for the final dashboard revision.",
+        "CI backend, frontend, contracts and container publication passed for that revision."
+      ],
+      "artifacts": [
+        "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36773001225",
+        "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36773001852"
+      ]
+    }
+  ],
+  "limits": [
+    "Session aggregates describe a bounded search sample: at most 500 traces and 50 matching spans per trace, not exact total traffic.",
+    "Old traces cannot acquire user/session attributes retroactively and remain available in diagnostics.",
+    "Client-only traces without a correlated API span remain in diagnostics; delayed client batches are not attributed to the current login.",
+    "No new live voice or screen-sharing action was exercised after this rollout; the proof covers authenticated HTTP grouping, query validity and navigation."
+  ]
+}
