@@ -181,6 +181,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-18](../evidence/flutter/qa18-prejoin-voice-roster-2026-09-27-001.json),
   [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json),
   [QA-136](../evidence/flutter/qa136-untrusted-commit-review-and-regression-2026-09-30-001.json).
+- [x] Не терять roster invalidation, приходящий во время загрузки исходного SSE
+  snapshot: подписываться до ACL-проверенного чтения и затем сразу перечитывать
+  roster по накопленному событию. Новый тест сначала воспроизводит timeout на
+  старом порядке, затем проходит после исправления; package race detector и
+  полный backend suite проходят —
+  [QA-137](../evidence/flutter/qa137-realtime-roster-initial-snapshot-race-2026-09-30-001.json).
 - [x] Добавить лёгкий thumbnail в карточки экранов: публиковать JPEG не чаще
   раза в 4 секунды и не более 14 KiB; проверять сигнатуру/размер до отображения,
   очищать превью при disconnect. Web/Flutter unit и widget suites прошли —

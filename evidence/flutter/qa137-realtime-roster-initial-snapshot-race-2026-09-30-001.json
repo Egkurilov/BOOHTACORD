@@ -1,0 +1,40 @@
+{
+  "id": "QA-137",
+  "kind": "realtime-roster-initial-snapshot-race",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "1f085f2af159291af86a81329b95799af53c71c4",
+  "summary": "Fixed a lost-invalidation race in authenticated voice-roster SSE: the handler now subscribes before loading its initial ACL-checked snapshot. Changes arriving during the query remain queued and trigger a fresh snapshot. The live two-account/server roster acceptance remains open.",
+  "checks": [
+    {
+      "name": "Regression test before fix",
+      "command": "go test ./internal/voice/watch_connected_participants -run TestStreamDoesNotMissChangeDuringInitialSnapshot -count=1",
+      "status": "FAIL_EXPECTED",
+      "observation": "Reproduced the bug: the first snapshot arrived, the notification emitted during List was lost, and the stream timed out with one List call."
+    },
+    {
+      "name": "Roster SSE package tests after fix",
+      "command": "GOCACHE=/tmp/boohtacord-review-go-cache go test ./internal/voice/watch_connected_participants -count=1",
+      "status": "PASS",
+      "observation": "Initial snapshot, notification refresh and notification-during-initial-snapshot tests pass."
+    },
+    {
+      "name": "Roster SSE race detector",
+      "command": "GOCACHE=/tmp/boohtacord-review-go-cache go test -race ./internal/voice/watch_connected_participants -count=1",
+      "status": "PASS",
+      "observation": "The changed package passes under Go's race detector."
+    },
+    {
+      "name": "Complete backend suite",
+      "command": "GOCACHE=/tmp/boohtacord-review-go-cache go test ./...",
+      "status": "PASS",
+      "observation": "All backend packages pass after the fix. Local httptest requires permission to bind loopback ports."
+    },
+    {
+      "name": "Live two-account and deployed webhook verification",
+      "status": "NOT_RUN",
+      "observation": "No deployed LiveKit webhook/SSE stream or cross-account privacy session was exercised."
+    }
+  ],
+  "remaining": "Verify room join/leave and screen-share invalidation against the deployed webhook with two separate accounts, including disconnect/reconnect, ACL isolation and visible refresh latency."
+}
