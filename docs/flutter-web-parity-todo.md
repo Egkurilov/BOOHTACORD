@@ -307,6 +307,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
 
 - [ ] Проверить administrator REST ACL на работающем backend: роль, блокировка, topology, reset-link, voice kick и audit через два аккаунта.
 - [ ] Проверить серверную очистку `UNATTACHED` вложений через 24 часа и восстановление после сбоя на реальном deployment; клиентского DELETE-контракта нет. Пройти live 507/partial-upload UX на TEXT/DM и устройствах.
+- [x] Для macOS sandbox разрешить запись только в выбранный пользователем путь,
+  поскольку скачивание вложения пишет байты после `NSSavePanel`; сохранить
+  `app-sandbox` и не запрашивать общий доступ к файлам. Debug/Release entitlements
+  теперь указывают `user-selected.read-write`, формат валиден, Release bundle
+  universal и ad-hoc signature проходит проверку. Реальное сохранение из UI и
+  notarized/Developer ID distribution остаются непроверенными.
 - [ ] Проверить edit/delete 409 и idempotent send retry с реальным backend и физическим устройством, включая удаление во время редактирования и смену диалога.
 - [ ] Проверить reply context, pagination/scroll anchoring и read cursors на границах страниц и при realtime updates.
 - [x] Сохранять несданный TEXT/DM черновик при переключении бесед и восстановить

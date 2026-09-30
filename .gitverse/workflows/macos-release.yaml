@@ -1,0 +1,82 @@
+name: macOS Release
+
+on:
+  push:
+    tags:
+      - 'macos-v*'
+
+permissions:
+  contents: read
+
+jobs:
+  macos-release:
+    runs-on: [self-hosted, macos]
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter 3.47.5
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+          cache: true
+
+      - name: Verify Flutter toolchain and release tag
+        working-directory: desktop
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          flutter --version
+          app_version="$(sed -E -n 's/^version: *([0-9][0-9.]*)\+[0-9][0-9]*$/\1/p' pubspec.yaml)"
+          if [[ -z "$app_version" || "$RELEASE_TAG" != "macos-v$app_version" ]]; then
+            echo "Release tag $RELEASE_TAG does not match desktop/pubspec.yaml version $app_version" >&2
+            exit 1
+          fi
+
+      - name: Resolve locked Flutter dependencies
+        working-directory: desktop
+        run: flutter pub get --enforce-lockfile
+
+      - name: Test release packaging
+        run: bash scripts/macos_release/package.test.sh
+
+      - name: Run Flutter tests
+        working-directory: desktop
+        run: flutter test
+
+      - name: Analyze Flutter client
+        working-directory: desktop
+        run: flutter analyze --no-fatal-infos
+
+      - name: Build universal macOS release client
+        working-directory: desktop
+        run: flutter build macos --release --no-pub
+
+      - name: Package app and checksum
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          bash scripts/macos_release/package.sh \
+            desktop/build/macos/Build/Products/Release/BOOHTACORD.app \
+            "$RELEASE_TAG" \
+            desktop/build/release-assets
+
+      - name: Publish GitVerse release
+        uses: actions/create-release@v1
+        with:
+          api_key: ${{ secrets.RELEASE_API_KEY }}
+          title: BOOHTACORD macOS ${{ github.ref_name }}
+          body: |
+            Universal macOS app for version ${{ github.ref_name }} (Apple Silicon and Intel).
+
+            The app is ad-hoc signed and is not notarized by Apple. Gatekeeper may require the user to approve opening the downloaded app.
+
+            Verify the ZIP with the included SHA-256 checksum before extracting it.
+          files: |
+            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}.zip
+            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}.zip.sha256
+          draft: false
+          pre_release: false
