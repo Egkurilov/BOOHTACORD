@@ -425,6 +425,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
 ## P1 — Admin и переписка
 
 - [ ] Проверить administrator REST ACL на работающем backend: роль, блокировка, topology, reset-link, voice kick и audit через два аккаунта.
+- [x] Согласовать отправку TEXT/DM с мобильной клавиатурой: показывать action `Send` и отправлять по `onSubmitted`; в TEXT сохранять многострочный ввод и Shift+Enter. Flutter widget-тесты воспроизводят action отдельно для TEXT и DM, полный suite (291 тест) и analyzer проходят — [QA-156](../evidence/flutter/qa156-flutter-composer-soft-keyboard-send-2026-09-30-001.json). Реальную Gboard/Samsung-приёмку оставить открытой в QA-13.
 - [x] Пометить общие ошибки загрузки TEXT/DM и voice ролью
   `SemanticsRole.alert`, как web `role="alert"`: до исправления Flutter отдавал
   `SemanticsRole.none`, а не alert. Focused-тест проверяет именно роль, не факт

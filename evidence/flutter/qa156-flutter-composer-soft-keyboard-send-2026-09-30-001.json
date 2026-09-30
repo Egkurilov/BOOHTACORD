@@ -1,0 +1,40 @@
+{
+  "id": "QA-156",
+  "kind": "flutter-composer-soft-keyboard-send",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "caf15da",
+  "summary": "Flutter TEXT and DM composers expose the mobile keyboard Send action and route its submission through the existing send flow, matching web's Enter-to-send behavior. Shift+Enter remains a newline in TEXT. Automated verification passed; physical Gboard/Samsung acceptance remains open.",
+  "checks": [
+    {
+      "name": "TEXT soft-keyboard action regression reproduced before implementation",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'text composer submits from the soft-keyboard send action'",
+      "status": "PASS",
+      "observation": "The test initially failed because the Android TEXT composer did not expose TextInputAction.send."
+    },
+    {
+      "name": "TEXT and DM soft-keyboard send regressions",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'composer submits from the soft-keyboard'",
+      "status": "PASS",
+      "observation": "Both TEXT and DM expose TextInputAction.send and submit the entered message when the platform sends that action."
+    },
+    {
+      "name": "Full Flutter suite and analyzer",
+      "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 291 Flutter tests pass and flutter analyze reports no issues."
+    },
+    {
+      "name": "Android debug APK build",
+      "command": "cd desktop && flutter build apk --debug --no-pub",
+      "status": "PASS",
+      "observation": "Android debug APK builds successfully. Flutter reported existing Kotlin Gradle Plugin migration warnings for flutter_background, flutter_webrtc and livekit_client."
+    },
+    {
+      "name": "Physical Android Gboard/Samsung acceptance",
+      "status": "NOT_RUN",
+      "observation": "Widget tests exercise the platform TextInputAction callback but do not verify actual Gboard rendering, IME behavior, or device-specific submission."
+    }
+  ],
+  "remaining": "Install a build containing this change on Samsung/Gboard and verify Send is visible and submits once in TEXT and DM; verify normal multiline/Shift+Enter behavior is unchanged. Keep this physical check under QA-13."
+}
