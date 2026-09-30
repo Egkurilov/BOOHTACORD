@@ -42,7 +42,7 @@ if ($windows -notmatch 'uses:\s*actions/upload-artifact@v4' -or
     $windows -notmatch 'retention-days:\s*30') {
     throw 'Windows CI must retain the full release directory as a fail-closed workflow artifact.'
 }
-foreach ($required in @('workflow_call:', 'runs-on: windows-2025',
+foreach ($required in @('workflow_call:', 'runs-on: windows-2022',
     'uses: subosito/flutter-action@v2', 'flutter-version: 3.47.5',
     'flutter build windows --release --no-pub')) {
     if (-not $windows.Contains($required)) {
