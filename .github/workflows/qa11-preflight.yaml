@@ -1,5 +1,7 @@
 name: QA-11 release host preflight
 
+# GitHub manual host inspection from master.
+
 on:
   workflow_dispatch:
 

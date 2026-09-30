@@ -1,5 +1,7 @@
 name: Rehearse compatible image rollback
 
+# GitHub manual rehearsal only after observer confirmation.
+
 on:
   workflow_dispatch:
     inputs:

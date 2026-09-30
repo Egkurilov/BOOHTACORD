@@ -1,5 +1,7 @@
 name: Sample active attachment uploads
 
+# GitHub manual observation with an operator-controlled upload.
+
 on:
   workflow_dispatch:
     inputs:

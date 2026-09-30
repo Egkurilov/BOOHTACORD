@@ -1,5 +1,7 @@
 name: Android Release
 
+# GitHub tag release; signed APKs need the repository signing secrets.
+
 on:
   push:
     tags:

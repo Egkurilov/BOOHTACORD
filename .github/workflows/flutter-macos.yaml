@@ -1,5 +1,7 @@
 name: Flutter macOS CI
 
+# GitHub manual build while the macOS self-hosted runner is being migrated.
+
 # Keep manual dispatch until a GitHub macOS runner is provisioned.
 on:
   workflow_dispatch:

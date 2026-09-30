@@ -1,5 +1,7 @@
 name: macOS Release
 
+# GitHub manual release from the matching macos-vX.Y.Z tag.
+
 # Temporary: don't queue tag-triggered releases without a macOS runner.
 # Manually dispatch from the matching macos-vX.Y.Z tag when the runner is back.
 on:
