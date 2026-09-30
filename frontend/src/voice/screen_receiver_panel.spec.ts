@@ -25,7 +25,7 @@ describe('selected screen receiver panel', () => {
     const styles = source('../design/voice_viewer_reference.css')
 
     expect(viewer).toContain('<ScreenReceiverDiagnosticsPanel')
-    expect(panel).toContain('<details class="stream-diagnostics">')
+    expect(panel).toContain('<details ref="diagnostics" class="stream-diagnostics" @toggle="updatePlacement">')
     expect(panel).toContain('Нет свежих данных')
     expect(panel).toContain('Декодировано')
     expect(panel).toContain('Потери пакетов за 10 с')
@@ -35,5 +35,9 @@ describe('selected screen receiver panel', () => {
     expect(panel).toContain("hasAudio ? 'Аудиодорожка есть' : 'Аудиодорожки нет'")
     expect(styles).toContain('width: min(288px, calc(100vw - 32px))')
     expect(styles).toContain('font-variant-numeric: tabular-nums')
+    expect(styles).toContain('.stream-diagnostics[data-placement="above"] .stream-diagnostics-panel')
+    expect(styles).toContain('overflow-y: auto')
+    expect(panel).toContain('@toggle="updatePlacement"')
+    expect(panel).toContain('placeScreenDiagnostics')
   })
 })

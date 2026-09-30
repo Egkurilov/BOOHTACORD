@@ -15,7 +15,8 @@
 .stream-diagnostics > summary { display: flex; min-height: 36px; align-items: center; gap: var(--gc-space-2); border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-3); cursor: pointer; list-style: none; }
 .stream-diagnostics > summary::-webkit-details-marker { display: none; }
 .stream-diagnostics-badge { width: 8px; height: 8px; flex: 0 0 8px; border-radius: var(--gc-radius-full); background: var(--gc-warning); }
-.stream-diagnostics-panel { position: absolute; top: calc(100% + var(--gc-space-2)); right: 0; z-index: 4; width: min(288px, calc(100vw - 32px)); border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-md); padding: var(--gc-space-4); background: var(--gc-surface-raised); box-shadow: var(--gc-shadow-shell); }
+.stream-diagnostics-panel { position: absolute; top: calc(100% + var(--gc-space-2)); right: 0; z-index: 4; width: min(288px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-md); padding: var(--gc-space-4); background: var(--gc-surface-raised); box-shadow: var(--gc-shadow-shell); }
+.stream-diagnostics[data-placement="above"] .stream-diagnostics-panel { top: auto; bottom: calc(100% + var(--gc-space-2)); }
 .stream-diagnostics-panel dl { display: grid; gap: var(--gc-space-3); margin: 0; }
 .stream-diagnostics-panel dl > div { display: flex; justify-content: space-between; gap: var(--gc-space-3); }
 .stream-diagnostics-panel dt { color: var(--gc-text-muted); }

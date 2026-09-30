@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
+import { placeScreenDiagnostics } from './screen_diagnostics_placement'
 import type { ScreenReceiverMetrics } from './screen_receiver_diagnostics'
 
 const props = defineProps<{
@@ -14,12 +15,45 @@ const props = defineProps<{
 const status = computed(() => props.sampledAt === null ? 'Нет свежих данных' : `Измерено в ${new Date(props.sampledAt).toLocaleTimeString('ru-RU')}`)
 const value = (number: number | null | undefined, suffix: string) => number === null || number === undefined ? 'Нет данных' : `${number} ${suffix}`
 const percent = (number: number | null | undefined) => number === null || number === undefined ? 'Нет данных' : `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(number)} %`
+const diagnostics = ref<HTMLDetailsElement | null>(null)
+const panel = ref<HTMLDivElement | null>(null)
+let placementFrame = 0
+
+function updatePlacement(): void {
+  const root = diagnostics.value
+  const popover = panel.value
+  if (!root?.open || !popover) return
+  cancelAnimationFrame(placementFrame)
+  placementFrame = requestAnimationFrame(() => {
+    const summary = root.querySelector('summary')
+    if (!summary || !root.open) return
+    const rect = summary.getBoundingClientRect()
+    const result = placeScreenDiagnostics({
+      summaryTop: rect.top,
+      summaryBottom: rect.bottom,
+      panelHeight: popover.scrollHeight,
+      viewportHeight: window.innerHeight,
+    })
+    root.dataset.placement = result.placement
+    popover.style.maxHeight = `${result.maxHeight}px`
+  })
+}
+
+onMounted(() => {
+  window.addEventListener('resize', updatePlacement)
+  window.addEventListener('scroll', updatePlacement, true)
+})
+onBeforeUnmount(() => {
+  cancelAnimationFrame(placementFrame)
+  window.removeEventListener('resize', updatePlacement)
+  window.removeEventListener('scroll', updatePlacement, true)
+})
 </script>
 
 <template>
-  <details class="stream-diagnostics">
+  <details ref="diagnostics" class="stream-diagnostics" @toggle="updatePlacement">
     <summary :title="status"><span class="stream-diagnostics-badge" aria-hidden="true"></span><span>Статистика</span><span class="gc-sr-only">{{ status }}</span></summary>
-    <div class="stream-diagnostics-panel"><dl>
+    <div ref="panel" class="stream-diagnostics-panel"><dl>
       <div><dt>Профиль при запуске</dt><dd>{{ targetProfile ?? 'Нет данных от источника' }}</dd></div>
       <div><dt>Сейчас у зрителя</dt><dd>{{ actualVideoQuality }}</dd></div>
       <div><dt>Декодировано</dt><dd>{{ value(metrics?.decodedFps, 'FPS') }}</dd></div>
