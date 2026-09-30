@@ -566,10 +566,11 @@ track and speaker events. Lease-specific revocation and visible reconnect
 states are implemented, but still need backend-driven integration coverage and
 screenshot comparison.
 
-Conversation and voice error banners now expose a Flutter live region, matching
-the web TEXT/DM `role="alert"` and voice error alerts. A TEXT widget regression
-reproduced the missing announcement before the shared banner change; focused,
-workspace and full Flutter suites plus analyzer pass —
+Conversation and voice error banners expose `SemanticsRole.alert`, matching the
+web TEXT/DM `role="alert"` in Flutter's semantics tree. A TEXT widget regression
+reproduced the missing alert role before the change; focused, workspace and full
+Flutter suites plus analyzer pass —
 [QA-155](../evidence/flutter/qa155-conversation-error-live-alert-parity-2026-09-30-001.json).
-Actual spoken alert timing and priority remain open for TalkBack, VoiceOver and
-NVDA device acceptance.
+Windows/macOS engine alert events and actual spoken timing/priority remain open
+for native acceptance; Android's bridge does not map alert role to a live region,
+so TalkBack parity is specifically unproven.

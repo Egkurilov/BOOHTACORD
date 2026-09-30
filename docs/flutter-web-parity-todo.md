@@ -425,13 +425,15 @@ peer/platform-проверки и выравниваем viewer с вебом.
 ## P1 — Admin и переписка
 
 - [ ] Проверить administrator REST ACL на работающем backend: роль, блокировка, topology, reset-link, voice kick и audit через два аккаунта.
-- [x] Объявлять общие ошибки загрузки TEXT/DM и voice как live alert, как web
-  `role="alert"`; общий Flutter error banner покрывает все эти поверхности, а
-  regression test сначала подтвердил отсутствие announcement в TEXT. Focused,
-  workspace, полный Flutter suite (288) и analyzer проходят —
+- [x] Пометить общие ошибки загрузки TEXT/DM и voice ролью
+  `SemanticsRole.alert`, как web `role="alert"`: до исправления Flutter отдавал
+  `SemanticsRole.none`, а не alert. Focused-тест проверяет именно роль, не факт
+  устного объявления — полный Flutter suite и analyzer проверены; см.
   [QA-155](../evidence/flutter/qa155-conversation-error-live-alert-parity-2026-09-30-001.json).
-  Фактическое assertive/polite поведение TalkBack/VoiceOver/NVDA остаётся
-  непроверенным в общей device screen-reader приёмке.
+  В Windows/macOS Flutter engine alert-транслируется в платформенное alert event;
+  Android bridge не превращает alert role в live-region, поэтому эквивалентность
+  TalkBack пока не доказана. Реальное поведение TalkBack/VoiceOver/NVDA и
+  assertive/polite приоритет остаются открытыми.
 - [ ] Проверить серверную очистку `UNATTACHED` вложений через 24 часа и восстановление после сбоя на реальном deployment; клиентского DELETE-контракта нет. Пройти live 507/partial-upload UX на TEXT/DM и устройствах.
 - [x] Для macOS sandbox разрешить запись только в выбранный пользователем путь,
   поскольку скачивание вложения пишет байты после `NSSavePanel`; сохранить

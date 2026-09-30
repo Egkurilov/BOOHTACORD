@@ -3,20 +3,20 @@
   "kind": "conversation-error-live-alert-parity",
   "status": "PARTIAL",
   "executed_at": "2026-09-30",
-  "source_revision": "e727737",
-  "summary": "Flutter's shared error banner now announces workspace errors in TEXT, DM and voice as a live region, matching the corresponding web role=alert surfaces without a voice-only nested announcement wrapper.",
+  "source_revision": "6bfa23e",
+  "summary": "Flutter's shared error banner now exposes SemanticsRole.alert for workspace errors in TEXT, DM and voice. This matches web role=alert in the Flutter semantics tree; it does not by itself prove native announcement timing or assertiveness.",
   "checks": [
     {
-      "name": "Flutter text error regression reproduced before implementation",
-      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'announces text conversation errors as live alerts'",
+      "name": "Flutter text error alert-role regression reproduced before implementation",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'exposes text conversation errors with alert semantics'",
       "status": "PASS",
-      "observation": "Before the fix, the text error remained visible but its semantics did not expose the live-region flag."
+      "observation": "Before the fix, the text error remained visible but exposed SemanticsRole.none instead of SemanticsRole.alert."
     },
     {
-      "name": "Focused text error announcement",
-      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'announces text conversation errors as live alerts'",
+      "name": "Focused text error alert role",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'exposes text conversation errors with alert semantics'",
       "status": "PASS",
-      "observation": "The visible text history error is exposed through a live-region semantic node."
+      "observation": "The visible text history error is exposed with SemanticsRole.alert. This assertion checks the semantics tree, not an actual spoken announcement."
     },
     {
       "name": "Workspace screen widget tests",
@@ -26,15 +26,20 @@
     },
     {
       "name": "Full Flutter test suite and analyzer",
-      "command": "cd desktop && flutter test --no-pub; flutter analyze --no-pub",
+      "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
       "status": "PASS",
       "observation": "All 288 Flutter tests pass and flutter analyze reports no issues."
     },
     {
+      "name": "Native accessibility bridge mapping inspection",
+      "status": "PASS",
+      "observation": "Flutter Windows engine maps alert events to the native alert event, and macOS converts alert events into live-region notifications. The Android bridge currently has an ALERT role enum but does not configure alert nodes as live regions; this source inspection does not replace device acceptance."
+    },
+    {
       "name": "Native screen-reader announcement priority and timing",
       "status": "NOT_RUN",
-      "observation": "Widget semantics were checked, but actual spoken announcement timing/priority was not checked with TalkBack, VoiceOver or NVDA."
+      "observation": "Widget semantics were checked, but actual spoken timing/priority was not checked. Flutter's Android accessibility bridge currently exposes no explicit alert-role-to-live-region mapping; TalkBack parity remains unproven."
     }
   ],
-  "remaining": "Verify that TEXT/DM/voice errors are announced once, with suitable urgency and focus behavior, through TalkBack on Android, VoiceOver on macOS and NVDA on Windows."
+  "remaining": "Verify actual spoken announcement timing/priority and focus through TalkBack on Android, VoiceOver on macOS and NVDA on Windows; determine whether Android needs a dedicated accessible alert mechanism because its Flutter bridge does not map alert role to live-region behavior."
 }
