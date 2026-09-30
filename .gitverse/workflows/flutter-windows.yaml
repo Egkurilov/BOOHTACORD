@@ -6,6 +6,7 @@ on:
     paths:
       - 'desktop/**'
       - '.gitverse/workflows/flutter-windows.yaml'
+      - 'scripts/android_release/**'
   workflow_dispatch:
 
 permissions:
@@ -20,7 +21,11 @@ jobs:
         run: git config --global core.longpaths true
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: desktop
+          # Keep the release publisher in the CI checkout so its HTTP contract
+          # and upload-recovery tests run on the supported Windows runner.
+          sparse-checkout: |
+            desktop
+            scripts/android_release
       - name: Verify installed Flutter 3.47.5
         shell: powershell
         run: |
@@ -65,6 +70,13 @@ jobs:
         shell: powershell
         run: |
           & "$env:USERPROFILE\develop\flutter\bin\flutter.bat" test --no-pub
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test GitVerse Android release publisher
+        shell: powershell
+        run: |
+          node --version
+          if ($LASTEXITCODE -ne 0) { throw 'Node.js is required for the release publisher tests.' }
+          node --test scripts/android_release/publish.test.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Analyze Flutter client
         working-directory: desktop

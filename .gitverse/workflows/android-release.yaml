@@ -15,6 +15,14 @@ jobs:
       - name: Checkout release source
         uses: actions/checkout@v4
 
+      - name: Test idempotent GitVerse release publisher
+        shell: powershell
+        run: |
+          node --version
+          if ($LASTEXITCODE -ne 0) { throw 'Node.js is required for the release publisher.' }
+          node --test scripts/android_release/publish.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Build signed ABI-specific APKs
         working-directory: desktop
         shell: powershell
@@ -105,30 +113,16 @@ jobs:
             Remove-Item Env:\BOOHTACORD_ANDROID_KEYSTORE_FILE -ErrorAction SilentlyContinue
           }
 
-      - name: Publish GitVerse release
-        uses: actions/create-release@v1
-        with:
-          # GitVerse reserves the GITVERSE_ prefix for platform-defined names.
-          api_key: ${{ secrets.RELEASE_API_KEY }}
-          title: BOOHTACORD Android ${{ github.ref_name }}
-          body: |
-            Signed Android APKs for version ${{ github.ref_name }}.
-
-            Voice and screen sharing updates:
-            - Live voice roster and clearer connection/reconnect status.
-            - More reliable audio-device refresh and system-output fallback.
-            - Screen-share diagnostics distinguish decoded and rendered FPS, with bounded sender/receiver metrics.
-            - Quality and FPS changes during an active stream; stream viewer recovery when a share restarts.
-            - Android keyboard Send action works in text channels and direct messages.
-            - App version and build number are visible before login and in profile settings.
-
-            Download exactly one APK matching your device:
-            - arm64-v8a: most modern Android phones and tablets
-            - armeabi-v7a: older 32-bit ARM devices
-            - x86_64: Android emulators and x86-64 devices
-          files: |
-            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-arm64-v8a.apk
-            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-armeabi-v7a.apk
-            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}-x86_64.apk
-          draft: false
-          pre_release: false
+      - name: Publish GitVerse release and APK assets
+        shell: powershell
+        env:
+          RELEASE_API_KEY: ${{ secrets.RELEASE_API_KEY }}
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $assetRoot = 'desktop/build/release-assets'
+          node scripts/android_release/publish.mjs `
+            --tag $tag `
+            --asset "$assetRoot/BOOHTACORD-$tag-arm64-v8a.apk" `
+            --asset "$assetRoot/BOOHTACORD-$tag-armeabi-v7a.apk" `
+            --asset "$assetRoot/BOOHTACORD-$tag-x86_64.apk"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
