@@ -10,7 +10,15 @@ describe('local sound check', () => {
 
   it('uses the chosen input only on explicit action and releases tracks and context', async () => {
     const stop = vi.fn()
-    const stream = { getTracks: () => [{ stop }] } as unknown as MediaStream
+    let signalTrackEnded: (() => void) | undefined
+    const track = {
+      stop,
+      addEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
+        signalTrackEnded = listener as () => void
+      },
+      removeEventListener: vi.fn(),
+    } as unknown as MediaStreamTrack
+    const stream = { getTracks: () => [track] } as unknown as MediaStream
     const getUserMedia = vi.fn().mockResolvedValue(stream)
     const analyser = { fftSize: 0, getByteTimeDomainData: (samples: Uint8Array) => samples.fill(128) }
     const close = vi.fn().mockResolvedValue(undefined)
@@ -18,7 +26,13 @@ describe('local sound check', () => {
     const check = await startMicrophoneCheck('mic-2', { getUserMedia } as unknown as MediaDevices, () => context)
     expect(getUserMedia).toHaveBeenCalledWith({ audio: { deviceId: { exact: 'mic-2' } }, video: false })
     expect(check.level()).toBe(0)
+    const ended = vi.fn()
+    check.onEnded(ended)
+    signalTrackEnded?.()
+    expect(ended).toHaveBeenCalledOnce()
     await check.stop()
+    signalTrackEnded?.()
+    expect(ended).toHaveBeenCalledOnce()
     expect(stop).toHaveBeenCalledOnce()
     expect(close).toHaveBeenCalledOnce()
   })

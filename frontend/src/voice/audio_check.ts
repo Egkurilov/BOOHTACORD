@@ -1,4 +1,8 @@
-export interface MicrophoneCheck { level(): number; stop(): Promise<void> }
+export interface MicrophoneCheck {
+  level(): number
+  onEnded(listener: () => void): () => void
+  stop(): Promise<void>
+}
 
 export function levelFromSamples(samples: Uint8Array): number {
   if (!samples.length) return 0
@@ -29,6 +33,7 @@ export async function startMicrophoneCheck(
     throw cause
   }
   const samples = new Uint8Array(analyser.fftSize)
+  const tracks = stream.getTracks()
   let stopped = false
   return {
     level: () => {
@@ -36,11 +41,16 @@ export async function startMicrophoneCheck(
       analyser.getByteTimeDomainData(samples)
       return levelFromSamples(samples)
     },
+    onEnded: (listener) => {
+      const onTrackEnded = () => { if (!stopped) listener() }
+      tracks.forEach((track) => track.addEventListener('ended', onTrackEnded))
+      return () => tracks.forEach((track) => track.removeEventListener('ended', onTrackEnded))
+    },
     stop: async () => {
       if (stopped) return
       stopped = true
       source.disconnect()
-      stream.getTracks().forEach((track) => track.stop())
+      tracks.forEach((track) => track.stop())
       await context.close()
     },
   }

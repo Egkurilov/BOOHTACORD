@@ -97,6 +97,16 @@ class _AudioDeviceCheckState extends State<AudioDeviceCheck> {
           });
           unawaited(_service.stopMicrophone());
         },
+        onDone: () {
+          if (!mounted || generation != _inputGeneration) return;
+          setState(() {
+            _inputActive = false;
+            _level = 0;
+            _inputState = 'Не удалось проверить микрофон. Проверьте разрешение и выбранное устройство.';
+          });
+          _levelSubscription = null;
+          unawaited(_service.stopMicrophone());
+        },
       );
       setState(() {
         _inputActive = true;

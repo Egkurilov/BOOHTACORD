@@ -181,6 +181,44 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
+
+  testWidgets('reports when the microphone level stream ends unexpectedly', (
+    tester,
+  ) async {
+    final service = _FakeAudioDeviceCheckService();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AudioDeviceCheck(
+            inputDeviceId: 'input-1',
+            inputDeviceLabel: 'USB microphone',
+            outputDeviceId: null,
+            outputDeviceLabel: null,
+            serviceFactory: () => service,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Проверить микрофон'));
+    await tester.pumpAndSettle();
+    await service.levels.close();
+    await tester.pump();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 1)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Не удалось проверить микрофон. Проверьте разрешение и выбранное устройство.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Проверить микрофон'), findsOneWidget);
+    expect(service.stopCount, 1);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }
 
 class _FakeAudioDeviceCheckService implements AudioDeviceCheckService {

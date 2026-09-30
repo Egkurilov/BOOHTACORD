@@ -9,6 +9,7 @@ const outputState = ref('')
 const outputBusy = ref(false)
 const inputBusy = ref(false)
 let probe: MicrophoneCheck | null = null
+let removeEndedListener: (() => void) | null = null
 let timer: ReturnType<typeof setInterval> | null = null
 let generation = 0
 
@@ -17,10 +18,26 @@ function stopInput(): void {
   inputBusy.value = false
   if (timer) clearInterval(timer)
   timer = null
+  removeEndedListener?.()
+  removeEndedListener = null
   const old = probe
   probe = null
   level.value = 0
   inputState.value = 'Проверка микрофона выключена.'
+  if (old) void old.stop()
+}
+
+function failInput(): void {
+  generation++
+  inputBusy.value = false
+  if (timer) clearInterval(timer)
+  timer = null
+  removeEndedListener?.()
+  removeEndedListener = null
+  const old = probe
+  probe = null
+  level.value = 0
+  inputState.value = 'Не удалось проверить микрофон. Проверьте разрешение и выбранное устройство.'
   if (old) void old.stop()
 }
 
@@ -34,6 +51,9 @@ async function toggleInput(): Promise<void> {
     const started = await startMicrophoneCheck(props.inputId)
     if (version !== generation) { await started.stop(); return }
     probe = started
+    removeEndedListener = started.onEnded(() => {
+      if (version === generation) failInput()
+    })
     inputState.value = 'Говорите: индикатор показывает локальный уровень, звук не отправляется.'
     timer = setInterval(() => { level.value = started.level() }, 100)
   } catch {
