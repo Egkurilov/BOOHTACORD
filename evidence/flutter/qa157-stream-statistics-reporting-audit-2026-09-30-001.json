@@ -1,0 +1,72 @@
+{
+  "id": "QA-157",
+  "kind": "stream-statistics-reporting-audit",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "32f91cc",
+  "summary": "Source audit confirms web sender and selected-receiver clients POST bounded anonymous reports to the authenticated same-origin endpoint; Flutter's Android sender payload and ApiClient route/Origin/session-cookie handling match the contract. The Flutter sender loop is started only on Android, while Flutter receiver measurements are local-only and are not POSTed. Thus full web/Flutter reporting parity is not achieved. The web diagnostics popover now flips above when needed and clamps/scrolls within available viewport height.",
+  "checks": [
+    {
+      "name": "Web sender reporting lifecycle and POST contract",
+      "status": "PASS",
+      "observation": "Source review: frontend/src/voice/screen_sender_reporting.ts refreshes sender diagnostics every 2 seconds while SHARING and reports every 5 seconds; state cleanup stops both timers. screen_client_reporter.ts posts JSON with credentials=same-origin to /api/v1/voice/screen-metrics and applies fixed enums and numeric bounds. Reporter and lifecycle tests pass."
+    },
+    {
+      "name": "Web selected receiver reporting lifecycle and POST contract",
+      "status": "PASS",
+      "observation": "Source review: ScreenViewer.vue submits receiver reports only for the selected stream and only while the document is visible; use_screen_receiver_diagnostics.ts samples the selected receiver track, resets on track changes, and reports through the same endpoint. Reporter and lifecycle tests pass."
+    },
+    {
+      "name": "Flutter Android sender payload, cadence and origin/session headers",
+      "command": "cd desktop && flutter test --no-pub test/screen_share_metrics_test.dart && flutter test --no-pub test/avatar_api_test.dart --plain-name 'posts anonymous sender metrics with the authenticated origin'",
+      "status": "PASS",
+      "observation": "The sender report serializes bounded android_native sender dimensions/FPS/bitrate/RTT; ApiClient posts to /api/v1/voice/screen-metrics with JSON, the configured server Origin and session cookie. AppState starts the sender timer immediately and every 5 seconds, uses a generation gate, and stops on unpublish/leave/disconnect. The metric builder and API-client assertions passed."
+    },
+    {
+      "name": "Flutter reporting platform coverage",
+      "status": "GAP_FOUND",
+      "observation": "LocalVideoTrack sender reporting is started under defaultTargetPlatform == TargetPlatform.android only. Although the backend accepts desktop_native, native macOS/Windows senders currently do not report."
+    },
+    {
+      "name": "Flutter receiver reporting coverage",
+      "status": "GAP_FOUND",
+      "observation": "ScreenReceiverDiagnostics samples and displays RemoteVideoTrack receiver stats locally every 2 seconds, but there is no receiver report callback/API submission. Flutter Android/macOS/Windows receiver samples therefore do not reach /voice/screen-metrics."
+    },
+    {
+      "name": "Backend strict metrics route, retention and ACL",
+      "command": "cd backend && go test ./internal/observability/http_metrics ./internal/observability/report_client_screen/api ./cmd/api",
+      "status": "PASS",
+      "observation": "The endpoint accepts fixed platform/direction/state values and bounded numeric fields, rejects unknown identity fields, retains only fresh anonymous samples, requires a session for POST, and restricts the admin snapshot to administrators. All three Go test packages pass; desktop_native is an allowed platform enum."
+    },
+    {
+      "name": "Web diagnostics popover placement regression",
+      "command": "cd frontend && npm test -- --run src/voice/screen_diagnostics_placement.spec.ts src/voice/screen_receiver_panel.spec.ts src/voice/screen_viewer_toolbar_layout.spec.ts",
+      "status": "PASS",
+      "observation": "Placement tests cover opening above near the bottom, staying below when it fits, and clamping/scrolling to the roomier side when neither side fits. Component wiring and overflow CSS assertions pass."
+    },
+    {
+      "name": "Web popover viewport behavior in a live browser",
+      "status": "NOT_RUN",
+      "observation": "The layout calculation, Vue event wiring, and CSS were verified with unit/source tests, but the lower-edge interaction was not visually confirmed in an authenticated browser session."
+    },
+    {
+      "name": "Full frontend tests and production build",
+      "command": "cd frontend && npm test -- --run && npm run build",
+      "status": "PASS",
+      "observation": "All 685 frontend tests pass; vue-tsc and Vite production build pass. Vite reports the existing >500 kB chunk-size advisory."
+    },
+    {
+      "name": "Flutter receiver/sender calculation tests and analyzer",
+      "command": "cd desktop && flutter test --no-pub test/screen_share_metrics_test.dart test/screen_receiver_diagnostics_test.dart && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 11 focused Flutter metrics/diagnostics tests pass and flutter analyze reports no issues."
+    },
+    {
+      "name": "Production/browser and live-peer verification",
+      "status": "NOT_RUN",
+      "observation": "No live screen share, authenticated metrics POST, admin sample, or browser viewport interaction was performed. Source/build/unit evidence does not prove runtime metric arrival or rendered placement on a deployed browser."
+    }
+  ],
+  "privacy": "Reported schema contains only bounded numeric samples and fixed platform/direction/state enums. No account, channel, track, IP, token, or media-content fields are included.",
+  "remaining": "Implement Flutter sender reports for native desktop and receiver reports for the selected stream across Android/macOS/Windows with bounded cadence and generation/lifecycle cancellation. Then validate sender plus two receiver samples end-to-end against the authenticated admin snapshot; visually confirm the web popover near the lower viewport edge on a live browser."
+}

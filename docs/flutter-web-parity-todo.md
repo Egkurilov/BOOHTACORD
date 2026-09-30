@@ -175,6 +175,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   360 dp — [QA-57](../evidence/flutter/qa57-screen-diagnostics-popover-web-parity-2026-09-28-001.json).
   Фактические populated receiver metrics и matched screenshots на устройствах
   остаются открытыми в пункте выше.
+- [x] Исправить web-панель статистики, когда summary у нижней границы viewport:
+  размещать popover сверху, ограничивать его доступной высотой и прокручивать
+  содержимое; viewport placement regressions и frontend production build прошли.
+  Live browser screenshot confirmation остаётся открытым — [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
 - [x] Добавить dock-объявление о новой чужой демонстрации экрана и отключаемый
   локальный звуковой сигнал; не объявлять исходные публикации при входе и
   восстановленные дорожки при reconnect — локальная логика/виджет покрыты
@@ -310,6 +314,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   и сопоставить sender с двумя receiver snapshots в QA-07. Физическая
   остановка/немедленный restart и два receiver остаются открыты —
   [QA-142](../evidence/flutter/qa142-screen-share-metrics-generation-race-2026-09-30-001.json).
+- [ ] Довести отправку stream telemetry Flutter до web-контракта: сейчас web
+  публикует sender и выбранный receiver, а Flutter публикует только Android
+  sender; macOS/Windows sender и Flutter receiver stats остаются локальными и не
+  попадают в `/voice/screen-metrics`. Проверить cadence, lifecycle stop и
+  `desktop_native` с реальными peers после реализации — [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
 - [x] Устранить Android screen-share retry leak: публиковать созданный track под
   контролем клиента, очищать его при publish failure, снизить Android профиль
   до 720p/15 FPS и сохранять текст исходной ошибки — [QA-23](../evidence/flutter/qa23-android-ime-screen-share-2026-09-27-001.json).
