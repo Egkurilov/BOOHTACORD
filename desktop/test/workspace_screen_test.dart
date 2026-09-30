@@ -724,14 +724,65 @@ void main() {
 
     final error = find.text('Не удалось загрузить историю.');
     expect(error, findsOneWidget);
+    final alert = find.ancestor(
+      of: error,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.role == SemanticsRole.alert,
+      ),
+    );
     expect(
-      tester.getSemantics(error).getSemanticsData().role,
+      tester.getSemantics(alert).getSemanticsData().role,
       SemanticsRole.alert,
     );
 
     semantics.dispose();
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
+  });
+
+  testWidgets('exposes Android conversation errors as polite live regions', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    final semantics = tester.ensureSemantics();
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    state
+      ..selectedChannel = _PortraitApi.channel
+      ..error = 'Не удалось загрузить историю.';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final error = find.text('Не удалось загрузить историю.');
+    expect(error, findsOneWidget);
+    expect(tester.getSemantics(error).flagsCollection.isLiveRegion, isTrue);
+    expect(
+      find.ancestor(
+        of: error,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.role == SemanticsRole.alert,
+        ),
+      ),
+      findsOneWidget,
+    );
+
+    semantics.dispose();
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('shows the voice roster before joining the room', (tester) async {
@@ -1083,8 +1134,16 @@ void main() {
     state.notifyListeners();
     await tester.pump();
     expect(find.text(state.error!), findsOneWidget);
+    final alert = find.ancestor(
+      of: find.text(state.error!),
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.role == SemanticsRole.alert,
+      ),
+    );
     expect(
-      tester.getSemantics(find.text(state.error!)).getSemanticsData().role,
+      tester.getSemantics(alert).getSemanticsData().role,
       SemanticsRole.alert,
     );
     expect(tester.takeException(), isNull);
