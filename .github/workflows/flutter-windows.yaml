@@ -1,12 +1,7 @@
 name: Flutter Windows CI
 
 on:
-  push:
-    branches: [master]
-    paths:
-      - 'desktop/**'
-      - '.github/workflows/flutter-windows.yaml'
-      - 'scripts/android_release/**'
+  workflow_call:
   workflow_dispatch:
 
 permissions:
@@ -14,31 +9,32 @@ permissions:
 
 jobs:
   windows:
-    runs-on: [self-hosted, windows, x64, boohtacord-windows]
+    runs-on: windows-2025
     steps:
       - name: Enable long paths for Windows checkout
         shell: powershell
         run: git config --global core.longpaths true
       - uses: actions/checkout@v4
         with:
-          # Keep the release publisher in the CI checkout so its HTTP contract
-          # and upload-recovery tests run on the supported Windows runner.
+          # Keep the release publisher in the CI checkout for its HTTP contract tests.
           sparse-checkout: |
             desktop
             scripts/android_release
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.5
+          channel: stable
+          cache: true
       - name: Verify installed Flutter 3.47.5
         shell: powershell
         run: |
-          $flutter = Join-Path $env:USERPROFILE 'develop\flutter\bin\flutter.bat'
-          if (-not (Test-Path -LiteralPath $flutter)) { throw "Flutter SDK missing: $flutter" }
-          $version = (& $flutter --version --machine | ConvertFrom-Json).frameworkVersion
+          $version = (flutter --version --machine | ConvertFrom-Json).frameworkVersion
           if ($LASTEXITCODE -ne 0 -or $version -ne '3.47.5') { throw "Expected Flutter 3.47.5, got $version" }
       - name: Resolve locked Flutter dependencies
         working-directory: desktop
         shell: powershell
         run: |
-          $env:FLUTTER_ROOT = Join-Path $env:USERPROFILE 'develop\flutter'
-          & "$env:FLUTTER_ROOT\bin\flutter.bat" pub get --enforce-lockfile
+          flutter pub get --enforce-lockfile
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Point CMake at Windows plugin sources
         working-directory: desktop
@@ -66,7 +62,7 @@ jobs:
         working-directory: desktop
         shell: powershell
         run: |
-          & "$env:USERPROFILE\develop\flutter\bin\flutter.bat" test --no-pub
+          flutter test --no-pub
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Test GitHub Android release publisher
         shell: powershell
@@ -79,13 +75,13 @@ jobs:
         working-directory: desktop
         shell: powershell
         run: |
-          & "$env:USERPROFILE\develop\flutter\bin\flutter.bat" analyze --no-pub --no-fatal-infos
+          flutter analyze --no-pub --no-fatal-infos
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build Windows release client
         working-directory: desktop
         shell: powershell
         run: |
-          & "$env:USERPROFILE\develop\flutter\bin\flutter.bat" build windows --release --no-pub
+          flutter build windows --release --no-pub
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify complete Windows release directory
         shell: powershell

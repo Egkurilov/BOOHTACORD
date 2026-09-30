@@ -22,9 +22,12 @@ jobs:
   flutter:
     uses: ./.github/workflows/ci-flutter.yaml
 
+  windows:
+    uses: ./.github/workflows/flutter-windows.yaml
+
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: [contracts, backend, frontend, flutter]
+    needs: [contracts, backend, frontend, flutter, windows]
     runs-on: ubuntu-24.04
     permissions:
       contents: read

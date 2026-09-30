@@ -42,6 +42,13 @@ if ($windows -notmatch 'uses:\s*actions/upload-artifact@v4' -or
     $windows -notmatch 'retention-days:\s*30') {
     throw 'Windows CI must retain the full release directory as a fail-closed workflow artifact.'
 }
+foreach ($required in @('workflow_call:', 'runs-on: windows-2025',
+    'uses: subosito/flutter-action@v2', 'flutter-version: 3.47.5',
+    'flutter build windows --release --no-pub')) {
+    if (-not $windows.Contains($required)) {
+        throw "Windows CI must run on a hosted runner before merge: $required"
+    }
+}
 $macos = Get-Content -LiteralPath (Join-Path $root '.github/workflows/flutter-macos.yaml') -Raw
 if ($macos -notmatch 'bash scripts/macos_release/package.sh' -or
     $macos -notmatch 'uses:\s*actions/upload-artifact@v4' -or
@@ -52,9 +59,10 @@ if ($macos -notmatch 'bash scripts/macos_release/package.sh' -or
 $ci = Get-Content -LiteralPath (Join-Path $root '.github/workflows/ci.yaml') -Raw
 $flutterCiPath = Join-Path $root '.github/workflows/ci-flutter.yaml'
 if ($ci -notmatch '(?m)^  flutter:\s*\r?\n    uses: \./\.github/workflows/ci-flutter\.yaml' -or
-    $ci -notmatch 'needs: \[contracts, backend, frontend, flutter\]' -or
+    $ci -notmatch '(?m)^  windows:\s*\r?\n    uses: \./\.github/workflows/flutter-windows\.yaml' -or
+    $ci -notmatch 'needs: \[contracts, backend, frontend, flutter, windows\]' -or
     -not (Test-Path -LiteralPath $flutterCiPath)) {
-    throw 'Pull-request CI must run the Flutter gate before publishing images.'
+    throw 'Pull-request CI must run Flutter and Windows gates before publishing images.'
 }
 $flutterCi = Get-Content -LiteralPath $flutterCiPath -Raw
 foreach ($required in @(

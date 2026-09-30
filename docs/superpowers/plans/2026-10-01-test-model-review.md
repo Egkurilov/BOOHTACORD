@@ -54,11 +54,11 @@
 
 - [x] Use the failing Linux CI result to identify three notification-service tests and one profile-widget test tied to the host platform.
 - [x] Allow `NativeNotificationService` to receive an explicit supported-platform decision in tests while preserving the production default.
-- [ ] Inject that decision in the four affected tests, rerun them locally, then rerun the hosted Flutter gate.
+- [x] Inject that decision in the four affected tests, rerun them locally, then rerun the hosted Flutter gate.
 
 ## Packet 3 — review and delivery
 
 - [x] Document coverage and test-model findings in `docs/reviews/2026-10-01-test-model.md`, distinguishing unit, database integration, build and physical-device gates.
 - [x] Record a T-060 evidence result under `evidence/release/`, with `NOT_RUN` for unavailable iOS/device checks.
-- [ ] Run native checks, inspect status and file sizes, stage exact files, commit and push the review branch.
-- [ ] Check GitHub CI on the branch or PR; only claim a passing release gate if its run completed.
+- [x] Run native checks, inspect status and file sizes, stage exact files, commit and push the review branch.
+- [x] Check GitHub CI on the branch or PR; PR CI run `36788582014` passed before merge.
