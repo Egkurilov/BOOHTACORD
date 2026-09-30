@@ -1,13 +1,8 @@
 name: Flutter macOS CI
 
+# Temporary: automatic runs stay off until a macOS runner is provisioned.
+# Keep manual dispatch available for an intentional run after the runner returns.
 on:
-  push:
-    branches: [master]
-    paths:
-      - 'desktop/**'
-      - 'scripts/macos_release/**'
-      - '.gitverse/workflows/flutter-macos.yaml'
-      - '.gitverse/workflows/macos-release.yaml'
   workflow_dispatch:
 
 permissions:

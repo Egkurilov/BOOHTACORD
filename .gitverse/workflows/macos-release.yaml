@@ -1,9 +1,9 @@
 name: macOS Release
 
+# Temporary: don't queue tag-triggered releases without a macOS runner.
+# Manually dispatch from the matching macos-vX.Y.Z tag when the runner is back.
 on:
-  push:
-    tags:
-      - 'macos-v*'
+  workflow_dispatch:
 
 permissions:
   contents: read
