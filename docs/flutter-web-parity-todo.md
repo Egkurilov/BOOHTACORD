@@ -443,7 +443,8 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-146](../evidence/flutter/qa146-web-member-popover-long-login-2026-09-30-001.json).
 - [x] Показывать версию и номер сборки до входа и в настройках профиля, чтобы их
   можно было сообщить при диагностике; значение сверяется тестом с `pubspec.yaml`.
-  Android release `1.0.13 (18)` подготовлен —
+  Android release `1.0.14 (19)` подготовлен; публикация APK заблокирована таймаутом
+  GitVerse release API —
   [QA-147](../evidence/flutter/qa147-android-visible-app-version-2026-09-30-001.json).
 
 ## P1 — Admin и переписка
@@ -587,6 +588,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Собрать Android release APK с upload keystore и проверить APK Signature Scheme v2; извлечённые permissions содержат `POST_NOTIFICATIONS` и Android MediaProjection foreground service — [QA-47](../evidence/flutter/qa47-android-release-apk-signing-2026-09-28-001.json).
 - [x] Подготовить публикацию Android APK в GitVerse Releases без бинарников в Git: release workflow собирает три ABI-варианта, каждый из локальной проверки меньше 95 MB; универсальный APK превышает GitVerse 100 MB asset limit — [QA-104](../evidence/flutter/qa104-gitverse-android-release-apks-2026-09-29-001.json).
 - [x] Добавить GitVerse repository secrets для API-публикации и Android upload keystore; tag-triggered workflow #1679869 завершился успешно и опубликовал все три ABI APK в [релизе android-v1.0.3](https://gitverse.ru/egkurilov/BOOHTACORD/releases/tag/android-v1.0.3). Установка и device acceptance остаются отдельной проверкой — [QA-104](../evidence/flutter/qa104-gitverse-android-release-apks-2026-09-29-001.json).
+- [ ] Опубликовать APK Android `1.0.14`: tag-triggered job 1691408 собрал и подписал все три ABI APK, но `actions/create-release@v1` не уложился в свой фиксированный 10-секундный API timeout при первой загрузке; публичный релиз создан без APK. Нужен publisher с поддержкой длительных upload-запросов или безопасного повтора — [QA-158](../evidence/android/qa158-android-release-1.0.14-publish-timeout-2026-09-30-001.json).
 - [x] Собрать и опубликовать Android v1.0.4 через tag-triggered GitVerse workflow; release содержит подписанные APK для `arm64-v8a`, `armeabi-v7a` и `x86_64`, бинарники не добавлены в Git. Физическая установка/device acceptance остаётся открытой — [QA-114](../evidence/flutter/qa114-gitverse-android-release-apks-2026-09-29-001.json).
 - [x] Подготовить Android `1.0.5+9`: analyzer, все 253 Flutter-теста и три подписанных ABI APK прошли локальную проверку — [QA-118](../evidence/flutter/qa118-android-release-build-2026-09-29-001.json). Публикация GitVerse через tag `android-v1.0.5` и device acceptance остаются открытыми.
 - [x] Убрать повторную safe-zone подгонку полноразмерного composite artwork: Android 8+ теперь отображает исходный рисунок на full-bleed adaptive background, а foreground прозрачен; pre-26 density mipmaps оставлены прежними. APK проверен `apksigner`, установлен поверх приложения на Pixel 7 без потери данных; в штатном круглом стиле лишней белой внутренней рамки нет — [QA-77](../evidence/flutter/qa77-android-adaptive-launcher-icon-2026-09-28-001.json).

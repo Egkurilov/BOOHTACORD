@@ -1,0 +1,46 @@
+{
+  "id": "QA-158",
+  "kind": "android-release-gate",
+  "status": "BLOCKED",
+  "executed_at": "2026-09-30",
+  "source": {
+    "tag": "android-v1.0.14",
+    "commit": "05ae9bbf3c576011f938d5c5d9d6755d5c1a54af",
+    "workflow_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1691408",
+    "release": "https://gitverse.ru/egkurilov/BOOHTACORD/releases/tag/android-v1.0.14"
+  },
+  "checks": [
+    {
+      "name": "Flutter client tests",
+      "status": "PASS",
+      "observation": "All 299 Flutter tests passed before the release version bump; all 299 passed again after the version bump."
+    },
+    {
+      "name": "Flutter analyzer",
+      "status": "PASS",
+      "observation": "flutter analyze --no-pub completed without issues before and after the version bump."
+    },
+    {
+      "name": "Local signed ABI APK build",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "artifacts": [
+        {"path": "desktop/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk", "size_bytes": 39378769},
+        {"path": "desktop/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk", "size_bytes": 30802347},
+        {"path": "desktop/build/app/outputs/flutter-apk/app-x86_64-release.apk", "size_bytes": 45133002}
+      ],
+      "observation": "All three release APKs passed apksigner verification and report versionName 1.0.14. Generated build outputs are ignored and were not added to Git."
+    },
+    {
+      "name": "GitVerse signed ABI APK build",
+      "status": "PASS",
+      "observation": "Workflow run 1691408 built all three APKs: arm64-v8a 37.6 MiB, armeabi-v7a 29.4 MiB and x86_64 43 MiB."
+    },
+    {
+      "name": "GitVerse release asset upload",
+      "status": "FAIL",
+      "observation": "The release metadata was created, but upload of the first arm64-v8a APK failed with context deadline exceeded. The release page currently exposes only source archives and no APK attachments."
+    }
+  ],
+  "failure_or_blocker": "The public actions/create-release@v1 action applies a fixed 10-second request timeout. GitVerse did not accept the 37.6 MiB arm64-v8a asset before that deadline. The Android v1.0.14 release is not deliverable until APK assets are uploaded."
+}
