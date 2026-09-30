@@ -22,11 +22,17 @@
     "deploy": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36763536959",
     "windows": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36763536932"
   },
+  "github_ci": {
+    "run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36763537365",
+    "result": "PASS",
+    "jobs": {"contracts": "success", "backend": "success", "frontend": "success", "publish": "success"},
+    "workflow_registration": "Ten top-level GitHub workflows are active in the Actions API."
+  },
   "blockers": [
     "GitHub repository reported zero self-hosted runners.",
     "GitHub repository reported no Actions secrets, including DEPLOY_SSH_PRIVATE_KEY and the four Android signing inputs.",
     "The agent did not have SSH access to the Hetzner runner host; no runner was registered or production deployment verified.",
     "macOS packaging requires a macOS runner and was not run on the Linux validation host."
   ],
-  "limits": "Local checks prove source configuration only. Neither GitHub CI success, production deploy/smoke, release publication nor QA-11 on the new route is claimed."
+  "limits": "GitHub CI and GHCR publish passed for the initial migrated source revision. Production deploy/smoke, client release publication and QA-11 on the new route are not claimed."
 }
