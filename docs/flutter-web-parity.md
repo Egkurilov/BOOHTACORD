@@ -71,15 +71,15 @@ announced. State/UI regressions, the full Flutter suite and analyzer pass; real
 hotplug and audible route switching remain unverified —
 [QA-150](../evidence/flutter/qa150-audio-device-disconnect-feedback-2026-09-30-001.json).
 
-Screen-metrics reporting is not yet at client parity. Web submits bounded
-anonymous sender samples while sharing and receiver samples for the selected
-visible stream to the authenticated `/voice/screen-metrics` endpoint. Flutter's
-same-origin API client and Android sender payload match the contract, but the
-sender reporter is only started on Android; Flutter receiver sampling currently
-updates the local diagnostics UI without submitting reports, and native macOS/
-Windows sender samples are absent. The server accepts `android_native` and
-`desktop_native`; this source audit does not prove live transmission —
-[QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
+Flutter now submits bounded sender samples on Android/macOS/Windows and reports
+the selected remote receiver every five seconds to the same authenticated
+`/voice/screen-metrics` endpoint as web. Local preview is excluded, receiver
+reports pause while the app is backgrounded, and both directions use only the
+server's anonymous fixed-field schema. The complete Flutter test suite and
+analyzer pass. Remaining acceptance: confirm native sender/receiver stats and
+delivery on real peers and admin snapshots; web reports `presented_fps`, while
+Flutter currently reports decoded FPS and has no verified rendered-frame
+counter. See [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
 
 The local microphone check in both clients now ends its active state and reports
 the existing unavailable-device message when the selected input track or level

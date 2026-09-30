@@ -3,8 +3,8 @@
   "kind": "stream-statistics-reporting-audit",
   "status": "PARTIAL",
   "executed_at": "2026-09-30",
-  "source_revision": "32f91cc",
-  "summary": "Source audit confirms web sender and selected-receiver clients POST bounded anonymous reports to the authenticated same-origin endpoint; Flutter's Android sender payload and ApiClient route/Origin/session-cookie handling match the contract. The Flutter sender loop is started only on Android, while Flutter receiver measurements are local-only and are not POSTed. Thus full web/Flutter reporting parity is not achieved. The web diagnostics popover now flips above when needed and clamps/scrolls within available viewport height.",
+  "source_revision": "c5f9d03",
+  "summary": "Flutter now posts bounded sender samples on Android/macOS/Windows and selected remote receiver samples to the authenticated screen-metrics endpoint, alongside web sender/receiver reporting. Unit/widget coverage, the full Flutter test suite and analyzer pass. Runtime delivery on real peers and parity for renderer-presented FPS remain unverified. The web diagnostics popover flips above when needed and clamps/scrolls within available viewport height.",
   "checks": [
     {
       "name": "Web sender reporting lifecycle and POST contract",
@@ -17,20 +17,28 @@
       "observation": "Source review: ScreenViewer.vue submits receiver reports only for the selected stream and only while the document is visible; use_screen_receiver_diagnostics.ts samples the selected receiver track, resets on track changes, and reports through the same endpoint. Reporter and lifecycle tests pass."
     },
     {
-      "name": "Flutter Android sender payload, cadence and origin/session headers",
-      "command": "cd desktop && flutter test --no-pub test/screen_share_metrics_test.dart && flutter test --no-pub test/avatar_api_test.dart --plain-name 'posts anonymous sender metrics with the authenticated origin'",
+      "name": "Flutter Android and desktop sender payload/platform/cadence",
+      "command": "cd desktop && flutter test --no-pub test/screen_share_metrics_test.dart",
       "status": "PASS",
-      "observation": "The sender report serializes bounded android_native sender dimensions/FPS/bitrate/RTT; ApiClient posts to /api/v1/voice/screen-metrics with JSON, the configured server Origin and session cookie. AppState starts the sender timer immediately and every 5 seconds, uses a generation gate, and stops on unpublish/leave/disconnect. The metric builder and API-client assertions passed."
+      "observation": "The sender uses android_native on Android and desktop_native on macOS/Windows. AppState starts a sample immediately and every 5 seconds, uses a generation gate, and stops on unpublish/leave/disconnect. Bounded serialization and supported-platform mapping tests pass; the existing API-client test confirms the authenticated same-origin route, Origin and session cookie."
     },
     {
-      "name": "Flutter reporting platform coverage",
-      "status": "GAP_FOUND",
-      "observation": "LocalVideoTrack sender reporting is started under defaultTargetPlatform == TargetPlatform.android only. Although the backend accepts desktop_native, native macOS/Windows senders currently do not report."
+      "name": "Flutter selected receiver reporting and foreground lifecycle",
+      "command": "cd desktop && flutter test --no-pub test/screen_receiver_report_test.dart test/screen_receiver_diagnostics_test.dart",
+      "status": "PASS",
+      "observation": "The selected remote receiver sends an anonymous bounded sample every 5 seconds, including waiting_subscription when selected but not subscribed. Local preview and unselected streams are excluded; the widget regression confirms reporting pauses in background and resumes in foreground."
     },
     {
-      "name": "Flutter receiver reporting coverage",
-      "status": "GAP_FOUND",
-      "observation": "ScreenReceiverDiagnostics samples and displays RemoteVideoTrack receiver stats locally every 2 seconds, but there is no receiver report callback/API submission. Flutter Android/macOS/Windows receiver samples therefore do not reach /voice/screen-metrics."
+      "name": "Flutter authenticated API client route and headers",
+      "command": "cd desktop && flutter test --no-pub test/avatar_api_test.dart --plain-name 'posts anonymous sender metrics with the authenticated origin'",
+      "status": "PASS",
+      "observation": "The API client posts JSON to /api/v1/voice/screen-metrics with configured Origin and the existing session cookie; no client identity is added to the report."
+    },
+    {
+      "name": "Full Flutter test suite and static analysis",
+      "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 298 Flutter tests pass and flutter analyze reports no issues."
     },
     {
       "name": "Backend strict metrics route, retention and ACL",
@@ -64,9 +72,9 @@
     {
       "name": "Production/browser and live-peer verification",
       "status": "NOT_RUN",
-      "observation": "No live screen share, authenticated metrics POST, admin sample, or browser viewport interaction was performed. Source/build/unit evidence does not prove runtime metric arrival or rendered placement on a deployed browser."
+      "observation": "No live Android/macOS/Windows sender plus two receiver run was performed; metric arrival in the authenticated admin snapshot and native stats availability remain unverified. The browser popover has no live screenshot confirmation. Flutter currently reports decoded FPS but does not provide a verified renderer-presented FPS counter."
     }
   ],
   "privacy": "Reported schema contains only bounded numeric samples and fixed platform/direction/state enums. No account, channel, track, IP, token, or media-content fields are included.",
-  "remaining": "Implement Flutter sender reports for native desktop and receiver reports for the selected stream across Android/macOS/Windows with bounded cadence and generation/lifecycle cancellation. Then validate sender plus two receiver samples end-to-end against the authenticated admin snapshot; visually confirm the web popover near the lower viewport edge on a live browser."
+  "remaining": "Run live Android/macOS/Windows screen shares with two receivers and verify sender/receiver reports in the authenticated admin snapshot, including stop/restart behavior; determine a trustworthy Flutter renderer-presented FPS source; visually confirm the web popover near the lower viewport edge in a live browser."
 }

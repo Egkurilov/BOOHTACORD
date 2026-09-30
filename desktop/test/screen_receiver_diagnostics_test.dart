@@ -179,6 +179,12 @@ void main() {
       ),
     );
 
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pump();
+    expect(reports, isEmpty);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump(const Duration(seconds: 5));
     await tester.pump();
     expect(reports, [

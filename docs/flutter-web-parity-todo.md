@@ -314,11 +314,15 @@ peer/platform-проверки и выравниваем viewer с вебом.
   и сопоставить sender с двумя receiver snapshots в QA-07. Физическая
   остановка/немедленный restart и два receiver остаются открыты —
   [QA-142](../evidence/flutter/qa142-screen-share-metrics-generation-race-2026-09-30-001.json).
-- [ ] Довести отправку stream telemetry Flutter до web-контракта: сейчас web
-  публикует sender и выбранный receiver, а Flutter публикует только Android
-  sender; macOS/Windows sender и Flutter receiver stats остаются локальными и не
-  попадают в `/voice/screen-metrics`. Проверить cadence, lifecycle stop и
-  `desktop_native` с реальными peers после реализации — [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
+- [x] Отправлять bounded screen-share telemetry из Flutter: sender с Android/
+  macOS/Windows и receiver выбранной удалённой трансляции каждые 5 секунд через
+  тот же authenticated endpoint; локальный предпросмотр не отправляется,
+  receiver reporting приостанавливается в фоне. Full Flutter suite (298 tests),
+  focused telemetry tests и analyzer прошли — [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
+- [ ] Проверить реальную доставку Flutter sender и двух receiver отчётов на
+  Android/macOS/Windows, lifecycle stop/restart и admin snapshot; отдельно
+  решить parity для `presented_fps` (Flutter сейчас отправляет decoded FPS, но
+  не имеет подтверждённого renderer-presented counter) — [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
 - [x] Устранить Android screen-share retry leak: публиковать созданный track под
   контролем клиента, очищать его при publish failure, снизить Android профиль
   до 720p/15 FPS и сохранять текст исходной ошибки — [QA-23](../evidence/flutter/qa23-android-ime-screen-share-2026-09-27-001.json).
