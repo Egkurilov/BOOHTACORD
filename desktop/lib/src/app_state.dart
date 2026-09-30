@@ -104,6 +104,13 @@ class AppState extends ChangeNotifier {
   static Future<List<MediaDevice>> _enumerateAudioDevices() async {
     final devices = await Hardware.instance.enumerateDevices();
     final additional = await AndroidAudioDevices.enumerateAdditionalDevices();
+    return _mergeAudioDeviceLists(devices, additional);
+  }
+
+  static List<MediaDevice> _mergeAudioDeviceLists(
+    List<MediaDevice> devices,
+    List<MediaDevice> additional,
+  ) {
     final knownIds = devices
         .map((device) => '${device.kind}:${device.deviceId}')
         .toSet();
@@ -138,6 +145,7 @@ class AppState extends ChangeNotifier {
   StreamSubscription<List<MediaDevice>>? _audioDeviceSubscription;
   int _audioDeviceRevision = 0;
   bool _audioDeviceRefreshQueued = false;
+  bool _isDisposed = false;
   bool _audioDeviceRefreshAfterCaptureRequested = false;
   final Uuid _uuid = const Uuid();
   AppPhase phase = AppPhase.loading;
@@ -876,17 +884,10 @@ class AppState extends ChangeNotifier {
     List<MediaDevice> baseDevices,
     int revision,
   ) async {
+    if (!AndroidAudioDevices.isAndroid) return;
     final additional = await AndroidAudioDevices.enumerateAdditionalDevices();
-    if (revision != _audioDeviceRevision || additional.isEmpty) return;
-    final knownIds = baseDevices
-        .map((device) => '${device.kind}:${device.deviceId}')
-        .toSet();
-    _applyAudioDevices([
-      ...baseDevices,
-      ...additional.where(
-        (device) => !knownIds.contains('${device.kind}:${device.deviceId}'),
-      ),
-    ]);
+    if (_isDisposed || revision != _audioDeviceRevision) return;
+    _applyAudioDevices(_mergeAudioDeviceLists(baseDevices, additional));
     notifyListeners();
   }
 
@@ -2137,6 +2138,7 @@ class AppState extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _realtimeRetry?.cancel();
     _maintenanceTimer?.cancel();
     _stopVoiceRosterEvents();
