@@ -37,7 +37,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Версия 1.0.13 (18)'), findsOneWidget);
+    expect(find.text(appVersionLabel), findsOneWidget);
   });
 
   test(
@@ -49,7 +49,7 @@ void main() {
       ).firstMatch(File('pubspec.yaml').readAsStringSync())?.group(1);
 
       expect(packageVersion, '$appVersionName+$appBuildNumber');
-      expect(appVersionLabel, 'Версия 1.0.13 (18)');
+      expect(appVersionLabel, 'Версия 1.0.14 (19)');
     },
   );
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui' show SemanticsRole, Tristate;
 
 import 'package:boohtacord_desktop/src/app_state.dart';
+import 'package:boohtacord_desktop/src/app_version.dart';
 import 'package:boohtacord_desktop/src/screens/auth_screen.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +35,7 @@ void main() {
 
     await tester.pumpWidget(MaterialApp(home: AuthScreen(state: state)));
 
-    expect(find.text('Версия 1.0.13 (18)'), findsOneWidget);
+    expect(find.text(appVersionLabel), findsOneWidget);
   });
 
   testWidgets('login and password fields keep a usable mobile height', (

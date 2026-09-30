@@ -115,11 +115,12 @@ jobs:
             Signed Android APKs for version ${{ github.ref_name }}.
 
             Voice and screen sharing updates:
-            - Live voice roster with avatars and microphone status; empty rooms hide the zero count.
-            - Direct voice-channel switching without a transfer prompt.
-            - Stream thumbnails and automatic viewing when a stopped stream restarts.
-            - Quality and FPS changes during an active stream.
-            - Viewer closes automatically when the broadcaster stops streaming.
+            - Live voice roster and clearer connection/reconnect status.
+            - More reliable audio-device refresh and system-output fallback.
+            - Screen-share diagnostics distinguish decoded and rendered FPS, with bounded sender/receiver metrics.
+            - Quality and FPS changes during an active stream; stream viewer recovery when a share restarts.
+            - Android keyboard Send action works in text channels and direct messages.
+            - App version and build number are visible before login and in profile settings.
 
             Download exactly one APK matching your device:
             - arm64-v8a: most modern Android phones and tablets
