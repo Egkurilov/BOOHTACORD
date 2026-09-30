@@ -139,7 +139,8 @@ peer/platform-проверки и выравниваем viewer с вебом.
   выравнивание с web и проверка на реальном peer остаются открытыми.
 - [ ] Сверить permission-denied/prejoin/dock copy, focus и screen-reader
   announcements на устройствах. Обычный и joining copy prejoin приведён к вебу,
-  состояния подключения и ошибки помечены live-region и покрыты локальным тестом;
+  состояния подключения, а также загрузка/ошибка prejoin roster помечены
+  live-region и покрыты локальными тестами — [QA-154](../evidence/flutter/qa154-prejoin-roster-live-status-parity-2026-09-30-001.json);
   dock reconnect/leaving, deafen guidance и pending/leave button states также
   приведены к вебу и покрыты локально. Проверка реальных screen readers/focus и
   mute/deafen поведения остаётся открытой — [QA-52](../evidence/flutter/qa52-voice-prejoin-copy-live-region-2026-09-28-001.json),

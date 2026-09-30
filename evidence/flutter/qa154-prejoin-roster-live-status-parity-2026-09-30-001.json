@@ -1,0 +1,40 @@
+{
+  "id": "QA-154",
+  "kind": "prejoin-roster-live-status-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "6fc33d6",
+  "summary": "Flutter now exposes prejoin roster loading and retry/error copy as a live region, matching the web VoicePrejoin role=status behavior. Visual layout and wording are unchanged.",
+  "checks": [
+    {
+      "name": "Flutter regression reproduced before implementation",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'announces prejoin roster loading and errors as live status'",
+      "status": "PASS",
+      "observation": "Before the fix, the new widget regression failed because the loading text did not expose the live-region semantic flag."
+    },
+    {
+      "name": "Focused prejoin loading and retry/error announcements",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'announces prejoin roster loading and errors as live status'",
+      "status": "PASS",
+      "observation": "The test verifies both the loading message and the web-matching retry/error message are exposed as live regions."
+    },
+    {
+      "name": "Workspace screen widget tests",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 45 workspace screen widget tests pass."
+    },
+    {
+      "name": "Full Flutter test suite and analyzer",
+      "command": "cd desktop && flutter test --no-pub; flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 287 Flutter tests pass and flutter analyze reports no issues."
+    },
+    {
+      "name": "Native screen-reader acceptance",
+      "status": "NOT_RUN",
+      "observation": "TalkBack, VoiceOver and NVDA were not exercised on physical devices/desktops; widget semantics are not proof of spoken announcement behavior."
+    }
+  ],
+  "remaining": "Verify that loading and retry/error transitions are announced once and intelligibly by TalkBack, VoiceOver and NVDA, and compare prejoin focus/navigation behavior on Android, macOS and Windows."
+}
