@@ -76,6 +76,22 @@
       "observation": "Instrumented Pixel logcat reported '[screen-thumbnail] send=published'. The line contains no participant identity, image bytes or raw exception."
     },
     {
+      "name": "Live Pixel video frames on macOS receiver",
+      "status": "PASS",
+      "observation": "After Mac unlock, the connected Mac 1.0.15+20 client displayed the live portrait Android screen from status bar through the bottom navigation with black side bars and no apparent crop. Both participant microphones were visibly off."
+    },
+    {
+      "name": "Live macOS roster-card thumbnail acceptance",
+      "status": "FAIL",
+      "observation": "While the Pixel share was active and the Mac received video frames, both the Mac participant card and compact participant strip continued to show the Android avatar rather than a screen thumbnail. The thumbnail remained absent after the four-second sender sampling interval; opening the stream showed live video but did not change the participant thumbnail."
+    },
+    {
+      "name": "LiveKit token data-publish grant versus thumbnail transport",
+      "command": "cd backend && go test ./internal/media/livekit_credential; inspect signer.go and signer_test.go",
+      "status": "PASS",
+      "observation": "The server-issued voice grant explicitly sets CanPublishData(false), and its unit test asserts the claim remains false. Flutter's published sender log only confirms the local SDK data-channel send returned; the grant prevents treating that as evidence that the SFU forwarded the thumbnail. Do not broaden the grant without security review/ADR."
+    },
+    {
       "name": "Full Flutter suite and analyzer after thumbnail strip fix",
       "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
       "status": "PASS",
@@ -86,8 +102,14 @@
       "command": "cd desktop && flutter run -d macos --no-pub",
       "status": "BLOCKED",
       "observation": "The Debug app built and Flutter VM service started, but the window remained on 'Подключаемся к гильдии…'. A separate unauthenticated GET to the public maintenance endpoint returned HTTP 200 in 0.025s; this does not identify why app initialization is waiting. No receiver-stage event could be observed."
+    },
+    {
+      "name": "Earlier Pixel-to-Mac retest attempt while Mac was locked",
+      "command": "adb devices -l; adb shell dumpsys window; desktop UI availability check",
+      "status": "BLOCKED",
+      "observation": "On 2026-10-01 the user approved another brief Pixel-to-Mac test with microphones muted. Read-only ADB confirmed Pixel 7 connected, BOOHTACORD 1.0.15+20 foregrounded. The desktop UI check reported the Mac locked and unavailable; no voice join or screen share was started, so this attempt provides no new sender/receiver acceptance evidence."
     }
   ],
-  "latest_update": "2026-10-01: Instrumented Pixel logcat reports send=published. The signed Android 1.0.15+20 APK was rebuilt and installed over the existing app without clearing data; a subsequent muted Pixel-only SHARE_TEST showed the captured screen thumbnail in the compact participant strip after the sampling interval. The Mac Debug build remained at 'Подключаемся к гильдии…'. A process sample and securityd log now confirm it is waiting for Keychain authorization on service .session.v3; details in QA-163. Remote Mac receiver logs and card acceptance remain pending until startup is unblocked.",
-  "remaining": "Complete user-approved Keychain authorization or test a stable Developer ID-signed Mac build, then inspect receiver-stage logs for the Pixel packet and verify the remote Mac participant card displays the thumbnail. Rerun Pixel and Mac acceptance together with both microphones off."
+  "latest_update": "2026-10-01: Instrumented Pixel logcat reports send=published, and the signed Android 1.0.15+20 APK displays its local thumbnail. After the user unlocked Mac, both clients were already connected in SHARE_TEST with microphones off. The Mac received and rendered the full portrait video without apparent crop, but its participant card and compact strip continued to show the Android avatar. Source tracing found the server-issued LiveKit grant explicitly sets CanPublishData=false (also asserted by the backend signer test); the SDK send completion therefore does not prove the thumbnail packet was forwarded. Keep this permission unchanged until a security-reviewed design/ADR authorizes a constrained approach. Paired live evidence closes the Mac video-frame/crop check but confirms the remote-thumbnail gap remains open.",
+  "remaining": "Resolve remote participant thumbnails without weakening the server's data-publish restriction absent a security decision; update web and Flutter acceptance after an approved approach. Keep Android receiver crop/profile/metrics/OS-stop checks, Windows capture/runtime checks and matched cross-platform viewer screenshots open."
 }

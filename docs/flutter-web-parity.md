@@ -308,9 +308,16 @@ both deployed web and Flutter viewers.
   (mic, speaking and screen sharing) from LiveKit events. Non-connected
   navigation receives authenticated roster snapshots through a short-lived SSE
   stream; signed LiveKit webhook events only invalidate snapshots, and each
-  snapshot rechecks channel visibility and active leases. Web and Flutter also
-  send bounded (14 KiB max), four-second screen thumbnails for roster cards.
-  Parser, reconnect, webhook, thumbnail and widget tests pass [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json).
+  snapshot rechecks channel visibility and active leases. Web and Flutter
+  currently attempt to send bounded (14 KiB max), four-second screen thumbnails
+  as LiveKit data packets. The production credential deliberately denies data
+  publishing (`CanPublishData=false`), so local send completion does not prove
+  forwarding; paired live testing confirms the Mac still displays avatars even
+  while the Android video track renders. Do not enable the broad data grant
+  without an explicit security review/ADR. The parser, reconnect, webhook,
+  thumbnail and widget tests still pass [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json),
+  but they do not cover this credential/live-forwarding restriction —
+  [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
   Two-account/live-server privacy and event-delivery acceptance plus focused
   ordering/spacing screenshots remain open.
 - Port admin topology operations with confirmations, revision conflicts and

@@ -1,10 +1,10 @@
 {
   "id": "QA-163",
   "kind": "macos-keychain-prompt-runtime",
-  "status": "BLOCKED",
+  "status": "PARTIAL",
   "executed_at": "2026-10-01",
   "source_revision": "0e40edd",
-  "summary": "The macOS Debug 1.0.15+20 client remained on the guild startup screen. A read-only process sample and Unified Logging confirm flutter_secure_storage is waiting for macOS Keychain authorization while reading session service v3. The current ad-hoc app signature is not among the code hashes listed in the access-control prompt, consistent with the prompt recurring after a rebuild. No Keychain items were changed and no password was collected.",
+  "summary": "The macOS Debug 1.0.15+20 client initially remained on the guild startup screen. A read-only process sample and Unified Logging confirmed flutter_secure_storage was waiting for macOS Keychain authorization while reading session service v3. After the user manually unlocked the Mac, the same running client advanced into the authenticated SHARE_TEST room. The current ad-hoc app signature is not among the code hashes listed in the access-control prompt, consistent with authorization recurring after a rebuild. No Keychain items were changed and no password was collected.",
   "checks": [
     {
       "name": "Current macOS Debug startup state",
@@ -47,10 +47,15 @@
       "observation": "All 315 Flutter tests passed and analyzer reported no issues."
     },
     {
-      "name": "Startup after user-approved authorization or stable signature",
+      "name": "Prompt-free startup without manual unlock or stable signature (initial blocked observation)",
       "status": "BLOCKED",
       "observation": "The app is waiting for the user to resolve the native Keychain access prompt, or for a Developer ID-signed build with a stable signing requirement. This host has no valid Developer ID signing identity."
+    },
+    {
+      "name": "Current session after manual Mac unlock",
+      "status": "PASS",
+      "observation": "After the user manually unlocked the Mac on 2026-10-01, the already-running BOOHTACORD client advanced from the guild-loading screen into the authenticated SHARE_TEST room and connected. Both voice participants were muted. Codex did not enter or collect a password. This does not prove prompt-free cold startup or persistence across a fresh app launch."
     }
   ],
-  "remaining": "After the user approves Keychain access in the macOS system prompt (without sharing their password) or provides a stable signed build, verify startup reaches the authenticated workspace promptly, repeat the read after a fresh relaunch, and retry the Pixel-to-Mac thumbnail acceptance. The public maintenance request no longer touches the session cookie, but cannot replace the protected session check."
+  "remaining": "Repeat the startup check after a fresh app launch to establish normal latency and whether the Keychain authorization recurs; no stable Developer ID identity is available on this host. The public maintenance request no longer touches the session cookie, but cannot replace the protected session check."
 }
