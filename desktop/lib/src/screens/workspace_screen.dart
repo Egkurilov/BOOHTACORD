@@ -2326,8 +2326,10 @@ class _ConversationState extends State<_Conversation>
                       ),
                   enabled: !widget.state.sending,
                   maxLength: 8000,
+                  textInputAction: TextInputAction.send,
                   minLines: 1,
                   maxLines: 5,
+                  onSubmitted: (_) => _send(),
                   decoration: InputDecoration(
                     counterText: '',
                     hintText: 'Написать сообщение…',
@@ -4107,6 +4109,7 @@ class _DirectConversationState extends State<_DirectConversation> {
                       ),
                   enabled: !widget.state.sending,
                   maxLength: 8000,
+                  textInputAction: TextInputAction.send,
                   minLines: 1,
                   maxLines: 5,
                   onSubmitted: (_) => _send(),

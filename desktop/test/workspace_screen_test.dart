@@ -1669,6 +1669,69 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('text composer submits from the soft-keyboard send action', (
+    tester,
+  ) async {
+    final api = _PortraitApi();
+    final state = AppState(api);
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(platform: TargetPlatform.android),
+        home: WorkspaceScreen(state: state),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final composer = find.byType(TextField).last;
+    expect(
+      tester.widget<TextField>(composer).textInputAction,
+      TextInputAction.send,
+    );
+    await tester.enterText(composer, 'Отправка с клавиатуры');
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pumpAndSettle();
+
+    expect(api.textSendIds, hasLength(1));
+    expect(state.messages.last.body, 'Отправка с клавиатуры');
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('direct-message composer submits from the soft-keyboard action', (
+    tester,
+  ) async {
+    final api = _PortraitApi(includeDirectMessage: true);
+    final state = AppState(api);
+    await state.initialize();
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(platform: TargetPlatform.android),
+        home: WorkspaceScreen(state: state),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final composer = find.byType(TextField).last;
+    expect(
+      tester.widget<TextField>(composer).textInputAction,
+      TextInputAction.send,
+    );
+    await tester.enterText(composer, 'Личное сообщение с клавиатуры');
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pumpAndSettle();
+
+    expect(
+      state.directMessageHistory.last.body,
+      'Личное сообщение с клавиатуры',
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('shows a failed text send and retries the same client ID', (
     tester,
   ) async {
