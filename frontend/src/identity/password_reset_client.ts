@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 
 export type PasswordResetRequest = (input: string, init: RequestInit) => Promise<Response>
@@ -6,7 +7,7 @@ export class PasswordResetInvalidError extends Error {
   constructor() { super('Ссылка недействительна или срок её действия истёк. Попросите администратора выдать новую ссылку.') }
 }
 
-export async function completePasswordReset(token: string, password: string, request: PasswordResetRequest = fetch): Promise<void> {
+export async function completePasswordReset(token: string, password: string, request: PasswordResetRequest = tracedFetch): Promise<void> {
   let response: Response
   try {
     response = await request(`${apiBaseUrl}/auth/password-reset/complete`, {

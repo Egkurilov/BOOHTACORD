@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { parseMentionIds } from '../conversation/mention_ids'
 import type { TextMessageAttachment } from '../conversation/message_client'
@@ -101,7 +102,7 @@ function requestInit(method: 'GET' | 'PUT', body?: unknown): RequestInit {
   }
 }
 
-export async function loadDirectMessageHistory(directMessageId: string, before: string | undefined, request: DirectMessageRequest = fetch, at?: string): Promise<DirectMessageHistoryPage> {
+export async function loadDirectMessageHistory(directMessageId: string, before: string | undefined, request: DirectMessageRequest = tracedFetch, at?: string): Promise<DirectMessageHistoryPage> {
   if (!directMessageId) invalidHistory()
   if (before && at) invalidHistory()
   const query = at ? `?at=${encodeURIComponent(at)}&limit=20` : before ? `?before=${encodeURIComponent(before)}` : ''
@@ -110,7 +111,7 @@ export async function loadDirectMessageHistory(directMessageId: string, before: 
   return { messages: source.messages.map(historyItem), nextCursor: optionalText(source.next_cursor) }
 }
 
-export async function advanceDirectMessageReadCursor(directMessageId: string, messageId: string, request: DirectMessageRequest = fetch): Promise<DirectMessageReadCursor> {
+export async function advanceDirectMessageReadCursor(directMessageId: string, messageId: string, request: DirectMessageRequest = tracedFetch): Promise<DirectMessageReadCursor> {
   if (!directMessageId || !messageId) invalidHistory()
   const response = await request(`${apiBaseUrl}/direct-messages/${encodeURIComponent(directMessageId)}/read-cursor`, requestInit('PUT', { message_id: messageId }))
   return readCursor(await checked(response))

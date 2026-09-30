@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-30",
+  "scope": "W3C client-to-server trace continuity and operational traffic exclusion",
+  "revision": "0e7fa217abb6d738edd73201bf86d8b1edf417e6",
+  "results": {
+    "git_sync": "PASS: origin/master 5ef0731d merged without conflicts; branch pushed to GitVerse PR 5",
+    "go_tests": "PASS: go test ./internal/observability/...; full go test ./... and go vet ./... passed before master merge, which did not touch Go",
+    "web_tests": "PASS: focused 3 files and 8 tests; production Docker image completed npm ci and npm run build",
+    "flutter_tests": "PASS: focused telemetry, auth screen and profile screen tests, 21 tests",
+    "production_release": "PASS: guarded OCI release on 176.108.242.211; API and Web image digests verified; health 200; maintenance disabled",
+    "http_w3c": "PASS: Tempo trace 53e43ab5886784c80410b50fec7af856 includes boohtacord-web api.request and boohtacord-api GET /api/v1/members/{userID}; server parent span ID equals client span ID",
+    "websocket_w3c": "PASS: Tempo trace cd5b2ee5a8fcedf2e6d1c02402f470c5 includes boohtacord-web realtime.connect, boohtacord-api GET /api/v1/realtime and realtime.connection with consecutive parent span IDs after browser WebSocket close",
+    "incoming_header": "PASS: synthetic W3C trace 5138762face14df1b797487a72f2f921 retained incoming parent span 1111111111111111",
+    "incoming_websocket_query": "PASS: synthetic W3C trace 9d9889e4c96c4dbfb54c7b3ae0fa52b1 retained incoming parent span 2222222222222222",
+    "service_request_exclusion": "PASS: health, maintenance and auth/session probes returned 200 while Tempo returned 404 for their three unique incoming W3C trace IDs",
+    "trace_relay_exclusion": "PASS: unauthenticated trace relay probe carrying trace ID 9ae6f42e9f654755aa426d2422e3009e returned 403; Tempo returned 404 for that trace ID; unit tests cover service endpoint exclusion from spans and HTTP metrics",
+    "flutter_live_continuity": "NOT_RUN: no installed Flutter client session was available for this release verification"
+  }
+}

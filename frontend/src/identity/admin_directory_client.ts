@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import type { ProfileRequest } from './profile_client'
 
@@ -41,27 +42,27 @@ function query(cursor: string | undefined): string {
   const parameters = new URLSearchParams({ limit: '100' }); if (cursor) parameters.set('cursor', cursor)
   return parameters.toString()
 }
-export async function listAdminAccounts(cursor?: string, request: ProfileRequest = fetch): Promise<AdminAccountPage> {
+export async function listAdminAccounts(cursor?: string, request: ProfileRequest = tracedFetch): Promise<AdminAccountPage> {
   const page = record(await (await call(`/admin/accounts?${query(cursor)}`, { method: 'GET' }, request)).json())
   if (!Array.isArray(page.accounts)) throw new Error('Сервер вернул некорректный список аккаунтов.')
   return { accounts: page.accounts.map(parseAccount), ...(typeof page.next_cursor === 'string' ? { next_cursor: page.next_cursor } : {}) }
 }
-export async function listAuditEvents(before?: string, request: ProfileRequest = fetch): Promise<AuditPage> {
+export async function listAuditEvents(before?: string, request: ProfileRequest = tracedFetch): Promise<AuditPage> {
   const parameters = new URLSearchParams({ limit: '100' }); if (before) parameters.set('before', before)
   const page = record(await (await call(`/admin/audit?${parameters}`, { method: 'GET' }, request)).json())
   if (!Array.isArray(page.events)) throw new Error('Сервер вернул некорректный список аудита.')
   return { events: page.events.map(parseEvent), ...(typeof page.next_cursor === 'string' ? { next_cursor: page.next_cursor } : {}) }
 }
-export async function updateAdminAccount(accountID: string, role: AdminAccount['role'], blocked: boolean, request: ProfileRequest = fetch): Promise<void> {
+export async function updateAdminAccount(accountID: string, role: AdminAccount['role'], blocked: boolean, request: ProfileRequest = tracedFetch): Promise<void> {
   if (!accountID || !['MEMBER', 'ADMINISTRATOR'].includes(role) || typeof blocked !== 'boolean') throw new Error('Некорректное состояние аккаунта.')
   await call(`/admin/accounts/${encodeURIComponent(accountID)}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ role, blocked }) }, request)
 }
-export async function createPasswordResetLink(accountID: string, request: ProfileRequest = fetch): Promise<PasswordResetLink> {
+export async function createPasswordResetLink(accountID: string, request: ProfileRequest = tracedFetch): Promise<PasswordResetLink> {
   if (!accountID) throw new Error('Не выбран аккаунт для восстановления доступа.')
   const result = record(await (await call('/admin/password-reset-links', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ account_id: accountID }) }, request)).json())
   return { url: text(result.url), expires_at: text(result.expires_at) }
 }
-export async function kickVoiceParticipant(accountID: string, request: ProfileRequest = fetch): Promise<VoiceKickResult> {
+export async function kickVoiceParticipant(accountID: string, request: ProfileRequest = tracedFetch): Promise<VoiceKickResult> {
   if (!accountID) throw new Error('Не выбран участник голосового канала.')
   const result = record(await (await call(`/admin/accounts/${encodeURIComponent(accountID)}/voice-kick`, { method: 'POST' }, request)).json())
   if (typeof result.revoked_leases !== 'number' || !Number.isInteger(result.revoked_leases)) throw new Error('Сервер вернул некорректный результат отключения.')

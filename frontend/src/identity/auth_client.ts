@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
@@ -34,11 +35,11 @@ async function send(path: string, input: AuthenticationInput, request: Authentic
   if (!response.ok) throw new Error(await errorMessage(response))
 }
 
-export function login(input: AuthenticationInput, request: AuthenticationRequest = fetch): Promise<void> {
+export function login(input: AuthenticationInput, request: AuthenticationRequest = tracedFetch): Promise<void> {
   return send('/auth/login', input, request)
 }
 
-export function register(input: AuthenticationInput, request: AuthenticationRequest = fetch): Promise<void> {
+export function register(input: AuthenticationInput, request: AuthenticationRequest = tracedFetch): Promise<void> {
   if (!validCodePointLength(input.password, 12, 128)) return Promise.reject(new Error('Пароль должен содержать от 12 до 128 символов.'))
   return send('/auth/register', input, request)
 }

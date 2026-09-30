@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 
 export interface OwnProfile { account_id: string; login: string; display_name: string; role: 'MEMBER' | 'ADMINISTRATOR'; avatar_url?: string }
@@ -25,26 +26,26 @@ async function call(path: string, init: RequestInit, request: ProfileRequest): P
   if (!response.ok) throw await error(response)
   return response
 }
-export async function loadOwnProfile(request: ProfileRequest = fetch): Promise<OwnProfile> { return parseProfile(await (await call('/me', { method: 'GET' }, request)).json()) }
-export async function saveOwnProfile(displayName: string, request: ProfileRequest = fetch): Promise<OwnProfile> {
+export async function loadOwnProfile(request: ProfileRequest = tracedFetch): Promise<OwnProfile> { return parseProfile(await (await call('/me', { method: 'GET' }, request)).json()) }
+export async function saveOwnProfile(displayName: string, request: ProfileRequest = tracedFetch): Promise<OwnProfile> {
   return parseProfile(await (await call('/me', { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ display_name: displayName }) }, request)).json())
 }
-export async function changeOwnPassword(currentPassword: string, newPassword: string, request: ProfileRequest = fetch): Promise<void> {
+export async function changeOwnPassword(currentPassword: string, newPassword: string, request: ProfileRequest = tracedFetch): Promise<void> {
   await call('/me/password', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }) }, request)
 }
-export async function uploadAvatar(file: File, request: ProfileRequest = fetch): Promise<void> {
+export async function uploadAvatar(file: File, request: ProfileRequest = tracedFetch): Promise<void> {
   if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 2 * 1024 * 1024) throw new Error('Выберите PNG или JPEG до 2 MiB.')
   await call('/me/avatar', { method: 'PUT', headers: { 'content-type': file.type }, body: file }, request)
 }
-export async function deleteAvatar(request: ProfileRequest = fetch): Promise<void> { await call('/me/avatar', { method: 'DELETE' }, request) }
-export async function loadMembers(cursor?: string, request: ProfileRequest = fetch): Promise<MemberPage> {
+export async function deleteAvatar(request: ProfileRequest = tracedFetch): Promise<void> { await call('/me/avatar', { method: 'DELETE' }, request) }
+export async function loadMembers(cursor?: string, request: ProfileRequest = tracedFetch): Promise<MemberPage> {
   const query = new URLSearchParams({ limit: '100' }); if (cursor) query.set('cursor', cursor)
   const page = record(await (await call(`/members?${query}`, { method: 'GET' }, request)).json())
   if (!Array.isArray(page.members)) throw new Error('Сервер вернул некорректный список участников.')
   const members = page.members.map(parseMember)
   return { members, ...(typeof page.next_cursor === 'string' ? { next_cursor: page.next_cursor } : {}) }
 }
-export async function loadMember(userID: string, request: ProfileRequest = fetch): Promise<GuildMember> {
+export async function loadMember(userID: string, request: ProfileRequest = tracedFetch): Promise<GuildMember> {
   if (!userID) throw new Error('Не выбран участник гильдии.')
   return parseMember(await (await call(`/members/${encodeURIComponent(userID)}`, { method: 'GET' }, request)).json())
 }

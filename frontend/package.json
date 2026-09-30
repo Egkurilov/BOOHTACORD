@@ -10,6 +10,12 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/context-zone": "2.11.0",
+    "@opentelemetry/exporter-trace-otlp-proto": "0.222.0",
+    "@opentelemetry/resources": "2.11.0",
+    "@opentelemetry/sdk-trace-base": "2.11.0",
+    "@opentelemetry/sdk-trace-web": "2.11.0",
     "livekit-client": "2.22.3",
     "pinia": "4.0.3",
     "vue": "3.5.43"

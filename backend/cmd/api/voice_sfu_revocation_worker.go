@@ -6,6 +6,10 @@ import (
 	"log/slog"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+
 	dispatchvoicesfurevocation "voice-platform/backend/internal/media/dispatch_voice_sfu_revocation"
 )
 
@@ -38,8 +42,12 @@ func startVoiceLeaseRevocationNotificationWorker(parent context.Context, notifie
 func attemptVoiceLeaseRevocationNotificationDispatch(parent context.Context, notifier voiceLeaseRevocationNotifier) {
 	context, cancel := context.WithTimeout(parent, voiceLeaseNotificationTimeout)
 	defer cancel()
+	context, span := otel.Tracer("boohtacord/voice-workers").Start(context, "voice.lease_notification.dispatch")
+	defer span.End()
 	emitted, err := notifier.Dispatch(context, voiceLeaseNotificationBatchLimit)
+	span.SetAttributes(attribute.Int("voice.notifications.emitted", emitted))
 	if err != nil {
+		span.SetStatus(codes.Error, "notification dispatch failed")
 		slog.Warn("voice lease revocation notification dispatch did not complete", "emitted", emitted)
 	}
 }
@@ -67,8 +75,14 @@ func startVoiceSFURevocationWorker(parent context.Context, dispatcher dispatchvo
 }
 
 func attemptVoiceSFURevocationDispatch(context context.Context, dispatcher dispatchvoicesfurevocation.Dispatcher, observer voiceSFURevocationObserver) {
+	context, span := otel.Tracer("boohtacord/voice-workers").Start(context, "voice.sfu_revocation.dispatch")
+	defer span.End()
 	result, err := dispatchvoicesfurevocation.DispatchPending(context, dispatcher)
+	span.SetAttributes(attribute.Int("voice.revocations.confirmed", result.Confirmed), attribute.Int("voice.revocations.pending", result.Pending))
 	observer.ObserveVoiceSFURevocation(result.Confirmed, result.Pending, err != nil && !errors.Is(err, dispatchvoicesfurevocation.ErrPending))
+	if err != nil && !errors.Is(err, dispatchvoicesfurevocation.ErrPending) {
+		span.SetStatus(codes.Error, "SFU revocation failed")
+	}
 	if err != nil {
 		slog.Warn("voice sfu revocation dispatch did not complete", "confirmed", result.Confirmed, "pending", result.Pending)
 	}

@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import type { DirectMessageRequest } from './direct_message_client'
 
@@ -56,7 +57,7 @@ async function checked(response: Response): Promise<unknown> {
   throw new DirectMessageSearchRequestError(response.status, code)
 }
 
-export async function searchDirectMessageHistory(directMessageId: string, query: string, before: string | undefined, limit = 50, request: DirectMessageRequest = fetch): Promise<DirectMessageSearchPage> {
+export async function searchDirectMessageHistory(directMessageId: string, query: string, before: string | undefined, limit = 50, request: DirectMessageRequest = tracedFetch): Promise<DirectMessageSearchPage> {
   const parameters = new URLSearchParams({ query })
   if (before) parameters.set('before', before)
   parameters.set('limit', String(limit))

@@ -1,8 +1,9 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 
 export type LogoutRequest = (input: string, init: RequestInit) => Promise<Response>
 
-export async function logout(request: LogoutRequest = fetch): Promise<void> {
+export async function logout(request: LogoutRequest = tracedFetch): Promise<void> {
   let response: Response
   try {
     response = await request(`${apiBaseUrl}/auth/logout`, {

@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import type { DirectMessageRequest } from './direct_message_client'
 
@@ -65,14 +66,14 @@ function requestInit(method: 'GET' | 'POST', body?: unknown): RequestInit {
   }
 }
 
-export async function loadDirectMessageCandidates(after: string | undefined, request: DirectMessageRequest = fetch): Promise<DirectMessageCandidatePage> {
+export async function loadDirectMessageCandidates(after: string | undefined, request: DirectMessageRequest = tracedFetch): Promise<DirectMessageCandidatePage> {
   const query = after ? `?after=${encodeURIComponent(after)}` : ''
   const source = record(await checked(await request(`${apiBaseUrl}/direct-message-candidates${query}`, requestInit('GET'))))
   if (!source || !Array.isArray(source.candidates)) invalidPage()
   return { candidates: source.candidates.map(candidate), nextAfter: optionalText(source.next_after, invalidPage) }
 }
 
-export async function openDirectMessage(participantId: string, request: DirectMessageRequest = fetch): Promise<OpenedDirectMessage> {
+export async function openDirectMessage(participantId: string, request: DirectMessageRequest = tracedFetch): Promise<OpenedDirectMessage> {
   if (!participantId) invalidDirectMessage()
   return openedDirectMessage(await checked(await request(`${apiBaseUrl}/direct-messages`, requestInit('POST', { participant_id: participantId }))))
 }

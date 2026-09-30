@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models.dart';
+import 'client_telemetry.dart';
+import 'tracing_http_client.dart';
 
 class ApiFailure implements Exception {
   const ApiFailure(this.message, {this.status, this.code});
@@ -30,7 +32,9 @@ class VoiceAdmissionCloseResult {
 }
 
 class ApiClient {
-  ApiClient({http.Client? client}) : _client = client ?? http.Client();
+  ApiClient({http.Client? client}) : _transport = client ?? http.Client() {
+    _client = TracingHttpClient(_transport);
+  }
   @visibleForTesting
   static const MacOsOptions macOsSessionOptions = MacOsOptions(
     accountName: 'ru.boohtacord.boohtacordDesktop.session.v3',
@@ -38,7 +42,24 @@ class ApiClient {
   );
   static const _serverKey = 'server_url';
   static const _cookieKey = 'boohtacord_session_cookie';
-  final http.Client _client;
+  final http.Client _transport;
+  late final http.Client _client;
+  bool _hadRealtimeConnection = false;
+
+  Future<void> submitClientSpans(List<int> body) async {
+    final response = await _transport.post(
+      _uri('/telemetry/traces'),
+      headers: {
+        ...await _headers(),
+        'content-type': 'application/x-protobuf',
+        'x-client-platform': Platform.operatingSystem,
+      },
+      body: body,
+    );
+    if (response.statusCode != 202) {
+      throw StateError('Telemetry export failed');
+    }
+  }
   void Function()? onUnauthorized;
   // Keep macOS on the legacy Keychain without sharing entitlements: the
   // Data Protection Keychain returns errSecMissingEntitlement for ad-hoc
@@ -1055,14 +1076,25 @@ class ApiClient {
   }
 
   Future<WebSocket> openRealtime() async {
-    final httpUri = Uri.parse(baseUrl);
-    final realtimeUri = httpUri.replace(
-      scheme: 'wss',
-      path: '${httpUri.path}/realtime',
-      query: null,
+    return ClientTelemetry.trace(
+      _hadRealtimeConnection ? 'realtime.reconnect' : 'realtime.connect',
+      () async {
+        final httpUri = Uri.parse(baseUrl);
+        final realtimeUri = httpUri.replace(
+          scheme: 'wss',
+          path: '${httpUri.path}/realtime',
+          query: null,
+        );
+        final headers = await _headers();
+        headers.addAll(ClientTelemetry.currentTraceHeaders());
+        final socket = await WebSocket.connect(
+          realtimeUri.toString(),
+          headers: headers,
+        );
+        _hadRealtimeConnection = true;
+        return socket;
+      },
     );
-    final headers = await _headers();
-    return WebSocket.connect(realtimeUri.toString(), headers: headers);
   }
 
   Future<ChatMessage> sendMessage(

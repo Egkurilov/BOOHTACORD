@@ -1,4 +1,5 @@
 import { ref, type Ref } from 'vue'
+import { endTracedOperation, startTracedOperation } from '../telemetry/client_tracing'
 
 import type { ScreenViewerCard, ScreenViewerController } from './screen_viewer_controller'
 
@@ -34,11 +35,16 @@ export function createScreenViewerControls(
 
   function select(id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null): void {
     if (!controller) return
+    const span = startTracedOperation('screen.view')
+    let failed = false
     try {
       controller.select(id, video, audio)
       error.value = null
     } catch (cause) {
+      failed = true
       error.value = cause instanceof Error ? cause.message : 'Не удалось выбрать демонстрацию.'
+    } finally {
+      endTracedOperation(span, 'screen.view', failed)
     }
   }
 

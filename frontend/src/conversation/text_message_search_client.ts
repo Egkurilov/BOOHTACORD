@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { MessageRequestError, type MessageRequest } from './message_client'
 
@@ -50,7 +51,7 @@ async function checked(response: Response): Promise<unknown> {
   throw new MessageRequestError(response.status, code)
 }
 
-export async function searchTextMessages(channelId: string, query: string, before: string | undefined, limit = 50, request: MessageRequest = fetch): Promise<TextMessageSearchPage> {
+export async function searchTextMessages(channelId: string, query: string, before: string | undefined, limit = 50, request: MessageRequest = tracedFetch): Promise<TextMessageSearchPage> {
   const parameters = new URLSearchParams({ query })
   if (before) parameters.set('before', before)
   parameters.set('limit', String(limit))

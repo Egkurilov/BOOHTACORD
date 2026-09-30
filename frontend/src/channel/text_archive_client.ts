@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import type { AdminTopologyRequest } from './admin_topology_client'
 
@@ -11,7 +12,7 @@ export class TextArchiveError extends Error {
   }
 }
 
-export async function archiveTextChannel(id: string, expectedRevision: number, request: AdminTopologyRequest = fetch): Promise<TextArchiveResult> {
+export async function archiveTextChannel(id: string, expectedRevision: number, request: AdminTopologyRequest = tracedFetch): Promise<TextArchiveResult> {
   if (!id || !Number.isInteger(expectedRevision) || expectedRevision < 1) throw new Error('Некорректные параметры архивации.')
   const response = await request(`${apiBaseUrl}/admin/channels/${encodeURIComponent(id)}`, {
     method: 'DELETE', credentials: 'same-origin',

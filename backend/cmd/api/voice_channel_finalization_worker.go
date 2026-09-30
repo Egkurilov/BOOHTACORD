@@ -5,6 +5,10 @@ import (
 	"log/slog"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	finalizeclosedvoicechannel "voice-platform/backend/internal/channel/finalize_closed_voice_channel"
@@ -44,8 +48,12 @@ func startVoiceChannelFinalizationWorker(parent context.Context, finalizer voice
 func attemptVoiceChannelFinalization(parent context.Context, finalizer voiceChannelFinalizer) {
 	ctx, cancel := context.WithTimeout(parent, voiceChannelFinalizationTimeout)
 	defer cancel()
+	ctx, span := otel.Tracer("boohtacord/voice-workers").Start(ctx, "voice.channel.finalization")
+	defer span.End()
 	count, err := finalizer.Run(ctx, voiceChannelFinalizationBatchLimit)
+	span.SetAttributes(attribute.Int("voice.channels.finalized", count))
 	if err != nil {
+		span.SetStatus(codes.Error, "voice channel finalization failed")
 		slog.Warn("voice channel finalization did not complete", "finalized", count)
 	}
 }

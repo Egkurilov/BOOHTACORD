@@ -1,6 +1,7 @@
 import { readScreenShareDiagnostics, startScreenShare, stopScreenShare, type ScreenProfile, type VoiceRoom } from './livekit_gateway'
 import { updateScreenShare } from './media_publishing'
 import type { ScreenDiagnostics } from './screen_diagnostics'
+import { tracedOperation } from '../telemetry/client_tracing'
 
 export interface ScreenVoiceSession {
   room: VoiceRoom
@@ -11,17 +12,21 @@ export class VoiceScreenSession {
   constructor(private readonly current: () => ScreenVoiceSession | null) {}
 
   async startScreen(profile: ScreenProfile): Promise<ScreenDiagnostics> {
-    const current = this.requireCurrent()
-    const diagnostics = await startScreenShare(current.room, profile)
-    current.screenProfile = profile
-    return diagnostics
+    return tracedOperation('screen.share.start', async () => {
+      const current = this.requireCurrent()
+      const diagnostics = await startScreenShare(current.room, profile)
+      current.screenProfile = profile
+      return diagnostics
+    })
   }
 
   async stopScreen(): Promise<void> {
-    const current = this.current()
-    if (!current || !current.screenProfile) return
-    await stopScreenShare(current.room)
-    current.screenProfile = null
+    return tracedOperation('screen.share.stop', async () => {
+      const current = this.current()
+      if (!current || !current.screenProfile) return
+      await stopScreenShare(current.room)
+      current.screenProfile = null
+    })
   }
 
   async updateScreenProfile(profile: ScreenProfile): Promise<ScreenDiagnostics> {

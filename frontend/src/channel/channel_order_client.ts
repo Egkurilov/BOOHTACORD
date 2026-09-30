@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import type { AdminTopologyRequest } from './admin_topology_client'
 
@@ -11,7 +12,7 @@ export class ChannelOrderError extends Error {
   }
 }
 
-export async function reorderChannels(categoryId: string, ids: string[], expectedRevision: number, request: AdminTopologyRequest = fetch): Promise<ChannelOrderResult> {
+export async function reorderChannels(categoryId: string, ids: string[], expectedRevision: number, request: AdminTopologyRequest = tracedFetch): Promise<ChannelOrderResult> {
   if (!categoryId || !ids.length || ids.some((id) => !id) || new Set(ids).size !== ids.length
     || !Number.isInteger(expectedRevision) || expectedRevision < 1) throw new Error('Некорректный порядок каналов.')
   const response = await request(`${apiBaseUrl}/admin/categories/${encodeURIComponent(categoryId)}/channels/order`, {

@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import type { ScreenReceiverMetrics } from './screen_receiver_diagnostics'
 import type { ScreenDiagnostics } from './screen_diagnostics'
@@ -82,7 +83,7 @@ export function buildSenderScreenReport(platform: WebPlatform, diagnostics: Scre
   }
 }
 
-export async function postScreenClientReport(report: ScreenClientReport, request: typeof fetch = fetch): Promise<void> {
+export async function postScreenClientReport(report: ScreenClientReport, request: typeof fetch = tracedFetch): Promise<void> {
   const response = await request(`${apiBaseUrl}/voice/screen-metrics`, {
     method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(report),
   })

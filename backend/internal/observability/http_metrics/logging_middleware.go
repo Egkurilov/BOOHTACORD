@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"voice-platform/backend/internal/observability/skip_requests"
 	"voice-platform/backend/internal/security/request_id"
 )
 
@@ -13,7 +14,7 @@ func LoggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 		logger = slog.Default()
 	}
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.URL.Path == "/metrics" {
+		if skiprequests.Skip(request) {
 			next.ServeHTTP(writer, request)
 			return
 		}

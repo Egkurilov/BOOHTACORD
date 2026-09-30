@@ -1,9 +1,10 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import type { MessageRequest } from './message_client'
 
 export interface TextReadCursor { channelId: string; messageId: string; messageCreatedAt: string }
 
-export async function advanceTextReadCursor(channelId: string, messageId: string, request: MessageRequest = fetch): Promise<TextReadCursor> {
+export async function advanceTextReadCursor(channelId: string, messageId: string, request: MessageRequest = tracedFetch): Promise<TextReadCursor> {
   if (!channelId || !messageId) throw new Error('Некорректный курсор чтения.')
   const response = await request(`${apiBaseUrl}/channels/${encodeURIComponent(channelId)}/read-cursor`, {
     method: 'PUT', credentials: 'same-origin',

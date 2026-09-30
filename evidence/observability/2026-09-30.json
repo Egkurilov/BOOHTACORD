@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-30",
+  "scope": "manual OpenTelemetry instrumentation and private observability infrastructure",
+  "results": {
+    "go_tests": "PASS: go test ./...",
+    "web_tests": "PASS: 226 files, 675 tests; npm run build",
+    "flutter_tests": "PASS: 273 full-suite tests",
+    "flutter_analyze_lib_test": "PASS: flutter analyze lib test",
+    "flutter_analyze_full": "BLOCKED: two existing info-level findings in vendored packages/flutter_webrtc after master sync",
+    "contracts": "PASS: scripts/verify-contracts.ps1",
+    "collector_tempo_prometheus": "PASS: all three containers running; Tempo /ready 200; Prometheus /-/ready 200",
+    "synthetic_otlp": "PASS: HTTPS ingest 200; Tempo trace 24c0f1ca0cb1b1e319d4ce91736d3818 retrievable",
+    "ingress_access": "PASS: unauthorized OTLP request 401; authorized request 200; private Tempo and Prometheus backends",
+    "grafana": "PASS: both data sources healthy; nginx proxies /public/ to Grafana; browser loaded Tempo plugin and displayed a production API trace; Runtime displayed 3/3 healthy targets, route and status tables",
+    "production_api_export": "PASS: release 3abd9890532e5d44b2e67f3b6781dc2f59be03ac deployed on 176.108.242.211; GET /api/v1/maintenance appeared in Tempo as trace e3c79aff072671b0796a29d3837c0cc1; Prometheus showed API requests and 5 ms through 5 s latency buckets; API exporter logs showed no errors",
+    "production_web_bundle": "PASS: release 3abd9890532e5d44b2e67f3b6781dc2f59be03ac web container running; https://v.bootybay.ru/ returned 200; unauthenticated client relay request returned 403",
+    "released_client_export": "NOT_RUN: no authenticated browser activity or signed Flutter application was available for a real client span check",
+    "native_ios_macos_android_windows_runtime": "NOT_RUN: no released on-device telemetry test"
+  }
+}

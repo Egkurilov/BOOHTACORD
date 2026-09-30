@@ -1,0 +1,70 @@
+import { describe, expect, it, vi } from 'vitest'
+import { InMemorySpanExporter, SimpleSpanProcessor, BasicTracerProvider } from '@opentelemetry/sdk-trace-base'
+import { ZoneContextManager } from '@opentelemetry/context-zone'
+import { context } from '@opentelemetry/api'
+import { createTracedFetch, traceOperation } from './client_tracing'
+
+describe('manual web tracing', () => {
+  it('links an API call without recording its URL, body or credentials', async () => {
+    const exporter = new InMemorySpanExporter()
+    const provider = new BasicTracerProvider({ spanProcessors: [new SimpleSpanProcessor(exporter)] })
+    const transport = vi.fn(async () => new Response(null, { status: 204 })) as unknown as typeof fetch
+    const request = createTracedFetch(provider.getTracer('test'), transport)
+    await request('/api/v1/direct-messages/private-id?token=query-secret', {
+      method: 'POST', body: 'private-message', headers: { cookie: 'session=cookie-secret' },
+    })
+    const [url, init] = (transport as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit]
+    expect(url).toContain('private-id')
+    expect(new Headers(init.headers).get('traceparent')).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/)
+    const spans = exporter.getFinishedSpans()
+    expect(spans).toHaveLength(1)
+    expect(spans[0].name).toBe('api.request')
+    const visible = JSON.stringify({ name: spans[0].name, attributes: spans[0].attributes, status: spans[0].status })
+    for (const secret of ['private-id', 'query-secret', 'private-message', 'cookie-secret']) expect(visible).not.toContain(secret)
+    await provider.shutdown()
+  })
+
+  it('records a fixed voice operation and strips error details', async () => {
+    const exporter = new InMemorySpanExporter()
+    const provider = new BasicTracerProvider({ spanProcessors: [new SimpleSpanProcessor(exporter)] })
+    await expect(traceOperation(provider.getTracer('test'), 'voice.join', async () => {
+      throw new Error('private voice token')
+    })).rejects.toThrow('private voice token')
+    const span = exporter.getFinishedSpans()[0]
+    expect(span.name).toBe('voice.join')
+    expect(span.events.map((event) => event.name)).toEqual(['app.client.voice.join.started', 'app.client.voice.join.failed'])
+    expect(JSON.stringify({ name: span.name, attributes: span.attributes, status: span.status, events: span.events })).not.toContain('private voice token')
+    await provider.shutdown()
+  })
+
+  it('parents the immediate API call under its explicit voice operation', async () => {
+    context.setGlobalContextManager(new ZoneContextManager().enable())
+    const exporter = new InMemorySpanExporter()
+    const provider = new BasicTracerProvider({ spanProcessors: [new SimpleSpanProcessor(exporter)] })
+    const tracer = provider.getTracer('test')
+    const request = createTracedFetch(tracer, vi.fn(async () => new Response(null, { status: 204 })) as unknown as typeof fetch)
+    await traceOperation(tracer, 'voice.join', async (within) => {
+      await Promise.resolve()
+      return within(() => request('/api/v1/voice', { method: 'POST' }))
+    })
+    const [api, voice] = exporter.getFinishedSpans()
+    expect(voice.events.map((event) => event.name)).toEqual(['app.client.voice.join.started', 'app.client.voice.join.completed'])
+    expect(api.spanContext().traceId).toBe(voice.spanContext().traceId)
+    expect(api.parentSpanContext?.spanId).toBe(voice.spanContext().spanId)
+    await provider.shutdown()
+    context.disable()
+  })
+
+  it('does not trace operational requests or export its own OTLP batches', async () => {
+    const exporter = new InMemorySpanExporter()
+    const provider = new BasicTracerProvider({ spanProcessors: [new SimpleSpanProcessor(exporter)] })
+    const transport = vi.fn(async () => new Response(null, { status: 202 })) as unknown as typeof fetch
+    const request = createTracedFetch(provider.getTracer('test'), transport)
+    for (const path of ['/api/v1/health', '/api/v1/maintenance', '/api/v1/telemetry/traces', '/api/v1/voice/rosters/events']) {
+      await request(path)
+    }
+    expect(exporter.getFinishedSpans()).toHaveLength(0)
+    expect((transport as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(4)
+    await provider.shutdown()
+  })
+})

@@ -1,16 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-
 import { loadCurrentSession } from '../identity/current_session'
-import { parseRealtimeEvent, realtimeURL, type RealtimeEvent } from './realtime_client'
+import { parseRealtimeEvent, realtimeTraceURL, realtimeURL, type RealtimeEvent } from './realtime_client'
 import { createRealtimeDelivery, type EventHandler } from './realtime_event_delivery'
 import { reconnectDelay } from './reconnect_policy'
 import type { RealtimeConnectOptions, RealtimeSocket, RealtimeSocketFactory } from './realtime_connection_types'
+import { startTracedCompletion } from '../telemetry/client_tracing'
 
 export type { RealtimeConnectOptions, RealtimeSocket, RealtimeSocketFactory } from './realtime_connection_types'
-
 export type RealtimeState = 'IDLE' | 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR'
-
 export const useRealtimeStore = defineStore('realtime', () => {
   const state = ref<RealtimeState>('IDLE')
   const error = ref<string | null>(null)
@@ -20,7 +18,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
   let generation = 0
   let attempt = 0
   let delivery: ReturnType<typeof createRealtimeDelivery> | null = null
-
+  let pendingConnection: (() => void) | null = null
   function connect(onEvent: EventHandler, factory: RealtimeSocketFactory = (url) => new WebSocket(url), url?: string, options: RealtimeConnectOptions = {}): void {
     if (active) return
     active = true
@@ -66,20 +64,24 @@ export const useRealtimeStore = defineStore('realtime', () => {
 
     function open(): void {
       if (!active || ownGeneration !== generation) return
+      const operation = attempt === 0 ? 'realtime.connect' : 'realtime.reconnect'
+      const { finish, traceparent, tracestate } = startTracedCompletion(operation)
+      pendingConnection = () => finish(true)
       state.value = 'CONNECTING'
       let current: RealtimeSocket
       try {
         const target = url ?? realtimeURL()
         const after = delivery?.cursor()
-        current = factory(after ? `${target}${target.includes('?') ? '&' : '?'}after=${encodeURIComponent(after)}` : target)
+        current = factory(realtimeTraceURL(after ? `${target}${target.includes('?') ? '&' : '?'}after=${encodeURIComponent(after)}` : target, traceparent, tracestate))
       } catch (cause) {
+        finish(true)
         error.value = cause instanceof Error ? cause.message : 'Realtime-соединение недоступно.'
         state.value = 'DISCONNECTED'
         schedule()
         return
       }
       socket = current
-      current.onopen = () => { if (socket === current) { state.value = 'CONNECTED'; error.value = null } }
+      current.onopen = () => { finish(); if (socket === current) { state.value = 'CONNECTED'; error.value = null } }
       current.onmessage = (message) => {
         if (socket !== current) return
         try {
@@ -91,8 +93,8 @@ export const useRealtimeStore = defineStore('realtime', () => {
           state.value = 'ERROR'
         }
       }
-      current.onerror = () => fail(current)
-      current.onclose = () => fail(current)
+      current.onerror = () => { finish(true); fail(current) }
+      current.onclose = () => { finish(true); fail(current) }
     }
     open()
   }
@@ -106,6 +108,8 @@ export const useRealtimeStore = defineStore('realtime', () => {
     delivery = null
     const current = socket
     socket = null
+    pendingConnection?.()
+    pendingConnection = null
     if (current) { current.onclose = null; current.onerror = null; current.onmessage = null; current.onopen = null; current.close() }
     state.value = 'DISCONNECTED'
     error.value = null

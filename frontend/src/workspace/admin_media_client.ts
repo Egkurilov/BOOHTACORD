@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 
 export interface AdminScreenSample {
@@ -58,7 +59,7 @@ function sample(value: unknown): AdminScreenSample {
   return parsed
 }
 
-export async function listAdminScreenMetrics(request: typeof fetch = fetch): Promise<AdminScreenSample[]> {
+export async function listAdminScreenMetrics(request: typeof fetch = tracedFetch): Promise<AdminScreenSample[]> {
   const response = await request(`${apiBaseUrl}/admin/screen-metrics`, { credentials: 'same-origin', headers: { accept: 'application/json' }, cache: 'no-store' })
   if (!response.ok) throw new Error('Не удалось загрузить показатели медиа.')
   const payload = record(await response.json())

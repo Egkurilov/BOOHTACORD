@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"voice-platform/backend/internal/observability/skip_requests"
 )
 
 func (recorder *Recorder) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.URL.Path == "/metrics" {
+		if skiprequests.Skip(request) {
 			next.ServeHTTP(writer, request)
 			return
 		}

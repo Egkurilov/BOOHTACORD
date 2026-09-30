@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 
 export interface CurrentSession {
@@ -7,7 +8,7 @@ export interface CurrentSession {
 
 export type SessionRequest = (input: string, init: RequestInit) => Promise<Response>
 
-export async function loadCurrentSession(request: SessionRequest = fetch): Promise<CurrentSession | null> {
+export async function loadCurrentSession(request: SessionRequest = tracedFetch): Promise<CurrentSession | null> {
   const response = await request(`${apiBaseUrl}/auth/session`, { credentials: 'same-origin', headers: { accept: 'application/json' } })
   if (response.status === 401) return null
   if (!response.ok) throw new Error(`Не удалось определить текущую сессию (${response.status}).`)

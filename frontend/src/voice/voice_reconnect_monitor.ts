@@ -1,4 +1,6 @@
 import type { VoiceConnectionObserver } from './voice_session'
+import { type Span } from '@opentelemetry/api'
+import { endTracedOperation, startTracedOperation } from '../telemetry/client_tracing'
 
 export interface ReconnectableVoiceRoom {
   on(event: 'reconnecting' | 'reconnected' | 'disconnected', listener: () => void): unknown
@@ -6,6 +8,7 @@ export interface ReconnectableVoiceRoom {
 
 export class VoiceReconnectMonitor {
   private leaving = false
+  private reconnectSpan: Span | null = null
   private observer: VoiceConnectionObserver | null = null
 
   setObserver(observer: VoiceConnectionObserver): void {
@@ -13,7 +16,13 @@ export class VoiceReconnectMonitor {
   }
 
   notifyDisconnected(): void {
+    this.finishReconnect(true)
     this.observer?.disconnected()
+  }
+
+  private finishReconnect(failed = false): void {
+    if (this.reconnectSpan) endTracedOperation(this.reconnectSpan, 'voice.reconnect', failed)
+    this.reconnectSpan = null
   }
 
   async whileLeaving(action: () => Promise<void>): Promise<void> {
@@ -22,8 +31,8 @@ export class VoiceReconnectMonitor {
   }
 
   bind(room: ReconnectableVoiceRoom, current: () => boolean, disconnected: () => Promise<void>): void {
-    room.on('reconnecting', () => { if (current()) this.observer?.reconnecting() })
-    room.on('reconnected', () => { if (current()) this.observer?.reconnected() })
+    room.on('reconnecting', () => { if (current()) { this.reconnectSpan ??= startTracedOperation('voice.reconnect'); this.observer?.reconnecting() } })
+    room.on('reconnected', () => { if (current()) { this.finishReconnect(); this.observer?.reconnected() } })
     room.on('disconnected', () => {
       if (current() && !this.leaving) void disconnected()
     })

@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { parseMentionIds } from './mention_ids'
 
@@ -86,7 +87,7 @@ function requestInit(method: string, body?: unknown): RequestInit {
   return { method, credentials: 'same-origin', headers: { accept: 'application/json', ...(body ? { 'content-type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) }
 }
 
-export async function loadMessagePage(channelId: string, before: string | undefined, request: MessageRequest = fetch, at?: string): Promise<MessagePage> {
+export async function loadMessagePage(channelId: string, before: string | undefined, request: MessageRequest = tracedFetch, at?: string): Promise<MessagePage> {
   if (before && at) throw new Error('Выберите один курсор истории.')
   const query = at ? `?at=${encodeURIComponent(at)}&limit=20` : before ? `?before=${encodeURIComponent(before)}` : ''
   const response = await request(`${apiBaseUrl}/channels/${encodeURIComponent(channelId)}/messages${query}`, requestInit('GET'))
@@ -96,7 +97,7 @@ export async function loadMessagePage(channelId: string, before: string | undefi
   return { messages: source.messages.map((value) => message(value, true)), nextCursor }
 }
 
-export async function createTextMessage(channelId: string, clientMessageId: string, body: string, request: MessageRequest = fetch, replyToId?: string, attachmentIds: string[] = [], mentionUserIds: string[] = []): Promise<TextMessage> {
+export async function createTextMessage(channelId: string, clientMessageId: string, body: string, request: MessageRequest = tracedFetch, replyToId?: string, attachmentIds: string[] = [], mentionUserIds: string[] = []): Promise<TextMessage> {
   const response = await request(`${apiBaseUrl}/channels/${encodeURIComponent(channelId)}/messages`, requestInit('POST', {
     client_message_id: clientMessageId,
     body,
@@ -107,11 +108,11 @@ export async function createTextMessage(channelId: string, clientMessageId: stri
   return message(await checked(response))
 }
 
-export async function editTextMessage(channelId: string, messageId: string, body: string, expectedRevision: number, request: MessageRequest = fetch, mentionUserIds: string[] = []): Promise<TextMessage> {
+export async function editTextMessage(channelId: string, messageId: string, body: string, expectedRevision: number, request: MessageRequest = tracedFetch, mentionUserIds: string[] = []): Promise<TextMessage> {
   const response = await request(`${apiBaseUrl}/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}`, requestInit('PATCH', { body, expected_revision: expectedRevision, ...(mentionUserIds.length ? { mention_user_ids: mentionUserIds } : {}) }))
   return message(await checked(response))
 }
 
-export async function deleteTextMessage(channelId: string, messageId: string, request: MessageRequest = fetch): Promise<void> {
+export async function deleteTextMessage(channelId: string, messageId: string, request: MessageRequest = tracedFetch): Promise<void> {
   await checked(await request(`${apiBaseUrl}/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}`, requestInit('DELETE')))
 }

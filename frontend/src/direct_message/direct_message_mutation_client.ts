@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { parseMentionIds } from '../conversation/mention_ids'
 import type { DirectMessageHistoryItem, DirectMessageRequest } from './direct_message_client'
@@ -54,18 +55,18 @@ function path(directMessageId: string, messageId?: string): string {
   return messageId ? `${base}/${encodeURIComponent(messageId)}` : base
 }
 
-export async function createDirectMessage(directMessageId: string, clientMessageId: string, body: string, request: DirectMessageRequest = fetch, replyToId?: string, mentionUserIds: string[] = [], attachmentIds: string[] = []): Promise<DirectMessageHistoryItem> {
+export async function createDirectMessage(directMessageId: string, clientMessageId: string, body: string, request: DirectMessageRequest = tracedFetch, replyToId?: string, mentionUserIds: string[] = [], attachmentIds: string[] = []): Promise<DirectMessageHistoryItem> {
   if (!clientMessageId || (!body && attachmentIds.length === 0)) invalid()
   const response = await request(path(directMessageId), requestInit('POST', { client_message_id: clientMessageId, body, ...(replyToId ? { reply_to_id: replyToId } : {}), ...(attachmentIds.length ? { attachment_ids: attachmentIds } : {}), ...(mentionUserIds.length ? { mention_user_ids: mentionUserIds } : {}) }))
   return message(await checked(response))
 }
 
-export async function editDirectMessage(directMessageId: string, messageId: string, body: string, expectedRevision: number, request: DirectMessageRequest = fetch, mentionUserIds: string[] = []): Promise<DirectMessageHistoryItem> {
+export async function editDirectMessage(directMessageId: string, messageId: string, body: string, expectedRevision: number, request: DirectMessageRequest = tracedFetch, mentionUserIds: string[] = []): Promise<DirectMessageHistoryItem> {
   if (!body || !Number.isInteger(expectedRevision) || expectedRevision < 1) invalid()
   const response = await request(path(directMessageId, messageId), requestInit('PATCH', { body, expected_revision: expectedRevision, ...(mentionUserIds.length ? { mention_user_ids: mentionUserIds } : {}) }))
   return message(await checked(response))
 }
 
-export async function deleteDirectMessage(directMessageId: string, messageId: string, request: DirectMessageRequest = fetch): Promise<void> {
+export async function deleteDirectMessage(directMessageId: string, messageId: string, request: DirectMessageRequest = tracedFetch): Promise<void> {
   await checked(await request(path(directMessageId, messageId), requestInit('DELETE')))
 }

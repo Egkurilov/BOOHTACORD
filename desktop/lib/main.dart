@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'src/app.dart';
-import 'src/app_state.dart';
 import 'src/services/api_client.dart';
+import 'src/services/client_telemetry.dart';
+import 'src/telemetry/traced_app_state.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +24,9 @@ Future<void> main() async {
       await windowManager.focus();
     });
   }
-  final state = AppState(ApiClient());
+  final api = ApiClient();
+  await ClientTelemetry.initialize(api.submitClientSpans);
+  final state = TracedAppState(api);
   runApp(BoohtacordApp(state: state));
   await state.initialize();
 }

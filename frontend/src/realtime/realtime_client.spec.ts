@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseRealtimeEvent, realtimeURL } from './realtime_client'
+import { parseRealtimeEvent, realtimeURL, realtimeTraceURL } from './realtime_client'
 
 describe('realtime client contract', () => {
   it('uses the same host and no credential in its websocket URL', () => {
     expect(realtimeURL({ protocol: 'https:', host: 'voice.example.test' })).toBe('wss://voice.example.test/api/v1/realtime')
+  })
+
+  it('carries a W3C traceparent through the browser WebSocket handshake', () => {
+    const parent = '00-11111111111111111111111111111111-2222222222222222-01'
+    expect(realtimeTraceURL('wss://voice.example.test/api/v1/realtime?after=cursor', parent)).toBe(`wss://voice.example.test/api/v1/realtime?after=cursor&traceparent=${parent}`)
+    expect(new URL(realtimeTraceURL('wss://voice.example.test/api/v1/realtime', parent, 'vendor=state')).searchParams.get('tracestate')).toBe('vendor=state')
   })
 
   it('accepts only schema event kinds and typed payloads', () => {

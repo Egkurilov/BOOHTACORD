@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 
 export type ChannelKind = 'TEXT' | 'VOICE'
@@ -97,7 +98,7 @@ export function parseTopology(value: unknown): ChannelTopology {
   }
 }
 
-export async function loadTopology(request: TopologyRequest = fetch): Promise<ChannelTopology> {
+export async function loadTopology(request: TopologyRequest = tracedFetch): Promise<ChannelTopology> {
   const response = await request(`${apiBaseUrl}/channels`, {
     credentials: 'same-origin',
     headers: { accept: 'application/json' },

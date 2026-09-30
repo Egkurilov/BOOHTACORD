@@ -43,3 +43,9 @@ export function realtimeURL(location: RealtimeLocation = window.location, after?
   const base = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}${apiBaseUrl}/realtime`
   return after ? `${base}?after=${encodeURIComponent(after)}` : base
 }
+
+export function realtimeTraceURL(target: string, traceparent?: string, tracestate?: string): string {
+  if (!traceparent) return target
+  const parentURL = `${target}${target.includes('?') ? '&' : '?'}traceparent=${encodeURIComponent(traceparent)}`
+  return tracestate ? `${parentURL}&tracestate=${encodeURIComponent(tracestate)}` : parentURL
+}

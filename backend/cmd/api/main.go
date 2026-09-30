@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"go.opentelemetry.io/otel"
+
 	"voice-platform/backend/internal/database/pool"
 	"voice-platform/backend/internal/identity/admin_account"
 	adminapi "voice-platform/backend/internal/identity/admin_account/api"
@@ -36,11 +38,14 @@ import (
 	maintenancepostgres "voice-platform/backend/internal/maintenance/admission/postgres"
 	authorizelivekitsignal "voice-platform/backend/internal/media/authorize_livekit_signal"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
+	tracehttp "voice-platform/backend/internal/observability/trace_http"
 	"voice-platform/backend/internal/security/request_id"
 )
 
 func main() {
 	configureLogging()
+	stopTelemetry := startTelemetry()
+	defer stopTelemetry()
 	address := apiAddress()
 	database, err := pool.Open(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -89,6 +94,7 @@ func main() {
 	configureVoiceLeaseRoutes(mux, database, sessionService, maintenanceService)
 	configureVoiceParticipantRoutes(mux, database, sessionService, configuration.mediaSnapshot, metrics, os.Getenv("LIVEKIT_API_KEY"), os.Getenv("LIVEKIT_API_SECRET"))
 	configureClientScreenRoutes(mux, sessionService, metrics)
+	configureClientTelemetryRoutes(mux, sessionService, configuration)
 	configureAdminVoiceRoutes(mux, database, sessionService)
 	configureMediaCredentialRoutes(mux, database, sessionService, configuration.credentialSigner)
 	voiceWorkersStop := startVoiceBackgroundServices(database, configuration, metrics, events)
@@ -96,7 +102,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              address,
-		Handler:           requestid.Middleware(httpmetrics.LoggingMiddleware(slog.Default(), metrics.Middleware(configuration.originMiddleware(mux)))),
+		Handler:           requestid.Middleware(httpmetrics.LoggingMiddleware(slog.Default(), metrics.Middleware(tracehttp.Middleware(otel.Tracer("boohtacord/api"), mux, configuration.originMiddleware(mux))))),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

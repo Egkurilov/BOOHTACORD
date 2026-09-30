@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
@@ -20,7 +21,7 @@ export const useAuthorDirectory = defineStore('author-directory', () => {
     return authors.value[id]?.hasAvatar ? `${apiBaseUrl}/members/${encodeURIComponent(id)}/avatar` : undefined
   }
 
-  function ensure(id: string, request: ProfileRequest = fetch, force = false): Promise<void> {
+  function ensure(id: string, request: ProfileRequest = tracedFetch, force = false): Promise<void> {
     if (!id || id === 'Вы') return Promise.resolve()
     const current = authors.value[id]
     if (!force && current && Date.now() - current.checkedAt < freshForMs) return Promise.resolve()
@@ -51,7 +52,7 @@ export const useAuthorDirectory = defineStore('author-directory', () => {
     authors.value[profile.account_id] = { displayName: name || fallbackName, hasAvatar: Boolean(profile.avatar_url), checkedAt: Date.now(), verified: Boolean(name) }
   }
 
-  async function refreshKnown(request: ProfileRequest = fetch): Promise<void> {
+  async function refreshKnown(request: ProfileRequest = tracedFetch): Promise<void> {
     await Promise.all(Object.keys(authors.value).map((id) => ensure(id, request, true)))
   }
 

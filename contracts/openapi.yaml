@@ -44,6 +44,25 @@
         }
       }
     },
+    "/api/v1/telemetry/traces": {
+      "post": {
+        "operationId": "ingestClientTraces",
+        "description": "Authenticated same-origin OTLP protobuf relay. The server accepts at most 256 KiB and 32 fixed-name spans, strips all client attributes, events, links and resource fields, then forwards metadata-only traces with a server-side collector credential. The client never receives that credential.",
+        "parameters": [
+          { "name": "X-Client-Platform", "in": "header", "required": true, "schema": { "type": "string", "enum": ["web", "android", "ios", "windows", "macos"] } }
+        ],
+        "requestBody": { "required": true, "content": { "application/x-protobuf": { "schema": { "type": "string", "format": "binary", "maxLength": 262144 } } } },
+        "responses": {
+          "202": { "description": "Metadata-only spans accepted by collector" },
+          "400": { "description": "Invalid OTLP batch or operation name" },
+          "401": { "description": "No active server-side session" },
+          "413": { "description": "OTLP batch exceeds size limit" },
+          "415": { "description": "OTLP protobuf content type required" },
+          "429": { "description": "Telemetry rate limit exceeded" },
+          "503": { "description": "Collector unavailable or not configured" }
+        }
+      }
+    },
     "/api/v1/direct-messages": {
       "post": {
         "operationId": "openDirectMessage",

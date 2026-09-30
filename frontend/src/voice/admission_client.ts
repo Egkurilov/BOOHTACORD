@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 
 export interface VoiceLease {
@@ -84,18 +85,18 @@ function mutation(method: string, body?: unknown): RequestInit {
 export async function acquireVoiceLease(
   channelId: string,
   transfer: boolean,
-  request: VoiceRequest = fetch,
+  request: VoiceRequest = tracedFetch,
 ): Promise<VoiceLease> {
   const response = await request(`${apiBaseUrl}/voice/channels/${encodeURIComponent(channelId)}/leases`, mutation('POST', { transfer }))
   return lease(await checked(response))
 }
 
-export async function issueLiveKitCredential(leaseId: string, request: VoiceRequest = fetch): Promise<LiveKitCredential> {
+export async function issueLiveKitCredential(leaseId: string, request: VoiceRequest = tracedFetch): Promise<LiveKitCredential> {
   const response = await request(`${apiBaseUrl}/voice/leases/${encodeURIComponent(leaseId)}/credential`, mutation('POST'))
   return credential(await checked(response))
 }
 
-export async function releaseVoiceLease(leaseId: string, request: VoiceRequest = fetch): Promise<void> {
+export async function releaseVoiceLease(leaseId: string, request: VoiceRequest = tracedFetch): Promise<void> {
   const response = await request(`${apiBaseUrl}/voice/leases/${encodeURIComponent(leaseId)}`, mutation('DELETE'))
   await checked(response)
 }

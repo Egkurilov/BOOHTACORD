@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	livekitcredential "voice-platform/backend/internal/media/livekit_credential"
@@ -23,6 +24,9 @@ type runtimeConfiguration struct {
 	loginLimiter         *ratelimit.Limiter
 	passwordResetLimiter *ratelimit.Limiter
 	uploadLimiter        *ratelimit.Limiter
+	telemetryLimiter     *ratelimit.Limiter
+	telemetryEndpoint    string
+	telemetryAuth        string
 	attachmentRoot       string
 }
 
@@ -59,6 +63,9 @@ func loadRuntimeConfiguration() runtimeConfiguration {
 	if err == nil {
 		configuration.uploadLimiter, err = ratelimit.New(ratelimit.Config{Limit: 10, Window: 5 * time.Minute, MaxSources: 10_000})
 	}
+	if err == nil {
+		configuration.telemetryLimiter, err = ratelimit.New(ratelimit.Config{Limit: 120, Window: time.Minute, MaxSources: 10_000})
+	}
 	if err != nil {
 		slog.Error("configure rate limiter", "error", err)
 		os.Exit(1)
@@ -67,5 +74,12 @@ func loadRuntimeConfiguration() runtimeConfiguration {
 		slog.Error("configure attachment storage", "error", "ATTACHMENTS_DIRECTORY is required")
 		os.Exit(1)
 	}
+	configuration.telemetryEndpoint = os.Getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
+	if configuration.telemetryEndpoint == "" {
+		if base := strings.TrimRight(os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), "/"); base != "" {
+			configuration.telemetryEndpoint = base + "/v1/traces"
+		}
+	}
+	configuration.telemetryAuth = os.Getenv("OTEL_INGEST_AUTH")
 	return configuration
 }

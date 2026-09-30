@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import type { AdminTopologyRequest } from './admin_topology_client'
@@ -37,7 +38,7 @@ async function mutate(path: string, method: 'PATCH' | 'PUT', body: unknown, requ
   return record(await response.json())
 }
 
-export async function renameCategory(id: string, name: string, expected: number, request: AdminTopologyRequest = fetch): Promise<CategoryRenameResult> {
+export async function renameCategory(id: string, name: string, expected: number, request: AdminTopologyRequest = tracedFetch): Promise<CategoryRenameResult> {
   expectedRevision(expected)
   if (!id || !name.trim() || !validCodePointLength(name, 1, 80)) throw new Error('Введите имя категории до 80 символов.')
   const result = await mutate(`/admin/categories/${encodeURIComponent(id)}`, 'PATCH', { name, expected_revision: expected }, request)
@@ -45,7 +46,7 @@ export async function renameCategory(id: string, name: string, expected: number,
   return { id: result.id, name: result.name, revision: revision(result.revision) }
 }
 
-export async function reorderCategories(ids: string[], expected: number, request: AdminTopologyRequest = fetch): Promise<CategoryRevision> {
+export async function reorderCategories(ids: string[], expected: number, request: AdminTopologyRequest = tracedFetch): Promise<CategoryRevision> {
   expectedRevision(expected)
   if (!ids.length || ids.some((id) => !id) || new Set(ids).size !== ids.length) throw new Error('Некорректный порядок категорий.')
   const result = await mutate('/admin/categories/order', 'PUT', { expected_revision: expected, ids }, request)

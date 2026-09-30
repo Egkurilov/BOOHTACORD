@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import type { AdminTopologyRequest } from './admin_topology_client'
 
@@ -11,7 +12,7 @@ export class VoiceCloseError extends Error {
   }
 }
 
-export async function closeVoiceAdmission(id: string, expectedRevision: number, request: AdminTopologyRequest = fetch): Promise<VoiceCloseResult> {
+export async function closeVoiceAdmission(id: string, expectedRevision: number, request: AdminTopologyRequest = tracedFetch): Promise<VoiceCloseResult> {
   if (!id || !Number.isInteger(expectedRevision) || expectedRevision < 1) throw new Error('Некорректные параметры закрытия канала.')
   const response = await request(`${apiBaseUrl}/admin/voice-channels/${encodeURIComponent(id)}/close-admission`, {
     method: 'POST', credentials: 'same-origin',

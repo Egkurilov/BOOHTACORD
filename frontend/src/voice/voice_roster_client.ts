@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 
 export interface VoiceRosterMember {
@@ -45,7 +46,7 @@ export function parseVoiceRosters(value: unknown): VoiceRoomRoster[] {
   })
 }
 
-export async function loadVoiceRosters(request: VoiceRosterRequest = fetch): Promise<VoiceRoomRoster[]> {
+export async function loadVoiceRosters(request: VoiceRosterRequest = tracedFetch): Promise<VoiceRoomRoster[]> {
   const response = await request(`${apiBaseUrl}/voice/participants`, {
     credentials: 'same-origin', cache: 'no-store', headers: { accept: 'application/json' },
   })

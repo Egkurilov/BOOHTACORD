@@ -72,12 +72,16 @@ services:
       LIVEKIT_PUBLIC_WS_URL: ${LIVEKIT_PUBLIC_WS_URL:?set LIVEKIT_PUBLIC_WS_URL in .env}
       LIVEKIT_PRIVATE_HTTP_URL: ${LIVEKIT_PRIVATE_HTTP_URL:-http://livekit:7880}
       ATTACHMENTS_DIRECTORY: /var/lib/voice-platform/attachments
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      OTEL_INGEST_AUTH: ${OTEL_INGEST_AUTH:-}
+    extra_hosts:
+      - metric.bootybay.ru:167.233.56.32
     depends_on:
       migrate:
         condition: service_completed_successfully
     volumes:
       - attachments-data:/var/lib/voice-platform/attachments
-    networks: [private]
+    networks: [private, telemetry-egress]
     logging: *json-log-rotation
 
   migrate:
@@ -212,6 +216,7 @@ services:
 
 networks:
   edge:
+  telemetry-egress:
   private:
     internal: true
 

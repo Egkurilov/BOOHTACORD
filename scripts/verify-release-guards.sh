@@ -12,6 +12,7 @@ pwsh -NoProfile -File scripts/verify-github-workflows.ps1
 pwsh -NoProfile -File scripts/verify-android-release-signing.ps1
 printf 'Checking Compose configuration...\n'
 "$compose_cli" --env-file .env.example -f compose.yaml --profile operator config --quiet
+pwsh -NoProfile -File scripts/verify-otel-egress.ps1
 printf 'Checking Compose image contract...\n'
 pwsh -NoProfile -File scripts/verify-compose-images.ps1
 bash scripts/check-attachment-volume-headroom.test.sh

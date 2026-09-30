@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { MessageRequestError, type MessageRequest } from './message_client'
 import { MAX_MESSAGE_ATTACHMENT_BYTES } from './attachment_limits'
@@ -35,7 +36,7 @@ async function checked(response: Response): Promise<unknown> {
   throw new MessageRequestError(response.status, code)
 }
 
-export async function uploadTextAttachment(channelId: string, file: File, request: MessageRequest = fetch): Promise<TextAttachmentUpload> {
+export async function uploadTextAttachment(channelId: string, file: File, request: MessageRequest = tracedFetch): Promise<TextAttachmentUpload> {
   if (!channelId || !file.name || !Number.isInteger(file.size) || file.size < 0 || file.size > MAX_MESSAGE_ATTACHMENT_BYTES) {
     throw new Error('Файл не соответствует ограничению вложения.')
   }

@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import type { AdminTopologyRequest } from './admin_topology_client'
 
@@ -11,7 +12,7 @@ export class ChannelMoveError extends Error {
   }
 }
 
-export async function moveChannel(id: string, categoryId: string, expectedRevision: number, request: AdminTopologyRequest = fetch): Promise<ChannelMoveResult> {
+export async function moveChannel(id: string, categoryId: string, expectedRevision: number, request: AdminTopologyRequest = tracedFetch): Promise<ChannelMoveResult> {
   if (!id || !categoryId || !Number.isInteger(expectedRevision) || expectedRevision < 1) throw new Error('Некорректные параметры переноса канала.')
   const response = await request(`${apiBaseUrl}/admin/channels/${encodeURIComponent(id)}/category`, {
     method: 'PATCH', credentials: 'same-origin',

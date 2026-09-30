@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { MessageRequestError, type MessageRequest } from '../conversation/message_client'
 
@@ -33,7 +34,7 @@ async function checked(response: Response): Promise<unknown> {
   throw new MessageRequestError(response.status, code)
 }
 
-export async function searchMessages(input: SearchMessagesInput, request: MessageRequest = fetch): Promise<SearchMessagesPage> {
+export async function searchMessages(input: SearchMessagesInput, request: MessageRequest = tracedFetch): Promise<SearchMessagesPage> {
   if (input.channelId && input.directMessageId) throw new Error('Выберите один фильтр беседы.')
   const parameters = new URLSearchParams({ query: input.query })
   if (input.channelId) parameters.set('channel_id', input.channelId)

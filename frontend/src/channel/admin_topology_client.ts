@@ -1,3 +1,4 @@
+import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import type { ChannelKind } from './topology_client'
@@ -96,17 +97,17 @@ async function post(path: string, input: CreateCategoryInput | CreateChannelInpu
   return response.json()
 }
 
-export async function createCategory(input: CreateCategoryInput, request: AdminTopologyRequest = fetch): Promise<CreatedCategory> {
+export async function createCategory(input: CreateCategoryInput, request: AdminTopologyRequest = tracedFetch): Promise<CreatedCategory> {
   if (!input.name.trim() || !validCodePointLength(input.name, 1, 80)) throw new Error('Введите имя категории до 80 символов.')
   return parseCreatedCategory(await post('/admin/categories', input, request))
 }
 
-export async function createChannel(categoryId: string, input: CreateChannelInput, request: AdminTopologyRequest = fetch): Promise<CreatedChannel> {
+export async function createChannel(categoryId: string, input: CreateChannelInput, request: AdminTopologyRequest = tracedFetch): Promise<CreatedChannel> {
   if (!input.name.trim() || !validCodePointLength(input.name, 1, 80)) throw new Error('Введите имя канала до 80 символов.')
   return parseCreatedChannel(await post(`/admin/categories/${encodeURIComponent(categoryId)}/channels`, input, request))
 }
 
-export async function deleteEmptyCategory(categoryId: string, expectedRevision: number, request: AdminTopologyRequest = fetch): Promise<DeletedCategory> {
+export async function deleteEmptyCategory(categoryId: string, expectedRevision: number, request: AdminTopologyRequest = tracedFetch): Promise<DeletedCategory> {
   if (!categoryId || !Number.isInteger(expectedRevision) || expectedRevision < 1) throw new Error('Некорректные параметры удаления категории.')
   const response = await request(`${apiBaseUrl}/admin/categories/${encodeURIComponent(categoryId)}?expected_revision=${expectedRevision}`, { method: 'DELETE', credentials: 'same-origin', headers: { accept: 'application/json' } })
   if (!response.ok) throw new Error(await errorMessage(response))
