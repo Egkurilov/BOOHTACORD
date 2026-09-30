@@ -313,13 +313,18 @@ both deployed web and Flutter viewers.
   as LiveKit data packets. The production credential deliberately denies data
   publishing (`CanPublishData=false`), so local send completion does not prove
   forwarding; paired live testing confirms the Mac still displays avatars even
-  while the Android video track renders. Do not enable the broad data grant
-  without an explicit security review/ADR. The parser, reconnect, webhook,
+  while the Android video track renders. Keep the broad data grant disabled.
+  ADR-013 records a bounded, room-scoped video-track capture as the direction
+  to investigate; implementation remains open until its SDK lifecycle,
+  bandwidth bound and unsubscribe behavior are covered by tests. The parser, reconnect, webhook,
   thumbnail and widget tests still pass [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json),
   but they do not cover this credential/live-forwarding restriction —
   [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
   Two-account/live-server privacy and event-delivery acceptance plus focused
-  ordering/spacing screenshots remain open.
+  ordering/spacing screenshots remain open. Cross-client thumbnail preview is
+  a separate open item under [ADR-013](adr/ADR-013-room-scoped-screen-thumbnail-preview.md):
+  remove the ineffective thumbnail DataPacket path only after a tested,
+  bounded video-track preview path is ready.
 - Port admin topology operations with confirmations, revision conflicts and
   refresh recovery. Initial slice now adds authenticated category/channel
   create/rename and empty-category deletion, admin-only entry, server-side
