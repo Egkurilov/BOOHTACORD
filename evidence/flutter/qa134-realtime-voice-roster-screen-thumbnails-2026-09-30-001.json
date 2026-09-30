@@ -3,8 +3,8 @@
   "kind": "realtime-voice-roster-and-screen-thumbnails",
   "status": "PARTIAL",
   "executed_at": "2026-09-30",
-  "source_revision": "dde173477a24c5e677da53b4dfd671af24ae73aa",
-  "summary": "Reviewed the new cross-client voice roster and screen-share work. Authenticated short-lived SSE snapshots are invalidated by signed LiveKit webhooks and recheck server ACL/leases; web and Flutter publish bounded screen thumbnails. Relevant local test suites pass. Live two-account privacy, deployed webhook delivery, physical-device viewer behavior and Windows runtime acceptance remain open.",
+  "source_revision": "239238fc106fdaed9f76860ab3c9f479c8eb165a",
+  "summary": "Reviewed the incoming cross-client voice roster and screen-share commits. Authenticated short-lived SSE snapshots are invalidated by signed LiveKit webhooks and recheck server ACL/leases; web and Flutter publish bounded screen thumbnails; receiver packet loss is reported as a rolling ten-second percentage. Local regression suites and web production build pass. Live two-account privacy, deployed webhook delivery, physical-device viewer behavior and Windows runtime acceptance remain open.",
   "checks": [
     {
       "name": "Backend changed-package tests",
@@ -16,19 +16,25 @@
       "name": "Flutter complete test suite",
       "command": "cd desktop && flutter test --reporter compact",
       "status": "PASS",
-      "observation": "All 270 tests pass, including thumbnail encoding/validation, roster event parsing and workspace integration."
+      "observation": "All 274 tests pass, including thumbnail encoding/validation, roster event parsing, workspace integration and rolling packet-loss calculations."
     },
     {
       "name": "Flutter analyzer for application and tests",
-      "command": "cd desktop && flutter analyze lib test --no-pub",
+      "command": "cd desktop && flutter analyze",
       "status": "PASS",
-      "observation": "No issues found. Running the analyzer at the desktop root also discovers the standalone QA integration subproject, whose dependencies are intentionally independent; its missing nested package configuration produces warnings, so the application/test scope was analyzed explicitly."
+      "observation": "No issues found after the incoming CI change excluded the standalone macOS Keychain integration project from the root analyzer."
     },
     {
       "name": "Frontend complete test suite",
       "command": "cd frontend && npm test -- --reporter=dot",
       "status": "PASS",
-      "observation": "225 test files and 672 tests pass, including realtime roster, thumbnail, viewer lifecycle and screen control tests."
+      "observation": "226 test files and 677 tests pass, including realtime roster, thumbnail, viewer lifecycle, screen controls and rolling packet-loss diagnostics."
+    },
+    {
+      "name": "Frontend production build",
+      "command": "cd frontend && npm run build",
+      "status": "PASS",
+      "observation": "vue-tsc and Vite production build pass. Vite reports an informational large-chunk warning for the LiveKit client bundle."
     },
     {
       "name": "Android release failure in supplied CI log",
@@ -47,5 +53,5 @@
       "observation": "No live webhook/SSE delivery, cross-account ACL probe, physical viewer comparison or Windows runtime test was performed."
     }
   ],
-  "remaining": "Verify roster refresh and privacy with two live accounts, deployed LiveKit webhook delivery and reconnect, screen-thumbnail lifecycle with a remote peer, and native screen-share behavior on Android/macOS/Windows. Run the GitVerse Android release workflow to reconfirm signing and release compilation after the integration_test isolation fix."
+  "remaining": "Verify roster refresh and privacy with two live accounts, deployed LiveKit webhook delivery and reconnect, screen-thumbnail lifecycle and populated packet-loss diagnostics with a remote peer, and native screen-share behavior on Android/macOS/Windows. The remote repository records a successful signed Android v1.0.12 release; iOS archive/device acceptance remains open."
 }

@@ -104,6 +104,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] На физических устройствах проверить receiver metrics/audio states,
   fullscreen/share permissions и переключение rail/viewer; локальный fullscreen
   и исправления диагностики, отступов и мобильного возврата — [QA-17](../evidence/flutter/qa17-voice-viewer-mobile-navigation-2026-09-27-001.json).
+- [x] Показывать потери пакетов трансляции как процент за скользящее окно 10 секунд,
+  синхронно в web и Flutter; покрыть накопление окна, счётчики без изменения,
+  reset и недоступные stats — [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json).
+  Полный Flutter/web suite и web production build проходят; сравнение populated
+  diagnostics с реальным удалённым viewer остаётся в device-проверке выше.
 - [x] Привести receiver diagnostics к веб-паттерну: компактная кнопка-summary и
   popover до 288 px вместо inline `ExpansionTile`, с прокруткой, размещением
   вверх при нехватке места снизу, закрытием по Escape и проверкой Android-width
