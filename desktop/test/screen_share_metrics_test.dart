@@ -1,7 +1,21 @@
 import 'package:boohtacord_desktop/src/services/screen_share_metrics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('maps supported native clients to server telemetry platforms', () {
+    expect(
+      nativeScreenMetricsPlatform(TargetPlatform.android),
+      'android_native',
+    );
+    expect(nativeScreenMetricsPlatform(TargetPlatform.macOS), 'desktop_native');
+    expect(
+      nativeScreenMetricsPlatform(TargetPlatform.windows),
+      'desktop_native',
+    );
+    expect(nativeScreenMetricsPlatform(TargetPlatform.iOS), isNull);
+  });
+
   test('selects the highest-resolution sender layer and sums bytes', () {
     final snapshot = screenShareSenderSnapshotFromStats([
       const ScreenShareSenderStats(
@@ -61,6 +75,28 @@ void main() {
       'encoded_fps': 18,
       'bitrate_kbps': 960,
       'rtt_ms': 45,
+    });
+  });
+
+  test('reports desktop sender measurements with the desktop platform', () {
+    final report = buildScreenShareSenderReport(
+      previous: null,
+      current: const ScreenShareSenderSnapshot(
+        timestampMs: 1000,
+        frameWidth: 1920,
+        frameHeight: 1080,
+        framesPerSecond: 30,
+      ),
+      platform: 'desktop_native',
+    );
+
+    expect(report.toJson(), {
+      'platform': 'desktop_native',
+      'direction': 'sender',
+      'state': 'playing',
+      'frame_width': 1920,
+      'frame_height': 1080,
+      'encoded_fps': 30,
     });
   });
 

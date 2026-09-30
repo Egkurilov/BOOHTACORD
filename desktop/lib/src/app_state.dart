@@ -2762,8 +2762,8 @@ class AppState extends ChangeNotifier {
       screenSharePhase = ScreenSharePhase.sharing;
       screenShareError = null;
       final track = event.publication.track;
-      if (defaultTargetPlatform == TargetPlatform.android &&
-          track is LocalVideoTrack) {
+      if (track is LocalVideoTrack &&
+          nativeScreenMetricsPlatform(defaultTargetPlatform) != null) {
         _startScreenShareMetrics(track);
       }
       if (track is LocalVideoTrack) {
@@ -3099,13 +3099,13 @@ class AppState extends ChangeNotifier {
       );
       if (revision != _screenShareMetricsGate.generation ||
           !identical(track, _screenShareMetricsTrack) ||
-          screenSharePhase != ScreenSharePhase.sharing ||
-          current == null) {
+          screenSharePhase != ScreenSharePhase.sharing) {
         return;
       }
       final report = buildScreenShareSenderReport(
         previous: _previousScreenShareMetrics,
         current: current,
+        platform: nativeScreenMetricsPlatform(defaultTargetPlatform)!,
       );
       _previousScreenShareMetrics = current;
       try {

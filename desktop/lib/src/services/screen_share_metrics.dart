@@ -1,3 +1,11 @@
+import 'package:flutter/foundation.dart';
+
+String? nativeScreenMetricsPlatform(TargetPlatform platform) => switch (platform) {
+  TargetPlatform.android => 'android_native',
+  TargetPlatform.macOS || TargetPlatform.windows => 'desktop_native',
+  _ => null,
+};
+
 class ScreenShareSenderStats {
   const ScreenShareSenderStats({
     required this.timestampMs,
@@ -70,6 +78,7 @@ ScreenShareSenderSnapshot? screenShareSenderSnapshotFromStats(
 
 class ScreenShareSenderReport {
   const ScreenShareSenderReport({
+    required this.platform,
     required this.state,
     this.frameWidth,
     this.frameHeight,
@@ -78,6 +87,7 @@ class ScreenShareSenderReport {
     this.roundTripTimeMs,
   });
 
+  final String platform;
   final String state;
   final int? frameWidth;
   final int? frameHeight;
@@ -86,7 +96,7 @@ class ScreenShareSenderReport {
   final double? roundTripTimeMs;
 
   Map<String, Object> toJson() => {
-    'platform': 'android_native',
+    'platform': platform,
     'direction': 'sender',
     'state': state,
     'frame_width': ?frameWidth,
@@ -100,9 +110,13 @@ class ScreenShareSenderReport {
 ScreenShareSenderReport buildScreenShareSenderReport({
   required ScreenShareSenderSnapshot? previous,
   required ScreenShareSenderSnapshot? current,
+  String platform = 'android_native',
 }) {
   if (current == null) {
-    return const ScreenShareSenderReport(state: 'waiting_first_frame');
+    return ScreenShareSenderReport(
+      platform: platform,
+      state: 'waiting_first_frame',
+    );
   }
   final elapsedMs = previous == null
       ? null
@@ -123,6 +137,7 @@ ScreenShareSenderReport buildScreenShareSenderReport({
   final bitrate = bitrateKbps == null ? null : _round(bitrateKbps, 1);
   final rtt = roundTripTimeMs == null ? null : _round(roundTripTimeMs, 1);
   return ScreenShareSenderReport(
+    platform: platform,
     state: fps == null && bitrate == null
         ? 'waiting_first_frame'
         : fps == 0

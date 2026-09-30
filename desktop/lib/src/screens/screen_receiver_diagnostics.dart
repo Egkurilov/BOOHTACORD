@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart';
 
+import '../services/screen_share_metrics.dart';
+import '../services/screen_receiver_report.dart';
 import '../theme.dart';
 import 'screen_packet_loss.dart';
 
@@ -131,12 +134,18 @@ class ScreenReceiverDiagnostics extends StatefulWidget {
     required this.track,
     required this.isLocal,
     required this.hasAudio,
+    this.selectedStreamId,
+    this.reportEnabled = true,
+    this.onReport,
     this.sourceTrackName,
   });
 
   final RemoteVideoTrack? track;
   final bool isLocal;
   final bool hasAudio;
+  final String? selectedStreamId;
+  final bool reportEnabled;
+  final Future<void> Function(Map<String, Object> report)? onReport;
   final String? sourceTrackName;
 
   @override
@@ -144,12 +153,14 @@ class ScreenReceiverDiagnostics extends StatefulWidget {
       _ScreenReceiverDiagnosticsState();
 }
 
-class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
+class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
+    with WidgetsBindingObserver {
   final OverlayPortalController _popoverController = OverlayPortalController();
   final LayerLink _summaryLink = LayerLink();
   final GlobalKey _summaryKey = GlobalKey();
   final FocusNode _focusNode = FocusNode(debugLabel: 'Статистика трансляции');
   Timer? _timer;
+  Timer? _reportTimer;
   int _samplingGeneration = 0;
   ScreenReceiverSnapshot? _previous;
   ScreenReceiverSnapshot? _current;
@@ -157,26 +168,41 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
   final ScreenPacketLossWindow _lossWindow = ScreenPacketLossWindow();
   DateTime? _sampledAt;
   bool _sampling = false;
+  bool _reporting = false;
+  bool _appVisible = true;
   bool _popoverOpen = false;
   String _sampleStatus = 'Ожидание статистики приёмника';
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _restartSampling();
   }
 
   @override
   void didUpdateWidget(covariant ScreenReceiverDiagnostics oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.track != widget.track) _restartSampling();
+    if (oldWidget.track != widget.track ||
+        oldWidget.isLocal != widget.isLocal ||
+        oldWidget.reportEnabled != widget.reportEnabled ||
+        oldWidget.selectedStreamId != widget.selectedStreamId) {
+      _restartSampling();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
+    _reportTimer?.cancel();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appVisible = state == AppLifecycleState.resumed;
   }
 
   void _togglePopover() {
@@ -204,6 +230,16 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
     _current = null;
     _metrics = null;
     _sampledAt = null;
+    _reportTimer?.cancel();
+    _reporting = false;
+    if (!widget.isLocal &&
+        widget.reportEnabled &&
+        widget.onReport != null) {
+      _reportTimer = Timer.periodic(
+        const Duration(seconds: 5),
+        (_) => unawaited(_submitReport()),
+      );
+    }
     final track = widget.track;
     _sampleStatus = widget.isLocal
         ? 'Метрики приёмника не применимы к предпросмотру'
@@ -216,6 +252,36 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
       const Duration(seconds: 2),
       (_) => unawaited(_sample(track, generation)),
     );
+  }
+
+  Future<void> _submitReport() async {
+    final reportCallback = widget.onReport;
+    if (_reporting ||
+        !mounted ||
+        !_appVisible ||
+        widget.isLocal ||
+        !widget.reportEnabled ||
+        reportCallback == null) {
+      return;
+    }
+    final platform = nativeScreenMetricsPlatform(defaultTargetPlatform);
+    if (platform == null) return;
+    final report = buildScreenReceiverReport(
+      platform: platform,
+      selected: true,
+      hasTrack: widget.track != null,
+      current: _current,
+      metrics: _metrics,
+    );
+    if (report == null) return;
+    _reporting = true;
+    try {
+      await reportCallback(report);
+    } catch (_) {
+      // Best-effort diagnostics must not interrupt screen playback.
+    } finally {
+      _reporting = false;
+    }
   }
 
   Future<void> _sample(RemoteVideoTrack track, int generation) async {

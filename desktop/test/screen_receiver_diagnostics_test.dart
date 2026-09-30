@@ -160,6 +160,51 @@ void main() {
     expect(find.text('1440p · 60 FPS'), findsOneWidget);
   });
 
+  testWidgets('reports selected receiver samples but never local preview', (
+    tester,
+  ) async {
+    final reports = <Map<String, Object>>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ScreenReceiverDiagnostics(
+            track: null,
+            isLocal: false,
+            hasAudio: false,
+            selectedStreamId: 'remote-screen',
+            reportEnabled: true,
+            onReport: (report) async => reports.add(report),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pump();
+    expect(reports, [
+      {
+        'platform': 'android_native',
+        'direction': 'receiver',
+        'state': 'waiting_subscription',
+      },
+    ]);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ScreenReceiverDiagnostics(
+            track: null,
+            isLocal: true,
+            hasAudio: false,
+            reportEnabled: false,
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 10));
+    expect(reports, hasLength(1));
+  });
+
   testWidgets('keeps the diagnostics popover within a compact viewport', (
     tester,
   ) async {
