@@ -5,6 +5,12 @@ import 'package:image/image.dart' as image;
 const screenThumbnailTopic = 'boohtacord.screen.thumbnail.v1';
 const maxScreenThumbnailBytes = 14 * 1024;
 
+Uint8List? screenThumbnailForIdentity(
+  Map<String, Uint8List> thumbnails,
+  String? identity,
+) =>
+    identity == null ? null : thumbnails[identity];
+
 Uint8List? encodeScreenThumbnail(Uint8List frame) {
   final decoded = image.decodeImage(frame);
   if (decoded == null) return null;

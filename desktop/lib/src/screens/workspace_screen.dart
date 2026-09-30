@@ -16,6 +16,7 @@ import '../services/pinned_screen_mini_player_policy.dart';
 import '../services/api_client.dart';
 import '../services/voice_avatar_palette.dart';
 import '../services/voice_participant_presentation.dart';
+import '../services/screen_thumbnail.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
 import '../widgets/message_attachment_composer.dart';
@@ -4953,6 +4954,13 @@ class _VoiceParticipantRoom extends StatelessWidget {
                       isLocal: true,
                       hasScreen:
                           state.screenSharePhase == ScreenSharePhase.sharing,
+                      thumbnail: state.screenSharePhase ==
+                              ScreenSharePhase.sharing
+                          ? screenThumbnailForIdentity(
+                              state.screenThumbnails,
+                              room?.localParticipant?.identity,
+                            )
+                          : null,
                       onScreenTap:
                           state.screenSharePhase == ScreenSharePhase.sharing
                           ? () => onScreenSelected(null)
@@ -4980,7 +4988,10 @@ class _VoiceParticipantRoom extends StatelessWidget {
                           ),
                     hasScreen: hasScreen,
                     thumbnail: hasScreen
-                        ? state.screenThumbnails[participant.identity]
+                        ? screenThumbnailForIdentity(
+                            state.screenThumbnails,
+                            participant.identity,
+                          )
                         : null,
                     onScreenTap: hasScreen
                         ? () => onScreenSelected(participant.identity)
@@ -5256,7 +5267,10 @@ class _VoiceScreenViewer extends StatelessWidget {
           identity: participant.identity,
           label: _participantName(participant),
           selected: participant.identity == selectedIdentity,
-          thumbnail: state.screenThumbnails[participant.identity],
+          thumbnail: screenThumbnailForIdentity(
+            state.screenThumbnails,
+            participant.identity,
+          ),
           accountId: _voiceParticipantAccountId(participant),
           avatarLabel: _participantName(participant),
           hasAudio: participant.audioTrackPublications.any(
