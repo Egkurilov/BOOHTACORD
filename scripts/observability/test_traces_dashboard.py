@@ -26,7 +26,7 @@ class TracesDashboardTest(unittest.TestCase):
         variable = self.dashboard['templating']['list'][0]
         pattern = variable['regex'].strip('/').replace('(?<', '(?P<')
         account = '03ef6b06-497a-49aa-b70c-7cc031810f83'
-        for name in ('Аня [QA]', 'Новое имя', 'Name · with delimiter'):
+        for name in ('Аня [QA]', 'Новое имя', 'Name · with delimiter', 'Name\nQA'):
             label = name + ' · ' + account
             match = re.fullmatch(pattern, label)
             self.assertEqual(match['text'], label)
