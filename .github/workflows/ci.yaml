@@ -19,9 +19,12 @@ jobs:
   frontend:
     uses: ./.github/workflows/ci-frontend.yaml
 
+  flutter:
+    uses: ./.github/workflows/ci-flutter.yaml
+
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: [contracts, backend, frontend]
+    needs: [contracts, backend, frontend, flutter]
     runs-on: ubuntu-24.04
     permissions:
       contents: read

@@ -49,4 +49,28 @@ if ($macos -notmatch 'bash scripts/macos_release/package.sh' -or
     $macos -notmatch 'retention-days:\s*30') {
     throw 'macOS CI must package and retain its ZIP and checksum as a workflow artifact.'
 }
+$ci = Get-Content -LiteralPath (Join-Path $root '.github/workflows/ci.yaml') -Raw
+$flutterCiPath = Join-Path $root '.github/workflows/ci-flutter.yaml'
+if ($ci -notmatch '(?m)^  flutter:\s*\r?\n    uses: \./\.github/workflows/ci-flutter\.yaml' -or
+    $ci -notmatch 'needs: \[contracts, backend, frontend, flutter\]' -or
+    -not (Test-Path -LiteralPath $flutterCiPath)) {
+    throw 'Pull-request CI must run the Flutter gate before publishing images.'
+}
+$flutterCi = Get-Content -LiteralPath $flutterCiPath -Raw
+foreach ($required in @(
+    'workflow_call:', 'runs-on: ubuntu-24.04', 'flutter-version: 3.47.5',
+    'flutter pub get --enforce-lockfile', 'flutter test --no-pub',
+    'working-directory: desktop/packages/livekit_client',
+    'working-directory: desktop/packages/flutter_webrtc',
+    'flutter analyze --no-pub', 'flutter build apk --debug --no-pub'
+)) {
+    if (-not $flutterCi.Contains($required)) {
+        throw "Flutter CI gate is missing: $required"
+    }
+}
+$android = Get-Content -LiteralPath (Join-Path $root '.github/workflows/android-release.yaml') -Raw
+if ($android -notmatch '(?m)^  quality:\s*\r?\n    uses: \./\.github/workflows/ci-flutter\.yaml' -or
+    $android -notmatch '(?m)^  android-release:\s*\r?\n    needs: quality') {
+    throw 'Android release must pass the Flutter gate before signing and publication.'
+}
 Write-Output 'GitHub workflow routing: OK'
