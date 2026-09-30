@@ -433,6 +433,8 @@ peer/platform-проверки и выравниваем viewer с вебом.
   В Windows/macOS Flutter engine alert-транслируется в платформенное alert event;
   для Android добавлен отдельный polite live-region дочернего текста, поскольку
   bridge не превращает alert role в live-region. Android debug APK собран;
+  GitVerse Windows CI run 1690633 прошёл tests, analyzer и Release build для
+  tree, содержащего этот fix;
   фактическое объявление TalkBack и отличие polite от web assertive остаются
   непроверенными. VoiceOver/NVDA и focus также требуют device acceptance.
 - [ ] Проверить серверную очистку `UNATTACHED` вложений через 24 часа и восстановление после сбоя на реальном deployment; клиентского DELETE-контракта нет. Пройти live 507/partial-upload UX на TEXT/DM и устройствах.
