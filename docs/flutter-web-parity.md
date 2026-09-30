@@ -572,5 +572,6 @@ reproduced the missing alert role before the change; focused, workspace and full
 Flutter suites plus analyzer pass —
 [QA-155](../evidence/flutter/qa155-conversation-error-live-alert-parity-2026-09-30-001.json).
 Windows/macOS engine alert events and actual spoken timing/priority remain open
-for native acceptance; Android's bridge does not map alert role to a live region,
-so TalkBack parity is specifically unproven.
+for native acceptance. Android adds a separate polite live-region child because
+its bridge does not map alert role to a live region; the APK compiles, but actual
+TalkBack announcement and parity with web's assertive urgency remain unproven.

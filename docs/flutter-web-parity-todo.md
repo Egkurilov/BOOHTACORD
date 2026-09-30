@@ -431,9 +431,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   устного объявления — полный Flutter suite и analyzer проверены; см.
   [QA-155](../evidence/flutter/qa155-conversation-error-live-alert-parity-2026-09-30-001.json).
   В Windows/macOS Flutter engine alert-транслируется в платформенное alert event;
-  Android bridge не превращает alert role в live-region, поэтому эквивалентность
-  TalkBack пока не доказана. Реальное поведение TalkBack/VoiceOver/NVDA и
-  assertive/polite приоритет остаются открытыми.
+  для Android добавлен отдельный polite live-region дочернего текста, поскольку
+  bridge не превращает alert role в live-region. Android debug APK собран;
+  фактическое объявление TalkBack и отличие polite от web assertive остаются
+  непроверенными. VoiceOver/NVDA и focus также требуют device acceptance.
 - [ ] Проверить серверную очистку `UNATTACHED` вложений через 24 часа и восстановление после сбоя на реальном deployment; клиентского DELETE-контракта нет. Пройти live 507/partial-upload UX на TEXT/DM и устройствах.
 - [x] Для macOS sandbox разрешить запись только в выбранный пользователем путь,
   поскольку скачивание вложения пишет байты после `NSSavePanel`; сохранить
