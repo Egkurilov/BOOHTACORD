@@ -41,6 +41,17 @@
       "observation": "All 298 Flutter tests pass and flutter analyze reports no issues."
     },
     {
+      "name": "macOS debug application compilation",
+      "command": "cd desktop && flutter build macos --no-pub --debug",
+      "status": "PASS",
+      "observation": "Flutter produced build/macos/Build/Products/Debug/BOOHTACORD.app. This confirms macOS compilation, not runtime stats delivery."
+    },
+    {
+      "name": "Windows runner for current pushed revision",
+      "status": "NOT_RUN",
+      "observation": "The push to master triggers Flutter Windows CI, but the available GitVerse browser view is signed out and still shows the previous run list; the current run result has not been verified."
+    },
+    {
       "name": "Backend strict metrics route, retention and ACL",
       "command": "cd backend && go test ./internal/observability/http_metrics ./internal/observability/report_client_screen/api ./cmd/api",
       "status": "PASS",
