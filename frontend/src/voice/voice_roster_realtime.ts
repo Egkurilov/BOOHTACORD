@@ -71,5 +71,9 @@ export function createVoiceRosterRealtime(
     error.value = null
   }
 
-  return { channels, error, reconnect, start: reconnect, stop }
+  function start(): void {
+    if (source === null) reconnect()
+  }
+
+  return { channels, error, reconnect, start, stop }
 }

@@ -38,4 +38,23 @@ describe('voice roster event stream', () => {
     expect(sources[0].close).toHaveBeenCalledOnce()
     expect(roster.channels.value).toBeNull()
   })
+
+  it('keeps start idempotent while explicit reconnect replaces the stream', () => {
+    const sources: VoiceRosterEvents[] = []
+    const factory = vi.fn(() => {
+      const source: VoiceRosterEvents = { onmessage: null, onerror: null, close: vi.fn() }
+      sources.push(source)
+      return source
+    })
+    const roster = createVoiceRosterRealtime(factory)
+
+    roster.start()
+    roster.start()
+    expect(factory).toHaveBeenCalledOnce()
+
+    roster.reconnect()
+    expect(factory).toHaveBeenCalledTimes(2)
+    expect(sources[0].close).toHaveBeenCalledOnce()
+    roster.stop()
+  })
 })

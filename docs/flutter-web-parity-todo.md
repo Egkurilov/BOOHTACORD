@@ -219,8 +219,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-137](../evidence/flutter/qa137-realtime-roster-initial-snapshot-race-2026-09-30-001.json).
 - [x] Не открывать второй roster `EventSource` при первом `CONNECTED` отдельного
   workspace WebSocket: начальный SSE уже запускается при mount. При последующем
-  восстановлении WebSocket roster по-прежнему принудительно обновляется.
-  Зафиксировано test-first; полный frontend suite (679 тестов), TypeScript
+  восстановлении WebSocket roster по-прежнему принудительно обновляется, а
+  повторный `start()` того же менеджера не создаёт второй EventSource.
+  Зафиксировано test-first; полный frontend suite (680 тестов), TypeScript
   проверка и production build проходят —
   [QA-144](../evidence/flutter/qa144-web-roster-sse-initial-reconnect-2026-09-30-001.json).
   Сервер штатно закрывает SSE response через 10 секунд, поэтому браузерные

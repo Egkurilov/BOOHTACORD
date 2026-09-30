@@ -21,7 +21,8 @@ reconnects and reauthenticates; repeated sequential `/events` requests at that
 interval are expected. The first `CONNECTED` transition of the separate
 workspace WebSocket must not force a second roster stream immediately after
 mount. That redundant initial reopen is gated now; a later WebSocket recovery
-still refreshes the roster — [QA-144](../evidence/flutter/qa144-web-roster-sse-initial-reconnect-2026-09-30-001.json).
+still refreshes the roster, and calling the roster manager's `start()` twice is
+idempotent — [QA-144](../evidence/flutter/qa144-web-roster-sse-initial-reconnect-2026-09-30-001.json).
 Confirm the connection count and 10-second reconnect cadence in a live browser;
 the current macOS host is locked and no browser tab/device is available.
 
