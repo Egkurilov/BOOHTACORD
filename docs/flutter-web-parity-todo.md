@@ -370,6 +370,15 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-103](../evidence/flutter/qa103-desktop-screen-share-rollback-2026-09-29-001.json),
   [QA-81](../evidence/flutter/qa81-gitverse-windows-runner-ci-2026-09-29-004.json).
 
+## P1 — Каналы и навигация
+
+- [x] При первой загрузке топологии автоматически открывать первый текстовый
+  канал в порядке категорий, как это делает Flutter; не менять действующий
+  выбор канала или личную переписку. Если выбранный канал исчез, очистить его и
+  перейти к первому доступному текстовому каналу — регрессия, полный frontend
+  suite (681 тест) и production build пройдены —
+  [QA-145](../evidence/flutter/qa145-web-default-text-channel-2026-09-30-001.json).
+
 ## P1 — Admin и переписка
 
 - [ ] Проверить administrator REST ACL на работающем backend: роль, блокировка, topology, reset-link, voice kick и audit через два аккаунта.

@@ -11,6 +11,34 @@ import { useVoiceNavigationStore } from '../voice/navigation_store'
 import { useWorkspaceVoiceControls } from './voice_controls'
 
 describe('selected channel topology', () => {
+  it('selects the first TEXT channel after the initial topology load', async () => {
+    setActivePinia(createPinia())
+    const topology = useTopologyStore()
+    const navigation = useVoiceNavigationStore()
+    const controls = useWorkspaceVoiceControls()
+
+    topology.topology = {
+      revision: 1,
+      categories: [
+        {
+          id: 'cat-1', name: 'Voice first', position: 0, channels: [
+            { id: 'voice-1', name: 'Голосовой', kind: 'VOICE', position: 0, admissionClosed: false },
+            { id: 'text-1', name: 'Первый текстовый', kind: 'TEXT', position: 1, admissionClosed: false },
+          ],
+        },
+        {
+          id: 'cat-2', name: 'Other', position: 1, channels: [
+            { id: 'text-2', name: 'Второй текстовый', kind: 'TEXT', position: 0, admissionClosed: false },
+          ],
+        },
+      ],
+    }
+    await nextTick()
+
+    expect(navigation.selectedSurface).toEqual({ kind: 'TEXT', channelId: 'text-1' })
+    expect(controls.selectedChannel.value).toMatchObject({ id: 'text-1', kind: 'TEXT' })
+  })
+
   it('updates the selected channel title after a refreshed rename without changing its kind', () => {
     setActivePinia(createPinia())
     const topology = useTopologyStore()

@@ -1,0 +1,29 @@
+{
+  "id": "QA-145",
+  "kind": "web-default-text-channel",
+  "status": "PASS",
+  "executed_at": "2026-09-30",
+  "source_revision": "7df895d",
+  "summary": "The Vue workspace now selects the first TEXT channel when the initial topology arrives, matching Flutter. Valid TEXT, VOICE, and DM navigation remains intact; when the selected channel is removed, selection falls back to the first available TEXT channel.",
+  "checks": [
+    {
+      "name": "Test-first initial topology regression",
+      "command": "cd frontend && npm test -- --run src/workspace/selected_channel_topology.spec.ts",
+      "status": "PASS",
+      "observation": "The test was first run before the implementation and failed with selectedSurface NONE instead of the first TEXT channel. It now passes and confirms that a preceding VOICE channel is skipped and the first TEXT channel in topology order is selected."
+    },
+    {
+      "name": "Complete frontend test suite",
+      "command": "cd frontend && npm test -- --run",
+      "status": "PASS",
+      "observation": "All 681 tests in 226 files pass."
+    },
+    {
+      "name": "TypeScript check and production frontend build",
+      "command": "cd frontend && npm run build",
+      "status": "PASS",
+      "observation": "vue-tsc and Vite production build pass. Vite reports the existing LiveKit chunk-size advisory (>500 kB)."
+    }
+  ],
+  "remaining": "No remaining code-level gap for automatic initial text-channel selection."
+}
