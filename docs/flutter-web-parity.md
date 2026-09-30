@@ -78,6 +78,10 @@ capturer's direct-ByteBuffer `.array()` failure is fixed and covered by a native
 regression; post-fix live thumbnail delivery on both local and remote cards is
 still open. The earlier macOS packaging evidence records 1.0.13+18 and predates
 this Android version bump — [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
+The macOS Debug 1.0.15+20 rebuild eventually restored the existing session and
+reached SHARE_TEST prejoin after more than six minutes on its loading screen;
+startup latency is now an explicit open parity/reliability gap —
+[QA-160](../evidence/flutter/qa160-macos-debug-restart-2026-09-30-001.json).
 
 Flutter now submits bounded sender samples on Android/macOS/Windows and reports
 the selected remote receiver every five seconds to the same authenticated

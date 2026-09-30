@@ -4,7 +4,7 @@
   "status": "PARTIAL",
   "executed_at": "2026-09-30",
   "source_revision": "fab58cc",
-  "summary": "Rebuilt the macOS Debug app from the current source and relaunched it. Bundle metadata confirms version 1.0.15 (20), replacing the older running build, but runtime startup remains on the guild-connection splash, so successful sign-in/session use is unverified.",
+  "summary": "Rebuilt and relaunched macOS Debug from current source. Bundle metadata confirms version 1.0.15 (20). The app eventually restored the existing session and reached the SHARE_TEST prejoin view, but only after more than six minutes on the guild-connection splash; startup latency and its cause remain unresolved.",
   "checks": [
     {
       "name": "Current-source macOS Debug build",
@@ -20,7 +20,7 @@
     {
       "name": "Fresh app relaunch and guild startup",
       "status": "PARTIAL",
-      "observation": "The relaunched BOOHTACORD window is the rebuilt app but remains at 'Подключаемся к гильдии…' on repeated UI inspection. No voice connection or microphone activation was attempted."
+      "observation": "At 20:36 local time the relaunched window showed 'Подключаемся к гильдии…'. By 20:43 local time it had restored the Pistol121 session and reached the SHARE_TEST prejoin view, displaying 'Пока никого нет.' The wait exceeded six minutes. No voice connection or microphone activation was attempted."
     },
     {
       "name": "Public service reachability check",
@@ -28,5 +28,5 @@
       "observation": "GET https://v.bootybay.ru/api/v1/maintenance returned HTTP 200 from the host. This only verifies the public maintenance endpoint, not authenticated API or guild startup."
     }
   ],
-  "remaining": "Diagnose why the fresh macOS Debug process stays on the guild-connection splash, then confirm login/session restoration and version in the running UI. Do not treat public maintenance endpoint reachability as proof that authenticated startup works."
+  "remaining": "Find why startup takes more than six minutes and verify normal startup latency after a fresh relaunch. The public maintenance endpoint returning HTTP 200 does not prove authenticated API or Keychain startup behavior."
 }
