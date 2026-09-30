@@ -1699,6 +1699,32 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('text composer does not send on Shift+Enter', (tester) async {
+    final api = _PortraitApi();
+    final state = AppState(api);
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(platform: TargetPlatform.android),
+        home: WorkspaceScreen(state: state),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final composer = find.byType(TextField).last;
+    await tester.tap(composer);
+    await tester.enterText(composer, 'Первая строка');
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    expect(api.textSendIds, isEmpty);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('direct-message composer submits from the soft-keyboard action', (
     tester,
   ) async {
