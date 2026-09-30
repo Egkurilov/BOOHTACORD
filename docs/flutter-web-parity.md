@@ -85,7 +85,9 @@ Two macOS crash reports captured on 2026-09-30 show the same `EXC_BAD_ACCESS`
 in the queued first-frame callback of `FlutterRTCVideoRenderer`: it dereferenced
 an already-cleared weak renderer after disposal. A nil guard now protects that
 callback; the focused regression, all 17 plugin tests and macOS Debug build pass.
-Post-fix live Pixel-to-Mac verification remains open —
+The post-fix Pixel 7 full-screen stream rendered its complete portrait frame on
+Mac; the receiver stayed responsive through start, first frame and app-level
+stop, with both microphones muted —
 [QA-162](../evidence/flutter/qa162-macos-webrtc-renderer-dispose-race-2026-09-30-001.json).
 The macOS Debug 1.0.15+20 rebuild eventually restored the existing session and
 reached SHARE_TEST prejoin after more than six minutes on its loading screen;

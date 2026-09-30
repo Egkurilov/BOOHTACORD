@@ -1,10 +1,10 @@
 {
   "id": "QA-162",
   "kind": "macos-webrtc-renderer-dispose-race",
-  "status": "PARTIAL",
+  "status": "PASS",
   "executed_at": "2026-09-30",
-  "source_revision": "7d31afb",
-  "summary": "Two macOS DiagnosticReports for BOOHTACORD 1.0.15 record the same EXC_BAD_ACCESS/SIGSEGV at address 0x40 in FlutterRTCVideoRenderer's queued first-frame callback. The callback dereferenced an ivar through weakSelf after the renderer could have been disposed. A nil guard is covered by a test-first source regression, the full flutter_webrtc test suite passes, and a macOS Debug build compiles. A post-fix live Pixel-to-Mac screen-share retest remains open.",
+  "source_revision": "3ec86a1",
+  "summary": "Two macOS DiagnosticReports for BOOHTACORD 1.0.15 record the same EXC_BAD_ACCESS/SIGSEGV at address 0x40 in FlutterRTCVideoRenderer's queued first-frame callback. The callback dereferenced an ivar through weakSelf after the renderer could have been disposed. A nil guard is covered by a test-first source regression, all 17 flutter_webrtc tests pass, the macOS Debug build compiles, and a live Pixel-to-Mac full-screen share rendered the complete portrait frame and stopped cleanly without a crash.",
   "checks": [
     {
       "name": "Repeated macOS crash signature",
@@ -31,9 +31,9 @@
     },
     {
       "name": "Post-fix Pixel-to-Mac live screen-share retest",
-      "status": "NOT_RUN",
-      "observation": "The authorized short test stream was stopped after confirming the crash and its cause. A fresh short stream is needed to verify the rebuilt Mac client survives remote video rendering."
+      "status": "PASS",
+      "observation": "Pixel 7 (Android 17/API 37, BOOHTACORD 1.0.15+20, account microphone muted) shared the entire screen in SHARE_TEST to the macOS Debug client (1.0.15+20, microphone muted). Both clients showed the two-person roster and approximately 5–6 ms RTT. The Mac participant card exposed the share and opened the viewer; after the first frames arrived, the complete portrait display—including its top and bottom edges—was visible with side letterboxing and no crop. The Mac client remained responsive without crashing. Stopping the share on Android returned the Mac viewer to the roster and removed the share."
     }
   ],
-  "remaining": "Run one short post-fix Pixel-to-Mac screen-share test with both microphones muted and confirm the Mac client survives start, frame rendering, and stop."
+  "remaining": "This closes the macOS renderer crash retest only. Windows parity, Android OS-level stop, repeated reconnect/stop cycles, and broader screen-share acceptance remain open in the platform checklist."
 }
