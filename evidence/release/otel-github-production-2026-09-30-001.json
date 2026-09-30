@@ -1,0 +1,35 @@
+{
+  "id": "otel-github-production-2026-09-30-001",
+  "kind": "production-observability-recovery",
+  "status": "PASS",
+  "observed_at": "2026-09-30T19:53:49Z",
+  "source_commit": "27bc282928a9e7aee614b2168546ce4fadc1b05f",
+  "scenario": "Restore traces after the GitVerse master release replaced the instrumented branch deployment and removed OTel wiring from the running API.",
+  "checks": [
+    {
+      "name": "github_ci_and_release_guard",
+      "result": "PASS",
+      "observation": "GitHub CI run 36766500682 passed. GitHub production run 36766500191 attempt 2 passed backend, frontend, release_guard and deploy. The stale pre-fix run 36763536959 was cancelled."
+    },
+    {
+      "name": "production_runtime",
+      "result": "PASS",
+      "observation": "The release directory for the source commit exists; the API and web containers run digest-pinned images. The API container has OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_INGEST_AUTH set and is attached to voice-platform_telemetry-egress."
+    },
+    {
+      "name": "tempo_ingestion",
+      "result": "PASS",
+      "observation": "Tempo returned zero traces in the preceding 30-minute query before rollout and 22 traces in the 15-minute query after rollout; latest trace timestamp was 2026-09-30T19:53:08Z. Root spans included voice.channel.finalization, voice.sfu_revocation.dispatch, voice.lease_notification.dispatch and API GET routes."
+    },
+    {
+      "name": "github_runner_migration",
+      "result": "PASS",
+      "observation": "Two GitHub Linux runners were online with dedicated non-root service accounts on the approved monitoring host. Only the two BOOHTACORD GitVerse runner services were disabled. The GitHub production environment holds DEPLOY_SSH_PRIVATE_KEY and the release workflow authenticated to the production host."
+    }
+  ],
+  "artifacts": [
+    "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36766500682",
+    "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36766500191"
+  ],
+  "limits": "This proves backend and web trace ingestion after the rollout. It does not measure client-to-server span continuity for an individual browser voice session or media packet performance."
+}
