@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import io.flutter.plugin.common.MethodChannel;
 
@@ -64,10 +63,7 @@ public class FrameCapturer implements VideoSink {
         // Therefore we can use the NV12 helper, but swap the U and V input buffers
         YuvHelper.I420ToNV12(y, strides[0], v, strides[2], u, strides[1], yuvBuffer, width, height);
 
-        // For some reason the ByteBuffer may have leading 0. We remove them as
-        // otherwise the
-        // image will be shifted
-        byte[] cleanedArray = Arrays.copyOfRange(yuvBuffer.array(), yuvBuffer.arrayOffset(), minSize);
+        byte[] cleanedArray = copyBufferBytes(yuvBuffer, minSize);
 
         YuvImage yuvImage = new YuvImage(
             cleanedArray,
@@ -124,5 +120,16 @@ public class FrameCapturer implements VideoSink {
         } finally {
             file = null;
         }
+    }
+
+    static byte[] copyBufferBytes(ByteBuffer buffer, int length) {
+        ByteBuffer readable = buffer.duplicate();
+        readable.clear();
+        if (length < 0 || length > readable.remaining()) {
+            throw new IllegalArgumentException("Invalid frame buffer length");
+        }
+        byte[] bytes = new byte[length];
+        readable.get(bytes);
+        return bytes;
     }
 }

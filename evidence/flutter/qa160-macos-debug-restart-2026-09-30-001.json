@@ -1,0 +1,32 @@
+{
+  "id": "QA-160",
+  "kind": "macos-debug-restart-current-version",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "fab58cc",
+  "summary": "Rebuilt the macOS Debug app from the current source and relaunched it. Bundle metadata confirms version 1.0.15 (20), replacing the older running build, but runtime startup remains on the guild-connection splash, so successful sign-in/session use is unverified.",
+  "checks": [
+    {
+      "name": "Current-source macOS Debug build",
+      "command": "cd desktop && flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "The Debug app bundle was rebuilt successfully from the current source."
+    },
+    {
+      "name": "Bundle version after rebuild",
+      "status": "PASS",
+      "observation": "Contents/Info.plist reports CFBundleShortVersionString 1.0.15 and CFBundleVersion 20."
+    },
+    {
+      "name": "Fresh app relaunch and guild startup",
+      "status": "PARTIAL",
+      "observation": "The relaunched BOOHTACORD window is the rebuilt app but remains at 'Подключаемся к гильдии…' on repeated UI inspection. No voice connection or microphone activation was attempted."
+    },
+    {
+      "name": "Public service reachability check",
+      "status": "PASS",
+      "observation": "GET https://v.bootybay.ru/api/v1/maintenance returned HTTP 200 from the host. This only verifies the public maintenance endpoint, not authenticated API or guild startup."
+    }
+  ],
+  "remaining": "Diagnose why the fresh macOS Debug process stays on the guild-connection splash, then confirm login/session restoration and version in the running UI. Do not treat public maintenance endpoint reachability as proof that authenticated startup works."
+}

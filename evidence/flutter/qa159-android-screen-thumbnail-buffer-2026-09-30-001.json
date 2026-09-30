@@ -1,0 +1,51 @@
+{
+  "id": "QA-159",
+  "kind": "android-screen-thumbnail-buffer",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "fab58cc",
+  "summary": "A Pixel 7 to Mac Flutter screen-share check showed the full portrait frame on the Mac, but neither participant card displayed the sender's thumbnail. Source tracing found Android FrameCapturer allocated a direct ByteBuffer then called array(), which is unsupported; the exception was hidden by the best-effort thumbnail caller. The native buffer copy is fixed and regression-tested. Current signed 1.0.15+20 arm64 was built and installed on Pixel; post-fix thumbnail delivery still needs a live peer run.",
+  "checks": [
+    {
+      "name": "Pre-fix Pixel-to-Mac screen-share baseline",
+      "status": "PARTIAL",
+      "observation": "With Android 1.0.14+19, the Pixel share was visible on the Mac Flutter viewer from top status bar to bottom navigation with letterboxing and no apparent frame crop. The Mac participant card showed the profile avatar and 'Смотреть экран' control, not a screen thumbnail; the Pixel participant card also retained its avatar. During initial mobile navigation, tapping the voice channel directly entered voice with the microphone active; this was noticed and left immediately. The subsequent screen-share run used the explicit listener-only path, and both clients showed muted microphones throughout that run."
+    },
+    {
+      "name": "Android FrameCapturer direct-buffer regression before fix",
+      "command": "cd desktop/android && JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew :flutter_webrtc:testDebugUnitTest --no-daemon",
+      "status": "PASS",
+      "observation": "The new native test failed to compile before implementation because FrameCapturer.copyBufferBytes(ByteBuffer,int) did not exist. Source inspection confirmed the old path called ByteBuffer.array() on a buffer created with allocateDirect()."
+    },
+    {
+      "name": "Android direct-buffer copy regression after fix",
+      "command": "cd desktop/android && JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew :flutter_webrtc:testDebugUnitTest --no-daemon",
+      "status": "PASS",
+      "observation": "Native Flutter WebRTC Android unit tests pass, including the regression that copies bytes from a direct ByteBuffer without array()."
+    },
+    {
+      "name": "Flutter suite and analyzer",
+      "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 300 Flutter tests pass and flutter analyze reports no issues."
+    },
+    {
+      "name": "Signed Android 1.0.15+20 release APKs",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Built three signed ABI APKs: arm64-v8a 39.4 MB, armeabi-v7a 30.8 MB and x86_64 45.1 MB."
+    },
+    {
+      "name": "Pixel 7 update from release APK",
+      "command": "adb install -r desktop/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
+      "status": "PASS",
+      "observation": "The signed arm64 APK installed over the existing app without uninstalling or clearing data. Android reports versionName 1.0.15, versionCode 2020 and lastUpdateTime 2026-09-30 20:30:07."
+    },
+    {
+      "name": "Post-fix thumbnail on local and remote participant cards",
+      "status": "NOT_RUN",
+      "observation": "The post-fix simultaneous Pixel publisher/Mac receiver screen-share run was not performed. The pre-fix run confirms the two clients exchanged screen video, but does not prove thumbnail delivery after the fix."
+    }
+  ],
+  "remaining": "Run a post-fix Pixel screen share with the microphone explicitly disabled and a concurrent Mac viewer. Confirm the local and remote participant cards receive the JPEG thumbnail, stop the share, and verify the full source frame on the viewer."
+}

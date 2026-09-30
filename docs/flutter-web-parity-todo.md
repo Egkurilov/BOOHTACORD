@@ -54,6 +54,10 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   Вход с записью новой session cookie и повторный вход для старого service всё
   ещё нужно проверить; existing Keychain записи не удалялись. Не переносить
   session cookie в plaintext и не удалять Keychain items.
+- [ ] Повторно диагностировать зависание свежей macOS Debug-сборки 1.0.15+20
+  на «Подключаемся к гильдии…»: bundle пересобран и перезапущен, публичный
+  maintenance endpoint отвечает HTTP 200, но авторизованный запуск не завершён
+  — [QA-160](../evidence/flutter/qa160-macos-debug-restart-2026-09-30-001.json).
 
 ## P0 — Голосовые каналы и демонстрация экрана
 
