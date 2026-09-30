@@ -49,10 +49,10 @@
       "observation": "Windows runner boohtacord-win-station v6.0.2 completed Flutter tests (29s), analyzer (8s) and Windows Release build (2m13s) successfully in 3m06s. https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1688305"
     },
     {
-      "name": "Current HEAD Windows CI regression gate",
+      "name": "Windows CI regression gate for fix commit",
       "command": "Flutter Windows CI run 1688569, job 3317010, for commit 32ad1296f682f01203f9aeee7b87b857b468dac4",
       "status": "PASS",
-      "observation": "On 2026-09-30, GitVerse reports the exact current HEAD run successful: Windows tests, analyzer and Windows Release build all completed; runner boohtacord-win-station v6.0.2. https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1688569"
+      "observation": "On 2026-09-30, GitVerse reports the run for code commit 32ad129 successful: Windows tests, analyzer and Windows Release build all completed; runner boohtacord-win-station v6.0.2. The following commit only updates this QA record and checklist. https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1688569"
     },
     {
       "name": "Physical/live viewer acceptance",
@@ -61,5 +61,5 @@
       "observation": "No Android devices were listed. No live remote viewer switch, delayed stats network response, or visible diagnostics refresh was tested on Android/macOS/Windows."
     }
   ],
-  "remaining": "Verify switching between two live screen-share publishers while the previous receiver stats request is slow, confirm the newly selected viewer continues updating diagnostics without overlap, and check the behavior in deployed web and Flutter viewers. Continue the overall P0 full-path screen-share and voice acceptance on physical platforms. The current-HEAD Windows Release CI gate is verified by run 1688569."
+  "remaining": "Verify switching between two live screen-share publishers while the previous receiver stats request is slow, confirm the newly selected viewer continues updating diagnostics without overlap, and check the behavior in deployed web and Flutter viewers. Continue the overall P0 full-path screen-share and voice acceptance on physical platforms. The Windows Release CI gate for fix commit 32ad129 is verified by run 1688569."
 }

@@ -143,7 +143,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
   token и локальный Flutter suite, analyzer, Android ABI release и macOS Release
   проходят — [QA-140](../evidence/flutter/qa140-receiver-diagnostics-track-generation-2026-09-30-001.json).
   GitVerse Windows CI run 1688569 прошёл tests, analyzer и Release build для
-  current HEAD `32ad129`; реальный переключаемый remote viewer остаётся открытым.
+  code commit `32ad129`; реальный переключаемый remote viewer остаётся открытым.
 - [x] Привести receiver diagnostics к веб-паттерну: компактная кнопка-summary и
   popover до 288 px вместо inline `ExpansionTile`, с прокруткой, размещением
   вверх при нехватке места снизу, закрытием по Escape и проверкой Android-width
