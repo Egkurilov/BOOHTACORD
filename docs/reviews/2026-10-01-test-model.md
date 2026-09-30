@@ -10,7 +10,7 @@
 | --- | --- | --- |
 | Go API | 354 файла `_test.go` после исправлений; unit/API/ACL и PostgreSQL integration; `go test`, `go vet` | Локальный прогон проходит, но DB-тесты без `TEST_DATABASE_URL` пропускаются. GitHub backend CI поднимает PostgreSQL и отвергает любой `skip` через `verify-go-test-events.py`. |
 | Web | 232 Vitest-файла, 701 тест | Unit и часть Vue SSR проходят. 30 файлов читают исходники как текст; такие утверждения не доказывают поведение в браузере. Браузерного end-to-end набора нет. |
-| Flutter app | 56 файлов в `desktop/test`, 315 тестов | Unit/widget проходят локально; анализатор без ошибок. CI до изменений запускал их лишь после push в master на Windows. |
+| Flutter app | 56 файлов в `desktop/test`, 316 тестов на актуальном `master` | Unit/widget проходят локально; анализатор без ошибок. CI до изменений запускал их лишь после push в master на Windows. |
 | Forked media packages | 46 файлов LiveKit и 7 WebRTC | LiveKit: 430 passed, 1 skipped; WebRTC: 17 passed. Раньше корневой `flutter test` их не запускал. |
 | Native builds | Android debug, Windows release, macOS manual | Android debug проходит локально и добавлен в PR gate. Windows release остаётся на self-hosted runner после merge; macOS runner отсутствует, iOS native build не проверен. |
 | Реальное медиа | Два клиента, устройства, потери сети, bitrate/FPS | Существующие unit/fixture тесты не заменяют аппаратные и сетевые измерения. Релизный gate по этим сценариям остаётся открытым. |

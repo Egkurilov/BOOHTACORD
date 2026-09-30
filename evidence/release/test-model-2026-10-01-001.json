@@ -9,7 +9,7 @@
   "checks": [
     {"name": "Go unit/API suite", "status": "PASS_WITH_SKIP", "detail": "Local full go test and go vet passed; PostgreSQL integration needs CI database"},
     {"name": "web Vitest", "status": "PASS", "detail": "701 tests in 232 files"},
-    {"name": "Flutter app", "status": "PASS", "detail": "315 unit/widget tests"},
+    {"name": "Flutter app", "status": "PASS", "detail": "316 unit/widget tests after synchronizing master"},
     {"name": "LiveKit fork", "status": "PASS_WITH_SKIP", "detail": "430 passed, 1 upstream skipped test"},
     {"name": "WebRTC fork", "status": "PASS", "detail": "17 tests"},
     {"name": "Web production build", "status": "PASS", "detail": "vue-tsc and Vite build"},
