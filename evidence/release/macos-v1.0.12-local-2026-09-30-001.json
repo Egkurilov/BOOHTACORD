@@ -1,0 +1,50 @@
+{
+  "id": "macos-v1.0.12-local-2026-09-30-001",
+  "kind": "macos-universal-release-package",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "45cedda",
+  "environment": {
+    "host_os": "macOS arm64",
+    "xcode": "27.0",
+    "app_version": "1.0.12"
+  },
+  "summary": "Added and built the universal macOS app/release packaging path. The local ad-hoc-signed app contains arm64 and x86_64 slices and packages below the GitVerse release asset limit. Developer ID/notarization and app runtime acceptance remain open.",
+  "checks": [
+    {
+      "name": "macOS release package script tests",
+      "command": "bash scripts/macos_release/package.test.sh",
+      "status": "PASS",
+      "observation": "The test package is emitted and a mismatched app-version/release-tag pair is rejected."
+    },
+    {
+      "name": "macOS universal Release build",
+      "command": "cd desktop && flutter build macos --release --no-pub",
+      "status": "PASS",
+      "observation": "BOOHTACORD.app built at 94.7 MB; the main executable contains x86_64 and arm64 slices. Xcode emitted dependency/compiler warnings but completed successfully."
+    },
+    {
+      "name": "Sandbox entitlements and ad-hoc signature",
+      "command": "codesign --verify --deep --strict --verbose=2 desktop/build/macos/Build/Products/Release/BOOHTACORD.app",
+      "status": "PASS",
+      "observation": "The signature verifies. The effective release entitlements retain App Sandbox, network client/server and user-selected-file read-write access; there is no broad all-files entitlement."
+    },
+    {
+      "name": "Versioned GitVerse package and SHA-256",
+      "command": "bash scripts/macos_release/package.sh desktop/build/macos/Build/Products/Release/BOOHTACORD.app macos-v1.0.12 /tmp/boohtacord-macos-release.zwSkEx",
+      "status": "PASS",
+      "observation": "ZIP size is 40,061,559 bytes (about 38.2 MiB), below the 95 MB safety ceiling; SHA-256 is cc5a1104a374a8a1277f4599b89b5784ad9f53bae841a4ab8a4d5134bba68bcf and shasum -c passes."
+    },
+    {
+      "name": "Developer ID signing, notarization and macOS runtime acceptance",
+      "status": "NOT_RUN",
+      "observation": "No valid Developer ID identity is available on this Mac. The app was not launched for login/session persistence, attachment-save UI, voice or screen-share acceptance; an ad-hoc signature does not prove Gatekeeper/notarization behavior."
+    },
+    {
+      "name": "GitVerse macOS CI/release workflow",
+      "status": "NOT_RUN",
+      "observation": "Workflow source is committed, but its self-hosted macOS runner and tag-triggered GitVerse publication were not invoked during this local validation."
+    }
+  ],
+  "remaining": "Configure Developer ID signing/notarization, run the pushed macOS CI workflow, test app launch/session persistence and saving a protected attachment through NSSavePanel, then exercise real voice/screen-sharing peers."
+}

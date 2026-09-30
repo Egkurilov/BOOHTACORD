@@ -12,8 +12,11 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
 - [ ] На подписанной macOS release-сборке проверить запуск и сохранение сессии
   через перезапуск; подтвердить ожидаемый повторный вход для cookies, ранее
   сохранённых в legacy Keychain. Debug-клиент после свежего запуска восстановил
-  существующую авторизованную сессию; Developer ID-сборка всё ещё недоступна,
-  поскольку на этом Mac нет valid signing identity —
+  существующую авторизованную сессию; universal macOS Release 1.0.12 теперь
+  локально собирается и упаковывается с валидной ad-hoc подписью, но Developer
+  ID/notarization и runtime-проверка запуска/сессии остаются открытыми —
+  [QA-135](../evidence/release/macos-v1.0.12-local-2026-09-30-001.json).
+  На этом Mac нет valid Developer ID signing identity —
   [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
 - [x] Устранить `PlatformException` при сохранении сессии на macOS: screenshot
   показывал Security.framework `errSecMissingEntitlement` (`-34018`) при
