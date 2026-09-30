@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:boohtacord_desktop/src/app_version.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/profile_screen.dart';
@@ -21,6 +24,34 @@ void main() {
     expect(loading, findsOneWidget);
     expect(tester.getSemantics(loading).flagsCollection.isLiveRegion, isTrue);
   });
+
+  testWidgets('shows the app version and build number in profile settings', (
+    tester,
+  ) async {
+    final state = AppState(ApiClient());
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+
+    expect(find.text('Версия 1.0.13 (18)'), findsOneWidget);
+  });
+
+  test(
+    'app version label stays synchronized with the package release version',
+    () {
+      final packageVersion = RegExp(
+        r'^version:\s*(\S+)',
+        multiLine: true,
+      ).firstMatch(File('pubspec.yaml').readAsStringSync())?.group(1);
+
+      expect(packageVersion, '$appVersionName+$appBuildNumber');
+      expect(appVersionLabel, 'Версия 1.0.13 (18)');
+    },
+  );
 
   testWidgets('announces profile loading errors accessibly', (tester) async {
     final state = AppState(ApiClient())

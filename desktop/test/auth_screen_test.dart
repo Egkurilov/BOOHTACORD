@@ -28,6 +28,15 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('shows the app version before login', (tester) async {
+    final state = AppState(ApiClient())..phase = AppPhase.signedOut;
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(MaterialApp(home: AuthScreen(state: state)));
+
+    expect(find.text('Версия 1.0.13 (18)'), findsOneWidget);
+  });
+
   testWidgets('login and password fields keep a usable mobile height', (
     tester,
   ) async {

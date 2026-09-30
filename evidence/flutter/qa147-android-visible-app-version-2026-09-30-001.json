@@ -1,0 +1,29 @@
+{
+  "id": "QA-147",
+  "kind": "android-visible-app-version",
+  "status": "PASS",
+  "executed_at": "2026-09-30",
+  "source_revision": "1b8178d",
+  "summary": "The app version and build number are visible both on the signed-out login card and in profile settings. The constants are checked against the package release version, currently 1.0.13+18.",
+  "checks": [
+    {
+      "name": "Test-first login version indicator",
+      "command": "cd desktop && flutter test --no-pub test/auth_screen_test.dart --plain-name 'shows the app version before login'",
+      "status": "PASS",
+      "observation": "The test first failed because the login card had no version label. The version 1.0.13 (18) is now visible before authentication."
+    },
+    {
+      "name": "Profile version and package synchronization",
+      "command": "cd desktop && flutter test --no-pub test/profile_screen_test.dart",
+      "status": "PASS",
+      "observation": "Profile settings render the same version/build label, and a source test asserts the constants match the version declared by pubspec.yaml."
+    },
+    {
+      "name": "Complete Flutter tests and analyzer",
+      "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub --no-fatal-infos",
+      "status": "PASS",
+      "observation": "All 281 Flutter tests pass and flutter analyze reports no issues."
+    }
+  ],
+  "remaining": "Signed ABI-split APK publication and physical-device confirmation are tracked separately as the Android release result."
+}

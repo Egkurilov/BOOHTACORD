@@ -383,6 +383,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   как в Flutter. Регрессионный тест и полный frontend suite (682 теста),
   production build пройдены —
   [QA-146](../evidence/flutter/qa146-web-member-popover-long-login-2026-09-30-001.json).
+- [x] Показывать версию и номер сборки до входа и в настройках профиля, чтобы их
+  можно было сообщить при диагностике; значение сверяется тестом с `pubspec.yaml`.
+  Android release `1.0.13 (18)` подготовлен —
+  [QA-147](../evidence/flutter/qa147-android-visible-app-version-2026-09-30-001.json).
 
 ## P1 — Admin и переписка
 

@@ -2,6 +2,7 @@ import 'dart:ui' show SemanticsRole;
 
 import 'package:flutter/material.dart';
 
+import '../app_version.dart';
 import '../app_state.dart';
 import '../theme.dart';
 
@@ -310,6 +311,15 @@ class _AuthScreenState extends State<AuthScreen> {
                             label: Text(
                               widget.state.serverUrl,
                               overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            appVersionLabel,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: GcColors.muted,
+                              fontSize: 12,
                             ),
                           ),
                         ],
