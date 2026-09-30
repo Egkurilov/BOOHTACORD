@@ -68,6 +68,11 @@ dev_dependencies:
   # Narrow pin so committed codegen stays deterministic across machines
   json_serializable: ">=6.14.1 <6.15.0"
 
+dependency_overrides:
+  # Standalone package tests must exercise the WebRTC fork used by the app.
+  flutter_webrtc:
+    path: ../flutter_webrtc
+
 import_sorter:
   comments: false
   ignored_files:

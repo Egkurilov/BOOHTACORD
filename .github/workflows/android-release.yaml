@@ -11,7 +11,11 @@ permissions:
   contents: write
 
 jobs:
+  quality:
+    uses: ./.github/workflows/ci-flutter.yaml
+
   android-release:
+    needs: quality
     runs-on: [self-hosted, windows, x64, boohtacord-windows]
     steps:
       - name: Checkout release source

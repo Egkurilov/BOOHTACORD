@@ -1,0 +1,3 @@
+# Stream tests create temporary files in this fixture directory.
+*
+!.gitignore

@@ -1,0 +1,22 @@
+{
+  "id": "test-model-2026-10-01-001",
+  "kind": "release-quality-gate-review",
+  "task": "T-060",
+  "status": "PARTIAL",
+  "observed_at": "2026-09-30T22:43:35Z",
+  "observer": "Codex",
+  "environment": "Windows development host; GitHub hosted Flutter CI proposed in this revision",
+  "checks": [
+    {"name": "Go unit/API suite", "status": "PASS_WITH_SKIP", "detail": "Local full go test and go vet passed; PostgreSQL integration needs CI database"},
+    {"name": "web Vitest", "status": "PASS", "detail": "701 tests in 232 files"},
+    {"name": "Flutter app", "status": "PASS", "detail": "317 unit/widget tests after portable notification fixture"},
+    {"name": "LiveKit fork", "status": "PASS_WITH_SKIP", "detail": "430 passed, 1 upstream skipped test"},
+    {"name": "WebRTC fork", "status": "PASS", "detail": "17 tests"},
+    {"name": "Web production build", "status": "PASS", "detail": "vue-tsc and Vite build"},
+    {"name": "Flutter analyzer", "status": "PASS", "detail": "No issues found"},
+    {"name": "Android debug compile", "status": "PASS", "detail": "Local Windows Flutter 3.47.5 build"},
+    {"name": "iOS native build", "status": "NOT_RUN", "detail": "No macOS runner available"},
+    {"name": "Physical two-client media quality", "status": "NOT_RUN", "detail": "Requires devices and controlled network"}
+  ],
+  "limits": "Local Go tests skip PostgreSQL integration without TEST_DATABASE_URL; GitHub backend CI provides PostgreSQL and rejects skips. GitHub Flutter CI result is pending. Release gate remains open for native iOS and physical media scenarios."
+}

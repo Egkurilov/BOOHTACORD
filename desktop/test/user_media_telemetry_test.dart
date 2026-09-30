@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:boohtacord_desktop/src/telemetry/report_media/sender_sample.dart';
@@ -60,4 +62,31 @@ void main() {
       expect(reports.last, containsPair('direction', 'connection'));
     },
   );
+
+  test('connection reporting recovers after a slow failed delivery', () async {
+    final firstDelivery = Completer<void>();
+    final reports = <Map<String, Object>>[];
+    var now = DateTime(2026);
+    final reporter = ConnectionMediaReporter(
+      (report) async {
+        reports.add(report);
+        if (reports.length == 1) {
+          await firstDelivery.future;
+          throw StateError('offline');
+        }
+      },
+      'android_native',
+      now: () => now,
+    );
+
+    final inFlight = reporter.submit(25, ConnectionQuality.good);
+    now = now.add(const Duration(seconds: 5));
+    await reporter.submit(26, ConnectionQuality.poor);
+    expect(reports, hasLength(1));
+    firstDelivery.complete();
+    await inFlight;
+    await reporter.submit(27, ConnectionQuality.good);
+    expect(reports, hasLength(2));
+    expect(reports.last, containsPair('rtt_ms', 27));
+  });
 }

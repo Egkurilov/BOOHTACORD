@@ -84,3 +84,17 @@ func TestVoiceConnectionReportDoesNotPolluteScreenSnapshot(t *testing.T) {
 		t.Fatalf("status=%d", response.Code)
 	}
 }
+
+func TestUnauthenticatedMediaSampleCreatesNoTrace(t *testing.T) {
+	exporter := tracetest.NewInMemoryExporter()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+	old := otel.GetTracerProvider()
+	otel.SetTracerProvider(provider)
+	t.Cleanup(func() { otel.SetTracerProvider(old); _ = provider.Shutdown(context.Background()) })
+
+	report := httpmetrics.ClientScreenReport{Platform: "desktop_web", Direction: "sender", State: "playing"}
+	recordMediaSample(context.Background(), report)
+	if spans := exporter.GetSpans(); len(spans) != 0 {
+		t.Fatalf("unauthenticated media sample created %d trace spans", len(spans))
+	}
+}
