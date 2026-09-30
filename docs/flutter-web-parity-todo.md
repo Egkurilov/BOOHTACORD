@@ -18,6 +18,11 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   [QA-135](../evidence/release/macos-v1.0.12-local-2026-09-30-001.json).
   На этом Mac нет valid Developer ID signing identity —
   [QA-40](../evidence/flutter/qa40-macos-startup-loading-2026-09-28-001.json).
+  Пользователь сообщил о запросе пароля/разрешения Keychain при входе. Текущая
+  конфигурация не задаёт user-presence/access-control policy; точный системный
+  диалог не подтверждён. Повторить свежий вход и relaunch с session cookie в
+  Developer ID-подписанном клиенте после уточнения текста окна —
+  [QA-141](../evidence/flutter/qa141-macos-keychain-access-prompt-2026-09-30-001.json).
 - [x] Устранить `PlatformException` при сохранении сессии на macOS: screenshot
   показывал Security.framework `errSecMissingEntitlement` (`-34018`) при
   Data Protection Keychain. На macOS используется поддерживаемый legacy
@@ -29,7 +34,8 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   [QA-99](../evidence/flutter/qa99-macos-keychain-service-rotation-2026-09-29-001.json),
   [QA-113](../evidence/flutter/qa113-macos-keychain-integration-roundtrip-2026-09-29-001.json).
   Вход с записью новой session cookie и повторный вход для старого service всё
-  ещё нужно проверить по предыдущему пункту; existing Keychain записи не удалялись.
+  ещё нужно проверить; existing Keychain записи не удалялись. Не переносить
+  session cookie в plaintext и не удалять Keychain items.
 
 ## P0 — Голосовые каналы и демонстрация экрана
 

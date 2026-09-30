@@ -1,0 +1,39 @@
+{
+  "id": "QA-141",
+  "kind": "macos-keychain-access-prompt-diagnosis",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "efa7822",
+  "summary": "Investigated the user-reported macOS Keychain password/authorization prompt. The app uses flutter_secure_storage's legacy Keychain mode with an app-specific service and does not configure user-presence/access-control flags. The local app is ad-hoc signed and the host has no valid code-signing identity, so stable-signature acceptance cannot be tested. The exact native dialog remains unconfirmed.",
+  "checks": [
+    {
+      "name": "Session Keychain configuration",
+      "status": "PASS",
+      "observation": "ApiClient selects usesDataProtectionKeychain=false and an isolated v2 service. MacOsOptions defaults accessControlFlags to empty and useSecureEnclave to false; the client does not request an additional biometric/passcode presence policy."
+    },
+    {
+      "name": "Local macOS signing identity",
+      "command": "security find-identity -v -p codesigning",
+      "status": "BLOCKED",
+      "observation": "The host reports 0 valid identities. The built Debug app's code signature is ad-hoc with no TeamIdentifier/designated requirement, so stable signed-app Keychain persistence cannot be validated here."
+    },
+    {
+      "name": "Flutter tests",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 276 Flutter tests pass. The initial sandboxed invocation could not update Flutter's engine cache; rerunning with the required cache permission completed successfully."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Exact dialog and recurrence",
+      "status": "NOT_RUN",
+      "observation": "The user's exact dialog text/screenshot and whether the prompt repeats after Allow are not yet available. No account credentials or Keychain entries were inspected or changed."
+    }
+  ],
+  "remaining": "Obtain the exact prompt wording (unlock login Keychain versus grant BOOHTACORD access), then validate fresh cookie write/read and restart under a stable Developer ID-signed build. Do not downgrade session-cookie storage to plaintext or delete user Keychain items."
+}
