@@ -241,8 +241,14 @@ peer/platform-проверки и выравниваем viewer с вебом.
   sender/receiver reports и admin diagnostics; исходный screen-share clipping
   теперь можно сопоставлять по размерам на Android sender и web peers —
   [QA-50](../evidence/flutter/qa50-screen-share-frame-dimensions-2026-09-28-001.json).
+- [x] Изолировать sender-stats busy lock по поколению screen-share track: поздний
+  `getSenderStats()` старой демонстрации не должен удерживать lock новой. Два
+  generation-gate regression tests, полный suite из 278 Flutter-тестов и analyzer
+  проходят — [QA-142](../evidence/flutter/qa142-screen-share-metrics-generation-race-2026-09-30-001.json).
 - [ ] На устройстве подтвердить остановку отчётов при OS share stop/leave/disconnect
-  и сопоставить sender с двумя receiver snapshots в QA-07.
+  и сопоставить sender с двумя receiver snapshots в QA-07. Физическая
+  остановка/немедленный restart и два receiver остаются открыты —
+  [QA-142](../evidence/flutter/qa142-screen-share-metrics-generation-race-2026-09-30-001.json).
 - [x] Устранить Android screen-share retry leak: публиковать созданный track под
   контролем клиента, очищать его при publish failure, снизить Android профиль
   до 720p/15 FPS и сохранять текст исходной ошибки — [QA-23](../evidence/flutter/qa23-android-ime-screen-share-2026-09-27-001.json).

@@ -20,6 +20,7 @@ import 'services/android_audio_devices.dart';
 import 'services/password_reset_link.dart';
 import 'services/screen_share_quality.dart';
 import 'services/screen_share_metrics.dart';
+import 'services/screen_share_metrics_generation_gate.dart';
 import 'services/native_notifications.dart';
 import 'services/voice_lease_revocation.dart';
 import 'services/voice_volume_preferences.dart';
@@ -251,8 +252,7 @@ class AppState extends ChangeNotifier {
   bool _screenThumbnailBusy = false;
   LocalVideoTrack? _screenShareMetricsTrack;
   ScreenShareSenderSnapshot? _previousScreenShareMetrics;
-  int _screenShareMetricsRevision = 0;
-  bool _screenShareMetricsBusy = false;
+  final _screenShareMetricsGate = ScreenShareMetricsGenerationGate();
   int _voiceRosterRevision = 0;
   bool _voiceRosterLoading = false;
   bool _notificationAppIsForeground = true;
@@ -3037,7 +3037,7 @@ class AppState extends ChangeNotifier {
 
   void _startScreenShareMetrics(LocalVideoTrack track) {
     _stopScreenShareMetrics();
-    final revision = _screenShareMetricsRevision;
+    final revision = _screenShareMetricsGate.generation;
     _screenShareMetricsTrack = track;
     _screenShareMetricsTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       unawaited(_sampleScreenShareMetrics(track, revision));
@@ -3047,7 +3047,7 @@ class AppState extends ChangeNotifier {
 
   void _stopScreenShareMetrics() {
     _stopScreenThumbnailPublishing();
-    _screenShareMetricsRevision++;
+    _screenShareMetricsGate.nextGeneration();
     _screenShareMetricsTimer?.cancel();
     _screenShareMetricsTimer = null;
     _screenShareMetricsTrack = null;
@@ -3058,14 +3058,13 @@ class AppState extends ChangeNotifier {
     LocalVideoTrack track,
     int revision,
   ) async {
-    if (_screenShareMetricsBusy ||
-        revision != _screenShareMetricsRevision ||
+    if (revision != _screenShareMetricsGate.generation ||
         !identical(track, _screenShareMetricsTrack) ||
         screenSharePhase != ScreenSharePhase.sharing ||
-        voicePhase == VoicePhase.leaving) {
+        voicePhase == VoicePhase.leaving ||
+        !_screenShareMetricsGate.tryEnter(revision)) {
       return;
     }
-    _screenShareMetricsBusy = true;
     try {
       final stats = await track.getSenderStats();
       final current = screenShareSenderSnapshotFromStats(
@@ -3083,7 +3082,7 @@ class AppState extends ChangeNotifier {
             )
             .toList(growable: false),
       );
-      if (revision != _screenShareMetricsRevision ||
+      if (revision != _screenShareMetricsGate.generation ||
           !identical(track, _screenShareMetricsTrack) ||
           screenSharePhase != ScreenSharePhase.sharing ||
           current == null) {
@@ -3102,7 +3101,7 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       // Some platform WebRTC implementations do not expose sender stats.
     } finally {
-      _screenShareMetricsBusy = false;
+      _screenShareMetricsGate.leave(revision);
     }
   }
 

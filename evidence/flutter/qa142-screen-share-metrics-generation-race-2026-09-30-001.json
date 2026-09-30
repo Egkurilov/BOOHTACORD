@@ -1,0 +1,47 @@
+{
+  "id": "QA-142",
+  "kind": "screen-share-metrics-generation-race",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "efa7822",
+  "summary": "Fixed a race where a pending sender-stats request from a stopped screen-share track could hold a global busy flag and prevent diagnostics from sampling a newly published track. Stats request locks are now scoped to track generations, so stale completion cannot block or unlock the current generation.",
+  "checks": [
+    {
+      "name": "Test-first check before implementation",
+      "command": "cd desktop && flutter test --no-pub test/screen_share_metrics_generation_gate_test.dart",
+      "status": "FAIL_EXPECTED",
+      "observation": "The focused test failed to compile because the generation-scoped gate did not exist yet. This is the expected test-first failure, not a physical reproduction of the pending WebRTC request race."
+    },
+    {
+      "name": "Generation gate tests",
+      "command": "cd desktop && flutter test --no-pub test/screen_share_metrics_generation_gate_test.dart",
+      "status": "PASS",
+      "observation": "Both regressions pass: a new generation can sample while an old request is pending, and late release from the old generation cannot clear the current generation's lock."
+    },
+    {
+      "name": "Complete Flutter test suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 278 Flutter tests pass."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android ABI-split Release compilation",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Built armeabi-v7a (29 MB), arm64-v8a (37 MB) and x86_64 (43 MB) APKs in ignored local build output. APKs were not added to Git; the build emitted the existing Kotlin Gradle Plugin migration warning."
+    },
+    {
+      "name": "OS-level stop/restart and peer diagnostics",
+      "command": "adb devices -l",
+      "status": "NOT_RUN",
+      "observation": "No Android devices are currently listed. Runtime stop/restart and two-receiver telemetry correlation remain unverified."
+    }
+  ],
+  "remaining": "Repeat OS-level stop, leave/disconnect and immediate screen-share restart on physical Android; confirm reports stop for the old share and resume for the new share, and correlate sender report with two receiver snapshots."
+}
