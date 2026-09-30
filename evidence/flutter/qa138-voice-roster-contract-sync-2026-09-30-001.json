@@ -1,0 +1,77 @@
+{
+  "id": "QA-138",
+  "kind": "voice-roster-contract-sync",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "6a8b1ffd9b3a51d4b996873e4c7faac848e1ad6b",
+  "summary": "Synchronized the canonical OpenAPI and mobile/API documentation with the implemented authenticated voice-roster SSE endpoint and required microphone_muted member state. Web and Flutter now reject incomplete roster records instead of silently displaying every participant as muted. Full client tests, Windows CI/Release, local macOS Release and signed ABI-split Android Release builds pass. Physical Android and deployed webhook acceptance remain open.",
+  "checks": [
+    {
+      "name": "Regression tests before client fix",
+      "command": "frontend: npm test -- --reporter=dot src/voice/voice_roster_client.spec.ts; desktop: flutter test --no-pub test/voice_roster_api_test.dart",
+      "status": "FAIL_EXPECTED",
+      "observation": "Both new tests reproduced the previous behavior: a roster record lacking microphone_muted was accepted."
+    },
+    {
+      "name": "Flutter complete test suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 275 tests pass, including strict REST/SSE roster parsing and updated workspace fixtures."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Frontend complete test suite",
+      "command": "cd frontend && npm test -- --reporter=dot",
+      "status": "PASS",
+      "observation": "226 test files and 677 tests pass."
+    },
+    {
+      "name": "Frontend production build",
+      "command": "cd frontend && npm run build",
+      "status": "PASS",
+      "observation": "Typecheck and Vite production build pass; Vite emits the existing informational large LiveKit chunk warning."
+    },
+    {
+      "name": "GitVerse Windows CI",
+      "command": "Flutter Windows CI run 1688178 for commit 6a8b1ffd9b3a51d4b996873e4c7faac848e1ad6b",
+      "status": "PASS",
+      "observation": "The Windows runner completed Flutter tests, analyzer and Windows Release build successfully in 3m10s."
+    },
+    {
+      "name": "macOS Release compile",
+      "command": "cd desktop && flutter build macos --release --no-pub",
+      "status": "PASS",
+      "observation": "Built build/macos/Build/Products/Release/BOOHTACORD.app (94.7 MB); runtime, signing and notarization acceptance are not implied."
+    },
+    {
+      "name": "Canonical OpenAPI roster assertions",
+      "command": "jq -e '.openapi == \"3.1.1\" and (.paths[\"/api/v1/voice/rosters/events\"].get.operationId == \"watchConnectedVoiceParticipants\") and (.paths[\"/api/v1/voice/rosters/events\"].get.responses[\"200\"].content[\"text/event-stream\"].schema.type == \"string\") and (.paths[\"/api/v1/voice/rosters/events\"].get.responses[\"401\"] != null) and (.paths[\"/api/v1/voice/rosters/events\"].get.responses[\"503\"].content[\"text/plain\"].schema.type == \"string\") and (.paths[\"/api/v1/voice/rosters/events\"].get.responses[\"500\"].content[\"text/plain\"].schema.type == \"string\") and (.components.schemas.VoiceParticipant.required | index(\"microphone_muted\")) and (.components.schemas.VoiceParticipant.properties.microphone_muted.type == \"boolean\")' contracts/openapi.yaml",
+      "status": "PASS",
+      "observation": "OpenAPI 3.1 JSON parses; watchConnectedVoiceParticipants describes text/event-stream with 401/500/503 outcomes, and VoiceParticipant requires boolean microphone_muted."
+    },
+    {
+      "name": "PowerShell contract verifier",
+      "command": "pwsh -NoProfile -File scripts/verify-contracts.ps1",
+      "status": "BLOCKED",
+      "observation": "PowerShell Core is not installed. The verifier was updated and equivalent focused JSON/path/field assertions passed with jq."
+    },
+    {
+      "name": "Signed ABI-split Android release build",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Release signing was required by Gradle and all three APKs were produced: armeabi-v7a 30.8 MB, arm64-v8a 39.3 MB and x86_64 45.1 MB. Artifacts remain in the ignored local build directory, not git."
+    },
+    {
+      "name": "Android physical acceptance",
+      "command": "adb devices -l",
+      "status": "NOT_RUN",
+      "observation": "ADB daemon started but reported no attached devices; no install, login, voice or screen-share runtime check was performed."
+    }
+  ],
+  "remaining": "Run the PowerShell contract verifier in an environment with pwsh. Install the generated signed APK on a physical Android device and verify prejoin roster microphone/screen-share status, authenticated SSE refresh, disconnect/reconnect and deployed signed LiveKit webhook behavior. macOS installed-app/session and Windows runtime visual/media acceptance remain governed by the open platform items in the parity checklist."
+}

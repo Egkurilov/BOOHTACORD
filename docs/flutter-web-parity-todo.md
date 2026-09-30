@@ -39,7 +39,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
 
 - [ ] На macOS, Windows и Android пройти полный путь: подключение, mute/deafen,
   запуск screen share, возврат к roster, повторное открытие из карточки, выбор
-  другой трансляции и корректное завершение локально/из OS.
+  другой трансляции и корректное завершение локально/из OS. После обновления
+  roster-контракта собраны macOS Release, GitVerse Windows Release CI и свежие
+  подписанные Android ABI APKs; текущая ADB-инвентаризация не нашла устройство,
+  поэтому новый APK не установлен и этот runtime пункт остаётся открытым —
+  [QA-138](../evidence/flutter/qa138-voice-roster-contract-sync-2026-09-30-001.json).
 - [ ] На macOS и Android открыть локальную трансляцию повторно из собственной
   карточки после возврата к roster; отдельно проверить, что завершившаяся чужая
   трансляция не подменяется локальной.
@@ -187,6 +191,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   старом порядке, затем проходит после исправления; package race detector и
   полный backend suite проходят —
   [QA-137](../evidence/flutter/qa137-realtime-roster-initial-snapshot-race-2026-09-30-001.json).
+- [x] Синхронизировать канонический roster contract: описать authenticated
+  short-lived SSE endpoint и обязательный `microphone_muted`, а web/Flutter
+  клиенты должны отвергать снимки без этого состояния вместо ложного fallback
+  «микрофон выключен». OpenAPI field/path assertions и focused/full client tests
+  проходят; PowerShell verifier локально недоступен —
+  [QA-138](../evidence/flutter/qa138-voice-roster-contract-sync-2026-09-30-001.json).
 - [x] Добавить лёгкий thumbnail в карточки экранов: публиковать JPEG не чаще
   раза в 4 секунды и не более 14 KiB; проверять сигнатуру/размер до отображения,
   очищать превью при disconnect. Web/Flutter unit и widget suites прошли —

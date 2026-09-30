@@ -45,6 +45,17 @@ package race detection and the full backend suite pass. Deployed webhook
 delivery, two-account ACL isolation and reconnect behavior remain open —
 [QA-137](../evidence/flutter/qa137-realtime-roster-initial-snapshot-race-2026-09-30-001.json).
 
+The canonical OpenAPI now includes that same short-lived authenticated SSE
+route and requires the server-observed `microphone_muted` participant field;
+web and Flutter reject incomplete roster records rather than fabricate a muted
+state. Contract assertions and full client suites pass —
+[QA-138](../evidence/flutter/qa138-voice-roster-contract-sync-2026-09-30-001.json).
+That revision also rebuilt the macOS Release app and the signed ABI-split Android
+release APKs, while GitVerse Windows CI #1688178 passed tests, analysis and the
+Windows Release build. These compile gates do not replace installed-app or
+physical media acceptance; those remain open in the platform checklist —
+[QA-138](../evidence/flutter/qa138-voice-roster-contract-sync-2026-09-30-001.json).
+
 Search scope now matches the web default: opening search from an active TEXT or DM
 conversation selects that conversation, while opening it from VOICE uses all
 conversations. This is covered for all three contexts —
