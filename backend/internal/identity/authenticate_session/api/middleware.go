@@ -70,7 +70,7 @@ func PrincipalFrom(context context.Context) (authenticatesession.Principal, bool
 
 func WithPrincipal(ctx context.Context, principal authenticatesession.Principal) context.Context {
 	if span := trace.SpanFromContext(ctx); span.IsRecording() {
-		span.SetAttributes(correlatesession.Attributes(principal.AccountID, principal.SessionDigest)...)
+		span.SetAttributes(correlatesession.NamedAttributes(principal.AccountID, principal.SessionDigest, principal.DisplayName)...)
 	}
 	return context.WithValue(ctx, principalKey{}, principal)
 }

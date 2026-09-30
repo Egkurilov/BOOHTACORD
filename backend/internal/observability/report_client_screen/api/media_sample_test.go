@@ -23,10 +23,11 @@ func TestMediaSampleHasVerifiedIdentityAndMeasuredValues(t *testing.T) {
 	old := otel.GetTracerProvider()
 	otel.SetTracerProvider(provider)
 	t.Cleanup(func() { otel.SetTracerProvider(old); _ = provider.Shutdown(context.Background()) })
-	principal := auth.Principal{AccountID: "verified-account", SessionDigest: sha256.Sum256([]byte("secret"))}
+	principal := auth.Principal{AccountID: "verified-account", DisplayName: "Аня [QA]", SessionDigest: sha256.Sum256([]byte("secret"))}
 	body := `{"platform":"ios_native","direction":"sender","state":"playing","rtt_ms":42,"bitrate_kbps":7500,"encoded_fps":55,"packet_loss_percent":0,"packet_loss_window_ms":10000,"target_resolution":1440,"target_fps":60,"connection_quality":"GOOD","sample_age_ms":200}`
 	request := httptest.NewRequest("POST", "/", strings.NewReader(body))
 	request.Header.Set("X-User-ID", "forged")
+	request.Header.Set("X-User-Name", "forged-name")
 	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), principal))
 	response := httptest.NewRecorder()
 	NewSubmitHandler(httpmetrics.New()).ServeHTTP(response, request)
@@ -41,7 +42,7 @@ func TestMediaSampleHasVerifiedIdentityAndMeasuredValues(t *testing.T) {
 	for _, attr := range spans[0].Attributes {
 		attrs[attr.Key] = attr.Value
 	}
-	for _, expected := range correlation.Attributes(principal.AccountID, principal.SessionDigest) {
+	for _, expected := range correlation.NamedAttributes(principal.AccountID, principal.SessionDigest, principal.DisplayName) {
 		if attrs[expected.Key] != expected.Value {
 			t.Fatalf("identity mismatch: %s", expected.Key)
 		}

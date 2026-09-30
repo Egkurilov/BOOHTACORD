@@ -1,6 +1,7 @@
 """Contracts for navigable, bounded and identity-safe trace views."""
 import json
 import pathlib
+import re
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -16,10 +17,26 @@ class TracesDashboardTest(unittest.TestCase):
         variables = {v['name']: v for v in self.dashboard['templating']['list']}
         for name in ('user', 'session'):
             variable = variables[name]
-            self.assertEqual(variable['query']['label'], f'{name}.id')
+            self.assertEqual(variable['query']['label'], 'user.label' if name == 'user' else 'session.id')
             self.assertEqual(variable['query']['type'], 1)
             self.assertEqual(variable['current']['value'], '$__all')
             self.assertTrue(variable['includeAll'])
+
+    def test_friendly_filter_retains_uuid_value_and_stable_grouping(self):
+        variable = self.dashboard['templating']['list'][0]
+        pattern = variable['regex'].strip('/').replace('(?<', '(?P<')
+        account = '03ef6b06-497a-49aa-b70c-7cc031810f83'
+        for name in ('Аня [QA]', 'Новое имя', 'Name · with delimiter'):
+            label = name + ' · ' + account
+            match = re.fullmatch(pattern, label)
+            self.assertEqual(match['text'], label)
+            self.assertEqual(match['value'], account)
+        for panel_id in (21, 33):
+            panel = self.panels[panel_id]
+            self.assertIn('span.user.name', panel['targets'][0]['query'])
+            group = next(t for t in panel['transformations'] if t['id'] == 'groupBy')
+            self.assertEqual(group['options']['fields']['user.name']['operation'], 'aggregate')
+            self.assertEqual(group['options']['fields']['user.id']['operation'], 'groupby')
 
     def test_session_summary_groups_spans_and_links_to_filtered_timeline(self):
         panel = self.panels[21]

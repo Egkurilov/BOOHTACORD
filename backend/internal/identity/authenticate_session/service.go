@@ -17,6 +17,7 @@ var (
 type Principal struct {
 	AccountID     string
 	Role          string
+	DisplayName   string
 	SessionDigest [sha256.Size]byte
 }
 

@@ -24,3 +24,15 @@ func Attributes(accountID string, digest [sha256.Size]byte) []attribute.KeyValue
 	id := hex.EncodeToString(hash.Sum(nil)[:16])
 	return append(attributes, attribute.String("session.id", id))
 }
+
+// NamedAttributes adds the authenticated profile's display name for private
+// diagnostics. Group and filter by the stable account ID, even after renaming.
+// Names must never become metric labels, resources or access-log fields.
+func NamedAttributes(accountID string, digest [sha256.Size]byte, displayName string) []attribute.KeyValue {
+	attrs := Attributes(accountID, digest)
+	if accountID == "" || displayName == "" {
+		return attrs
+	}
+	return append(attrs, attribute.String("user.name", displayName),
+		attribute.String("user.label", displayName+" · "+accountID))
+}

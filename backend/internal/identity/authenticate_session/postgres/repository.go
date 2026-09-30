@@ -11,7 +11,7 @@ import (
 )
 
 const selectActivePrincipal = `
-SELECT u.id::text, u.role
+SELECT u.id::text, u.role, u.display_name
 FROM sessions s
 JOIN users u ON u.id = s.user_id
 WHERE s.token_digest = $1
@@ -36,7 +36,7 @@ func New(database Database) Repository {
 
 func (repository Repository) FindActive(context context.Context, digest [sha256.Size]byte) (authenticatesession.Principal, error) {
 	var principal authenticatesession.Principal
-	err := repository.database.QueryRow(context, selectActivePrincipal, digest[:]).Scan(&principal.AccountID, &principal.Role)
+	err := repository.database.QueryRow(context, selectActivePrincipal, digest[:]).Scan(&principal.AccountID, &principal.Role, &principal.DisplayName)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return authenticatesession.Principal{}, authenticatesession.ErrSessionNotFound
 	}

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -20,7 +21,7 @@ func TestAuthenticationCorrelatesOnlyVerifiedIdentity(t *testing.T) {
 			recorder := tracetest.NewSpanRecorder()
 			provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
 			ctx, span := provider.Tracer("test").Start(t.Context(), "request")
-			principal := authenticatesession.Principal{AccountID: "account-1", SessionDigest: sha256.Sum256([]byte("private-token"))}
+			principal := authenticatesession.Principal{AccountID: "account-1", DisplayName: "Аня [QA]", SessionDigest: sha256.Sum256([]byte("private-token"))}
 			auth := authenticatorFunc(func(context.Context, string) (authenticatesession.Principal, error) {
 				if !authenticated {
 					return authenticatesession.Principal{}, authenticatesession.ErrUnauthenticated
@@ -34,6 +35,7 @@ func TestAuthenticationCorrelatesOnlyVerifiedIdentity(t *testing.T) {
 			r := httptest.NewRequest(http.MethodGet, "/protected", nil).WithContext(ctx)
 			r.AddCookie(&http.Cookie{Name: session.CookieName, Value: "private-token"})
 			r.Header.Set("X-User-ID", "forged-user")
+			r.Header.Set("X-User-Name", "forged-name")
 			r.Header.Set("X-Session-ID", "forged-session")
 			middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				got, ok := PrincipalFrom(r.Context())
@@ -45,8 +47,8 @@ func TestAuthenticationCorrelatesOnlyVerifiedIdentity(t *testing.T) {
 			span.End()
 			attrs := recorder.Ended()[0].Attributes()
 			if authenticated {
-				want := correlatesession.Attributes(principal.AccountID, principal.SessionDigest)
-				if len(attrs) != 2 || attrs[0] != want[0] || attrs[1] != want[1] {
+				want := correlatesession.NamedAttributes(principal.AccountID, principal.SessionDigest, principal.DisplayName)
+				if !slices.Equal(attrs, want) {
 					t.Fatal("verified user/session attributes missing or overridden")
 				}
 			} else if len(attrs) != 0 {
