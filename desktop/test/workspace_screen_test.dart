@@ -654,6 +654,54 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('announces prejoin roster loading and errors as live status', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    state.selectedChannel = _PortraitApi.voiceChannel;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    state
+      ..voiceRosters = null
+      ..voiceRosterError = null
+      ..notifyListeners();
+    await tester.pump();
+    final loadingStatus = find.text('Проверяем, кто сейчас в комнате…');
+    expect(loadingStatus, findsOneWidget);
+    expect(
+      tester.getSemantics(loadingStatus).flagsCollection.isLiveRegion,
+      isTrue,
+    );
+
+    state
+      ..voiceRosterError = 'Нет связи со списком голосовых каналов.'
+      ..notifyListeners();
+    await tester.pump();
+    final errorStatus = find.text(
+      'Не удалось обновить состав комнаты. Повторяем попытку.',
+    );
+    expect(errorStatus, findsOneWidget);
+    expect(
+      tester.getSemantics(errorStatus).flagsCollection.isLiveRegion,
+      isTrue,
+    );
+
+    semantics.dispose();
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('shows the voice roster before joining the room', (tester) async {
     final semantics = tester.ensureSemantics();
     tester.view.devicePixelRatio = 1;

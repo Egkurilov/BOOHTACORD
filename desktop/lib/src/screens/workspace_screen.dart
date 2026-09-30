@@ -4777,13 +4777,16 @@ class _VoiceRosterPreview extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         if (roster == null)
-          Text(
-            error == null
-                ? 'Проверяем, кто сейчас в комнате…'
-                : 'Не удалось обновить состав комнаты. Повторяем попытку.',
-            style: TextStyle(
-              color: error == null ? GcColors.muted : GcColors.warning,
-              fontSize: 12,
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              error == null
+                  ? 'Проверяем, кто сейчас в комнате…'
+                  : 'Не удалось обновить состав комнаты. Повторяем попытку.',
+              style: TextStyle(
+                color: error == null ? GcColors.muted : GcColors.warning,
+                fontSize: 12,
+              ),
             ),
           )
         else if (roster!.participants.isEmpty)
