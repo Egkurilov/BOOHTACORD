@@ -3,7 +3,7 @@
   "kind": "android-screen-thumbnail-buffer",
   "status": "PARTIAL",
   "executed_at": "2026-09-30",
-  "source_revision": "fab58cc",
+  "source_revision": "fb1fe51937481c43615df17f2d2ec92d2bd167d3",
   "summary": "A Pixel 7 to Mac Flutter screen-share check showed the full portrait frame on the Mac, but neither participant card displayed the sender's thumbnail. Source tracing found Android FrameCapturer allocated a direct ByteBuffer then called array(), which is unsupported; the exception was hidden by the best-effort thumbnail caller. The native buffer copy is fixed and regression-tested. Current signed 1.0.15+20 arm64 was built and installed on Pixel; post-fix thumbnail delivery still needs a live peer run.",
   "checks": [
     {
@@ -40,6 +40,12 @@
       "command": "adb install -r desktop/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
       "status": "PASS",
       "observation": "The signed arm64 APK installed over the existing app without uninstalling or clearing data. Android reports versionName 1.0.15, versionCode 2020 and lastUpdateTime 2026-09-30 20:30:07."
+    },
+    {
+      "name": "GitVerse Flutter Windows CI on the thumbnail fix commit",
+      "command": "GitVerse Flutter Windows CI run #1692456, commit fb1fe51937481c43615df17f2d2ec92d2bd167d3",
+      "status": "PASS",
+      "observation": "The Windows runner completed successfully in 3m12s, including Flutter tests, analyzer and Windows Release build."
     },
     {
       "name": "Post-fix thumbnail on local and remote participant cards",

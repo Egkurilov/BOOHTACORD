@@ -78,6 +78,9 @@ capturer's direct-ByteBuffer `.array()` failure is fixed and covered by a native
 regression; post-fix live thumbnail delivery on both local and remote cards is
 still open. The earlier macOS packaging evidence records 1.0.13+18 and predates
 this Android version bump — [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
+The fix commit also passed GitVerse Flutter Windows CI run #1692456, including
+the full Flutter suite, analyzer and Windows Release build; post-fix thumbnail
+delivery still requires the authorized live device check.
 The macOS Debug 1.0.15+20 rebuild eventually restored the existing session and
 reached SHARE_TEST prejoin after more than six minutes on its loading screen;
 startup latency is now an explicit open parity/reliability gap —

@@ -3,7 +3,7 @@
   "kind": "macos-debug-restart-current-version",
   "status": "PARTIAL",
   "executed_at": "2026-09-30",
-  "source_revision": "fab58cc",
+  "source_revision": "fb1fe51937481c43615df17f2d2ec92d2bd167d3",
   "summary": "Rebuilt and relaunched macOS Debug from current source. Bundle metadata confirms version 1.0.15 (20). The app eventually restored the existing session and reached the SHARE_TEST prejoin view, but only after more than six minutes on the guild-connection splash; startup latency and its cause remain unresolved.",
   "checks": [
     {
