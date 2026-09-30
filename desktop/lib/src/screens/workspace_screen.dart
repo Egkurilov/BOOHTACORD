@@ -22,6 +22,7 @@ import '../widgets/audio_device_check.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
 import '../widgets/screen_share_setup_dialog.dart';
+import '../widgets/voice_participant_thumbnail.dart';
 import '../widgets/formatted_message_body.dart';
 import '../widgets/horizontal_swipe_region.dart';
 import '../widgets/android_system_gesture_exclusion.dart';
@@ -4954,8 +4955,8 @@ class _VoiceParticipantRoom extends StatelessWidget {
                       isLocal: true,
                       hasScreen:
                           state.screenSharePhase == ScreenSharePhase.sharing,
-                      thumbnail: state.screenSharePhase ==
-                              ScreenSharePhase.sharing
+                      thumbnail:
+                          state.screenSharePhase == ScreenSharePhase.sharing
                           ? screenThumbnailForIdentity(
                               state.screenThumbnails,
                               room?.localParticipant?.identity,
@@ -5139,8 +5140,7 @@ class _VoiceScreenViewer extends StatelessWidget {
         hasAudio: screenAudioAvailable,
         selectedStreamId: selectedIdentity,
         reportEnabled:
-            !showingLocalScreen &&
-            selectedIdentity?.isNotEmpty == true,
+            !showingLocalScreen && selectedIdentity?.isNotEmpty == true,
         onReport: state.api.reportScreenShareMetrics,
         sourceTrackName: sourceTrackName,
       ),
@@ -5520,6 +5520,12 @@ class _VoiceParticipantStrip extends StatelessWidget {
                 speaking: localSpeaking,
                 microphoneUnavailable: state.microphoneUnavailable,
                 deafened: state.deafened,
+                thumbnail: state.screenSharePhase == ScreenSharePhase.sharing
+                    ? screenThumbnailForIdentity(
+                        state.screenThumbnails,
+                        state.room?.localParticipant?.identity,
+                      )
+                    : null,
               ),
               for (final participant in participants)
                 _VoiceStripPerson(
@@ -5528,6 +5534,18 @@ class _VoiceParticipantStrip extends StatelessWidget {
                   avatarUrl: _participantMember(state, participant)?.avatarUrl,
                   muted: _participantMuted(participant),
                   speaking: participant.isSpeaking,
+                  thumbnail:
+                      participant.videoTrackPublications.any(
+                        (publication) =>
+                            publication.source ==
+                                TrackSource.screenShareVideo &&
+                            publication.track != null,
+                      )
+                      ? screenThumbnailForIdentity(
+                          state.screenThumbnails,
+                          participant.identity,
+                        )
+                      : null,
                 ),
             ],
           ),
@@ -5546,6 +5564,7 @@ class _VoiceStripPerson extends StatelessWidget {
     required this.speaking,
     this.microphoneUnavailable = false,
     this.deafened = false,
+    this.thumbnail,
   });
 
   final AppState state;
@@ -5555,6 +5574,7 @@ class _VoiceStripPerson extends StatelessWidget {
   final bool speaking;
   final bool microphoneUnavailable;
   final bool deafened;
+  final Uint8List? thumbnail;
 
   @override
   Widget build(BuildContext context) {
@@ -5577,13 +5597,18 @@ class _VoiceStripPerson extends StatelessWidget {
       ),
       child: Row(
         children: [
-          AuthenticatedAvatar(
-            state: state,
-            name: name,
-            avatarUrl: avatarUrl,
-            radius: 15,
-            borderColor: presentation.isSpeaking ? GcColors.success : null,
-            borderWidth: presentation.isSpeaking ? 2 : 0,
+          VoiceParticipantThumbnail(
+            thumbnail: thumbnail,
+            width: 44,
+            height: 32,
+            fallback: AuthenticatedAvatar(
+              state: state,
+              name: name,
+              avatarUrl: avatarUrl,
+              radius: 15,
+              borderColor: presentation.isSpeaking ? GcColors.success : null,
+              borderWidth: presentation.isSpeaking ? 2 : 0,
+            ),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -5677,26 +5702,18 @@ class _VoiceParticipantCard extends StatelessWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              thumbnail == null
-                  ? AuthenticatedAvatar(
-                      state: state,
-                      name: name,
-                      avatarUrl: avatarUrl,
-                      radius: 32,
-                      fallbackFontSize: 26,
-                    )
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: SizedBox(
-                        width: 80,
-                        height: 64,
-                        child: Image.memory(
-                          thumbnail!,
-                          fit: BoxFit.cover,
-                          gaplessPlayback: true,
-                        ),
-                      ),
-                    ),
+              VoiceParticipantThumbnail(
+                thumbnail: thumbnail,
+                width: 80,
+                height: 64,
+                fallback: AuthenticatedAvatar(
+                  state: state,
+                  name: name,
+                  avatarUrl: avatarUrl,
+                  radius: 32,
+                  fallbackFontSize: 26,
+                ),
+              ),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

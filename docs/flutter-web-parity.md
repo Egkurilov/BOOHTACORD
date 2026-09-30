@@ -72,15 +72,20 @@ hotplug and audible route switching remain unverified —
 [QA-150](../evidence/flutter/qa150-audio-device-disconnect-feedback-2026-09-30-001.json).
 
 On 2026-09-30 a signed Android 1.0.15+20 arm64 build was installed on Pixel 7
-without clearing app data. A pre-fix Pixel→Mac Flutter test showed the full
-portrait source frame but no participant-card thumbnails. The Android frame
-capturer's direct-ByteBuffer `.array()` failure is fixed and covered by a native
-regression; post-fix live thumbnail delivery on both local and remote cards is
-still open. The earlier macOS packaging evidence records 1.0.13+18 and predates
-this Android version bump — [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
-The fix commit also passed GitVerse Flutter Windows CI run #1692456, including
-the full Flutter suite, analyzer and Windows Release build; post-fix thumbnail
-delivery still requires the authorized live device check.
+without clearing app data. The Android frame capturer's direct-ByteBuffer
+`.array()` failure is fixed and covered by a native regression. A 2026-10-01
+instrumented run reported `send=published`; source inspection then found the
+compact Android participant strip always rendered avatars and did not consume
+the thumbnail map. The strip now displays the published local preview, verified
+on Pixel after rebuilding/installing the signed APK without clearing data.
+Cross-client acceptance remains open: the previous Mac card still showed only
+an avatar, and a rebuilt Mac Debug client stayed on “Подключаемся к гильдии…”
+before receiver diagnostics could run. The earlier macOS packaging evidence
+records 1.0.13+18 and predates this Android version bump —
+[QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
+The diagnostic/build changes pass all 311 Flutter tests and analyzer; the earlier
+fix commit also passed GitVerse Flutter Windows CI run #1692456, including the
+Windows Release build.
 Two macOS crash reports captured on 2026-09-30 show the same `EXC_BAD_ACCESS`
 in the queued first-frame callback of `FlutterRTCVideoRenderer`: it dereferenced
 an already-cleared weak renderer after disposal. A nil guard now protects that
