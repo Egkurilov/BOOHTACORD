@@ -54,12 +54,23 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   Вход с записью новой session cookie и повторный вход для старого service всё
   ещё нужно проверить; existing Keychain записи не удалялись. Не переносить
   session cookie в plaintext и не удалять Keychain items.
-- [ ] Найти причину единичной долгой загрузки macOS Debug 1.0.15+20: после более
-  чем шести минут на «Подключаемся к гильдии…» приложение восстановило сессию.
-  Свежий повторный запуск той же версии на подключённом Mac быстро открыл
-  SHARE_TEST и показал Pixel screen share; аномальная задержка не повторилась,
-  но её причина неизвестна —
+- [x] Найти причину долгой загрузки macOS Debug 1.0.15+20: свежий sample
+  текущего процесса снова показывает `flutter_secure_storage.read` →
+  `SecItemCopyMatching` → `CSSM_DecryptDataFinal`; `securityd` подтвердил prompt
+  для `.session.v3`. Ad-hoc CDHash текущей сборки отличается от code hashes,
+  перечисленных в ACL записи, поэтому новая пересборка может снова потребовать
+  разрешение. Подробности — [QA-163](../evidence/flutter/qa163-macos-keychain-prompt-runtime-2026-10-01-001.json);
+  предыдущая шестиминутная задержка описана в
   [QA-160](../evidence/flutter/qa160-macos-debug-restart-2026-09-30-001.json).
+- [ ] Обеспечить устойчивый macOS startup/session restore без повторяющегося
+  Keychain prompt: проверить один раз выданное пользователем разрешение и
+  повторный запуск; затем повторить со стабильной Developer ID подписью. Не
+  отключать Keychain ACL и не переносить session cookie в plaintext. На этом Mac
+  нет действительной Developer ID identity; сейчас требуется действие
+  пользователя в системном окне либо тест на корректно подписанной сборке —
+  [QA-141](../evidence/flutter/qa141-macos-keychain-access-prompt-2026-09-30-001.json),
+  [QA-143](../evidence/flutter/qa143-macos-keychain-v3-startup-recovery-2026-09-30-001.json),
+  [QA-163](../evidence/flutter/qa163-macos-keychain-prompt-runtime-2026-10-01-001.json).
 
 ## P0 — Голосовые каналы и демонстрация экрана
 

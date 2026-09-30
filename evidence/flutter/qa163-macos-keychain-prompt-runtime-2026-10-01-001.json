@@ -1,0 +1,38 @@
+{
+  "id": "QA-163",
+  "kind": "macos-keychain-prompt-runtime",
+  "status": "BLOCKED",
+  "executed_at": "2026-10-01",
+  "source_revision": "0e40edd",
+  "summary": "The macOS Debug 1.0.15+20 client remained on the guild startup screen. A read-only process sample and Unified Logging confirm flutter_secure_storage is waiting for macOS Keychain authorization while reading session service v3. The current ad-hoc app signature is not among the code hashes listed in the access-control prompt, consistent with the prompt recurring after a rebuild. No Keychain items were changed and no password was collected.",
+  "checks": [
+    {
+      "name": "Current macOS Debug startup state",
+      "status": "FAIL",
+      "observation": "The running app (1.0.15+20, launched at 00:20 local time) still displayed 'Подключаемся к гильдии…' more than 12 minutes after launch."
+    },
+    {
+      "name": "Read-only process sample of startup wait",
+      "command": "/usr/bin/sample <BOOHTACORD PID> 2 -file <temporary sample>; inspect call graph",
+      "status": "PASS",
+      "observation": "The serial flutter_secure_storage_service queue was blocked in FlutterSecureStorage.read → SecItemCopyMatching → ItemImpl.getContent → CSSM_DecryptDataFinal → SecurityServer mach_msg. No cookie or secret values were inspected."
+    },
+    {
+      "name": "Keychain authorization prompt confirmation",
+      "command": "/usr/bin/log show --last 20m --style compact --predicate '(process == securityd) AND eventMessage CONTAINS BOOHTACORD'",
+      "status": "PASS",
+      "observation": "securityd logged 'displaying keychain prompt' for the app and service ru.boohtacord.boohtacordDesktop.session.v3. The logged ACL lists code-signature hashes that do not include the current Debug bundle CDHash; the bundle is ad-hoc signed with no TeamIdentifier. This supports the conclusion that a new build is requesting Keychain authorization."
+    },
+    {
+      "name": "Keychain item safety",
+      "status": "PASS",
+      "observation": "No Keychain item was read, deleted, migrated, or modified during this diagnosis; no password was entered or collected."
+    },
+    {
+      "name": "Startup after user-approved authorization or stable signature",
+      "status": "BLOCKED",
+      "observation": "The app is waiting for the user to resolve the native Keychain access prompt, or for a Developer ID-signed build with a stable signing requirement. This host has no valid Developer ID signing identity."
+    }
+  ],
+  "remaining": "After the user approves Keychain access in the macOS system prompt (without sharing their password) or provides a stable signed build, verify startup reaches the authenticated workspace promptly, repeat the read after a fresh relaunch, and retry the Pixel-to-Mac thumbnail acceptance."
+}

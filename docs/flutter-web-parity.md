@@ -96,8 +96,19 @@ stop, with both microphones muted —
 [QA-162](../evidence/flutter/qa162-macos-webrtc-renderer-dispose-race-2026-09-30-001.json).
 The macOS Debug 1.0.15+20 rebuild eventually restored the existing session and
 reached SHARE_TEST prejoin after more than six minutes on its loading screen;
-startup latency is now an explicit open parity/reliability gap —
-[QA-160](../evidence/flutter/qa160-macos-debug-restart-2026-09-30-001.json).
+on 2026-10-01 a live process sample reproduced the wait in
+`flutter_secure_storage.read` → `SecItemCopyMatching` →
+`CSSM_DecryptDataFinal`, and `securityd` logged an access prompt for the v3
+session-cookie service. The current ad-hoc build's CDHash is not among the hashes
+listed by that Keychain ACL, consistent with authorization being requested again
+after rebuild. This identifies the startup delay but does not resolve it. No
+Keychain entry was modified and no password was collected. Reliable startup needs
+user-approved Keychain access and stable-signature acceptance; this host has no
+valid Developer ID identity —
+[QA-141](../evidence/flutter/qa141-macos-keychain-access-prompt-2026-09-30-001.json),
+[QA-143](../evidence/flutter/qa143-macos-keychain-v3-startup-recovery-2026-09-30-001.json),
+[QA-160](../evidence/flutter/qa160-macos-debug-restart-2026-09-30-001.json),
+[QA-163](../evidence/flutter/qa163-macos-keychain-prompt-runtime-2026-10-01-001.json).
 
 Flutter now submits bounded sender samples on Android/macOS/Windows and reports
 the selected remote receiver every five seconds to the same authenticated
