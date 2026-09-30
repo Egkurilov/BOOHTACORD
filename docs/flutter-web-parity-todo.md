@@ -274,8 +274,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   повторный запуск screen share с удалённым участником. Обрезка receiver-side
   воспроизведена в web на Pixel 7 (576×1280, в кадре видна только верхняя часть);
   найденное CSS intrinsic-minimum исправлено и прошло regression test/build.
-  Проверка production stylesheet 2026-09-30 подтвердила, что fix не выложен;
-  требуется authorized frontend deploy, затем подтвердить все четыре края в браузере. Отдельно
+  Проверка всех production stylesheet правил 2026-09-30 подтвердила доставку
+  fix с `min-width: 0; min-height: 0`; live share должен подтвердить все четыре
+  края. Отдельно
   сравнить portrait/landscape кадр в Flutter receiver и проверить повторный запуск
   screen share [QA-132](../evidence/flutter/qa132-browser-android-screen-share-crop-2026-09-29-001.json).
   Для проверки добавлен

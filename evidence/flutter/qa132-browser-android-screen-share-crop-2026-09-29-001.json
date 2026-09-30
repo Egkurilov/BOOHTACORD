@@ -2,7 +2,7 @@
   "id": "QA-132",
   "kind": "browser-android-screen-share-crop",
   "status": "FIX_IMPLEMENTED_DEPLOYED_RETEST_OPEN",
-  "executed_at": "2026-09-29",
+  "executed_at": "2026-09-30",
   "summary": "Reproduced the reported crop on the authenticated web receiver while a Pixel 7 Android 17 device was sharing its screen. The browser displayed a 576×1280 stream in a landscape stage but clipped the portrait frame. The video was already configured with object-fit: contain; the grid item retained its automatic intrinsic minimum size and was cut by the stage's overflow:hidden. Setting min-width and min-height to zero lets the player shrink to the stage and contain the full frame.",
   "checks": [
     {
@@ -34,11 +34,11 @@
       "observation": "223 test files and 666 tests passed."
     },
     {
-      "name": "Production stylesheet deployment check",
-      "command": "Fetch https://v.bootybay.ru/ and its linked CSS; inspect the .screen-player rule",
-      "status": "NOT_DEPLOYED",
-      "observation": "On 2026-09-30, the production page and linked stylesheet returned HTTP 200, but .screen-player contained object-fit:contain and max-height:100% without min-width:0 or min-height:0. This confirms the local crop fix is not deployed. No production state was changed."
+      "name": "Production stylesheet deployment check (all matching rules)",
+      "command": "Fetch https://v.bootybay.ru/ and its linked CSS; inspect every .screen-player rule with cache bypass",
+      "status": "PASS",
+      "observation": "On 2026-09-30, the production page and linked stylesheet returned HTTP 200. All four .screen-player rules were inspected; the final rule includes min-width:0 and min-height:0 (stylesheet ETag \"6abcab97-16871-gzip\"). The fix is deployed. This verifies CSS delivery only, not full-frame rendering with a live Pixel share. No production state was changed."
     }
   ],
-  "remaining": "Deploy the frontend change, then repeat Pixel portrait screen sharing in a browser and confirm all four source edges after attach, resize/rotation and fullscreen. Also compare the Android stream in the Flutter receiver; sender/receiver dimensions alone do not prove full-frame rendering. The 2026-09-30 production CSS check confirms the deployed bundle still lacks min-width:0 and min-height:0; deployment requires authorization."
+  "remaining": "Repeat Pixel portrait screen sharing in a browser and confirm all four source edges after attach, resize/rotation and fullscreen. Also compare the Android stream in the Flutter receiver; sender/receiver dimensions alone do not prove full-frame rendering. The 2026-09-30 production stylesheet check confirms the min-width:0/min-height:0 fix is deployed; live rendering acceptance remains open."
 }
