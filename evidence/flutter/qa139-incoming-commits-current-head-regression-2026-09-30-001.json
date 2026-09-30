@@ -1,0 +1,84 @@
+{
+  "id": "QA-139",
+  "kind": "incoming-commits-current-head-regression",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "88d64eb",
+  "summary": "Re-ran the full Flutter, web and backend suites plus Flutter analysis on the current repository tip after reviewing five incoming commits by egkurilov. All automated suites pass. This does not close live two-account roster/privacy, deployed webhook, populated receiver statistics or physical macOS/Windows/Android media acceptance.",
+  "reviewed_commits": [
+    {
+      "revision": "dde1734",
+      "subject": "feat(voice): improve realtime rosters and screen sharing across clients",
+      "assessment": "Large cross-client voice-roster/SSE, ACL revalidation, thumbnail, viewer lifecycle and screen publishing change. Focused and full client/backend regression suites pass; live webhook delivery and two-account privacy acceptance remain open."
+    },
+    {
+      "revision": "d626bdf",
+      "subject": "fix(voice): show connected member avatars and prepare Android release",
+      "assessment": "Android version/release workflow and connected voice-member navigation presentation with focused coverage. No generated release binary was added."
+    },
+    {
+      "revision": "19db89e",
+      "subject": "fix(ci): exclude standalone macOS integration host from root analysis",
+      "assessment": "Limits root Flutter analysis to the application while the standalone macOS integration host keeps its independent dependency context; analyzer passes."
+    },
+    {
+      "revision": "b80bb14",
+      "subject": "docs(evidence): record web and Android release audit with iOS gap",
+      "assessment": "QA evidence only; records platform/release scope and iOS limitation."
+    },
+    {
+      "revision": "239238f",
+      "subject": "feat(screen): show ten-second receiver packet loss percentage",
+      "assessment": "Adds bounded rolling receiver loss calculation in Flutter and web with focused unit/widget coverage; full suites pass. Real populated remote-stream behavior remains unverified."
+    }
+  ],
+  "checks": [
+    {
+      "name": "Flutter complete test suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "All 275 tests pass. Initial sandbox attempt could not update the shared Flutter SDK engine stamp; rerun with SDK write access succeeded."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Frontend complete test suite",
+      "command": "cd frontend && npm test -- --reporter=dot",
+      "status": "PASS",
+      "observation": "226 test files and 677 tests pass. Existing Vue test fixture prop warnings are non-failing."
+    },
+    {
+      "name": "Backend complete test suite",
+      "command": "cd backend && GOCACHE=/tmp/boohtacord-current-go-cache go test ./...",
+      "status": "PASS",
+      "observation": "All packages pass after rerunning with localhost listener access for httptest. The sandbox-only initial attempt failed to bind IPv6 loopback ports."
+    },
+    {
+      "name": "OpenAPI roster contract assertions",
+      "command": "jq -e '.openapi and .paths[\"/api/v1/voice/rosters/events\"] and (.components.schemas.VoiceParticipant.required | index(\"microphone_muted\"))' contracts/openapi.yaml",
+      "status": "PASS",
+      "observation": "Roster event path exists and microphone_muted remains a required participant field."
+    },
+    {
+      "name": "PowerShell contract verifier",
+      "command": "pwsh -NoProfile -File scripts/verify-contracts.ps1",
+      "status": "BLOCKED",
+      "observation": "PowerShell Core is not installed in this environment; equivalent focused OpenAPI assertions passed with jq."
+    },
+    {
+      "name": "Live and physical platform acceptance",
+      "status": "NOT_RUN",
+      "observation": "No live two-account privacy/reconnect run, deployed webhook/SSE event validation, populated remote receiver loss sample or physical macOS/Windows/Android voice/screen-share run was performed in this pass."
+    },
+    {
+      "name": "Repository hygiene",
+      "status": "PASS",
+      "observation": "HEAD equals origin/master at review start. No tracked/untracked additions from the reviewed commits beyond already committed source/evidence; the pre-existing untracked desktop/devtools_options.yaml was preserved."
+    }
+  ],
+  "remaining": "First priority: validate prejoin roster ACL/privacy, event freshness and disconnect/reconnect with two accounts against deployed signed LiveKit webhooks. Next: complete full screen-share viewer/capture acceptance on physical Android/macOS/Windows and inspect populated receiver packet-loss stats. Run the PowerShell contract verifier in an environment with pwsh."
+}

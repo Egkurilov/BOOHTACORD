@@ -114,10 +114,13 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Показывать потери пакетов трансляции как процент за скользящее окно 10 секунд,
   синхронно в web и Flutter; покрыть накопление окна, счётчики без изменения,
   reset и недоступные stats — [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json).
-  Полные Flutter (274), web (677), Go и analyzer проверки повторно прошли при
-  разборе incoming commits — [QA-136](../evidence/flutter/qa136-untrusted-commit-review-and-regression-2026-09-30-001.json).
-  Сравнение populated diagnostics с реальным удалённым viewer остаётся в
-  device-проверке выше.
+  При разборе incoming commits пройдены полные Flutter (275), web (677), Go и
+  analyzer проверки как на первоначальном review, так и повторно на текущем HEAD —
+  [QA-136](../evidence/flutter/qa136-untrusted-commit-review-and-regression-2026-09-30-001.json),
+  [QA-139](../evidence/flutter/qa139-incoming-commits-current-head-regression-2026-09-30-001.json).
+  Следующий приоритет — двухаккаунтная проверка roster/privacy и затем полный
+  screen-share acceptance на реальных macOS/Windows/Android peers; сравнение
+  populated diagnostics с удалённым viewer остаётся открытым.
 - [x] Привести receiver diagnostics к веб-паттерну: компактная кнопка-summary и
   popover до 288 px вместо inline `ExpansionTile`, с прокруткой, размещением
   вверх при нехватке места снизу, закрытием по Escape и проверкой Android-width
