@@ -1,0 +1,46 @@
+{
+  "id": "QA-158",
+  "kind": "stream-metrics-contract-and-web-panel",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "bc581bf",
+  "summary": "Audited stream-metrics reporting across web, Flutter and backend. Both clients submit bounded anonymous sender/selected-remote-receiver reports through the same authenticated endpoint; backend validates and exposes fresh snapshots only to administrators. Fixed web receiver statistics popover to use viewport-fixed coordinates so it remains visible and scrollable instead of being pushed below or clipped by the viewer container.",
+  "checks": [
+    {
+      "name": "Web sender and selected receiver reporting",
+      "status": "PASS",
+      "observation": "Source and frontend tests confirm sender diagnostics refresh while sharing and are reported every 5 seconds; selected remote receiver reports are posted while visible, unselected/local streams are excluded, and stop/cleanup is tied to component/share lifecycle. Reports use same-origin credentials and the shared /api/v1/voice/screen-metrics route."
+    },
+    {
+      "name": "Flutter sender and receiver reporting",
+      "command": "cd desktop && flutter test --no-pub test/screen_share_metrics_test.dart test/screen_receiver_report_test.dart test/screen_receiver_diagnostics_test.dart",
+      "status": "PASS",
+      "observation": "18 focused tests pass. They cover bounded Android/macOS/Windows sender measurements, selected remote receiver payloads, waiting subscription, excluding local preview/unselected tracks, native rendered-FPS mapping and diagnostics calculations. Source review confirms five-second sender/receiver reporting and lifecycle/generation gates."
+    },
+    {
+      "name": "Flutter authenticated endpoint request",
+      "command": "cd desktop && flutter test --no-pub test/avatar_api_test.dart --plain-name 'posts anonymous sender metrics with the authenticated origin'",
+      "status": "PASS",
+      "observation": "The API-client test confirms POST to /api/v1/voice/screen-metrics with JSON, configured Origin and the existing authenticated session cookie; the report body carries no account or room identity."
+    },
+    {
+      "name": "Backend route, schema validation, retention and access control",
+      "command": "cd backend && go test ./internal/observability/http_metrics ./internal/observability/report_client_screen/api ./cmd/api",
+      "status": "PASS",
+      "observation": "All packages pass. The POST validates fixed enums and numeric bounds, rejects unknown fields, requires a session, and the fresh anonymous admin snapshot requires administrator access."
+    },
+    {
+      "name": "Web statistics popover viewport regression",
+      "command": "cd frontend && npm test -- --run && npm run build",
+      "status": "PASS",
+      "observation": "All 686 frontend tests pass and the Vue type-check plus Vite production build pass. Placement tests now assert fixed top/left coordinates, viewport bounds, flipping and max-height; the panel uses fixed positioning and internal scrolling so viewer-container clipping no longer applies."
+    },
+    {
+      "name": "Live web interaction and real metric arrival",
+      "status": "NOT_RUN",
+      "observation": "No authenticated browser screenshot or live sender plus receiver session was run. Actual cross-client arrival in the admin snapshot and visual confirmation at the affected viewport edge remain unverified."
+    }
+  ],
+  "privacy": "Reports contain bounded numeric measurements and fixed platform/direction/state enums only; no account, room, track, IP, token or media-content values are sent.",
+  "remaining": "Visually confirm the popover on the live web client near the lower viewport edge, then run a real web/Flutter screen-share session and verify sender/receiver samples in the authenticated admin snapshot."
+}

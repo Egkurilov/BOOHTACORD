@@ -176,9 +176,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Фактические populated receiver metrics и matched screenshots на устройствах
   остаются открытыми в пункте выше.
 - [x] Исправить web-панель статистики, когда summary у нижней границы viewport:
-  размещать popover сверху, ограничивать его доступной высотой и прокручивать
-  содержимое; viewport placement regressions и frontend production build прошли.
-  Live browser screenshot confirmation остаётся открытым — [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
+  фиксировать popover относительно viewport с рассчитанными top/left, ограничивать
+  доступную высоту и прокручивать содержимое, не допуская обрезания контейнером
+  viewer; полный frontend suite (686 tests) и production build прошли. Live browser
+  screenshot confirmation остаётся открытым — [QA-158](../evidence/flutter/qa158-stream-metrics-web-panel-2026-09-30-001.json).
 - [x] Добавить dock-объявление о новой чужой демонстрации экрана и отключаемый
   локальный звуковой сигнал; не объявлять исходные публикации при входе и
   восстановленные дорожки при reconnect — локальная логика/виджет покрыты
@@ -319,11 +320,14 @@ peer/platform-проверки и выравниваем viewer с вебом.
   тот же authenticated endpoint; локальный предпросмотр не отправляется,
   receiver reporting приостанавливается в фоне. Full Flutter suite (299 tests),
   analyzer, macOS Debug, Android Debug APK и GitVerse Flutter Windows CI (tests,
-  analyzer, Windows Release) прошли — [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
+  analyzer, Windows Release) прошли; повторная сверка web/Flutter/backend путей —
+  [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json),
+  [QA-158](../evidence/flutter/qa158-stream-metrics-web-panel-2026-09-30-001.json).
 - [x] Считать `presented_fps` отдельно от `decoded_fps` во Flutter: разбирать
   native inbound `framesRendered`, рассчитывать дельту счётчика и отправлять
   только bounded FPS; LiveKit model parser, report payload и regression покрыты
-  тестами по W3C-семантике счётчика — [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
+  тестами по W3C-семантике счётчика — [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json),
+  [QA-158](../evidence/flutter/qa158-stream-metrics-web-panel-2026-09-30-001.json).
 - [ ] Проверить реальную доставку Flutter sender и двух receiver отчётов на
   Android/macOS/Windows, наличие `framesRendered` в native stats, stop/restart
   и admin snapshot — [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
