@@ -3,8 +3,8 @@
   "kind": "flutter-composer-soft-keyboard-send",
   "status": "PARTIAL",
   "executed_at": "2026-09-30",
-  "source_revision": "caf15da",
-  "summary": "Flutter TEXT and DM composers expose the mobile keyboard Send action and route its submission through the existing send flow, matching web's Enter-to-send behavior. Shift+Enter remains a newline in TEXT. Automated verification passed; physical Gboard/Samsung acceptance remains open.",
+  "source_revision": "8b0e573",
+  "summary": "Flutter TEXT and DM composers expose the mobile keyboard Send action and route its submission through the existing send flow, matching web's Enter-to-send behavior. A framework keyboard test confirms Shift+Enter does not trigger the send shortcut. Widget tests do not simulate actual newline insertion; physical Gboard/Samsung acceptance remains open.",
   "checks": [
     {
       "name": "TEXT soft-keyboard action regression reproduced before implementation",
@@ -19,10 +19,16 @@
       "observation": "Both TEXT and DM expose TextInputAction.send and submit the entered message when the platform sends that action."
     },
     {
+      "name": "Shift+Enter does not invoke the hardware send shortcut",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'text composer does not send on Shift+Enter'",
+      "status": "PASS",
+      "observation": "The framework shortcut matcher does not send the message while Shift is held. Widget tests do not model the native IME's newline insertion behavior."
+    },
+    {
       "name": "Full Flutter suite and analyzer",
       "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
       "status": "PASS",
-      "observation": "All 291 Flutter tests pass and flutter analyze reports no issues."
+      "observation": "All 292 Flutter tests pass and flutter analyze reports no issues."
     },
     {
       "name": "Android debug APK build",
