@@ -1,0 +1,40 @@
+{
+  "id": "artifact-storage-2026-10-01-001",
+  "task": "T-054 / T-060",
+  "kind": "github-build-artifact-storage",
+  "status": "PARTIAL",
+  "observed_at": "2026-10-01",
+  "source_revision": "ab738166c98cc450d7a053abb7ea782aee507144",
+  "environment": {
+    "source_host": "Windows worktree",
+    "github_repository": "https://github.com/Egkurilov/BOOHTACORD",
+    "windows_runner": "self-hosted Windows",
+    "macos_runner": "NOT_RUN: manual workflow only"
+  },
+  "audit": {
+    "github_master_and_tags_blobs_over_1mb": 0,
+    "current_tracked_build_packages": 0,
+    "current_binary_assets": "79 image/icon/font assets totaling 2521862 bytes; app icons are build inputs",
+    "old_local_gitverse_refs": "Local GitVerse refs still reach historical APK, Windows ZIP and downloaded libwebrtc blobs. They are absent from GitHub master and published tags; no history rewrite was needed.",
+    "github_releases": "GitHub Releases API returned no published releases at audit time."
+  },
+  "checks": {
+    "workflow_verifier_initial": "EXPECTED_FAIL: Windows build had no artifact upload",
+    "workflow_verifier_final": "PASS: ./scripts/verify-github-workflows.ps1",
+    "workflow_yaml_parse": "PASS: both modified YAML files parsed with PyYAML BaseLoader",
+    "macos_packager_syntax": "PASS: committed LF shell source passes bash -n",
+    "ignore_rules": "PASS: generated APK, ZIP, EXE, DLL, PDB, macOS .app and downloaded libwebrtc paths ignored",
+    "windows_ci": "PASS: workflow 36780533143 completed successfully",
+    "windows_artifact_contents": "PASS on runner: required EXE, flutter_windows.dll, libwebrtc.dll and data/flutter_assets were present before upload. Upload step succeeded. Downloaded ZIP was not unpacked locally.",
+    "windows_artifact": "PASS: artifact 11127686094, 25075099 bytes, sha256:aeed62c390a85a3ec6220d706de2079b51ee9fdb139a64eef7d03d5b5ccc7792, expires 2026-10-30T21:40:20Z",
+    "github_ci": "PASS: workflow 36780533443 completed successfully",
+    "production_workflow": "PASS: workflow 36780533089 completed successfully",
+    "macos_ci_artifact": "NOT_RUN: macOS workflow is manual and no macOS runner is registered"
+  },
+  "runs": {
+    "ci": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36780533443",
+    "windows_ci": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36780533143",
+    "production": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36780533089"
+  },
+  "limits": "The GitHub Windows artifact is available for 30 days. A local ZIP download and extraction were not performed because automatic approval review rejected the authenticated download command without a detailed reason; runner checks and GitHub artifact metadata provide the evidence above. No macOS runner is registered. GitHub Releases currently has no published release. Physical Windows/macOS installation was not verified."
+}

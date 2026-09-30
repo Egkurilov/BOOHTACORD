@@ -32,6 +32,6 @@
 
 ## Packet 3 — delivery and evidence
 
-- [ ] Inspect status and sizes, stage exact files, commit on `codex/artifact-storage`, integrate current GitHub `master` and push.
-- [ ] Wait for CI/Windows CI and inspect uploaded artifact contents, including the EXE, DLL and Flutter assets.
-- [ ] Record verification evidence and limits; keep physical/macOS checks open if their runners are unavailable.
+- [x] Inspect status and sizes, stage exact files, commit on `codex/artifact-storage`, integrate current GitHub `master` and push.
+- [x] Wait for CI/Windows CI; check EXE, DLL and Flutter assets on the runner and verify the uploaded artifact metadata in GitHub.
+- [x] Record verification evidence and limits; keep physical/macOS checks open while no macOS runner is registered.
