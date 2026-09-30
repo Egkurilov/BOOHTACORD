@@ -29,8 +29,8 @@ describe('selected-stream toolbar layout', () => {
     expect(panel).toContain('<span>Статистика</span>')
     expect(css).toMatch(/\.stream-quality \{[^}]*display: flex;[^}]*justify-content: space-between/)
     expect(css).toMatch(/\.stream-diagnostics > summary \{[^}]*min-height: 36px;/)
-    const mediumLayout = css.split('@media (max-width: 1100px)')[1]?.split('@media (max-width: 600px)')[0]
-    expect(mediumLayout).toContain('.stream-diagnostics-panel { right: auto; left: 0; }')
+    expect(css).toContain('.stream-diagnostics-panel { position: fixed;')
+    expect(panel).toContain('alignLeft: window.innerWidth <= 1100')
     expect(css).toContain('@media (max-width: 600px)')
     expect(css).toContain('.stream-diagnostics { flex: 1 1 100%; }')
     expect(css).toContain('.stream-voice-return {')

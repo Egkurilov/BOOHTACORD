@@ -29,13 +29,20 @@ function updatePlacement(): void {
     if (!summary || !root.open) return
     const rect = summary.getBoundingClientRect()
     const result = placeScreenDiagnostics({
+      summaryLeft: rect.left,
+      summaryRight: rect.right,
       summaryTop: rect.top,
       summaryBottom: rect.bottom,
       panelHeight: popover.scrollHeight,
+      panelWidth: popover.getBoundingClientRect().width,
+      viewportWidth: window.innerWidth,
       viewportHeight: window.innerHeight,
+      alignLeft: window.innerWidth <= 1100,
     })
     root.dataset.placement = result.placement
     popover.style.maxHeight = `${result.maxHeight}px`
+    popover.style.top = `${result.top}px`
+    popover.style.left = `${result.left}px`
   })
 }
 
