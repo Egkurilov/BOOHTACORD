@@ -66,6 +66,15 @@ class _ConnectionErrorScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(color: GcColors.textSecondary),
             ),
+            if (state.error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                state.error!,
+                key: const ValueKey('startup-connection-error-detail'),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
             const SizedBox(height: 24),
             FilledButton(
               onPressed: state.initialize,

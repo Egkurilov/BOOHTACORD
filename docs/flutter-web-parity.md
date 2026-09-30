@@ -114,6 +114,11 @@ not read the session cookie before `/auth/session` or on its five-second timer;
 the regression and full Flutter suite pass. This removes redundant Keychain
 access but does not resolve the protected session-cookie prompt —
 [QA-163](../evidence/flutter/qa163-macos-keychain-prompt-runtime-2026-10-01-001.json).
+An unresponsive startup session check now exits the indefinite loading state
+after 20 seconds, displays the sanitized retryable error and keeps the login
+session intact. On macOS the guidance calls out the system Keychain prompt. This
+does not cancel the underlying native call or prove persistent startup after a
+rebuild; those checks remain open — [QA-163](../evidence/flutter/qa163-macos-keychain-prompt-runtime-2026-10-01-001.json).
 
 Flutter now submits bounded sender samples on Android/macOS/Windows and reports
 the selected remote receiver every five seconds to the same authenticated

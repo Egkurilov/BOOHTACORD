@@ -35,6 +35,18 @@
       "observation": "A regression first failed because GET /maintenance read and sent the stored session cookie. It now uses only the public Origin/Accept headers. This removes an unnecessary Keychain read from startup and repeated five-second refreshes; the authenticated /auth/session check still needs the protected cookie and remains subject to the system prompt."
     },
     {
+      "name": "Stalled startup session check leaves splash with actionable retry",
+      "command": "cd desktop && flutter test --no-pub test/app_state_test.dart --plain-name 'a stalled session check exits loading and offers a retryable error'",
+      "status": "PASS",
+      "observation": "A test-injected 20 ms session timeout transitions AppState from loading to connectionError, exposes the retryable error and button, and advises macOS users to check Keychain authorization. The production timeout is 20 seconds. The timeout does not cancel the underlying native secure-storage call and does not restore access until Keychain authorization is resolved."
+    },
+    {
+      "name": "Full Flutter suite and analyzer after startup timeout",
+      "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 315 Flutter tests passed and analyzer reported no issues."
+    },
+    {
       "name": "Startup after user-approved authorization or stable signature",
       "status": "BLOCKED",
       "observation": "The app is waiting for the user to resolve the native Keychain access prompt, or for a Developer ID-signed build with a stable signing requirement. This host has no valid Developer ID signing identity."

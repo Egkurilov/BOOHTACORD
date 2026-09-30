@@ -102,6 +102,29 @@ void main() {
     state.dispose();
   });
 
+  testWidgets(
+    'a stalled session check exits loading and offers a retryable error',
+    (tester) async {
+      final api = _FakeApi(topology)..sessionGate = Completer<SessionUser?>();
+      final state = AppState(
+        api,
+        startupSessionTimeout: const Duration(milliseconds: 20),
+      );
+      addTearDown(state.dispose);
+
+      await tester.runAsync(state.initialize);
+
+      expect(state.phase, AppPhase.connectionError);
+      expect(state.error, contains('Проверка сессии не завершилась'));
+      await tester.pumpWidget(BoohtacordApp(state: state));
+      expect(
+        find.textContaining('Проверка сессии не завершилась'),
+        findsOneWidget,
+      );
+      expect(find.text('Повторить подключение'), findsOneWidget);
+    },
+  );
+
   test('keeps profile load errors separate and clears them on retry', () async {
     final api = _FakeApi(topology)
       ..profileFailure = const ApiFailure('Профиль временно недоступен.');
@@ -1093,6 +1116,7 @@ class _FakeApi extends ApiClient {
   bool passwordResetCompleted = false;
   Object? profileFailure;
   Object? sessionFailure;
+  Completer<SessionUser?>? sessionGate;
   String? updatedDisplayName;
   int passwordChangeRequests = 0;
   String? sentReplyToId;
@@ -1122,6 +1146,8 @@ class _FakeApi extends ApiClient {
   Future<SessionUser?> currentSession() async {
     final failure = sessionFailure;
     if (failure != null) throw failure;
+    final gate = sessionGate;
+    if (gate != null) return gate.future;
     return const SessionUser(accountId: 'account-1', role: 'MEMBER');
   }
 

@@ -76,6 +76,13 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
     314 Flutter-тестов/analyzer проходят. Это сокращает лишние обращения, но не
     обходит защищённое чтение `/auth/session` и не закрывает блокировку —
     [QA-163](../evidence/flutter/qa163-macos-keychain-prompt-runtime-2026-10-01-001.json).
+  - [x] Не оставлять launch splash навсегда при зависшем session check: после
+    20 секунд показывать retryable connection error с подсказкой про системное
+    Keychain-окно на macOS. Widget regression подтверждает переход из loading,
+    видимую причину и кнопку retry; все 315 Flutter-тестов и analyzer проходят.
+    Это ограничивает UI ожидание, но не отменяет native Keychain operation и не
+    заменяет авторизацию/стабильную подпись —
+    [QA-163](../evidence/flutter/qa163-macos-keychain-prompt-runtime-2026-10-01-001.json).
 
 ## P0 — Голосовые каналы и демонстрация экрана
 

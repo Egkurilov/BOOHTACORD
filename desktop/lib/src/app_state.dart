@@ -92,6 +92,7 @@ class AppState extends ChangeNotifier {
 
   AppState(
     this.api, {
+    this.startupSessionTimeout = const Duration(seconds: 20),
     Future<List<MediaDevice>> Function()? audioDeviceLoader,
     Stream<List<MediaDevice>>? audioDeviceChanges,
     NativeNotificationService? nativeNotifications,
@@ -142,6 +143,8 @@ class AppState extends ChangeNotifier {
   }
 
   final ApiClient api;
+  @visibleForTesting
+  final Duration startupSessionTimeout;
   final Future<List<MediaDevice>> Function() _audioDeviceLoader;
   final Stream<List<MediaDevice>>? _audioDeviceChanges;
   final NativeNotificationService _nativeNotifications;
@@ -460,7 +463,14 @@ class AppState extends ChangeNotifier {
         const Duration(seconds: 5),
         (_) => unawaited(refreshMaintenance()),
       );
-      user = await api.currentSession();
+      user = await api.currentSession().timeout(
+        startupSessionTimeout,
+        onTimeout: () => throw ApiFailure(
+          'Проверка сессии не завершилась вовремя. '
+          '${Platform.isMacOS ? 'Проверьте системный запрос доступа к Связке ключей и соединение. ' : 'Проверьте соединение. '}'
+          'Повторите попытку.',
+        ),
+      );
       if (user == null) {
         await _nativeNotifications.useAccount(null);
         phase = AppPhase.signedOut;
