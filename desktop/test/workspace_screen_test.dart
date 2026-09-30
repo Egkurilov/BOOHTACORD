@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui' show Tristate;
+import 'dart:ui' show SemanticsRole, Tristate;
 
 import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
@@ -702,7 +702,7 @@ void main() {
     state.dispose();
   });
 
-  testWidgets('announces text conversation errors as live alerts', (
+  testWidgets('exposes text conversation errors with alert semantics', (
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
@@ -724,7 +724,10 @@ void main() {
 
     final error = find.text('Не удалось загрузить историю.');
     expect(error, findsOneWidget);
-    expect(tester.getSemantics(error).flagsCollection.isLiveRegion, isTrue);
+    expect(
+      tester.getSemantics(error).getSemanticsData().role,
+      SemanticsRole.alert,
+    );
 
     semantics.dispose();
     await tester.pumpWidget(const SizedBox.shrink());
@@ -1081,14 +1084,8 @@ void main() {
     await tester.pump();
     expect(find.text(state.error!), findsOneWidget);
     expect(
-      find.ancestor(
-        of: find.text(state.error!),
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is Semantics && widget.properties.liveRegion == true,
-        ),
-      ),
-      findsOneWidget,
+      tester.getSemantics(find.text(state.error!)).getSemanticsData().role,
+      SemanticsRole.alert,
     );
     expect(tester.takeException(), isNull);
 

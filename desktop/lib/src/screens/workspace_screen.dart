@@ -7462,7 +7462,7 @@ class _ErrorBanner extends StatelessWidget {
   final String message;
   @override
   Widget build(BuildContext context) => Semantics(
-    liveRegion: true,
+    role: SemanticsRole.alert,
     child: Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
