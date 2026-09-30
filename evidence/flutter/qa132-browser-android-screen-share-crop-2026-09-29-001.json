@@ -32,7 +32,13 @@
       "command": "cd frontend && npm test",
       "status": "PASS",
       "observation": "223 test files and 666 tests passed."
+    },
+    {
+      "name": "Production stylesheet deployment check",
+      "command": "Fetch https://v.bootybay.ru/ and its linked CSS; inspect the .screen-player rule",
+      "status": "NOT_DEPLOYED",
+      "observation": "On 2026-09-30, the production page and linked stylesheet returned HTTP 200, but .screen-player contained object-fit:contain and max-height:100% without min-width:0 or min-height:0. This confirms the local crop fix is not deployed. No production state was changed."
     }
   ],
-  "remaining": "The active browser was served from v.bootybay.ru and did not contain this unpushed CSS change during the retest. Deploy the frontend change, then repeat Pixel portrait screen sharing in a browser and confirm all four source edges after attach, resize/rotation and fullscreen. Also compare the Android stream in the Flutter receiver; sender/receiver dimensions alone do not prove full-frame rendering."
+  "remaining": "Deploy the frontend change, then repeat Pixel portrait screen sharing in a browser and confirm all four source edges after attach, resize/rotation and fullscreen. Also compare the Android stream in the Flutter receiver; sender/receiver dimensions alone do not prove full-frame rendering. The 2026-09-30 production CSS check confirms the deployed bundle still lacks min-width:0 and min-height:0; deployment requires authorization."
 }

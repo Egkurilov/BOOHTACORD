@@ -115,8 +115,9 @@ automatic intrinsic minimum size and the stage's `overflow: hidden` clipped its
 lower portion. The player now has `min-width: 0; min-height: 0`; its regression
 test failed before the fix and passes after it, and the frontend production build
 passes [QA-132](../evidence/flutter/qa132-browser-android-screen-share-crop-2026-09-29-001.json).
-The live reproduction used the deployed page, so the CSS change still needs to be
-deployed and verified with a new Pixel share. Flutter's LiveKit renderer uses
+The 2026-09-30 production stylesheet check confirms the deployed `.screen-player`
+still lacks `min-width: 0; min-height: 0`; deployment is still required. Once
+authorized, verify with a new Pixel share. Flutter's LiveKit renderer uses
 `VideoViewFit.contain`; neither that nor receiver dimensions prove that all four
 source edges arrive. The Android encoder wrapper also now adapts on a mismatch
 in either source axis [QA-93](../evidence/flutter/qa93-android-encoder-height-resize-2026-09-29-001.json).
