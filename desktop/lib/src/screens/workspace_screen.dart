@@ -6081,6 +6081,33 @@ class _AudioSettingsScreen extends StatelessWidget {
                           : 'Динамики не найдены',
                       onChanged: state.selectAudioOutput,
                     ),
+                    if (state.audioDeviceWarning != null) ...[
+                      const SizedBox(height: 8),
+                      Semantics(
+                        key: const ValueKey('audio-device-warning'),
+                        liveRegion: true,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.warning_amber_outlined,
+                              size: 16,
+                              color: GcColors.warning,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                state.audioDeviceWarning!,
+                                style: const TextStyle(
+                                  color: GcColors.warning,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     if (!state.audioDevicesLoading &&
                         !state.audioDeviceScanFailed) ...[
                       const SizedBox(height: 8),

@@ -222,6 +222,7 @@ class AppState extends ChangeNotifier {
   bool audioDevicesLoading = false;
   bool audioDeviceScanFailed = false;
   String? audioSettingsError;
+  String? audioDeviceWarning;
   AudioActivationMode audioActivationMode = AudioActivationMode.vad;
   int? pushToTalkKeyId;
   String? pushToTalkKeyLabel;
@@ -561,6 +562,7 @@ class AppState extends ChangeNotifier {
     audioActivationError = null;
     selectedAudioInputId = null;
     selectedAudioOutputId = null;
+    audioDeviceWarning = null;
     audioProcessing = const AudioProcessingPreferences();
     user = null;
     profile = null;
@@ -637,6 +639,7 @@ class AppState extends ChangeNotifier {
     audioActivationError = null;
     selectedAudioInputId = null;
     selectedAudioOutputId = null;
+    audioDeviceWarning = null;
     audioProcessing = const AudioProcessingPreferences();
     topology = null;
     selectedChannel = null;
@@ -904,17 +907,25 @@ class AppState extends ChangeNotifier {
     audioOutputDevices = devices
         .where((device) => device.kind == 'audiooutput')
         .toList(growable: false);
-    if (selectedAudioInputId != null &&
+    if (audioInputDevices.isNotEmpty &&
+        selectedAudioInputId != null &&
         !audioInputDevices.any(
           (device) => device.deviceId == selectedAudioInputId,
         )) {
-      selectedAudioInputId = null;
+      if (selectedAudioInputId != 'default') {
+        audioDeviceWarning = 'Выбранный микрофон отключён. Выберите доступное устройство и проверьте звук.';
+      }
+      selectedAudioInputId = audioInputDevices.first.deviceId;
     }
-    if (selectedAudioOutputId != null &&
+    if (audioOutputDevices.isNotEmpty &&
+        selectedAudioOutputId != null &&
         !audioOutputDevices.any(
           (device) => device.deviceId == selectedAudioOutputId,
         )) {
-      selectedAudioOutputId = null;
+      if (selectedAudioOutputId != 'default') {
+        audioDeviceWarning = 'Выбранный динамик отключён. Выберите доступное устройство и проверьте звук.';
+      }
+      selectedAudioOutputId = audioOutputDevices.first.deviceId;
     }
   }
 
@@ -928,6 +939,7 @@ class AppState extends ChangeNotifier {
         .firstOrNull;
     if (device == null) return;
     final previous = selectedAudioInputId;
+    audioDeviceWarning = null;
     try {
       final track = _room?.localParticipant
           ?.getTrackPublicationBySource(TrackSource.microphone)
@@ -960,6 +972,7 @@ class AppState extends ChangeNotifier {
         .firstOrNull;
     if (device == null) return;
     final previous = selectedAudioOutputId;
+    audioDeviceWarning = null;
     try {
       if (AndroidAudioDevices.isNativeOutputRoute(device.deviceId)) {
         if (_room != null &&

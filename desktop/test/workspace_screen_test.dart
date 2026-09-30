@@ -386,6 +386,49 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('announces when the selected audio device disconnects', (
+    tester,
+  ) async {
+    const warning =
+        'Выбранный микрофон отключён. Выберите доступное устройство и проверьте звук.';
+    final state = AppState(
+      _PortraitApi(),
+      audioDeviceLoader: () async => const [
+        MediaDevice('mic-new', 'Built-in microphone', 'audioinput', null),
+        MediaDevice('speaker', 'Speakers', 'audiooutput', null),
+      ],
+    );
+    await state.initialize();
+    state.audioDeviceWarning = warning;
+    state.toggleWorkspacePanel(WorkspacePanel.audio);
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    final audioList = find.byKey(const ValueKey('audio-settings-list'));
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('audio-device-warning')),
+      160,
+      scrollable: find.descendant(
+        of: audioList,
+        matching: find.byType(Scrollable),
+      ),
+    );
+
+    expect(find.text(warning), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.key == const ValueKey('audio-device-warning') &&
+            widget.properties.liveRegion == true,
+      ),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('profile panel matches web toolbar without a duplicate heading', (
     tester,
   ) async {
