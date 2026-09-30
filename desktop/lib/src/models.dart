@@ -7,7 +7,7 @@ class VoiceRosterMember {
     required this.accountId,
     required this.displayName,
     required this.screenSharing,
-    this.microphoneMuted = true,
+    required this.microphoneMuted,
   });
 
   final String accountId;
@@ -25,14 +25,14 @@ class VoiceRosterMember {
         displayName is! String ||
         displayName.trim().isEmpty ||
         screenSharing is! bool ||
-        (microphoneMuted != null && microphoneMuted is! bool)) {
+        microphoneMuted is! bool) {
       throw const FormatException('Invalid voice roster member.');
     }
     return VoiceRosterMember(
       accountId: accountId,
       displayName: displayName,
       screenSharing: screenSharing,
-      microphoneMuted: microphoneMuted is bool ? microphoneMuted : true,
+      microphoneMuted: microphoneMuted,
     );
   }
 }

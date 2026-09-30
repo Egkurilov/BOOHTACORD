@@ -625,6 +625,7 @@ void main() {
               accountId: 'account-2',
               displayName: 'Мика',
               screenSharing: true,
+              microphoneMuted: true,
             ),
           ],
         ),

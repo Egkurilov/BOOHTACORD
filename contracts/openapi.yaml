@@ -483,12 +483,38 @@
     "/api/v1/voice/participants": {
       "get": {
         "operationId": "listConnectedVoiceParticipants",
-        "description": "Authenticated non-blocked guild member; no voice lease required. Returns all current VOICE channels including empty rooms. Participants are LiveKit ICE-active voice-lease identities intersected with current unrevoked database leases, sessions and accounts. Names come from users, not LiveKit metadata. Screen sharing means a currently unmuted screen video publication in this snapshot; speaking is not asserted. No result is cached.",
+        "description": "Authenticated non-blocked guild member; no voice lease required. Returns all current VOICE channels including empty rooms. Participants are LiveKit ICE-active voice-lease identities intersected with current unrevoked database leases, sessions and accounts. Names come from users, not LiveKit metadata. Screen sharing means a currently unmuted screen video publication in this snapshot; microphone_muted is true unless the participant has a currently unmuted microphone audio track. Speaking is not asserted. No result is cached.",
         "responses": {
           "200": { "description": "Current voice-room roster snapshot", "headers": { "Cache-Control": { "schema": { "type": "string", "enum": ["no-store"] } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VoiceParticipants" } } } },
           "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "503": { "description": "Private LiveKit RoomService snapshot unavailable; never interpreted as an empty roster", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/voice/rosters/events": {
+      "get": {
+        "operationId": "watchConnectedVoiceParticipants",
+        "description": "Authenticated non-blocked guild member; no voice lease required. Opens a short-lived Server-Sent Events stream of complete VoiceParticipants snapshots. Each snapshot is independently rebuilt from the caller's currently visible VOICE channels, active LiveKit participants and current unrevoked leases. LiveKit webhooks carry invalidation hints only; they never supply roster data. The stream closes after at most 10 seconds and clients reconnect to reauthenticate. Each event is one UTF-8 line `data: <JSON VoiceParticipants>` followed by a blank line. No event is cached.",
+        "responses": {
+          "200": {
+            "description": "SSE stream of complete current voice-roster snapshots; one JSON snapshot per data event",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "enum": ["no-store"] } },
+              "X-Accel-Buffering": { "schema": { "type": "string", "enum": ["no"] } }
+            },
+            "content": {
+              "text/event-stream": {
+                "schema": { "type": "string" },
+                "examples": {
+                  "snapshot": { "value": "data: {\"channels\":[{\"channel_id\":\"11111111-1111-4111-8111-111111111111\",\"participants\":[{\"account_id\":\"22222222-2222-4222-8222-222222222222\",\"display_name\":\"Мика\",\"screen_sharing\":false,\"microphone_muted\":true}]}]}\n\n" }
+                }
+              }
+            }
+          },
+          "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "503": { "description": "Private LiveKit RoomService snapshot unavailable; stream is not opened with a fabricated empty roster", "content": { "text/plain": { "schema": { "type": "string" } } } },
+          "500": { "description": "Response writer does not support streaming", "content": { "text/plain": { "schema": { "type": "string" } } } }
         }
       }
     },
@@ -1844,11 +1870,12 @@
         }
       },
       "VoiceParticipant": {
-        "type": "object", "additionalProperties": false, "required": ["account_id", "display_name", "screen_sharing"],
+        "type": "object", "additionalProperties": false, "required": ["account_id", "display_name", "screen_sharing", "microphone_muted"],
         "properties": {
           "account_id": { "type": "string", "format": "uuid" },
           "display_name": { "type": "string" },
-          "screen_sharing": { "type": "boolean" }
+          "screen_sharing": { "type": "boolean" },
+          "microphone_muted": { "type": "boolean", "description": "True when no currently unmuted microphone audio track is published; this is not an inferred speaking state." }
         }
       },
       "VoiceLeaseRequest": {

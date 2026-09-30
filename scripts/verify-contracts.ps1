@@ -352,6 +352,22 @@ if ($null -eq $openApi.paths.'/api/v1/voice/channels/{channelID}/leases'.post) {
     throw 'Voice contract must define POST /api/v1/voice/channels/{channelID}/leases.'
 }
 
+$voiceRosterEvents = $openApi.paths.'/api/v1/voice/rosters/events'.get
+if ($null -eq $voiceRosterEvents -or
+    $voiceRosterEvents.operationId -ne 'watchConnectedVoiceParticipants' -or
+    $voiceRosterEvents.responses.'200'.content.'text/event-stream'.schema.type -ne 'string' -or
+    $null -eq $voiceRosterEvents.responses.'401' -or
+    $voiceRosterEvents.responses.'503'.content.'text/plain'.schema.type -ne 'string' -or
+    $voiceRosterEvents.responses.'500'.content.'text/plain'.schema.type -ne 'string') {
+    throw 'Voice contract must define the authenticated SSE roster stream and its 401/500/503 outcomes.'
+}
+
+$voiceParticipant = $openApi.components.schemas.VoiceParticipant
+if ($voiceParticipant.required -notcontains 'microphone_muted' -or
+    $voiceParticipant.properties.microphone_muted.type -ne 'boolean') {
+    throw 'Voice participant contract must expose the server-observed microphone_muted state.'
+}
+
 if ($null -eq $openApi.paths.'/api/v1/voice/leases/{leaseID}'.delete) {
     throw 'Voice contract must define DELETE /api/v1/voice/leases/{leaseID}.'
 }

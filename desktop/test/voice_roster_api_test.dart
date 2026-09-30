@@ -33,6 +33,7 @@ void main() {
                         'account_id': 'account-2',
                         'display_name': 'Мика',
                         'screen_sharing': true,
+                        'microphone_muted': false,
                       },
                     ],
                   },
@@ -55,6 +56,7 @@ void main() {
       expect(rosters, hasLength(2));
       expect(rosters.first.participants.single.displayName, 'Мика');
       expect(rosters.first.participants.single.screenSharing, isTrue);
+      expect(rosters.first.participants.single.microphoneMuted, isFalse);
       expect(rosters.last.participants, isEmpty);
     },
   );
@@ -79,6 +81,38 @@ void main() {
 
     await expectLater(api.voiceParticipants(), throwsA(isA<ApiFailure>()));
   });
+
+  test(
+    'rejects a roster member without the required microphone state',
+    () async {
+      final api = ApiClient(
+        client: MockClient(
+          (_) async => http.Response.bytes(
+            utf8.encode(
+              jsonEncode({
+                'channels': [
+                  {
+                    'channel_id': 'voice-1',
+                    'participants': [
+                      {
+                        'account_id': 'account-2',
+                        'display_name': 'Мика',
+                        'screen_sharing': false,
+                      },
+                    ],
+                  },
+                ],
+              }),
+            ),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          ),
+        ),
+      );
+
+      await expectLater(api.voiceParticipants(), throwsFormatException);
+    },
+  );
 
   test('reports unavailable private voice presence from the API', () async {
     final api = ApiClient(
