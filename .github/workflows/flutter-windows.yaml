@@ -87,3 +87,19 @@ jobs:
         run: |
           & "$env:USERPROFILE\develop\flutter\bin\flutter.bat" build windows --release --no-pub
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify complete Windows release directory
+        shell: powershell
+        run: |
+          $release = 'desktop/build/windows/x64/runner/Release'
+          foreach ($required in @('boohtacord_desktop.exe', 'flutter_windows.dll', 'libwebrtc.dll', 'data/flutter_assets')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $release $required))) {
+              throw "Windows release is missing $required"
+            }
+          }
+      - name: Retain Windows build as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOHTACORD-windows-x64-${{ github.sha }}
+          path: desktop/build/windows/x64/runner/Release/
+          if-no-files-found: error
+          retention-days: 30

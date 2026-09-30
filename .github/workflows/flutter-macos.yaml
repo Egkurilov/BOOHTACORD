@@ -36,3 +36,21 @@ jobs:
       - name: Build universal macOS release client
         working-directory: desktop
         run: flutter build macos --release --no-pub
+      - name: Package macOS CI build and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -E -n 's/^version: *([0-9][0-9.]*)\+[0-9][0-9]*$/\1/p' desktop/pubspec.yaml)"
+          test -n "$version"
+          bash scripts/macos_release/package.sh \
+            desktop/build/macos/Build/Products/Release/BOOHTACORD.app \
+            "macos-v$version" \
+            "$RUNNER_TEMP/boohtacord-macos-artifacts"
+      - name: Retain macOS build and checksum as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOHTACORD-macos-universal-${{ github.sha }}
+          path: ${{ runner.temp }}/boohtacord-macos-artifacts/
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0

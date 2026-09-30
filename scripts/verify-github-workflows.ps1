@@ -23,4 +23,30 @@ if ($deploy -notmatch 'GITHUB_OUTPUT' -or $deploy -notmatch "github\.ref_name ==
     $deploy -notmatch 'group: v-bootybay-production') {
     throw 'GitHub production delivery guards are incomplete.'
 }
+
+$tracked = @(git -C $root ls-files -- artifacts desktop/build frontend/dist desktop/packages/flutter_webrtc/third_party)
+if ($LASTEXITCODE -ne 0) { throw 'Could not inspect tracked build outputs.' }
+$generated = @($tracked | Where-Object {
+    $_ -match '^artifacts/.*\.(apk|aab|ipa|zip|dmg|msix|exe|dll|pdb|lib)$' -or
+    $_ -match '^(desktop/build|frontend/dist)/' -or
+    $_ -match '^desktop/packages/flutter_webrtc/third_party/(downloads|libwebrtc)/'
+})
+if ($generated.Count -gt 0) {
+    throw "Generated build outputs are tracked by Git: $($generated -join ', ')"
+}
+
+$windows = Get-Content -LiteralPath (Join-Path $root '.github/workflows/flutter-windows.yaml') -Raw
+if ($windows -notmatch 'uses:\s*actions/upload-artifact@v4' -or
+    $windows -notmatch 'path:\s*desktop/build/windows/x64/runner/Release/' -or
+    $windows -notmatch 'if-no-files-found:\s*error' -or
+    $windows -notmatch 'retention-days:\s*30') {
+    throw 'Windows CI must retain the full release directory as a fail-closed workflow artifact.'
+}
+$macos = Get-Content -LiteralPath (Join-Path $root '.github/workflows/flutter-macos.yaml') -Raw
+if ($macos -notmatch 'bash scripts/macos_release/package.sh' -or
+    $macos -notmatch 'uses:\s*actions/upload-artifact@v4' -or
+    $macos -notmatch 'if-no-files-found:\s*error' -or
+    $macos -notmatch 'retention-days:\s*30') {
+    throw 'macOS CI must package and retain its ZIP and checksum as a workflow artifact.'
+}
 Write-Output 'GitHub workflow routing: OK'
