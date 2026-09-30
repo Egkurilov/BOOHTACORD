@@ -250,7 +250,8 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Изолировать sender-stats busy lock по поколению screen-share track: поздний
   `getSenderStats()` старой демонстрации не должен удерживать lock новой. Два
   generation-gate regression tests, полный suite из 278 Flutter-тестов и analyzer
-  проходят — [QA-142](../evidence/flutter/qa142-screen-share-metrics-generation-race-2026-09-30-001.json).
+  проходят; Android ABI Release и GitVerse Windows Release CI #1688448 также
+  успешны — [QA-142](../evidence/flutter/qa142-screen-share-metrics-generation-race-2026-09-30-001.json).
 - [ ] На устройстве подтвердить остановку отчётов при OS share stop/leave/disconnect
   и сопоставить sender с двумя receiver snapshots в QA-07. Физическая
   остановка/немедленный restart и два receiver остаются открыты —
