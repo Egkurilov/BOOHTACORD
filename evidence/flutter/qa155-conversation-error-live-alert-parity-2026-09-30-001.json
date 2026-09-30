@@ -36,6 +36,11 @@
       "observation": "Flutter Windows engine maps alert events to the native alert event, and macOS converts alert events into live-region notifications. The Android bridge currently has an ALERT role enum but does not configure alert nodes as live regions; this source inspection does not replace device acceptance."
     },
     {
+      "name": "GitVerse Windows CI for alert-role change",
+      "status": "NOT_RUN",
+      "observation": "The workflow is configured for pushes that modify desktop/**. The accessible GitVerse CI page was signed out and its latest visible run was #1690402 for f85f718, before this source revision; Windows test/analyzer/Release results for this change could not be verified."
+    },
+    {
       "name": "Native screen-reader announcement priority and timing",
       "status": "NOT_RUN",
       "observation": "Widget semantics were checked, but actual spoken timing/priority was not checked. Flutter's Android accessibility bridge currently exposes no explicit alert-role-to-live-region mapping; TalkBack parity remains unproven."
