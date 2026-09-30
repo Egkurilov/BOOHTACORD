@@ -1,0 +1,39 @@
+{
+  "id": "QA-153",
+  "kind": "macos-release-ad-hoc-seal-recovery",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "0ff2e54",
+  "summary": "A universal macOS 1.0.13 (18) Release bundle was rebuilt. The first fresh build's outer ad-hoc signature did not seal the current App.framework CDHash, so deep verification failed. Re-signing only the outer ad-hoc bundle with its existing Release entitlements repaired verification. The packaging script now performs this repair only for invalid ad-hoc signatures and refuses to replace a failed Developer ID signature.",
+  "checks": [
+    {
+      "name": "Universal macOS Release compilation",
+      "command": "cd desktop && flutter build macos --release --no-pub",
+      "status": "PASS",
+      "observation": "Built BOOHTACORD.app version 1.0.13 (18), 94.7 MB reported by Flutter / 90 MB on disk. Main executable contains x86_64 and arm64 slices."
+    },
+    {
+      "name": "Ad-hoc seal mismatch diagnosis and recovery",
+      "status": "PASS",
+      "observation": "The first fresh bundle failed `codesign --verify --deep --strict` with `nested code is modified or invalid` for Contents/Frameworks/App.framework. The nested framework verified standalone; its current CDHash differed from the outer bundle's recorded CDHash. Re-signing only the outer app with the bundle's existing Release entitlements made deep verification pass."
+    },
+    {
+      "name": "Packaging recovery guard tests",
+      "command": "bash scripts/macos_release/package.test.sh && bash -n scripts/macos_release/package.sh scripts/macos_release/package.test.sh",
+      "status": "PASS",
+      "observation": "The package test verifies an invalid ad-hoc bundle is re-sealed and then accepted, while an invalid Developer ID signature is rejected without invoking the re-sign step. Shell syntax checks pass."
+    },
+    {
+      "name": "Release ZIP and SHA-256 package gate",
+      "command": "bash scripts/macos_release/package.sh desktop/build/macos/Build/Products/Release/BOOHTACORD.app macos-v1.0.13 <temporary-output-directory>",
+      "status": "PASS",
+      "observation": "On a fresh Flutter build, the packager reproduced the stale App.framework CDHash, detected the ad-hoc outer signature, re-sealed the outer app while preserving Release entitlements, and passed deep strict verification. It packaged a 40,067,669-byte ZIP below the 95 MB GitVerse asset ceiling; SHA-256: 24b7a427193666d90e993fe182aa063a4b1fc598da6f895094ad5e9e398e7efa. The test archive is temporary and was not published."
+    },
+    {
+      "name": "Developer ID distribution, notarization and runtime launch/session",
+      "status": "NOT_RUN",
+      "observation": "No valid Developer ID signing identity is available and the Mac desktop session is locked."
+    }
+  ],
+  "remaining": "Provision the macOS release runner and Developer ID credentials, verify a signed/notarized build does not enter the ad-hoc recovery branch, publish via GitVerse, then install and test launch/session persistence on an unlocked Mac."
+}

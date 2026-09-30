@@ -26,6 +26,13 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   Developer ID-подписанном клиенте после уточнения текста окна —
   [QA-141](../evidence/flutter/qa141-macos-keychain-access-prompt-2026-09-30-001.json),
   [QA-143](../evidence/flutter/qa143-macos-keychain-v3-startup-recovery-2026-09-30-001.json).
+- [x] Сделать macOS release packaging устойчивым к устаревшему nested-code seal
+  после Flutter/Xcode build: при ошибке проверки разрешено переподписать только
+  внешний ad-hoc bundle с сохранением entitlements; ошибочную Developer ID
+  подпись скрипт не заменяет. Проверены universal Release 1.0.13+18, strict
+  bundle verification, ZIP 40,067,669 bytes и checksum; package regression
+  покрывает оба пути. Подписанный/notarized Release и установленный runtime
+  остаются открытыми — [QA-153](../evidence/flutter/qa153-macos-release-ad-hoc-seal-recovery-2026-09-30-001.json).
 - [x] Восстановить macOS Debug startup после зависания v2 Keychain lookup: свежий
   sample подтвердил ожидание внутри `SecItemCopyMatching`/`CSSM_DecryptDataFinal`;
   сессия переведена на отдельный legacy service `.session.v3`, прежние записи
