@@ -109,6 +109,11 @@ valid Developer ID identity —
 [QA-143](../evidence/flutter/qa143-macos-keychain-v3-startup-recovery-2026-09-30-001.json),
 [QA-160](../evidence/flutter/qa160-macos-debug-restart-2026-09-30-001.json),
 [QA-163](../evidence/flutter/qa163-macos-keychain-prompt-runtime-2026-10-01-001.json).
+The public `/maintenance` request now uses Origin/Accept-only headers so it does
+not read the session cookie before `/auth/session` or on its five-second timer;
+the regression and full Flutter suite pass. This removes redundant Keychain
+access but does not resolve the protected session-cookie prompt —
+[QA-163](../evidence/flutter/qa163-macos-keychain-prompt-runtime-2026-10-01-001.json).
 
 Flutter now submits bounded sender samples on Android/macOS/Windows and reports
 the selected remote receiver every five seconds to the same authenticated

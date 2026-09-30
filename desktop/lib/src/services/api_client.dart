@@ -94,15 +94,21 @@ class ApiClient {
     await _storage.delete(key: _cookieKey);
   }
 
+  Map<String, String> _publicHeaders({String accept = 'application/json'}) {
+    final server = Uri.parse(baseUrl);
+    return {
+      'accept': accept,
+      'origin': '${server.scheme}://${server.authority}',
+    };
+  }
+
   Future<Map<String, String>> _headers({
     bool jsonBody = false,
     String accept = 'application/json',
   }) async {
     final cookie = await _storage.read(key: _cookieKey);
-    final server = Uri.parse(baseUrl);
     return {
-      'accept': accept,
-      'origin': '${server.scheme}://${server.authority}',
+      ..._publicHeaders(accept: accept),
       if (jsonBody) 'content-type': 'application/json',
       'cookie': ?cookie,
     };
@@ -183,7 +189,7 @@ class ApiClient {
 
   Future<bool> maintenanceActive() async {
     final data = await _checked(
-      await _client.get(_uri('/maintenance'), headers: await _headers()),
+      await _client.get(_uri('/maintenance'), headers: _publicHeaders()),
     );
     if (data is! Map<String, dynamic> || data['active'] is! bool) {
       throw const ApiFailure('Сервер вернул некорректный статус обновления.');

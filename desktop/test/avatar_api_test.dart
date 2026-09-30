@@ -143,6 +143,8 @@ void main() {
 
     expect(await api.maintenanceActive(), isTrue);
     expect(request.url.path, '/api/v1/maintenance');
+    expect(request.headers['origin'], 'https://v.bootybay.ru');
+    expect(request.headers, isNot(contains('cookie')));
   });
 
   test(

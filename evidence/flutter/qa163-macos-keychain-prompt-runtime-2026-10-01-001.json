@@ -26,7 +26,13 @@
     {
       "name": "Keychain item safety",
       "status": "PASS",
-      "observation": "No Keychain item was read, deleted, migrated, or modified during this diagnosis; no password was entered or collected."
+      "observation": "The diagnosis observed only the blocked read call stack and authorization metadata; no cookie value was returned or inspected. No Keychain item was deleted or modified, and no password was entered or collected."
+    },
+    {
+      "name": "Public maintenance request avoids session Keychain access",
+      "command": "cd desktop && flutter test --no-pub test/avatar_api_test.dart",
+      "status": "PASS",
+      "observation": "A regression first failed because GET /maintenance read and sent the stored session cookie. It now uses only the public Origin/Accept headers. This removes an unnecessary Keychain read from startup and repeated five-second refreshes; the authenticated /auth/session check still needs the protected cookie and remains subject to the system prompt."
     },
     {
       "name": "Startup after user-approved authorization or stable signature",
@@ -34,5 +40,5 @@
       "observation": "The app is waiting for the user to resolve the native Keychain access prompt, or for a Developer ID-signed build with a stable signing requirement. This host has no valid Developer ID signing identity."
     }
   ],
-  "remaining": "After the user approves Keychain access in the macOS system prompt (without sharing their password) or provides a stable signed build, verify startup reaches the authenticated workspace promptly, repeat the read after a fresh relaunch, and retry the Pixel-to-Mac thumbnail acceptance."
+  "remaining": "After the user approves Keychain access in the macOS system prompt (without sharing their password) or provides a stable signed build, verify startup reaches the authenticated workspace promptly, repeat the read after a fresh relaunch, and retry the Pixel-to-Mac thumbnail acceptance. The public maintenance request no longer touches the session cookie, but cannot replace the protected session check."
 }
