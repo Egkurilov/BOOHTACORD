@@ -213,11 +213,14 @@ class NativeNotificationService {
   NativeNotificationService({
     NativeNotificationDriver? driver,
     NativeNotificationPreferences? preferences,
+    bool? supportedOnCurrentPlatform,
   }) : _driver = driver ?? FlutterLocalNotificationDriver(),
-       _preferences = preferences ?? _SharedPreferencesNotificationStore();
+       _preferences = preferences ?? _SharedPreferencesNotificationStore(),
+       _supportedOverride = supportedOnCurrentPlatform;
 
   final NativeNotificationDriver _driver;
   final NativeNotificationPreferences _preferences;
+  final bool? _supportedOverride;
   String? _accountId;
   bool _initialized = false;
   bool enabled = false;
@@ -227,11 +230,12 @@ class NativeNotificationService {
   final Set<String> _deliveriesInFlight = <String>{};
 
   bool get supported =>
-      !kIsWeb &&
-      (Platform.isIOS ||
-          Platform.isAndroid ||
-          Platform.isMacOS ||
-          Platform.isWindows);
+      _supportedOverride ??
+      (!kIsWeb &&
+          (Platform.isIOS ||
+              Platform.isAndroid ||
+              Platform.isMacOS ||
+              Platform.isWindows));
 
   Future<void> initialize() async {
     if (!supported || _initialized) return;

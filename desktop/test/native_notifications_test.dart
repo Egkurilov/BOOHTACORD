@@ -43,6 +43,20 @@ void main() {
     },
   );
 
+  test('unsupported platform keeps notification delivery disabled', () async {
+    final driver = _FakeNotificationDriver();
+    final service = NativeNotificationService(
+      driver: driver,
+      preferences: _MemoryNotificationPreferences(),
+      supportedOnCurrentPlatform: false,
+    );
+    await service.initialize();
+    await service.useAccount('account-a');
+    expect(await service.enable(), isFalse);
+    expect(service.permission, NativeNotificationPermission.unavailable);
+    expect(driver.permissionRequests, 0);
+  });
+
   test(
     'notifies only when hidden, enabled, and once per event/account',
     () async {
@@ -50,6 +64,7 @@ void main() {
       final service = NativeNotificationService(
         driver: driver,
         preferences: _MemoryNotificationPreferences(),
+        supportedOnCurrentPlatform: true,
       );
       await service.initialize();
       await service.useAccount('account-a');
@@ -96,6 +111,7 @@ void main() {
     final service = NativeNotificationService(
       driver: driver,
       preferences: _MemoryNotificationPreferences(),
+      supportedOnCurrentPlatform: true,
     );
     await service.initialize();
     await service.useAccount('account-a');
@@ -117,6 +133,7 @@ void main() {
       final service = NativeNotificationService(
         driver: driver,
         preferences: _MemoryNotificationPreferences(),
+        supportedOnCurrentPlatform: true,
       );
 
       await service.initialize();

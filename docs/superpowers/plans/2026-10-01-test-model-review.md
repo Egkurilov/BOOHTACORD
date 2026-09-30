@@ -50,6 +50,12 @@
 - [x] Add an in-process HTTP receiver test in `backend/internal/observability/start_metrics/provider_test.go` that forces a metric flush and observes the export.
 - [x] Confirm both exporters are no-ops when endpoint configuration is absent, then run the nearest Go packages.
 
+## Packet 2d — portable Flutter notification tests
+
+- [x] Use the failing Linux CI result to identify three notification-service tests and one profile-widget test tied to the host platform.
+- [x] Allow `NativeNotificationService` to receive an explicit supported-platform decision in tests while preserving the production default.
+- [ ] Inject that decision in the four affected tests, rerun them locally, then rerun the hosted Flutter gate.
+
 ## Packet 3 — review and delivery
 
 - [x] Document coverage and test-model findings in `docs/reviews/2026-10-01-test-model.md`, distinguishing unit, database integration, build and physical-device gates.

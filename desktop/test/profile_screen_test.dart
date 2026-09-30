@@ -5,6 +5,7 @@ import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/profile_screen.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
+import 'package:boohtacord_desktop/src/services/native_notifications.dart';
 import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -71,7 +72,12 @@ void main() {
   });
 
   testWidgets('explains generic native notification privacy', (tester) async {
-    final state = AppState(ApiClient());
+    final state = AppState(
+      ApiClient(),
+      nativeNotifications: NativeNotificationService(
+        supportedOnCurrentPlatform: true,
+      ),
+    );
     addTearDown(state.dispose);
 
     await tester.pumpWidget(
