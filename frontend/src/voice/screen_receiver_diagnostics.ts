@@ -9,6 +9,7 @@ export interface ScreenReceiverSnapshot {
 }
 
 export interface ScreenReceiverMetrics {
+  packetLossWindowMs?: number | null
   bitrateKbps: number | null
   decodedFps: number | null
   droppedFrames: number | null

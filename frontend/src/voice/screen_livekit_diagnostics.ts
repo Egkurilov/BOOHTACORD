@@ -3,6 +3,9 @@ import {
   type ScreenDiagnostics,
   type ScreenSenderStats,
 } from './screen_diagnostics'
+import { ScreenPacketLossWindow } from './screen_packet_loss'
+
+const losses = new WeakMap<LiveKitScreenVideoTrack, { stream?: string; window: ScreenPacketLossWindow }>()
 
 export interface LiveKitScreenVideoTrack {
   currentBitrate?: number
@@ -30,12 +33,25 @@ export async function inspectLiveKitScreenDiagnostics(
   } catch {
     sender = undefined
   }
-  return normalizeScreenDiagnostics({
+  let loss: number | null = null
+  let windowMs: number | null = null
+  if (video) {
+    let entry = losses.get(video)
+    if (!entry || entry.stream !== sender?.streamId) {
+      entry = { stream: sender?.streamId, window: new ScreenPacketLossWindow() }
+      losses.set(video, entry)
+    }
+    loss = entry.window.add({ timestamp: sender?.timestamp ?? NaN, packetsSent: sender?.packetsSent, packetsLost: sender?.packetsLost })
+    windowMs = entry.window.durationMs
+  }
+  return { ...normalizeScreenDiagnostics({
     audioTrack,
     bitrateBps: video?.currentBitrate,
     connectionQuality,
     readyState: video?.mediaStreamTrack.readyState,
     sender,
     settings: video?.getSourceTrackSettings(),
-  })
+  }), sampledAt: Date.now(), senderStatsAvailable: sender !== undefined,
+    senderDimensionsAvailable: Boolean(sender?.frameWidth && sender?.frameHeight),
+    packetLossPercent: loss, packetLossWindowMs: windowMs }
 }

@@ -20,7 +20,8 @@ export function useScreenReceiverDiagnostics(selected: Ref<ScreenViewerCard | nu
       const current = await card.readReceiverStats()
       if (version !== generation) return
       if (!current) { metrics.value = null; sampledAt.value = null; previous = null; lossWindow.clear(); return }
-      metrics.value = { ...compareScreenReceiverStats(previous, current), packetLossPercent: lossWindow.add(current) }
+      const packetLossPercent = lossWindow.add(current)
+      metrics.value = { ...compareScreenReceiverStats(previous, current), packetLossPercent, packetLossWindowMs: lossWindow.durationMs }
       sampledAt.value = Date.now()
       previous = current
     } catch {

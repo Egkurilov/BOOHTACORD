@@ -3,6 +3,13 @@ import { describe, expect, it } from 'vitest'
 import { readVoiceConnectionStats, voiceConnectionQuality } from './voice_connection_quality'
 
 describe('voice connection quality', () => {
+  it('reads a listener RTT only from the selected ICE transport', () => {
+    expect(readVoiceConnectionStats('good', [
+      { type: 'transport', selectedCandidatePairId: 'active' },
+      { type: 'candidate-pair', id: 'old', currentRoundTripTime: 9, nominated: true, state: 'succeeded' },
+      { type: 'candidate-pair', id: 'active', currentRoundTripTime: 0.02 },
+    ]).pingMs).toBe(20)
+  })
   it('normalizes LiveKit quality values for the shared dock', () => {
     expect(voiceConnectionQuality('excellent')).toBe('EXCELLENT')
     expect(voiceConnectionQuality('GOOD')).toBe('GOOD')

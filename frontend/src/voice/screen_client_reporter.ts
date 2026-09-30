@@ -1,34 +1,10 @@
 import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
-import type { ScreenReceiverMetrics } from './screen_receiver_diagnostics'
 import type { ScreenDiagnostics } from './screen_diagnostics'
 
-export type WebPlatform = 'ios_web' | 'android_web' | 'desktop_web'
-export interface ScreenClientReport {
-  platform: WebPlatform
-  direction: 'sender' | 'receiver'
-  state: 'waiting_subscription' | 'waiting_first_frame' | 'playing' | 'stalled'
-  frame_width?: number
-  frame_height?: number
-  presented_fps?: number
-  encoded_fps?: number
-  decoded_fps?: number
-  bitrate_kbps?: number
-  jitter_ms?: number
-  packets_lost?: number
-  dropped_frames?: number
-  rtt_ms?: number
-}
-export interface ScreenClientReportInput {
-  platform: WebPlatform
-  selected: boolean
-  hasTrack: boolean
-  videoReady: boolean
-  playbackFps: number | null
-  receiverMetrics: ScreenReceiverMetrics | null
-  frameWidth?: number
-  frameHeight?: number
-}
+export type { ScreenClientReport, ScreenClientReportInput, WebPlatform } from '../telemetry/report_media/types'
+import type { ScreenClientReport, ScreenClientReportInput, WebPlatform } from '../telemetry/report_media/types'
+import { bounded, pixelDimension, lossFields, sampleAge, senderFields } from '../telemetry/report_media/fields'
 
 export function webPlatform(userAgent: string): WebPlatform {
   if (/iPhone|iPad|iPod/i.test(userAgent)) return 'ios_web'
@@ -36,16 +12,8 @@ export function webPlatform(userAgent: string): WebPlatform {
   return 'desktop_web'
 }
 
-function bounded(value: number | null | undefined, maximum: number): number | undefined {
-  return value !== null && value !== undefined && Number.isFinite(value) && value >= 0 && value <= maximum ? value : undefined
-}
-
-function pixelDimension(value: number | undefined): number | undefined {
-  return value !== undefined && Number.isFinite(value) && value >= 1 && value <= 8192 ? Math.round(value) : undefined
-}
-
 export function buildScreenClientReport(input: ScreenClientReportInput): ScreenClientReport | null {
-  if (!input.selected) return null
+  if (!input.selected || (sampleAge(input.sampledAt) ?? 0) > 15000) return null
   const presented = bounded(input.playbackFps, 240)
   const decoded = bounded(input.receiverMetrics?.decodedFps, 240)
   const bitrate = bounded(input.receiverMetrics?.bitrateKbps, 100000)
@@ -57,6 +25,8 @@ export function buildScreenClientReport(input: ScreenClientReportInput): ScreenC
   const state = !input.hasTrack ? 'waiting_subscription' : !input.videoReady ? 'waiting_first_frame' : presented === 0 ? 'stalled' : 'playing'
   return {
     platform: input.platform, direction: 'receiver', state,
+    ...lossFields(input.receiverMetrics?.packetLossPercent, input.packetLossWindowMs ?? input.receiverMetrics?.packetLossWindowMs),
+    ...(input.sampledAt === undefined ? {} : { sample_age_ms: sampleAge(input.sampledAt) }),
     ...(frameWidth === undefined || frameHeight === undefined ? {} : { frame_width: frameWidth, frame_height: frameHeight }),
     ...(presented === undefined ? {} : { presented_fps: presented }),
     ...(decoded === undefined ? {} : { decoded_fps: decoded }),
@@ -67,14 +37,16 @@ export function buildScreenClientReport(input: ScreenClientReportInput): ScreenC
   }
 }
 
-export function buildSenderScreenReport(platform: WebPlatform, diagnostics: ScreenDiagnostics): ScreenClientReport | null {
-  if (diagnostics.source === 'ENDED') return null
+export function buildSenderScreenReport(platform: WebPlatform, diagnostics: ScreenDiagnostics, profile?: string | null): ScreenClientReport | null {
+  if (diagnostics.source === 'ENDED' || (sampleAge(diagnostics.sampledAt) ?? 0) > 15000) return null
+  if (diagnostics.senderStatsAvailable === false) return { platform, direction: 'sender', state: 'waiting_first_frame', ...senderFields(diagnostics, profile) }
   const encoded = bounded(diagnostics.measured?.framesPerSecond, 240)
   const bitrate = bounded(diagnostics.bitrateBps === undefined ? undefined : diagnostics.bitrateBps / 1000, 100000)
   const rtt = bounded(diagnostics.roundTripTimeMs, 60000)
-  const frameWidth = pixelDimension(diagnostics.measured?.width)
-  const frameHeight = pixelDimension(diagnostics.measured?.height)
+  const frameWidth = diagnostics.senderDimensionsAvailable === false ? undefined : pixelDimension(diagnostics.measured?.width)
+  const frameHeight = diagnostics.senderDimensionsAvailable === false ? undefined : pixelDimension(diagnostics.measured?.height)
   return {
+    ...senderFields(diagnostics, profile),
     platform, direction: 'sender', state: diagnostics.source === 'ACTIVE' ? 'playing' : 'waiting_first_frame',
     ...(frameWidth === undefined || frameHeight === undefined ? {} : { frame_width: frameWidth, frame_height: frameHeight }),
     ...(encoded === undefined ? {} : { encoded_fps: encoded }),

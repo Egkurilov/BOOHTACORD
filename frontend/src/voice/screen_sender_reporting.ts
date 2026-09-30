@@ -9,10 +9,11 @@ export function installScreenSenderReporting(
   diagnostics: Ref<ScreenDiagnostics>,
   refresh: () => Promise<void>,
   platform: WebPlatform = webPlatform(navigator.userAgent),
+  profile: () => string | null = () => null,
 ): void {
   watch(state, (phase, _previous, onCleanup) => {
     if (phase !== 'SHARING') return
-    const stopReporting = startScreenClientReporting(() => buildSenderScreenReport(platform, diagnostics.value), () => true)
+    const stopReporting = startScreenClientReporting(() => buildSenderScreenReport(platform, diagnostics.value, profile()), () => true)
     const refreshTimer = globalThis.setInterval(() => { void refresh() }, 2000)
     onCleanup(() => { stopReporting(); globalThis.clearInterval(refreshTimer) })
   }, { immediate: true, flush: 'sync' })

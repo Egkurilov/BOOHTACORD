@@ -29,6 +29,9 @@ import 'services/voice_stream_start_tracker.dart';
 import 'services/voice_connection_quality.dart';
 import 'services/voice_roster_events.dart';
 import 'services/screen_thumbnail.dart';
+import 'telemetry/report_media/sender.dart';
+import 'telemetry/report_media/sender_sample.dart';
+import 'telemetry/report_media/connection.dart';
 
 enum AppPhase { loading, connectionError, signedOut, ready }
 
@@ -262,6 +265,7 @@ class AppState extends ChangeNotifier {
   LocalVideoTrack? _screenShareMetricsTrack;
   ScreenShareSenderSnapshot? _previousScreenShareMetrics;
   final _screenShareMetricsGate = ScreenShareMetricsGenerationGate();
+  final _senderMediaTelemetry = SenderMediaTelemetry();
   int _voiceRosterRevision = 0;
   bool _voiceRosterLoading = false;
   bool _notificationAppIsForeground = true;
@@ -2791,6 +2795,10 @@ class AppState extends ChangeNotifier {
   void _startVoiceConnectionStatsPolling(Room room) {
     _stopVoiceConnectionStatsPolling();
     final revision = _voiceConnectionStatsRevision;
+    final platform = nativeScreenMetricsPlatform(defaultTargetPlatform);
+    final reporter = platform == null
+        ? null
+        : ConnectionMediaReporter(api.reportScreenShareMetrics, platform);
 
     Future<void> sample() async {
       if (_voiceConnectionStatsBusy ||
@@ -2809,11 +2817,14 @@ class AppState extends ChangeNotifier {
                 voicePhase != VoicePhase.listener)) {
           return;
         }
+        final measuredPing = voiceRttMillisecondsFromPeerConnections(reports);
+        if (reporter != null) {
+          unawaited(reporter.submit(measuredPing,
+              room.localParticipant?.connectionQuality ?? ConnectionQuality.unknown));
+        }
         final ping = voicePingAfterMeasurement(
           previousPingMilliseconds: _voicePingMs,
-          measuredPingMilliseconds: voiceRttMillisecondsFromPeerConnections(
-            reports,
-          ),
+          measuredPingMilliseconds: measuredPing,
         );
         if (_voicePingMs != ping) {
           _voicePingMs = ping;
@@ -3067,6 +3078,7 @@ class AppState extends ChangeNotifier {
     _screenShareMetricsTimer = null;
     _screenShareMetricsTrack = null;
     _previousScreenShareMetrics = null;
+    _senderMediaTelemetry.clear();
   }
 
   Future<void> _sampleScreenShareMetrics(
@@ -3109,7 +3121,17 @@ class AppState extends ChangeNotifier {
       );
       _previousScreenShareMetrics = current;
       try {
-        await api.reportScreenShareMetrics(report.toJson());
+        final samples = stats.map((item) => SenderMediaSample(
+          streamId: item.streamId, timestamp: item.timestamp,
+          frameWidth: item.frameWidth, frameHeight: item.frameHeight,
+          packetsSent: item.packetsSent, packetsLost: item.packetsLost,
+          qualityLimitationReason: item.qualityLimitationReason,
+        )).toList();
+        await api.reportScreenShareMetrics({
+          ...report.toJson(),
+          ..._senderMediaTelemetry.fields(samples, screenShareQuality,
+              _room?.localParticipant?.connectionQuality ?? ConnectionQuality.unknown),
+        });
       } catch (_) {
         // Diagnostic telemetry is best-effort and must not interrupt sharing.
       }

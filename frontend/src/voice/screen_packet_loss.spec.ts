@@ -3,6 +3,20 @@ import { describe, expect, it } from 'vitest'
 import { ScreenPacketLossWindow } from './screen_packet_loss'
 
 describe('screen receiver packet loss', () => {
+  it('handles five-second polling jitter without losing the ten-second baseline', () => {
+    const window = new ScreenPacketLossWindow()
+    for (const timestamp of [0, 5001, 10002, 15002]) window.add({ timestamp, packetsSent: timestamp, packetsLost: 0 })
+    expect(window.add({ timestamp: 20000, packetsSent: 20000, packetsLost: 0 })).toBe(0)
+    expect(window.durationMs).toBe(9998)
+  })
+  it('uses sent packets as sender denominator and exposes the actual window', () => {
+    const window = new ScreenPacketLossWindow()
+    expect(window.add({ timestamp: 0, packetsSent: 1000, packetsLost: 100 })).toBeNull()
+    expect(window.add({ timestamp: 10000, packetsSent: 2000, packetsLost: 110 })).toBe(1)
+    expect(window.durationMs).toBe(10000)
+    expect(window.add({ timestamp: 12000, packetsSent: 5, packetsLost: 0 })).toBeNull()
+    expect(window.durationMs).toBeNull()
+  })
   it('reports the loss percentage over a ten-second window rather than lifetime loss', () => {
     const window = new ScreenPacketLossWindow()
     expect(window.add({ timestamp: 0, packetsReceived: 1000, packetsLost: 2476 })).toBeNull()

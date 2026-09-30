@@ -30,10 +30,10 @@ describe('anonymous screen client reports', () => {
 
   it('reports measured sender FPS without substituting the selected target', () => {
     expect(buildSenderScreenReport('desktop_web', { source: 'ACTIVE', audioTrack: 'ABSENT', connectionQuality: 'GOOD', measured: { width: 1920, height: 1080, framesPerSecond: 27 }, bitrateBps: 1800000, roundTripTimeMs: 45 })).toEqual({
-      platform: 'desktop_web', direction: 'sender', state: 'playing', frame_width: 1920, frame_height: 1080, encoded_fps: 27, bitrate_kbps: 1800, rtt_ms: 45,
+      platform: 'desktop_web', direction: 'sender', state: 'playing', connection_quality: 'GOOD', frame_width: 1920, frame_height: 1080, encoded_fps: 27, bitrate_kbps: 1800, rtt_ms: 45,
     })
     expect(buildSenderScreenReport('desktop_web', { source: 'ACTIVE', audioTrack: 'ABSENT', connectionQuality: 'GOOD', measured: { width: 1920, height: 1080 } })).toEqual({
-      platform: 'desktop_web', direction: 'sender', state: 'playing', frame_width: 1920, frame_height: 1080,
+      platform: 'desktop_web', direction: 'sender', state: 'playing', connection_quality: 'GOOD', frame_width: 1920, frame_height: 1080,
     })
   })
 })

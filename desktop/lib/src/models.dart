@@ -235,6 +235,9 @@ class AdminScreenSample {
     'desktop_web',
     'android_native',
     'desktop_native',
+    'ios_native',
+    'windows_native',
+    'macos_native',
   };
   static const directions = {'sender', 'receiver'};
   static const states = {

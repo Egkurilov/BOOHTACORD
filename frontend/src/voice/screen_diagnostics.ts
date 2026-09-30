@@ -9,6 +9,11 @@ export interface ScreenMeasurement {
 }
 
 export interface ScreenDiagnostics {
+  sampledAt?: number
+  senderStatsAvailable?: boolean
+  senderDimensionsAvailable?: boolean
+  packetLossPercent?: number | null
+  packetLossWindowMs?: number | null
   adaptationReason?: string
   audioTrack: ScreenAudioTrackStatus
   bitrateBps?: number
@@ -20,6 +25,9 @@ export interface ScreenDiagnostics {
 }
 
 export interface ScreenSenderStats {
+  timestamp?: number
+  streamId?: string
+  packetsSent?: number
   frameHeight?: number
   frameWidth?: number
   framesPerSecond?: number
@@ -54,12 +62,12 @@ export function normalizeScreenDiagnostics(input: RawScreenDiagnostics): ScreenD
   const videoAvailable = input.readyState !== undefined
   const width = positive(input.sender?.frameWidth) ?? positive(input.settings?.width)
   const height = positive(input.sender?.frameHeight) ?? positive(input.settings?.height)
-  const framesPerSecond = positive(input.sender?.framesPerSecond)
-  const measured = width && height ? { width, height, ...(framesPerSecond ? { framesPerSecond } : {}) } : null
+  const framesPerSecond = nonNegative(input.sender?.framesPerSecond)
+  const measured = width && height ? { width, height, ...(framesPerSecond !== undefined ? { framesPerSecond } : {}) } : null
   const packetsLost = nonNegative(input.sender?.packetsLost)
   const roundTripTime = nonNegative(input.sender?.roundTripTime)
   return {
-    ...(positive(input.bitrateBps) ? { bitrateBps: positive(input.bitrateBps) } : {}),
+    ...(nonNegative(input.bitrateBps) !== undefined ? { bitrateBps: nonNegative(input.bitrateBps) } : {}),
     ...(input.sender?.qualityLimitationReason ? { adaptationReason: input.sender.qualityLimitationReason } : {}),
     ...(packetsLost !== undefined ? { packetsLost } : {}),
     ...(roundTripTime !== undefined ? { roundTripTimeMs: Math.round(roundTripTime * 1000) } : {}),

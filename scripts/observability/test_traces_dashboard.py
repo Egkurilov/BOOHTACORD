@@ -55,6 +55,23 @@ class TracesDashboardTest(unittest.TestCase):
         self.assertGreaterEqual(len(row['panels']), 2)
         self.assertTrue(any('span.user.id = nil' in p['targets'][0]['query'] for p in row['panels']))
 
+    def test_media_samples_keep_identity_units_and_missing_values(self):
+        panel = self.panels[33]
+        query = panel['targets'][0]['query']
+        self.assertIn('name = "media.sample"', query)
+        for field in ('user.id', 'session.id', 'media.rtt_ms', 'media.bitrate_kbps', 'media.encoded_fps',
+                      'media.decoded_fps', 'media.packet_loss_percent', 'media.packet_loss_window_ms',
+                      'media.target_resolution', 'media.target_fps', 'media.frame_width', 'media.frame_height'):
+            self.assertIn('span.' + field, query)
+        for identity in ('user', 'session'):
+            self.assertIn('${' + identity + ':regex}', query)
+        group = next(t for t in panel['transformations'] if t['id'] == 'groupBy')
+        self.assertEqual(group['options']['fields']['media.rtt_ms']['aggregations'], ['last'])
+        units = {o['matcher']['options']: next((p['value'] for p in o['properties'] if p['id'] == 'unit'), None)
+                 for o in panel['fieldConfig']['overrides']}
+        self.assertEqual(units['media.packet_loss_percent (last)'], 'percent')
+        self.assertEqual(units['media.rtt_ms (last)'], 'ms')
+
 
 if __name__ == '__main__':
     unittest.main()

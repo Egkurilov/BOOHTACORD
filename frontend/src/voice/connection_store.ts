@@ -21,6 +21,7 @@ import { observeStreamStarts } from './stream_start_runtime'
 import { installScreenSenderReporting } from './screen_sender_reporting'
 import type { VoiceConnectionQuality } from './voice_connection_quality'
 import { monitorVoiceConnectionStats } from './voice_connection_stats_polling'
+import { createConnectionReporter } from '../telemetry/report_media/connection'
 
 export type VoiceConnectionState = 'IDLE' | 'JOINING' | 'RECONNECTING' | 'CONNECTED' | 'LISTENER' | 'LEAVING' | 'ERROR'
 export type { ScreenShareState } from './screen_controls'
@@ -55,10 +56,12 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
     connectionQuality.value = 'UNKNOWN'
     pingMs.value = null
     if (!current || (phase !== 'CONNECTED' && phase !== 'LISTENER') || !readStats) return
+    const reportConnection = createConnectionReporter()
     stopVoiceStatsPolling = monitorVoiceConnectionStats(readStats.bind(current.room), (stats) => {
       if (active.value !== current || (state.value !== 'CONNECTED' && state.value !== 'LISTENER')) return
       connectionQuality.value = stats.quality
       pingMs.value = stats.pingMs
+      reportConnection(stats)
     }, () => {
       if (active.value !== current) return
       connectionQuality.value = 'UNKNOWN'
@@ -67,7 +70,7 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   }, { immediate: true, flush: 'sync' })
   onScopeDispose(() => stopVoiceStatsPolling?.())
   const { refreshScreenDiagnostics, startScreen, stopScreen } = createScreenControls(session.screen, active, screenError, screenProfile, screenState, screenDiagnostics)
-  installScreenSenderReporting(screenState, screenDiagnostics, refreshScreenDiagnostics)
+  installScreenSenderReporting(screenState, screenDiagnostics, refreshScreenDiagnostics, undefined, () => screenProfile.value)
   const screenViewer = createScreenViewerControls(session, rawScreenViewerCards, selectedScreenStreamId, screenViewerError, screenViewerEnded)
   const { deafenChanging, toggleDeafen } = createDeafenControls(session, deafened, microphoneMuted, microphonePermissionDenied, error)
   const { setMicrophoneMuted, toggleMicrophone } = createMicrophoneControls(session, active, state, deafened, microphoneMuted, microphonePermissionDenied, error)

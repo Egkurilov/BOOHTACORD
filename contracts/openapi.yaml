@@ -540,7 +540,7 @@
     "/api/v1/voice/screen-metrics": {
       "post": {
         "operationId": "reportClientScreenMetrics",
-        "description": "Authenticated client report. Strict 2 KiB body with fixed platform/direction/state enums and bounded numeric measurements only; no user, room, track, address, SDP or content fields. Client-reported values are diagnostic and not capability evidence. Mutation requires the deployment Origin.",
+        "description": "Authenticated client report. Strict 2 KiB body with fixed platform/direction/state enums and bounded numeric measurements only; no user, room, track, address, SDP or content fields. Server attaches verified user/session IDs to media.sample spans. Client-reported values are diagnostic and not capability evidence. Mutation requires the deployment Origin.",
         "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientScreenReport" } } } },
         "responses": {
           "204": { "description": "Anonymous report accepted" },
@@ -1855,8 +1855,8 @@
       "ClientScreenReport": {
         "type": "object", "additionalProperties": false, "required": ["platform", "direction", "state"],
         "properties": {
-          "platform": { "type": "string", "enum": ["ios_web", "android_web", "desktop_web", "android_native", "desktop_native"] },
-          "direction": { "type": "string", "enum": ["sender", "receiver"] },
+          "platform": { "type": "string", "enum": ["ios_web", "android_web", "desktop_web", "android_native", "ios_native", "windows_native", "macos_native", "desktop_native"] },
+          "direction": { "type": "string", "enum": ["sender", "receiver", "connection"] },
           "state": { "type": "string", "enum": ["waiting_subscription", "waiting_first_frame", "playing", "stalled"] },
           "frame_width": { "type": "integer", "minimum": 1, "maximum": 8192 },
           "frame_height": { "type": "integer", "minimum": 1, "maximum": 8192 },
@@ -1867,7 +1867,14 @@
           "jitter_ms": { "type": "number", "minimum": 0, "maximum": 60000 },
           "packets_lost": { "type": "integer", "minimum": 0, "maximum": 1000000000 },
           "dropped_frames": { "type": "integer", "minimum": 0, "maximum": 1000000000 },
-          "rtt_ms": { "type": "number", "minimum": 0, "maximum": 60000 }
+          "rtt_ms": { "type": "number", "minimum": 0, "maximum": 60000 },
+          "packet_loss_percent": { "type": "number", "minimum": 0, "maximum": 100, "description": "Delta loss over packet_loss_window_ms. Required together with the window. Sender denominator is sent packets; receiver denominator is received plus lost packets." },
+          "packet_loss_window_ms": { "type": "number", "minimum": 9000, "maximum": 12000 },
+          "target_resolution": { "type": "number", "enum": [720, 1080, 1440] },
+          "target_fps": { "type": "number", "enum": [15, 30, 60] },
+          "sample_age_ms": { "type": "number", "minimum": 0, "maximum": 15000 },
+          "connection_quality": { "type": "string", "enum": ["UNKNOWN", "EXCELLENT", "GOOD", "POOR", "LOST"] },
+          "adaptation_reason": { "type": "string", "enum": ["none", "cpu", "bandwidth", "other"] }
         }
       },
       "ClientScreenSample": {
@@ -1879,7 +1886,7 @@
       },
       "ClientScreenSnapshot": {
         "type": "object", "additionalProperties": false, "required": ["samples"],
-        "properties": { "samples": { "type": "array", "maxItems": 10, "items": { "$ref": "#/components/schemas/ClientScreenSample" } } }
+        "properties": { "samples": { "type": "array", "maxItems": 16, "items": { "$ref": "#/components/schemas/ClientScreenSample" } } }
       },
       "VoiceChannelParticipants": {
         "type": "object", "additionalProperties": false, "required": ["channel_id", "participants"],

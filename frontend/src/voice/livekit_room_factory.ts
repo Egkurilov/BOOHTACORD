@@ -85,9 +85,10 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
     return inspectLiveKitScreenDiagnostics(video, Boolean(audio), liveKitRoom.localParticipant.connectionQuality)
   }
   room.readVoiceConnectionStats = async () => {
-    const audio = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack
-    const report = await audio?.getRTCStatsReport()
-    return readVoiceConnectionStats(liveKitRoom.localParticipant.connectionQuality, report?.values())
+    const manager = liveKitRoom.engine.pcManager
+    const reports = await Promise.all([manager?.publisher.getStats(), manager?.subscriber?.getStats()])
+    const samples = reports.map((report) => readVoiceConnectionStats(liveKitRoom.localParticipant.connectionQuality, report?.values()))
+    return samples.find((sample) => sample.pingMs !== null) ?? samples[0]!
   }
   room.localParticipant.updateScreenShareProfile = async (profile: ScreenProfile) => {
     const match = /^P(720|1080|1440)_(15|30|60)$/.exec(profile)

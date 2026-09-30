@@ -1,20 +1,29 @@
 class ScreenPacketLossWindow {
   final List<_Sample> _samples = [];
+  double? durationMs;
+  bool? _sender;
 
-  void clear() => _samples.clear();
+  void clear() {
+    _samples.clear();
+    durationMs = null;
+    _sender = null;
+  }
 
   double? add({
     required double timestampMs,
-    required double? packetsReceived,
+    double? packetsReceived,
+    double? packetsSent,
     required double? packetsLost,
   }) {
-    if (!_valid(timestampMs) ||
-        !_valid(packetsReceived) ||
-        !_valid(packetsLost)) {
+    durationMs = null;
+    final sender = packetsSent != null;
+    if (_sender != null && _sender != sender) clear();
+    final count = packetsSent ?? packetsReceived;
+    if (!_valid(timestampMs) || !_valid(count) || !_valid(packetsLost)) {
       clear();
       return null;
     }
-    final received = packetsReceived!;
+    final received = count!;
     final lost = packetsLost!;
     final last = _samples.isEmpty ? null : _samples.last;
     if (last != null &&
@@ -23,9 +32,14 @@ class ScreenPacketLossWindow {
             lost < last.lost)) {
       clear();
     }
+    _sender = sender;
     _samples.add(_Sample(timestampMs, received, lost));
     final cutoff = timestampMs - 10000;
     while (_samples.length > 1 && _samples[1].timestampMs <= cutoff) {
+      _samples.removeAt(0);
+    }
+    while (_samples.length > 1 &&
+        timestampMs - _samples.first.timestampMs > 12000) {
       _samples.removeAt(0);
     }
     final baseline = _samples.first;
@@ -39,8 +53,9 @@ class ScreenPacketLossWindow {
     if (elapsedMs < 9000) return null;
     final receivedDelta = received - baseline.received;
     final lostDelta = lost - baseline.lost;
-    final total = receivedDelta + lostDelta;
-    if (total <= 0) return null;
+    final total = sender ? receivedDelta : receivedDelta + lostDelta;
+    if (total <= 0 || lostDelta > total) return null;
+    durationMs = elapsedMs;
     return ((lostDelta / total) * 10000).round() / 100;
   }
 }

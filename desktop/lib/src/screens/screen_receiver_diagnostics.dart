@@ -282,6 +282,8 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
       hasTrack: widget.track != null,
       current: _current,
       metrics: _metrics,
+      sampleAgeMs: _sampledAt == null ? null : DateTime.now().difference(_sampledAt!).inMilliseconds,
+      packetLossWindowMs: _lossWindow.durationMs,
     );
     if (report == null) return;
     _reporting = true;
@@ -308,6 +310,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
         _previous = null;
         _lossWindow.clear();
         setState(() {
+          _current = null;
           _metrics = null;
           _sampledAt = null;
           _sampleStatus = 'Приёмник не вернул статистику';
@@ -331,6 +334,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
       final metrics = ScreenReceiverMetrics(
         bitrateKbps: measured.bitrateKbps,
         decodedFps: measured.decodedFps,
+        presentedFps: measured.presentedFps,
         droppedFrames: measured.droppedFrames,
         jitterMs: measured.jitterMs,
         packetsLost: measured.packetsLost,
@@ -354,6 +358,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
         _previous = null;
         _lossWindow.clear();
         setState(() {
+          _current = null;
           _metrics = null;
           _sampledAt = null;
           _sampleStatus = 'Не удалось прочитать статистику';

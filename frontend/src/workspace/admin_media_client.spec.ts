@@ -3,6 +3,13 @@ import { describe, expect, it, vi } from 'vitest'
 import { listAdminScreenMetrics } from './admin_media_client'
 
 describe('administrator screen metrics', () => {
+  it('accepts native platform names used by media traces', async () => {
+    const samples = ['ios_native', 'windows_native', 'macos_native'].map((platform) => ({
+      report: { platform, direction: 'sender', state: 'playing' }, sampled_at_utc: '2026-09-30T13:00:00Z',
+    }))
+    const result = await listAdminScreenMetrics(async () => new Response(JSON.stringify({ samples })))
+    expect(result.map((item) => item.platform)).toEqual(['ios_native', 'windows_native', 'macos_native'])
+  })
   it('parses only bounded anonymous sample fields', async () => {
     const request = vi.fn(async (..._args: Parameters<typeof fetch>) => new Response(JSON.stringify({ samples: [{
       report: { platform: 'ios_web', direction: 'receiver', state: 'playing', frame_width: 540, frame_height: 1170, decoded_fps: 30, presented_fps: 26.5, account_id: 'secret' },

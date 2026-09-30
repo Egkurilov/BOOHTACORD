@@ -6,13 +6,19 @@ Map<String, Object>? buildScreenReceiverReport({
   required bool hasTrack,
   required ScreenReceiverSnapshot? current,
   required ScreenReceiverMetrics? metrics,
+  int? sampleAgeMs,
+  double? packetLossWindowMs,
 }) {
-  if (!selected) return null;
+  if (!selected ||
+      (sampleAgeMs != null && (sampleAgeMs < 0 || sampleAgeMs > 15000))) {
+    return null;
+  }
 
   final width = _pixelDimension(current?.frameWidth);
   final height = _pixelDimension(current?.frameHeight);
   final decodedFps = _bounded(metrics?.decodedFps, 240);
   final presentedFps = _bounded(metrics?.presentedFps, 240);
+  final loss = _bounded(metrics?.packetLossPercent, 100);
   final state = !hasTrack
       ? 'waiting_subscription'
       : current == null
@@ -26,6 +32,14 @@ Map<String, Object>? buildScreenReceiverReport({
   return {
     'platform': platform,
     'direction': 'receiver',
+    'sample_age_ms': ?sampleAgeMs,
+    if (loss != null &&
+        packetLossWindowMs != null &&
+        packetLossWindowMs >= 9000 &&
+        packetLossWindowMs <= 12000) ...{
+      'packet_loss_percent': loss,
+      'packet_loss_window_ms': packetLossWindowMs,
+    },
     'state': state,
     if (width != null && height != null) ...{
       'frame_width': width,

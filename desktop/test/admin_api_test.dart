@@ -387,7 +387,7 @@ void main() {
     final excessive = ApiClient(
       client: MockClient(
         (_) async => http.Response(
-          '{"samples":[${List.filled(11, '{}').join(',')}]}',
+          '{"samples":[${List.filled(17, '{}').join(',')}]}',
           200,
         ),
       ),

@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 
 String? nativeScreenMetricsPlatform(TargetPlatform platform) => switch (platform) {
   TargetPlatform.android => 'android_native',
-  TargetPlatform.macOS || TargetPlatform.windows => 'desktop_native',
+  TargetPlatform.iOS => 'ios_native',
+  TargetPlatform.macOS => 'macos_native',
+  TargetPlatform.windows => 'windows_native',
   _ => null,
 };
 

@@ -1322,6 +1322,9 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     'desktop_web' => 'ПК · браузер',
     'android_native' => 'Android · приложение',
     'desktop_native' => 'ПК · приложение',
+    'ios_native' => 'iPhone/iPad · приложение',
+    'windows_native' => 'Windows · приложение',
+    'macos_native' => 'macOS · приложение',
     _ => 'Неизвестная платформа',
   };
 

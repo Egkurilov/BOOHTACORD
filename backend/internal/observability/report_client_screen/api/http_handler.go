@@ -26,6 +26,7 @@ func NewSubmitHandler(recorder Recorder) http.Handler {
 			writer.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		recordMediaSample(request.Context(), report)
 		writer.WriteHeader(http.StatusNoContent)
 	})
 }

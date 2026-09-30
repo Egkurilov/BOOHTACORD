@@ -3,6 +3,20 @@ import 'package:boohtacord_desktop/src/services/screen_receiver_report.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('exports interval loss, preserves zero, and drops old samples', () {
+    Map<String, Object>? report(int age) => buildScreenReceiverReport(
+      platform: 'ios_native',
+      selected: true,
+      hasTrack: true,
+      current: null,
+      metrics: const ScreenReceiverMetrics(packetLossPercent: 0),
+      packetLossWindowMs: 10000,
+      sampleAgeMs: age,
+    );
+    expect(report(1000), containsPair('packet_loss_percent', 0.0));
+    expect(report(1000), containsPair('packet_loss_window_ms', 10000.0));
+    expect(report(16000), isNull);
+  });
   test('builds a bounded report for the selected desktop receiver', () {
     final report = buildScreenReceiverReport(
       platform: 'desktop_native',

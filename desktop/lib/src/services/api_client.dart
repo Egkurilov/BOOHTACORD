@@ -650,7 +650,7 @@ class ApiClient {
       throw const ApiFailure('Сервер вернул некорректные показатели медиа.');
     }
     final samples = data['samples'] as List;
-    if (samples.length > 10) {
+    if (samples.length > 16) {
       throw const ApiFailure('Сервер вернул некорректные показатели медиа.');
     }
     try {

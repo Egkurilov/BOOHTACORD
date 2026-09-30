@@ -35,6 +35,10 @@ func (recorder *Recorder) ObserveClientScreen(report ClientScreenReport) error {
 	if err := report.validate(); err != nil {
 		return err
 	}
+	// Connection-only samples belong to traces, not screen FPS/bitrate metrics.
+	if report.Direction == "connection" {
+		return nil
+	}
 	metrics := recorder.clientScreen
 	metrics.mu.Lock()
 	metrics.latest[report.Platform+":"+report.Direction] = ClientScreenSample{Report: report, SampledAtUTC: metrics.now().UTC().Format(time.RFC3339)}

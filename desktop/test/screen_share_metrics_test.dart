@@ -8,12 +8,12 @@ void main() {
       nativeScreenMetricsPlatform(TargetPlatform.android),
       'android_native',
     );
-    expect(nativeScreenMetricsPlatform(TargetPlatform.macOS), 'desktop_native');
+    expect(nativeScreenMetricsPlatform(TargetPlatform.macOS), 'macos_native');
     expect(
       nativeScreenMetricsPlatform(TargetPlatform.windows),
-      'desktop_native',
+      'windows_native',
     );
-    expect(nativeScreenMetricsPlatform(TargetPlatform.iOS), isNull);
+    expect(nativeScreenMetricsPlatform(TargetPlatform.iOS), 'ios_native');
   });
 
   test('selects the highest-resolution sender layer and sums bytes', () {

@@ -9,6 +9,7 @@ const error = ref<string | null>(null)
 let timer: ReturnType<typeof setInterval> | null = null
 const platforms: Record<AdminScreenSample['platform'], string> = {
   ios_web: 'iPhone/iPad · браузер', android_web: 'Android · браузер', desktop_web: 'ПК · браузер',
+  ios_native: 'iPhone/iPad · приложение', windows_native: 'Windows · приложение', macos_native: 'macOS · приложение',
   android_native: 'Android · приложение', desktop_native: 'ПК · приложение',
 }
 const states: Record<AdminScreenSample['state'], string> = {

@@ -2,7 +2,7 @@ import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 
 export interface AdminScreenSample {
-  platform: 'ios_web' | 'android_web' | 'desktop_web' | 'android_native' | 'desktop_native'
+  platform: 'ios_web' | 'android_web' | 'desktop_web' | 'android_native' | 'desktop_native' | 'ios_native' | 'windows_native' | 'macos_native'
   direction: 'sender' | 'receiver'
   state: 'waiting_subscription' | 'waiting_first_frame' | 'playing' | 'stalled'
   frame_width?: number
@@ -40,7 +40,7 @@ function sample(value: unknown): AdminScreenSample {
   const outer = record(value); const report = record(outer.report)
   if (typeof outer.sampled_at_utc !== 'string' || !Number.isFinite(Date.parse(outer.sampled_at_utc))) throw new Error('Некорректные показатели медиа.')
   const parsed: AdminScreenSample = {
-    platform: choice(report.platform, ['ios_web', 'android_web', 'desktop_web', 'android_native', 'desktop_native']),
+    platform: choice(report.platform, ['ios_web', 'android_web', 'desktop_web', 'android_native', 'desktop_native', 'ios_native', 'windows_native', 'macos_native']),
     direction: choice(report.direction, ['sender', 'receiver']),
     state: choice(report.state, ['waiting_subscription', 'waiting_first_frame', 'playing', 'stalled']),
     sampled_at_utc: outer.sampled_at_utc,
@@ -63,6 +63,6 @@ export async function listAdminScreenMetrics(request: typeof fetch = tracedFetch
   const response = await request(`${apiBaseUrl}/admin/screen-metrics`, { credentials: 'same-origin', headers: { accept: 'application/json' }, cache: 'no-store' })
   if (!response.ok) throw new Error('Не удалось загрузить показатели медиа.')
   const payload = record(await response.json())
-  if (!Array.isArray(payload.samples) || payload.samples.length > 10) throw new Error('Некорректные показатели медиа.')
+  if (!Array.isArray(payload.samples) || payload.samples.length > 16) throw new Error('Некорректные показатели медиа.')
   return payload.samples.map(sample)
 }
