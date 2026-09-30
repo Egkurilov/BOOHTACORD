@@ -150,6 +150,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
   final GlobalKey _summaryKey = GlobalKey();
   final FocusNode _focusNode = FocusNode(debugLabel: 'Статистика трансляции');
   Timer? _timer;
+  int _samplingGeneration = 0;
   ScreenReceiverSnapshot? _previous;
   ScreenReceiverSnapshot? _current;
   ScreenReceiverMetrics? _metrics;
@@ -195,7 +196,9 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
   }
 
   void _restartSampling() {
+    final generation = ++_samplingGeneration;
     _timer?.cancel();
+    _sampling = false;
     _previous = null;
     _lossWindow.clear();
     _current = null;
@@ -208,19 +211,23 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
         ? 'Видеоприёмник недоступен'
         : 'Ожидание статистики приёмника';
     if (track == null) return;
-    unawaited(_sample(track));
+    unawaited(_sample(track, generation));
     _timer = Timer.periodic(
       const Duration(seconds: 2),
-      (_) => unawaited(_sample(track)),
+      (_) => unawaited(_sample(track, generation)),
     );
   }
 
-  Future<void> _sample(RemoteVideoTrack track) async {
-    if (_sampling) return;
+  Future<void> _sample(RemoteVideoTrack track, int generation) async {
+    if (_sampling || generation != _samplingGeneration) return;
     _sampling = true;
     try {
       final stats = await track.getReceiverStats();
-      if (!mounted || !identical(track, widget.track)) return;
+      if (!mounted ||
+          generation != _samplingGeneration ||
+          !identical(track, widget.track)) {
+        return;
+      }
       if (stats == null) {
         _previous = null;
         _lossWindow.clear();
@@ -264,7 +271,9 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
         _sampleStatus = 'Измерено в ${_formatTime(_sampledAt!)}';
       });
     } catch (_) {
-      if (mounted && identical(track, widget.track)) {
+      if (mounted &&
+          generation == _samplingGeneration &&
+          identical(track, widget.track)) {
         _previous = null;
         _lossWindow.clear();
         setState(() {
@@ -274,7 +283,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics> {
         });
       }
     } finally {
-      _sampling = false;
+      if (generation == _samplingGeneration) _sampling = false;
     }
   }
 

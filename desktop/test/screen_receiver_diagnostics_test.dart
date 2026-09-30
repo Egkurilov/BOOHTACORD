@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:boohtacord_desktop/src/screens/screen_receiver_diagnostics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
+import 'package:livekit_client/livekit_client.dart';
+import 'package:livekit_client/src/stats/stats.dart';
 
 void main() {
   test('computes receiver rates from counters and elapsed time', () {
@@ -50,6 +55,42 @@ void main() {
     expect(metrics.droppedFrames, isNull);
     expect(metrics.jitterMs, isNull);
     expect(metrics.packetsLost, isNull);
+  });
+
+  testWidgets('a pending old track stats request cannot block a new track', (
+    tester,
+  ) async {
+    final oldStats = Completer<VideoReceiverStats?>();
+    final currentStats = Completer<VideoReceiverStats?>();
+    final oldTrack = _StatsTrack(() => oldStats.future);
+    final currentTrack = _StatsTrack(() => currentStats.future);
+    final diagnosticsKey = GlobalKey();
+
+    Widget build(RemoteVideoTrack track) => MaterialApp(
+      home: Scaffold(
+        body: ScreenReceiverDiagnostics(
+          key: diagnosticsKey,
+          track: track,
+          isLocal: false,
+          hasAudio: false,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(build(oldTrack));
+    expect(oldTrack.calls, 1);
+
+    await tester.pumpWidget(build(currentTrack));
+    expect(currentTrack.calls, 1);
+
+    oldStats.complete(null);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    expect(currentTrack.calls, 1);
+
+    currentStats.complete(VideoReceiverStats('new', 1));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('reports missing receiver stats and local no-audio preview', (
@@ -151,4 +192,32 @@ void main() {
     expect(panelRect.right, lessThanOrEqualTo(360));
     expect(tester.takeException(), isNull);
   });
+}
+
+class _StatsTrack extends RemoteVideoTrack {
+  _StatsTrack(this.readStats)
+    : super(
+        TrackSource.screenShareVideo,
+        _EmptyMediaStream(),
+        _EmptyMediaStreamTrack(),
+      );
+
+  final Future<VideoReceiverStats?> Function() readStats;
+  int calls = 0;
+
+  @override
+  Future<VideoReceiverStats?> getReceiverStats() {
+    calls++;
+    return readStats();
+  }
+}
+
+class _EmptyMediaStream implements rtc.MediaStream {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _EmptyMediaStreamTrack implements rtc.MediaStreamTrack {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
