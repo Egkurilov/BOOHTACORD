@@ -205,9 +205,18 @@ peer/platform-проверки и выравниваем viewer с вебом.
   смену демонстрации, 10-секундное обновление и поведение при недоступности
   private presence. Теперь web и Flutter получают короткоживущие SSE-снимки,
   обновляемые после подписанных webhook-событий LiveKit; каждый снимок повторно
-  проверяет ACL и lease. Локальные unit suites проходят, но доставка событий на
-  работающем сервере, приватность между двумя аккаунтами и disconnect/reconnect
-  ещё не проверены —
+  проверяет ACL и lease. **Новая production-находка (30.09.2026):** в браузере
+  prejoin `SHARE_TEST` сначала показал «состав недоступен» и повторяющуюся ошибку,
+  затем автоматическое обновление восстановилось и показало пустую комнату;
+  пользователь ранее приложил такой же экран Flutter. Голос и микрофон в браузерной
+  проверке не подключались. Новый Flutter regression test подтверждает локальный
+  переход 503 → retry → успешный empty snapshot; live retry на устройстве и
+  populated snapshot на обоих клиентах ещё проверить. Сопоставить ошибку с
+  серверными и LiveKit логами; причина пока неизвестна —
+  [QA-148](../evidence/flutter/qa148-production-prejoin-roster-recovery-2026-09-30-001.json).
+  Локальные unit suites проходят, но
+  доставка событий, приватность между двумя аккаунтами и disconnect/reconnect
+  на production ещё не проверены —
   [QA-18](../evidence/flutter/qa18-prejoin-voice-roster-2026-09-27-001.json),
   [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json),
   [QA-136](../evidence/flutter/qa136-untrusted-commit-review-and-regression-2026-09-30-001.json).

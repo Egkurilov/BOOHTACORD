@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:boohtacord_desktop/src/app.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart' show MediaDevice;
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -44,6 +46,40 @@ void main() {
     expect(state.selectedChannel?.id, textChannel.id);
     expect(state.messages, hasLength(1));
   });
+
+  test(
+    'voice roster stream retries after 503 and clears error on snapshot',
+    () async {
+      final api = _RecoveringRosterApi(topology);
+      final state = AppState(api);
+      addTearDown(state.dispose);
+      final errorShown = Completer<void>();
+      final rosterRecovered = Completer<void>();
+      state.addListener(() {
+        if (state.voiceRosterError != null && !errorShown.isCompleted) {
+          errorShown.complete();
+        }
+        if (state.voiceRosters != null && !rosterRecovered.isCompleted) {
+          rosterRecovered.complete();
+        }
+      });
+
+      await state.initialize();
+      expect(api.rosterAttempts, 1);
+      expect(state.phase, AppPhase.ready);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(state.voiceRosterError, isNotNull);
+      await errorShown.future.timeout(const Duration(seconds: 2));
+      expect(state.voiceRosters, isNull);
+
+      await rosterRecovered.future.timeout(const Duration(seconds: 4));
+      expect(api.rosterAttempts, greaterThanOrEqualTo(2));
+      expect(state.voiceRosterError, isNull);
+      expect(state.voiceRosters, hasLength(1));
+      expect(state.voiceRosters!.single.channelId, 'voice-channel');
+      expect(state.voiceRosters!.single.participants, isEmpty);
+    },
+  );
 
   testWidgets('a temporary TLS failure offers retry without showing login', (
     tester,
@@ -1343,6 +1379,31 @@ class _FakeApi extends ApiClient {
     return (
       'lease-1',
       const VoiceCredential(url: 'wss://voice.example.test', token: 'token'),
+    );
+  }
+}
+
+class _RecoveringRosterApi extends _FakeApi {
+  _RecoveringRosterApi(super.value);
+
+  int rosterAttempts = 0;
+
+  @override
+  Future<http.StreamedResponse> voiceRosterEvents() async {
+    rosterAttempts++;
+    if (rosterAttempts == 1) {
+      throw const ApiFailure(
+        'Нет связи со списком голосовых каналов.',
+        status: 503,
+      );
+    }
+    return http.StreamedResponse(
+      Stream.value(
+        utf8.encode(
+          'data: {"channels":[{"channel_id":"voice-channel","participants":[]}] }\n\n',
+        ),
+      ),
+      200,
     );
   }
 }

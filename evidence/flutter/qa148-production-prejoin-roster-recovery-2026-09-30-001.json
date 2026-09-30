@@ -1,0 +1,43 @@
+{
+  "id": "QA-148",
+  "kind": "production-prejoin-roster-recovery",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "c442b73",
+  "summary": "The authenticated production web prejoin for SHARE_TEST initially rendered the unavailable-roster/retrying state. A later automatic refresh cleared the error and rendered the empty-room state. The user-provided Flutter screenshot shows the same unavailable state, but a live Flutter retry was not performed. No voice join or microphone was started. This is consistent with a transient roster service/presence failure but does not establish the cause.",
+  "checks": [
+    {
+      "name": "Production web prejoin initial roster state",
+      "status": "PASS",
+      "observation": "SHARE_TEST displayed 'состав недоступен' and 'Не удалось обновить состав комнаты. Повторяем попытку.' before voice admission."
+    },
+    {
+      "name": "Automatic web roster recovery",
+      "status": "PASS",
+      "observation": "Without joining voice, a later refresh cleared the unavailable state and displayed 'Голосовой канал пуст' / 'Пока никого нет.' The observed state was an empty room, not evidence of a populated roster."
+    },
+    {
+      "name": "Flutter state recovery after an unavailable roster stream",
+      "command": "cd desktop && flutter test --no-pub test/app_state_test.dart && flutter analyze --no-pub test/app_state_test.dart",
+      "status": "PASS",
+      "observation": "All 39 AppState tests pass and the changed test analyzes cleanly. A regression simulates a 503 followed by an authenticated SSE empty-room snapshot; Flutter retries, clears the error and retains the explicit empty roster."
+    },
+    {
+      "name": "Flutter roster API, SSE parser and prejoin widget tests",
+      "command": "cd desktop && flutter test --no-pub test/voice_roster_api_test.dart test/voice_roster_events_test.dart test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 49 tests in the roster API, SSE parser and workspace/prejoin widget test files pass."
+    },
+    {
+      "name": "Flutter live retry and cross-account presence transitions",
+      "status": "NOT_RUN",
+      "observation": "The user supplied a Flutter screenshot with the unavailable state. A live device retry, second-account join/leave/share, and the 10-second SSE reconnect cadence were not tested."
+    },
+    {
+      "name": "Voice and microphone safety",
+      "status": "PASS",
+      "observation": "The production browser remained in prejoin; no voice connection or microphone was started."
+    }
+  ],
+  "remaining": "Correlate a reproduced roster failure with server and LiveKit diagnostics, then verify recovery and ACL-correct populated snapshots on web and Flutter with two accounts. Do not treat an unavailable snapshot as an empty room."
+}
