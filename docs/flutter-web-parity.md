@@ -76,7 +76,8 @@ the selected remote receiver every five seconds to the same authenticated
 `/voice/screen-metrics` endpoint as web. Local preview is excluded, receiver
 reports pause while the app is backgrounded, and both directions use only the
 server's anonymous fixed-field schema. The complete Flutter test suite and
-analyzer pass. Flutter parses native inbound `framesRendered` separately from
+analyzer pass. The macOS Debug app, Android Debug APK and GitVerse Windows
+Release workflow also compile successfully. Flutter parses native inbound `framesRendered` separately from
 `framesDecoded`, derives the interval rendered FPS and sends it as
 `presented_fps`; unavailable counters are omitted rather than substituted with
 decoded FPS. The [W3C WebRTC Stats definition](https://www.w3.org/TR/webrtc-stats/)

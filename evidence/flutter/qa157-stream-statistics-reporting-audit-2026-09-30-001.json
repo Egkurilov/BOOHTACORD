@@ -3,8 +3,8 @@
   "kind": "stream-statistics-reporting-audit",
   "status": "PARTIAL",
   "executed_at": "2026-09-30",
-  "source_revision": "8355d32",
-  "summary": "Flutter posts bounded sender samples on Android/macOS/Windows and selected remote receiver samples to the authenticated screen-metrics endpoint. It parses inbound framesRendered separately from framesDecoded and reports interval presented_fps using the W3C counter semantics. Unit/widget coverage, the full Flutter test suite, analyzer and macOS debug build pass. Native field availability and live delivery on peers remain unverified. The web diagnostics popover flips above when needed and clamps/scrolls within available viewport height.",
+  "source_revision": "e42acf9",
+  "summary": "Flutter posts bounded sender samples on Android/macOS/Windows and selected remote receiver samples to the authenticated screen-metrics endpoint. It parses inbound framesRendered separately from framesDecoded and reports interval presented_fps using the W3C counter semantics. Unit/widget coverage, all 299 Flutter tests, analyzer, macOS Debug, Android Debug APK and GitVerse Windows tests/analyzer/Release build pass. Native field availability and live delivery on peers remain unverified. The web diagnostics popover flips above when needed and clamps/scrolls within available viewport height.",
   "checks": [
     {
       "name": "Web sender reporting lifecycle and POST contract",
@@ -54,8 +54,15 @@
     },
     {
       "name": "Windows runner for current pushed revision",
-      "status": "NOT_RUN",
-      "observation": "The push to master triggers Flutter Windows CI, but the available GitVerse browser view is signed out and still shows the previous run list; the current run result has not been verified."
+      "command": "curl -fsSL 'https://gitverse.ru/api/repos/egkurilov/BOOHTACORD/actions/workflows/flutter-windows.yaml/badge.svg?branch=master&event=push'",
+      "status": "PASS",
+      "observation": "The public GitVerse Flutter Windows CI badge for master/push returned success after commit 8355d32. The workflow runs flutter test, flutter analyze, and flutter build windows --release. The stale signed-out UI run list did not expose a run ID, so the badge is the available verification record."
+    },
+    {
+      "name": "Android debug APK compilation",
+      "command": "cd desktop && flutter build apk --debug --no-pub",
+      "status": "PASS",
+      "observation": "Built build/app/outputs/flutter-apk/app-debug.apk. Gradle emitted Flutter 3.47.5's forward-compatibility warning for flutter_background, flutter_webrtc and livekit_client applying Kotlin Gradle Plugin; plugin migration remains separately open."
     },
     {
       "name": "Backend strict metrics route, retention and ACL",

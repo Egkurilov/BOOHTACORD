@@ -318,7 +318,8 @@ peer/platform-проверки и выравниваем viewer с вебом.
   macOS/Windows и receiver выбранной удалённой трансляции каждые 5 секунд через
   тот же authenticated endpoint; локальный предпросмотр не отправляется,
   receiver reporting приостанавливается в фоне. Full Flutter suite (299 tests),
-  focused telemetry tests и analyzer прошли — [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
+  analyzer, macOS Debug, Android Debug APK и GitVerse Flutter Windows CI (tests,
+  analyzer, Windows Release) прошли — [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
 - [x] Считать `presented_fps` отдельно от `decoded_fps` во Flutter: разбирать
   native inbound `framesRendered`, рассчитывать дельту счётчика и отправлять
   только bounded FPS; LiveKit model parser, report payload и regression покрыты
@@ -587,4 +588,4 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] Проверить подписанную macOS Release-сборку и Keychain persistence после перезапуска; на текущем Mac нет действительной Apple Developer identity. macOS Debug app и Android Debug APK собраны локально — [QA-30](../evidence/flutter/qa30-native-debug-builds-2026-09-27-001.json).
 - [x] Временно отключить автоматические push/tag запуски macOS CI и macOS Release, пока GitVerse runner недоступен; ручной dispatch сохранён. Возобновить автозапуски после provision macOS runner.
 - [ ] Сохранить защищённую копию Android upload JKS/credentials вне сборочного host; установить/обновить release APK на физическом Android и пройти QA-13.
-- [ ] Проверить совместимость Kotlin Gradle Plugin с `flutter_webrtc`, `livekit_client` и `flutter_background` перед обновлением Flutter toolchain.
+- [ ] Проверить совместимость Kotlin Gradle Plugin с `flutter_webrtc`, `livekit_client` и `flutter_background` перед обновлением Flutter toolchain. Android Debug build проходит, но Flutter 3.47.5 уже предупреждает, что будущие версии откажутся собирать плагины, применяющие KGP — наблюдение [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
