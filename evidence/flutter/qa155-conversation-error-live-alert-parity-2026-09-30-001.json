@@ -56,6 +56,12 @@
       "command": "cd desktop && flutter build apk --debug --no-pub",
       "status": "PASS",
       "observation": "The Android debug APK target builds with the Android-only polite live-region fallback. Existing Flutter plugin Kotlin Gradle Plugin migration warnings were emitted."
+    },
+    {
+      "name": "macOS debug application build",
+      "command": "cd desktop && flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "The macOS Debug application target builds with SemanticsRole.alert. This verifies compilation, not VoiceOver behavior."
     }
   ],
   "remaining": "Verify actual spoken announcement timing/priority and focus through TalkBack on Android, VoiceOver on macOS and NVDA on Windows. Android currently has a polite fallback; confirm whether this sufficiently communicates workspace errors and whether an assertive native bridge is required to match web urgency."
