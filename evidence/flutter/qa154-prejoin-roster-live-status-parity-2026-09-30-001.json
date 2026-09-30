@@ -31,6 +31,23 @@
       "observation": "All 287 Flutter tests pass and flutter analyze reports no issues."
     },
     {
+      "name": "Windows runner tests, analyzer and release build",
+      "status": "PASS",
+      "observation": "GitVerse Flutter Windows CI run 1690402 on commit f85f718 succeeded: Flutter tests, analyzer and Windows Release build passed."
+    },
+    {
+      "name": "macOS debug build",
+      "command": "cd desktop && flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "The macOS application target compiles. Existing flutter_soloud native-code warnings were emitted."
+    },
+    {
+      "name": "Android debug APK build",
+      "command": "cd desktop && flutter build apk --debug --no-pub",
+      "status": "PASS",
+      "observation": "The Android APK target compiles. Gradle warns that flutter_background, flutter_webrtc and livekit_client apply the Kotlin Gradle Plugin; this did not fail the build."
+    },
+    {
       "name": "Native screen-reader acceptance",
       "status": "NOT_RUN",
       "observation": "TalkBack, VoiceOver and NVDA were not exercised on physical devices/desktops; widget semantics are not proof of spoken announcement behavior."
