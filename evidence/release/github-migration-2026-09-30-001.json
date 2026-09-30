@@ -1,0 +1,32 @@
+{
+  "id": "github-migration-2026-09-30-001",
+  "task": "T-054 / QA-11",
+  "kind": "github-source-and-actions-migration",
+  "status": "BLOCKED",
+  "observed_at": "2026-09-30T19:10:32Z",
+  "github_repository": "https://github.com/Egkurilov/BOOHTACORD",
+  "source_revision": "e8f4f53d5b516f3e1df1b3bf7eba3594f6f0461f",
+  "source_tree": "c90b11efe7c0d8f1f25070b6bf7729e0d0203776",
+  "migration": "GitVerse master was fetched first. Seventeen tags and master were pushed to GitHub. A separate clone excluded historical artifacts/android/*.apk Git blobs larger than GitHub's 100 MiB object limit; the source tree at master is unchanged. Original history and binaries remain in GitVerse.",
+  "configuration": "GitHub master is the default branch. The production environment permits only master. All nine GitVerse workflows were moved to GitHub Actions; GHCR CI publishes SHA-qualified images and production deployment retains the guarded local OCI path.",
+  "local_checks": {
+    "actionlint_1_7_12": "PASS",
+    "github_workflow_routing": "PASS",
+    "android_release_publisher_6_tests": "PASS",
+    "release_guards_linux_clone": "PASS",
+    "spec_traceability_39_requirements": "PASS",
+    "contracts": "PASS"
+  },
+  "github_runs": {
+    "ci": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36763537365",
+    "deploy": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36763536959",
+    "windows": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36763536932"
+  },
+  "blockers": [
+    "GitHub repository reported zero self-hosted runners.",
+    "GitHub repository reported no Actions secrets, including DEPLOY_SSH_PRIVATE_KEY and the four Android signing inputs.",
+    "The agent did not have SSH access to the Hetzner runner host; no runner was registered or production deployment verified.",
+    "macOS packaging requires a macOS runner and was not run on the Linux validation host."
+  ],
+  "limits": "Local checks prove source configuration only. Neither GitHub CI success, production deploy/smoke, release publication nor QA-11 on the new route is claimed."
+}
