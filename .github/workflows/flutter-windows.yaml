@@ -40,10 +40,11 @@ jobs:
           $env:FLUTTER_ROOT = Join-Path $env:USERPROFILE 'develop\flutter'
           & "$env:FLUTTER_ROOT\bin\flutter.bat" pub get --enforce-lockfile
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Ensure Windows plugin junctions
+      - name: Materialize Windows plugins for CMake
         working-directory: desktop
         shell: powershell
         run: |
+          # This host's CMake cannot read Flutter plugin files through reparse points.
           $metadata = Get-Content -Raw .flutter-plugins-dependencies | ConvertFrom-Json
           $linkRoot = Join-Path (Get-Location) 'windows\flutter\ephemeral\.plugin_symlinks'
           New-Item -ItemType Directory -Force -Path $linkRoot | Out-Null
@@ -55,14 +56,21 @@ jobs:
 
             $link = Join-Path $linkRoot $plugin.name
             $linkedCMake = Join-Path $link 'windows\CMakeLists.txt'
-            if (Test-Path -LiteralPath $linkedCMake) { continue }
-            if (Test-Path -LiteralPath $link) {
-              throw "Flutter plugin path exists but is unusable: $link"
+            $existing = Get-Item -LiteralPath $link -Force -ErrorAction SilentlyContinue
+            if ($existing -and $existing.LinkType) {
+              $savedLink = Join-Path $linkRoot ("$($plugin.name).original-link")
+              if (Test-Path -LiteralPath $savedLink) {
+                throw "Flutter plugin link backup already exists: $savedLink"
+              }
+              Rename-Item -LiteralPath $link -NewName (Split-Path -Leaf $savedLink)
+              $existing = $null
             }
-
-            New-Item -ItemType Junction -Path $link -Target $pluginRoot | Out-Null
+            if ($existing -and -not (Test-Path -LiteralPath $linkedCMake)) {
+              throw "Flutter plugin package is incomplete: $link"
+            }
+            if (-not $existing) { Copy-Item -LiteralPath $pluginRoot -Destination $link -Recurse }
             if (-not (Test-Path -LiteralPath $linkedCMake)) {
-              throw "Could not link Windows Flutter plugin '$($plugin.name)' to '$pluginRoot'"
+              throw "Could not copy Windows Flutter plugin '$($plugin.name)' from '$pluginRoot'"
             }
           }
       - name: Run Flutter tests
