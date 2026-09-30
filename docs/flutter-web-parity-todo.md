@@ -71,8 +71,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   запуск screen share, возврат к roster, повторное открытие из карточки, выбор
   другой трансляции и корректное завершение локально/из OS. После обновления
   roster-контракта собраны macOS Release, GitVerse Windows Release CI и свежие
-  подписанные Android ABI APKs; текущая ADB-инвентаризация не нашла устройство,
-  поэтому новый APK не установлен и этот runtime пункт остаётся открытым —
+  подписанные Android ABI APKs. 2026-09-30 Pixel 7 / Android 17 с 1.0.15+20 и
+  Mac Debug 1.0.15+20 одновременно вошли в SHARE_TEST с выключенными
+  микрофонами; полный portrait-экран отобразился на Mac без crop, приложение
+  пережило старт/первый кадр/остановку и вернулось к roster — [QA-162](../evidence/flutter/qa162-macos-webrtc-renderer-dispose-race-2026-09-30-001.json).
+  Полный сценарий остаётся открыт для Windows, OS-level stop, повторного открытия
+  своей трансляции после возврата к roster и выбора другого потока —
   [QA-138](../evidence/flutter/qa138-voice-roster-contract-sync-2026-09-30-001.json).
 - [ ] На macOS и Android открыть локальную трансляцию повторно из собственной
   карточки после возврата к roster; отдельно проверить, что завершившаяся чужая
@@ -288,6 +292,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Полный portrait stream с Pixel виден на Mac без обрезки, но post-fix runtime
   preview всё ещё не появился на participant cards (видны аватар и «Смотреть
   экран»); выяснить, почему thumbnail не отображается — [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
+- [x] Устранить повторяющийся macOS crash при получении видеокадров: два отчёта
+  `EXC_BAD_ACCESS` в `FlutterRTCVideoRenderer` указывают на dereference `weakSelf`
+  после удаления renderer. Добавлены nil guard и test-first regression; все 17
+  тестов `flutter_webrtc` и macOS Debug build прошли. Повторный Pixel→Mac live
+  test после фикса остаётся открытым — [QA-162](../evidence/flutter/qa162-macos-webrtc-renderer-dispose-race-2026-09-30-001.json).
 - [x] Выровнять active voice participant grid с CSS `auto-fill/minmax(160px, 1fr)`:
   вычислять число колонок по доступной ширине, сохранять 176 px минимальную высоту,
   web-порядок карточки и 64 px avatar; добавить screen-share badge и доступную кнопку

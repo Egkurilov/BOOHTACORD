@@ -243,6 +243,9 @@
   // Notify the Flutter new pixelBufferRef to be ready.
   dispatch_async(dispatch_get_main_queue(), ^{
     FlutterRTCVideoRenderer* strongSelf = weakSelf;
+    if (!strongSelf) {
+      return;
+    }
     if (!strongSelf->_isFirstFrameRendered) {
       if (strongSelf.eventSink) {
         strongSelf.eventSink(@{@"event" : @"didFirstFrameRendered"});
