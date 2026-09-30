@@ -163,7 +163,19 @@ peer/platform-проверки и выравниваем viewer с вебом.
   screen-reader подсказкой — [QA-37](../evidence/flutter/qa37-voice-viewer-rail-web-parity-2026-09-28-001.json).
 - [ ] Проверить prejoin roster на реальном сервере с двумя аккаунтами: вход/выход,
   смену демонстрации, 10-секундное обновление и поведение при недоступности
-  private presence — реализация и целевые тесты в [QA-18](../evidence/flutter/qa18-prejoin-voice-roster-2026-09-27-001.json).
+  private presence. Теперь web и Flutter получают короткоживущие SSE-снимки,
+  обновляемые после подписанных webhook-событий LiveKit; каждый снимок повторно
+  проверяет ACL и lease. Локальные unit suites проходят, но доставка событий на
+  работающем сервере, приватность между двумя аккаунтами и disconnect/reconnect
+  ещё не проверены —
+  [QA-18](../evidence/flutter/qa18-prejoin-voice-roster-2026-09-27-001.json),
+  [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json).
+- [x] Добавить лёгкий thumbnail в карточки экранов: публиковать JPEG не чаще
+  раза в 4 секунды и не более 14 KiB; проверять сигнатуру/размер до отображения,
+  очищать превью при disconnect. Web/Flutter unit и widget suites прошли —
+  [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json).
+  На реальном участнике проверить свежесть, остановку после прекращения показа и
+  поведение при reconnect в незакрытом P0 full-path пункте.
 - [x] Выровнять active voice participant grid с CSS `auto-fill/minmax(160px, 1fr)`:
   вычислять число колонок по доступной ширине, сохранять 176 px минимальную высоту,
   web-порядок карточки и 64 px avatar; добавить screen-share badge и доступную кнопку

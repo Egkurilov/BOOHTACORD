@@ -9,7 +9,7 @@ states are not.
 
 ## Current parity map
 
-Status below reflects the Flutter and web source as of 2026-09-29, including native
+Status below reflects the Flutter and web source as of 2026-09-30, including native
 identity/reset, audio/PTT, local screen publishing, web screen-share setup, and live voice navigation
 slices. Reconcile this table
 when a feature lands; do not use the old summary as a substitute for reading
@@ -182,9 +182,14 @@ both deployed web and Flutter viewers.
   conversation viewport only while the app is foregrounded; scrolling older
   cannot regress it, and successful advancement reloads server counts.
 - Connected voice navigation now mirrors live member count and roster status
-  (mic, speaking and screen sharing) from LiveKit events; focused comparison of
-  roster ordering/spacing remains. Connected rooms also render participant
-  cards and mic/speaking status; remaining lifecycle gaps are tracked in phase 6.
+  (mic, speaking and screen sharing) from LiveKit events. Non-connected
+  navigation receives authenticated roster snapshots through a short-lived SSE
+  stream; signed LiveKit webhook events only invalidate snapshots, and each
+  snapshot rechecks channel visibility and active leases. Web and Flutter also
+  send bounded (14 KiB max), four-second screen thumbnails for roster cards.
+  Parser, reconnect, webhook, thumbnail and widget tests pass [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json).
+  Two-account/live-server privacy and event-delivery acceptance plus focused
+  ordering/spacing screenshots remain open.
 - Port admin topology operations with confirmations, revision conflicts and
   refresh recovery. Initial slice now adds authenticated category/channel
   create/rename and empty-category deletion, admin-only entry, server-side

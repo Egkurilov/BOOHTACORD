@@ -1,0 +1,51 @@
+{
+  "id": "QA-134",
+  "kind": "realtime-voice-roster-and-screen-thumbnails",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "dde173477a24c5e677da53b4dfd671af24ae73aa",
+  "summary": "Reviewed the new cross-client voice roster and screen-share work. Authenticated short-lived SSE snapshots are invalidated by signed LiveKit webhooks and recheck server ACL/leases; web and Flutter publish bounded screen thumbnails. Relevant local test suites pass. Live two-account privacy, deployed webhook delivery, physical-device viewer behavior and Windows runtime acceptance remain open.",
+  "checks": [
+    {
+      "name": "Backend changed-package tests",
+      "command": "cd backend && GOCACHE=/tmp/boohtacord-go-cache go test ./cmd/api ./internal/media/snapshot_livekit_presence ./internal/security/origin_check ./internal/voice/list_connected_participants ./internal/voice/watch_connected_participants",
+      "status": "PASS",
+      "observation": "All five changed backend packages pass, including SSE handler, signed webhook, roster ACL/snapshot and exact Origin bypass tests."
+    },
+    {
+      "name": "Flutter complete test suite",
+      "command": "cd desktop && flutter test --reporter compact",
+      "status": "PASS",
+      "observation": "All 270 tests pass, including thumbnail encoding/validation, roster event parsing and workspace integration."
+    },
+    {
+      "name": "Flutter analyzer for application and tests",
+      "command": "cd desktop && flutter analyze lib test --no-pub",
+      "status": "PASS",
+      "observation": "No issues found. Running the analyzer at the desktop root also discovers the standalone QA integration subproject, whose dependencies are intentionally independent; its missing nested package configuration produces warnings, so the application/test scope was analyzed explicitly."
+    },
+    {
+      "name": "Frontend complete test suite",
+      "command": "cd frontend && npm test -- --reporter=dot",
+      "status": "PASS",
+      "observation": "225 test files and 672 tests pass, including realtime roster, thumbnail, viewer lifecycle and screen control tests."
+    },
+    {
+      "name": "Android release failure in supplied CI log",
+      "command": "Review android-release_android-release_task2411752.log against subsequent repository history",
+      "status": "PASS",
+      "observation": "The supplied run failed because integration_test was present in the generated release plugin registrant but its plugin was unavailable to release compilation. Commit 6990e27 removes integration_test from the main app dev dependencies and keeps the macOS Keychain integration project isolated; current Flutter unit tests pass. A fresh signed Android release workflow was not run as part of this review."
+    },
+    {
+      "name": "Full backend suite and PowerShell contract verifier",
+      "status": "NOT_RUN",
+      "observation": "The full go test ./... run was interrupted after environment cache/loopback restrictions; all changed packages were then rerun successfully with loopback permission. scripts/verify-contracts.ps1 could not run because pwsh is not installed."
+    },
+    {
+      "name": "Live two-account/server and platform acceptance",
+      "status": "NOT_RUN",
+      "observation": "No live webhook/SSE delivery, cross-account ACL probe, physical viewer comparison or Windows runtime test was performed."
+    }
+  ],
+  "remaining": "Verify roster refresh and privacy with two live accounts, deployed LiveKit webhook delivery and reconnect, screen-thumbnail lifecycle with a remote peer, and native screen-share behavior on Android/macOS/Windows. Run the GitVerse Android release workflow to reconfirm signing and release compilation after the integration_test isolation fix."
+}
