@@ -71,6 +71,13 @@ announced. State/UI regressions, the full Flutter suite and analyzer pass; real
 hotplug and audible route switching remain unverified —
 [QA-150](../evidence/flutter/qa150-audio-device-disconnect-feedback-2026-09-30-001.json).
 
+The local microphone check in both clients now ends its active state and reports
+the existing unavailable-device message when the selected input track or level
+stream ends unexpectedly. Web track-ended and Flutter stream-completion
+regressions, the full Flutter suite, analyzer and frontend production build pass;
+physical disconnect/reconnect acceptance remains open —
+[QA-152](../evidence/flutter/qa152-local-microphone-ended-state-parity-2026-09-30-001.json).
+
 The authenticated prejoin roster SSE now subscribes before its initial
 server-authorized snapshot is loaded. A regression test reproduces the previous
 lost-wakeup window and verifies the queued event causes an immediate refresh;

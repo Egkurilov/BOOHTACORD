@@ -1,0 +1,40 @@
+{
+  "id": "QA-152",
+  "kind": "local-microphone-ended-state-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "e60398d",
+  "summary": "Web and Flutter now stop reporting an active local microphone check and show the existing unavailable-device message when the selected microphone track or level stream ends unexpectedly. PCM remains local and is not sent or stored.",
+  "checks": [
+    {
+      "name": "Flutter regression reproduced before implementation",
+      "command": "cd desktop && flutter test --no-pub test/audio_device_check_test.dart",
+      "status": "PASS",
+      "observation": "The new widget regression failed against the previous implementation because closing the level stream left the active-check state visible. After the fix, all 6 focused audio-device-check tests pass; the widget shows the retry action and unavailable-device status and stops the recorder."
+    },
+    {
+      "name": "Web microphone track-ended lifecycle regression",
+      "command": "cd frontend && npm run test -- src/voice/audio_check.spec.ts",
+      "status": "PASS",
+      "observation": "All 4 local audio-check tests pass. The microphone check notifies its owner on an ended track and suppresses a late ended event after cleanup."
+    },
+    {
+      "name": "Full Flutter test suite and analyzer",
+      "command": "cd desktop && flutter test --no-pub; flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 286 Flutter tests pass and analyzer reports no issues."
+    },
+    {
+      "name": "Frontend production typecheck and build",
+      "command": "cd frontend && npm run build",
+      "status": "PASS",
+      "observation": "Vue typecheck and Vite production build pass. Vite reports its existing advisory that a generated chunk exceeds 500 kB."
+    },
+    {
+      "name": "Physical microphone disconnect during local check",
+      "status": "NOT_RUN",
+      "observation": "No device hotplug runtime test was performed."
+    }
+  ],
+  "remaining": "Physically disconnect and reconnect a selected microphone while the local test is active on Android, macOS and Windows; verify accessible error recovery and matched UI behavior."
+}

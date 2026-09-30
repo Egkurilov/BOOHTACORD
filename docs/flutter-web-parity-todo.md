@@ -82,6 +82,13 @@ peer/platform-проверки и выравниваем viewer с вебом.
   ID, который ожидает `record`; проверить речь на Pixel 7 без входа в голосовой
   канал, затем остановить захват. Полный Flutter suite (265 тестов), analyzer и
   release-сборка прошли — [QA-128](../evidence/flutter/qa128-android-local-microphone-check-2026-09-29-001.json).
+- [x] Завершать локальную проверку микрофона и показывать ошибку выбранного
+  устройства, если input track или уровень аудио неожиданно закончился; web
+  слушает `MediaStreamTrack.ended`, Flutter обрабатывает завершение amplitude
+  stream. Flutter regression был красным до исправления; focused web/Flutter
+  tests, полный Flutter suite (286), analyzer и frontend production build прошли.
+  Физическое отключение/подключение микрофона на Android, macOS и Windows
+  остаётся открытым — [QA-152](../evidence/flutter/qa152-local-microphone-ended-state-parity-2026-09-30-001.json).
 - [ ] На Android физически проверить USB/Bluetooth microphone/output hotplug,
   смену маршрута в активном звонке и слышимость; на macOS/Windows проверить
   перечисление, hotplug и переключение устройств. Пустой Android scan в
