@@ -24,21 +24,23 @@ func NewHandler(lister Lister, notifier *Notifier) http.Handler {
 			http.Error(writer, "session required", http.StatusUnauthorized)
 			return
 		}
-		initial, err := lister.List(request.Context(), principal.AccountID)
-		if err != nil {
-			http.Error(writer, "roster unavailable", http.StatusServiceUnavailable)
-			return
-		}
 		flusher, ok := writer.(http.Flusher)
 		if !ok {
 			http.Error(writer, "stream unsupported", http.StatusInternalServerError)
 			return
 		}
+		// Subscribe before loading the initial snapshot so a room change during
+		// List is queued and causes a fresh snapshot immediately afterward.
+		updates, unsubscribe := notifier.Subscribe()
+		defer unsubscribe()
+		initial, err := lister.List(request.Context(), principal.AccountID)
+		if err != nil {
+			http.Error(writer, "roster unavailable", http.StatusServiceUnavailable)
+			return
+		}
 		writer.Header().Set("Content-Type", "text/event-stream")
 		writer.Header().Set("Cache-Control", "no-store")
 		writer.Header().Set("X-Accel-Buffering", "no")
-		updates, unsubscribe := notifier.Subscribe()
-		defer unsubscribe()
 		write := func(value roster.Result) bool {
 			encoded, err := json.Marshal(value)
 			if err != nil {

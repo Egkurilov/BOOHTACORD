@@ -3,6 +3,7 @@ package watchconnectedparticipants
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -19,6 +20,20 @@ type rosterStub struct{ actor string }
 func (stub *rosterStub) List(_ context.Context, actor string) (roster.Result, error) {
 	stub.actor = actor
 	return roster.Result{Channels: []roster.ChannelRoster{{ChannelID: "room", Participants: []roster.Participant{}}}}, nil
+}
+
+type notifyingRosterStub struct {
+	notifier *Notifier
+	calls    int
+}
+
+func (stub *notifyingRosterStub) List(_ context.Context, _ string) (roster.Result, error) {
+	stub.calls++
+	if stub.calls == 1 {
+		// Model a participant change while the initial roster is being loaded.
+		stub.notifier.Notify()
+	}
+	return roster.Result{Channels: []roster.ChannelRoster{{ChannelID: fmt.Sprintf("snapshot-%d", stub.calls)}}}, nil
 }
 
 func TestStreamSendsAuthorizedSnapshotAndUpdatesOnNotification(t *testing.T) {
@@ -44,5 +59,31 @@ func TestStreamSendsAuthorizedSnapshotAndUpdatesOnNotification(t *testing.T) {
 	second, err := reader.ReadString('\n')
 	if err != nil || !strings.Contains(second, `"channel_id":"room"`) {
 		t.Fatalf("second=%s err=%v", second, err)
+	}
+}
+
+func TestStreamDoesNotMissChangeDuringInitialSnapshot(t *testing.T) {
+	notifier := NewNotifier()
+	lister := &notifyingRosterStub{notifier: notifier}
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		request = request.WithContext(sessionapi.WithPrincipal(request.Context(), auth.Principal{AccountID: "viewer"}))
+		NewHandler(lister, notifier).ServeHTTP(writer, request)
+	}))
+	defer server.Close()
+	client := &http.Client{Timeout: 3 * time.Second}
+	response, err := client.Get(server.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	reader := bufio.NewReader(response.Body)
+	first, err := reader.ReadString('\n')
+	if err != nil || !strings.Contains(first, `"channel_id":"snapshot-1"`) {
+		t.Fatalf("first=%s err=%v", first, err)
+	}
+	_, _ = reader.ReadString('\n') // SSE frame separator
+	second, err := reader.ReadString('\n')
+	if err != nil || !strings.Contains(second, `"channel_id":"snapshot-2"`) {
+		t.Fatalf("second=%s err=%v calls=%d", second, err, lister.calls)
 	}
 }
