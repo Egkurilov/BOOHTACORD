@@ -33,7 +33,7 @@ class ApiClient {
   ApiClient({http.Client? client}) : _client = client ?? http.Client();
   @visibleForTesting
   static const MacOsOptions macOsSessionOptions = MacOsOptions(
-    accountName: 'ru.boohtacord.boohtacordDesktop.session.v2',
+    accountName: 'ru.boohtacord.boohtacordDesktop.session.v3',
     usesDataProtectionKeychain: false,
   );
   static const _serverKey = 'server_url';
@@ -42,8 +42,8 @@ class ApiClient {
   void Function()? onUnauthorized;
   // Keep macOS on the legacy Keychain without sharing entitlements: the
   // Data Protection Keychain returns errSecMissingEntitlement for ad-hoc
-  // builds. A versioned service isolates new sessions from existing items
-  // that can block legacy SecItemCopyMatching during startup.
+  // builds. This versioned service isolates new sessions from prior items
+  // that have blocked SecItemCopyMatching during startup.
   final FlutterSecureStorage _storage = Platform.isMacOS
       ? const FlutterSecureStorage(mOptions: macOsSessionOptions)
       : const FlutterSecureStorage();

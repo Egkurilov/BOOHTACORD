@@ -1,0 +1,58 @@
+{
+  "id": "QA-143",
+  "kind": "macos-keychain-v3-startup-recovery",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "b7aad0b17a55bf0609c54614deea34866d0ed0a2",
+  "summary": "A fresh sample of the running macOS Debug client proved startup was blocked inside flutter_secure_storage's legacy Keychain SecItemCopyMatching while Security.framework waited in CSSM_DecryptDataFinal. Rotating the session-cookie service from v2 to v3, without reading or deleting older entries, allowed a fresh Debug process to reach the login form. This is a recovery from the observed v2 stall, not proof that future cookie writes or stable signed releases avoid macOS authorization prompts.",
+  "checks": [
+    {
+      "name": "Test-first service version check",
+      "command": "cd desktop && flutter test --no-pub test/api_client_storage_options_test.dart",
+      "status": "FAIL_EXPECTED",
+      "observation": "Before changing ApiClient, the test expected service v3 but the configuration still returned v2."
+    },
+    {
+      "name": "Keychain wait located in Debug process",
+      "command": "sample <Debug BOOHTACORD PID> 1 1 -mayDie; inspect the captured call graph",
+      "status": "PASS",
+      "observation": "The serial flutter_secure_storage_service queue was blocked in FlutterSecureStorage.read → SecItemCopyMatching → Keychain ItemImpl.getContent → CSSM_DecryptDataFinal → SecurityServer mach_msg. No cookie or secret values were inspected."
+    },
+    {
+      "name": "v3 service configuration regression test",
+      "command": "cd desktop && flutter test --no-pub test/api_client_storage_options_test.dart",
+      "status": "PASS",
+      "observation": "The focused test confirms the app now selects ru.boohtacord.boohtacordDesktop.session.v3 and remains on the supported legacy Keychain path."
+    },
+    {
+      "name": "Fresh macOS Debug startup",
+      "command": "cd desktop && flutter run -d macos --no-pub; inspect BOOHTACORD window",
+      "status": "PASS",
+      "observation": "The fresh v3 Debug process reached the signed-out Voice Platform login form. No account credentials were entered; older Keychain service entries were not read or deleted, and no Keychain dialog was visible during this check."
+    },
+    {
+      "name": "Disposable Keychain plugin write/read/delete under v3 options",
+      "command": "cd desktop/qa/macos_keychain_integration && flutter test integration_test/macos_keychain_roundtrip_test.dart -d macos",
+      "status": "PASS",
+      "observation": "The isolated macOS integration host wrote, read and deleted only its documented disposable QA key while using ApiClient.macOsSessionOptions (v3). No session cookie or account credentials were accessed, and the test showed no permission prompt."
+    },
+    {
+      "name": "Complete Flutter test suite and analyzer",
+      "command": "cd desktop && flutter test --no-pub; flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 278 Flutter tests pass and analyzer reports no issues."
+    },
+    {
+      "name": "Universal macOS Release compilation",
+      "command": "cd desktop && flutter build macos --release --no-pub",
+      "status": "PASS",
+      "observation": "Built universal BOOHTACORD.app (94.7 MB). The build has third-party deprecation/compiler warnings; it is ad-hoc signed, so this is not stable-signature or installed-app Keychain acceptance."
+    },
+    {
+      "name": "New session-cookie write and relaunch under stable signature",
+      "status": "NOT_RUN",
+      "observation": "No login was performed. This host has no valid Developer ID signing identity, so signed-release Keychain persistence and recurring authorization behavior remain unverified."
+    }
+  ],
+  "remaining": "Complete one successful login to write a v3 session cookie and verify read/restore after relaunch; repeat with a stable Developer ID signature. Keep all prior Keychain items untouched unless the user explicitly requests their removal."
+}

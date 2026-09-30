@@ -22,7 +22,16 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   конфигурация не задаёт user-presence/access-control policy; точный системный
   диалог не подтверждён. Повторить свежий вход и relaunch с session cookie в
   Developer ID-подписанном клиенте после уточнения текста окна —
-  [QA-141](../evidence/flutter/qa141-macos-keychain-access-prompt-2026-09-30-001.json).
+  [QA-141](../evidence/flutter/qa141-macos-keychain-access-prompt-2026-09-30-001.json),
+  [QA-143](../evidence/flutter/qa143-macos-keychain-v3-startup-recovery-2026-09-30-001.json).
+- [x] Восстановить macOS Debug startup после зависания v2 Keychain lookup: свежий
+  sample подтвердил ожидание внутри `SecItemCopyMatching`/`CSSM_DecryptDataFinal`;
+  сессия переведена на отдельный legacy service `.session.v3`, прежние записи
+  оставлены нетронутыми. Новый процесс дошёл до login form без Keychain prompt;
+  disposable plugin write/read/delete прошёл, 278 Flutter-тестов/analyzer и
+  universal macOS Release compilation прошли. Успешный account login/write,
+  relaunch в v3 и stable-signature acceptance ещё не проверены —
+  [QA-143](../evidence/flutter/qa143-macos-keychain-v3-startup-recovery-2026-09-30-001.json).
 - [x] Устранить `PlatformException` при сохранении сессии на macOS: screenshot
   показывал Security.framework `errSecMissingEntitlement` (`-34018`) при
   Data Protection Keychain. На macOS используется поддерживаемый legacy
