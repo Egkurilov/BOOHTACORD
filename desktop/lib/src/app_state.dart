@@ -262,6 +262,8 @@ class AppState extends ChangeNotifier {
   Timer? _screenShareMetricsTimer;
   Timer? _screenThumbnailTimer;
   bool _screenThumbnailBusy = false;
+  ScreenThumbnailPublishResult? _screenThumbnailLastLoggedResult;
+  bool _screenThumbnailReceiveLogged = false;
   LocalVideoTrack? _screenShareMetricsTrack;
   ScreenShareSenderSnapshot? _previousScreenShareMetrics;
   final _screenShareMetricsGate = ScreenShareMetricsGenerationGate();
@@ -2665,6 +2667,7 @@ class AppState extends ChangeNotifier {
   void _bindVoiceRoomEvents(Room room) {
     final listener = room.createListener();
     _voiceEvents = listener;
+    _screenThumbnailReceiveLogged = false;
     listener.on<ParticipantConnectionQualityUpdatedEvent>((event) {
       if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
       if (!identical(event.participant, room.localParticipant)) return;
@@ -2748,14 +2751,31 @@ class AppState extends ChangeNotifier {
     listener.on<TrackSubscribedEvent>((_) => refreshVoiceNavigation());
     listener.on<TrackUnsubscribedEvent>((_) => refreshVoiceNavigation());
     listener.on<DataReceivedEvent>((event) {
-      if (!identical(_room, room) ||
-          event.topic != screenThumbnailTopic ||
-          event.participant == null) {
+      if (!identical(_room, room) || event.topic != screenThumbnailTopic) {
         return;
       }
       final bytes = Uint8List.fromList(event.data);
-      if (!validScreenThumbnail(bytes)) return;
+      if (event.participant == null) {
+        if (!_screenThumbnailReceiveLogged) {
+          debugPrint('[screen-thumbnail] receive=missing_participant');
+          _screenThumbnailReceiveLogged = true;
+        }
+        return;
+      }
+      if (!validScreenThumbnail(bytes)) {
+        if (!_screenThumbnailReceiveLogged) {
+          debugPrint(
+            '[screen-thumbnail] receive=invalid bytes=${bytes.length}',
+          );
+          _screenThumbnailReceiveLogged = true;
+        }
+        return;
+      }
       screenThumbnails[event.participant!.identity] = bytes;
+      if (!_screenThumbnailReceiveLogged) {
+        debugPrint('[screen-thumbnail] receive=valid bytes=${bytes.length}');
+        _screenThumbnailReceiveLogged = true;
+      }
       notifyListeners();
     });
     listener.on<LocalTrackPublishedEvent>((event) {
@@ -2973,6 +2993,7 @@ class AppState extends ChangeNotifier {
 
   void _startScreenThumbnailPublishing(Room room, LocalVideoTrack track) {
     _stopScreenThumbnailPublishing();
+    _screenThumbnailLastLoggedResult = null;
     _screenThumbnailTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       unawaited(_publishScreenThumbnail(room, track));
     });
@@ -2987,24 +3008,33 @@ class AppState extends ChangeNotifier {
     }
     _screenThumbnailBusy = true;
     try {
-      final frame = (await track.mediaStreamTrack.captureFrame()).asUint8List();
-      final thumbnail = await compute(encodeScreenThumbnail, frame);
-      if (thumbnail != null &&
-          identical(_room, room) &&
-          screenSharePhase == ScreenSharePhase.sharing) {
-        final localIdentity = room.localParticipant?.identity;
-        if (localIdentity != null) {
+      final result = await publishScreenThumbnailFrame(
+        capture: () async =>
+            (await track.mediaStreamTrack.captureFrame()).asUint8List(),
+        encode: (frame) => compute(encodeScreenThumbnail, frame),
+        storeLocally: (thumbnail) {
+          final localIdentity = room.localParticipant?.identity;
+          if (localIdentity == null) return;
           screenThumbnails[localIdentity] = thumbnail;
           notifyListeners();
-        }
-        await room.localParticipant?.publishData(
-          thumbnail,
-          topic: screenThumbnailTopic,
-          reliable: true,
-        );
+        },
+        publish: (thumbnail) async {
+          await room.localParticipant?.publishData(
+            thumbnail,
+            topic: screenThumbnailTopic,
+            reliable: true,
+          );
+        },
+        isActive: () =>
+            identical(_room, room) &&
+            screenSharePhase == ScreenSharePhase.sharing,
+      );
+      if (_screenThumbnailLastLoggedResult != result) {
+        debugPrint('[screen-thumbnail] send=${result.name}');
+        _screenThumbnailLastLoggedResult = result;
       }
     } catch (_) {
-      // A missing native frame must never interrupt the media publication.
+      // Thumbnail diagnostics must never interrupt the media publication.
     } finally {
       _screenThumbnailBusy = false;
     }
@@ -3013,6 +3043,8 @@ class AppState extends ChangeNotifier {
   void _stopScreenThumbnailPublishing() {
     _screenThumbnailTimer?.cancel();
     _screenThumbnailTimer = null;
+    _screenThumbnailLastLoggedResult = null;
+    _screenThumbnailReceiveLogged = false;
   }
 
   Future<void> updateScreenShareQuality(ScreenShareQuality quality) async {
@@ -3039,10 +3071,10 @@ class AppState extends ChangeNotifier {
       for (final encoding in encodings) {
         final relativeScale =
             (encoding.scaleResolutionDownBy ?? 1.0) / baseScale;
-        encoding.maxBitrate = (quality.maxBitrate * 1000 /
-                (relativeScale * relativeScale))
-            .round()
-            .clamp(200000, quality.maxBitrate * 1000);
+        encoding.maxBitrate =
+            (quality.maxBitrate * 1000 / (relativeScale * relativeScale))
+                .round()
+                .clamp(200000, quality.maxBitrate * 1000);
         encoding.maxFramerate = quality.frameRate;
         encoding.scaleResolutionDownBy = source == null
             ? relativeScale

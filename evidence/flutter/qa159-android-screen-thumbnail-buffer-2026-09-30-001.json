@@ -2,9 +2,9 @@
   "id": "QA-159",
   "kind": "android-screen-thumbnail-buffer",
   "status": "PARTIAL",
-  "executed_at": "2026-09-30",
-  "source_revision": "9e2c8de",
-  "summary": "Source tracing found Android FrameCapturer allocated a direct ByteBuffer then called array(), which is unsupported; the exception was hidden by the best-effort thumbnail caller. The native buffer copy is fixed and regression-tested. On the installed signed Android 1.0.15+20 arm64 build, a muted Pixel 7 full-screen share rendered on the restarted macOS 1.0.15+20 Debug client with the entire portrait frame visible and letterboxed. The remote participant card still showed an avatar plus 'Смотреть экран', not a thumbnail, so thumbnail publication/display remains unverified after the fix.",
+  "executed_at": "2026-10-01",
+  "source_revision": "6485fd0",
+  "summary": "Source tracing found Android FrameCapturer allocated a direct ByteBuffer then called array(), which is unsupported; the native buffer copy is fixed and regression-tested. The signed Android 1.0.15+20 arm64 build successfully delivered a full portrait screen to the macOS 1.0.15+20 Debug viewer. The 2026-10-01 investigation added bounded non-sensitive diagnostics and found the compact Android participant strip did not consume the thumbnail map. After fixing that UI path, Pixel sender diagnostics reported send=published and the muted Pixel participant strip displayed the thumbnail. Remote thumbnail receipt/display remains unverified because the Mac Debug client became stuck at guild initialization before the paired check.",
   "checks": [
     {
       "name": "Pre-fix Pixel-to-Mac screen-share baseline",
@@ -53,10 +53,41 @@
       "observation": "On 2026-09-30, Pixel 7 shared the entire display in SHARE_TEST with its microphone visibly muted. The restarted Mac Debug client joined with its microphone muted and displayed the portrait stream from top status bar through bottom navigation, centered with black side bars and no apparent crop. The Mac showed a 'Смотреть экран' participant-card control, stream statistics, and approximately 5–6 ms voice ping. The stream was stopped, then Mac and Pixel left the voice room. The participant card did not show a captured thumbnail before opening the stream; thumbnail acceptance remains open."
     },
     {
-      "name": "Post-fix thumbnail on local and remote participant cards",
-      "status": "NOT_RUN",
-      "observation": "A post-fix peer run confirmed full screen video reaches the Mac, but the Mac participant card still showed the avatar and 'Смотреть экран' rather than a thumbnail. The local Pixel participant card also showed its avatar. Thumbnail delivery/rendering after the fix is therefore still unverified and should be investigated separately."
+      "name": "Thumbnail visibility before compact-strip UI fix (historical observation)",
+      "status": "FAIL",
+      "observation": "Before the compact-strip fix, the 2026-10-01 Pixel participant tile showed its avatar despite the local share preview rendering. A later Pixel-only run verified that the compact strip now displays the thumbnail (see the PASS check below). The Mac was not a valid receiver for the later verification because its rebuilt Debug client remained on the guild initialization screen; do not treat the earlier participant-card observation as current remote acceptance."
+    },
+    {
+      "name": "Thumbnail sender pipeline stage regression tests",
+      "command": "cd desktop && flutter test --no-pub test/screen_thumbnail_pipeline_test.dart test/screen_thumbnail_test.dart",
+      "status": "PASS",
+      "observation": "Tests cover capture failure, encoding failure, invalid JPEG rejection, local preview plus publish success, cancellation after sharing stops, and publish failure without hiding the local preview. Tests pass; Android runtime execution is separately recorded in the sender-stage PASS check below."
+    },
+    {
+      "name": "Pixel compact participant-strip thumbnail after UI fix",
+      "command": "adb install -r desktop/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk; start muted Pixel share; inspect participant strip",
+      "status": "PASS",
+      "observation": "The signed Android 1.0.15+20 APK installed over the existing app without clearing data. On a subsequent Pixel-only SHARE_TEST run, the compact participant strip rendered the live screen thumbnail after the sampling interval; microphone remained muted and the share stopped normally."
+    },
+    {
+      "name": "Pixel screen-thumbnail sender runtime stage",
+      "command": "adb logcat -d -s flutter | rg 'screen-thumbnail'",
+      "status": "PASS",
+      "observation": "Instrumented Pixel logcat reported '[screen-thumbnail] send=published'. The line contains no participant identity, image bytes or raw exception."
+    },
+    {
+      "name": "Full Flutter suite and analyzer after thumbnail strip fix",
+      "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 311 Flutter tests pass and flutter analyze reports no issues."
+    },
+    {
+      "name": "macOS receiver-stage live test",
+      "command": "cd desktop && flutter run -d macos --no-pub",
+      "status": "BLOCKED",
+      "observation": "The Debug app built and Flutter VM service started, but the window remained on 'Подключаемся к гильдии…'. A separate unauthenticated GET to the public maintenance endpoint returned HTTP 200 in 0.025s; this does not identify why app initialization is waiting. No receiver-stage event could be observed."
     }
   ],
-  "remaining": "Investigate why the fixed thumbnail path still does not visibly show a sender preview in the local Pixel or remote Mac participant card; add focused runtime evidence after correcting or confirming the expected behavior."
+  "latest_update": "2026-10-01: Instrumented Pixel logcat reports send=published. The signed Android 1.0.15+20 APK was rebuilt and installed over the existing app without clearing data; a subsequent muted Pixel-only SHARE_TEST showed the captured screen thumbnail in the compact participant strip after the sampling interval. The Mac Debug build remained at 'Подключаемся к гильдии…', so updated receiver logs and remote-card acceptance are still pending.",
+  "remaining": "Restore Mac Debug startup and inspect its receive-stage logs for the Pixel packet; fix any delivery/card-lookup issue and verify the remote Mac participant card displays the thumbnail. Then rerun Pixel and Mac acceptance together with both microphones off."
 }

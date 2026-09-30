@@ -285,13 +285,22 @@ peer/platform-проверки и выравниваем viewer с вебом.
   «микрофон выключен». OpenAPI field/path assertions и focused/full client tests
   проходят; PowerShell verifier локально недоступен —
   [QA-138](../evidence/flutter/qa138-voice-roster-contract-sync-2026-09-30-001.json).
-- [x] Добавить лёгкий thumbnail в карточки экранов: публиковать JPEG не чаще
+- [ ] Добавить и проверить лёгкий thumbnail в карточках экранов: публиковать JPEG не чаще
   раза в 4 секунды и не более 14 KiB; проверять сигнатуру/размер до отображения,
   очищать превью при disconnect. Web/Flutter unit и widget suites прошли —
   [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json).
-  Полный portrait stream с Pixel виден на Mac без обрезки, но post-fix runtime
-  preview всё ещё не появился на participant cards (видны аватар и «Смотреть
-  экран»); выяснить, почему thumbnail не отображается — [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
+  - [x] Android compact participant strip: после установки подписанного APK и
+    короткой muted Pixel 7 проверки preview появился в локальной карточке;
+    logcat подтвердил `send=published`.
+  - [ ] Получить thumbnail в macOS participant card и проверить удалённое
+    отображение. Предыдущий live-тест показал только аватар; новый Mac Debug
+    клиент пока зависает на «Подключаемся к гильдии…», поэтому receiver-stage
+    логов нет. Отдельный unauthenticated GET maintenance endpoint ответил 200;
+    причина зависания не установлена.
+  Pipeline теперь оставляет безопасные stage-коды без participant identity,
+  JPEG или текста исключения. После восстановления Mac startup проверить
+  receiver и закрыть cross-client acceptance —
+  [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
 - [x] Устранить повторяющийся macOS crash при получении видеокадров: два отчёта
   `EXC_BAD_ACCESS` в `FlutterRTCVideoRenderer` указывают на dereference `weakSelf`
   после удаления renderer. Добавлены nil guard и test-first regression; все 17
