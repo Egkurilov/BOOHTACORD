@@ -1,0 +1,59 @@
+{
+  "id": "QA-140",
+  "kind": "receiver-diagnostics-track-generation",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "3f64613f840e66dd7688ca34f2c8bf21bbdbf5c4",
+  "summary": "Fixed a Flutter diagnostics lifecycle race when a selected screen-share track changes before the previous getReceiverStats request settles. Sampling is now scoped by generation, so stale results are ignored and an old request cannot retain or clear the active track's sampling lock. Local tests and Android/macOS/Windows build gates pass; live remote viewer acceptance remains open.",
+  "checks": [
+    {
+      "name": "Regression test before fix",
+      "command": "cd desktop && flutter test --no-pub test/screen_receiver_diagnostics_test.dart --plain-name 'a pending old track stats request cannot block a new track'",
+      "status": "FAIL_EXPECTED",
+      "observation": "With the old implementation, switching tracks while the old stats Future was pending left the new track call count at 0 (expected 1)."
+    },
+    {
+      "name": "Focused receiver diagnostics widget suite",
+      "command": "cd desktop && flutter test --no-pub test/screen_receiver_diagnostics_test.dart",
+      "status": "PASS",
+      "observation": "All six diagnostics widget/unit tests pass, including track switch while the old request is pending and protection against clearing the current request lock."
+    },
+    {
+      "name": "Complete Flutter test suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 276 tests pass."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Signed ABI-split Android Release builds",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Produced armeabi-v7a (30.8 MB), arm64-v8a (39.3 MB) and x86_64 (45.1 MB) APKs in ignored local build output; none was added to Git."
+    },
+    {
+      "name": "macOS Release build",
+      "command": "cd desktop && flutter build macos --release --no-pub",
+      "status": "PASS",
+      "observation": "Built BOOHTACORD.app (94.7 MB). This compile does not establish Developer ID signing, notarization or installed-app runtime behavior."
+    },
+    {
+      "name": "GitVerse Flutter Windows CI",
+      "command": "Flutter Windows CI run 1688305 for commit 3f64613f840e66dd7688ca34f2c8bf21bbdbf5c4",
+      "status": "PASS",
+      "observation": "Windows runner boohtacord-win-station v6.0.2 completed Flutter tests (29s), analyzer (8s) and Windows Release build (2m13s) successfully in 3m06s. https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1688305"
+    },
+    {
+      "name": "Physical/live viewer acceptance",
+      "command": "adb devices -l",
+      "status": "NOT_RUN",
+      "observation": "No Android devices were listed. No live remote viewer switch, delayed stats network response, or visible diagnostics refresh was tested on Android/macOS/Windows."
+    }
+  ],
+  "remaining": "Verify switching between two live screen-share publishers while the previous receiver stats request is slow, confirm the newly selected viewer continues updating diagnostics without overlap, and check the behavior in deployed web and Flutter viewers. Continue the overall P0 full-path screen-share and voice acceptance on physical platforms."
+}
