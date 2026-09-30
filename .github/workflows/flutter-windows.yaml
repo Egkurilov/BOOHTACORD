@@ -53,7 +53,7 @@ jobs:
             $pluginRoot = [System.IO.Path]::GetFullPath($plugin.path)
             $pluginCMake = Join-Path $pluginRoot 'windows\CMakeLists.txt'
             if (-not (Test-Path -LiteralPath $pluginCMake)) { continue }
-            if ($plugin.name -notmatch '^[a-z0-9_]+$' -or $pluginRoot -match '[";`r`n]') { throw 'Unsupported plugin name or path' }
+            if ($plugin.name -notmatch '^[a-z0-9_]+$' -or $pluginRoot -match '[";]') { throw 'Unsupported plugin name or path' }
             $sourceLines += "set(BOOHTACORD_PLUGIN_SOURCE_$($plugin.name) `"$($pluginRoot.Replace('\','/'))`")"
           }
           $pluginPath = 'flutter/ephemeral/.plugin_symlinks/${plugin}/windows'
