@@ -1,0 +1,58 @@
+{
+  "id": "QA-136",
+  "kind": "incoming-commit-review-and-regression",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "9c847402678406f25e088c9be2583b09ba94ebde",
+  "summary": "Reviewed five incoming commits by egkurilov: realtime voice roster/screen thumbnails and cross-client viewer updates (dde1734), Android release/version and connected-avatar UI (d626bdf), isolated macOS integration host from root analysis (19db89e), release audit evidence (b80bb14), and ten-second receiver packet-loss percentage in web/Flutter (239238f). No unexpected credential, broad filesystem or unrelated generated-file changes were found. Local regression suites pass. Live server/device checks and the PowerShell contract verifier remain outstanding.",
+  "checks": [
+    {
+      "name": "Complete Flutter test suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "All 274 tests pass, including roster, thumbnail lifecycle, workspace and ten-second packet-loss coverage."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found; excludes only the standalone macOS Keychain integration Flutter project with its own dependencies."
+    },
+    {
+      "name": "Complete frontend test suite",
+      "command": "cd frontend && npm test -- --reporter=dot",
+      "status": "PASS",
+      "observation": "226 test files and 677 tests pass."
+    },
+    {
+      "name": "Frontend production build",
+      "command": "cd frontend && npm run build",
+      "status": "PASS",
+      "observation": "vue-tsc and Vite production build pass; Vite emits an informational LiveKit chunk-size warning."
+    },
+    {
+      "name": "Complete backend Go suite",
+      "command": "cd backend && GOCACHE=/tmp/boohtacord-review-go-cache go test ./...",
+      "status": "PASS",
+      "observation": "All backend packages pass, including LiveKit presence snapshots, Origin middleware and authenticated SSE roster/webhook packages. Loopback permission was required for httptest listeners."
+    },
+    {
+      "name": "PowerShell contract verifier",
+      "command": "pwsh -NoProfile -File scripts/verify-contracts.ps1",
+      "status": "BLOCKED",
+      "observation": "PowerShell Core is not installed in the local environment; the verifier was not run."
+    },
+    {
+      "name": "Diff whitespace validation",
+      "command": "git diff --check 19db89e..HEAD",
+      "status": "PASS",
+      "observation": "No whitespace errors."
+    },
+    {
+      "name": "Live service and physical platform acceptance",
+      "status": "NOT_RUN",
+      "observation": "No two-account privacy test, deployed LiveKit webhook/SSE observation, populated remote packet-loss measurement, or new physical Windows/macOS/Android acceptance was performed."
+    }
+  ],
+  "remaining": "Run scripts/verify-contracts.ps1 in an environment with PowerShell Core. Verify prejoin roster privacy and event refresh with two live accounts and deployed LiveKit webhooks; confirm receiver packet-loss percentage using a populated remote stream; retain outstanding physical Windows/macOS/Android screen-share acceptance."
+}

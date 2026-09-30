@@ -110,8 +110,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Показывать потери пакетов трансляции как процент за скользящее окно 10 секунд,
   синхронно в web и Flutter; покрыть накопление окна, счётчики без изменения,
   reset и недоступные stats — [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json).
-  Полный Flutter/web suite и web production build проходят; сравнение populated
-  diagnostics с реальным удалённым viewer остаётся в device-проверке выше.
+  Полные Flutter (274), web (677), Go и analyzer проверки повторно прошли при
+  разборе incoming commits — [QA-136](../evidence/flutter/qa136-untrusted-commit-review-and-regression-2026-09-30-001.json).
+  Сравнение populated diagnostics с реальным удалённым viewer остаётся в
+  device-проверке выше.
 - [x] Привести receiver diagnostics к веб-паттерну: компактная кнопка-summary и
   popover до 288 px вместо inline `ExpansionTile`, с прокруткой, размещением
   вверх при нехватке места снизу, закрытием по Escape и проверкой Android-width
@@ -177,7 +179,8 @@ peer/platform-проверки и выравниваем viewer с вебом.
   работающем сервере, приватность между двумя аккаунтами и disconnect/reconnect
   ещё не проверены —
   [QA-18](../evidence/flutter/qa18-prejoin-voice-roster-2026-09-27-001.json),
-  [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json).
+  [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json),
+  [QA-136](../evidence/flutter/qa136-untrusted-commit-review-and-regression-2026-09-30-001.json).
 - [x] Добавить лёгкий thumbnail в карточки экранов: публиковать JPEG не чаще
   раза в 4 секунды и не более 14 KiB; проверять сигнатуру/размер до отображения,
   очищать превью при disconnect. Web/Flutter unit и widget suites прошли —
