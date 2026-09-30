@@ -76,10 +76,13 @@ the selected remote receiver every five seconds to the same authenticated
 `/voice/screen-metrics` endpoint as web. Local preview is excluded, receiver
 reports pause while the app is backgrounded, and both directions use only the
 server's anonymous fixed-field schema. The complete Flutter test suite and
-analyzer pass. Remaining acceptance: confirm native sender/receiver stats and
-delivery on real peers and admin snapshots; web reports `presented_fps`, while
-Flutter currently reports decoded FPS and has no verified rendered-frame
-counter. See [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
+analyzer pass. Flutter parses native inbound `framesRendered` separately from
+`framesDecoded`, derives the interval rendered FPS and sends it as
+`presented_fps`; unavailable counters are omitted rather than substituted with
+decoded FPS. The [W3C WebRTC Stats definition](https://www.w3.org/TR/webrtc-stats/)
+increments `framesRendered` just after a frame is rendered. Remaining
+acceptance: confirm native counter availability, delivery on real peers and admin snapshots — see
+[QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
 
 The local microphone check in both clients now ends its active state and reports
 the existing unavailable-device message when the selected input track or level

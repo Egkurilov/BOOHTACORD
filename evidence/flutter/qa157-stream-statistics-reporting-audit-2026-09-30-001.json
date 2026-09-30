@@ -3,8 +3,8 @@
   "kind": "stream-statistics-reporting-audit",
   "status": "PARTIAL",
   "executed_at": "2026-09-30",
-  "source_revision": "c5f9d03",
-  "summary": "Flutter now posts bounded sender samples on Android/macOS/Windows and selected remote receiver samples to the authenticated screen-metrics endpoint, alongside web sender/receiver reporting. Unit/widget coverage, the full Flutter test suite and analyzer pass. Runtime delivery on real peers and parity for renderer-presented FPS remain unverified. The web diagnostics popover flips above when needed and clamps/scrolls within available viewport height.",
+  "source_revision": "8355d32",
+  "summary": "Flutter posts bounded sender samples on Android/macOS/Windows and selected remote receiver samples to the authenticated screen-metrics endpoint. It parses inbound framesRendered separately from framesDecoded and reports interval presented_fps using the W3C counter semantics. Unit/widget coverage, the full Flutter test suite, analyzer and macOS debug build pass. Native field availability and live delivery on peers remain unverified. The web diagnostics popover flips above when needed and clamps/scrolls within available viewport height.",
   "checks": [
     {
       "name": "Web sender reporting lifecycle and POST contract",
@@ -29,6 +29,12 @@
       "observation": "The selected remote receiver sends an anonymous bounded sample every 5 seconds, including waiting_subscription when selected but not subscribed. Local preview and unselected streams are excluded; the widget regression confirms reporting pauses in background and resumes in foreground."
     },
     {
+      "name": "Flutter rendered FPS maps native framesRendered counter",
+      "command": "cd desktop && flutter test --no-pub test/screen_receiver_diagnostics_test.dart test/screen_receiver_report_test.dart",
+      "status": "PASS",
+      "observation": "The LiveKit receiver parser reads framesRendered from the inbound-rtp report, Flutter derives its interval rate independently of framesDecoded, and report JSON uses presented_fps. W3C WebRTC Stats defines framesRendered as the cumulative number of rendered frames, incremented just after render."
+    },
+    {
       "name": "Flutter authenticated API client route and headers",
       "command": "cd desktop && flutter test --no-pub test/avatar_api_test.dart --plain-name 'posts anonymous sender metrics with the authenticated origin'",
       "status": "PASS",
@@ -38,7 +44,7 @@
       "name": "Full Flutter test suite and static analysis",
       "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
       "status": "PASS",
-      "observation": "All 298 Flutter tests pass and flutter analyze reports no issues."
+      "observation": "All 299 Flutter tests pass and flutter analyze reports no issues."
     },
     {
       "name": "macOS debug application compilation",
@@ -83,9 +89,9 @@
     {
       "name": "Production/browser and live-peer verification",
       "status": "NOT_RUN",
-      "observation": "No live Android/macOS/Windows sender plus two receiver run was performed; metric arrival in the authenticated admin snapshot and native stats availability remain unverified. The browser popover has no live screenshot confirmation. Flutter currently reports decoded FPS but does not provide a verified renderer-presented FPS counter."
+      "observation": "No live Android/macOS/Windows sender plus two receiver run was performed; metric arrival in the authenticated admin snapshot and native availability of framesRendered remain unverified. The browser popover has no live screenshot confirmation."
     }
   ],
   "privacy": "Reported schema contains only bounded numeric samples and fixed platform/direction/state enums. No account, channel, track, IP, token, or media-content fields are included.",
-  "remaining": "Run live Android/macOS/Windows screen shares with two receivers and verify sender/receiver reports in the authenticated admin snapshot, including stop/restart behavior; determine a trustworthy Flutter renderer-presented FPS source; visually confirm the web popover near the lower viewport edge in a live browser."
+  "remaining": "Run live Android/macOS/Windows screen shares with two receivers and verify sender/receiver reports including framesRendered in the authenticated admin snapshot, including stop/restart behavior; visually confirm the web popover near the lower viewport edge in a live browser."
 }
