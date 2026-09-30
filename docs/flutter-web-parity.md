@@ -81,6 +81,12 @@ this Android version bump — [QA-159](../evidence/flutter/qa159-android-screen-
 The fix commit also passed GitVerse Flutter Windows CI run #1692456, including
 the full Flutter suite, analyzer and Windows Release build; post-fix thumbnail
 delivery still requires the authorized live device check.
+Two macOS crash reports captured on 2026-09-30 show the same `EXC_BAD_ACCESS`
+in the queued first-frame callback of `FlutterRTCVideoRenderer`: it dereferenced
+an already-cleared weak renderer after disposal. A nil guard now protects that
+callback; the focused regression, all 17 plugin tests and macOS Debug build pass.
+Post-fix live Pixel-to-Mac verification remains open —
+[QA-162](../evidence/flutter/qa162-macos-webrtc-renderer-dispose-race-2026-09-30-001.json).
 The macOS Debug 1.0.15+20 rebuild eventually restored the existing session and
 reached SHARE_TEST prejoin after more than six minutes on its loading screen;
 startup latency is now an explicit open parity/reliability gap —

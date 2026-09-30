@@ -288,6 +288,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Полный portrait stream с Pixel виден на Mac без обрезки, но post-fix runtime
   preview всё ещё не появился на participant cards (видны аватар и «Смотреть
   экран»); выяснить, почему thumbnail не отображается — [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
+- [x] Устранить повторяющийся macOS crash при получении видеокадров: два отчёта
+  `EXC_BAD_ACCESS` в `FlutterRTCVideoRenderer` указывают на dereference `weakSelf`
+  после удаления renderer. Добавлены nil guard и test-first regression; все 17
+  тестов `flutter_webrtc` и macOS Debug build прошли. Повторный Pixel→Mac live
+  test после фикса остаётся открытым — [QA-162](../evidence/flutter/qa162-macos-webrtc-renderer-dispose-race-2026-09-30-001.json).
 - [x] Выровнять active voice participant grid с CSS `auto-fill/minmax(160px, 1fr)`:
   вычислять число колонок по доступной ширине, сохранять 176 px минимальную высоту,
   web-порядок карточки и 64 px avatar; добавить screen-share badge и доступную кнопку

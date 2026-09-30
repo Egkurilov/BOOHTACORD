@@ -1,0 +1,39 @@
+{
+  "id": "QA-162",
+  "kind": "macos-webrtc-renderer-dispose-race",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "7d31afb",
+  "summary": "Two macOS DiagnosticReports for BOOHTACORD 1.0.15 record the same EXC_BAD_ACCESS/SIGSEGV at address 0x40 in FlutterRTCVideoRenderer's queued first-frame callback. The callback dereferenced an ivar through weakSelf after the renderer could have been disposed. A nil guard is covered by a test-first source regression, the full flutter_webrtc test suite passes, and a macOS Debug build compiles. A post-fix live Pixel-to-Mac screen-share retest remains open.",
+  "checks": [
+    {
+      "name": "Repeated macOS crash signature",
+      "status": "PASS",
+      "observation": "BOOHTACORD-2026-09-30-212149.ips and BOOHTACORD-2026-09-30-214429.ips both report EXC_BAD_ACCESS/SIGSEGV, fault address 0x40, on the main queue in __39-[FlutterRTCVideoRenderer renderFrame:]_block_invoke_2. Both reports identify bundle ru.boohtacord.boohtacordDesktop version 1.0.15."
+    },
+    {
+      "name": "Regression test before fix",
+      "command": "cd desktop/packages/flutter_webrtc && flutter test --no-pub test/macos_video_renderer_lifecycle_test.dart",
+      "status": "PASS",
+      "observation": "The new focused test failed before the implementation change because the queued callback did not guard a disposed renderer."
+    },
+    {
+      "name": "flutter_webrtc package tests after fix",
+      "command": "cd desktop/packages/flutter_webrtc && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 17 package tests passed, including the macOS renderer lifecycle regression and the source parity check for the shared Darwin/macOS implementations."
+    },
+    {
+      "name": "macOS Debug native compilation",
+      "command": "cd desktop && flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "The Debug app built successfully with the guarded Objective-C renderer callback."
+    },
+    {
+      "name": "Post-fix Pixel-to-Mac live screen-share retest",
+      "status": "NOT_RUN",
+      "observation": "The authorized short test stream was stopped after confirming the crash and its cause. A fresh short stream is needed to verify the rebuilt Mac client survives remote video rendering."
+    }
+  ],
+  "remaining": "Run one short post-fix Pixel-to-Mac screen-share test with both microphones muted and confirm the Mac client survives start, frame rendering, and stop."
+}
