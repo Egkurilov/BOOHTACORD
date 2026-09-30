@@ -1,0 +1,41 @@
+{
+  "id": "QA-149",
+  "kind": "android-audio-empty-device-refresh-fallback",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "35112e1",
+  "summary": "Android audio-device refresh now keeps a selectable system output when both the WebRTC and native communication-device lists are empty. The same merge/fallback path is used for initial enumeration and device-change events. An async native scan is ignored after its AppState has been disposed.",
+  "checks": [
+    {
+      "name": "Android empty device-change regression",
+      "command": "cd desktop && flutter test --no-pub test/app_state_test.dart --plain-name 'keeps Android system output available after an empty device-change scan'",
+      "status": "PASS",
+      "observation": "The regression reproduced the missing system output before the implementation change. After the fix, the device-change scan retains the selectable 'Системный динамик' fallback."
+    },
+    {
+      "name": "AppState and Android audio device test suites",
+      "command": "cd desktop && flutter test --no-pub test/app_state_test.dart test/android_audio_devices_test.dart",
+      "status": "PASS",
+      "observation": "All 44 tests passed, including route enumeration, selection, Android additions, stale scan protection, system-output fallback, and AppState lifecycle handling."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 283 tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Physical Android hotplug and route switching",
+      "command": "adb devices -l",
+      "status": "NOT_RUN",
+      "observation": "ADB reported no attached Android device; Flutter listed macOS and Chrome only. USB/Bluetooth hotplug and audible route switching were not tested."
+    }
+  ],
+  "remaining": "Test USB/Bluetooth hotplug and audible route switching during an active call on physical Android, macOS and Windows devices. Confirm pre-Android-12 system-default output behavior on a physical Android device."
+}

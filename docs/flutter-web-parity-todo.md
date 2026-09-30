@@ -82,7 +82,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   release-сборка прошли — [QA-128](../evidence/flutter/qa128-android-local-microphone-check-2026-09-29-001.json).
 - [ ] На Android физически проверить USB/Bluetooth microphone/output hotplug,
   смену маршрута в активном звонке и слышимость; на macOS/Windows проверить
-  перечисление, hotplug и переключение устройств. Повторное перечисление,
+  перечисление, hotplug и переключение устройств. Пустой Android scan в
+  `devicechange` теперь сохраняет выбор системного выхода вместо пустого списка;
+  regression, все 283 Flutter-теста и analyzer прошли —
+  [QA-149](../evidence/flutter/qa149-android-audio-empty-device-refresh-2026-09-30-001.json).
+  Повторное перечисление,
   stale-scan protection, distinct loading/empty/error и ручное обновление
   покрыты локальными тестами — [QA-14](../evidence/flutter/qa14-audio-device-refresh-2026-09-27-001.json),
   [QA-69](../evidence/flutter/qa69-android-usb-audio-routes-2026-09-28-001.json),
