@@ -30,7 +30,9 @@ class TracesDashboardTest(unittest.TestCase):
             self.assertIn('span.' + identity + '.id', target['query'])
             self.assertIn('${' + identity + ':regex}', target['query'])
         group = next(t for t in panel['transformations'] if t['id'] == 'groupBy')
-        self.assertEqual(group['options']['fields']['span.session.id']['operation'], 'groupby')
+        # Tempo 2.10 returns selected attribute keys without their TraceQL scope.
+        self.assertEqual(group['options']['fields']['session.id']['operation'], 'groupby')
+        self.assertEqual(group['options']['fields']['user.id']['operation'], 'groupby')
         encoded = json.dumps(panel, ensure_ascii=False)
         self.assertIn('var-session=${__value.raw}', encoded)
         self.assertIn('выборк', panel['description'])
