@@ -27,7 +27,15 @@ executable="$("$plutil" -extract CFBundleExecutable raw -o - "$app/Contents/Info
 architectures="$("$lipo" -archs "$app/Contents/MacOS/$executable")" || fail 'could not inspect app architectures'
 [[ " $architectures " == *' arm64 '* && " $architectures " == *' x86_64 '* ]] || fail "app is not universal (architectures: $architectures)"
 
-"$codesign" --verify --deep --strict --verbose=2 "$app" || fail 'app signature verification failed'
+if ! "$codesign" --verify --deep --strict --verbose=2 "$app"; then
+  # Flutter/Xcode can re-sign App.framework after sealing an ad-hoc outer app.
+  # Re-seal only that outer bundle, and never replace a trusted distribution
+  # signature when verification fails.
+  signature_details="$("$codesign" -dv --verbose=4 "$app" 2>&1)" || fail 'could not inspect the invalid app signature'
+  [[ "$signature_details" == *'Signature=adhoc'* ]] || fail 'app signature verification failed'
+  "$codesign" --force --sign - --preserve-metadata=entitlements,flags,runtime "$app" || fail 'could not re-seal the ad-hoc app bundle'
+fi
+"$codesign" --verify --deep --strict --verbose=2 "$app" || fail 'app signature verification failed after ad-hoc re-seal'
 mkdir -p "$output_dir"
 archive_name="BOOHTACORD-$tag.zip"
 archive="$output_dir/$archive_name"
