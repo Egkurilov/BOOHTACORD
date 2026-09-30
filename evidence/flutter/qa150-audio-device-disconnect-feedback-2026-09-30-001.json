@@ -1,0 +1,41 @@
+{
+  "id": "QA-150",
+  "kind": "audio-device-disconnect-feedback-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "f8b1de3",
+  "summary": "Flutter audio settings now match the web response to hotplug: an unavailable selected route is retained while the system temporarily reports no devices; when a non-empty list returns without that route, selection moves to the first available device and an accessible warning asks the user to verify audio. Explicitly choosing a device clears the warning.",
+  "checks": [
+    {
+      "name": "State behavior for empty then recovered device enumeration",
+      "command": "cd desktop && flutter test --no-pub test/app_state_test.dart --plain-name 'warns and selects an available device when the chosen mic is disconnected'",
+      "status": "PASS",
+      "observation": "The chosen route survives a temporarily empty enumeration. When a replacement list arrives, the first available microphone is selected, the connected speaker remains selected, and the web-equivalent warning is set."
+    },
+    {
+      "name": "Accessible audio settings warning UI",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'announces when the selected audio device disconnects'",
+      "status": "PASS",
+      "observation": "The warning renders in audio settings and is exposed as a live region."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 285 tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Physical hotplug and audible route switch",
+      "command": "adb devices -l; system_profiler SPAudioDataType -json",
+      "status": "NOT_RUN",
+      "observation": "ADB found no Android device; macOS CoreAudio reported no devices. No physical Windows audio device was available in this environment."
+    }
+  ],
+  "remaining": "Verify physical USB/Bluetooth disconnect/reconnect, actual routing and audible playback during an active voice call on Android, macOS and Windows; check the warning and fallback with VoiceOver, NVDA and TalkBack."
+}

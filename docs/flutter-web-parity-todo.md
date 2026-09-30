@@ -91,6 +91,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   покрыты локальными тестами — [QA-14](../evidence/flutter/qa14-audio-device-refresh-2026-09-27-001.json),
   [QA-69](../evidence/flutter/qa69-android-usb-audio-routes-2026-09-28-001.json),
   [QA-126](../evidence/flutter/qa126-android-communication-audio-routes-2026-09-29-001.json).
+  Flutter now also retains a vanished selection during an empty device scan,
+  then falls back to the first replacement and announces a live warning when
+  devices return; state/UI tests, all 285 Flutter tests and analyzer pass —
+  [QA-150](../evidence/flutter/qa150-audio-device-disconnect-feedback-2026-09-30-001.json).
 - [ ] На каждой платформе проверить разрешение screen share, OS-level stop,
   Android 14+ MediaProjection service и реальный захват у peer. На Pixel 7
   (Android 17/API 37) полный захват экрана прошёл: foreground service имел тип
