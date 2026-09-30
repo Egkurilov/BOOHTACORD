@@ -1,0 +1,33 @@
+{
+  "id": "QA-161",
+  "kind": "gitverse-android-release-publisher",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "1f58bb3",
+  "summary": "Replaced the bundled release action's single timed upload flow with an idempotent publisher using GitVerse's documented release and multipart-asset endpoints. Six local tests cover creation, multipart payload, lost-response recovery, retry, repeated jobs, conflicting assets and missing credentials. The Windows runner and a real tagged release have not yet been exercised.",
+  "checks": [
+    {
+      "name": "Publisher contract and retry tests",
+      "command": "node --test scripts/android_release/publish.test.mjs",
+      "status": "PASS",
+      "observation": "All six tests pass using a mocked GitVerse API. Tests verify multipart attachment, a bounded 15-minute request timeout, transient retry, reconciling an accepted upload after a lost response, skipping an already-present same-size asset, rejecting conflicting assets and failing closed without RELEASE_API_KEY."
+    },
+    {
+      "name": "JavaScript syntax, workflow YAML and diff checks",
+      "command": "node --check scripts/android_release/publish.mjs && node --check scripts/android_release/publish.test.mjs; Ruby YAML parse for both Android Release and Flutter Windows CI workflows; git diff --check",
+      "status": "PASS",
+      "observation": "Both workflow files parse as YAML, JavaScript syntax checks pass and the diff has no whitespace errors."
+    },
+    {
+      "name": "GitVerse Windows runner test",
+      "status": "NOT_RUN",
+      "observation": "The release-publisher suite was added to the Flutter Windows workflow but no run for this change has completed yet."
+    },
+    {
+      "name": "Published Android 1.0.15 GitVerse release",
+      "status": "NOT_RUN",
+      "observation": "No release tag was pushed and no public release or APK asset was created by this change."
+    }
+  ],
+  "remaining": "Push the publisher change, verify its Node tests on the Windows runner, then trigger the tag workflow for the current Android version and confirm the public release lists and downloads all three ABI APKs. Keep release publication open until the action succeeds."
+}

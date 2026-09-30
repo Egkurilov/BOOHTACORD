@@ -3,8 +3,8 @@
   "kind": "macos-debug-restart-current-version",
   "status": "PARTIAL",
   "executed_at": "2026-09-30",
-  "source_revision": "fb1fe51937481c43615df17f2d2ec92d2bd167d3",
-  "summary": "Rebuilt and relaunched macOS Debug from current source. Bundle metadata confirms version 1.0.15 (20). The app eventually restored the existing session and reached the SHARE_TEST prejoin view, but only after more than six minutes on the guild-connection splash; startup latency and its cause remain unresolved.",
+  "source_revision": "9e2c8de",
+  "summary": "Rebuilt and relaunched macOS Debug from current source. Bundle metadata confirms version 1.0.15 (20). The first recorded run restored the session after more than six minutes on the guild-connection splash, but a fresh current-source restart on 2026-09-30 reached SHARE_TEST quickly and successfully rendered the Pixel screen share. The earlier startup delay did not recur; its cause remains unknown.",
   "checks": [
     {
       "name": "Current-source macOS Debug build",
@@ -26,6 +26,12 @@
       "name": "Public service reachability check",
       "status": "PASS",
       "observation": "GET https://v.bootybay.ru/api/v1/maintenance returned HTTP 200 from the host. This only verifies the public maintenance endpoint, not authenticated API or guild startup."
+    },
+    {
+      "name": "Fresh restart on the connected Mac",
+      "command": "cd desktop && flutter run -d macos",
+      "status": "PASS",
+      "observation": "Flutter rebuilt and launched the Debug app from current source (pubspec version 1.0.15+20). The existing Pistol121 session restored into SHARE_TEST within the run's approximately 30-second build/launch window. The app displayed the Android participant and later its full-screen stream."
     }
   ],
   "remaining": "Find why startup takes more than six minutes and verify normal startup latency after a fresh relaunch. The public maintenance endpoint returning HTTP 200 does not prove authenticated API or Keychain startup behavior."

@@ -54,10 +54,11 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   Вход с записью новой session cookie и повторный вход для старого service всё
   ещё нужно проверить; existing Keychain записи не удалялись. Не переносить
   session cookie в plaintext и не удалять Keychain items.
-- [ ] Найти причину долгого старта свежей macOS Debug-сборки 1.0.15+20:
-  после более чем шести минут на «Подключаемся к гильдии…» приложение всё-таки
-  восстановило сессию и открыло SHARE_TEST prejoin. Public maintenance endpoint
-  отвечает HTTP 200; причина задержки неизвестна —
+- [ ] Найти причину единичной долгой загрузки macOS Debug 1.0.15+20: после более
+  чем шести минут на «Подключаемся к гильдии…» приложение восстановило сессию.
+  Свежий повторный запуск той же версии на подключённом Mac быстро открыл
+  SHARE_TEST и показал Pixel screen share; аномальная задержка не повторилась,
+  но её причина неизвестна —
   [QA-160](../evidence/flutter/qa160-macos-debug-restart-2026-09-30-001.json).
 
 ## P0 — Голосовые каналы и демонстрация экрана
@@ -284,8 +285,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   раза в 4 секунды и не более 14 KiB; проверять сигнатуру/размер до отображения,
   очищать превью при disconnect. Web/Flutter unit и widget suites прошли —
   [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json).
-  На реальном участнике проверить свежесть, остановку после прекращения показа и
-  поведение при reconnect в незакрытом P0 full-path пункте.
+  Полный portrait stream с Pixel виден на Mac без обрезки, но post-fix runtime
+  preview всё ещё не появился на participant cards (видны аватар и «Смотреть
+  экран»); выяснить, почему thumbnail не отображается — [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
 - [x] Выровнять active voice participant grid с CSS `auto-fill/minmax(160px, 1fr)`:
   вычислять число колонок по доступной ширине, сохранять 176 px минимальную высоту,
   web-порядок карточки и 64 px avatar; добавить screen-share badge и доступную кнопку
@@ -593,7 +595,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Собрать Android release APK с upload keystore и проверить APK Signature Scheme v2; извлечённые permissions содержат `POST_NOTIFICATIONS` и Android MediaProjection foreground service — [QA-47](../evidence/flutter/qa47-android-release-apk-signing-2026-09-28-001.json).
 - [x] Подготовить публикацию Android APK в GitVerse Releases без бинарников в Git: release workflow собирает три ABI-варианта, каждый из локальной проверки меньше 95 MB; универсальный APK превышает GitVerse 100 MB asset limit — [QA-104](../evidence/flutter/qa104-gitverse-android-release-apks-2026-09-29-001.json).
 - [x] Добавить GitVerse repository secrets для API-публикации и Android upload keystore; tag-triggered workflow #1679869 завершился успешно и опубликовал все три ABI APK в [релизе android-v1.0.3](https://gitverse.ru/egkurilov/BOOHTACORD/releases/tag/android-v1.0.3). Установка и device acceptance остаются отдельной проверкой — [QA-104](../evidence/flutter/qa104-gitverse-android-release-apks-2026-09-29-001.json).
-- [ ] Устранить timeout публикации APK в GitVerse Releases: job для Android `1.0.14` собрал и подписал все три ABI APK, но `actions/create-release@v1` не уложился в фиксированный API timeout; этот старый релиз оставлен без APK. Перед публикацией актуального `1.0.15` заменить publisher на поддерживающий долгие upload-запросы или безопасный повтор — [QA-158](../evidence/android/qa158-android-release-1.0.14-publish-timeout-2026-09-30-001.json).
+- [ ] Проверить новый GitVerse APK publisher на Windows runner и опубликовать актуальный Android `1.0.15`: вместо единого timeout-prone `actions/create-release@v1` используется отдельная загрузка каждого APK через documented multipart API с 15-минутным timeout и сверкой списка ассетов после ошибки. Шесть mock/API contract tests проходят локально; CI и реальный release пока не запускались — [QA-161](../evidence/android/qa161-gitverse-release-publisher-2026-09-30-001.json). Исторический timeout публикации `1.0.14` — [QA-158](../evidence/android/qa158-android-release-1.0.14-publish-timeout-2026-09-30-001.json).
 - [x] Собрать и опубликовать Android v1.0.4 через tag-triggered GitVerse workflow; release содержит подписанные APK для `arm64-v8a`, `armeabi-v7a` и `x86_64`, бинарники не добавлены в Git. Физическая установка/device acceptance остаётся открытой — [QA-114](../evidence/flutter/qa114-gitverse-android-release-apks-2026-09-29-001.json).
 - [x] Подготовить Android `1.0.5+9`: analyzer, все 253 Flutter-теста и три подписанных ABI APK прошли локальную проверку — [QA-118](../evidence/flutter/qa118-android-release-build-2026-09-29-001.json). Публикация GitVerse через tag `android-v1.0.5` и device acceptance остаются открытыми.
 - [x] Убрать повторную safe-zone подгонку полноразмерного composite artwork: Android 8+ теперь отображает исходный рисунок на full-bleed adaptive background, а foreground прозрачен; pre-26 density mipmaps оставлены прежними. APK проверен `apksigner`, установлен поверх приложения на Pixel 7 без потери данных; в штатном круглом стиле лишней белой внутренней рамки нет — [QA-77](../evidence/flutter/qa77-android-adaptive-launcher-icon-2026-09-28-001.json).

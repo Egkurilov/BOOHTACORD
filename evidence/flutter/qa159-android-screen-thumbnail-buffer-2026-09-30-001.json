@@ -3,8 +3,8 @@
   "kind": "android-screen-thumbnail-buffer",
   "status": "PARTIAL",
   "executed_at": "2026-09-30",
-  "source_revision": "fb1fe51937481c43615df17f2d2ec92d2bd167d3",
-  "summary": "A Pixel 7 to Mac Flutter screen-share check showed the full portrait frame on the Mac, but neither participant card displayed the sender's thumbnail. Source tracing found Android FrameCapturer allocated a direct ByteBuffer then called array(), which is unsupported; the exception was hidden by the best-effort thumbnail caller. The native buffer copy is fixed and regression-tested. Current signed 1.0.15+20 arm64 was built and installed on Pixel; post-fix thumbnail delivery still needs a live peer run.",
+  "source_revision": "9e2c8de",
+  "summary": "Source tracing found Android FrameCapturer allocated a direct ByteBuffer then called array(), which is unsupported; the exception was hidden by the best-effort thumbnail caller. The native buffer copy is fixed and regression-tested. On the installed signed Android 1.0.15+20 arm64 build, a muted Pixel 7 full-screen share rendered on the restarted macOS 1.0.15+20 Debug client with the entire portrait frame visible and letterboxed. The remote participant card still showed an avatar plus 'Смотреть экран', not a thumbnail, so thumbnail publication/display remains unverified after the fix.",
   "checks": [
     {
       "name": "Pre-fix Pixel-to-Mac screen-share baseline",
@@ -48,10 +48,15 @@
       "observation": "The Windows runner completed successfully in 3m12s, including Flutter tests, analyzer and Windows Release build."
     },
     {
+      "name": "Post-fix Pixel 7 to macOS 1.0.15+20 live screen-share preview",
+      "status": "PASS",
+      "observation": "On 2026-09-30, Pixel 7 shared the entire display in SHARE_TEST with its microphone visibly muted. The restarted Mac Debug client joined with its microphone muted and displayed the portrait stream from top status bar through bottom navigation, centered with black side bars and no apparent crop. The Mac showed a 'Смотреть экран' participant-card control, stream statistics, and approximately 5–6 ms voice ping. The stream was stopped, then Mac and Pixel left the voice room. The participant card did not show a captured thumbnail before opening the stream; thumbnail acceptance remains open."
+    },
+    {
       "name": "Post-fix thumbnail on local and remote participant cards",
       "status": "NOT_RUN",
-      "observation": "The post-fix simultaneous Pixel publisher/Mac receiver screen-share run was not performed. The pre-fix run confirms the two clients exchanged screen video, but does not prove thumbnail delivery after the fix."
+      "observation": "A post-fix peer run confirmed full screen video reaches the Mac, but the Mac participant card still showed the avatar and 'Смотреть экран' rather than a thumbnail. The local Pixel participant card also showed its avatar. Thumbnail delivery/rendering after the fix is therefore still unverified and should be investigated separately."
     }
   ],
-  "remaining": "Run a post-fix Pixel screen share with the microphone explicitly disabled and a concurrent Mac viewer. Confirm the local and remote participant cards receive the JPEG thumbnail, stop the share, and verify the full source frame on the viewer."
+  "remaining": "Investigate why the fixed thumbnail path still does not visibly show a sender preview in the local Pixel or remote Mac participant card; add focused runtime evidence after correcting or confirming the expected behavior."
 }
