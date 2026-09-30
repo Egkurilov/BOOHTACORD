@@ -127,6 +127,8 @@ class VideoReceiverStats extends ReceiverStats {
 
   num? framesDecoded;
 
+  num? framesRendered;
+
   num? framesDropped;
 
   num? framesReceived;

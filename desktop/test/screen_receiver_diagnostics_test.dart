@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/livekit_client.dart';
 import 'package:livekit_client/src/stats/stats.dart';
+import 'package:livekit_client/src/track/remote/video.dart' as livekit_remote;
 
 void main() {
   test('computes receiver rates from counters and elapsed time', () {
@@ -14,6 +15,7 @@ void main() {
       timestampMs: 1000,
       bytesReceived: 100000,
       framesDecoded: 20,
+      framesRendered: 20,
       framesDropped: 1,
       packetsLost: 2,
     );
@@ -27,6 +29,7 @@ void main() {
       frameWidth: 1920,
       frameHeight: 1080,
       framesPerSecond: 30,
+      framesRendered: 80,
     );
 
     final metrics = compareScreenReceiverStats(previous, current);
@@ -36,6 +39,28 @@ void main() {
     expect(metrics.droppedFrames, 3);
     expect(metrics.jitterMs, 12);
     expect(metrics.packetsLost, 3);
+    expect(metrics.presentedFps, 30);
+  });
+
+  test('maps native inbound framesRendered into receiver stats', () async {
+    final track = livekit_remote.RemoteVideoTrack(
+      TrackSource.screenShareVideo,
+      _EmptyMediaStream(),
+      _EmptyMediaStreamTrack(),
+      receiver: _StatsReceiver([
+        rtc.StatsReport('inbound-1', 'inbound-rtp', 3000, {
+          'framesDecoded': 90,
+          'framesRendered': 84,
+          'framesDropped': 3,
+        }),
+      ]),
+    );
+
+    final stats = await track.getReceiverStats();
+
+    expect(stats?.framesDecoded, 90);
+    expect(stats?.framesRendered, 84);
+    expect(stats?.framesDropped, 3);
   });
 
   test('does not invent rates without a valid baseline', () {
@@ -269,6 +294,18 @@ class _EmptyMediaStream implements rtc.MediaStream {
 }
 
 class _EmptyMediaStreamTrack implements rtc.MediaStreamTrack {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _StatsReceiver implements rtc.RTCRtpReceiver {
+  _StatsReceiver(this.reports);
+
+  final List<rtc.StatsReport> reports;
+
+  @override
+  Future<List<rtc.StatsReport>> getStats() async => reports;
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

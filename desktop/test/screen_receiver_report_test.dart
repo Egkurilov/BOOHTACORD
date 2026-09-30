@@ -12,6 +12,7 @@ void main() {
         timestampMs: 6000,
         bytesReceived: 100000,
         framesDecoded: 160,
+        framesRendered: 140,
         framesDropped: 4,
         jitterSeconds: 0.012,
         packetsLost: 3,
@@ -22,6 +23,7 @@ void main() {
       metrics: const ScreenReceiverMetrics(
         bitrateKbps: 800,
         decodedFps: 24,
+        presentedFps: 20,
         droppedFrames: 2,
         jitterMs: 12,
         packetsLost: 3,
@@ -35,6 +37,7 @@ void main() {
       'frame_width': 1920,
       'frame_height': 1080,
       'decoded_fps': 24,
+      'presented_fps': 20,
       'bitrate_kbps': 800,
       'jitter_ms': 12,
       'packets_lost': 3,

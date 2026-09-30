@@ -16,6 +16,7 @@ class ScreenReceiverSnapshot {
     required this.timestampMs,
     this.bytesReceived,
     this.framesDecoded,
+    this.framesRendered,
     this.framesDropped,
     this.jitterSeconds,
     this.packetsLost,
@@ -28,6 +29,7 @@ class ScreenReceiverSnapshot {
   final double timestampMs;
   final double? bytesReceived;
   final double? framesDecoded;
+  final double? framesRendered;
   final double? framesDropped;
   final double? jitterSeconds;
   final double? packetsLost;
@@ -41,6 +43,7 @@ class ScreenReceiverMetrics {
   const ScreenReceiverMetrics({
     this.bitrateKbps,
     this.decodedFps,
+    this.presentedFps,
     this.droppedFrames,
     this.jitterMs,
     this.packetsLost,
@@ -49,6 +52,7 @@ class ScreenReceiverMetrics {
 
   final double? bitrateKbps;
   final double? decodedFps;
+  final double? presentedFps;
   final double? droppedFrames;
   final double? jitterMs;
   final double? packetsLost;
@@ -72,6 +76,12 @@ ScreenReceiverMetrics compareScreenReceiverStats(
     decodedFps: _rate(
       previous?.framesDecoded,
       current.framesDecoded,
+      elapsedMs,
+      1000,
+    ),
+    presentedFps: _rate(
+      previous?.framesRendered,
+      current.framesRendered,
       elapsedMs,
       1000,
     ),
@@ -308,6 +318,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
         timestampMs: stats.timestamp.toDouble(),
         bytesReceived: stats.bytesReceived?.toDouble(),
         framesDecoded: stats.framesDecoded?.toDouble(),
+        framesRendered: stats.framesRendered?.toDouble(),
         framesDropped: stats.framesDropped?.toDouble(),
         jitterSeconds: stats.jitter?.toDouble(),
         packetsLost: stats.packetsLost?.toDouble(),

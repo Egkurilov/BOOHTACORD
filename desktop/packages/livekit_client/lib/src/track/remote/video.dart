@@ -91,6 +91,7 @@ class RemoteVideoTrack extends RemoteTrack with VideoTrack {
         receiverStats.bytesReceived = getNumValFromReport(v.values, 'bytesReceived');
         receiverStats.packetsLost = getNumValFromReport(v.values, 'packetsLost');
         receiverStats.framesDecoded = getNumValFromReport(v.values, 'framesDecoded');
+        receiverStats.framesRendered = getNumValFromReport(v.values, 'framesRendered');
         receiverStats.framesDropped = getNumValFromReport(v.values, 'framesDropped');
         receiverStats.framesReceived = getNumValFromReport(v.values, 'framesReceived');
         receiverStats.packetsReceived = getNumValFromReport(v.values, 'packetsReceived');

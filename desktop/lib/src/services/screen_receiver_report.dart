@@ -12,11 +12,12 @@ Map<String, Object>? buildScreenReceiverReport({
   final width = _pixelDimension(current?.frameWidth);
   final height = _pixelDimension(current?.frameHeight);
   final decodedFps = _bounded(metrics?.decodedFps, 240);
+  final presentedFps = _bounded(metrics?.presentedFps, 240);
   final state = !hasTrack
       ? 'waiting_subscription'
       : current == null
       ? 'waiting_first_frame'
-      : decodedFps == 0 || current.framesPerSecond == 0
+      : presentedFps == 0 || current.framesPerSecond == 0
       ? 'stalled'
       : width != null && height != null
       ? 'playing'
@@ -31,6 +32,7 @@ Map<String, Object>? buildScreenReceiverReport({
       'frame_height': height,
     },
     'decoded_fps': ?decodedFps,
+    'presented_fps': ?presentedFps,
     'bitrate_kbps': ?_bounded(metrics?.bitrateKbps, 100000),
     'jitter_ms': ?_bounded(metrics?.jitterMs, 60000),
     'packets_lost': ?_boundedInt(metrics?.packetsLost, 1000000000),
