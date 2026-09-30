@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ChannelNavigation from '../channel/ChannelNavigation.vue'
 import { buildVoiceNavigationPresence } from '../channel/voice_navigation_presence'
-import { createVoiceRosterRealtime } from '../voice/voice_roster_realtime'
+import { createVoiceRosterRealtime, createVoiceRosterReconnectGate } from '../voice/voice_roster_realtime'
 import type { TopologyChannel } from '../channel/topology_client'
 import DirectMessageNavigation from '../direct_message/DirectMessageNavigation.vue'
 import { useDirectMessageStore } from '../direct_message/direct_message_store'
@@ -38,11 +38,11 @@ const screenShareSetupOpen = ref(false)
 const directMessageStore = useDirectMessageStore()
 const directMessageCandidateStore = useDirectMessageCandidateStore()
 const messageStore = useMessageStore()
-const realtimeStore = useRealtimeStore(), voiceRoster = createVoiceRosterRealtime()
+const realtimeStore = useRealtimeStore(), voiceRoster = createVoiceRosterRealtime(), shouldReconnectVoiceRoster = createVoiceRosterReconnectGate(realtimeStore.state === 'CONNECTED')
 const { busy: logoutBusy, error: logoutError, signOut } = bindWorkspaceLogout(voiceConnection, leaveVoice, realtimeStore, () => emit('loggedOut'))
 const guildPresence = useGuildPresence()
 const workspaceRealtime = createWorkspaceRealtime({ topology: topologyStore, messages: messageStore, directMessages: directMessageStore }, realtimeStore, guildPresence, voiceConnection, props.accountId, () => expireWorkspaceSession(voiceConnection, () => emit('sessionExpired')))
-watch(() => realtimeStore.state, (state) => { if (state === 'ERROR' || state === 'DISCONNECTED') guildPresence.invalidate(); if (state === 'CONNECTED') voiceRoster.reconnect() })
+watch(() => realtimeStore.state, (state) => { if (state === 'ERROR' || state === 'DISCONNECTED') guildPresence.invalidate(); if (state === 'CONNECTED' && shouldReconnectVoiceRoster()) voiceRoster.reconnect() })
 const sidebarSection = ref<'channels' | 'messages'>('channels')
 const activePanel = ref<'none' | 'admin' | 'audio' | 'profile' | 'search'>('none')
 const { navOpen, membersOpen, modalDrawer, closeDrawers, toggleNavigation, toggleMembers } = useWorkspaceDrawers(activePanel)

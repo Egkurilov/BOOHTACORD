@@ -1,8 +1,25 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { createVoiceRosterRealtime, type VoiceRosterEvents } from './voice_roster_realtime'
+import {
+  createVoiceRosterRealtime,
+  createVoiceRosterReconnectGate,
+  type VoiceRosterEvents,
+} from './voice_roster_realtime'
 
 describe('voice roster event stream', () => {
+  it('does not reopen the roster stream for the initial realtime connection', () => {
+    const shouldReconnect = createVoiceRosterReconnectGate()
+
+    expect(shouldReconnect()).toBe(false)
+    expect(shouldReconnect()).toBe(true)
+  })
+
+  it('refreshes when the workspace mounted with an already-connected realtime socket', () => {
+    const shouldReconnect = createVoiceRosterReconnectGate(true)
+
+    expect(shouldReconnect()).toBe(true)
+  })
+
   it('uses one server-pushed stream, updates from events, and closes on stop', () => {
     const sources: VoiceRosterEvents[] = []
     const factory = vi.fn(() => {

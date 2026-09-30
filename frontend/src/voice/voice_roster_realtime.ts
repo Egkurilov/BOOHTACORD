@@ -9,6 +9,17 @@ export interface VoiceRosterEvents {
   close(): void
 }
 
+export function createVoiceRosterReconnectGate(alreadyConnected = false): () => boolean {
+  let connectedOnce = alreadyConnected
+  return () => {
+    if (!connectedOnce) {
+      connectedOnce = true
+      return false
+    }
+    return true
+  }
+}
+
 export function createVoiceRosterRealtime(
   open: (url: string) => VoiceRosterEvents = (url) => new EventSource(url) as unknown as VoiceRosterEvents,
 ) {

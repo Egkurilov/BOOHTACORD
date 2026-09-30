@@ -1,0 +1,41 @@
+{
+  "id": "QA-144",
+  "kind": "web-roster-sse-initial-reconnect",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "9432b26",
+  "summary": "The web workspace opened the roster EventSource on mount and also force-reopened it on the initial CONNECTED transition of its separate workspace WebSocket. A connection gate now suppresses only that redundant initial reopen while preserving a forced refresh after a later WebSocket recovery. The server's documented 10-second SSE response lifetime remains intentional and causes sequential browser EventSource requests.",
+  "checks": [
+    {
+      "name": "Test-first regression before implementation",
+      "command": "cd frontend && npm test -- --run src/voice/voice_roster_realtime.spec.ts",
+      "status": "FAIL_EXPECTED",
+      "observation": "The new regression failed because the initial-connect reconnect gate did not yet exist."
+    },
+    {
+      "name": "Focused roster event stream tests",
+      "command": "cd frontend && npm test -- --run src/voice/voice_roster_realtime.spec.ts src/workspace/workspace_realtime_dispatch.spec.ts",
+      "status": "PASS",
+      "observation": "Roster stream lifecycle and workspace realtime tests pass, including suppressing the initial reconnect and refreshing when the workspace mounts with an already-connected socket."
+    },
+    {
+      "name": "Complete frontend test suite",
+      "command": "cd frontend && npm test -- --run",
+      "status": "PASS",
+      "observation": "All 679 tests in 226 files pass."
+    },
+    {
+      "name": "TypeScript check and production frontend build",
+      "command": "cd frontend && npm run build",
+      "status": "PASS",
+      "observation": "vue-tsc and Vite production build pass. Vite reports the existing LiveKit chunk-size advisory (>500 kB)."
+    },
+    {
+      "name": "Live browser connection count and reconnect cadence",
+      "command": "Inspect browser Network panel for /api/v1/voice/rosters/events during initial load and across one 10-second response close.",
+      "status": "NOT_RUN",
+      "observation": "No browser tab is available and the Mac is locked."
+    }
+  ],
+  "remaining": "Verify in a live browser that initial workspace load creates no extra manual EventSource reopen, that the expected sequential reconnect follows the server's 10-second response close, and that a later workspace WebSocket recovery refreshes the roster."
+}
