@@ -1,0 +1,29 @@
+{
+  "id": "QA-146",
+  "kind": "web-member-popover-long-login",
+  "status": "PASS",
+  "executed_at": "2026-09-30",
+  "source_revision": "7d96fc6",
+  "summary": "The web member profile popover now allows the identity text column to shrink within the fixed avatar/popover width, clamps long display names to two lines and truncates long logins with an ellipsis, matching Flutter behavior.",
+  "checks": [
+    {
+      "name": "Test-first long identity regression",
+      "command": "cd frontend && npm test -- --run src/design/shell_reference_geometry.spec.ts",
+      "status": "PASS",
+      "observation": "The new regression initially failed because the identity text column had no min-width constraint and the login had no overflow treatment. It now confirms a shrinkable identity column, two-line display-name clamp and single-line ellipsis for the login."
+    },
+    {
+      "name": "Complete frontend test suite",
+      "command": "cd frontend && npm test -- --run",
+      "status": "PASS",
+      "observation": "All 682 tests in 226 files pass."
+    },
+    {
+      "name": "TypeScript check and production frontend build",
+      "command": "cd frontend && npm run build",
+      "status": "PASS",
+      "observation": "vue-tsc and Vite production build pass. Vite reports the existing LiveKit chunk-size advisory (>500 kB)."
+    }
+  ],
+  "remaining": "The long login and display-name layout is covered by CSS regression assertions; manual screenshot comparison at responsive breakpoints remains part of the broader open visual QA."
+}

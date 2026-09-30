@@ -378,6 +378,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   перейти к первому доступному текстовому каналу — регрессия, полный frontend
   suite (681 тест) и production build пройдены —
   [QA-145](../evidence/flutter/qa145-web-default-text-channel-2026-09-30-001.json).
+- [x] Ограничить текстовую колонку карточки участника и обрезать длинный логин
+  многоточием; длинное отображаемое имя переносится максимум на две строки,
+  как в Flutter. Регрессионный тест и полный frontend suite (682 теста),
+  production build пройдены —
+  [QA-146](../evidence/flutter/qa146-web-member-popover-long-login-2026-09-30-001.json).
 
 ## P1 — Admin и переписка
 

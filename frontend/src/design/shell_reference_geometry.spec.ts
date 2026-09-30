@@ -11,6 +11,12 @@ function token(name: string): number {
 }
 
 describe('1440px PNG shell geometry', () => {
+  it('keeps long member identities inside the profile popover', () => {
+    expect(shell).toContain('.member-popover-identity > div { min-width: 0; flex: 1 1 auto; }')
+    expect(shell).toContain('-webkit-line-clamp: 2')
+    expect(shell).toContain('.member-popover-identity p { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }')
+  })
+
   it('keeps the chat and voice content at the screenshot x coordinates', () => {
     const wideRule = shell.match(/@media \(min-width: 1440px\) \{([\s\S]*?)\n\}/)?.[1] ?? ''
     const wideNav = token('layout-nav-wide')
