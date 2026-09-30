@@ -1,0 +1,40 @@
+{
+  "id": "QA-155",
+  "kind": "conversation-error-live-alert-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-30",
+  "source_revision": "e727737",
+  "summary": "Flutter's shared error banner now announces workspace errors in TEXT, DM and voice as a live region, matching the corresponding web role=alert surfaces without a voice-only nested announcement wrapper.",
+  "checks": [
+    {
+      "name": "Flutter text error regression reproduced before implementation",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'announces text conversation errors as live alerts'",
+      "status": "PASS",
+      "observation": "Before the fix, the text error remained visible but its semantics did not expose the live-region flag."
+    },
+    {
+      "name": "Focused text error announcement",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'announces text conversation errors as live alerts'",
+      "status": "PASS",
+      "observation": "The visible text history error is exposed through a live-region semantic node."
+    },
+    {
+      "name": "Workspace screen widget tests",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 46 workspace screen widget tests pass, including prejoin status and text error announcement regressions."
+    },
+    {
+      "name": "Full Flutter test suite and analyzer",
+      "command": "cd desktop && flutter test --no-pub; flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 288 Flutter tests pass and flutter analyze reports no issues."
+    },
+    {
+      "name": "Native screen-reader announcement priority and timing",
+      "status": "NOT_RUN",
+      "observation": "Widget semantics were checked, but actual spoken announcement timing/priority was not checked with TalkBack, VoiceOver or NVDA."
+    }
+  ],
+  "remaining": "Verify that TEXT/DM/voice errors are announced once, with suitable urgency and focus behavior, through TalkBack on Android, VoiceOver on macOS and NVDA on Windows."
+}

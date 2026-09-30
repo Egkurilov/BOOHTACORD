@@ -425,6 +425,13 @@ peer/platform-проверки и выравниваем viewer с вебом.
 ## P1 — Admin и переписка
 
 - [ ] Проверить administrator REST ACL на работающем backend: роль, блокировка, topology, reset-link, voice kick и audit через два аккаунта.
+- [x] Объявлять общие ошибки загрузки TEXT/DM и voice как live alert, как web
+  `role="alert"`; общий Flutter error banner покрывает все эти поверхности, а
+  regression test сначала подтвердил отсутствие announcement в TEXT. Focused,
+  workspace, полный Flutter suite (288) и analyzer проходят —
+  [QA-155](../evidence/flutter/qa155-conversation-error-live-alert-parity-2026-09-30-001.json).
+  Фактическое assertive/polite поведение TalkBack/VoiceOver/NVDA остаётся
+  непроверенным в общей device screen-reader приёмке.
 - [ ] Проверить серверную очистку `UNATTACHED` вложений через 24 часа и восстановление после сбоя на реальном deployment; клиентского DELETE-контракта нет. Пройти live 507/partial-upload UX на TEXT/DM и устройствах.
 - [x] Для macOS sandbox разрешить запись только в выбранный пользователем путь,
   поскольку скачивание вложения пишет байты после `NSSavePanel`; сохранить
