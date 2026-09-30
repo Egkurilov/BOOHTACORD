@@ -4898,10 +4898,7 @@ class _VoiceParticipantRoom extends StatelessWidget {
           ),
           if (state.error != null) ...[
             const SizedBox(height: 18),
-            Semantics(
-              liveRegion: true,
-              child: _ErrorBanner(message: state.error!),
-            ),
+            _ErrorBanner(message: state.error!),
           ],
           if (state.microphoneUnavailable) ...[
             const SizedBox(height: 14),
@@ -7464,21 +7461,24 @@ class _ErrorBanner extends StatelessWidget {
   const _ErrorBanner({required this.message});
   final String message;
   @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-    color: const Color(0xFF422830),
-    child: Row(
-      children: [
-        const Icon(Icons.error_outline, color: GcColors.danger, size: 18),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            message,
-            style: const TextStyle(color: GcColors.danger, fontSize: 13),
+  Widget build(BuildContext context) => Semantics(
+    liveRegion: true,
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      color: const Color(0xFF422830),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: GcColors.danger, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: GcColors.danger, fontSize: 13),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }

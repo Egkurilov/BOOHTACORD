@@ -702,6 +702,35 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('announces text conversation errors as live alerts', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    state
+      ..selectedChannel = _PortraitApi.channel
+      ..error = 'Не удалось загрузить историю.';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final error = find.text('Не удалось загрузить историю.');
+    expect(error, findsOneWidget);
+    expect(tester.getSemantics(error).flagsCollection.isLiveRegion, isTrue);
+
+    semantics.dispose();
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('shows the voice roster before joining the room', (tester) async {
     final semantics = tester.ensureSemantics();
     tester.view.devicePixelRatio = 1;
