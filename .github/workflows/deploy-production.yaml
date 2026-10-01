@@ -94,6 +94,13 @@ jobs:
       - name: Inspect Docker storage before guarded release
         shell: bash
         run: bash scripts/qa08_capacity/prepare_host_storage.sh
+      - name: Recover attachment filesystem headroom from unused Docker data
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
+          ssh_options=(-i "$HOME/.ssh/id_deploy" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          ssh "${ssh_options[@]}" "$remote" 'sudo -n bash -s' < scripts/qa08_capacity/reclaim_deploy_headroom.sh
 
       - name: Package the checked-out source
         id: source
