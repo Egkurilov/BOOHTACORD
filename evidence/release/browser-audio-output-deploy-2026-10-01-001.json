@@ -1,0 +1,42 @@
+{
+  "id": "browser-audio-output-deploy-2026-10-01-001",
+  "kind": "production-deploy",
+  "status": "PASS_DEPLOY_LIVE_AUDIO_NOT_RUN",
+  "executed_at": "2026-10-01T19:38:20Z",
+  "revision": "2c2ac04b6a9f978c6a9107e5073ec8b7c8cafa00",
+  "branch": "master",
+  "observer": "Codex",
+  "authorization": "User requested merge into master and deployment if needed.",
+  "environment": "https://v.bootybay.ru",
+  "scenario": "Publish the reviewed native audio mute/volume correction, verify the deployed revision, static asset delivery and existing media service.",
+  "checks": [
+    {"name": "local_frontend_suite", "result": "PASS", "test_files": 234, "tests": 721},
+    {"name": "local_typescript_vite_build", "result": "PASS"},
+    {"name": "production_workflow", "result": "PASS", "run": 22,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36915082882",
+      "jobs": ["backend", "frontend", "release_guard", "deploy"]},
+    {"name": "general_ci_at_observation", "result": "IN_PROGRESS",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36915083375",
+      "passed": ["contracts", "backend", "frontend"], "pending": ["Flutter Android build checks", "Windows release build", "publish"]},
+    {"name": "running_api_revision", "result": "PASS", "revision": "2c2ac04b6a9f978c6a9107e5073ec8b7c8cafa00"},
+    {"name": "running_web_revision", "result": "PASS", "revision": "2c2ac04b6a9f978c6a9107e5073ec8b7c8cafa00"},
+    {"name": "public_health", "result": "PASS", "http_status": 200, "body_status": "ok"},
+    {"name": "public_frontend", "result": "PASS", "http_status": 200,
+      "previous_asset": "/assets/index-BFWtY3nd.js", "current_asset": "/assets/index-C6S58CP8.js",
+      "asset_http_status": 200, "asset_bytes": 540161, "matches_local_build_asset_name": true},
+    {"name": "livekit_process_preserved", "result": "PASS",
+      "started_before": "2026-09-23T21:48:17.428983741Z", "started_after": "2026-09-23T21:48:17.428983741Z"},
+    {"name": "media_snapshot_after_deploy", "result": "PASS", "snapshot_success": 1,
+      "participants_active": 4, "screen_streams_active": 1, "realtime_connections_active": 6},
+    {"name": "audible_browser_acceptance", "result": "NOT_RUN", "detail": "Browser connector remains unavailable; user must load the new frontend to exercise the controls."}
+  ],
+  "images": {
+    "api": "voice-platform-api@sha256:647f34b247bdd13cbb2ef4f604f854ea28289ddc9da25e03f19e1761f51af82e",
+    "web": "voice-platform-web@sha256:a4dc906675c9c1724fc9c9dbebb5ff52bd240ba868fc669e32540f3421677e4a"
+  },
+  "limitations": [
+    "Successful rollout and unit tests do not establish audible behavior or zero interruption at each client.",
+    "Existing open tabs keep their previous JavaScript until reloaded; reload a viewer tab to use this correction.",
+    "This release changes audio output controls. The stream profile scaling and FPS findings remain follow-up work; QA-06/QA-07 remain open."
+  ]
+}

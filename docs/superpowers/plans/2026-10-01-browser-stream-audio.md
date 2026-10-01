@@ -52,4 +52,3 @@ this.gain.gain.value = this.element.volume > 0 ? volume / this.element.volume : 
 - [x] Run the audio gain, screen audio toggle, remote voice playback and volume controls tests.
 - [x] Run `npm run build`; record exact results and the remaining live acceptance limitation.
 - [x] Inspect the diff, status and changed line counts. Keep production deployment as a separate packet after live acceptance.
-
