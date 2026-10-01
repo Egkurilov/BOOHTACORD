@@ -18,7 +18,9 @@ def tools_directory():
 
 def certificate(text, *, release):
     hashes = re.findall(r'Signer #\d+ certificate SHA-256 digest:\s*([0-9a-f]{64})', text)
-    if len(hashes) != 1: raise ValueError('Expected exactly one verified APK signer')
+    if len(hashes) != 1:
+        # apksigner output contains public certificate data, never the private key.
+        raise ValueError('Expected exactly one verified APK signer; observed: ' + repr(text[:3000]))
     if release and hashes[0] != CERTIFICATE: raise ValueError('Android release signing identity changed')
     return hashes[0]
 
