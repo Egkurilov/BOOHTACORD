@@ -38,6 +38,80 @@ void main() {
     expect(find.text(appVersionLabel), findsOneWidget);
   });
 
+  testWidgets('password reset link dialog stays modal until Escape', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(ApiClient())..phase = AppPhase.signedOut;
+    addTearDown(state.dispose);
+    await tester.pumpWidget(MaterialApp(home: AuthScreen(state: state)));
+
+    final opener = tester.widget<TextButton>(
+      find.ancestor(
+        of: find.text('Есть ссылка для сброса пароля?'),
+        matching: find.byType(TextButton),
+      ),
+    );
+    opener.focusNode!.requestFocus();
+    await tester.pump();
+    expect(opener.focusNode!.hasFocus, isTrue);
+
+    await tester.tap(find.text('Есть ссылка для сброса пароля?'));
+    await tester.pumpAndSettle();
+
+    final title = find.text('Ссылка для сброса пароля');
+    final route = ModalRoute.of(tester.element(title))!;
+    expect(route.barrierDismissible, isFalse);
+    expect(route.traversalEdgeBehavior, TraversalEdgeBehavior.closedLoop);
+
+    await tester.tapAt(const Offset(4, 4));
+    await tester.pumpAndSettle();
+    expect(title, findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(title, findsNothing);
+    expect(opener.focusNode!.hasFocus, isTrue);
+  });
+
+  testWidgets('server address dialog stays modal until Escape', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(ApiClient())..phase = AppPhase.signedOut;
+    addTearDown(state.dispose);
+    await tester.pumpWidget(MaterialApp(home: AuthScreen(state: state)));
+
+    final opener = tester.widget<TextButton>(
+      find.ancestor(
+        of: find.textContaining('https://'),
+        matching: find.byType(TextButton),
+      ),
+    );
+    opener.focusNode!.requestFocus();
+    await tester.pump();
+    expect(opener.focusNode!.hasFocus, isTrue);
+
+    await tester.tap(find.textContaining('https://'));
+    await tester.pumpAndSettle();
+
+    final title = find.text('Сервер гильдии');
+    final route = ModalRoute.of(tester.element(title))!;
+    expect(route.barrierDismissible, isFalse);
+    expect(route.traversalEdgeBehavior, TraversalEdgeBehavior.closedLoop);
+
+    await tester.tapAt(const Offset(4, 4));
+    await tester.pumpAndSettle();
+    expect(title, findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(title, findsNothing);
+    expect(opener.focusNode!.hasFocus, isTrue);
+  });
+
   testWidgets('login and password fields keep a usable mobile height', (
     tester,
   ) async {

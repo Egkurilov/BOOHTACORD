@@ -1,0 +1,32 @@
+{
+  "id": "QA-187",
+  "kind": "authentication-dialog-keyboard-and-controller-lifecycle",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "09de6289398a00be9821e36a9b394a3535e653a3",
+  "summary": "Password-reset-link and server-address dialogs are modal on backdrop taps, use closed-loop keyboard traversal, support Escape cancellation and restore focus to the opener. Dialog-owned text controllers live until the route transition removes their fields, fixing use-after-dispose assertions during close.",
+  "checks": [
+    {
+      "name": "Auth dialog barrier, traversal and Escape regressions",
+      "command": "cd desktop && flutter test test/auth_screen_test.dart",
+      "status": "PASS",
+      "observation": "Both new widget tests verify barrier taps leave the dialog open, routes use closed-loop traversal, Escape dismisses them, focus returns to the opener and the reverse transition completes without a disposed-controller exception."
+    },
+    {
+      "name": "Authentication screen regression suite",
+      "command": "cd desktop && flutter test test/auth_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 12 auth screen widget tests passed, including layout, tabs, login validation and native error handling."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "limitations": [
+    "Physical keyboard and screen-reader acceptance was not performed on macOS, Windows or Android."
+  ],
+  "remaining": "Verify native screen-reader announcements on macOS, Windows and Android; broader matched screenshots remain open."
+}

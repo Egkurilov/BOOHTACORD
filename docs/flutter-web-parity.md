@@ -136,6 +136,13 @@ prevents a late frame from completing the same request a second time. Android
 unit tests, the Dart thumbnail pipeline/widget tests and analyzer pass, but the
 Pixel app-only preview remains pending runtime acceptance —
 [QA-186](../evidence/flutter/qa186-android-local-preview-frame-timeout-2026-10-01-001.json).
+The password-reset-link and server-address dialogs on Flutter authentication
+now remain open on scrim taps, keep keyboard traversal modal, close on Escape and
+restore focus to their opener. Their text controllers are owned by the dialog
+routes and disposed only when the reverse transition removes the fields, avoiding
+the earlier use-after-dispose assertion. Auth widget tests and analyzer pass;
+physical screen-reader acceptance remains open —
+[QA-187](../evidence/flutter/qa187-auth-dialog-keyboard-lifecycle-2026-10-01-001.json).
 The macOS Debug 1.0.15+20 rebuild eventually restored the existing session and
 reached SHARE_TEST prejoin after more than six minutes on its loading screen;
 on 2026-10-01 a live process sample reproduced the wait in

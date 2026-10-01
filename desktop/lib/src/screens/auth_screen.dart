@@ -1,6 +1,7 @@
 import 'dart:ui' show SemanticsRole;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 
 import '../app_version.dart';
 import '../app_state.dart';
@@ -19,6 +20,12 @@ class _AuthScreenState extends State<AuthScreen> {
   final _password = TextEditingController();
   final _loginFocus = FocusNode(debugLabel: 'auth-login');
   final _passwordFocus = FocusNode(debugLabel: 'auth-password');
+  final _passwordResetButtonFocus = FocusNode(
+    debugLabel: 'auth-password-reset-link-button',
+  );
+  final _serverAddressButtonFocus = FocusNode(
+    debugLabel: 'auth-server-address-button',
+  );
   bool _register = false;
   bool _pending = false;
   late final bool _focusLogin;
@@ -36,6 +43,8 @@ class _AuthScreenState extends State<AuthScreen> {
     _password.dispose();
     _loginFocus.dispose();
     _passwordFocus.dispose();
+    _passwordResetButtonFocus.dispose();
+    _serverAddressButtonFocus.dispose();
     super.dispose();
   }
 
@@ -54,76 +63,28 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _usePasswordResetLink() async {
-    final controller = TextEditingController();
     final link = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: GcColors.surface,
-        title: const Text('Ссылка для сброса пароля'),
-        content: SizedBox(
-          width: 460,
-          child: TextField(
-            controller: controller,
-            autofocus: true,
-            obscureText: true,
-            maxLength: 512,
-            enableIMEPersonalizedLearning: false,
-            decoration: const InputDecoration(
-              labelText: 'Одноразовая ссылка администратора',
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Продолжить'),
-          ),
-        ],
-      ),
+      barrierDismissible: false,
+      traversalEdgeBehavior: TraversalEdgeBehavior.closedLoop,
+      builder: (_) => const _PasswordResetLinkDialog(),
     );
-    controller.clear();
-    controller.dispose();
     if (!mounted || link == null) return;
     widget.state.openPasswordResetLink(link);
   }
 
   Future<void> _changeServer() async {
-    final controller = TextEditingController(
-      text: widget.state.serverUrl.replaceFirst(RegExp(r'/api/v1$'), ''),
-    );
     final value = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: GcColors.surface,
-        title: const Text('Сервер гильдии'),
-        content: SizedBox(
-          width: 460,
-          child: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'HTTPS-адрес',
-              hintText: 'https://guild.example.com',
-            ),
-          ),
+      barrierDismissible: false,
+      traversalEdgeBehavior: TraversalEdgeBehavior.closedLoop,
+      builder: (_) => _ServerAddressDialog(
+        initialServerUrl: widget.state.serverUrl.replaceFirst(
+          RegExp(r'/api/v1$'),
+          '',
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Сохранить'),
-          ),
-        ],
       ),
     );
-    controller.dispose();
     if (value == null || value.isEmpty) return;
     try {
       await widget.state.setServer(value);
@@ -301,11 +262,13 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                           const SizedBox(height: 16),
                           TextButton.icon(
+                            focusNode: _passwordResetButtonFocus,
                             onPressed: _pending ? null : _usePasswordResetLink,
                             icon: const Icon(Icons.password_outlined, size: 18),
                             label: const Text('Есть ссылка для сброса пароля?'),
                           ),
                           TextButton.icon(
+                            focusNode: _serverAddressButtonFocus,
                             onPressed: _pending ? null : _changeServer,
                             icon: const Icon(Icons.dns_outlined, size: 18),
                             label: Text(
@@ -333,6 +296,114 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
       );
     },
+  );
+}
+
+class _PasswordResetLinkDialog extends StatefulWidget {
+  const _PasswordResetLinkDialog();
+
+  @override
+  State<_PasswordResetLinkDialog> createState() =>
+      _PasswordResetLinkDialogState();
+}
+
+class _PasswordResetLinkDialogState extends State<_PasswordResetLinkDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.clear();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => CallbackShortcuts(
+    bindings: {
+      const SingleActivator(LogicalKeyboardKey.escape): () =>
+          Navigator.of(context).pop(),
+    },
+    child: AlertDialog(
+      backgroundColor: GcColors.surface,
+      title: const Text('Ссылка для сброса пароля'),
+      content: SizedBox(
+        width: 460,
+        child: TextField(
+          controller: _controller,
+          autofocus: true,
+          obscureText: true,
+          maxLength: 512,
+          enableIMEPersonalizedLearning: false,
+          decoration: const InputDecoration(
+            labelText: 'Одноразовая ссылка администратора',
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Отмена'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text),
+          child: const Text('Продолжить'),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ServerAddressDialog extends StatefulWidget {
+  const _ServerAddressDialog({required this.initialServerUrl});
+
+  final String initialServerUrl;
+
+  @override
+  State<_ServerAddressDialog> createState() => _ServerAddressDialogState();
+}
+
+class _ServerAddressDialogState extends State<_ServerAddressDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialServerUrl,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => CallbackShortcuts(
+    bindings: {
+      const SingleActivator(LogicalKeyboardKey.escape): () =>
+          Navigator.of(context).pop(),
+    },
+    child: AlertDialog(
+      backgroundColor: GcColors.surface,
+      title: const Text('Сервер гильдии'),
+      content: SizedBox(
+        width: 460,
+        child: TextField(
+          controller: _controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'HTTPS-адрес',
+            hintText: 'https://guild.example.com',
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Отмена'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text),
+          child: const Text('Сохранить'),
+        ),
+      ],
+    ),
   );
 }
 
