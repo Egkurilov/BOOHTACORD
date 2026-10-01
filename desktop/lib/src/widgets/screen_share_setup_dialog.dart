@@ -41,6 +41,7 @@ class ScreenShareSetupDialog extends StatefulWidget {
   }) => showDialog<ScreenShareSetupSelection>(
     context: context,
     barrierDismissible: false,
+    traversalEdgeBehavior: TraversalEdgeBehavior.closedLoop,
     builder: (_) => ScreenShareSetupDialog(
       initialQuality: initialQuality,
       allowSourceSelection: allowSourceSelection,

@@ -2,6 +2,7 @@ import 'package:boohtacord_desktop/src/services/screen_share_quality.dart';
 import 'package:boohtacord_desktop/src/widgets/screen_share_setup_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart';
 
@@ -156,6 +157,51 @@ void main() {
     expect(result?.sourceId, isNull);
     expect(result?.quality.resolution, 1440);
     expect(result?.quality.frameRate, 60);
+  });
+
+  testWidgets('keeps keyboard traversal inside screen-share setup', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => ScreenShareSetupDialog.show(
+                context,
+                initialQuality: ScreenShareQuality.balanced,
+                allowSourceSelection: false,
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    final dialogScope = FocusScope.of(tester.element(find.byType(Dialog)));
+    expect(dialogScope.traversalEdgeBehavior, TraversalEdgeBehavior.closedLoop);
+    final focusables = dialogScope.traversalDescendants
+        .where((node) => node.context != null)
+        .toList();
+    expect(focusables, isNotEmpty);
+
+    focusables.last.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(focusables, contains(FocusManager.instance.primaryFocus));
+
+    focusables.first.requestFocus();
+    await tester.pump();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    expect(focusables, contains(FocusManager.instance.primaryFocus));
   });
 
   testWidgets('iOS setup explains app-only capture before starting', (
