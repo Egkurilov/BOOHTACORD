@@ -28,6 +28,13 @@
       "observation": "Selected the Calculator task in Android's Show an app picker at the default 720p/15 FPS profile. After returning BOOHTACORD, the large local self-preview was fully black, while the participant card showed the Calculator keypad thumbnail. The screenshot was taken about 24 seconds after start. The system showed the active screen-share timer, and the room UI continued to report the microphone muted."
     },
     {
+      "name": "Mac prejoin view while Pixel publishes",
+      "device": "macOS BOOHTACORD, authenticated Pistol121 session, SHARE_TEST",
+      "command": "Open SHARE_TEST without joining voice; inspect prejoin and screen-share affordances",
+      "status": "PUBLISHING_VISIBLE_PREVIEW_NOT_OPENED",
+      "observation": "The Mac prejoin participant card updated to Pistol121_android and displayed 'Идёт трансляция'. Clicking that badge and the screen icon in the channel sidebar did not open a video viewer; the large content remained on the 'Вы не подключены' prejoin card. The Mac account was already listed in the separate Voice channel, so we did not join SHARE_TEST and risk transferring its voice lease."
+    },
+    {
       "name": "Stop and cleanup",
       "device": "Google Pixel 7, Android 17/API 37",
       "command": "Stop share, leave voice; adb shell dumpsys media_projection",
@@ -36,7 +43,7 @@
     }
   ],
   "limitations": [
-    "The room had no paired remote receiver, so web/macOS playback and receiver frame delivery were not tested.",
+    "The Mac observed active-publisher metadata in prejoin but was not connected as a media receiver; web/macOS playback and receiver frame delivery were not tested.",
     "In this Flutter client, track.captureFrame() calls the Android captureFrame method, whose FrameCapturer temporarily attaches as a sink to the same VideoTrack. Because the local thumbnail map is in-memory only and the app process restarted for the APK update, the visible Calculator thumbnail indicates at least one fresh frame reached a track sink. This does not prove the VideoTrackRenderer sink received a frame, frames were continuously delivered, or the outgoing sender encoded them.",
     "This was a runtime reproduction only; no source fix was made and FE-59 remains open."
   ],
