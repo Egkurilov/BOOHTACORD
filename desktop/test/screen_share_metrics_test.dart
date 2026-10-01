@@ -3,6 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('converts WebRTC microsecond timestamps to milliseconds', () {
+    expect(webRtcStatsTimestampMs(5000000), 5000);
+    expect(webRtcStatsTimestampMs(10000000), 10000);
+  });
+
   test('maps supported native clients to server telemetry platforms', () {
     expect(
       nativeScreenMetricsPlatform(TargetPlatform.android),

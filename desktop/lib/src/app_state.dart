@@ -3411,7 +3411,7 @@ class AppState extends ChangeNotifier {
         stats
             .map(
               (item) => ScreenShareSenderStats(
-                timestampMs: item.timestamp.toDouble(),
+                timestampMs: webRtcStatsTimestampMs(item.timestamp),
                 frameWidth: item.frameWidth,
                 frameHeight: item.frameHeight,
                 bytesSent: item.bytesSent,
@@ -3438,7 +3438,7 @@ class AppState extends ChangeNotifier {
             .map(
               (item) => SenderMediaSample(
                 streamId: item.streamId,
-                timestamp: item.timestamp,
+                timestamp: webRtcStatsTimestampMs(item.timestamp),
                 frameWidth: item.frameWidth,
                 frameHeight: item.frameHeight,
                 packetsSent: item.packetsSent,

@@ -6,6 +6,7 @@ import 'package:boohtacord_desktop/src/telemetry/report_media/sender_sample.dart
 import 'package:boohtacord_desktop/src/telemetry/report_media/sender.dart';
 import 'package:boohtacord_desktop/src/telemetry/report_media/connection.dart';
 import 'package:boohtacord_desktop/src/services/screen_share_quality.dart';
+import 'package:boohtacord_desktop/src/services/screen_share_metrics.dart';
 
 void main() {
   test('sender reports ten-second loss independently of lifetime totals', () {
@@ -39,6 +40,28 @@ void main() {
     expect(fields, containsPair('connection_quality', 'GOOD'));
     telemetry.clear();
     expect(sample(30000, 13000, 2500), isNot(contains('packet_loss_percent')));
+  });
+  test('sender loss window accepts converted WebRTC timestamps', () {
+    final telemetry = SenderMediaTelemetry();
+    Map<String, Object> sample(int timestampUs, int sent, int lost) =>
+        telemetry.fields(
+          [
+            SenderMediaSample(
+              streamId: 'stream-a',
+              timestamp: webRtcStatsTimestampMs(timestampUs),
+              packetsSent: sent,
+              packetsLost: lost,
+            ),
+          ],
+          const ScreenShareQuality(resolution: 720, frameRate: 15),
+          ConnectionQuality.good,
+        );
+    expect(sample(1000000, 1000, 10), isNot(contains('packet_loss_percent')));
+    expect(sample(6000000, 1500, 15), isNot(contains('packet_loss_percent')));
+    expect(
+      sample(11000000, 2000, 20),
+      containsPair('packet_loss_percent', 1.0),
+    );
   });
   test(
     'connection reporting preserves missing RTT and throttles failures',

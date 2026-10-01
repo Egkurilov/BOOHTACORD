@@ -86,8 +86,38 @@ class TracesDashboardTest(unittest.TestCase):
         self.assertEqual(group['options']['fields']['media.rtt_ms']['aggregations'], ['last'])
         units = {o['matcher']['options']: next((p['value'] for p in o['properties'] if p['id'] == 'unit'), None)
                  for o in panel['fieldConfig']['overrides']}
-        self.assertEqual(units['media.packet_loss_percent (last)'], 'percent')
+        self.assertEqual(units['packet_loss_display'], 'percent')
         self.assertEqual(units['media.rtt_ms (last)'], 'ms')
+
+    def test_sender_fps_gap_and_packet_loss_are_visible(self):
+        panel = self.panels[33]
+        transforms = panel['transformations']
+        ratio = next(t for t in transforms if t['id'] == 'calculateField')
+        self.assertEqual(ratio['options']['mode'], 'binary')
+        self.assertEqual(ratio['options']['binary'], {
+            'left': 'media.encoded_fps (last)', 'operator': '/',
+            'right': 'media.target_fps (last)',
+        })
+        self.assertEqual(ratio['options']['alias'], 'fps_target_ratio')
+        loss = next(t for t in transforms if t['id'] == 'calculateField' and t is not ratio)
+        self.assertEqual(loss['options']['binary'], {
+            'left': 'media.packet_loss_percent (last)', 'operator': '+', 'right': '0',
+        })
+        self.assertEqual(loss['options']['alias'], 'packet_loss_display')
+        order = next(t for t in transforms if t['id'] == 'organize')['options']['indexByName']
+        self.assertLess(order['fps_target_ratio'], order['media.frame_width (last)'])
+        self.assertLess(order['packet_loss_display'], order['media.frame_width (last)'])
+        overrides = {o['matcher']['options']: {p['id']: p['value'] for p in o['properties']}
+                     for o in panel['fieldConfig']['overrides']}
+        self.assertEqual(overrides['fps_target_ratio']['unit'], 'percentunit')
+        self.assertEqual(overrides['fps_target_ratio']['custom.cellOptions']['type'], 'color-background')
+        self.assertEqual(overrides['fps_target_ratio']['mappings'][0]['options']['match'], 'null+nan')
+        self.assertEqual(overrides['fps_target_ratio']['thresholds']['steps'], [
+            {'color': 'red', 'value': None},
+            {'color': 'orange', 'value': 0.5},
+            {'color': 'green', 'value': 0.8},
+        ])
+        self.assertEqual(overrides['packet_loss_display']['mappings'][0]['options']['result']['text'], 'нет данных')
 
 
 if __name__ == '__main__':

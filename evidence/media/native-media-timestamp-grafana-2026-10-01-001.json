@@ -1,0 +1,19 @@
+{
+  "id": "native-media-timestamp-grafana-2026-10-01-001",
+  "kind": "media-diagnostics-integration-check",
+  "status": "PASS_LOCAL_AND_DASHBOARD_UI_NEW_CLIENT_PENDING",
+  "observed_at_utc": "2026-10-01T08:02:28Z",
+  "observations": [
+    "Live macOS sender sample: 9 FPS versus 30 target, 0.2 kbps, 5.4 ms RTT, EXCELLENT connection, adaptation none; neighboring sample had 17 FPS.",
+    "Live Android sender samples: 2-5 FPS versus 15 target over several 5-second samples, 0-0.2 kbps, 7-13 ms RTT, adaptation none.",
+    "Neither sampled sender trace contained packet_loss_percent. Live Grafana panel lacked the loss column present in repository dashboard JSON."
+  ],
+  "root_cause": "Bundled Flutter WebRTC sends RTCStats timestamp_us; native reporter treated it as milliseconds. This divides computed bitrate by about 1000 and prevents the 9-12 second loss window from completing. The traces do not establish why actual FPS was below the selected maximum profile.",
+  "checks": [
+    {"name": "native_sender_and_loss_tests", "result": "PASS_LOCAL"},
+    {"name": "grafana_dashboard_contract_tests", "result": "PASS_LOCAL"},
+    {"name": "live_dashboard_import_and_fps_color", "result": "PASS_UI", "detail": "Old macOS sender sample shows 30% in a red cell; voice and receiver rows show a gray dash."},
+    {"name": "new_native_client_packet_loss_sample", "result": "NOT_RUN", "detail": "Existing native installations still report old data; historical packet loss cannot be reconstructed."}
+  ],
+  "privacy": "No account names, account IDs, session IDs, media content, or authentication data are recorded in this evidence."
+}
