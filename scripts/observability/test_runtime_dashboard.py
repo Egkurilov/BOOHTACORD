@@ -25,7 +25,9 @@ class RuntimeDashboardTest(unittest.TestCase):
         traffic = self.panels[5]['targets'][0]['expr']
         latency = self.panels[6]['targets'][0]['expr']
         self.assertIn('rate(boohtacord_http_server_requests_total[$__rate_interval])', traffic)
-        self.assertIn('rate(boohtacord_http_server_duration_seconds_bucket[$__range])', latency)
+        self.assertIn('rate(boohtacord_http_server_duration_seconds_bucket{', latency)
+        self.assertIn('}[$__range])', latency)
+        self.assertIn('http_route!="GET /api/v1/realtime"', latency)
         self.assertTrue(latency.endswith('>= 0'))
 
 

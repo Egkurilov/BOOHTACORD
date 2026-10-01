@@ -36,15 +36,16 @@
     "A Web client api.request for DELETE /api/v1/voice/leases/{leaseID} had span status error while the corresponding API span and HTTP response were 204. The deployed client classification is inconsistent with the successful response; exact cause remains unproven.",
     "The selected media sample showed screen sender FPS below the target with no measured packet loss. Static or low-motion content could explain low encoded FPS, so this is not a confirmed quality fault."
   ],
-  "change": "Runtime dashboard traffic, error share and p95 use the selected time range instead of cumulative counters; p95 excludes NaN routes without samples.",
+  "change": "Runtime dashboard traffic, error share and p95 use the selected time range instead of cumulative counters; p95 excludes WebSocket and NaN routes without samples.",
   "validation": [
     "10 Python dashboard contract tests PASS",
-    "Grafana Explore accepted the equivalent 3h histogram_quantile rate query and returned 19 finite route values after filtering NaN",
+    "Grafana Explore accepted the equivalent 3h histogram_quantile rate query and returned 18 finite HTTP routes after excluding WebSocket and NaN",
+    "Production Runtime dashboard import confirmed: 3309 interval requests and 0% 5xx in the fixed window",
     "git diff --check PASS"
   ],
   "limitations": [
     "Full per-trace enumeration was not possible through the available Grafana UI. Tempo and Prometheus private APIs were not reachable from this workstation and SSH authentication to the monitoring host failed.",
-    "The repository dashboard change has not been imported into production Grafana.",
+    "Full per-trace enumeration and client transport root cause remain unverified.",
     "Client errors lack enough safe error classification attributes to distinguish timeout, cancellation, DNS and transport failure.",
     "No private account, session, trace, token or media identifiers are stored in this record."
   ]
