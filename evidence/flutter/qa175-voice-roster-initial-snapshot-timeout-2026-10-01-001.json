@@ -1,0 +1,28 @@
+{
+  "id": "QA-175",
+  "kind": "voice-roster-initial-snapshot-timeout",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "working tree based on 2aa001f",
+  "summary": "The initial roster SSE snapshot now uses the same five-second context deadline as event-triggered refresh snapshots. A stalled initial SFU/database load can return service unavailable instead of leaving prejoin without a response indefinitely.",
+  "checks": [
+    {
+      "name": "Test-first initial snapshot deadline regression",
+      "status": "PASS",
+      "observation": "The new focused test failed before the fix because the initial Lister.List received no context deadline. After the fix, the lister receives a deadline no more than five seconds away."
+    },
+    {
+      "name": "Backend test suite",
+      "command": "cd backend && go test ./...",
+      "status": "PASS",
+      "observation": "All Go backend packages passed."
+    },
+    {
+      "name": "Backend static analysis",
+      "command": "cd backend && go vet ./...",
+      "status": "PASS",
+      "observation": "go vet completed without diagnostics."
+    }
+  ],
+  "limits": "No production deployment, LiveKit outage reproduction, client retry observation, two-account ACL test, device test, or ADB validation was performed."
+}

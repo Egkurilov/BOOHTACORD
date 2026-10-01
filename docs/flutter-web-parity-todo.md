@@ -309,6 +309,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Для подтверждения первопричины наблюдавшегося production сбоя требуется
   deployment с этой метрикой и новый отказ; ACL/privacy/live roster acceptance
   остаются открытыми.
+- [x] Ограничить initial SSE roster snapshot тем же 5-секундным context timeout,
+  что и invalidation-triggered snapshots. До исправления regression подтверждал,
+  что initial `Lister.List` получал unbounded request context; после исправления
+  полный backend suite и `go vet ./...` проходят —
+  [QA-175](../evidence/flutter/qa175-voice-roster-initial-snapshot-timeout-2026-10-01-001.json).
+  Production error correlation/recovery и two-account acceptance остаются открытыми.
 - [x] Не терять roster invalidation, приходящий во время загрузки исходного SSE
   snapshot: подписываться до ACL-проверенного чтения и затем сразу перечитывать
   roster по накопленному событию. Новый тест сначала воспроизводит timeout на

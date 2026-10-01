@@ -22,6 +22,20 @@ func (stub *rosterStub) List(_ context.Context, actor string) (roster.Result, er
 	return roster.Result{Channels: []roster.ChannelRoster{{ChannelID: "room", Participants: []roster.Participant{}}}}, nil
 }
 
+type deadlineRosterStub struct {
+	deadlineAt  time.Time
+	hasDeadline bool
+	cancel      context.CancelFunc
+}
+
+func (stub *deadlineRosterStub) List(ctx context.Context, _ string) (roster.Result, error) {
+	stub.deadlineAt, stub.hasDeadline = ctx.Deadline()
+	if stub.cancel != nil {
+		stub.cancel()
+	}
+	return roster.Result{Channels: []roster.ChannelRoster{}}, nil
+}
+
 type notifyingRosterStub struct {
 	notifier *Notifier
 	calls    int
@@ -85,5 +99,22 @@ func TestStreamDoesNotMissChangeDuringInitialSnapshot(t *testing.T) {
 	second, err := reader.ReadString('\n')
 	if err != nil || !strings.Contains(second, `"channel_id":"snapshot-2"`) {
 		t.Fatalf("second=%s err=%v calls=%d", second, err, lister.calls)
+	}
+}
+
+func TestInitialSnapshotHasBoundedDeadline(t *testing.T) {
+	notifier := NewNotifier()
+	requestContext, cancel := context.WithCancel(context.Background())
+	lister := &deadlineRosterStub{cancel: cancel}
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request = request.WithContext(sessionapi.WithPrincipal(requestContext, auth.Principal{AccountID: "viewer"}))
+	NewHandler(lister, notifier).ServeHTTP(httptest.NewRecorder(), request)
+
+	if !lister.hasDeadline {
+		t.Fatal("initial roster snapshot did not receive a bounded context")
+	}
+	remaining := time.Until(lister.deadlineAt)
+	if remaining <= 0 || remaining > 5*time.Second {
+		t.Fatalf("initial snapshot deadline remaining = %s, want <= 5s", remaining)
 	}
 }

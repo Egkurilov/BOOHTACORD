@@ -15,6 +15,8 @@ type Lister interface {
 	List(context.Context, string) (roster.Result, error)
 }
 
+const snapshotTimeout = 5 * time.Second
+
 // Each stream expires quickly so the client's reconnect reauthenticates its
 // cookie. Every snapshot rechecks channel visibility and active leases.
 func NewHandler(lister Lister, notifier *Notifier) http.Handler {
@@ -33,7 +35,9 @@ func NewHandler(lister Lister, notifier *Notifier) http.Handler {
 		// List is queued and causes a fresh snapshot immediately afterward.
 		updates, unsubscribe := notifier.Subscribe()
 		defer unsubscribe()
-		initial, err := lister.List(request.Context(), principal.AccountID)
+		initialContext, cancelInitial := context.WithTimeout(request.Context(), snapshotTimeout)
+		initial, err := lister.List(initialContext, principal.AccountID)
+		cancelInitial()
 		if err != nil {
 			http.Error(writer, "roster unavailable", http.StatusServiceUnavailable)
 			return
@@ -64,7 +68,7 @@ func NewHandler(lister Lister, notifier *Notifier) http.Handler {
 			case <-expires.C:
 				return
 			case <-updates:
-				ctx, cancel := context.WithTimeout(request.Context(), 5*time.Second)
+				ctx, cancel := context.WithTimeout(request.Context(), snapshotTimeout)
 				updated, err := lister.List(ctx, principal.AccountID)
 				cancel()
 				if err != nil || !write(updated) {
