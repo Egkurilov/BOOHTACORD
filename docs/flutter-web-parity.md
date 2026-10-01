@@ -1,5 +1,13 @@
 # Flutter ↔ web parity plan
 
+macOS remote-stream discovery now distinguishes an active publication from a
+subscribed video track. With manual subscriptions, a live publication may have
+no attached track after thumbnail sampling; it must still expose the Watch
+screen action and screen choice. Selection shows connecting until the track
+arrives. The regression, 347 Flutter tests, analyzer and macOS debug build pass
+[QA-201](../evidence/flutter/qa201-macos-unsubscribed-screen-discovery-2026-10-01-001.json).
+Live appearance/playback/unpublish acceptance remains open as FE-61.
+
 Vue (`frontend/src`) is the product reference. The Flutter clients for macOS,
 Windows and Android must match its user-visible behavior, information
 hierarchy, copy, states and design tokens while using the same API, realtime,

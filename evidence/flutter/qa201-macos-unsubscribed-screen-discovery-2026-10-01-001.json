@@ -1,0 +1,19 @@
+{
+  "id": "QA-201",
+  "kind": "screen-publication-discovery-regression",
+  "status": "IMPLEMENTED_NEEDS_LIVE_ACCEPTANCE",
+  "executed_at": "2026-10-01",
+  "source_revision": "9ac439e",
+  "task": "T-030",
+  "summary": "With autoSubscribe=false, a live screen publication can have track=null after temporary thumbnail unsubscribe. Workspace discovery incorrectly required an attached track, hiding the stream button and screen choice. Discovery now uses an unmuted screenShareVideo publication; selection retains explicit subscription and shows connecting until the track arrives.",
+  "checks": [
+    {"name": "Red/green macOS widget regression", "status": "PASS", "observation": "A real RemoteParticipant publication without an attached track reproduced the missing Watch screen button before the fix. After the fix it appears, selection is requested and connecting replaces ended state."},
+    {"name": "Related workspace/viewer tests", "status": "PASS", "observation": "56 tests passed."},
+    {"name": "Full Flutter tests", "command": "flutter test --no-pub", "status": "PASS", "observation": "347 tests passed."},
+    {"name": "Analyzer", "command": "flutter analyze --no-pub", "status": "PASS", "observation": "No issues found."},
+    {"name": "macOS debug build", "command": "flutter build macos --debug --no-pub", "status": "PASS", "observation": "Built desktop/build/macos/Build/Products/Debug/BOOHTACORD.app."},
+    {"name": "Spec traceability", "command": "scripts/verify-spec-traceability.ps1", "status": "NOT_RUN", "observation": "Neither pwsh nor powershell is installed on this host. No requirements or contracts changed."},
+    {"name": "Live macOS receiver playback", "status": "NOT_RUN", "observation": "No voice join or broadcast initiated. Widget regression does not prove live media decoding or thumbnail delivery."}
+  ],
+  "remaining": "Verify an existing remote broadcast appears on updated macOS, opens and disappears after unpublish. Live acceptance remains open."
+}

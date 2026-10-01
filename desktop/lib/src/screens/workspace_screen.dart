@@ -1296,7 +1296,7 @@ class _VoiceNavigationMembers extends StatelessWidget {
             screenSharing: participant.videoTrackPublications.any(
               (publication) =>
                   publication.source == TrackSource.screenShareVideo &&
-                  publication.track != null,
+                  !publication.muted,
             ),
           ),
         ],
@@ -4472,7 +4472,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
               (participant) => participant.videoTrackPublications.any(
                 (publication) =>
                     publication.source == TrackSource.screenShareVideo &&
-                    publication.track != null,
+                    !publication.muted,
               ),
             )
             .toList(growable: false);
@@ -4660,6 +4660,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                           )
                         : widget.selectedScreenIdentity?.isNotEmpty == true
                         ? VoiceScreenEndedView(
+                            connecting: selectedScreenPublication != null,
                             choices: [
                               if (localScreenTrack != null)
                                 VoiceScreenChoice(
@@ -5828,7 +5829,7 @@ class _VoiceParticipantStrip extends StatelessWidget {
                         (publication) =>
                             publication.source ==
                                 TrackSource.screenShareVideo &&
-                            publication.track != null,
+                            !publication.muted,
                       )
                       ? screenThumbnailForIdentity(
                           state.screenThumbnails,

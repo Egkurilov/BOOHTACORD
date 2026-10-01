@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:ui' show SemanticsRole, Tristate;
 
@@ -16,7 +17,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:livekit_client/livekit_client.dart' show MediaDevice;
+import 'package:livekit_client/livekit_client.dart'
+    show MediaDevice, Room, RemoteParticipant;
+import 'package:livekit_client/src/proto/livekit_models.pb.dart' as lk;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -24,6 +27,58 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
   setUp(ComposerDraftMemory.clear);
+
+  testWidgets('macOS shows an unsubscribed published screen and opens it', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final room = _PublishedScreenRoom();
+    // ignore: invalid_use_of_internal_member
+    final created = await RemoteParticipant.createFromInfo(
+      room: room,
+      info: lk.ParticipantInfo(
+        sid: 'remote-sid',
+        identity: 'remote-screen',
+        name: 'Streamer',
+        tracks: [
+          lk.TrackInfo(
+            sid: 'screen-sid',
+            type: lk.TrackType.VIDEO,
+            source: lk.TrackSource.SCREEN_SHARE,
+            muted: false,
+          ),
+        ],
+      ),
+    );
+    room.members['remote-screen'] = created.participant;
+    final state = _PublishedScreenState(room);
+    await state.initialize();
+    state.selectedChannel = _PortraitApi.voiceChannel;
+    state.voiceChannel = _PortraitApi.voiceChannel;
+    state.voicePhase = VoicePhase.connected;
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    expect(created.participant.videoTrackPublications.single.track, isNull);
+    expect(
+      find.widgetWithText(OutlinedButton, 'Смотреть экран'),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Смотреть экран'));
+    await tester.pump();
+    expect(state.selectedScreen, 'remote-screen');
+    expect(find.text('Подключаемся к демонстрации…'), findsOneWidget);
+    expect(find.textContaining('Демонстрация завершена.'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    await tester.runAsync(() => room.dispose());
+    debugDefaultTargetPlatformOverride = null;
+  });
 
   for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
     testWidgets(
@@ -2816,6 +2871,25 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
   });
+}
+
+class _PublishedScreenRoom extends Room {
+  final members = <String, RemoteParticipant>{};
+  @override
+  UnmodifiableMapView<String, RemoteParticipant> get remoteParticipants =>
+      UnmodifiableMapView(members);
+}
+
+class _PublishedScreenState extends AppState {
+  _PublishedScreenState(this.testRoom) : super(_PortraitApi());
+  final Room testRoom;
+  String? selectedScreen;
+  @override
+  Room get room => testRoom;
+  @override
+  Future<void> selectRemoteScreenForViewing(String? identity) async {
+    selectedScreen = identity;
+  }
 }
 
 class _PortraitApi extends ApiClient {
