@@ -316,22 +316,24 @@ peer/platform-проверки и выравниваем viewer с вебом.
   «микрофон выключен». OpenAPI field/path assertions и focused/full client tests
   проходят; PowerShell verifier локально недоступен —
   [QA-138](../evidence/flutter/qa138-voice-roster-contract-sync-2026-09-30-001.json).
-- [ ] Добавить и проверить лёгкий thumbnail в карточках экранов: публиковать JPEG не чаще
-  раза в 4 секунды и не более 14 KiB; проверять сигнатуру/размер до отображения,
-  очищать превью при disconnect. Web/Flutter unit и widget suites прошли —
-  [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json).
-  - [x] Android compact participant strip: после установки подписанного APK и
-    короткой muted Pixel 7 проверки preview появился в локальной карточке;
-    logcat подтвердил `send=published`.
-  - [ ] Получить thumbnail в macOS participant card и проверить удалённое
-    отображение. Предыдущий live-тест показал только аватар; новый Mac Debug
-    клиент пока зависает на «Подключаемся к гильдии…», поэтому receiver-stage
-    логов нет. Отдельный unauthenticated GET maintenance endpoint ответил 200;
-    причина зависания не установлена.
-  Pipeline теперь оставляет безопасные stage-коды без participant identity,
-  JPEG или текста исключения. После восстановления Mac startup проверить
-  receiver и закрыть cross-client acceptance —
-  [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
+- [x] Реализовать безопасные превью демонстраций без LiveKit DataPackets и
+  расширения `CanPublishData`: web и Flutter берут ограниченный JPEG из уже
+  опубликованной/временно подписанной screen-video дорожки; одновременно
+  захватывается не более одного скрытого preview на комнату, временная подписка
+  очищается при завершении/ошибке, а выбранный viewer сохраняет свою подписку.
+  Web локальное превью обновляется не чаще раза в 4 секунды; превью остаётся
+  до unpublish/disconnect. Тесты покрывают размер/сигнатуру, capture deadline,
+  cleanup, очередь, reconnect и гонки выбора viewer — [QA-165](../evidence/flutter/qa165-web-screen-thumbnail-receiver-capture-2026-10-01-001.json),
+  [QA-167](../evidence/flutter/qa167-flutter-preview-subscription-race-2026-10-01-001.json),
+  [QA-168](../evidence/flutter/qa168-web-preview-selection-during-capture-2026-10-01-001.json),
+  [QA-169](../evidence/flutter/qa169-screen-thumbnail-cross-client-source-and-test-audit-2026-10-01-001.json).
+  Сохранить `CanPublishData=false` согласно [ADR-013](../adr/ADR-013-room-scoped-screen-thumbnail-preview.md).
+- [ ] Провести paired runtime acceptance thumbnail на Android→macOS и Android→web;
+  отдельно проверить остановку/очистку, повторный выбор того же viewer и отсутствие
+  лишней подписки/помехи голосу. ADB в текущей сессии недоступен, поэтому этот
+  live-шаг не выполнялся; также остаётся runtime-проверка Windows. Исходные
+  Android и Flutter pipeline записи — [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json),
+  [QA-166](../evidence/flutter/qa166-flutter-temporary-screen-subscriptions-2026-10-01-001.json).
 - [x] Устранить повторяющийся macOS crash при получении видеокадров: два отчёта
   `EXC_BAD_ACCESS` в `FlutterRTCVideoRenderer` указывают на dereference `weakSelf`
   после удаления renderer. Добавлены nil guard и test-first regression; все 17

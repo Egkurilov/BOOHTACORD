@@ -1,0 +1,45 @@
+{
+  "id": "QA-169",
+  "kind": "screen-thumbnail-cross-client-source-and-test-audit",
+  "status": "PARTIAL",
+  "executed_at": "2026-10-01",
+  "source_revision": "8bd606b",
+  "summary": "Audited the current web and Flutter screen-thumbnail implementations against ADR-013. Both clients capture bounded JPEG previews from LiveKit screen-video tracks without DataPackets; temporary hidden-preview subscriptions are serialized, selected-viewer subscriptions are retained, and lifecycle/race regressions are covered. Focused web and Flutter tests plus web production build and Flutter analyzer pass. Device/paired runtime acceptance and Windows runtime remain open.",
+  "checks": [
+    {
+      "name": "Web thumbnail capture/subscription regressions",
+      "command": "cd frontend && npm test -- src/voice/screen_thumbnail_capture.spec.ts src/voice/screen_thumbnail.spec.ts src/voice/livekit_screen_viewer_adapter.spec.ts",
+      "status": "PASS",
+      "observation": "All 13 focused tests pass, covering JPEG validation, remote frame capture and the serialized temporary subscription/viewer-selection lifecycle."
+    },
+    {
+      "name": "Web production typecheck and build",
+      "command": "cd frontend && npm run build",
+      "status": "PASS",
+      "observation": "vue-tsc and Vite build pass; Vite reports its existing advisory for chunks larger than 500 kB."
+    },
+    {
+      "name": "Flutter thumbnail pipeline/widget regressions",
+      "command": "cd desktop && flutter test --no-pub test/screen_thumbnail_pipeline_test.dart test/screen_thumbnail_test.dart test/voice_participant_thumbnail_test.dart",
+      "status": "PASS",
+      "observation": "All 20 focused tests pass, covering decoded-frame gating, bounded capture, native capture serialization, temporary subscription cleanup, selected-viewer retention, stale selections and participant-card rendering."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "Analyzer reports no issues."
+    },
+    {
+      "name": "Paired Android-to-macOS/web runtime acceptance",
+      "status": "NOT_RUN",
+      "observation": "ADB was unavailable in this session. No voice connection or screen projection was started; remote thumbnail delivery, unpublish cleanup and live bandwidth were not observed."
+    },
+    {
+      "name": "Windows screen-thumbnail runtime acceptance",
+      "status": "NOT_RUN",
+      "observation": "No Windows runtime was available in this session."
+    }
+  ],
+  "remaining": "Run an explicitly authorized paired Android-to-macOS/web preview and verify appearance, retention until unpublish, cleanup, selected-viewer playback and voice continuity; separately exercise the Windows runtime. Keep ADR-013 acceptance open until those observations are recorded."
+}
