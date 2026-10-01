@@ -121,6 +121,33 @@ class ScreenPreviewSubscriptionQueue {
   void close() => _closed = true;
 }
 
+/// Captures work under a short-lived track subscription, unless the user
+/// selects that track for ongoing playback while the preview is in progress.
+Future<T?> withTemporaryScreenPreviewSubscription<T>({
+  required Future<void> Function() subscribe,
+  required Future<T?> Function() action,
+  required Future<void> Function() unsubscribe,
+  required bool Function() keepSubscribed,
+}) async {
+  var subscriptionAttempted = false;
+  try {
+    subscriptionAttempted = true;
+    await subscribe();
+    return await action();
+  } finally {
+    if (subscriptionAttempted && !keepSubscribed()) {
+      try {
+        await unsubscribe();
+      } catch (_) {
+        // A cleanup failure must not replace an earlier preview failure.
+      }
+    }
+  }
+}
+
+bool isCurrentScreenViewerSelection(String? requested, String? selected) =>
+    requested == selected;
+
 /// Captures one thumbnail only after the receiver has decoded a real frame.
 /// The bounded attempts ensure stale/unpublished tracks don't keep polling.
 Future<Uint8List?> captureRemoteScreenThumbnail({

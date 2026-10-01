@@ -1,0 +1,46 @@
+{
+  "id": "QA-167",
+  "kind": "flutter-preview-subscription-race",
+  "status": "PARTIAL",
+  "executed_at": "2026-10-01",
+  "source_revision": "301722e",
+  "summary": "Hardened Flutter temporary screen preview subscription lifecycle: successful and failed capture paths release their short-lived subscription; a selected viewer keeps it; and an outdated asynchronous viewer selection cannot subscribe after a newer selection. Full tests, analyzer, Android Release and macOS Debug builds pass. Live cross-client acceptance remains outstanding.",
+  "checks": [
+    {
+      "name": "Focused thumbnail pipeline tests",
+      "command": "cd desktop && flutter test --no-pub test/screen_thumbnail_pipeline_test.dart",
+      "status": "PASS",
+      "observation": "15 tests pass. New tests cover cleanup after success/failure, retaining a selected viewer's subscription, and ignoring stale selection results."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 326 Flutter tests pass."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "Analyzer reports no issues."
+    },
+    {
+      "name": "Android ABI-split release build",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Version 1.0.17+22 signed APKs built: armeabi-v7a 31.0 MB, arm64-v8a 39.5 MB, x86_64 45.3 MB. Not installed because elevated `adb devices -l` returned no attached devices."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd desktop && flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "Built build/macos/Build/Products/Debug/BOOHTACORD.app from the current source."
+    },
+    {
+      "name": "Live preview and Windows runtime acceptance",
+      "status": "NOT_RUN",
+      "observation": "No Pixel or Windows runtime was available. No voice join or screen projection was started. Cross-client preview delivery, clear-on-unpublish, selected-viewer playback and bandwidth remain unverified."
+    }
+  ],
+  "remaining": "Run a short authorized Pixel-to-Mac/web preview test after the Pixel reconnects; verify preview delivery and cleanup and selected playback. Run Windows runtime acceptance and CI before closing the cross-client preview item under ADR-013."
+}

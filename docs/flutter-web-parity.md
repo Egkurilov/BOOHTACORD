@@ -335,6 +335,12 @@ both deployed web and Flutter viewers.
   remains open because the Pixel is disconnected and no fresh paired
   screen-share test has run —
   [QA-166](../evidence/flutter/qa166-flutter-temporary-screen-subscriptions-2026-10-01-001.json).
+  Follow-up regression coverage now also verifies that temporary subscriptions
+  always clean up on capture failure and that a viewer selection made during
+  capture retains playback; stale async viewer selections no longer subscribe
+  after a newer selection. All 326 tests, analyzer, Android 1.0.17+22
+  ABI-split Release and current-source macOS Debug builds pass —
+  [QA-167](../evidence/flutter/qa167-flutter-preview-subscription-race-2026-10-01-001.json).
   Close cross-client preview only after Flutter's temporary subscription policy
   and the paired live test satisfy [ADR-013](adr/ADR-013-room-scoped-screen-thumbnail-preview.md).
 - Port admin topology operations with confirmations, revision conflicts and

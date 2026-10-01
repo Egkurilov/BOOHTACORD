@@ -34,12 +34,12 @@
       "name": "macOS Debug build",
       "command": "cd desktop && flutter build macos --debug --no-pub",
       "status": "PASS",
-      "observation": "Build result to be recorded after the active build completes."
+      "observation": "Build completed successfully and produced build/macos/Build/Products/Debug/BOOHTACORD.app."
     },
     {
       "name": "Paired live remote thumbnail preview",
       "status": "NOT_RUN",
-      "observation": "No Pixel is currently connected (`adb devices` is empty); no new voice join or screen projection was started. Runtime preview appearance/clear behavior and bandwidth remain unverified."
+      "observation": "An elevated ADB query returned an empty attached-device list. No voice join or screen projection was started. Runtime preview appearance/clear behavior and bandwidth remain unverified."
     },
     {
       "name": "Windows native runtime acceptance",

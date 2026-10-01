@@ -143,6 +143,69 @@ void main() {
   );
 
   test(
+    'temporary preview subscription is released after a successful capture',
+    () async {
+      final events = <String>[];
+
+      final result = await withTemporaryScreenPreviewSubscription<String>(
+        subscribe: () async => events.add('subscribe'),
+        action: () async {
+          events.add('capture');
+          return 'thumbnail';
+        },
+        unsubscribe: () async => events.add('unsubscribe'),
+        keepSubscribed: () => false,
+      );
+
+      expect(result, 'thumbnail');
+      expect(events, ['subscribe', 'capture', 'unsubscribe']);
+    },
+  );
+
+  test(
+    'temporary preview subscription is released when capture fails',
+    () async {
+      final events = <String>[];
+
+      await expectLater(
+        withTemporaryScreenPreviewSubscription<void>(
+          subscribe: () async => events.add('subscribe'),
+          action: () async => throw StateError('capture failed'),
+          unsubscribe: () async => events.add('unsubscribe'),
+          keepSubscribed: () => false,
+        ),
+        throwsStateError,
+      );
+
+      expect(events, ['subscribe', 'unsubscribe']);
+    },
+  );
+
+  test('selected viewer retains subscription after preview action', () async {
+    final events = <String>[];
+
+    await withTemporaryScreenPreviewSubscription<void>(
+      subscribe: () async => events.add('subscribe'),
+      action: () async => events.add('capture'),
+      unsubscribe: () async => events.add('unsubscribe'),
+      keepSubscribed: () => true,
+    );
+
+    expect(events, ['subscribe', 'capture']);
+  });
+
+  test('outdated async viewer selection is no longer current', () {
+    expect(
+      isCurrentScreenViewerSelection('participant-a', 'participant-b'),
+      isFalse,
+    );
+    expect(
+      isCurrentScreenViewerSelection('participant-b', 'participant-b'),
+      isTrue,
+    );
+  });
+
+  test(
     'a closed remote preview queue skips publications that have not started',
     () async {
       final queue = ScreenPreviewSubscriptionQueue();

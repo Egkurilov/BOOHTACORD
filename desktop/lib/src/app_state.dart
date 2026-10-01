@@ -2525,7 +2525,13 @@ class AppState extends ChangeNotifier {
       }
     }
 
-    if (next == null) return;
+    if (next == null ||
+        !isCurrentScreenViewerSelection(
+          next,
+          _selectedRemoteScreenViewerIdentity,
+        )) {
+      return;
+    }
     _subscribeRemoteScreenForViewing(room, next);
   }
 
@@ -2964,18 +2970,22 @@ class AppState extends ChangeNotifier {
         final waiter = Completer<RemoteVideoTrack?>();
         _screenPreviewTrackWaiters[trackId] = waiter;
         _screenThumbnailRemoteTrackIds[trackId] = participant.identity;
-        var requestedSubscription = false;
         try {
           final existingTrack = publication.track;
           if (existingTrack is RemoteVideoTrack) {
             waiter.complete(existingTrack);
           }
-          requestedSubscription = true;
-          await _setRemoteTrackSubscription(publication, true);
-          final track = await waiter.future.timeout(
-            const Duration(seconds: 4),
-            onTimeout: () => null,
-          );
+          final track =
+              await withTemporaryScreenPreviewSubscription<RemoteVideoTrack>(
+                subscribe: publication.subscribe,
+                action: () => waiter.future.timeout(
+                  const Duration(seconds: 4),
+                  onTimeout: () => null,
+                ),
+                unsubscribe: publication.unsubscribe,
+                keepSubscribed: () =>
+                    _selectedRemoteScreenViewerIdentity == participant.identity,
+              );
           if (track == null ||
               _selectedRemoteScreenViewerIdentity == participant.identity ||
               !_isRemoteScreenPublicationActive(
@@ -2998,14 +3008,15 @@ class AppState extends ChangeNotifier {
             _screenPreviewTrackWaiters.remove(trackId);
           }
           _screenThumbnailRemoteTrackIds.remove(trackId);
-          if (requestedSubscription &&
-              _isRemoteScreenPublicationActive(
+          if (_isRemoteScreenPublicationActive(
                 room,
                 participant,
                 publication,
               ) &&
-              _selectedRemoteScreenViewerIdentity != participant.identity) {
-            await _setRemoteTrackSubscription(publication, false);
+              _selectedRemoteScreenViewerIdentity == participant.identity) {
+            // A selection can race the temporary unsubscribe's completion.
+            // Restore persistent playback after the preview has left the queue.
+            await _setRemoteTrackSubscription(publication, true);
           }
         }
       }),
