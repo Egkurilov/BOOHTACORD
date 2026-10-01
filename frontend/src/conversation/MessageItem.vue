@@ -14,7 +14,7 @@ import { handleMessageEditKeydown } from './message_edit_shortcuts'
 type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments' | 'mentionUserIds'> & { channelId?: string; directMessageId?: string; attachments?: TextMessageAttachment[]; mentionUserIds?: string[] }
 
 const props = defineProps<{ message: RenderedMessage; grouped?: boolean; replyPreview?: string; canEdit: boolean; canDelete: boolean; retryDisabled?: boolean; mentionRecipient?: { id: string; displayName: string }; editMessage?: (body: string, mentionIds: string[], revision: number) => Promise<EditResult>; refreshMessage?: () => Promise<{ revision: number; deleted: boolean } | null> }>()
-const emit = defineEmits<{ remove: []; reply: []; retry: [] }>()
+const emit = defineEmits<{ remove: []; reply: []; retry: []; replyContext: [messageId: string] }>()
 const editor = useMessageEditController({
   save: (body, ids, revision) => props.editMessage?.(body, ids, revision) ?? Promise.resolve({ kind: 'stale', message: 'Сообщение недоступно.' }),
   refresh: () => props.refreshMessage?.() ?? Promise.resolve(null),
@@ -86,7 +86,7 @@ function initial(name: string): string {
       </template>
       <p v-else-if="message.deleted">Сообщение удалено</p>
       <template v-else>
-        <p v-if="replyPreview" class="reply-preview">↪ {{ replyPreview }}</p>
+        <button v-if="replyPreview && message.replyToId" class="reply-preview" type="button" aria-label="Открыть контекст ответа" @click="emit('replyContext', message.replyToId)">↪ {{ replyPreview }}</button>
         <MessageBody :body="message.body" />
         <p v-if="message.mentionUserIds?.length" class="message-mentions">Упомянуты: <span v-for="id in message.mentionUserIds" :key="id">@{{ authors.displayName(id) }} </span></p>
         <TextMessageAttachments v-if="textChannelId && textAttachments.length" :channel-id="textChannelId" :attachments="textAttachments" />

@@ -11,7 +11,7 @@ import type { DirectMessageHistoryItem } from './direct_message_client'
 import { useDirectMessageStore } from './direct_message_store'
 
 const props = defineProps<{ directMessageId: string; session: CurrentSession | null; otherParticipantId: string; otherParticipantDisplayName: string }>()
-const emit = defineEmits<{ reply: [message: DirectMessageHistoryItem]; retry: [message: DirectMessageHistoryItem]; viewportChange: [] }>()
+const emit = defineEmits<{ reply: [message: DirectMessageHistoryItem]; retry: [message: DirectMessageHistoryItem]; replyContext: [messageId: string]; viewportChange: [] }>()
 const store = useDirectMessageStore()
 const authors = useAuthorDirectory()
 const list = ref<HTMLOListElement | null>(null)
@@ -47,6 +47,12 @@ watch([() => store.historyLoaded, latestServerId], async ([loaded, newest], [was
 
 function onScroll(): void { if (isHistoryNearBottom(list.value)) jumpCount.value = 0; emit('viewportChange') }
 function jumpToLatest(): void { if (!list.value) return; list.value.scrollTop = list.value.scrollHeight; jumpCount.value = 0; emit('viewportChange') }
+function openReplyContext(messageId: string): void {
+  const target = [...(list.value?.querySelectorAll<HTMLElement>('[data-message-id]') ?? [])]
+    .find((item) => item.dataset.messageId === messageId)
+  if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); return }
+  emit('replyContext', messageId)
+}
 watch(() => store.messages, (messages) => {
   for (const message of messages) if (message.replyPreview) void authors.ensure(message.replyPreview.authorId)
 }, { immediate: true })
@@ -97,6 +103,7 @@ async function loadOlder(): Promise<void> {
         :refresh-message="() => store.refreshMessage(entry.message.id)"
         @remove="store.remove(entry.message.id)"
         @reply="emit('reply', entry.message)"
+        @reply-context="openReplyContext"
         @retry="emit('retry', entry.message)"
       />
     </li>

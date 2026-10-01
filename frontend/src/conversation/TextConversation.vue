@@ -28,6 +28,7 @@ const store = useMessageStore()
 const topology = useTopologyStore()
 const searchTarget = useSearchTargetStore()
 const contextTarget = computed(() => searchTarget.target?.kind === 'CHANNEL' && searchTarget.target.conversationId === props.channelId ? searchTarget.target : null)
+const replyContextTarget = ref<string | null>(null)
 const firstUnread = computed(() => topology.topology?.categories.flatMap(({ channels }) => channels).find(({ id }) => id === props.channelId)?.firstUnreadMessageId)
 const { unreadBoundary, unreadContextOpen, readUnlocked, showUnread, continueAtLatest } = useUnreadBoundary(() => props.channelId, firstUnread, () => queueVisibleRead())
 const authors = useAuthorDirectory()
@@ -48,6 +49,7 @@ const { readRoot, queueVisibleRead } = useVisibleRead({
   refreshCounters: () => { void topology.refresh() },
 })
 watch(() => props.channelId, (channelId) => {
+  replyContextTarget.value = null
   void store.open(channelId)
   void loadSession()
 }, { immediate: true })
@@ -89,8 +91,9 @@ function onComposerPaste(event: ClipboardEvent): void {
       <button type="button" @click="continueAtLatest">Остаться у последних</button>
     </div>
     <SearchMessageContext v-if="contextTarget" kind="CHANNEL" :conversation-id="props.channelId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
+    <SearchMessageContext v-else-if="replyContextTarget" kind="CHANNEL" :conversation-id="props.channelId" :message-id="replyContextTarget" heading="Контекст ответа" @close="replyContextTarget = null" />
     <SearchMessageContext v-else-if="unreadContextOpen" kind="CHANNEL" :conversation-id="props.channelId" :message-id="unreadBoundary" heading="Первое непрочитанное сообщение" @close="continueAtLatest" />
-    <TextHistoryList :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @retry="retry" @viewport-change="queueVisibleRead" />
+    <TextHistoryList :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @reply-context="replyContextTarget = $event" @retry="retry" @viewport-change="queueVisibleRead" />
     <div class="composer-wrap">
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>

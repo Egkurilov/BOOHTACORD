@@ -11,7 +11,7 @@ import type { TextMessage } from './message_client'
 import { useMessageStore } from './message_store'
 
 const props = defineProps<{ channelId: string; session: CurrentSession | null }>()
-const emit = defineEmits<{ reply: [message: TextMessage]; retry: [message: TextMessage]; viewportChange: [] }>()
+const emit = defineEmits<{ reply: [message: TextMessage]; retry: [message: TextMessage]; replyContext: [messageId: string]; viewportChange: [] }>()
 const store = useMessageStore()
 const authors = useAuthorDirectory()
 const list = ref<HTMLOListElement | null>(null)
@@ -48,6 +48,13 @@ watch([() => store.historyLoaded, latestServerId], async ([loaded, newest], [was
 
 function onScroll(): void { if (isHistoryNearBottom(list.value)) jumpCount.value = 0; emit('viewportChange') }
 function jumpToLatest(): void { if (!list.value) return; list.value.scrollTop = list.value.scrollHeight; jumpCount.value = 0; emit('viewportChange') }
+
+function openReplyContext(messageId: string): void {
+  const target = [...(list.value?.querySelectorAll<HTMLElement>('[data-message-id]') ?? [])]
+    .find((item) => item.dataset.messageId === messageId)
+  if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); return }
+  emit('replyContext', messageId)
+}
 
 function replyPreview(message: TextMessage): string | undefined {
   if (!message.replyToId) return undefined
@@ -95,6 +102,7 @@ async function loadOlder(): Promise<void> {
         :refresh-message="() => store.refreshMessage(entry.message.id)"
         @remove="store.remove(entry.message.id)"
         @reply="emit('reply', entry.message)"
+        @reply-context="openReplyContext"
         @retry="emit('retry', entry.message)"
       />
     </li>

@@ -2153,7 +2153,7 @@ class _ConversationState extends State<_Conversation>
     return anchors;
   }
 
-  void _jumpToReply(ChatMessage message) {
+  Future<void> _jumpToReply(ChatMessage message) async {
     final targetId = message.replyToId;
     if (targetId == null) return;
     final context =
@@ -2166,7 +2166,20 @@ class _ConversationState extends State<_Conversation>
           alignment: 0.25,
         ),
       );
+      return;
     }
+    await widget.state.openSearchContext(
+      SearchMessage(
+        id: targetId,
+        kind: SearchMessageKind.channel,
+        conversationId: widget.channel.id,
+        authorId: message.authorId,
+        body: message.body,
+        createdAt: message.createdAt,
+        revision: message.revision,
+      ),
+      heading: 'Контекст ответа',
+    );
   }
 
   String? _replyPreview(ChatMessage message) {
@@ -3543,7 +3556,7 @@ class _SearchMessageContextState extends State<_SearchMessageContext> {
       children: [
         _Header(
           icon: Icons.manage_search,
-          title: 'Контекст найденного сообщения',
+          title: widget.state.searchContextHeading,
           subtitle: target == null
               ? ''
               : isDirect
@@ -3553,7 +3566,11 @@ class _SearchMessageContextState extends State<_SearchMessageContext> {
           trailing: TextButton.icon(
             onPressed: widget.state.returnFromSearchContext,
             icon: const Icon(Icons.arrow_back, size: 18),
-            label: const Text('Вернуться к беседе'),
+            label: Text(
+              widget.state.searchContextHeading == 'Контекст ответа'
+                  ? 'К последним сообщениям'
+                  : 'Вернуться к беседе',
+            ),
           ),
         ),
         if (widget.state.searchContextError case final error?)
@@ -3566,7 +3583,10 @@ class _SearchMessageContextState extends State<_SearchMessageContext> {
                   const SizedBox(height: 8),
                   if (target != null)
                     TextButton(
-                      onPressed: () => widget.state.openSearchContext(target),
+                      onPressed: () => widget.state.openSearchContext(
+                        target,
+                        heading: widget.state.searchContextHeading,
+                      ),
                       child: const Text('Повторить'),
                     ),
                 ],
@@ -3928,6 +3948,37 @@ class _DirectConversationState extends State<_DirectConversation> {
     return '${_directAuthorName(target.authorId)}: ${_messageSnippet(target.body)}';
   }
 
+  void _jumpToDirectReply(DirectChatMessage message) {
+    final targetId = message.replyToId;
+    if (targetId == null) return;
+    final context = _directMessageKeys['${widget.conversation.id}:$targetId']
+        ?.currentContext;
+    if (context != null) {
+      unawaited(
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 220),
+          alignment: 0.25,
+        ),
+      );
+      return;
+    }
+    unawaited(
+      widget.state.openSearchContext(
+        SearchMessage(
+          id: targetId,
+          kind: SearchMessageKind.directMessage,
+          conversationId: widget.conversation.id,
+          authorId: message.authorId,
+          body: message.body,
+          createdAt: message.createdAt,
+          revision: message.revision,
+        ),
+        heading: 'Контекст ответа',
+      ),
+    );
+  }
+
   void _replyToDirect(DirectChatMessage message) {
     setState(() => _replyTarget = message);
     _rememberDraft();
@@ -4096,7 +4147,11 @@ class _DirectConversationState extends State<_DirectConversation> {
                                     children: [
                                       if (_directReplyLabel(message)
                                           case final label?)
-                                        _ReplyPreview(label: label),
+                                        _ReplyPreview(
+                                          label: label,
+                                          onTap: () =>
+                                              _jumpToDirectReply(message),
+                                        ),
                                       if (message.deleted)
                                         const Text(
                                           'Сообщение удалено',

@@ -30,7 +30,7 @@ onBeforeUnmount(context.clear)
       <button type="button" @click="emit('close')">К последним сообщениям</button>
     </header>
     <p v-if="status === 'loading'" role="status">Открываем сообщение…</p>
-    <p v-else-if="status === 'unavailable'" role="alert">Найденное сообщение больше недоступно в этой беседе.</p>
+    <p v-else-if="status === 'unavailable'" role="alert">Сообщение больше недоступно в этой беседе.</p>
     <p v-else-if="status === 'error'" role="alert">Не удалось открыть сообщение. Беседа могла стать недоступной. <button type="button" @click="context.open(props.messageId)">Повторить</button></p>
     <ol v-if="messages.length" class="search-context-list" aria-label="Найденное сообщение и предыдущие сообщения">
       <li v-for="message in messages" :key="message.id" :class="{ 'search-context-target': message.id === props.messageId }" :data-search-anchor="message.id === props.messageId ? '' : undefined" :aria-current="message.id === props.messageId ? 'location' : undefined" :tabindex="message.id === props.messageId ? -1 : undefined">

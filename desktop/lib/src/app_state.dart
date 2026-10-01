@@ -178,6 +178,7 @@ class AppState extends ChangeNotifier {
   NavigationSection navigationSection = NavigationSection.channels;
   WorkspacePanel workspacePanel = WorkspacePanel.none;
   SearchMessage? searchContextMessage;
+  String searchContextHeading = 'Контекст найденного сообщения';
   List<ChatMessage> searchContextTextMessages = const [];
   List<DirectChatMessage> searchContextDirectMessages = const [];
   bool loadingSearchContext = false;
@@ -1344,6 +1345,7 @@ class AppState extends ChangeNotifier {
     _searchOriginChannel = selectedChannel;
     _searchOriginDirectMessage = selectedDirectMessage;
     searchContextMessage = null;
+    searchContextHeading = 'Контекст найденного сообщения';
     searchContextTextMessages = const [];
     searchContextDirectMessages = const [];
     searchContextError = null;
@@ -1354,6 +1356,7 @@ class AppState extends ChangeNotifier {
   void closeSearchPanel() {
     _searchContextSequence++;
     loadingSearchContext = false;
+    searchContextHeading = 'Контекст найденного сообщения';
     if (workspacePanel == WorkspacePanel.search) {
       workspacePanel = WorkspacePanel.none;
     }
@@ -1362,9 +1365,13 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> openSearchContext(SearchMessage target) async {
+  Future<void> openSearchContext(
+    SearchMessage target, {
+    String? heading,
+  }) async {
     final sequence = ++_searchContextSequence;
     searchContextMessage = target;
+    searchContextHeading = heading ?? 'Контекст найденного сообщения';
     searchContextTextMessages = const [];
     searchContextDirectMessages = const [];
     searchContextError = null;
@@ -1469,6 +1476,7 @@ class AppState extends ChangeNotifier {
     _searchOriginChannel = null;
     _searchOriginDirectMessage = null;
     searchContextMessage = null;
+    searchContextHeading = 'Контекст найденного сообщения';
     searchContextTextMessages = const [];
     searchContextDirectMessages = const [];
     searchContextError = null;

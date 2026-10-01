@@ -1805,6 +1805,63 @@ void main() {
     state.dispose();
   });
 
+  testWidgets(
+    'opens a reply context when its target is outside loaded history',
+    (tester) async {
+      final api = _PortraitApi(withHistory: true)
+        ..replyContextPage = ChatMessagePage(
+          messages: [
+            ChatMessage(
+              id: 'older-reply-target',
+              channelId: _PortraitApi.channel.id,
+              authorId: 'account-2',
+              body: 'Исходное сообщение из старой страницы',
+              createdAt: DateTime.utc(2026, 9, 24),
+              deleted: false,
+              revision: 1,
+            ),
+          ],
+        );
+      final state = AppState(api);
+      await state.initialize();
+      state.messages = [
+        ChatMessage(
+          id: 'reply-message',
+          channelId: _PortraitApi.channel.id,
+          authorId: 'account-1',
+          body: 'Ответ в текущей странице',
+          createdAt: DateTime.utc(2026, 9, 25),
+          deleted: false,
+          revision: 1,
+          replyToId: 'older-reply-target',
+        ),
+      ];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AnimatedBuilder(
+            animation: state,
+            builder: (_, _) => WorkspaceScreen(state: state),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.textContaining('Исходное сообщение недоступно'));
+      await tester.pumpAndSettle();
+
+      expect(api.lastMessageAt, 'older-reply-target');
+      expect(state.workspacePanel, WorkspacePanel.searchContext);
+      expect(find.text('Контекст ответа'), findsOneWidget);
+      expect(
+        find.text('Исходное сообщение из старой страницы'),
+        findsOneWidget,
+      );
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+    },
+  );
+
   testWidgets('message composer groups attachment and paste actions', (
     tester,
   ) async {
@@ -1825,6 +1882,61 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
   });
+
+  testWidgets(
+    'opens a DM reply context when its target is outside loaded history',
+    (tester) async {
+      final api = _PortraitApi(includeDirectMessage: true)
+        ..directReplyContextPage = DirectChatMessagePage(
+          messages: [
+            DirectChatMessage(
+              id: 'older-dm-reply-target',
+              directMessageId: 'dm-1',
+              authorId: 'account-2',
+              body: 'Старое личное сообщение',
+              createdAt: DateTime.utc(2026, 9, 24),
+              deleted: false,
+              revision: 1,
+            ),
+          ],
+        );
+      final state = AppState(api);
+      await state.initialize();
+      await state.openDirectConversation(state.directMessages.single);
+      state.directMessageHistory = [
+        DirectChatMessage(
+          id: 'dm-reply-message',
+          directMessageId: 'dm-1',
+          authorId: 'account-1',
+          body: 'Ответ в личной переписке',
+          createdAt: DateTime.utc(2026, 9, 25),
+          deleted: false,
+          revision: 1,
+          replyToId: 'older-dm-reply-target',
+        ),
+      ];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AnimatedBuilder(
+            animation: state,
+            builder: (_, _) => WorkspaceScreen(state: state),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.textContaining('Исходное сообщение недоступно'));
+      await tester.pumpAndSettle();
+
+      expect(api.lastDirectMessageAt, 'older-dm-reply-target');
+      expect(state.workspacePanel, WorkspacePanel.searchContext);
+      expect(find.text('Контекст ответа'), findsOneWidget);
+      expect(find.text('Старое личное сообщение'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+    },
+  );
 
   testWidgets('text composer submits from the soft-keyboard send action', (
     tester,
@@ -2748,7 +2860,11 @@ class _PortraitApi extends ApiClient {
   final List<GuildMember> membersResult;
   final advancedMessageIds = <String>[];
   int messagePageCalls = 0;
+  String? lastMessageAt;
+  ChatMessagePage? replyContextPage;
   int directMessagePageCalls = 0;
+  String? lastDirectMessageAt;
+  DirectChatMessagePage? directReplyContextPage;
   final advancedDirectMessageIds = <String>[];
   String? sentReplyToId;
   String? sentDirectReplyToId;
@@ -3028,6 +3144,10 @@ class _PortraitApi extends ApiClient {
     String? at,
   }) async {
     directMessagePageCalls++;
+    if (at != null) {
+      lastDirectMessageAt = at;
+      if (directReplyContextPage != null) return directReplyContextPage!;
+    }
     if (paginatedDirectHistory && before != null) {
       return DirectChatMessagePage(
         messages: List.generate(
@@ -3116,6 +3236,10 @@ class _PortraitApi extends ApiClient {
     String? at,
   }) async {
     messagePageCalls++;
+    if (at != null) {
+      lastMessageAt = at;
+      if (replyContextPage != null) return replyContextPage!;
+    }
     if (paginatedHistory && before != null) {
       return ChatMessagePage(
         messages: List.generate(
