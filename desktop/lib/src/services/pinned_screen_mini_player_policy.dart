@@ -20,6 +20,12 @@ bool screenSelectionBelongsToVoiceChannel({
     selectionVoiceChannelId != null &&
     selectionVoiceChannelId == activeVoiceChannelId;
 
+bool localScreenShareJustStarted({
+  required bool wasSharing,
+  required bool isSharing,
+}) =>
+    !wasSharing && isSharing;
+
 bool pinnedScreenPublicationEnded({
   required bool participantPresent,
   required bool publicationPresent,

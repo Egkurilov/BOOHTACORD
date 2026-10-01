@@ -355,6 +355,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   live-шаг не выполнялся; также остаётся runtime-проверка Windows. Исходные
   Android и Flutter pipeline записи — [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json),
   [QA-166](../evidence/flutter/qa166-flutter-temporary-screen-subscriptions-2026-10-01-001.json).
+  Исправлен UX edge case локального viewer: запуск собственного screen share
+  теперь возвращает выбор с удалённой демонстрации или закрытого viewer на
+  собственный экран; policy/widget tests и analyzer проходят. Проверка видео
+  на физическом Android остаётся частью paired runtime acceptance.
 - [x] Устранить повторяющийся macOS crash при получении видеокадров: два отчёта
   `EXC_BAD_ACCESS` в `FlutterRTCVideoRenderer` указывают на dereference `weakSelf`
   после удаления renderer. Добавлены nil guard и test-first regression; все 17

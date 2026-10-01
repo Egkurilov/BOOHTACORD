@@ -62,6 +62,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   String? _screenWaitingToRestart;
   String? _pinnedScreenIdentity;
   String? _screenSelectionVoiceChannelId;
+  late ScreenSharePhase _lastObservedScreenSharePhase;
   String? get _visibleVoiceScreenIdentity =>
       widget.state.selectedChannel?.id == widget.state.voiceChannel?.id
       ? _selectedScreenIdentity
@@ -78,6 +79,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   @override
   void initState() {
     super.initState();
+    _lastObservedScreenSharePhase = widget.state.screenSharePhase;
     _lastWorkspacePanel = widget.state.workspacePanel;
     widget.state.addListener(_workspaceChanged);
     HardwareKeyboard.instance.addHandler(_handleHardwareKey);
@@ -116,6 +118,22 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   void _workspaceChanged() {
+    final screenSharePhase = widget.state.screenSharePhase;
+    final localScreenJustStarted = localScreenShareJustStarted(
+      wasSharing: _lastObservedScreenSharePhase == ScreenSharePhase.sharing,
+      isSharing: screenSharePhase == ScreenSharePhase.sharing,
+    );
+    _lastObservedScreenSharePhase = screenSharePhase;
+    if (localScreenJustStarted &&
+        (_selectedScreenIdentity != null || _pinnedScreenIdentity != null)) {
+      setState(() {
+        _selectedScreenIdentity = null;
+        _pinnedScreenIdentity = null;
+        _screenWaitingToRestart = null;
+        _screenSelectionVoiceChannelId = widget.state.voiceChannel?.id;
+      });
+      unawaited(widget.state.selectRemoteScreenForViewing(null));
+    }
     final activeVoiceChannelId = widget.state.voiceChannel?.id;
     if ((_selectedScreenIdentity != null || _pinnedScreenIdentity != null) &&
         !screenSelectionBelongsToVoiceChannel(

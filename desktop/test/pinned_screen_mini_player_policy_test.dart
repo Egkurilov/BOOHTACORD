@@ -63,6 +63,21 @@ void main() {
         isFalse,
       );
     });
+
+    test('local share start returns focus from a remote stream', () {
+      expect(
+        localScreenShareJustStarted(wasSharing: false, isSharing: true),
+        isTrue,
+      );
+      expect(
+        localScreenShareJustStarted(wasSharing: true, isSharing: true),
+        isFalse,
+      );
+      expect(
+        localScreenShareJustStarted(wasSharing: false, isSharing: false),
+        isFalse,
+      );
+    });
   });
 
   group('pinned screen publication lifecycle', () {
