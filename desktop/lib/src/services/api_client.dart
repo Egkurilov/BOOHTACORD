@@ -57,9 +57,12 @@ class ApiClient {
       body: body,
     );
     if (response.statusCode != 202) {
-      throw StateError('Telemetry export failed');
+      // Keep diagnostics actionable without logging the relay's response body,
+      // which is not a trusted or privacy-safe source of details.
+      throw StateError('Telemetry export failed: HTTP ${response.statusCode}');
     }
   }
+
   void Function()? onUnauthorized;
   // Keep macOS on the legacy Keychain without sharing entitlements: the
   // Data Protection Keychain returns errSecMissingEntitlement for ad-hoc
