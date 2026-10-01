@@ -1,0 +1,34 @@
+{
+  "id": "QA-168",
+  "kind": "web-preview-selection-during-capture",
+  "status": "PARTIAL",
+  "executed_at": "2026-10-01",
+  "source_revision": "3ae7aa6",
+  "summary": "Added a web-reference regression test for selecting a remote screen while temporary thumbnail capture is still running. The capture completion preserves the explicitly selected viewer subscription, matching Flutter's protected lifecycle behavior. Full frontend tests and production typecheck/build pass; paired runtime delivery remains unverified.",
+  "checks": [
+    {
+      "name": "LiveKit screen viewer adapter tests",
+      "command": "cd frontend && npm test -- src/voice/livekit_screen_viewer_adapter.spec.ts",
+      "status": "PASS",
+      "observation": "8 adapter tests pass, including the new selection-during-capture case."
+    },
+    {
+      "name": "Full frontend suite",
+      "command": "cd frontend && npm test",
+      "status": "PASS",
+      "observation": "All 710 tests in 233 files pass."
+    },
+    {
+      "name": "Frontend production typecheck and build",
+      "command": "cd frontend && npm run build",
+      "status": "PASS",
+      "observation": "vue-tsc and Vite production build pass. Vite retains the existing advisory for chunks larger than 500 kB."
+    },
+    {
+      "name": "Paired live preview delivery",
+      "status": "NOT_RUN",
+      "observation": "No paired mobile-to-desktop/web room test was performed; subscription delivery, thumbnail visibility, cleanup on unpublish and network impact still need live acceptance."
+    }
+  ],
+  "remaining": "Verify the selected and preview thumbnail behavior on a paired live room, then retain Android/macOS/Windows runtime acceptance as open until each target is exercised."
+}

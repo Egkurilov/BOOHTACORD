@@ -330,6 +330,10 @@ both deployed web and Flutter viewers.
   Web's 709 tests and production build pass for the new receiver path, but the
   paired live thumbnail test has not yet run —
   [QA-165](../evidence/flutter/qa165-web-screen-thumbnail-receiver-capture-2026-10-01-001.json).
+  The web adapter now also has a regression test for selecting a screen while
+  its thumbnail capture is still in flight: completion retains the selected
+  viewer subscription. All 710 frontend tests and the production typecheck/build
+  pass — [QA-168](../evidence/flutter/qa168-web-preview-selection-during-capture-2026-10-01-001.json).
   Flutter's 322-test/analyzer run, Android ABI-split release build, and
   macOS Debug build pass; runtime preview acceptance on Android/macOS/Windows
   remains open because the Pixel is disconnected and no fresh paired
