@@ -143,6 +143,11 @@ routes and disposed only when the reverse transition removes the fields, avoidin
 the earlier use-after-dispose assertion. Auth widget tests and analyzer pass;
 physical screen-reader acceptance remains open —
 [QA-187](../evidence/flutter/qa187-auth-dialog-keyboard-lifecycle-2026-10-01-001.json).
+The login/registration mode tabs are also verified as keyboard-operable: Tab
+reaches Registration, Space activates it, and its selected state is exposed in
+semantics. The auth suite (13 tests) and analyzer pass; physical keyboard and
+screen-reader acceptance remains open —
+[QA-188](../evidence/flutter/qa188-auth-mode-tab-keyboard-2026-10-01-001.json).
 The macOS Debug 1.0.15+20 rebuild eventually restored the existing session and
 reached SHARE_TEST prejoin after more than six minutes on its loading screen;
 on 2026-10-01 a live process sample reproduced the wait in

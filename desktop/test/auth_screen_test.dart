@@ -190,6 +190,32 @@ void main() {
     semantics.dispose();
   });
 
+  testWidgets('auth mode tabs are reachable and activatable by keyboard', (
+    tester,
+  ) async {
+    final state = AppState(ApiClient())..phase = AppPhase.signedOut;
+    addTearDown(state.dispose);
+    final semantics = tester.ensureSemantics();
+
+    await tester.pumpWidget(MaterialApp(home: AuthScreen(state: state)));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .getSemantics(find.byKey(const ValueKey('auth-mode-tab-Регистрация')))
+          .getSemanticsData()
+          .flagsCollection
+          .isSelected,
+      Tristate.isTrue,
+    );
+    expect(tester.takeException(), isNull);
+    semantics.dispose();
+  });
+
   testWidgets('login keeps focus and entered text through app-state rebuilds', (
     tester,
   ) async {

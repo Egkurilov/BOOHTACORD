@@ -1,0 +1,26 @@
+{
+  "id": "QA-188",
+  "kind": "authentication-mode-tab-keyboard-accessibility",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "c0b426cfa4bc4c1c3f22a798ecdb37d575f75c7e",
+  "summary": "The login and registration mode tabs are reachable and operable with a hardware keyboard, and selection is exposed through tab semantics.",
+  "checks": [
+    {
+      "name": "Authentication mode tabs keyboard regression",
+      "command": "cd desktop && flutter test test/auth_screen_test.dart --reporter compact",
+      "status": "PASS",
+      "observation": "All 13 auth screen widget tests passed. The new regression sends Tab twice and Space, then verifies Registration is selected in semantics and no framework exception occurred."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "limitations": [
+    "Physical keyboard and platform screen-reader acceptance was not performed on macOS, Windows or Android."
+  ],
+  "remaining": "Verify keyboard and screen-reader behavior on each target OS; matched authentication screenshots remain open."
+}
