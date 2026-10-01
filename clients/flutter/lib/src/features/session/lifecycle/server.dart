@@ -4,6 +4,7 @@ extension SessionServerChange on SessionController {
   Future<void> setServer(String value) async {
     if (closing) await waitForClose();
     final ticket = scope.close();
+    effects.invalidateOperations?.call();
     await closeWith(() async {
       try {
         effects.beforeServerChange();
@@ -19,6 +20,9 @@ extension SessionServerChange on SessionController {
         changed();
       } catch (_) {
         scope.resume(ticket);
+        try {
+          await effects.resume?.call();
+        } catch (_) {}
         rethrow;
       }
     });

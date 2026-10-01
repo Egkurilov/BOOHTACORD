@@ -3,6 +3,8 @@ import '../../../models.dart';
 // Composition hooks affect their own feature state; this owner controls ordering.
 class SessionEffects {
   const SessionEffects({
+    this.invalidateOperations,
+    this.resume,
     required this.initialize,
     required this.prepare,
     required this.ready,
@@ -26,4 +28,6 @@ class SessionEffects {
   final Future<void> Function() clearServer;
   final void Function(String?) error;
   final String Function(Object) message;
+  final void Function()? invalidateOperations;
+  final Future<void> Function()? resume;
 }

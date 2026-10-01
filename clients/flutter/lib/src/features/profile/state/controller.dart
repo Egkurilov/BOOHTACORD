@@ -42,12 +42,16 @@ class ProfileController extends ChangeNotifier {
           : 'Не удалось выполнить действие: ${cause.runtimeType}.');
 
   void clear() {
-    revision++;
+    cancelOperations();
     profile = null;
-    profileLoading = false;
-    profileSaving = false;
     profileLoadError = null;
     avatarRevision = 0;
+  }
+
+  void cancelOperations() {
+    revision++;
+    profileLoading = false;
+    profileSaving = false;
   }
 
   Future<bool> save(Future<void> Function(bool Function()) operation) async {

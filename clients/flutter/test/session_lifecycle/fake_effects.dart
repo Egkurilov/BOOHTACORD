@@ -4,7 +4,11 @@ import 'package:boohtacord_desktop/src/services/api_client.dart';
 SessionEffects effects({
   Future<void> Function()? clear,
   Future<void> Function()? ready,
+  void Function()? invalidate,
+  Future<void> Function()? resume,
 }) => SessionEffects(
+  invalidateOperations: invalidate,
+  resume: resume,
   initialize: () async {},
   prepare: (_) async {},
   ready: ready ?? () async {},

@@ -2,6 +2,7 @@ export '../../../models.dart';
 export '../../../services/api_client.dart' show ApiFailure;
 export 'types.dart';
 export 'clear.dart';
+export 'cancel.dart';
 export '../../text/history_state/load.dart';
 export '../../text/history_state/older.dart';
 export '../../text/history_state/refresh.dart';

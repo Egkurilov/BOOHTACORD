@@ -62,7 +62,7 @@ class WorkspaceController extends ChangeNotifier {
   }
 
   void clear() {
-    searchContextSequence++;
+    cancelOperations();
     topology = null;
     members = const [];
     membersLoading = false;
@@ -82,6 +82,12 @@ class WorkspaceController extends ChangeNotifier {
     searchContextError = null;
     searchOriginChannel = null;
     searchOriginDirectMessage = null;
+  }
+
+  void cancelOperations() {
+    searchContextSequence++;
+    membersLoading = false;
+    loadingSearchContext = false;
   }
 
   @override

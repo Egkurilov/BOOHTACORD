@@ -102,6 +102,19 @@ class AppState extends ChangeNotifier {
       api,
       startupTimeout: startupSessionTimeout,
       effects: SessionEffects(
+        invalidateOperations: () {
+          _profile.cancelOperations();
+          _workspace.cancelOperations();
+          _conversation.cancelOperations();
+          _stopVoiceRosterEvents();
+        },
+        resume: () async {
+          final ticket = _session.scope.capture();
+          await _closeRealtime();
+          if (!ticket.isActive) return;
+          _startVoiceRosterEvents();
+          unawaited(_connectRealtime());
+        },
         initialize: _initializeSessionPlatform,
         prepare: _prepareSessionAccount,
         ready: _loadSessionWorkspace,
