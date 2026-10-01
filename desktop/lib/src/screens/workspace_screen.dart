@@ -21,6 +21,7 @@ import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
+import '../widgets/confirmation_dialog.dart';
 import '../widgets/screen_share_setup_dialog.dart';
 import '../widgets/voice_participant_thumbnail.dart';
 import '../widgets/formatted_message_body.dart';
@@ -7292,7 +7293,7 @@ class _MemberProfilePopoverState extends State<_MemberProfilePopover> {
   }
 
   Future<void> _kick(RemoteParticipant participant) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showConfirmationDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Отключить от голоса?'),
@@ -7757,7 +7758,7 @@ class _MessageEditDialogState extends State<_MessageEditDialog> {
 }
 
 Future<bool> _confirmDelete(BuildContext context) async =>
-    await showDialog<bool>(
+    await showConfirmationDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Удалить сообщение?'),

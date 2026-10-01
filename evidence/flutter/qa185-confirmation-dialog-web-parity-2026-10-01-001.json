@@ -1,0 +1,32 @@
+{
+  "id": "QA-185",
+  "kind": "confirmation-dialog-web-parity",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "4f4f07aa42fc8b11ffe7969690491d04ebbf18cc",
+  "summary": "Flutter destructive confirmations for message deletion, voice kick and admin topology changes now remain open on backdrop taps, use closed-loop keyboard traversal, support Escape/Back cancellation and restore focus to the opener, matching the web client's native confirmation behavior.",
+  "checks": [
+    {
+      "name": "Confirmation barrier, keyboard traversal, Escape and focus restoration",
+      "command": "cd desktop && flutter test test/confirmation_dialog_test.dart",
+      "status": "PASS",
+      "observation": "The widget regression verifies a non-dismissible modal route with closed-loop traversal; an outside tap leaves it open; Escape cancels it and restores focus to the opener."
+    },
+    {
+      "name": "Related admin/workspace screen regressions",
+      "command": "cd desktop && flutter test test/confirmation_dialog_test.dart test/admin_topology_widget_test.dart test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 60 targeted widget tests passed, including admin topology and workspace message/member behavior."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "limitations": [
+    "Physical keyboard and screen-reader acceptance was not performed on macOS, Windows or Android."
+  ],
+  "remaining": "Continue matched visual checks and VoiceOver, NVDA and TalkBack acceptance for the broader admin/profile/dialog focus paths."
+}

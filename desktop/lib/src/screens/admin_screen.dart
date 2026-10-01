@@ -8,6 +8,7 @@ import '../app_state.dart';
 import '../models.dart';
 import '../services/api_client.dart';
 import '../theme.dart';
+import '../widgets/confirmation_dialog.dart';
 
 enum _AdminSection { members, channels, audit, media }
 
@@ -249,7 +250,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
 
   Future<void> _kickVoiceParticipant(AdminAccount account) async {
     if (_busyAccountIds.contains(account.accountId)) return;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showConfirmationDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Отключить от голоса?'),
@@ -394,7 +395,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _deleteCategory(ChannelCategory category) async {
-    final approved = await showDialog<bool>(
+    final approved = await showConfirmationDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Удалить категорию?'),
@@ -500,7 +501,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         .firstOrNull;
     final topology = widget.state.topology;
     if (channel == null || topology == null) return;
-    final approved = await showDialog<bool>(
+    final approved = await showConfirmationDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Подтверждение архивации'),
@@ -539,7 +540,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         .firstOrNull;
     final topology = widget.state.topology;
     if (channel == null || topology == null || channel.admissionClosed) return;
-    final approved = await showDialog<bool>(
+    final approved = await showConfirmationDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Подтверждение закрытия'),

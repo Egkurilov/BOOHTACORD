@@ -91,6 +91,14 @@ widget test verifies both Tab and Shift+Tab remain within the dialog. The other
 settings/dialog focus paths and platform screen-reader acceptance remain open —
 [QA-183](../evidence/flutter/qa183-screen-share-dialog-keyboard-loop-2026-10-01-001.json).
 
+Flutter destructive confirmation dialogs for message deletion, voice kick and
+admin topology actions now match the web's native confirmation behavior: an
+outside tap cannot accidentally discard the pending action, keyboard traversal
+is kept inside the modal, Escape/Back cancels, and closing restores focus to the
+opener. A widget regression covers the barrier policy, Escape and focus return;
+physical keyboard/screen-reader acceptance on macOS, Windows and Android remains
+open — [QA-185](../evidence/flutter/qa185-confirmation-dialog-web-parity-2026-10-01-001.json).
+
 Flutter audio device-change handling now matches the web's missing-device
 response: transient empty scans preserve the selected IDs; when a replacement
 appears the first available route is selected and an accessible warning is
