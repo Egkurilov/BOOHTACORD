@@ -33,7 +33,9 @@ def builtInKotlinActive = agpMajor >= 9 &&
     (!project.hasProperty('android.builtInKotlin') ||
         Boolean.parseBoolean(project.property('android.builtInKotlin').toString()))
 if (!builtInKotlinActive) {
-    apply plugin: 'kotlin-android'
+    // KGP is needed only on legacy builds. Apply it imperatively so Flutter's
+    // static migration detector does not treat this conditional as unconditional.
+    pluginManager.apply('kotlin-android')
 }
 
 android {

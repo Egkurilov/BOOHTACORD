@@ -1,0 +1,40 @@
+{
+  "id": "QA-176",
+  "kind": "android-kgp-warning-free-build-modes",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "working-tree after 89aeaec",
+  "summary": "Changed three local Android plugin forks to apply legacy Kotlin Gradle Plugin imperatively only when AGP built-in Kotlin is disabled. Strengthened the two-mode debug gate to fail on Flutter's KGP migration warning. Debug and signed Release builds passed in legacy and built-in modes without that warning; generated release APKs verify with APK Signature Scheme v2. No ADB/device was used.",
+  "checks": [
+    {
+      "name": "Regression gate rejects the known Flutter KGP warning",
+      "command": "JAVA_HOME=<JDK 17> bash scripts/android_release/verify_android_kotlin_modes.sh (before implementation)",
+      "status": "PASS",
+      "observation": "Test-first run failed as expected because Flutter emitted its KGP warning for flutter_background, flutter_webrtc and livekit_client. After the plugin scripts were updated, the same gate passed both modes and rejected no KGP warning."
+    },
+    {
+      "name": "Legacy and AGP built-in Kotlin Debug matrix",
+      "command": "JAVA_HOME=<JDK 17> bash scripts/android_release/verify_android_kotlin_modes.sh",
+      "status": "PASS",
+      "observation": "Legacy mode built with flutter build apk --debug --no-pub; built-in mode built with :app:assembleDebug -Pandroid.builtInKotlin=true. Neither build emitted Flutter's KGP compatibility warning."
+    },
+    {
+      "name": "Signed legacy split-ABI Release matrix",
+      "command": "cd desktop && JAVA_HOME=<JDK 17> flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Produced armeabi-v7a (30 MB), arm64-v8a (38 MB) and x86_64 (43 MB) signed APKs. apksigner verified APK Signature Scheme v2 for each."
+    },
+    {
+      "name": "Signed AGP built-in Kotlin universal Release",
+      "command": "cd desktop/android && JAVA_HOME=<JDK 17> ./gradlew :app:assembleRelease -Pandroid.builtInKotlin=true --no-daemon",
+      "status": "PASS",
+      "observation": "Universal signed APK (107 MB) built successfully; apksigner verified APK Signature Scheme v2. Flutter's KGP compatibility warning was absent."
+    }
+  ],
+  "limitations": [
+    "Remote CI has not yet run against this change.",
+    "No Android device, ADB, installation, or runtime acceptance was performed.",
+    "The default remains android.builtInKotlin=false; this change validates compatibility but does not change the default build mode."
+  ],
+  "remaining": "Run the Android CI workflow after push. Device/runtime checks remain separate and require ADB; they were intentionally not attempted."
+}

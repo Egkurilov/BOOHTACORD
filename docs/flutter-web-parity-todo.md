@@ -684,10 +684,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   `android.builtInKotlin=true`; оба режима прошли. Signed Release также прошёл
   в обоих режимах: split APK для трёх ABI в legacy и universal APK в built-in
   режиме; APK v2 signatures проверены — [QA-172](../evidence/flutter/qa172-android-kotlin-build-modes-2026-10-01-001.json).
-- [ ] До включения `android.builtInKotlin=true` убрать оставшиеся Flutter KGP
-  warnings от `flutter_webrtc` и `livekit_client`, затем подтвердить оба режима
-  на CI и signed Release matrix. После локального форка Flutter продолжает
-  предупреждать о KGP декларациях трёх плагинов, хотя Debug проходит в обоих
-  режимах; мы не меняли исходники двух остальных локальных форков. Оставить
-  `android.builtInKotlin=false` по умолчанию до закрытия этого пункта. Runtime и
-  device acceptance не проверялись; ADB для текущей работы не требуется.
+- [x] Убрать ложное предупреждение Flutter о KGP для `flutter_background`,
+  `flutter_webrtc` и `livekit_client`: при выключенном built-in Kotlin локальные
+  форки применяют KGP императивно через `pluginManager`, а в built-in режиме не
+  применяют legacy plugin. Регрессионный gate теперь падает, если предупреждение
+  возвращается; Debug обоих режимов и подписанные Release-сборки обоих режимов
+  прошли локально. Три split ABI APK legacy и universal APK built-in проверены
+  `apksigner` (v2); удалённый CI и device/runtime acceptance не проверялись,
+  `android.builtInKotlin=false` оставлен значением по умолчанию —
+  [QA-176](../evidence/flutter/qa176-android-kgp-warning-free-build-modes-2026-10-01-001.json).
