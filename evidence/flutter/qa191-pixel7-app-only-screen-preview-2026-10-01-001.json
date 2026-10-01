@@ -18,7 +18,7 @@
       "device": "Google Pixel 7, SHARE_TEST, microphone muted",
       "command": "adb shell dumpsys media_projection; adb exec-out screencap -p",
       "status": "FAIL_LOCAL_VIEWER_BLACK_THUMBNAIL_VALID",
-      "observation": "On versionCode 2024, Android reported RECORD_CONTENT_TASK targeting com.google.android.calculator. After returning to BOOHTACORD, the main local viewer remained black after approximately 21 seconds, while the participant card showed a live Calculator thumbnail. This establishes that app-task pixels reached the thumbnail capture path, but not why the large VideoTrackRenderer remained black. The room UI showed microphone muted and RTT around 7 ms."
+      "observation": "On versionCode 2024, Android reported RECORD_CONTENT_TASK targeting com.google.android.calculator. After returning to BOOHTACORD, the main local viewer remained black after approximately 21 seconds, while the participant card displayed a Calculator thumbnail. Thumbnail freshness was not independently verified during that interval, so this proves app-task pixels reached the thumbnail capture path but does not establish ongoing capture or explain the black VideoTrackRenderer. The room UI showed microphone muted and RTT around 7 ms."
     },
     {
       "name": "Stop and cleanup",
@@ -29,6 +29,7 @@
     }
   ],
   "limitations": [
+    "The Android texture renderer's frame callbacks/EGL presentation were not instrumented; no conclusion can yet be drawn about whether frames reached the renderer or were presented.",
     "No remote macOS or web receiver was connected; remote playback and receiver frame metrics were not tested.",
     "The user-reported full-display success was not repeated in this authorized app-only test."
   ],
