@@ -3,7 +3,7 @@
   "kind": "flutter-prejoin-roster-header-copy",
   "status": "PARTIAL",
   "executed_at": "2026-10-01",
-  "source_revision": "pending",
+  "source_revision": "b79fc07",
   "summary": "Flutter's prejoin voice header now matches the web reference across roster loading, unavailable, empty and populated states. A test-first widget regression failed on the old static invitation copy and passes after the change. Device screen-reader/focus acceptance remains open.",
   "checks": [
     {
