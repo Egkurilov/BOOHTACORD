@@ -1,0 +1,24 @@
+{
+  "id": "reorganization-flutter-transport-2026-10-01",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "baseline_revision": "7c4851c9",
+  "environment": "Windows; Flutter 3.47.5; Dart 3.13.4",
+  "preservation": {
+    "api_client": "Compatibility facade preserves overridable methods and history convenience-method dispatch",
+    "session": "One transport/session store; original cookie, server preference and macOS Keychain identifiers",
+    "http": "Original endpoints, payloads, validation, error messages, tracing and public maintenance headers",
+    "limits": "Every new production Dart source file is below 100 lines after formatting"
+  },
+  "checks": {
+    "new_shared_transport_test_failed_before_implementation": true,
+    "shared_cookie_and_401_invalidation_tests": "PASS",
+    "focused_api_regressions_before_second_new_test": 42,
+    "full_flutter_tests": 348,
+    "flutter_analyze": "No issues found"
+  },
+  "limitations": [
+    "macOS Keychain option preservation is unit-tested; physical macOS acceptance has not run",
+    "Media and session-controller ownership are subsequent packets"
+  ]
+}
