@@ -1,0 +1,49 @@
+{
+  "id": "QA-197",
+  "kind": "android-preview-render-event",
+  "status": "FAIL_LOCAL_PREVIEW_BLACK_AFTER_EGL_SWAP",
+  "executed_at": "2026-10-01",
+  "source_revision": "81757fd",
+  "summary": "Moved the Android didFirstFrameRendered notification from VideoSink.onFrame to WebRTC EglRenderer's RenderListener, which fires after swapBuffers. Pixel runtime produced the post-swap callback and a fresh Calculator thumbnail, but the large local preview remained black. The APK was installed and the short app-only capture was stopped; MediaProjection and voice session were then verified closed.",
+  "artifact": {
+    "version_name": "1.0.18",
+    "version_code": 2027,
+    "path": "desktop/build/app/outputs/flutter-apk/app-release.apk",
+    "sha256": "e2ddc482c6ed2eecb1cfb1267abcb2854f41643ac311bd5bd5a5b87fca89416c",
+    "size_bytes": 69455248,
+    "git_ignored": true
+  },
+  "checks": [
+    {
+      "name": "Native renderer callback and LiveKit widget callback tests",
+      "command": "flutter test packages/flutter_webrtc/test/unit/native/rtc_video_renderer_first_frame_test.dart; flutter test packages/livekit_client/test/widgets/video_track_renderer_frame_callback_test.dart",
+      "status": "PASS"
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "flutter analyze lib/src/screens/workspace_screen.dart packages/livekit_client/lib/src/widgets/video_track_renderer.dart packages/livekit_client/lib/src/widgets/video_track_renderer_frame_callback.dart",
+      "status": "PASS"
+    },
+    {
+      "name": "Android Debug native compile",
+      "command": "flutter build apk --debug --target-platform android-arm64",
+      "status": "PASS"
+    },
+    {
+      "name": "Signed Android Release native compile",
+      "command": "flutter build apk --release --target-platform android-arm64 --build-name=1.0.18 --build-number=2027",
+      "status": "PASS"
+    },
+    {
+      "name": "Pixel 7 app-only screen-share retest",
+      "device": "Google Pixel 7, Calculator task, microphone muted",
+      "status": "FAIL_LOCAL_PREVIEW_BLACK_AFTER_EGL_SWAP",
+      "observation": "Installed 1.0.18+2027 on Pixel 7. Selected Calculator app task (dumpsys media_projection showed RECORD_CONTENT_TASK and com.google.android.calculator); voice participant card displayed a fresh Calculator thumbnail and logs contained [screen-preview] local_renderer=first_swap_buffers, but the large local viewer stayed black in screenshot /private/tmp/boohtacord-pixel-preview-2027.png. Microphone remained off. Stopped the screen share (dumpsys media_projection returned null) and exited SHARE_TEST. No Mac/paired receiver was used."
+    }
+  ],
+  "limitations": [
+    "The post-swap callback proves an EGL surface buffer was swapped, not that Flutter's texture compositor displayed the expected pixels; the runtime result confirms that distinction matters.",
+    "Remote receiver playback and sender encoded-frame counters remain unverified; FE-59 stays open."
+  ],
+  "remaining": "Investigate Android local preview texture/compositor path despite successful app capture, thumbnail update, and EGL swap event. Then verify sender/receiver stats and paired remote playback when an authorized second viewer is available."
+}

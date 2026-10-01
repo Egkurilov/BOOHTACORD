@@ -62,6 +62,20 @@ public class SurfaceTextureRenderer extends EglRenderer {
       frameRotation = -1;
     }
     super.init(sharedContext, configAttributes, drawer);
+    // RendererEvents.onFirstFrameRendered must mean a frame was actually
+    // rendered, not merely delivered to this VideoSink. EglRenderer invokes
+    // RenderListener after swapping the rendered frame into the EGL surface.
+    addRenderListener(timestampNs -> {
+      synchronized (layoutLock) {
+        if (isFirstFrameRendered) {
+          return;
+        }
+        isFirstFrameRendered = true;
+      }
+      if (this.rendererEvents != null) {
+        this.rendererEvents.onFirstFrameRendered();
+      }
+    });
   }
   @Override
   public void init(final EglBase.Context sharedContext, final int[] configAttributes,
@@ -175,12 +189,6 @@ public class SurfaceTextureRenderer extends EglRenderer {
     synchronized (layoutLock) {
       if (isRenderingPaused) {
         return;
-      }
-      if (!isFirstFrameRendered) {
-        isFirstFrameRendered = true;
-        if (rendererEvents != null) {
-          rendererEvents.onFirstFrameRendered();
-        }
       }
       if (rotatedFrameWidth != frame.getRotatedWidth()
               || rotatedFrameHeight != frame.getRotatedHeight()
