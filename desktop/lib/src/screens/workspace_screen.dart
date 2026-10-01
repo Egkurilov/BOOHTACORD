@@ -4310,10 +4310,8 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                   ? 'Демонстрация $selectedName'
                   : active
                   ? state.voicePhase == VoicePhase.reconnecting
-                        ? 'Восстанавливаем связь · состояние микрофона сохранено'
-                        : 'Голосовой канал · участников: $participantCount'
-                  : channel.admissionClosed
-                  ? 'Вход временно закрыт'
+                  ? 'Восстанавливаем связь · состояние микрофона сохранено'
+                  : 'Голосовой канал · участников: $participantCount'
                   : _voicePrejoinHeaderSubtitle(state, channel),
               trailing: active
                   ? Row(

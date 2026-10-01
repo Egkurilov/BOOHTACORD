@@ -726,6 +726,19 @@ void main() {
     await tester.pump();
     expect(find.text('Голосовой канал · сейчас: 1'), findsOneWidget);
 
+    state
+      ..selectedChannel = const GuildChannel(
+        id: 'voice-1',
+        name: 'голосовой',
+        kind: ChannelKind.voice,
+        admissionClosed: true,
+      )
+      ..voiceRosters = null
+      ..voiceRosterError = 'Нет связи со списком голосовых каналов.'
+      ..notifyListeners();
+    await tester.pump();
+    expect(find.text('Голосовой канал · состав недоступен'), findsOneWidget);
+
     semantics.dispose();
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
