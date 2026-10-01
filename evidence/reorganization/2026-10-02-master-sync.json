@@ -1,0 +1,20 @@
+{
+  "id": "reorganization-master-sync-2026-10-02",
+  "kind": "branch-sync-verification",
+  "status": "PASS",
+  "incoming_revision": "8c83b515",
+  "resolution": [
+    "Preserved Android EGL surface release barrier and renderer changes under clients/flutter",
+    "Preserved macOS screen discovery, connecting state and regression test",
+    "Applied upstream privacy-safe telemetry status error to the extracted TelemetryExportApi",
+    "Combined current parity evidence with the new canonical client paths"
+  ],
+  "checks": {
+    "flutter_app_tests": 351,
+    "livekit_vendor_tests": 431,
+    "livekit_existing_upstream_skips": 1,
+    "webrtc_vendor_tests": 18,
+    "flutter_analyze": "No issues found"
+  },
+  "limitations": ["Physical media results remain those of the incoming evidence; not rerun by this packet"]
+}

@@ -1,0 +1,49 @@
+{
+  "id": "QA-200",
+  "kind": "android-screen-preview-egl-resize-barrier",
+  "status": "IMPLEMENTED_NEEDS_PIXEL_RUNTIME",
+  "executed_at": "2026-10-01",
+  "source_revision": "81a4f63",
+  "summary": "Found a lifecycle race candidate in SurfaceTextureRenderer: on frame-size changes it queued EGL surface release but immediately resized the Flutter SurfaceProducer and acquired a replacement surface. The new SurfaceReleaseBarrier waits for EGL release completion before changing the backing surface. This ordering is unit-tested and the Android release APK compiles; no Android device was connected, so whether it fixes the black app-only preview is unverified.",
+  "artifact": {
+    "version_name": "1.0.18",
+    "version_code": 2030,
+    "path": "desktop/build/app/outputs/flutter-apk/app-release.apk",
+    "sha256": "b2b5729dd55c421e160a6623b879a256197b8932c30a7523f1c6e80a5022181f",
+    "size_bytes": 69455248,
+    "git_ignored": true
+  },
+  "checks": [
+    {
+      "name": "EGL release/resize ordering",
+      "command": "./gradlew :flutter_webrtc:testDebugUnitTest --tests com.cloudwebrtc.webrtc.SurfaceReleaseBarrierTest",
+      "status": "PASS",
+      "observation": "The test verified resize waits for asynchronous EGL release completion and proceeds after synchronous completion. An additional test verified interrupt status is restored after waiting."
+    },
+    {
+      "name": "Android plugin unit tests",
+      "command": "./gradlew :flutter_webrtc:testDebugUnitTest",
+      "status": "PASS",
+      "observation": "The full flutter_webrtc Android unit-test task completed successfully, including the new surface-release barrier tests."
+    },
+    {
+      "name": "Android release compilation",
+      "command": "flutter build apk --release --target-platform android-arm64 --build-name=1.0.18 --build-number=2030",
+      "status": "PASS",
+      "observation": "Release APK compiled. The artifact remains locally ignored and was not installed or pushed to Git."
+    },
+    {
+      "name": "Pixel 7 app-only runtime retest",
+      "device": "Google Pixel 7",
+      "command": "ADB device inventory and Flutter device inventory",
+      "status": "NOT_RUN_NO_ANDROID_DEVICE",
+      "observation": "adb devices returned an empty list; flutter devices reported only macOS and Chrome. No APK install, voice-room join, microphone capture, or screen-share was attempted."
+    }
+  ],
+  "limitations": [
+    "The EGL-release versus producer-resize race is a source-level candidate, not a proven cause of the black preview.",
+    "The connected Pixel test is necessary to verify the production symptom and confirm that full-screen preview remains unaffected.",
+    "No receiver was connected, so remote publication and playback were not tested."
+  ],
+  "remaining": "Install 1.0.18+2030 when Pixel 7 is available and repeat Calculator app-only preview, then test full-display capture and a paired receiver. Keep FE-59 open until both local rendering and remote playback pass."
+}

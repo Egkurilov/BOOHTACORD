@@ -10,8 +10,6 @@ import org.webrtc.RendererCommon;
 import org.webrtc.ThreadUtils;
 import org.webrtc.VideoFrame;
 
-import java.util.concurrent.CountDownLatch;
-
 import io.flutter.view.TextureRegistry;
 
 /**
@@ -62,6 +60,20 @@ public class SurfaceTextureRenderer extends EglRenderer {
       frameRotation = -1;
     }
     super.init(sharedContext, configAttributes, drawer);
+    // RendererEvents.onFirstFrameRendered must mean a frame was actually
+    // rendered, not merely delivered to this VideoSink. EglRenderer invokes
+    // RenderListener after swapping the rendered frame into the EGL surface.
+    addRenderListener(timestampNs -> {
+      synchronized (layoutLock) {
+        if (isFirstFrameRendered) {
+          return;
+        }
+        isFirstFrameRendered = true;
+      }
+      if (this.rendererEvents != null) {
+        this.rendererEvents.onFirstFrameRendered();
+      }
+    });
   }
   @Override
   public void init(final EglBase.Context sharedContext, final int[] configAttributes,
@@ -108,14 +120,17 @@ public class SurfaceTextureRenderer extends EglRenderer {
         // effect for a Surface obtained afterwards. Without recreating the EGL
         // surface here, a simulcast layer upgrade keeps rendering into the old
         // low-resolution buffer and the video stays blurry.
-        releaseEglSurface(() -> {});
-        // Clear the field before re-obtaining: if getSurface() throws, the
-        // next frame takes the surface == null path and recreates cleanly
-        // rather than rendering into the already-released surface.
-        surface = null;
-        producer.setSize(frame.getRotatedWidth(), frame.getRotatedHeight());
-        surface = producer.getSurface();
-        createEglSurface(surface);
+        SurfaceReleaseBarrier.runAfterRelease(
+            completion -> releaseEglSurface(completion),
+            () -> {
+              // Clear the field before re-obtaining: if getSurface() throws, the
+              // next frame takes the surface == null path and recreates cleanly
+              // rather than rendering into the already-released surface.
+              surface = null;
+              producer.setSize(frame.getRotatedWidth(), frame.getRotatedHeight());
+              surface = producer.getSurface();
+              createEglSurface(surface);
+            });
       }
     }
     updateFrameDimensionsAndReportEvents(frame);
@@ -163,10 +178,8 @@ public class SurfaceTextureRenderer extends EglRenderer {
   public void surfaceDestroyed() {
     ThreadUtils.checkIsOnMainThread();
     synchronized (surfaceLock) {
-      final CountDownLatch completionLatch = new CountDownLatch(1);
-      releaseEglSurface(completionLatch::countDown);
-      ThreadUtils.awaitUninterruptibly(completionLatch);
-      surface = null;
+      SurfaceReleaseBarrier.runAfterRelease(
+          completion -> releaseEglSurface(completion), () -> surface = null);
     }
   }
 
@@ -175,12 +188,6 @@ public class SurfaceTextureRenderer extends EglRenderer {
     synchronized (layoutLock) {
       if (isRenderingPaused) {
         return;
-      }
-      if (!isFirstFrameRendered) {
-        isFirstFrameRendered = true;
-        if (rendererEvents != null) {
-          rendererEvents.onFirstFrameRendered();
-        }
       }
       if (rotatedFrameWidth != frame.getRotatedWidth()
               || rotatedFrameHeight != frame.getRotatedHeight()

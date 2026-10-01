@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 void main() {
-  test('native first-frame event notifies renderer listener', () {
+  test('native rendered-frame event notifies renderer listener', () {
     final renderer = RTCVideoRenderer();
     var notifications = 0;
     renderer.onFirstFrameRendered = () => notifications++;

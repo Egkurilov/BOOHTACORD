@@ -11,24 +11,26 @@ class VoiceScreenEndedView extends StatelessWidget {
     required this.participants,
     required this.onScreenSelected,
     required this.onReturnToParticipants,
+    this.connecting = false,
   });
 
   final List<VoiceScreenChoice> choices;
   final Widget participants;
   final ValueChanged<String?> onScreenSelected;
   final VoidCallback onReturnToParticipants;
+  final bool connecting;
 
   @override
   Widget build(BuildContext context) => VoiceViewerLayout(
-    stage: const ColoredBox(
+    stage: ColoredBox(
       color: GcColors.streamCanvas,
       child: Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Text(
-            'Демонстрация завершена. Выберите другую вручную или вернитесь к участникам.',
+            connecting ? 'Подключаемся к демонстрации…' : 'Демонстрация завершена. Выберите другую вручную или вернитесь к участникам.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: GcColors.muted, fontSize: 14),
+            style: const TextStyle(color: GcColors.muted, fontSize: 14),
           ),
         ),
       ),

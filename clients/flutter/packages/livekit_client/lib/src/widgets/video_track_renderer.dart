@@ -75,7 +75,7 @@ class VideoTrackRenderer extends StatefulWidget {
   final VideoRenderMode renderMode;
   final rtc.RTCVideoRenderer? cachedRenderer;
   final bool autoDisposeRenderer;
-  final VoidCallback? onFirstFrameReceived;
+  final VoidCallback? onFirstFrameRendered;
 
   /// wrap the video view in a Center widget (if [fit] is [VideoViewFit.contain])
   final bool autoCenter;
@@ -101,7 +101,7 @@ class VideoTrackRenderer extends StatefulWidget {
     this.autoCenter = true,
     this.adaptiveStreamPixelDensity = AdaptiveStreamPixelDensity.auto,
     this.placeholderBuilder,
-    this.onFirstFrameReceived,
+    this.onFirstFrameRendered,
     Key? key,
   }) : super(key: key);
 
@@ -226,7 +226,7 @@ class _VideoTrackRendererState extends State<VideoTrackRenderer> {
     if (renderer != null) {
       setVideoTrackRendererFirstFrameCallback(
         renderer,
-        widget.onFirstFrameReceived,
+        widget.onFirstFrameRendered,
       );
     }
     await _listener?.dispose();
@@ -273,10 +273,10 @@ class _VideoTrackRendererState extends State<VideoTrackRenderer> {
       _viewRegistration.pixelDensity = widget.adaptiveStreamPixelDensity;
     }
 
-    if (widget.onFirstFrameReceived != oldWidget.onFirstFrameReceived && _renderer != null) {
+    if (widget.onFirstFrameRendered != oldWidget.onFirstFrameRendered && _renderer != null) {
       setVideoTrackRendererFirstFrameCallback(
         _renderer!,
-        widget.onFirstFrameReceived,
+        widget.onFirstFrameRendered,
       );
     }
 
