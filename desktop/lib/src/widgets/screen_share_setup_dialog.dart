@@ -249,9 +249,12 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          SizedBox(height: compact ? 12 : 20),
-                          if (!widget.updating) _buildMobileCaptureNotice(),
-                          SizedBox(height: compact ? 8 : 20),
+                          if (!widget.updating &&
+                              defaultTargetPlatform == TargetPlatform.iOS) ...[
+                            SizedBox(height: compact ? 12 : 20),
+                            _buildMobileCaptureNotice(),
+                            SizedBox(height: compact ? 8 : 20),
+                          ],
                           _buildQualityPicker(),
                         ],
                       ),

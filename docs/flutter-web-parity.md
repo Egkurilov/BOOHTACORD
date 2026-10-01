@@ -90,6 +90,11 @@ The Flutter screen-share setup modal explicitly traps keyboard traversal; a
 widget test verifies both Tab and Shift+Tab remain within the dialog. The other
 settings/dialog focus paths and platform screen-reader acceptance remain open —
 [QA-183](../evidence/flutter/qa183-screen-share-dialog-keyboard-loop-2026-10-01-001.json).
+The Android screen-share quality picker no longer repeats an app-specific
+permission warning before the system MediaProjection consent dialog; the iOS
+app-only capture notice remains. Update-quality mode also omits setup guidance.
+All 11 picker tests and the analyzer pass —
+[QA-190](../evidence/flutter/qa190-android-screen-share-quality-copy-2026-10-01-001.json).
 
 Flutter destructive confirmation dialogs for message deletion, voice kick and
 admin topology actions now match the web's native confirmation behavior: an

@@ -265,9 +265,51 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Изменить качество и FPS без перезапуска'), findsOneWidget);
-    expect(find.textContaining('Android покажет системный запрос'), findsNothing);
+    expect(
+      find.text('Изменить качество и FPS без перезапуска'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Android покажет системный запрос'),
+      findsNothing,
+    );
     expect(find.text('Применить качество'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('does not show Android-specific quality-picker guidance', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => ScreenShareSetupDialog.show(
+                context,
+                initialQuality: ScreenShareQuality.balanced,
+                allowSourceSelection: false,
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Android покажет системный запрос'),
+      findsNothing,
+    );
+    expect(find.textContaining('запрос на запись экрана'), findsNothing);
+    expect(find.text('Разрешение'), findsOneWidget);
+    expect(find.text('Частота кадров'), findsOneWidget);
     expect(tester.takeException(), isNull);
     debugDefaultTargetPlatformOverride = null;
   });

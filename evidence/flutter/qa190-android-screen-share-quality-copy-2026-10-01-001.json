@@ -1,0 +1,26 @@
+{
+  "id": "QA-190",
+  "kind": "android-screen-share-quality-picker-copy",
+  "status": "PASS_WITH_DEVICE_VISUAL_ACCEPTANCE_OPEN",
+  "executed_at": "2026-10-01",
+  "source_revision": "6a367ec8ba4ebffb956bc33675bde35cef34c518",
+  "summary": "The Android screen-share quality picker omits the app-specific MediaProjection explanation; the Android system consent dialog remains the authoritative permission prompt. iOS-specific capture limitation copy is preserved, and update-quality mode still omits setup guidance.",
+  "checks": [
+    {
+      "name": "Screen-share picker widget suite",
+      "command": "cd desktop && flutter test test/screen_share_quality_test.dart --reporter compact",
+      "status": "PASS",
+      "observation": "All 11 tests passed, including the new Android initial-picker test, existing update-quality copy test, iOS guidance test, keyboard loop and 320 dp/Android portrait layouts."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "limitations": [
+    "The changed copy was not visually checked on a physical Android device."
+  ],
+  "remaining": "Confirm the quality dialog copy and spacing on Android at phone width; system MediaProjection consent and iOS-specific guidance remain unchanged."
+}
