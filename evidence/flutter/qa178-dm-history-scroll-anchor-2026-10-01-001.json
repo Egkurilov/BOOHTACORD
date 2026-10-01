@@ -3,8 +3,8 @@
   "kind": "dm-history-scroll-anchor",
   "status": "PASS",
   "executed_at": "2026-10-01",
-  "source_revision": "working-tree after ed84346",
-  "summary": "Fixed direct-message history pagination so prepending an older cursor page preserves the visible row's screen position and leaves the read cursor on the newest previously read peer message. Test-first regression reproduced the displaced row before the fix. No ADB/device was used.",
+  "source_revision": "8ffcc21",
+  "summary": "Fixed direct-message history pagination so prepending an older cursor page preserves the visible row's screen position and leaves the read cursor on the newest previously read peer message. Test-first regression reproduced the displaced row before the fix. Signed Android Release APKs for all three ABIs and macOS Debug compiled from this revision; no ADB/device was used.",
   "checks": [
     {
       "name": "DM older-page scroll anchor and read-cursor regression",
@@ -23,11 +23,24 @@
       "command": "cd desktop && flutter analyze --no-pub --no-fatal-infos",
       "status": "PASS",
       "observation": "Analyzer reported no issues."
+    },
+    {
+      "name": "Signed Android split Release build",
+      "command": "cd desktop && JAVA_HOME=<JDK 17> flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Built armeabi-v7a (31 MB), arm64-v8a (39 MB) and x86_64 (45 MB) APKs. apksigner verified APK Signature Scheme v2 for all three. APK files remain ignored build artifacts and are not committed."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd desktop && flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "Built build/macos/Build/Products/Debug/BOOHTACORD.app. The app was compiled but not launched."
     }
   ],
   "limitations": [
     "Reply navigation to a target outside the loaded history window is not covered by this change.",
     "Realtime overlap and server-backed read-cursor behavior remain unverified.",
+    "Windows compilation/runtime was not verified in this turn.",
     "No Android device, ADB, or platform runtime validation was performed."
   ],
   "remaining": "Verify reply targets across unloaded pages, realtime updates and server-backed cursor boundaries; keep physical Android acceptance open."
