@@ -15,6 +15,7 @@ import 'guild_presence_state.dart';
 import 'features/audio/devices/controller.dart';
 import 'features/session/lifecycle/controller.dart';
 import 'features/profile/state/controller.dart';
+import 'features/workspace/lifecycle/controller.dart';
 import 'models.dart';
 import 'services/api_client.dart';
 import 'services/composer_draft_memory.dart';
@@ -37,6 +38,7 @@ import 'telemetry/report_media/sender_sample.dart';
 import 'telemetry/report_media/connection.dart';
 
 export 'features/session/lifecycle/types.dart';
+export 'features/workspace/lifecycle/types.dart';
 
 enum VoicePhase {
   idle,
@@ -51,10 +53,6 @@ enum VoicePhase {
 enum ScreenSharePhase { idle, starting, sharing, stopping, error }
 
 enum AudioActivationMode { vad, ptt }
-
-enum NavigationSection { channels, directMessages }
-
-enum WorkspacePanel { none, profile, audio, admin, search, searchContext }
 
 enum MessageEditStatus { saved, conflict, error, stale }
 
@@ -125,6 +123,32 @@ class AppState extends ChangeNotifier {
     )..addListener(notifyListeners);
     _nativeNotifications.sessionScope = _session.scope;
     _nativeNotifications.addListener(notifyListeners);
+    _workspace = WorkspaceController(
+      api,
+      _session.scope,
+      effects: WorkspaceEffects(
+        audioPanelOpened: () {
+          _audioDevices.watch();
+          unawaited(refreshAudioDevices());
+        },
+        selectChannel: _loadChannelHistory,
+        openDirect: _loadDirectHistory,
+        invalidateText: () {
+          _textHistoryLoadSequence++;
+          loadingMessages = false;
+        },
+        clearText: () {
+          messages = const [];
+          nextMessageCursor = null;
+          loadingMessages = false;
+        },
+        clearDirect: () {
+          directMessageHistory = const [];
+        },
+        error: (value) => error = value,
+        message: _message,
+      ),
+    )..addListener(notifyListeners);
     _profile = ProfileController(
       api,
       _session.scope,
@@ -147,6 +171,7 @@ class AppState extends ChangeNotifier {
   late final AudioDeviceController _audioDevices;
   late final SessionController _session;
   late final ProfileController _profile;
+  late final WorkspaceController _workspace;
   @visibleForTesting
   final Duration startupSessionTimeout;
   final NativeNotificationService _nativeNotifications;
@@ -157,31 +182,59 @@ class AppState extends ChangeNotifier {
   set user(SessionUser? value) => _session.user = value;
   OwnProfile? get profile => _profile.profile;
   set profile(OwnProfile? value) => _profile.profile = value;
-  ChannelTopology? topology;
-  List<GuildMember> members = const [];
-  final GuildPresenceState guildPresence = GuildPresenceState();
-  bool membersLoading = false;
-  String? membersError;
+  ChannelTopology? get topology => _workspace.topology;
+  set topology(ChannelTopology? value) => _workspace.topology = value;
+  List<GuildMember> get members => _workspace.members;
+  set members(List<GuildMember> value) => _workspace.members = value;
+  GuildPresenceState get guildPresence => _workspace.guildPresence;
+  bool get membersLoading => _workspace.membersLoading;
+  set membersLoading(bool value) => _workspace.membersLoading = value;
+  String? get membersError => _workspace.membersError;
+  set membersError(String? value) => _workspace.membersError = value;
   List<VoiceRoomRoster>? voiceRosters;
   String? voiceRosterError;
-  List<DirectConversation> directMessages = const [];
-  List<DirectCandidate> directMessageCandidates = const [];
-  DirectConversation? selectedDirectMessage;
+  List<DirectConversation> get directMessages => _workspace.directMessages;
+  set directMessages(List<DirectConversation> value) =>
+      _workspace.directMessages = value;
+  List<DirectCandidate> get directMessageCandidates =>
+      _workspace.directMessageCandidates;
+  set directMessageCandidates(List<DirectCandidate> value) =>
+      _workspace.directMessageCandidates = value;
+  DirectConversation? get selectedDirectMessage =>
+      _workspace.selectedDirectMessage;
+  set selectedDirectMessage(DirectConversation? value) =>
+      _workspace.selectedDirectMessage = value;
   List<DirectChatMessage> directMessageHistory = const [];
   String? nextDirectMessageCursor;
   bool loadingOlderDirectMessages = false;
-  NavigationSection navigationSection = NavigationSection.channels;
-  WorkspacePanel workspacePanel = WorkspacePanel.none;
-  SearchMessage? searchContextMessage;
-  String searchContextHeading = 'Контекст найденного сообщения';
-  List<ChatMessage> searchContextTextMessages = const [];
-  List<DirectChatMessage> searchContextDirectMessages = const [];
-  bool loadingSearchContext = false;
-  String? searchContextError;
-  GuildChannel? _searchOriginChannel;
-  DirectConversation? _searchOriginDirectMessage;
-  int _searchContextSequence = 0;
-  GuildChannel? selectedChannel;
+  NavigationSection get navigationSection => _workspace.navigationSection;
+  set navigationSection(NavigationSection value) =>
+      _workspace.navigationSection = value;
+  WorkspacePanel get workspacePanel => _workspace.workspacePanel;
+  set workspacePanel(WorkspacePanel value) => _workspace.workspacePanel = value;
+  SearchMessage? get searchContextMessage => _workspace.searchContextMessage;
+  set searchContextMessage(SearchMessage? value) =>
+      _workspace.searchContextMessage = value;
+  String get searchContextHeading => _workspace.searchContextHeading;
+  set searchContextHeading(String value) =>
+      _workspace.searchContextHeading = value;
+  List<ChatMessage> get searchContextTextMessages =>
+      _workspace.searchContextTextMessages;
+  set searchContextTextMessages(List<ChatMessage> value) =>
+      _workspace.searchContextTextMessages = value;
+  List<DirectChatMessage> get searchContextDirectMessages =>
+      _workspace.searchContextDirectMessages;
+  set searchContextDirectMessages(List<DirectChatMessage> value) =>
+      _workspace.searchContextDirectMessages = value;
+  bool get loadingSearchContext => _workspace.loadingSearchContext;
+  set loadingSearchContext(bool value) =>
+      _workspace.loadingSearchContext = value;
+  String? get searchContextError => _workspace.searchContextError;
+  set searchContextError(String? value) =>
+      _workspace.searchContextError = value;
+  GuildChannel? get selectedChannel => _workspace.selectedChannel;
+  set selectedChannel(GuildChannel? value) =>
+      _workspace.selectedChannel = value;
   List<ChatMessage> messages = const [];
   String? nextMessageCursor;
   bool loadingOlderMessages = false;
@@ -413,6 +466,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> _clearExpiredAccount() async {
     _profile.clear();
+    _workspace.clear();
     final ticket = _session.scope.capture();
     _textHistoryLoadSequence++;
     ComposerDraftMemory.clear();
@@ -590,6 +644,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> _clearServerAccount() async {
     _profile.clear();
+    _workspace.clear();
     _audioPreferences = null;
     audioActivationMode = AudioActivationMode.vad;
     pushToTalkKeyId = null;
@@ -618,6 +673,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> _clearSignedOutAccount() async {
     _profile.clear();
+    _workspace.clear();
     ComposerDraftMemory.clear();
     _textHistoryLoadSequence++;
     loadingMessages = false;
@@ -800,15 +856,8 @@ class AppState extends ChangeNotifier {
     _voiceRosterLoading = false;
   }
 
-  void toggleWorkspacePanel(WorkspacePanel panel) {
-    workspacePanel = workspacePanel == panel ? WorkspacePanel.none : panel;
-    error = null;
-    if (workspacePanel == WorkspacePanel.audio) {
-      _audioDevices.watch();
-      unawaited(refreshAudioDevices());
-    }
-    notifyListeners();
-  }
+  void toggleWorkspacePanel(WorkspacePanel panel) =>
+      _workspace.toggleWorkspacePanel(panel);
 
   AudioCaptureOptions get _audioCaptureOptions => _audioDevices.captureOptions;
 
@@ -978,213 +1027,23 @@ class AppState extends ChangeNotifier {
 
   Future<bool> deleteAvatar() => _profile.deleteAvatar();
 
-  Future<void> refreshMembers() async {
-    membersLoading = true;
-    membersError = null;
-    notifyListeners();
-    try {
-      members = await api.members();
-    } catch (cause) {
-      membersError = _message(cause);
-    } finally {
-      membersLoading = false;
-      notifyListeners();
-    }
-  }
-
+  Future<void> refreshMembers() => _workspace.refreshMembers();
   MemberPresence memberPresence(GuildMember member) =>
-      guildPresence.resolve(member.id, member.presence);
+      _workspace.memberPresence(member);
+  Future<void> refreshDirectMessages() => _workspace.refreshDirectMessages();
+  Future<void> showDirectMessages() => _workspace.showDirectMessages();
+  void showChannels() => _workspace.showChannels();
+  void openSearchPanel() => _workspace.openSearchPanel();
+  void closeSearchPanel() => _workspace.closeSearchPanel();
+  Future<void> openSearchContext(SearchMessage target, {String? heading}) =>
+      _workspace.openSearchContext(target, heading: heading);
+  Future<void> returnFromSearchContext() =>
+      _workspace.returnFromSearchContext();
 
-  Future<void> refreshDirectMessages() async {
-    try {
-      directMessages = await api.directMessages();
-      if (navigationSection == NavigationSection.directMessages) {
-        directMessageCandidates = await api.directMessageCandidates();
-      }
-    } catch (cause) {
-      error = _message(cause);
-    }
-    notifyListeners();
-  }
+  Future<void> openDirectConversation(DirectConversation conversation) =>
+      _workspace.openDirectConversation(conversation);
 
-  Future<void> showDirectMessages() async {
-    _textHistoryLoadSequence++;
-    loadingMessages = false;
-    workspacePanel = WorkspacePanel.none;
-    navigationSection = NavigationSection.directMessages;
-    selectedChannel = null;
-    error = null;
-    notifyListeners();
-    await refreshDirectMessages();
-  }
-
-  void showChannels() {
-    workspacePanel = WorkspacePanel.none;
-    navigationSection = NavigationSection.channels;
-    selectedDirectMessage = null;
-    directMessageHistory = const [];
-    final all = topology?.categories.expand((category) => category.channels);
-    selectedChannel ??= all
-        ?.where((channel) => channel.kind == ChannelKind.text)
-        .firstOrNull;
-    notifyListeners();
-  }
-
-  void openSearchPanel() {
-    _searchContextSequence++;
-    _searchOriginChannel = selectedChannel;
-    _searchOriginDirectMessage = selectedDirectMessage;
-    searchContextMessage = null;
-    searchContextHeading = 'Контекст найденного сообщения';
-    searchContextTextMessages = const [];
-    searchContextDirectMessages = const [];
-    searchContextError = null;
-    workspacePanel = WorkspacePanel.search;
-    notifyListeners();
-  }
-
-  void closeSearchPanel() {
-    _searchContextSequence++;
-    loadingSearchContext = false;
-    searchContextHeading = 'Контекст найденного сообщения';
-    if (workspacePanel == WorkspacePanel.search) {
-      workspacePanel = WorkspacePanel.none;
-    }
-    _searchOriginChannel = null;
-    _searchOriginDirectMessage = null;
-    notifyListeners();
-  }
-
-  Future<void> openSearchContext(
-    SearchMessage target, {
-    String? heading,
-  }) async {
-    final sequence = ++_searchContextSequence;
-    searchContextMessage = target;
-    searchContextHeading = heading ?? 'Контекст найденного сообщения';
-    searchContextTextMessages = const [];
-    searchContextDirectMessages = const [];
-    searchContextError = null;
-    loadingSearchContext = true;
-    workspacePanel = WorkspacePanel.searchContext;
-    if (target.kind == SearchMessageKind.channel) {
-      final channel = topology?.categories
-          .expand((category) => category.channels)
-          .where(
-            (value) =>
-                value.id == target.conversationId &&
-                value.kind == ChannelKind.text,
-          )
-          .firstOrNull;
-      var resolvedChannel = channel;
-      if (resolvedChannel == null) {
-        await refreshTopology();
-        if (sequence != _searchContextSequence) return;
-        resolvedChannel = topology?.categories
-            .expand((category) => category.channels)
-            .where(
-              (value) =>
-                  value.id == target.conversationId &&
-                  value.kind == ChannelKind.text,
-            )
-            .firstOrNull;
-      }
-      if (resolvedChannel == null) {
-        searchContextError = 'Найденный канал больше недоступен.';
-        loadingSearchContext = false;
-        notifyListeners();
-        return;
-      }
-      _textHistoryLoadSequence++;
-      loadingMessages = false;
-      selectedChannel = resolvedChannel;
-      selectedDirectMessage = null;
-      navigationSection = NavigationSection.channels;
-    } else {
-      var conversation = directMessages
-          .where((value) => value.id == target.conversationId)
-          .firstOrNull;
-      if (conversation == null) {
-        await refreshDirectMessages();
-        if (sequence != _searchContextSequence) return;
-        conversation = directMessages
-            .where((value) => value.id == target.conversationId)
-            .firstOrNull;
-      }
-      if (conversation == null) {
-        searchContextError = 'Личный диалог больше недоступен.';
-        loadingSearchContext = false;
-        notifyListeners();
-        return;
-      }
-      _textHistoryLoadSequence++;
-      loadingMessages = false;
-      selectedDirectMessage = conversation;
-      selectedChannel = null;
-      navigationSection = NavigationSection.directMessages;
-    }
-    notifyListeners();
-    try {
-      if (target.kind == SearchMessageKind.channel) {
-        final page = await api.messagePage(
-          target.conversationId,
-          at: target.id,
-        );
-        if (sequence != _searchContextSequence) return;
-        searchContextTextMessages = page.messages;
-        if (!page.messages.any((message) => message.id == target.id)) {
-          searchContextError =
-              'Найденное сообщение больше недоступно в канале.';
-        }
-      } else {
-        final page = await api.directMessageHistoryPage(
-          target.conversationId,
-          at: target.id,
-        );
-        if (sequence != _searchContextSequence) return;
-        searchContextDirectMessages = page.messages;
-        if (!page.messages.any((message) => message.id == target.id)) {
-          searchContextError =
-              'Найденное сообщение больше недоступно в диалоге.';
-        }
-      }
-    } catch (cause) {
-      if (sequence != _searchContextSequence) return;
-      searchContextError = _message(cause);
-    } finally {
-      if (sequence == _searchContextSequence) {
-        loadingSearchContext = false;
-        notifyListeners();
-      }
-    }
-  }
-
-  Future<void> returnFromSearchContext() async {
-    _searchContextSequence++;
-    final channel = _searchOriginChannel;
-    final directMessage = _searchOriginDirectMessage;
-    _searchOriginChannel = null;
-    _searchOriginDirectMessage = null;
-    searchContextMessage = null;
-    searchContextHeading = 'Контекст найденного сообщения';
-    searchContextTextMessages = const [];
-    searchContextDirectMessages = const [];
-    searchContextError = null;
-    workspacePanel = WorkspacePanel.none;
-    if (channel != null) {
-      await selectChannel(channel);
-    } else if (directMessage != null) {
-      await openDirectConversation(directMessage);
-    } else {
-      notifyListeners();
-    }
-  }
-
-  Future<void> openDirectConversation(DirectConversation conversation) async {
-    _textHistoryLoadSequence++;
-    loadingMessages = false;
-    selectedDirectMessage = conversation;
-    selectedChannel = null;
+  Future<void> _loadDirectHistory(DirectConversation conversation) async {
     nextDirectMessageCursor = null;
     loadingDirectMessages = true;
     error = null;
@@ -1274,19 +1133,8 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> createDirectConversation(DirectCandidate candidate) async {
-    try {
-      final id = await api.openDirectMessage(candidate.id);
-      await refreshDirectMessages();
-      final conversation = directMessages
-          .where((value) => value.id == id)
-          .firstOrNull;
-      if (conversation != null) await openDirectConversation(conversation);
-    } catch (cause) {
-      error = _message(cause);
-      notifyListeners();
-    }
-  }
+  Future<void> createDirectConversation(DirectCandidate candidate) =>
+      _workspace.createDirectConversation(candidate);
 
   Future<bool> sendDirect(
     String body, {
@@ -1536,36 +1384,13 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshTopology() async {
-    try {
-      topology = await api.topology();
-      final all = topology!.categories.expand((category) => category.channels);
-      if (selectedChannel != null &&
-          !all.any((channel) => channel.id == selectedChannel!.id)) {
-        _textHistoryLoadSequence++;
-        selectedChannel = null;
-        messages = const [];
-        nextMessageCursor = null;
-        loadingMessages = false;
-      }
-      selectedChannel ??= all
-          .where((channel) => channel.kind == ChannelKind.text)
-          .firstOrNull;
-      if (selectedChannel?.kind == ChannelKind.text) {
-        await selectChannel(selectedChannel!);
-      }
-    } catch (cause) {
-      error = _message(cause);
-    }
-    notifyListeners();
-  }
+  Future<void> refreshTopology() => _workspace.refreshTopology();
 
-  Future<void> selectChannel(GuildChannel channel) async {
+  Future<void> selectChannel(GuildChannel channel) =>
+      _workspace.selectChannel(channel);
+
+  Future<void> _loadChannelHistory(GuildChannel channel) async {
     final loadSequence = ++_textHistoryLoadSequence;
-    workspacePanel = WorkspacePanel.none;
-    navigationSection = NavigationSection.channels;
-    selectedDirectMessage = null;
-    selectedChannel = channel;
     messages = const [];
     nextMessageCursor = null;
     _textHistoryHasLoadedOlderPages = false;
@@ -1967,6 +1792,7 @@ class AppState extends ChangeNotifier {
   void dispose() {
     _session.dispose();
     _profile.dispose();
+    _workspace.dispose();
     _nativeNotifications.dispose();
     _closeScreenPreviewSubscriptions();
     _realtimeRetry?.cancel();

@@ -1,0 +1,14 @@
+{
+  "id": "reorganization-workspace-state-2026-10-02",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "scope": "Workspace selection, directory loading, panels and search context ownership",
+  "checks": {
+    "full_flutter_tests": 367,
+    "local_dart_import_guard": "PASS",
+    "late_member_list_after_account_replacement": "PASS",
+    "existing_workspace_navigation_and_audio_panel_tests": "PASS"
+  },
+  "preserved": ["AppState UI facade", "Audio discovery on opening the audio panel", "TEXT and DM search paths stay separate"],
+  "limitations": ["Conversation history and media ownership remain subsequent packets"]
+}
