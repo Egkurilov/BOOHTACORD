@@ -1,0 +1,18 @@
+{
+  "id": "reorganization-public-assets-2026-10-01",
+  "kind": "built-image-smoke",
+  "status": "PASS",
+  "base_sha": "8b7f1ddc196c6ead42f45a4b4fe06ac896c0f9a5",
+  "changes": "COPY public ./public; shared PNG response verifier",
+  "environment": "Disposable loopback-only nginx container built on Hetzner",
+  "checks": {
+    "docker_build": "PASS",
+    "http_status": 200,
+    "content_type": "image/png",
+    "png_magic": "PASS",
+    "spa_fallback_rejection_tests": "PASS"
+  },
+  "image_id": "sha256:d75989fb7fe2caf98914aee15618e70d61a225a66fe451129e15309efb00b958",
+  "image_size_bytes": 21142281,
+  "limitations": ["This is a development smoke image, not a signed production release."]
+}
