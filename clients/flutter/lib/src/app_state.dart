@@ -14,6 +14,7 @@ import 'package:uuid/uuid.dart';
 import 'guild_presence_state.dart';
 import 'features/audio/devices/controller.dart';
 import 'features/session/lifecycle/controller.dart';
+import 'features/profile/state/controller.dart';
 import 'models.dart';
 import 'services/api_client.dart';
 import 'services/composer_draft_memory.dart';
@@ -122,6 +123,13 @@ class AppState extends ChangeNotifier {
         message: _message,
       ),
     )..addListener(notifyListeners);
+    _profile = ProfileController(
+      api,
+      _session.scope,
+      error: (value) => error = value,
+      formatError: _message,
+      refreshMembers: refreshMembers,
+    )..addListener(notifyListeners);
     _audioDevices = AudioDeviceController(
       readRoom: () => _room,
       loader: audioDeviceLoader,
@@ -136,6 +144,7 @@ class AppState extends ChangeNotifier {
   final ApiClient api;
   late final AudioDeviceController _audioDevices;
   late final SessionController _session;
+  late final ProfileController _profile;
   @visibleForTesting
   final Duration startupSessionTimeout;
   final NativeNotificationService _nativeNotifications;
@@ -144,7 +153,8 @@ class AppState extends ChangeNotifier {
   set phase(AppPhase value) => _session.phase = value;
   SessionUser? get user => _session.user;
   set user(SessionUser? value) => _session.user = value;
-  OwnProfile? profile;
+  OwnProfile? get profile => _profile.profile;
+  set profile(OwnProfile? value) => _profile.profile = value;
   ChannelTopology? topology;
   List<GuildMember> members = const [];
   final GuildPresenceState guildPresence = GuildPresenceState();
@@ -180,9 +190,12 @@ class AppState extends ChangeNotifier {
   bool loadingDirectMessages = false;
   bool realtimeConnected = false;
   bool maintenanceActive = false;
-  bool profileLoading = false;
-  String? profileLoadError;
-  bool profileSaving = false;
+  bool get profileLoading => _profile.profileLoading;
+  set profileLoading(bool value) => _profile.profileLoading = value;
+  String? get profileLoadError => _profile.profileLoadError;
+  set profileLoadError(String? value) => _profile.profileLoadError = value;
+  bool get profileSaving => _profile.profileSaving;
+  set profileSaving(bool value) => _profile.profileSaving = value;
   bool get logoutBusy => _session.logoutBusy;
   set logoutBusy(bool value) => _session.logoutBusy = value;
   String? get logoutError => _session.logoutError;
@@ -194,7 +207,7 @@ class AppState extends ChangeNotifier {
   bool resetUnusable = false;
   String? resetError;
   bool focusLoginOnMount = false;
-  int avatarRevision = 0;
+  int get avatarRevision => _profile.avatarRevision;
   String? error;
   VoicePhase voicePhase = VoicePhase.idle;
   GuildChannel? voiceChannel;
@@ -403,6 +416,7 @@ class AppState extends ChangeNotifier {
   Future<void> _expireSession() => _session.expire();
 
   Future<void> _clearExpiredAccount() async {
+    _profile.clear();
     final ticket = _session.scope.capture();
     _textHistoryLoadSequence++;
     ComposerDraftMemory.clear();
@@ -579,6 +593,7 @@ class AppState extends ChangeNotifier {
   Future<void> setServer(String value) => _session.setServer(value);
 
   Future<void> _clearServerAccount() async {
+    _profile.clear();
     _audioPreferences = null;
     audioActivationMode = AudioActivationMode.vad;
     pushToTalkKeyId = null;
@@ -606,6 +621,7 @@ class AppState extends ChangeNotifier {
   Future<void> logout() => _session.logout();
 
   Future<void> _clearSignedOutAccount() async {
+    _profile.clear();
     ComposerDraftMemory.clear();
     _textHistoryLoadSequence++;
     loadingMessages = false;
@@ -640,19 +656,7 @@ class AppState extends ChangeNotifier {
     nextDirectMessageCursor = null;
   }
 
-  Future<void> refreshProfile() async {
-    profileLoading = true;
-    profileLoadError = null;
-    notifyListeners();
-    try {
-      profile = await api.ownProfile();
-    } catch (cause) {
-      profileLoadError = _message(cause);
-    } finally {
-      profileLoading = false;
-      notifyListeners();
-    }
-  }
+  Future<void> refreshProfile() => _profile.refreshProfile();
 
   Future<void> refreshMaintenance() async {
     try {
@@ -968,94 +972,15 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<bool> saveDisplayName(String value) async {
-    if (value.runes.isEmpty || value.runes.length > 64) {
-      error = 'Имя должно содержать от 1 до 64 символов.';
-      notifyListeners();
-      return false;
-    }
-    profileSaving = true;
-    error = null;
-    notifyListeners();
-    try {
-      profile = await api.updateOwnProfile(value);
-      await refreshMembers();
-      return true;
-    } catch (cause) {
-      error = _message(cause);
-      return false;
-    } finally {
-      profileSaving = false;
-      notifyListeners();
-    }
-  }
+  Future<bool> saveDisplayName(String value) => _profile.saveDisplayName(value);
 
-  Future<bool> updatePassword(String current, String next) async {
-    if (current.runes.length < 12 ||
-        current.runes.length > 128 ||
-        next.runes.length < 12 ||
-        next.runes.length > 128) {
-      error = 'Пароль должен содержать от 12 до 128 символов.';
-      notifyListeners();
-      return false;
-    }
-    profileSaving = true;
-    error = null;
-    notifyListeners();
-    try {
-      await api.changePassword(current, next);
-      return true;
-    } catch (cause) {
-      error = _message(cause);
-      return false;
-    } finally {
-      profileSaving = false;
-      notifyListeners();
-    }
-  }
+  Future<bool> updatePassword(String current, String next) =>
+      _profile.updatePassword(current, next);
 
-  Future<bool> uploadAvatar(Uint8List bytes, String contentType) async {
-    if (bytes.isEmpty || bytes.length > 2 * 1024 * 1024) {
-      error = 'Выберите изображение размером не более 2 МиБ.';
-      notifyListeners();
-      return false;
-    }
-    profileSaving = true;
-    error = null;
-    notifyListeners();
-    try {
-      await api.uploadOwnAvatar(bytes, contentType);
-      profile = await api.ownProfile();
-      avatarRevision++;
-      await refreshMembers();
-      return true;
-    } catch (cause) {
-      error = _message(cause);
-      return false;
-    } finally {
-      profileSaving = false;
-      notifyListeners();
-    }
-  }
+  Future<bool> uploadAvatar(Uint8List bytes, String contentType) =>
+      _profile.uploadAvatar(bytes, contentType);
 
-  Future<bool> deleteAvatar() async {
-    profileSaving = true;
-    error = null;
-    notifyListeners();
-    try {
-      await api.deleteOwnAvatar();
-      profile = await api.ownProfile();
-      avatarRevision++;
-      await refreshMembers();
-      return true;
-    } catch (cause) {
-      error = _message(cause);
-      return false;
-    } finally {
-      profileSaving = false;
-      notifyListeners();
-    }
-  }
+  Future<bool> deleteAvatar() => _profile.deleteAvatar();
 
   Future<void> refreshMembers() async {
     membersLoading = true;
@@ -2043,6 +1968,7 @@ class AppState extends ChangeNotifier {
   @override
   void dispose() {
     _session.dispose();
+    _profile.dispose();
     _closeScreenPreviewSubscriptions();
     _realtimeRetry?.cancel();
     _maintenanceTimer?.cancel();
