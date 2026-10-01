@@ -1,0 +1,44 @@
+{
+  "id": "QA-195",
+  "kind": "pixel7-android-app-only-self-preview",
+  "status": "FAIL_LOCAL_VIEWER_BLACK_WITH_CALCULATOR_THUMBNAIL",
+  "executed_at": "2026-10-01",
+  "source_revision": "9b7ce74d022d193ed32fe9f86596b311f94e46c3",
+  "summary": "A current-source signed release APK updated in place on Pixel 7. App-only capture of Calculator again showed a fresh-looking Calculator thumbnail in the participant card while the large local self-preview remained black. The defect reproduces on versionCode 2025; remote playback was not tested.",
+  "artifact": {
+    "version_name": "1.0.18",
+    "version_code": 2025,
+    "path": "desktop/build/app/outputs/flutter-apk/app-release.apk",
+    "sha256": "dc54f86b1faa3c3aa084f89fa609f7ee3d4571f9d5171d05e84edc3778bdf311",
+    "size_bytes": 111824554
+  },
+  "checks": [
+    {
+      "name": "Release update installed without removing app data",
+      "device": "Google Pixel 7, Android 17/API 37",
+      "command": "adb install -r app-release.apk; adb shell dumpsys package ru.boohtacord.app",
+      "status": "PASS",
+      "observation": "The Pixel had versionCode 2024. The current-source 1.0.18/versionCode 2025 APK installed successfully over it with adb install -r; no uninstall or data clear was used."
+    },
+    {
+      "name": "App-only Calculator capture and local self-preview",
+      "device": "Google Pixel 7, SHARE_TEST, microphone muted, no remote receiver",
+      "command": "Android screen-capture picker; adb exec-out screencap -p",
+      "status": "FAIL_VIEWER_BLACK_THUMBNAIL_VISIBLE",
+      "observation": "Selected the Calculator task in Android's Show an app picker at the default 720p/15 FPS profile. After returning BOOHTACORD, the large local self-preview was fully black, while the participant card showed the Calculator keypad thumbnail. The system showed the active screen-share timer, and the room UI continued to report the microphone muted."
+    },
+    {
+      "name": "Stop and cleanup",
+      "device": "Google Pixel 7, Android 17/API 37",
+      "command": "Stop share, leave voice; adb shell dumpsys media_projection",
+      "status": "PASS",
+      "observation": "The UI returned to the voice-room join screen and MediaProjection reported null; no projection remained active."
+    }
+  ],
+  "limitations": [
+    "The room had no paired remote receiver, so web/macOS playback and receiver frame delivery were not tested.",
+    "The source/capture thumbnail and VideoTrackRenderer frame callbacks were not instrumented; the thumbnail demonstrates app-task pixels were available to that UI path but does not prove ongoing published-track frames.",
+    "This was a runtime reproduction only; no source fix was made and FE-59 remains open."
+  ],
+  "remaining": "Instrument sender and local renderer frame flow, then repeat with a paired web/macOS receiver to isolate app-task capture, track publication, and Android rendering. Add a regression test and fix before closing T-030 preview acceptance."
+}
