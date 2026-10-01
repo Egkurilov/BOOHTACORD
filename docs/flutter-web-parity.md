@@ -80,9 +80,11 @@ states; full Flutter tests/analyzer pass —
 Reply previews now navigate consistently in web and Flutter: targets in the
 loaded window scroll into view, while targets outside it open bounded
 `at`-anchored context for TEXT and DM with a return path. Focused unloaded-target
-widget tests, the full Flutter and frontend suites, and macOS/Android Debug builds
-pass; live backend/read-cursor and Windows/device acceptance remain open —
-[QA-181](../evidence/flutter/qa181-reply-context-unloaded-history-2026-10-01-001.json).
+widget tests plus web navigation tests, the full Flutter suite (336), frontend
+suite (713), and macOS/Android Debug builds pass. Live browser viewport,
+backend/read-cursor, Windows and device acceptance remain open —
+[QA-181](../evidence/flutter/qa181-reply-context-unloaded-history-2026-10-01-001.json),
+[QA-182](../evidence/flutter/qa182-web-reply-context-navigation-2026-10-01-001.json).
 
 Flutter audio device-change handling now matches the web's missing-device
 response: transient empty scans preserve the selected IDs; when a replacement

@@ -1,0 +1,33 @@
+{
+  "id": "QA-182",
+  "kind": "web-reply-context-navigation",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "ea72cfb",
+  "summary": "TEXT and DM history lists share tested reply-target navigation: scroll a target already in the loaded DOM, otherwise request the bounded context view.",
+  "checks": [
+    {
+      "name": "Test-first reply navigation regression",
+      "command": "cd frontend && npm test -- --run src/conversation/reply_context_navigation.spec.ts",
+      "status": "PASS",
+      "observation": "Before implementation the test suite failed because the navigation helper did not exist. After implementation all 3 cases passed: loaded target scrolling, missing target fallback, and fallback while the history list is unmounted."
+    },
+    {
+      "name": "Full frontend test suite",
+      "command": "cd frontend && npm test",
+      "status": "PASS",
+      "observation": "All 234 test files and 713 tests passed."
+    },
+    {
+      "name": "Frontend production build",
+      "command": "cd frontend && npm run build",
+      "status": "PASS",
+      "observation": "TypeScript/Vue type-check and Vite production build passed. Vite emitted its existing advisory about bundles larger than 500 kB."
+    }
+  ],
+  "limitations": [
+    "Tests exercise the shared navigation decision without a real browser layout or scroll viewport.",
+    "Live backend context loading and read-cursor behavior remain unverified."
+  ],
+  "remaining": "Verify actual scroll positioning and bounded context/return interaction in a browser session with history spanning multiple pages."
+}
