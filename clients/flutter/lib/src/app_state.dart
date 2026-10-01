@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -31,7 +30,7 @@ import 'services/voice_volume_preferences.dart';
 import 'services/voice_reconnect_policy.dart';
 import 'services/voice_stream_start_tracker.dart';
 import 'services/voice_connection_quality.dart';
-import 'services/voice_roster_events.dart';
+import 'features/voice/roster_state/controller.dart';
 import 'services/screen_thumbnail.dart';
 import 'telemetry/report_media/sender.dart';
 import 'telemetry/report_media/sender_sample.dart';
@@ -184,6 +183,15 @@ class AppState extends ChangeNotifier {
         },
       ).call,
     )..addListener(notifyListeners);
+    _voiceRoster = VoiceRosterController(
+      api,
+      _session.scope,
+      isReady: () => phase == AppPhase.ready,
+      hasUser: () => user != null,
+      message: _message,
+      retryDelay: voiceRosterRetryDelay,
+      staleTimeout: voiceRosterStaleTimeout,
+    )..addListener(notifyListeners);
     _profile = ProfileController(
       api,
       _session.scope,
@@ -209,6 +217,7 @@ class AppState extends ChangeNotifier {
   late final WorkspaceController _workspace;
   late final ConversationController _conversation;
   late final RealtimeController _realtime;
+  late final VoiceRosterController _voiceRoster;
   @visibleForTesting
   final Duration startupSessionTimeout;
   final NativeNotificationService _nativeNotifications;
@@ -227,8 +236,11 @@ class AppState extends ChangeNotifier {
   set membersLoading(bool value) => _workspace.membersLoading = value;
   String? get membersError => _workspace.membersError;
   set membersError(String? value) => _workspace.membersError = value;
-  List<VoiceRoomRoster>? voiceRosters;
-  String? voiceRosterError;
+  List<VoiceRoomRoster>? get voiceRosters => _voiceRoster.voiceRosters;
+  set voiceRosters(List<VoiceRoomRoster>? value) =>
+      _voiceRoster.voiceRosters = value;
+  String? get voiceRosterError => _voiceRoster.voiceRosterError;
+  set voiceRosterError(String? value) => _voiceRoster.voiceRosterError = value;
   List<DirectConversation> get directMessages => _workspace.directMessages;
   set directMessages(List<DirectConversation> value) =>
       _workspace.directMessages = value;
@@ -380,12 +392,6 @@ class AppState extends ChangeNotifier {
   bool _voiceAdmissionPending = false;
   final Map<String, String> _revokedVoiceLeasesDuringJoin = {};
   Timer? _maintenanceTimer;
-  StreamSubscription<String>? _voiceRosterSubscription;
-  Completer<void>? _voiceRosterStreamDone;
-  Timer? _voiceRosterRetryTimer;
-  Timer? _voiceRosterStaleTimer;
-  Completer<void>? _voiceRosterRetryDone;
-  bool _voiceRosterWatching = false;
   Timer? _voiceStreamNoticeTimer;
   Timer? _voiceConnectionStatsTimer;
   int _voiceConnectionStatsRevision = 0;
@@ -407,8 +413,6 @@ class AppState extends ChangeNotifier {
   ScreenShareSenderSnapshot? _previousScreenShareMetrics;
   final _screenShareMetricsGate = ScreenShareMetricsGenerationGate();
   final _senderMediaTelemetry = SenderMediaTelemetry();
-  int _voiceRosterRevision = 0;
-  bool _voiceRosterLoading = false;
   bool get _notificationAppIsForeground => _nativeNotifications.appIsForeground;
 
   String get serverUrl => api.baseUrl;
@@ -767,136 +771,11 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshVoiceRosters() async {
-    if (phase != AppPhase.ready || user == null || _voiceRosterLoading) return;
-    _voiceRosterLoading = true;
-    final revision = ++_voiceRosterRevision;
-    try {
-      final rosters = await api.voiceParticipants();
-      if (revision != _voiceRosterRevision || phase != AppPhase.ready) return;
-      voiceRosters = rosters;
-      voiceRosterError = null;
-    } catch (cause) {
-      if (revision != _voiceRosterRevision || phase != AppPhase.ready) return;
-      voiceRosters = null;
-      voiceRosterError = _message(cause);
-    } finally {
-      if (revision == _voiceRosterRevision) {
-        _voiceRosterLoading = false;
-        notifyListeners();
-      }
-    }
-  }
+  Future<void> refreshVoiceRosters() => _voiceRoster.refreshVoiceRosters();
 
-  void _startVoiceRosterEvents() {
-    if (user == null || _voiceRosterWatching) return;
-    _voiceRosterWatching = true;
-    unawaited(_watchVoiceRosterEvents(++_voiceRosterRevision));
-  }
+  void _startVoiceRosterEvents() => _voiceRoster.start();
 
-  Future<void> _watchVoiceRosterEvents(int revision) async {
-    while (_voiceRosterWatching &&
-        revision == _voiceRosterRevision &&
-        phase == AppPhase.ready) {
-      try {
-        final response = await api.voiceRosterEvents();
-        if (!_voiceRosterWatching || revision != _voiceRosterRevision) {
-          await response.stream.listen(null).cancel();
-          return;
-        }
-        final done = Completer<void>();
-        _voiceRosterStreamDone = done;
-        _voiceRosterSubscription = response.stream
-            .transform(utf8.decoder)
-            .transform(const LineSplitter())
-            .listen(
-              (line) {
-                if (revision != _voiceRosterRevision) return;
-                try {
-                  final rooms = parseVoiceRosterEvent(line);
-                  if (rooms == null) return;
-                  _voiceRosterStaleTimer?.cancel();
-                  _voiceRosterStaleTimer = null;
-                  voiceRosters = rooms;
-                  voiceRosterError = null;
-                  notifyListeners();
-                } catch (cause) {
-                  voiceRosters = null;
-                  voiceRosterError = _message(cause);
-                  notifyListeners();
-                }
-              },
-              onError: (Object _) {
-                _markVoiceRosterStreamLost(revision);
-                if (!done.isCompleted) done.complete();
-              },
-              onDone: () {
-                _markVoiceRosterStreamLost(revision);
-                if (!done.isCompleted) done.complete();
-              },
-            );
-        await done.future;
-        _voiceRosterSubscription = null;
-        _voiceRosterStreamDone = null;
-      } catch (cause) {
-        if (revision == _voiceRosterRevision) {
-          if (cause is ApiFailure &&
-              (cause.status == 401 || cause.status == 403)) {
-            voiceRosters = null;
-          }
-          if (voiceRosters == null) {
-            voiceRosterError = _message(cause);
-          } else {
-            _markVoiceRosterStreamLost(revision);
-          }
-          notifyListeners();
-        }
-      }
-      if (!_voiceRosterWatching || revision != _voiceRosterRevision) return;
-      final retry = Completer<void>();
-      _voiceRosterRetryDone = retry;
-      _voiceRosterRetryTimer = Timer(voiceRosterRetryDelay, () {
-        if (!retry.isCompleted) retry.complete();
-      });
-      await retry.future;
-      _voiceRosterRetryTimer = null;
-      _voiceRosterRetryDone = null;
-    }
-  }
-
-  void _markVoiceRosterStreamLost(int revision) {
-    if (!_voiceRosterWatching || revision != _voiceRosterRevision) return;
-    if (voiceRosters == null && voiceRosterError == null) {
-      voiceRosterError = 'Нет связи со списком голосовых каналов.';
-      notifyListeners();
-    }
-    _voiceRosterStaleTimer ??= Timer(voiceRosterStaleTimeout, () {
-      _voiceRosterStaleTimer = null;
-      if (!_voiceRosterWatching || revision != _voiceRosterRevision) return;
-      voiceRosters = null;
-      voiceRosterError = 'Нет связи со списком голосовых каналов.';
-      notifyListeners();
-    });
-  }
-
-  void _stopVoiceRosterEvents() {
-    _voiceRosterWatching = false;
-    _voiceRosterRetryTimer?.cancel();
-    _voiceRosterRetryTimer = null;
-    _voiceRosterStaleTimer?.cancel();
-    _voiceRosterStaleTimer = null;
-    final retry = _voiceRosterRetryDone;
-    if (retry != null && !retry.isCompleted) retry.complete();
-    _voiceRosterRetryDone = null;
-    final subscription = _voiceRosterSubscription;
-    if (subscription != null) unawaited(subscription.cancel());
-    _voiceRosterSubscription = null;
-    final done = _voiceRosterStreamDone;
-    if (done != null && !done.isCompleted) done.complete();
-    _voiceRosterStreamDone = null;
-    _voiceRosterRevision++;
-    _voiceRosterLoading = false;
-  }
+  void _stopVoiceRosterEvents() => _voiceRoster.stop();
 
   void toggleWorkspacePanel(WorkspacePanel panel) =>
       _workspace.toggleWorkspacePanel(panel);
@@ -1287,6 +1166,7 @@ class AppState extends ChangeNotifier {
   void dispose() {
     _session.dispose();
     _realtime.dispose();
+    _voiceRoster.dispose();
     _profile.dispose();
     _workspace.dispose();
     _conversation.dispose();

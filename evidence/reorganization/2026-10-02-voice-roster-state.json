@@ -1,0 +1,14 @@
+{
+  "id": "reorganization-voice-roster-state-2026-10-02",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "scope": "Voice roster REST and SSE ownership, retries, stale timeout and account cancellation",
+  "checks": {
+    "roster_and_existing_app_state_tests": 47,
+    "focused_race_tests_after_additional_restart_case": 2,
+    "late_stream_cancelled_after_logout": "PASS",
+    "old_watcher_cannot_clear_new_handles": "PASS",
+    "dart_dependency_guard": "PASS"
+  },
+  "limitations": ["Live media acceptance is outside this packet"]
+}
