@@ -25,7 +25,7 @@ test('creates a tag release and uploads a binary APK with a bounded long timeout
         assert.equal(parsed.host, 'uploads.example.test')
         assert.equal(init.headers['Content-Type'], 'application/octet-stream')
         assert.deepEqual(Buffer.from(init.body), Buffer.from('signed-apk-bytes'))
-        return json({ id: 91, name: asset.name, size: asset.size }, 201)
+        return json({ id: 91, name: asset.name, size: asset.size, digest: asset.digest }, 201)
       }
       assert.fail(`Unexpected request: ${init.method ?? 'GET'} ${url}`)
     }
@@ -57,7 +57,7 @@ test('recovers a lost upload response by listing the already-created asset', asy
       if (parsed.pathname.endsWith('/releases/tags/android-v1.0.15')) return json(release)
       if (parsed.pathname === `${releasePath}/releases/73/assets` && init.method === 'GET') {
         listCalls += 1
-        return json(uploadCalls === 0 ? [] : [{ id: 91, name: asset.name, size: asset.size }])
+        return json(uploadCalls === 0 ? [] : [{ id: 91, name: asset.name, size: asset.size, digest: asset.digest }])
       }
       if (parsed.pathname === `${releasePath}/releases/73/assets` && init.method === 'POST') {
         uploadCalls += 1

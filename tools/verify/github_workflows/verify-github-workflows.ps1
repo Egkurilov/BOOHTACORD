@@ -41,7 +41,7 @@ if ($windows -notmatch 'uses:\s*actions/upload-artifact@v4' -or
 }
 foreach ($required in @('workflow_call:', 'runs-on: windows-2022',
     'uses: subosito/flutter-action@v2', 'flutter-version: 3.47.5',
-    'flutter build windows --release --no-pub')) {
+    'python -m tools.build.windows.run', 'python -m tools.ci.native.flutter')) {
     if (-not $windows.Contains($required)) {
         throw "Windows CI must run on a hosted runner before merge: $required"
     }
@@ -60,25 +60,18 @@ if ($LASTEXITCODE -ne 0) { throw 'CI component dependency validation failed.' }
 $flutterCi = Get-Content -LiteralPath $flutterCiPath -Raw
 foreach ($required in @(
     'workflow_call:', 'runs-on: ubuntu-24.04', 'flutter-version: 3.47.5',
-    'python3 -m tools.ci.native.flutter', 'flutter build apk --debug --no-pub'
+    'python3 -m tools.ci.native.flutter', 'python3 -m tools.build.android.run --debug'
 )) {
     if (-not $flutterCi.Contains($required)) {
         throw "Flutter CI gate is missing: $required"
     }
 }
 if ($flutterCi -notmatch 'uses:\s*actions/upload-artifact@v4' -or
-    $flutterCi -notmatch 'path:\s*clients/flutter/build/app/outputs/flutter-apk/app-debug\.apk' -or
+    $flutterCi -notmatch 'path:\s*\.out/native/android-debug/' -or
     $flutterCi -notmatch 'if-no-files-found:\s*error' -or
     $flutterCi -notmatch 'retention-days:\s*30') {
     throw 'Flutter CI must retain the built debug APK as a fail-closed workflow artifact.'
 }
-$android = Get-Content -LiteralPath (Join-Path $root '.github/workflows/android-release.yaml') -Raw
-if ($android -notmatch '(?m)^  quality:\s*\r?\n    uses: \./\.github/workflows/ci-flutter\.yaml' -or
-    $android -notmatch '(?m)^  android-release:\s*\r?\n    needs: quality' -or
-    $android -notmatch 'runs-on:\s*ubuntu-24\.04' -or
-    $android -notmatch 'uses:\s*actions/upload-artifact@v4' -or
-    $android -notmatch 'path:\s*clients/flutter/build/release-assets/\*\.apk' -or
-    $android -notmatch 'if-no-files-found:\s*error') {
-    throw 'Android release must pass the Flutter gate before signing and publication.'
-}
+python -m tools.verify.workflows.native
+if ($LASTEXITCODE -ne 0) { throw 'Native signing and artifact retention validation failed.' }
 Write-Output 'GitHub workflow routing: OK'

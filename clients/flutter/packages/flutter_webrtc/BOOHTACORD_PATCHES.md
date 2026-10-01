@@ -18,11 +18,11 @@ dimensions now resize the virtual display and are not rotated to match the
 device panel. Legacy/full-display capture keeps the existing orientation
 normalization until MediaProjection reports authoritative content dimensions.
 Unit coverage is recorded in
-[QA-184](../../../evidence/flutter/qa184-android-app-window-capture-resize-2026-10-01-001.json).
+[QA-184](../../../../evidence/flutter/qa184-android-app-window-capture-resize-2026-10-01-001.json).
 
 The related LiveKit encoding support and Flutter profile logic live in
-`desktop/packages/livekit_client` and `desktop/lib/src/services/screen_share_quality.dart`.
-See [QA-88](../../../evidence/flutter/qa88-android-screen-share-resolution-cap-2026-09-29-001.json).
+`clients/flutter/packages/livekit_client` and `clients/flutter/lib/src/services/screen_share_quality.dart`.
+See [QA-88](../../../../evidence/flutter/qa88-android-screen-share-resolution-cap-2026-09-29-001.json).
 
 ## macOS ScreenCaptureKit screen profile
 
@@ -57,7 +57,7 @@ The Android capturer forwards the OS `MediaProjection.Callback.onStop` event to
 the Dart track-ended dispatcher. The Dart dispatcher buffers an early native
 event until LiveKit attaches its `onEnded` callback and delivers it at most
 once. This allows a system-level stop to unpublish the local screen track.
-Physical Android receiver and OS-stop acceptance remain open; see [QA-26](../../../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
+Physical Android receiver and OS-stop acceptance remain open; see [QA-26](../../../../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
 
 ## Desktop source thumbnail race
 
@@ -78,5 +78,17 @@ capturer/source/track creation failures after this request started loopback
 audio; it does not stop an unrelated active capture. Flutter displays the
 native error message rather than the `PlatformException` wrapper. Windows
 compilation passes, while injected-failure runtime and window-source
-acceptance remain open; see [QA-98](../../../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json)
-and [QA-103](../../../evidence/flutter/qa103-desktop-screen-share-rollback-2026-09-29-001.json).
+acceptance remain open; see [QA-98](../../../../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json)
+and [QA-103](../../../../evidence/flutter/qa103-desktop-screen-share-rollback-2026-09-29-001.json).
+
+## Source and maintenance policy
+
+[UPSTREAM.json](UPSTREAM.json) pins the published upstream archive SHA-256,
+license and changed source files, measured against the verified pub.dev archive.
+The local overrides remain required. Return to upstream only after the fixes
+are included and the focused tests plus affected platform media acceptance pass.
+
+Additional retained patches cover AGP built-in Kotlin compatibility, direct
+Android frame buffers and capture serialization, EGL surface-release barriers,
+and macOS renderer disposal/first-frame propagation. Their JVM/Dart tests are
+listed in the upstream record; compilation alone does not certify hardware.

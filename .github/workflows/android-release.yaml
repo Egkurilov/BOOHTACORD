@@ -14,6 +14,9 @@ jobs:
     uses: ./.github/workflows/ci-flutter.yaml
 
   android-release:
+    concurrency:
+      group: boohtacord-native-signing
+      cancel-in-progress: false
     needs: quality
     runs-on: ubuntu-24.04
     steps:
@@ -38,58 +41,19 @@ jobs:
       - name: Test idempotent GitHub release publisher
         run: node --test tools/release/android/publish.test.mjs tools/release/android/publish_retries.test.mjs tools/release/android/publish_conflicts.test.mjs
 
-      - name: Build signed ABI-specific APKs
-        working-directory: clients/flutter
-        shell: bash
+      - name: Build and verify the signed Android distribution
         env:
           BOOHTACORD_ANDROID_KEYSTORE_BASE64: ${{ secrets.BOOHTACORD_ANDROID_KEYSTORE_BASE64 }}
           BOOHTACORD_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.BOOHTACORD_ANDROID_KEYSTORE_PASSWORD }}
           BOOHTACORD_ANDROID_KEY_ALIAS: ${{ secrets.BOOHTACORD_ANDROID_KEY_ALIAS }}
           BOOHTACORD_ANDROID_KEY_PASSWORD: ${{ secrets.BOOHTACORD_ANDROID_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          for name in BOOHTACORD_ANDROID_KEYSTORE_BASE64 BOOHTACORD_ANDROID_KEYSTORE_PASSWORD BOOHTACORD_ANDROID_KEY_ALIAS BOOHTACORD_ANDROID_KEY_PASSWORD; do
-            if [[ -z "${!name:-}" ]]; then
-              echo "Required repository secret is missing: $name" >&2
-              exit 1
-            fi
-          done
-
-          [[ "${GITHUB_REF_NAME}" =~ ^android-v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid Android release tag' >&2; exit 1; }
-          pubspec_version="$(sed -nE 's/^version:[[:space:]]*([^+[:space:]]+).*/\1/p' pubspec.yaml | head -n 1)"
-          if [[ "${GITHUB_REF_NAME#android-v}" != "$pubspec_version" ]]; then
-            echo "Release tag does not match pubspec version $pubspec_version" >&2
-            exit 1
-          fi
-          flutter --version | grep -q 'Flutter 3.47.5'
-          : "${RUNNER_TEMP:?RUNNER_TEMP must be configured}"
-          keystore="$RUNNER_TEMP/boohtacord-android-upload.jks"
-          trap 'rm -f "$keystore"' EXIT
-          printf '%s' "$BOOHTACORD_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore"
-          chmod 600 "$keystore"
-          export BOOHTACORD_ANDROID_KEYSTORE_FILE="$keystore"
-
-          flutter pub get --enforce-lockfile
-          flutter build apk --release --split-per-abi --no-pub
-
-          mkdir -p build/release-assets
-          for abi in arm64-v8a armeabi-v7a x86_64; do
-            source="build/app/outputs/flutter-apk/app-${abi}-release.apk"
-            test -s "$source" || { echo "Missing split APK: $source" >&2; exit 1; }
-            bytes="$(stat -c '%s' "$source")"
-            if (( bytes > 95000000 )); then
-              echo "APK exceeds the 95 MB release safety ceiling: $source ($bytes bytes)" >&2
-              exit 1
-            fi
-            cp "$source" "build/release-assets/BOOHTACORD-${GITHUB_REF_NAME}-${abi}.apk"
-            echo "Prepared $abi APK ($bytes bytes)"
-          done
+        run: python3 -m tools.build.android.run
 
       - name: Upload signed APKs as workflow artifacts
         uses: actions/upload-artifact@v4
         with:
           name: BOOHTACORD-${{ github.ref_name }}-signed-apks
-          path: clients/flutter/build/release-assets/*.apk
+          path: clients/flutter/build/release-assets/
           if-no-files-found: error
           retention-days: 30
 
@@ -104,4 +68,6 @@ jobs:
             --tag "$tag" \
             --asset "$asset_root/BOOHTACORD-$tag-arm64-v8a.apk" \
             --asset "$asset_root/BOOHTACORD-$tag-armeabi-v7a.apk" \
-            --asset "$asset_root/BOOHTACORD-$tag-x86_64.apk"
+            --asset "$asset_root/BOOHTACORD-$tag-x86_64.apk" \
+            --asset "$asset_root/artifact-manifest.json" \
+            --asset "$asset_root/SHA256SUMS"

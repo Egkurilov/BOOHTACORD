@@ -25,12 +25,11 @@ jobs:
       - name: Verify Android Kotlin build modes
         run: bash tools/verify/android_kotlin/verify_android_kotlin_modes.sh
       - name: Build Android debug APK
-        working-directory: clients/flutter
-        run: flutter build apk --debug --no-pub
+        run: python3 -m tools.build.android.run --debug
       - name: Upload Android debug APK
         uses: actions/upload-artifact@v4
         with:
           name: boohtacord-android-debug-apk
-          path: clients/flutter/build/app/outputs/flutter-apk/app-debug.apk
+          path: .out/native/android-debug/
           if-no-files-found: error
           retention-days: 30

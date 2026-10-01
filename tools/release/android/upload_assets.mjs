@@ -1,4 +1,5 @@
 import { readFile, stat } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import path from 'node:path'
 import { apiUrl, isRetryable, maxAttempts, retryDelay, sendJson } from './github_api.mjs'
 
@@ -26,18 +27,19 @@ export async function uploadAssets({ release, assets, token, owner, repo, apiRoo
     if (size === 0 || size > 95_000_000) {
       throw new Error(`Release asset is empty or exceeds the 95 MB limit: ${name}`)
     }
+    const bytes = await readFile(assetPath)
+    const digest = `sha256:${createHash('sha256').update(bytes).digest('hex')}`
 
     const currentAssets = await listAssets()
     const current = currentAssets.find((asset) => asset.name === name)
     if (current) {
-      if (current.size !== size) {
+      if (current.size !== size || current.digest !== digest) {
         throw new Error(`GitHub has a conflicting existing asset: ${name}`)
       }
       uploaded.push({ name, size, alreadyPresent: true })
       continue
     }
 
-    const bytes = await readFile(assetPath)
     let completed = false
     for (let attempt = 1; attempt <= maxAttempts && !completed; attempt += 1) {
       try {
@@ -51,7 +53,7 @@ export async function uploadAssets({ release, assets, token, owner, repo, apiRoo
           const afterFailure = await listAssets()
           const accepted = afterFailure.find((asset) => asset.name === name)
           if (accepted) {
-            if (accepted.size !== size) {
+            if (accepted.size !== size || accepted.digest !== digest) {
               throw new Error(`GitHub has a conflicting existing asset: ${name}`)
             }
             completed = true

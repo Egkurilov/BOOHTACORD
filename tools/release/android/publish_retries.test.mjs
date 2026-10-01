@@ -13,7 +13,7 @@ test('skips an identical asset when a tag-triggered job is safely retried', asyn
         return json(release)
       }
       if (parsed.pathname === `${releasePath}/releases/73/assets`) {
-        return json([{ id: 91, name: asset.name, size: asset.size }])
+        return json([{ id: 91, name: asset.name, size: asset.size, digest: asset.digest }])
       }
       assert.fail(`Unexpected request: ${init.method ?? 'GET'} ${url}`)
     }
@@ -52,7 +52,7 @@ test('retries a transient upload error when the API confirms the asset was not c
       if (parsed.pathname === `${releasePath}/releases/73/assets` && init.method === 'POST') {
         uploadCalls += 1
         if (uploadCalls === 1) return json({ message: 'temporarily unavailable' }, 503)
-        return json({ id: 92, name: asset.name, size: asset.size }, 201)
+        return json({ id: 92, name: asset.name, size: asset.size, digest: asset.digest }, 201)
       }
       assert.fail(`Unexpected request: ${init.method ?? 'GET'} ${url}`)
     }

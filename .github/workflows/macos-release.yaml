@@ -12,6 +12,9 @@ permissions:
 
 jobs:
   macos-release:
+    concurrency:
+      group: boohtacord-native-signing
+      cancel-in-progress: false
     runs-on: [self-hosted, macos]
     steps:
       - name: Checkout release source
@@ -66,6 +69,9 @@ jobs:
             "$RELEASE_TAG" \
             clients/flutter/build/release-assets
 
+      - name: Inspect signature and retain distribution manifest
+        run: python3 -m tools.build.macos.metadata clients/flutter/build/macos/Build/Products/Release/BOOHTACORD.app clients/flutter/build/release-assets
+
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v3
         with:
@@ -79,5 +85,7 @@ jobs:
           files: |
             clients/flutter/build/release-assets/BOOHTACORD-${{ github.ref_name }}.zip
             clients/flutter/build/release-assets/BOOHTACORD-${{ github.ref_name }}.zip.sha256
+            clients/flutter/build/release-assets/artifact-manifest.json
+            clients/flutter/build/release-assets/SHA256SUMS
           draft: false
           prerelease: false

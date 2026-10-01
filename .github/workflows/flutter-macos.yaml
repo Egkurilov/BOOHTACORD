@@ -46,6 +46,8 @@ jobs:
             clients/flutter/build/macos/Build/Products/Release/BOOHTACORD.app \
             "macos-v$version" \
             "$RUNNER_TEMP/boohtacord-macos-artifacts"
+      - name: Inspect native identity and retain distribution manifest
+        run: python3 -m tools.build.macos.metadata clients/flutter/build/macos/Build/Products/Release/BOOHTACORD.app "$RUNNER_TEMP/boohtacord-macos-artifacts"
       - name: Retain macOS build and checksum as workflow artifact
         uses: actions/upload-artifact@v4
         with:

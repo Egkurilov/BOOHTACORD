@@ -62,3 +62,19 @@ test('runs the publisher CLI on the current platform and fails closed without it
   assert.equal(result.status, 1)
   assert.match(result.stderr, /GITHUB_TOKEN is required/)
 })
+
+test('rejects a same-size asset with different or unavailable bytes digest', async () => {
+  await withAsset(Buffer.from('new-build'), async (asset) => {
+    for (const digest of [undefined, `sha256:${'0'.repeat(64)}`]) {
+      await assert.rejects(publishGitHubRelease({
+        tag: 'android-v1.0.15', title: 'release', body: '', assets: [asset.path],
+        token: 'write-token', apiRoot,
+        fetchImpl: async (url, init = {}) => {
+          if (String(url).includes('/releases/tags/')) return json(release)
+          assert.equal(init.method, 'GET')
+          return json([{ name: asset.name, size: asset.size, digest }])
+        },
+      }), /conflicting existing asset/)
+    }
+  })
+})

@@ -1,0 +1,25 @@
+"""One Windows build command for local use and hosted CI."""
+import json
+import sys
+from tools.ci.native.process import ROOT, client, output, require_version, run
+from tools.release.native_artifact.manifest import write
+from .plugins import configure
+
+
+def main():
+    if sys.platform != 'win32': raise RuntimeError('Windows build requires a Windows host')
+    require_version('flutter', json.loads(output('flutter', '--version', '--machine'))['frameworkVersion'])
+    flutter = client('flutter')
+    run('flutter', 'pub', 'get', '--enforce-lockfile', cwd=flutter)
+    configure(flutter)
+    run('flutter', 'build', 'windows', '--release', '--no-pub', cwd=flutter)
+    release = flutter / 'build/windows/x64/runner/Release'
+    for required in ('boohtacord_desktop.exe', 'flutter_windows.dll', 'libwebrtc.dll', 'data/flutter_assets'):
+        if not (release / required).exists(): raise RuntimeError('Incomplete Windows release: ' + required)
+    signing = json.loads(output('powershell', '-NoProfile', '-File', str(ROOT / 'tools/build/windows/signature.ps1'),
+                                '-Path', str(release / 'boohtacord_desktop.exe')))
+    write(release, 'windows', ['x64'], 'boohtacord_desktop', signing)
+    print('Retained Windows artifact, checksums and measured signing metadata: ' + str(release))
+
+
+if __name__ == '__main__': main()

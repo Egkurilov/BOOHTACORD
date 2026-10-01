@@ -1,0 +1,17 @@
+{
+  "package": "flutter_background",
+  "upstream_version": "1.3.1",
+  "upstream_archive_url": "https://pub.dev/api/archives/flutter_background-1.3.1.tar.gz",
+  "upstream_archive_sha256": "ee47be26beddc59875158a93eeaaad0c0b5f3b21afbdad3de73a2903be824f0e",
+  "license_file": "LICENSE",
+  "license": "MIT",
+  "patches_document": "BOOHTACORD_PATCHES.md",
+  "verification": "python -m tools.ci.native.flutter; bash tools/verify/android_kotlin/verify_android_kotlin_modes.sh",
+  "return_to_upstream": "Remove the override only after upstream includes these fixes and focused regressions plus affected physical media acceptance pass.",
+  "modified_upstream_files": [
+    "README.md",
+    "analysis_options.yaml",
+    "android/build.gradle"
+  ],
+  "added_patch_files": []
+}

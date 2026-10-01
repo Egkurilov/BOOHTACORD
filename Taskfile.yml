@@ -18,6 +18,10 @@ tasks:
     cmds: ['{{.PYTHON}} -m tools.ci.native.flutter']
   build:server:
     cmds: ['{{.PYTHON}} -m tools.build.server.run {{.CLI_ARGS}}']
+  build:android:
+    cmds: ['{{.PYTHON}} -m tools.build.android.run {{.CLI_ARGS}}']
+  build:windows:
+    cmds: ['{{.PYTHON}} -m tools.build.windows.run']
   release:verify:
     cmds: ['{{.PYTHON}} -m tools.release.bundle.verify {{.CLI_ARGS}}']
   release:install:

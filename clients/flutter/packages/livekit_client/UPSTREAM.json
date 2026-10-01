@@ -1,0 +1,31 @@
+{
+  "package": "livekit_client",
+  "upstream_version": "2.13.0",
+  "upstream_archive_url": "https://pub.dev/api/archives/livekit_client-2.13.0.tar.gz",
+  "upstream_archive_sha256": "a410348effd06f4220c2d6ed9ad3935406e81fffbd1c366eba1c39fe0558f449",
+  "license_file": "LICENSE",
+  "license": "Apache-2.0",
+  "patches_document": "BOOHTACORD_PATCHES.md",
+  "verification": "python -m tools.ci.native.flutter; bash tools/verify/android_kotlin/verify_android_kotlin_modes.sh",
+  "return_to_upstream": "Remove the override only after upstream includes these fixes and focused regressions plus affected physical media acceptance pass.",
+  "modified_upstream_files": [
+    "android/build.gradle",
+    "lib/livekit_client.dart",
+    "lib/src/core/engine.dart",
+    "lib/src/core/room.dart",
+    "lib/src/stats/stats.dart",
+    "lib/src/track/local/audio.dart",
+    "lib/src/track/remote/video.dart",
+    "lib/src/types/video_encoding.dart",
+    "lib/src/widgets/video_track_renderer.dart",
+    "pubspec.yaml",
+    "test/utils_test.dart"
+  ],
+  "added_patch_files": [
+    "lib/src/utils/voice_reconnect_policy.dart",
+    "lib/src/widgets/video_track_renderer_frame_callback.dart",
+    "test/core/voice_reconnect_policy_test.dart",
+    "test/track/local_audio_rtt_test.dart",
+    "test/widgets/video_track_renderer_frame_callback_test.dart"
+  ]
+}

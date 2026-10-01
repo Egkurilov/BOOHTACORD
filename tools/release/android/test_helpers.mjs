@@ -1,4 +1,5 @@
 import { mkdtemp, rm, stat, writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import os from 'node:os'
 import path from 'node:path'
 
@@ -19,7 +20,8 @@ export async function withAsset(content, run) {
   const file = path.join(directory, 'BOOHTACORD-android-v1.0.15-arm64-v8a.apk')
   await writeFile(file, content)
   try {
-    await run({ path: file, name: path.basename(file), size: (await stat(file)).size })
+    await run({ path: file, name: path.basename(file), size: (await stat(file)).size,
+      digest: `sha256:${createHash('sha256').update(content).digest('hex')}` })
   } finally {
     await rm(directory, { recursive: true, force: true })
   }
