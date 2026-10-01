@@ -3,7 +3,7 @@
   "kind": "flutter-temporary-screen-subscriptions",
   "status": "PARTIAL",
   "executed_at": "2026-10-01",
-  "source_revision": "3ae7aa6",
+  "source_revision": "301722e",
   "summary": "Flutter now disables LiveKit auto-subscription, explicitly subscribes to microphone tracks, serializes bounded temporary screen-video subscriptions for thumbnail capture, and preserves selected-viewer subscriptions. Flutter tests and analysis pass; Android release and macOS Debug builds pass. Live Android/macOS/Windows cross-client thumbnail behavior is not yet verified.",
   "checks": [
     {

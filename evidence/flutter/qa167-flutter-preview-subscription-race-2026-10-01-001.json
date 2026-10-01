@@ -3,7 +3,7 @@
   "kind": "flutter-preview-subscription-race",
   "status": "PARTIAL",
   "executed_at": "2026-10-01",
-  "source_revision": "301722e",
+  "source_revision": "9b67752",
   "summary": "Hardened Flutter temporary screen preview subscription lifecycle: successful and failed capture paths release their short-lived subscription; a selected viewer keeps it; and an outdated asynchronous viewer selection cannot subscribe after a newer selection. Full tests, analyzer, Android Release and macOS Debug builds pass. Live cross-client acceptance remains outstanding.",
   "checks": [
     {
