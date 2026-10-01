@@ -1,0 +1,89 @@
+{
+  "id": "browser-stream-review-2026-10-01-001",
+  "kind": "poc-02-observability-review",
+  "status": "ISSUES_OBSERVED",
+  "executed_at": "2026-10-01T19:20:36Z",
+  "revision": "8c6a26f9882e71a0d8529b20928abedd3708a535",
+  "observer": "Codex; user confirmed browsers and moving video/game content",
+  "environment": {
+    "application": "https://v.bootybay.ru",
+    "transport": "LiveKit v1.13.7",
+    "client": "desktop_web; browser versions and hardware unknown",
+    "source": "Private Tempo media.sample spans and production host/container metrics via authorized SSH",
+    "mutations": "None; no restart, deployment, media recording or load generation"
+  },
+  "initial_window": {
+    "utc": ["2026-10-01T18:40:00Z", "2026-10-01T18:50:00Z"],
+    "moscow": "21:40–21:50",
+    "traces": 495,
+    "read_errors": 0,
+    "sender": {
+      "reports": 120, "target": "1080p30", "state": {"playing": 101, "waiting_first_frame": 19},
+      "dimension_reports": {"2560x1440": 74, "1280x720": 1, "missing": 45},
+      "encoded_fps": {"samples": 71, "median": 29, "mean": 22.73, "min": 1, "max": 31},
+      "bitrate_kbps": {"samples": 101, "median": 3541.8, "mean": 3273.89},
+      "rtt_ms": {"median": 23, "max": 32},
+      "adaptation_reason": {"none": 100, "bandwidth": 1}
+    },
+    "viewer_720p": {
+      "observed_utc": ["18:40:04", "18:41:34"], "reports": 19, "dimensions": "1280x720",
+      "decoded_fps": {"median": 30, "mean": 29.92, "min": 28.5, "max": 30.5},
+      "presented_fps": {"median": 29.5, "mean": 29.74},
+      "bitrate_kbps_mean": 1188.86, "jitter_ms": {"median": 8, "p95": 14, "max": 15},
+      "packet_loss_percent": {"median": 0.51, "max": 1.06}, "stalled_reports": 0
+    },
+    "viewer_high_resolution": {
+      "observed_utc": ["18:40:00", "18:48:10"], "reports": 57,
+      "dimension_reports": {"2560x1440": 56, "1280x720": 1},
+      "decoded_fps": {"median": 30, "mean": 23.91, "min": 0, "max": 31.5},
+      "presented_fps": {"median": 28.5, "mean": 23.75, "max": 102.5},
+      "bitrate_kbps_mean": 3706.45, "jitter_ms": {"median": 14, "p95": 83, "max": 90},
+      "packet_loss_percent": {"median": 0.66, "max": 2.82}, "stalled_reports": 2
+    }
+  },
+  "later_window": {
+    "utc": ["2026-10-01T19:12:16Z", "2026-10-01T19:17:16Z"],
+    "moscow": "22:12–22:17", "traces": 307, "read_errors": 0,
+    "connection_clients": 4, "sender_clients": 1, "receiver_clients": 2,
+    "sender": {
+      "reports": 56, "target": "1080p60", "dimension_reports": {"2560x1440": 31, "1280x720": 24, "missing": 1},
+      "encoded_fps": {"samples": 52, "median": 7, "mean": 16.92, "min": 2, "max": 53},
+      "bitrate_kbps_mean": 2177.91, "adaptation_reason": {"none": 56}
+    },
+    "viewer_720p": {
+      "reports": 47, "dimensions": "1280x720", "decoded_fps_mean": 24.48,
+      "presented_fps": {"median": 20.5, "mean": 23.98, "min": 7.5, "max": 53.5},
+      "bitrate_kbps_mean": 1586.44, "jitter_ms": {"median": 11, "p95": 24},
+      "packet_loss_percent": {"median": 0.58, "max": 2.54}, "stalled_reports": 0
+    },
+    "viewer_1440p": {
+      "observed_utc": ["19:12:18", "19:15:02"], "reports": 19, "dimensions": "2560x1440",
+      "decoded_fps": {"median": 4, "mean": 4.11, "min": 0, "max": 7.5},
+      "presented_fps": {"median": 4, "mean": 4.47}, "bitrate_kbps_mean": 1430.14,
+      "jitter_ms": {"median": 73, "p95": 88, "max": 91},
+      "packet_loss_percent": {"median": 0, "max": 0.29}, "stalled_reports": 1
+    }
+  },
+  "server": {
+    "utc": "2026-10-01T19:20:36Z", "load_average": [0.07, 0.18, 0.24],
+    "ram_mib": {"total": 7940, "available": 4899}, "swap_mib": 0,
+    "livekit": {"cpu_percent_docker": 5.16, "ram_mib": 106.2},
+    "api": {"cpu_percent_docker": 0.48, "ram_mib": 17.86}, "active_screen_streams": 1
+  },
+  "findings": [
+    "Initial profile captures 2560x1440 at 60fps and only sets publishing bitrate/FPS. Resolution scaling exists in updateScreenShareProfile but is absent on initial start. Receiver dimensions confirm 1440p under a 1080p target.",
+    "For moving content the high-resolution path is not consistently smooth; later sender and receiver report similarly low FPS. Exact cause needs per-layer active/quality-limitation/capture diagnostics.",
+    "Host resource samples show no server CPU or RAM saturation; this does not exclude client or path bottlenecks.",
+    "HTML audio is forced unmuted at volume 1 by WebAudioGain, leaving mute/volume solely to GainNode. A native output safeguard needs regression coverage and live acceptance.",
+    "Prometheus does not scrape API media histograms. Latest admin samples overwrite other clients of the same platform/direction. Detailed per-client samples are available in Tempo."
+  ],
+  "limitations": [
+    "No visual inspection or listening: browser connector returned Unable to load browser request-header policy on retries. Image sharpness, A/V sync and perceived delay were not measured.",
+    "Client diagnostics are self-reported, sparse and visibility-dependent; report means are not time-weighted. Missing receiver reports do not prove disconnect or freeze.",
+    "Sender selects the largest reported simulcast layer; bitrate totals all layers. Do not compare sender bitrate directly with one receiver or treat a dimension switch as capture resizing.",
+    "One presented-FPS value of 102.5 for a 30fps target suggests a sampling/counter artefact; prefer decoded FPS and medians. Zero-FPS states alone do not measure freeze duration.",
+    "The later window uses a 60fps target and four connection clients; it is not an unchanged continuation of the original three-client 30fps scenario.",
+    "No codec, QP, keyframe, decoder load, jitter-buffer delay or end-to-end latency was recorded. QA-06/QA-07 and capacity gates remain open."
+  ],
+  "privacy": "Only anonymous aggregates saved in Git; no account/session IDs, names, tokens, SDP, ICE addresses or media payloads."
+}

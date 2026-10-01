@@ -71,9 +71,11 @@ class WebAudioGain extends BaseAudioGain {
   }
 
   protected apply(): void {
-    this.element.muted = false
-    this.element.volume = 1
-    this.gain.gain.value = this.muted ? 0 : this.volume / 100
+    // Control native output and compensate if the browser ignores its volume.
+    const volume = this.muted ? 0 : this.volume / 100
+    this.element.muted = this.muted
+    this.element.volume = Math.min(1, volume)
+    this.gain.gain.value = this.element.volume > 0 ? volume / this.element.volume : 0
   }
 }
 

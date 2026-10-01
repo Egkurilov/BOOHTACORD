@@ -7,6 +7,49 @@ function element() {
 }
 
 describe('audio gain', () => {
+  it('silences the native audio output as well as the gain node', () => {
+    const audio = element()
+    const gain = { connect: vi.fn(), disconnect: vi.fn(), gain: { value: 1 } }
+    const context = { createGain: () => gain, createMediaElementSource: () => ({ connect() {}, disconnect() {} }), destination: {} }
+    const output = new AudioMixer(() => context).attach(audio)
+
+    output.setVolume(60)
+    output.setMuted(true)
+    expect(audio.muted).toBe(true)
+    expect(audio.volume).toBe(0)
+    expect(gain.gain.value).toBe(0)
+    // LiveKit may unmute the element while attaching a replacement remote track.
+    audio.muted = false
+    expect(audio.volume).toBe(0)
+    output.setMuted(false)
+    expect(audio.volume * gain.gain.value).toBe(0.6)
+  })
+
+  it.each([0, 25, 50, 100, 175, 200])('applies %s percent without double attenuation', (percent) => {
+    const audio = element()
+    const gain = { connect: vi.fn(), disconnect: vi.fn(), gain: { value: 1 } }
+    const context = { createGain: () => gain, createMediaElementSource: () => ({ connect() {}, disconnect() {} }), destination: {} }
+    const output = new AudioMixer(() => context).attach(audio)
+
+    output.setVolume(percent)
+
+    expect(audio.volume).toBe(Math.min(1, percent / 100))
+    expect(audio.volume * gain.gain.value).toBe(percent / 100)
+  })
+
+  it('retains gain attenuation when the browser ignores element volume writes', () => {
+    const audio = element()
+    Object.defineProperty(audio, 'volume', { get: () => 1, set: () => {} })
+    const gain = { connect: vi.fn(), disconnect: vi.fn(), gain: { value: 1 } }
+    const context = { createGain: () => gain, createMediaElementSource: () => ({ connect() {}, disconnect() {} }), destination: {} }
+    const output = new AudioMixer(() => context).attach(audio)
+
+    output.setVolume(25)
+    expect(audio.volume * gain.gain.value).toBe(0.25)
+    output.setMuted(true)
+    expect(gain.gain.value).toBe(0)
+  })
+
   it('uses a Web Audio gain node for volumes over the HTML media element limit', () => {
     const gain = { connect: vi.fn(), disconnect: vi.fn(), gain: { value: 1 } }
     const source = { connect: vi.fn(), disconnect: vi.fn() }

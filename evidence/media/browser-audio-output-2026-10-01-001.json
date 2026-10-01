@@ -1,0 +1,26 @@
+{
+  "id": "browser-audio-output-2026-10-01-001",
+  "kind": "audio-output-regression",
+  "status": "PASS_LOCAL_LIVE_NOT_RUN",
+  "executed_at": "2026-10-01T19:28:26Z",
+  "base_revision": "b119156fba57cc6006b7a0081ed76b1fb6cb5a37",
+  "branch": "codex/browser-stream-review",
+  "observer": "Codex",
+  "scenario": "User reported stream mute and volume controls ineffective in desktop browsers.",
+  "change": "Native element mute/volume now follows the selected level. Web Audio compensates for the actual native volume and supplies amplification to preserve 0–200% without double attenuation. Mute and zero volume silence both paths. Existing public interfaces and preferences are unchanged.",
+  "files": ["frontend/src/voice/audio_gain.ts", "frontend/src/voice/audio_gain.spec.ts"],
+  "checks": [
+    {"name": "regression_before_change", "result": "EXPECTED_FAIL", "detail": "Four new native output assertions failed on the original code."},
+    {"name": "native_volume_write_ignored", "result": "EXPECTED_FAIL_THEN_PASS", "detail": "Added coverage for browsers that ignore element volume; gain compensates using the read-back volume."},
+    {"name": "focused_audio_tests", "result": "PASS", "files": 5, "tests": 30,
+      "command": "npm test -- src/voice/audio_gain.spec.ts src/voice/screen_viewer_audio_toggle.spec.ts src/voice/screen_viewer_controls.spec.ts src/voice/remote_voice_playback.spec.ts src/voice/voice_volume_controls.spec.ts"},
+    {"name": "typescript_and_production_build", "result": "PASS", "command": "npm run build", "warning": "Vite reports two existing chunks above 500 kB."},
+    {"name": "live_audible_browser_acceptance", "result": "NOT_RUN", "detail": "Browser connector unavailable: Unable to load browser request-header policy."},
+    {"name": "production_deployment", "result": "NOT_RUN", "detail": "Change remains local; active stream was not interrupted."}
+  ],
+  "limitations": [
+    "Tests use controlled audio element and gain objects; they do not prove actual browser audio routing or audible volume.",
+    "This fixes the demonstrated lack of native output control, but the root cause of the user's audible symptom is not fully reproduced.",
+    "Live acceptance must check mute/on, 0/50/100/175/200%, independent participant voice, track replacement and browser versions. QA-06 remains open."
+  ]
+}
