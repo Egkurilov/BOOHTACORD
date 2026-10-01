@@ -3,7 +3,7 @@
   "kind": "android-screen-share-quality-picker-copy",
   "status": "PASS_WITH_DEVICE_VISUAL_ACCEPTANCE_OPEN",
   "executed_at": "2026-10-01",
-  "source_revision": "6a367ec8ba4ebffb956bc33675bde35cef34c518",
+  "source_revision": "0838dc653e1cb1cd1104da76a4959ccd70a22afb",
   "summary": "The Android screen-share quality picker omits the app-specific MediaProjection explanation; the Android system consent dialog remains the authoritative permission prompt. iOS-specific capture limitation copy is preserved, and update-quality mode still omits setup guidance.",
   "checks": [
     {
@@ -17,6 +17,12 @@
       "command": "cd desktop && flutter analyze --no-pub",
       "status": "PASS",
       "observation": "No issues found."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd desktop && flutter test --reporter compact",
+      "status": "PASS",
+      "observation": "All 345 Flutter tests passed."
     }
   ],
   "limitations": [

@@ -93,7 +93,7 @@ settings/dialog focus paths and platform screen-reader acceptance remain open �
 The Android screen-share quality picker no longer repeats an app-specific
 permission warning before the system MediaProjection consent dialog; the iOS
 app-only capture notice remains. Update-quality mode also omits setup guidance.
-All 11 picker tests and the analyzer pass —
+All 11 picker tests, the full 345-test Flutter suite and the analyzer pass —
 [QA-190](../evidence/flutter/qa190-android-screen-share-quality-copy-2026-10-01-001.json).
 
 Flutter destructive confirmation dialogs for message deletion, voice kick and
