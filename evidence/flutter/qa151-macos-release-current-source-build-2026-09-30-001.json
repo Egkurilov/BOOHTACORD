@@ -2,21 +2,21 @@
   "id": "QA-151",
   "kind": "macos-release-current-source-build",
   "status": "PARTIAL",
-  "executed_at": "2026-09-30",
-  "source_revision": "1e7634f",
-  "summary": "The current Flutter source builds as a universal macOS Release app, version 1.0.13 (18). The bundle passes strict codesign verification with an ad-hoc signature. This proves packaging/compile integrity only, not a trusted Developer ID distribution or runtime/session behavior.",
+  "executed_at": "2026-10-01",
+  "source_revision": "0d7f3a3",
+  "summary": "The current Flutter source builds as a universal macOS Release app, version 1.0.17 (22). The bundle passes strict codesign verification with an ad-hoc signature and includes x86_64 and arm64 slices. This proves packaging/compile integrity only, not a trusted Developer ID distribution or runtime/session behavior.",
   "checks": [
     {
       "name": "Universal macOS Release build",
       "command": "cd desktop && flutter build macos --release --no-pub",
       "status": "PASS",
-      "observation": "Built desktop/build/macos/Build/Products/Release/BOOHTACORD.app (94.7 MB reported by Flutter; 90 MB on disk). The main executable contains x86_64 and arm64 slices. Bundle version is 1.0.13 (18)."
+      "observation": "Built desktop/build/macos/Build/Products/Release/BOOHTACORD.app (95.2 MB reported by Flutter; 91 MiB on disk). The main executable contains x86_64 and arm64 slices. Bundle version is 1.0.17 (22). Build succeeded with upstream plugin/compiler deprecation and precision warnings."
     },
     {
       "name": "Ad-hoc code signature integrity",
       "command": "codesign --verify --deep --strict --verbose=2 desktop/build/macos/Build/Products/Release/BOOHTACORD.app",
       "status": "PASS",
-      "observation": "The bundle is valid on disk and satisfies its designated requirement. Signature type is ad-hoc; this is not Developer ID signing or notarization. Main executable SHA-256: 6500705c01561f0418b287ad2d9c4ea1e6073a02b6adaf92a89d5c59f63d859f."
+      "observation": "The bundle is valid on disk and satisfies its designated requirement. Signature type is ad-hoc; this is not Developer ID signing or notarization. `lipo -archs` reports x86_64 arm64."
     },
     {
       "name": "Launch and session persistence on installed macOS Release app",
