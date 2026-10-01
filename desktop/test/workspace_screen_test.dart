@@ -1729,6 +1729,51 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('preserves the visible DM anchor when loading an older page', (
+    tester,
+  ) async {
+    final api = _PortraitApi(
+      includeDirectMessage: true,
+      paginatedDirectHistory: true,
+      directHistoryCount: 30,
+    );
+    final state = AppState(api);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await state.initialize();
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(state.nextDirectMessageCursor, 'older-dm-page');
+    expect(api.advancedDirectMessageIds.last, 'dm-message-29');
+    final anchor = find.text('Личное сообщение 0');
+    expect(anchor, findsOneWidget);
+    final anchorTopBefore = tester.getTopLeft(anchor).dy;
+
+    await tester.tap(find.text('Загрузить предыдущие сообщения'));
+    await tester.pumpAndSettle();
+
+    expect(api.directMessagePageCalls, 2);
+    expect(state.directMessageHistory.first.id, 'older-dm-message-0');
+    expect(
+      tester.getTopLeft(anchor).dy,
+      closeTo(anchorTopBefore, 1),
+      reason:
+          'loading a DM page above the viewport must not move its visible row',
+    );
+    expect(api.advancedDirectMessageIds, ['dm-message-29']);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('selects a reply target and sends a reply in a text channel', (
     tester,
   ) async {
@@ -2666,6 +2711,8 @@ class _PortraitApi extends ApiClient {
     this.withHistory = false,
     this.historyCount = 1,
     this.paginatedHistory = false,
+    this.paginatedDirectHistory = false,
+    this.directHistoryCount = 1,
     this.includeDirectMessage = false,
     this.voiceRosters = const [],
     this.extraVoiceChannels = const [],
@@ -2691,6 +2738,8 @@ class _PortraitApi extends ApiClient {
   final bool withHistory;
   final int historyCount;
   final bool paginatedHistory;
+  final bool paginatedDirectHistory;
+  final int directHistoryCount;
   final bool includeDirectMessage;
   final List<VoiceRoomRoster> voiceRosters;
   final List<GuildChannel> extraVoiceChannels;
@@ -2700,6 +2749,7 @@ class _PortraitApi extends ApiClient {
   final advancedMessageIds = <String>[];
   int messagePageCalls = 0;
   int directMessagePageCalls = 0;
+  final advancedDirectMessageIds = <String>[];
   String? sentReplyToId;
   String? sentDirectReplyToId;
   List<String> sentMentionIds = const [];
@@ -2955,17 +3005,21 @@ class _PortraitApi extends ApiClient {
       : const [];
 
   @override
-  Future<List<DirectChatMessage>> directMessageHistory(String id) async => [
-    DirectChatMessage(
-      id: 'dm-message-1',
-      directMessageId: id,
-      authorId: 'account-2',
-      body: 'Исходное личное сообщение',
-      createdAt: DateTime.utc(2026, 9, 24),
-      deleted: false,
-      revision: 1,
-    ),
-  ];
+  Future<List<DirectChatMessage>> directMessageHistory(String id) async =>
+      List.generate(
+        paginatedDirectHistory ? directHistoryCount : 1,
+        (index) => DirectChatMessage(
+          id: paginatedDirectHistory ? 'dm-message-$index' : 'dm-message-1',
+          directMessageId: id,
+          authorId: 'account-2',
+          body: paginatedDirectHistory
+              ? 'Личное сообщение $index'
+              : 'Исходное личное сообщение',
+          createdAt: DateTime.utc(2026, 9, 25).add(Duration(minutes: index)),
+          deleted: false,
+          revision: 1,
+        ),
+      );
 
   @override
   Future<DirectChatMessagePage> directMessageHistoryPage(
@@ -2974,7 +3028,37 @@ class _PortraitApi extends ApiClient {
     String? at,
   }) async {
     directMessagePageCalls++;
-    return DirectChatMessagePage(messages: await directMessageHistory(id));
+    if (paginatedDirectHistory && before != null) {
+      return DirectChatMessagePage(
+        messages: List.generate(
+          12,
+          (index) => DirectChatMessage(
+            id: 'older-dm-message-$index',
+            directMessageId: id,
+            authorId: 'account-2',
+            body: index == 0
+                ? 'Более старое личное сообщение 0 ${'длинный текст ' * 16}'
+                : 'Более старое личное сообщение $index',
+            createdAt: DateTime.utc(2026, 9, 24).add(Duration(minutes: index)),
+            deleted: false,
+            revision: 1,
+          ),
+        ),
+        nextCursor: 'oldest-dm-page',
+      );
+    }
+    return DirectChatMessagePage(
+      messages: await directMessageHistory(id),
+      nextCursor: paginatedDirectHistory ? 'older-dm-page' : null,
+    );
+  }
+
+  @override
+  Future<void> advanceDirectMessageReadCursor(
+    String directMessageId,
+    String messageId,
+  ) async {
+    advancedDirectMessageIds.add(messageId);
   }
 
   @override

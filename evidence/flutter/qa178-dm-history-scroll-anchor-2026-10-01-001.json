@@ -1,0 +1,34 @@
+{
+  "id": "QA-178",
+  "kind": "dm-history-scroll-anchor",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "working-tree after ed84346",
+  "summary": "Fixed direct-message history pagination so prepending an older cursor page preserves the visible row's screen position and leaves the read cursor on the newest previously read peer message. Test-first regression reproduced the displaced row before the fix. No ADB/device was used.",
+  "checks": [
+    {
+      "name": "DM older-page scroll anchor and read-cursor regression",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'preserves the visible DM anchor when loading an older page'",
+      "status": "PASS",
+      "observation": "The test initially failed on the previous implementation because the original visible message was no longer built in the viewport after loading an older page. After the fix, its screen coordinate remains within 1 logical pixel, the older page is prepended, and the read-cursor API was called only for dm-message-29."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 332 Flutter tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub --no-fatal-infos",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    }
+  ],
+  "limitations": [
+    "Reply navigation to a target outside the loaded history window is not covered by this change.",
+    "Realtime overlap and server-backed read-cursor behavior remain unverified.",
+    "No Android device, ADB, or platform runtime validation was performed."
+  ],
+  "remaining": "Verify reply targets across unloaded pages, realtime updates and server-backed cursor boundaries; keep physical Android acceptance open."
+}

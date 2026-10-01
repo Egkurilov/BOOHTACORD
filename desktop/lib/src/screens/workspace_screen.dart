@@ -3674,6 +3674,7 @@ class _DirectConversationState extends State<_DirectConversation> {
   final _composerFocus = FocusNode();
   final _attachmentComposerKey = GlobalKey<MessageAttachmentComposerState>();
   final _scroll = ScrollController();
+  final Map<String, GlobalKey> _directMessageKeys = {};
   DirectChatMessage? _replyTarget;
   final Set<String> _mentionUserIds = {};
   List<MessageAttachment> _attachments = const [];
@@ -3772,19 +3773,64 @@ class _DirectConversationState extends State<_DirectConversation> {
 
   Future<void> _loadOlderDirect() async {
     if (!_scroll.hasClients) return;
+    final visibleAnchors = _visibleDirectMessageAnchors();
     final oldOffset = _scroll.position.pixels;
     final oldExtent = _scroll.position.maxScrollExtent;
     if (!await widget.state.loadOlderDirectMessages() || !mounted) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scroll.hasClients) return;
-      final position = _scroll.position;
-      position.jumpTo(
-        (oldOffset + position.maxScrollExtent - oldExtent).clamp(
+    void restoreAnchor(int attemptsRemaining) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scroll.hasClients) return;
+        final position = _scroll.position;
+        final anchor = visibleAnchors
+            .map((anchor) {
+              final row = anchor.key.currentContext?.findRenderObject();
+              return row is RenderBox && row.attached
+                  ? (
+                      top: anchor.top,
+                      currentTop: row.localToGlobal(Offset.zero).dy,
+                    )
+                  : null;
+            })
+            .whereType<({double top, double currentTop})>()
+            .firstOrNull;
+        final target = anchor == null
+            ? oldOffset + position.maxScrollExtent - oldExtent
+            : position.pixels + anchor.currentTop - anchor.top;
+        final clamped = target.clamp(
           position.minScrollExtent,
           position.maxScrollExtent,
-        ),
-      );
-    });
+        );
+        if ((position.pixels - clamped).abs() > 0.5) {
+          position.jumpTo(clamped);
+          if (attemptsRemaining > 1) restoreAnchor(attemptsRemaining - 1);
+        }
+      });
+    }
+
+    restoreAnchor(2);
+  }
+
+  List<({GlobalKey key, double top})> _visibleDirectMessageAnchors() {
+    if (!_scroll.hasClients) return const [];
+    final anchors = <({GlobalKey key, double top})>[];
+    for (final message in widget.state.directMessageHistory) {
+      final key = _directMessageKeys['${widget.conversation.id}:${message.id}'];
+      final row = key?.currentContext?.findRenderObject();
+      if (row is! RenderBox || !row.attached) continue;
+      final viewport = RenderAbstractViewport.maybeOf(row);
+      if (viewport is! RenderBox) continue;
+      final rowRect = row.localToGlobal(Offset.zero) & row.size;
+      final viewportBox = viewport as RenderBox;
+      final viewportRect =
+          viewportBox.localToGlobal(Offset.zero) & viewportBox.size;
+      if (rowRect.bottom > viewportRect.top &&
+          rowRect.top < viewportRect.bottom &&
+          rowRect.right > viewportRect.left &&
+          rowRect.left < viewportRect.right) {
+        anchors.add((key: key!, top: rowRect.top));
+      }
+    }
+    return anchors;
   }
 
   Future<void> _send() async {
@@ -3896,6 +3942,12 @@ class _DirectConversationState extends State<_DirectConversation> {
         if (mounted) widget.state.markSelectedDirectMessageRead();
       });
     }
+    final renderedMessageKeys = widget.state.directMessageHistory
+        .map((message) => '${widget.conversation.id}:${message.id}')
+        .toSet();
+    _directMessageKeys.removeWhere(
+      (key, _) => !renderedMessageKeys.contains(key),
+    );
     return Column(
       children: [
         _Header(
@@ -3948,6 +4000,22 @@ class _DirectConversationState extends State<_DirectConversation> {
                     itemCount:
                         widget.state.directMessageHistory.length +
                         (widget.state.nextDirectMessageCursor == null ? 0 : 1),
+                    findChildIndexCallback: (key) {
+                      final messageKey = _directMessageKeys.entries
+                          .where((entry) => identical(entry.value, key))
+                          .firstOrNull;
+                      if (messageKey == null) return null;
+                      final messageId = messageKey.key.substring(
+                        widget.conversation.id.length + 1,
+                      );
+                      final messageIndex = widget.state.directMessageHistory
+                          .indexWhere((message) => message.id == messageId);
+                      if (messageIndex < 0) return null;
+                      return messageIndex +
+                          (widget.state.nextDirectMessageCursor == null
+                              ? 0
+                              : 1);
+                    },
                     itemBuilder: (context, index) {
                       if (widget.state.nextDirectMessageCursor != null &&
                           index == 0) {
@@ -3982,139 +4050,150 @@ class _DirectConversationState extends State<_DirectConversation> {
                           widget.state.directMessageHistory[messageIndex];
                       final own =
                           message.authorId == widget.state.user?.accountId;
-                      return HorizontalSwipeRegion(
-                        enabled:
-                            (defaultTargetPlatform == TargetPlatform.iOS ||
-                                defaultTargetPlatform ==
-                                    TargetPlatform.android) &&
-                            MediaQuery.sizeOf(context).width < 1024 &&
-                            !message.deleted &&
-                            message.sendStatus == null,
-                        canStart: (position, _) => position.dx >= 72,
-                        onSwipeRight: () => _replyToDirect(message),
-                        child: Row(
-                          mainAxisAlignment: own
-                              ? MainAxisAlignment.end
-                              : MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Flexible(
-                              child: Container(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 560,
-                                ),
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 11,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: own
-                                      ? GcColors.selected
-                                      : GcColors.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (_directReplyLabel(message)
-                                        case final label?)
-                                      _ReplyPreview(label: label),
-                                    if (message.deleted)
-                                      const Text(
-                                        'Сообщение удалено',
-                                        style: TextStyle(
-                                          color: GcColors.muted,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      )
-                                    else
-                                      FormattedMessageBody(
-                                        body: message.body,
-                                        color: GcColors.text,
-                                        fontSize: 14,
-                                        lineHeight: 1.4,
-                                      ),
-                                    if (message.sendStatus ==
-                                        MessageSendStatus.sending)
-                                      const Text(
-                                        'Отправляется…',
-                                        style: TextStyle(
-                                          color: GcColors.muted,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    if (message.sendStatus ==
-                                        MessageSendStatus.failed)
-                                      TextButton.icon(
-                                        onPressed: widget.state.sending
-                                            ? null
-                                            : () => _retry(message),
-                                        icon: const Icon(
-                                          Icons.refresh,
-                                          size: 16,
-                                        ),
-                                        label: const Text(
-                                          'Не отправлено · Повторить отправку',
-                                        ),
-                                      ),
-                                    if (!message.deleted &&
-                                        message.sendStatus == null &&
-                                        message.attachments.isNotEmpty)
-                                      MessageAttachmentList(
-                                        state: widget.state,
-                                        parentPath:
-                                            '/direct-messages/${Uri.encodeComponent(message.directMessageId)}',
-                                        attachments: message.attachments,
-                                      ),
-                                    if (message.mentionUserIds.isNotEmpty &&
-                                        !message.deleted) ...[
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        'Упомянуты: ${message.mentionUserIds.map((id) => _mentionDisplayName(widget.state, id)).join(' ')}',
-                                        style: const TextStyle(
-                                          color: GcColors.muted,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                            if (!message.deleted && message.sendStatus == null)
-                              _DirectMessageActionMenu(
-                                message: message,
-                                canEdit: own,
-                                onReply: _replyToDirect,
-                                mentionOptions: [
-                                  (
-                                    widget.conversation.participantId,
-                                    widget.conversation.displayName,
+                      final key = _directMessageKeys.putIfAbsent(
+                        '${widget.conversation.id}:${message.id}',
+                        () => GlobalKey(
+                          debugLabel: '${widget.conversation.id}:${message.id}',
+                        ),
+                      );
+                      return KeyedSubtree(
+                        key: key,
+                        child: HorizontalSwipeRegion(
+                          enabled:
+                              (defaultTargetPlatform == TargetPlatform.iOS ||
+                                  defaultTargetPlatform ==
+                                      TargetPlatform.android) &&
+                              MediaQuery.sizeOf(context).width < 1024 &&
+                              !message.deleted &&
+                              message.sendStatus == null,
+                          canStart: (position, _) => position.dx >= 72,
+                          onSwipeRight: () => _replyToDirect(message),
+                          child: Row(
+                            mainAxisAlignment: own
+                                ? MainAxisAlignment.end
+                                : MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Flexible(
+                                child: Container(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 560,
                                   ),
-                                ],
-                                selfId: widget.state.user?.accountId ?? '',
-                                onEdit: (body, revision, ids) =>
-                                    widget.state.editDirectWithResult(
-                                      message,
-                                      body,
-                                      revision,
-                                      mentionUserIds: ids,
-                                    ),
-                                onRefresh: () async {
-                                  final latest = await widget.state
-                                      .refreshDirectMessageRevision(message);
-                                  return latest == null
-                                      ? null
-                                      : (
-                                          revision: latest.revision,
-                                          deleted: latest.deleted,
-                                        );
-                                },
-                                onDelete: () =>
-                                    widget.state.deleteDirect(message),
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 11,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: own
+                                        ? GcColors.selected
+                                        : GcColors.surface,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (_directReplyLabel(message)
+                                          case final label?)
+                                        _ReplyPreview(label: label),
+                                      if (message.deleted)
+                                        const Text(
+                                          'Сообщение удалено',
+                                          style: TextStyle(
+                                            color: GcColors.muted,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        )
+                                      else
+                                        FormattedMessageBody(
+                                          body: message.body,
+                                          color: GcColors.text,
+                                          fontSize: 14,
+                                          lineHeight: 1.4,
+                                        ),
+                                      if (message.sendStatus ==
+                                          MessageSendStatus.sending)
+                                        const Text(
+                                          'Отправляется…',
+                                          style: TextStyle(
+                                            color: GcColors.muted,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      if (message.sendStatus ==
+                                          MessageSendStatus.failed)
+                                        TextButton.icon(
+                                          onPressed: widget.state.sending
+                                              ? null
+                                              : () => _retry(message),
+                                          icon: const Icon(
+                                            Icons.refresh,
+                                            size: 16,
+                                          ),
+                                          label: const Text(
+                                            'Не отправлено · Повторить отправку',
+                                          ),
+                                        ),
+                                      if (!message.deleted &&
+                                          message.sendStatus == null &&
+                                          message.attachments.isNotEmpty)
+                                        MessageAttachmentList(
+                                          state: widget.state,
+                                          parentPath:
+                                              '/direct-messages/${Uri.encodeComponent(message.directMessageId)}',
+                                          attachments: message.attachments,
+                                        ),
+                                      if (message.mentionUserIds.isNotEmpty &&
+                                          !message.deleted) ...[
+                                        const SizedBox(height: 5),
+                                        Text(
+                                          'Упомянуты: ${message.mentionUserIds.map((id) => _mentionDisplayName(widget.state, id)).join(' ')}',
+                                          style: const TextStyle(
+                                            color: GcColors.muted,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
                               ),
-                          ],
+                              if (!message.deleted &&
+                                  message.sendStatus == null)
+                                _DirectMessageActionMenu(
+                                  message: message,
+                                  canEdit: own,
+                                  onReply: _replyToDirect,
+                                  mentionOptions: [
+                                    (
+                                      widget.conversation.participantId,
+                                      widget.conversation.displayName,
+                                    ),
+                                  ],
+                                  selfId: widget.state.user?.accountId ?? '',
+                                  onEdit: (body, revision, ids) =>
+                                      widget.state.editDirectWithResult(
+                                        message,
+                                        body,
+                                        revision,
+                                        mentionUserIds: ids,
+                                      ),
+                                  onRefresh: () async {
+                                    final latest = await widget.state
+                                        .refreshDirectMessageRevision(message);
+                                    return latest == null
+                                        ? null
+                                        : (
+                                            revision: latest.revision,
+                                            deleted: latest.deleted,
+                                          );
+                                  },
+                                  onDelete: () =>
+                                      widget.state.deleteDirect(message),
+                                ),
+                            ],
+                          ),
                         ),
                       );
                     },
