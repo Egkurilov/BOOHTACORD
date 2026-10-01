@@ -4,7 +4,7 @@
   "status": "PARTIAL",
   "executed_at": "2026-10-01",
   "source_revision": "b07ea47",
-  "summary": "When voice admission is closed, Flutter now keeps the same roster-state header subtitle as web instead of replacing it with the admission restriction. The restriction remains communicated by the closed-state notice and disabled join controls. A test-first regression reproduces the mismatch and passes after the fix.",
+  "summary": "When voice admission is closed, Flutter now keeps the same roster-state header subtitle as web instead of replacing it with the admission restriction. A test-first regression reproduces the header mismatch and passes after the fix; body presentation is covered separately by QA-171.",
   "checks": [
     {
       "name": "Test-first closed-admission roster error regression",

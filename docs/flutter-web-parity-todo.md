@@ -186,6 +186,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   приведены к вебу и покрыты локально. Проверка реальных screen readers/focus и
   mute/deafen поведения остаётся открытой — [QA-52](../evidence/flutter/qa52-voice-prejoin-copy-live-region-2026-09-28-001.json),
   [QA-53](../evidence/flutter/qa53-voice-dock-deafen-web-parity-2026-09-28-001.json).
+  Состояние закрытого канала также выровнено с web: специальный status banner,
+  отсутствие roster/prejoin/join controls и явный выход для активного участника;
+  просмотр уже выбранного потока сохраняется — [QA-171](../evidence/flutter/qa171-flutter-closed-voice-admission-parity-2026-10-01-001.json).
 - [x] Явно показывать после отказа/сбоя microphone capture, что пользователь
   остался слушателем; дать безопасный retry для VAD и PTT-инструкцию без
   обхода удерживаемой клавиши — [QA-32](../evidence/flutter/qa32-voice-microphone-unavailable-fallback-2026-09-27-001.json).

@@ -1,0 +1,28 @@
+{
+  "id": "QA-171",
+  "kind": "flutter-closed-voice-admission-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-10-01",
+  "source_revision": "be2a361",
+  "summary": "Flutter now matches web when a voice channel is closed: shows the dedicated closure status, hides the prejoin roster and join controls, preserves an explicitly selected screen viewer, and offers a leave action to an already connected participant. Widget regressions cover disconnected and connected presentation; physical cross-platform acceptance remains open.",
+  "checks": [
+    {
+      "name": "Test-first closed-admission body regression",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name \"announces prejoin roster loading and errors as live status\"",
+      "status": "PASS",
+      "observation": "The new assertion first failed because Flutter did not render the web-equivalent closure status. After implementation, the test confirms the status role, hides prejoin copy and listener join controls, and shows the leave action in a connected closed-channel state."
+    },
+    {
+      "name": "Full Flutter suite and analyzer",
+      "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 326 Flutter tests pass and flutter analyze reports no issues."
+    },
+    {
+      "name": "Windows/macOS/Android runtime and screen-reader acceptance",
+      "status": "NOT_RUN",
+      "observation": "No physical closed-channel room was available. Runtime screenshots, the active-user leave action, selected-stream retention, and TalkBack/VoiceOver/NVDA behavior remain unverified on devices."
+    }
+  ],
+  "remaining": "Verify closed-admission copy/layout, focus/live announcement, active-user leave behavior, and selected-stream retention against web on macOS, Windows, and Android."
+}

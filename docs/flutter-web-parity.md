@@ -44,12 +44,15 @@ TEXT channel, if any — [QA-145](../evidence/flutter/qa145-web-default-text-cha
 Flutter's voice prejoin header now mirrors the web copy for roster loading,
 unavailable, empty and populated states instead of showing a static invitation
 that diverged from the room card. The roster subtitle remains visible even when
-administrator admission is closed; the separate closed-state message and
-disabled join controls continue to explain the restriction. A widget regression
-covers loading, unavailable, empty and populated states, including an unavailable
-roster in a closed channel; full Flutter tests/analyzer pass —
+administrator admission is closed. For a closed channel, Flutter also mirrors
+web's dedicated status message, hides the roster/prejoin card and join controls,
+and offers Leave while already connected; a selected stream viewer is retained.
+Widget regressions cover loading, unavailable, empty and populated states, an
+unavailable roster in a closed channel, and both disconnected/connected closed
+states; full Flutter tests/analyzer pass —
 [QA-169](../evidence/flutter/qa169-flutter-prejoin-roster-header-copy-2026-10-01-001.json),
-[QA-170](../evidence/flutter/qa170-flutter-closed-channel-roster-header-2026-10-01-001.json).
+[QA-170](../evidence/flutter/qa170-flutter-closed-channel-roster-header-2026-10-01-001.json),
+[QA-171](../evidence/flutter/qa171-flutter-closed-voice-admission-parity-2026-10-01-001.json).
 
 | Area | Web reference | Flutter now | Remaining gap |
 | --- | --- | --- | --- |
