@@ -738,6 +738,29 @@ void main() {
       ..notifyListeners();
     await tester.pump();
     expect(find.text('Голосовой канал · состав недоступен'), findsOneWidget);
+    final closedNotice = find.text(
+      'Вход в этот канал закрыт администратором. Отзыв media-доступа ещё подтверждается.',
+    );
+    expect(closedNotice, findsOneWidget);
+    expect(
+      tester.getSemantics(closedNotice).getSemanticsData().role,
+      SemanticsRole.status,
+    );
+    expect(
+      find.text(
+        'Посмотрите, кто сейчас в комнате, и выберите удобный способ подключения.',
+      ),
+      findsNothing,
+    );
+    expect(find.text('Подключиться без микрофона'), findsNothing);
+
+    state
+      ..voiceChannel = state.selectedChannel
+      ..voicePhase = VoicePhase.connected
+      ..notifyListeners();
+    await tester.pump();
+    expect(find.text('Выйти из голосового канала'), findsOneWidget);
+    expect(find.text('Все в сборе'), findsNothing);
 
     semantics.dispose();
     await tester.pumpWidget(const SizedBox.shrink());

@@ -4310,8 +4310,8 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                   ? 'Демонстрация $selectedName'
                   : active
                   ? state.voicePhase == VoicePhase.reconnecting
-                  ? 'Восстанавливаем связь · состояние микрофона сохранено'
-                  : 'Голосовой канал · участников: $participantCount'
+                        ? 'Восстанавливаем связь · состояние микрофона сохранено'
+                        : 'Голосовой канал · участников: $participantCount'
                   : _voicePrejoinHeaderSubtitle(state, channel),
               trailing: active
                   ? Row(
@@ -4362,6 +4362,11 @@ class _VoiceRoomState extends State<_VoiceRoom> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                 child: _ErrorBanner(message: state.screenShareError!),
+              ),
+            if (channel.admissionClosed)
+              _VoiceAdmissionClosedNotice(
+                error: state.error,
+                onLeave: active ? state.leaveVoice : null,
               ),
             Expanded(
               child: active
@@ -4488,6 +4493,8 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                             onReturnToParticipants: () =>
                                 widget.onSelectScreen(''),
                           )
+                        : channel.admissionClosed
+                        ? const SizedBox.shrink()
                         : _VoiceParticipantRoom(
                             state: state,
                             room: room,
@@ -4495,6 +4502,8 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                             screens: screens,
                             onScreenSelected: widget.onSelectScreen,
                           )
+                  : channel.admissionClosed
+                  ? const SizedBox.shrink()
                   : _VoicePrejoinCard(state: state, channel: channel),
             ),
           ],
@@ -4587,6 +4596,50 @@ GuildMember? _participantMember(AppState state, RemoteParticipant participant) {
 bool _participantMuted(RemoteParticipant participant) {
   final publications = participant.audioTrackPublications;
   return publications.isEmpty || publications.every((item) => item.muted);
+}
+
+class _VoiceAdmissionClosedNotice extends StatelessWidget {
+  const _VoiceAdmissionClosedNotice({required this.error, this.onLeave});
+
+  final String? error;
+  final VoidCallback? onLeave;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          role: SemanticsRole.status,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF422830),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Text(
+              'Вход в этот канал закрыт администратором. Отзыв media-доступа ещё подтверждается.',
+              style: TextStyle(color: GcColors.danger, fontSize: 13),
+            ),
+          ),
+        ),
+        if (error != null) ...[
+          const SizedBox(height: 8),
+          _ErrorBanner(message: error!),
+        ],
+        if (onLeave != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: onLeave,
+              child: const Text('Выйти из голосового канала'),
+            ),
+          ),
+      ],
+    ),
+  );
 }
 
 class _VoicePrejoinCard extends StatelessWidget {
