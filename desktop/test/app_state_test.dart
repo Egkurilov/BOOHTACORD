@@ -882,6 +882,27 @@ void main() {
     },
   );
 
+  test(
+    'realtime text refresh preserves already loaded history pages',
+    () async {
+      final api = _FakeApi(topology, paginated: true);
+      final state = AppState(api);
+      addTearDown(state.dispose);
+      await state.initialize();
+      await state.loadOlderMessages();
+      api.committedTextClientId = 'realtime-client-message';
+
+      await state.refreshSelectedTextHistory();
+
+      expect(state.messages.map((message) => message.id), [
+        'message-older',
+        'message-1',
+        'message-committed',
+      ]);
+      expect(state.nextMessageCursor, isNull);
+    },
+  );
+
   test('requests an existing voice lease transfer immediately', () async {
     final api = _FakeApi(
       topology,

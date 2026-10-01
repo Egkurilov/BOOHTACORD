@@ -190,6 +190,7 @@ class AppState extends ChangeNotifier {
   String? nextMessageCursor;
   bool loadingOlderMessages = false;
   bool loadingMessages = false;
+  bool _textHistoryHasLoadedOlderPages = false;
   bool sending = false;
   bool loadingDirectMessages = false;
   bool realtimeConnected = false;
@@ -418,6 +419,7 @@ class AppState extends ChangeNotifier {
     _pendingTextSends.clear();
     _pendingDirectSends.clear();
     nextMessageCursor = null;
+    _textHistoryHasLoadedOlderPages = false;
     workspacePanel = WorkspacePanel.none;
     navigationSection = NavigationSection.channels;
     loadingMessages = false;
@@ -1852,6 +1854,7 @@ class AppState extends ChangeNotifier {
     selectedChannel = channel;
     messages = const [];
     nextMessageCursor = null;
+    _textHistoryHasLoadedOlderPages = false;
     error = null;
     notifyListeners();
     if (channel.kind == ChannelKind.text) {
@@ -1899,6 +1902,7 @@ class AppState extends ChangeNotifier {
     try {
       final page = await api.messagePage(channel.id, before: cursor);
       if (selectedChannel?.id != channel.id) return false;
+      _textHistoryHasLoadedOlderPages = true;
       final byId = {for (final message in messages) message.id: message};
       for (final message in page.messages) {
         byId.putIfAbsent(message.id, () => message);
@@ -1915,6 +1919,43 @@ class AppState extends ChangeNotifier {
     } finally {
       loadingOlderMessages = false;
       notifyListeners();
+    }
+  }
+
+  /// Refreshes the newest page without discarding history already loaded by
+  /// the user. This is used for realtime message events and resynchronization.
+  Future<void> refreshSelectedTextHistory() async {
+    final channel = selectedChannel;
+    if (channel == null || channel.kind != ChannelKind.text) return;
+
+    loadingMessages = true;
+    notifyListeners();
+    try {
+      final page = await api.messagePage(channel.id);
+      if (selectedChannel?.id != channel.id) return;
+
+      final byId = {for (final message in messages) message.id: message};
+      for (final message in page.messages) {
+        final existing = byId[message.id];
+        if (existing == null || message.revision >= existing.revision) {
+          byId[message.id] = message;
+        }
+      }
+      _acknowledgeMessageIds(
+        page.messages.map((message) => message.clientMessageId),
+      );
+      messages = _withPendingText(channel.id, byId.values);
+      if (!_textHistoryHasLoadedOlderPages) {
+        nextMessageCursor = page.nextCursor;
+      }
+      error = null;
+    } catch (cause) {
+      if (selectedChannel?.id == channel.id) error = _message(cause);
+    } finally {
+      if (selectedChannel?.id == channel.id) {
+        loadingMessages = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -2006,7 +2047,7 @@ class AppState extends ChangeNotifier {
         case 'message.created':
           final previousUnread = _addressedUnreadCount(kind!, payload);
           if (selectedChannel?.id == payload['channel_id']) {
-            unawaited(selectChannel(selectedChannel!));
+            unawaited(refreshSelectedTextHistory());
           }
           unawaited(
             _refreshAndDeliverMessageNotification(
@@ -2032,7 +2073,7 @@ class AppState extends ChangeNotifier {
           unawaited(refreshTopology());
           unawaited(refreshMembers());
           if (selectedChannel?.kind == ChannelKind.text) {
-            unawaited(selectChannel(selectedChannel!));
+            unawaited(refreshSelectedTextHistory());
           }
         case 'voice.lease_revoked':
           final revocation = VoiceLeaseRevocation.parse(
