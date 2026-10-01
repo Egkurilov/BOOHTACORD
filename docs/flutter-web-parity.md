@@ -308,33 +308,29 @@ both deployed web and Flutter viewers.
   (mic, speaking and screen sharing) from LiveKit events. Non-connected
   navigation receives authenticated roster snapshots through a short-lived SSE
   stream; signed LiveKit webhook events only invalidate snapshots, and each
-  snapshot rechecks channel visibility and active leases. Web still attempts to
-  send bounded (14 KiB max), four-second screen thumbnails as LiveKit data
-  packets. The production credential deliberately denies data publishing
-  (`CanPublishData=false`), so local send completion does not prove forwarding;
-  paired live testing confirms the Mac still displays avatars even while the
-  Android video track renders. Flutter no longer sends or consumes thumbnail
-  DataPackets: it captures one local JPEG after `framesDecoded` on a subscribed
-  remote screen track and serializes native frame captures. This capture is
-  bounded to 12 attempts at 250 ms, then falls back to the avatar. Flutter
-  still uses LiveKit's default `autoSubscribe=true`, so this captures from an
-  existing track subscription rather than adding a temporary one; the
-  subscription policy still needs review for bandwidth parity with web. Keep
-  the broad data grant disabled. ADR-013 records the final bounded,
-  room-scoped track-preview constraints. The parser, reconnect, webhook,
-  thumbnail and widget tests still pass [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json),
-  but they do not cover this credential/live-forwarding restriction —
-  [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
-  Two-account/live-server privacy and event-delivery acceptance plus focused
-  ordering/spacing screenshots remain open. Web's ineffective thumbnail
-  DataPacket path must still be removed and replaced with a bounded receiver
-  capture. Flutter's 320-test/analyzer run and Android release build/install/
-  launch on Pixel pass, but runtime preview acceptance on Android/macOS/Windows
-  remains open; no screen share was started in that smoke check. These results
-  are recorded in
-  [QA-164](../evidence/flutter/qa164-flutter-room-screen-thumbnail-pipeline-2026-10-01-001.json).
-  Close cross-client preview only after the track lifecycle, bandwidth policy,
-  and paired live test satisfy [ADR-013](adr/ADR-013-room-scoped-screen-thumbnail-preview.md).
+  snapshot rechecks channel visibility and active leases. Both web and Flutter
+  now avoid thumbnail DataPackets; the production credential intentionally
+  keeps `CanPublishData=false`. Web uses `autoSubscribe=false`, briefly
+  serializes preview subscriptions so at most one active screen-video track is
+  sampled per room; it captures a bounded JPEG (up to 12 attempts at 250 ms,
+  max 14 KiB), then unsubscribes after the first usable frame. A selected
+  full-screen viewer retains its subscription, and an existing thumbnail
+  remains visible after preview unsubscribe until the share is unpublished.
+  Flutter captures a local JPEG after receiver `framesDecoded`
+  and serializes native frame captures, but still uses `autoSubscribe=true`; it
+  needs the same temporary-subscription policy to avoid downloading every
+  hidden screen share. Keep the broad data grant disabled. ADR-013 records the
+  room-scoped track-preview constraints. Earlier roster and packet evidence is
+  in [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json)
+  and [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
+  Web's 709 tests and production build pass for the new receiver path, but the
+  paired live thumbnail test has not yet run —
+  [QA-165](../evidence/flutter/qa165-web-screen-thumbnail-receiver-capture-2026-10-01-001.json).
+  Flutter's 320-test/analyzer run and Android release build/install/launch on
+  Pixel pass, but runtime preview acceptance on Android/macOS/Windows remains
+  open — [QA-164](../evidence/flutter/qa164-flutter-room-screen-thumbnail-pipeline-2026-10-01-001.json).
+  Close cross-client preview only after Flutter's temporary subscription policy
+  and the paired live test satisfy [ADR-013](adr/ADR-013-room-scoped-screen-thumbnail-preview.md).
 - Port admin topology operations with confirmations, revision conflicts and
   refresh recovery. Initial slice now adds authenticated category/channel
   create/rename and empty-category deletion, admin-only entry, server-side

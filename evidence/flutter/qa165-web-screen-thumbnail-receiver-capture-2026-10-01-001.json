@@ -1,0 +1,39 @@
+{
+  "id": "QA-165",
+  "kind": "web-screen-thumbnail-receiver-capture",
+  "status": "PARTIAL",
+  "executed_at": "2026-10-01",
+  "source_revision": "e62ac3a",
+  "summary": "Replaced the web thumbnail DataPacket send/receive path with a local receiver-frame capture. With web autoSubscribe=false, preview subscriptions are serialized so at most one active screen-video track is temporarily subscribed at a time; it returns to the normal viewer policy after one bounded JPEG frame. An explicitly selected viewer keeps the track. Captured thumbnails survive preview unsubscribe and are cleared when the share is unpublished or participant leaves. Focused tests, full frontend suite and production build pass; paired runtime delivery is not yet tested.",
+  "checks": [
+    {
+      "name": "Web thumbnail capture and subscription lifecycle tests",
+      "command": "cd frontend && npm test -- src/voice/screen_thumbnail_capture.spec.ts src/voice/screen_thumbnail.spec.ts src/voice/livekit_screen_viewer_adapter.spec.ts",
+      "status": "PASS",
+      "observation": "21 tests cover bounded JPEG validation, decoded-frame wait, cancellation, playback setup failure, retry deadline, short serialized subscriptions for previews, preserving the explicit viewer subscription and clearing only when a share is unpublished."
+    },
+    {
+      "name": "Full frontend test suite",
+      "command": "cd frontend && npm test",
+      "status": "PASS",
+      "observation": "All 709 tests in 233 files pass."
+    },
+    {
+      "name": "Frontend production build and typecheck",
+      "command": "cd frontend && npm run build",
+      "status": "PASS",
+      "observation": "vue-tsc --noEmit and Vite production build pass. Vite emits the existing large-chunk advisory for the ~518 KB LiveKit chunk."
+    },
+    {
+      "name": "Backend LiveKit data-publish grant",
+      "status": "PASS",
+      "observation": "No backend credential or ACL code was changed. The existing signer assertion and production-grant audit in QA-159 continue to document CanPublishData=false."
+    },
+    {
+      "name": "Paired Android-to-web thumbnail runtime preview",
+      "status": "NOT_RUN",
+      "observation": "No room join or screen projection was started during this implementation pass. The new receiver path needs explicit paired live validation."
+    }
+  ],
+  "remaining": "Verify one-frame preview delivery, timely unsubscribe, persistence until unpublish, no interruption when the same stream is selected, and cleanup on leave in a paired Pixel-to-web room test. Then implement the matching temporary subscription policy in Flutter and verify Android/macOS/Windows runtime behavior."
+}

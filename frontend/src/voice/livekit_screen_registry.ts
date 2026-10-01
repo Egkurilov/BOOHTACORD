@@ -12,7 +12,7 @@ export interface ScreenParticipantPublication {
 export class LiveKitScreenRegistry {
   private current: ScreenViewerStream[] = []
 
-  refresh(participants: ScreenParticipantPublication[], selectedId: string | null): void {
+  refresh(participants: ScreenParticipantPublication[], selectedId: string | null, previewingIds: ReadonlySet<string> = new Set()): void {
     this.current = participants.flatMap((participant) => participant.video ? [{
       audio: participant.isLocal ? undefined : participant.audio,
       accountId: participant.accountId,
@@ -24,7 +24,7 @@ export class LiveKitScreenRegistry {
       targetProfile: screenShareTargetProfile(participant.video.name),
       video: participant.video,
     }] : [])
-    this.current.filter((stream) => stream.id !== selectedId && !stream.isLocal).forEach((stream) => {
+    this.current.filter((stream) => stream.id !== selectedId && !stream.isLocal && !previewingIds.has(stream.id)).forEach((stream) => {
       stream.video.setSubscribed?.(false)
       stream.audio?.setSubscribed?.(false)
     })

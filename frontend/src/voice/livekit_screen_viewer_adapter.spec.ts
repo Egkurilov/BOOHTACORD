@@ -68,6 +68,105 @@ describe('LiveKit screen viewer adapter', () => {
     expect(playback.clear).toHaveBeenCalledOnce()
   })
 
+  it('temporarily subscribes to a screen track for one thumbnail then lets the viewer unsubscribe it', async () => {
+    const track = { attach: vi.fn(), detach: vi.fn() }
+    const video = { isMuted: false, setSubscribed: vi.fn(), source: 'screen-video', track: undefined as typeof track | undefined }
+    const alice = {
+      identity: 'alice',
+      metadata: 'account:22222222-2222-4222-8222-222222222222',
+      getTrackPublication: (source: string) => source === 'screen-video' ? video : undefined,
+    }
+    const listeners = new Map<string, (...arguments_: any[]) => void>()
+    const room: LiveKitScreenViewerRoom = {
+      on: vi.fn((event: string, listener: (...arguments_: any[]) => void) => listeners.set(event, listener)),
+      remoteParticipants: new Map([['alice', alice]]),
+    }
+    let finishCapture!: (captured: boolean) => void
+    const capture = vi.fn(() => new Promise<boolean>((resolve) => { finishCapture = resolve }))
+    const binding = bindLiveKitScreenViewer(room, {
+      activeSpeakersChanged: 'active-speakers-changed', participantConnected: 'participant-connected', participantDisconnected: 'participant-disconnected', localTrackPublished: 'local-track-published', localTrackUnpublished: 'local-track-unpublished', trackMuted: 'track-muted', trackPublished: 'track-published', trackSubscribed: 'track-subscribed', trackUnmuted: 'track-unmuted', trackUnpublished: 'track-unpublished', trackUnsubscribed: 'track-unsubscribed',
+    }, { microphone: 'microphone', screenAudio: 'screen-audio', screenVideo: 'screen-video' }, undefined, capture as never)
+    listeners.get('track-published')!(video, alice)
+    video.track = track
+    listeners.get('track-subscribed')!(track, video, alice)
+    await Promise.resolve()
+
+    expect(video.setSubscribed).toHaveBeenLastCalledWith(true)
+    expect(capture).toHaveBeenCalledOnce()
+    expect(video.setSubscribed).not.toHaveBeenCalledWith(false)
+
+    finishCapture(true)
+    await vi.waitFor(() => expect(video.setSubscribed).toHaveBeenLastCalledWith(false))
+  })
+
+  it('serializes temporary preview subscriptions across simultaneous screen shares', async () => {
+    const track = { attach: vi.fn(), detach: vi.fn() }
+    const first = { ...publication('screen-video'), track: undefined as typeof track | undefined }
+    const second = publication('screen-video')
+    const alice = { identity: 'alice', getTrackPublication: () => first }
+    const bob = { identity: 'bob', getTrackPublication: () => second }
+    const listeners = new Map<string, (...arguments_: any[]) => void>()
+    const room: LiveKitScreenViewerRoom = {
+      on: vi.fn((event: string, listener: (...arguments_: any[]) => void) => listeners.set(event, listener)),
+      remoteParticipants: new Map([['alice', alice], ['bob', bob]]),
+    }
+    let finishCapture!: (captured: boolean) => void
+    const capture = vi.fn(() => new Promise<boolean>((resolve) => { finishCapture = resolve }))
+    bindLiveKitScreenViewer(room, {
+      activeSpeakersChanged: 'active-speakers-changed', participantConnected: 'participant-connected', participantDisconnected: 'participant-disconnected', localTrackPublished: 'local-track-published', localTrackUnpublished: 'local-track-unpublished', trackMuted: 'track-muted', trackPublished: 'track-published', trackSubscribed: 'track-subscribed', trackUnmuted: 'track-unmuted', trackUnpublished: 'track-unpublished', trackUnsubscribed: 'track-unsubscribed',
+    }, { microphone: 'microphone', screenAudio: 'screen-audio', screenVideo: 'screen-video' }, undefined, capture as never).subscribeScreenThumbnails()
+    expect(first.setSubscribed).toHaveBeenLastCalledWith(true)
+    expect(second.setSubscribed).not.toHaveBeenCalledWith(true)
+    first.track = track
+    listeners.get('track-subscribed')!(track, first, alice)
+    await Promise.resolve()
+    finishCapture(true)
+    await vi.waitFor(() => {
+      expect(first.setSubscribed).toHaveBeenLastCalledWith(false)
+      expect(second.setSubscribed).toHaveBeenLastCalledWith(true)
+    })
+    expect(capture).toHaveBeenCalledOnce()
+  })
+
+  it('does not create a preview subscription for the screen already selected by the viewer', () => {
+    const video = publication('screen-video')
+    const alice = { identity: 'alice', metadata: 'account:22222222-2222-4222-8222-222222222222', getTrackPublication: () => video }
+    const listeners = new Map<string, (...arguments_: any[]) => void>()
+    const room: LiveKitScreenViewerRoom = {
+      on: vi.fn((event: string, listener: (...arguments_: any[]) => void) => listeners.set(event, listener)),
+      remoteParticipants: new Map([['alice', alice]]),
+    }
+    const binding = bindLiveKitScreenViewer(room, {
+      activeSpeakersChanged: 'active-speakers-changed', participantConnected: 'participant-connected', participantDisconnected: 'participant-disconnected', localTrackPublished: 'local-track-published', localTrackUnpublished: 'local-track-unpublished', trackMuted: 'track-muted', trackPublished: 'track-published', trackSubscribed: 'track-subscribed', trackUnmuted: 'track-unmuted', trackUnpublished: 'track-unpublished', trackUnsubscribed: 'track-unsubscribed',
+    }, { microphone: 'microphone', screenAudio: 'screen-audio', screenVideo: 'screen-video' })
+    binding.refresh()
+    binding.viewer.select('22222222-2222-4222-8222-222222222222:screen', null, null)
+    video.setSubscribed.mockClear()
+
+    binding.subscribeScreenThumbnails()
+
+    expect(video.setSubscribed).not.toHaveBeenCalled()
+  })
+
+  it('retains a captured preview after unsubscribe and clears it only when the share is unpublished', () => {
+    const video = publication('screen-video')
+    const alice = { identity: 'alice', metadata: 'account:22222222-2222-4222-8222-222222222222', getTrackPublication: () => video }
+    const listeners = new Map<string, (...arguments_: any[]) => void>()
+    const room: LiveKitScreenViewerRoom = {
+      on: vi.fn((event: string, listener: (...arguments_: any[]) => void) => listeners.set(event, listener)),
+      remoteParticipants: new Map([['alice', alice]]),
+    }
+    const binding = bindLiveKitScreenViewer(room, {
+      activeSpeakersChanged: 'active-speakers-changed', participantConnected: 'participant-connected', participantDisconnected: 'participant-disconnected', localTrackPublished: 'local-track-published', localTrackUnpublished: 'local-track-unpublished', trackMuted: 'track-muted', trackPublished: 'track-published', trackSubscribed: 'track-subscribed', trackUnmuted: 'track-unmuted', trackUnpublished: 'track-unpublished', trackUnsubscribed: 'track-unsubscribed',
+    }, { microphone: 'microphone', screenAudio: 'screen-audio', screenVideo: 'screen-video' })
+    const removeThumbnail = vi.spyOn(binding.viewer, 'removeThumbnail')
+
+    listeners.get('track-unsubscribed')!({}, video, alice)
+    expect(removeThumbnail).not.toHaveBeenCalled()
+    listeners.get('track-unpublished')!(video, alice)
+    expect(removeThumbnail).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222222')
+  })
+
   it('maps LiveKit active speakers to local and remote participants and forgets a departed participant', () => {
     const microphone = publication('microphone')
     const listeners = new Map<string, (...arguments_: any[]) => void>()
