@@ -1,7 +1,7 @@
 {
   "id": "android-github-apk-delivery-2026-10-01-001",
   "kind": "android-release-gate",
-  "status": "PARTIAL",
+  "status": "PASS",
   "executed_at": "2026-10-01",
   "source": {
     "failed_deploy_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36843134662",
@@ -35,19 +35,29 @@
     },
     {
       "name": "Android debug APK workflow artifact",
-      "status": "NOT_RUN",
-      "observation": "Awaiting GitHub CI on the updated master branch."
+      "status": "PASS",
+      "run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36847149661",
+      "artifact": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36847149661/artifacts/11154965749",
+      "observation": "CI #66 passed and uploaded boohtacord-android-debug-apk containing desktop/build/app/outputs/flutter-apk/app-debug.apk."
     },
     {
       "name": "Signed Android release APKs",
-      "status": "NOT_RUN",
-      "observation": "Awaiting the android-v1.0.18 tag workflow and artifact inspection."
+      "status": "PASS",
+      "run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36848919914",
+      "release": "https://github.com/Egkurilov/BOOHTACORD/releases/tag/android-v1.0.18",
+      "artifacts": [
+        {"name": "BOOHTACORD-android-v1.0.18-arm64-v8a.apk", "size_bytes": 39516517},
+        {"name": "BOOHTACORD-android-v1.0.18-armeabi-v7a.apk", "size_bytes": 31054783},
+        {"name": "BOOHTACORD-android-v1.0.18-x86_64.apk", "size_bytes": 45336286}
+      ],
+      "observation": "Quality, signed ABI-specific build, workflow artifact upload, and GitHub Release publication passed. GitHub Release API reports all three APK assets uploaded with Android package MIME type."
     },
     {
       "name": "Production deploy",
-      "status": "NOT_RUN",
-      "observation": "Awaiting production workflow after the guard fix is pushed."
+      "status": "PASS",
+      "run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36847148950",
+      "observation": "Deploy #21 passed backend, frontend, release_guard, guarded rollout, pinned image verification, public /api/v1/health check, and attachment headroom audit."
     }
   ],
-  "limitation": "The local Mac has Flutter 3.47.5 but no Android SDK; it cannot independently build an APK. GitHub runner artifacts and release assets are the required binary proof."
+  "limitation": "The local Mac has Flutter 3.47.5 but no Android SDK. The APK builds and release assets were verified on GitHub runners; physical-device installation was not part of this check."
 }
