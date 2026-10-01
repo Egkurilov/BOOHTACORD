@@ -9,7 +9,7 @@ states are not.
 
 ## Current parity map
 
-Status below reflects the Flutter and web source as of 2026-09-30, including native
+Status below reflects the Flutter and web source as of 2026-10-01, including native
 identity/reset, audio/PTT, local screen publishing, web screen-share setup, and live voice navigation
 slices. Reconcile this table
 when a feature lands; do not use the old summary as a substitute for reading
@@ -308,23 +308,33 @@ both deployed web and Flutter viewers.
   (mic, speaking and screen sharing) from LiveKit events. Non-connected
   navigation receives authenticated roster snapshots through a short-lived SSE
   stream; signed LiveKit webhook events only invalidate snapshots, and each
-  snapshot rechecks channel visibility and active leases. Web and Flutter
-  currently attempt to send bounded (14 KiB max), four-second screen thumbnails
-  as LiveKit data packets. The production credential deliberately denies data
-  publishing (`CanPublishData=false`), so local send completion does not prove
-  forwarding; paired live testing confirms the Mac still displays avatars even
-  while the Android video track renders. Keep the broad data grant disabled.
-  ADR-013 records a bounded, room-scoped video-track capture as the direction
-  to investigate; implementation remains open until its SDK lifecycle,
-  bandwidth bound and unsubscribe behavior are covered by tests. The parser, reconnect, webhook,
+  snapshot rechecks channel visibility and active leases. Web still attempts to
+  send bounded (14 KiB max), four-second screen thumbnails as LiveKit data
+  packets. The production credential deliberately denies data publishing
+  (`CanPublishData=false`), so local send completion does not prove forwarding;
+  paired live testing confirms the Mac still displays avatars even while the
+  Android video track renders. Flutter no longer sends or consumes thumbnail
+  DataPackets: it captures one local JPEG after `framesDecoded` on a subscribed
+  remote screen track and serializes native frame captures. This capture is
+  bounded to 12 attempts at 250 ms, then falls back to the avatar. Flutter
+  still uses LiveKit's default `autoSubscribe=true`, so this captures from an
+  existing track subscription rather than adding a temporary one; the
+  subscription policy still needs review for bandwidth parity with web. Keep
+  the broad data grant disabled. ADR-013 records the final bounded,
+  room-scoped track-preview constraints. The parser, reconnect, webhook,
   thumbnail and widget tests still pass [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json),
   but they do not cover this credential/live-forwarding restriction —
   [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
   Two-account/live-server privacy and event-delivery acceptance plus focused
-  ordering/spacing screenshots remain open. Cross-client thumbnail preview is
-  a separate open item under [ADR-013](adr/ADR-013-room-scoped-screen-thumbnail-preview.md):
-  remove the ineffective thumbnail DataPacket path only after a tested,
-  bounded video-track preview path is ready.
+  ordering/spacing screenshots remain open. Web's ineffective thumbnail
+  DataPacket path must still be removed and replaced with a bounded receiver
+  capture. Flutter's 320-test/analyzer run and Android release build/install/
+  launch on Pixel pass, but runtime preview acceptance on Android/macOS/Windows
+  remains open; no screen share was started in that smoke check. These results
+  are recorded in
+  [QA-164](../evidence/flutter/qa164-flutter-room-screen-thumbnail-pipeline-2026-10-01-001.json).
+  Close cross-client preview only after the track lifecycle, bandwidth policy,
+  and paired live test satisfy [ADR-013](adr/ADR-013-room-scoped-screen-thumbnail-preview.md).
 - Port admin topology operations with confirmations, revision conflicts and
   refresh recovery. Initial slice now adds authenticated category/channel
   create/rename and empty-category deletion, admin-only entry, server-side

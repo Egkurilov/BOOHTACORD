@@ -1,0 +1,57 @@
+{
+  "id": "QA-164",
+  "kind": "flutter-room-screen-thumbnail-pipeline",
+  "status": "PARTIAL",
+  "executed_at": "2026-10-01",
+  "source_revision": "259a2ce",
+  "summary": "Flutter now captures a bounded local JPEG from a subscribed remote screen-video track after decoded frames are available, instead of sending/receiving thumbnail DataPackets. Queueing prevents concurrent calls into the plugin's shared frame file. Unit coverage, the 320-test full suite, analyzer, Android ABI-split release build, update install and app launch pass. No screen share or voice-room connection was started during this smoke test, so receiver thumbnail runtime behavior remains unverified.",
+  "checks": [
+    {
+      "name": "Thumbnail capture and cancellation tests",
+      "command": "cd desktop && flutter test --no-pub test/screen_thumbnail_pipeline_test.dart test/screen_thumbnail_test.dart test/voice_participant_thumbnail_test.dart",
+      "status": "PASS",
+      "observation": "Focused tests cover waiting for decoded frames, inactive-track cancellation, bounded no-frame attempts, serialized native frame capture, JPEG validation and participant thumbnail rendering."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 320 Flutter tests pass after rebasing onto the incoming GitHub CI/test commits."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "Analyzer reports no issues."
+    },
+    {
+      "name": "Android release build",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Signed ABI-split APKs built for armeabi-v7a, arm64-v8a and x86_64. The arm64 APK is 39.5 MB. A universal APK was not used because its versionCode 21 is below the installed CI split APK code."
+    },
+    {
+      "name": "Install over existing Pixel 7 app",
+      "command": "adb install -r desktop/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
+      "status": "PASS",
+      "observation": "The arm64 release APK installed without uninstalling or clearing app data. The device now reports versionName 1.0.16 and versionCode 2021."
+    },
+    {
+      "name": "Pixel app launch smoke check",
+      "command": "adb shell monkey -p ru.boohtacord.app 1; inspect recent logcat for fatal exceptions",
+      "status": "PASS",
+      "observation": "BOOHTACORD process launched on Pixel 7. Recent logcat contained no FATAL EXCEPTION or Flutter PlatformException. No account action, voice join, microphone activation or screen projection was performed."
+    },
+    {
+      "name": "Remote thumbnail runtime preview",
+      "status": "NOT_RUN",
+      "observation": "The Pixel was left with the app open. A room join and new Android screen projection were not started; a separate short paired preview test requires explicit live confirmation."
+    },
+    {
+      "name": "Web receiver thumbnail migration",
+      "status": "NOT_RUN",
+      "observation": "Web still uses the ineffective DataPacket thumbnail path. This implementation stage changes Flutter only."
+    }
+  ],
+  "remaining": "Run a paired Pixel-to-Mac and Pixel-to-web preview test with an explicit short-lived screen-share authorization; confirm the thumbnail appears and clears on stop/unsubscribe, confirm bandwidth/subscription policy under ADR-013, implement the web receiver capture path, and validate Windows runtime behavior."
+}

@@ -26,7 +26,7 @@ void main() {
     expect(image.decodeJpg(thumbnail)?.width, 160);
   });
 
-  test('ignores malformed thumbnail packets', () {
+  test('rejects malformed JPEG previews', () {
     expect(validScreenThumbnail(Uint8List.fromList([1, 2, 3])), isFalse);
     expect(validScreenThumbnail(Uint8List(15 * 1024)), isFalse);
   });
