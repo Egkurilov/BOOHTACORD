@@ -11,7 +11,7 @@ def build(source, output, revision, source_hash, environment):
         subprocess.run(["docker", "buildx", "build", "--platform", "linux/amd64",
                         "--label", f"org.opencontainers.image.revision={revision}",
                         "--label", f"org.voice-platform.source-archive-sha256={source_hash}",
-                        "--sbom=true", "--provenance=mode=max", "--load", "--tag", tag,
+                        "--sbom=true", "--provenance=mode=max,version=v0.2", "--load", "--tag", tag,
                         "--output", f"type=oci,dest={archive}", str(source / context)], env=environment, check=True)
         image_id = subprocess.check_output(["docker", "image", "inspect", "--format", "{{.Id}}", tag], text=True).strip()
         receipts[service] = verify(archive, revision, source_hash, image_id)
