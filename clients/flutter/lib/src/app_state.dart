@@ -123,6 +123,8 @@ class AppState extends ChangeNotifier {
         message: _message,
       ),
     )..addListener(notifyListeners);
+    _nativeNotifications.sessionScope = _session.scope;
+    _nativeNotifications.addListener(notifyListeners);
     _profile = ProfileController(
       api,
       _session.scope,
@@ -305,7 +307,7 @@ class AppState extends ChangeNotifier {
   final _senderMediaTelemetry = SenderMediaTelemetry();
   int _voiceRosterRevision = 0;
   bool _voiceRosterLoading = false;
-  bool _notificationAppIsForeground = true;
+  bool get _notificationAppIsForeground => _nativeNotifications.appIsForeground;
   int _realtimeAttempt = 0;
   final Set<String> _realtimeEventIds = <String>{};
   final Map<String, String> _sendRetryIds = <String, String>{};
@@ -330,21 +332,15 @@ class AppState extends ChangeNotifier {
 
   Future<void> enableNotifications() async {
     await _nativeNotifications.enable();
-    notifyListeners();
   }
 
-  Future<void> disableNotifications() async {
-    await _nativeNotifications.disable();
-    notifyListeners();
-  }
+  Future<void> disableNotifications() => _nativeNotifications.disable();
 
-  Future<void> refreshNotificationStatus() async {
-    await _nativeNotifications.refreshStatus();
-    notifyListeners();
-  }
+  Future<void> refreshNotificationStatus() =>
+      _nativeNotifications.refreshStatus();
 
   void setNotificationAppForeground(bool foreground) {
-    _notificationAppIsForeground = foreground;
+    _nativeNotifications.appIsForeground = foreground;
   }
 
   void reportError(String message) {
@@ -1866,6 +1862,8 @@ class AppState extends ChangeNotifier {
     required Map<String, dynamic> payload,
     required int? previousUnread,
   }) async {
+    final ticket = _session.scope.capture();
+    if (!ticket.isActive) return;
     if (eventId == null || kind == null || user == null) return;
     try {
       if (kind == 'message.created') {
@@ -1873,6 +1871,7 @@ class AppState extends ChangeNotifier {
       } else if (kind == 'direct_message.message_created') {
         await refreshDirectMessages();
       }
+      if (!ticket.isActive) return;
       final body = notificationBodyForUnreadIncrease(
         kind: kind,
         previousUnread: previousUnread,
@@ -1886,7 +1885,6 @@ class AppState extends ChangeNotifier {
         body: body,
         appIsForeground: _notificationAppIsForeground,
       );
-      if (_nativeNotifications.error != null) notifyListeners();
     } catch (_) {
       // Native alerts must not interfere with message or realtime recovery.
     }
@@ -1969,6 +1967,7 @@ class AppState extends ChangeNotifier {
   void dispose() {
     _session.dispose();
     _profile.dispose();
+    _nativeNotifications.dispose();
     _closeScreenPreviewSubscriptions();
     _realtimeRetry?.cancel();
     _maintenanceTimer?.cancel();

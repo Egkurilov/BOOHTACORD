@@ -1,0 +1,15 @@
+{
+  "id": "reorganization-notification-state-2026-10-02",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "scope": "Notification account state, preferences, permission and delivery owner with separate platform driver",
+  "checks": {
+    "notification_and_app_state_tests": 53,
+    "local_dart_import_guard": "PASS",
+    "late_preference_read_after_logout": "PASS",
+    "late_dedup_read_after_logout": "PASS"
+  },
+  "baseline": "Both logout race tests failed before the change and pass with generation checks",
+  "preserved": ["Generic notification copy", "Per-account opt-in and dedup", "Platform application identity"],
+  "limitations": ["No physical notification delivery or permission UI acceptance is claimed"]
+}
