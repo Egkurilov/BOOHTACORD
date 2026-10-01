@@ -34,7 +34,7 @@ def run_smoke(receipts, output):
     network, database = "release-smoke-" + suffix, "db-" + suffix
     containers = []
     api, web = [receipts[name]["index_digest"] for name in ("api", "web")]
-    docker("network", "create", "--internal", network)
+    docker("network", "create", network)
     try:
         containers.append(docker("run", "-d", "--rm", "--name", database, "--network", network,
                                  "-e", "POSTGRES_DB=voice_platform_test", "-e", "POSTGRES_USER=voice_platform_test",
