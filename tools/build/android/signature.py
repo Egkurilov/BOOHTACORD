@@ -17,12 +17,18 @@ def tools_directory():
 
 
 def certificate(text, *, release):
-    hashes = re.findall(r'Signer #\d+ certificate SHA-256 digest:\s*([0-9a-f]{64})', text)
-    if len(hashes) != 1:
+    records = re.findall(r'(?m)^(Signer #\d+|V[123](?:\.1)? Signer:) certificate SHA-256 digest: '
+                         r'([0-9a-fA-F]{64})\s*$', text)
+    labels = [label for label, _ in records]
+    hashes = {digest.lower() for _, digest in records}
+    numbered = any(label.startswith('Signer #') for label in labels)
+    if (len(hashes) != 1 or len(labels) != len(set(labels)) or
+            (numbered and labels != ['Signer #1'])):
         # apksigner output contains public certificate data, never the private key.
         raise ValueError('Expected exactly one verified APK signer; observed: ' + repr(text[:3000]))
-    if release and hashes[0] != CERTIFICATE: raise ValueError('Android release signing identity changed')
-    return hashes[0]
+    fingerprint = hashes.pop()
+    if release and fingerprint != CERTIFICATE: raise ValueError('Android release signing identity changed')
+    return fingerprint
 
 
 def inspect(apk, *, release, version):
