@@ -1,0 +1,33 @@
+{
+  "id": "QA-179",
+  "kind": "text-realtime-history-merge",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "5b624d4",
+  "summary": "Flutter realtime message refresh now merges the latest page into the loaded TEXT window, preserving older messages and the current pagination cursor state. Resync-required events use the same non-destructive refresh path.",
+  "checks": [
+    {
+      "name": "TEXT realtime history merge regression",
+      "command": "cd desktop && flutter test test/app_state_test.dart --plain-name 'realtime text refresh preserves already loaded history pages'",
+      "status": "PASS",
+      "observation": "After loading an older cursor page, the test added a newly committed message to the latest page and refreshed. Both the old and current messages remained, the new message appeared, and an exhausted cursor stayed null."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "All 333 Flutter tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    }
+  ],
+  "limitations": [
+    "No Android device or ADB was available or required for these state-level checks.",
+    "Live WebSocket delivery and server-backed read-cursor behavior were not exercised."
+  ],
+  "remaining": "Verify reply navigation across unloaded pages and perform a live backend realtime/read-cursor acceptance check when the environment is available."
+}
