@@ -1,0 +1,33 @@
+{
+  "id": "QA-174",
+  "kind": "flutter-voice-roster-sse-stale-snapshot-parity",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "working tree based on d1c259a",
+  "summary": "Flutter now expires a cached prejoin roster 10 seconds after its SSE stream is lost, matching the web stale-snapshot window. A fresh snapshot cancels expiration and clears the reconnect error.",
+  "checks": [
+    {
+      "name": "Regression for stale roster expiry",
+      "status": "PASS",
+      "observation": "New state test first failed because the stale snapshot was not cleared within the injected 100 ms policy; after the fix it confirms that the roster expires and connection error is visible."
+    },
+    {
+      "name": "Regression for recovery before expiry",
+      "status": "PASS",
+      "observation": "A new SSE snapshot arrives before timeout; the stale timer is canceled and the recovered roster remains available without an error."
+    },
+    {
+      "name": "Flutter application tests and analysis",
+      "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub --no-fatal-infos",
+      "status": "PASS",
+      "observation": "All 328 tests passed; analyzer reported no issues."
+    },
+    {
+      "name": "Android and macOS debug builds",
+      "command": "cd desktop && flutter build apk --debug --no-pub && flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "Both native debug builds completed. Android emitted the existing Flutter KGP migration warning; macOS emitted third-party flutter_soloud compiler warnings."
+    }
+  ],
+  "limits": "No ADB/device runtime, live production reconnect, Windows build/runtime, or paired web/Flutter session test was performed."
+}

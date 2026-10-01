@@ -93,6 +93,8 @@ class AppState extends ChangeNotifier {
   AppState(
     this.api, {
     this.startupSessionTimeout = const Duration(seconds: 20),
+    this.voiceRosterRetryDelay = const Duration(seconds: 2),
+    this.voiceRosterStaleTimeout = const Duration(seconds: 10),
     Future<List<MediaDevice>> Function()? audioDeviceLoader,
     Stream<List<MediaDevice>>? audioDeviceChanges,
     NativeNotificationService? nativeNotifications,
@@ -104,6 +106,9 @@ class AppState extends ChangeNotifier {
            nativeNotifications ?? NativeNotificationService() {
     api.onUnauthorized = _handleUnauthorized;
   }
+
+  final Duration voiceRosterRetryDelay;
+  final Duration voiceRosterStaleTimeout;
 
   static Future<List<MediaDevice>> _enumerateAudioDevices() async {
     final devices = await Hardware.instance.enumerateDevices();
@@ -253,9 +258,9 @@ class AppState extends ChangeNotifier {
   StreamSubscription<String>? _voiceRosterSubscription;
   Completer<void>? _voiceRosterStreamDone;
   Timer? _voiceRosterRetryTimer;
+  Timer? _voiceRosterStaleTimer;
   Completer<void>? _voiceRosterRetryDone;
   bool _voiceRosterWatching = false;
-  DateTime? _voiceRosterLastSnapshotAt;
   Timer? _voiceStreamNoticeTimer;
   Timer? _voiceConnectionStatsTimer;
   int _voiceConnectionStatsRevision = 0;
@@ -758,8 +763,9 @@ class AppState extends ChangeNotifier {
                 try {
                   final rooms = parseVoiceRosterEvent(line);
                   if (rooms == null) return;
+                  _voiceRosterStaleTimer?.cancel();
+                  _voiceRosterStaleTimer = null;
                   voiceRosters = rooms;
-                  _voiceRosterLastSnapshotAt = DateTime.now();
                   voiceRosterError = null;
                   notifyListeners();
                 } catch (cause) {
@@ -769,9 +775,11 @@ class AppState extends ChangeNotifier {
                 }
               },
               onError: (Object _) {
+                _markVoiceRosterStreamLost(revision);
                 if (!done.isCompleted) done.complete();
               },
               onDone: () {
+                _markVoiceRosterStreamLost(revision);
                 if (!done.isCompleted) done.complete();
               },
             );
@@ -784,22 +792,18 @@ class AppState extends ChangeNotifier {
               (cause.status == 401 || cause.status == 403)) {
             voiceRosters = null;
           }
-          if (voiceRosters == null) voiceRosterError = _message(cause);
+          if (voiceRosters == null) {
+            voiceRosterError = _message(cause);
+          } else {
+            _markVoiceRosterStreamLost(revision);
+          }
           notifyListeners();
         }
       }
       if (!_voiceRosterWatching || revision != _voiceRosterRevision) return;
-      final lastSnapshot = _voiceRosterLastSnapshotAt;
-      if (lastSnapshot != null &&
-          DateTime.now().difference(lastSnapshot) >
-              const Duration(seconds: 20)) {
-        voiceRosters = null;
-        voiceRosterError = 'Нет связи со списком голосовых каналов.';
-        notifyListeners();
-      }
       final retry = Completer<void>();
       _voiceRosterRetryDone = retry;
-      _voiceRosterRetryTimer = Timer(const Duration(seconds: 2), () {
+      _voiceRosterRetryTimer = Timer(voiceRosterRetryDelay, () {
         if (!retry.isCompleted) retry.complete();
       });
       await retry.future;
@@ -808,11 +812,27 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  void _markVoiceRosterStreamLost(int revision) {
+    if (!_voiceRosterWatching || revision != _voiceRosterRevision) return;
+    if (voiceRosters == null && voiceRosterError == null) {
+      voiceRosterError = 'Нет связи со списком голосовых каналов.';
+      notifyListeners();
+    }
+    _voiceRosterStaleTimer ??= Timer(voiceRosterStaleTimeout, () {
+      _voiceRosterStaleTimer = null;
+      if (!_voiceRosterWatching || revision != _voiceRosterRevision) return;
+      voiceRosters = null;
+      voiceRosterError = 'Нет связи со списком голосовых каналов.';
+      notifyListeners();
+    });
+  }
+
   void _stopVoiceRosterEvents() {
     _voiceRosterWatching = false;
-    _voiceRosterLastSnapshotAt = null;
     _voiceRosterRetryTimer?.cancel();
     _voiceRosterRetryTimer = null;
+    _voiceRosterStaleTimer?.cancel();
+    _voiceRosterStaleTimer = null;
     final retry = _voiceRosterRetryDone;
     if (retry != null && !retry.isCompleted) retry.complete();
     _voiceRosterRetryDone = null;

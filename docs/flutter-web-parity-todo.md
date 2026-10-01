@@ -294,6 +294,13 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-18](../evidence/flutter/qa18-prejoin-voice-roster-2026-09-27-001.json),
   [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json),
   [QA-136](../evidence/flutter/qa136-untrusted-commit-review-and-regression-2026-09-30-001.json).
+- [x] Выравнять срок жизни prejoin roster после обрыва SSE: Flutter теперь
+  сохраняет последний snapshot до 10 секунд с disconnect/error (как web),
+  отменяет stale timer при следующем snapshot и очищает snapshot после таймаута.
+  Два test-first state regressions, все 328 Flutter-тестов, analyzer, Android
+  Debug APK и macOS Debug app прошли —
+  [QA-174](../evidence/flutter/qa174-flutter-roster-sse-stale-snapshot-2026-10-01-001.json).
+  Live reconnect/production roster acceptance и Windows runtime остаются открытыми.
 - [x] Добавить безопасные server-side метрики стадии сбоя roster snapshot:
   `visibility_initial`, `presence_snapshot`, `visibility_recheck`; неизвестные
   labels сворачиваются в `unknown`, текст ошибки и IDs не попадают в labels.
