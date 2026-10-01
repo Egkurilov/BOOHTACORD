@@ -1,0 +1,44 @@
+{
+  "id": "github-deploy-headroom-recovery-2026-10-01",
+  "task": "T-054",
+  "kind": "production-deploy-storage-recovery",
+  "status": "PARTIAL",
+  "observed_at": "2026-10-01T06:54:13Z",
+  "environment": "GitHub Actions production deploy and the private attachment filesystem",
+  "source_revision": "5878beb1b46eb967f47df91c4a00a6c43f793b4f",
+  "failed_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36824977261/job/110249114688",
+  "successful_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36826771425",
+  "observer": "Codex using GitHub Actions job logs",
+  "checks": [
+    {
+      "name": "Original failure",
+      "result": "FAIL",
+      "available_bytes": 10194767872,
+      "required_bytes": 10569208282,
+      "detail": "The guarded release stopped before installing release files because the attachment filesystem lacked the required free-space reserve."
+    },
+    {
+      "name": "Controlled Docker recovery",
+      "result": "PASS",
+      "before_available_bytes": 10291286016,
+      "required_bytes": 10569208282,
+      "build_target_bytes": 11819208282,
+      "after_available_bytes": 23133110272,
+      "detail": "The recovery verified that Docker and attachments share a filesystem and that production containers exist, then pruned unused build cache. The image-removal fallback was not needed; no volumes or containers were pruned."
+    },
+    {
+      "name": "Deploy and post-rollout audit",
+      "result": "PASS",
+      "deploy_job": "success",
+      "post_rollout_available_bytes": 21367107584,
+      "post_rollout_required_bytes": 10569208282,
+      "snapshot_success": 1,
+      "api_health": "ok"
+    },
+    {
+      "name": "Capacity under active uploads",
+      "result": "NOT_RUN",
+      "detail": "This run measured idle post-rollout headroom, not representative concurrent uploads."
+    }
+  ]
+}
