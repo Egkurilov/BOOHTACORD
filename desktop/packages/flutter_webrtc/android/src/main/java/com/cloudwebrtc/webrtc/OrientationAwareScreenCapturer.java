@@ -11,6 +11,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.media.projection.MediaProjection;
+import android.os.Build;
 import android.view.Surface;
 import android.view.WindowManager;
 import android.app.Activity;
@@ -43,6 +44,7 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
     private MediaProjection mediaProjection;
     private volatile boolean isDisposed = false;
     private volatile boolean isStopped = false;
+    private volatile boolean capturedContentSizeAuthoritative = false;
     private MediaProjectionManager mediaProjectionManager;
     private WindowManager windowManager;
     private boolean isPortrait;
@@ -65,6 +67,14 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
                 super.onStop();
                 handleProjectionStopped();
             }
+
+            @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+            @Override
+            public void onCapturedContentResize(int width, int height) {
+                if (width <= 0 || height <= 0 || isDisposed || isStopped) return;
+                capturedContentSizeAuthoritative = true;
+                changeCaptureFormat(width, height, 15);
+            }
         };
     }
 
@@ -73,10 +83,13 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
         // stopCapture() no longer holds the monitor (synchronized removed), so guard explicitly here.
         if (isDisposed || isStopped) return;
         this.isPortrait = isDeviceOrientationPortrait();
-        final int max = Math.max(this.height, this.width);
-        final int min = Math.min(this.height, this.width);
-        final int newW = this.isPortrait ? min : max;
-        final int newH = this.isPortrait ? max : min;
+        final int[] outputDimensions = ScreenCaptureDimensions.forOutput(
+                this.width,
+                this.height,
+                this.isPortrait,
+                capturedContentSizeAuthoritative);
+        final int newW = outputDimensions[0];
+        final int newH = outputDimensions[1];
         // Avoid ANR: only enter changeCaptureFormat() (synchronized) when the dimensions actually change.
         // Previously every frame took the lock, which widened the race window against stopCapture().
         if (newW != this.oldWidth || newH != this.oldHeight) {

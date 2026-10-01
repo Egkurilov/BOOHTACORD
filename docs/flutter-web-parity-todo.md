@@ -355,6 +355,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   live-шаг не выполнялся; также остаётся runtime-проверка Windows. Исходные
   Android и Flutter pipeline записи — [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json),
   [QA-166](../evidence/flutter/qa166-flutter-temporary-screen-subscriptions-2026-10-01-001.json).
+  Для Android app-only capture добавлено чтение фактического размера содержимого
+  через MediaProjection resize callback — [QA-184](../evidence/flutter/qa184-android-app-window-capture-resize-2026-10-01-001.json);
+  физическое подтверждение предпросмотра при выборе приложения ещё требуется.
   Исправлен UX edge case локального viewer: запуск собственного screen share
   теперь возвращает выбор с удалённой демонстрации или закрытого viewer на
   собственный экран; policy/widget tests и analyzer проходят. Проверка видео

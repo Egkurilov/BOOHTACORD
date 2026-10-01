@@ -11,6 +11,15 @@ screen capture does not apply the requested 16:9 `getDisplayMedia` constraints;
 exposing the real source size lets LiveKit apply the user's selected
 resolution cap to its outgoing RTP encoding without cropping portrait frames.
 
+On Android 14+, `OrientationAwareScreenCapturer` also honors
+`MediaProjection.Callback.onCapturedContentResize`. App-only capture can have
+dimensions and aspect ratio different from the physical display; those content
+dimensions now resize the virtual display and are not rotated to match the
+device panel. Legacy/full-display capture keeps the existing orientation
+normalization until MediaProjection reports authoritative content dimensions.
+Unit coverage is recorded in
+[QA-184](../../../evidence/flutter/qa184-android-app-window-capture-resize-2026-10-01-001.json).
+
 The related LiveKit encoding support and Flutter profile logic live in
 `desktop/packages/livekit_client` and `desktop/lib/src/services/screen_share_quality.dart`.
 See [QA-88](../../../evidence/flutter/qa88-android-screen-share-resolution-cap-2026-09-29-001.json).
