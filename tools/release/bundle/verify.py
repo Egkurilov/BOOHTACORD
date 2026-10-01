@@ -2,7 +2,7 @@
 import argparse
 import json
 from pathlib import Path
-from scripts.qa11_release.verify_oci import verify as verify_oci
+from tools.verify.oci.verify_oci import verify as verify_oci
 from .files import check_files
 from .manifest import require, validate
 from .signature import verify as verify_signature

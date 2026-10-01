@@ -5,10 +5,11 @@ from pathlib import Path
 from tools.release.bundle.files import sha256
 
 SOURCE_PATHS = ("backend", "clients/web", "contracts", "docker", "compose.yaml", "scripts", "tools", ".node-version", "Taskfile.yml")
-RUNTIME_PATHS = ("compose.yaml", "docker/Caddyfile", "docker/livekit.yaml", "tools/release",
-                 "scripts/deploy-images.sh", "scripts/check-attachment-volume-headroom.sh",
-                 "scripts/audit-attachment-volume.sh", "scripts/qa11_release/verify_oci.py",
-                 "scripts/qa11_release/verify_running.sh", "scripts/qa12_rollback")
+RUNTIME_PATHS = ("compose.yaml", "docker/Caddyfile", "docker/livekit.yaml",
+                 "tools/release/archive", "tools/release/bundle", "tools/release/install", "tools/release/rollback",
+                 "tools/release/rollout/deploy-images.sh", "tools/ops/attachment_headroom/check-attachment-volume-headroom.sh",
+                 "tools/ops/attachment_audit/audit-attachment-volume.sh", "tools/verify/oci/verify_oci.py",
+                 "tools/verify/running_images/verify_running.sh")
 
 
 def git(root, *args):

@@ -37,7 +37,7 @@ jobs:
         run: test "$OPERATOR_READY" = upload-in-progress
       - name: Configure pinned read-only SSH transport
         shell: bash
-        run: bash scripts/configure-deploy-ssh.sh
+        run: bash tools/release/ssh/configure-deploy-ssh.sh
       - name: Sample exact volume and private reservation gauge
         shell: bash
-        run: bash scripts/qa08_capacity/sample_active_uploads.sh "$(git rev-parse HEAD)"
+        run: bash tools/qa/active_uploads/sample_active_uploads.sh "$(git rev-parse HEAD)"

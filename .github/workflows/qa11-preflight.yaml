@@ -24,10 +24,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash scripts/configure-deploy-ssh.sh
+          bash tools/release/ssh/configure-deploy-ssh.sh
           remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
           ssh_options=(-i "$HOME/.ssh/id_deploy" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
-          ssh "${ssh_options[@]}" "$remote" bash -s < scripts/qa11_release/preflight.sh
+          ssh "${ssh_options[@]}" "$remote" bash -s < tools/release/preflight/preflight.sh
       - name: Probe pinned temporary Buildx plugin
         shell: bash
         run: |
@@ -39,4 +39,4 @@ jobs:
           incoming="/tmp/voice-platform-qa11-buildx-$(git rev-parse HEAD)"
           ssh_options=(-i "$HOME/.ssh/id_deploy" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
           scp "${ssh_options[@]}" "$binary" "$remote:$incoming"
-          ssh "${ssh_options[@]}" "$remote" bash -s -- "$incoming" < scripts/qa11_release/probe_buildx.sh
+          ssh "${ssh_options[@]}" "$remote" bash -s -- "$incoming" < tools/build/legacy_server/probe_buildx.sh

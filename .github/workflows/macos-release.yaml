@@ -42,7 +42,7 @@ jobs:
         run: flutter pub get --enforce-lockfile
 
       - name: Test release packaging
-        run: bash scripts/macos_release/package.test.sh
+        run: bash tools/build/macos/package.test.sh
 
       - name: Run Flutter tests
         working-directory: clients/flutter
@@ -61,7 +61,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          bash scripts/macos_release/package.sh \
+          bash tools/build/macos/package.sh \
             clients/flutter/build/macos/Build/Products/Release/BOOHTACORD.app \
             "$RELEASE_TAG" \
             clients/flutter/build/release-assets

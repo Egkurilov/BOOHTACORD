@@ -47,8 +47,8 @@
 | backend: go vet ./... | PASS | Статическая проверка Go |
 | frontend: npm test | FAIL | 80 файлов: 78 PASS / 2 FAIL; 233 выполненных теста: 232 PASS / 1 FAIL; FPS suite не загрузилась |
 | frontend: npm run build | FAIL | TS2307 отсутствующий module, TS7006 callback types, TS2554 extra formatter argument |
-| scripts/verify-contracts.ps1 | PASS | Проектный verifier, не исчерпывающая проверка совместимости |
-| scripts/verify-spec-traceability.ps1 | PASS | Все 39 REQ встречаются в backlog, не проверка их исполнения |
+| tools/verify/contracts/verify-contracts.ps1 | PASS | Проектный verifier, не исчерпывающая проверка совместимости |
+| tools/verify/spec_traceability/verify-spec-traceability.ps1 | PASS | Все 39 REQ встречаются в backlog, не проверка их исполнения |
 | docker compose --env-file .env.example -f compose.yaml config --quiet | PASS | Только config interpolation, без запуска сервисов |
 
 Логи текущего прогона: `%TEMP%/boohtacord-review-20260924-{backend,frontend,build}.log`; они локальны и не являются архивом release evidence.

@@ -25,11 +25,11 @@ jobs:
         run: docker compose --env-file .env.example -f compose.yaml config --quiet
       - name: Verify private OTLP egress wiring
         shell: pwsh
-        run: ./scripts/verify-otel-egress.ps1
+        run: ./tools/verify/otel_egress/verify-otel-egress.ps1
       - name: Verify trace dashboard correlation
-        run: python3 -m unittest scripts.observability.test_traces_dashboard
+        run: python3 -m unittest tools.verify.trace_dashboard.test_traces_dashboard
       - name: Reject implicit or latest Compose images
         shell: pwsh
-        run: ./scripts/verify-compose-images.ps1
+        run: ./tools/verify/compose_images/verify-compose-images.ps1
       - name: Test proxy network deployment guard
-        run: bash scripts/deploy-images.test.sh
+        run: bash tools/release/rollout/deploy-images.test.sh

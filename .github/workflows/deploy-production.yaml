@@ -9,6 +9,7 @@ on:
       - 'contracts/**'
       - 'docker/**'
       - 'scripts/**'
+      - 'tools/**'
       - 'compose.yaml'
       - '.env.example'
       - '.github/workflows/deploy-production.yaml'
@@ -68,7 +69,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify contracts, traceability, images and release guards
         shell: bash
-        run: bash scripts/verify-release-guards.sh
+        run: bash tools/ci/release_guards/verify-release-guards.sh
 
   deploy:
     if: ${{ github.ref_name == 'master' }}
@@ -84,14 +85,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Inspect Docker storage before guarded release
         shell: bash
-        run: bash scripts/qa08_capacity/prepare_host_storage.sh
+        run: bash tools/ops/docker_storage/prepare_host_storage.sh
       - name: Recover attachment filesystem headroom from unused Docker data
         shell: bash
         run: |
           set -euo pipefail
           remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
           ssh_options=(-i "$HOME/.ssh/id_deploy" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
-          ssh "${ssh_options[@]}" "$remote" 'sudo -n bash -s' < scripts/qa08_capacity/reclaim_deploy_headroom.sh
+          ssh "${ssh_options[@]}" "$remote" 'sudo -n bash -s' < tools/ops/docker_storage/reclaim_deploy_headroom.sh
 
       - name: Package the checked-out source
         id: source
@@ -112,7 +113,7 @@ jobs:
           ARCHIVE: ${{ steps.source.outputs.archive }}
           ARCHIVE_SHA256: ${{ steps.source.outputs.archive_sha256 }}
           GIT_SHA: ${{ steps.source.outputs.git_sha }}
-        run: bash scripts/qa11_release/transfer_release.sh
+        run: bash tools/release/legacy_transfer/transfer_release.sh
       - name: Audit live attachment headroom after rollout
         shell: bash
         run: |
@@ -120,4 +121,4 @@ jobs:
           git_sha="$(git rev-parse HEAD)"
           remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
           ssh_options=(-i ~/.ssh/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
-          ssh "${ssh_options[@]}" "$remote" bash -s -- "$git_sha" < scripts/audit-attachment-volume.sh
+          ssh "${ssh_options[@]}" "$remote" bash -s -- "$git_sha" < tools/ops/attachment_audit/audit-attachment-volume.sh

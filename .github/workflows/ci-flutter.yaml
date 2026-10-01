@@ -23,7 +23,7 @@ jobs:
       - name: Test and analyze app and vendor packages
         run: python3 -m tools.ci.native.flutter
       - name: Verify Android Kotlin build modes
-        run: bash scripts/android_release/verify_android_kotlin_modes.sh
+        run: bash tools/verify/android_kotlin/verify_android_kotlin_modes.sh
       - name: Build Android debug APK
         working-directory: clients/flutter
         run: flutter build apk --debug --no-pub

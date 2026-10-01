@@ -12,7 +12,7 @@ def main():
     events = destination / "backend.jsonl"
     with events.open("w", encoding="utf-8") as stream:
         result = run("go", "test", "-json", "-count=1", "./...", cwd=backend, stdout=stream, check=False)
-    verified = run(sys.executable, "scripts/verify-go-test-events.py", str(events), check=False)
+    verified = run(sys.executable, "tools/verify/go_test_events/verify-go-test-events.py", str(events), check=False)
     if result.returncode or verified.returncode:
         raise SystemExit(1)
     run("go", "vet", "./...", cwd=backend)

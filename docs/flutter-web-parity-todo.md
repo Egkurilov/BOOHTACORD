@@ -713,7 +713,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Сделать Android CI regression gate для двух Gradle режимов и устранить
   конфигурационную несовместимость `flutter_background 1.3.1`: пакет vendored как
   локальный MIT fork без изменений Dart/native runtime, а его Android Gradle
-  script применяет KGP только в legacy режиме. `scripts/android_release/verify_android_kotlin_modes.sh`
+  script применяет KGP только в legacy режиме. `tools/verify/android_kotlin/verify_android_kotlin_modes.sh`
   собирает Debug при текущем `android.builtInKotlin=false` и через Gradle с
   `android.builtInKotlin=true`; оба режима прошли. Signed Release также прошёл
   в обоих режимах: split APK для трёх ABI в legacy и universal APK в built-in

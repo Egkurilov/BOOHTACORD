@@ -36,7 +36,7 @@ jobs:
           cache: true
 
       - name: Test idempotent GitHub release publisher
-        run: node --test scripts/android_release/publish.test.mjs scripts/android_release/publish_retries.test.mjs scripts/android_release/publish_conflicts.test.mjs
+        run: node --test tools/release/android/publish.test.mjs tools/release/android/publish_retries.test.mjs tools/release/android/publish_conflicts.test.mjs
 
       - name: Build signed ABI-specific APKs
         working-directory: clients/flutter
@@ -100,7 +100,7 @@ jobs:
           set -euo pipefail
           tag="$GITHUB_REF_NAME"
           asset_root=clients/flutter/build/release-assets
-          node scripts/android_release/publish.mjs \
+          node tools/release/android/publish.mjs \
             --tag "$tag" \
             --asset "$asset_root/BOOHTACORD-$tag-arm64-v8a.apk" \
             --asset "$asset_root/BOOHTACORD-$tag-armeabi-v7a.apk" \

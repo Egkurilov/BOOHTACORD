@@ -1,6 +1,6 @@
 """Build and validate OCI artifacts with the exact source labels and attestations."""
 import subprocess
-from scripts.qa11_release.verify_oci import verify
+from tools.verify.oci.verify_oci import verify
 
 
 def build(source, output, revision, source_hash, environment):

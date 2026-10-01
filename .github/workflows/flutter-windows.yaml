@@ -19,7 +19,7 @@ jobs:
           # Keep the release publisher in the CI checkout for its HTTP contract tests.
           sparse-checkout: |
             clients/flutter
-            scripts/android_release
+            tools/release/android
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.47.5
@@ -71,7 +71,7 @@ jobs:
         run: |
           node --version
           if ($LASTEXITCODE -ne 0) { throw 'Node.js is required for the release publisher tests.' }
-          node --test scripts/android_release/publish.test.mjs scripts/android_release/publish_retries.test.mjs scripts/android_release/publish_conflicts.test.mjs
+          node --test tools/release/android/publish.test.mjs tools/release/android/publish_retries.test.mjs tools/release/android/publish_conflicts.test.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Analyze Flutter client
         working-directory: clients/flutter

@@ -25,8 +25,8 @@
 
 ```text
 go test ./internal/observability/... ./internal/identity/authenticate_session/...
-python -m unittest scripts.observability.test_traces_dashboard
-python scripts/observability/check_trace_queries.py http://127.0.0.1:3200 docker/observability/dashboards/traces.json
+python -m unittest tools.verify.trace_dashboard.test_traces_dashboard
+python tools/qa/trace_queries/check_trace_queries.py http://127.0.0.1:3200 docker/observability/dashboards/traces.json
 ```
 
 Первая команда выполняется из `backend`; последняя — на узле с приватным доступом к Tempo. Тест dashboard включён в CI contracts и production release guards. Production workflow доставляет API; JSON панели нужно импортировать в существующую Grafana с тем же UID. После сохранения проверить сводку и ссылку на сессию на свежем авторизованном запросе.

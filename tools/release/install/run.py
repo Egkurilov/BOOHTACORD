@@ -35,7 +35,7 @@ def install(args):
             compatible_upgrade(current, manifest)
             runtime = Path(staging) / "runtime"
             extract(incoming / "runtime.tar.gz", runtime, max_bytes=100_000_000)
-            subprocess.run(["bash", str(runtime / "scripts/check-attachment-volume-headroom.sh")], check=True)
+            subprocess.run(["bash", str(runtime / "tools/ops/attachment_headroom/check-attachment-volume-headroom.sh")], check=True)
             destination = root / args.revision
             if destination.exists():
                 existing = verify_bundle(destination, args.public_key, args.revision)

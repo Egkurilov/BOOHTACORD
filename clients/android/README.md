@@ -28,4 +28,4 @@ flutter run -d <android-device-id>
 flutter build apk --release
 ```
 
-Release APK требует корректного локального signing config; секреты и keystore не добавляют в Git. Проверьте [`scripts/verify-android-release-signing.ps1`](../../scripts/verify-android-release-signing.ps1) и [mobile contract](../../contracts/mobile-client-contract.md). Native HTTP должен соблюдать secure-cookie, CSRF и Origin проверки сервера; административная роль не открывает чужие DM.
+Release APK требует корректного локального signing config; секреты и keystore не добавляют в Git. Проверьте [`tools/verify/android_release_signing/verify-android-release-signing.ps1`](../../tools/verify/android_release_signing/verify-android-release-signing.ps1) и [mobile contract](../../contracts/mobile-client-contract.md). Native HTTP должен соблюдать secure-cookie, CSRF и Origin проверки сервера; административная роль не открывает чужие DM.

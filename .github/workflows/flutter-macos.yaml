@@ -26,7 +26,7 @@ jobs:
         working-directory: clients/flutter
         run: flutter pub get --enforce-lockfile
       - name: Test macOS release packaging
-        run: bash scripts/macos_release/package.test.sh
+        run: bash tools/build/macos/package.test.sh
       - name: Run Flutter tests
         working-directory: clients/flutter
         run: flutter test
@@ -42,7 +42,7 @@ jobs:
           set -euo pipefail
           version="$(sed -E -n 's/^version: *([0-9][0-9.]*)\+[0-9][0-9]*$/\1/p' clients/flutter/pubspec.yaml)"
           test -n "$version"
-          bash scripts/macos_release/package.sh \
+          bash tools/build/macos/package.sh \
             clients/flutter/build/macos/Build/Products/Release/BOOHTACORD.app \
             "macos-v$version" \
             "$RUNNER_TEMP/boohtacord-macos-artifacts"

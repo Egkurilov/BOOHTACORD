@@ -82,8 +82,8 @@ npm test
 npm run build
 Pop-Location
 
-& .\scripts\verify-contracts.ps1
-& .\scripts\verify-spec-traceability.ps1
+& .\tools\verify\contracts\verify-contracts.ps1
+& .\tools\verify\spec_traceability\verify-spec-traceability.ps1
 docker compose --env-file .env.example -f compose.yaml config --quiet
 ```
 

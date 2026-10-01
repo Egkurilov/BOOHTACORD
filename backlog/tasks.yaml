@@ -12,7 +12,7 @@ tasks:
     title: Specification packet and traceability
     requirements: [REQ-PRODUCT-01, REQ-ISOLATION-01, REQ-STACK-01, REQ-ARCH-01, REQ-QUALITY-02]
     depends_on: []
-    evidence: [scripts/verify-spec-traceability.ps1, scripts/verify-contracts.ps1]
+    evidence: [tools/verify/spec_traceability/verify-spec-traceability.ps1, tools/verify/contracts/verify-contracts.ps1]
   - id: T-002
     title: Architecture, data model and ADR boundaries
     requirements: [REQ-ARCH-01, REQ-SECURITY-01]

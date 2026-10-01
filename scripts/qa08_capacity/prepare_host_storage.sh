@@ -1,5 +1,3 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-bash scripts/configure-deploy-ssh.sh
-bash scripts/qa08_capacity/inspect_docker_storage.sh
+exec bash "$(dirname "${BASH_SOURCE[0]}")/../../tools/ops/docker_storage/prepare_host_storage.sh" "$@"

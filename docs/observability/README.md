@@ -87,6 +87,6 @@ repairing a previously cached 404 response, clear the browser cache once.
 `docker compose -f /opt/boohtacord-observability/compose.yaml ps` shows the
 three infrastructure services. On the server, Tempo `/ready` listens on
 `127.0.0.1:3200` and Prometheus `/-/ready` on `127.0.0.1:9091`. The synthetic
-OTLP smoke tool is `scripts/observability/smoke_otlp.py`; it requires an
+OTLP smoke tool is `tools/qa/otlp_smoke/smoke_otlp.py`; it requires an
 authorized HTTP Basic password file and emits metadata only. See the evidence
 record for the last verified results and outstanding production checks.

@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure pinned read-only SSH transport
         shell: bash
-        run: bash scripts/configure-deploy-ssh.sh
+        run: bash tools/release/ssh/configure-deploy-ssh.sh
       - name: Measure exact volume and running API without mutation
         shell: bash
         run: |
@@ -30,4 +30,4 @@ jobs:
           [[ "$git_sha" =~ ^[0-9a-f]{40}$ ]]
           remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
           ssh_options=(-i ~/.ssh/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
-          ssh "${ssh_options[@]}" "$remote" bash -s -- "$git_sha" < scripts/audit-attachment-volume.sh
+          ssh "${ssh_options[@]}" "$remote" bash -s -- "$git_sha" < tools/ops/attachment_audit/audit-attachment-volume.sh

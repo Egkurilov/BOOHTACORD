@@ -29,7 +29,7 @@ def deploy(directory, manifest):
     environment = {**os.environ, "VOICE_PLATFORM_DIR": str(directory)}
     for service, component in manifest["components"].items():
         environment[service.upper() + "_IMAGE"] = f"voice-platform-{service}@{component['index_digest']}"
-    subprocess.run(["bash", str(directory / "scripts/deploy-images.sh")], env=environment, check=True)
+    subprocess.run(["bash", str(directory / "tools/release/rollout/deploy-images.sh")], env=environment, check=True)
 
 
 def verify_running(directory, manifest):
