@@ -744,4 +744,4 @@ TalkBack announcement and parity with web's assertive urgency remain unproven.
 The GitVerse Windows CI run 1690633 passed tests, analysis and Release build on a
 commit containing this change.
 
-The current-source Pixel 7 app-only test is recorded in [QA-191](../evidence/flutter/qa191-pixel7-app-only-screen-preview-2026-10-01-001.json): the Calculator participant thumbnail updated, but the large own-screen viewer stayed black after returning to BOOHTACORD. Root cause and paired receiver behavior remain open.
+The current-source Pixel 7 app-only test is recorded in [QA-191](../evidence/flutter/qa191-pixel7-app-only-screen-preview-2026-10-01-001.json): the participant card displayed a Calculator thumbnail, but its freshness was not verified; the large own-screen viewer stayed black after returning to BOOHTACORD. Root cause and paired receiver behavior remain open.
