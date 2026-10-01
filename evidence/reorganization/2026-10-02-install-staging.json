@@ -1,0 +1,37 @@
+{
+  "id": "reorganization-install-staging-2026-10-02",
+  "kind": "integration-verification",
+  "status": "PASS",
+  "source_revision": "800d3408918467e655fc7c4acf6fb594cb8aa480",
+  "environment": "Dedicated Docker-in-Docker container on Hetzner, no host Docker socket or external published ports",
+  "legacy_source_revision": "c2df662f610f0dfbae7b28c7ca3e43347942563b",
+  "measurements": {
+    "install_seconds": 26.609,
+    "disk_free_before_bytes": 43943653376,
+    "minimum_observed_disk_free_bytes": 43735007232,
+    "disk_free_after_bytes": 43739947008,
+    "disk_samples_at_200ms": 133
+  },
+  "checks": {
+    "signed_bundle_import_and_guarded_rollout": "PASS",
+    "api_health_after_rollout": "PASS",
+    "maintenance_admission_enable_disable": "PASS",
+    "exact_running_image_digests": "PASS",
+    "network_ids_preserved": "PASS",
+    "volume_creation_times_and_mountpoints_preserved": "PASS",
+    "build_and_developer_commands_prohibited_by_test_wrappers": "PASS",
+    "wrong_transport_checksum_rejected_by_installer": "PASS",
+    "tampered_signature_rejected_by_installer": "PASS",
+    "negative_installs_left_running_containers_unchanged": "PASS",
+    "migration_prefix_disk_reserve_running_digest_function_negatives": "PASS"
+  },
+  "prerequisites": [
+    "Fresh attachment volume ownership required UID 65532; owner applied this in the staging container",
+    "Alpine staging needed GNU coreutils for the existing df guard; installed before the installation measurement"
+  ],
+  "limitations": [
+    "Ephemeral staging signing key; production trust provisioning remains open",
+    "Disk figures sample the shared host filesystem, so other host activity can affect them",
+    "Rollback and the final reorganized Compose runtime require subsequent staging verification"
+  ]
+}
