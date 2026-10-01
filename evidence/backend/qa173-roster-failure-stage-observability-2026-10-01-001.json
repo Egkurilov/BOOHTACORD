@@ -1,0 +1,16 @@
+{
+  "id": "QA-173",
+  "kind": "voice-roster-failure-stage-observability",
+  "status": "PASS",
+  "observed_at": "2026-10-01",
+  "environment": "Local Go test environment",
+  "checks": [
+    "Test-first regression initially failed because the roster failure-stage metric API did not exist.",
+    "Roster service now records one of three fixed failure stages: initial visible-channel lookup, LiveKit presence snapshot, or ACL/lease recheck.",
+    "Prometheus metric label values are allowlisted; unexpected stage strings collapse to unknown.",
+    "Metrics tests verify that error details and account/channel/lease identity values are not recorded.",
+    "go test ./... passed across backend packages.",
+    "go vet ./... passed."
+  ],
+  "limits": "This adds diagnostic capability but does not identify the cause of the previously observed production roster outage until deployed and observed during a failure. No production deployment, account-level live roster, device, or ADB test was performed."
+}

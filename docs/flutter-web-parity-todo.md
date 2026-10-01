@@ -294,6 +294,14 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-18](../evidence/flutter/qa18-prejoin-voice-roster-2026-09-27-001.json),
   [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json),
   [QA-136](../evidence/flutter/qa136-untrusted-commit-review-and-regression-2026-09-30-001.json).
+- [x] Добавить безопасные server-side метрики стадии сбоя roster snapshot:
+  `visibility_initial`, `presence_snapshot`, `visibility_recheck`; неизвестные
+  labels сворачиваются в `unknown`, текст ошибки и IDs не попадают в labels.
+  Полный Go suite и `go vet ./...` прошли —
+  [QA-173](../evidence/backend/qa173-roster-failure-stage-observability-2026-10-01-001.json).
+  Для подтверждения первопричины наблюдавшегося production сбоя требуется
+  deployment с этой метрикой и новый отказ; ACL/privacy/live roster acceptance
+  остаются открытыми.
 - [x] Не терять roster invalidation, приходящий во время загрузки исходного SSE
   snapshot: подписываться до ACL-проверенного чтения и затем сразу перечитывать
   roster по накопленному событию. Новый тест сначала воспроизводит timeout на

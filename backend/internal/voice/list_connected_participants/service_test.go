@@ -10,15 +10,20 @@ import (
 )
 
 type snapshotObserver struct {
-	calls  int
-	rooms  int
-	failed bool
+	calls    int
+	rooms    int
+	failed   bool
+	failures []string
 }
 
 func (observer *snapshotObserver) ObserveVoiceRosterSnapshot(_ time.Duration, rooms int, failed bool) {
 	observer.calls++
 	observer.rooms = rooms
 	observer.failed = failed
+}
+
+func (observer *snapshotObserver) ObserveVoiceRosterFailure(stage string) {
+	observer.failures = append(observer.failures, stage)
 }
 
 const (
@@ -29,10 +34,11 @@ const (
 )
 
 type repositoryStub struct {
-	channels []Channel
-	second   []Channel
-	err      error
-	calls    int
+	channels  []Channel
+	second    []Channel
+	err       error
+	secondErr error
+	calls     int
 }
 
 func (stub *repositoryStub) ListVisible(_ context.Context, actor string) ([]Channel, error) {
@@ -40,8 +46,11 @@ func (stub *repositoryStub) ListVisible(_ context.Context, actor string) ([]Chan
 		panic("wrong actor")
 	}
 	stub.calls++
+	if stub.calls > 1 && stub.secondErr != nil {
+		return nil, stub.secondErr
+	}
 	if stub.calls > 1 && stub.second != nil {
-		return stub.second, stub.err
+		return stub.second, nil
 	}
 	return stub.channels, stub.err
 }
@@ -119,5 +128,43 @@ func TestListReportsSnapshotLoadWithoutActorOrRoomIDs(t *testing.T) {
 	}
 	if observer.calls != 1 || observer.rooms != 2 || observer.failed {
 		t.Fatalf("observer = %+v", observer)
+	}
+}
+
+func TestListReportsOnlyBoundedRosterFailureStages(t *testing.T) {
+	secondRoom := "66666666-6666-4666-8666-666666666666"
+	tests := []struct {
+		name       string
+		repository *repositoryStub
+		presence   *presenceStub
+		want       string
+	}{
+		{
+			name:       "initial visibility query",
+			repository: &repositoryStub{err: errors.New("sensitive database detail")},
+			presence:   &presenceStub{},
+			want:       "visibility_initial",
+		},
+		{
+			name:       "LiveKit snapshot",
+			repository: &repositoryStub{channels: []Channel{{ID: channelID}, {ID: secondRoom}}},
+			presence:   &presenceStub{err: snapshotlivekitpresence.ErrUnavailable},
+			want:       "presence_snapshot",
+		},
+		{
+			name:       "ACL recheck",
+			repository: &repositoryStub{channels: []Channel{{ID: channelID}, {ID: secondRoom}}, secondErr: errors.New("sensitive database detail")},
+			presence:   &presenceStub{connected: map[string][]snapshotlivekitpresence.ConnectedLease{}},
+			want:       "visibility_recheck",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			observer := &snapshotObserver{}
+			_, _ = New(test.repository, test.presence, observer).List(context.Background(), actorID)
+			if len(observer.failures) != 1 || observer.failures[0] != test.want {
+				t.Fatalf("failure stages = %v, want [%s]", observer.failures, test.want)
+			}
+		})
 	}
 }

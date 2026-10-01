@@ -61,9 +61,37 @@ func TestRecorderPublishesRosterSnapshotRateAndLatencyWithoutIdentity(t *testing
 		`voice_platform_voice_roster_snapshot_seconds_count 1`,
 		`voice_platform_voice_roster_requested_rooms_count 1`,
 	} {
-		if !strings.Contains(metrics, want) { t.Fatalf("metrics lack %q", want) }
+		if !strings.Contains(metrics, want) {
+			t.Fatalf("metrics lack %q", want)
+		}
 	}
-	if strings.Contains(metrics, "voice:22222222") { t.Fatal("room ID leaked") }
+	if strings.Contains(metrics, "voice:22222222") {
+		t.Fatal("room ID leaked")
+	}
+}
+
+func TestRecorderPublishesRosterFailureStageWithoutErrorDetails(t *testing.T) {
+	recorder := New()
+	recorder.ObserveVoiceRosterFailure("presence_snapshot")
+	recorder.ObserveVoiceRosterFailure("visibility_initial")
+	recorder.ObserveVoiceRosterFailure("untrusted error text")
+	scrape := httptest.NewRecorder()
+	recorder.Handler().ServeHTTP(scrape, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	metrics := scrape.Body.String()
+	for _, want := range []string{
+		`voice_platform_voice_roster_failures_total{stage="presence_snapshot"} 1`,
+		`voice_platform_voice_roster_failures_total{stage="visibility_initial"} 1`,
+		`voice_platform_voice_roster_failures_total{stage="unknown"} 1`,
+	} {
+		if !strings.Contains(metrics, want) {
+			t.Fatalf("metrics lack %q: %q", want, metrics)
+		}
+	}
+	for _, forbidden := range []string{"sensitive database detail", "account_id", "channel_id", "lease_id"} {
+		if strings.Contains(metrics, forbidden) {
+			t.Fatalf("metrics contain error detail or identity field %q", forbidden)
+		}
+	}
 }
 
 func TestRecorderPublishesRealtimeConnectionMetrics(t *testing.T) {

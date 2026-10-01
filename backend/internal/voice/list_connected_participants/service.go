@@ -39,6 +39,7 @@ type Presence interface {
 }
 type SnapshotObserver interface {
 	ObserveVoiceRosterSnapshot(time.Duration, int, bool)
+	ObserveVoiceRosterFailure(string)
 }
 type Service struct {
 	repository Repository
@@ -57,6 +58,7 @@ func New(repository Repository, presence Presence, observers ...SnapshotObserver
 func (service Service) List(ctx context.Context, actorID string) (Result, error) {
 	channels, err := service.repository.ListVisible(ctx, actorID)
 	if err != nil {
+		service.observeFailure("visibility_initial")
 		return Result{}, fmt.Errorf("list visible voice channels: %w", err)
 	}
 	result := Result{Channels: make([]ChannelRoster, 0, len(channels))}
@@ -70,11 +72,13 @@ func (service Service) List(ctx context.Context, actorID string) (Result, error)
 		service.observer.ObserveVoiceRosterSnapshot(time.Since(started), len(ids), err != nil)
 	}
 	if err != nil {
+		service.observeFailure("presence_snapshot")
 		return Result{}, fmt.Errorf("%w: %v", ErrPresenceUnavailable, err)
 	}
 	// A lease or account may be revoked while the private SFU snapshot is read.
 	channels, err = service.repository.ListVisible(ctx, actorID)
 	if err != nil {
+		service.observeFailure("visibility_recheck")
 		return Result{}, fmt.Errorf("recheck visible voice channels: %w", err)
 	}
 	for _, channel := range channels {
@@ -98,4 +102,10 @@ func (service Service) List(ctx context.Context, actorID string) (Result, error)
 		result.Channels = append(result.Channels, current)
 	}
 	return result, nil
+}
+
+func (service Service) observeFailure(stage string) {
+	if service.observer != nil {
+		service.observer.ObserveVoiceRosterFailure(stage)
+	}
 }
