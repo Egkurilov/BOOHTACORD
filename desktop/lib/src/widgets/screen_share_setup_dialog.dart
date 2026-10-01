@@ -250,7 +250,7 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
                       child: Column(
                         children: [
                           SizedBox(height: compact ? 12 : 20),
-                          _buildMobileCaptureNotice(),
+                          if (!widget.updating) _buildMobileCaptureNotice(),
                           SizedBox(height: compact ? 8 : 20),
                           _buildQualityPicker(),
                         ],
