@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import 'guild_presence_state.dart';
+import 'features/audio/devices/controller.dart';
 import 'models.dart';
 import 'services/api_client.dart';
 import 'services/composer_draft_memory.dart';
@@ -98,66 +99,24 @@ class AppState extends ChangeNotifier {
     Future<List<MediaDevice>> Function()? audioDeviceLoader,
     Stream<List<MediaDevice>>? audioDeviceChanges,
     NativeNotificationService? nativeNotifications,
-  }) : _audioDeviceLoader = audioDeviceLoader ?? _enumerateAudioDevices,
-       // Public constructor parameter, private stored stream.
-       // ignore: prefer_initializing_formals
-       _audioDeviceChanges = audioDeviceChanges,
-       _nativeNotifications =
+  }) : _nativeNotifications =
            nativeNotifications ?? NativeNotificationService() {
+    _audioDevices = AudioDeviceController(
+      readRoom: () => _room,
+      loader: audioDeviceLoader,
+      changes: audioDeviceChanges,
+    )..addListener(notifyListeners);
     api.onUnauthorized = _handleUnauthorized;
   }
 
   final Duration voiceRosterRetryDelay;
   final Duration voiceRosterStaleTimeout;
 
-  static Future<List<MediaDevice>> _enumerateAudioDevices() async {
-    final devices = await Hardware.instance.enumerateDevices();
-    final additional = await AndroidAudioDevices.enumerateAdditionalDevices();
-    return _mergeAudioDeviceLists(devices, additional);
-  }
-
-  static List<MediaDevice> _mergeAudioDeviceLists(
-    List<MediaDevice> devices,
-    List<MediaDevice> additional,
-  ) {
-    final knownIds = devices
-        .map((device) => '${device.kind}:${device.deviceId}')
-        .toSet();
-    final allDevices = [
-      ...devices,
-      ...additional.where(
-        (device) => !knownIds.contains('${device.kind}:${device.deviceId}'),
-      ),
-    ];
-    if (AndroidAudioDevices.isAndroid &&
-        !allDevices.any((device) => device.kind == 'audiooutput')) {
-      // Android may expose its active system output only through the
-      // communication route, while the plugin's enumeration is empty (for
-      // example before API 31). Keep the OS default usable and truthfully
-      // selectable instead of claiming that no speaker exists.
-      allDevices.add(
-        const MediaDevice(
-          'default',
-          'Системный динамик',
-          'audiooutput',
-          'android:default',
-        ),
-      );
-    }
-    return allDevices;
-  }
-
   final ApiClient api;
+  late final AudioDeviceController _audioDevices;
   @visibleForTesting
   final Duration startupSessionTimeout;
-  final Future<List<MediaDevice>> Function() _audioDeviceLoader;
-  final Stream<List<MediaDevice>>? _audioDeviceChanges;
   final NativeNotificationService _nativeNotifications;
-  StreamSubscription<List<MediaDevice>>? _audioDeviceSubscription;
-  int _audioDeviceRevision = 0;
-  bool _audioDeviceRefreshQueued = false;
-  bool _isDisposed = false;
-  bool _audioDeviceRefreshAfterCaptureRequested = false;
   final Uuid _uuid = const Uuid();
   AppPhase phase = AppPhase.loading;
   SessionUser? user;
@@ -227,16 +186,34 @@ class AppState extends ChangeNotifier {
           defaultTargetPlatform == TargetPlatform.iOS
       ? ScreenShareQuality.balanced
       : ScreenShareQuality.desktopDefault;
-  List<MediaDevice> audioInputDevices = const [];
-  List<MediaDevice> audioOutputDevices = const [];
-  String? selectedAudioInputId;
-  String? selectedAudioOutputId;
-  AudioProcessingPreferences audioProcessing =
-      const AudioProcessingPreferences();
-  bool audioDevicesLoading = false;
-  bool audioDeviceScanFailed = false;
-  String? audioSettingsError;
-  String? audioDeviceWarning;
+  List<MediaDevice> get audioInputDevices => _audioDevices.audioInputDevices;
+  set audioInputDevices(List<MediaDevice> value) =>
+      _audioDevices.audioInputDevices = value;
+  List<MediaDevice> get audioOutputDevices => _audioDevices.audioOutputDevices;
+  set audioOutputDevices(List<MediaDevice> value) =>
+      _audioDevices.audioOutputDevices = value;
+  String? get selectedAudioInputId => _audioDevices.selectedAudioInputId;
+  set selectedAudioInputId(String? value) =>
+      _audioDevices.selectedAudioInputId = value;
+  String? get selectedAudioOutputId => _audioDevices.selectedAudioOutputId;
+  set selectedAudioOutputId(String? value) =>
+      _audioDevices.selectedAudioOutputId = value;
+  AudioProcessingPreferences get audioProcessing =>
+      _audioDevices.audioProcessing;
+  set audioProcessing(AudioProcessingPreferences value) =>
+      _audioDevices.audioProcessing = value;
+  bool get audioDevicesLoading => _audioDevices.audioDevicesLoading;
+  set audioDevicesLoading(bool value) =>
+      _audioDevices.audioDevicesLoading = value;
+  bool get audioDeviceScanFailed => _audioDevices.audioDeviceScanFailed;
+  set audioDeviceScanFailed(bool value) =>
+      _audioDevices.audioDeviceScanFailed = value;
+  String? get audioSettingsError => _audioDevices.audioSettingsError;
+  set audioSettingsError(String? value) =>
+      _audioDevices.audioSettingsError = value;
+  String? get audioDeviceWarning => _audioDevices.audioDeviceWarning;
+  set audioDeviceWarning(String? value) =>
+      _audioDevices.audioDeviceWarning = value;
   AudioActivationMode audioActivationMode = AudioActivationMode.vad;
   int? pushToTalkKeyId;
   String? pushToTalkKeyLabel;
@@ -249,7 +226,9 @@ class AppState extends ChangeNotifier {
   EventsListener<RoomEvent>? _voiceEvents;
   VoiceVolumePreferences? _voiceVolumePreferences;
   final Set<String> _mutedScreenShareAudioIdentities = <String>{};
-  AudioPreferences? _audioPreferences;
+  AudioPreferences? get _audioPreferences => _audioDevices.preferences;
+  set _audioPreferences(AudioPreferences? value) =>
+      _audioDevices.preferences = value;
   String? _leaseId;
   bool _listenerOnly = false;
   bool _voiceAdmissionPending = false;
@@ -859,26 +838,13 @@ class AppState extends ChangeNotifier {
     workspacePanel = workspacePanel == panel ? WorkspacePanel.none : panel;
     error = null;
     if (workspacePanel == WorkspacePanel.audio) {
-      _audioDeviceSubscription ??=
-          (_audioDeviceChanges ?? Hardware.instance.onDeviceChange.stream)
-              .listen((devices) {
-                final revision = ++_audioDeviceRevision;
-                audioDeviceScanFailed = false;
-                _applyAudioDevices(devices);
-                notifyListeners();
-                unawaited(_applyAndroidAudioDeviceAdditions(devices, revision));
-              });
+      _audioDevices.watch();
       unawaited(refreshAudioDevices());
     }
     notifyListeners();
   }
 
-  AudioCaptureOptions get _audioCaptureOptions => AudioCaptureOptions(
-    deviceId: selectedAudioInputId,
-    autoGainControl: audioProcessing.autoGainControl,
-    echoCancellation: audioProcessing.echoCancellation,
-    noiseSuppression: audioProcessing.noiseSuppression,
-  );
+  AudioCaptureOptions get _audioCaptureOptions => _audioDevices.captureOptions;
 
   Future<void> _loadAudioPreferences(String accountId) async {
     final preferences = await AudioPreferences.open(accountId);
@@ -902,183 +868,19 @@ class AppState extends ChangeNotifier {
         : null;
   }
 
-  Future<void> refreshAudioDevices() async {
-    if (audioDevicesLoading) {
-      _audioDeviceRefreshQueued = true;
-      return;
-    }
-    final revision = _audioDeviceRevision;
-    audioDevicesLoading = true;
-    audioDeviceScanFailed = false;
-    audioSettingsError = null;
-    notifyListeners();
-    try {
-      final devices = await _audioDeviceLoader();
-      if (revision == _audioDeviceRevision) {
-        audioDeviceScanFailed = false;
-        _applyAudioDevices(devices);
-      }
-    } catch (cause) {
-      if (revision == _audioDeviceRevision) {
-        audioDeviceScanFailed = true;
-        audioSettingsError =
-            'Не удалось получить список аудиоустройств: ${cause.runtimeType}.';
-      }
-    } finally {
-      audioDevicesLoading = false;
-      notifyListeners();
-      if (_audioDeviceRefreshQueued) {
-        _audioDeviceRefreshQueued = false;
-        unawaited(refreshAudioDevices());
-      }
-    }
-  }
+  Future<void> refreshAudioDevices() => _audioDevices.refreshAudioDevices();
 
-  Future<void> _applyAndroidAudioDeviceAdditions(
-    List<MediaDevice> baseDevices,
-    int revision,
-  ) async {
-    if (!AndroidAudioDevices.isAndroid) return;
-    final additional = await AndroidAudioDevices.enumerateAdditionalDevices();
-    if (_isDisposed || revision != _audioDeviceRevision) return;
-    _applyAudioDevices(_mergeAudioDeviceLists(baseDevices, additional));
-    notifyListeners();
-  }
+  void _refreshAudioDevicesAfterMicrophoneCapture() =>
+      _audioDevices.refreshAfterMicrophoneCapture();
 
-  void _refreshAudioDevicesAfterMicrophoneCapture() {
-    if (_audioDeviceRefreshAfterCaptureRequested) return;
-    _audioDeviceRefreshAfterCaptureRequested = true;
-    unawaited(refreshAudioDevices());
-  }
+  Future<void> selectAudioInput(String deviceId) =>
+      _audioDevices.selectAudioInput(deviceId);
 
-  void _applyAudioDevices(List<MediaDevice> devices) {
-    audioInputDevices = devices
-        .where((device) => device.kind == 'audioinput')
-        .toList(growable: false);
-    audioOutputDevices = devices
-        .where((device) => device.kind == 'audiooutput')
-        .toList(growable: false);
-    if (audioInputDevices.isNotEmpty &&
-        selectedAudioInputId != null &&
-        !audioInputDevices.any(
-          (device) => device.deviceId == selectedAudioInputId,
-        )) {
-      if (selectedAudioInputId != 'default') {
-        audioDeviceWarning = 'Выбранный микрофон отключён. Выберите доступное устройство и проверьте звук.';
-      }
-      selectedAudioInputId = audioInputDevices.first.deviceId;
-    }
-    if (audioOutputDevices.isNotEmpty &&
-        selectedAudioOutputId != null &&
-        !audioOutputDevices.any(
-          (device) => device.deviceId == selectedAudioOutputId,
-        )) {
-      if (selectedAudioOutputId != 'default') {
-        audioDeviceWarning = 'Выбранный динамик отключён. Выберите доступное устройство и проверьте звук.';
-      }
-      selectedAudioOutputId = audioOutputDevices.first.deviceId;
-    }
-  }
+  Future<void> selectAudioOutput(String deviceId) =>
+      _audioDevices.selectAudioOutput(deviceId);
 
-  Future<void> selectAudioInput(String deviceId) async {
-    final device = audioInputDevices
-        .where(
-          (candidate) =>
-              candidate.deviceId == deviceId ||
-              (deviceId.isEmpty && candidate.deviceId == 'default'),
-        )
-        .firstOrNull;
-    if (device == null) return;
-    final previous = selectedAudioInputId;
-    audioDeviceWarning = null;
-    try {
-      final track = _room?.localParticipant
-          ?.getTrackPublicationBySource(TrackSource.microphone)
-          ?.track;
-      if (track is LocalAudioTrack) {
-        await track.setDeviceId(deviceId);
-      } else if (_room != null) {
-        await _room!.setAudioInputDevice(device);
-      } else {
-        await Hardware.instance.selectAudioInput(device);
-      }
-      selectedAudioInputId = device.deviceId;
-      await _audioPreferences?.setInputDevice(device.deviceId);
-      audioSettingsError = null;
-    } catch (cause) {
-      selectedAudioInputId = previous;
-      audioSettingsError =
-          'Не удалось переключить микрофон: ${cause.runtimeType}.';
-    }
-    notifyListeners();
-  }
-
-  Future<void> selectAudioOutput(String deviceId) async {
-    final device = audioOutputDevices
-        .where(
-          (candidate) =>
-              candidate.deviceId == deviceId ||
-              (deviceId.isEmpty && candidate.deviceId == 'default'),
-        )
-        .firstOrNull;
-    if (device == null) return;
-    final previous = selectedAudioOutputId;
-    audioDeviceWarning = null;
-    try {
-      if (AndroidAudioDevices.isNativeOutputRoute(device.deviceId)) {
-        if (_room != null &&
-            !await AndroidAudioDevices.selectNativeOutput(device.deviceId)) {
-          throw StateError('Android не смог переключить аудиовыход.');
-        }
-      } else if (AndroidAudioDevices.isAndroid &&
-          device.deviceId == 'default') {
-        await AndroidAudioDevices.clearNativeOutput();
-      } else if (_room != null) {
-        await AndroidAudioDevices.clearNativeOutput();
-        await _room!.setAudioOutputDevice(device);
-      } else {
-        await AndroidAudioDevices.clearNativeOutput();
-        await Hardware.instance.selectAudioOutput(device);
-      }
-      selectedAudioOutputId = device.deviceId;
-      await _audioPreferences?.setOutputDevice(device.deviceId);
-      audioSettingsError = null;
-    } catch (cause) {
-      selectedAudioOutputId = previous;
-      audioSettingsError =
-          'Не удалось переключить динамик: ${cause.runtimeType}.';
-    }
-    notifyListeners();
-  }
-
-  Future<void> setAudioProcessing(AudioProcessingPreferences next) async {
-    final previous = audioProcessing;
-    audioProcessing = next;
-    audioSettingsError = null;
-    try {
-      final track = _room?.localParticipant
-          ?.getTrackPublicationBySource(TrackSource.microphone)
-          ?.track;
-      if (track is LocalAudioTrack) {
-        // ignore: experimental_member_use
-        await track.setAudioProcessingOptions(
-          // ignore: experimental_member_use
-          AudioProcessingOptions(
-            autoGainControl: next.autoGainControl,
-            echoCancellation: next.echoCancellation,
-            noiseSuppression: next.noiseSuppression,
-            highPassFilter: false,
-          ),
-        );
-      }
-      await _audioPreferences?.setProcessing(next);
-    } catch (cause) {
-      audioProcessing = previous;
-      audioSettingsError =
-          'Не удалось применить обработку микрофона: ${cause.runtimeType}.';
-    }
-    notifyListeners();
-  }
+  Future<void> setAudioProcessing(AudioProcessingPreferences next) =>
+      _audioDevices.setAudioProcessing(next);
 
   Future<void> setPushToTalkKey(int? keyId, String? label) async {
     final previousId = pushToTalkKeyId;
@@ -2273,7 +2075,6 @@ class AppState extends ChangeNotifier {
 
   @override
   void dispose() {
-    _isDisposed = true;
     _closeScreenPreviewSubscriptions();
     _realtimeRetry?.cancel();
     _maintenanceTimer?.cancel();
@@ -2281,7 +2082,7 @@ class AppState extends ChangeNotifier {
     _voiceStreamNoticeTimer?.cancel();
     _stopVoiceConnectionStatsPolling();
     _stopScreenShareMetrics();
-    unawaited(_audioDeviceSubscription?.cancel());
+    _audioDevices.dispose();
     api.onUnauthorized = null;
     unawaited(_realtimeSubscription?.cancel());
     unawaited(_realtimeSocket?.close());
