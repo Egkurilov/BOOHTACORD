@@ -7,7 +7,7 @@ import (
 )
 
 func TestCaddySignalRouteUsesAdmissionGuard(t *testing.T) {
-	configuration, err := os.ReadFile("../../../../docker/Caddyfile")
+	configuration, err := os.ReadFile("../../../../deploy/caddy/Caddyfile")
 	if err != nil {
 		t.Fatalf("read Caddyfile: %v", err)
 	}
