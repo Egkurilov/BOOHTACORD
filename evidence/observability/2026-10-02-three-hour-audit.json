@@ -40,12 +40,12 @@
   "validation": [
     "10 Python dashboard contract tests PASS",
     "Grafana Explore accepted the equivalent 3h histogram_quantile rate query and returned 18 finite HTTP routes after excluding WebSocket and NaN",
-    "Production Runtime dashboard import confirmed: 3309 interval requests and 0% 5xx in the fixed window",
+    "Production Runtime dashboard import confirmed after final revision: 3309 interval requests, 0% 5xx, and no WebSocket route in p95 in the fixed window",
     "git diff --check PASS"
   ],
   "limitations": [
     "Full per-trace enumeration was not possible through the available Grafana UI. Tempo and Prometheus private APIs were not reachable from this workstation and SSH authentication to the monitoring host failed.",
-    "Full per-trace enumeration and client transport root cause remain unverified.",
+    "Client transport root cause remains unverified without safe error-class attributes or device-side network evidence.",
     "Client errors lack enough safe error classification attributes to distinguish timeout, cancellation, DNS and transport failure.",
     "No private account, session, trace, token or media identifiers are stored in this record."
   ]
