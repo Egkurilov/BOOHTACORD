@@ -1,0 +1,34 @@
+{
+  "id": "reorganization-compose-staging-2026-10-02",
+  "kind": "integration-verification",
+  "status": "PASS",
+  "source_revision": "ee77e185c4a101fb78fdba44c1e70be30550f40e",
+  "baseline_revision": "66c2129d1c89b07605b4d185a66a5137173c6909",
+  "checks": {
+    "normalized_compose_diff": "Only build removal and declared configuration paths changed",
+    "local_and_linux_contracts": "PASS",
+    "python_tests": 49,
+    "go_tests": 818,
+    "go_skipped": 0,
+    "web_tests": 721,
+    "operator_binaries": 9,
+    "built_image_smoke": "PASS",
+    "signed_install": "PASS",
+    "four_volumes_and_three_networks_unchanged": true,
+    "production_bundle_has_no_root_compose_or_developer_overlay": true
+  },
+  "measurements": {
+    "installation_seconds": 27.072,
+    "bundle_bytes": 58580686,
+    "free_bytes_before": 42786852864,
+    "free_bytes_minimum": 42712555520,
+    "free_bytes_after": 42723758080,
+    "samples": 134
+  },
+  "environment": "boohtacord-reorg-install-stage on Hetzner; isolated Docker daemon with no host socket or external published ports",
+  "limitations": [
+    "Production remains unchanged",
+    "Staging signer is not production trust",
+    "No physical authenticated media acceptance was performed"
+  ]
+}
