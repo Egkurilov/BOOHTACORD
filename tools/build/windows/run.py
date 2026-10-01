@@ -16,7 +16,7 @@ def main():
     release = flutter / 'build/windows/x64/runner/Release'
     for required in ('boohtacord_desktop.exe', 'flutter_windows.dll', 'libwebrtc.dll', 'data/flutter_assets'):
         if not (release / required).exists(): raise RuntimeError('Incomplete Windows release: ' + required)
-    signing = json.loads(output('powershell', '-NoProfile', '-File', str(ROOT / 'tools/build/windows/signature.ps1'),
+    signing = json.loads(output('pwsh', '-NoProfile', '-File', str(ROOT / 'tools/build/windows/signature.ps1'),
                                 '-Path', str(release / 'boohtacord_desktop.exe')))
     write(release, 'windows', ['x64'], 'boohtacord_desktop', signing)
     print('Retained Windows artifact, checksums and measured signing metadata: ' + str(release))
