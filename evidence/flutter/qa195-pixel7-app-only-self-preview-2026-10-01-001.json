@@ -4,7 +4,7 @@
   "status": "FAIL_LOCAL_VIEWER_BLACK_WITH_CALCULATOR_THUMBNAIL",
   "executed_at": "2026-10-01",
   "source_revision": "9b7ce74d022d193ed32fe9f86596b311f94e46c3",
-  "summary": "A current-source signed release APK updated in place on Pixel 7. App-only capture of Calculator again showed a fresh-looking Calculator thumbnail in the participant card while the large local self-preview remained black. The defect reproduces on versionCode 2025; remote playback was not tested.",
+  "summary": "A current-source signed release APK updated in place on Pixel 7. App-only capture of Calculator again showed a fresh Calculator thumbnail in the participant card while the large local self-preview remained black. Source inspection confirms the thumbnail is obtained by captureFrame() from the same LocalVideoTrack using a temporary FrameCapturer sink; therefore at least one fresh frame reached a track sink, but renderer output and sustained flow remain unverified. The defect reproduces on versionCode 2025; remote playback was not tested.",
   "artifact": {
     "version_name": "1.0.18",
     "version_code": 2025,
@@ -25,7 +25,7 @@
       "device": "Google Pixel 7, SHARE_TEST, microphone muted, no remote receiver",
       "command": "Android screen-capture picker; adb exec-out screencap -p",
       "status": "FAIL_VIEWER_BLACK_THUMBNAIL_VISIBLE",
-      "observation": "Selected the Calculator task in Android's Show an app picker at the default 720p/15 FPS profile. After returning BOOHTACORD, the large local self-preview was fully black, while the participant card showed the Calculator keypad thumbnail. The system showed the active screen-share timer, and the room UI continued to report the microphone muted."
+      "observation": "Selected the Calculator task in Android's Show an app picker at the default 720p/15 FPS profile. After returning BOOHTACORD, the large local self-preview was fully black, while the participant card showed the Calculator keypad thumbnail. The screenshot was taken about 24 seconds after start. The system showed the active screen-share timer, and the room UI continued to report the microphone muted."
     },
     {
       "name": "Stop and cleanup",
@@ -37,8 +37,8 @@
   ],
   "limitations": [
     "The room had no paired remote receiver, so web/macOS playback and receiver frame delivery were not tested.",
-    "The source/capture thumbnail and VideoTrackRenderer frame callbacks were not instrumented; the thumbnail demonstrates app-task pixels were available to that UI path but does not prove ongoing published-track frames.",
+    "In this Flutter client, track.captureFrame() calls the Android captureFrame method, whose FrameCapturer temporarily attaches as a sink to the same VideoTrack. Because the local thumbnail map is in-memory only and the app process restarted for the APK update, the visible Calculator thumbnail indicates at least one fresh frame reached a track sink. This does not prove the VideoTrackRenderer sink received a frame, frames were continuously delivered, or the outgoing sender encoded them.",
     "This was a runtime reproduction only; no source fix was made and FE-59 remains open."
   ],
-  "remaining": "Instrument sender and local renderer frame flow, then repeat with a paired web/macOS receiver to isolate app-task capture, track publication, and Android rendering. Add a regression test and fix before closing T-030 preview acceptance."
+  "remaining": "Instrument whether the local VideoTrackRenderer receives/draws frames and inspect sender framesEncoded/framesSent; repeat with a paired web/macOS receiver to isolate renderer output from publication/receiver behavior. Add a regression test and fix before closing T-030 preview acceptance."
 }
