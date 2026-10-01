@@ -9,6 +9,7 @@ import { useAuthorDirectory } from '../identity/author_directory'
 import type { CurrentSession } from '../identity/current_session'
 import type { DirectMessageHistoryItem } from './direct_message_client'
 import { useDirectMessageStore } from './direct_message_store'
+import { navigateToReplyTarget } from '../conversation/reply_context_navigation'
 
 const props = defineProps<{ directMessageId: string; session: CurrentSession | null; otherParticipantId: string; otherParticipantDisplayName: string }>()
 const emit = defineEmits<{ reply: [message: DirectMessageHistoryItem]; retry: [message: DirectMessageHistoryItem]; replyContext: [messageId: string]; viewportChange: [] }>()
@@ -48,10 +49,7 @@ watch([() => store.historyLoaded, latestServerId], async ([loaded, newest], [was
 function onScroll(): void { if (isHistoryNearBottom(list.value)) jumpCount.value = 0; emit('viewportChange') }
 function jumpToLatest(): void { if (!list.value) return; list.value.scrollTop = list.value.scrollHeight; jumpCount.value = 0; emit('viewportChange') }
 function openReplyContext(messageId: string): void {
-  const target = [...(list.value?.querySelectorAll<HTMLElement>('[data-message-id]') ?? [])]
-    .find((item) => item.dataset.messageId === messageId)
-  if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); return }
-  emit('replyContext', messageId)
+  navigateToReplyTarget(list.value, messageId, () => emit('replyContext', messageId))
 }
 watch(() => store.messages, (messages) => {
   for (const message of messages) if (message.replyPreview) void authors.ensure(message.replyPreview.authorId)
