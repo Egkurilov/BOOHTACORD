@@ -29,8 +29,21 @@ class WorkspaceController extends ChangeNotifier {
   String? membersError;
   List<DirectConversation> directMessages = const [];
   List<DirectCandidate> directMessageCandidates = const [];
-  DirectConversation? selectedDirectMessage;
-  GuildChannel? selectedChannel;
+  int selectionRevision = 0;
+  DirectConversation? _selectedDirectMessage;
+  GuildChannel? _selectedChannel;
+  DirectConversation? get selectedDirectMessage => _selectedDirectMessage;
+  set selectedDirectMessage(DirectConversation? value) {
+    if (_selectedDirectMessage?.id != value?.id) selectionRevision++;
+    _selectedDirectMessage = value;
+  }
+
+  GuildChannel? get selectedChannel => _selectedChannel;
+  set selectedChannel(GuildChannel? value) {
+    if (_selectedChannel?.id != value?.id) selectionRevision++;
+    _selectedChannel = value;
+  }
+
   NavigationSection navigationSection = NavigationSection.channels;
   WorkspacePanel workspacePanel = WorkspacePanel.none;
   SearchMessage? searchContextMessage;

@@ -9,14 +9,13 @@ import 'package:flutter_background/flutter_background.dart';
 import 'package:livekit_client/livekit_client.dart'
     hide ChatMessage, voiceReconnectAttemptLimit;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
 
 import 'guild_presence_state.dart';
 import 'features/audio/devices/controller.dart';
 import 'features/session/lifecycle/controller.dart';
 import 'features/profile/state/controller.dart';
 import 'features/workspace/lifecycle/controller.dart';
-import 'models.dart';
+import 'features/conversation/lifecycle/controller.dart';
 import 'services/api_client.dart';
 import 'services/composer_draft_memory.dart';
 import 'services/audio_preferences.dart';
@@ -39,6 +38,7 @@ import 'telemetry/report_media/connection.dart';
 
 export 'features/session/lifecycle/types.dart';
 export 'features/workspace/lifecycle/types.dart';
+export 'features/conversation/lifecycle/types.dart';
 
 enum VoicePhase {
   idle,
@@ -53,10 +53,6 @@ enum VoicePhase {
 enum ScreenSharePhase { idle, starting, sharing, stopping, error }
 
 enum AudioActivationMode { vad, ptt }
-
-enum MessageEditStatus { saved, conflict, error, stale }
-
-typedef MessageEditOutcome = ({MessageEditStatus kind, String? message});
 
 String screenShareFailureDetail(Object cause) {
   if (cause is String && cause.trim().isNotEmpty) return cause.trim();
@@ -133,21 +129,21 @@ class AppState extends ChangeNotifier {
         },
         selectChannel: _loadChannelHistory,
         openDirect: _loadDirectHistory,
-        invalidateText: () {
-          _textHistoryLoadSequence++;
-          loadingMessages = false;
-        },
-        clearText: () {
-          messages = const [];
-          nextMessageCursor = null;
-          loadingMessages = false;
-        },
-        clearDirect: () {
-          directMessageHistory = const [];
-        },
+        invalidateText: () => _conversation.invalidateSelection(),
+        clearText: () => _conversation.clearText(),
+        clearDirect: () => _conversation.clearDirect(),
         error: (value) => error = value,
         message: _message,
       ),
+    )..addListener(notifyListeners);
+    _conversation = ConversationController(
+      api,
+      _session.scope,
+      _workspace,
+      readUser: () => user,
+      isReady: () => phase == AppPhase.ready,
+      reportError: (value) => error = value,
+      formatError: _message,
     )..addListener(notifyListeners);
     _profile = ProfileController(
       api,
@@ -172,10 +168,10 @@ class AppState extends ChangeNotifier {
   late final SessionController _session;
   late final ProfileController _profile;
   late final WorkspaceController _workspace;
+  late final ConversationController _conversation;
   @visibleForTesting
   final Duration startupSessionTimeout;
   final NativeNotificationService _nativeNotifications;
-  final Uuid _uuid = const Uuid();
   AppPhase get phase => _session.phase;
   set phase(AppPhase value) => _session.phase = value;
   SessionUser? get user => _session.user;
@@ -204,9 +200,17 @@ class AppState extends ChangeNotifier {
       _workspace.selectedDirectMessage;
   set selectedDirectMessage(DirectConversation? value) =>
       _workspace.selectedDirectMessage = value;
-  List<DirectChatMessage> directMessageHistory = const [];
-  String? nextDirectMessageCursor;
-  bool loadingOlderDirectMessages = false;
+  List<DirectChatMessage> get directMessageHistory =>
+      _conversation.directMessageHistory;
+  set directMessageHistory(List<DirectChatMessage> value) =>
+      _conversation.directMessageHistory = value;
+  String? get nextDirectMessageCursor => _conversation.nextDirectMessageCursor;
+  set nextDirectMessageCursor(String? value) =>
+      _conversation.nextDirectMessageCursor = value;
+  bool get loadingOlderDirectMessages =>
+      _conversation.loadingOlderDirectMessages;
+  set loadingOlderDirectMessages(bool value) =>
+      _conversation.loadingOlderDirectMessages = value;
   NavigationSection get navigationSection => _workspace.navigationSection;
   set navigationSection(NavigationSection value) =>
       _workspace.navigationSection = value;
@@ -235,14 +239,21 @@ class AppState extends ChangeNotifier {
   GuildChannel? get selectedChannel => _workspace.selectedChannel;
   set selectedChannel(GuildChannel? value) =>
       _workspace.selectedChannel = value;
-  List<ChatMessage> messages = const [];
-  String? nextMessageCursor;
-  bool loadingOlderMessages = false;
-  bool loadingMessages = false;
-  bool _textHistoryHasLoadedOlderPages = false;
-  int _textHistoryLoadSequence = 0;
-  bool sending = false;
-  bool loadingDirectMessages = false;
+  List<ChatMessage> get messages => _conversation.messages;
+  set messages(List<ChatMessage> value) => _conversation.messages = value;
+  String? get nextMessageCursor => _conversation.nextMessageCursor;
+  set nextMessageCursor(String? value) =>
+      _conversation.nextMessageCursor = value;
+  bool get loadingOlderMessages => _conversation.loadingOlderMessages;
+  set loadingOlderMessages(bool value) =>
+      _conversation.loadingOlderMessages = value;
+  bool get loadingMessages => _conversation.loadingMessages;
+  set loadingMessages(bool value) => _conversation.loadingMessages = value;
+  bool get sending => _conversation.sending;
+  set sending(bool value) => _conversation.sending = value;
+  bool get loadingDirectMessages => _conversation.loadingDirectMessages;
+  set loadingDirectMessages(bool value) =>
+      _conversation.loadingDirectMessages = value;
   bool realtimeConnected = false;
   bool maintenanceActive = false;
   bool get profileLoading => _profile.profileLoading;
@@ -363,14 +374,7 @@ class AppState extends ChangeNotifier {
   bool get _notificationAppIsForeground => _nativeNotifications.appIsForeground;
   int _realtimeAttempt = 0;
   final Set<String> _realtimeEventIds = <String>{};
-  final Map<String, String> _sendRetryIds = <String, String>{};
-  final Map<String, ChatMessage> _pendingTextSends = {};
-  final Map<String, DirectChatMessage> _pendingDirectSends = {};
-  String? _lastReadDirectMessageId;
   bool _checkingRealtimeSession = false;
-  final Map<String, DateTime> _lastReadTextAt = {};
-  final Map<String, DateTime> _pendingTextReadAt = {};
-  final Set<String> _pendingTextReads = {};
 
   String get serverUrl => api.baseUrl;
   Room? get room => _room;
@@ -467,8 +471,9 @@ class AppState extends ChangeNotifier {
   Future<void> _clearExpiredAccount() async {
     _profile.clear();
     _workspace.clear();
+    _conversation.clear();
     final ticket = _session.scope.capture();
-    _textHistoryLoadSequence++;
+    _conversation.textHistoryLoadSequence++;
     ComposerDraftMemory.clear();
     _stopVoiceRosterEvents();
     profile = null;
@@ -485,11 +490,11 @@ class AppState extends ChangeNotifier {
     nextDirectMessageCursor = null;
     selectedChannel = null;
     messages = const [];
-    _sendRetryIds.clear();
-    _pendingTextSends.clear();
-    _pendingDirectSends.clear();
+    _conversation.sendRetryIds.clear();
+    _conversation.pendingTextSends.clear();
+    _conversation.pendingDirectSends.clear();
     nextMessageCursor = null;
-    _textHistoryHasLoadedOlderPages = false;
+    _conversation.textHistoryHasLoadedOlderPages = false;
     workspacePanel = WorkspacePanel.none;
     navigationSection = NavigationSection.channels;
     loadingMessages = false;
@@ -517,9 +522,9 @@ class AppState extends ChangeNotifier {
     error = null;
     logoutError = null;
     _realtimeEventIds.clear();
-    _lastReadTextAt.clear();
-    _pendingTextReads.clear();
-    _lastReadDirectMessageId = null;
+    _conversation.lastReadTextAt.clear();
+    _conversation.pendingTextReads.clear();
+    _conversation.lastReadDirectMessageId = null;
     final room = _room;
     _room = null;
     notifyListeners();
@@ -645,6 +650,7 @@ class AppState extends ChangeNotifier {
   Future<void> _clearServerAccount() async {
     _profile.clear();
     _workspace.clear();
+    _conversation.clear();
     _audioPreferences = null;
     audioActivationMode = AudioActivationMode.vad;
     pushToTalkKeyId = null;
@@ -674,8 +680,9 @@ class AppState extends ChangeNotifier {
   Future<void> _clearSignedOutAccount() async {
     _profile.clear();
     _workspace.clear();
+    _conversation.clear();
     ComposerDraftMemory.clear();
-    _textHistoryLoadSequence++;
+    _conversation.textHistoryLoadSequence++;
     loadingMessages = false;
     profile = null;
     profileLoadError = null;
@@ -697,9 +704,9 @@ class AppState extends ChangeNotifier {
     topology = null;
     selectedChannel = null;
     messages = const [];
-    _sendRetryIds.clear();
-    _pendingTextSends.clear();
-    _pendingDirectSends.clear();
+    _conversation.sendRetryIds.clear();
+    _conversation.pendingTextSends.clear();
+    _conversation.pendingDirectSends.clear();
     members = const [];
     directMessages = const [];
     directMessageCandidates = const [];
@@ -1043,95 +1050,14 @@ class AppState extends ChangeNotifier {
   Future<void> openDirectConversation(DirectConversation conversation) =>
       _workspace.openDirectConversation(conversation);
 
-  Future<void> _loadDirectHistory(DirectConversation conversation) async {
-    nextDirectMessageCursor = null;
-    loadingDirectMessages = true;
-    error = null;
-    notifyListeners();
-    try {
-      final page = await api.directMessageHistoryPage(conversation.id);
-      if (selectedDirectMessage?.id == conversation.id) {
-        _acknowledgeMessageIds(
-          page.messages.map((message) => message.clientMessageId),
-        );
-        directMessageHistory = _withPendingDirect(
-          conversation.id,
-          page.messages,
-        );
-        nextDirectMessageCursor = page.nextCursor;
-      }
-    } catch (cause) {
-      error = _message(cause);
-    } finally {
-      loadingDirectMessages = false;
-      notifyListeners();
-    }
-  }
+  Future<void> _loadDirectHistory(DirectConversation conversation) =>
+      _conversation.loadDirectHistory(conversation);
 
-  Future<bool> loadOlderDirectMessages() async {
-    final conversation = selectedDirectMessage;
-    final cursor = nextDirectMessageCursor;
-    if (conversation == null || cursor == null || loadingOlderDirectMessages) {
-      return false;
-    }
-    loadingOlderDirectMessages = true;
-    notifyListeners();
-    try {
-      final page = await api.directMessageHistoryPage(
-        conversation.id,
-        before: cursor,
-      );
-      if (selectedDirectMessage?.id != conversation.id) return false;
-      final byId = {
-        for (final message in directMessageHistory) message.id: message,
-      };
-      for (final message in page.messages) {
-        byId.putIfAbsent(message.id, () => message);
-      }
-      _acknowledgeMessageIds(
-        page.messages.map((message) => message.clientMessageId),
-      );
-      directMessageHistory = _withPendingDirect(conversation.id, byId.values);
-      nextDirectMessageCursor = page.nextCursor;
-      return true;
-    } catch (cause) {
-      error = _message(cause);
-      return false;
-    } finally {
-      loadingOlderDirectMessages = false;
-      notifyListeners();
-    }
-  }
+  Future<bool> loadOlderDirectMessages() =>
+      _conversation.loadOlderDirectMessages();
 
-  Future<void> markSelectedDirectMessageRead() async {
-    final conversation = selectedDirectMessage;
-    if (conversation == null || loadingDirectMessages) return;
-    final visibleOtherMessages = directMessageHistory
-        .where(
-          (message) =>
-              message.sendStatus == null && message.authorId != user?.accountId,
-        )
-        .toList();
-    if (visibleOtherMessages.isEmpty) return;
-    final messageId = visibleOtherMessages.last.id;
-    if (_lastReadDirectMessageId == messageId) return;
-    _lastReadDirectMessageId = messageId;
-    try {
-      await api.advanceDirectMessageReadCursor(conversation.id, messageId);
-      if (selectedDirectMessage?.id != conversation.id) return;
-      directMessages = directMessages
-          .map(
-            (value) =>
-                value.id == conversation.id ? value.withUnreadCount(0) : value,
-          )
-          .toList(growable: false);
-      notifyListeners();
-    } catch (cause) {
-      _lastReadDirectMessageId = null;
-      error = _message(cause);
-      notifyListeners();
-    }
-  }
+  Future<void> markSelectedDirectMessageRead() =>
+      _conversation.markSelectedDirectMessageRead();
 
   Future<void> createDirectConversation(DirectCandidate candidate) =>
       _workspace.createDirectConversation(candidate);
@@ -1141,98 +1067,12 @@ class AppState extends ChangeNotifier {
     String? replyToId,
     List<String> mentionUserIds = const [],
     List<MessageAttachment> attachments = const [],
-  }) async {
-    final conversation = selectedDirectMessage;
-    final trimmed = body.trim();
-    if (conversation == null ||
-        sending ||
-        trimmed.isEmpty && attachments.isEmpty ||
-        trimmed.runes.length > 8000) {
-      return false;
-    }
-    final mentions = mentionUserIds.take(100).toSet().toList();
-    final attachmentIds = attachments.map((item) => item.id).toList();
-    final retryKey = _sendRetryKey(
-      'dm',
-      conversation.id,
-      trimmed,
-      replyToId,
-      mentions,
-      attachmentIds,
-    );
-    final clientMessageId = _sendRetryIds.putIfAbsent(retryKey, _uuid.v4);
-    final pending =
-        _pendingDirectSends[clientMessageId] ??
-        DirectChatMessage(
-          id: 'optimistic:$clientMessageId',
-          directMessageId: conversation.id,
-          authorId: user?.accountId ?? '',
-          body: trimmed,
-          createdAt: DateTime.now(),
-          deleted: false,
-          revision: 0,
-          clientMessageId: clientMessageId,
-          mentionUserIds: mentions,
-          replyToId: replyToId,
-          attachments: attachments,
-        );
-    _pendingDirectSends[clientMessageId] = pending.withSendStatus(
-      MessageSendStatus.sending,
-    );
-    if (selectedDirectMessage?.id == conversation.id) {
-      directMessageHistory = _withPendingDirect(
-        conversation.id,
-        directMessageHistory,
-      );
-    }
-    sending = true;
-    error = null;
-    notifyListeners();
-    try {
-      final message = await api.sendDirectMessage(
-        conversation.id,
-        clientMessageId,
-        trimmed,
-        replyToId: replyToId,
-        mentionUserIds: mentions,
-        attachmentIds: attachmentIds,
-      );
-      _sendRetryIds.remove(retryKey);
-      _pendingDirectSends.remove(clientMessageId);
-      if (phase == AppPhase.ready &&
-          selectedDirectMessage?.id == conversation.id) {
-        directMessageHistory = [
-          ...directMessageHistory.where(
-            (value) =>
-                value.id != message.id &&
-                value.clientMessageId != clientMessageId,
-          ),
-          message,
-        ];
-      }
-      return true;
-    } catch (cause) {
-      if (_pendingDirectSends.containsKey(clientMessageId)) {
-        _pendingDirectSends[clientMessageId] = pending.withSendStatus(
-          MessageSendStatus.failed,
-        );
-        if (selectedDirectMessage?.id == conversation.id) {
-          directMessageHistory = _withPendingDirect(
-            conversation.id,
-            directMessageHistory,
-          );
-        }
-      }
-      if (phase == AppPhase.ready &&
-          selectedDirectMessage?.id == conversation.id) {
-        error = _message(cause);
-      }
-      return false;
-    } finally {
-      sending = false;
-      notifyListeners();
-    }
-  }
+  }) => _conversation.sendDirect(
+    body,
+    replyToId: replyToId,
+    mentionUserIds: mentionUserIds,
+    attachments: attachments,
+  );
 
   Future<MessageAttachment> uploadAttachment(
     String fileName,
@@ -1240,189 +1080,43 @@ class AppState extends ChangeNotifier {
     String? channelId,
     String? directMessageId,
     void Function(int sent, int total)? onProgress,
-  }) async {
-    if ((channelId == null) == (directMessageId == null)) {
-      throw const ApiFailure('Выберите беседу для вложения.');
-    }
-    if (directMessageId != null) {
-      return api.uploadDirectMessageAttachment(
-        directMessageId,
-        fileName,
-        bytes,
-        onProgress: onProgress,
-      );
-    }
-    return api.uploadChannelAttachment(
-      channelId!,
-      fileName,
-      bytes,
-      onProgress: onProgress,
-    );
-  }
+  }) => _conversation.uploadAttachment(
+    fileName,
+    bytes,
+    channelId: channelId,
+    directMessageId: directMessageId,
+    onProgress: onProgress,
+  );
 
-  Future<bool> editDirect(DirectChatMessage message, String body) async =>
-      (await editDirectWithResult(message, body, message.revision)).kind ==
-      MessageEditStatus.saved;
+  Future<bool> editDirect(DirectChatMessage message, String body) =>
+      _conversation.editDirect(message, body);
 
   Future<MessageEditOutcome> editDirectWithResult(
     DirectChatMessage message,
     String body,
     int expectedRevision, {
     List<String>? mentionUserIds,
-  }) async {
-    final trimmed = body.trim();
-    if (selectedDirectMessage?.id != message.directMessageId ||
-        !directMessageHistory.any((item) => item.id == message.id)) {
-      return (kind: MessageEditStatus.stale, message: 'Беседа изменилась.');
-    }
-    if (trimmed.isEmpty || trimmed.runes.length > 8000) {
-      return (
-        kind: MessageEditStatus.error,
-        message: 'Сообщение должно содержать до 8000 символов.',
-      );
-    }
-    try {
-      final edited = await api.editDirectMessage(
-        message.directMessageId,
-        message.id,
-        trimmed,
-        expectedRevision,
-        mentionUserIds: mentionUserIds ?? message.mentionUserIds,
-      );
-      if (selectedDirectMessage?.id != message.directMessageId) {
-        return (kind: MessageEditStatus.stale, message: 'Беседа изменилась.');
-      }
-      directMessageHistory = directMessageHistory
-          .map((value) => value.id == edited.id ? edited : value)
-          .toList(growable: false);
-      error = null;
-      notifyListeners();
-      return (kind: MessageEditStatus.saved, message: null);
-    } catch (cause) {
-      final conflict = cause is ApiFailure && cause.status == 409;
-      final messageText = conflict
-          ? 'Сообщение изменилось. Обновите версию, чтобы сохранить свой текст.'
-          : _message(cause);
-      if (selectedDirectMessage?.id == message.directMessageId) {
-        error = messageText;
-        notifyListeners();
-      }
-      return (
-        kind: conflict ? MessageEditStatus.conflict : MessageEditStatus.error,
-        message: messageText,
-      );
-    }
-  }
+  }) => _conversation.editDirectWithResult(
+    message,
+    body,
+    expectedRevision,
+    mentionUserIds: mentionUserIds,
+  );
 
   Future<DirectChatMessage?> refreshDirectMessageRevision(
     DirectChatMessage message,
-  ) async {
-    final target = message.directMessageId;
-    if (selectedDirectMessage?.id != target ||
-        !directMessageHistory.any((item) => item.id == message.id)) {
-      return null;
-    }
-    final count = directMessageHistory
-        .where((item) => item.sendStatus == null)
-        .length;
-    final maxPages = (count + 49) ~/ 50 + 2;
-    final seen = <String>{};
-    String? before;
-    try {
-      for (var pageIndex = 0; pageIndex < maxPages; pageIndex++) {
-        final page = await api.directMessageHistoryPage(target, before: before);
-        if (selectedDirectMessage?.id != target) return null;
-        final found = page.messages
-            .where((item) => item.id == message.id)
-            .firstOrNull;
-        if (found != null) {
-          directMessageHistory = directMessageHistory
-              .map(
-                (item) => item.id == found.id && found.revision >= item.revision
-                    ? found
-                    : item,
-              )
-              .toList(growable: false);
-          error = null;
-          notifyListeners();
-          return directMessageHistory
-              .where((item) => item.id == found.id)
-              .firstOrNull;
-        }
-        final cursor = page.nextCursor;
-        if (cursor == null || !seen.add(cursor)) break;
-        before = cursor;
-      }
-    } catch (cause) {
-      if (selectedDirectMessage?.id == target) {
-        error = _message(cause);
-        notifyListeners();
-      }
-    }
-    return null;
-  }
+  ) => _conversation.refreshDirectMessageRevision(message);
 
-  Future<void> deleteDirect(DirectChatMessage message) async {
-    try {
-      await api.deleteDirectMessage(message.directMessageId, message.id);
-      if (selectedDirectMessage?.id == message.directMessageId) {
-        directMessageHistory = directMessageHistory
-            .map(
-              (item) => item.id == message.id && !item.deleted
-                  ? item.asDeleted()
-                  : item,
-            )
-            .toList(growable: false);
-        error = null;
-        notifyListeners();
-      }
-    } catch (cause) {
-      if (selectedDirectMessage?.id == message.directMessageId) {
-        error = _message(cause);
-        notifyListeners();
-      }
-    }
-  }
+  Future<void> deleteDirect(DirectChatMessage message) =>
+      _conversation.deleteDirect(message);
 
   Future<void> refreshTopology() => _workspace.refreshTopology();
 
   Future<void> selectChannel(GuildChannel channel) =>
       _workspace.selectChannel(channel);
 
-  Future<void> _loadChannelHistory(GuildChannel channel) async {
-    final loadSequence = ++_textHistoryLoadSequence;
-    messages = const [];
-    nextMessageCursor = null;
-    _textHistoryHasLoadedOlderPages = false;
-    loadingMessages = false;
-    error = null;
-    notifyListeners();
-    if (channel.kind == ChannelKind.text) {
-      loadingMessages = true;
-      notifyListeners();
-      try {
-        final page = await api.messagePage(channel.id);
-        if (_textHistoryLoadSequence == loadSequence &&
-            selectedChannel?.id == channel.id) {
-          _acknowledgeMessageIds(
-            page.messages.map((message) => message.clientMessageId),
-          );
-          messages = _withPendingText(channel.id, page.messages);
-          nextMessageCursor = page.nextCursor;
-        }
-      } catch (cause) {
-        if (_textHistoryLoadSequence == loadSequence &&
-            selectedChannel?.id == channel.id) {
-          error = _message(cause);
-        }
-      } finally {
-        if (_textHistoryLoadSequence == loadSequence) {
-          loadingMessages = false;
-          notifyListeners();
-        }
-      }
-    }
-  }
+  Future<void> _loadChannelHistory(GuildChannel channel) =>
+      _conversation.loadChannelHistory(channel);
 
   Future<void> enterVoiceChannel(GuildChannel channel) async {
     await selectChannel(channel);
@@ -1434,128 +1128,15 @@ class AppState extends ChangeNotifier {
     await joinVoice(channel);
   }
 
-  Future<bool> loadOlderMessages() async {
-    final channel = selectedChannel;
-    final cursor = nextMessageCursor;
-    if (channel == null ||
-        channel.kind != ChannelKind.text ||
-        cursor == null ||
-        loadingOlderMessages) {
-      return false;
-    }
-    loadingOlderMessages = true;
-    notifyListeners();
-    try {
-      final page = await api.messagePage(channel.id, before: cursor);
-      if (selectedChannel?.id != channel.id) return false;
-      _textHistoryHasLoadedOlderPages = true;
-      final byId = {for (final message in messages) message.id: message};
-      for (final message in page.messages) {
-        byId.putIfAbsent(message.id, () => message);
-      }
-      _acknowledgeMessageIds(
-        page.messages.map((message) => message.clientMessageId),
-      );
-      messages = _withPendingText(channel.id, byId.values);
-      nextMessageCursor = page.nextCursor;
-      return true;
-    } catch (cause) {
-      error = _message(cause);
-      return false;
-    } finally {
-      loadingOlderMessages = false;
-      notifyListeners();
-    }
-  }
+  Future<bool> loadOlderMessages() => _conversation.loadOlderMessages();
 
   /// Refreshes the newest page without discarding history already loaded by
   /// the user. This is used for realtime message events and resynchronization.
-  Future<void> refreshSelectedTextHistory() async {
-    final channel = selectedChannel;
-    if (channel == null || channel.kind != ChannelKind.text) return;
+  Future<void> refreshSelectedTextHistory() =>
+      _conversation.refreshSelectedTextHistory();
 
-    final loadSequence = ++_textHistoryLoadSequence;
-    loadingMessages = true;
-    notifyListeners();
-    try {
-      final page = await api.messagePage(channel.id);
-      if (_textHistoryLoadSequence != loadSequence ||
-          selectedChannel?.id != channel.id) {
-        return;
-      }
-
-      final byId = {for (final message in messages) message.id: message};
-      for (final message in page.messages) {
-        final existing = byId[message.id];
-        if (existing == null || message.revision >= existing.revision) {
-          byId[message.id] = message;
-        }
-      }
-      _acknowledgeMessageIds(
-        page.messages.map((message) => message.clientMessageId),
-      );
-      messages = _withPendingText(channel.id, byId.values);
-      if (!_textHistoryHasLoadedOlderPages) {
-        nextMessageCursor = page.nextCursor;
-      }
-      error = null;
-    } catch (cause) {
-      if (_textHistoryLoadSequence == loadSequence &&
-          selectedChannel?.id == channel.id) {
-        error = _message(cause);
-      }
-    } finally {
-      if (_textHistoryLoadSequence == loadSequence &&
-          selectedChannel?.id == channel.id) {
-        loadingMessages = false;
-        notifyListeners();
-      }
-    }
-  }
-
-  Future<void> markTextChannelRead(String channelId, String messageId) async {
-    if (phase != AppPhase.ready ||
-        selectedChannel?.id != channelId ||
-        selectedChannel?.kind != ChannelKind.text) {
-      return;
-    }
-    final message = messages
-        .where(
-          (candidate) =>
-              candidate.id == messageId &&
-              !candidate.deleted &&
-              candidate.sendStatus == null,
-        )
-        .firstOrNull;
-    if (message == null) return;
-    final lastReadAt = _lastReadTextAt[channelId];
-    if (lastReadAt != null && !message.createdAt.isAfter(lastReadAt)) return;
-    final pendingAt = _pendingTextReadAt[channelId];
-    if (pendingAt != null && !message.createdAt.isAfter(pendingAt)) return;
-    final key = '$channelId:$messageId';
-    if (!_pendingTextReads.add(key)) return;
-    _pendingTextReadAt[channelId] = message.createdAt;
-    try {
-      await api.advanceTextChannelReadCursor(channelId, messageId);
-      _lastReadTextAt[channelId] = message.createdAt;
-      if (phase != AppPhase.ready || selectedChannel?.id != channelId) return;
-      final updated = await api.topology();
-      if (phase != AppPhase.ready || selectedChannel?.id != channelId) return;
-      topology = updated;
-      selectedChannel = updated.categories
-          .expand((category) => category.channels)
-          .where((channel) => channel.id == channelId)
-          .firstOrNull;
-      notifyListeners();
-    } catch (_) {
-      // Keep server-provided counts until a visible retry succeeds.
-    } finally {
-      _pendingTextReads.remove(key);
-      if (_pendingTextReadAt[channelId] == message.createdAt) {
-        _pendingTextReadAt.remove(channelId);
-      }
-    }
-  }
+  Future<void> markTextChannelRead(String channelId, String messageId) =>
+      _conversation.markTextChannelRead(channelId, messageId);
 
   Future<void> _connectRealtime() async {
     if (!api.realtimeEnabled ||
@@ -1793,6 +1374,7 @@ class AppState extends ChangeNotifier {
     _session.dispose();
     _profile.dispose();
     _workspace.dispose();
+    _conversation.dispose();
     _nativeNotifications.dispose();
     _closeScreenPreviewSubscriptions();
     _realtimeRetry?.cancel();
@@ -1814,307 +1396,39 @@ class AppState extends ChangeNotifier {
     String? replyToId,
     List<String> mentionUserIds = const [],
     List<MessageAttachment> attachments = const [],
-  }) async {
-    final channel = selectedChannel;
-    final trimmed = body.trim();
-    if (channel == null ||
-        channel.kind != ChannelKind.text ||
-        sending ||
-        trimmed.isEmpty && attachments.isEmpty ||
-        trimmed.runes.length > 8000) {
-      return false;
-    }
-    final mentions = mentionUserIds.take(100).toSet().toList();
-    final attachmentIds = attachments.map((item) => item.id).toList();
-    final retryKey = _sendRetryKey(
-      'text',
-      channel.id,
-      trimmed,
-      replyToId,
-      mentions,
-      attachmentIds,
-    );
-    final clientMessageId = _sendRetryIds.putIfAbsent(retryKey, _uuid.v4);
-    final pending =
-        _pendingTextSends[clientMessageId] ??
-        ChatMessage(
-          id: 'optimistic:$clientMessageId',
-          channelId: channel.id,
-          authorId: user?.accountId ?? '',
-          body: trimmed,
-          createdAt: DateTime.now(),
-          deleted: false,
-          revision: 0,
-          clientMessageId: clientMessageId,
-          replyToId: replyToId,
-          mentionUserIds: mentions,
-          attachments: attachments,
-        );
-    _pendingTextSends[clientMessageId] = pending.withSendStatus(
-      MessageSendStatus.sending,
-    );
-    messages = _withPendingText(channel.id, messages);
-    sending = true;
-    error = null;
-    notifyListeners();
-    try {
-      final message = await api.sendMessage(
-        channel.id,
-        clientMessageId,
-        trimmed,
-        replyToId: replyToId,
-        mentionUserIds: mentions,
-        attachmentIds: attachmentIds,
-      );
-      _sendRetryIds.remove(retryKey);
-      _pendingTextSends.remove(clientMessageId);
-      if (phase == AppPhase.ready && selectedChannel?.id == channel.id) {
-        messages = [
-          ...messages.where(
-            (value) =>
-                value.id != message.id &&
-                value.clientMessageId != clientMessageId,
-          ),
-          message,
-        ];
-      }
-      return true;
-    } catch (cause) {
-      if (_pendingTextSends.containsKey(clientMessageId)) {
-        _pendingTextSends[clientMessageId] = pending.withSendStatus(
-          MessageSendStatus.failed,
-        );
-        if (selectedChannel?.id == channel.id) {
-          messages = _withPendingText(channel.id, messages);
-        }
-      }
-      if (phase == AppPhase.ready && selectedChannel?.id == channel.id) {
-        error = _message(cause);
-      }
-      return false;
-    } finally {
-      sending = false;
-      notifyListeners();
-    }
-  }
-
-  String _sendRetryKey(
-    String kind,
-    String conversationId,
-    String body,
-    String? replyToId,
-    List<String> mentions,
-    List<String> attachmentIds,
-  ) => jsonEncode([
-    kind,
-    conversationId,
+  }) => _conversation.send(
     body,
-    replyToId,
-    mentions,
-    attachmentIds,
-  ]);
+    replyToId: replyToId,
+    mentionUserIds: mentionUserIds,
+    attachments: attachments,
+  );
 
-  void _acknowledgeMessageIds(Iterable<String?> ids) {
-    final acknowledged = ids.whereType<String>().toSet();
-    if (acknowledged.isEmpty) return;
-    _sendRetryIds.removeWhere((_, id) => acknowledged.contains(id));
-    for (final id in acknowledged) {
-      _pendingTextSends.remove(id);
-      _pendingDirectSends.remove(id);
-    }
-  }
+  Future<bool> retryTextSend(String clientMessageId) =>
+      _conversation.retryTextSend(clientMessageId);
 
-  List<ChatMessage> _withPendingText(
-    String channelId,
-    Iterable<ChatMessage> history,
-  ) {
-    final confirmed = history
-        .where((message) => message.sendStatus == null)
-        .toList();
-    final confirmedIds = confirmed
-        .map((message) => message.clientMessageId)
-        .toSet();
-    final combined = [
-      ...confirmed,
-      ..._pendingTextSends.values.where(
-        (message) =>
-            message.channelId == channelId &&
-            !confirmedIds.contains(message.clientMessageId),
-      ),
-    ];
-    combined.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    return combined;
-  }
+  Future<bool> retryDirectSend(String clientMessageId) =>
+      _conversation.retryDirectSend(clientMessageId);
 
-  List<DirectChatMessage> _withPendingDirect(
-    String conversationId,
-    Iterable<DirectChatMessage> history,
-  ) {
-    final confirmed = history
-        .where((message) => message.sendStatus == null)
-        .toList();
-    final confirmedIds = confirmed
-        .map((message) => message.clientMessageId)
-        .toSet();
-    final combined = [
-      ...confirmed,
-      ..._pendingDirectSends.values.where(
-        (message) =>
-            message.directMessageId == conversationId &&
-            !confirmedIds.contains(message.clientMessageId),
-      ),
-    ];
-    combined.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    return combined;
-  }
-
-  Future<bool> retryTextSend(String clientMessageId) async {
-    final pending = _pendingTextSends[clientMessageId];
-    if (pending == null ||
-        pending.sendStatus != MessageSendStatus.failed ||
-        selectedChannel?.id != pending.channelId) {
-      return false;
-    }
-    return send(
-      pending.body,
-      replyToId: pending.replyToId,
-      mentionUserIds: pending.mentionUserIds,
-      attachments: pending.attachments,
-    );
-  }
-
-  Future<bool> retryDirectSend(String clientMessageId) async {
-    final pending = _pendingDirectSends[clientMessageId];
-    if (pending == null ||
-        pending.sendStatus != MessageSendStatus.failed ||
-        selectedDirectMessage?.id != pending.directMessageId) {
-      return false;
-    }
-    return sendDirect(
-      pending.body,
-      replyToId: pending.replyToId,
-      mentionUserIds: pending.mentionUserIds,
-      attachments: pending.attachments,
-    );
-  }
-
-  Future<bool> editText(ChatMessage message, String body) async =>
-      (await editTextWithResult(message, body, message.revision)).kind ==
-      MessageEditStatus.saved;
+  Future<bool> editText(ChatMessage message, String body) =>
+      _conversation.editText(message, body);
 
   Future<MessageEditOutcome> editTextWithResult(
     ChatMessage message,
     String body,
     int expectedRevision, {
     List<String>? mentionUserIds,
-  }) async {
-    final trimmed = body.trim();
-    if (selectedChannel?.id != message.channelId ||
-        !messages.any((item) => item.id == message.id)) {
-      return (kind: MessageEditStatus.stale, message: 'Беседа изменилась.');
-    }
-    if (trimmed.isEmpty || trimmed.runes.length > 8000) {
-      return (
-        kind: MessageEditStatus.error,
-        message: 'Сообщение должно содержать до 8000 символов.',
-      );
-    }
-    try {
-      final edited = await api.editMessage(
-        message.channelId,
-        message.id,
-        trimmed,
-        expectedRevision,
-        mentionUserIds: mentionUserIds ?? message.mentionUserIds,
-      );
-      if (selectedChannel?.id != message.channelId) {
-        return (kind: MessageEditStatus.stale, message: 'Беседа изменилась.');
-      }
-      messages = messages
-          .map((value) => value.id == edited.id ? edited : value)
-          .toList(growable: false);
-      error = null;
-      notifyListeners();
-      return (kind: MessageEditStatus.saved, message: null);
-    } catch (cause) {
-      final conflict = cause is ApiFailure && cause.status == 409;
-      final messageText = conflict
-          ? 'Сообщение изменилось. Обновите версию, чтобы сохранить свой текст.'
-          : _message(cause);
-      if (selectedChannel?.id == message.channelId) {
-        error = messageText;
-        notifyListeners();
-      }
-      return (
-        kind: conflict ? MessageEditStatus.conflict : MessageEditStatus.error,
-        message: messageText,
-      );
-    }
-  }
+  }) => _conversation.editTextWithResult(
+    message,
+    body,
+    expectedRevision,
+    mentionUserIds: mentionUserIds,
+  );
 
-  Future<ChatMessage?> refreshTextMessageRevision(ChatMessage message) async {
-    final target = message.channelId;
-    if (selectedChannel?.id != target ||
-        !messages.any((item) => item.id == message.id)) {
-      return null;
-    }
-    final count = messages.where((item) => item.sendStatus == null).length;
-    final maxPages = (count + 49) ~/ 50 + 2;
-    final seen = <String>{};
-    String? before;
-    try {
-      for (var pageIndex = 0; pageIndex < maxPages; pageIndex++) {
-        final page = await api.messagePage(target, before: before);
-        if (selectedChannel?.id != target) return null;
-        final found = page.messages
-            .where((item) => item.id == message.id)
-            .firstOrNull;
-        if (found != null) {
-          messages = messages
-              .map(
-                (item) => item.id == found.id && found.revision >= item.revision
-                    ? found
-                    : item,
-              )
-              .toList(growable: false);
-          error = null;
-          notifyListeners();
-          return messages.where((item) => item.id == found.id).firstOrNull;
-        }
-        final cursor = page.nextCursor;
-        if (cursor == null || !seen.add(cursor)) break;
-        before = cursor;
-      }
-    } catch (cause) {
-      if (selectedChannel?.id == target) {
-        error = _message(cause);
-        notifyListeners();
-      }
-    }
-    return null;
-  }
+  Future<ChatMessage?> refreshTextMessageRevision(ChatMessage message) =>
+      _conversation.refreshTextMessageRevision(message);
 
-  Future<void> deleteText(ChatMessage message) async {
-    try {
-      await api.deleteMessage(message.channelId, message.id);
-      if (selectedChannel?.id == message.channelId) {
-        messages = messages
-            .map(
-              (item) => item.id == message.id && !item.deleted
-                  ? item.asDeleted()
-                  : item,
-            )
-            .toList(growable: false);
-        error = null;
-        notifyListeners();
-      }
-    } catch (cause) {
-      if (selectedChannel?.id == message.channelId) {
-        error = _message(cause);
-        notifyListeners();
-      }
-    }
-  }
+  Future<void> deleteText(ChatMessage message) =>
+      _conversation.deleteText(message);
 
   Future<void> selectRemoteScreenForViewing(String? participantIdentity) async {
     final nextIdentity = participantIdentity?.trim();
