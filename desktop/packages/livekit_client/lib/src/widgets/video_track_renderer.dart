@@ -31,6 +31,7 @@ import '../track/local/video.dart';
 import '../track/options.dart';
 import '../track/video_track_view_registration.dart';
 import '../types/other.dart';
+import 'video_track_renderer_frame_callback.dart';
 
 enum VideoViewMirrorMode {
   auto,
@@ -74,6 +75,7 @@ class VideoTrackRenderer extends StatefulWidget {
   final VideoRenderMode renderMode;
   final rtc.RTCVideoRenderer? cachedRenderer;
   final bool autoDisposeRenderer;
+  final VoidCallback? onFirstFrameReceived;
 
   /// wrap the video view in a Center widget (if [fit] is [VideoViewFit.contain])
   final bool autoCenter;
@@ -99,6 +101,7 @@ class VideoTrackRenderer extends StatefulWidget {
     this.autoCenter = true,
     this.adaptiveStreamPixelDensity = AdaptiveStreamPixelDensity.auto,
     this.placeholderBuilder,
+    this.onFirstFrameReceived,
     Key? key,
   }) : super(key: key);
 
@@ -176,8 +179,11 @@ class _VideoTrackRendererState extends State<VideoTrackRenderer> {
     final renderer = _renderer;
     _renderer = null;
     try {
-      renderer?.onResize = null;
-      renderer?.srcObject = null;
+      if (renderer != null) {
+        renderer.onResize = null;
+        setVideoTrackRendererFirstFrameCallback(renderer, null);
+        renderer.srcObject = null;
+      }
       if (dispose) {
         unawaited(renderer?.dispose());
       }
@@ -208,12 +214,21 @@ class _VideoTrackRendererState extends State<VideoTrackRenderer> {
     unawaited(_listener?.dispose());
     if (widget.autoDisposeRenderer) {
       _releaseRenderer(dispose: true);
+    } else if (_renderer != null) {
+      setVideoTrackRendererFirstFrameCallback(_renderer!, null);
     }
     super.dispose();
   }
 
   Future<void> _attach() async {
     _renderer?.srcObject = widget.track.mediaStream;
+    final renderer = _renderer;
+    if (renderer != null) {
+      setVideoTrackRendererFirstFrameCallback(
+        renderer,
+        widget.onFirstFrameReceived,
+      );
+    }
     await _listener?.dispose();
     _listener = widget.track.createListener()
       ..on<TrackStreamUpdatedEvent>((event) {
@@ -256,6 +271,13 @@ class _VideoTrackRendererState extends State<VideoTrackRenderer> {
       }());
     } else if (widget.adaptiveStreamPixelDensity != oldWidget.adaptiveStreamPixelDensity) {
       _viewRegistration.pixelDensity = widget.adaptiveStreamPixelDensity;
+    }
+
+    if (widget.onFirstFrameReceived != oldWidget.onFirstFrameReceived && _renderer != null) {
+      setVideoTrackRendererFirstFrameCallback(
+        _renderer!,
+        widget.onFirstFrameReceived,
+      );
     }
 
     if ([BrowserType.safari, BrowserType.firefox].contains(lkBrowser()) && oldWidget.key != widget.key) {

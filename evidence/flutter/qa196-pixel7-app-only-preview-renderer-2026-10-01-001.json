@@ -1,0 +1,44 @@
+{
+  "id": "QA-196",
+  "kind": "pixel7-android-app-only-preview-renderer",
+  "status": "FAIL_LOCAL_TEXTURE_BLACK_AFTER_RENDERER_SINK_FRAME",
+  "executed_at": "2026-10-01",
+  "source_revision": "c865abbb2ea5f086e0c4929cf0465993f6e6bd6e",
+  "summary": "A signed current-source release APK with renderer first-frame diagnostics was installed in place on Pixel 7. App-only Calculator capture produced a fresh thumbnail while the large local self-preview remained black. Flutter debug output confirms the native VideoTrackRenderer sink received its first frame. The callback is sent before EglRenderer completes drawing, so this narrows the issue to renderer output/Flutter texture presentation but does not prove a frame was drawn or presented. No remote receiver was connected.",
+  "artifact": {
+    "version_name": "1.0.18",
+    "version_code": 2026,
+    "path": "desktop/build/app/outputs/flutter-apk/app-release.apk",
+    "sha256": "8a7e4140e39c66b6a2b6132e8660c8717061573c50ea3b3a238b623edea591da",
+    "size_bytes": 69455248
+  },
+  "checks": [
+    {
+      "name": "Release APK installed without removing app data",
+      "device": "Google Pixel 7, Android 17/API 37",
+      "command": "adb install -r app-release.apk; adb shell dumpsys package ru.boohtacord.app",
+      "status": "PASS",
+      "observation": "Release version 1.0.18/versionCode 2026 installed over the existing app using adb install -r; no uninstall or data clear was used."
+    },
+    {
+      "name": "App-only Calculator capture and local self-preview",
+      "device": "Google Pixel 7, SHARE_TEST, microphone muted, no remote receiver",
+      "command": "Android screen-capture picker; adb shell dumpsys media_projection; adb logcat -d -s flutter:I flutter:V; adb shell screencap -p",
+      "status": "FAIL_VIEWER_BLACK_THUMBNAIL_AND_RENDERER_SINK_FRAME",
+      "observation": "Selected Calculator in Android's Show an app picker at 720p/15 FPS. dumpsys media_projection confirmed RECORD_CONTENT_TASK for the Calculator task. After returning to BOOHTACORD, the large local preview was black while the participant card showed the Calculator keypad. Flutter log contained `[screen-preview] local_renderer_sink=first_frame`. The native event originates in SurfaceTextureRenderer.onFrame before super.onFrame(frame), so this proves sink frame delivery, not EGL draw completion or Flutter texture presentation. Microphone remained muted."
+    },
+    {
+      "name": "Stop and cleanup",
+      "device": "Google Pixel 7, Android 17/API 37",
+      "command": "Stop share, leave voice; adb shell dumpsys media_projection",
+      "status": "PASS",
+      "observation": "MediaProjection returned null and Pixel returned to the SHARE_TEST prejoin screen; test voice session was ended."
+    }
+  ],
+  "limitations": [
+    "No paired browser/macOS receiver was connected. Sender frame counters and remote playback are unverified; Mac joining may transfer the existing Pistol121 voice lease.",
+    "`didFirstFrameRendered` is emitted before the native EglRenderer finishes drawing the frame and cannot establish that Flutter's Texture displayed pixels.",
+    "The screenshot was inspected from a temporary file outside the repository; no generated image or APK was added to Git. FE-59 remains open."
+  ],
+  "remaining": "Instrument or otherwise observe EGL draw/texture presentation completion, inspect sender framesEncoded/framesSent, and repeat with an authorized paired receiver before selecting a source-level fix. Keep FE-59 open until app-only local and remote rendering are verified."
+}

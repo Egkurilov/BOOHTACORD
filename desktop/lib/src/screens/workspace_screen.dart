@@ -5370,6 +5370,11 @@ class _VoiceScreenViewer extends StatelessWidget {
                   child: VideoTrackRenderer(
                     track,
                     renderMode: VideoRenderMode.auto,
+                    onFirstFrameReceived: showingLocalScreen
+                        ? () => debugPrint(
+                            '[screen-preview] local_renderer_sink=first_frame',
+                          )
+                        : null,
                   ),
                 ),
               ),
