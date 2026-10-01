@@ -1,0 +1,44 @@
+{
+  "id": "QA-198",
+  "kind": "pixel7-preview-impeller-ab",
+  "status": "FAIL_PREVIEW_BLACK_WITH_IMPELLER_DISABLED",
+  "executed_at": "2026-10-01",
+  "source_revision": "c277621",
+  "summary": "Repeated the muted Calculator app-only capture on Pixel 7 using a signed 1.0.18+2028 APK whose merged AndroidManifest explicitly set EnableImpeller=false. The local viewer remained black, so disabling Impeller alone does not resolve FE-59. Screen capture continued to the encoder at 1080x2400, while the local renderer reported its first EGL buffer swap.",
+  "artifact": {
+    "version_name": "1.0.18",
+    "version_code": 2028,
+    "path": "desktop/build/app/outputs/flutter-apk/app-release.apk",
+    "sha256": "3808cec50cf67132df2a076d848802b0589b0f22e582a3bce6aabfac432e4658",
+    "size_bytes": 69455280,
+    "git_ignored": true,
+    "experimental_manifest": "io.flutter.embedding.android.EnableImpeller=false"
+  },
+  "checks": [
+    {
+      "name": "Android release build and merged manifest",
+      "command": "flutter build apk --release --target-platform android-arm64 --build-name=1.0.18 --build-number=2028; inspect merged AndroidManifest.xml",
+      "status": "PASS",
+      "observation": "Release APK built and installed with adb install -r without uninstalling the app or clearing its data. Merged manifest contained EnableImpeller=false; Flutter log confirmed the opt-out was applied. The source manifest experiment was reverted after the test."
+    },
+    {
+      "name": "Calculator local preview A/B",
+      "device": "Google Pixel 7, Android 17/API 37, SHARE_TEST, microphone muted, no remote viewer",
+      "command": "Android Show an app picker -> Calculator; adb shell dumpsys media_projection; adb logcat -d --pid=28966",
+      "status": "FAIL_PREVIEW_BLACK_WITH_IMPELLER_DISABLED",
+      "observation": "dumpsys media_projection confirmed RECORD_CONTENT_TASK for com.google.android.calculator. The screenshot /private/tmp/boohtacord-pixel-preview-impeller-off-2028.png showed a black large local viewer while the participant card displayed Calculator content. Logcat included [screen-preview] local_renderer=first_swap_buffers and video_stream_encoder frame parameters changed to 1080x2400, texture=1. No paired viewer was connected."
+    },
+    {
+      "name": "Stop and cleanup",
+      "command": "Tap Stop screen share; verify dumpsys media_projection; leave SHARE_TEST",
+      "status": "PASS",
+      "observation": "MediaProjection returned null after stopping; Pixel returned to the SHARE_TEST prejoin screen."
+    }
+  ],
+  "limitations": [
+    "This A/B excludes Impeller as the sole cause for this Pixel scenario but does not establish whether the failure is in the Flutter texture backend, frame buffer conversion, or the video widget layout.",
+    "No remote receiver was used, so publication and viewer playback remain unverified.",
+    "One diagnostic entry reported screen-thumbnail local=captureFailed later in the run; the persistence/freshness of the visible participant thumbnail should be rechecked alongside renderer output."
+  ],
+  "remaining": "Compare the current ImageReader-backed SurfaceProducer path with a legacy SurfaceTextureEntry renderer on Pixel using the same Calculator task, then inspect decoded frame buffer type/conversion, native renderer frame counters, Flutter texture presentation, and remote receiver playback. Keep FE-59 open until the local preview is visibly correct and remote video is verified."
+}
