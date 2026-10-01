@@ -1,10 +1,10 @@
 {
   "id": "QA-161",
-  "kind": "gitverse-android-release-publisher",
+  "kind": "github-android-release-publisher",
   "status": "PARTIAL",
-  "executed_at": "2026-09-30",
-  "source_revision": "1f58bb3",
-  "summary": "Replaced the bundled release action's single timed upload flow with an idempotent publisher using GitVerse's documented release and multipart-asset endpoints. Six local tests cover creation, multipart payload, lost-response recovery, retry, repeated jobs, conflicting assets and missing credentials. The Windows runner and a real tagged release have not yet been exercised.",
+  "executed_at": "2026-10-01",
+  "source_revision": "0d7f3a3",
+  "summary": "The Android release publisher now uses GitHub Releases. Six local contract tests pass; GitHub Actions CI run #45 also completed its Windows job successfully, which runs the publisher tests before Flutter tests, analysis and Windows Release build. A real Android tag release and its three APK assets have not yet been exercised.",
   "checks": [
     {
       "name": "Publisher contract and retry tests",
@@ -19,15 +19,17 @@
       "observation": "Both workflow files parse as YAML, JavaScript syntax checks pass and the diff has no whitespace errors."
     },
     {
-      "name": "GitVerse Windows runner test",
-      "status": "NOT_RUN",
-      "observation": "The release-publisher suite was added to the Flutter Windows workflow but no run for this change has completed yet."
+      "name": "GitHub Windows runner publisher, Flutter tests, analyzer and Release build",
+      "command": "GitHub Actions CI run #45 · windows job",
+      "status": "PASS",
+      "observation": "Windows job completed successfully on commit 0d7f3a3. The workflow step order runs scripts/android_release/publish*.test.mjs before Flutter tests, analyzer and Windows Release compilation. The overall CI run's separate Flutter job was still in progress when inspected.",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36827453677"
     },
     {
-      "name": "Published Android 1.0.15 GitVerse release",
+      "name": "Published Android 1.0.17 GitHub release",
       "status": "NOT_RUN",
       "observation": "No release tag was pushed and no public release or APK asset was created by this change."
     }
   ],
-  "remaining": "Push the publisher change, verify its Node tests on the Windows runner, then trigger the tag workflow for the current Android version and confirm the public release lists and downloads all three ABI APKs. Keep release publication open until the action succeeds."
+  "remaining": "When the Android release is authorized, trigger the tag workflow for the current version and verify that the public GitHub release lists all three signed ABI APKs. Keep publication open until all assets are confirmed."
 }
