@@ -1,0 +1,37 @@
+{
+  "id": "QA-189",
+  "kind": "pixel7-android-app-only-local-screen-preview",
+  "status": "PASS_WITH_VISUAL_AND_REMOTE_ACCEPTANCE_OPEN",
+  "executed_at": "2026-10-01",
+  "source_revision": "1c8e4a2312ca0874e0ee2b7c8b2345136ce9d6c3",
+  "summary": "The app-only local thumbnail capture completed on Pixel 7 with Calculator selected as the MediaProjection task. The reported failure did not reproduce on installed BOOHTACORD 1.0.18+2023; pixel-level preview rendering and remote receiver playback were not verified.",
+  "checks": [
+    {
+      "name": "Pixel 7 app-only projection target",
+      "device": "Google Pixel 7, Android 17/API 37, 1080x2400",
+      "command": "adb shell dumpsys media_projection",
+      "status": "PASS",
+      "observation": "The Android MediaProjection ContentRecordingSession reported RECORD_CONTENT_TASK and targetUid for com.google.android.calculator. No personal target app was selected."
+    },
+    {
+      "name": "Local screen-thumbnail capture",
+      "device": "Google Pixel 7, BOOHTACORD 1.0.18 (versionCode 2023), SHARE_TEST",
+      "command": "adb logcat -d --pid=16594 | rg '\\[screen-thumbnail\\]'",
+      "status": "PASS",
+      "observation": "The app emitted `[screen-thumbnail] local=captured`, meaning capture, JPEG decode/encode, validation and local thumbnail storage completed. The voice UI reported the microphone remained off."
+    },
+    {
+      "name": "Stop and cleanup",
+      "device": "Google Pixel 7, Android 17/API 37",
+      "command": "adb shell input tap 540 2253; adb shell input tap 985 2253; adb shell dumpsys media_projection",
+      "status": "PASS",
+      "observation": "After stopping screen share, MediaProjection had no active projection and the UI offered to start sharing again. The test then left SHARE_TEST; the UI returned to the voice-join action."
+    }
+  ],
+  "limitations": [
+    "The preview pixels were not visually inspected, so a valid but blank or incorrect image is not ruled out.",
+    "No remote macOS or web receiver was connected during this test.",
+    "The user's originally selected application was not identified; Calculator was used as a safe target."
+  ],
+  "remaining": "Visually inspect the local participant preview and repeat with the user's intended target app if it is safe; then perform paired Android-to-macOS and Android-to-web receiver acceptance."
+}

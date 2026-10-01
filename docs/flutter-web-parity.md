@@ -133,9 +133,16 @@ Android local screen-thumbnail capture now bounds the native first-frame wait to
 five seconds. If no frame arrives, the WebRTC sink is removed and a timeout is
 returned so the serialized Flutter thumbnail queue can retry; an atomic gate
 prevents a late frame from completing the same request a second time. Android
-unit tests, the Dart thumbnail pipeline/widget tests and analyzer pass, but the
-Pixel app-only preview remains pending runtime acceptance —
+unit tests, the Dart thumbnail pipeline/widget tests and analyzer pass; at that
+point the Pixel app-only preview still needed runtime acceptance —
 [QA-186](../evidence/flutter/qa186-android-local-preview-frame-timeout-2026-10-01-001.json).
+That app-only capture was then exercised on the connected Pixel 7 (Android 17):
+Android confirmed the selected Calculator task as the projection target, and the
+Flutter local thumbnail pipeline returned `captured`; the mic stayed off and
+both projection and voice session were stopped afterward. The reported failure
+did not reproduce on installed version 1.0.18+2023. Pixel-level visual
+comparison and paired macOS/web receiver acceptance remain open —
+[QA-189](../evidence/flutter/qa189-pixel7-android-app-only-local-preview-2026-10-01-001.json).
 The password-reset-link and server-address dialogs on Flutter authentication
 now remain open on scrim taps, keep keyboard traversal modal, close on Escape and
 restore focus to their opener. Their text controllers are owned by the dialog
