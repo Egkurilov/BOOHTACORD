@@ -679,6 +679,7 @@ void main() {
     await tester.pump();
     final loadingStatus = find.text('Проверяем, кто сейчас в комнате…');
     expect(loadingStatus, findsOneWidget);
+    expect(find.text('Голосовой канал · проверяем состав'), findsOneWidget);
     expect(
       tester.getSemantics(loadingStatus).flagsCollection.isLiveRegion,
       isTrue,
@@ -692,10 +693,38 @@ void main() {
       'Не удалось обновить состав комнаты. Повторяем попытку.',
     );
     expect(errorStatus, findsOneWidget);
+    expect(find.text('Голосовой канал · состав недоступен'), findsOneWidget);
     expect(
       tester.getSemantics(errorStatus).flagsCollection.isLiveRegion,
       isTrue,
     );
+
+    state
+      ..voiceRosterError = null
+      ..voiceRosters = const [
+        VoiceRoomRoster(channelId: 'voice-1', participants: []),
+      ]
+      ..notifyListeners();
+    await tester.pump();
+    expect(find.text('Голосовой канал · пока пусто'), findsOneWidget);
+
+    state
+      ..voiceRosters = const [
+        VoiceRoomRoster(
+          channelId: 'voice-1',
+          participants: [
+            VoiceRosterMember(
+              accountId: 'account-2',
+              displayName: 'Собеседник',
+              screenSharing: false,
+              microphoneMuted: true,
+            ),
+          ],
+        ),
+      ]
+      ..notifyListeners();
+    await tester.pump();
+    expect(find.text('Голосовой канал · сейчас: 1'), findsOneWidget);
 
     semantics.dispose();
     await tester.pumpWidget(const SizedBox.shrink());

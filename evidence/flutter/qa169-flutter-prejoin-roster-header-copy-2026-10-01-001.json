@@ -1,0 +1,40 @@
+{
+  "id": "QA-169",
+  "kind": "flutter-prejoin-roster-header-copy",
+  "status": "PARTIAL",
+  "executed_at": "2026-10-01",
+  "source_revision": "pending",
+  "summary": "Flutter's prejoin voice header now matches the web reference across roster loading, unavailable, empty and populated states. A test-first widget regression failed on the old static invitation copy and passes after the change. Device screen-reader/focus acceptance remains open.",
+  "checks": [
+    {
+      "name": "Test-first prejoin header state regression",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name \"announces prejoin roster loading and errors as live status\"",
+      "status": "PASS",
+      "observation": "Before implementation, the new assertion failed because Flutter showed the static `подключитесь, чтобы увидеть участников` subtitle instead of the web-equivalent loading string. After implementation, one widget test passes across loading, error, empty, and populated roster states."
+    },
+    {
+      "name": "Full Flutter suite and analyzer",
+      "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 326 Flutter tests pass and analyzer reports no issues."
+    },
+    {
+      "name": "Android ABI-split release build",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Signed APKs build for armeabi-v7a (31.0 MB), arm64-v8a (39.5 MB), and x86_64 (45.3 MB), version 1.0.17+22."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd desktop && flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "Current source builds build/macos/Build/Products/Debug/BOOHTACORD.app. Existing running app was not interrupted or relaunched."
+    },
+    {
+      "name": "Native focus and screen-reader acceptance",
+      "status": "NOT_RUN",
+      "observation": "VoiceOver, TalkBack, and Windows screen-reader announcements were not exercised in this pass."
+    }
+  ],
+  "remaining": "Verify focus and screen-reader announcements for prejoin, permission-denied, dock, and roster error transitions on macOS, Windows, and Android."
+}

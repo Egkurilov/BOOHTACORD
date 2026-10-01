@@ -1681,6 +1681,18 @@ class _MainSurface extends StatelessWidget {
   }
 }
 
+String _voicePrejoinHeaderSubtitle(AppState state, GuildChannel channel) {
+  if (state.voiceRosterError != null) {
+    return 'Голосовой канал · состав недоступен';
+  }
+  final roster = state.voiceRosters
+      ?.where((item) => item.channelId == channel.id)
+      .firstOrNull;
+  if (roster == null) return 'Голосовой канал · проверяем состав';
+  if (roster.participants.isEmpty) return 'Голосовой канал · пока пусто';
+  return 'Голосовой канал · сейчас: ${roster.participants.length}';
+}
+
 class _Header extends StatelessWidget {
   const _Header({
     required this.icon,
@@ -4302,7 +4314,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                         : 'Голосовой канал · участников: $participantCount'
                   : channel.admissionClosed
                   ? 'Вход временно закрыт'
-                  : 'Голосовой канал · подключитесь, чтобы увидеть участников',
+                  : _voicePrejoinHeaderSubtitle(state, channel),
               trailing: active
                   ? Row(
                       mainAxisSize: MainAxisSize.min,

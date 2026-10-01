@@ -175,8 +175,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   реальном сбое сети на macOS, Windows и Android остаётся открытой.
 - [ ] Сверить permission-denied/prejoin/dock copy, focus и screen-reader
   announcements на устройствах. Обычный и joining copy prejoin приведён к вебу,
-  состояния подключения, а также загрузка/ошибка prejoin roster помечены
-  live-region и покрыты локальными тестами — [QA-154](../evidence/flutter/qa154-prejoin-roster-live-status-parity-2026-09-30-001.json);
+  состояния подключения, загрузка/ошибка roster помечены live-region, а header
+  теперь показывает те же dynamic roster states, что и web (проверка до фикса
+  воспроизводила расхождение на пустом roster) — [QA-154](../evidence/flutter/qa154-prejoin-roster-live-status-parity-2026-09-30-001.json),
+  [QA-169](../evidence/flutter/qa169-flutter-prejoin-roster-header-copy-2026-10-01-001.json);
   dock reconnect/leaving, deafen guidance и pending/leave button states также
   приведены к вебу и покрыты локально. Проверка реальных screen readers/focus и
   mute/deafen поведения остаётся открытой — [QA-52](../evidence/flutter/qa52-voice-prejoin-copy-live-region-2026-09-28-001.json),
