@@ -316,19 +316,25 @@ both deployed web and Flutter viewers.
   max 14 KiB), then unsubscribes after the first usable frame. A selected
   full-screen viewer retains its subscription, and an existing thumbnail
   remains visible after preview unsubscribe until the share is unpublished.
-  Flutter captures a local JPEG after receiver `framesDecoded`
-  and serializes native frame captures, but still uses `autoSubscribe=true`; it
-  needs the same temporary-subscription policy to avoid downloading every
-  hidden screen share. Keep the broad data grant disabled. ADR-013 records the
+  Flutter now connects with `autoSubscribe=false`, explicitly subscribes to
+  microphone tracks, and serializes temporary screen-video preview
+  subscriptions: at most one hidden screen is sampled at a time, a bounded
+  JPEG is captured after decoded frames arrive, then the track is unsubscribed.
+  A selected viewer explicitly retains its video/audio subscriptions, and an
+  existing thumbnail remains visible after preview unsubscribe until the share
+  is unpublished. Reconnects restore microphone, preview, and selected-viewer
+  subscriptions. Keep the broad data grant disabled. ADR-013 records the
   room-scoped track-preview constraints. Earlier roster and packet evidence is
   in [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json)
   and [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json).
   Web's 709 tests and production build pass for the new receiver path, but the
   paired live thumbnail test has not yet run —
   [QA-165](../evidence/flutter/qa165-web-screen-thumbnail-receiver-capture-2026-10-01-001.json).
-  Flutter's 320-test/analyzer run and Android release build/install/launch on
-  Pixel pass, but runtime preview acceptance on Android/macOS/Windows remains
-  open — [QA-164](../evidence/flutter/qa164-flutter-room-screen-thumbnail-pipeline-2026-10-01-001.json).
+  Flutter's 322-test/analyzer run, Android ABI-split release build, and
+  macOS Debug build pass; runtime preview acceptance on Android/macOS/Windows
+  remains open because the Pixel is disconnected and no fresh paired
+  screen-share test has run —
+  [QA-166](../evidence/flutter/qa166-flutter-temporary-screen-subscriptions-2026-10-01-001.json).
   Close cross-client preview only after Flutter's temporary subscription policy
   and the paired live test satisfy [ADR-013](adr/ADR-013-room-scoped-screen-thumbnail-preview.md).
 - Port admin topology operations with confirmations, revision conflicts and

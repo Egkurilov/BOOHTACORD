@@ -29,81 +29,136 @@ void main() {
     expect(waits, 2);
   });
 
-  test('stops the bounded receiver capture when the stream becomes inactive', () async {
-    var active = true;
-    var statsReads = 0;
-    var captures = 0;
+  test(
+    'stops the bounded receiver capture when the stream becomes inactive',
+    () async {
+      var active = true;
+      var statsReads = 0;
+      var captures = 0;
 
-    final result = await captureRemoteScreenThumbnail(
-      hasDecodedFrames: () async {
-        statsReads++;
-        active = false;
-        return false;
-      },
-      capture: () async {
-        captures++;
-        return Uint8List.fromList([1]);
-      },
-      encode: (_) async => Uint8List.fromList(validJpeg),
-      isActive: () => active,
-      wait: (_) async {},
-    );
+      final result = await captureRemoteScreenThumbnail(
+        hasDecodedFrames: () async {
+          statsReads++;
+          active = false;
+          return false;
+        },
+        capture: () async {
+          captures++;
+          return Uint8List.fromList([1]);
+        },
+        encode: (_) async => Uint8List.fromList(validJpeg),
+        isActive: () => active,
+        wait: (_) async {},
+      );
 
-    expect(result, isNull);
-    expect(statsReads, 1);
-    expect(captures, 0);
-  });
+      expect(result, isNull);
+      expect(statsReads, 1);
+      expect(captures, 0);
+    },
+  );
 
-  test('gives up after the preview deadline when no video frame is decoded', () async {
-    var statsReads = 0;
-    var captures = 0;
-    var waits = 0;
+  test(
+    'gives up after the preview deadline when no video frame is decoded',
+    () async {
+      var statsReads = 0;
+      var captures = 0;
+      var waits = 0;
 
-    final result = await captureRemoteScreenThumbnail(
-      hasDecodedFrames: () async {
-        statsReads++;
-        return false;
-      },
-      capture: () async {
-        captures++;
-        return Uint8List.fromList([1]);
-      },
-      encode: (_) async => Uint8List.fromList(validJpeg),
-      isActive: () => true,
-      wait: (_) async => waits++,
-      maxAttempts: 4,
-    );
+      final result = await captureRemoteScreenThumbnail(
+        hasDecodedFrames: () async {
+          statsReads++;
+          return false;
+        },
+        capture: () async {
+          captures++;
+          return Uint8List.fromList([1]);
+        },
+        encode: (_) async => Uint8List.fromList(validJpeg),
+        isActive: () => true,
+        wait: (_) async => waits++,
+        maxAttempts: 4,
+      );
 
-    expect(result, isNull);
-    expect(statsReads, 4);
-    expect(captures, 0);
-    expect(waits, 3);
-  });
+      expect(result, isNull);
+      expect(statsReads, 4);
+      expect(captures, 0);
+      expect(waits, 3);
+    },
+  );
 
-  test('serializes captures that share the native temporary-frame file', () async {
-    final queue = ScreenThumbnailCaptureQueue();
-    final firstStarted = Completer<void>();
-    final finishFirst = Completer<void>();
-    var secondStarted = false;
+  test(
+    'serializes captures that share the native temporary-frame file',
+    () async {
+      final queue = ScreenThumbnailCaptureQueue();
+      final firstStarted = Completer<void>();
+      final finishFirst = Completer<void>();
+      var secondStarted = false;
 
-    final first = queue.run(() async {
-      firstStarted.complete();
-      await finishFirst.future;
-      return 'first';
-    });
-    await firstStarted.future;
-    final second = queue.run(() async {
-      secondStarted = true;
-      return 'second';
-    });
+      final first = queue.run(() async {
+        firstStarted.complete();
+        await finishFirst.future;
+        return 'first';
+      });
+      await firstStarted.future;
+      final second = queue.run(() async {
+        secondStarted = true;
+        return 'second';
+      });
 
-    await Future<void>.delayed(Duration.zero);
-    expect(secondStarted, isFalse);
-    finishFirst.complete();
-    expect(await first, 'first');
-    expect(await second, 'second');
-    expect(secondStarted, isTrue);
-  });
+      await Future<void>.delayed(Duration.zero);
+      expect(secondStarted, isFalse);
+      finishFirst.complete();
+      expect(await first, 'first');
+      expect(await second, 'second');
+      expect(secondStarted, isTrue);
+    },
+  );
+
+  test(
+    'serializes remote preview subscriptions and deduplicates a publication',
+    () async {
+      final queue = ScreenPreviewSubscriptionQueue();
+      final firstGate = Completer<void>();
+      final order = <String>[];
+
+      final first = queue.enqueue('track-1', () async {
+        order.add('start-1');
+        await firstGate.future;
+        order.add('end-1');
+      });
+      final duplicate = queue.enqueue('track-1', () async {
+        order.add('duplicate');
+      });
+      final second = queue.enqueue('track-2', () async {
+        order.add('start-2');
+      });
+
+      await Future<void>.delayed(Duration.zero);
+      expect(order, ['start-1']);
+      firstGate.complete();
+      await Future.wait([first, duplicate, second]);
+
+      expect(order, ['start-1', 'end-1', 'start-2']);
+    },
+  );
+
+  test(
+    'a closed remote preview queue skips publications that have not started',
+    () async {
+      final queue = ScreenPreviewSubscriptionQueue();
+      final firstGate = Completer<void>();
+      var secondStarted = false;
+      final first = queue.enqueue('track-1', () => firstGate.future);
+      final second = queue.enqueue('track-2', () async => secondStarted = true);
+
+      await Future<void>.delayed(Duration.zero);
+      queue.close();
+      firstGate.complete();
+      await Future.wait([first, second]);
+
+      expect(secondStarted, isFalse);
+    },
+  );
 
   test(
     'reports capture failure without attempting encode or storing',
@@ -182,5 +237,4 @@ void main() {
     expect(result, ScreenThumbnailCaptureResult.cancelled);
     expect(stored, isFalse);
   });
-
 }

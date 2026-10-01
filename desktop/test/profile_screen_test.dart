@@ -50,7 +50,7 @@ void main() {
       ).firstMatch(File('pubspec.yaml').readAsStringSync())?.group(1);
 
       expect(packageVersion, '$appVersionName+$appBuildNumber');
-      expect(appVersionLabel, 'Версия 1.0.16 (21)');
+      expect(appVersionLabel, 'Версия 1.0.17 (22)');
     },
   );
 

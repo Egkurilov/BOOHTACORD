@@ -128,6 +128,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
         _screenSelectionVoiceChannelId = null;
         _screenWaitingToRestart = null;
       });
+      unawaited(widget.state.selectRemoteScreenForViewing(null));
     }
     final roomForSelection = widget.state.room;
     final selectedIdentity = _selectedScreenIdentity;
@@ -144,6 +145,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
         _selectedScreenIdentity = '';
         _pinnedScreenIdentity = null;
       });
+      unawaited(widget.state.selectRemoteScreenForViewing(null));
     }
     final waitingIdentity = _screenWaitingToRestart;
     if (waitingIdentity != null &&
@@ -157,6 +159,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
         _selectedScreenIdentity = waitingIdentity;
         _screenWaitingToRestart = null;
       });
+      unawaited(widget.state.selectRemoteScreenForViewing(waitingIdentity));
     }
     final pinnedIdentity = _pinnedScreenIdentity;
     final pinnedParticipant = pinnedIdentity == null
@@ -215,6 +218,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   void _selectVoiceScreen(String? identity) {
+    unawaited(widget.state.selectRemoteScreenForViewing(identity));
     setState(() {
       _screenWaitingToRestart = null;
       _screenSelectionVoiceChannelId = widget.state.voiceChannel?.id;
@@ -229,6 +233,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
 
   void _toggleVoiceScreenPin(String? identity) {
     if (identity == null) return;
+    unawaited(widget.state.selectRemoteScreenForViewing(identity));
     setState(() {
       _screenWaitingToRestart = null;
       _screenSelectionVoiceChannelId = widget.state.voiceChannel?.id;
@@ -240,6 +245,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   void _stopWatchingPinnedScreen() {
+    unawaited(widget.state.selectRemoteScreenForViewing(null));
     setState(() {
       _screenWaitingToRestart = null;
       _screenSelectionVoiceChannelId = widget.state.voiceChannel?.id;

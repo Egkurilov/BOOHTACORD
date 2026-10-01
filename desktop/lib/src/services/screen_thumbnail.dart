@@ -86,6 +86,41 @@ class ScreenThumbnailCaptureQueue {
   }
 }
 
+/// Runs at most one temporary remote screen subscription at a time.
+///
+/// A publication can be queued only once. Closing prevents queued work from
+/// starting after the room has left while allowing the active task to clean up.
+class ScreenPreviewSubscriptionQueue {
+  Future<void> _tail = Future<void>.value();
+  final Map<String, Future<void>> _queued = <String, Future<void>>{};
+  bool _closed = false;
+
+  bool get isClosed => _closed;
+
+  Future<void> enqueue(String trackId, Future<void> Function() operation) {
+    if (_closed) return Future<void>.value();
+    final existing = _queued[trackId];
+    if (existing != null) return existing;
+
+    final result = Completer<void>();
+    final completion = result.future;
+    _queued[trackId] = completion;
+    _tail = _tail.then((_) async {
+      try {
+        if (!_closed) await operation();
+      } catch (_) {
+        // A thumbnail preview is optional and must not interrupt voice.
+      } finally {
+        if (identical(_queued[trackId], completion)) _queued.remove(trackId);
+        if (!result.isCompleted) result.complete();
+      }
+    });
+    return completion;
+  }
+
+  void close() => _closed = true;
+}
+
 /// Captures one thumbnail only after the receiver has decoded a real frame.
 /// The bounded attempts ensure stale/unpublished tracks don't keep polling.
 Future<Uint8List?> captureRemoteScreenThumbnail({

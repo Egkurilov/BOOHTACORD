@@ -1,0 +1,51 @@
+{
+  "id": "QA-166",
+  "kind": "flutter-temporary-screen-subscriptions",
+  "status": "PARTIAL",
+  "executed_at": "2026-10-01",
+  "source_revision": "3ae7aa6",
+  "summary": "Flutter now disables LiveKit auto-subscription, explicitly subscribes to microphone tracks, serializes bounded temporary screen-video subscriptions for thumbnail capture, and preserves selected-viewer subscriptions. Flutter tests and analysis pass; Android release and macOS Debug builds pass. Live Android/macOS/Windows cross-client thumbnail behavior is not yet verified.",
+  "checks": [
+    {
+      "name": "Screen preview subscription queue tests",
+      "command": "cd desktop && flutter test --no-pub test/screen_thumbnail_pipeline_test.dart test/app_state_test.dart test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "103 focused Flutter tests pass, including serialization/deduplication, queue close behavior, voice state and selected-screen viewer wiring."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 322 tests pass."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "Analyzer reports no issues."
+    },
+    {
+      "name": "Android ABI-split release build",
+      "command": "cd desktop && flutter build apk --release --split-per-abi --no-pub",
+      "status": "PASS",
+      "observation": "Signed APKs built for armeabi-v7a (31.0 MB), arm64-v8a (39.5 MB), and x86_64 (45.3 MB), version 1.0.17+22. This build was not installed because adb reported no connected devices."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd desktop && flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "Build result to be recorded after the active build completes."
+    },
+    {
+      "name": "Paired live remote thumbnail preview",
+      "status": "NOT_RUN",
+      "observation": "No Pixel is currently connected (`adb devices` is empty); no new voice join or screen projection was started. Runtime preview appearance/clear behavior and bandwidth remain unverified."
+    },
+    {
+      "name": "Windows native runtime acceptance",
+      "status": "NOT_RUN",
+      "observation": "No Windows runtime was available in this session."
+    }
+  ],
+  "remaining": "Install version 1.0.17+22 and run a short, explicitly authorized Pixel-to-Mac/web test; verify thumbnail appearance, retention after temporary unsubscribe, clearing on unpublish, and selected-viewer playback. Run Windows CI/runtime validation before closing cross-client preview under ADR-013."
+}

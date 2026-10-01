@@ -268,8 +268,11 @@ class AppState extends ChangeNotifier {
   ScreenThumbnailCaptureResult? _screenThumbnailLastLoggedResult;
   final ScreenThumbnailCaptureQueue _screenThumbnailCaptureQueue =
       ScreenThumbnailCaptureQueue();
-  final Map<String, String> _screenThumbnailRemoteTrackIds =
-      <String, String>{};
+  ScreenPreviewSubscriptionQueue? _screenPreviewSubscriptionQueue;
+  final Map<String, Completer<RemoteVideoTrack?>> _screenPreviewTrackWaiters =
+      <String, Completer<RemoteVideoTrack?>>{};
+  String? _selectedRemoteScreenViewerIdentity;
+  final Map<String, String> _screenThumbnailRemoteTrackIds = <String, String>{};
   LocalVideoTrack? _screenShareMetricsTrack;
   ScreenShareSenderSnapshot? _previousScreenShareMetrics;
   final _screenShareMetricsGate = ScreenShareMetricsGenerationGate();
@@ -2171,6 +2174,7 @@ class AppState extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
+    _closeScreenPreviewSubscriptions();
     _realtimeRetry?.cancel();
     _maintenanceTimer?.cancel();
     _stopVoiceRosterEvents();
@@ -2492,6 +2496,69 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<void> selectRemoteScreenForViewing(String? participantIdentity) async {
+    final nextIdentity = participantIdentity?.trim();
+    final next = nextIdentity == null || nextIdentity.isEmpty
+        ? null
+        : nextIdentity;
+    final previous = _selectedRemoteScreenViewerIdentity;
+    if (previous == next) return;
+    _selectedRemoteScreenViewerIdentity = next;
+    final room = _room;
+    if (room == null) return;
+
+    if (previous != null) {
+      final participant = room.remoteParticipants[previous];
+      if (participant != null) {
+        for (final publication in participant.videoTrackPublications.where(
+          (item) => item.source == TrackSource.screenShareVideo,
+        )) {
+          if (!_screenThumbnailRemoteTrackIds.containsKey(publication.sid)) {
+            await _setRemoteTrackSubscription(publication, false);
+          }
+        }
+        for (final publication in participant.audioTrackPublications.where(
+          (item) => item.source == TrackSource.screenShareAudio,
+        )) {
+          await _setRemoteTrackSubscription(publication, false);
+        }
+      }
+    }
+
+    if (next == null) return;
+    _subscribeRemoteScreenForViewing(room, next);
+  }
+
+  void _subscribeRemoteScreenForViewing(Room room, String identity) {
+    final participant = room.remoteParticipants[identity];
+    if (participant == null) return;
+    for (final publication in participant.videoTrackPublications.where(
+      (item) => item.source == TrackSource.screenShareVideo,
+    )) {
+      unawaited(_setRemoteTrackSubscription(publication, true));
+    }
+    for (final publication in participant.audioTrackPublications.where(
+      (item) => item.source == TrackSource.screenShareAudio,
+    )) {
+      unawaited(_setRemoteTrackSubscription(publication, true));
+    }
+  }
+
+  Future<void> _setRemoteTrackSubscription(
+    RemoteTrackPublication publication,
+    bool subscribed,
+  ) async {
+    try {
+      if (subscribed) {
+        await publication.subscribe();
+      } else {
+        await publication.unsubscribe();
+      }
+    } catch (_) {
+      // Subscription failures leave the screen viewer on its avatar fallback.
+    }
+  }
+
   Future<void> joinVoice(
     GuildChannel channel, {
     bool listenerOnly = false,
@@ -2500,6 +2567,9 @@ class AppState extends ChangeNotifier {
     if (voiceChannel?.id == channel.id && _room != null) return;
     screenThumbnails.clear();
     _screenThumbnailRemoteTrackIds.clear();
+    _closeScreenPreviewSubscriptions();
+    _screenPreviewSubscriptionQueue = ScreenPreviewSubscriptionQueue();
+    _selectedRemoteScreenViewerIdentity = null;
     voicePhase = VoicePhase.joining;
     _voicePingMs = null;
     _voiceAdmissionPending = true;
@@ -2555,7 +2625,11 @@ class AppState extends ChangeNotifier {
       }
       pendingRoom = room;
       _bindVoiceRoomEvents(room);
-      await room.connect(result.$2.url, result.$2.token);
+      await room.connect(
+        result.$2.url,
+        result.$2.token,
+        connectOptions: const ConnectOptions(autoSubscribe: false),
+      );
       if (AndroidAudioDevices.isNativeOutputRoute(selectedAudioOutputId)) {
         if (!await AndroidAudioDevices.selectNativeOutput(
           selectedAudioOutputId!,
@@ -2571,6 +2645,7 @@ class AppState extends ChangeNotifier {
       }
       _room = room;
       voiceChannel = channel;
+      _subscribeCurrentRemoteVoiceTracks(room);
       await _applySavedVoiceVolumes(room);
       if (listenerOnly) {
         _listenerOnly = true;
@@ -2722,6 +2797,11 @@ class AppState extends ChangeNotifier {
       if (!identical(_room, room)) return;
       voicePhase = _listenerOnly ? VoicePhase.listener : VoicePhase.connected;
       _observeVoiceStreamStarts(room);
+      _subscribeCurrentRemoteVoiceTracks(room);
+      final selectedIdentity = _selectedRemoteScreenViewerIdentity;
+      if (selectedIdentity != null) {
+        _subscribeRemoteScreenForViewing(room, selectedIdentity);
+      }
       unawaited(_applySavedVoiceVolumes(room));
       if (deafened) unawaited(_deafenRemoteAudio(room));
       if (audioActivationMode == AudioActivationMode.ptt) {
@@ -2737,7 +2817,10 @@ class AppState extends ChangeNotifier {
       if (!identical(_room, room)) return;
       if (event.publication.source == TrackSource.screenShareVideo &&
           event.track is RemoteVideoTrack) {
-        unawaited(_captureRemoteScreenThumbnail(room, event));
+        final waiter = _screenPreviewTrackWaiters[event.publication.sid];
+        if (waiter != null && !waiter.isCompleted) {
+          waiter.complete(event.track as RemoteVideoTrack);
+        }
       }
       if (event.track is RemoteAudioTrack) {
         if (deafened) unawaited(event.publication.disable());
@@ -2755,18 +2838,44 @@ class AppState extends ChangeNotifier {
     listener.on<ParticipantConnectedEvent>((_) => refreshVoiceNavigation());
     listener.on<ParticipantDisconnectedEvent>((event) {
       screenThumbnails.remove(event.participant.identity);
-      _screenThumbnailRemoteTrackIds.removeWhere(
-        (_, participantIdentity) =>
-            participantIdentity == event.participant.identity,
-      );
+      final endedTrackIds = _screenThumbnailRemoteTrackIds.entries
+          .where((entry) => entry.value == event.participant.identity)
+          .map((entry) => entry.key)
+          .toList(growable: false);
+      for (final trackId in endedTrackIds) {
+        final waiter = _screenPreviewTrackWaiters[trackId];
+        if (waiter != null && !waiter.isCompleted) waiter.complete(null);
+        _screenThumbnailRemoteTrackIds.remove(trackId);
+      }
+      if (_selectedRemoteScreenViewerIdentity == event.participant.identity) {
+        _selectedRemoteScreenViewerIdentity = null;
+      }
       refreshVoiceNavigation();
     });
     listener.on<ActiveSpeakersChangedEvent>((_) => refreshVoiceNavigation());
-    listener.on<TrackPublishedEvent>((_) => refreshVoiceNavigation());
+    listener.on<TrackPublishedEvent>((event) {
+      if (identical(_room, room)) {
+        if (event.publication.source == TrackSource.microphone) {
+          unawaited(_setRemoteTrackSubscription(event.publication, true));
+        } else if (event.publication.source == TrackSource.screenShareVideo) {
+          _queueRemoteScreenThumbnail(
+            room,
+            event.participant,
+            event.publication,
+          );
+        }
+      }
+      refreshVoiceNavigation();
+    });
     listener.on<TrackUnpublishedEvent>((event) {
       if (event.publication.source == TrackSource.screenShareVideo) {
         screenThumbnails.remove(event.participant.identity);
         _screenThumbnailRemoteTrackIds.remove(event.publication.sid);
+        final waiter = _screenPreviewTrackWaiters[event.publication.sid];
+        if (waiter != null && !waiter.isCompleted) waiter.complete(null);
+        if (_selectedRemoteScreenViewerIdentity == event.participant.identity) {
+          unawaited(selectRemoteScreenForViewing(null));
+        }
       }
       refreshVoiceNavigation();
     });
@@ -2776,7 +2885,8 @@ class AppState extends ChangeNotifier {
     listener.on<TrackUnsubscribedEvent>((event) {
       if (event.publication.source == TrackSource.screenShareVideo) {
         _screenThumbnailRemoteTrackIds.remove(event.publication.sid);
-        screenThumbnails.remove(event.participant.identity);
+        final waiter = _screenPreviewTrackWaiters[event.publication.sid];
+        if (waiter != null && !waiter.isCompleted) waiter.complete(null);
       }
       refreshVoiceNavigation();
     });
@@ -2816,24 +2926,113 @@ class AppState extends ChangeNotifier {
     });
   }
 
-  Future<void> _captureRemoteScreenThumbnail(
+  void _subscribeCurrentRemoteVoiceTracks(Room room) {
+    for (final participant in room.remoteParticipants.values) {
+      for (final publication in participant.audioTrackPublications.where(
+        (item) => item.source == TrackSource.microphone,
+      )) {
+        unawaited(_setRemoteTrackSubscription(publication, true));
+      }
+      for (final publication in participant.videoTrackPublications.where(
+        (item) => item.source == TrackSource.screenShareVideo,
+      )) {
+        _queueRemoteScreenThumbnail(room, participant, publication);
+      }
+    }
+  }
+
+  void _queueRemoteScreenThumbnail(
     Room room,
-    TrackSubscribedEvent event,
-  ) async {
-    final track = event.track as RemoteVideoTrack;
-    final trackId = event.publication.sid;
-    if (_screenThumbnailRemoteTrackIds.containsKey(trackId)) {
+    RemoteParticipant participant,
+    RemoteTrackPublication publication,
+  ) {
+    final queue = _screenPreviewSubscriptionQueue;
+    if (queue == null ||
+        queue.isClosed ||
+        publication.source != TrackSource.screenShareVideo ||
+        publication.muted ||
+        _selectedRemoteScreenViewerIdentity == participant.identity) {
       return;
     }
-    final participant = event.participant;
-    _screenThumbnailRemoteTrackIds[trackId] = participant.identity;
+    unawaited(
+      queue.enqueue(publication.sid, () async {
+        if (!_isRemoteScreenPublicationActive(room, participant, publication) ||
+            _selectedRemoteScreenViewerIdentity == participant.identity) {
+          return;
+        }
+        final trackId = publication.sid;
+        final waiter = Completer<RemoteVideoTrack?>();
+        _screenPreviewTrackWaiters[trackId] = waiter;
+        _screenThumbnailRemoteTrackIds[trackId] = participant.identity;
+        var requestedSubscription = false;
+        try {
+          final existingTrack = publication.track;
+          if (existingTrack is RemoteVideoTrack) {
+            waiter.complete(existingTrack);
+          }
+          requestedSubscription = true;
+          await _setRemoteTrackSubscription(publication, true);
+          final track = await waiter.future.timeout(
+            const Duration(seconds: 4),
+            onTimeout: () => null,
+          );
+          if (track == null ||
+              _selectedRemoteScreenViewerIdentity == participant.identity ||
+              !_isRemoteScreenPublicationActive(
+                room,
+                participant,
+                publication,
+              )) {
+            return;
+          }
+          await _captureRemoteScreenThumbnail(
+            room,
+            participant,
+            publication,
+            track,
+          );
+        } catch (_) {
+          // A failed thumbnail subscription must not affect voice playback.
+        } finally {
+          if (identical(_screenPreviewTrackWaiters[trackId], waiter)) {
+            _screenPreviewTrackWaiters.remove(trackId);
+          }
+          _screenThumbnailRemoteTrackIds.remove(trackId);
+          if (requestedSubscription &&
+              _isRemoteScreenPublicationActive(
+                room,
+                participant,
+                publication,
+              ) &&
+              _selectedRemoteScreenViewerIdentity != participant.identity) {
+            await _setRemoteTrackSubscription(publication, false);
+          }
+        }
+      }),
+    );
+  }
+
+  bool _isRemoteScreenPublicationActive(
+    Room room,
+    RemoteParticipant participant,
+    RemoteTrackPublication publication,
+  ) =>
+      identical(_room, room) &&
+      _screenPreviewSubscriptionQueue?.isClosed == false &&
+      identical(room.remoteParticipants[participant.identity], participant) &&
+      participant.videoTrackPublications.any(
+        (item) => identical(item, publication),
+      );
+
+  Future<void> _captureRemoteScreenThumbnail(
+    Room room,
+    RemoteParticipant participant,
+    RemoteTrackPublication publication,
+    RemoteVideoTrack track,
+  ) async {
     bool isActive() =>
-        identical(_room, room) &&
-        identical(room.remoteParticipants[participant.identity], participant) &&
-        identical(event.publication.track, track) &&
-        participant.videoTrackPublications.any(
-          (publication) => identical(publication, event.publication),
-        );
+        _isRemoteScreenPublicationActive(room, participant, publication) &&
+        identical(publication.track, track);
 
     final thumbnail = await captureRemoteScreenThumbnail(
       hasDecodedFrames: () async {
@@ -2841,8 +3040,7 @@ class AppState extends ChangeNotifier {
         return decoded != null && decoded > 0;
       },
       capture: () => _screenThumbnailCaptureQueue.run(
-        () async =>
-            (await track.mediaStreamTrack.captureFrame()).asUint8List(),
+        () async => (await track.mediaStreamTrack.captureFrame()).asUint8List(),
       ),
       encode: (frame) => compute(encodeScreenThumbnail, frame),
       isActive: isActive,
@@ -2850,6 +3048,16 @@ class AppState extends ChangeNotifier {
     if (thumbnail == null || !isActive()) return;
     screenThumbnails[participant.identity] = thumbnail;
     notifyListeners();
+  }
+
+  void _closeScreenPreviewSubscriptions() {
+    _screenPreviewSubscriptionQueue?.close();
+    _screenPreviewSubscriptionQueue = null;
+    for (final waiter in _screenPreviewTrackWaiters.values) {
+      if (!waiter.isCompleted) waiter.complete(null);
+    }
+    _screenPreviewTrackWaiters.clear();
+    _screenThumbnailRemoteTrackIds.clear();
   }
 
   void _startVoiceConnectionStatsPolling(Room room) {
@@ -2879,8 +3087,13 @@ class AppState extends ChangeNotifier {
         }
         final measuredPing = voiceRttMillisecondsFromPeerConnections(reports);
         if (reporter != null) {
-          unawaited(reporter.submit(measuredPing,
-              room.localParticipant?.connectionQuality ?? ConnectionQuality.unknown));
+          unawaited(
+            reporter.submit(
+              measuredPing,
+              room.localParticipant?.connectionQuality ??
+                  ConnectionQuality.unknown,
+            ),
+          );
         }
         final ping = voicePingAfterMeasurement(
           previousPingMilliseconds: _voicePingMs,
@@ -3190,16 +3403,27 @@ class AppState extends ChangeNotifier {
       );
       _previousScreenShareMetrics = current;
       try {
-        final samples = stats.map((item) => SenderMediaSample(
-          streamId: item.streamId, timestamp: item.timestamp,
-          frameWidth: item.frameWidth, frameHeight: item.frameHeight,
-          packetsSent: item.packetsSent, packetsLost: item.packetsLost,
-          qualityLimitationReason: item.qualityLimitationReason,
-        )).toList();
+        final samples = stats
+            .map(
+              (item) => SenderMediaSample(
+                streamId: item.streamId,
+                timestamp: item.timestamp,
+                frameWidth: item.frameWidth,
+                frameHeight: item.frameHeight,
+                packetsSent: item.packetsSent,
+                packetsLost: item.packetsLost,
+                qualityLimitationReason: item.qualityLimitationReason,
+              ),
+            )
+            .toList();
         await api.reportScreenShareMetrics({
           ...report.toJson(),
-          ..._senderMediaTelemetry.fields(samples, screenShareQuality,
-              _room?.localParticipant?.connectionQuality ?? ConnectionQuality.unknown),
+          ..._senderMediaTelemetry.fields(
+            samples,
+            screenShareQuality,
+            _room?.localParticipant?.connectionQuality ??
+                ConnectionQuality.unknown,
+          ),
         });
       } catch (_) {
         // Diagnostic telemetry is best-effort and must not interrupt sharing.
@@ -3222,6 +3446,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _disposeVoiceEvents() async {
+    _closeScreenPreviewSubscriptions();
     final listener = _voiceEvents;
     _voiceEvents = null;
     await listener?.dispose();
