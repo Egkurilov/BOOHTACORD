@@ -229,6 +229,42 @@ void main() {
     expect(transientAttempts, 2);
     expect(find.text('Вложение удалено или недоступно.'), findsOneWidget);
   });
+
+  testWidgets('keeps the image viewer inside a narrow mobile viewport', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 640);
+    addTearDown(tester.view.reset);
+    const onePixelPng =
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
+    final state = AppState(
+      ApiClient(
+        client: MockClient(
+          (_) async => http.Response.bytes(
+            base64Decode(onePixelPng),
+            200,
+            headers: {'content-type': 'image/png'},
+          ),
+        ),
+      ),
+    );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(_app(state));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('attachment-preview-attachment-1')),
+    );
+    await tester.pumpAndSettle();
+
+    final dialog = tester.getRect(find.byType(Dialog));
+    expect(dialog.left, greaterThanOrEqualTo(0));
+    expect(dialog.top, greaterThanOrEqualTo(0));
+    expect(dialog.right, lessThanOrEqualTo(320));
+    expect(dialog.bottom, lessThanOrEqualTo(640));
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Widget _app(AppState state) => MaterialApp(

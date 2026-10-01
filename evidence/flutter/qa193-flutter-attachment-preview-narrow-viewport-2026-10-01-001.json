@@ -1,0 +1,20 @@
+{
+  "id": "QA-193",
+  "kind": "flutter-attachment-preview-narrow-viewport",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "working-tree after d2cdb28",
+  "checks": [
+    {
+      "name": "Protected image dialog at 320x640 logical pixels",
+      "command": "cd desktop && flutter test test/message_attachment_list_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "The test opens a protected one-pixel PNG preview at a 320x640 viewport, checks the dialog bounds remain inside the viewport, and confirms Flutter reports no layout exception. All six message_attachment_list_test.dart tests pass."
+    }
+  ],
+  "limitations": [
+    "This widget test does not prove visual parity in a browser, on a physical phone, with a long filename or keyboard visible.",
+    "Real authenticated TEXT/DM preview loading and participant-only ACL denial remain unverified."
+  ],
+  "remaining": "Compare the actual protected viewer at matching browser/Flutter narrow viewports and verify TEXT/DM access with an authorized participant and a denied nonparticipant."
+}
