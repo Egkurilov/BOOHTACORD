@@ -1,0 +1,36 @@
+{
+  "id": "QA-191",
+  "kind": "pixel7-android-app-only-screen-preview",
+  "status": "FAIL_LOCAL_VIEWER_BLACK_ON_CURRENT_SOURCE",
+  "executed_at": "2026-10-01",
+  "source_revision": "1bb7420",
+  "summary": "The current-source app-only Calculator capture produced a valid participant thumbnail, but the large local own-screen viewer stayed black after returning to BOOHTACORD. The defect is in the local viewer/render path or its interaction with app-task capture; root cause is not yet proven.",
+  "checks": [
+    {
+      "name": "Installed application revision",
+      "device": "Google Pixel 7, Android 17/API 37",
+      "command": "adb shell dumpsys package ru.boohtacord.app",
+      "status": "PASS",
+      "observation": "The initial installed package was versionName 1.0.18, versionCode 2023, and its picker still displayed Android capture guidance removed from current source in commit 0838dc6. A current-source APK was built as versionName 1.0.18, versionCode 2024; the signer matched the installed package and Android accepted an in-place update without deleting app data. The updated picker no longer displayed that guidance."
+    },
+    {
+      "name": "App-only capture target and local preview",
+      "device": "Google Pixel 7, SHARE_TEST, microphone muted",
+      "command": "adb shell dumpsys media_projection; adb exec-out screencap -p",
+      "status": "FAIL_LOCAL_VIEWER_BLACK_THUMBNAIL_VALID",
+      "observation": "On versionCode 2024, Android reported RECORD_CONTENT_TASK targeting com.google.android.calculator. After returning to BOOHTACORD, the main local viewer remained black after approximately 21 seconds, while the participant card showed a live Calculator thumbnail. This establishes that app-task pixels reached the thumbnail capture path, but not why the large VideoTrackRenderer remained black. The room UI showed microphone muted and RTT around 7 ms."
+    },
+    {
+      "name": "Stop and cleanup",
+      "device": "Google Pixel 7, Android 17/API 37",
+      "command": "Stop share and leave voice; adb shell dumpsys media_projection",
+      "status": "PASS",
+      "observation": "Screen share was stopped, the voice session was left, and MediaProjection reported no active projection."
+    }
+  ],
+  "limitations": [
+    "No remote macOS or web receiver was connected; remote playback and receiver frame metrics were not tested.",
+    "The user-reported full-display success was not repeated in this authorized app-only test."
+  ],
+  "remaining": "Reproduce with a paired macOS or web receiver, inspect bounded local sender/receiver frame stats, and identify why the Android local VideoTrackRenderer is black while thumbnail capture has pixels. Add a regression test and fix before closing T-030 preview acceptance."
+}
