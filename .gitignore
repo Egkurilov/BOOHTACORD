@@ -22,6 +22,8 @@ clients/flutter/packages/flutter_webrtc/third_party/libwebrtc/
 *.pyc
 data/
 attachments/
+# This is source code, not the runtime attachment store.
+!clients/flutter/lib/src/features/attachments/
 evidence/design/artifacts/
 evidence/*.json
 !evidence/README.md
