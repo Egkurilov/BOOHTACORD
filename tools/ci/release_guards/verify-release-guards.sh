@@ -15,7 +15,7 @@ pwsh -NoProfile -File tools/verify/ci_sbom/verify-ci-sbom.ps1
 pwsh -NoProfile -File tools/verify/github_workflows/verify-github-workflows.ps1
 pwsh -NoProfile -File tools/verify/android_release_signing/verify-android-release-signing.ps1
 printf 'Checking Compose configuration...\n'
-"$compose_cli" --env-file .env.example -f compose.yaml --profile operator config --quiet
+"$compose_cli" --env-file .env.example -f deploy/compose.yaml --profile operator config --quiet
 pwsh -NoProfile -File tools/verify/otel_egress/verify-otel-egress.ps1
 python3 -m unittest tools.verify.trace_dashboard.test_traces_dashboard
 printf 'Checking Compose image contract...\n'

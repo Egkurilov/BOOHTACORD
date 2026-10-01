@@ -7,7 +7,7 @@ on:
       - 'backend/**'
       - 'clients/web/**'
       - 'contracts/**'
-      - 'docker/**'
+      - 'deploy/**'
       - 'scripts/**'
       - 'tools/**'
       - 'compose.yaml'

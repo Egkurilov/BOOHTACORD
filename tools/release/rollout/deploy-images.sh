@@ -2,7 +2,9 @@
 set -euo pipefail
 
 project_dir="${VOICE_PLATFORM_DIR:-/opt/voice-platform}"
-compose_file="$project_dir/compose.yaml"
+compose_dir="$project_dir"
+[[ ! -f "$project_dir/deploy/compose.yaml" ]] || compose_dir="$project_dir/deploy"
+compose_file="$compose_dir/compose.yaml"
 env_file="$project_dir/.env"
 
 fail() {
@@ -32,7 +34,7 @@ fi
 public_host="$(sed -n 's/^PUBLIC_HOST=//p' "$env_file" | tail -n 1)"
 [[ "$public_host" =~ ^[A-Za-z0-9.-]+$ ]] || fail "PUBLIC_HOST must be a hostname."
 
-compose=(docker compose --project-directory "$project_dir" -f "$compose_file")
+compose=(docker compose --project-directory "$compose_dir" --env-file "$env_file" -f "$compose_file")
 
 assert_proxy_networks() {
   local proxy_id

@@ -3,9 +3,9 @@ $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 Push-Location $projectRoot
 try {
     if ($env:VOICE_PLATFORM_COMPOSE_CLI) {
-        $json = & $env:VOICE_PLATFORM_COMPOSE_CLI --env-file .env.example -f compose.yaml config --format json
+        $json = & $env:VOICE_PLATFORM_COMPOSE_CLI --env-file .env.example -f deploy/compose.yaml config --format json
     } else {
-        $json = docker compose --env-file .env.example -f compose.yaml config --format json
+        $json = docker compose --env-file .env.example -f deploy/compose.yaml config --format json
     }
     if ($LASTEXITCODE -ne 0) { throw 'Compose config failed.' }
     $api = ($json -join "`n" | ConvertFrom-Json).services.api

@@ -1,0 +1,42 @@
+x-json-log-rotation: &json-log-rotation
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  livekit:
+    image: livekit/livekit-server:v1.13.7
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        awk '
+          BEGIN {
+            key = ENVIRON["LIVEKIT_API_KEY"]
+            secret = ENVIRON["LIVEKIT_API_SECRET"]
+            if (key == "" || secret == "") exit 1
+          }
+          $0 == "  __LIVEKIT_API_KEY__: __LIVEKIT_API_SECRET__" {
+            print "  " key ": " secret
+            replaced = 1
+            next
+          }
+          $0 == "  api_key: __LIVEKIT_API_KEY__" {
+            print "  api_key: " key
+            next
+          }
+          { print }
+          END { if (!replaced) exit 1 }
+        ' /etc/livekit-template.yaml > /tmp/livekit.yaml
+        exec /livekit-server --config /tmp/livekit.yaml --node-ip "$${LIVEKIT_NODE_IP}"
+    environment:
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:?set LIVEKIT_API_KEY in .env}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:?set LIVEKIT_API_SECRET in .env}
+      LIVEKIT_NODE_IP: ${LIVEKIT_NODE_IP:?set LIVEKIT_NODE_IP in .env}
+    ports:
+      - "7882:7882/tcp"
+      - "50000-50100:50000-50100/udp"
+    volumes:
+      - ./livekit.yaml:/etc/livekit-template.yaml:ro
+    networks: [edge, private]
+    logging: *json-log-rotation

@@ -5,8 +5,8 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 fixture="$(mktemp -d)"
 trap 'rm -rf -- "$fixture"' EXIT
 project="$fixture/project"
-mkdir -p "$project/scripts" "$fixture/bin"
-printf 'services: {}\n' > "$project/compose.yaml"
+mkdir -p "$project/deploy" "$fixture/bin"
+printf 'services: {}\n' > "$project/deploy/compose.yaml"
 printf 'PUBLIC_HOST=v.bootybay.ru\nAPI_IMAGE=old\nWEB_IMAGE=old\n' > "$project/.env"
 
 cat > "$fixture/bin/docker" <<'EOF'
@@ -52,6 +52,7 @@ if grep -Fq 'up -d --no-deps --no-build api web' "$fixture/calls"; then exit 1; 
 grep -Fq 'maintenance-admission --disable' "$fixture/calls"
 
 run_deploy pass
+grep -Fq -- "--project-directory $project/deploy --env-file $project/.env -f $project/deploy/compose.yaml" "$fixture/calls"
 pull="$(grep -n -F 'pull api migrate web' "$fixture/calls" | head -n 1 | cut -d: -f1)"
 guard="$(grep -n -Fx guard "$fixture/calls" | head -n 1 | cut -d: -f1)"
 migrate="$(grep -n -F 'run --rm --no-deps migrate' "$fixture/calls" | head -n 1 | cut -d: -f1)"

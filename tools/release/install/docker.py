@@ -3,6 +3,7 @@ import json
 import os
 import subprocess
 from .guards import installed_digests
+from .paths import compose_arguments, rollout_script
 from tools.release.bundle.manifest import require
 
 
@@ -29,13 +30,13 @@ def deploy(directory, manifest):
     environment = {**os.environ, "VOICE_PLATFORM_DIR": str(directory)}
     for service, component in manifest["components"].items():
         environment[service.upper() + "_IMAGE"] = f"voice-platform-{service}@{component['index_digest']}"
-    subprocess.run(["bash", str(directory / "tools/release/rollout/deploy-images.sh")], env=environment, check=True)
+    subprocess.run(["bash", str(rollout_script(directory))], env=environment, check=True)
 
 
 def verify_running(directory, manifest):
     for service, component in manifest["components"].items():
         digest = component["index_digest"]
-        container = docker("compose", "--project-directory", str(directory), "-f", str(directory / "compose.yaml"), "ps", "-q", service)
+        container = docker("compose", *compose_arguments(directory), "ps", "-q", service)
         require(bool(container) and "\n" not in container, "Expected one running " + service)
         installed_digests(digest, docker("image", "inspect", "--format", "{{.Id}}", f"voice-platform-{service}@{digest}"),
                           docker("inspect", "--format", "{{.Image}}", container),

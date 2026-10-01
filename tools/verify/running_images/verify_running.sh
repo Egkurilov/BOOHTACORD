@@ -3,6 +3,8 @@ set -euo pipefail
 revision="$1"
 release_dir="${VOICE_PLATFORM_DIR:-/opt/voice-platform-releases/$revision}"
 [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+compose_dir="$release_dir"
+[[ ! -f "$release_dir/deploy/compose.yaml" ]] || compose_dir="$release_dir/deploy"
 for service in api web; do
   expected="$(python3 - "$release_dir/$service.oci.json" <<'PY'
 import json
@@ -18,7 +20,7 @@ PY
   pinned="voice-platform-$service@$expected"
   pinned_id="$(docker image inspect --format '{{.Id}}' "$pinned")"
   [[ "$pinned_id" == "$expected" ]] || { echo "$service digest reference is unavailable" >&2; exit 1; }
-  container="$(docker compose --project-directory "$release_dir" -f "$release_dir/compose.yaml" ps -q "$service")"
+  container="$(docker compose --project-directory "$compose_dir" --env-file "$release_dir/.env" -f "$compose_dir/compose.yaml" ps -q "$service")"
   [[ -n "$container" ]]
   running="$(docker inspect --format '{{.Image}}' "$container")"
   [[ "$running" == "$expected" ]] || { echo "$service container differs from verified OCI index" >&2; exit 1; }

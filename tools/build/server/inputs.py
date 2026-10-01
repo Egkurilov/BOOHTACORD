@@ -4,8 +4,10 @@ import subprocess
 from pathlib import Path
 from tools.release.bundle.files import sha256
 
-SOURCE_PATHS = ("backend", "clients/web", "contracts", "docker", "compose.yaml", "scripts", "tools", ".node-version", "Taskfile.yml")
-RUNTIME_PATHS = ("compose.yaml", "docker/Caddyfile", "docker/livekit.yaml",
+SOURCE_PATHS = ("backend", "clients/web", "contracts", "deploy", "compose.yaml", "tools", ".node-version", "Taskfile.yml")
+TOPOLOGY_PATHS = ("deploy/compose.yaml", "deploy/operators.yaml", "deploy/caddy/Caddyfile",
+                  "deploy/livekit/compose.yaml", "deploy/livekit/livekit.yaml")
+RUNTIME_PATHS = (*TOPOLOGY_PATHS,
                  "tools/release/archive", "tools/release/bundle", "tools/release/install", "tools/release/rollback",
                  "tools/release/rollout/deploy-images.sh", "tools/ops/attachment_headroom/check-attachment-volume-headroom.sh",
                  "tools/ops/attachment_audit/audit-attachment-volume.sh", "tools/verify/oci/verify_oci.py",
@@ -32,6 +34,6 @@ def compatibility(root):
     names = git(root, "ls-files", "-z", "--", migration_root).decode().split("\0")
     return {"backend_tree": git(root, "rev-parse", "HEAD:backend").decode().strip(),
             "contracts_sha256": fingerprint(root, ("contracts",)),
-            "topology_sha256": fingerprint(root, ("compose.yaml", "docker/Caddyfile", "docker/livekit.yaml")),
+            "topology_sha256": fingerprint(root, TOPOLOGY_PATHS),
             "migrations": {Path(name).name: hashlib.sha256(git(root, "show", "HEAD:" + name)).hexdigest()
                            for name in names if name.endswith(".sql")}}

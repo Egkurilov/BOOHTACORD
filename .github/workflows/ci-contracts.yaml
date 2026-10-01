@@ -22,7 +22,7 @@ jobs:
           python -m tools.ci.native.contracts
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Validate Compose interpolation without starting services
-        run: docker compose --env-file .env.example -f compose.yaml config --quiet
+        run: docker compose --env-file .env.example -f deploy/compose.yaml config --quiet
       - name: Verify private OTLP egress wiring
         shell: pwsh
         run: ./tools/verify/otel_egress/verify-otel-egress.ps1

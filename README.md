@@ -55,7 +55,7 @@ Self-hosted веб-платформа в логике лёгкого Discord: г
 2. Поднимите контур:
 
    ```powershell
-   docker compose --env-file .env -f compose.yaml up --build -d
+   docker compose --env-file .env -f deploy/compose.yaml -f deploy/compose.dev.yaml up --build -d
    ```
 
 3. Проверьте API:
@@ -84,7 +84,7 @@ Pop-Location
 
 & .\tools\verify\contracts\verify-contracts.ps1
 & .\tools\verify\spec_traceability\verify-spec-traceability.ps1
-docker compose --env-file .env.example -f compose.yaml config --quiet
+docker compose --env-file .env.example -f deploy/compose.yaml config --quiet
 ```
 
 ## Документация

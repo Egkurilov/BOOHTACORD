@@ -2,15 +2,15 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
-$composePath = Join-Path $projectRoot 'compose.yaml'
-$compose = Get-Content -LiteralPath $composePath -Raw
+$composePath = Join-Path $projectRoot 'deploy/compose.yaml'
+$compose = (Get-Content -LiteralPath $composePath -Raw) + (Get-Content -LiteralPath (Join-Path $projectRoot 'deploy/livekit/compose.yaml') -Raw)
 $runtimeServices = @('postgres', 'livekit', 'api', 'web', 'proxy')
 
 foreach ($service in $runtimeServices) {
     $escapedService = [regex]::Escape($service)
     $serviceBlock = [regex]::Match(
         $compose,
-        "(?ms)^  ${escapedService}:\r?\n(?<body>.*?)(?=^  [a-z][a-z0-9-]*:\r?\n|^networks:)"
+        "(?ms)^  ${escapedService}:\r?\n(?<body>.*?)(?=^  [a-z][a-z0-9-]*:\r?\n|^networks:|\z)"
     )
     if (-not $serviceBlock.Success) {
         throw "Missing Compose service: $service"

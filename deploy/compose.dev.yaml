@@ -1,0 +1,7 @@
+services:
+  api:
+    build:
+      context: ../backend
+  web:
+    build:
+      context: ../clients/web

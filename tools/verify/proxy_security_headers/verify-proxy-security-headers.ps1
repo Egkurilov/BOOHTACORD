@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
-$caddyfile = Get-Content -LiteralPath (Join-Path $projectRoot 'docker/Caddyfile') -Raw
+$caddyfile = Get-Content -LiteralPath (Join-Path $projectRoot 'deploy/caddy/Caddyfile') -Raw
 
 foreach ($line in @(
     'X-Content-Type-Options "nosniff"',
