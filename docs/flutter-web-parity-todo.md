@@ -178,7 +178,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   состояния подключения, загрузка/ошибка roster помечены live-region, а header
   теперь показывает те же dynamic roster states, что и web (проверка до фикса
   воспроизводила расхождение на пустом roster) — [QA-154](../evidence/flutter/qa154-prejoin-roster-live-status-parity-2026-09-30-001.json),
-  [QA-169](../evidence/flutter/qa169-flutter-prejoin-roster-header-copy-2026-10-01-001.json);
+  [QA-169](../evidence/flutter/qa169-flutter-prejoin-roster-header-copy-2026-10-01-001.json).
+  Заголовок также сохраняет состояние roster при закрытом администратором входе;
+  ошибка roster в этом состоянии покрыта красным/зелёным regression test —
+  [QA-170](../evidence/flutter/qa170-flutter-closed-channel-roster-header-2026-10-01-001.json).
   dock reconnect/leaving, deafen guidance и pending/leave button states также
   приведены к вебу и покрыты локально. Проверка реальных screen readers/focus и
   mute/deafen поведения остаётся открытой — [QA-52](../evidence/flutter/qa52-voice-prejoin-copy-live-region-2026-09-28-001.json),

@@ -1,0 +1,28 @@
+{
+  "id": "QA-170",
+  "kind": "flutter-closed-channel-roster-header-parity",
+  "status": "PARTIAL",
+  "executed_at": "2026-10-01",
+  "source_revision": "b07ea47",
+  "summary": "When voice admission is closed, Flutter now keeps the same roster-state header subtitle as web instead of replacing it with the admission restriction. The restriction remains communicated by the closed-state notice and disabled join controls. A test-first regression reproduces the mismatch and passes after the fix.",
+  "checks": [
+    {
+      "name": "Test-first closed-admission roster error regression",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name \"announces prejoin roster loading and errors as live status\"",
+      "status": "PASS",
+      "observation": "Before implementation, the new assertion failed because the header showed 'Вход временно закрыт' instead of the web-equivalent 'Голосовой канал · состав недоступен'. After implementation, the widget test passes for loading, unavailable, empty, populated, and unavailable-in-closed-channel states."
+    },
+    {
+      "name": "Full Flutter suite and analyzer",
+      "command": "cd desktop && flutter test --no-pub && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "All 326 Flutter tests pass and flutter analyze reports no issues."
+    },
+    {
+      "name": "Physical screen-reader and closed-channel visual acceptance",
+      "status": "NOT_RUN",
+      "observation": "No physical Android/Windows/macOS closed-admission room was available for matched screenshot or native screen-reader acceptance."
+    }
+  ],
+  "remaining": "Verify the closed voice-channel roster header, closed-state notice, disabled controls, focus, and live announcements against web on Android, macOS, and Windows."
+}
