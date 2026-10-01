@@ -1,0 +1,40 @@
+{
+  "id": "QA-186",
+  "kind": "android-local-screen-thumbnail-frame-timeout",
+  "status": "PASS_WITH_DEVICE_ACCEPTANCE_OPEN",
+  "executed_at": "2026-10-01",
+  "source_revision": "7514e83fc55e061ef354b066f4a5c07fe2d8c15a",
+  "summary": "Android local preview capture no longer waits forever for the first native video frame: a five-second timeout removes the frame sink and returns an error, while an atomic completion gate protects against duplicate timeout/late-frame replies. The local thumbnail queue can retry after a failed capture. This addresses a failure path found during source audit; the user's app-only preview symptom is not confirmed fixed until device acceptance.",
+  "checks": [
+    {
+      "name": "Android WebRTC capture plugin unit tests",
+      "command": "cd desktop/android && JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew :flutter_webrtc:testDebugUnitTest",
+      "status": "PASS",
+      "observation": "All 10 Android unit tests passed, including two new FrameCaptureGate tests covering timeout/frame terminal-event races."
+    },
+    {
+      "name": "Android debug Java compilation",
+      "command": "cd desktop/android && JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew :flutter_webrtc:testDebugUnitTest :app:compileDebugJavaWithJavac",
+      "status": "PASS",
+      "observation": "The modified flutter_webrtc native plugin and Android app compile successfully."
+    },
+    {
+      "name": "Flutter screen-thumbnail and participant preview tests",
+      "command": "cd desktop && flutter test test/screen_thumbnail_pipeline_test.dart test/screen_thumbnail_test.dart test/voice_participant_thumbnail_test.dart",
+      "status": "PASS",
+      "observation": "All 22 targeted tests passed, including local retry after a native capture timeout."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Pixel 7 app-only versus full-display preview",
+      "status": "OPEN",
+      "observation": "Pixel 7 is attached, but the user has not yet confirmed the requested short SHARE_TEST session. No app launch, voice join or screen transmission was performed."
+    }
+  ],
+  "remaining": "With user confirmation, install/run the rebuilt client on Pixel 7, join SHARE_TEST muted, compare local preview for single-app and full-display projection, verify late-frame retry and stop cleanup, then confirm a remote receiver independently."
+}

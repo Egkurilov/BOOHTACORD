@@ -18,64 +18,80 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 import io.flutter.plugin.common.MethodChannel;
 
 public class FrameCapturer implements VideoSink {
+    private static final long FRAME_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(5);
     private final VideoTrack videoTrack;
     private File file;
     private final MethodChannel.Result callback;
-    private boolean gotFrame = false;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final FrameCaptureGate completionGate = new FrameCaptureGate();
+    private final Runnable timeout = () -> finishWithError(
+        "TimeoutException",
+        "Timed out waiting for a video frame."
+    );
 
     public FrameCapturer(VideoTrack track, File file, MethodChannel.Result callback) {
         videoTrack = track;
         this.file = file;
         this.callback = callback;
         track.addSink(this);
+        mainHandler.postDelayed(timeout, FRAME_TIMEOUT_MILLIS);
     }
 
     @Override
     public void onFrame(VideoFrame videoFrame) {
-        if (gotFrame)
-            return;
-        gotFrame = true;
+        if (!completionGate.tryComplete()) return;
+        mainHandler.removeCallbacks(timeout);
         videoFrame.retain();
-        VideoFrame.Buffer buffer = videoFrame.getBuffer();
-        VideoFrame.I420Buffer i420Buffer = buffer.toI420();
-        ByteBuffer y = i420Buffer.getDataY();
-        ByteBuffer u = i420Buffer.getDataU();
-        ByteBuffer v = i420Buffer.getDataV();
-        int width = i420Buffer.getWidth();
-        int height = i420Buffer.getHeight();
-        int[] strides = new int[] {
-            i420Buffer.getStrideY(),
-            i420Buffer.getStrideU(),
-            i420Buffer.getStrideV()
-        };
-        final int chromaWidth = (width + 1) / 2;
-        final int chromaHeight = (height + 1) / 2;
-        final int minSize = width * height + chromaWidth * chromaHeight * 2;
+        final int frameRotation = videoFrame.getRotation();
+        final YuvImage yuvImage;
+        final int width;
+        final int height;
+        try {
+            VideoFrame.I420Buffer i420Buffer = videoFrame.getBuffer().toI420();
+            try {
+                ByteBuffer y = i420Buffer.getDataY();
+                ByteBuffer u = i420Buffer.getDataU();
+                ByteBuffer v = i420Buffer.getDataV();
+                width = i420Buffer.getWidth();
+                height = i420Buffer.getHeight();
+                int[] strides = new int[] {
+                    i420Buffer.getStrideY(),
+                    i420Buffer.getStrideU(),
+                    i420Buffer.getStrideV()
+                };
+                final int chromaWidth = (width + 1) / 2;
+                final int chromaHeight = (height + 1) / 2;
+                final int minSize = width * height + chromaWidth * chromaHeight * 2;
 
-        ByteBuffer yuvBuffer = ByteBuffer.allocateDirect(minSize);
-        // NV21 is the same as NV12, only that V and U are stored in the reverse oder
-        // NV21 (YYYYYYYYY:VUVU)
-        // NV12 (YYYYYYYYY:UVUV)
-        // Therefore we can use the NV12 helper, but swap the U and V input buffers
-        YuvHelper.I420ToNV12(y, strides[0], v, strides[2], u, strides[1], yuvBuffer, width, height);
+                ByteBuffer yuvBuffer = ByteBuffer.allocateDirect(minSize);
+                // NV21 is NV12 with the U and V bytes reversed. Reuse the NV12
+                // helper with swapped chroma planes.
+                YuvHelper.I420ToNV12(y, strides[0], v, strides[2], u, strides[1], yuvBuffer, width, height);
 
-        byte[] cleanedArray = copyBufferBytes(yuvBuffer, minSize);
-
-        YuvImage yuvImage = new YuvImage(
-            cleanedArray,
-            ImageFormat.NV21,
-            width,
-            height,
-            // We omit the strides here. If they were included, the resulting image would
-            // have its colors offset.
-            null);
-        i420Buffer.release();
+                byte[] cleanedArray = copyBufferBytes(yuvBuffer, minSize);
+                yuvImage = new YuvImage(
+                    cleanedArray,
+                    ImageFormat.NV21,
+                    width,
+                    height,
+                    null);
+            } finally {
+                i420Buffer.release();
+            }
+        } catch (RuntimeException runtime) {
+            mainHandler.post(() -> videoTrack.removeSink(this));
+            file = null;
+            videoFrame.release();
+            callback.error("FrameCaptureError", runtime.getLocalizedMessage(), runtime);
+            return;
+        }
         videoFrame.release();
-        new Handler(Looper.getMainLooper()).post(() -> {
+        mainHandler.post(() -> {
             videoTrack.removeSink(this);
         });
         try {
@@ -86,6 +102,7 @@ public class FrameCapturer implements VideoSink {
                 file.createNewFile();
             }
         } catch (IOException io) {
+            file = null;
             callback.error("IOException", io.getLocalizedMessage(), io);
             return;
         }
@@ -95,7 +112,7 @@ public class FrameCapturer implements VideoSink {
                 100,
                 outputStream
             );
-            switch (videoFrame.getRotation()) {
+            switch (frameRotation) {
                 case 0:
                     break;
                 case 90:
@@ -117,8 +134,19 @@ public class FrameCapturer implements VideoSink {
             callback.error("IOException", io.getLocalizedMessage(), io);
         } catch (IllegalArgumentException iae) {
             callback.error("IllegalArgumentException", iae.getLocalizedMessage(), iae);
+        } catch (RuntimeException runtime) {
+            callback.error("FrameCaptureError", runtime.getLocalizedMessage(), runtime);
         } finally {
             file = null;
+        }
+    }
+
+    private void finishWithError(String code, String message) {
+        if (!completionGate.tryComplete()) return;
+        try {
+            videoTrack.removeSink(this);
+        } finally {
+            callback.error(code, message, null);
         }
     }
 

@@ -351,13 +351,20 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Сохранить `CanPublishData=false` согласно [ADR-013](../adr/ADR-013-room-scoped-screen-thumbnail-preview.md).
 - [ ] Провести paired runtime acceptance thumbnail на Android→macOS и Android→web;
   отдельно проверить остановку/очистку, повторный выбор того же viewer и отсутствие
-  лишней подписки/помехи голосу. ADB в текущей сессии недоступен, поэтому этот
-  live-шаг не выполнялся; также остаётся runtime-проверка Windows. Исходные
+  лишней подписки/помехи голосу. Pixel 7 снова доступен через ADB, но находится
+  на домашнем экране; live-проверка ждёт подтверждения короткой передачи экрана.
+  Также остаётся runtime-проверка Windows. Исходные
   Android и Flutter pipeline записи — [QA-159](../evidence/flutter/qa159-android-screen-thumbnail-buffer-2026-09-30-001.json),
   [QA-166](../evidence/flutter/qa166-flutter-temporary-screen-subscriptions-2026-10-01-001.json).
   Для Android app-only capture добавлено чтение фактического размера содержимого
   через MediaProjection resize callback — [QA-184](../evidence/flutter/qa184-android-app-window-capture-resize-2026-10-01-001.json);
   физическое подтверждение предпросмотра при выборе приложения ещё требуется.
+  Локальный Android `captureFrame()` теперь возвращает ошибку после пяти секунд,
+  если MediaProjection не выдала кадр; native sink снимается, атомарное завершение
+  не допускает двойного ответа, а очередь thumbnail может повторить захват —
+  [QA-186](../evidence/flutter/qa186-android-local-preview-frame-timeout-2026-10-01-001.json).
+  Это закрывает зависание и retry-path, но не подтверждает устранение симптома без
+  повторной проверки app-only захвата на Pixel.
   Исправлен UX edge case локального viewer: запуск собственного screen share
   теперь возвращает выбор с удалённой демонстрации или закрытого viewer на
   собственный экран; policy/widget tests и analyzer проходят. Проверка видео

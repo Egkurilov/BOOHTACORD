@@ -129,6 +129,13 @@ The post-fix Pixel 7 full-screen stream rendered its complete portrait frame on
 Mac; the receiver stayed responsive through start, first frame and app-level
 stop, with both microphones muted —
 [QA-162](../evidence/flutter/qa162-macos-webrtc-renderer-dispose-race-2026-09-30-001.json).
+Android local screen-thumbnail capture now bounds the native first-frame wait to
+five seconds. If no frame arrives, the WebRTC sink is removed and a timeout is
+returned so the serialized Flutter thumbnail queue can retry; an atomic gate
+prevents a late frame from completing the same request a second time. Android
+unit tests, the Dart thumbnail pipeline/widget tests and analyzer pass, but the
+Pixel app-only preview remains pending runtime acceptance —
+[QA-186](../evidence/flutter/qa186-android-local-preview-frame-timeout-2026-10-01-001.json).
 The macOS Debug 1.0.15+20 rebuild eventually restored the existing session and
 reached SHARE_TEST prejoin after more than six minutes on its loading screen;
 on 2026-10-01 a live process sample reproduced the wait in

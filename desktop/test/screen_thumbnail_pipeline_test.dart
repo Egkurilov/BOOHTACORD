@@ -114,6 +114,38 @@ void main() {
     },
   );
 
+  test('retries a local preview after native capture times out', () async {
+    final queue = ScreenThumbnailCaptureQueue();
+    var captureAttempts = 0;
+    Uint8List? stored;
+
+    Future<Uint8List> capture() async {
+      captureAttempts++;
+      if (captureAttempts == 1) {
+        throw TimeoutException('No frame arrived before capture timeout.');
+      }
+      return Uint8List.fromList([1]);
+    }
+
+    final first = await captureScreenThumbnailFrame(
+      capture: () => queue.run(capture),
+      encode: (_) async => Uint8List.fromList(validJpeg),
+      storeLocally: (_) {},
+      isActive: () => true,
+    );
+    final retry = await captureScreenThumbnailFrame(
+      capture: () => queue.run(capture),
+      encode: (_) async => Uint8List.fromList(validJpeg),
+      storeLocally: (thumbnail) => stored = thumbnail,
+      isActive: () => true,
+    );
+
+    expect(first, ScreenThumbnailCaptureResult.captureFailed);
+    expect(retry, ScreenThumbnailCaptureResult.captured);
+    expect(captureAttempts, 2);
+    expect(stored, Uint8List.fromList(validJpeg));
+  });
+
   test(
     'serializes remote preview subscriptions and deduplicates a publication',
     () async {
