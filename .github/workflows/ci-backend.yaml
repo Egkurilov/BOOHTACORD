@@ -33,13 +33,4 @@ jobs:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
       - name: Test, vet and build Go API
-        working-directory: backend
-        run: |
-          set -euo pipefail
-          test_events="$(mktemp "${RUNNER_TEMP:-/tmp}/backend-test-events.XXXXXX")"
-          test_status=0
-          go test -json -count=1 ./... > "$test_events" || test_status=$?
-          python3 ../scripts/verify-go-test-events.py "$test_events"
-          test "$test_status" -eq 0
-          go vet ./...
-          go build -o /tmp/voice-platform-api ./cmd/api
+        run: python3 -m tools.ci.native.backend

@@ -1,0 +1,18 @@
+version: '3'
+
+vars:
+  PYTHON: '{{if eq OS "windows"}}python{{else}}python3{{end}}'
+
+tasks:
+  doctor:
+    cmds: ['{{.PYTHON}} -m tools.ci.native.doctor']
+  check:toolchains:
+    cmds: ['{{.PYTHON}} -m tools.verify.toolchains.check']
+  check:contracts:
+    cmds: ['{{.PYTHON}} -m tools.ci.native.contracts']
+  test:backend:
+    cmds: ['{{.PYTHON}} -m tools.ci.native.backend']
+  test:web:
+    cmds: ['{{.PYTHON}} -m tools.ci.native.web']
+  test:flutter:
+    cmds: ['{{.PYTHON}} -m tools.ci.native.flutter']

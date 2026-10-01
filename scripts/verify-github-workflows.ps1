@@ -67,10 +67,7 @@ if ($ci -notmatch '(?m)^  flutter:\s*\r?\n    uses: \./\.github/workflows/ci-flu
 $flutterCi = Get-Content -LiteralPath $flutterCiPath -Raw
 foreach ($required in @(
     'workflow_call:', 'runs-on: ubuntu-24.04', 'flutter-version: 3.47.5',
-    'flutter pub get --enforce-lockfile', 'flutter test --no-pub',
-    'working-directory: desktop/packages/livekit_client',
-    'working-directory: desktop/packages/flutter_webrtc',
-    'flutter analyze --no-pub', 'flutter build apk --debug --no-pub'
+    'python3 -m tools.ci.native.flutter', 'flutter build apk --debug --no-pub'
 )) {
     if (-not $flutterCi.Contains($required)) {
         throw "Flutter CI gate is missing: $required"
