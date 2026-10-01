@@ -1,0 +1,25 @@
+version: 1
+method: slavik-gym-v5.1
+authority: native-manifests-and-imports
+projects:
+  backend:
+    manifest: backend/go.mod
+    route: internal/<domain>/<capability>
+    composition: internal/app/<capability>
+  web:
+    manifest: frontend/package.json
+    route: src/<feature>/<capability>
+  flutter:
+    manifest: desktop/pubspec.yaml
+    route: lib/src/features/<feature>/<capability>
+  delivery:
+    manifest: tools/toolchains.json
+    route: tools/<purpose>/<capability>
+limits:
+  file_lines: {target: 100, hard: 120}
+  leaf_production_files: {target: 8, hard: 16}
+  leaf_direct_tests: {target: 8, hard: 16}
+notes:
+  - Native paths are updated atomically with client moves.
+  - Aggregate directories are not selectable implementation routes.
+  - Existing native test and lock files remain authoritative.

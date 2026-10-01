@@ -1,0 +1,37 @@
+{
+  "id": "reorganization-baseline-2026-10-01",
+  "kind": "refactor-preservation",
+  "status": "PASS",
+  "base_sha": "8b7f1ddc196c6ead42f45a4b4fe06ac896c0f9a5",
+  "input_sha256": "d0053e94747b08eec3dcf6a1ef1958a252cd69aa284a55bb686543b7a1f7df2f",
+  "observer": "Codex native command outputs",
+  "checks": {
+    "web_tests_windows_node_24_18_0": {"passed": 721, "files": 234, "seconds": 5.95},
+    "web_typecheck_and_build": "PASS",
+    "flutter_locked_dependencies": "PASS",
+    "flutter_3_47_5_tests_windows": {"passed": 346, "seconds": 65},
+    "go_linux_1_26_0_postgres_17_6": {"passed": 745, "skipped": 0, "failed": 0},
+    "go_linux_vet_and_build": "PASS",
+    "go_linux_test_vet_build_seconds_with_cold_dependencies": 132,
+    "go_windows_1_26_4_via_ssh_tunnel": {
+      "passed": 742, "skipped": 0, "failed": 1,
+      "failure": "TestClaimAgainstDisposablePostgresSchema exhausted its 20-second deadline",
+      "isolated_retry": "PASS in 19.10 seconds; full acceptance uses the same-host Linux database run"
+    }
+  },
+  "measurements": {
+    "tracked_files": 3185,
+    "source_archive_bytes": 5456621,
+    "source_archive_creation_seconds": 0.476659,
+    "checkout_seconds": null,
+    "installation_seconds": null,
+    "installation_peak_disk_bytes": null,
+    "flutter_frame_and_rebuild_timings": null
+  },
+  "limitations": [
+    "Existing Linux Go directive selected 1.26.0; the next packet pins the tested developer/Docker version 1.26.4.",
+    "The SSH tunnel adds latency; no production data was used in these tests.",
+    "Hardware media, macOS signing and interactive client acceptance were not run.",
+    "Archive creation time is not a checkout benchmark; missing measurements remain unknown."
+  ]
+}
