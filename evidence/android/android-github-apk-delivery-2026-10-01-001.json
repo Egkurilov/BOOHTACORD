@@ -1,0 +1,53 @@
+{
+  "id": "android-github-apk-delivery-2026-10-01-001",
+  "kind": "android-release-gate",
+  "status": "PARTIAL",
+  "executed_at": "2026-10-01",
+  "source": {
+    "failed_deploy_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36843134662",
+    "failed_ci_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36843901376",
+    "queued_android_release_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36828830704",
+    "failure": "Deployment and CI release guards require a Flutter debug APK build absent from ci-flutter.yaml; Android Release then waits for an unavailable self-hosted Windows runner. No signed APK reached GitHub Releases."
+  },
+  "fix": "Build and retain a debug APK in the reusable Flutter CI workflow; build and retain three signed release APKs on a GitHub-hosted Ubuntu runner before publishing the release assets.",
+  "checks": [
+    {
+      "name": "GitHub workflow routing",
+      "command": "pwsh -NoProfile -File scripts/verify-github-workflows.ps1",
+      "status": "PASS"
+    },
+    {
+      "name": "API contracts",
+      "command": "pwsh -NoProfile -File scripts/verify-contracts.ps1",
+      "status": "PASS"
+    },
+    {
+      "name": "Android release publisher tests",
+      "command": "node --test scripts/android_release/publish.test.mjs scripts/android_release/publish_retries.test.mjs scripts/android_release/publish_conflicts.test.mjs",
+      "status": "PASS",
+      "observation": "All six tests passed."
+    },
+    {
+      "name": "Flutter app tests",
+      "command": "cd desktop && flutter test --no-pub --reporter compact",
+      "status": "PASS",
+      "observation": "All 337 tests passed."
+    },
+    {
+      "name": "Android debug APK workflow artifact",
+      "status": "NOT_RUN",
+      "observation": "Awaiting GitHub CI on the updated master branch."
+    },
+    {
+      "name": "Signed Android release APKs",
+      "status": "NOT_RUN",
+      "observation": "Awaiting the android-v1.0.18 tag workflow and artifact inspection."
+    },
+    {
+      "name": "Production deploy",
+      "status": "NOT_RUN",
+      "observation": "Awaiting production workflow after the guard fix is pushed."
+    }
+  ],
+  "limitation": "The local Mac has Flutter 3.47.5 but no Android SDK; it cannot independently build an APK. GitHub runner artifacts and release assets are the required binary proof."
+}

@@ -76,9 +76,19 @@ foreach ($required in @(
         throw "Flutter CI gate is missing: $required"
     }
 }
+if ($flutterCi -notmatch 'uses:\s*actions/upload-artifact@v4' -or
+    $flutterCi -notmatch 'path:\s*desktop/build/app/outputs/flutter-apk/app-debug\.apk' -or
+    $flutterCi -notmatch 'if-no-files-found:\s*error' -or
+    $flutterCi -notmatch 'retention-days:\s*30') {
+    throw 'Flutter CI must retain the built debug APK as a fail-closed workflow artifact.'
+}
 $android = Get-Content -LiteralPath (Join-Path $root '.github/workflows/android-release.yaml') -Raw
 if ($android -notmatch '(?m)^  quality:\s*\r?\n    uses: \./\.github/workflows/ci-flutter\.yaml' -or
-    $android -notmatch '(?m)^  android-release:\s*\r?\n    needs: quality') {
+    $android -notmatch '(?m)^  android-release:\s*\r?\n    needs: quality' -or
+    $android -notmatch 'runs-on:\s*ubuntu-24\.04' -or
+    $android -notmatch 'uses:\s*actions/upload-artifact@v4' -or
+    $android -notmatch 'path:\s*desktop/build/release-assets/\*\.apk' -or
+    $android -notmatch 'if-no-files-found:\s*error') {
     throw 'Android release must pass the Flutter gate before signing and publication.'
 }
 Write-Output 'GitHub workflow routing: OK'

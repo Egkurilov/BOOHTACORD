@@ -1,7 +1,6 @@
 name: Android Release
 
-# GitHub tag release; signed APKs need the repository signing secrets.
-
+# A matching android-v* tag publishes signed APKs using repository signing secrets.
 on:
   push:
     tags:
@@ -16,119 +15,93 @@ jobs:
 
   android-release:
     needs: quality
-    runs-on: [self-hosted, windows, x64, boohtacord-windows]
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout release source
         uses: actions/checkout@v4
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+          cache: true
+
       - name: Test idempotent GitHub release publisher
-        shell: powershell
-        run: |
-          node --version
-          if ($LASTEXITCODE -ne 0) { throw 'Node.js is required for the release publisher.' }
-          node --test scripts/android_release/publish.test.mjs scripts/android_release/publish_retries.test.mjs scripts/android_release/publish_conflicts.test.mjs
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        run: node --test scripts/android_release/publish.test.mjs scripts/android_release/publish_retries.test.mjs scripts/android_release/publish_conflicts.test.mjs
 
       - name: Build signed ABI-specific APKs
         working-directory: desktop
-        shell: powershell
+        shell: bash
         env:
           BOOHTACORD_ANDROID_KEYSTORE_BASE64: ${{ secrets.BOOHTACORD_ANDROID_KEYSTORE_BASE64 }}
           BOOHTACORD_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.BOOHTACORD_ANDROID_KEYSTORE_PASSWORD }}
           BOOHTACORD_ANDROID_KEY_ALIAS: ${{ secrets.BOOHTACORD_ANDROID_KEY_ALIAS }}
           BOOHTACORD_ANDROID_KEY_PASSWORD: ${{ secrets.BOOHTACORD_ANDROID_KEY_PASSWORD }}
         run: |
-          $ErrorActionPreference = 'Stop'
+          set -euo pipefail
+          for name in BOOHTACORD_ANDROID_KEYSTORE_BASE64 BOOHTACORD_ANDROID_KEYSTORE_PASSWORD BOOHTACORD_ANDROID_KEY_ALIAS BOOHTACORD_ANDROID_KEY_PASSWORD; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Required repository secret is missing: $name" >&2
+              exit 1
+            fi
+          done
 
-          $requiredSecrets = @(
-            'BOOHTACORD_ANDROID_KEYSTORE_BASE64',
-            'BOOHTACORD_ANDROID_KEYSTORE_PASSWORD',
-            'BOOHTACORD_ANDROID_KEY_ALIAS',
-            'BOOHTACORD_ANDROID_KEY_PASSWORD'
-          )
-          foreach ($name in $requiredSecrets) {
-            if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
-              throw "Required repository secret is missing: $name"
-            }
-          }
+          [[ "${GITHUB_REF_NAME}" =~ ^android-v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid Android release tag' >&2; exit 1; }
+          pubspec_version="$(sed -nE 's/^version:[[:space:]]*([^+[:space:]]+).*/\1/p' pubspec.yaml | head -n 1)"
+          if [[ "${GITHUB_REF_NAME#android-v}" != "$pubspec_version" ]]; then
+            echo "Release tag does not match pubspec version $pubspec_version" >&2
+            exit 1
+          fi
+          flutter --version | grep -q 'Flutter 3.47.5'
+          : "${RUNNER_TEMP:?RUNNER_TEMP must be configured}"
+          keystore="$RUNNER_TEMP/boohtacord-android-upload.jks"
+          trap 'rm -f "$keystore"' EXIT
+          printf '%s' "$BOOHTACORD_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          chmod 600 "$keystore"
+          export BOOHTACORD_ANDROID_KEYSTORE_FILE="$keystore"
 
-          $tagVersion = $env:GITHUB_REF_NAME -replace '^android-v', ''
-          $versionLine = Select-String -Path pubspec.yaml -Pattern '^version:\s*(\S+)'
-          if ($null -eq $versionLine) { throw 'Could not read app version from pubspec.yaml' }
-          $pubspecVersion = $versionLine.Matches[0].Groups[1].Value.Split('+')[0]
-          if ($tagVersion -ne $pubspecVersion) {
-            throw "Release tag android-v$tagVersion does not match pubspec version $pubspecVersion"
-          }
+          flutter pub get --enforce-lockfile
+          flutter build apk --release --split-per-abi --no-pub
 
-          $flutterRoot = Join-Path $env:USERPROFILE 'develop\flutter'
-          $flutter = Join-Path $flutterRoot 'bin\flutter.bat'
-          if (-not (Test-Path -LiteralPath $flutter)) { throw "Flutter SDK missing: $flutter" }
-          $env:FLUTTER_ROOT = $flutterRoot
-          $flutterVersion = (& $flutter --version --machine | ConvertFrom-Json).frameworkVersion
-          if ($LASTEXITCODE -ne 0 -or $flutterVersion -ne '3.47.5') {
-            throw "Expected Flutter 3.47.5, got $flutterVersion"
-          }
+          mkdir -p build/release-assets
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            source="build/app/outputs/flutter-apk/app-${abi}-release.apk"
+            test -s "$source" || { echo "Missing split APK: $source" >&2; exit 1; }
+            bytes="$(stat -c '%s' "$source")"
+            if (( bytes > 95000000 )); then
+              echo "APK exceeds the 95 MB release safety ceiling: $source ($bytes bytes)" >&2
+              exit 1
+            fi
+            cp "$source" "build/release-assets/BOOHTACORD-${GITHUB_REF_NAME}-${abi}.apk"
+            echo "Prepared $abi APK ($bytes bytes)"
+          done
 
-          $androidSdk = $env:ANDROID_SDK_ROOT
-          if ([string]::IsNullOrWhiteSpace($androidSdk)) { $androidSdk = $env:ANDROID_HOME }
-          if ([string]::IsNullOrWhiteSpace($androidSdk) -and $env:LOCALAPPDATA) {
-            $androidSdk = Join-Path $env:LOCALAPPDATA 'Android\Sdk'
-          }
-          if ([string]::IsNullOrWhiteSpace($androidSdk) -or
-              -not (Test-Path -LiteralPath (Join-Path $androidSdk 'platform-tools\adb.exe'))) {
-            throw 'Android SDK is missing on the Windows runner.'
-          }
-          $env:ANDROID_SDK_ROOT = $androidSdk
-          $env:ANDROID_HOME = $androidSdk
-
-          if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP)) {
-            throw 'RUNNER_TEMP is not configured; refusing to write the release keystore into the checkout.'
-          }
-          $keystore = Join-Path $env:RUNNER_TEMP 'boohtacord-android-upload.jks'
-          $outputDirectory = Join-Path (Get-Location) 'build\app\outputs\flutter-apk'
-          $releaseAssets = Join-Path (Get-Location) 'build\release-assets'
-          try {
-            $keystoreBytes = [Convert]::FromBase64String($env:BOOHTACORD_ANDROID_KEYSTORE_BASE64)
-            [IO.File]::WriteAllBytes($keystore, $keystoreBytes)
-            $env:BOOHTACORD_ANDROID_KEYSTORE_FILE = $keystore
-
-            & $flutter pub get --enforce-lockfile
-            if ($LASTEXITCODE -ne 0) { throw 'Flutter dependency resolution failed.' }
-            & $flutter build apk --release --split-per-abi --no-pub
-            if ($LASTEXITCODE -ne 0) { throw 'Signed ABI-split APK build failed.' }
-
-            New-Item -ItemType Directory -Force -Path $releaseAssets | Out-Null
-            $abiApks = @(
-              @{ Source = 'app-arm64-v8a-release.apk'; Abi = 'arm64-v8a' },
-              @{ Source = 'app-armeabi-v7a-release.apk'; Abi = 'armeabi-v7a' },
-              @{ Source = 'app-x86_64-release.apk'; Abi = 'x86_64' }
-            )
-            foreach ($apk in $abiApks) {
-              $source = Join-Path $outputDirectory $apk.Source
-              if (-not (Test-Path -LiteralPath $source)) { throw "Expected split APK missing: $source" }
-              $file = Get-Item -LiteralPath $source
-              if ($file.Length -gt 95000000) {
-                throw "APK exceeds the 95 MB release safety ceiling: $($file.Name) ($($file.Length) bytes)"
-              }
-              $destination = Join-Path $releaseAssets "BOOHTACORD-$($env:GITHUB_REF_NAME)-$($apk.Abi).apk"
-              Copy-Item -LiteralPath $source -Destination $destination -Force
-              Write-Host "Prepared $($apk.Abi) APK ($([math]::Round($file.Length / 1MB, 1)) MiB)"
-            }
-          } finally {
-            Remove-Item -LiteralPath $keystore -Force -ErrorAction SilentlyContinue
-            Remove-Item Env:\BOOHTACORD_ANDROID_KEYSTORE_FILE -ErrorAction SilentlyContinue
-          }
+      - name: Upload signed APKs as workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOHTACORD-${{ github.ref_name }}-signed-apks
+          path: desktop/build/release-assets/*.apk
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Publish GitHub release and APK assets
-        shell: powershell
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $tag = $env:GITHUB_REF_NAME
-          $assetRoot = 'desktop/build/release-assets'
-          node scripts/android_release/publish.mjs `
-            --tag $tag `
-            --asset "$assetRoot/BOOHTACORD-$tag-arm64-v8a.apk" `
-            --asset "$assetRoot/BOOHTACORD-$tag-armeabi-v7a.apk" `
-            --asset "$assetRoot/BOOHTACORD-$tag-x86_64.apk"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          asset_root=desktop/build/release-assets
+          node scripts/android_release/publish.mjs \
+            --tag "$tag" \
+            --asset "$asset_root/BOOHTACORD-$tag-arm64-v8a.apk" \
+            --asset "$asset_root/BOOHTACORD-$tag-armeabi-v7a.apk" \
+            --asset "$asset_root/BOOHTACORD-$tag-x86_64.apk"
