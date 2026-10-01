@@ -86,6 +86,11 @@ backend/read-cursor, Windows and device acceptance remain open —
 [QA-181](../evidence/flutter/qa181-reply-context-unloaded-history-2026-10-01-001.json),
 [QA-182](../evidence/flutter/qa182-web-reply-context-navigation-2026-10-01-001.json).
 
+The Flutter screen-share setup modal explicitly traps keyboard traversal; a
+widget test verifies both Tab and Shift+Tab remain within the dialog. The other
+settings/dialog focus paths and platform screen-reader acceptance remain open —
+[QA-183](../evidence/flutter/qa183-screen-share-dialog-keyboard-loop-2026-10-01-001.json).
+
 Flutter audio device-change handling now matches the web's missing-device
 response: transient empty scans preserve the selected IDs; when a replacement
 appears the first available route is selected and an accessible warning is

@@ -1,0 +1,33 @@
+{
+  "id": "QA-183",
+  "kind": "screen-share-dialog-keyboard-loop",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "30252ef",
+  "summary": "The screen-share setup dialog explicitly uses a closed-loop focus traversal policy so keyboard users cannot tab into the obscured workspace while the modal is open.",
+  "checks": [
+    {
+      "name": "Tab and Shift+Tab remain in the screen-share dialog",
+      "command": "cd desktop && flutter test test/screen_share_quality_test.dart --plain-name 'keeps keyboard traversal inside screen-share setup'",
+      "status": "PASS",
+      "observation": "The widget test verifies closedLoop traversal and checks that focus remains within the dialog's traversal descendants after moving forward from the last focusable and backward from the first."
+    },
+    {
+      "name": "Screen-share quality and layout regressions",
+      "command": "cd desktop && flutter test test/screen_share_quality_test.dart",
+      "status": "PASS",
+      "observation": "All 9 quality, profile, screen-size and keyboard-focus tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze",
+      "status": "PASS",
+      "observation": "No issues found."
+    }
+  ],
+  "limitations": [
+    "No physical keyboard or screen reader acceptance was available; the Mac is locked and ADB is unavailable.",
+    "This closes keyboard traversal only for the screen-share setup modal, not other dialogs or panels."
+  ],
+  "remaining": "Continue focus-trap/return and keyboard reachability checks for profile, audio, admin and other dialogs; verify VoiceOver, NVDA and TalkBack on their respective platforms."
+}
