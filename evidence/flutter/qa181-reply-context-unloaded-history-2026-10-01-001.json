@@ -1,0 +1,45 @@
+{
+  "id": "QA-181",
+  "kind": "reply-context-unloaded-history",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "251a7a2",
+  "summary": "Reply previews in Flutter and web now open their target even when it is outside the currently loaded history page. Loaded targets scroll into view; unloaded targets use the existing bounded message-context endpoint and provide a return path.",
+  "checks": [
+    {
+      "name": "TEXT unloaded reply target regression",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart --plain-name 'opens a reply context when its target is outside loaded history'",
+      "status": "PASS",
+      "observation": "A test-first regression reproduced failure to open an older target; after the change, tapping the reply opens the context page centered on the target."
+    },
+    {
+      "name": "DM unloaded reply target regression",
+      "command": "cd desktop && flutter test test/workspace_screen_test.dart --plain-name 'opens a DM reply context when its target is outside loaded history'",
+      "status": "PASS",
+      "observation": "The DM reply preview opens its target via the DM history-at endpoint when that message is not loaded."
+    },
+    {
+      "name": "Full Flutter suite and analyzer",
+      "command": "cd desktop && flutter test && flutter analyze",
+      "status": "PASS",
+      "observation": "All 336 Flutter tests passed and the analyzer reported no issues."
+    },
+    {
+      "name": "Frontend tests and production build",
+      "command": "cd frontend && npm test && npm run build",
+      "status": "PASS",
+      "observation": "233 test files / 710 tests passed and the Vite production build completed; Vite emitted its existing large-chunk advisory."
+    },
+    {
+      "name": "Desktop and Android debug compilation",
+      "command": "cd desktop && flutter build macos --debug --no-pub && flutter build apk --debug --no-pub",
+      "status": "PASS",
+      "observation": "macOS Debug app and Android Debug APK compiled successfully."
+    }
+  ],
+  "limitations": [
+    "No ADB/device runtime acceptance was performed.",
+    "Windows compilation/runtime and live backend navigation/read-cursor acceptance remain unverified."
+  ],
+  "remaining": "Verify reply navigation with live backend data across cursor-page boundaries and confirm read-cursor behavior on supported runtime platforms."
+}
