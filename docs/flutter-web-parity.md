@@ -638,10 +638,12 @@ both deployed web and Flutter viewers.
   explicitly creates/validates plugin junctions so it does not depend on
   Developer Mode [QA-81](../evidence/flutter/qa81-gitverse-windows-runner-ci-2026-09-29-004.json).
   Launching the built client and Windows runtime/screenshot parity remain open.
-- Android debug build succeeds but reports that `flutter_webrtc` and
-  `livekit_client` currently apply the Kotlin Gradle Plugin, which Flutter warns
-  will become incompatible with a future Flutter release. Track their upstream
-  migration/upgrade before that toolchain change.
+- Android Debug and signed Release compile in both AGP Kotlin modes. The local
+  `flutter_background` 1.3.1 fork conditionally applies KGP only when built-in
+  Kotlin is disabled; CI now exercises both modes. Flutter still warns about KGP
+  declarations from `flutter_background`, `flutter_webrtc` and `livekit_client`,
+  so keep the current default disabled until the other local plugin forks and
+  Flutter's compatibility detection are addressed — [QA-172](../evidence/flutter/qa172-android-kotlin-build-modes-2026-10-01-001.json).
 - Do not mark a row complete until both the feature and its visual/state parity
   criteria have evidence.
 

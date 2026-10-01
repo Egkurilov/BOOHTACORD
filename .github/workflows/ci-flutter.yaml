@@ -39,6 +39,5 @@ jobs:
       - name: Analyze Flutter app
         working-directory: desktop
         run: flutter analyze --no-pub --no-fatal-infos
-      - name: Compile Android debug APK
-        working-directory: desktop
-        run: flutter build apk --debug --no-pub
+      - name: Verify Android Kotlin build modes
+        run: bash scripts/android_release/verify_android_kotlin_modes.sh

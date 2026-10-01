@@ -655,17 +655,18 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] Проверить подписанную macOS Release-сборку и Keychain persistence после перезапуска; на текущем Mac нет действительной Apple Developer identity. macOS Debug app и Android Debug APK собраны локально — [QA-30](../evidence/flutter/qa30-native-debug-builds-2026-09-27-001.json).
 - [x] Временно отключить автоматические push/tag запуски macOS CI и macOS Release, пока GitVerse runner недоступен; ручной dispatch сохранён. Возобновить автозапуски после provision macOS runner.
 - [ ] Сохранить защищённую копию Android upload JKS/credentials вне сборочного host; установить/обновить release APK на физическом Android и пройти QA-13.
-- [x] Проверить KGP/build compatibility до следующего переключения Android toolchain:
-  текущая конфигурация Flutter 3.47.5 + AGP 9.1.0 собирает Debug APK с
-  `android.builtInKotlin=false`, но Flutter продолжает предупреждать о трёх
-  плагинах `flutter_background`, `flutter_webrtc` и `livekit_client`. Отдельная
-  probe-сборка с `android.builtInKotlin=true` падает на `flutter_background 1.3.1`,
-  который безусловно применяет `kotlin-android`; AGP сообщает, что Kotlin уже
-  встроен и KGP надо убрать. У двух локальных форков KGP guard-ится условием,
-  но их literal plugin declarations всё ещё попадают в предупреждение Flutter —
-  [QA-170](../evidence/flutter/qa170-android-built-in-kotlin-compatibility-2026-10-01-001.json).
-- [ ] До включения `android.builtInKotlin=true` мигрировать все три отмеченных
-  Android plugin build scripts с учётом fallback, проверить обе Gradle-конфигурации
-  на полном Debug и signed Release build и закрепить regression gate в Android CI.
-  Пока эту матрицу не закрыли, оставить `android.builtInKotlin=false`; миграция
-  относится к build compatibility и не требует установки/ADB.
+- [x] Сделать Android CI regression gate для двух Gradle режимов и устранить
+  конфигурационную несовместимость `flutter_background 1.3.1`: пакет vendored как
+  локальный MIT fork без изменений Dart/native runtime, а его Android Gradle
+  script применяет KGP только в legacy режиме. `scripts/android_release/verify_android_kotlin_modes.sh`
+  собирает Debug при текущем `android.builtInKotlin=false` и через Gradle с
+  `android.builtInKotlin=true`; оба режима прошли. Signed Release также прошёл
+  в обоих режимах: split APK для трёх ABI в legacy и universal APK в built-in
+  режиме; APK v2 signatures проверены — [QA-172](../evidence/flutter/qa172-android-kotlin-build-modes-2026-10-01-001.json).
+- [ ] До включения `android.builtInKotlin=true` убрать оставшиеся Flutter KGP
+  warnings от `flutter_webrtc` и `livekit_client`, затем подтвердить оба режима
+  на CI и signed Release matrix. После локального форка Flutter продолжает
+  предупреждать о KGP декларациях трёх плагинов, хотя Debug проходит в обоих
+  режимах; мы не меняли исходники двух остальных локальных форков. Оставить
+  `android.builtInKotlin=false` по умолчанию до закрытия этого пункта. Runtime и
+  device acceptance не проверялись; ADB для текущей работы не требуется.
