@@ -32,7 +32,7 @@
       "device": "macOS BOOHTACORD, authenticated Pistol121 session, SHARE_TEST",
       "command": "Open SHARE_TEST without joining voice; inspect prejoin and screen-share affordances",
       "status": "PUBLISHING_VISIBLE_PREVIEW_NOT_OPENED",
-      "observation": "The Mac prejoin participant card updated to Pistol121_android and displayed 'Идёт трансляция'. Clicking that badge and the screen icon in the channel sidebar did not open a video viewer; the large content remained on the 'Вы не подключены' prejoin card. The Mac account was already listed in the separate Voice channel, so we did not join SHARE_TEST and risk transferring its voice lease."
+      "observation": "The Mac prejoin participant card updated to Pistol121_android and displayed 'Идёт трансляция'. Clicking that badge and the screen icon in the channel sidebar did not open a video viewer; the large content remained on the 'Вы не подключены' prejoin card. This matches the web's VoicePrejoin.vue + VoiceRoomRoster.vue, which expose roster/share state but no video viewer before voice join. The Mac account was already listed in the separate Voice channel, so we did not join SHARE_TEST and risk transferring its voice lease."
     },
     {
       "name": "Stop and cleanup",
