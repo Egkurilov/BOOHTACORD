@@ -16,3 +16,9 @@ tasks:
     cmds: ['{{.PYTHON}} -m tools.ci.native.web']
   test:flutter:
     cmds: ['{{.PYTHON}} -m tools.ci.native.flutter']
+  build:server:
+    cmds: ['{{.PYTHON}} -m tools.build.server.run {{.CLI_ARGS}}']
+  release:verify:
+    cmds: ['{{.PYTHON}} -m tools.release.bundle.verify {{.CLI_ARGS}}']
+  release:install:
+    cmds: ['{{.PYTHON}} -m tools.release.install.run {{.CLI_ARGS}}']
