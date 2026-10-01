@@ -1,0 +1,39 @@
+{
+  "id": "QA-199",
+  "kind": "pixel7-preview-surfacetexture-ab",
+  "status": "FAIL_PREVIEW_BLACK_WITH_LEGACY_SURFACE_TEXTURE",
+  "executed_at": "2026-10-01",
+  "source_revision": "f312c70",
+  "summary": "Repeated the muted Calculator app-only capture on Pixel 7 using a signed 1.0.18+2029 A/B APK that used the legacy SurfaceTextureEntry texture backend and had Impeller disabled. The local viewer remained black. Since the preceding SurfaceProducer + Impeller-off run was also black, neither tested texture backend resolves FE-59 in this configuration.",
+  "artifact": {
+    "version_name": "1.0.18",
+    "version_code": 2029,
+    "path": "desktop/build/app/outputs/flutter-apk/app-release.apk",
+    "sha256": "2ebfddfa7866c5bea950f2e53085659bba516611e40f5dce137ddca43c77611c",
+    "size_bytes": 69455280,
+    "git_ignored": true,
+    "experimental_android_manifest": "io.flutter.embedding.android.EnableImpeller=false",
+    "experimental_texture_backend": "legacy SurfaceTextureEntry"
+  },
+  "checks": [
+    {
+      "name": "Pixel 7 legacy texture backend A/B",
+      "device": "Google Pixel 7, Android 17/API 37, SHARE_TEST, microphone muted, no remote viewer",
+      "command": "Select Calculator in Android app picker; inspect local preview, adb logcat, and adb shell dumpsys media_projection",
+      "status": "FAIL_PREVIEW_BLACK_WITH_LEGACY_SURFACE_TEXTURE",
+      "observation": "The large local preview stayed black while the participant thumbnail displayed Calculator content. Logcat recorded first_swap_buffers and the encoder at 1080x2400 with texture=1. MediaProjection targeted the Calculator task. Screenshot: /private/tmp/boohtacord-pixel-preview-surfacetexture-2029.png. The same black result occurred in QA-198 with SurfaceProducer and Impeller disabled."
+    },
+    {
+      "name": "Stop and cleanup",
+      "command": "Stop screen share; verify adb shell dumpsys media_projection; leave SHARE_TEST",
+      "status": "PASS",
+      "observation": "MediaProjection returned null after stopping; Pixel returned to the SHARE_TEST prejoin screen. Microphone remained muted."
+    }
+  ],
+  "limitations": [
+    "The A/B shows that switching between these two texture backends did not resolve the symptom with Impeller disabled; it does not prove that both backends fail under every renderer configuration.",
+    "first_swap_buffers and encoder dimensions prove that frames reached those stages, not that non-black pixels were composited by Flutter.",
+    "No remote receiver was connected, so sender delivery and remote playback remain unverified."
+  ],
+  "remaining": "Trace the capture frame buffer type and conversion into EglRenderer, then verify Flutter texture presentation and sender/receiver frame counters with a paired viewer. Keep FE-59 open until app-only local pixels and remote playback are visibly correct."
+}
