@@ -1,7 +1,6 @@
 """Install already-built, signed artifacts. Requires provisioned host trust and runtime."""
 import argparse
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -14,18 +13,17 @@ from tools.release.bundle.manifest import require
 from tools.release.bundle.verify import verify_bundle
 from .docker import deploy, docker, load_images, verify_running
 from .guards import disk_budget
+from .locking import installation_lock
+from .runtime import check_expanded, prepare_environment
 from .state import current_manifest, write_receipt
 
 
 def install(args):
-    import fcntl
     require(re.fullmatch(r"[0-9a-f]{40}", args.revision), "Full revision is required")
     require(re.fullmatch(r"[0-9a-f]{64}", args.sha256), "Bundle checksum is required")
     require(args.bundle.is_file() and sha256(args.bundle) == args.sha256, "Transferred bundle checksum differs")
     root = args.release_root.resolve()
-    root.mkdir(mode=0o750, parents=True, exist_ok=True)
-    with (root / ".install.lock").open("a") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
+    with installation_lock(root):
         disk_budget(shutil.disk_usage(root).free, args.bundle.stat().st_size)
         docker_root = Path(docker("info", "--format", "{{.DockerRootDir}}"))
         disk_budget(shutil.disk_usage(docker_root).free, args.bundle.stat().st_size)
@@ -42,23 +40,13 @@ def install(args):
             if destination.exists():
                 existing = verify_bundle(destination, args.public_key, args.revision)
                 require(existing == manifest, "Immutable release directory contains another artifact")
-                for source in runtime.rglob("*"):
-                    if source.is_file():
-                        target = destination / source.relative_to(runtime)
-                        require(target.is_file() and not target.is_symlink() and sha256(target) == sha256(source),
-                                "Retained runtime differs from the signed artifact")
+                check_expanded(destination, runtime)
             else:
                 for path in runtime.iterdir():
                     require(not (incoming / path.name).exists(), "Runtime payload conflicts with release artifacts")
                     path.rename(incoming / path.name)
                 incoming.rename(destination)
-            require(args.environment.is_file(), "Production environment is unavailable")
-            # The secure environment remains host-only and never enters an artifact.
-            env_path = destination / ".env"
-            descriptor = os.open(env_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-            with os.fdopen(descriptor, "wb") as target, args.environment.open("rb") as source:
-                shutil.copyfileobj(source, target)
-            env_path.chmod(0o600)
+            prepare_environment(destination, args.environment)
             load_images(destination, manifest)
             deploy(destination, manifest)
             verify_running(destination, manifest)

@@ -22,3 +22,5 @@ tasks:
     cmds: ['{{.PYTHON}} -m tools.release.bundle.verify {{.CLI_ARGS}}']
   release:install:
     cmds: ['{{.PYTHON}} -m tools.release.install.run {{.CLI_ARGS}}']
+  release:rollback:
+    cmds: ['{{.PYTHON}} -m tools.release.rollback.run {{.CLI_ARGS}}']
