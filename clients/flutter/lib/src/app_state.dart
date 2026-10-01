@@ -13,6 +13,7 @@ import 'package:uuid/uuid.dart';
 
 import 'guild_presence_state.dart';
 import 'features/audio/devices/controller.dart';
+import 'features/session/lifecycle/controller.dart';
 import 'models.dart';
 import 'services/api_client.dart';
 import 'services/composer_draft_memory.dart';
@@ -34,7 +35,7 @@ import 'telemetry/report_media/sender.dart';
 import 'telemetry/report_media/sender_sample.dart';
 import 'telemetry/report_media/connection.dart';
 
-enum AppPhase { loading, connectionError, signedOut, ready }
+export 'features/session/lifecycle/types.dart';
 
 enum VoicePhase {
   idle,
@@ -101,6 +102,26 @@ class AppState extends ChangeNotifier {
     NativeNotificationService? nativeNotifications,
   }) : _nativeNotifications =
            nativeNotifications ?? NativeNotificationService() {
+    _session = SessionController(
+      api,
+      startupTimeout: startupSessionTimeout,
+      effects: SessionEffects(
+        initialize: _initializeSessionPlatform,
+        prepare: _prepareSessionAccount,
+        ready: _loadSessionWorkspace,
+        closeMedia: leaveVoice,
+        closeRealtime: _closeRealtime,
+        clearAccount: _clearSignedOutAccount,
+        expireAccount: _clearExpiredAccount,
+        beforeServerChange: () {
+          loadingMessages = false;
+          _stopVoiceRosterEvents();
+        },
+        clearServer: _clearServerAccount,
+        error: (value) => error = value,
+        message: _message,
+      ),
+    )..addListener(notifyListeners);
     _audioDevices = AudioDeviceController(
       readRoom: () => _room,
       loader: audioDeviceLoader,
@@ -114,12 +135,15 @@ class AppState extends ChangeNotifier {
 
   final ApiClient api;
   late final AudioDeviceController _audioDevices;
+  late final SessionController _session;
   @visibleForTesting
   final Duration startupSessionTimeout;
   final NativeNotificationService _nativeNotifications;
   final Uuid _uuid = const Uuid();
-  AppPhase phase = AppPhase.loading;
-  SessionUser? user;
+  AppPhase get phase => _session.phase;
+  set phase(AppPhase value) => _session.phase = value;
+  SessionUser? get user => _session.user;
+  set user(SessionUser? value) => _session.user = value;
   OwnProfile? profile;
   ChannelTopology? topology;
   List<GuildMember> members = const [];
@@ -159,8 +183,10 @@ class AppState extends ChangeNotifier {
   bool profileLoading = false;
   String? profileLoadError;
   bool profileSaving = false;
-  bool logoutBusy = false;
-  String? logoutError;
+  bool get logoutBusy => _session.logoutBusy;
+  set logoutBusy(bool value) => _session.logoutBusy = value;
+  String? get logoutError => _session.logoutError;
+  set logoutError(String? value) => _session.logoutError = value;
   bool resetRoute = false;
   String? resetToken;
   bool resetPending = false;
@@ -273,7 +299,6 @@ class AppState extends ChangeNotifier {
   final Map<String, ChatMessage> _pendingTextSends = {};
   final Map<String, DirectChatMessage> _pendingDirectSends = {};
   String? _lastReadDirectMessageId;
-  bool _expiringSession = false;
   bool _checkingRealtimeSession = false;
   final Map<String, DateTime> _lastReadTextAt = {};
   final Map<String, DateTime> _pendingTextReadAt = {};
@@ -375,14 +400,13 @@ class AppState extends ChangeNotifier {
     unawaited(_expireSession());
   }
 
-  Future<void> _expireSession() async {
-    if (phase != AppPhase.ready || _expiringSession) return;
-    _expiringSession = true;
+  Future<void> _expireSession() => _session.expire();
+
+  Future<void> _clearExpiredAccount() async {
+    final ticket = _session.scope.capture();
     _textHistoryLoadSequence++;
     ComposerDraftMemory.clear();
     _stopVoiceRosterEvents();
-    phase = AppPhase.signedOut;
-    user = null;
     profile = null;
     profileLoadError = null;
     unawaited(_nativeNotifications.useAccount(null));
@@ -440,53 +464,44 @@ class AppState extends ChangeNotifier {
       _disposeVoiceEvents(),
       if (room != null) room.disconnect(),
     ]);
+    if (!ticket.isCurrent) return;
     error = null;
-    _expiringSession = false;
     notifyListeners();
   }
 
-  Future<void> initialize() async {
-    phase = AppPhase.loading;
-    error = null;
-    notifyListeners();
-    try {
-      await api.initialize();
-      await _loadVoiceStreamSoundPreference();
-      await _nativeNotifications.initialize();
-      unawaited(refreshMaintenance());
-      _maintenanceTimer ??= Timer.periodic(
-        const Duration(seconds: 5),
-        (_) => unawaited(refreshMaintenance()),
-      );
-      user = await api.currentSession().timeout(
-        startupSessionTimeout,
-        onTimeout: () => throw ApiFailure(
-          'Проверка сессии не завершилась вовремя. '
-          '${Platform.isMacOS ? 'Проверьте системный запрос доступа к Связке ключей и соединение. ' : 'Проверьте соединение. '}'
-          'Повторите попытку.',
-        ),
-      );
-      if (user == null) {
-        await _nativeNotifications.useAccount(null);
-        phase = AppPhase.signedOut;
-      } else {
-        await _nativeNotifications.useAccount(user!.accountId);
-        await _loadAudioPreferences(user!.accountId);
-        phase = AppPhase.ready;
-        await Future.wait([
-          refreshTopology(),
-          refreshMembers(),
-          refreshDirectMessages(),
-          refreshProfile(),
-        ]);
-        _startVoiceRosterEvents();
-        unawaited(_connectRealtime());
-      }
-    } catch (cause) {
-      phase = AppPhase.connectionError;
-      error = _message(cause);
-    }
-    notifyListeners();
+  Future<void> initialize() => _session.initialize();
+
+  Future<void> _initializeSessionPlatform() async {
+    final ticket = _session.scope.capture();
+    await _loadVoiceStreamSoundPreference();
+    if (!ticket.isActive) return;
+    await _nativeNotifications.initialize();
+    if (!ticket.isActive) return;
+    unawaited(refreshMaintenance());
+    _maintenanceTimer ??= Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => unawaited(refreshMaintenance()),
+    );
+  }
+
+  Future<void> _prepareSessionAccount(SessionUser account) async {
+    final ticket = _session.scope.capture();
+    await _nativeNotifications.useAccount(account.accountId);
+    if (!ticket.isActive) return;
+    await _loadAudioPreferences(account.accountId);
+  }
+
+  Future<void> _loadSessionWorkspace() async {
+    final ticket = _session.scope.capture();
+    await Future.wait([
+      refreshTopology(),
+      refreshMembers(),
+      refreshDirectMessages(),
+      refreshProfile(),
+    ]);
+    if (!ticket.isActive || phase != AppPhase.ready) return;
+    _startVoiceRosterEvents();
+    unawaited(_connectRealtime());
   }
 
   Future<void> _loadVoiceStreamSoundPreference() async {
@@ -561,13 +576,9 @@ class AppState extends ChangeNotifier {
     if (notify && changed) notifyListeners();
   }
 
-  Future<void> setServer(String value) async {
-    _textHistoryLoadSequence++;
-    loadingMessages = false;
-    _stopVoiceRosterEvents();
-    await leaveVoice();
-    await _closeRealtime();
-    await api.setBaseUrl(value);
+  Future<void> setServer(String value) => _session.setServer(value);
+
+  Future<void> _clearServerAccount() async {
     _audioPreferences = null;
     audioActivationMode = AudioActivationMode.vad;
     pushToTalkKeyId = null;
@@ -577,7 +588,6 @@ class AppState extends ChangeNotifier {
     selectedAudioOutputId = null;
     audioDeviceWarning = null;
     audioProcessing = const AudioProcessingPreferences();
-    user = null;
     profile = null;
     profileLoadError = null;
     await _nativeNotifications.useAccount(null);
@@ -585,60 +595,20 @@ class AppState extends ChangeNotifier {
     selectedChannel = null;
     voiceRosters = null;
     voiceRosterError = null;
-    phase = AppPhase.signedOut;
-    error = null;
-    notifyListeners();
   }
 
   Future<void> authenticate(
     String login,
     String password, {
     required bool register,
-  }) async {
-    error = null;
-    notifyListeners();
-    try {
-      await api.authenticate(login, password, register: register);
-      user = await api.currentSession();
-      if (user != null) {
-        await _nativeNotifications.useAccount(user!.accountId);
-        await _loadAudioPreferences(user!.accountId);
-      }
-      phase = AppPhase.ready;
-      await Future.wait([
-        refreshTopology(),
-        refreshMembers(),
-        refreshDirectMessages(),
-        refreshProfile(),
-      ]);
-      _startVoiceRosterEvents();
-      unawaited(_connectRealtime());
-    } catch (cause) {
-      error = _message(cause);
-      rethrow;
-    } finally {
-      notifyListeners();
-    }
-  }
+  }) => _session.authenticate(login, password, register: register);
 
-  Future<void> logout() async {
-    if (logoutBusy) return;
-    logoutBusy = true;
-    logoutError = null;
-    notifyListeners();
-    try {
-      await leaveVoice();
-      await api.logout();
-    } catch (cause) {
-      logoutError = _message(cause);
-      logoutBusy = false;
-      notifyListeners();
-      return;
-    }
+  Future<void> logout() => _session.logout();
+
+  Future<void> _clearSignedOutAccount() async {
     ComposerDraftMemory.clear();
     _textHistoryLoadSequence++;
     loadingMessages = false;
-    user = null;
     profile = null;
     profileLoadError = null;
     await _nativeNotifications.useAccount(null);
@@ -668,10 +638,6 @@ class AppState extends ChangeNotifier {
     selectedDirectMessage = null;
     directMessageHistory = const [];
     nextDirectMessageCursor = null;
-    phase = AppPhase.signedOut;
-    await _closeRealtime();
-    logoutBusy = false;
-    notifyListeners();
   }
 
   Future<void> refreshProfile() async {
@@ -847,8 +813,9 @@ class AppState extends ChangeNotifier {
   AudioCaptureOptions get _audioCaptureOptions => _audioDevices.captureOptions;
 
   Future<void> _loadAudioPreferences(String accountId) async {
+    final ticket = _session.scope.capture();
     final preferences = await AudioPreferences.open(accountId);
-    if (user?.accountId != accountId) return;
+    if (!ticket.isActive || user?.accountId != accountId) return;
     _audioPreferences = preferences;
     if (!preferences.persistent) {
       audioSettingsError = 'Не удалось открыть хранилище настроек аудио.';
@@ -2075,6 +2042,7 @@ class AppState extends ChangeNotifier {
 
   @override
   void dispose() {
+    _session.dispose();
     _closeScreenPreviewSubscriptions();
     _realtimeRetry?.cancel();
     _maintenanceTimer?.cancel();
