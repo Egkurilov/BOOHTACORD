@@ -2,6 +2,10 @@ name: CI backend
 
 on:
   workflow_call:
+    inputs:
+      release_receipt:
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -33,4 +37,12 @@ jobs:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
       - name: Test, vet and build Go API
-        run: python3 -m tools.ci.native.backend
+        run: python3 -m tools.ci.receipts.run backend
+      - name: Retain source-bound gate receipt
+        if: inputs.release_receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-backend-${{ github.sha }}
+          path: .out/checks/backend.json
+          if-no-files-found: error
+          retention-days: 30

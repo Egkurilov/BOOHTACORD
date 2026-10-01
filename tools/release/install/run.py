@@ -32,6 +32,9 @@ def install(args):
             extract(args.bundle, incoming, max_bytes=min(8_000_000_000, shutil.disk_usage(root).free - 2_147_483_648))
             manifest = verify_bundle(incoming, args.public_key, args.revision)
             current = current_manifest(root, args.public_key)
+            expected_current = getattr(args, 'expected_current_revision', None)
+            require(expected_current is None or current['source_revision'] == expected_current,
+                    'Running source changed while delivery was waiting; rerun preflight')
             compatible_upgrade(current, manifest)
             runtime = Path(staging) / "runtime"
             extract(incoming / "runtime.tar.gz", runtime, max_bytes=100_000_000)
@@ -62,6 +65,7 @@ def main():
     parser.add_argument("--release-root", type=Path, default=Path("/opt/voice-platform-releases"))
     parser.add_argument("--environment", type=Path, default=Path("/opt/voice-platform/.env"))
     parser.add_argument("--public-key", type=Path, default=Path("/etc/voice-platform/release-signing.pub.pem"))
+    parser.add_argument("--expected-current-revision")
     install(parser.parse_args())
 
 

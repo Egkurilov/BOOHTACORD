@@ -2,6 +2,10 @@ name: CI contracts
 
 on:
   workflow_call:
+    inputs:
+      release_receipt:
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -19,7 +23,7 @@ jobs:
       - name: Verify API and requirement traceability
         shell: pwsh
         run: |
-          python -m tools.ci.native.contracts
+          python -m tools.ci.receipts.run contracts
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Validate Compose interpolation without starting services
         run: docker compose --env-file .env.example -f deploy/compose.yaml config --quiet
@@ -33,3 +37,14 @@ jobs:
         run: ./tools/verify/compose_images/verify-compose-images.ps1
       - name: Test proxy network deployment guard
         run: bash tools/release/rollout/deploy-images.test.sh
+      - name: Verify all deployment guard failures before producing a release receipt
+        if: inputs.release_receipt
+        run: bash tools/ci/release_guards/verify-release-guards.sh
+      - name: Retain source-bound gate receipt
+        if: inputs.release_receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-contracts-${{ github.sha }}
+          path: .out/checks/contracts.json
+          if-no-files-found: error
+          retention-days: 30

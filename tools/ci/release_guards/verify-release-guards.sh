@@ -34,6 +34,7 @@ bash tools/qa/legacy_rollback/preflight.test.sh
 bash tools/qa/legacy_rollback/rehearse.test.sh
 bash tools/qa/legacy_rollback/workflow.test.sh
 bash tools/release/legacy_install/deploy-local-images.test.sh
+bash tools/release/delivery/transfer.test.sh
 bash tools/release/legacy_resume/resume.test.sh
 bash tools/ops/docker_storage/reclaim_old_images.test.sh
 bash tools/ops/docker_storage/prune_build_cache.test.sh

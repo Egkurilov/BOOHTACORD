@@ -12,8 +12,7 @@ grep -Fq 'group: v-bootybay-production' "$workflow"
 grep -Fq 'cancel-in-progress: false' "$workflow"
 grep -Fq "github.ref_name == 'master'" "$workflow"
 grep -Fq 'bash tools/release/ssh/configure-deploy-ssh.sh' "$workflow"
-grep -Fq 'git rev-parse HEAD' "$workflow"
-grep -Fq 'tools/qa/legacy_rollback/rehearse.sh' "$workflow"
-grep -Fq 'StrictHostKeyChecking=yes' "$workflow"
+grep -Fq 'bash tools/release/delivery/rollback.sh' "$workflow"
+grep -Fq 'StrictHostKeyChecking=yes' "$root/tools/release/delivery/rollback.sh"
 if grep -Eq '^  push:|^  pull_request:' "$workflow"; then exit 1; fi
 echo 'QA-12 manual workflow source contract passed'

@@ -1,8 +1,8 @@
 # ADR-012: Prebuilt signed server releases
 
-Status: implementation in progress; production cutover requires staging evidence.
+Status: staging verified; production trust and GitHub cutover remain pending.
 Date: 2026-10-01.
-Supersedes the source-build installation portion of ADR-011-github-delivery.
+Supersedes the source-build installation and independent GHCR rebuild portions of ADR-011-github-delivery.
 
 ## Decision
 
@@ -39,6 +39,24 @@ migration inventory, contracts and deployment topology in two signed releases.
 No database restoration, reverse migration or volume deletion is introduced.
 
 ## Acceptance
+
+Build server retains the signed bundle and checksum in GitHub Actions for 30
+days. Deploy production consumes only a successful master build from this
+repository and verifies producer provenance. Recovery selects the same retained
+artifact by run ID and full revision. Private signing material is available only
+to the protected builder job; host trust is provisioned independently at
+`/etc/voice-platform/release-signing.pub.pem`.
+
+Build cancellation is isolated from installation. Install, recovery and compatible
+rollback share the non-cancellable `v-bootybay-production` queue and host lock.
+Delivery rejects reverse source ancestry, and the installer checks that the
+running revision has not changed after it acquires the lock. Historical GHCR
+images remain available; future mirrors must copy verified images without a
+second rebuild. The signed bundle is the authoritative new distribution.
+
+The staging builder, isolated installation and signed rollback results are in
+`evidence/reorganization/`. They use a staging-only signer and do not certify
+production key provisioning or a trusted GitHub production run.
 
 Unit negatives cover source/receipt drift, archive traversal and expansion,
 signature/checksum tampering, migration incompatibility, disk exhaustion and

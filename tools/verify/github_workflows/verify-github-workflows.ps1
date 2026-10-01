@@ -18,11 +18,8 @@ foreach ($name in $names) {
 if (Test-Path -LiteralPath (Join-Path $root '.gitverse/workflows')) {
     throw 'Legacy GitVerse workflow directory remains active.'
 }
-$deploy = Get-Content -LiteralPath (Join-Path $root '.github/workflows/deploy-production.yaml') -Raw
-if ($deploy -notmatch 'GITHUB_OUTPUT' -or $deploy -notmatch "github\.ref_name == 'master'" -or
-    $deploy -notmatch 'group: v-bootybay-production') {
-    throw 'GitHub production delivery guards are incomplete.'
-}
+python -m tools.verify.workflows.delivery
+if ($LASTEXITCODE -ne 0) { throw 'Signed delivery workflow validation failed.' }
 
 $tracked = @(git -C $root ls-files -- artifacts clients/flutter/build clients/web/dist clients/flutter/packages/flutter_webrtc/third_party)
 if ($LASTEXITCODE -ne 0) { throw 'Could not inspect tracked build outputs.' }

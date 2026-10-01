@@ -2,6 +2,10 @@ name: CI frontend
 
 on:
   workflow_call:
+    inputs:
+      release_receipt:
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -17,4 +21,12 @@ jobs:
           cache: npm
           cache-dependency-path: clients/web/package-lock.json
       - name: Test and build Vue client
-        run: python3 -m tools.ci.native.web
+        run: python3 -m tools.ci.receipts.run web
+      - name: Retain source-bound gate receipt
+        if: inputs.release_receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-web-${{ github.sha }}
+          path: .out/checks/web.json
+          if-no-files-found: error
+          retention-days: 30
