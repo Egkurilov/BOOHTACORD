@@ -1,0 +1,32 @@
+{
+  "id": "QA-194",
+  "kind": "flutter-windows-cross-platform-ci",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "b0fe7a4880b8b2ad528c9c825cf7bf8892f88ec4",
+  "run_url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36909393279",
+  "run_number": 81,
+  "duration": "12m57s",
+  "checks": [
+    {
+      "name": "Flutter Windows CI",
+      "status": "PASS",
+      "observation": "Windows app tests, Flutter analysis, Windows Release build and required release-directory artifact checks succeeded."
+    },
+    {
+      "name": "Flutter and Android CI",
+      "status": "PASS",
+      "observation": "Flutter app, LiveKit and flutter_webrtc tests; Flutter analysis; Android Kotlin build-mode verification; and Android debug APK build succeeded."
+    },
+    {
+      "name": "Contracts, backend, frontend and image publication",
+      "status": "PASS",
+      "observation": "The contracts, backend, frontend and publish jobs completed successfully. GitHub reported six non-fatal Node.js 20 deprecation warnings for actions."
+    }
+  ],
+  "limitations": [
+    "This is compile/test CI evidence, not installed-app runtime or screenshot parity acceptance for Windows, macOS or Android.",
+    "GitHub's public run summary was available; detailed job logs required sign-in and were not inspected."
+  ],
+  "remaining": "Continue platform runtime, visual, accessibility and real-peer acceptance in the parity checklist."
+}
