@@ -6,7 +6,7 @@ from pathlib import Path
 
 def check_versions(root: Path, versions: dict) -> list[str]:
     errors = []
-    web = root / ("clients/web" if (root / "clients/web/package.json").exists() else "frontend")
+    web = root / "clients/web"
     required = {
         root / ".node-version": versions["node"],
         web / "Dockerfile": f"FROM node:{versions['node']}-alpine",

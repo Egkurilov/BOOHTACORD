@@ -608,9 +608,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Flutter и исправить несуществующий `--gc-surface-base` в web rail —
   [QA-97](../evidence/flutter/qa97-flutter-web-design-token-parity-2026-09-29-001.json).
   Общий matched-screenshot/device gate остаётся открытым.
-- [x] Выровнять профиль по web CSS: centered 720 px content, 480 px form, 64 px avatar, responsive 24/16 px insets, 16 px page title, section dividers и toolbar без дублированного заголовка; desktop/mobile геометрия и route покрыты widget tests — [QA-49](../evidence/flutter/qa49-profile-geometry-web-parity-2026-09-28-001.json).
+- [x] Выровнять профиль по web CSS: centered 720 px content, 480 px form, 64 px avatar, responsive 24/16 px insets, 16 px page title, section dividers и toolbar без дублированного заголовка; clients/flutter/mobile геометрия и route покрыты widget tests — [QA-49](../evidence/flutter/qa49-profile-geometry-web-parity-2026-09-28-001.json).
 - [x] Выровнять maintenance banner по web CSS: минимум 44 px, текст 14/20 px,
-  поля 12/16 px и естественный перенос без обрезания; desktop/mobile viewport
+  поля 12/16 px и естественный перенос без обрезания; clients/flutter/mobile viewport
   проверены виджет-тестами —
   [QA-41](../evidence/flutter/qa41-maintenance-banner-web-geometry-2026-09-28-001.json).
   Matched screenshots на реальных платформах остаются в общем screenshot gate.

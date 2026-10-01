@@ -18,9 +18,9 @@ Self-hosted веб-платформа в логике лёгкого Discord: г
 
 | Клиент | Раздел разработки | Исходники | Версия в манифесте | Статус |
 | --- | --- | --- | --- | --- |
-| Web | [Web](clients/web/README.md) | [`frontend/`](frontend/) | `0.1.0` | Исходники и production pipeline есть; релизные gates проверяются отдельно |
-| Android | [Android](clients/android/README.md) | [`desktop/`](desktop/) + [`desktop/android/`](desktop/android/) | `1.0.0+1` | Flutter runner и функции есть; физическая media/visual приёмка открыта |
-| iOS | [iOS](clients/ios/README.md) | [`desktop/`](desktop/) + [`desktop/ios/`](desktop/ios/) | `1.0.0+1` | Подписанная локальная сборка установлена и открыта на iPhone; функциональная приёмка открыта |
+| Web | [Web](clients/web/README.md) | [`clients/web/`](clients/web/) | `0.1.0` | Исходники и production pipeline есть; релизные gates проверяются отдельно |
+| Android | [Android](clients/android/README.md) | [`clients/flutter/`](clients/flutter/) + [`clients/flutter/android/`](clients/flutter/android/) | `1.0.0+1` | Flutter runner и функции есть; физическая media/visual приёмка открыта |
+| iOS | [iOS](clients/ios/README.md) | [`clients/flutter/`](clients/flutter/) + [`clients/flutter/ios/`](clients/flutter/ios/) | `1.0.0+1` | Подписанная локальная сборка установлена и открыта на iPhone; функциональная приёмка открыта |
 
 Код web и Flutter остаётся в существующих build roots, чтобы не ломать CI и поставку. Отдельные папки `clients/web`, `clients/android` и `clients/ios` собирают платформенные инструкции. [Правила версионности и матрица реализованных функций](docs/CLIENT_VERSIONING.md) отличают наличие кода от подтверждённой приёмки; [Flutter ↔ web parity](docs/flutter-web-parity.md) содержит подробные пробелы.
 

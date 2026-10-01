@@ -34,7 +34,7 @@ check_space() {
 check_space
 for service in api web; do
   context="$release_dir/backend"
-  [[ "$service" == web ]] && context="$release_dir/frontend"
+  [[ "$service" == web ]] && context="$release_dir/clients/web"
   image="voice-platform-$service:$revision"
   archive="$release_dir/$service.oci.tar"
   docker buildx build --platform linux/amd64 \

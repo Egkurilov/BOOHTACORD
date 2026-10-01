@@ -18,7 +18,7 @@ jobs:
         with:
           # Keep the release publisher in the CI checkout for its HTTP contract tests.
           sparse-checkout: |
-            desktop
+            clients/flutter
             scripts/android_release
       - uses: subosito/flutter-action@v2
         with:
@@ -33,13 +33,13 @@ jobs:
             throw "Expected Flutter 3.47.5, got $($versionOutput -join ' ')"
           }
       - name: Resolve locked Flutter dependencies
-        working-directory: desktop
+        working-directory: clients/flutter
         shell: powershell
         run: |
           flutter pub get --enforce-lockfile
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Point CMake at Windows plugin sources
-        working-directory: desktop
+        working-directory: clients/flutter
         shell: powershell
         run: |
           # Flutter creates plugin links; this host's CMake cannot read through them.
@@ -61,7 +61,7 @@ jobs:
           $content = $content.Replace($ffiPath, '"${BOOHTACORD_PLUGIN_SOURCE_${ffi_plugin}}/windows"')
           [System.IO.File]::WriteAllText($cmakeFile, (($sourceLines -join "`n") + "`n" + $content), [System.Text.UTF8Encoding]::new($false))
       - name: Run Flutter tests
-        working-directory: desktop
+        working-directory: clients/flutter
         shell: powershell
         run: |
           flutter test --no-pub
@@ -74,13 +74,13 @@ jobs:
           node --test scripts/android_release/publish.test.mjs scripts/android_release/publish_retries.test.mjs scripts/android_release/publish_conflicts.test.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Analyze Flutter client
-        working-directory: desktop
+        working-directory: clients/flutter
         shell: powershell
         run: |
           flutter analyze --no-pub --no-fatal-infos
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build Windows release client
-        working-directory: desktop
+        working-directory: clients/flutter
         shell: powershell
         run: |
           flutter build windows --release --no-pub
@@ -88,7 +88,7 @@ jobs:
       - name: Verify complete Windows release directory
         shell: powershell
         run: |
-          $release = 'desktop/build/windows/x64/runner/Release'
+          $release = 'clients/flutter/build/windows/x64/runner/Release'
           foreach ($required in @('boohtacord_desktop.exe', 'flutter_windows.dll', 'libwebrtc.dll', 'data/flutter_assets')) {
             if (-not (Test-Path -LiteralPath (Join-Path $release $required))) {
               throw "Windows release is missing $required"
@@ -98,6 +98,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: BOOHTACORD-windows-x64-${{ github.sha }}
-          path: desktop/build/windows/x64/runner/Release/
+          path: clients/flutter/build/windows/x64/runner/Release/
           if-no-files-found: error
           retention-days: 30

@@ -195,7 +195,7 @@ services:
   web:
     image: ${WEB_IMAGE:?set WEB_IMAGE to a pinned image reference in .env}
     build:
-      context: ./frontend
+      context: ./clients/web
     networks: [private]
     logging: *json-log-rotation
 

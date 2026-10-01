@@ -58,7 +58,7 @@ for _ in {1..50}; do
 done
 curl -sf http://127.0.0.1:18096/api/v1/health >/dev/null
 
-python3 "$repo/scripts/qa05_browser_real507/proxy.py" "$repo/frontend/dist" 18096 18796 &
+python3 "$repo/scripts/qa05_browser_real507/proxy.py" "$repo/clients/web/dist" 18096 18796 &
 proxy_pid=$!
 for _ in {1..50}; do
   if curl -sf http://127.0.0.1:18796/api/v1/health >/dev/null; then break; fi

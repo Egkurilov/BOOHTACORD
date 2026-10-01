@@ -39,7 +39,7 @@ jobs:
         run: node --test scripts/android_release/publish.test.mjs scripts/android_release/publish_retries.test.mjs scripts/android_release/publish_conflicts.test.mjs
 
       - name: Build signed ABI-specific APKs
-        working-directory: desktop
+        working-directory: clients/flutter
         shell: bash
         env:
           BOOHTACORD_ANDROID_KEYSTORE_BASE64: ${{ secrets.BOOHTACORD_ANDROID_KEYSTORE_BASE64 }}
@@ -89,7 +89,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: BOOHTACORD-${{ github.ref_name }}-signed-apks
-          path: desktop/build/release-assets/*.apk
+          path: clients/flutter/build/release-assets/*.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -99,7 +99,7 @@ jobs:
         run: |
           set -euo pipefail
           tag="$GITHUB_REF_NAME"
-          asset_root=desktop/build/release-assets
+          asset_root=clients/flutter/build/release-assets
           node scripts/android_release/publish.mjs \
             --tag "$tag" \
             --asset "$asset_root/BOOHTACORD-$tag-arm64-v8a.apk" \

@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 from tools.release.bundle.files import sha256
 
-SOURCE_PATHS = ("backend", "frontend", "contracts", "docker", "compose.yaml", "scripts", "tools", ".node-version", "Taskfile.yml")
+SOURCE_PATHS = ("backend", "clients/web", "contracts", "docker", "compose.yaml", "scripts", "tools", ".node-version", "Taskfile.yml")
 RUNTIME_PATHS = ("compose.yaml", "docker/Caddyfile", "docker/livekit.yaml", "tools/release",
                  "scripts/deploy-images.sh", "scripts/check-attachment-volume-headroom.sh",
                  "scripts/audit-attachment-volume.sh", "scripts/qa11_release/verify_oci.py",

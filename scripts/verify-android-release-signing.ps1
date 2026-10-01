@@ -1,9 +1,9 @@
 $ErrorActionPreference = 'Stop'
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$gradlePath = Join-Path $root 'desktop/android/app/build.gradle.kts'
+$gradlePath = Join-Path $root 'clients/flutter/android/app/build.gradle.kts'
 $gradle = Get-Content -LiteralPath $gradlePath -Raw
-$ignore = Get-Content -LiteralPath (Join-Path $root 'desktop/android/.gitignore') -Raw
+$ignore = Get-Content -LiteralPath (Join-Path $root 'clients/flutter/android/.gitignore') -Raw
 
 if ($gradle -match 'signingConfigs\.getByName\("debug"\)') {
     throw 'Android release must not use the debug signing config.'
@@ -33,15 +33,15 @@ foreach ($pattern in @('key.properties', '**/*.keystore', '**/*.jks')) {
 }
 
 foreach ($path in @(
-    'desktop/android/key.properties',
-    'desktop/android/app/release.jks',
-    'desktop/android/app/release.keystore'
+    'clients/flutter/android/key.properties',
+    'clients/flutter/android/app/release.jks',
+    'clients/flutter/android/app/release.keystore'
 )) {
     git -C $root check-ignore -q -- $path
     if ($LASTEXITCODE -ne 0) { throw "Git does not ignore $path." }
 }
 
-$tracked = git -C $root ls-files -- desktop/android
+$tracked = git -C $root ls-files -- clients/flutter/android
 if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect tracked Android files.' }
 if ($tracked | Where-Object { $_ -match '(key\.properties|\.(jks|keystore))$' }) {
     throw 'A signing credential or keystore is tracked by Git.'

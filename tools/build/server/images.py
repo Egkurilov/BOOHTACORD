@@ -5,7 +5,7 @@ from scripts.qa11_release.verify_oci import verify
 
 def build(source, output, revision, source_hash, environment):
     receipts = {}
-    for service, context in (("api", "backend"), ("web", "frontend")):
+    for service, context in (("api", "backend"), ("web", "clients/web")):
         tag = f"voice-platform-{service}:{revision}"
         archive = output / (service + ".oci.tar")
         subprocess.run(["docker", "buildx", "build", "--platform", "linux/amd64",

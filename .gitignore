@@ -16,8 +16,8 @@ artifacts/**/*.dll
 artifacts/**/*.pdb
 artifacts/**/*.lib
 artifacts/**/*.app/
-desktop/packages/flutter_webrtc/third_party/downloads/
-desktop/packages/flutter_webrtc/third_party/libwebrtc/
+clients/flutter/packages/flutter_webrtc/third_party/downloads/
+clients/flutter/packages/flutter_webrtc/third_party/libwebrtc/
 **/__pycache__/
 *.pyc
 data/

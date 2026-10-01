@@ -7,10 +7,10 @@ projects:
     route: internal/<domain>/<capability>
     composition: internal/app/<capability>
   web:
-    manifest: frontend/package.json
+    manifest: clients/web/package.json
     route: src/<feature>/<capability>
   flutter:
-    manifest: desktop/pubspec.yaml
+    manifest: clients/flutter/pubspec.yaml
     route: lib/src/features/<feature>/<capability>
   delivery:
     manifest: tools/toolchains.json

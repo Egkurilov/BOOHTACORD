@@ -10,9 +10,10 @@ VERSIONS = json.loads((ROOT / "tools/toolchains.json").read_text(encoding="utf-8
 
 def client(name):
     path = ROOT / "clients" / name
-    return path if (path / ("package.json" if name == "web" else "pubspec.yaml")).exists() else ROOT / {
-        "web": "frontend", "flutter": "desktop"
-    }[name]
+    manifest = path / ("package.json" if name == "web" else "pubspec.yaml")
+    if not manifest.is_file():
+        raise RuntimeError(f"Native client manifest is unavailable: {manifest}")
+    return path
 
 
 def run(*args, cwd=ROOT, stdout=None, check=True):

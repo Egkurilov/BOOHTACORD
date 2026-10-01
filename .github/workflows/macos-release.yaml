@@ -25,7 +25,7 @@ jobs:
           cache: true
 
       - name: Verify Flutter toolchain and release tag
-        working-directory: desktop
+        working-directory: clients/flutter
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
@@ -33,27 +33,27 @@ jobs:
           flutter --version
           app_version="$(sed -E -n 's/^version: *([0-9][0-9.]*)\+[0-9][0-9]*$/\1/p' pubspec.yaml)"
           if [[ -z "$app_version" || "$RELEASE_TAG" != "macos-v$app_version" ]]; then
-            echo "Release tag $RELEASE_TAG does not match desktop/pubspec.yaml version $app_version" >&2
+            echo "Release tag $RELEASE_TAG does not match clients/flutter/pubspec.yaml version $app_version" >&2
             exit 1
           fi
 
       - name: Resolve locked Flutter dependencies
-        working-directory: desktop
+        working-directory: clients/flutter
         run: flutter pub get --enforce-lockfile
 
       - name: Test release packaging
         run: bash scripts/macos_release/package.test.sh
 
       - name: Run Flutter tests
-        working-directory: desktop
+        working-directory: clients/flutter
         run: flutter test
 
       - name: Analyze Flutter client
-        working-directory: desktop
+        working-directory: clients/flutter
         run: flutter analyze --no-fatal-infos
 
       - name: Build universal macOS release client
-        working-directory: desktop
+        working-directory: clients/flutter
         run: flutter build macos --release --no-pub
 
       - name: Package app and checksum
@@ -62,9 +62,9 @@ jobs:
         run: |
           set -euo pipefail
           bash scripts/macos_release/package.sh \
-            desktop/build/macos/Build/Products/Release/BOOHTACORD.app \
+            clients/flutter/build/macos/Build/Products/Release/BOOHTACORD.app \
             "$RELEASE_TAG" \
-            desktop/build/release-assets
+            clients/flutter/build/release-assets
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v3
@@ -77,7 +77,7 @@ jobs:
 
             Verify the ZIP with the included SHA-256 checksum before extracting it.
           files: |
-            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}.zip
-            desktop/build/release-assets/BOOHTACORD-${{ github.ref_name }}.zip.sha256
+            clients/flutter/build/release-assets/BOOHTACORD-${{ github.ref_name }}.zip
+            clients/flutter/build/release-assets/BOOHTACORD-${{ github.ref_name }}.zip.sha256
           draft: false
           prerelease: false

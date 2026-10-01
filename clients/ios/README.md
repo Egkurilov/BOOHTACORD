@@ -1,6 +1,6 @@
 # iOS-клиент BOOHTACORD
 
-**Статус на 2026-09-28:** iOS runner находится в [`desktop/ios/`](../../desktop/ios/) и использует общий Flutter-код [`desktop/lib/`](../../desktop/lib/). Версия локальной сборки — `1.0.0+1`, bundle ID — `ru.boohtacord.app`, минимальная версия iOS — 15.0. После синхронизации с GitVerse `master` (`426ec29`) подписанная release-сборка установлена по проводу на iPhone 17 с iOS 27.0. Иконка из общего [`app_icon.jpg`](../../desktop/assets/branding/app_icon.jpg) отображается на домашнем экране, приложение запускается. Это не подтверждает голос, демонстрацию экрана и полную функциональную приёмку. [Запись проверки](../../evidence/ios/ios-wired-release-install-2026-09-28-001.json).
+**Статус на 2026-09-28:** iOS runner находится в [`clients/flutter/ios/`](../../clients/flutter/ios/) и использует общий Flutter-код [`clients/flutter/lib/`](../../clients/flutter/lib/). Версия локальной сборки — `1.0.0+1`, bundle ID — `ru.boohtacord.app`, минимальная версия iOS — 15.0. После синхронизации с GitVerse `master` (`426ec29`) подписанная release-сборка установлена по проводу на iPhone 17 с iOS 27.0. Иконка из общего [`app_icon.jpg`](../../clients/flutter/assets/branding/app_icon.jpg) отображается на домашнем экране, приложение запускается. Это не подтверждает голос, демонстрацию экрана и полную функциональную приёмку. [Запись проверки](../../evidence/ios/ios-wired-release-install-2026-09-28-001.json).
 
 Позднее исправлены высота полей входа и поведение при временном сбое проверки сессии. Исправленная сборка [проверена тестами, установлена поверх приложения и запущена](../../evidence/ios/ios-session-retry-input-height-2026-09-28-001.json). Сохранность конкретной пользовательской сессии без просмотра приватных данных не подтверждалась.
 
@@ -16,7 +16,7 @@
 
 ## Исходники и требования
 
-- Экраны, API client, voice/media сервисы: [`desktop/lib/`](../../desktop/lib/); Xcode workspace: [`desktop/ios/Runner.xcworkspace`](../../desktop/ios/Runner.xcworkspace).
+- Экраны, API client, voice/media сервисы: [`clients/flutter/lib/`](../../clients/flutter/lib/); Xcode workspace: [`clients/flutter/ios/Runner.xcworkspace`](../../clients/flutter/ios/Runner.xcworkspace).
 - Поведенческий эталон: [web](../web/README.md); фактическая карта Flutter: [flutter-web-parity](../../docs/flutter-web-parity.md).
 - Серверный контракт: [mobile-client-contract](../../contracts/mobile-client-contract.md), [OpenAPI](../../contracts/openapi.yaml), [realtime schema](../../contracts/realtime.schema.json).
 - Дизайн и критерии: [UI spec](../../docs/UI_SPEC.md), [GuildChat status](../../docs/design/GUILDCHAT_V1_STATUS.md), [acceptance](../../docs/ACCEPTANCE.md).

@@ -4,9 +4,9 @@
 
 | Клиент | Источник версии | Значение | Что оно означает |
 | --- | --- | --- | --- |
-| Web | [`frontend/package.json`](../frontend/package.json) | `0.1.0` | Версия npm-пакета; production образ и проверенный deploy идентифицируются точным commit SHA/OCI digest |
-| Android | [`desktop/pubspec.yaml`](../desktop/pubspec.yaml) | `1.0.0+3` | Новый APK ограничивает sender resolution выбранным профилем; подпись и hash записаны в [QA-88](../evidence/flutter/qa88-android-screen-share-resolution-cap-2026-09-29-001.json) |
-| iOS | [`desktop/pubspec.yaml`](../desktop/pubspec.yaml) | `1.0.0+3` | Flutter build number `CFBundleVersion=3`; публикации нет |
+| Web | [`clients/web/package.json`](../clients/web/package.json) | `0.1.0` | Версия npm-пакета; production образ и проверенный deploy идентифицируются точным commit SHA/OCI digest |
+| Android | [`clients/flutter/pubspec.yaml`](../clients/flutter/pubspec.yaml) | `1.0.0+3` | Новый APK ограничивает sender resolution выбранным профилем; подпись и hash записаны в [QA-88](../evidence/flutter/qa88-android-screen-share-resolution-cap-2026-09-29-001.json) |
+| iOS | [`clients/flutter/pubspec.yaml`](../clients/flutter/pubspec.yaml) | `1.0.0+3` | Flutter build number `CFBundleVersion=3`; публикации нет |
 
 `/api/v1` — версия серверного HTTP-контракта, не версия приложения. Совместимость проверяется вместе с [`openapi.yaml`](../contracts/openapi.yaml), [`realtime.schema.json`](../contracts/realtime.schema.json) и [mobile contract](../contracts/mobile-client-contract.md). Не выводите номер релиза из даты или одного зелёного CI.
 

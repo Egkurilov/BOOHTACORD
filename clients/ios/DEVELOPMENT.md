@@ -1,10 +1,10 @@
 # Разработка iOS-клиента
 
-iOS runner создан в существующем Flutter-проекте [`desktop/`](../../desktop/). Общие функции Android и iOS находятся в `desktop/lib/`; iOS AppIcon сгенерирован из того же [`app_icon.jpg`](../../desktop/assets/branding/app_icon.jpg), что используется для Android/macOS/Windows. Web остаётся эталоном поведения; системные разрешения, компоновка и медиа проверяются на iPhone отдельно.
+iOS runner создан в существующем Flutter-проекте [`clients/flutter/`](../../clients/flutter/). Общие функции Android и iOS находятся в `clients/flutter/lib/`; iOS AppIcon сгенерирован из того же [`app_icon.jpg`](../../clients/flutter/assets/branding/app_icon.jpg), что используется для Android/macOS/Windows. Web остаётся эталоном поведения; системные разрешения, компоновка и медиа проверяются на iPhone отдельно.
 
 ## Инструменты и сборка
 
-Нужны macOS, Xcode, Flutter с iOS toolchain и физический iPhone для проверки медиа. Текущий Xcode-проект подключает Flutter-плагины через генерируемый Swift Package; в `desktop/ios/` нет `Podfile`. [Flutter iOS setup](https://docs.flutter.dev/platform-integration/ios/setup) описывает настройку среды.
+Нужны macOS, Xcode, Flutter с iOS toolchain и физический iPhone для проверки медиа. Текущий Xcode-проект подключает Flutter-плагины через генерируемый Swift Package; в `clients/flutter/ios/` нет `Podfile`. [Flutter iOS setup](https://docs.flutter.dev/platform-integration/ios/setup) описывает настройку среды.
 
 ```bash
 cd desktop
@@ -17,7 +17,7 @@ flutter build ios --release
 
 Для подписи откройте `ios/Runner.xcworkspace` в Xcode и выберите свой Team в Runner → Signing & Capabilities. Bundle ID: `ru.boohtacord.app`. Локально использован Personal Team с бесплатной учётной записью Apple и автоматическим provisioning. Подписанная release-сборка позволяет запускать приложение с домашнего экрана; debug-сборку iOS 14+ нужно запускать из Xcode или Flutter tooling. Для повторной установки по кабелю можно использовать Xcode Run с конфигурацией Release либо `xcrun devicectl device install app --device <device-id> <path-to-Runner.app>` и `xcrun devicectl device process launch --device <device-id> ru.boohtacord.app`.
 
-На данном Mac каталог `desktop/` управляется FileProvider, который добавляет метаданные к build artifacts и может нарушать code signing. Локальный игнорируемый `desktop/build` направлен в `~/Library/Caches/boohtacord-ios-build`; это настройка рабочей машины, не часть проекта. После `flutter build ios --release` подписанный `.app` находится в `build/ios/iphoneos/Runner.app` (промежуточный Xcode output — `build/ios/Release-iphoneos/Runner.app`). Не добавляйте provisioning profile, сертификаты или локальный build cache в Git.
+На данном Mac каталог `clients/flutter/` управляется FileProvider, который добавляет метаданные к build artifacts и может нарушать code signing. Локальный игнорируемый `clients/flutter/build` направлен в `~/Library/Caches/boohtacord-ios-build`; это настройка рабочей машины, не часть проекта. После `flutter build ios --release` подписанный `.app` находится в `build/ios/iphoneos/Runner.app` (промежуточный Xcode output — `build/ios/Release-iphoneos/Runner.app`). Не добавляйте provisioning profile, сертификаты или локальный build cache в Git.
 
 ## Платформенная реализация и открытые проверки
 

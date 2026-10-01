@@ -2,9 +2,9 @@
 
 ## Где разрабатывать
 
-Android — runner общего Flutter-проекта [`desktop/`](../../desktop/): UI и сервисы в [`desktop/lib/`](../../desktop/lib/), Android-конфигурация в [`desktop/android/`](../../desktop/android/). Не создавайте параллельную копию Dart-кода. [ADR-006](../../docs/adr/ADR-006-android-client.md) разрешает Android-приложение поверх существующих API, ACL и LiveKit.
+Android — runner общего Flutter-проекта [`clients/flutter/`](../../clients/flutter/): UI и сервисы в [`clients/flutter/lib/`](../../clients/flutter/lib/), Android-конфигурация в [`clients/flutter/android/`](../../clients/flutter/android/). Не создавайте параллельную копию Dart-кода. [ADR-006](../../docs/adr/ADR-006-android-client.md) разрешает Android-приложение поверх существующих API, ACL и LiveKit.
 
-В [`pubspec.yaml`](../../desktop/pubspec.yaml) указано `1.0.0+1`: Flutter использует `1.0.0` как Android `versionName`, `1` как `versionCode`. Это значение манифеста, а не заключение о релизной готовности; см. [политику версий](../../docs/CLIENT_VERSIONING.md).
+В [`pubspec.yaml`](../../clients/flutter/pubspec.yaml) указано `1.0.0+1`: Flutter использует `1.0.0` как Android `versionName`, `1` как `versionCode`. Это значение манифеста, а не заключение о релизной готовности; см. [политику версий](../../docs/CLIENT_VERSIONING.md).
 
 ## Реализованные возможности в исходниках
 
@@ -18,7 +18,7 @@ Android — runner общего Flutter-проекта [`desktop/`](../../deskto
 
 ## Запуск и проверки
 
-Из `desktop/`:
+Из `clients/flutter/`:
 
 ```bash
 flutter pub get

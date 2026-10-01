@@ -23,27 +23,27 @@ jobs:
       - name: Verify Flutter toolchain
         run: flutter --version
       - name: Resolve locked Flutter dependencies
-        working-directory: desktop
+        working-directory: clients/flutter
         run: flutter pub get --enforce-lockfile
       - name: Test macOS release packaging
         run: bash scripts/macos_release/package.test.sh
       - name: Run Flutter tests
-        working-directory: desktop
+        working-directory: clients/flutter
         run: flutter test
       - name: Analyze Flutter client
-        working-directory: desktop
+        working-directory: clients/flutter
         run: flutter analyze --no-fatal-infos
       - name: Build universal macOS release client
-        working-directory: desktop
+        working-directory: clients/flutter
         run: flutter build macos --release --no-pub
       - name: Package macOS CI build and checksum
         shell: bash
         run: |
           set -euo pipefail
-          version="$(sed -E -n 's/^version: *([0-9][0-9.]*)\+[0-9][0-9]*$/\1/p' desktop/pubspec.yaml)"
+          version="$(sed -E -n 's/^version: *([0-9][0-9.]*)\+[0-9][0-9]*$/\1/p' clients/flutter/pubspec.yaml)"
           test -n "$version"
           bash scripts/macos_release/package.sh \
-            desktop/build/macos/Build/Products/Release/BOOHTACORD.app \
+            clients/flutter/build/macos/Build/Products/Release/BOOHTACORD.app \
             "macos-v$version" \
             "$RUNNER_TEMP/boohtacord-macos-artifacts"
       - name: Retain macOS build and checksum as workflow artifact

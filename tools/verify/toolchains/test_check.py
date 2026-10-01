@@ -8,7 +8,7 @@ from tools.verify.toolchains.check import check_versions
 class ToolchainTests(unittest.TestCase):
     def tree(self, root):
         files = {
-            "frontend/Dockerfile": "FROM node:24.18.0-alpine AS build\nCOPY public ./public\n",
+            "clients/web/Dockerfile": "FROM node:24.18.0-alpine AS build\nCOPY public ./public\n",
             "backend/Dockerfile": "FROM golang:1.26.4-alpine AS build\n",
             "backend/go.mod": "module example\ngo 1.26.0\ntoolchain go1.26.4\n",
             ".node-version": "24.18.0\n",
@@ -27,7 +27,7 @@ class ToolchainTests(unittest.TestCase):
 
     def test_rejects_runtime_and_ci_drift(self):
         for name, content in [
-            ("frontend/Dockerfile", "FROM node:22-alpine AS build\n"),
+            ("clients/web/Dockerfile", "FROM node:22-alpine AS build\n"),
             (".github/workflows/client.yaml", "node-version: 22\n"),
             (".github/workflows/client.yaml", "flutter-version: 3.46.0\n"),
             ("backend/go.mod", "module example\ngo 1.26.0\n"),
