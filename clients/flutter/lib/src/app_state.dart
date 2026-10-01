@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -16,6 +15,8 @@ import 'features/session/lifecycle/controller.dart';
 import 'features/profile/state/controller.dart';
 import 'features/workspace/lifecycle/controller.dart';
 import 'features/conversation/lifecycle/controller.dart';
+import 'features/realtime/lifecycle/controller.dart';
+import 'features/realtime/dispatch/workspace.dart';
 import 'services/api_client.dart';
 import 'services/composer_draft_memory.dart';
 import 'services/audio_preferences.dart';
@@ -145,6 +146,31 @@ class AppState extends ChangeNotifier {
       reportError: (value) => error = value,
       formatError: _message,
     )..addListener(notifyListeners);
+    _realtime = RealtimeController(
+      api,
+      _session.scope,
+      isReady: () => phase == AppPhase.ready,
+      expire: _expireSession,
+      invalidatePresence: () => guildPresence.invalidate(),
+      dispatch: WorkspaceRealtimeDispatch(
+        _workspace,
+        _conversation,
+        voiceRevoked: _dispatchVoiceRevocation,
+        notifyMessage: (event) {
+          final unread =
+              _addressedUnreadCount(event.kind, event.payload) ??
+              (event.kind == 'direct_message.message_created' ? 0 : null);
+          unawaited(
+            _refreshAndDeliverMessageNotification(
+              eventId: event.id,
+              kind: event.kind,
+              payload: event.payload,
+              previousUnread: unread,
+            ),
+          );
+        },
+      ).call,
+    )..addListener(notifyListeners);
     _profile = ProfileController(
       api,
       _session.scope,
@@ -169,6 +195,7 @@ class AppState extends ChangeNotifier {
   late final ProfileController _profile;
   late final WorkspaceController _workspace;
   late final ConversationController _conversation;
+  late final RealtimeController _realtime;
   @visibleForTesting
   final Duration startupSessionTimeout;
   final NativeNotificationService _nativeNotifications;
@@ -254,7 +281,8 @@ class AppState extends ChangeNotifier {
   bool get loadingDirectMessages => _conversation.loadingDirectMessages;
   set loadingDirectMessages(bool value) =>
       _conversation.loadingDirectMessages = value;
-  bool realtimeConnected = false;
+  bool get realtimeConnected => _realtime.connected;
+  set realtimeConnected(bool value) => _realtime.connected = value;
   bool maintenanceActive = false;
   bool get profileLoading => _profile.profileLoading;
   set profileLoading(bool value) => _profile.profileLoading = value;
@@ -338,9 +366,6 @@ class AppState extends ChangeNotifier {
   bool _listenerOnly = false;
   bool _voiceAdmissionPending = false;
   final Map<String, String> _revokedVoiceLeasesDuringJoin = {};
-  WebSocket? _realtimeSocket;
-  StreamSubscription<dynamic>? _realtimeSubscription;
-  Timer? _realtimeRetry;
   Timer? _maintenanceTimer;
   StreamSubscription<String>? _voiceRosterSubscription;
   Completer<void>? _voiceRosterStreamDone;
@@ -372,9 +397,6 @@ class AppState extends ChangeNotifier {
   int _voiceRosterRevision = 0;
   bool _voiceRosterLoading = false;
   bool get _notificationAppIsForeground => _nativeNotifications.appIsForeground;
-  int _realtimeAttempt = 0;
-  final Set<String> _realtimeEventIds = <String>{};
-  bool _checkingRealtimeSession = false;
 
   String get serverUrl => api.baseUrl;
   Room? get room => _room;
@@ -521,7 +543,7 @@ class AppState extends ChangeNotifier {
     _clearVoiceStreamNotice(resetTracker: true, notify: false);
     error = null;
     logoutError = null;
-    _realtimeEventIds.clear();
+    _realtime.eventIds.clear();
     _conversation.lastReadTextAt.clear();
     _conversation.pendingTextReads.clear();
     _conversation.lastReadDirectMessageId = null;
@@ -1138,104 +1160,28 @@ class AppState extends ChangeNotifier {
   Future<void> markTextChannelRead(String channelId, String messageId) =>
       _conversation.markTextChannelRead(channelId, messageId);
 
-  Future<void> _connectRealtime() async {
-    if (!api.realtimeEnabled ||
-        phase != AppPhase.ready ||
-        _realtimeSocket != null) {
-      return;
-    }
-    try {
-      final socket = await api.openRealtime();
-      if (phase != AppPhase.ready) {
-        await socket.close();
-        return;
-      }
-      _realtimeSocket = socket;
-      _realtimeAttempt = 0;
-      _realtimeSubscription = socket.listen(
-        _handleRealtimeData,
-        onDone: _handleRealtimeClosed,
-        onError: (_) => _handleRealtimeClosed(),
-        cancelOnError: true,
-      );
-    } catch (_) {
-      _scheduleRealtimeRetry();
-    }
-  }
+  Future<void> _connectRealtime() => _realtime.connect();
 
-  void _handleRealtimeData(dynamic raw) {
-    if (raw is! String) return;
-    try {
-      final event = jsonDecode(raw) as Map<String, dynamic>;
-      final eventId = event['event_id'] as String?;
-      final kind = event['kind'] as String?;
-      final payload = event['payload'] as Map<String, dynamic>? ?? const {};
-      if (eventId == null || !_realtimeEventIds.add(eventId)) return;
-      if (_realtimeEventIds.length > 1000) _realtimeEventIds.clear();
-      switch (kind) {
-        case 'connection.ready':
-          realtimeConnected = true;
-        case 'presence.snapshot':
-          guildPresence.acceptSnapshot(payload['online_user_ids']);
-        case 'presence.changed':
-          guildPresence.acceptChange(payload['user_id'], payload['presence']);
-        case 'message.created':
-          final previousUnread = _addressedUnreadCount(kind!, payload);
-          if (selectedChannel?.id == payload['channel_id']) {
-            unawaited(refreshSelectedTextHistory());
-          }
-          unawaited(
-            _refreshAndDeliverMessageNotification(
-              eventId: eventId,
-              kind: kind,
-              payload: payload,
-              previousUnread: previousUnread,
-            ),
+  void _dispatchVoiceRevocation(Map<String, dynamic> payload) {
+    final revocation = VoiceLeaseRevocation.parse(
+      payload['lease_id'],
+      payload['reason'],
+      activeLeaseId: _leaseId,
+      admissionPending: _voiceAdmissionPending,
+    );
+    if (revocation != null) {
+      if (_voiceAdmissionPending) {
+        _revokedVoiceLeasesDuringJoin[revocation.leaseId] = revocation.reason;
+        if (_revokedVoiceLeasesDuringJoin.length > 16) {
+          _revokedVoiceLeasesDuringJoin.remove(
+            _revokedVoiceLeasesDuringJoin.keys.first,
           );
-        case 'direct_message.message_created':
-          final previousUnread = _addressedUnreadCount(kind!, payload) ?? 0;
-          unawaited(
-            _refreshAndDeliverMessageNotification(
-              eventId: eventId,
-              kind: kind,
-              payload: payload,
-              previousUnread: previousUnread,
-            ),
-          );
-        case 'channel.updated':
-          unawaited(refreshTopology());
-        case 'connection.resync_required':
-          unawaited(refreshTopology());
-          unawaited(refreshMembers());
-          if (selectedChannel?.kind == ChannelKind.text) {
-            unawaited(refreshSelectedTextHistory());
-          }
-        case 'voice.lease_revoked':
-          final revocation = VoiceLeaseRevocation.parse(
-            payload['lease_id'],
-            payload['reason'],
-            activeLeaseId: _leaseId,
-            admissionPending: _voiceAdmissionPending,
-          );
-          if (revocation != null) {
-            if (_voiceAdmissionPending) {
-              _revokedVoiceLeasesDuringJoin[revocation.leaseId] =
-                  revocation.reason;
-              if (_revokedVoiceLeasesDuringJoin.length > 16) {
-                _revokedVoiceLeasesDuringJoin.remove(
-                  _revokedVoiceLeasesDuringJoin.keys.first,
-                );
-              }
-            } else {
-              unawaited(
-                _handleVoiceLeaseRevoked(revocation.leaseId, revocation.reason),
-              );
-            }
-          }
+        }
+      } else {
+        unawaited(
+          _handleVoiceLeaseRevoked(revocation.leaseId, revocation.reason),
+        );
       }
-      notifyListeners();
-    } catch (_) {
-      // Unknown or malformed future events are ignored and grant no authority.
     }
   }
 
@@ -1322,62 +1268,17 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _handleRealtimeClosed() {
-    _realtimeSocket = null;
-    realtimeConnected = false;
-    guildPresence.invalidate();
-    notifyListeners();
-    unawaited(_checkSessionAfterRealtimeClose());
-  }
-
-  Future<void> _checkSessionAfterRealtimeClose() async {
-    if (phase != AppPhase.ready || _checkingRealtimeSession) return;
-    _checkingRealtimeSession = true;
-    try {
-      if (await api.currentSession() == null) {
-        await _expireSession();
-        return;
-      }
-    } catch (_) {
-      // A transient REST failure does not establish that the session expired.
-    } finally {
-      _checkingRealtimeSession = false;
-    }
-    _scheduleRealtimeRetry();
-  }
-
-  void _scheduleRealtimeRetry() {
-    if (phase != AppPhase.ready || _realtimeRetry != null) return;
-    guildPresence.invalidate();
-    notifyListeners();
-    final seconds = 1 << _realtimeAttempt.clamp(0, 5);
-    _realtimeAttempt++;
-    _realtimeRetry = Timer(Duration(seconds: seconds), () {
-      _realtimeRetry = null;
-      unawaited(_connectRealtime());
-    });
-  }
-
-  Future<void> _closeRealtime() async {
-    _realtimeRetry?.cancel();
-    _realtimeRetry = null;
-    await _realtimeSubscription?.cancel();
-    _realtimeSubscription = null;
-    await _realtimeSocket?.close();
-    _realtimeSocket = null;
-    realtimeConnected = false;
-    guildPresence.invalidate();
-  }
+  Future<void> _closeRealtime() => _realtime.close();
 
   @override
   void dispose() {
     _session.dispose();
+    _realtime.dispose();
     _profile.dispose();
     _workspace.dispose();
     _conversation.dispose();
     _nativeNotifications.dispose();
     _closeScreenPreviewSubscriptions();
-    _realtimeRetry?.cancel();
     _maintenanceTimer?.cancel();
     _stopVoiceRosterEvents();
     _voiceStreamNoticeTimer?.cancel();
@@ -1385,8 +1286,6 @@ class AppState extends ChangeNotifier {
     _stopScreenShareMetrics();
     _audioDevices.dispose();
     api.onUnauthorized = null;
-    unawaited(_realtimeSubscription?.cancel());
-    unawaited(_realtimeSocket?.close());
     unawaited(_room?.disconnect());
     super.dispose();
   }

@@ -1,0 +1,15 @@
+{
+  "id": "reorganization-realtime-state-2026-10-02",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "scope": "WebSocket ownership, event deduplication, scoped dispatch and reconnect session checks",
+  "checks": {
+    "realtime_and_existing_app_state_tests": 48,
+    "focused_realtime_tests_with_extra_dedup_case": 3,
+    "late_socket_is_closed": "PASS",
+    "late_reconnect_session_check_cannot_expire_new_account": "PASS",
+    "old_scope_cannot_dispatch_events": "PASS"
+  },
+  "preserved": ["Bounded deduplication", "Reconnect backoff", "Transient WS/REST failure does not tear down media"],
+  "limitations": ["No physical network interruption acceptance is claimed"]
+}
