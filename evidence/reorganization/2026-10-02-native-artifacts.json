@@ -1,0 +1,25 @@
+{
+  "id": "reorganization-native-artifacts-2026-10-02",
+  "kind": "build-verification",
+  "status": "PASS",
+  "scope": "Shared Android debug build, artifact metadata and native origin inspection",
+  "source_revision": "0df15db3263c16e99d0700b10d48307c083c14ad",
+  "source_dirty": true,
+  "checks": {
+    "shared_android_debug_build": "PASS",
+    "manifest_artifact_checksums": "PASS",
+    "application_id": "ru.boohtacord.app",
+    "version": "1.0.18+23",
+    "tools_python_tests": 60,
+    "publisher_node_tests": 7,
+    "published_android_1_0_18_signature_and_identity": "PASS",
+    "published_apk_sha256": "2b196b5dda20bef3b1263dd9ceed00ded4a4811fd5b7634fbbd2b27332d845f3",
+    "vendor_upstream_archives_downloaded_and_hash_verified": 3
+  },
+  "limitations": [
+    "Local debug build includes in-progress workflow/metadata/ignore changes, explicitly marked source_dirty",
+    "Updated Windows pipeline acceptance is pending GitHub CI",
+    "No new signed Android release or macOS build is claimed",
+    "No physical media acceptance or native capability improvement is claimed"
+  ]
+}

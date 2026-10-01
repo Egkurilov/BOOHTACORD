@@ -34,6 +34,8 @@ def write(directory, platform, architectures, application_id, signing, *, root=R
     revision = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
     dirty = subprocess.run(['git', '-C', str(root), 'diff', '--quiet', 'HEAD', '--'], stderr=subprocess.DEVNULL).returncode != 0
     contracts = {path.name: digest(path) for path in sorted((root / 'contracts').glob('*')) if path.is_file()}
+    if not {'openapi.yaml', 'realtime.schema.json', 'mobile-client-contract.md'} <= contracts.keys():
+        raise ValueError('Native artifact contract inputs are missing from checkout')
     result = {'schema_version': 1, 'source_revision': revision, 'source_dirty': dirty, 'version': version(root),
               'platform': platform, 'architectures': architectures, 'application_id': application_id,
               'signing': signing, 'toolchains': json.loads((root / 'tools/toolchains.json').read_text()),

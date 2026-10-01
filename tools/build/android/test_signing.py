@@ -13,8 +13,10 @@ class TransientSigningMaterialTests(unittest.TestCase):
             environment = {'RUNNER_TEMP': temporary, 'BOOHTACORD_ANDROID_KEYSTORE_BASE64': base64.b64encode(b'fixture').decode(),
                            'BOOHTACORD_ANDROID_KEYSTORE_FILE': 'existing.jks',
                            **{'BOOHTACORD_ANDROID_' + name: 'fixture' for name in ('KEYSTORE_PASSWORD', 'KEY_ALIAS', 'KEY_PASSWORD')}}
-            with patch.dict(os.environ, environment), self.assertRaises(RuntimeError):
-                with provision():
-                    self.assertEqual(Path(os.environ['BOOHTACORD_ANDROID_KEYSTORE_FILE']).read_bytes(), b'fixture')
-                    raise RuntimeError('build failed')
+            with patch.dict(os.environ, environment):
+                with self.assertRaises(RuntimeError):
+                    with provision():
+                        self.assertEqual(Path(os.environ['BOOHTACORD_ANDROID_KEYSTORE_FILE']).read_bytes(), b'fixture')
+                        raise RuntimeError('build failed')
+                self.assertEqual(os.environ['BOOHTACORD_ANDROID_KEYSTORE_FILE'], 'existing.jks')
             self.assertEqual(list(Path(temporary).iterdir()), [])
