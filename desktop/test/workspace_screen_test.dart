@@ -1682,6 +1682,53 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('preserves the visible text anchor when loading an older page', (
+    tester,
+  ) async {
+    final api = _PortraitApi(
+      withHistory: true,
+      historyCount: 30,
+      paginatedHistory: true,
+    );
+    final state = AppState(api);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(state.nextMessageCursor, 'older-page');
+    expect(api.advancedMessageIds.last, 'message-29');
+    final list = find.byKey(const ValueKey('text-channel-messages'));
+    final scroll = tester.widget<ListView>(list).controller!;
+    scroll.jumpTo(scroll.position.minScrollExtent);
+    await tester.pumpAndSettle();
+    final anchor = find.text('Сообщение 0');
+    expect(anchor, findsOneWidget);
+    final anchorTopBefore = tester.getTopLeft(anchor).dy;
+
+    await tester.tap(find.text('Загрузить предыдущие сообщения'));
+    await tester.pumpAndSettle();
+
+    expect(api.messagePageCalls, 2);
+    expect(state.messages.first.id, 'older-message-0');
+    expect(
+      tester.getTopLeft(anchor).dy,
+      closeTo(anchorTopBefore, 1),
+      reason: 'loading a page above the viewport must not move its visible row',
+    );
+    expect(api.advancedMessageIds, isNot(contains('older-message-0')));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('selects a reply target and sends a reply in a text channel', (
     tester,
   ) async {
@@ -2618,6 +2665,7 @@ class _PortraitApi extends ApiClient {
   _PortraitApi({
     this.withHistory = false,
     this.historyCount = 1,
+    this.paginatedHistory = false,
     this.includeDirectMessage = false,
     this.voiceRosters = const [],
     this.extraVoiceChannels = const [],
@@ -2642,6 +2690,7 @@ class _PortraitApi extends ApiClient {
   });
   final bool withHistory;
   final int historyCount;
+  final bool paginatedHistory;
   final bool includeDirectMessage;
   final List<VoiceRoomRoster> voiceRosters;
   final List<GuildChannel> extraVoiceChannels;
@@ -2983,7 +3032,29 @@ class _PortraitApi extends ApiClient {
     String? at,
   }) async {
     messagePageCalls++;
-    return ChatMessagePage(messages: await messages(channelId));
+    if (paginatedHistory && before != null) {
+      return ChatMessagePage(
+        messages: List.generate(
+          12,
+          (index) => ChatMessage(
+            id: 'older-message-$index',
+            channelId: channelId,
+            authorId: 'account-2',
+            body: index == 0
+                ? 'Более старое сообщение 0 ${'длинный текст ' * 16}'
+                : 'Более старое сообщение $index',
+            createdAt: DateTime.utc(2026, 9, 24).add(Duration(minutes: index)),
+            deleted: false,
+            revision: 1,
+          ),
+        ),
+        nextCursor: 'oldest-page',
+      );
+    }
+    return ChatMessagePage(
+      messages: await messages(channelId),
+      nextCursor: paginatedHistory ? 'older-page' : null,
+    );
   }
 
   @override

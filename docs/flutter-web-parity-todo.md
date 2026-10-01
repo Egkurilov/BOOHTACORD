@@ -551,6 +551,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
   notarized/Developer ID distribution остаются непроверенными.
 - [ ] Проверить edit/delete 409 и idempotent send retry с реальным backend и физическим устройством, включая удаление во время редактирования и смену диалога.
 - [ ] Проверить reply context, pagination/scroll anchoring и read cursors на границах страниц и при realtime updates.
+  - [x] Для TEXT сохранить экранную позицию видимого сообщения при добавлении cursor-страницы сверху и не откатывать read cursor на старые сообщения. Тест сначала воспроизвёл сдвиг строки за пределы viewport; исправлено сохранением ключей/координат видимых строк при reindex sliver. Focused regression, workspace suite (51 тест), полный Flutter suite (329 тестов) и analyzer прошли — [QA-177](../evidence/flutter/qa177-text-history-scroll-anchor-2026-10-01-001.json). DM, reply через границы страниц и realtime/backend acceptance остаются открыты.
 - [x] Сохранять несданный TEXT/DM черновик при переключении бесед и восстановить
   тело, ответ, упоминания и уже загруженные вложения отдельно по аккаунту;
   очищать память при logout/session expiry. Service isolation/clear и TEXT

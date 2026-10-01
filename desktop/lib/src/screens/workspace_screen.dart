@@ -2092,18 +2092,65 @@ class _ConversationState extends State<_Conversation>
 
   Future<void> _loadOlder() async {
     if (!_scroll.hasClients) return;
+    final visibleAnchors = _visibleMessageAnchors();
     final oldOffset = _scroll.position.pixels;
     final oldExtent = _scroll.position.maxScrollExtent;
     if (!await widget.state.loadOlderMessages() || !mounted) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scroll.hasClients) return;
-      final position = _scroll.position;
-      final restored = oldOffset + position.maxScrollExtent - oldExtent;
-      position.jumpTo(
-        restored.clamp(position.minScrollExtent, position.maxScrollExtent),
-      );
-      _followLatest = false;
-    });
+    void restoreAnchor(int attemptsRemaining) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scroll.hasClients) return;
+        final position = _scroll.position;
+        final anchor = visibleAnchors
+            .map((anchor) {
+              final row = anchor.key.currentContext?.findRenderObject();
+              return row is RenderBox && row.attached
+                  ? (
+                      top: anchor.top,
+                      currentTop: row.localToGlobal(Offset.zero).dy,
+                    )
+                  : null;
+            })
+            .whereType<({double top, double currentTop})>()
+            .firstOrNull;
+        final target = anchor == null
+            ? oldOffset + position.maxScrollExtent - oldExtent
+            : position.pixels + anchor.currentTop - anchor.top;
+        final clamped = target.clamp(
+          position.minScrollExtent,
+          position.maxScrollExtent,
+        );
+        if ((position.pixels - clamped).abs() > 0.5) {
+          position.jumpTo(clamped);
+          if (attemptsRemaining > 1) restoreAnchor(attemptsRemaining - 1);
+        }
+        _followLatest = false;
+      });
+    }
+
+    restoreAnchor(2);
+  }
+
+  List<({GlobalKey key, double top})> _visibleMessageAnchors() {
+    if (!_scroll.hasClients) return const [];
+    final anchors = <({GlobalKey key, double top})>[];
+    for (final message in widget.state.messages) {
+      final key = _messageKeys['${widget.channel.id}:${message.id}'];
+      final row = key?.currentContext?.findRenderObject();
+      if (row is! RenderBox || !row.attached) continue;
+      final viewport = RenderAbstractViewport.maybeOf(row);
+      if (viewport is! RenderBox) continue;
+      final rowRect = row.localToGlobal(Offset.zero) & row.size;
+      final viewportBox = viewport as RenderBox;
+      final viewportRect =
+          viewportBox.localToGlobal(Offset.zero) & viewportBox.size;
+      if (rowRect.bottom > viewportRect.top &&
+          rowRect.top < viewportRect.bottom &&
+          rowRect.right > viewportRect.left &&
+          rowRect.left < viewportRect.right) {
+        anchors.add((key: key!, top: rowRect.top));
+      }
+    }
+    return anchors;
   }
 
   void _jumpToReply(ChatMessage message) {
@@ -2195,6 +2242,21 @@ class _ConversationState extends State<_Conversation>
                     itemCount:
                         timeline.length +
                         (widget.state.nextMessageCursor == null ? 0 : 1),
+                    findItemIndexCallback: (key) {
+                      final messageKey = _messageKeys.entries
+                          .where((entry) => identical(entry.value, key))
+                          .firstOrNull;
+                      if (messageKey == null) return null;
+                      final messageId = messageKey.key.substring(
+                        widget.channel.id.length + 1,
+                      );
+                      final timelineIndex = timeline.indexWhere(
+                        (entry) => entry.message?.id == messageId,
+                      );
+                      if (timelineIndex < 0) return null;
+                      return timelineIndex +
+                          (widget.state.nextMessageCursor == null ? 0 : 1);
+                    },
                     separatorBuilder: (context, index) {
                       if (widget.state.nextMessageCursor != null &&
                           index == 0) {

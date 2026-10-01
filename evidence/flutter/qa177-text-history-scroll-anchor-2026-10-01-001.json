@@ -1,0 +1,40 @@
+{
+  "id": "QA-177",
+  "kind": "text-history-scroll-anchor",
+  "status": "PASS",
+  "executed_at": "2026-10-01",
+  "source_revision": "working-tree after d8e424a",
+  "summary": "Fixed TEXT history pagination so prepending an older cursor page preserves the screen position of a visible message and does not regress the read cursor. A test-first widget regression reproduced the visible row being displaced outside the viewport before the fix. No ADB/device was used.",
+  "checks": [
+    {
+      "name": "TEXT older-page scroll anchor and read-cursor regression",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'preserves the visible text anchor when loading an older page'",
+      "status": "PASS",
+      "observation": "The regression first failed on the prior implementation: after loading a page, the previously visible oldest row was no longer built in the viewport. After the fix, that row remains within 1 logical pixel of its original screen coordinate, the new older page is prepended, and the read cursor remains at the newest previously read message."
+    },
+    {
+      "name": "Workspace widget suite",
+      "command": "cd desktop && flutter test --no-pub test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 51 workspace widget tests passed."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd desktop && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 329 Flutter tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub --no-fatal-infos",
+      "status": "PASS",
+      "observation": "Analyzer reported no issues."
+    }
+  ],
+  "limitations": [
+    "Direct-message history does not yet have the same scroll-anchor regression or correction.",
+    "Reply navigation across unloaded pages, realtime overlap and live backend cursor behavior remain unverified.",
+    "No Android device, ADB, or platform runtime validation was performed."
+  ],
+  "remaining": "Extend and verify the behavior for DM history and test reply, realtime and server-backed read-cursor boundaries; keep physical Android acceptance open."
+}
