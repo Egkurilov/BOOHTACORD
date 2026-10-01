@@ -655,4 +655,17 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] Проверить подписанную macOS Release-сборку и Keychain persistence после перезапуска; на текущем Mac нет действительной Apple Developer identity. macOS Debug app и Android Debug APK собраны локально — [QA-30](../evidence/flutter/qa30-native-debug-builds-2026-09-27-001.json).
 - [x] Временно отключить автоматические push/tag запуски macOS CI и macOS Release, пока GitVerse runner недоступен; ручной dispatch сохранён. Возобновить автозапуски после provision macOS runner.
 - [ ] Сохранить защищённую копию Android upload JKS/credentials вне сборочного host; установить/обновить release APK на физическом Android и пройти QA-13.
-- [ ] Проверить совместимость Kotlin Gradle Plugin с `flutter_webrtc`, `livekit_client` и `flutter_background` перед обновлением Flutter toolchain. Android Debug build проходит, но Flutter 3.47.5 уже предупреждает, что будущие версии откажутся собирать плагины, применяющие KGP — наблюдение [QA-157](../evidence/flutter/qa157-stream-statistics-reporting-audit-2026-09-30-001.json).
+- [x] Проверить KGP/build compatibility до следующего переключения Android toolchain:
+  текущая конфигурация Flutter 3.47.5 + AGP 9.1.0 собирает Debug APK с
+  `android.builtInKotlin=false`, но Flutter продолжает предупреждать о трёх
+  плагинах `flutter_background`, `flutter_webrtc` и `livekit_client`. Отдельная
+  probe-сборка с `android.builtInKotlin=true` падает на `flutter_background 1.3.1`,
+  который безусловно применяет `kotlin-android`; AGP сообщает, что Kotlin уже
+  встроен и KGP надо убрать. У двух локальных форков KGP guard-ится условием,
+  но их literal plugin declarations всё ещё попадают в предупреждение Flutter —
+  [QA-170](../evidence/flutter/qa170-android-built-in-kotlin-compatibility-2026-10-01-001.json).
+- [ ] До включения `android.builtInKotlin=true` мигрировать все три отмеченных
+  Android plugin build scripts с учётом fallback, проверить обе Gradle-конфигурации
+  на полном Debug и signed Release build и закрепить regression gate в Android CI.
+  Пока эту матрицу не закрыли, оставить `android.builtInKotlin=false`; миграция
+  относится к build compatibility и не требует установки/ADB.

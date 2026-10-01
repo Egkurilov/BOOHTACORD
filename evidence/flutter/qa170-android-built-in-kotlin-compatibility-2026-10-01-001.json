@@ -1,0 +1,33 @@
+{
+  "id": "QA-170",
+  "kind": "android-built-in-kotlin-compatibility-audit",
+  "status": "PARTIAL",
+  "executed_at": "2026-10-01",
+  "source_revision": "6acf087",
+  "summary": "The current Android build works on Flutter 3.47.5 / AGP 9.1.0 with android.builtInKotlin=false, but Flutter warns about flutter_background, flutter_webrtc and livekit_client applying KGP. A no-device Gradle probe with android.builtInKotlin=true fails while configuring flutter_background 1.3.1 because it unconditionally applies kotlin-android, which AGP 9 rejects when built-in Kotlin is active. Keep the current compatibility mode until all three declarations have been migrated and both modes are covered by Android CI.",
+  "checks": [
+    {
+      "name": "Current Android Debug build with built-in Kotlin disabled",
+      "command": "cd desktop && JAVA_HOME=<JDK 17> flutter build apk --debug --no-pub",
+      "status": "PASS",
+      "observation": "Debug APK builds successfully without connecting to or installing on a device. Flutter 3.47.5 emits its KGP warning for flutter_background, flutter_webrtc and livekit_client."
+    },
+    {
+      "name": "AGP 9 built-in Kotlin compatibility probe",
+      "command": "cd desktop/android && JAVA_HOME=<JDK 17> ./gradlew :app:assembleDebug -Pandroid.builtInKotlin=true --no-daemon",
+      "status": "FAIL",
+      "observation": "Gradle 9.3.1 / AGP 9.1.0 fails at flutter_background 1.3.1 android/build.gradle line 3. The plugin applies kotlin-android unconditionally; AGP reports KGP is no longer required with built-in Kotlin and instructs removing org.jetbrains.kotlin.android. No device was used."
+    },
+    {
+      "name": "Local plugin and resolved dependency source audit",
+      "status": "PARTIAL",
+      "observation": "The app does not directly apply KGP. flutter_webrtc and livekit_client conditionally skip their apply statement when AGP 9 built-in Kotlin is active, but Flutter's detector still warns because the plugin declarations remain in the source. The first built-in-Kotlin configuration failure is flutter_background; a fully migrated three-plugin build matrix has not been completed."
+    }
+  ],
+  "references": [
+    "https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin",
+    "https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-plugin-authors",
+    "https://pub.dev/packages/flutter_background/changelog"
+  ],
+  "remaining": "Migrate flutter_background, flutter_webrtc and livekit_client plugin build scripts without regressing the false-mode compatibility, add CI builds for builtInKotlin=false and true, then switch the default only after both Debug and signed Release gates pass."
+}
