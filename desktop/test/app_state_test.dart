@@ -903,6 +903,34 @@ void main() {
     },
   );
 
+  test(
+    'text refresh cannot leave message loading stuck after channel switch',
+    () async {
+      final api = _FakeApi(topology);
+      final state = AppState(api);
+      addTearDown(state.dispose);
+      await state.initialize();
+      final pageGate = Completer<ChatMessagePage>();
+      api.messagePageGate = pageGate;
+
+      final refresh = state.refreshSelectedTextHistory();
+      await Future<void>.delayed(Duration.zero);
+      await state.selectChannel(
+        const GuildChannel(
+          id: 'voice-1',
+          name: 'Голосовой',
+          kind: ChannelKind.voice,
+          admissionClosed: false,
+        ),
+      );
+      pageGate.complete(const ChatMessagePage(messages: []));
+      await refresh;
+
+      expect(state.selectedChannel?.id, 'voice-1');
+      expect(state.loadingMessages, isFalse);
+    },
+  );
+
   test('requests an existing voice lease transfer immediately', () async {
     final api = _FakeApi(
       topology,
@@ -1197,6 +1225,7 @@ class _FakeApi extends ApiClient {
   List<String> sentDirectAttachmentIds = const [];
   int failTextSends = 0;
   int failDirectSends = 0;
+  Completer<ChatMessagePage>? messagePageGate;
   String? committedTextClientId;
   Completer<void>? textSendGate;
   Completer<void>? textEditGate;
@@ -1389,6 +1418,9 @@ class _FakeApi extends ApiClient {
     String? before,
     String? at,
   }) async {
+    if (before == null && at == null && messagePageGate != null) {
+      return messagePageGate!.future;
+    }
     if (paginated && before != null) {
       olderPageRequests++;
       return ChatMessagePage(

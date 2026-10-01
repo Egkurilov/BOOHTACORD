@@ -191,6 +191,7 @@ class AppState extends ChangeNotifier {
   bool loadingOlderMessages = false;
   bool loadingMessages = false;
   bool _textHistoryHasLoadedOlderPages = false;
+  int _textHistoryLoadSequence = 0;
   bool sending = false;
   bool loadingDirectMessages = false;
   bool realtimeConnected = false;
@@ -397,6 +398,7 @@ class AppState extends ChangeNotifier {
   Future<void> _expireSession() async {
     if (phase != AppPhase.ready || _expiringSession) return;
     _expiringSession = true;
+    _textHistoryLoadSequence++;
     ComposerDraftMemory.clear();
     _stopVoiceRosterEvents();
     phase = AppPhase.signedOut;
@@ -580,6 +582,8 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> setServer(String value) async {
+    _textHistoryLoadSequence++;
+    loadingMessages = false;
     _stopVoiceRosterEvents();
     await leaveVoice();
     await _closeRealtime();
@@ -652,6 +656,8 @@ class AppState extends ChangeNotifier {
       return;
     }
     ComposerDraftMemory.clear();
+    _textHistoryLoadSequence++;
+    loadingMessages = false;
     user = null;
     profile = null;
     profileLoadError = null;
@@ -1311,6 +1317,8 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> showDirectMessages() async {
+    _textHistoryLoadSequence++;
+    loadingMessages = false;
     workspacePanel = WorkspacePanel.none;
     navigationSection = NavigationSection.directMessages;
     selectedChannel = null;
@@ -1390,6 +1398,8 @@ class AppState extends ChangeNotifier {
         notifyListeners();
         return;
       }
+      _textHistoryLoadSequence++;
+      loadingMessages = false;
       selectedChannel = resolvedChannel;
       selectedDirectMessage = null;
       navigationSection = NavigationSection.channels;
@@ -1410,6 +1420,8 @@ class AppState extends ChangeNotifier {
         notifyListeners();
         return;
       }
+      _textHistoryLoadSequence++;
+      loadingMessages = false;
       selectedDirectMessage = conversation;
       selectedChannel = null;
       navigationSection = NavigationSection.directMessages;
@@ -1471,6 +1483,8 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> openDirectConversation(DirectConversation conversation) async {
+    _textHistoryLoadSequence++;
+    loadingMessages = false;
     selectedDirectMessage = conversation;
     selectedChannel = null;
     nextDirectMessageCursor = null;
@@ -1830,6 +1844,7 @@ class AppState extends ChangeNotifier {
       final all = topology!.categories.expand((category) => category.channels);
       if (selectedChannel != null &&
           !all.any((channel) => channel.id == selectedChannel!.id)) {
+        _textHistoryLoadSequence++;
         selectedChannel = null;
         messages = const [];
         nextMessageCursor = null;
@@ -1848,6 +1863,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> selectChannel(GuildChannel channel) async {
+    final loadSequence = ++_textHistoryLoadSequence;
     workspacePanel = WorkspacePanel.none;
     navigationSection = NavigationSection.channels;
     selectedDirectMessage = null;
@@ -1855,6 +1871,7 @@ class AppState extends ChangeNotifier {
     messages = const [];
     nextMessageCursor = null;
     _textHistoryHasLoadedOlderPages = false;
+    loadingMessages = false;
     error = null;
     notifyListeners();
     if (channel.kind == ChannelKind.text) {
@@ -1862,7 +1879,8 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       try {
         final page = await api.messagePage(channel.id);
-        if (selectedChannel?.id == channel.id) {
+        if (_textHistoryLoadSequence == loadSequence &&
+            selectedChannel?.id == channel.id) {
           _acknowledgeMessageIds(
             page.messages.map((message) => message.clientMessageId),
           );
@@ -1870,10 +1888,15 @@ class AppState extends ChangeNotifier {
           nextMessageCursor = page.nextCursor;
         }
       } catch (cause) {
-        error = _message(cause);
+        if (_textHistoryLoadSequence == loadSequence &&
+            selectedChannel?.id == channel.id) {
+          error = _message(cause);
+        }
       } finally {
-        loadingMessages = false;
-        notifyListeners();
+        if (_textHistoryLoadSequence == loadSequence) {
+          loadingMessages = false;
+          notifyListeners();
+        }
       }
     }
   }
@@ -1928,11 +1951,15 @@ class AppState extends ChangeNotifier {
     final channel = selectedChannel;
     if (channel == null || channel.kind != ChannelKind.text) return;
 
+    final loadSequence = ++_textHistoryLoadSequence;
     loadingMessages = true;
     notifyListeners();
     try {
       final page = await api.messagePage(channel.id);
-      if (selectedChannel?.id != channel.id) return;
+      if (_textHistoryLoadSequence != loadSequence ||
+          selectedChannel?.id != channel.id) {
+        return;
+      }
 
       final byId = {for (final message in messages) message.id: message};
       for (final message in page.messages) {
@@ -1950,9 +1977,13 @@ class AppState extends ChangeNotifier {
       }
       error = null;
     } catch (cause) {
-      if (selectedChannel?.id == channel.id) error = _message(cause);
+      if (_textHistoryLoadSequence == loadSequence &&
+          selectedChannel?.id == channel.id) {
+        error = _message(cause);
+      }
     } finally {
-      if (selectedChannel?.id == channel.id) {
+      if (_textHistoryLoadSequence == loadSequence &&
+          selectedChannel?.id == channel.id) {
         loadingMessages = false;
         notifyListeners();
       }
