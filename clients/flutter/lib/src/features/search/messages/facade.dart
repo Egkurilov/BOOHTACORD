@@ -11,11 +11,13 @@ mixin SearchMessagesFacade on ApiFacadeBase {
     String? directMessageId,
     String? before,
     int limit = 20,
-  }) => _searchMessages.searchMessages(
-    query,
-    channelId: channelId,
-    directMessageId: directMessageId,
-    before: before,
-    limit: limit,
+  }) => transport.run(
+    () => _searchMessages.searchMessages(
+      query,
+      channelId: channelId,
+      directMessageId: directMessageId,
+      before: before,
+      limit: limit,
+    ),
   );
 }

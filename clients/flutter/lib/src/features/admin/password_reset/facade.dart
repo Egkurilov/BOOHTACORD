@@ -7,5 +7,7 @@ mixin AdminPasswordResetFacade on ApiFacadeBase {
 
   Future<AdminPasswordResetLink> createAdminPasswordResetLink(
     String accountId,
-  ) => _adminPasswordReset.createAdminPasswordResetLink(accountId);
+  ) => transport.run(
+    () => _adminPasswordReset.createAdminPasswordResetLink(accountId),
+  );
 }

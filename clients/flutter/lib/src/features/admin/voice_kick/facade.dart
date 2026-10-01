@@ -5,5 +5,5 @@ mixin AdminVoiceKickFacade on ApiFacadeBase {
   late final _adminVoiceKick = AdminVoiceKickApi(transport);
 
   Future<int> kickAdminVoiceParticipant(String accountId) =>
-      _adminVoiceKick.kickAdminVoiceParticipant(accountId);
+      transport.run(() => _adminVoiceKick.kickAdminVoiceParticipant(accountId));
 }

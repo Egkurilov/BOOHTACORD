@@ -24,6 +24,12 @@ class RealtimeConnectApi {
           realtimeUri.toString(),
           headers: headers,
         );
+        try {
+          transport.ensureCurrent();
+        } catch (_) {
+          await socket.close();
+          rethrow;
+        }
         _hadRealtimeConnection = true;
         return socket;
       },

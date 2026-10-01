@@ -4,6 +4,6 @@ import 'api.dart';
 mixin ScreenMetricsReportFacade on ApiFacadeBase {
   late final _screenMetricsReport = ScreenMetricsReportApi(transport);
 
-  Future<void> reportScreenShareMetrics(Map<String, Object> report) =>
-      _screenMetricsReport.reportScreenShareMetrics(report);
+  Future<void> reportScreenShareMetrics(Map<String, Object> report) => transport
+      .run(() => _screenMetricsReport.reportScreenShareMetrics(report));
 }

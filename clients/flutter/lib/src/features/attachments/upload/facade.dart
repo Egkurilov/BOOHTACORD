@@ -12,11 +12,13 @@ mixin AttachmentUploadFacade on ApiFacadeBase {
     String fileName,
     Uint8List bytes, {
     void Function(int sent, int total)? onProgress,
-  }) => _attachmentUpload.uploadChannelAttachment(
-    channelId,
-    fileName,
-    bytes,
-    onProgress: onProgress,
+  }) => transport.run(
+    () => _attachmentUpload.uploadChannelAttachment(
+      channelId,
+      fileName,
+      bytes,
+      onProgress: onProgress,
+    ),
   );
 
   Future<MessageAttachment> uploadDirectMessageAttachment(
@@ -24,10 +26,12 @@ mixin AttachmentUploadFacade on ApiFacadeBase {
     String fileName,
     Uint8List bytes, {
     void Function(int sent, int total)? onProgress,
-  }) => _attachmentUpload.uploadDirectMessageAttachment(
-    directMessageId,
-    fileName,
-    bytes,
-    onProgress: onProgress,
+  }) => transport.run(
+    () => _attachmentUpload.uploadDirectMessageAttachment(
+      directMessageId,
+      fileName,
+      bytes,
+      onProgress: onProgress,
+    ),
   );
 }

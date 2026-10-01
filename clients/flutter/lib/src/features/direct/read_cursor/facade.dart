@@ -7,8 +7,10 @@ mixin DirectReadCursorFacade on ApiFacadeBase {
   Future<void> advanceDirectMessageReadCursor(
     String directMessageId,
     String messageId,
-  ) => _directReadCursor.advanceDirectMessageReadCursor(
-    directMessageId,
-    messageId,
+  ) => transport.run(
+    () => _directReadCursor.advanceDirectMessageReadCursor(
+      directMessageId,
+      messageId,
+    ),
   );
 }

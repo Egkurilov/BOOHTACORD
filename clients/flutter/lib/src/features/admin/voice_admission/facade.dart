@@ -8,8 +8,10 @@ mixin VoiceAdmissionFacade on ApiFacadeBase {
   Future<VoiceAdmissionCloseResult> closeVoiceAdmission({
     required String channelId,
     required int expectedRevision,
-  }) => _voiceAdmission.closeVoiceAdmission(
-    channelId: channelId,
-    expectedRevision: expectedRevision,
+  }) => transport.run(
+    () => _voiceAdmission.closeVoiceAdmission(
+      channelId: channelId,
+      expectedRevision: expectedRevision,
+    ),
   );
 }

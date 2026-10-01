@@ -5,5 +5,8 @@ mixin PasswordResetFacade on ApiFacadeBase {
   late final _passwordReset = PasswordResetApi(transport);
 
   Future<void> completePasswordReset(String token, String password) =>
-      _passwordReset.completePasswordReset(token, password);
+      transport.run(
+        () => _passwordReset.completePasswordReset(token, password),
+        allowClosed: true,
+      );
 }

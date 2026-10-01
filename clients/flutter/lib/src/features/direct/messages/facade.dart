@@ -12,13 +12,15 @@ mixin DirectMessagesFacade on ApiFacadeBase {
     String? replyToId,
     List<String> mentionUserIds = const [],
     List<String> attachmentIds = const [],
-  }) => _directMessages.sendDirectMessage(
-    id,
-    clientMessageId,
-    body,
-    replyToId: replyToId,
-    mentionUserIds: mentionUserIds,
-    attachmentIds: attachmentIds,
+  }) => transport.run(
+    () => _directMessages.sendDirectMessage(
+      id,
+      clientMessageId,
+      body,
+      replyToId: replyToId,
+      mentionUserIds: mentionUserIds,
+      attachmentIds: attachmentIds,
+    ),
   );
 
   Future<DirectChatMessage> editDirectMessage(
@@ -27,14 +29,18 @@ mixin DirectMessagesFacade on ApiFacadeBase {
     String body,
     int expectedRevision, {
     List<String> mentionUserIds = const [],
-  }) => _directMessages.editDirectMessage(
-    directMessageId,
-    messageId,
-    body,
-    expectedRevision,
-    mentionUserIds: mentionUserIds,
+  }) => transport.run(
+    () => _directMessages.editDirectMessage(
+      directMessageId,
+      messageId,
+      body,
+      expectedRevision,
+      mentionUserIds: mentionUserIds,
+    ),
   );
 
   Future<void> deleteDirectMessage(String directMessageId, String messageId) =>
-      _directMessages.deleteDirectMessage(directMessageId, messageId);
+      transport.run(
+        () => _directMessages.deleteDirectMessage(directMessageId, messageId),
+      );
 }

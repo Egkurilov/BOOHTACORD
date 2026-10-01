@@ -5,23 +5,27 @@ mixin AdminCategoriesFacade on ApiFacadeBase {
   late final _adminCategories = AdminCategoriesApi(transport);
 
   Future<void> createCategory(String name) =>
-      _adminCategories.createCategory(name);
+      transport.run(() => _adminCategories.createCategory(name));
 
   Future<void> renameCategory({
     required String categoryId,
     required String name,
     required int expectedRevision,
-  }) => _adminCategories.renameCategory(
-    categoryId: categoryId,
-    name: name,
-    expectedRevision: expectedRevision,
+  }) => transport.run(
+    () => _adminCategories.renameCategory(
+      categoryId: categoryId,
+      name: name,
+      expectedRevision: expectedRevision,
+    ),
   );
 
   Future<void> deleteEmptyCategory({
     required String categoryId,
     required int expectedRevision,
-  }) => _adminCategories.deleteEmptyCategory(
-    categoryId: categoryId,
-    expectedRevision: expectedRevision,
+  }) => transport.run(
+    () => _adminCategories.deleteEmptyCategory(
+      categoryId: categoryId,
+      expectedRevision: expectedRevision,
+    ),
   );
 }

@@ -5,5 +5,5 @@ mixin TelemetryExportFacade on ApiFacadeBase {
   late final _telemetryExport = TelemetryExportApi(transport);
 
   Future<void> submitClientSpans(List<int> body) =>
-      _telemetryExport.submitClientSpans(body);
+      transport.run(() => _telemetryExport.submitClientSpans(body));
 }

@@ -6,5 +6,5 @@ mixin AdminMediaMetricsFacade on ApiFacadeBase {
   late final _adminMediaMetrics = AdminMediaMetricsApi(transport);
 
   Future<List<AdminScreenSample>> listAdminScreenMetrics() =>
-      _adminMediaMetrics.listAdminScreenMetrics();
+      transport.run(() => _adminMediaMetrics.listAdminScreenMetrics());
 }

@@ -13,5 +13,7 @@ mixin DirectHistoryFacade on ApiFacadeBase {
     String id, {
     String? before,
     String? at,
-  }) => _directHistory.directMessageHistoryPage(id, before: before, at: at);
+  }) => transport.run(
+    () => _directHistory.directMessageHistoryPage(id, before: before, at: at),
+  );
 }

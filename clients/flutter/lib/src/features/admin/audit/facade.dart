@@ -6,5 +6,7 @@ mixin AdminAuditFacade on ApiFacadeBase {
   late final _adminAudit = AdminAuditApi(transport);
 
   Future<AdminAuditPage> listAdminAudit({String? before, int limit = 100}) =>
-      _adminAudit.listAdminAudit(before: before, limit: limit);
+      transport.run(
+        () => _adminAudit.listAdminAudit(before: before, limit: limit),
+      );
 }

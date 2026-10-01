@@ -5,5 +5,6 @@ import 'api.dart';
 mixin TopologyFacade on ApiFacadeBase {
   late final _topology = TopologyApi(transport);
 
-  Future<ChannelTopology> topology() => _topology.topology();
+  Future<ChannelTopology> topology() =>
+      transport.run(() => _topology.topology());
 }

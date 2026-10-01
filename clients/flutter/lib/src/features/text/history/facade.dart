@@ -13,5 +13,7 @@ mixin TextHistoryFacade on ApiFacadeBase {
     String channelId, {
     String? before,
     String? at,
-  }) => _textHistory.messagePage(channelId, before: before, at: at);
+  }) => transport.run(
+    () => _textHistory.messagePage(channelId, before: before, at: at),
+  );
 }

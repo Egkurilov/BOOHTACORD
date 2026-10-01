@@ -24,7 +24,7 @@ class SessionController extends ChangeNotifier {
   final ApiClient api;
   final SessionEffects effects;
   final Duration startupTimeout;
-  final SessionScope scope = SessionScope();
+  SessionScope get scope => api.transport.session.scope;
   AppPhase phase = AppPhase.loading;
   SessionUser? user;
   bool logoutBusy = false;

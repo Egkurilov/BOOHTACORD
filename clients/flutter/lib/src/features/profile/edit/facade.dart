@@ -5,11 +5,14 @@ import 'api.dart';
 mixin OwnProfileFacade on ApiFacadeBase {
   late final _ownProfile = OwnProfileApi(transport);
 
-  Future<OwnProfile> ownProfile() => _ownProfile.ownProfile();
+  Future<OwnProfile> ownProfile() =>
+      transport.run(() => _ownProfile.ownProfile());
 
   Future<OwnProfile> updateOwnProfile(String displayName) =>
-      _ownProfile.updateOwnProfile(displayName);
+      transport.run(() => _ownProfile.updateOwnProfile(displayName));
 
   Future<void> changePassword(String currentPassword, String newPassword) =>
-      _ownProfile.changePassword(currentPassword, newPassword);
+      transport.run(
+        () => _ownProfile.changePassword(currentPassword, newPassword),
+      );
 }

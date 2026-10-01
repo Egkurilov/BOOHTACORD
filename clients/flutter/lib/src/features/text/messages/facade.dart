@@ -12,13 +12,15 @@ mixin TextMessagesFacade on ApiFacadeBase {
     String? replyToId,
     List<String> mentionUserIds = const [],
     List<String> attachmentIds = const [],
-  }) => _textMessages.sendMessage(
-    channelId,
-    clientMessageId,
-    body,
-    replyToId: replyToId,
-    mentionUserIds: mentionUserIds,
-    attachmentIds: attachmentIds,
+  }) => transport.run(
+    () => _textMessages.sendMessage(
+      channelId,
+      clientMessageId,
+      body,
+      replyToId: replyToId,
+      mentionUserIds: mentionUserIds,
+      attachmentIds: attachmentIds,
+    ),
   );
 
   Future<ChatMessage> editMessage(
@@ -27,14 +29,16 @@ mixin TextMessagesFacade on ApiFacadeBase {
     String body,
     int expectedRevision, {
     List<String> mentionUserIds = const [],
-  }) => _textMessages.editMessage(
-    channelId,
-    messageId,
-    body,
-    expectedRevision,
-    mentionUserIds: mentionUserIds,
+  }) => transport.run(
+    () => _textMessages.editMessage(
+      channelId,
+      messageId,
+      body,
+      expectedRevision,
+      mentionUserIds: mentionUserIds,
+    ),
   );
 
   Future<void> deleteMessage(String channelId, String messageId) =>
-      _textMessages.deleteMessage(channelId, messageId);
+      transport.run(() => _textMessages.deleteMessage(channelId, messageId));
 }

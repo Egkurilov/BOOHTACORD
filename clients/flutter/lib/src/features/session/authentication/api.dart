@@ -13,7 +13,7 @@ class AuthSessionApi {
       headers: await transport.headers(),
     );
     if (response.statusCode == 401) {
-      await transport.session.clearCookie();
+      await transport.clearSessionCookie();
       return null;
     }
     final data = await transport.checked(response) as Map<String, dynamic>;
@@ -54,6 +54,6 @@ class AuthSessionApi {
         headers: await transport.headers(),
       ),
     );
-    await transport.session.clearCookie();
+    await transport.clearSessionCookie();
   }
 }

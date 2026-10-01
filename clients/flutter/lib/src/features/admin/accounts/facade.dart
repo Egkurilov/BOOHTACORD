@@ -8,15 +8,19 @@ mixin AdminAccountsFacade on ApiFacadeBase {
   Future<AdminAccountPage> listAdminAccounts({
     String? cursor,
     int limit = 100,
-  }) => _adminAccounts.listAdminAccounts(cursor: cursor, limit: limit);
+  }) => transport.run(
+    () => _adminAccounts.listAdminAccounts(cursor: cursor, limit: limit),
+  );
 
   Future<void> updateAdminAccount({
     required String accountId,
     required String role,
     required bool blocked,
-  }) => _adminAccounts.updateAdminAccount(
-    accountId: accountId,
-    role: role,
-    blocked: blocked,
+  }) => transport.run(
+    () => _adminAccounts.updateAdminAccount(
+      accountId: accountId,
+      role: role,
+      blocked: blocked,
+    ),
   );
 }

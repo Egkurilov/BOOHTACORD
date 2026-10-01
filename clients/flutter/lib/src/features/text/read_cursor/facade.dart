@@ -7,5 +7,7 @@ mixin TextReadCursorFacade on ApiFacadeBase {
   Future<void> advanceTextChannelReadCursor(
     String channelId,
     String messageId,
-  ) => _textReadCursor.advanceTextChannelReadCursor(channelId, messageId);
+  ) => transport.run(
+    () => _textReadCursor.advanceTextChannelReadCursor(channelId, messageId),
+  );
 }

@@ -8,8 +8,8 @@ mixin VoiceRosterFacade on ApiFacadeBase {
   late final _voiceRoster = VoiceRosterApi(transport);
 
   Future<List<VoiceRoomRoster>> voiceParticipants() =>
-      _voiceRoster.voiceParticipants();
+      transport.run(() => _voiceRoster.voiceParticipants());
 
   Future<http.StreamedResponse> voiceRosterEvents() =>
-      _voiceRoster.voiceRosterEvents();
+      transport.run(() => _voiceRoster.voiceRosterEvents());
 }

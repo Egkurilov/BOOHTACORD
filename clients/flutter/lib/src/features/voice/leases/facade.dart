@@ -8,8 +8,12 @@ mixin VoiceLeasesFacade on ApiFacadeBase {
   Future<(String, VoiceCredential)> voiceCredential(
     String channelId, {
     bool transfer = false,
-  }) => _voiceLeases.voiceCredential(channelId, transfer: transfer);
+  }) => transport.run(
+    () => _voiceLeases.voiceCredential(channelId, transfer: transfer),
+  );
 
-  Future<void> releaseVoice(String leaseId) =>
-      _voiceLeases.releaseVoice(leaseId);
+  Future<void> releaseVoice(String leaseId) => transport.run(
+    () => _voiceLeases.releaseVoice(leaseId),
+    allowClosed: true,
+  );
 }

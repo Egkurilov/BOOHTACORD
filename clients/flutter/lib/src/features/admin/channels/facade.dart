@@ -9,27 +9,33 @@ mixin AdminChannelsFacade on ApiFacadeBase {
     required String categoryId,
     required String name,
     required ChannelKind kind,
-  }) => _adminChannels.createChannel(
-    categoryId: categoryId,
-    name: name,
-    kind: kind,
+  }) => transport.run(
+    () => _adminChannels.createChannel(
+      categoryId: categoryId,
+      name: name,
+      kind: kind,
+    ),
   );
 
   Future<void> renameChannel({
     required String channelId,
     required String name,
     required int expectedRevision,
-  }) => _adminChannels.renameChannel(
-    channelId: channelId,
-    name: name,
-    expectedRevision: expectedRevision,
+  }) => transport.run(
+    () => _adminChannels.renameChannel(
+      channelId: channelId,
+      name: name,
+      expectedRevision: expectedRevision,
+    ),
   );
 
   Future<void> archiveTextChannel({
     required String channelId,
     required int expectedRevision,
-  }) => _adminChannels.archiveTextChannel(
-    channelId: channelId,
-    expectedRevision: expectedRevision,
+  }) => transport.run(
+    () => _adminChannels.archiveTextChannel(
+      channelId: channelId,
+      expectedRevision: expectedRevision,
+    ),
   );
 }

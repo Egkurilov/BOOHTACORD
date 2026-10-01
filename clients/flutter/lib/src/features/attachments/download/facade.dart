@@ -10,9 +10,11 @@ mixin AttachmentDownloadFacade on ApiFacadeBase {
     String parentPath,
     String attachmentId, {
     bool preview = false,
-  }) => _attachmentDownload.messageAttachmentBytes(
-    parentPath,
-    attachmentId,
-    preview: preview,
+  }) => transport.run(
+    () => _attachmentDownload.messageAttachmentBytes(
+      parentPath,
+      attachmentId,
+      preview: preview,
+    ),
   );
 }
