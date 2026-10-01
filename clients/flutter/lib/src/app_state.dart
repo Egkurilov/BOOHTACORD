@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
-import 'package:flutter_background/flutter_background.dart';
 import 'package:livekit_client/livekit_client.dart'
     hide ChatMessage, voiceReconnectAttemptLimit;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,7 +22,6 @@ import 'services/android_audio_devices.dart';
 import 'services/password_reset_link.dart';
 import 'services/screen_share_quality.dart';
 import 'services/screen_share_metrics.dart';
-import 'services/screen_share_metrics_generation_gate.dart';
 import 'services/native_notifications.dart';
 import 'services/voice_lease_revocation.dart';
 import 'services/voice_volume_preferences.dart';
@@ -31,9 +29,9 @@ import 'services/voice_reconnect_policy.dart';
 import 'services/voice_stream_start_tracker.dart';
 import 'services/voice_connection_quality.dart';
 import 'features/voice/roster_state/controller.dart';
+import 'features/screen/lifecycle/controller.dart';
+export 'features/screen/lifecycle/types.dart';
 import 'services/screen_thumbnail.dart';
-import 'telemetry/report_media/sender.dart';
-import 'telemetry/report_media/sender_sample.dart';
 import 'telemetry/report_media/connection.dart';
 
 export 'features/session/lifecycle/types.dart';
@@ -50,39 +48,7 @@ enum VoicePhase {
   error,
 }
 
-enum ScreenSharePhase { idle, starting, sharing, stopping, error }
-
 enum AudioActivationMode { vad, ptt }
-
-String screenShareFailureDetail(Object cause) {
-  if (cause is String && cause.trim().isNotEmpty) return cause.trim();
-  if (cause is StateError) return cause.message;
-  if (cause is PlatformException) {
-    final message = cause.message?.trim();
-    if (message != null && message.isNotEmpty) return message;
-    final code = cause.code.trim();
-    if (code.isNotEmpty) return code;
-  }
-  final detail = cause.toString().trim();
-  if (detail.isNotEmpty && detail != cause.runtimeType.toString()) {
-    return detail;
-  }
-  return cause.runtimeType.toString();
-}
-
-VideoDimensions? _screenShareCaptureDimensions(LocalVideoTrack track) {
-  try {
-    final settings = track.mediaStreamTrack.getSettings();
-    final width = settings['width'];
-    final height = settings['height'];
-    if (width is num && height is num && width > 0 && height > 0) {
-      return VideoDimensions(width.round(), height.round());
-    }
-  } catch (_) {
-    // Some platform implementations don't expose capture settings.
-  }
-  return null;
-}
 
 class AppState extends ChangeNotifier {
   static const _voiceStreamSoundPreferenceKey = 'voice-screen-start-sound:v1';
@@ -204,6 +170,14 @@ class AppState extends ChangeNotifier {
       loader: audioDeviceLoader,
       changes: audioDeviceChanges,
     )..addListener(notifyListeners);
+    _screen = ScreenShareController(
+      api,
+      _session.scope,
+      readRoom: () => _room,
+      voiceReady: () =>
+          voicePhase == VoicePhase.connected ||
+          voicePhase == VoicePhase.listener,
+    )..addListener(notifyListeners);
     api.onUnauthorized = _handleUnauthorized;
   }
 
@@ -218,6 +192,7 @@ class AppState extends ChangeNotifier {
   late final ConversationController _conversation;
   late final RealtimeController _realtime;
   late final VoiceRosterController _voiceRoster;
+  late final ScreenShareController _screen;
   @visibleForTesting
   final Duration startupSessionTimeout;
   final NativeNotificationService _nativeNotifications;
@@ -336,14 +311,14 @@ class AppState extends ChangeNotifier {
   bool deafenChanging = false;
   bool voiceStreamSoundEnabled = true;
   bool voiceStreamStartNotice = false;
-  ScreenSharePhase screenSharePhase = ScreenSharePhase.idle;
-  String? screenShareError;
-  final Map<String, Uint8List> screenThumbnails = {};
-  ScreenShareQuality screenShareQuality =
-      defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS
-      ? ScreenShareQuality.balanced
-      : ScreenShareQuality.desktopDefault;
+  ScreenSharePhase get screenSharePhase => _screen.phase;
+  set screenSharePhase(ScreenSharePhase value) => _screen.phase = value;
+  String? get screenShareError => _screen.error;
+  set screenShareError(String? value) => _screen.error = value;
+  Map<String, Uint8List> get screenThumbnails => _screen.thumbnails;
+  ScreenShareQuality get screenShareQuality => _screen.quality;
+  set screenShareQuality(ScreenShareQuality value) => _screen.quality = value;
+
   List<MediaDevice> get audioInputDevices => _audioDevices.audioInputDevices;
   set audioInputDevices(List<MediaDevice> value) =>
       _audioDevices.audioInputDevices = value;
@@ -398,21 +373,13 @@ class AppState extends ChangeNotifier {
   bool _voiceConnectionStatsBusy = false;
   final VoiceStreamStartTracker _voiceStreamStartTracker =
       VoiceStreamStartTracker();
-  Timer? _screenShareMetricsTimer;
-  Timer? _screenThumbnailTimer;
-  bool _screenThumbnailBusy = false;
-  ScreenThumbnailCaptureResult? _screenThumbnailLastLoggedResult;
-  final ScreenThumbnailCaptureQueue _screenThumbnailCaptureQueue =
-      ScreenThumbnailCaptureQueue();
+  ScreenThumbnailCaptureQueue get _screenThumbnailCaptureQueue =>
+      _screen.captureQueue;
   ScreenPreviewSubscriptionQueue? _screenPreviewSubscriptionQueue;
   final Map<String, Completer<RemoteVideoTrack?>> _screenPreviewTrackWaiters =
       <String, Completer<RemoteVideoTrack?>>{};
   String? _selectedRemoteScreenViewerIdentity;
   final Map<String, String> _screenThumbnailRemoteTrackIds = <String, String>{};
-  LocalVideoTrack? _screenShareMetricsTrack;
-  ScreenShareSenderSnapshot? _previousScreenShareMetrics;
-  final _screenShareMetricsGate = ScreenShareMetricsGenerationGate();
-  final _senderMediaTelemetry = SenderMediaTelemetry();
   bool get _notificationAppIsForeground => _nativeNotifications.appIsForeground;
 
   String get serverUrl => api.baseUrl;
@@ -1178,6 +1145,7 @@ class AppState extends ChangeNotifier {
     _stopVoiceConnectionStatsPolling();
     _stopScreenShareMetrics();
     _audioDevices.dispose();
+    _screen.dispose();
     api.onUnauthorized = null;
     unawaited(_room?.disconnect());
     super.dispose();
@@ -1627,30 +1595,13 @@ class AppState extends ChangeNotifier {
           event.publication.source != TrackSource.screenShareVideo) {
         return;
       }
-      screenSharePhase = ScreenSharePhase.sharing;
-      screenShareError = null;
       final track = event.publication.track;
-      if (track is LocalVideoTrack &&
-          nativeScreenMetricsPlatform(defaultTargetPlatform) != null) {
-        _startScreenShareMetrics(track);
-      }
-      if (track is LocalVideoTrack) {
-        _startScreenThumbnailCapture(room, track);
-      }
-      notifyListeners();
+      if (track is LocalVideoTrack) _screen.published(room, track);
     });
     listener.on<LocalTrackUnpublishedEvent>((event) {
-      if (!identical(_room, room) ||
-          event.publication.source != TrackSource.screenShareVideo) {
-        return;
-      }
-      screenSharePhase = ScreenSharePhase.idle;
-      _stopScreenShareMetrics();
-      _stopScreenThumbnailCapture();
-      final localIdentity = room.localParticipant?.identity;
-      if (localIdentity != null) screenThumbnails.remove(localIdentity);
-      unawaited(_disableAndroidScreenShareBackground());
-      notifyListeners();
+      if (event.publication.source != TrackSource.screenShareVideo) return;
+      final track = event.publication.track;
+      _screen.unpublished(room, track is LocalVideoTrack ? track : null);
     });
     listener.on<RoomDisconnectedEvent>((event) {
       if (!identical(_room, room) || voicePhase == VoicePhase.leaving) return;
@@ -1868,319 +1819,22 @@ class AppState extends ChangeNotifier {
     String? sourceId,
     ScreenShareQuality? quality,
     VideoDimensions? sourceDimensions,
-  }) async {
-    final room = _room;
-    final participant = room?.localParticipant;
-    if (room == null ||
-        participant == null ||
-        voicePhase != VoicePhase.connected &&
-            voicePhase != VoicePhase.listener) {
-      screenShareError =
-          'Подключитесь к голосовому каналу перед демонстрацией.';
-      screenSharePhase = ScreenSharePhase.error;
-      notifyListeners();
-      return;
-    }
-    if (screenSharePhase == ScreenSharePhase.starting ||
-        screenSharePhase == ScreenSharePhase.sharing) {
-      return;
-    }
-    screenSharePhase = ScreenSharePhase.starting;
-    screenShareError = null;
-    screenShareQuality = quality ?? screenShareQuality;
-    notifyListeners();
-    var androidBackgroundEnabled = false;
-    LocalVideoTrack? pendingScreenShareTrack;
-    try {
-      if (defaultTargetPlatform == TargetPlatform.android) {
-        final permitted = await rtc.Helper.requestCapturePermission();
-        if (!permitted) throw StateError('Захват экрана не разрешён.');
-        final initialized = await FlutterBackground.initialize(
-          androidConfig: const FlutterBackgroundAndroidConfig(
-            notificationTitle: 'Демонстрация экрана',
-            notificationText: 'Экран передаётся участникам голосового канала',
-            shouldRequestBatteryOptimizationsOff: false,
-          ),
-        );
-        if (!initialized ||
-            !await FlutterBackground.enableBackgroundExecution()) {
-          throw StateError('Не удалось включить фоновую передачу экрана.');
-        }
-        androidBackgroundEnabled = true;
-        final foregroundStarted = await const MethodChannel(
-          'boohtacord/screen_share',
-        ).invokeMethod<bool>('awaitForegroundService', {'timeoutMs': 3000});
-        if (foregroundStarted != true) {
-          throw StateError(
-            'Android не успел запустить foreground service для захвата экрана.',
-          );
-        }
-      }
-      final captureOptions = ScreenShareCaptureOptions(
-        sourceId: sourceId,
-        maxFrameRate: screenShareQuality.captureFrameRate.toDouble(),
-        params: screenShareQuality.captureParameters,
-      );
-      pendingScreenShareTrack = await LocalVideoTrack.createScreenShareTrack(
-        captureOptions,
-      );
-      final captureDimensions = _screenShareCaptureDimensions(
-        pendingScreenShareTrack,
-      );
-      await participant.publishVideoTrack(
-        pendingScreenShareTrack,
-        publishOptions: screenShareQuality.publishOptions(
-          // Use a single layer on Android while investigating receiver-side
-          // clipping reported across Flutter and web viewers. Verify on-device
-          // before deciding whether the bandwidth trade-off is acceptable.
-          simulcast: defaultTargetPlatform != TargetPlatform.android,
-          sourceDimensions:
-              captureDimensions ??
-              (defaultTargetPlatform == TargetPlatform.windows
-                  ? sourceDimensions
-                  : null),
-        ),
-      );
-      // Ownership transfers to the participant after a successful publish.
-      pendingScreenShareTrack = null;
-      screenSharePhase = ScreenSharePhase.sharing;
-      notifyListeners();
-    } catch (cause) {
-      _stopScreenShareMetrics();
-      try {
-        await pendingScreenShareTrack?.stop();
-      } catch (_) {}
-      if (androidBackgroundEnabled) {
-        await _disableAndroidScreenShareBackground();
-      }
-      screenSharePhase = ScreenSharePhase.error;
-      screenShareError =
-          'Не удалось начать демонстрацию экрана: ${screenShareFailureDetail(cause)}';
-      notifyListeners();
-    }
-  }
+  }) => _screen.startScreenShare(
+    sourceId: sourceId,
+    quality: quality,
+    sourceDimensions: sourceDimensions,
+  );
 
-  Future<void> stopScreenShare() async {
-    final participant = _room?.localParticipant;
-    if (participant == null || screenSharePhase == ScreenSharePhase.idle) {
-      return;
-    }
-    screenSharePhase = ScreenSharePhase.stopping;
-    _stopScreenShareMetrics();
-    _stopScreenThumbnailCapture();
-    notifyListeners();
-    try {
-      await participant.setScreenShareEnabled(false);
-      screenSharePhase = ScreenSharePhase.idle;
-      await _disableAndroidScreenShareBackground();
-    } catch (cause) {
-      screenSharePhase = ScreenSharePhase.error;
-      screenShareError =
-          'Не удалось остановить демонстрацию: ${screenShareFailureDetail(cause)}';
-    }
-    notifyListeners();
-  }
+  Future<void> stopScreenShare() => _screen.stopScreenShare();
 
-  void _startScreenThumbnailCapture(Room room, LocalVideoTrack track) {
-    _stopScreenThumbnailCapture();
-    _screenThumbnailLastLoggedResult = null;
-    _screenThumbnailTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      unawaited(_captureLocalScreenThumbnail(room, track));
-    });
-    unawaited(_captureLocalScreenThumbnail(room, track));
-  }
 
-  Future<void> _captureLocalScreenThumbnail(
-    Room room,
-    LocalVideoTrack track,
-  ) async {
-    if (_screenThumbnailBusy ||
-        !identical(_room, room) ||
-        screenSharePhase != ScreenSharePhase.sharing) {
-      return;
-    }
-    _screenThumbnailBusy = true;
-    try {
-      final result = await captureScreenThumbnailFrame(
-        capture: () => _screenThumbnailCaptureQueue.run(
-          () async =>
-              (await track.mediaStreamTrack.captureFrame()).asUint8List(),
-        ),
-        encode: (frame) => compute(encodeScreenThumbnail, frame),
-        storeLocally: (thumbnail) {
-          final localIdentity = room.localParticipant?.identity;
-          if (localIdentity == null) return;
-          screenThumbnails[localIdentity] = thumbnail;
-          notifyListeners();
-        },
-        isActive: () =>
-            identical(_room, room) &&
-            screenSharePhase == ScreenSharePhase.sharing,
-      );
-      if (_screenThumbnailLastLoggedResult != result) {
-        debugPrint('[screen-thumbnail] local=${result.name}');
-        _screenThumbnailLastLoggedResult = result;
-      }
-    } catch (_) {
-      // Thumbnail diagnostics must never interrupt the media publication.
-    } finally {
-      _screenThumbnailBusy = false;
-    }
-  }
+  Future<void> updateScreenShareQuality(ScreenShareQuality quality) =>
+      _screen.updateScreenShareQuality(quality);
 
-  void _stopScreenThumbnailCapture() {
-    _screenThumbnailTimer?.cancel();
-    _screenThumbnailTimer = null;
-    _screenThumbnailLastLoggedResult = null;
-  }
+  void _stopScreenShareMetrics() => _screen.stopSampling();
 
-  Future<void> updateScreenShareQuality(ScreenShareQuality quality) async {
-    if (screenSharePhase != ScreenSharePhase.sharing) return;
-    final track = _room?.localParticipant
-        ?.getTrackPublicationBySource(TrackSource.screenShareVideo)
-        ?.track;
-    if (track is! LocalVideoTrack || track.sender == null) {
-      screenShareError = 'Активная видеодорожка демонстрации недоступна.';
-      notifyListeners();
-      return;
-    }
-    try {
-      final sender = track.sender!;
-      final parameters = sender.parameters;
-      final encodings = parameters.encodings;
-      if (encodings == null || encodings.isEmpty) {
-        throw StateError('Видеоэнкодер не предоставил параметры качества.');
-      }
-      final source = _screenShareCaptureDimensions(track);
-      final baseScale = encodings
-          .map((encoding) => encoding.scaleResolutionDownBy ?? 1.0)
-          .reduce((left, right) => left < right ? left : right);
-      for (final encoding in encodings) {
-        final relativeScale =
-            (encoding.scaleResolutionDownBy ?? 1.0) / baseScale;
-        encoding.maxBitrate =
-            (quality.maxBitrate * 1000 / (relativeScale * relativeScale))
-                .round()
-                .clamp(200000, quality.maxBitrate * 1000);
-        encoding.maxFramerate = quality.frameRate;
-        encoding.scaleResolutionDownBy = source == null
-            ? relativeScale
-            : quality.scaleResolutionDownBy(source) * relativeScale;
-      }
-      final applied = await sender.setParameters(parameters);
-      if (applied == false) {
-        throw StateError('Энкодер отклонил новые параметры.');
-      }
-      screenShareQuality = quality;
-      screenShareError = null;
-    } catch (cause) {
-      screenShareError =
-          'Не удалось изменить качество: ${screenShareFailureDetail(cause)}';
-    }
-    notifyListeners();
-  }
-
-  void _startScreenShareMetrics(LocalVideoTrack track) {
-    _stopScreenShareMetrics();
-    final revision = _screenShareMetricsGate.generation;
-    _screenShareMetricsTrack = track;
-    _screenShareMetricsTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      unawaited(_sampleScreenShareMetrics(track, revision));
-    });
-    unawaited(_sampleScreenShareMetrics(track, revision));
-  }
-
-  void _stopScreenShareMetrics() {
-    _stopScreenThumbnailCapture();
-    _screenShareMetricsGate.nextGeneration();
-    _screenShareMetricsTimer?.cancel();
-    _screenShareMetricsTimer = null;
-    _screenShareMetricsTrack = null;
-    _previousScreenShareMetrics = null;
-    _senderMediaTelemetry.clear();
-  }
-
-  Future<void> _sampleScreenShareMetrics(
-    LocalVideoTrack track,
-    int revision,
-  ) async {
-    if (revision != _screenShareMetricsGate.generation ||
-        !identical(track, _screenShareMetricsTrack) ||
-        screenSharePhase != ScreenSharePhase.sharing ||
-        voicePhase == VoicePhase.leaving ||
-        !_screenShareMetricsGate.tryEnter(revision)) {
-      return;
-    }
-    try {
-      final stats = await track.getSenderStats();
-      final current = screenShareSenderSnapshotFromStats(
-        stats
-            .map(
-              (item) => ScreenShareSenderStats(
-                timestampMs: webRtcStatsTimestampMs(item.timestamp),
-                frameWidth: item.frameWidth,
-                frameHeight: item.frameHeight,
-                bytesSent: item.bytesSent,
-                framesSent: item.framesSent,
-                framesPerSecond: item.framesPerSecond,
-                roundTripTimeSeconds: item.roundTripTime,
-              ),
-            )
-            .toList(growable: false),
-      );
-      if (revision != _screenShareMetricsGate.generation ||
-          !identical(track, _screenShareMetricsTrack) ||
-          screenSharePhase != ScreenSharePhase.sharing) {
-        return;
-      }
-      final report = buildScreenShareSenderReport(
-        previous: _previousScreenShareMetrics,
-        current: current,
-        platform: nativeScreenMetricsPlatform(defaultTargetPlatform)!,
-      );
-      _previousScreenShareMetrics = current;
-      try {
-        final samples = stats
-            .map(
-              (item) => SenderMediaSample(
-                streamId: item.streamId,
-                timestamp: webRtcStatsTimestampMs(item.timestamp),
-                frameWidth: item.frameWidth,
-                frameHeight: item.frameHeight,
-                packetsSent: item.packetsSent,
-                packetsLost: item.packetsLost,
-                qualityLimitationReason: item.qualityLimitationReason,
-              ),
-            )
-            .toList();
-        await api.reportScreenShareMetrics({
-          ...report.toJson(),
-          ..._senderMediaTelemetry.fields(
-            samples,
-            screenShareQuality,
-            _room?.localParticipant?.connectionQuality ??
-                ConnectionQuality.unknown,
-          ),
-        });
-      } catch (_) {
-        // Diagnostic telemetry is best-effort and must not interrupt sharing.
-      }
-    } catch (_) {
-      // Some platform WebRTC implementations do not expose sender stats.
-    } finally {
-      _screenShareMetricsGate.leave(revision);
-    }
-  }
-
-  Future<void> _disableAndroidScreenShareBackground() async {
-    if (defaultTargetPlatform != TargetPlatform.android ||
-        !FlutterBackground.isBackgroundExecutionEnabled) {
-      return;
-    }
-    try {
-      await FlutterBackground.disableBackgroundExecution();
-    } catch (_) {}
-  }
+  Future<void> _disableAndroidScreenShareBackground() =>
+      _screen.driver.disableBackground();
 
   Future<void> _disposeVoiceEvents() async {
     _closeScreenPreviewSubscriptions();

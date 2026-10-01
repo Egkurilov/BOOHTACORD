@@ -1,0 +1,41 @@
+import 'package:flutter/foundation.dart';
+import 'package:livekit_client/livekit_client.dart';
+
+import '../../../services/screen_thumbnail.dart';
+import 'controller.dart';
+
+extension ScreenThumbnailSample on ScreenThumbnailController {
+  Future<void> sample(Room room, LocalVideoTrack track) async {
+    final ticket = scope.capture();
+    final expected = revision;
+    bool active() =>
+        ticket.isActive &&
+        expected == revision &&
+        identical(this.track, track) &&
+        identical(readRoom(), room) &&
+        isSharing();
+    if (!active() || busy == expected) return;
+    busy = expected;
+    try {
+      final result = await captureScreenThumbnailFrame(
+        capture: () => queue.run(() => capture(track)),
+        encode: encode,
+        storeLocally: (thumbnail) {
+          final identity = room.localParticipant?.identity;
+          if (identity == null) return;
+          thumbnails[identity] = thumbnail;
+          changed();
+        },
+        isActive: active,
+      );
+      if (active() && lastLoggedResult != result) {
+        debugPrint('[screen-thumbnail] local=${result.name}');
+        lastLoggedResult = result;
+      }
+    } catch (_) {
+      // Thumbnail diagnostics must never interrupt the media publication.
+    } finally {
+      if (busy == expected) busy = null;
+    }
+  }
+}
