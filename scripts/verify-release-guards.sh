@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+python3 -m venv .out/release-guards-venv
+source .out/release-guards-venv/bin/activate
+python -m pip install -r tools/requirements-ci.txt
+
 bash scripts/install-ci-powershell.sh
 compose_cli="$(bash scripts/install-ci-compose.sh)"
 trap 'rm -f "$compose_cli"' EXIT

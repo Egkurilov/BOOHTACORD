@@ -58,12 +58,8 @@ if ($macos -notmatch 'bash scripts/macos_release/package.sh' -or
 }
 $ci = Get-Content -LiteralPath (Join-Path $root '.github/workflows/ci.yaml') -Raw
 $flutterCiPath = Join-Path $root '.github/workflows/ci-flutter.yaml'
-if ($ci -notmatch '(?m)^  flutter:\s*\r?\n    uses: \./\.github/workflows/ci-flutter\.yaml' -or
-    $ci -notmatch '(?m)^  windows:\s*\r?\n    uses: \./\.github/workflows/flutter-windows\.yaml' -or
-    $ci -notmatch 'needs: \[contracts, backend, frontend, flutter, windows\]' -or
-    -not (Test-Path -LiteralPath $flutterCiPath)) {
-    throw 'Pull-request CI must run Flutter and Windows gates before publishing images.'
-}
+python -m tools.verify.workflows.selection
+if ($LASTEXITCODE -ne 0) { throw 'CI component dependency validation failed.' }
 $flutterCi = Get-Content -LiteralPath $flutterCiPath -Raw
 foreach ($required in @(
     'workflow_call:', 'runs-on: ubuntu-24.04', 'flutter-version: 3.47.5',

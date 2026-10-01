@@ -11,13 +11,16 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned CI verification dependencies
+        run: python -m pip install -r tools/requirements-ci.txt
       - name: Verify API and requirement traceability
         shell: pwsh
         run: |
-          ./scripts/verify-contracts.ps1
-          ./scripts/verify-spec-traceability.ps1
-          ./scripts/verify-github-workflows.ps1
-          ./scripts/verify-ci-sbom.ps1
+          python -m tools.ci.native.contracts
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Validate Compose interpolation without starting services
         run: docker compose --env-file .env.example -f compose.yaml config --quiet
       - name: Verify private OTLP egress wiring

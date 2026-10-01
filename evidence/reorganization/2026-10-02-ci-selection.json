@@ -1,0 +1,17 @@
+{
+  "id": "reorganization-ci-selection-2026-10-02",
+  "kind": "configuration-verification",
+  "status": "PASS",
+  "checks": {
+    "selector_and_dependency_policy_tests": 12,
+    "all_python_tool_tests": 25,
+    "shared_native_contracts_command": "PASS",
+    "contracts_and_39_requirement_traceability": "PASS",
+    "compose_interpolation_images_and_otel": "PASS"
+  },
+  "policy": "Contracts always run; components select their native gates; unknown paths run all gates; stale CI checks are cancellable",
+  "limitations": [
+    "Remote GitHub queue behavior is not inferred from YAML validation",
+    "Signed builder/install workflow cutover, common production locks and native signing queue remain separate packets"
+  ]
+}
