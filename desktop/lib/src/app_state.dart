@@ -16,6 +16,8 @@ import 'models.dart';
 import 'services/api_client.dart';
 import 'services/composer_draft_memory.dart';
 import 'services/audio_preferences.dart';
+import 'services/voice_audio_config.dart';
+import 'services/voice_processing_platform.dart';
 import 'services/android_audio_devices.dart';
 import 'services/password_reset_link.dart';
 import 'services/screen_share_quality.dart';
@@ -873,12 +875,8 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  AudioCaptureOptions get _audioCaptureOptions => AudioCaptureOptions(
-    deviceId: selectedAudioInputId,
-    autoGainControl: audioProcessing.autoGainControl,
-    echoCancellation: audioProcessing.echoCancellation,
-    noiseSuppression: audioProcessing.noiseSuppression,
-  );
+  AudioCaptureOptions get _audioCaptureOptions =>
+      voiceAudioCaptureOptions(selectedAudioInputId, audioProcessing);
 
   Future<void> _loadAudioPreferences(String accountId) async {
     final preferences = await AudioPreferences.open(accountId);
@@ -1060,15 +1058,13 @@ class AppState extends ChangeNotifier {
           ?.getTrackPublicationBySource(TrackSource.microphone)
           ?.track;
       if (track is LocalAudioTrack) {
-        // ignore: experimental_member_use
-        await track.setAudioProcessingOptions(
+        await applyVoiceProcessingForPlatform(
+          platform: defaultTargetPlatform,
+          current: track.currentOptions,
+          next: next,
+          recapture: track.restartTrack,
           // ignore: experimental_member_use
-          AudioProcessingOptions(
-            autoGainControl: next.autoGainControl,
-            echoCancellation: next.echoCancellation,
-            noiseSuppression: next.noiseSuppression,
-            highPassFilter: false,
-          ),
+          updateRuntime: track.setAudioProcessingOptions,
         );
       }
       await _audioPreferences?.setProcessing(next);
@@ -2708,6 +2704,7 @@ class AppState extends ChangeNotifier {
           adaptiveStream: true,
           dynacast: true,
           defaultAudioCaptureOptions: _audioCaptureOptions,
+          defaultAudioPublishOptions: voiceMicrophonePublishOptions,
           defaultAudioOutputOptions: AudioOutputOptions(
             deviceId:
                 AndroidAudioDevices.isNativeOutputRoute(

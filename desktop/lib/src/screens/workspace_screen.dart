@@ -24,6 +24,7 @@ import '../widgets/message_attachment_list.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/screen_share_setup_dialog.dart';
 import '../widgets/voice_participant_thumbnail.dart';
+import '../widgets/voice_stream_indicator.dart';
 import '../widgets/formatted_message_body.dart';
 import '../widgets/horizontal_swipe_region.dart';
 import '../widgets/android_system_gesture_exclusion.dart';
@@ -1296,7 +1297,7 @@ class _VoiceNavigationMembers extends StatelessWidget {
             screenSharing: participant.videoTrackPublications.any(
               (publication) =>
                   publication.source == TrackSource.screenShareVideo &&
-                  publication.track != null,
+                  !publication.muted,
             ),
           ),
         ],
@@ -5206,7 +5207,13 @@ class _VoiceParticipantRoom extends StatelessWidget {
                   ? 1
                   : calculatedColumns;
               final hasScreenShare =
-                  screens.isNotEmpty ||
+                  participants.any(
+                    (participant) => participant.videoTrackPublications.any(
+                      (publication) =>
+                          publication.source == TrackSource.screenShareVideo &&
+                          !publication.muted,
+                    ),
+                  ) ||
                   state.screenSharePhase == ScreenSharePhase.sharing;
               // The native button keeps Material's 48 dp touch target; the
               // web share action is 30 px tall, so shared cards need the
@@ -5254,7 +5261,11 @@ class _VoiceParticipantRoom extends StatelessWidget {
                   }
                   final participant = participants[index - 1];
                   final volume = state.participantVolume(participant);
-                  final hasScreen = screens.contains(participant);
+                  final hasScreen = participant.videoTrackPublications.any(
+                    (publication) =>
+                        publication.source == TrackSource.screenShareVideo &&
+                        !publication.muted,
+                  );
                   return _VoiceParticipantCard(
                     key: ValueKey('voice-participant-card:${participant.sid}'),
                     state: state,
@@ -5815,6 +5826,8 @@ class _VoiceParticipantStrip extends StatelessWidget {
                         state.room?.localParticipant?.identity,
                       )
                     : null,
+                screenSharing:
+                    state.screenSharePhase == ScreenSharePhase.sharing,
               ),
               for (final participant in participants)
                 _VoiceStripPerson(
@@ -5823,6 +5836,11 @@ class _VoiceParticipantStrip extends StatelessWidget {
                   avatarUrl: _participantMember(state, participant)?.avatarUrl,
                   muted: _participantMuted(participant),
                   speaking: participant.isSpeaking,
+                  screenSharing: participant.videoTrackPublications.any(
+                    (publication) =>
+                        publication.source == TrackSource.screenShareVideo &&
+                        !publication.muted,
+                  ),
                   thumbnail:
                       participant.videoTrackPublications.any(
                         (publication) =>
@@ -5854,6 +5872,7 @@ class _VoiceStripPerson extends StatelessWidget {
     this.microphoneUnavailable = false,
     this.deafened = false,
     this.thumbnail,
+    this.screenSharing = false,
   });
 
   final AppState state;
@@ -5864,6 +5883,7 @@ class _VoiceStripPerson extends StatelessWidget {
   final bool microphoneUnavailable;
   final bool deafened;
   final Uint8List? thumbnail;
+  final bool screenSharing;
 
   @override
   Widget build(BuildContext context) {
@@ -5908,6 +5928,7 @@ class _VoiceStripPerson extends StatelessWidget {
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
           ),
+          if (screenSharing) const VoiceStreamIndicator(),
           Tooltip(
             message: presentation.label,
             child: Icon(
