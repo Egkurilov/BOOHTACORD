@@ -13,7 +13,9 @@ reload failed.
 Web identity is compiled into the JavaScript bundle and emitted separately as
 `/build-info.json`. Native identity combines compile-time release ID/order with
 installed package version/build. The committed `contracts/client-build.json`
-drives both build paths and retained release receipts.
+contains independent web, Android, iOS, Windows and macOS lines. Each build path
+selects one line and copies its selector and identity into the bundle and
+retained release receipt. Web has no native package build number.
 
 Clients evaluate policy locally using the same language-neutral fixtures. They
 check after a short startup jitter, every five foreground minutes, on a stale
@@ -25,8 +27,13 @@ download page only after a user action. No client installs a package, closes an
 active media session, discards a draft, or reloads automatically.
 
 The deployment mounts the catalog read-only. Promotion and withdrawal use an
-atomic compare-and-swap revision command. Store-only selectors remain
+atomic compare-and-swap revision command with a single-publisher lock and
+durable temporary-file flush. Store-only selectors remain
 `unconfigured` until an actual distribution URL exists.
+
+Catalog revision reuse with different bytes and revision rollback are rejected.
+The existing Prometheus registry exposes bounded update-check and catalog-load
+health without release IDs, user IDs or URLs as labels.
 
 ## Consequences
 

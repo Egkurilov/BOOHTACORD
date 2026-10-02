@@ -41,7 +41,7 @@ func Run(ctx context.Context) (result error) {
 	events, stopRealtime := workerruntime.StartRealtime(ctx, database)
 	resources.Add(stopRealtime)
 	metrics := httpmetrics.New()
-	updates := clientupdates.NewStore(configuration.ClientUpdateCatalogPath, configuration.ClientUpdateAllowedHosts)
+	updates := clientupdates.NewStore(configuration.ClientUpdateCatalogPath, configuration.ClientUpdateAllowedHosts, metrics)
 	updates.Start(ctx)
 	handler, err := routes(database, configuration, events, metrics, updates)
 	if err != nil {

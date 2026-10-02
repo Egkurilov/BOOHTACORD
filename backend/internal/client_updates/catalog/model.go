@@ -26,12 +26,12 @@ type Target struct {
 	ReleaseID       string       `json:"release_id"`
 	ReleaseOrder    int          `json:"release_order"`
 	Version         string       `json:"version"`
-	NativeBuild     string       `json:"native_build"`
+	NativeBuild     *string      `json:"native_build"`
 	Priority        string       `json:"priority"`
 	PublishedAt     string       `json:"published_at"`
 	ExpiresAt       string       `json:"expires_at,omitempty"`
 	Summary         string       `json:"summary"`
-	ReleaseNotesURL string       `json:"release_notes_url"`
+	ReleaseNotesURL *string      `json:"release_notes_url"`
 	Requirements    Requirements `json:"requirements"`
 	Action          Action       `json:"action"`
 }
@@ -43,8 +43,8 @@ type Requirements struct {
 }
 
 type Action struct {
-	Kind string `json:"kind"`
-	URL  string `json:"url"`
+	Kind string  `json:"kind"`
+	URL  *string `json:"url"`
 }
 
 type Policy struct {

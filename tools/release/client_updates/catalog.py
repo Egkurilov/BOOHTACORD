@@ -1,5 +1,6 @@
 """Validate and atomically mutate the runtime client release catalog."""
 import argparse
+from contextlib import contextmanager
 import json
 import os
 import re
@@ -24,18 +25,22 @@ def validate(document):
         seen.add(key)
         if entry.get("state") not in ("published", "unconfigured", "disabled"): raise ValueError("invalid state")
         if (entry["state"] == "published") != isinstance(entry.get("target"), dict): raise ValueError("target does not match state")
-        if entry["state"] == "published": validate_target(entry["target"])
+        if entry["state"] == "published": validate_target(entry["target"], entry.get("platform"))
     return document
 
 
-def validate_target(target):
+def validate_target(target, platform):
     if not re.fullmatch(r"[A-Za-z0-9._-]{1,96}", target.get("release_id", "")) or target.get("release_order", 0) < 1:
         raise ValueError("invalid release identity")
     if target.get("priority") not in ("normal", "important"):
         raise ValueError("invalid priority")
+    native_build = target.get("native_build")
+    if platform == "web" and native_build is not None: raise ValueError("web target has native build")
+    if platform != "web" and not isinstance(native_build, str): raise ValueError("native target has no package build")
     action = target.get("action", {})
     if action.get("kind") not in ("reload", "open_download_page", "open_store", "open_instructions"):
         raise ValueError("invalid action")
+    if action.get("kind") != "reload" and not action.get("url"): raise ValueError("action URL is required")
 
 
 def load(path):
@@ -43,17 +48,32 @@ def load(path):
     return validate(json.loads(path.read_text(encoding="utf-8")))
 
 
+@contextmanager
+def publisher_lock(path):
+    lock = path.with_suffix(path.suffix + ".lock")
+    try: descriptor = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError as error: raise ValueError("another catalog publisher is active") from error
+    try:
+        os.write(descriptor, str(os.getpid()).encode("ascii")); os.close(descriptor); yield
+    finally:
+        try: os.close(descriptor)
+        except OSError: pass
+        lock.unlink(missing_ok=True)
+
+
 def mutate(path, expected_revision, selector, state, target):
-    document = load(path)
-    if document["catalog_revision"] != expected_revision: raise ValueError("catalog revision changed")
-    matches = [entry for entry in document["entries"] if tuple(entry[name] for name in SELECTOR) == selector]
-    if len(matches) != 1: raise ValueError("selector is not configured exactly once")
-    matches[0].update(state=state, target=target)
-    document["catalog_revision"] += 1; validate(document)
-    payload = json.dumps(document, indent=2, ensure_ascii=False) + "\n"
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False) as stream:
-        stream.write(payload); temporary = Path(stream.name)
-    os.replace(temporary, path)
+    with publisher_lock(path):
+        document = load(path)
+        if document["catalog_revision"] != expected_revision: raise ValueError("catalog revision changed")
+        matches = [entry for entry in document["entries"] if tuple(entry[name] for name in SELECTOR) == selector]
+        if len(matches) != 1: raise ValueError("selector is not configured exactly once")
+        matches[0].update(state=state, target=target)
+        document["catalog_revision"] += 1; validate(document)
+        payload = json.dumps(document, indent=2, ensure_ascii=False) + "\n"
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False) as stream:
+            stream.write(payload); stream.flush(); os.fsync(stream.fileno()); temporary = Path(stream.name)
+        os.replace(temporary, path)
+        return document
 
 
 def main():

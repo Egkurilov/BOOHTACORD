@@ -23,10 +23,7 @@ class NativeUpdateIdentity {
     final package = await PackageInfo.fromPlatform();
     final platform = Platform.isAndroid ? 'android' : Platform.isWindows ? 'windows' : Platform.operatingSystem;
     final arch = _architecture();
-    final selector = Platform.isAndroid ? UpdateSelector.android(arch)
-      : Platform.isWindows ? UpdateSelector.windows(arch)
-      : Platform.isIOS ? UpdateSelector.ios(arch)
-      : UpdateSelector.macos(arch);
+    final selector = UpdateSelector(platform, appDistribution, appChannel, arch);
     return NativeUpdateIdentity(
       LocalUpdateIdentity(releaseId:appReleaseId, releaseOrder:appReleaseOrder, platform:platform, version:appVersionName, nativeBuild:appBuildNumber, installedVersion:package.version, installedBuild:package.buildNumber, packageName:package.packageName, expectedPackageName:Platform.isAndroid ? 'ru.boohtacord.app' : Platform.isWindows ? 'boohtacord_desktop' : null),
       selector,

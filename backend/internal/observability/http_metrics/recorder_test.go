@@ -29,6 +29,29 @@ func TestRecorderPublishesLowCardinalityRequestMetrics(t *testing.T) {
 	}
 }
 
+func TestRecorderPublishesClientUpdateHealthWithoutReleaseIdentity(t *testing.T) {
+	recorder := New()
+	recorder.ObserveClientUpdateCheck("web", "published")
+	recorder.ObserveClientUpdateCatalogReload("success", 41)
+
+	scrape := httptest.NewRecorder()
+	recorder.Handler().ServeHTTP(scrape, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	metrics := scrape.Body.String()
+	for _, want := range []string{
+		`voice_platform_client_update_checks_total{platform="web",result="published"} 1`,
+		`voice_platform_client_release_catalog_reload_total{result="success"} 1`,
+		`voice_platform_client_release_catalog_valid 1`,
+		`voice_platform_client_release_catalog_revision 41`,
+	} {
+		if !strings.Contains(metrics, want) {
+			t.Fatalf("metrics lack %q: %q", want, metrics)
+		}
+	}
+	if strings.Contains(metrics, "release_id") {
+		t.Fatalf("metrics leaked release identity: %q", metrics)
+	}
+}
+
 func TestRecorderPublishesAggregatedSFURevocationMetrics(t *testing.T) {
 	recorder := New()
 	recorder.ObserveVoiceSFURevocation(2, 1, true)

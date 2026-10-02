@@ -8,9 +8,9 @@ import (
 const validCatalog = `{
   "schema_version":1,"catalog_revision":7,"application_family":"boohtacord",
   "entries":[{"platform":"web","distribution":"browser","channel":"stable","arch":"any","state":"published",
-  "target":{"release_id":"web-7","release_order":7,"version":"1.0.0","native_build":"7","priority":"normal",
-  "published_at":"2026-10-02T09:00:00Z","summary":"Update","release_notes_url":"/releases/web-7",
-  "requirements":{"supported_arches":["any"]},"action":{"kind":"reload","url":"/"}}}]}`
+  "target":{"release_id":"web-7","release_order":7,"version":"1.0.0","native_build":null,"priority":"normal",
+  "published_at":"2026-10-02T09:00:00Z","summary":"Update","release_notes_url":null,
+  "requirements":{"supported_arches":["any"]},"action":{"kind":"reload","url":null}}}]}`
 
 func TestParseValidCatalog(t *testing.T) {
 	catalog, err := Parse(strings.NewReader(validCatalog), []string{"github.com"})
@@ -30,7 +30,7 @@ func TestParseRejectsUnknownField(t *testing.T) {
 }
 
 func TestParseRejectsUnsafeURL(t *testing.T) {
-	unsafe := strings.Replace(validCatalog, `"url":"/"`, `"url":"javascript:alert(1)"`, 1)
+	unsafe := strings.Replace(validCatalog, `"release_notes_url":null`, `"release_notes_url":"javascript:alert(1)"`, 1)
 	if _, err := Parse(strings.NewReader(unsafe), nil); err == nil {
 		t.Fatal("expected unsafe URL rejection")
 	}

@@ -8,4 +8,4 @@ export const buildIdentity: LocalIdentity = {
   native_build: __APP_NATIVE_BUILD__,
 }
 
-export const buildLabel = `Версия ${__APP_VERSION__} (${__APP_NATIVE_BUILD__})`
+export const buildLabel = `Web ${__APP_VERSION__} · ${__APP_RELEASE_ID__.slice(-12)}`
