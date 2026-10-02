@@ -1,0 +1,48 @@
+{
+  "id": "QA-228",
+  "date": "2026-10-02",
+  "task": "FE-52/FE-59",
+  "source_revision": "36f6fad",
+  "working_tree_changes": true,
+  "status": "SOURCE_FIX_PASS_RUNTIME_CONFIRMATION_OPEN",
+  "root_cause": "Native flutter_webrtc returns RTCStats.timestamp_us for Android, iOS, and macOS. Flutter screen receiver diagnostics consumed that value as milliseconds, while the existing sender path already converted microseconds to milliseconds. This inflated receiver intervals by 1000x, suppressing calculated decoded FPS, bitrate, and the 10-second packet-loss window.",
+  "changes": [
+    {
+      "file": "clients/flutter/lib/src/screens/screen_receiver_diagnostics.dart",
+      "change": "Normalize the native receiver stats timestamp with the existing webRtcStatsTimestampMs helper before building receiver snapshots."
+    },
+    {
+      "file": "clients/flutter/test/screen_receiver_diagnostics_test.dart",
+      "change": "Add a widget regression using native microsecond timestamps; it expects 60 decoded FPS and 4000 kbit/s from a two-second sample delta. The test failed before the conversion and passes after it."
+    }
+  ],
+  "verification": {
+    "focused_flutter_tests": {
+      "command": "flutter test test/screen_receiver_diagnostics_test.dart test/screen_receiver_report_test.dart test/screen_share_metrics_test.dart test/screen_scope/captured_content_visibility_test.dart test/screen_scope/lifecycle_test.dart",
+      "result": "PASS",
+      "passed": 27
+    },
+    "full_flutter_suite": {
+      "command": "flutter test",
+      "result": "PASS",
+      "passed": 423
+    },
+    "flutter_analyze": "PASS",
+    "macos_debug_build": "PASS",
+    "android_debug_apk_build": "PASS",
+    "spec_traceability": {
+      "result": "NOT_RUN_TOOL_UNAVAILABLE",
+      "reason": "Neither pwsh nor powershell is installed on this host."
+    }
+  },
+  "runtime_acceptance": "NOT_RUN_AFTER_FIX",
+  "macos_hot_reload": {
+    "result": "NOT_AVAILABLE",
+    "observation": "No Flutter terminal session was attached to this task. flutter attach waited for a VM service connection and was cancelled without restarting or otherwise changing the running Mac app."
+  },
+  "limitations": [
+    "QA-227 captured the pre-fix runtime discrepancy. The already-installed Mac and Android Emulator build have not been updated after this source change.",
+    "Debug builds validate compilation, not actual runtime telemetry or receiver/server report parity."
+  ],
+  "remaining": "Apply the change without restarting the user's macOS application if a hot-reload session is available; otherwise wait for authorization before replacing/restarting it. Update the Android Emulator, repeat a muted paired stream, and verify decoded FPS, bitrate, packet-loss window, and receiver report values against the live picture. Keep FE-52/FE-59 open until runtime values agree."
+}

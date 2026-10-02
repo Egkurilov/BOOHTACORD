@@ -120,6 +120,51 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('normalizes native microsecond timestamps before receiver rates', (
+    tester,
+  ) async {
+    final samples = [
+      VideoReceiverStats('inbound', 5000000)
+        ..bytesReceived = 50000
+        ..framesDecoded = 20
+        ..framesRendered = 10
+        ..framesDropped = 1
+        ..frameWidth = 576
+        ..frameHeight = 1280
+        ..framesPerSecond = 14,
+      VideoReceiverStats('inbound', 7000000)
+        ..bytesReceived = 1050000
+        ..framesDecoded = 140
+        ..framesRendered = 50
+        ..framesDropped = 4
+        ..frameWidth = 576
+        ..frameHeight = 1280
+        ..framesPerSecond = 14,
+    ];
+    var nextSample = 0;
+    final track = _StatsTrack(() async => samples[nextSample++]);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ScreenReceiverDiagnostics(
+            track: track,
+            isLocal: false,
+            hasAudio: false,
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+    await tester.tap(find.text('Статистика'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('60 FPS'), findsOneWidget);
+    expect(find.text('4000 кбит/с'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('reports missing receiver stats and local no-audio preview', (
     tester,
   ) async {

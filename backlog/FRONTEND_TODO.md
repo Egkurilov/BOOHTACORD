@@ -16,10 +16,17 @@ discovery/view/unpublish), FE-57 (Android Gboard login и повтор screen sh
 Windows-only gates и FE-63 MSVC/PCM acceptance отложены; общие изменения всё
 равно проверять на отсутствие Windows build-регрессий.
 
-Последний парный runtime-прогон Android Emulator + macOS подтвердил roster и
-RTT/индикатор качества при выключенных микрофонах (7–8 мс Android, 5 мс Mac).
-Screen-share не запускался: системный шаг MediaProjection был отменён после
-блокировки до подтверждения выбранного приложения — [QA-226](../evidence/flutter/qa226-android-emulator-paired-voice-screen-share-gate-2026-10-02-001.json).
+Парная проверка Android Emulator + macOS подтвердила roster и RTT с
+выключенными микрофонами (7–8 мс Android, 5 мс Mac); отдельная попытка до
+выбора Clock была безопасно отменена — [QA-226](../evidence/flutter/qa226-android-emulator-paired-voice-screen-share-gate-2026-10-02-001.json).
+После выбора Clock Mac показал полный портретный кадр без обрезки, а два кадра
+подтвердили изменение изображения во время фоновой работы Android. При этом
+статистика Mac противоречит видимому потоку: 14 FPS в размере зрителя, но 0 FPS
+decoded и 0.2 кбит/с. Захват штатно остановлен, MediaProjection очищена — [QA-227](../evidence/flutter/qa227-android-emulator-clock-to-macos-live-receiver-2026-10-02-001.json).
+
+- [ ] **FE-59 follow-up — Принять receiver-метрики после исправления native stats timestamp.** В QA-227 изображение Clock менялось, но Mac receiver diagnostics сообщала 0 FPS decoded и 0.2 кбит/с при размере 576×1280 · 14 FPS. Причина найдена: native `RTCStats.timestamp_us` делился как миллисекунды; receiver теперь использует ту же конверсию в ms, что уже была у sender. Widget regression воспроизвёл ошибку до фикса, полный Flutter suite (423), analyzer и macOS/Android Debug builds проходят — [QA-228](../evidence/flutter/qa228-native-screen-receiver-timestamp-normalization-2026-10-02-001.json). Остаётся runtime/hot-reload приёмка: сверить FPS, bitrate, 10-секундный loss window и telemetry report; голосовой RTT не считать RTT приёмника.
+
+**Частичная live-приёмка macOS:** Android Emulator→Mac discovery, видимый full-frame и удаление публикации после stop прошли в [QA-227](../evidence/flutter/qa227-android-emulator-clock-to-macos-live-receiver-2026-10-02-001.json). Отдельный browser-published black-screen сценарий, физический Pixel и достоверная корреляция sender/receiver counters остаются открыты.
 
 - [ ] **FE-52 · P1 · T-030/051 — Метрики отправителя Android.** Реализованы ограниченные анонимные `android_native` sender FPS/bitrate/RTT с интервалом 5 секунд; polling прекращается при unpublish, leave, revoke, disconnect и dispose. Формулы/payload/API проходят unit tests, signed APK собран и проверен — [QA-19](../evidence/flutter/qa19-android-sender-metrics-2026-09-27-001.json). Осталось проверить live lifecycle и сопоставить sender с двумя одновременными receiver snapshots в QA-07 на устройстве. Исходный профиль запрашивает максимум 30 FPS; 60 FPS не заявлять без аппаратного прогона.
 - [ ] **FE-53 · P1 · T-040/041/044/050 — Просмотр изображения в чате.** Веб TEXT/DM теперь открывает увеличенный viewer через существующие ACL-protected PNG preview endpoints, отдельно скачивает оригинал и обрабатывает loading/retry/unavailable/deleted; native Flutter viewer для TEXT/DM уже имел те же основные состояния — [QA-20](../evidence/flutter/qa20-web-attachment-image-viewer-2026-09-27-001.json). Осталось проверить Escape/focus return, узкие экраны, ACL и визуальный паритет в настоящем браузере на обоих типах чата и на устройствах; preview ограничен сервером PNG до 1024 px. Зависимость DES-09 выполнена.

@@ -322,7 +322,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
         return;
       }
       final next = ScreenReceiverSnapshot(
-        timestampMs: stats.timestamp.toDouble(),
+        timestampMs: webRtcStatsTimestampMs(stats.timestamp),
         bytesReceived: stats.bytesReceived?.toDouble(),
         framesDecoded: stats.framesDecoded?.toDouble(),
         framesRendered: stats.framesRendered?.toDouble(),

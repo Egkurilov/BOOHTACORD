@@ -1,0 +1,49 @@
+{
+  "id": "QA-227",
+  "date": "2026-10-02",
+  "task": "FE-59/FE-61/FE-64",
+  "source_revision": "31ceae5",
+  "status": "PARTIAL_PAIRED_MAC_FRAME_PASS_RECEIVER_METRICS_CONFLICT",
+  "observers": "Codex, during the user's explicitly authorized Android emulator test",
+  "devices": [
+    {
+      "platform": "Android Emulator",
+      "model": "sdk_gphone64_arm64",
+      "api_level": 35,
+      "app_version": "1.0.23",
+      "app_build": 2036
+    },
+    {
+      "platform": "macOS",
+      "app": "BOOHTACORD"
+    }
+  ],
+  "checks": [
+    {
+      "name": "Muted voice and app-only projection baseline",
+      "result": "PASS",
+      "observation": "Mac joined SHARE_TEST without its microphone; Android's voice dock and participant card also showed the microphone disabled. The Mac roster discovered the Android participant and its active screen publication. Android dumpsys showed TYPE_SCREEN_CAPTURE and a foreground IsolateHolderService with mediaProjection type while Clock was the top-resumed application."
+    },
+    {
+      "name": "Mac remote frame and full portrait bounds",
+      "result": "PASS",
+      "observation": "The Mac viewer rendered the selected Clock app as a full 576x1280 portrait image centered in the landscape stage, with the complete app bounds visible and no top/bottom crop. Two Mac screenshots about two seconds apart showed changing Clock pixels, confirming the receiver was not displaying only a frozen first frame."
+    },
+    {
+      "name": "Receiver statistics consistency",
+      "result": "FAIL",
+      "observation": "While the Mac visibly rendered changing frames and reported the current viewer as 576x1280 at 14 FPS, its diagnostics simultaneously reported decoded 0 FPS and received 0.2 kbit/s, with receiver RTT unavailable. Voice-dock RTT was separately 4 ms. These receiver fields are inconsistent with the observed moving remote image and need source-level diagnosis; voice RTT is not receiver RTT."
+    },
+    {
+      "name": "App-only hide, stop and cleanup",
+      "result": "PASS",
+      "observation": "Returning Android to BOOHTACORD displayed the expected hidden-selected-app explanation. The filtered native capture log recorded visible, hidden, then projection_app_stop events. Stopping removed the Mac remote screen entry; dumpsys media_projection returned null. Both clients then left SHARE_TEST and the emulator showed an empty voice roster."
+    }
+  ],
+  "limitations": [
+    "This is API 35 emulator evidence, not Pixel or other physical Android acceptance.",
+    "The Mac viewer's changing pixels prove visible receiver rendering, but sender encoded-frame counters and a trustworthy receiver decoded-frame rate were not obtained; server-side publication metrics were not queried.",
+    "This Android-to-Mac test does not establish the separate reported black-screen case for a browser-published stream after switching to the macOS client."
+  ],
+  "remaining": "Trace the Mac receiver diagnostics to raw LiveKit/WebRTC stats and fix the 0-FPS/near-zero-bitrate discrepancy without changing the stream renderer; then correlate sender and receiver counters on an emulator and Pixel. Separately repeat the browser-to-Mac source-switch scenario for FE-61."
+}
