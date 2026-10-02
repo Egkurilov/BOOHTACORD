@@ -229,6 +229,16 @@ void main() {
     await tester.pump();
     expect(state.pushToTalkPressed, isFalse);
 
+    final cancelledGesture = await tester.startGesture(
+      tester.getCenter(ptt),
+      pointer: 7,
+    );
+    await tester.pump();
+    expect(state.pushToTalkPressed, isTrue);
+    await cancelledGesture.cancel();
+    await tester.pump();
+    expect(state.pushToTalkPressed, isFalse);
+
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
     debugDefaultTargetPlatformOverride = null;

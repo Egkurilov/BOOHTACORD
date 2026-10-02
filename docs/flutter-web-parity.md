@@ -628,7 +628,8 @@ both deployed web and Flutter viewers.
   dialog and capture focus do not accidentally transmit. Android/iOS PTT does
   not require a hardware key: hold the microphone button in the compact voice
   dock to talk; pointer release/cancel and dock teardown mute it. Widget/unit
-  coverage passes [QA-213](../evidence/flutter/qa213-mobile-push-to-talk-touch-2026-10-02-001.json).
+  coverage verifies pointer up and pointer cancel and passes
+  [QA-213](../evidence/flutter/qa213-mobile-push-to-talk-touch-2026-10-02-001.json).
   Verify touch hold/release, system interruption, backgrounding and screen-reader
   behavior on physical Android/iOS devices, and retain hardware-key focus tests
   on desktop.

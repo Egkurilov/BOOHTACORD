@@ -7,7 +7,7 @@
     {
       "result": "PASS",
       "command": "cd clients/flutter && flutter test test/voice_scope/ptt_test.dart test/workspace_screen_test.dart",
-      "observation": "Mobile PTT mode accepts a missing keyboard assignment; widget coverage verifies pointer down enables PTT and pointer up releases it. Desktop PTT continues to require an assigned hardware key."
+      "observation": "Mobile PTT mode accepts a missing keyboard assignment; widget coverage verifies pointer down enables PTT and both pointer up and pointer cancel release it. Desktop PTT continues to require an assigned hardware key."
     },
     {
       "result": "PASS",
@@ -16,7 +16,7 @@
     },
     {
       "result": "OPEN",
-      "observation": "Physical Android/iOS hold, release, pointer cancellation, system interruption, app backgrounding, and TalkBack/VoiceOver acceptance are not run."
+      "observation": "Physical Android/iOS hold, release, system interruption, app backgrounding, and TalkBack/VoiceOver acceptance are not run. ADB daemon could not start in this environment (Operation not permitted), so device acceptance remains open."
     }
   ]
 }
