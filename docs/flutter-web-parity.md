@@ -48,6 +48,15 @@ retained MediaProjection system log was present). Android plugin unit tests and
 Java compilation pass with the installed JDK 17. FE-59/61/64 remain open for a
 paired live run.
 
+On 2026-10-02, Android Emulator API 35 / app `1.0.23+2035` passed a single-app
+Clock capture: the local viewer showed a non-black portrait frame after returning
+to BOOHTACORD, and MediaProjection plus the foreground service survived a muted
+10-second background/resume. Stop/leave cleared the projection and service.
+Five focused Flutter capture/thumbnail lifecycle tests passed —
+[QA-224](../evidence/flutter/qa224-android-emulator-app-only-share-resume-2026-10-02-001.json).
+This is emulator-only and had no paired receiver, so it does not close FE-59 or
+FE-64's remote playback/publication checks.
+
 Vue (`clients/web/src`) is the product reference. The Flutter clients for macOS,
 Windows and Android must match its user-visible behavior, information
 hierarchy, copy, states and design tokens while using the same API, realtime,

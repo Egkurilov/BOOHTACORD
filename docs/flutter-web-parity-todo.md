@@ -202,7 +202,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-221](../evidence/flutter/qa221-android-background-microphone-fgs-gap-2026-10-02-001.json),
   [Android requirements](https://developer.android.com/about/versions/14/changes/fgs-types-required),
   [background-start restrictions](https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start).
-- [ ] **FE-59/FE-64 · Pixel runtime:** full-display stream produced a visible local preview and thumbnail; MediaProjection and its foreground service remained active while BOOHTACORD was backgrounded for about a minute. Returning to the existing Activity restored the connected voice screen/preview; stopping cleared projection/service. Mic was muted, and no paired receiver was present, so remote frames and mic-enabled background voice remain open — [QA-222](../evidence/flutter/qa222-pixel-screen-share-background-lifecycle-2026-10-02-001.json).
+- [ ] **FE-59/FE-64 · Android runtime:** Pixel full-display preview/thumbnail and muted background/resume passed — [QA-222](../evidence/flutter/qa222-pixel-screen-share-background-lifecycle-2026-10-02-001.json). Android Emulator API 35 additionally passed single-app Clock preview, 10-second muted background/resume, and projection/service cleanup after stop/leave — [QA-224](../evidence/flutter/qa224-android-emulator-app-only-share-resume-2026-10-02-001.json). No paired receiver was present in either run; remote frames, sender/receiver metric correlation and mic-enabled background voice remain open.
 - [ ] На Android сверить room membership/publication с `MediaProjection` при
   переводе приложения в фон и возврате. Pixel 7 / `1.0.19+2032`: в user-started
   Calculator app-only тесте projection/foreground service и BOOHTACORD process

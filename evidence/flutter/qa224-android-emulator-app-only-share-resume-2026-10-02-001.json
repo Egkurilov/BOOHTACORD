@@ -1,0 +1,46 @@
+{
+  "id": "QA-224",
+  "date": "2026-10-02",
+  "task": "FE-59/FE-64",
+  "source_revision": "b047664",
+  "status": "PARTIAL_EMULATOR_PASS_PAIRED_RECEIVER_OPEN",
+  "device": {
+    "model": "Android Emulator (sdk_gphone64_arm64)",
+    "api_level": 35,
+    "app_version": "1.0.23",
+    "app_build": 2035
+  },
+  "automated_tests": {
+    "command": "flutter test test/screen_scope/lifecycle_test.dart test/android_screen_capture_fgs_contract_test.dart test/screen_scope/thumbnail_test.dart",
+    "result": "PASS",
+    "passed": 5
+  },
+  "checks": [
+    {
+      "name": "App-only system source selection",
+      "result": "PASS",
+      "observation": "The Android MediaProjection system flow offered single-app capture; the Clock app was selected. The emulator joined SHARE_TEST without a microphone, and its roster showed only the local participant."
+    },
+    {
+      "name": "Android local preview",
+      "result": "PASS",
+      "observation": "After returning to the existing BOOHTACORD Activity, the local viewer displayed a non-black portrait frame from Clock with the expected letterboxing inside the landscape viewer. MediaProjection remained active."
+    },
+    {
+      "name": "Background and resume (microphone muted)",
+      "result": "PASS",
+      "observation": "After BOOHTACORD was sent to Home for 10 seconds, dumpsys still showed TYPE_SCREEN_CAPTURE and the IsolateHolderService foreground with foreground-service type 0x20. Bringing the existing MainActivity forward preserved the visible local Clock preview."
+    },
+    {
+      "name": "Stop and leave cleanup",
+      "result": "PASS",
+      "observation": "Stopping from the voice dock cleared MediaProjection and the app foreground service. After leaving SHARE_TEST, the room roster refreshed to empty within approximately five seconds."
+    }
+  ],
+  "limitations": [
+    "This is emulator acceptance, not a physical-device result. Background duration was 10 seconds and the microphone remained muted.",
+    "No paired browser or macOS receiver was connected; remote publication, decoded frames, receiver crop and paired metrics remain unverified.",
+    "The test does not establish microphone continuity in the background; that remains a separate FE-68 acceptance."
+  ],
+  "remaining": "Repeat app-only and background/resume with a paired web or macOS receiver, correlate bounded sender/receiver frame counters, then separately test microphone-enabled background behavior if ADR-006 requires it."
+}
