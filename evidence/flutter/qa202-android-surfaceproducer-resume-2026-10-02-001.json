@@ -3,7 +3,7 @@
   "kind": "android-surfaceproducer-resume-lifecycle",
   "status": "IMPLEMENTED_NEEDS_PIXEL_RUNTIME",
   "executed_at": "2026-10-02",
-  "source_revision": "13fc68a",
+  "source_revision": "93680fb",
   "task": "T-030",
   "summary": "The user reported that a stream visible in a browser becomes black when switching back to the Android client. SurfaceTextureRenderer previously ignored SurfaceProducer.onSurfaceAvailable and could reacquire a surface before Flutter announced it was restored. Rendering is now gated between cleanup and availability callbacks; after resume, the renderer reacquires the current surface on the next frame. This is a lifecycle fix candidate, not yet confirmed as the cause of the remote black stream.",
   "artifact": {
