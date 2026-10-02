@@ -1,0 +1,94 @@
+{
+  "id": "browser-stream-review-2026-10-02-001",
+  "kind": "poc-02-observability-review",
+  "status": "ISSUES_OBSERVED",
+  "executed_at": "2026-10-02T19:13:15Z",
+  "revision": "c78ebdbf7bbd4ee5e3e48d2e0386c8e17c5f4084",
+  "environment": {
+    "application": "https://v.bootybay.ru",
+    "client": "desktop_web; owner confirmed browser publisher/viewer and selected 1080p60",
+    "transport": "livekit/livekit-server:v1.13.7",
+    "source": "Private Tempo media.sample, Prometheus, production container/host counters and LiveKit congestion logs",
+    "mutation": "Read-only inspection; this task did not restart, deploy, change quality or record media",
+    "deployment_during_observation": "API was d2c66c3e at 19:06; API/web were c78ebdbf at 19:13; existing browser bundle revisions are unknown",
+    "api_image_digest_at_end": "sha256:7ee28e246e0c81f3e2ba1590b94945fcb7602b59acc9df1fa2bdcd0ae56caecd",
+    "web_image_digest_at_end": "sha256:28b78d4627780dc66d914d95dacdd843d9a4bdd8735ec3ea819beaa41b0b7f8f"
+  },
+  "collection": {
+    "final_query_end_utc": "2026-10-02T19:13:12Z",
+    "lookback_seconds": 1800,
+    "unique_media_samples": 1335,
+    "query_partition_seconds": 120,
+    "per_partition_limit": 1000,
+    "maximum_partition_results": 135,
+    "method": "Deduplicate by trace/span; aggregate anonymous client/session groups; no query reached its result cap",
+    "timestamps": "media.sample already backdates span time by sample_age_ms; do not subtract it twice"
+  },
+  "primary_window": {
+    "utc": ["2026-10-02T19:00:31Z", "2026-10-02T19:05:42Z"],
+    "moscow": "22:00:31–22:05:42",
+    "sender": {
+      "reports": 63, "target": "1080p60", "dimensions": {"2560x1440": 63},
+      "encoded_fps": {"n": 63, "median": 51, "mean": 36.27, "min": 1, "max": 55},
+      "bitrate_kbps": {"median": 4826.4, "mean": 5333.79, "max": 11850.4},
+      "packet_loss_percent": {"n": 61, "median": 0, "max": 0.41},
+      "rtt_ms": {"median": 12, "max": 23}, "adaptation_reason": {"none": 63}
+    },
+    "viewer_a": {
+      "reports": 54, "dimensions": {"2560x1440": 53, "1280x720": 1}, "stalled_reports": 9,
+      "decoded_fps": {"n": 52, "median": 11, "mean": 15.25, "min": 0, "max": 53.6},
+      "presented_fps": {"median": 12.25, "max": 140.4},
+      "packet_loss_percent": {"n": 38, "median": 1.855, "max": 14.99},
+      "connection_rtt_ms": {"n": 52, "median": 64.5, "max": 2280},
+      "bitrate_kbps": {"median": 2382.45, "mean": 3220.49}, "jitter_ms": {"median": 17.5, "max": 80}
+    },
+    "viewer_b": {
+      "reports": 29, "dimensions": {"2560x1440": 29}, "stalled_reports": 2,
+      "decoded_fps": {"n": 27, "median": 26.5, "mean": 29.2, "min": 0, "max": 57},
+      "presented_fps": {"median": 38, "max": 151.5},
+      "packet_loss_percent": {"n": 24, "median": 0, "max": 0.15},
+      "connection_rtt_ms": {"n": 52, "median": 6, "max": 8},
+      "bitrate_kbps": {"median": 2702.5, "mean": 3805.49}, "jitter_ms": {"median": 13, "max": 82}
+    }
+  },
+  "aligned_example": {
+    "utc": "2026-10-02T19:04:17Z–19:04:27Z",
+    "viewer_a": "decoded FPS 0, then 7.5, then 11; loss 5.23%, 7.5%, 3.21%; connection RTT peaks at 1183 ms",
+    "sender": "encoded FPS 14 at 19:04:21, 53 at 19:04:25; zero reported upstream loss",
+    "sfu": "15 LOSS congestion events around 19:04:18; repeated NACK ratio about 0.40; capacity estimate reaches 463992 bps, later 881460 bps",
+    "nack_caveat": "Repeated-NACK ratio is not the packet-loss percentage or a line-speed measurement"
+  },
+  "later_window": {
+    "utc": ["2026-10-02T19:10:12Z", "2026-10-02T19:13:12Z"],
+    "viewer_b": {"reports": 19, "dimensions": {"1280x720": 18, "2560x1440": 1}, "decoded_fps_n": 17, "decoded_fps_median": 51.5, "decoded_fps_min": 32, "packet_loss_max_percent": 0.08},
+    "viewer_a": {"reports": 1, "dimensions": "2560x1440", "decoded_fps": 10.1},
+    "interpretation": "720p can be smooth on the healthier receiver path; sparse reports and layer/content changes prevent a controlled before/after performance claim"
+  },
+  "server": {
+    "utc": ["2026-10-02T19:09:10Z", "2026-10-02T19:09:58Z"], "samples": 5,
+    "host_cpu_busy_percent": 6.78, "available_ram_min_kib": 4523132,
+    "livekit_cpu_percent_docker": {"min": 3.37, "max": 6.24}, "livekit_ram_mib_approx": 100,
+    "host_udp_receive_send_buffer_errors_delta": 0,
+    "api_p95_seconds_excluding_websocket": 0.02958333333333344,
+    "api_error_traces_last_10m": 0,
+    "caveat": "Host-namespace UDP counters do not establish container-namespace or end-to-end packet delivery"
+  },
+  "findings": [
+    "Confirmed profile defect: startScreenShare captures 2560x1440/60 and applies only bitrate/framerate; resolution scaling exists only in updateScreenShareProfile. Actual receiver frames confirm the mismatch under 1080p60.",
+    "1440p contains 1.7778 times the pixels of 1080p. Extra encoding/decoding and bandwidth pressure is expected, but its individual FPS cost was not isolated.",
+    "Viewer A path impairment is independently supported by losses, RTT spikes and SFU LOSS congestion decisions. Wi-Fi, ISP routing, congestion and client stalls cannot be separated by these counters alone.",
+    "Sender FPS also varies; active simulcast layers and capture motion are not independently measured, so all sender dips cannot be attributed to network or CPU.",
+    "Presented FPS has impossible-for-target bursts above 140 while decoded FPS remains lower. Diagnose with decoded FPS; the playback counter needs visibility/window handling review.",
+    "Existing traces already contain the requested profile, platform, resolution, FPS, bitrate, loss and RTT. No additional tracing was required to establish these findings."
+  ],
+  "next_actions": [
+    "Apply the selected encoder resolution on initial screen publication and verify initial 720p/1080p/1440p against actual encoded dimensions.",
+    "Repeat a bounded simultaneous moving-scene comparison after correct scaling; evaluate the impaired receiver path independently.",
+    "For remaining sender/decoder attribution, add capture FPS, active-layer identity, encode/decode time and jitter-buffer delay; keep unknown fields absent.",
+    "Forward already accepted dropped_frames/packets_lost into media.sample and review presented-FPS sampling across visibility changes."
+  ],
+  "source_files": ["clients/web/src/voice/media_publishing.ts", "clients/web/src/voice/livekit_room_factory.ts", "clients/web/src/voice/screen_livekit_diagnostics.ts", "clients/web/src/voice/screen_playback_fps.ts", "backend/internal/observability/report_client_screen/api/record_media_sample.go"],
+  "reference": "https://www.w3.org/TR/webrtc-stats/",
+  "limitations": ["Client reports are sparse and visibility-dependent; absent rows are not proof of disconnection or zero FPS.", "Sender bitrate totals layers while each receiver reports its selected stream.", "No visual stream inspection, hardware profiling, codec/QP or controlled network test was performed.", "No claim that the cause of every low-FPS event or a specific local network device has been proven."],
+  "privacy": "Only anonymous aggregates saved; no account/session identifiers, names, credentials, SDP, ICE addresses or media payloads."
+}
