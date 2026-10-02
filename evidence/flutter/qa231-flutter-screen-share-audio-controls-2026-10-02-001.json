@@ -1,0 +1,66 @@
+{
+  "id": "QA-231",
+  "date": "2026-10-02",
+  "task": "FE-69 / T-030 / T-051",
+  "source_revision": "46688fe4",
+  "working_tree_changes_at_build": true,
+  "client_pair": "Web/macOS screen publisher → Android Flutter receiver",
+  "finding": "A screen-share audio publication without LiveKit's explicit screenShareAudio source was not recognized by Flutter. The viewer therefore reported no audio track and did not expose stream mute/volume controls, although audio was audible.",
+  "change": {
+    "detail": "Prefer explicit screen-share audio. For older publishers, infer it only when there is exactly one unknown-source audio publication alongside an active screen-share video; do not guess when ambiguous or when no screen video exists. Apply this classification consistently to viewer subscription, late publications, diagnostics, mute and per-stream gain.",
+    "controls": "Added a 0–200% gain slider to the pinned stream mini-player; existing mute control now targets the classified screen audio track."
+  },
+  "test_first": {
+    "result": "RED_THEN_GREEN",
+    "focused_test": "clients/flutter/test/screen_share_audio_publication_test.dart",
+    "passed": 4,
+    "cases": [
+      "explicit screen audio source is preferred",
+      "a single unknown audio publication beside a screen is recognized",
+      "multiple unknown audio publications are not guessed",
+      "unknown audio without screen video is not misclassified"
+    ]
+  },
+  "verification": {
+    "full_flutter_suite": {
+      "command": "flutter test",
+      "result": "PASS",
+      "passed": 445
+    },
+    "flutter_analyze": {
+      "command": "flutter analyze",
+      "result": "PASS",
+      "detail": "No issues found after removing one unused import reported in the newly integrated upstream updates controller."
+    },
+    "release_apk": {
+      "command": "flutter build apk --release --split-per-abi --no-pub",
+      "result": "PASS",
+      "version": "1.0.24+38",
+      "certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b",
+      "artifacts": [
+        {
+          "path": "clients/flutter/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
+          "version_code": 2038
+        },
+        {
+          "path": "clients/flutter/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk",
+          "version_code": 1038
+        },
+        {
+          "path": "clients/flutter/build/app/outputs/flutter-apk/app-x86_64-release.apk",
+          "version_code": 4038
+        }
+      ],
+      "signing_identity": "PASS: all split APKs verified with the established release certificate"
+    },
+    "spec_traceability": {
+      "result": "NOT_RUN_TOOL_UNAVAILABLE",
+      "reason": "pwsh and powershell are not installed on this host."
+    }
+  },
+  "runtime_acceptance": "OPEN_NOT_RUN",
+  "runtime_limits": [
+    "User identified the active publisher/viewer pair as Web/macOS → Android. The current stream was left untouched and the release APK was not installed, so actual Android playback, mute and gain remain to be verified live."
+  ],
+  "remaining": "With the current Web/macOS publisher and Android receiver connected, confirm audio is identified, mute silences only the stream, and per-stream gain changes audibly. Do not interrupt the active stream without the user's go-ahead."
+}

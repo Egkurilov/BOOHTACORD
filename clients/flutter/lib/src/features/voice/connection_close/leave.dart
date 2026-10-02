@@ -53,6 +53,7 @@ extension VoiceConnectionCloseLeave on VoiceController {
     voicePingMs = null;
     voiceChannel = null;
     mutedScreenShareAudioIdentities.clear();
+    transientScreenShareVolumes.clear();
     microphoneMuted = false;
     microphoneUnavailable = false;
     deafened = false;

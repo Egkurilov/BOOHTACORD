@@ -71,6 +71,7 @@ abstract class VoiceState extends ChangeNotifier {
   EventsListener<RoomEvent>? voiceEvents;
   VoiceVolumePreferences? voiceVolumePreferences;
   final Set<String> mutedScreenShareAudioIdentities = <String>{};
+  final Map<String, int> transientScreenShareVolumes = <String, int>{};
   AudioPreferences? get audioPreferences => audio.preferences;
   set audioPreferences(AudioPreferences? value) => audio.preferences = value;
   String? leaseId;

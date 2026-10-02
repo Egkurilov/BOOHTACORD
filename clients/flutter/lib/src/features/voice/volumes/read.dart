@@ -26,9 +26,10 @@ extension VoiceVolumesRead on VoiceController {
 
   int? screenShareVolume(RemoteParticipant participant) {
     final accountId = voiceAccountId(participant);
-    return accountId == null
-        ? null
-        : voiceVolumePreferences?.screen(accountId) ?? 100;
+    return transientScreenShareVolumes[participant.identity] ??
+        (accountId == null
+            ? 100
+            : voiceVolumePreferences?.screen(accountId) ?? 100);
   }
 
   bool screenShareAudioMuted(RemoteParticipant participant) =>

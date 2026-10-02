@@ -6,7 +6,6 @@ import 'package:flutter/widgets.dart';
 import 'api.dart';
 import 'evaluator.dart';
 import 'identity.dart';
-import 'model.dart';
 import 'preferences.dart';
 
 enum UpdateCheckStatus { idle, checking, ok, error }

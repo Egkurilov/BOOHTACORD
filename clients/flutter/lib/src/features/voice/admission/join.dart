@@ -27,6 +27,7 @@ extension VoiceAdmissionJoin on VoiceController {
     closeScreenPreviewSubscriptions();
     screenPreviewSubscriptionQueue = ScreenPreviewSubscriptionQueue();
     selectedRemoteScreenViewerIdentity = null;
+    transientScreenShareVolumes.clear();
     voicePhase = VoicePhase.joining;
     voicePingMs = null;
     voiceAdmissionPending = true;

@@ -4,6 +4,7 @@ import 'package:livekit_client/livekit_client.dart'
     hide ChatMessage, voiceReconnectAttemptLimit;
 
 import '../lifecycle/controller.dart';
+import '../screen_viewer/audio_publication.dart';
 
 extension VoiceEventsRemoteTracks on VoiceController {
   void bindRemoteTracks(
@@ -23,9 +24,11 @@ extension VoiceEventsRemoteTracks on VoiceController {
       }
       if (event.track is RemoteAudioTrack) {
         if (deafened) unawaited(event.publication.disable());
-        unawaited(
-          applySavedAudioVolume(event.participant, event.publication.source),
-        );
+        final source =
+            isScreenShareAudioPublication(event.participant, event.publication)
+            ? TrackSource.screenShareAudio
+            : event.publication.source;
+        unawaited(applySavedAudioVolume(event.participant, source));
       }
     });
     void refreshVoiceNavigation() {
@@ -65,6 +68,17 @@ extension VoiceEventsRemoteTracks on VoiceController {
             event.participant,
             event.publication,
           );
+          if (event.participant.identity ==
+              selectedRemoteScreenViewerIdentity) {
+            subscribeRemoteScreenForViewing(room, event.participant.identity);
+          }
+        } else if (event.participant.identity ==
+                selectedRemoteScreenViewerIdentity &&
+            isScreenShareAudioPublication(
+              event.participant,
+              event.publication,
+            )) {
+          unawaited(setRemoteTrackSubscription(event.publication, true));
         }
       }
       refreshVoiceNavigation();

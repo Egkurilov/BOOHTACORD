@@ -18,6 +18,7 @@ import '../services/api_client.dart';
 import '../services/voice_avatar_palette.dart';
 import '../services/voice_participant_presentation.dart';
 import '../services/screen_thumbnail.dart';
+import '../features/voice/screen_viewer/audio_publication.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
 import '../widgets/noise_suppression_settings.dart';
@@ -4500,12 +4501,9 @@ class _VoiceRoomState extends State<_VoiceRoom> {
               )
             : null;
         final localScreenTrack = localScreenPublication?.track as VideoTrack?;
-        final selectedAudioPublication = selectedScreen?.audioTrackPublications
-            .where(
-              (publication) =>
-                  publication.source == TrackSource.screenShareAudio,
-            )
-            .firstOrNull;
+        final selectedAudioPublication = selectedScreen == null
+            ? null
+            : screenShareAudioPublication(selectedScreen);
         final participantCount = active ? participants.length + 1 : 0;
         final showingLocalScreen =
             selectedTrack == null &&
@@ -4685,13 +4683,11 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                                     participant,
                                   ),
                                   avatarLabel: _participantName(participant),
-                                  hasAudio: participant.audioTrackPublications
-                                      .any(
-                                        (publication) =>
-                                            publication.source ==
-                                                TrackSource.screenShareAudio &&
-                                            publication.track != null,
-                                      ),
+                                  hasAudio:
+                                      screenShareAudioPublication(
+                                        participant,
+                                      ) !=
+                                      null,
                                 ),
                             ],
                             participants: _VoiceParticipantStrip(
@@ -5600,11 +5596,7 @@ class _VoiceScreenViewer extends StatelessWidget {
           ),
           accountId: _voiceParticipantAccountId(participant),
           avatarLabel: _participantName(participant),
-          hasAudio: participant.audioTrackPublications.any(
-            (publication) =>
-                publication.source == TrackSource.screenShareAudio &&
-                publication.track != null,
-          ),
+          hasAudio: screenShareAudioPublication(participant) != null,
         ),
     ];
     return Padding(
@@ -5680,12 +5672,11 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
           .firstOrNull;
       final track = publication?.track as VideoTrack?;
       final hasAudio =
-          participant?.audioTrackPublications.any(
-            (item) =>
-                item.source == TrackSource.screenShareAudio &&
-                item.track != null,
-          ) ??
-          false;
+          participant != null &&
+          screenShareAudioPublication(participant) != null;
+      final screenVolume = participant == null
+          ? null
+          : state.screenShareVolume(participant);
       final name = participant == null
           ? 'Демонстрация'
           : _participantName(participant);
@@ -5727,7 +5718,7 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
                     onPressed: onReturnToVoice,
                     icon: const Icon(Icons.graphic_eq_outlined, size: 18),
                   ),
-                  if (hasAudio && participant != null)
+                  if (hasAudio)
                     IconButton(
                       tooltip: state.screenShareAudioMuted(participant)
                           ? 'Включить звук'
@@ -5783,6 +5774,33 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
                       ),
               ),
             ),
+            if (hasAudio && screenVolume != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 12, 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.volume_down_outlined, size: 18),
+                    Expanded(
+                      child: Slider(
+                        value: screenVolume.toDouble(),
+                        min: 0,
+                        max: 200,
+                        divisions: 200,
+                        semanticFormatterCallback: (value) =>
+                            '${value.round()} процентов',
+                        onChanged: state.deafened
+                            ? null
+                            : (value) => unawaited(
+                                state.setScreenShareVolume(
+                                  participant,
+                                  value.round(),
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       );

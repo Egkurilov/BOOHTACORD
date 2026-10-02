@@ -21,10 +21,7 @@ extension VoiceVolumesMute on VoiceController {
     } else {
       mutedScreenShareAudioIdentities.remove(identity);
     }
-    final accountId = voiceAccountId(participant);
-    final savedVolume = accountId == null
-        ? 100
-        : voiceVolumePreferences?.screen(accountId) ?? 100;
+    final savedVolume = screenShareVolume(participant) ?? 100;
     try {
       await applyParticipantVolume(
         participant,

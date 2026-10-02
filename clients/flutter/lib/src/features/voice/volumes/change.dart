@@ -43,24 +43,22 @@ extension VoiceVolumesChange on VoiceController {
     final revision = operationRevision;
     if (!active(ticket, revision)) return;
     final room = this.room;
-    final preferences = voiceVolumePreferences;
     final accountId = voiceAccountId(participant);
-    if (room == null ||
-        preferences == null ||
-        accountId == null ||
-        !room.remoteParticipants.values.contains(participant)) {
+    if (room == null || !room.remoteParticipants.values.contains(participant)) {
       return;
     }
     final level = VoiceVolumePreferences.normalize(percent);
     try {
-      await Future.wait([
-        preferences.setScreen(accountId, level),
-        applyParticipantVolume(
-          participant,
-          screenShareAudioMuted(participant) ? 0 : level,
-          TrackSource.screenShareAudio,
-        ),
-      ]);
+      transientScreenShareVolumes[participant.identity] = level;
+      final preferences = voiceVolumePreferences;
+      if (preferences != null && accountId != null) {
+        await preferences.setScreen(accountId, level);
+      }
+      await applyParticipantVolume(
+        participant,
+        screenShareAudioMuted(participant) ? 0 : level,
+        TrackSource.screenShareAudio,
+      );
       if (active(ticket, revision)) notifyListeners();
     } catch (_) {
       if (!active(ticket, revision)) return;
