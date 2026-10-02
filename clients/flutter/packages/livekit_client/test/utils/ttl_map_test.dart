@@ -297,8 +297,11 @@ void main() {
       // Wait for expiry
       await Future.delayed(const Duration(milliseconds: 150));
 
-      // Size should be updated after accessing expired entries
-      expect(map.has('key1'), isFalse); // This triggers cleanup
+      // Exercise deterministic lazy cleanup for every expired entry. The
+      // periodic timer may run later when the Windows CI host is busy.
+      expect(map.has('key1'), isFalse);
+      expect(map.has('key2'), isFalse);
+      expect(map.has('key3'), isFalse);
       expect(map.size, equals(0));
 
       map.dispose();
