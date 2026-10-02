@@ -2,43 +2,18 @@ package migrate
 
 import (
 	"context"
-	"os"
-	"strings"
 	"testing"
 	"time"
+	postgresfixture "voice-platform/backend/internal/testsupport/postgres"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestDeletingStateMigrationInDisposableSchema(t *testing.T) {
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL is required for the migration integration test")
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	admin, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer admin.Close()
-	schema := "be11mig_" + strings.ReplaceAll(uuid.NewString(), "-", "")
-	if _, err := admin.Exec(ctx, "CREATE SCHEMA "+schema); err != nil {
-		t.Fatal(err)
-	}
-	defer admin.Exec(context.Background(), "DROP SCHEMA "+schema+" CASCADE")
-	config, err := pgxpool.ParseConfig(url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	config.ConnConfig.RuntimeParams["search_path"] = schema
-	pool, err := pgxpool.NewWithConfig(ctx, config)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer pool.Close()
-	_, err = pool.Exec(ctx, `CREATE TABLE attachments (
+	pool := postgresfixture.New(t, ctx, "TEST_DATABASE_URL", postgresfixture.LoopbackOrLocalhost)
+	_, err := pool.Exec(ctx, `CREATE TABLE attachments (
     id uuid PRIMARY KEY, storage_key uuid NOT NULL, state text NOT NULL
         CONSTRAINT attachments_state_check CHECK (state IN ('UNATTACHED','ATTACHED','HIDDEN')),
     created_at timestamptz NOT NULL, attached_at timestamptz, hidden_at timestamptz,
