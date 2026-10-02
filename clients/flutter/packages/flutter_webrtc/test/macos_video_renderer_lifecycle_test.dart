@@ -76,6 +76,38 @@ void main() {
     expect(lockRelease, greaterThan(pendingFrameReset));
   });
 
+  test('macOS ignores a first-frame callback from a replaced track', () {
+    final macosSource = File(
+      'macos/flutter_webrtc/Sources/flutter_webrtc/FlutterRTCVideoRenderer.m',
+    ).readAsStringSync();
+    final setTrackStart = macosSource.indexOf(
+      '- (void)setVideoTrack:(RTCVideoTrack*)videoTrack {',
+    );
+    final setTrackEnd = macosSource.indexOf(
+      '\n- (id<RTCI420Buffer>)correctRotation:',
+      setTrackStart,
+    );
+    final renderStart = macosSource.indexOf(
+      '- (void)renderFrame:(RTCVideoFrame*)frame {',
+    );
+    final renderEnd = macosSource.indexOf('\n- (void)setSize:', renderStart);
+    expect(setTrackStart, isNonNegative);
+    expect(setTrackEnd, greaterThan(setTrackStart));
+    expect(renderStart, isNonNegative);
+    expect(renderEnd, greaterThan(renderStart));
+    final setTrackMethod = macosSource.substring(setTrackStart, setTrackEnd);
+    final renderMethod = macosSource.substring(renderStart, renderEnd);
+
+    expect(setTrackMethod, contains('_trackGeneration += 1;'));
+    expect(setTrackMethod, contains('_isFirstFrameRendered = false;'));
+    expect(renderMethod, contains('NSUInteger frameGeneration = 0;'));
+    expect(renderMethod, contains('frameGeneration = _trackGeneration;'));
+    expect(
+      renderMethod,
+      contains('strongSelf->_trackGeneration == frameGeneration'),
+    );
+  });
+
   test('shared Darwin and macOS renderer implementations remain identical', () {
     final sharedSource = File(
       'common/darwin/Classes/FlutterRTCVideoRenderer.m',

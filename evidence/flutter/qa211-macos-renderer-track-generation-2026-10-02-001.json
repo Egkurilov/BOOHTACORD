@@ -1,0 +1,59 @@
+{
+  "id": "QA-211",
+  "kind": "macos-darwin-renderer-track-generation",
+  "status": "SOURCE_AND_MACOS_BUILD_PASS_LIVE_RECEIVER_PENDING",
+  "executed_at": "2026-10-02",
+  "source_revision": "3777c22",
+  "working_tree_changes": true,
+  "task": "T-030",
+  "summary": "A test-first review of macOS remote stream switching found a second renderer lifecycle race: a first-frame event queued for an old RTCVideoTrack could be delivered after track replacement and mark the new track ready. The shared Darwin and macOS renderer copies now capture the track generation with each uploaded frame and ignore queued first-frame notifications after the generation changes.",
+  "checks": [
+    {
+      "name": "Stale native first-frame regression before fix",
+      "command": "flutter test test/macos_video_renderer_lifecycle_test.dart --reporter expanded",
+      "status": "FAIL_AS_EXPECTED",
+      "observation": "The test failed because the renderer had no track generation guard for a delayed event."
+    },
+    {
+      "name": "Focused native renderer lifecycle tests",
+      "command": "flutter test test/macos_video_renderer_lifecycle_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "All 5 lifecycle/source-sync tests passed, including generation-scoped first-frame delivery and equality of shared Darwin/macOS implementations."
+    },
+    {
+      "name": "Full Flutter WebRTC package tests",
+      "command": "flutter test --reporter compact",
+      "status": "PASS",
+      "observation": "All 21 package tests passed."
+    },
+    {
+      "name": "Full Flutter application tests",
+      "command": "flutter test --no-pub --reporter compact",
+      "status": "PASS",
+      "observation": "All 409 application tests passed."
+    },
+    {
+      "name": "macOS Debug app build",
+      "command": "flutter build macos --debug",
+      "status": "PASS",
+      "observation": "Built build/macos/Build/Products/Debug/BOOHTACORD.app with the updated native renderer."
+    },
+    {
+      "name": "Pixel state during attempted live correlation",
+      "command": "adb shell dumpsys window; adb shell dumpsys media_projection; adb shell pidof ru.boohtacord.app; adb logcat -d -t 3000 -s Flutter:V flutter:V LiveKit:V AndroidRuntime:E",
+      "status": "READ_ONLY_NO_ACTIVE_CAPTURE",
+      "observation": "Pixel foreground was ChatGPT, MediaProjection was null, BOOHTACORD process was absent, and filtered app logs were empty. No app or capture state was changed."
+    },
+    {
+      "name": "Spec traceability after parity checklist update",
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "status": "BLOCKED",
+      "observation": "PowerShell Core (pwsh) is not installed on this host."
+    }
+  ],
+  "limitations": [
+    "The source regression protects the first-frame readiness event from an old track; it does not prove that a new native frame is decoded, uploaded, sampled by Flutter, or visibly displayed after source switching.",
+    "No active paired browser-to-macOS screen-share was available during this check, so this race is a concrete source defect but is not proven to be the cause of the user's black-screen report."
+  ],
+  "remaining": "Repeat the browser-to-macOS source switch with an active remote publication and correlate subscribed track generation, decoded frames, texture uploads, and visible frames. Keep FE-61 open until live playback and unpublish acceptance pass."
+}

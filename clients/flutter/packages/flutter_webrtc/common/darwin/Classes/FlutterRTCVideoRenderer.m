@@ -19,6 +19,7 @@
   FlutterEventChannel* _eventChannel;
   bool _isFirstFrameRendered;
   bool _frameAvailable;
+  NSUInteger _trackGeneration;
   os_unfair_lock _lock;
 }
 
@@ -34,6 +35,7 @@
     _lock = OS_UNFAIR_LOCK_INIT;
     _isFirstFrameRendered = false;
     _frameAvailable = false;
+    _trackGeneration = 0;
     _frameSize = CGSizeZero;
     _renderSize = CGSizeZero;
     _rotation = -1;
@@ -81,11 +83,12 @@
   if (oldValue != videoTrack) {
     os_unfair_lock_lock(&_lock);
     _videoTrack = videoTrack;
+    _trackGeneration += 1;
+    _isFirstFrameRendered = false;
     // A pending frame belongs to the previous track. If Flutter never sampled
     // it before a reconnect/track switch, it must not block the new track.
     _frameAvailable = false;
     os_unfair_lock_unlock(&_lock);
-    _isFirstFrameRendered = false;
     if (oldValue) {
       [oldValue removeRenderer:self];
     }
@@ -199,6 +202,7 @@
 - (void)renderFrame:(RTCVideoFrame*)frame {
 
   BOOL didUploadFrame = NO;
+  NSUInteger frameGeneration = 0;
   os_unfair_lock_lock(&_lock);
   if(_videoTrack == nil) {
     os_unfair_lock_unlock(&_lock);
@@ -209,6 +213,7 @@
     if(_textureId != -1) {
       [_registry textureFrameAvailable:_textureId];
       _frameAvailable = true;
+      frameGeneration = _trackGeneration;
       didUploadFrame = YES;
     }
   }
@@ -252,11 +257,16 @@
       if (!strongSelf) {
         return;
       }
-      if (!strongSelf->_isFirstFrameRendered) {
-        if (strongSelf.eventSink) {
-          strongSelf.eventSink(@{@"event" : @"didFirstFrameRendered"});
-          strongSelf->_isFirstFrameRendered = true;
-        }
+      BOOL isCurrentFirstFrame = NO;
+      os_unfair_lock_lock(&strongSelf->_lock);
+      if (strongSelf->_trackGeneration == frameGeneration &&
+          !strongSelf->_isFirstFrameRendered && strongSelf.eventSink) {
+        strongSelf->_isFirstFrameRendered = true;
+        isCurrentFirstFrame = YES;
+      }
+      os_unfair_lock_unlock(&strongSelf->_lock);
+      if (isCurrentFirstFrame) {
+        strongSelf.eventSink(@{@"event" : @"didFirstFrameRendered"});
       }
     });
   }

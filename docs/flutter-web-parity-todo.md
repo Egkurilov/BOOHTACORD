@@ -122,6 +122,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   выбранного сейчас потока: callback `ScreenFrameGate` привязан к generation
   выбранного трека. Regression воспроизведён до исправления; полный Flutter suite
   (409), macOS Debug и Android arm64 Debug builds проходят — [QA-210](../evidence/flutter/qa210-flutter-stale-screen-frame-callback-2026-10-02-001.json).
+- [x] На macOS/Darwin не принимать уже поставленное в main queue событие первого
+  кадра старого `RTCVideoTrack` за готовность нового: renderer сохраняет
+  generation при загрузке pixel buffer и перед отправкой события проверяет, что
+  дорожка не заменена. Регрессия падала до изменения; все 21 WebRTC package
+  tests и macOS Debug build проходят — [QA-211](../evidence/flutter/qa211-macos-renderer-track-generation-2026-10-02-001.json).
 - [x] Сохранять явное ended-состояние при завершении выбранной чужой трансляции;
   не переключать пользователя молча на собственный экран, предложить выбрать
   другой поток вручную или вернуться к участникам — [QA-38](../evidence/flutter/qa38-voice-screen-ended-state-2026-09-28-001.json).

@@ -28,6 +28,15 @@ the full suite (409), macOS Debug build, and Android arm64 Debug build pass —
 This keeps the new source's loading state honest but does not prove physical
 pixels are displayed; FE-59/61 still require live acceptance.
 
+The macOS/Darwin renderer also scopes queued first-frame events to the track
+generation that uploaded the pixel buffer. If a track is replaced before its
+main-queue event is delivered, that stale event is now ignored; the regression,
+all 21 WebRTC package tests, and a macOS Debug build pass —
+[QA-211](../evidence/flutter/qa211-macos-renderer-track-generation-2026-10-02-001.json).
+This closes another renderer-state race but still does not prove that the new
+track's decoded frames become visible on a real Mac; keep FE-61 open pending a
+paired live source-switch test.
+
 Android MediaProjection now emits low-frequency, content-free diagnostic events
 for capture startup, Android's captured-content visibility callback, Android
 projection stop, and normal app teardown — [QA-208](../evidence/flutter/qa208-android-projection-diagnostic-events-2026-10-02-001.json).
