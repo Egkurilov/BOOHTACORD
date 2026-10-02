@@ -28,6 +28,7 @@ func recordMediaSample(ctx context.Context, report httpmetrics.ClientScreenRepor
 		"bitrate_kbps": report.BitrateKbps, "rtt_ms": report.RTTMs, "jitter_ms": report.JitterMs,
 		"packet_loss_percent": report.PacketLossPercent, "packet_loss_window_ms": report.PacketLossWindowMs,
 		"target_resolution": report.TargetResolution, "target_fps": report.TargetFPS, "sample_age_ms": report.SampleAgeMs,
+		"capture_fps": report.CaptureFPS,
 	} {
 		if value != nil {
 			attrs = append(attrs, attribute.Float64("media."+name, *value))
@@ -41,6 +42,14 @@ func recordMediaSample(ctx context.Context, report httpmetrics.ClientScreenRepor
 	}
 	if report.AdaptationReason != "" {
 		attrs = append(attrs, attribute.String("media.adaptation_reason", report.AdaptationReason))
+	}
+	if report.ProfileCheckStatus != "" {
+		attrs = append(attrs, attribute.String("media.profile_check_status", report.ProfileCheckStatus),
+			attribute.String("media.profile_check_reason", report.ProfileCheckReason),
+			attribute.Int("media.profile_repair_attempts", *report.ProfileRepairAttempts))
+	}
+	if report.CaptureWidth != nil {
+		attrs = append(attrs, attribute.Int("media.capture_width", *report.CaptureWidth), attribute.Int("media.capture_height", *report.CaptureHeight))
 	}
 	// Age is relative to collection, avoiding dependence on the client's wall clock.
 	at := time.Now()

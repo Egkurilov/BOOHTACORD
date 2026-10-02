@@ -42,6 +42,7 @@ export interface VoiceRoom {
   disconnect(): Promise<void>
   on(event: 'reconnecting' | 'reconnected' | 'disconnected', listener: () => void): VoiceRoom
   readScreenDiagnostics?(): Promise<ScreenDiagnostics>
+  stopScreenProfileChecks?(): void
   readVoiceConnectionStats?(): Promise<VoiceConnectionStats>
   participantCards?: RemoteParticipantController
   remoteVoices?: RemoteVoicePlaybackController

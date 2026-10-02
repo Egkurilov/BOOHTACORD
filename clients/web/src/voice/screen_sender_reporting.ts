@@ -13,8 +13,9 @@ export function installScreenSenderReporting(
 ): void {
   watch(state, (phase, _previous, onCleanup) => {
     if (phase !== 'SHARING') return
+    void refresh()
     const stopReporting = startScreenClientReporting(() => buildSenderScreenReport(platform, diagnostics.value, profile()), () => true)
-    const refreshTimer = globalThis.setInterval(() => { void refresh() }, 2000)
+    const refreshTimer = globalThis.setInterval(() => { void refresh() }, 5000)
     onCleanup(() => { stopReporting(); globalThis.clearInterval(refreshTimer) })
   }, { immediate: true, flush: 'sync' })
 }

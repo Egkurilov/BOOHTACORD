@@ -12,6 +12,7 @@ def main():
     run("node", "--test", "tools/verify/dependencies/web_imports.test.mjs")
     run(sys.executable, "-m", "tools.verify.dependencies.web")
     run("npm", "test", cwd=client("web"))
+    run("npm", "run", "test:screen-profile", cwd=client("web"))
     run("npm", "run", "test:audio:quality", cwd=client("web"))
     with local_sfu():
         run("npm", "run", "test:audio:browser", cwd=client("web"))

@@ -9,6 +9,7 @@ export interface ScreenMeasurement {
 }
 
 export interface ScreenDiagnostics {
+  profileCheck?: import('./screen_profile/types').ProfileSnapshot
   sampledAt?: number
   senderStatsAvailable?: boolean
   senderDimensionsAvailable?: boolean

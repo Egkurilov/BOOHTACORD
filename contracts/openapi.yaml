@@ -1921,6 +1921,12 @@
           "packet_loss_window_ms": { "type": "number", "minimum": 9000, "maximum": 12000 },
           "target_resolution": { "type": "number", "enum": [720, 1080, 1440] },
           "target_fps": { "type": "number", "enum": [15, 30, 60] },
+          "profile_check_status": { "type": "string", "enum": ["checking", "matched", "adapted", "inactive", "drift", "repairing", "failed"], "description": "Optional sender-only guard state; status, reason and attempts must be supplied together." },
+          "profile_check_reason": { "type": "string", "enum": ["none", "capture", "configuration", "resolution", "unavailable"] },
+          "profile_repair_attempts": { "type": "integer", "minimum": 0, "maximum": 1 },
+          "capture_width": { "type": "integer", "minimum": 1, "maximum": 8192, "description": "Measured capture dimensions, distinct from encoded dimensions; width and height must be supplied together with guard state." },
+          "capture_height": { "type": "integer", "minimum": 1, "maximum": 8192 },
+          "capture_fps": { "type": "number", "minimum": 0, "maximum": 240, "description": "MediaStreamTrack settings frameRate, not measured captured-frame throughput; requires guard state." },
           "sample_age_ms": { "type": "number", "minimum": 0, "maximum": 15000 },
           "connection_quality": { "type": "string", "enum": ["UNKNOWN", "EXCELLENT", "GOOD", "POOR", "LOST"] },
           "adaptation_reason": { "type": "string", "enum": ["none", "cpu", "bandwidth", "other"] }

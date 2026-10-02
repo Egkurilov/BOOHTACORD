@@ -8,6 +8,7 @@
     "build": "vue-tsc --noEmit && vite build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:screen-profile": "playwright test -c tests/screen_profile/playwright.config.ts",
     "test:audio": "playwright test -c tests/audio/playwright.config.ts",
     "test:audio:quality": "node ../../tools/audio/quality_harness.mjs",
     "test:audio:browser": "playwright test -c tests/audio/playwright.config.ts"

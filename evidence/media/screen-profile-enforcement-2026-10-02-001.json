@@ -1,0 +1,40 @@
+{
+  "id": "screen-profile-enforcement-2026-10-02-001",
+  "kind": "browser-profile-control-integration",
+  "status": "PASS",
+  "scope": "Local automated behavior and actual Chromium encoder dimension control; not a physical FPS or network acceptance claim",
+  "base_revision": "c78ebdbf7bbd4ee5e3e48d2e0386c8e17c5f4084",
+  "plan": "docs/superpowers/plans/2026-10-02-screen-profile-enforcement.md",
+  "baseline_observation": "evidence/media/browser-stream-review-2026-10-02-001.json",
+  "changes": [
+    "Selected capture dimensions/FPS on initial publication, then capture constraints and proportional encoder caps before successful start returns.",
+    "Five-second diagnostic polling; three consecutive drift observations trigger at most one automatic repair per current profile and track generation.",
+    "Lower adaptive output, inactive layers and absent output measurements do not trigger forced quality increases.",
+    "User changes serialize after in-flight writes; stop/replacement/profile generations invalidate stale observations and pending mutations.",
+    "Persistent warning after failed recovery; validated guard outcomes and capture settings included in media.sample."
+  ],
+  "checks": {
+    "focused_web_tests": {"status": "PASS", "tests": 36, "files": 8},
+    "full_web_tests": {"status": "PASS", "tests": 783, "files": 247},
+    "web_typecheck_and_build": "PASS",
+    "web_import_boundaries": "PASS",
+    "go_profile_report_and_http_metrics_tests": "PASS",
+    "openapi_contract_check": "PASS",
+    "documentation_links": "PASS",
+    "chromium_encoding_smoke": {
+      "status": "PASS", "test": "clients/web/tests/screen_profile/encoding.browser.spec.ts",
+      "source": "Synthetic 2560x1440 canvas at 5fps; two local RTCPeerConnections; no application account or production SFU",
+      "measured_encoded_dimensions": [[1920, 1080], [1280, 720], [2560, 1440]],
+      "profiles": ["P1080_60", "P720_30", "P1440_60"],
+      "isolation": "Test-only maintain-resolution isolates dimension controls from congestion adaptation. Production maintains its existing maintain-framerate policy.",
+      "first_attempt": "With default balanced adaptation, Chromium encoded 480x270 despite correct 1920x1080 capture and sender caps; this correctly demonstrates why lower adaptive output must not cause repair."
+    },
+    "local_full_contract_wrapper": "BLOCKED on Windows by existing tools.audio.test_asset_build hardcoded /source path assertion; the direct OpenAPI check passed. Full Linux contracts remain a release gate."
+  },
+  "limitations": [
+    "This receipt predates trusted CI and deployment; delivery must be bound to the final source revision separately.",
+    "getSettings().frameRate describes capture settings, not measured captured-frame throughput.",
+    "Existing browser tabs require reload and a new share to exercise the new initial-publication code.",
+    "Physical moving-content FPS, Safari/Firefox behavior, and the impaired viewer network path remain unverified."
+  ]
+}

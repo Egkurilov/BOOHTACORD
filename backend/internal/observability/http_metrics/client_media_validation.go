@@ -1,6 +1,9 @@
 package httpmetrics
 
 func (report ClientScreenReport) validateMedia() error {
+	if !report.Report.Valid(report.Direction) {
+		return ErrInvalidClientScreenReport
+	}
 	if !validRange(report.PacketLossPercent, 100) || !validRange(report.PacketLossWindowMs, 12000) || !validRange(report.SampleAgeMs, 15000) {
 		return ErrInvalidClientScreenReport
 	}

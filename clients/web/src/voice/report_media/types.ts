@@ -2,6 +2,12 @@ import type { ScreenReceiverMetrics } from '../screen_receiver_diagnostics'
 
 export type WebPlatform = 'ios_web' | 'android_web' | 'desktop_web'
 export interface ScreenClientReport {
+  profile_check_status?: import('../screen_profile/types').ProfileStatus
+  profile_check_reason?: import('../screen_profile/types').ProfileReason
+  profile_repair_attempts?: number
+  capture_width?: number
+  capture_height?: number
+  capture_fps?: number
   platform: WebPlatform
   direction: 'sender' | 'receiver' | 'connection'
   state: 'waiting_subscription' | 'waiting_first_frame' | 'playing' | 'stalled'

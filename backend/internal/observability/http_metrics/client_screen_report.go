@@ -3,6 +3,7 @@ package httpmetrics
 import (
 	"errors"
 	"math"
+	"voice-platform/backend/internal/observability/report_client_screen/profile"
 )
 
 var ErrInvalidClientScreenReport = errors.New("invalid client screen report")
@@ -10,6 +11,7 @@ var ErrInvalidClientScreenReport = errors.New("invalid client screen report")
 // ClientScreenReport contains only bounded measurements and fixed enums.
 // It intentionally has no account, room, track, address, or content fields.
 type ClientScreenReport struct {
+	profile.Report
 	Platform           string   `json:"platform"`
 	Direction          string   `json:"direction"`
 	State              string   `json:"state"`

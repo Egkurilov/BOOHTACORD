@@ -12,6 +12,7 @@ export function screenFailureMessage(cause: unknown, userAgent?: string): string
 
 export function screenDiagnosticMessage(diagnostics: ScreenDiagnostics): string | null {
   if (diagnostics.source === 'ENDED') return 'Источник демонстрации завершён. Выберите его снова, чтобы продолжить показ.'
+  if (diagnostics.profileCheck?.status === 'failed') return 'Не удалось удержать выбранное качество демонстрации. Выберите качество заново или перезапустите показ.'
   if (diagnostics.audioTrack === 'ABSENT') return 'Демонстрация идёт без аудиодорожки. Выберите источник, для которого Chrome предлагает передавать звук.'
   if (diagnostics.adaptationReason === 'bandwidth' || diagnostics.connectionQuality === 'POOR' || diagnostics.connectionQuality === 'LOST') {
     return 'Сеть ограничивает демонстрацию. Голос имеет приоритет; проверьте соединение и обновите измерения.'

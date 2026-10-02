@@ -17,7 +17,12 @@ export function sampleAge(sampledAt: number | undefined): number | undefined {
 export function senderFields(diagnostics: ScreenDiagnostics, profile?: string | null) {
   const target = /^P(720|1080|1440)_(15|30|60)$/.exec(profile ?? '')
   const reason = diagnostics.adaptationReason
+  const check = diagnostics.profileCheck
+  const captureWidth = pixelDimension(check?.captureWidth), captureHeight = pixelDimension(check?.captureHeight)
   return {
+    ...(check ? { profile_check_status: check.status, profile_check_reason: check.reason, profile_repair_attempts: check.attempts,
+      ...(captureWidth && captureHeight ? { capture_width: captureWidth, capture_height: captureHeight } : {}),
+      ...(bounded(check.captureFps, 240) === undefined ? {} : { capture_fps: check.captureFps }) } : {}),
     connection_quality: diagnostics.connectionQuality,
     ...(target ? { target_resolution: Number(target[1]), target_fps: Number(target[2]) } : {}),
     ...lossFields(diagnostics.packetLossPercent, diagnostics.packetLossWindowMs),
