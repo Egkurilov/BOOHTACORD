@@ -1,0 +1,18 @@
+{
+  "id": "reorganization-voice-state-2026-10-02",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "scope": "Voice controller ownership, admission, lease events, room listeners, microphone/PTT, volumes and previews",
+  "checks": {
+    "flutter_tests": 382,
+    "flutter_analyze": "PASS",
+    "dart_dependency_guard": "PASS",
+    "late_admission_error_after_logout": "RED before change; PASS after",
+    "logout_before_credential_prevents_room_creation": "PASS",
+    "logout_during_connect_closes_late_room": "PASS",
+    "lease_revocation_during_connect_prevents_microphone_capture": "PASS",
+    "ptt_focus_loss_serializes_mute_after_pending_enable": "PASS"
+  },
+  "preserved": ["Manual lease transfer", "Listener fallback", "Reconnect attempt limit", "Account volume preferences", "Screen subscription and telemetry behavior"],
+  "limitations": ["Physical microphone, stream quality and native platform acceptance remain NOT_RUN"]
+}

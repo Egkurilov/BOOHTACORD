@@ -2,10 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/livekit_client.dart'
     hide ChatMessage, voiceReconnectAttemptLimit;
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'guild_presence_state.dart';
 import 'features/audio/devices/controller.dart';
@@ -18,41 +16,21 @@ import 'features/realtime/dispatch/workspace.dart';
 import 'services/api_client.dart';
 import 'services/composer_draft_memory.dart';
 import 'services/audio_preferences.dart';
-import 'services/android_audio_devices.dart';
 import 'services/password_reset_link.dart';
 import 'services/screen_share_quality.dart';
-import 'services/screen_share_metrics.dart';
 import 'services/native_notifications.dart';
-import 'services/voice_lease_revocation.dart';
 import 'services/voice_volume_preferences.dart';
-import 'services/voice_reconnect_policy.dart';
-import 'services/voice_stream_start_tracker.dart';
-import 'services/voice_connection_quality.dart';
 import 'features/voice/roster_state/controller.dart';
 import 'features/screen/lifecycle/controller.dart';
+import 'features/voice/lifecycle/controller.dart';
+export 'features/voice/lifecycle/types.dart';
 export 'features/screen/lifecycle/types.dart';
-import 'services/screen_thumbnail.dart';
-import 'telemetry/report_media/connection.dart';
 
 export 'features/session/lifecycle/types.dart';
 export 'features/workspace/lifecycle/types.dart';
 export 'features/conversation/lifecycle/types.dart';
 
-enum VoicePhase {
-  idle,
-  joining,
-  connected,
-  listener,
-  reconnecting,
-  leaving,
-  error,
-}
-
-enum AudioActivationMode { vad, ptt }
-
 class AppState extends ChangeNotifier {
-  static const _voiceStreamSoundPreferenceKey = 'voice-screen-start-sound:v1';
-
   AppState(
     this.api, {
     this.startupSessionTimeout = const Duration(seconds: 20),
@@ -61,6 +39,7 @@ class AppState extends ChangeNotifier {
     Future<List<MediaDevice>> Function()? audioDeviceLoader,
     Stream<List<MediaDevice>>? audioDeviceChanges,
     NativeNotificationService? nativeNotifications,
+    Room Function(RoomOptions)? voiceRoomFactory,
   }) : _nativeNotifications =
            nativeNotifications ?? NativeNotificationService() {
     _session = SessionController(
@@ -178,6 +157,16 @@ class AppState extends ChangeNotifier {
           voicePhase == VoicePhase.connected ||
           voicePhase == VoicePhase.listener,
     )..addListener(notifyListeners);
+    _voice = VoiceController(
+      api,
+      _session.scope,
+      _audioDevices,
+      _screen,
+      readUser: () => user,
+      reportError: (value) => error = value,
+      formatError: _message,
+      roomFactory: voiceRoomFactory,
+    )..addListener(notifyListeners);
     api.onUnauthorized = _handleUnauthorized;
   }
 
@@ -193,6 +182,7 @@ class AppState extends ChangeNotifier {
   late final RealtimeController _realtime;
   late final VoiceRosterController _voiceRoster;
   late final ScreenShareController _screen;
+  late final VoiceController _voice;
   @visibleForTesting
   final Duration startupSessionTimeout;
   final NativeNotificationService _nativeNotifications;
@@ -303,14 +293,48 @@ class AppState extends ChangeNotifier {
   bool focusLoginOnMount = false;
   int get avatarRevision => _profile.avatarRevision;
   String? error;
-  VoicePhase voicePhase = VoicePhase.idle;
-  GuildChannel? voiceChannel;
-  bool microphoneMuted = false;
-  bool microphoneUnavailable = false;
-  bool deafened = false;
-  bool deafenChanging = false;
-  bool voiceStreamSoundEnabled = true;
-  bool voiceStreamStartNotice = false;
+  VoicePhase get voicePhase => _voice.voicePhase;
+  set voicePhase(VoicePhase value) => _voice.voicePhase = value;
+  GuildChannel? get voiceChannel => _voice.voiceChannel;
+  set voiceChannel(GuildChannel? value) => _voice.voiceChannel = value;
+  bool get microphoneMuted => _voice.microphoneMuted;
+  set microphoneMuted(bool value) => _voice.microphoneMuted = value;
+  bool get microphoneUnavailable => _voice.microphoneUnavailable;
+  set microphoneUnavailable(bool value) => _voice.microphoneUnavailable = value;
+  bool get deafened => _voice.deafened;
+  set deafened(bool value) => _voice.deafened = value;
+  bool get deafenChanging => _voice.deafenChanging;
+  set deafenChanging(bool value) => _voice.deafenChanging = value;
+  bool get voiceStreamSoundEnabled => _voice.voiceStreamSoundEnabled;
+  set voiceStreamSoundEnabled(bool value) =>
+      _voice.voiceStreamSoundEnabled = value;
+  bool get voiceStreamStartNotice => _voice.voiceStreamStartNotice;
+  set voiceStreamStartNotice(bool value) =>
+      _voice.voiceStreamStartNotice = value;
+  AudioActivationMode get audioActivationMode => _voice.audioActivationMode;
+  set audioActivationMode(AudioActivationMode value) =>
+      _voice.audioActivationMode = value;
+  int? get pushToTalkKeyId => _voice.pushToTalkKeyId;
+  set pushToTalkKeyId(int? value) => _voice.pushToTalkKeyId = value;
+  String? get pushToTalkKeyLabel => _voice.pushToTalkKeyLabel;
+  set pushToTalkKeyLabel(String? value) => _voice.pushToTalkKeyLabel = value;
+  String? get audioActivationError => _voice.audioActivationError;
+  set audioActivationError(String? value) =>
+      _voice.audioActivationError = value;
+  bool get pushToTalkPressed => _voice.pushToTalkPressed;
+  set pushToTalkPressed(bool value) => _voice.pushToTalkPressed = value;
+  Room? get _room => _voice.room;
+  set _room(Room? value) => _voice.room = value;
+  int? get _voicePingMs => _voice.voicePingMs;
+  set _voiceVolumePreferences(VoiceVolumePreferences? value) =>
+      _voice.voiceVolumePreferences = value;
+  set _leaseId(String? value) => _voice.leaseId = value;
+  set _listenerOnly(bool value) => _voice.listenerOnly = value;
+  Timer? get _voiceStreamNoticeTimer => _voice.voiceStreamNoticeTimer;
+  Set<String> get _mutedScreenShareAudioIdentities =>
+      _voice.mutedScreenShareAudioIdentities;
+  set _audioPreferences(AudioPreferences? value) =>
+      _audioDevices.preferences = value;
   ScreenSharePhase get screenSharePhase => _screen.phase;
   set screenSharePhase(ScreenSharePhase value) => _screen.phase = value;
   String? get screenShareError => _screen.error;
@@ -347,39 +371,7 @@ class AppState extends ChangeNotifier {
   String? get audioDeviceWarning => _audioDevices.audioDeviceWarning;
   set audioDeviceWarning(String? value) =>
       _audioDevices.audioDeviceWarning = value;
-  AudioActivationMode audioActivationMode = AudioActivationMode.vad;
-  int? pushToTalkKeyId;
-  String? pushToTalkKeyLabel;
-  String? audioActivationError;
-  bool pushToTalkPressed = false;
-  bool _mutedBeforeDeafen = false;
-  bool _microphoneMutedBeforePtt = false;
-  Room? _room;
-  int? _voicePingMs;
-  EventsListener<RoomEvent>? _voiceEvents;
-  VoiceVolumePreferences? _voiceVolumePreferences;
-  final Set<String> _mutedScreenShareAudioIdentities = <String>{};
-  AudioPreferences? get _audioPreferences => _audioDevices.preferences;
-  set _audioPreferences(AudioPreferences? value) =>
-      _audioDevices.preferences = value;
-  String? _leaseId;
-  bool _listenerOnly = false;
-  bool _voiceAdmissionPending = false;
-  final Map<String, String> _revokedVoiceLeasesDuringJoin = {};
   Timer? _maintenanceTimer;
-  Timer? _voiceStreamNoticeTimer;
-  Timer? _voiceConnectionStatsTimer;
-  int _voiceConnectionStatsRevision = 0;
-  bool _voiceConnectionStatsBusy = false;
-  final VoiceStreamStartTracker _voiceStreamStartTracker =
-      VoiceStreamStartTracker();
-  ScreenThumbnailCaptureQueue get _screenThumbnailCaptureQueue =>
-      _screen.captureQueue;
-  ScreenPreviewSubscriptionQueue? _screenPreviewSubscriptionQueue;
-  final Map<String, Completer<RemoteVideoTrack?>> _screenPreviewTrackWaiters =
-      <String, Completer<RemoteVideoTrack?>>{};
-  String? _selectedRemoteScreenViewerIdentity;
-  final Map<String, String> _screenThumbnailRemoteTrackIds = <String, String>{};
   bool get _notificationAppIsForeground => _nativeNotifications.appIsForeground;
 
   String get serverUrl => api.baseUrl;
@@ -579,78 +571,6 @@ class AppState extends ChangeNotifier {
     unawaited(_connectRealtime());
   }
 
-  Future<void> _loadVoiceStreamSoundPreference() async {
-    try {
-      final preferences = await SharedPreferences.getInstance();
-      voiceStreamSoundEnabled =
-          preferences.getBool(_voiceStreamSoundPreferenceKey) ?? true;
-    } catch (_) {
-      // The in-memory default remains enabled when preferences are unavailable.
-    }
-  }
-
-  Future<void> setVoiceStreamSoundEnabled(bool enabled) async {
-    if (voiceStreamSoundEnabled == enabled) return;
-    voiceStreamSoundEnabled = enabled;
-    notifyListeners();
-    try {
-      final preferences = await SharedPreferences.getInstance();
-      await preferences.setBool(_voiceStreamSoundPreferenceKey, enabled);
-    } catch (_) {
-      // Keep the current-session preference even if persistence fails.
-    }
-  }
-
-  void _observeVoiceStreamStarts(Room room) {
-    final connected =
-        voicePhase == VoicePhase.connected || voicePhase == VoicePhase.listener;
-    final reconnecting = voicePhase == VoicePhase.reconnecting;
-    if (!connected && !reconnecting) {
-      _clearVoiceStreamNotice(resetTracker: true, notify: false);
-      return;
-    }
-
-    final remoteScreenSharers = room.remoteParticipants.values
-        .where(
-          (participant) => participant.videoTrackPublications.any(
-            (publication) => publication.source == TrackSource.screenShareVideo,
-          ),
-        )
-        .map((participant) => participant.identity);
-    final startedBy = _voiceStreamStartTracker.observe(
-      remoteScreenSharers,
-      connected: connected,
-      reconnecting: reconnecting,
-    );
-    if (startedBy == null) return;
-
-    _voiceStreamNoticeTimer?.cancel();
-    voiceStreamStartNotice = true;
-    _voiceStreamNoticeTimer = Timer(const Duration(seconds: 6), () {
-      _voiceStreamNoticeTimer = null;
-      voiceStreamStartNotice = false;
-      notifyListeners();
-    });
-    if (voiceStreamSoundEnabled) {
-      final sound = defaultTargetPlatform == TargetPlatform.android
-          ? SystemSoundType.click
-          : SystemSoundType.alert;
-      unawaited(SystemSound.play(sound).catchError((Object _) {}));
-    }
-  }
-
-  void _clearVoiceStreamNotice({
-    required bool resetTracker,
-    required bool notify,
-  }) {
-    _voiceStreamNoticeTimer?.cancel();
-    _voiceStreamNoticeTimer = null;
-    final changed = voiceStreamStartNotice;
-    voiceStreamStartNotice = false;
-    if (resetTracker) _voiceStreamStartTracker.reset();
-    if (notify && changed) notifyListeners();
-  }
-
   Future<void> setServer(String value) => _session.setServer(value);
 
   Future<void> _clearServerAccount() async {
@@ -747,35 +667,7 @@ class AppState extends ChangeNotifier {
   void toggleWorkspacePanel(WorkspacePanel panel) =>
       _workspace.toggleWorkspacePanel(panel);
 
-  AudioCaptureOptions get _audioCaptureOptions => _audioDevices.captureOptions;
-
-  Future<void> _loadAudioPreferences(String accountId) async {
-    final ticket = _session.scope.capture();
-    final preferences = await AudioPreferences.open(accountId);
-    if (!ticket.isActive || user?.accountId != accountId) return;
-    _audioPreferences = preferences;
-    if (!preferences.persistent) {
-      audioSettingsError = 'Не удалось открыть хранилище настроек аудио.';
-    }
-    selectedAudioInputId = preferences.inputDeviceId;
-    selectedAudioOutputId = preferences.outputDeviceId;
-    audioProcessing = preferences.processing;
-    audioActivationMode = preferences.activationMode == 'PTT'
-        ? AudioActivationMode.ptt
-        : AudioActivationMode.vad;
-    pushToTalkKeyId = preferences.pttKeyId;
-    pushToTalkKeyLabel = preferences.pttKeyLabel;
-    audioActivationError =
-        audioActivationMode == AudioActivationMode.ptt &&
-            pushToTalkKeyId == null
-        ? 'Назначьте клавишу для push-to-talk.'
-        : null;
-  }
-
   Future<void> refreshAudioDevices() => _audioDevices.refreshAudioDevices();
-
-  void _refreshAudioDevicesAfterMicrophoneCapture() =>
-      _audioDevices.refreshAfterMicrophoneCapture();
 
   Future<void> selectAudioInput(String deviceId) =>
       _audioDevices.selectAudioInput(deviceId);
@@ -785,125 +677,6 @@ class AppState extends ChangeNotifier {
 
   Future<void> setAudioProcessing(AudioProcessingPreferences next) =>
       _audioDevices.setAudioProcessing(next);
-
-  Future<void> setPushToTalkKey(int? keyId, String? label) async {
-    final previousId = pushToTalkKeyId;
-    final previousLabel = pushToTalkKeyLabel;
-    pushToTalkKeyId = keyId;
-    pushToTalkKeyLabel = keyId == null ? null : label;
-    audioActivationError = null;
-    try {
-      await _audioPreferences?.setPttKey(pushToTalkKeyId, pushToTalkKeyLabel);
-    } catch (cause) {
-      pushToTalkKeyId = previousId;
-      pushToTalkKeyLabel = previousLabel;
-      audioActivationError =
-          'Не удалось сохранить клавишу PTT: ${cause.runtimeType}.';
-    }
-    notifyListeners();
-  }
-
-  Future<void> setAudioActivationMode(AudioActivationMode next) async {
-    if (audioActivationMode == next) return;
-    final previous = audioActivationMode;
-    if (next == AudioActivationMode.ptt) {
-      _microphoneMutedBeforePtt = microphoneMuted;
-      audioActivationMode = next;
-      pushToTalkPressed = false;
-      if (pushToTalkKeyId == null) {
-        audioActivationError = 'Назначьте клавишу для push-to-talk.';
-      } else {
-        audioActivationError = null;
-      }
-      if (_room != null && voicePhase != VoicePhase.leaving) {
-        await _applyMicrophoneMuted(true);
-      }
-    } else {
-      pushToTalkPressed = false;
-      audioActivationMode = next;
-      audioActivationError = null;
-      if (_room != null && voicePhase != VoicePhase.leaving) {
-        await _applyMicrophoneMuted(
-          deafened ? true : _microphoneMutedBeforePtt,
-        );
-      }
-    }
-    try {
-      await _audioPreferences?.setActivationMode(
-        next == AudioActivationMode.ptt ? 'PTT' : 'VAD',
-      );
-    } catch (cause) {
-      audioActivationMode = previous;
-      audioActivationError =
-          'Не удалось сохранить режим микрофона: ${cause.runtimeType}.';
-      if (_room != null) {
-        await _applyMicrophoneMuted(
-          previous == AudioActivationMode.ptt
-              ? !pushToTalkPressed || deafened
-              : deafened || _microphoneMutedBeforePtt,
-        );
-      }
-    }
-    notifyListeners();
-  }
-
-  Future<void> setPushToTalkPressed(bool pressed) async {
-    if (audioActivationMode != AudioActivationMode.ptt ||
-        pushToTalkPressed == pressed) {
-      return;
-    }
-    if (pressed &&
-        voicePhase != VoicePhase.connected &&
-        voicePhase != VoicePhase.listener) {
-      return;
-    }
-    pushToTalkPressed = pressed;
-    audioActivationError = null;
-    if (voicePhase == VoicePhase.reconnecting) {
-      microphoneMuted = true;
-      notifyListeners();
-      return;
-    }
-    if (_room == null) {
-      notifyListeners();
-      return;
-    }
-    final shouldMute = !pressed || deafened;
-    final success = await _applyMicrophoneMuted(shouldMute);
-    if (!success) {
-      pushToTalkPressed = false;
-      await _applyMicrophoneMuted(true);
-    } else if (pressed && !shouldMute) {
-      _listenerOnly = false;
-      if (voicePhase == VoicePhase.listener) voicePhase = VoicePhase.connected;
-    }
-    notifyListeners();
-  }
-
-  Future<bool> _applyMicrophoneMuted(bool muted) async {
-    final participant = _room?.localParticipant;
-    if (participant == null) {
-      microphoneMuted = muted;
-      return true;
-    }
-    try {
-      await participant.setMicrophoneEnabled(
-        !muted,
-        audioCaptureOptions: _audioCaptureOptions,
-      );
-      microphoneMuted = muted;
-      if (!muted) {
-        _refreshAudioDevicesAfterMicrophoneCapture();
-        microphoneUnavailable = false;
-      }
-      return true;
-    } catch (cause) {
-      microphoneMuted = true;
-      if (!muted) microphoneUnavailable = true;
-      audioActivationError = 'Не удалось изменить микрофон: ${_message(cause)}';
-      return false;
-    }
-  }
 
   Future<bool> saveDisplayName(String value) => _profile.saveDisplayName(value);
 
@@ -1000,12 +773,16 @@ class AppState extends ChangeNotifier {
       _conversation.loadChannelHistory(channel);
 
   Future<void> enterVoiceChannel(GuildChannel channel) async {
+    final ticket = _session.scope.capture();
+    if (!ticket.isActive) return;
     await selectChannel(channel);
+    if (!ticket.isActive) return;
     if (channel.kind != ChannelKind.voice || channel.admissionClosed) return;
     if (voiceChannel?.id == channel.id || voicePhase == VoicePhase.joining) {
       return;
     }
     if (voiceChannel != null) await leaveVoice();
+    if (!ticket.isActive) return;
     await joinVoice(channel);
   }
 
@@ -1020,29 +797,6 @@ class AppState extends ChangeNotifier {
       _conversation.markTextChannelRead(channelId, messageId);
 
   Future<void> _connectRealtime() => _realtime.connect();
-
-  void _dispatchVoiceRevocation(Map<String, dynamic> payload) {
-    final revocation = VoiceLeaseRevocation.parse(
-      payload['lease_id'],
-      payload['reason'],
-      activeLeaseId: _leaseId,
-      admissionPending: _voiceAdmissionPending,
-    );
-    if (revocation != null) {
-      if (_voiceAdmissionPending) {
-        _revokedVoiceLeasesDuringJoin[revocation.leaseId] = revocation.reason;
-        if (_revokedVoiceLeasesDuringJoin.length > 16) {
-          _revokedVoiceLeasesDuringJoin.remove(
-            _revokedVoiceLeasesDuringJoin.keys.first,
-          );
-        }
-      } else {
-        unawaited(
-          _handleVoiceLeaseRevoked(revocation.leaseId, revocation.reason),
-        );
-      }
-    }
-  }
 
   int? _addressedUnreadCount(String? kind, Map<String, dynamic> payload) {
     if (kind == 'direct_message.message_created') {
@@ -1101,32 +855,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> _handleVoiceLeaseRevoked(String leaseId, String reason) async {
-    if (_leaseId != leaseId || _room == null) return;
-    _clearVoiceStreamNotice(resetTracker: true, notify: false);
-    _stopVoiceConnectionStatsPolling();
-    _stopScreenShareMetrics();
-    voicePhase = VoicePhase.leaving;
-    notifyListeners();
-    try {
-      await _room?.disconnect();
-    } catch (_) {}
-    await _disposeVoiceEvents();
-    _room = null;
-    _voicePingMs = null;
-    _leaseId = null;
-    voiceChannel = null;
-    _mutedScreenShareAudioIdentities.clear();
-    voicePhase = VoicePhase.error;
-    microphoneMuted = false;
-    microphoneUnavailable = false;
-    deafened = false;
-    pushToTalkPressed = false;
-    _listenerOnly = false;
-    error = VoiceLeaseRevocation(leaseId: leaseId, reason: reason).message;
-    notifyListeners();
-  }
-
   Future<void> _closeRealtime() => _realtime.close();
 
   @override
@@ -1146,6 +874,7 @@ class AppState extends ChangeNotifier {
     _stopScreenShareMetrics();
     _audioDevices.dispose();
     _screen.dispose();
+    _voice.dispose();
     api.onUnauthorized = null;
     unawaited(_room?.disconnect());
     super.dispose();
@@ -1190,631 +919,6 @@ class AppState extends ChangeNotifier {
   Future<void> deleteText(ChatMessage message) =>
       _conversation.deleteText(message);
 
-  Future<void> selectRemoteScreenForViewing(String? participantIdentity) async {
-    final nextIdentity = participantIdentity?.trim();
-    final next = nextIdentity == null || nextIdentity.isEmpty
-        ? null
-        : nextIdentity;
-    final previous = _selectedRemoteScreenViewerIdentity;
-    if (previous == next) return;
-    _selectedRemoteScreenViewerIdentity = next;
-    final room = _room;
-    if (room == null) return;
-
-    if (previous != null) {
-      final participant = room.remoteParticipants[previous];
-      if (participant != null) {
-        for (final publication in participant.videoTrackPublications.where(
-          (item) => item.source == TrackSource.screenShareVideo,
-        )) {
-          if (!_screenThumbnailRemoteTrackIds.containsKey(publication.sid)) {
-            await _setRemoteTrackSubscription(publication, false);
-          }
-        }
-        for (final publication in participant.audioTrackPublications.where(
-          (item) => item.source == TrackSource.screenShareAudio,
-        )) {
-          await _setRemoteTrackSubscription(publication, false);
-        }
-      }
-    }
-
-    if (next == null ||
-        !isCurrentScreenViewerSelection(
-          next,
-          _selectedRemoteScreenViewerIdentity,
-        )) {
-      return;
-    }
-    _subscribeRemoteScreenForViewing(room, next);
-  }
-
-  void _subscribeRemoteScreenForViewing(Room room, String identity) {
-    final participant = room.remoteParticipants[identity];
-    if (participant == null) return;
-    for (final publication in participant.videoTrackPublications.where(
-      (item) => item.source == TrackSource.screenShareVideo,
-    )) {
-      unawaited(_setRemoteTrackSubscription(publication, true));
-    }
-    for (final publication in participant.audioTrackPublications.where(
-      (item) => item.source == TrackSource.screenShareAudio,
-    )) {
-      unawaited(_setRemoteTrackSubscription(publication, true));
-    }
-  }
-
-  Future<void> _setRemoteTrackSubscription(
-    RemoteTrackPublication publication,
-    bool subscribed,
-  ) async {
-    try {
-      if (subscribed) {
-        await publication.subscribe();
-      } else {
-        await publication.unsubscribe();
-      }
-    } catch (_) {
-      // Subscription failures leave the screen viewer on its avatar fallback.
-    }
-  }
-
-  Future<void> joinVoice(
-    GuildChannel channel, {
-    bool listenerOnly = false,
-  }) async {
-    if (channel.admissionClosed) return;
-    if (voiceChannel?.id == channel.id && _room != null) return;
-    screenThumbnails.clear();
-    _screenThumbnailRemoteTrackIds.clear();
-    _closeScreenPreviewSubscriptions();
-    _screenPreviewSubscriptionQueue = ScreenPreviewSubscriptionQueue();
-    _selectedRemoteScreenViewerIdentity = null;
-    voicePhase = VoicePhase.joining;
-    _voicePingMs = null;
-    _voiceAdmissionPending = true;
-    microphoneUnavailable = false;
-    error = null;
-    notifyListeners();
-    Room? pendingRoom;
-    try {
-      final (String, VoiceCredential) result = await api.voiceCredential(
-        channel.id,
-        transfer: true,
-      );
-      _leaseId = result.$1;
-      final revocationDuringAdmission = _revokedVoiceLeasesDuringJoin.remove(
-        result.$1,
-      );
-      if (revocationDuringAdmission != null) {
-        _voiceAdmissionPending = false;
-        _leaseId = null;
-        voicePhase = VoicePhase.error;
-        error = VoiceLeaseRevocation(
-          leaseId: result.$1,
-          reason: revocationDuringAdmission,
-        ).message;
-        notifyListeners();
-        return;
-      }
-      final room = Room(
-        roomOptions: RoomOptions(
-          adaptiveStream: true,
-          dynacast: true,
-          defaultAudioCaptureOptions: _audioCaptureOptions,
-          defaultAudioOutputOptions: AudioOutputOptions(
-            deviceId:
-                AndroidAudioDevices.isNativeOutputRoute(
-                      selectedAudioOutputId,
-                    ) ||
-                    (AndroidAudioDevices.isAndroid &&
-                        selectedAudioOutputId == 'default')
-                ? null
-                : selectedAudioOutputId,
-          ),
-        ),
-      );
-      if (user != null) {
-        _voiceVolumePreferences ??= await VoiceVolumePreferences.open(
-          user!.accountId,
-        );
-        if (!_voiceVolumePreferences!.persistent) {
-          error =
-              'Не удалось загрузить настройки громкости; используется 100%.';
-        }
-      }
-      pendingRoom = room;
-      _bindVoiceRoomEvents(room);
-      await room.connect(
-        result.$2.url,
-        result.$2.token,
-        connectOptions: const ConnectOptions(autoSubscribe: false),
-      );
-      if (AndroidAudioDevices.isNativeOutputRoute(selectedAudioOutputId)) {
-        if (!await AndroidAudioDevices.selectNativeOutput(
-          selectedAudioOutputId!,
-        )) {
-          throw StateError('Android не смог выбрать сохранённый аудиовыход.');
-        }
-      }
-      final revokedReason = _revokedVoiceLeasesDuringJoin.remove(result.$1);
-      if (revokedReason != null) {
-        await _finishRevokedVoiceAdmission(room, result.$1, revokedReason);
-        notifyListeners();
-        return;
-      }
-      _room = room;
-      voiceChannel = channel;
-      _subscribeCurrentRemoteVoiceTracks(room);
-      await _applySavedVoiceVolumes(room);
-      if (listenerOnly) {
-        _listenerOnly = true;
-        microphoneMuted = true;
-        microphoneUnavailable = false;
-        voicePhase = VoicePhase.listener;
-      } else if (audioActivationMode == AudioActivationMode.ptt) {
-        _microphoneMutedBeforePtt = false;
-        pushToTalkPressed = false;
-        microphoneMuted = true;
-        _listenerOnly = false;
-        voicePhase = VoicePhase.connected;
-      } else {
-        try {
-          await room.localParticipant?.setMicrophoneEnabled(
-            true,
-            audioCaptureOptions: _audioCaptureOptions,
-          );
-          if (room.localParticipant != null) {
-            _refreshAudioDevicesAfterMicrophoneCapture();
-          }
-          microphoneUnavailable = false;
-          _listenerOnly = false;
-          voicePhase = VoicePhase.connected;
-        } catch (_) {
-          _listenerOnly = true;
-          microphoneMuted = true;
-          microphoneUnavailable = true;
-          voicePhase = VoicePhase.listener;
-        }
-      }
-      final revokedWhileEnablingMedia = _revokedVoiceLeasesDuringJoin.remove(
-        result.$1,
-      );
-      if (revokedWhileEnablingMedia != null) {
-        await _finishRevokedVoiceAdmission(
-          room,
-          result.$1,
-          revokedWhileEnablingMedia,
-        );
-        notifyListeners();
-        return;
-      }
-      _startVoiceConnectionStatsPolling(room);
-      _observeVoiceStreamStarts(room);
-      _voiceAdmissionPending = false;
-    } catch (cause) {
-      _stopVoiceConnectionStatsPolling();
-      _voiceAdmissionPending = false;
-      if (_leaseId != null) {
-        _revokedVoiceLeasesDuringJoin.remove(_leaseId);
-      }
-      try {
-        await pendingRoom?.disconnect();
-      } catch (_) {}
-      try {
-        await AndroidAudioDevices.clearNativeOutput();
-      } catch (_) {}
-      await _disposeVoiceEvents();
-      final leaseId = _leaseId;
-      if (leaseId != null) {
-        try {
-          await api.releaseVoice(leaseId);
-        } catch (_) {}
-      }
-      _room = null;
-      _leaseId = null;
-      voiceChannel = null;
-      _mutedScreenShareAudioIdentities.clear();
-      voicePhase = VoicePhase.error;
-      error = _message(cause);
-    }
-    notifyListeners();
-  }
-
-  Future<void> _finishRevokedVoiceAdmission(
-    Room room,
-    String leaseId,
-    String reason,
-  ) async {
-    _clearVoiceStreamNotice(resetTracker: true, notify: false);
-    _stopVoiceConnectionStatsPolling();
-    _voiceAdmissionPending = false;
-    _stopScreenShareMetrics();
-    await _disableAndroidScreenShareBackground();
-    screenSharePhase = ScreenSharePhase.idle;
-    screenShareError = null;
-    try {
-      await room.disconnect();
-    } catch (_) {}
-    await _disposeVoiceEvents();
-    try {
-      await AndroidAudioDevices.clearNativeOutput();
-    } catch (_) {}
-    if (identical(_room, room)) _room = null;
-    if (_leaseId == leaseId) _leaseId = null;
-    voiceChannel = null;
-    _mutedScreenShareAudioIdentities.clear();
-    microphoneMuted = false;
-    microphoneUnavailable = false;
-    deafened = false;
-    pushToTalkPressed = false;
-    _listenerOnly = false;
-    voicePhase = VoicePhase.error;
-    error = VoiceLeaseRevocation(leaseId: leaseId, reason: reason).message;
-  }
-
-  void _bindVoiceRoomEvents(Room room) {
-    final listener = room.createListener();
-    _voiceEvents = listener;
-    listener.on<ParticipantConnectionQualityUpdatedEvent>((event) {
-      if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
-      if (!identical(event.participant, room.localParticipant)) return;
-      notifyListeners();
-    });
-    listener.on<AudioSenderStatsEvent>((event) {
-      if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
-      final ping = voiceRttMilliseconds(event.stats.roundTripTime);
-      if (ping == null) return;
-      if (_voicePingMs == ping) return;
-      _voicePingMs = ping;
-      notifyListeners();
-    });
-    listener.on<RoomAttemptReconnectEvent>((event) {
-      if (!identical(_room, room) ||
-          voicePhase != VoicePhase.reconnecting ||
-          shouldAllowVoiceReconnectAttempt(event.attempt)) {
-        return;
-      }
-      error =
-          'Не удалось восстановить голосовое соединение после $voiceReconnectAttemptLimit попыток. Подключитесь ещё раз.';
-      unawaited(leaveVoice());
-    });
-    listener.on<RoomReconnectingEvent>((_) {
-      if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
-      voicePhase = VoicePhase.reconnecting;
-      _voicePingMs = null;
-      _observeVoiceStreamStarts(room);
-      notifyListeners();
-    });
-    listener.on<RoomResumingEvent>((_) {
-      if (!identical(_room, room) && voicePhase != VoicePhase.joining) return;
-      voicePhase = VoicePhase.reconnecting;
-      _voicePingMs = null;
-      _observeVoiceStreamStarts(room);
-      notifyListeners();
-    });
-    listener.on<RoomReconnectedEvent>((_) {
-      if (!identical(_room, room)) return;
-      voicePhase = _listenerOnly ? VoicePhase.listener : VoicePhase.connected;
-      _observeVoiceStreamStarts(room);
-      _subscribeCurrentRemoteVoiceTracks(room);
-      final selectedIdentity = _selectedRemoteScreenViewerIdentity;
-      if (selectedIdentity != null) {
-        _subscribeRemoteScreenForViewing(room, selectedIdentity);
-      }
-      unawaited(_applySavedVoiceVolumes(room));
-      if (deafened) unawaited(_deafenRemoteAudio(room));
-      if (audioActivationMode == AudioActivationMode.ptt) {
-        if (pushToTalkPressed && !deafened) {
-          _listenerOnly = false;
-          voicePhase = VoicePhase.connected;
-        }
-        unawaited(_applyMicrophoneMuted(!pushToTalkPressed || deafened));
-      }
-      notifyListeners();
-    });
-    listener.on<TrackSubscribedEvent>((event) {
-      if (!identical(_room, room)) return;
-      if (event.publication.source == TrackSource.screenShareVideo &&
-          event.track is RemoteVideoTrack) {
-        final waiter = _screenPreviewTrackWaiters[event.publication.sid];
-        if (waiter != null && !waiter.isCompleted) {
-          waiter.complete(event.track as RemoteVideoTrack);
-        }
-      }
-      if (event.track is RemoteAudioTrack) {
-        if (deafened) unawaited(event.publication.disable());
-        unawaited(
-          _applySavedAudioVolume(event.participant, event.publication.source),
-        );
-      }
-    });
-    void refreshVoiceNavigation() {
-      if (!identical(_room, room)) return;
-      _observeVoiceStreamStarts(room);
-      notifyListeners();
-    }
-
-    listener.on<ParticipantConnectedEvent>((_) => refreshVoiceNavigation());
-    listener.on<ParticipantDisconnectedEvent>((event) {
-      screenThumbnails.remove(event.participant.identity);
-      final endedTrackIds = _screenThumbnailRemoteTrackIds.entries
-          .where((entry) => entry.value == event.participant.identity)
-          .map((entry) => entry.key)
-          .toList(growable: false);
-      for (final trackId in endedTrackIds) {
-        final waiter = _screenPreviewTrackWaiters[trackId];
-        if (waiter != null && !waiter.isCompleted) waiter.complete(null);
-        _screenThumbnailRemoteTrackIds.remove(trackId);
-      }
-      if (_selectedRemoteScreenViewerIdentity == event.participant.identity) {
-        _selectedRemoteScreenViewerIdentity = null;
-      }
-      refreshVoiceNavigation();
-    });
-    listener.on<ActiveSpeakersChangedEvent>((_) => refreshVoiceNavigation());
-    listener.on<TrackPublishedEvent>((event) {
-      if (identical(_room, room)) {
-        if (event.publication.source == TrackSource.microphone) {
-          unawaited(_setRemoteTrackSubscription(event.publication, true));
-        } else if (event.publication.source == TrackSource.screenShareVideo) {
-          _queueRemoteScreenThumbnail(
-            room,
-            event.participant,
-            event.publication,
-          );
-        }
-      }
-      refreshVoiceNavigation();
-    });
-    listener.on<TrackUnpublishedEvent>((event) {
-      if (event.publication.source == TrackSource.screenShareVideo) {
-        screenThumbnails.remove(event.participant.identity);
-        _screenThumbnailRemoteTrackIds.remove(event.publication.sid);
-        final waiter = _screenPreviewTrackWaiters[event.publication.sid];
-        if (waiter != null && !waiter.isCompleted) waiter.complete(null);
-        if (_selectedRemoteScreenViewerIdentity == event.participant.identity) {
-          unawaited(selectRemoteScreenForViewing(null));
-        }
-      }
-      refreshVoiceNavigation();
-    });
-    listener.on<TrackMutedEvent>((_) => refreshVoiceNavigation());
-    listener.on<TrackUnmutedEvent>((_) => refreshVoiceNavigation());
-    listener.on<TrackSubscribedEvent>((_) => refreshVoiceNavigation());
-    listener.on<TrackUnsubscribedEvent>((event) {
-      if (event.publication.source == TrackSource.screenShareVideo) {
-        _screenThumbnailRemoteTrackIds.remove(event.publication.sid);
-        final waiter = _screenPreviewTrackWaiters[event.publication.sid];
-        if (waiter != null && !waiter.isCompleted) waiter.complete(null);
-      }
-      refreshVoiceNavigation();
-    });
-    listener.on<LocalTrackPublishedEvent>((event) {
-      if (!identical(_room, room) ||
-          event.publication.source != TrackSource.screenShareVideo) {
-        return;
-      }
-      final track = event.publication.track;
-      if (track is LocalVideoTrack) _screen.published(room, track);
-    });
-    listener.on<LocalTrackUnpublishedEvent>((event) {
-      if (event.publication.source != TrackSource.screenShareVideo) return;
-      final track = event.publication.track;
-      _screen.unpublished(room, track is LocalVideoTrack ? track : null);
-    });
-    listener.on<RoomDisconnectedEvent>((event) {
-      if (!identical(_room, room) || voicePhase == VoicePhase.leaving) return;
-      unawaited(_handleUnexpectedVoiceDisconnect(room, event));
-    });
-  }
-
-  void _subscribeCurrentRemoteVoiceTracks(Room room) {
-    for (final participant in room.remoteParticipants.values) {
-      for (final publication in participant.audioTrackPublications.where(
-        (item) => item.source == TrackSource.microphone,
-      )) {
-        unawaited(_setRemoteTrackSubscription(publication, true));
-      }
-      for (final publication in participant.videoTrackPublications.where(
-        (item) => item.source == TrackSource.screenShareVideo,
-      )) {
-        _queueRemoteScreenThumbnail(room, participant, publication);
-      }
-    }
-  }
-
-  void _queueRemoteScreenThumbnail(
-    Room room,
-    RemoteParticipant participant,
-    RemoteTrackPublication publication,
-  ) {
-    final queue = _screenPreviewSubscriptionQueue;
-    if (queue == null ||
-        queue.isClosed ||
-        publication.source != TrackSource.screenShareVideo ||
-        publication.muted ||
-        _selectedRemoteScreenViewerIdentity == participant.identity) {
-      return;
-    }
-    unawaited(
-      queue.enqueue(publication.sid, () async {
-        if (!_isRemoteScreenPublicationActive(room, participant, publication) ||
-            _selectedRemoteScreenViewerIdentity == participant.identity) {
-          return;
-        }
-        final trackId = publication.sid;
-        final waiter = Completer<RemoteVideoTrack?>();
-        _screenPreviewTrackWaiters[trackId] = waiter;
-        _screenThumbnailRemoteTrackIds[trackId] = participant.identity;
-        try {
-          final existingTrack = publication.track;
-          if (existingTrack is RemoteVideoTrack) {
-            waiter.complete(existingTrack);
-          }
-          final track =
-              await withTemporaryScreenPreviewSubscription<RemoteVideoTrack>(
-                subscribe: publication.subscribe,
-                action: () => waiter.future.timeout(
-                  const Duration(seconds: 4),
-                  onTimeout: () => null,
-                ),
-                unsubscribe: publication.unsubscribe,
-                keepSubscribed: () =>
-                    _selectedRemoteScreenViewerIdentity == participant.identity,
-              );
-          if (track == null ||
-              _selectedRemoteScreenViewerIdentity == participant.identity ||
-              !_isRemoteScreenPublicationActive(
-                room,
-                participant,
-                publication,
-              )) {
-            return;
-          }
-          await _captureRemoteScreenThumbnail(
-            room,
-            participant,
-            publication,
-            track,
-          );
-        } catch (_) {
-          // A failed thumbnail subscription must not affect voice playback.
-        } finally {
-          if (identical(_screenPreviewTrackWaiters[trackId], waiter)) {
-            _screenPreviewTrackWaiters.remove(trackId);
-          }
-          _screenThumbnailRemoteTrackIds.remove(trackId);
-          if (_isRemoteScreenPublicationActive(
-                room,
-                participant,
-                publication,
-              ) &&
-              _selectedRemoteScreenViewerIdentity == participant.identity) {
-            // A selection can race the temporary unsubscribe's completion.
-            // Restore persistent playback after the preview has left the queue.
-            await _setRemoteTrackSubscription(publication, true);
-          }
-        }
-      }),
-    );
-  }
-
-  bool _isRemoteScreenPublicationActive(
-    Room room,
-    RemoteParticipant participant,
-    RemoteTrackPublication publication,
-  ) =>
-      identical(_room, room) &&
-      _screenPreviewSubscriptionQueue?.isClosed == false &&
-      identical(room.remoteParticipants[participant.identity], participant) &&
-      participant.videoTrackPublications.any(
-        (item) => identical(item, publication),
-      );
-
-  Future<void> _captureRemoteScreenThumbnail(
-    Room room,
-    RemoteParticipant participant,
-    RemoteTrackPublication publication,
-    RemoteVideoTrack track,
-  ) async {
-    bool isActive() =>
-        _isRemoteScreenPublicationActive(room, participant, publication) &&
-        identical(publication.track, track);
-
-    final thumbnail = await captureRemoteScreenThumbnail(
-      hasDecodedFrames: () async {
-        final decoded = (await track.getReceiverStats())?.framesDecoded;
-        return decoded != null && decoded > 0;
-      },
-      capture: () => _screenThumbnailCaptureQueue.run(
-        () async => (await track.mediaStreamTrack.captureFrame()).asUint8List(),
-      ),
-      encode: (frame) => compute(encodeScreenThumbnail, frame),
-      isActive: isActive,
-    );
-    if (thumbnail == null || !isActive()) return;
-    screenThumbnails[participant.identity] = thumbnail;
-    notifyListeners();
-  }
-
-  void _closeScreenPreviewSubscriptions() {
-    _screenPreviewSubscriptionQueue?.close();
-    _screenPreviewSubscriptionQueue = null;
-    for (final waiter in _screenPreviewTrackWaiters.values) {
-      if (!waiter.isCompleted) waiter.complete(null);
-    }
-    _screenPreviewTrackWaiters.clear();
-    _screenThumbnailRemoteTrackIds.clear();
-  }
-
-  void _startVoiceConnectionStatsPolling(Room room) {
-    _stopVoiceConnectionStatsPolling();
-    final revision = _voiceConnectionStatsRevision;
-    final platform = nativeScreenMetricsPlatform(defaultTargetPlatform);
-    final reporter = platform == null
-        ? null
-        : ConnectionMediaReporter(api.reportScreenShareMetrics, platform);
-
-    Future<void> sample() async {
-      if (_voiceConnectionStatsBusy ||
-          revision != _voiceConnectionStatsRevision ||
-          !identical(_room, room) ||
-          (voicePhase != VoicePhase.connected &&
-              voicePhase != VoicePhase.listener)) {
-        return;
-      }
-      _voiceConnectionStatsBusy = true;
-      try {
-        final reports = await room.getPeerConnectionStats();
-        if (revision != _voiceConnectionStatsRevision ||
-            !identical(_room, room) ||
-            (voicePhase != VoicePhase.connected &&
-                voicePhase != VoicePhase.listener)) {
-          return;
-        }
-        final measuredPing = voiceRttMillisecondsFromPeerConnections(reports);
-        if (reporter != null) {
-          unawaited(
-            reporter.submit(
-              measuredPing,
-              room.localParticipant?.connectionQuality ??
-                  ConnectionQuality.unknown,
-            ),
-          );
-        }
-        final ping = voicePingAfterMeasurement(
-          previousPingMilliseconds: _voicePingMs,
-          measuredPingMilliseconds: measuredPing,
-        );
-        if (_voicePingMs != ping) {
-          _voicePingMs = ping;
-          notifyListeners();
-        }
-      } catch (_) {
-        // Keep voice controls working if this platform can't read connection
-        // stats; track-scoped LiveKit stats can still provide audio RTT.
-      } finally {
-        if (revision == _voiceConnectionStatsRevision) {
-          _voiceConnectionStatsBusy = false;
-        }
-      }
-    }
-
-    _voiceConnectionStatsTimer = Timer.periodic(
-      const Duration(seconds: 2),
-      (_) => unawaited(sample()),
-    );
-    unawaited(sample());
-  }
-
-  void _stopVoiceConnectionStatsPolling() {
-    _voiceConnectionStatsRevision++;
-    _voiceConnectionStatsTimer?.cancel();
-    _voiceConnectionStatsTimer = null;
-    _voiceConnectionStatsBusy = false;
-  }
-
   Future<void> startScreenShare({
     String? sourceId,
     ScreenShareQuality? quality,
@@ -1827,392 +931,62 @@ class AppState extends ChangeNotifier {
 
   Future<void> stopScreenShare() => _screen.stopScreenShare();
 
-
   Future<void> updateScreenShareQuality(ScreenShareQuality quality) =>
       _screen.updateScreenShareQuality(quality);
 
   void _stopScreenShareMetrics() => _screen.stopSampling();
 
-  Future<void> _disableAndroidScreenShareBackground() =>
-      _screen.driver.disableBackground();
-
-  Future<void> _disposeVoiceEvents() async {
-    _closeScreenPreviewSubscriptions();
-    final listener = _voiceEvents;
-    _voiceEvents = null;
-    await listener?.dispose();
-  }
-
-  String? _voiceAccountId(RemoteParticipant participant) {
-    final metadata = participant.metadata;
-    if (metadata == null || !metadata.startsWith('account:')) return null;
-    final accountId = metadata.substring('account:'.length);
-    return accountId.isEmpty ? null : accountId;
-  }
-
-  RemoteParticipant? voiceParticipantForAccount(String accountId) => _room
-      ?.remoteParticipants
-      .values
-      .where((participant) => _voiceAccountId(participant) == accountId)
-      .firstOrNull;
-
-  int? participantVolume(RemoteParticipant participant) {
-    final accountId = _voiceAccountId(participant);
-    return accountId == null
-        ? null
-        : _voiceVolumePreferences?.participant(accountId) ?? 100;
-  }
-
-  int? screenShareVolume(RemoteParticipant participant) {
-    final accountId = _voiceAccountId(participant);
-    return accountId == null
-        ? null
-        : _voiceVolumePreferences?.screen(accountId) ?? 100;
-  }
-
+  Future<void> _loadVoiceStreamSoundPreference() =>
+      _voice.loadVoiceStreamSoundPreference();
+  Future<void> setVoiceStreamSoundEnabled(bool enabled) =>
+      _voice.setVoiceStreamSoundEnabled(enabled);
+  void _clearVoiceStreamNotice({
+    required bool resetTracker,
+    required bool notify,
+  }) =>
+      _voice.clearVoiceStreamNotice(resetTracker: resetTracker, notify: notify);
+  Future<void> _loadAudioPreferences(String accountId) =>
+      _voice.loadAudioPreferences(accountId);
+  Future<void> setPushToTalkKey(int? keyId, String? label) =>
+      _voice.setPushToTalkKey(keyId, label);
+  Future<void> setAudioActivationMode(AudioActivationMode next) =>
+      _voice.setAudioActivationMode(next);
+  Future<void> setPushToTalkPressed(bool pressed) =>
+      _voice.setPushToTalkPressed(pressed);
+  void _dispatchVoiceRevocation(Map<String, dynamic> payload) =>
+      _voice.dispatchVoiceRevocation(payload);
+  void _stopVoiceConnectionStatsPolling() =>
+      _voice.stopVoiceConnectionStatsPolling();
+  void _closeScreenPreviewSubscriptions() =>
+      _voice.closeScreenPreviewSubscriptions();
+  Future<void> _disposeVoiceEvents() => _voice.disposeVoiceEvents();
+  Future<void> selectRemoteScreenForViewing(String? identity) =>
+      _voice.selectRemoteScreenForViewing(identity);
+  Future<void> joinVoice(GuildChannel channel, {bool listenerOnly = false}) =>
+      _voice.joinVoice(channel, listenerOnly: listenerOnly);
+  RemoteParticipant? voiceParticipantForAccount(String id) =>
+      _voice.voiceParticipantForAccount(id);
+  int? participantVolume(RemoteParticipant participant) =>
+      _voice.participantVolume(participant);
+  int? screenShareVolume(RemoteParticipant participant) =>
+      _voice.screenShareVolume(participant);
   bool screenShareAudioMuted(RemoteParticipant participant) =>
-      _mutedScreenShareAudioIdentities.contains(participant.identity);
-
+      _voice.screenShareAudioMuted(participant);
   Future<void> setScreenShareAudioMuted(
     RemoteParticipant participant,
     bool muted,
-  ) async {
-    final room = _room;
-    if (room == null || !room.remoteParticipants.values.contains(participant)) {
-      return;
-    }
-    final identity = participant.identity;
-    if (muted) {
-      _mutedScreenShareAudioIdentities.add(identity);
-    } else {
-      _mutedScreenShareAudioIdentities.remove(identity);
-    }
-    final accountId = _voiceAccountId(participant);
-    final savedVolume = accountId == null
-        ? 100
-        : _voiceVolumePreferences?.screen(accountId) ?? 100;
-    try {
-      await _applyParticipantVolume(
-        participant,
-        muted ? 0 : savedVolume,
-        TrackSource.screenShareAudio,
-      );
-    } catch (_) {
-      if (muted) {
-        _mutedScreenShareAudioIdentities.remove(identity);
-      } else {
-        _mutedScreenShareAudioIdentities.add(identity);
-      }
-      error = 'Не удалось изменить звук демонстрации.';
-    }
-    notifyListeners();
-  }
-
+  ) => _voice.setScreenShareAudioMuted(participant, muted);
   Future<void> setParticipantVolume(
     RemoteParticipant participant,
     num percent,
-  ) async {
-    final room = _room;
-    final preferences = _voiceVolumePreferences;
-    final accountId = _voiceAccountId(participant);
-    if (room == null ||
-        preferences == null ||
-        accountId == null ||
-        !room.remoteParticipants.values.contains(participant)) {
-      return;
-    }
-    final level = VoiceVolumePreferences.normalize(percent);
-    try {
-      await Future.wait([
-        preferences.setParticipant(accountId, level),
-        _applyParticipantVolume(participant, level),
-      ]);
-      notifyListeners();
-    } catch (_) {
-      error = 'Не удалось изменить или сохранить громкость участника.';
-      notifyListeners();
-    }
-  }
-
+  ) => _voice.setParticipantVolume(participant, percent);
   Future<void> setScreenShareVolume(
     RemoteParticipant participant,
     num percent,
-  ) async {
-    final room = _room;
-    final preferences = _voiceVolumePreferences;
-    final accountId = _voiceAccountId(participant);
-    if (room == null ||
-        preferences == null ||
-        accountId == null ||
-        !room.remoteParticipants.values.contains(participant)) {
-      return;
-    }
-    final level = VoiceVolumePreferences.normalize(percent);
-    try {
-      await Future.wait([
-        preferences.setScreen(accountId, level),
-        _applyParticipantVolume(
-          participant,
-          screenShareAudioMuted(participant) ? 0 : level,
-          TrackSource.screenShareAudio,
-        ),
-      ]);
-      notifyListeners();
-    } catch (_) {
-      error = 'Не удалось изменить или сохранить громкость демонстрации.';
-      notifyListeners();
-    }
-  }
-
-  Future<void> _applySavedVoiceVolumes(Room room) async {
-    for (final participant in room.remoteParticipants.values) {
-      await _applySavedParticipantVolume(participant);
-      await _applySavedAudioVolume(participant, TrackSource.screenShareAudio);
-    }
-  }
-
-  Future<void> _applySavedParticipantVolume(RemoteParticipant participant) =>
-      _applySavedAudioVolume(participant, TrackSource.microphone);
-
-  Future<void> _applySavedAudioVolume(
-    RemoteParticipant participant,
-    TrackSource source,
-  ) async {
-    try {
-      if (source == TrackSource.screenShareAudio &&
-          screenShareAudioMuted(participant)) {
-        await _applyParticipantVolume(participant, 0, source);
-        return;
-      }
-      final accountId = _voiceAccountId(participant);
-      final preferences = _voiceVolumePreferences;
-      if (accountId == null || preferences == null) return;
-      await _applyParticipantVolume(
-        participant,
-        source == TrackSource.screenShareAudio
-            ? preferences.screen(accountId)
-            : preferences.participant(accountId),
-        source,
-      );
-    } catch (_) {
-      error = 'Не удалось применить сохранённую громкость участника.';
-      notifyListeners();
-    }
-  }
-
-  Future<void> _applyParticipantVolume(
-    RemoteParticipant participant,
-    int level, [
-    TrackSource source = TrackSource.microphone,
-  ]) async {
-    for (final publication in participant.audioTrackPublications) {
-      if (publication.source != source || publication.track == null) {
-        continue;
-      }
-      await rtc.Helper.setVolume(
-        level / 100,
-        publication.track!.mediaStreamTrack,
-      );
-    }
-  }
-
-  Future<void> _deafenRemoteAudio(Room room) async {
-    for (final participant in room.remoteParticipants.values) {
-      for (final publication in participant.audioTrackPublications) {
-        await publication.disable();
-      }
-    }
-  }
-
-  Future<void> _handleUnexpectedVoiceDisconnect(
-    Room room,
-    RoomDisconnectedEvent event,
-  ) async {
-    if (!identical(_room, room) || voicePhase == VoicePhase.leaving) return;
-    _clearVoiceStreamNotice(resetTracker: true, notify: false);
-    _stopVoiceConnectionStatsPolling();
-    _stopScreenShareMetrics();
-    final leaseId = _leaseId;
-    _room = null;
-    _voicePingMs = null;
-    _leaseId = null;
-    voiceChannel = null;
-    screenThumbnails.clear();
-    _screenThumbnailRemoteTrackIds.clear();
-    _mutedScreenShareAudioIdentities.clear();
-    screenSharePhase = ScreenSharePhase.idle;
-    screenShareError = null;
-    await _disableAndroidScreenShareBackground();
-    microphoneMuted = false;
-    microphoneUnavailable = false;
-    deafened = false;
-    pushToTalkPressed = false;
-    _mutedBeforeDeafen = false;
-    _listenerOnly = false;
-    voicePhase = VoicePhase.error;
-    error = switch (event.reason) {
-      DisconnectReason.duplicateIdentity =>
-        'Голосовое подключение открыто в другом окне. Перенесите его оттуда.',
-      DisconnectReason.participantRemoved =>
-        'Администратор отключил вас от голосового канала.',
-      DisconnectReason.roomDeleted => 'Голосовая комната была закрыта.',
-      DisconnectReason.reconnectAttemptsExceeded =>
-        'Не удалось восстановить голосовое соединение после $voiceReconnectAttemptLimit попыток. Подключитесь ещё раз.',
-      _ => 'Связь с голосовым каналом потеряна. Подключитесь ещё раз.',
-    };
-    await _disposeVoiceEvents();
-    try {
-      await AndroidAudioDevices.clearNativeOutput();
-    } catch (_) {}
-    if (leaseId != null) {
-      try {
-        await api.releaseVoice(leaseId);
-      } catch (_) {}
-    }
-    notifyListeners();
-  }
-
-  Future<void> toggleMicrophone() async {
-    if (_room == null ||
-        deafened ||
-        audioActivationMode == AudioActivationMode.ptt) {
-      return;
-    }
-    microphoneMuted = !microphoneMuted;
-    try {
-      await _room!.localParticipant?.setMicrophoneEnabled(
-        !microphoneMuted,
-        audioCaptureOptions: _audioCaptureOptions,
-      );
-      if (!microphoneMuted) {
-        _refreshAudioDevicesAfterMicrophoneCapture();
-        error = null;
-        microphoneUnavailable = false;
-        _listenerOnly = false;
-        if (voicePhase == VoicePhase.listener) {
-          voicePhase = VoicePhase.connected;
-        }
-      }
-    } catch (cause) {
-      microphoneMuted = true;
-      microphoneUnavailable = true;
-      error = _message(cause);
-    }
-    notifyListeners();
-  }
-
-  Future<void> toggleDeafen() async {
-    final room = _room;
-    if (room == null || deafenChanging || voicePhase == VoicePhase.leaving) {
-      return;
-    }
-    final wasDeafened = deafened;
-    final wasMicrophoneMuted = microphoneMuted;
-    final nextDeafened = !wasDeafened;
-    deafenChanging = true;
-    error = null;
-    notifyListeners();
-    try {
-      if (nextDeafened) {
-        _mutedBeforeDeafen = wasMicrophoneMuted;
-        if (audioActivationMode == AudioActivationMode.ptt ||
-            !microphoneMuted) {
-          if (!await _applyMicrophoneMuted(true)) {
-            throw StateError(
-              audioActivationError ?? 'Не удалось выключить микрофон.',
-            );
-          }
-        }
-        for (final participant in room.remoteParticipants.values) {
-          for (final publication in participant.audioTrackPublications) {
-            await publication.disable();
-          }
-        }
-        deafened = true;
-      } else {
-        for (final participant in room.remoteParticipants.values) {
-          for (final publication in participant.audioTrackPublications) {
-            await publication.enable();
-          }
-        }
-        final shouldUnmute = audioActivationMode == AudioActivationMode.ptt
-            ? pushToTalkPressed
-            : !_mutedBeforeDeafen;
-        if (shouldUnmute && !await _applyMicrophoneMuted(false)) {
-          throw StateError(
-            audioActivationError ?? 'Не удалось включить микрофон.',
-          );
-        }
-        deafened = false;
-        _mutedBeforeDeafen = false;
-      }
-    } catch (cause) {
-      if (identical(_room, room) && voicePhase != VoicePhase.leaving) {
-        for (final participant in room.remoteParticipants.values) {
-          for (final publication in participant.audioTrackPublications) {
-            try {
-              if (wasDeafened) {
-                await publication.disable();
-              } else {
-                await publication.enable();
-              }
-            } catch (_) {}
-          }
-        }
-        if (microphoneMuted != wasMicrophoneMuted) {
-          await _applyMicrophoneMuted(wasMicrophoneMuted);
-        }
-      }
-      deafened = wasDeafened;
-      error = _message(cause);
-    } finally {
-      deafenChanging = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> leaveVoice() async {
-    if (_room == null && _leaseId == null) return;
-    _stopVoiceConnectionStatsPolling();
-    voicePhase = VoicePhase.leaving;
-    _clearVoiceStreamNotice(resetTracker: true, notify: false);
-    pushToTalkPressed = false;
-    notifyListeners();
-    if (screenSharePhase == ScreenSharePhase.sharing ||
-        screenSharePhase == ScreenSharePhase.starting) {
-      await stopScreenShare();
-    }
-    final leaseId = _leaseId;
-    try {
-      await _room?.disconnect();
-    } catch (_) {}
-    try {
-      await AndroidAudioDevices.clearNativeOutput();
-    } catch (_) {}
-    await _disposeVoiceEvents();
-    if (leaseId != null) {
-      try {
-        await api.releaseVoice(leaseId);
-      } catch (cause) {
-        error = _message(cause);
-      }
-    }
-    _room = null;
-    _voicePingMs = null;
-    _leaseId = null;
-    voiceChannel = null;
-    _mutedScreenShareAudioIdentities.clear();
-    microphoneMuted = false;
-    microphoneUnavailable = false;
-    deafened = false;
-    _listenerOnly = false;
-    _mutedBeforeDeafen = false;
-    _microphoneMutedBeforePtt = false;
-    voicePhase = VoicePhase.idle;
-    screenSharePhase = ScreenSharePhase.idle;
-    screenShareError = null;
-    notifyListeners();
-  }
+  ) => _voice.setScreenShareVolume(participant, percent);
+  Future<void> toggleMicrophone() => _voice.toggleMicrophone();
+  Future<void> toggleDeafen() => _voice.toggleDeafen();
+  Future<void> leaveVoice() => _voice.leaveVoice();
 
   String _message(Object cause) {
     if (cause is ApiFailure) return cause.message;
