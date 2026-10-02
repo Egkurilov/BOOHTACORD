@@ -1,0 +1,66 @@
+{
+  "id": "screen-profile-delivery-2026-10-02-001",
+  "kind": "signed-production-release-verification",
+  "status": "PASS",
+  "scope": "Browser profile enforcement delivery and release gates; physical stream FPS acceptance remains open",
+  "source_revision": "46688fe47ddb1419a5403aeaa5eafa4d9e712168",
+  "integrated_master_revision": "c034889d014443b99a20c9be62545bd43476c45a",
+  "local_verification": "evidence/media/screen-profile-enforcement-2026-10-02-001.json",
+  "baseline_observation": "evidence/media/browser-stream-review-2026-10-02-001.json",
+  "github": {
+    "build_server": {
+      "run_id": 37057409243,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37057409243",
+      "status": "PASS",
+      "gates": {"backend": "PASS", "web": "PASS", "contracts": "PASS", "artifact_smoke": "PASS"},
+      "artifact_id": 11249706156
+    },
+    "deploy_production": {
+      "run_id": 37058094055,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37058094055",
+      "status": "PASS"
+    },
+    "cross_platform_ci": {
+      "run_id": 37057409378,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37057409378",
+      "status": "CANCELLED_BY_NEWER_MASTER_PUSH",
+      "superseding_revision": "cd9888fc",
+      "gates": {"backend": "PASS", "web": "PASS", "contracts": "PASS", "windows": "PASS", "flutter_tests_and_analysis": "PASS", "android_build": "CANCELLED"},
+      "note": "The later Flutter-only source change triggered CI concurrency cancellation while Android Kotlin compilation was running. The source-bound server build and production deployment had already completed successfully."
+    }
+  },
+  "web_ci": {
+    "unit_tests": 796,
+    "test_files": 250,
+    "chromium_profile_dimensions": "PASS: 1920x1080, 1280x720, 2560x1440",
+    "audio_browser_regressions": "PASS: 5 tests",
+    "typecheck_and_build": "PASS"
+  },
+  "production": {
+    "checked_at_utc": "2026-10-02T20:05:42.098198+00:00",
+    "manifest_signature": "PASS: RSA/SHA-256 against the provisioned host public key",
+    "installed_receipt": "PASS",
+    "source_archive_sha256": "c571b0107c00d27d1d174fe90fea5203529f38343c2e742b454bb48b0acc5ff4",
+    "api_index_digest": "sha256:221a44a450b037362826f7f724c5e9b8d7d2262fac1227910a930bb2ecb36789",
+    "web_index_digest": "sha256:d1bea8193da39542a9a0db62dd7823fe359de696dae064feaf315ae9ddc26ee0",
+    "running_images_and_source_labels": "PASS: both running image IDs, digest-qualified configuration and source labels match the signed manifest",
+    "https_health": "PASS: https://v.bootybay.ru/api/v1/health returned status ok",
+    "public_web_revision": "PASS: https://v.bootybay.ru/release-receipt.json matches source_revision",
+    "public_build_info": "PASS: boohtacord-1.0.24-36"
+  },
+  "post_deployment_trace_observation": {
+    "start_unix_seconds": 1790971542,
+    "end_unix_seconds": 1790971822,
+    "sender_samples": 52,
+    "samples_with_profile_guard_fields": 0,
+    "search_limit_reached": false,
+    "interpretation": "New guard fields are not yet observed; existing tabs can still report the previous client. This does not demonstrate the new client's runtime behavior."
+  },
+  "limitations": [
+    "The full cross-platform workflow did not complete: its remaining Android build was cancelled by a newer master push.",
+    "Existing browser tabs need reload and a new share to exercise initial publication changes.",
+    "A selected 60fps cap does not prove physical 60fps; capture_fps is the browser capture setting.",
+    "The impaired viewer network path and actual moving-scene FPS after deployment remain unverified.",
+    "Lower adaptive resolution/FPS is preserved; this change avoids oversized capture and bounds configuration recovery."
+  ]
+}
