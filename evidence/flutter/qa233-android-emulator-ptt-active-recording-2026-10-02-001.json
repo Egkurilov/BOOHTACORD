@@ -1,0 +1,40 @@
+{
+  "id": "QA-233",
+  "date": "2026-10-02",
+  "task": "FE-66",
+  "source_revision": "0873c96b",
+  "device": {
+    "model": "Android Emulator (sdk_gphone64_arm64)",
+    "avd": "boohtacord-pixel7-api35",
+    "api_level": 35,
+    "app_version": "1.0.23",
+    "app_build": 2037
+  },
+  "checks": [
+    {
+      "name": "Select touch Push-to-talk without a hardware key",
+      "result": "PASS",
+      "observation": "The PTT selector changed from Voice Activity to Push-to-talk without requesting a key binding. Audio settings displayed the touch-hold instruction and the voice dock exposed a hold-to-talk control."
+    },
+    {
+      "name": "Microphone capture while touch is held",
+      "result": "PASS",
+      "observation": "During an ADB-injected touch hold, Android AudioService reported an active, unsilenced VOICE_COMMUNICATION recording for the app. No speech was played into the emulator."
+    },
+    {
+      "name": "Microphone capture stops on release",
+      "result": "PASS",
+      "observation": "After the touch pointer was released, AudioService reported Recording active: false and recorded the AudioRecord stop event."
+    },
+    {
+      "name": "Restore test state",
+      "result": "PASS",
+      "observation": "Voice Activity was restored. The client remained in the voice room with its microphone muted."
+    }
+  ],
+  "limitations": [
+    "Emulator-only validation; active AudioRecord does not prove that intelligible audio reached a remote participant.",
+    "System interruptions, app backgrounding while held, pointer cancellation, physical-device behavior, and TalkBack/VoiceOver remain untested."
+  ],
+  "remaining": "Validate touch cancellation and accessibility behavior on physical Android/iOS; use a paired receiver if end-to-end audio delivery must be accepted."
+}
