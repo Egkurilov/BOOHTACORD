@@ -1,0 +1,54 @@
+{
+  "id": "QA-226",
+  "date": "2026-10-02",
+  "task": "FE-59/FE-61/FE-64",
+  "source_revision": "31ceae5",
+  "status": "PARTIAL_PAIRED_VOICE_PASS_SCREEN_SHARE_NOT_RUN",
+  "devices": [
+    {
+      "platform": "Android Emulator",
+      "model": "sdk_gphone64_arm64",
+      "api_level": 35,
+      "app_version": "1.0.23",
+      "app_build": 2036
+    },
+    {
+      "platform": "macOS",
+      "app": "BOOHTACORD"
+    }
+  ],
+  "automated_checks": {
+    "flutter_test": {
+      "command": "flutter test test/screen_scope/captured_content_visibility_test.dart test/screen_scope/lifecycle_test.dart test/screen_scope/thumbnail_test.dart test/voice_connection_quality_test.dart",
+      "result": "PASS",
+      "passed": 14
+    },
+    "spec_traceability": {
+      "command": "tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN_TOOL_UNAVAILABLE",
+      "reason": "Neither pwsh nor powershell is installed on this host."
+    }
+  },
+  "checks": [
+    {
+      "name": "Muted paired voice connection and RTT UI",
+      "result": "PASS",
+      "observation": "Both clients joined SHARE_TEST with microphones disabled. Android's roster showed both participants and reported ping 7-8 ms with Excellent quality; the Mac accessibility state reported ping 5 ms with Excellent quality."
+    },
+    {
+      "name": "App-only screen-share receiver verification",
+      "result": "BLOCKED_BEFORE_CAPTURE",
+      "observation": "The Android quality dialog and system MediaProjection consent dialog opened. Consent was configured for 'A single app', but the current picker had not yet identified the target application. The action to proceed was rejected by the safety reviewer because Clock was not yet proven to be the selected target. The consent dialog was cancelled without starting capture."
+    },
+    {
+      "name": "Cleanup",
+      "result": "PASS",
+      "observation": "Android and Mac left the voice room; both returned to prejoin with an empty roster. Android dumpsys media_projection returned null. No microphone or screen publication remained active."
+    }
+  ],
+  "limitations": [
+    "No MediaProjection was started; there are no sender encoded-frame or Mac receiver decoded-frame observations from this run.",
+    "This emulator run does not establish physical Pixel behavior or close FE-59, FE-61, or FE-64."
+  ],
+  "remaining": "Repeat the paired screen-share test only after the Android system picker visibly identifies Clock as the selected application; then verify the Mac's rendered frame and bounded sender/receiver frame counters. Keep both microphones muted and stop capture immediately after the check."
+}
