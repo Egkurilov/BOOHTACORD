@@ -1,0 +1,41 @@
+{
+  "id": "android-merged-debug-build-2026-10-01-002",
+  "kind": "android-debug-build",
+  "status": "PASS_BUILD",
+  "executed_at": "2026-10-01",
+  "source_revision": "3991c385ff49d6b1addf6160e9afd1f83d4ee2c2",
+  "summary": "Rebuilt Android from master after merging the latest Android 1.0.15 and release changes.",
+  "checks": [
+    {
+      "name": "Flutter tests and analysis",
+      "status": "PASS_WITH_INFO",
+      "observation": "304 Flutter tests passed; analysis had no errors or warnings with --no-fatal-infos and retained two informational findings in vendored flutter_webrtc."
+    },
+    {
+      "name": "Android debug APK",
+      "status": "PASS",
+      "artifact": "desktop/build/app/outputs/flutter-apk/app-debug.apk",
+      "package": "ru.boohtacord.app",
+      "version_name": "1.0.15",
+      "version_code": 20,
+      "size_bytes": 219509636,
+      "sha256": "c45d2b96238c4907b880f456a426c5be57c34552b83869df2376cb2848bf6b89",
+      "observation": "apksigner verified APK Signature Scheme v2."
+    },
+    {
+      "name": "Requirements traceability",
+      "status": "PASS",
+      "observation": "The committed requirement index passed scripts/verify-spec-traceability.ps1; the approved brief was unavailable on this Mac."
+    },
+    {
+      "name": "Signed release APK",
+      "status": "BLOCKED",
+      "observation": "The original Android upload keystore is unavailable on this Mac; this debug APK cannot update a release-signed installation."
+    },
+    {
+      "name": "Physical-device runtime",
+      "status": "NOT_RUN",
+      "observation": "No Android device was connected for installation or manual acceptance."
+    }
+  ]
+}

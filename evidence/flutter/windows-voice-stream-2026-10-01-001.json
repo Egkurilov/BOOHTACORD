@@ -1,0 +1,53 @@
+{
+  "id": "windows-voice-stream-2026-10-01-001",
+  "kind": "windows-voice-stream-follow-up",
+  "status": "PASS_IMPLEMENTATION_RUNTIME_ACCEPTANCE_OPEN",
+  "observed_at": "2026-10-01",
+  "observer": "Codex",
+  "environment": "Windows host, Flutter 3.47.5, local Windows release build",
+  "checks": [
+    {
+      "name": "Microphone encoding ceiling",
+      "status": "PASS_SOURCE_AND_UNIT",
+      "observation": "The previous LiveKit default preset was 48000 bit/s. The voice Room now supplies an explicit 128000 bit/s maximum to its audio publish options. This is an encoding ceiling, not a measured constant bitrate."
+    },
+    {
+      "name": "Active screen indicator",
+      "status": "PASS_WIDGET_TEST",
+      "observation": "The compact participant strip shows an accessible screen icon when the participant has a non-muted screen publication, even before a thumbnail or subscribed video track arrives. The room card and navigation use publication status too."
+    },
+    {
+      "name": "Screen audio mute",
+      "status": "PASS_SOURCE_REVIEW_RUNTIME_NOT_RUN",
+      "observation": "The viewer mute action sets only the selected screen audio track to volume 0; unmute restores the saved level. TrackSubscribedEvent reapplies the mute state after resubscription. The Windows WebRTC channel accepts zero and calls RTCAudioTrack::SetVolume(0). Two-client listening has not been performed."
+    },
+    {
+      "name": "Windows noise suppression",
+      "status": "PASS_SOURCE_AND_UNIT_RUNTIME_NOT_RUN",
+      "observation": "Capture defaults enable WebRTC noise suppression and Windows native capture maps the flag into RTCAudioOptions. The Windows LiveKit plugin has no runtime processing method, so changing the setting now recaptures the microphone track, with rollback attempted on failure. Acoustic suppression has not been measured."
+    },
+    {
+      "name": "Flutter regression suite",
+      "status": "PASS",
+      "command": "cd desktop && flutter test --no-pub",
+      "observation": "All 353 tests passed."
+    },
+    {
+      "name": "Windows release build",
+      "status": "PASS",
+      "command": "cd desktop && flutter build windows --release --no-pub",
+      "observation": "The Windows x64 release executable was built. Third-party flutter_soloud C++ warnings remain."
+    },
+    {
+      "name": "Local test bundle",
+      "status": "PASS_ARCHIVE",
+      "observation": "The 34-entry Windows bundle was archived at C:/Users/egkur/Downloads/BOOHTACORD-windows-voice-test-2026-10-01.zip (SHA-256 5A4F5DE44D9A15CC9AB0CD4A68A4BFAF692CDD35C8F896330C8DFA054B949F0D)."
+    },
+    {
+      "name": "Physical two-party audio acceptance",
+      "status": "NOT_RUN",
+      "observation": "No simultaneous Windows publisher and independent listener were available for a recorded acoustic and stream mute comparison."
+    }
+  ],
+  "remaining": "Run a two-account call on the new Windows build: compare sender and receiver Opus stats and perceived quality with the previous release, start a screen with system audio, mute/unmute it while voice remains audible, and compare noise suppression on/off with a fixed background-noise source. Record hardware and measured results before closing the release gate."
+}

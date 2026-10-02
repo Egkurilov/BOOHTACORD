@@ -1,0 +1,63 @@
+{
+  "id": "all-branches-integration-2026-10-02",
+  "kind": "branch-integration-verification",
+  "status": "PARTIAL",
+  "base_revision": "60dab725a7e59f5a87a3054faa13900632bd7605",
+  "branches": {
+    "feat/guild-rename-github-issue-3": "4f4f07aa42fc8b11ffe7969690491d04ebbf18cc",
+    "feat/guild-rename-issue-3": "19d53789ead1973ab65ba83dc436cac6a0ec30a7",
+    "feat/media-diagnostics-issue-6": "19d53789ead1973ab65ba83dc436cac6a0ec30a7",
+    "fix/android-ci-deploy": "b1fc81da96a436ea624d0169c19f6e370d67df18",
+    "fix/github-deploy-headroom": "0d7f3a32c6cc36c5ca4ed73d5f44da52582484de",
+    "fix/grafana-media-fps-loss": "e766a7df6f1ef65e3f9c9eaf6e851b7a9ee00231",
+    "integrate/all-branches-2026-09-30": "d6712670a568dee3a59d2a78e3685433bdef5085",
+    "integrate/all-branches-2026-10-02": "f9751322b1dc3c1946832bd1e2a2adfec2180da4",
+    "master": "19d53789ead1973ab65ba83dc436cac6a0ec30a7",
+    "github": "60dab725a7e59f5a87a3054faa13900632bd7605",
+    "github/codex/hosted-windows-gate": "612931be0f3433d5ed416a45abb1a92c39234166",
+    "github/codex/observability-three-hour-audit": "fa784d434990fb144db1e3100c54fc870cfde820",
+    "github/codex/repository-reorganization": "b09e93b1eb0e5152622e6ccab13ebc3554b1de1e",
+    "github/codex/test-model-review": "1a77e8ff99174689035bcd2cfa2483421908cb1b",
+    "github/codex/windows-github-release-evidence": "7ecf62701cc00941bcec172fe0d05d0a3782f849",
+    "github/codex/windows-voice-stream-controls": "27dbdbe3104b5b1487ef6975cc0b8b5fb02b431c",
+    "github/master": "60dab725a7e59f5a87a3054faa13900632bd7605",
+    "origin": "7d31afbfa528464a5aebc396e4f84b56b2a1c7cc",
+    "origin/codex/dual-hetzner-runners": "3bd578ad8ba2148f6e0b9b8e73c3ea4f9089c136",
+    "origin/codex/hetzner-linux-builds": "ec36cae8932a49a7974c8096197ba32ee9901afd",
+    "origin/codex/otel-observability": "64e8a31524474f0994629be69af9d10148836697",
+    "origin/codex/qa11-release-preflight": "269da65f72fea3b256326c1995f9953f189a6f8f",
+    "origin/codex/screen-loss-rate": "239238fc106fdaed9f76860ab3c9f479c8eb165a",
+    "origin/codex/voice-platform-foundation": "071a59413d9cb58a5fa275401657311dcebdb387",
+    "origin/codex/voice-release-parity": "b80bb14a04c77466eb14a76b2804eeab13e2ccd2",
+    "origin/codex/voice-stream-experience": "dde173477a24c5e677da53b4dfd671af24ae73aa",
+    "origin/codex/windows-desktop-release": "1abe05a64bd137e55dd644db9525d7854db34507",
+    "origin/codex/windows-receiver-metrics": "7569d3292ea65ef19de851d6b3ec7b043be72fa3",
+    "origin/master": "7d31afbfa528464a5aebc396e4f84b56b2a1c7cc",
+    "origin/runner-check/hetzner": "9d8f5b673b8c549ce55e4b46e0d6f077b80bb0ad"
+  },
+  "policy": "Preserve canonical GitHub reorganization and signed GitHub delivery; reconcile old GitVerse history only after effect comparison. Do not restore retired GitVerse production writer or APK binaries.",
+  "missing_effects": [
+    "Windows local screen sender diagnostics b1f56d2 and test adjustment 616f694 restored in canonical owners"
+  ],
+  "restored_historical_evidence": 7,
+  "checks": {
+    "focused_windows_tests": "PASS: 18 tests",
+    "runtime_dashboard_tests": "PASS: 2 tests",
+    "contracts": "PASS: 76 Python tests and contract, traceability, workflow, SBOM, Compose guards",
+    "full_flutter": "PASS: 396 tests; analyzer lib/test no issues",
+    "remote_ci": "NOT_RUN",
+    "deployment": "NOT_RUN",
+    "sender_diagnostics": "PASS: 9 focused tests; scoped analyzer no issues"
+  },
+  "limitations": [
+    "Physical Windows/iOS/media acceptance remains unproven.",
+    "Existing uncommitted iOS QA work in main checkout preserved outside this integration.",
+    "Approved product brief unavailable on this Mac; traceability checked committed requirement index."
+  ],
+  "legacy_history_resolution": {
+    "strategy": "Port unique runtime effects into canonical GitHub paths; preserve full legacy ancestry in GitVerse only",
+    "preserved": "runtime effects, native telemetry guards, seven historical evidence records",
+    "superseded": "GitVerse production workflows and APK source artifacts intentionally remain retired by current signed GitHub delivery ADR",
+    "github_history_constraint": "Legacy APK blobs exceed GitHub 100 MiB file limit; original legacy history remains on existing refs and GitVerse, without force rewriting"
+  }
+}

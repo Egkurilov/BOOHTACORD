@@ -1,0 +1,47 @@
+{
+  "id": "QA-109",
+  "kind": "gitverse-windows-x64-release-publication",
+  "status": "PASS_PUBLICATION_MEDIA_ACCEPTANCE_OPEN",
+  "executed_at": "2026-09-29",
+  "environment": "GitVerse boohtacord-windows runner; Windows 11 local download and launch smoke",
+  "source_revision": "b4456707d5e3af836204215714973bf9c54e3fdf",
+  "executor": "Codex local Windows host and GitVerse CI",
+  "scenario": "Publish a Windows x64 ZIP under a platform-specific tag with a description identifying it as a Windows build.",
+  "release": {
+    "tag": "windows-v1.0.3",
+    "url": "https://gitverse.ru/egkurilov/BOOHTACORD/releases/tag/windows-v1.0.3",
+    "title": "BOOHTACORD windows-v1.0.3 (Windows x64)",
+    "description_verified": "The public release page states that this is a BOOHTACORD build for Windows x64 and explains whole-ZIP extraction and launching boohtacord_desktop.exe.",
+    "ci_run": "https://gitverse.ru/egkurilov/BOOHTACORD/cicd/1681164?job=3299672",
+    "ci_status": "PASS"
+  },
+  "artifact": {
+    "name": "BOOHTACORD-windows-v1.0.3-windows-x64.zip",
+    "download_url": "https://gitverse.ru/api/attachments/8442c779-a875-4932-a903-1ca79bda7c04",
+    "size_bytes": 24102889,
+    "sha256": "F6F0A1966112704ECA7F8CED1E169D8AEB2101C3C925A3574FF4A86232D3A209"
+  },
+  "checks": [
+    {
+      "name": "GitVerse workflow and release page",
+      "status": "PASS",
+      "observation": "CI run 1681164 passed testing, analysis, Windows Release compilation, packaging and GitVerse API asset upload. The public release page displays the Windows description and ZIP attachment."
+    },
+    {
+      "name": "Public attachment download and ZIP integrity",
+      "status": "PASS",
+      "observation": "The public attachment returned HTTP 206 for a one-byte range and downloaded fully without authentication. All 32 archive entries were readable, and extraction yielded boohtacord_desktop.exe, libwebrtc.dll and data/app.so."
+    },
+    {
+      "name": "Published ZIP Windows launch smoke",
+      "status": "PASS",
+      "observation": "The executable launched from the extracted published ZIP, remained running and responsive after five seconds, and displayed a BOOHTACORD window; the test process was then stopped. No account login was attempted."
+    },
+    {
+      "name": "Windows authenticated and media acceptance",
+      "status": "NOT_RUN",
+      "observation": "Session, voice, screen/window capture, failure rollback and second-peer behavior were not exercised."
+    }
+  ],
+  "remaining": "Verify authenticated Windows use, voice and screen-sharing scenarios with a server and second peer before closing the release quality gate."
+}

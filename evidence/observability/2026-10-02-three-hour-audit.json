@@ -1,0 +1,52 @@
+{
+  "id": "production-three-hour-audit-2026-10-02",
+  "kind": "observability-audit",
+  "status": "PARTIAL",
+  "observer": "Codex",
+  "window_utc": {
+    "from": "2026-10-01T18:22:28Z",
+    "to": "2026-10-01T21:22:28Z"
+  },
+  "sources": [
+    "Grafana BOOHTACORD Runtime dashboard at fixed window",
+    "Grafana BOOHTACORD Traces dashboard at fixed window",
+    "Grafana Explore: Prometheus instant queries ending at the window boundary",
+    "Grafana Explore: Tempo TraceQL status=error search"
+  ],
+  "metrics": {
+    "http_requests_increase_estimate": 3308.7164,
+    "http_5xx_increase": 0,
+    "http_401_login_increase_estimate": 10.0393,
+    "http_429_login_increase_estimate": 1.0167,
+    "top_route": "GET /api/v1/members/{userID}",
+    "top_route_increase_estimate": 2394.3255,
+    "api_counter_at_start": 755,
+    "api_counter_at_end": 1367,
+    "counter_resets_on_top_route": 1,
+    "monitoring_target_min_up": {
+      "boohtacord-otel-metrics": 1,
+      "boohtacord-prometheus": 1,
+      "boohtacord-tempo": 1
+    }
+  },
+  "trace_findings": [
+    "The all-services error search displayed 19 traces: 11 Android api.request, 1 Android realtime.reconnect, 4 macOS api.request, 2 Windows api.request and 1 Windows realtime.reconnect.",
+    "The identified-session dashboard additionally showed a Windows voice.join and a Web api.request error outside that search result. Search results are therefore not a complete error census.",
+    "An Android api.request trace ran for 3m21s with a client error and no server span. Several neighboring Android api.request errors lasted about 19-25s. This supports a client-to-server delivery failure but does not identify the network cause.",
+    "A Web client api.request for DELETE /api/v1/voice/leases/{leaseID} had span status error while the corresponding API span and HTTP response were 204. The deployed client classification is inconsistent with the successful response; exact cause remains unproven.",
+    "The selected media sample showed screen sender FPS below the target with no measured packet loss. Static or low-motion content could explain low encoded FPS, so this is not a confirmed quality fault."
+  ],
+  "change": "Runtime dashboard traffic, error share and p95 use the selected time range instead of cumulative counters; p95 excludes WebSocket and NaN routes without samples.",
+  "validation": [
+    "10 Python dashboard contract tests PASS",
+    "Grafana Explore accepted the equivalent 3h histogram_quantile rate query and returned 18 finite HTTP routes after excluding WebSocket and NaN",
+    "Production Runtime dashboard import confirmed after final revision: 3309 interval requests, 0% 5xx, and no WebSocket route in p95 in the fixed window",
+    "git diff --check PASS"
+  ],
+  "limitations": [
+    "Full per-trace enumeration was not possible through the available Grafana UI. Tempo and Prometheus private APIs were not reachable from this workstation and SSH authentication to the monitoring host failed.",
+    "Client transport root cause remains unverified without safe error-class attributes or device-side network evidence.",
+    "Client errors lack enough safe error classification attributes to distinguish timeout, cancellation, DNS and transport failure.",
+    "No private account, session, trace, token or media identifiers are stored in this record."
+  ]
+}

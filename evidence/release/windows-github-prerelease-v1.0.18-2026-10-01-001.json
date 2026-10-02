@@ -1,0 +1,44 @@
+{
+  "id": "QA-WINDOWS-GITHUB-RELEASE-001",
+  "kind": "windows-github-prerelease-publication",
+  "status": "PASS_PUBLICATION_RUNTIME_ACCEPTANCE_OPEN",
+  "executed_at": "2026-10-01",
+  "source_revision": "b119156fba57cc6006b7a0081ed76b1fb6cb5a37",
+  "version": "1.0.18+23",
+  "tag": "windows-v1.0.18",
+  "release_url": "https://github.com/Egkurilov/BOOHTACORD/releases/tag/windows-v1.0.18",
+  "ci_run_url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36912398721",
+  "ci_run_conclusion": "success",
+  "release_kind": "public prerelease",
+  "artifact": {
+    "name": "BOOHTACORD-windows-v1.0.18-x64.zip",
+    "url": "https://github.com/Egkurilov/BOOHTACORD/releases/download/windows-v1.0.18/BOOHTACORD-windows-v1.0.18-x64.zip",
+    "size_bytes": 25091256,
+    "sha256": "a722eba1fb8b605d8b2ecdab39a417ba8c714ef8758bbe4ba07db8077ad97cf1",
+    "origin": "GitHub Actions artifact BOOHTACORD-windows-x64-b119156fba57cc6006b7a0081ed76b1fb6cb5a37",
+    "authenticode": "NotSigned"
+  },
+  "checks": [
+    {
+      "name": "GitHub CI run 82",
+      "status": "PASS",
+      "observation": "Contracts, backend, frontend, Flutter, Windows and publish jobs completed successfully at the source revision."
+    },
+    {
+      "name": "Windows release archive",
+      "status": "PASS",
+      "observation": "The archive contains boohtacord_desktop.exe, flutter_windows.dll, libwebrtc.dll and data/flutter_assets. No traversal paths or secret-like filenames were found among its 32 entries. GitHub reported the same SHA-256 as the downloaded artifact."
+    },
+    {
+      "name": "Public GitHub release",
+      "status": "PASS",
+      "observation": "The release-by-tag API returned draft=false, prerelease=true, both assets in uploaded state and tag windows-v1.0.18 at the source revision."
+    },
+    {
+      "name": "Installed Windows runtime and real-peer media acceptance",
+      "status": "NOT_RUN",
+      "observation": "CI build success and archive inspection do not prove installed-app visual, accessibility, voice or screen-sharing behavior."
+    }
+  ],
+  "remaining": "Keep the release marked prerelease until installed Windows runtime, visual and accessibility checks and real-peer media tests have evidence. Add code signing before a stable Windows installer release."
+}

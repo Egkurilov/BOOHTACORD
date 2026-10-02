@@ -4,6 +4,7 @@ import '../../../core/session/scope.dart';
 import '../../../services/android_audio_devices.dart';
 import '../../../services/voice_volume_preferences.dart';
 import '../../../services/voice_lease_revocation.dart';
+import '../../../services/voice_audio_config.dart';
 import '../lifecycle/controller.dart';
 
 class CancelledVoiceAdmission implements Exception {}
@@ -36,6 +37,7 @@ extension VoiceAdmissionPrepare on VoiceController {
     adaptiveStream: true,
     dynacast: true,
     defaultAudioCaptureOptions: audio.captureOptions,
+    defaultAudioPublishOptions: voiceMicrophonePublishOptions,
     defaultAudioOutputOptions: AudioOutputOptions(
       deviceId:
           AndroidAudioDevices.isNativeOutputRoute(selectedAudioOutputId) ||
