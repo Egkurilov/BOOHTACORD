@@ -7,6 +7,16 @@ import 'state.dart';
 
 mixin AudioDeviceProcessing on AudioDeviceState {
   Future<void> setAudioProcessing(AudioProcessingPreferences next) async {
+    final ticket = scope.capture();
+    final settings = preferences;
+    final targetRoom = room;
+    bool current() =>
+        !isDisposed &&
+        ticket.isActive &&
+        identical(settings, preferences) &&
+        identical(targetRoom, room);
+    if (!current()) return;
+
     final previous = audioProcessing;
     audioProcessing = next;
     audioSettingsError = null;
@@ -25,13 +35,16 @@ mixin AudioDeviceProcessing on AudioDeviceState {
             highPassFilter: false,
           ),
         );
+        if (!current()) return;
       }
-      await preferences?.setProcessing(next);
+      await settings?.setProcessing(next);
+      if (!current()) return;
     } catch (cause) {
+      if (!current()) return;
       audioProcessing = previous;
       audioSettingsError =
           'Не удалось применить обработку микрофона: ${cause.runtimeType}.';
     }
-    notifyListeners();
+    if (current()) notifyListeners();
   }
 }

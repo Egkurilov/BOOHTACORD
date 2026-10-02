@@ -50,6 +50,7 @@ class AppState extends ChangeNotifier {
           _profile.cancelOperations();
           _workspace.cancelOperations();
           _conversation.cancelOperations();
+          _audioDevices.cancelOperations();
           _stopVoiceRosterEvents();
         },
         resume: () async {
@@ -145,6 +146,7 @@ class AppState extends ChangeNotifier {
       refreshMembers: refreshMembers,
     )..addListener(notifyListeners);
     _audioDevices = AudioDeviceController(
+      scope: _session.scope,
       readRoom: () => _room,
       loader: audioDeviceLoader,
       changes: audioDeviceChanges,

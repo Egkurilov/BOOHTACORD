@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../services/audio_preferences.dart';
+import '../../../core/session/scope.dart';
 import 'platform.dart';
 
 abstract class AudioDeviceState extends ChangeNotifier {
@@ -11,7 +12,10 @@ abstract class AudioDeviceState extends ChangeNotifier {
     required this.readRoom,
     Future<List<MediaDevice>> Function()? loader,
     this.changes,
-  }) : loader = loader ?? enumerateAudioDevices;
+    SessionScope? scope,
+  }) : scope = scope ?? SessionScope(),
+       loader = loader ?? enumerateAudioDevices;
+  final SessionScope scope;
   final Room? Function() readRoom;
   final Future<List<MediaDevice>> Function() loader;
   final Stream<List<MediaDevice>>? changes;
@@ -32,9 +36,19 @@ abstract class AudioDeviceState extends ChangeNotifier {
   bool audioDeviceScanFailed = false;
   String? audioSettingsError;
   String? audioDeviceWarning;
+  void cancelOperations() {
+    deviceRevision++;
+    audioDevicesLoading = false;
+    refreshQueued = false;
+    refreshAfterCaptureRequested = false;
+  }
+
   Future<void> refreshAudioDevices();
   void applyAudioDevices(List<MediaDevice> devices);
-  Future<void> applyAndroidAdditions(List<MediaDevice> baseDevices, int revision);
+  Future<void> applyAndroidAdditions(
+    List<MediaDevice> baseDevices,
+    int revision,
+  );
 
   AudioCaptureOptions get captureOptions => AudioCaptureOptions(
     deviceId: selectedAudioInputId,

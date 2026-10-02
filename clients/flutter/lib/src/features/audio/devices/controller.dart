@@ -14,12 +14,18 @@ class AudioDeviceController extends AudioDeviceState
         AudioDeviceInventory,
         AudioDeviceSelection,
         AudioDeviceProcessing {
-  AudioDeviceController({required super.readRoom, super.loader, super.changes});
+  AudioDeviceController({
+    required super.readRoom,
+    super.loader,
+    super.changes,
+    super.scope,
+  });
 
   void watch() {
     if (isDisposed) return;
     subscription ??= (changes ?? Hardware.instance.onDeviceChange.stream)
         .listen((devices) {
+          if (isDisposed || !scope.capture().isActive) return;
           final revision = ++deviceRevision;
           audioDeviceScanFailed = false;
           applyAudioDevices(devices);

@@ -7,6 +7,16 @@ import 'state.dart';
 
 mixin AudioDeviceSelection on AudioDeviceState {
   Future<void> selectAudioInput(String deviceId) async {
+    final ticket = scope.capture();
+    final settings = preferences;
+    final targetRoom = room;
+    bool current() =>
+        !isDisposed &&
+        ticket.isActive &&
+        identical(settings, preferences) &&
+        identical(targetRoom, room);
+    if (!current()) return;
+
     final device = audioInputDevices
         .where(
           (candidate) =>
@@ -23,23 +33,39 @@ mixin AudioDeviceSelection on AudioDeviceState {
           ?.track;
       if (track is LocalAudioTrack) {
         await track.setDeviceId(deviceId);
+        if (!current()) return;
       } else if (room != null) {
         await room!.setAudioInputDevice(device);
+        if (!current()) return;
       } else {
         await Hardware.instance.selectAudioInput(device);
+        if (!current()) return;
       }
+      if (!current()) return;
       selectedAudioInputId = device.deviceId;
-      await preferences?.setInputDevice(device.deviceId);
+      await settings?.setInputDevice(device.deviceId);
+      if (!current()) return;
       audioSettingsError = null;
     } catch (cause) {
+      if (!current()) return;
       selectedAudioInputId = previous;
       audioSettingsError =
           'Не удалось переключить микрофон: ${cause.runtimeType}.';
     }
-    notifyListeners();
+    if (current()) notifyListeners();
   }
 
   Future<void> selectAudioOutput(String deviceId) async {
+    final ticket = scope.capture();
+    final settings = preferences;
+    final targetRoom = room;
+    bool current() =>
+        !isDisposed &&
+        ticket.isActive &&
+        identical(settings, preferences) &&
+        identical(targetRoom, room);
+    if (!current()) return;
+
     final device = audioOutputDevices
         .where(
           (candidate) =>
@@ -59,21 +85,29 @@ mixin AudioDeviceSelection on AudioDeviceState {
       } else if (AndroidAudioDevices.isAndroid &&
           device.deviceId == 'default') {
         await AndroidAudioDevices.clearNativeOutput();
+        if (!current()) return;
       } else if (room != null) {
         await AndroidAudioDevices.clearNativeOutput();
+        if (!current()) return;
         await room!.setAudioOutputDevice(device);
+        if (!current()) return;
       } else {
         await AndroidAudioDevices.clearNativeOutput();
+        if (!current()) return;
         await Hardware.instance.selectAudioOutput(device);
+        if (!current()) return;
       }
+      if (!current()) return;
       selectedAudioOutputId = device.deviceId;
-      await preferences?.setOutputDevice(device.deviceId);
+      await settings?.setOutputDevice(device.deviceId);
+      if (!current()) return;
       audioSettingsError = null;
     } catch (cause) {
+      if (!current()) return;
       selectedAudioOutputId = previous;
       audioSettingsError =
           'Не удалось переключить динамик: ${cause.runtimeType}.';
     }
-    notifyListeners();
+    if (current()) notifyListeners();
   }
 }

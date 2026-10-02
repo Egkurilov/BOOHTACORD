@@ -9,7 +9,8 @@ import 'platform.dart';
 mixin AudioDeviceScan on AudioDeviceState {
   @override
   Future<void> refreshAudioDevices() async {
-    if (isDisposed) return;
+    final ticket = scope.capture();
+    if (isDisposed || !ticket.isActive) return;
     if (audioDevicesLoading) {
       refreshQueued = true;
       return;
@@ -21,22 +22,24 @@ mixin AudioDeviceScan on AudioDeviceState {
     notifyListeners();
     try {
       final devices = await loader();
-      if (!isDisposed && revision == deviceRevision) {
+      if (!isDisposed && ticket.isActive && revision == deviceRevision) {
         audioDeviceScanFailed = false;
         applyAudioDevices(devices);
       }
     } catch (cause) {
-      if (!isDisposed && revision == deviceRevision) {
+      if (!isDisposed && ticket.isActive && revision == deviceRevision) {
         audioDeviceScanFailed = true;
         audioSettingsError =
             'Не удалось получить список аудиоустройств: ${cause.runtimeType}.';
       }
     } finally {
-      audioDevicesLoading = false;
-      notifyListeners();
-      if (!isDisposed && refreshQueued) {
-        refreshQueued = false;
-        unawaited(refreshAudioDevices());
+      if (!isDisposed && ticket.isActive) {
+        audioDevicesLoading = false;
+        notifyListeners();
+        if (refreshQueued) {
+          refreshQueued = false;
+          unawaited(refreshAudioDevices());
+        }
       }
     }
   }
@@ -46,9 +49,10 @@ mixin AudioDeviceScan on AudioDeviceState {
     List<MediaDevice> baseDevices,
     int revision,
   ) async {
-    if (!AndroidAudioDevices.isAndroid) return;
+    final ticket = scope.capture();
+    if (!ticket.isActive || !AndroidAudioDevices.isAndroid) return;
     final additional = await AndroidAudioDevices.enumerateAdditionalDevices();
-    if (isDisposed || revision != deviceRevision) return;
+    if (!ticket.isActive || isDisposed || revision != deviceRevision) return;
     applyAudioDevices(mergeAudioDeviceLists(baseDevices, additional));
     notifyListeners();
   }

@@ -1,0 +1,13 @@
+{
+  "id": "reorganization-audio-account-scope-2026-10-02",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "scope": "Audio device and processing commands follow the shared account scope",
+  "checks": {
+    "focused_audio_and_app_tests": 51,
+    "flutter_analyze": "PASS",
+    "old_preference_failure_cannot_reset_new_account": "RED before change; PASS after",
+    "old_scan_cannot_clear_new_scan_progress": "PASS"
+  },
+  "limitations": ["Physical device switching remains NOT_RUN"]
+}
