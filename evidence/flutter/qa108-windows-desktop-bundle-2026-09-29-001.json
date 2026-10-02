@@ -1,0 +1,58 @@
+{
+  "id": "QA-108",
+  "kind": "windows-desktop-local-bundle",
+  "status": "PASS_BUILD_LAUNCH_MEDIA_OPEN",
+  "executed_at": "2026-09-29",
+  "environment": "Windows 11 25H2 x64; Flutter 3.47.5; Dart 3.13.4; Visual Studio Build Tools 2022 17.14.41; Windows SDK 10.0.26100.0",
+  "source_revision": "53b4e2d02bd7600da5ba6ae58e71a744bb4062c4",
+  "executor": "Codex local Windows host",
+  "scenario": "Build the shared Flutter client as a portable Windows x64 bundle after the Android, iOS and shared-client updates on origin/master.",
+  "checks": [
+    {
+      "name": "Flutter dependency resolution",
+      "command": "cd desktop && flutter pub get",
+      "status": "PASS"
+    },
+    {
+      "name": "Flutter unit and widget tests",
+      "command": "cd desktop && flutter test",
+      "status": "PASS",
+      "observation": "All 246 tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd desktop && flutter analyze --no-pub --no-fatal-infos",
+      "status": "PASS_WITH_INFOS",
+      "observation": "Exit code 0. Two info-level diagnostics remain in the local flutter_webrtc package (unnecessary_library_name and invalid_runtime_check_with_js_interop_types)."
+    },
+    {
+      "name": "Windows Release compilation",
+      "command": "cd desktop && flutter build windows --release --no-pub",
+      "status": "PASS",
+      "observation": "MSVC built boohtacord_desktop.exe and the full Flutter bundle. The native flutter_soloud dependency emitted compiler warnings."
+    },
+    {
+      "name": "Portable archive inventory and hash",
+      "status": "PASS",
+      "observation": "The 35-entry archive includes boohtacord_desktop.exe, data/, Flutter and plugin DLLs, including libwebrtc.dll. All 33 files were decompressed and read successfully (58,239,624 uncompressed bytes)."
+    },
+    {
+      "name": "Windows native launch smoke",
+      "status": "PASS",
+      "observation": "The compiled Release executable opened a BOOHTACORD window. The process was still running and responding after five seconds, then was stopped. No account login was attempted."
+    },
+    {
+      "name": "Extracted ZIP runtime and media acceptance",
+      "status": "NOT_RUN",
+      "observation": "The extracted-copy launch and cleanup attempt was rejected by automatic approval review. Login, voice, screen-sharing, and second-peer behavior were not observed."
+    }
+  ],
+  "artifact": {
+    "path": "artifacts/windows/BOOHTACORD-1.0.3+7-windows-x64.zip",
+    "retained_in_current_tree": true,
+    "committed": false,
+    "size_bytes": 24701796,
+    "sha256": "AA63147AB08E9C3ADE7C28BE64F69A2BEA295129F6E93A1D3505016BE83B7722"
+  },
+  "remaining": "Launch the extracted ZIP on Windows and verify session handling, voice, real screen/window capture, failure rollback, and a second peer before public release."
+}

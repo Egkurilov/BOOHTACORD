@@ -1,0 +1,48 @@
+{
+  "id": "android-merged-debug-build-2026-09-30-001",
+  "kind": "android-debug-build",
+  "status": "PASS_BUILD",
+  "executed_at": "2026-09-30",
+  "environment": "macOS arm64, Flutter 3.47.5, OpenJDK 17, Android SDK API 36, NDK 28.2.13676358",
+  "source_revision": "616f694264005c6b0e0f871caf398452ec9a504f",
+  "checks": [
+    {
+      "name": "Flutter widget and unit tests",
+      "status": "PASS",
+      "observation": "303 tests passed on the merged source."
+    },
+    {
+      "name": "Flutter analysis",
+      "status": "PASS_WITH_INFO",
+      "observation": "No errors or warnings with --no-fatal-infos; two informational findings remain in the vendored flutter_webrtc package."
+    },
+    {
+      "name": "Backend and frontend",
+      "status": "PASS",
+      "observation": "go test ./... passed; 692 frontend tests passed; production frontend build passed."
+    },
+    {
+      "name": "Contract and requirement checks",
+      "status": "PASS",
+      "observation": "verify-contracts.ps1 passed; verify-spec-traceability.ps1 passed against the committed requirement index. The approved brief was unavailable on this host."
+    },
+    {
+      "name": "Android debug APK",
+      "status": "PASS",
+      "observation": "flutter build apk --debug --no-pub produced an APK; aapt reports ru.boohtacord.app, versionName 1.0.14, versionCode 19; apksigner verifies a v2 signature.",
+      "artifact": "desktop/build/app/outputs/flutter-apk/app-debug.apk",
+      "size_bytes": 219508832,
+      "sha256": "87ba9b7d330c30643bd6f4a0ba6a2d7a5080517a41cafa6910062cdb31d29443"
+    },
+    {
+      "name": "Signed release APK",
+      "status": "BLOCKED",
+      "observation": "The original Android upload keystore and release signing configuration are not present on this Mac. A debug signature cannot update an installed release-signed app."
+    },
+    {
+      "name": "Physical-device runtime",
+      "status": "NOT_RUN",
+      "observation": "No Android phone was attached for installation or manual acceptance."
+    }
+  ]
+}

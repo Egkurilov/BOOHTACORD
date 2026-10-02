@@ -1,0 +1,33 @@
+{
+  "id": "QA-129",
+  "kind": "gitverse-windows-release-publication",
+  "status": "PARTIAL",
+  "executed_at": "2026-09-29",
+  "source_revision": "96ccceed77313db405e81a6530fe96bad052674a",
+  "tag": "windows-v1.0.13",
+  "release_url": "https://gitverse.ru/egkurilov/BOOHTACORD/releases/tag/windows-v1.0.13",
+  "summary": "The Windows x64 release was published after replacing GitVerse create-release's 10-second API call with a PowerShell 5-compatible publisher that retries transport errors and verifies the attached archive.",
+  "checks": [
+    {
+      "name": "Windows release workflow",
+      "status": "PASS",
+      "observation": "GitVerse run 1684338 passed source checkout, Flutter version check, locked dependency resolution, Flutter tests, analysis, Windows release build, archive packaging, and publication."
+    },
+    {
+      "name": "Release and attachment record",
+      "status": "PASS",
+      "observation": "The GitVerse release API returned tag windows-v1.0.13 at source revision 96ccceed77313db405e81a6530fe96bad052674a, public non-draft release ID 548822659, and one attachment BOOHTACORD-windows-v1.0.13-x64.zip (24,109,338 bytes). The release page returned HTTP 200."
+    },
+    {
+      "name": "Local Windows x64 archive",
+      "status": "PASS",
+      "observation": "A separate local build produced BOOHTACORD-windows-v1.0.13-x64.zip (24,708,054 bytes; SHA-256 114675C96A1E217003D104BF7FECEA2E23838B4CB77B930C2913D2D1513282E9). The published archive was rebuilt by GitVerse and has a different size."
+    },
+    {
+      "name": "Live two-client screen metrics and unauthenticated asset download",
+      "status": "NOT_RUN",
+      "observation": "No live two-client session was available. A direct unauthenticated HEAD request to the attachment endpoint returned 403, so browser download was not independently verified outside the GitVerse release page."
+    }
+  ],
+  "remaining": "Verify the archive download from a browser and screen-share sender/receiver metrics in a two-client Windows session."
+}
