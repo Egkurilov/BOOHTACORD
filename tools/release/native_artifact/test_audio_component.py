@@ -6,6 +6,13 @@ from tools.release.native_artifact.audio_component import write_audio_component
 
 
 class NativeAudioComponentTests(unittest.TestCase):
+    def test_windows_records_the_compiler_overlay_without_claiming_android_uses_it(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            result = write_audio_component(Path(temporary), platform='windows')
+            self.assertEqual(result['msvc_overlay_sha256'], 'e55494df7d9e18b3d146cdff0c668f616c43e8c0a43bb6572bd005926d382b7e')
+            other = write_audio_component(Path(temporary), platform='android')
+            self.assertNotIn('msvc_overlay_sha256', other)
+
     def test_release_sidecars_bind_exact_pinned_source_and_model(self):
         with tempfile.TemporaryDirectory() as temporary:
             result = write_audio_component(Path(temporary))

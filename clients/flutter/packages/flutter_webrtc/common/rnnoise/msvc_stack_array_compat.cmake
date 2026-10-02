@@ -1,0 +1,42 @@
+# The pinned v0.1 C source uses VLAs, an optional C11 feature absent in MSVC.
+# Generate compiler-only overlays under the build directory. Source/model hashes
+# remain upstream-identical; only the stack allocation syntax changes.
+function(_rnnoise_replace_stack_array contents_var scalar name bound)
+  set(_declaration "${scalar} ${name}[${bound}]")
+  string(FIND "${${contents_var}}" "${_declaration}" _position)
+  if(_position EQUAL -1)
+    message(FATAL_ERROR "Pinned RNNoise stack declaration missing: ${_declaration}")
+  endif()
+  string(LENGTH "${_declaration}" _declaration_length)
+  math(EXPR _next "${_position} + ${_declaration_length}")
+  string(SUBSTRING "${${contents_var}}" ${_next} -1 _tail)
+  string(FIND "${_tail}" "${_declaration}" _duplicate)
+  if(NOT _duplicate EQUAL -1)
+    message(FATAL_ERROR "Pinned RNNoise stack declaration duplicated: ${_declaration}")
+  endif()
+  string(REPLACE "${_declaration}"
+    "${scalar}* ${name} = (${scalar}*)BOOHTA_RNNOISE_STACK_ALLOC(sizeof(${scalar}) * (${bound}))"
+    _updated "${${contents_var}}")
+  set(${contents_var} "${_updated}" PARENT_SCOPE)
+endfunction()
+
+function(rnnoise_generate_msvc_stack_overlays upstream_dir output_dir result_var)
+  file(MAKE_DIRECTORY "${output_dir}")
+  file(READ "${upstream_dir}/pitch.c" _pitch)
+  _rnnoise_replace_stack_array(_pitch opus_val16 x_lp4 "len>>2")
+  _rnnoise_replace_stack_array(_pitch opus_val16 y_lp4 "lag>>2")
+  _rnnoise_replace_stack_array(_pitch opus_val32 xcorr "max_pitch>>1")
+  _rnnoise_replace_stack_array(_pitch opus_val32 yy_lookup "maxperiod+1")
+  file(READ "${upstream_dir}/celt_lpc.c" _lpc)
+  _rnnoise_replace_stack_array(_lpc opus_val16 rnum "ord")
+  _rnnoise_replace_stack_array(_lpc opus_val16 rden "ord")
+  _rnnoise_replace_stack_array(_lpc opus_val16 y "N+ord")
+  _rnnoise_replace_stack_array(_lpc opus_val16 xx "n")
+  # The non-MSVC branch permits native parity tests of the exact overlays.
+  set(_prefix "/* Generated MSVC stack-array compatibility overlay. */\n#if defined(_MSC_VER)\n#include <malloc.h>\n#define BOOHTA_RNNOISE_STACK_ALLOC _alloca\n#else\n#define BOOHTA_RNNOISE_STACK_ALLOC __builtin_alloca\n#endif\n")
+  set(_pitch_path "${output_dir}/rnnoise_msvc_pitch_generated.c")
+  set(_lpc_path "${output_dir}/rnnoise_msvc_celt_lpc_generated.c")
+  file(WRITE "${_pitch_path}" "${_prefix}${_pitch}")
+  file(WRITE "${_lpc_path}" "${_prefix}${_lpc}")
+  set(${result_var} "${_pitch_path};${_lpc_path}" PARENT_SCOPE)
+endfunction()

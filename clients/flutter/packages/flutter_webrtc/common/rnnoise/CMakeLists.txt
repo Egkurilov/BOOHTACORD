@@ -1,8 +1,15 @@
 cmake_minimum_required(VERSION 3.15)
 project(boohta_rnnoise LANGUAGES C CXX)
+set(_rnnoise_pitch_lpc upstream/src/pitch.c upstream/src/celt_lpc.c)
+option(BOOHTA_RNNOISE_TEST_MSVC_OVERLAY "Test MSVC stack-array overlays on this host" OFF)
+if(MSVC OR BOOHTA_RNNOISE_TEST_MSVC_OVERLAY)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/msvc_stack_array_compat.cmake")
+  rnnoise_generate_msvc_stack_overlays("${CMAKE_CURRENT_SOURCE_DIR}/upstream/src"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated_msvc_compatibility" _rnnoise_pitch_lpc)
+endif()
 add_library(boohta_rnnoise STATIC
-  upstream/src/denoise.c upstream/src/kiss_fft.c upstream/src/pitch.c
-  upstream/src/celt_lpc.c upstream/src/rnn.c upstream/src/rnn_data.c
+  upstream/src/denoise.c upstream/src/kiss_fft.c ${_rnnoise_pitch_lpc}
+  upstream/src/rnn.c upstream/src/rnn_data.c
   rnnoise_capture_processor.cc)
 target_include_directories(boohta_rnnoise PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/upstream/include PRIVATE upstream/src)
@@ -26,4 +33,6 @@ if(BOOHTA_RNNOISE_TESTS)
     target_compile_options(rnnoise_capture_processor_test PRIVATE -UNDEBUG)
   endif()
   add_test(NAME rnnoise_capture_processor_test COMMAND rnnoise_capture_processor_test)
+  add_executable(rnnoise_msvc_pcm_parity_fixture tests/rnnoise_msvc_pcm_parity_fixture.cc)
+  target_link_libraries(rnnoise_msvc_pcm_parity_fixture PRIVATE boohta_rnnoise)
 endif()

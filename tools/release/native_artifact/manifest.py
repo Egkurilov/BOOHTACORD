@@ -26,7 +26,7 @@ def write(directory, platform, architectures, application_id, signing, *, root=R
         raise ValueError('Signing status must be measured and explicit')
     if signing['status'] in ('signed', 'debug') and not re.fullmatch(r'[0-9a-f]{64}', signing.get('certificate_sha256', '')):
         raise ValueError('Signed artifacts require a measured certificate fingerprint')
-    audio_component = write_audio_component(directory, root=root)
+    audio_component = write_audio_component(directory, root=root, platform=platform)
     files = {}
     for path in sorted(directory.rglob('*')):
         if path.name in ('artifact-manifest.json', 'SHA256SUMS'): continue
