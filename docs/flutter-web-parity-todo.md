@@ -434,6 +434,10 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-189](../evidence/flutter/qa189-pixel7-android-app-only-local-preview-2026-10-01-001.json).
   Исходный симптом не воспроизвёлся на этой версии; визуальная сверка пикселей,
   другой целевой app и paired remote viewer macOS/web остаются открытыми.
+  На текущем source повторно исполнены все 14 Android WebRTC lifecycle tests;
+  они проходят. Свежий read-only ADB snapshot показывает Pixel 7 на launcher без
+  активного MediaProjection, поэтому это не runtime-приёмка и paired test остаётся
+  открытым — [QA-220](../evidence/flutter/qa220-android-screen-preview-lifecycle-current-head-2026-10-02-001.json).
   Исправлен UX edge case локального viewer: запуск собственного screen share
   теперь возвращает выбор с удалённой демонстрации или закрытого viewer на
   собственный экран; policy/widget tests и analyzer проходят. Проверка видео

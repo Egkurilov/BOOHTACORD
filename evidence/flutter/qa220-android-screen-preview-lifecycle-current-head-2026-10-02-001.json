@@ -1,0 +1,31 @@
+{
+  "id": "QA-220",
+  "task": "T-030",
+  "date": "2026-10-02",
+  "source_revision": "fa67811",
+  "status": "LOCAL_PASS_DEVICE_ACCEPTANCE_OPEN",
+  "summary": "Re-executed the Android WebRTC plugin lifecycle suite on the current source. Pixel 7 is connected to ADB, but currently shows the Android launcher with no active MediaProjection; no capture or app interaction was initiated.",
+  "checks": [
+    {
+      "name": "Android WebRTC plugin unit tests",
+      "command": "cd clients/flutter/android && JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH ./gradlew :flutter_webrtc:testDebugUnitTest --rerun-tasks",
+      "result": "PASS",
+      "observation": "All 14 tests across seven test suites executed; failures=0, errors=0, skipped=0. SurfaceProducerAvailability and SurfaceReleaseBarrier tests both ran."
+    },
+    {
+      "name": "Read-only Pixel runtime state",
+      "commands": [
+        "adb devices -l",
+        "adb shell dumpsys activity activities",
+        "adb shell dumpsys media_projection"
+      ],
+      "result": "DEVICE_ACCEPTANCE_OPEN",
+      "observation": "A Google Pixel 7 was attached. The top resumed activity was the Android launcher and Media Projection reported null. BOOHTACORD was not opened; no login, capture, or device state change was attempted."
+    }
+  ],
+  "limitations": [
+    "The unit suite validates lifecycle helpers and EGL release ordering but does not exercise Flutter's Android compositor or prove that preview pixels are displayed.",
+    "No MediaProjection, local preview, sender frame counters, or paired browser receiver were active, so this run does not close FE-59 or FE-64."
+  ],
+  "remaining": "With the user-authenticated app and an explicitly active test share, separately verify Calculator app-only and full-display capture, visible local preview pixels, sender encoded frames, and paired receiver decoded frames after app/background transitions."
+}
