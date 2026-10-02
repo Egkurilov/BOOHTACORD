@@ -165,6 +165,84 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('reports receiver rates computed from normalized timestamps', (
+    tester,
+  ) async {
+    final reports = <Map<String, Object>>[];
+    final samples = [
+      VideoReceiverStats('inbound', 5000000)
+        ..bytesReceived = 50000
+        ..framesDecoded = 20
+        ..framesRendered = 10
+        ..framesDropped = 1
+        ..packetsReceived = 100
+        ..packetsLost = 2
+        ..jitter = 0.012
+        ..frameWidth = 576
+        ..frameHeight = 1280
+        ..framesPerSecond = 14,
+      VideoReceiverStats('inbound', 7000000)
+        ..bytesReceived = 1050000
+        ..framesDecoded = 140
+        ..framesRendered = 50
+        ..framesDropped = 4
+        ..packetsReceived = 200
+        ..packetsLost = 4
+        ..jitter = 0.012
+        ..frameWidth = 576
+        ..frameHeight = 1280
+        ..framesPerSecond = 14,
+      VideoReceiverStats('inbound', 9000000)
+        ..bytesReceived = 2050000
+        ..framesDecoded = 260
+        ..framesRendered = 90
+        ..framesDropped = 7
+        ..packetsReceived = 300
+        ..packetsLost = 6
+        ..jitter = 0.012
+        ..frameWidth = 576
+        ..frameHeight = 1280
+        ..framesPerSecond = 14,
+    ];
+    var nextSample = 0;
+    final track = _StatsTrack(() async => samples[nextSample++]);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ScreenReceiverDiagnostics(
+            track: track,
+            isLocal: false,
+            hasAudio: false,
+            selectedStreamId: 'remote-screen',
+            onReport: (report) async => reports.add(report),
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+
+    expect(reports, hasLength(1));
+    expect(reports.single, containsPair('platform', 'android_native'));
+    expect(reports.single, containsPair('direction', 'receiver'));
+    expect(reports.single, containsPair('state', 'playing'));
+    expect(reports.single, containsPair('frame_width', 576));
+    expect(reports.single, containsPair('frame_height', 1280));
+    expect(reports.single, containsPair('decoded_fps', 60.0));
+    expect(reports.single, containsPair('presented_fps', 20.0));
+    expect(reports.single, containsPair('bitrate_kbps', 4000.0));
+    expect(reports.single, containsPair('jitter_ms', 12.0));
+    expect(reports.single, containsPair('packets_lost', 6));
+    expect(reports.single, containsPair('dropped_frames', 3));
+    expect(reports.single, isNot(contains('packet_loss_percent')));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('reports missing receiver stats and local no-audio preview', (
     tester,
   ) async {

@@ -2,7 +2,7 @@
   "id": "QA-228",
   "date": "2026-10-02",
   "task": "FE-52/FE-59",
-  "source_revision": "36f6fad",
+  "source_revision": "14f090c",
   "working_tree_changes": true,
   "status": "SOURCE_FIX_PASS_RUNTIME_CONFIRMATION_OPEN",
   "root_cause": "Native flutter_webrtc returns RTCStats.timestamp_us for Android, iOS, and macOS. Flutter screen receiver diagnostics consumed that value as milliseconds, while the existing sender path already converted microseconds to milliseconds. This inflated receiver intervals by 1000x, suppressing calculated decoded FPS, bitrate, and the 10-second packet-loss window.",
@@ -13,19 +13,25 @@
     },
     {
       "file": "clients/flutter/test/screen_receiver_diagnostics_test.dart",
-      "change": "Add a widget regression using native microsecond timestamps; it expects 60 decoded FPS and 4000 kbit/s from a two-second sample delta. The test failed before the conversion and passes after it."
+      "change": "Widget regressions using native microsecond timestamps prove receiver UI rates and the emitted report use normalized intervals: 60 decoded FPS, 20 presented FPS, and 4000 kbit/s. The original UI regression failed before the conversion and passes after it."
     }
   ],
   "verification": {
     "focused_flutter_tests": {
       "command": "flutter test test/screen_receiver_diagnostics_test.dart test/screen_receiver_report_test.dart test/screen_share_metrics_test.dart test/screen_scope/captured_content_visibility_test.dart test/screen_scope/lifecycle_test.dart",
       "result": "PASS",
-      "passed": 27
+      "passed": 28
     },
     "full_flutter_suite": {
       "command": "flutter test",
       "result": "PASS",
-      "passed": 423
+      "passed": 424
+    },
+    "receiver_diagnostics_flutter_tests": {
+      "command": "flutter test test/screen_receiver_diagnostics_test.dart",
+      "result": "PASS",
+      "passed": 11,
+      "detail": "Telemetry report contains normalized decoded/presented FPS and bitrate; packet-loss percentage remains omitted before a full window."
     },
     "flutter_analyze": "PASS",
     "macos_debug_build": "PASS",
