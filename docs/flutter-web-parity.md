@@ -104,9 +104,9 @@ The Android screen-share quality picker no longer repeats an app-specific
 permission warning before the system MediaProjection consent dialog. Before a
 new share it now explains that Android can hide a selected app when it is fully
 covered or the user switches away; the iOS app-only notice remains. Update-
-quality mode omits setup guidance. All 12 picker tests and the 405-test Flutter
-suite pass; the Android debug APK builds. Analyzer reports two existing info
-diagnostics in vendored `flutter_webrtc` files — [QA-203](../evidence/flutter/qa203-android-app-only-capture-guidance-2026-10-02-001.json).
+quality mode omits setup guidance. All 13 picker tests and the 406-test Flutter
+suite pass; Android APK and macOS debug builds pass. Analyzer reports two
+existing info diagnostics in vendored `flutter_webrtc` files — [QA-203](../evidence/flutter/qa203-android-app-only-capture-guidance-2026-10-02-001.json).
 
 Flutter destructive confirmation dialogs for message deletion, voice kick and
 admin topology actions now match the web's native confirmation behavior: an
