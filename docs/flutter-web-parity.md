@@ -84,8 +84,10 @@ leaving the app on an indefinite launch splash — [QA-216](../evidence/flutter/
 Runtime retry and session restoration on a signed macOS release remain open.
 
 The web prejoin roster uses one long-lived `EventSource` per workspace. The
-server sends heartbeat comments and revalidates the session cookie every 10
-seconds without closing the connection. A revoked session emits
+server sends heartbeat comments, reconciles roster snapshots every five
+seconds, and revalidates the session cookie every 10 seconds without closing
+the connection. It emits only changed snapshots, so a missed LiveKit webhook
+does not leave the roster stale indefinitely. A revoked session emits
 `session-expired`, which closes the source and follows the existing session
 expiry path. The first `CONNECTED` transition of the separate
 workspace WebSocket must not force a second roster stream immediately after

@@ -44,6 +44,19 @@ type notifyingRosterStub struct {
 	calls    int
 }
 
+type changingRosterStub struct {
+	calls atomic.Int32
+	actor atomic.Value
+}
+
+func (stub *changingRosterStub) List(_ context.Context, actor string) (roster.Result, error) {
+	stub.actor.Store(actor)
+	if stub.calls.Add(1) == 1 {
+		return roster.Result{Channels: []roster.ChannelRoster{{ChannelID: "before"}}}, nil
+	}
+	return roster.Result{Channels: []roster.ChannelRoster{{ChannelID: "after"}}}, nil
+}
+
 type sessionAuthenticatorFunc func(context.Context, string) (auth.Principal, error)
 
 func (function sessionAuthenticatorFunc) Authenticate(ctx context.Context, token string) (auth.Principal, error) {
@@ -68,7 +81,7 @@ func (stub *notifyingRosterStub) List(_ context.Context, _ string) (roster.Resul
 }
 
 func TestStreamSendsAuthorizedSnapshotAndUpdatesOnNotification(t *testing.T) {
-	notifier, lister := NewNotifier(), &rosterStub{}
+	notifier, lister := NewNotifier(), &changingRosterStub{}
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		NewHandler(lister, notifier, sessionAuthenticatorFunc(func(context.Context, string) (auth.Principal, error) {
 			return auth.Principal{AccountID: "viewer", SessionDigest: [32]byte{0: 1}}, nil
@@ -83,14 +96,39 @@ func TestStreamSendsAuthorizedSnapshotAndUpdatesOnNotification(t *testing.T) {
 	defer response.Body.Close()
 	reader := bufio.NewReader(response.Body)
 	first, err := reader.ReadString('\n')
-	if err != nil || !strings.Contains(first, `"channel_id":"room"`) || lister.actor != "viewer" {
-		t.Fatalf("first=%s err=%v actor=%s", first, err, lister.actor)
+	if err != nil || !strings.Contains(first, `"channel_id":"before"`) || lister.actor.Load() != "viewer" {
+		t.Fatalf("first=%s err=%v actor=%v", first, err, lister.actor.Load())
 	}
 	_, _ = reader.ReadString('\n') // SSE frame separator
 	notifier.Notify()
 	second, err := reader.ReadString('\n')
-	if err != nil || !strings.Contains(second, `"channel_id":"room"`) {
+	if err != nil || !strings.Contains(second, `"channel_id":"after"`) {
 		t.Fatalf("second=%s err=%v", second, err)
+	}
+}
+
+func TestStreamReconcilesRosterChangesWithoutNotification(t *testing.T) {
+	notifier, lister := NewNotifier(), &changingRosterStub{}
+	handler := newHandler(lister, notifier, sessionAuthenticatorFunc(func(context.Context, string) (auth.Principal, error) {
+		return auth.Principal{AccountID: "viewer", SessionDigest: [32]byte{0: 1}}, nil
+	}), time.Hour, time.Hour, 10*time.Millisecond)
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		handler.ServeHTTP(writer, testSessionRequest(request))
+	}))
+	defer server.Close()
+
+	response, err := (&http.Client{Timeout: time.Second}).Get(server.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	reader := bufio.NewReader(response.Body)
+	if line, err := reader.ReadString('\n'); err != nil || !strings.Contains(line, `"channel_id":"before"`) {
+		t.Fatalf("initial event = %q, err=%v", line, err)
+	}
+	_, _ = reader.ReadString('\n')
+	if line, err := reader.ReadString('\n'); err != nil || !strings.Contains(line, `"channel_id":"after"`) {
+		t.Fatalf("reconciled event = %q, err=%v", line, err)
 	}
 }
 
@@ -143,7 +181,7 @@ func TestInitialSnapshotHasBoundedDeadline(t *testing.T) {
 
 func TestStreamReauthenticatesWithoutClosingActiveSSEConnection(t *testing.T) {
 	notifier := NewNotifier()
-	lister := &rosterStub{}
+	lister := &changingRosterStub{}
 	var authentications atomic.Int32
 	authenticator := sessionAuthenticatorFunc(func(_ context.Context, token string) (auth.Principal, error) {
 		if token != "active-session" {
@@ -152,7 +190,7 @@ func TestStreamReauthenticatesWithoutClosingActiveSSEConnection(t *testing.T) {
 		authentications.Add(1)
 		return auth.Principal{AccountID: "viewer", SessionDigest: [32]byte{0: 1}}, nil
 	})
-	handler := newHandler(lister, notifier, authenticator, 100*time.Millisecond, time.Hour)
+	handler := newHandler(lister, notifier, authenticator, 100*time.Millisecond, time.Hour, time.Hour)
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		handler.ServeHTTP(writer, testSessionRequest(request))
 	}))
@@ -164,7 +202,7 @@ func TestStreamReauthenticatesWithoutClosingActiveSSEConnection(t *testing.T) {
 	}
 	defer response.Body.Close()
 	reader := bufio.NewReader(response.Body)
-	if line, err := reader.ReadString('\n'); err != nil || !strings.Contains(line, `"channel_id":"room"`) {
+	if line, err := reader.ReadString('\n'); err != nil || !strings.Contains(line, `"channel_id":"before"`) {
 		t.Fatalf("initial event = %q, err=%v", line, err)
 	}
 	_, _ = reader.ReadString('\n')
@@ -173,7 +211,7 @@ func TestStreamReauthenticatesWithoutClosingActiveSSEConnection(t *testing.T) {
 		t.Fatal("session was not reauthenticated while SSE remained open")
 	}
 	notifier.Notify()
-	if line, err := reader.ReadString('\n'); err != nil || !strings.Contains(line, `"channel_id":"room"`) {
+	if line, err := reader.ReadString('\n'); err != nil || !strings.Contains(line, `"channel_id":"after"`) {
 		t.Fatalf("updated event after session recheck = %q, err=%v", line, err)
 	}
 }
@@ -187,7 +225,7 @@ func TestStreamEmitsSessionExpiredEventAndClosesWhenSessionIsRevoked(t *testing.
 		}
 		return auth.Principal{AccountID: "viewer", SessionDigest: [32]byte{0: 1}}, nil
 	})
-	handler := newHandler(&rosterStub{}, notifier, authenticator, 10*time.Millisecond, time.Hour)
+	handler := newHandler(&rosterStub{}, notifier, authenticator, 10*time.Millisecond, time.Hour, time.Hour)
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		handler.ServeHTTP(writer, testSessionRequest(request))
 	}))
@@ -212,7 +250,7 @@ func TestStreamKeepsIdleConnectionAliveWithHeartbeatComments(t *testing.T) {
 	authenticator := sessionAuthenticatorFunc(func(context.Context, string) (auth.Principal, error) {
 		return auth.Principal{AccountID: "viewer", SessionDigest: [32]byte{0: 1}}, nil
 	})
-	handler := newHandler(&rosterStub{}, notifier, authenticator, time.Hour, 10*time.Millisecond)
+	handler := newHandler(&rosterStub{}, notifier, authenticator, time.Hour, 10*time.Millisecond, time.Hour)
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		handler.ServeHTTP(writer, testSessionRequest(request))
 	}))
@@ -238,7 +276,7 @@ func TestStreamClosesOnSessionRevalidationFailure(t *testing.T) {
 		authentications.Add(1)
 		return auth.Principal{}, errors.New("session store unavailable")
 	})
-	handler := newHandler(&rosterStub{}, notifier, authenticator, 10*time.Millisecond, time.Hour)
+	handler := newHandler(&rosterStub{}, notifier, authenticator, 10*time.Millisecond, time.Hour, time.Hour)
 	requestContext, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	request := testSessionRequest(httptest.NewRequest(http.MethodGet, "/", nil).WithContext(requestContext))

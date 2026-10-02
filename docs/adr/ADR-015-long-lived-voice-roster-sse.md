@@ -22,7 +22,11 @@ Keep one SSE response open for the lifetime of the client connection. Send
 comment heartbeats every 15 seconds so idle connections remain active through
 the reverse proxy. Revalidate the original session cookie every 10 seconds
 using the existing session authenticator. Continue rebuilding each roster
-snapshot through the existing ACL and LiveKit presence service.
+snapshot through the existing ACL and LiveKit presence service. Signed
+LiveKit webhooks request an immediate refresh, and each open stream also
+reconciles its snapshot every five seconds. Send a snapshot only when its
+serialized roster changes so a missed or delayed webhook cannot leave the
+browser stale indefinitely.
 
 If the session is revoked or no longer resolves to the original account and
 session digest, send an `event: session-expired` frame and close the response.
@@ -36,5 +40,6 @@ data; the clients may retry through their normal connection recovery paths.
   disconnects or the session expires.
 - Session revocation is detected within the 10-second revalidation interval.
 - The server performs a bounded session lookup per open roster stream every 10
-  seconds. Active participant/channel ACL checks still run for every snapshot.
+  seconds and a bounded ACL/LiveKit snapshot every five seconds. This adds
+  snapshot load proportional to the number of open roster streams.
 - Network failures still cause normal SSE or client-stream reconnects.

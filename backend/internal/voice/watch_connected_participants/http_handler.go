@@ -1,6 +1,7 @@
 package watchconnectedparticipants
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -25,14 +26,15 @@ type SessionAuthenticator interface {
 const snapshotTimeout = 5 * time.Second
 const sessionRevalidationInterval = 10 * time.Second
 const heartbeatInterval = 15 * time.Second
+const rosterReconciliationInterval = 5 * time.Second
 
 // Session validity is rechecked on the live connection, while every snapshot
 // independently rechecks channel visibility and active leases.
 func NewHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenticator) http.Handler {
-	return newHandler(lister, notifier, authenticator, sessionRevalidationInterval, heartbeatInterval)
+	return newHandler(lister, notifier, authenticator, sessionRevalidationInterval, heartbeatInterval, rosterReconciliationInterval)
 }
 
-func newHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenticator, revalidateEvery, heartbeatEvery time.Duration) http.Handler {
+func newHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenticator, revalidateEvery, heartbeatEvery, reconcileEvery time.Duration) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		principal, ok := sessionapi.PrincipalFrom(request.Context())
 		if !ok {
@@ -58,15 +60,20 @@ func newHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenti
 		writer.Header().Set("Content-Type", "text/event-stream")
 		writer.Header().Set("Cache-Control", "no-store")
 		writer.Header().Set("X-Accel-Buffering", "no")
+		var lastSnapshot []byte
 		write := func(value roster.Result) bool {
 			encoded, err := json.Marshal(value)
 			if err != nil {
 				return false
 			}
+			if bytes.Equal(encoded, lastSnapshot) {
+				return true
+			}
 			if _, err = fmt.Fprintf(writer, "data: %s\n\n", encoded); err != nil {
 				return false
 			}
 			flusher.Flush()
+			lastSnapshot = encoded
 			return true
 		}
 		if !write(initial) {
@@ -76,6 +83,8 @@ func newHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenti
 		defer revalidation.Stop()
 		heartbeat := time.NewTicker(heartbeatEvery)
 		defer heartbeat.Stop()
+		reconciliation := time.NewTicker(reconcileEvery)
+		defer reconciliation.Stop()
 		for {
 			select {
 			case <-request.Context().Done():
@@ -102,15 +111,26 @@ func newHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenti
 				}
 				flusher.Flush()
 			case <-updates:
-				ctx, cancel := context.WithTimeout(request.Context(), snapshotTimeout)
-				updated, err := lister.List(ctx, principal.AccountID)
-				cancel()
-				if err != nil || !write(updated) {
+				if !refreshSnapshot(request.Context(), lister, principal.AccountID, write) {
+					return
+				}
+			case <-reconciliation.C:
+				if !refreshSnapshot(request.Context(), lister, principal.AccountID, write) {
 					return
 				}
 			}
 		}
 	})
+}
+
+func refreshSnapshot(parent context.Context, lister Lister, accountID string, write func(roster.Result) bool) bool {
+	ctx, cancel := context.WithTimeout(parent, snapshotTimeout)
+	defer cancel()
+	updated, err := lister.List(ctx, accountID)
+	if err != nil {
+		return false
+	}
+	return write(updated)
 }
 
 func writeSessionExpired(writer http.ResponseWriter, flusher http.Flusher) {
