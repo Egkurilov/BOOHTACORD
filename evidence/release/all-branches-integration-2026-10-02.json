@@ -55,8 +55,9 @@
     "Approved product brief unavailable on this Mac; traceability checked committed requirement index."
   ],
   "legacy_history_resolution": {
-    "strategy": "ancestry reconciliation after patch-equivalence and canonical target comparison",
+    "strategy": "Port unique runtime effects into canonical GitHub paths; preserve full legacy ancestry in GitVerse only",
     "preserved": "runtime effects, native telemetry guards, seven historical evidence records",
-    "superseded": "GitVerse production workflows and APK source artifacts intentionally remain retired by current signed GitHub delivery ADR"
+    "superseded": "GitVerse production workflows and APK source artifacts intentionally remain retired by current signed GitHub delivery ADR",
+    "github_history_constraint": "Legacy APK blobs exceed GitHub 100 MiB file limit; original legacy history remains on existing refs and GitVerse, without force rewriting"
   }
 }
