@@ -10,6 +10,9 @@ instead of leaving an unexplained black stage. The discovery regression is
 recorded in [QA-201](../evidence/flutter/qa201-macos-unsubscribed-screen-discovery-2026-10-01-001.json);
 the first-frame state and macOS build are covered by
 [QA-205](../evidence/flutter/qa205-flutter-screen-viewer-first-frame-state-2026-10-02-001.json).
+The macOS/Darwin callback now means a pixel buffer was actually uploaded to
+Flutter's texture, not merely that WebRTC delivered a frame to the native
+renderer — [QA-206](../evidence/flutter/qa206-macos-texture-first-frame-upload-2026-10-02-001.json).
 Live appearance/playback/unpublish acceptance remains open as FE-61.
 
 Vue (`clients/web/src`) is the product reference. The Flutter clients for macOS,

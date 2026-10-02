@@ -1,0 +1,41 @@
+{
+  "id": "QA-206",
+  "kind": "macos-texture-first-frame-upload",
+  "status": "IMPLEMENTED_SOURCE_TESTED_LIVE_RUNTIME_PENDING",
+  "executed_at": "2026-10-02",
+  "source_revision": "7f446b3",
+  "working_tree_changes": true,
+  "task": "T-030",
+  "summary": "The macOS/Darwin WebRTC texture renderer emitted didFirstFrameRendered on every incoming frame even when no pixel buffer had been uploaded to Flutter's texture. The event now fires only after a buffer is copied and textureFrameAvailable is notified. This makes Flutter's web-parity loading state and first-frame diagnostics more truthful; it does not establish that the reported black Mac stream is fixed.",
+  "checks": [
+    {
+      "name": "Regression test before fix",
+      "command": "flutter test --no-pub test/macos_video_renderer_lifecycle_test.dart --reporter expanded",
+      "status": "FAIL_AS_EXPECTED",
+      "observation": "The new ordering assertion failed because the renderer had no uploaded-frame gate before emitting didFirstFrameRendered. Existing disposal and shared-source tests passed."
+    },
+    {
+      "name": "Focused macOS renderer lifecycle tests",
+      "command": "flutter test --no-pub test/macos_video_renderer_lifecycle_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "All 3 tests pass, including upload-before-first-frame ordering, disposal safety, and byte-for-byte parity between common Darwin and macOS renderer implementations."
+    },
+    {
+      "name": "Full flutter_webrtc package tests",
+      "command": "flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 20 package tests pass."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "Xcode compiled the changed Objective-C renderer and produced build/macos/Build/Products/Debug/BOOHTACORD.app."
+    }
+  ],
+  "limitations": [
+    "The source-order regression test proves the event is gated by the texture upload path, not that a live Mac compositor displays the pixels.",
+    "No active Pixel MediaProjection was present in the latest read-only snapshot, so paired sender/receiver counters were unavailable."
+  ],
+  "remaining": "Retest a still-active Pixel publication on Mac and browser. Confirm the Mac first-frame state clears only when a texture frame is uploaded, compare receiver decoded FPS/framesRendered, and verify unpublish/reselection. Keep FE-61 open until live acceptance passes."
+}

@@ -91,4 +91,7 @@ are included and the focused tests plus affected platform media acceptance pass.
 Additional retained patches cover AGP built-in Kotlin compatibility, direct
 Android frame buffers and capture serialization, EGL surface-release barriers,
 and macOS renderer disposal/first-frame propagation. Their JVM/Dart tests are
-listed in the upstream record; compilation alone does not certify hardware.
+listed in the upstream record. The macOS/Darwin texture renderer now emits its
+first-frame event only after copying a pixel buffer and notifying Flutter that
+the texture frame is available — [QA-206](../../../../evidence/flutter/qa206-macos-texture-first-frame-upload-2026-10-02-001.json).
+Compilation alone does not certify hardware.

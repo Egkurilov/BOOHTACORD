@@ -195,6 +195,7 @@
 #pragma mark - RTCVideoRenderer methods
 - (void)renderFrame:(RTCVideoFrame*)frame {
 
+  BOOL didUploadFrame = NO;
   os_unfair_lock_lock(&_lock);
   if(_videoTrack == nil) {
     os_unfair_lock_unlock(&_lock);
@@ -204,8 +205,9 @@
     [self copyI420ToCVPixelBuffer:_pixelBufferRef withFrame:frame];
     if(_textureId != -1) {
       [_registry textureFrameAvailable:_textureId];
+      _frameAvailable = true;
+      didUploadFrame = YES;
     }
-    _frameAvailable = true;
   }
   os_unfair_lock_unlock(&_lock);
 
@@ -240,19 +242,21 @@
     _rotation = frame.rotation;
   }
 
-  // Notify the Flutter new pixelBufferRef to be ready.
-  dispatch_async(dispatch_get_main_queue(), ^{
-    FlutterRTCVideoRenderer* strongSelf = weakSelf;
-    if (!strongSelf) {
-      return;
-    }
-    if (!strongSelf->_isFirstFrameRendered) {
-      if (strongSelf.eventSink) {
-        strongSelf.eventSink(@{@"event" : @"didFirstFrameRendered"});
-        strongSelf->_isFirstFrameRendered = true;
+  // Report first frame only after a pixel buffer was uploaded to Flutter's texture.
+  if (didUploadFrame) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      FlutterRTCVideoRenderer* strongSelf = weakSelf;
+      if (!strongSelf) {
+        return;
       }
-    }
-  });
+      if (!strongSelf->_isFirstFrameRendered) {
+        if (strongSelf.eventSink) {
+          strongSelf.eventSink(@{@"event" : @"didFirstFrameRendered"});
+          strongSelf->_isFirstFrameRendered = true;
+        }
+      }
+    });
+  }
 }
 
 /**
