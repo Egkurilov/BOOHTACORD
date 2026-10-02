@@ -60,6 +60,10 @@ abstract class VoiceState extends ChangeNotifier {
   String? pushToTalkKeyLabel;
   String? audioActivationError;
   bool pushToTalkPressed = false;
+  bool get usesTouchPushToTalk =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
   bool mutedBeforeDeafen = false;
   bool microphoneMutedBeforePtt = false;
   Room? room;

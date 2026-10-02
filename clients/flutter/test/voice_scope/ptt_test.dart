@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:boohtacord_desktop/src/features/voice/lifecycle/controller.dart';
 
 import 'fakes.dart';
@@ -25,4 +26,30 @@ void main() {
       expect(h.owner.pushToTalkPressed, isFalse);
     },
   );
+
+  test('mobile PTT does not require a hardware key', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    final h = VoiceHarness();
+    addTearDown(h.dispose);
+
+    expect(h.owner.usesTouchPushToTalk, isTrue);
+    await h.owner.setAudioActivationMode(AudioActivationMode.ptt);
+
+    expect(h.owner.audioActivationMode, AudioActivationMode.ptt);
+    expect(h.owner.audioActivationError, isNull);
+    expect(h.owner.pushToTalkKeyId, isNull);
+  });
+
+  test('desktop PTT still requires a hardware key', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    final h = VoiceHarness();
+    addTearDown(h.dispose);
+
+    expect(h.owner.usesTouchPushToTalk, isFalse);
+    await h.owner.setAudioActivationMode(AudioActivationMode.ptt);
+
+    expect(h.owner.audioActivationError, 'Назначьте клавишу для push-to-talk.');
+  });
 }

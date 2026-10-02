@@ -195,6 +195,45 @@ void main() {
     );
   }
 
+  testWidgets('mobile PTT dock transmits only while mic is held', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    state
+      ..voiceChannel = _PortraitApi.voiceChannel
+      ..selectedChannel = _PortraitApi.voiceChannel
+      ..voicePhase = VoicePhase.connected
+      ..audioActivationMode = AudioActivationMode.ptt;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final ptt = find.byTooltip('Удерживайте, чтобы говорить');
+    expect(ptt, findsOneWidget);
+    final gesture = await tester.startGesture(tester.getCenter(ptt));
+    await tester.pump();
+    expect(state.pushToTalkPressed, isTrue);
+    await gesture.up();
+    await tester.pump();
+    expect(state.pushToTalkPressed, isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   testWidgets('restores a text-channel draft after switching channels', (
     tester,
   ) async {
@@ -245,6 +284,8 @@ void main() {
   testWidgets('opens native audio settings and processing controls', (
     tester,
   ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
     final scan = Completer<List<MediaDevice>>();
     final refreshScan = Completer<List<MediaDevice>>();
     var scanCount = 0;
@@ -355,6 +396,7 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('audio settings test the devices shown in their selectors', (

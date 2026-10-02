@@ -41,6 +41,8 @@ mixin AppVoiceControlsAccess on AppOwners {
 
   AudioActivationMode get audioActivationMode => voice.audioActivationMode;
 
+  bool get usesTouchPushToTalk => voice.usesTouchPushToTalk;
+
   set audioActivationMode(AudioActivationMode value) =>
       voice.audioActivationMode = value;
 

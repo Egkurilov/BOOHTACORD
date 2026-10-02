@@ -20,7 +20,8 @@ extension VoicePreferencesLoad on VoiceController {
     pushToTalkKeyLabel = preferences.pttKeyLabel;
     audioActivationError =
         audioActivationMode == AudioActivationMode.ptt &&
-            pushToTalkKeyId == null
+            pushToTalkKeyId == null &&
+            !usesTouchPushToTalk
         ? 'Назначьте клавишу для push-to-talk.'
         : null;
   }

@@ -614,10 +614,15 @@ both deployed web and Flutter viewers.
   not report effective processing state, rather than claiming the requested
   value was applied. Verify device switching and processing audibly on
   macOS/Windows/Android. VAD/PTT mode and account-scoped key assignment are
-  implemented. PTT mutes on join and key release and is force-released on app
-  backgrounding, desktop window blur, or voice teardown; text-entry, dialog and
-  capture focus do not accidentally transmit. Verify hold/release and focus
-  recovery with hardware keyboards on each target platform.
+  implemented. Desktop PTT mutes on join and key release and is force-released
+  on app backgrounding, desktop window blur, or voice teardown; text-entry,
+  dialog and capture focus do not accidentally transmit. Android/iOS PTT does
+  not require a hardware key: hold the microphone button in the compact voice
+  dock to talk; pointer release/cancel and dock teardown mute it. Widget/unit
+  coverage passes [QA-213](../evidence/flutter/qa213-mobile-push-to-talk-touch-2026-10-02-001.json).
+  Verify touch hold/release, system interruption, backgrounding and screen-reader
+  behavior on physical Android/iOS devices, and retain hardware-key focus tests
+  on desktop.
 - Local screen picker/publish/stop is implemented for connected voice rooms;
   desktop uses LiveKit's screen/window picker, while Android requests the
   native MediaProjection grant and runs its declared `mediaProjection`

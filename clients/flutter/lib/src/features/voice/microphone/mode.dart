@@ -11,7 +11,7 @@ extension VoiceMicrophoneMode on VoiceController {
       microphoneMutedBeforePtt = microphoneMuted;
       audioActivationMode = next;
       pushToTalkPressed = false;
-      if (pushToTalkKeyId == null) {
+      if (pushToTalkKeyId == null && !usesTouchPushToTalk) {
         audioActivationError = 'Назначьте клавишу для push-to-talk.';
       } else {
         audioActivationError = null;

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart' hide ChatMessage;
@@ -6359,27 +6360,33 @@ class _AudioSettingsScreen extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: onCapturePttKey,
-                      icon: Icon(
-                        capturingPttKey
-                            ? Icons.keyboard
-                            : Icons.keyboard_alt_outlined,
+                    if (!state.usesTouchPushToTalk)
+                      OutlinedButton.icon(
+                        onPressed: onCapturePttKey,
+                        icon: Icon(
+                          capturingPttKey
+                              ? Icons.keyboard
+                              : Icons.keyboard_alt_outlined,
+                        ),
+                        label: Text(
+                          capturingPttKey
+                              ? 'Нажмите клавишу… · Esc — отмена'
+                              : state.pushToTalkKeyLabel == null
+                              ? 'Назначить PTT-клавишу'
+                              : 'Клавиша PTT · ${state.pushToTalkKeyLabel}',
+                        ),
                       ),
-                      label: Text(
-                        capturingPttKey
-                            ? 'Нажмите клавишу… · Esc — отмена'
-                            : state.pushToTalkKeyLabel == null
-                            ? 'Назначить PTT-клавишу'
-                            : 'Клавиша PTT · ${state.pushToTalkKeyLabel}',
-                      ),
-                    ),
                     if (state.audioActivationMode == AudioActivationMode.ptt)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(top: 4),
                         child: Text(
-                          'Удерживайте назначенную клавишу, чтобы говорить. При потере фокуса микрофон выключается.',
-                          style: TextStyle(color: GcColors.muted, fontSize: 12),
+                          state.usesTouchPushToTalk
+                              ? 'Удерживайте кнопку микрофона в панели голосового канала, чтобы говорить. При сворачивании приложения микрофон выключается.'
+                              : 'Удерживайте назначенную клавишу, чтобы говорить. При потере фокуса микрофон выключается.',
+                          style: const TextStyle(
+                            color: GcColors.muted,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     if (state.audioActivationError != null) ...[
@@ -6701,26 +6708,31 @@ class _VoiceDock extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _VoiceDockButton(
-              compact: compact,
-              tooltip: state.microphoneUnavailable
-                  ? 'Микрофон недоступен · повторить включение'
-                  : state.audioActivationMode == AudioActivationMode.ptt
-                  ? 'Микрофон управляется push-to-talk'
-                  : state.microphoneMuted
-                  ? 'Включить микрофон'
-                  : 'Выключить микрофон',
-              semanticsLabel: state.microphoneMuted
-                  ? 'Включить микрофон'
-                  : 'Выключить микрофон',
-              icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
-              danger: state.microphoneMuted,
-              toggled: !state.microphoneMuted,
-              enabled:
-                  state.audioActivationMode != AudioActivationMode.ptt &&
-                  !state.deafened,
-              onTap: state.toggleMicrophone,
-            ),
+            if (compact &&
+                state.usesTouchPushToTalk &&
+                state.audioActivationMode == AudioActivationMode.ptt)
+              _VoiceDockPttButton(state: state)
+            else
+              _VoiceDockButton(
+                compact: compact,
+                tooltip: state.microphoneUnavailable
+                    ? 'Микрофон недоступен · повторить включение'
+                    : state.audioActivationMode == AudioActivationMode.ptt
+                    ? 'Микрофон управляется push-to-talk'
+                    : state.microphoneMuted
+                    ? 'Включить микрофон'
+                    : 'Выключить микрофон',
+                semanticsLabel: state.microphoneMuted
+                    ? 'Включить микрофон'
+                    : 'Выключить микрофон',
+                icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
+                danger: state.microphoneMuted,
+                toggled: !state.microphoneMuted,
+                enabled:
+                    state.audioActivationMode != AudioActivationMode.ptt &&
+                    !state.deafened,
+                onTap: state.toggleMicrophone,
+              ),
             _VoiceDockButton(
               compact: compact,
               tooltip: state.deafened
@@ -6792,6 +6804,103 @@ class _VoiceDock extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _VoiceDockPttButton extends StatefulWidget {
+  const _VoiceDockPttButton({required this.state});
+  final AppState state;
+
+  @override
+  State<_VoiceDockPttButton> createState() => _VoiceDockPttButtonState();
+}
+
+class _VoiceDockPttButtonState extends State<_VoiceDockPttButton> {
+  int? _pointer;
+
+  void _start() {
+    if (widget.state.deafened ||
+        (widget.state.voicePhase != VoicePhase.connected &&
+            widget.state.voicePhase != VoicePhase.listener) ||
+        widget.state.pushToTalkPressed) {
+      return;
+    }
+    unawaited(widget.state.setPushToTalkPressed(true));
+  }
+
+  void _stop() {
+    _pointer = null;
+    unawaited(widget.state.setPushToTalkPressed(false));
+  }
+
+  void _release() {
+    if (_pointer == null) return;
+    _stop();
+  }
+
+  @override
+  void dispose() {
+    _release();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled =
+        !widget.state.deafened &&
+        (widget.state.voicePhase == VoicePhase.connected ||
+            widget.state.voicePhase == VoicePhase.listener);
+    final pressed = widget.state.pushToTalkPressed;
+    const label = 'Удерживайте, чтобы говорить';
+    return Semantics(
+      container: true,
+      button: true,
+      enabled: enabled,
+      label: label,
+      customSemanticsActions: {
+        if (enabled && !pressed)
+          CustomSemanticsAction(label: 'Начать говорить'): _start,
+        if (enabled && pressed)
+          CustomSemanticsAction(label: 'Закончить говорить'): _stop,
+      },
+      child: Tooltip(
+        message: label,
+        child: ExcludeSemantics(
+          child: Listener(
+            behavior: HitTestBehavior.opaque,
+            onPointerDown: !enabled
+                ? null
+                : (event) {
+                    if (_pointer != null || event.buttons != kPrimaryButton) {
+                      return;
+                    }
+                    _pointer = event.pointer;
+                    _start();
+                  },
+            onPointerUp: (event) {
+              if (event.pointer == _pointer) _release();
+            },
+            onPointerCancel: (event) {
+              if (event.pointer == _pointer) _release();
+            },
+            child: Material(
+              color: pressed
+                  ? GcColors.accent.withValues(alpha: 0.2)
+                  : GcColors.raised,
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox.square(
+                dimension: 48,
+                child: Icon(
+                  pressed ? Icons.mic : Icons.mic_none,
+                  size: 19,
+                  color: pressed ? GcColors.accent : GcColors.textSecondary,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _VoiceDockButton extends StatelessWidget {
