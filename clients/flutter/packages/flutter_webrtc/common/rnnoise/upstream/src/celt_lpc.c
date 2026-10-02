@@ -33,7 +33,6 @@
 #include "arch.h"
 #include "common.h"
 #include "pitch.h"
-#include "../../rnnoise_platform_compat.h" /* Local MSVC variable-length array port. */
 
 void _celt_lpc(
       opus_val16       *_lpc, /* out: [0...p-1] LPC coefficients      */
@@ -97,7 +96,7 @@ void celt_fir(
          int ord)
 {
    int i,j;
-   RNNOISE_STACK_ARRAY(opus_val16, rnum, ord);
+   opus_val16 rnum[ord];
    for(i=0;i<ord;i++)
       rnum[i] = num[ord-i-1];
    for (i=0;i<N-3;i+=4)
@@ -148,8 +147,8 @@ void celt_iir(const opus_val32 *_x,
 #else
    int i,j;
    celt_assert((ord&3)==0);
-   RNNOISE_STACK_ARRAY(opus_val16, rden, ord);
-   RNNOISE_STACK_ARRAY(opus_val16, y, N + ord);
+   opus_val16 rden[ord];
+   opus_val16 y[N+ord];
    for(i=0;i<ord;i++)
       rden[i] = den[ord-i-1];
    for(i=0;i<ord;i++)
@@ -209,7 +208,7 @@ int _celt_autocorr(
    int fastN=n-lag;
    int shift;
    const opus_val16 *xptr;
-   RNNOISE_STACK_ARRAY(opus_val16, xx, n);
+   opus_val16 xx[n];
    celt_assert(n>0);
    celt_assert(overlap>=0);
    if (overlap == 0)
