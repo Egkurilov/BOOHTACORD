@@ -28,7 +28,7 @@ T-пакеты описывают области требований. Част�
 | T-050 | Design foundation, shell/profile/admin/search/voice UI | FE-09, DES-01…08, QA-05 |
 | T-051 | Android разрешён ADR-006, APK build evidence | QA-13: release signing/device checks/parity |
 | T-052 | ACL/session baseline, private metrics/log rotation | BE-13, QA-03/10 |
-| T-054 | GitHub deploy и smoke evidence | QA-12 rollback; FE-62 — устранить текущий красный CI по версии Flutter |
+| T-054 | GitHub deploy и smoke evidence | QA-12 rollback; FE-62 закрыт: динамическое version assertion, полный Flutter suite и CI #123 green |
 | T-060 | Acceptance/runbooks, отдельные scoped evidence | QA-14 после обязательных gates |
 | T-061 | Local native audio-device checks, зависит от T-022 | Физическая проверка выбора/переключения устройств и audio I/O на каждой поддерживаемой Flutter-платформе; unit/build evidence недостаточно |
 
