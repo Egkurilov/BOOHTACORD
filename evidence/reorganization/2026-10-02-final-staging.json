@@ -1,0 +1,184 @@
+{
+  "id": "reorganization-final-staging-2026-10-02",
+  "kind": "release-integration-verification",
+  "status": "PASS",
+  "source_revision": "284807f5eb2ad862f0f4b9f05ecb8f6ace250ca5",
+  "environment": "Hetzner isolated builder and Docker-in-Docker installation stage; Windows i7-12700 for UI/checkout samples",
+  "checks": {
+    "github_ci_run": 36948145954,
+    "github_ci": "PASS: backend, web, contracts, Flutter Android, Windows",
+    "backend_tests": 821,
+    "backend_skips": 0,
+    "backend_vet_build": "PASS",
+    "web_tests": 721,
+    "web_typecheck_build": "PASS",
+    "tool_regressions": 74,
+    "release_guard_negatives": "PASS",
+    "signed_bundle_smoke": "PASS: OCI/SBOM/provenance, migration twice, health, PNG, operator binaries",
+    "postgres_fixture_isolation_and_cancelled_cleanup": "PASS"
+  },
+  "builder_seconds": 131.8,
+  "installation": {
+    "source_revision": "284807f5eb2ad862f0f4b9f05ecb8f6ace250ca5",
+    "status": "PASS",
+    "elapsed_seconds": 26.909,
+    "bundle_bytes": 58582790,
+    "disk_free_before": 41948676096,
+    "disk_free_minimum": 41872277504,
+    "disk_free_after": 41880219648,
+    "disk_samples": 133,
+    "four_volumes_and_three_networks_unchanged": true,
+    "canonical_compose": true,
+    "root_compose_absent": true
+  },
+  "components": {
+    "api": {
+      "index_digest": "sha256:9a1043023e2799b170853e0c2131cf36c35071848136de891420e0d7cc0cd7e8",
+      "archive_bytes": null
+    },
+    "web": {
+      "index_digest": "sha256:5a12715bf48b5019d172608f9ecb7113f1198a3b99293b9b95a841bfc5cf5bc2",
+      "archive_bytes": null
+    }
+  },
+  "ci_jobs": [
+    {
+      "name": "changes",
+      "conclusion": "success",
+      "started_at": "2026-10-02T00:52:32Z",
+      "completed_at": "2026-10-02T00:52:37Z"
+    },
+    {
+      "name": "contracts / contracts",
+      "conclusion": "success",
+      "started_at": "2026-10-02T00:52:32Z",
+      "completed_at": "2026-10-02T00:52:52Z"
+    },
+    {
+      "name": "frontend / frontend",
+      "conclusion": "success",
+      "started_at": "2026-10-02T00:52:40Z",
+      "completed_at": "2026-10-02T00:53:29Z"
+    },
+    {
+      "name": "flutter / flutter",
+      "conclusion": "success",
+      "started_at": "2026-10-02T00:52:40Z",
+      "completed_at": "2026-10-02T01:02:40Z"
+    },
+    {
+      "name": "windows / windows",
+      "conclusion": "success",
+      "started_at": "2026-10-02T00:52:40Z",
+      "completed_at": "2026-10-02T01:02:35Z"
+    },
+    {
+      "name": "backend / backend",
+      "conclusion": "success",
+      "started_at": "2026-10-02T00:52:40Z",
+      "completed_at": "2026-10-02T00:55:15Z"
+    }
+  ],
+  "checkout": {
+    "method": "git read-tree and checkout-index into empty directories; local shared object cache; no network clone; LF files",
+    "runs": [
+      {
+        "source_revision": "8b7f1ddc196c6ead42f45a4b4fe06ac896c0f9a5",
+        "tracked_files": 3185,
+        "checkout_seconds": [
+          1.41129,
+          1.44758,
+          1.381295
+        ],
+        "source_archive_bytes": 5456621
+      },
+      {
+        "source_revision": "284807f5eb2ad862f0f4b9f05ecb8f6ace250ca5",
+        "tracked_files": 3635,
+        "checkout_seconds": [
+          1.650692,
+          1.662168,
+          1.637259
+        ],
+        "source_archive_bytes": 5573655
+      }
+    ]
+  },
+  "flutter_rebuild_samples": [
+    {
+      "version": "before",
+      "repeat": 0,
+      "scenario": "100 completed roster refreshes; empty authenticated workspace; 1440x900",
+      "state_notifications": 100,
+      "dirty_widget_rebuilds": 20400,
+      "pump_median_us": 5978,
+      "pump_p95_us": 9308,
+      "renderer": "flutter_test debug CPU; no network, GPU, or media"
+    },
+    {
+      "version": "after",
+      "repeat": 0,
+      "scenario": "100 completed roster refreshes; empty authenticated workspace; 1440x900",
+      "state_notifications": 100,
+      "dirty_widget_rebuilds": 20400,
+      "pump_median_us": 5987,
+      "pump_p95_us": 9774,
+      "renderer": "flutter_test debug CPU; no network, GPU, or media"
+    },
+    {
+      "version": "before",
+      "repeat": 1,
+      "scenario": "100 completed roster refreshes; empty authenticated workspace; 1440x900",
+      "state_notifications": 100,
+      "dirty_widget_rebuilds": 20400,
+      "pump_median_us": 5881,
+      "pump_p95_us": 9057,
+      "renderer": "flutter_test debug CPU; no network, GPU, or media"
+    },
+    {
+      "version": "after",
+      "repeat": 1,
+      "scenario": "100 completed roster refreshes; empty authenticated workspace; 1440x900",
+      "state_notifications": 100,
+      "dirty_widget_rebuilds": 20400,
+      "pump_median_us": 5730,
+      "pump_p95_us": 9330,
+      "renderer": "flutter_test debug CPU; no network, GPU, or media"
+    },
+    {
+      "version": "before",
+      "repeat": 2,
+      "scenario": "100 completed roster refreshes; empty authenticated workspace; 1440x900",
+      "state_notifications": 100,
+      "dirty_widget_rebuilds": 20400,
+      "pump_median_us": 6214,
+      "pump_p95_us": 9126,
+      "renderer": "flutter_test debug CPU; no network, GPU, or media"
+    },
+    {
+      "version": "after",
+      "repeat": 2,
+      "scenario": "100 completed roster refreshes; empty authenticated workspace; 1440x900",
+      "state_notifications": 100,
+      "dirty_widget_rebuilds": 20400,
+      "pump_median_us": 6087,
+      "pump_p95_us": 8936,
+      "renderer": "flutter_test debug CPU; no network, GPU, or media"
+    }
+  ],
+  "interpretation": "Rebuild count remains 20400 per 100 roster updates. Median debug CPU pump is about 6 ms both before and after; no runtime speedup is claimed.",
+  "production_trust": {
+    "environment": "production",
+    "trust_anchor": "/etc/voice-platform/release-signing.pub.pem",
+    "public_key_sha256": "e44c979e15b434e9625df70f9816e5887d3b0a4f1301bc4185df4186ed002cd7",
+    "rsa_bits": 3072,
+    "private_key_storage": "GitHub production environment encrypted secret only"
+  },
+  "limitations": [
+    "Production installation is a separate receipt.",
+    "A full Windows Go run over SSH timed out in the same existing 20-second race test as the baseline; the same-host PostgreSQL native gate passed all 821 tests.",
+    "Checkout benchmark excludes network/object download; historical pre-change CI job timings and production install peak were not recorded and cannot be reconstructed as observed data.",
+    "Flutter samples measure debug test-renderer CPU work, not physical GPU frame time, jank or connected media.",
+    "macOS/iOS native signing and physical voice, PTT, stream and compatible client update acceptance remain separate NOT_RUN gates."
+  ]
+}

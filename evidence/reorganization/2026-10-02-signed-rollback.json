@@ -1,0 +1,30 @@
+{
+  "id": "reorganization-signed-rollback-2026-10-02",
+  "kind": "integration-verification",
+  "status": "PASS",
+  "current_revision": "64b6c787233640b94f8cac3e0eec1c9f2f4ea327",
+  "previous_revision": "dce14c1f27aaa94e57aaef4ce96fa3a76e3311a1",
+  "environment": "Isolated Docker-in-Docker staging on Hetzner; ephemeral staging trust key",
+  "checks": {
+    "each_artifact_backend_tests_no_skips": 818,
+    "each_artifact_web_tests": 721,
+    "each_artifact_contracts_and_built_image_smoke": "PASS",
+    "each_artifact_sbom_provenance_and_signature": "PASS",
+    "incompatible_topology_rejected_before_rollout": "PASS",
+    "rollback_to_previous_health_and_digest": "PASS",
+    "restore_current_health_and_digest": "PASS",
+    "four_volume_and_two_network_identities_preserved": "PASS",
+    "failure_and_interruption_restore_unit_tests": "PASS",
+    "changed_runtime_reuse_rejected": "PASS",
+    "all_python_tool_tests": 32
+  },
+  "measurements": {
+    "previous_install_seconds": 25.914,
+    "current_install_seconds": 25.205,
+    "rollback_rehearsal_seconds_including_30_second_observation": 79.22
+  },
+  "limitations": [
+    "Observation measured service health; authenticated browser/media observation was not performed",
+    "Production trust, workflow cutover and final Compose relocation still need verification"
+  ]
+}

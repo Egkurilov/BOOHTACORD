@@ -1,132 +1,55 @@
 name: Deploy production
 
 on:
-  push:
+  workflow_run:
+    workflows: [Build server]
     branches: [master]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'contracts/**'
-      - 'docker/**'
-      - 'scripts/**'
-      - 'compose.yaml'
-      - '.env.example'
-      - '.github/workflows/deploy-production.yaml'
-  workflow_dispatch:
+    types: [completed]
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: v-bootybay-production
   cancel-in-progress: false
 
 jobs:
-  backend:
-    runs-on: [self-hosted, linux, x64, boohtacord-hetzner-db]
-    timeout-minutes: 15
-    env:
-      VOICE_PLATFORM_TEST_DATABASE_URL: postgres://voice_platform_test:test-only-password@127.0.0.1:15432/voice_platform_test?sslmode=disable
-      TEST_DATABASE_URL: postgres://voice_platform_test:test-only-password@127.0.0.1:15432/voice_platform_test?sslmode=disable
-      CI_POSTGRES_EXTERNAL: 'true'
-      CI_POSTGRES_PORT: '15432'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: backend/go.mod
-          cache: false
-      - name: Start mandatory PostgreSQL test database
-        shell: bash
-        run: bash scripts/start-ci-postgres.sh
-      - name: Test and vet Go API
-        working-directory: backend
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -n "$VOICE_PLATFORM_TEST_DATABASE_URL"
-          test -n "$TEST_DATABASE_URL"
-          test_events="$(mktemp "${RUNNER_TEMP:-/tmp}/backend-test-events.XXXXXX")"
-          test_status=0
-          go test -json -count=1 ./... > "$test_events" || test_status=$?
-          python3 ../scripts/verify-go-test-events.py "$test_events"
-          test "$test_status" -eq 0
-          go vet ./...
-
-  frontend:
-    runs-on: [self-hosted, linux, x64, boohtacord-hetzner]
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - name: Test and build Vue client
-        working-directory: frontend
-        run: |
-          npm ci
-          npm test
-          npm run build
-
-  release_guard:
-    runs-on: [self-hosted, linux, x64, boohtacord-hetzner]
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-      - name: Verify contracts, traceability, images and release guards
-        shell: bash
-        run: bash scripts/verify-release-guards.sh
-
-  deploy:
-    if: ${{ github.ref_name == 'master' }}
-    needs: [backend, frontend, release_guard]
+  install:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'master' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     environment: production
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     env:
       DEPLOY_SERVER_IP: 176.108.242.211
-      DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
       SSH_USER: shaneque
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect Docker storage before guarded release
-        shell: bash
-        run: bash scripts/qa08_capacity/prepare_host_storage.sh
-      - name: Recover attachment filesystem headroom from unused Docker data
-        shell: bash
-        run: |
-          set -euo pipefail
-          remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
-          ssh_options=(-i "$HOME/.ssh/id_deploy" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
-          ssh "${ssh_options[@]}" "$remote" 'sudo -n bash -s' < scripts/qa08_capacity/reclaim_deploy_headroom.sh
-
-      - name: Package the checked-out source
-        id: source
-        shell: bash
-        run: |
-          set -euo pipefail
-          git_sha="$(git rev-parse HEAD)"
-          [[ "$git_sha" =~ ^[0-9a-f]{40}$ ]]
-          archive="${RUNNER_TEMP:?}/voice-platform-${git_sha}.tar.gz"
-          git archive --format=tar HEAD | gzip -n > "$archive"
-          printf 'git_sha=%s\n' "$git_sha" >> "$GITHUB_OUTPUT"
-          printf 'archive=%s\n' "$archive" >> "$GITHUB_OUTPUT"
-          printf 'archive_sha256=%s\n' "$(sha256sum "$archive" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
-
-      - name: Transfer, build and perform guarded release
-        shell: bash
+      - name: Verify the trusted producer and source revision
+        id: producer
         env:
-          ARCHIVE: ${{ steps.source.outputs.archive }}
-          ARCHIVE_SHA256: ${{ steps.source.outputs.archive_sha256 }}
-          GIT_SHA: ${{ steps.source.outputs.git_sha }}
-        run: bash scripts/qa11_release/transfer_release.sh
-      - name: Audit live attachment headroom after rollout
-        shell: bash
-        run: |
-          set -euo pipefail
-          git_sha="$(git rev-parse HEAD)"
-          remote="${SSH_USER}@${DEPLOY_SERVER_IP}"
-          ssh_options=(-i ~/.ssh/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
-          ssh "${ssh_options[@]}" "$remote" bash -s -- "$git_sha" < scripts/audit-attachment-volume.sh
+          BUILD_RUN_ID: ${{ github.event.workflow_run.id }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 -m tools.release.delivery.provenance
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.producer.outputs.revision }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: server-${{ steps.producer.outputs.revision }}
+          path: .out/incoming
+          run-id: ${{ steps.producer.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Configure pinned SSH transport
+        env:
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: bash tools/release/ssh/configure-deploy-ssh.sh
+      - name: Verify and install the built bundle
+        env:
+          RELEASE_REVISION: ${{ steps.producer.outputs.revision }}
+          BUNDLE_DIRECTORY: .out/incoming
+        run: bash tools/release/delivery/transfer.sh

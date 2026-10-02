@@ -1,0 +1,30 @@
+version: '3'
+
+vars:
+  PYTHON: '{{if eq OS "windows"}}python{{else}}python3{{end}}'
+
+tasks:
+  doctor:
+    cmds: ['{{.PYTHON}} -m tools.ci.native.doctor']
+  check:toolchains:
+    cmds: ['{{.PYTHON}} -m tools.verify.toolchains.check']
+  check:contracts:
+    cmds: ['{{.PYTHON}} -m tools.ci.native.contracts']
+  test:backend:
+    cmds: ['{{.PYTHON}} -m tools.ci.native.backend']
+  test:web:
+    cmds: ['{{.PYTHON}} -m tools.ci.native.web']
+  test:flutter:
+    cmds: ['{{.PYTHON}} -m tools.ci.native.flutter']
+  build:server:
+    cmds: ['{{.PYTHON}} -m tools.build.server.run {{.CLI_ARGS}}']
+  build:android:
+    cmds: ['{{.PYTHON}} -m tools.build.android.run {{.CLI_ARGS}}']
+  build:windows:
+    cmds: ['{{.PYTHON}} -m tools.build.windows.run']
+  release:verify:
+    cmds: ['{{.PYTHON}} -m tools.release.bundle.verify {{.CLI_ARGS}}']
+  release:install:
+    cmds: ['{{.PYTHON}} -m tools.release.install.run {{.CLI_ARGS}}']
+  release:rollback:
+    cmds: ['{{.PYTHON}} -m tools.release.rollback.run {{.CLI_ARGS}}']

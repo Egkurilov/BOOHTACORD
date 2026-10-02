@@ -1,0 +1,38 @@
+import 'dart:typed_data';
+
+import 'package:livekit_client/livekit_client.dart';
+
+import '../../services/screen_share_quality.dart';
+import '../../features/screen/lifecycle/controller.dart';
+import '../composition/owners.dart';
+
+mixin AppScreenAccess on AppOwners {
+  ScreenSharePhase get screenSharePhase => screen.phase;
+
+  set screenSharePhase(ScreenSharePhase value) => screen.phase = value;
+
+  String? get screenShareError => screen.error;
+
+  set screenShareError(String? value) => screen.error = value;
+
+  Map<String, Uint8List> get screenThumbnails => screen.thumbnails;
+
+  ScreenShareQuality get screenShareQuality => screen.quality;
+
+  set screenShareQuality(ScreenShareQuality value) => screen.quality = value;
+
+  Future<void> startScreenShare({
+    String? sourceId,
+    ScreenShareQuality? quality,
+    VideoDimensions? sourceDimensions,
+  }) => screen.startScreenShare(
+    sourceId: sourceId,
+    quality: quality,
+    sourceDimensions: sourceDimensions,
+  );
+
+  Future<void> stopScreenShare() => screen.stopScreenShare();
+
+  Future<void> updateScreenShareQuality(ScreenShareQuality quality) =>
+      screen.updateScreenShareQuality(quality);
+}

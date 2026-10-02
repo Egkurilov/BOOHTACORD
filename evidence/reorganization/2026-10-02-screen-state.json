@@ -1,0 +1,15 @@
+{
+  "id": "reorganization-screen-state-2026-10-02",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "scope": "Screen capture/publication owner, Android startup, quality, sender sampling and local thumbnails",
+  "checks": {
+    "flutter_tests": 377,
+    "flutter_analyze": "PASS",
+    "capture_after_stop_is_discarded": "PASS",
+    "publication_after_logout_is_removed": "PASS",
+    "replaced_track_cannot_publish_old_thumbnail": "PASS"
+  },
+  "preserved": ["Capture and publication options", "Android single layer", "Windows source dimensions", "Sender telemetry fields"],
+  "limitations": ["Physical capture, audio and frame timing acceptance remains NOT_RUN"]
+}

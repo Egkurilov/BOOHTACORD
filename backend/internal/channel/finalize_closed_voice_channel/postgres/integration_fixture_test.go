@@ -2,11 +2,10 @@ package finalizeclosedvoicechannelpostgres
 
 import (
 	"context"
-	"net"
-	"os"
 	"strings"
 	"testing"
 	"time"
+	postgresfixture "voice-platform/backend/internal/testsupport/postgres"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -22,50 +21,9 @@ type integrationFixture struct {
 
 func newIntegrationFixture(t *testing.T) integrationFixture {
 	t.Helper()
-	databaseURL := os.Getenv("VOICE_PLATFORM_TEST_DATABASE_URL")
-	if databaseURL == "" {
-		t.Skip("VOICE_PLATFORM_TEST_DATABASE_URL is not configured")
-	}
-	config, err := pgxpool.ParseConfig(databaseURL)
-	if err != nil {
-		t.Fatal("parse test database URL:", err)
-	}
-	if host := net.ParseIP(config.ConnConfig.Host); host == nil || !host.IsLoopback() {
-		t.Fatal("test database must use a loopback IP address")
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
-	admin, err := pgxpool.NewWithConfig(ctx, config)
-	if err != nil {
-		t.Fatal("open test database:", err)
-	}
-	if err := admin.Ping(ctx); err != nil {
-		admin.Close()
-		t.Fatal("ping test database:", err)
-	}
-	schema := "voice_finalize_" + strings.ReplaceAll(uuid.NewString(), "-", "")
-	if _, err := admin.Exec(ctx, "CREATE SCHEMA "+schema); err != nil {
-		admin.Close()
-		t.Fatal("create test schema:", err)
-	}
-	isolated := config.Copy()
-	if isolated.ConnConfig.RuntimeParams == nil {
-		isolated.ConnConfig.RuntimeParams = make(map[string]string)
-	}
-	isolated.ConnConfig.RuntimeParams["search_path"] = schema
-	pool, err := pgxpool.NewWithConfig(ctx, isolated)
-	if err != nil {
-		t.Fatal("open isolated test pool:", err)
-	}
-	t.Cleanup(func() {
-		pool.Close()
-		cleanupCtx, stop := context.WithTimeout(context.Background(), 10*time.Second)
-		defer stop()
-		if _, err := admin.Exec(cleanupCtx, "DROP SCHEMA "+schema+" CASCADE"); err != nil {
-			t.Errorf("drop isolated test schema: %v", err)
-		}
-		admin.Close()
-	})
+	pool := postgresfixture.New(t, ctx, "VOICE_PLATFORM_TEST_DATABASE_URL", postgresfixture.LoopbackIP)
 	if err := migrate.Run(ctx, pool); err != nil {
 		t.Fatal("run migrations:", err)
 	}

@@ -1,0 +1,42 @@
+import 'dart:async';
+
+import '../../models.dart';
+import '../../services/native_notifications.dart';
+import '../../features/session/lifecycle/controller.dart';
+import '../../features/workspace/lifecycle/controller.dart';
+import '../../features/profile/state/controller.dart';
+import '../../features/voice/lifecycle/controller.dart';
+import '../../features/voice/roster_state/controller.dart';
+import '../../features/realtime/lifecycle/controller.dart';
+import '../composition/owners.dart';
+
+extension AppAccountInitialization on AppOwners {
+  Future<void> initializePlatform() async {
+    final ticket = session.scope.capture();
+    await voice.loadVoiceStreamSoundPreference();
+    if (!ticket.isActive) return;
+    await nativeNotifications.initialize();
+    if (!ticket.isActive) return;
+    maintenance.start();
+  }
+
+  Future<void> prepareAccount(SessionUser account) async {
+    final ticket = session.scope.capture();
+    await nativeNotifications.useAccount(account.accountId);
+    if (!ticket.isActive) return;
+    await voice.loadAudioPreferences(account.accountId);
+  }
+
+  Future<void> loadWorkspace() async {
+    final ticket = session.scope.capture();
+    await Future.wait([
+      workspace.refreshTopology(),
+      workspace.refreshMembers(),
+      workspace.refreshDirectMessages(),
+      profileOwner.refreshProfile(),
+    ]);
+    if (!ticket.isActive || session.phase != AppPhase.ready) return;
+    voiceRoster.start();
+    unawaited(realtime.connect());
+  }
+}

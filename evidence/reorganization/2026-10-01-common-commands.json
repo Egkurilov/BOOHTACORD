@@ -1,0 +1,22 @@
+{
+  "id": "reorganization-common-commands-2026-10-01",
+  "kind": "native-verification",
+  "status": "PASS",
+  "checks": {
+    "toolchain_declarations_and_drift_negatives": "PASS",
+    "task_3_53_1_lists_entrypoints": "PASS",
+    "doctor_native_versions": "PASS",
+    "web_common_entrypoint": {"tests": 721, "build": "PASS"},
+    "flutter_common_entrypoint": {
+      "app_tests": 346, "livekit_vendor_tests": 431, "livekit_vendor_skipped": 1,
+      "webrtc_vendor_tests": 18, "analyze": "No issues found"
+    },
+    "database_version_and_unsafe_target_negative_tests": "PASS",
+    "postgres_real_version_check": 170006,
+    "contracts_and_traceability": "PASS"
+  },
+  "limitations": [
+    "Existing upstream LiveKit skip remains visible; vendor tests are not physical media acceptance.",
+    "Common backend command is additionally required in the next Linux build receipt."
+  ]
+}

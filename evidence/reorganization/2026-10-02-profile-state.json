@@ -1,0 +1,15 @@
+{
+  "id": "reorganization-profile-state-2026-10-02",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "scope": "Profile data, edits and avatar state extracted behind the AppState facade",
+  "checks": {
+    "profile_and_existing_app_state_tests": 49,
+    "flutter_analyze": "PASS",
+    "local_dart_import_guard": "PASS",
+    "late_profile_after_logout": "PASS",
+    "late_avatar_upload_after_account_replacement": "PASS",
+    "dispose_during_profile_load": "PASS"
+  },
+  "limitations": ["Remaining conversation, realtime and media owners are subsequent packets"]
+}

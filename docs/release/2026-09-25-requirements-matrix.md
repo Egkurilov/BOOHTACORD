@@ -1,6 +1,6 @@
 # Матрица требований для решения о выпуске
 
-Исторический срез: 26.09.2026. Число пакетов и статусы ниже отражают этот день; актуальные открытые задачи ведутся в [TODO](../../TODO.md), выполненные BE-19/20 — в [DONE_RECENT](../../DONE_RECENT.md). Delivery baseline `269da65` подтверждён trusted [run #1653749](../../evidence/release/qa11-gitverse-oci-2026-09-26-001.json); BE-18/FE-48/49 опубликованы trusted [run #1655044](../../evidence/release/voice-roster-stream-signal-deploy-2026-09-26-001.json), FE-50 — trusted [run #1655140](../../evidence/release/qa07-viewer-fps-source-deploy-2026-09-26-001.json). Источник требований — утверждённый `C:\Users\egkur\Downloads\TZ_Voice_Platform_v1.0.md` с [ADR-010](../adr/ADR-010-gitverse-delivery.md) для REQ-DEPLOY-01. Ни один `LOCAL` или `PARTIAL` в этой таблице не равен выпускному PASS. `LOCAL` означает проверку кода в локальном окружении; `PARTIAL` — часть сценария; `NOT_RUN` — применимая проверка ещё не выполнена; `BLOCKED` — нужен внешний host, устройство или утверждённый контракт; `FAIL` — измеренный провал критерия. Текущий выпускной вердикт — **NO-GO**.
+Исторический срез: 26.09.2026. Число пакетов и статусы ниже отражают этот день; актуальные открытые задачи ведутся в [TODO](../history/status/TODO-2026-09-30.md), выполненные BE-19/20 — в [DONE_RECENT](../history/status/DONE_RECENT-2026-09.md). Delivery baseline `269da65` подтверждён trusted [run #1653749](../../evidence/release/qa11-gitverse-oci-2026-09-26-001.json); BE-18/FE-48/49 опубликованы trusted [run #1655044](../../evidence/release/voice-roster-stream-signal-deploy-2026-09-26-001.json), FE-50 — trusted [run #1655140](../../evidence/release/qa07-viewer-fps-source-deploy-2026-09-26-001.json). Источник требований — утверждённый `C:\Users\egkur\Downloads\TZ_Voice_Platform_v1.0.md` с [ADR-010](../adr/ADR-010-gitverse-delivery.md) для REQ-DEPLOY-01. Ни один `LOCAL` или `PARTIAL` в этой таблице не равен выпускному PASS. `LOCAL` означает проверку кода в локальном окружении; `PARTIAL` — часть сценария; `NOT_RUN` — применимая проверка ещё не выполнена; `BLOCKED` — нужен внешний host, устройство или утверждённый контракт; `FAIL` — измеренный провал критерия. Текущий выпускной вердикт — **NO-GO**.
 
 | Требование | Текущее подтверждение | Для выпускного PASS |
 | --- | --- | --- |
@@ -44,10 +44,10 @@
 | REQ-QUALITY-01 · Latency/capacity цели | NOT_RUN | Измерить p95 join/message/switch/recovery, FPS и нагрузку [QA] |
 | REQ-QUALITY-02 · Выпускные гейты | NO-GO на срез 26.09: 17 пакетов TODO были открыты; P0 production headroom восстановлен, но sustained capacity и DES/QA ещё не имеют полного PASS [TODO], [QA-08-RECOVERED] | Закрыть применимые DES/QA с PASS, затем повторить решение [QA] |
 
-Сквозной счёт: **39/39 ID отражены**; QA-01/04 имеют trusted CI PASS, но обязательные media, capacity, browser, live rollback и release проверки ещё не имеют PASS. Исторический счёт TODO на 26.09: **52/69 закрыто, 17/69 открыто**; актуальный статус — в [TODO](../../TODO.md). Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
+Сквозной счёт: **39/39 ID отражены**; QA-01/04 имеют trusted CI PASS, но обязательные media, capacity, browser, live rollback и release проверки ещё не имеют PASS. Исторический счёт TODO на 26.09: **52/69 закрыто, 17/69 открыто**; актуальный статус — в [TODO](../history/status/TODO-2026-09-30.md). Статусы пересматриваются по новым evidence; таблица сама не закрывает QA-14.
 
-[DONE]: ../../DONE.md
-[TODO]: ../../TODO.md
+[DONE]: ../history/status/DONE-2026-09-26.md
+[TODO]: ../history/status/TODO-2026-09-30.md
 [QA]: ../../backlog/VERIFICATION_TODO.md
 [DES]: ../design/GUILDCHAT_V1_TODO.md
 [QA-01]: ../../evidence/qa/qa01-qa04-trusted-gitverse-ci-2026-09-25-001.json

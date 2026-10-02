@@ -1,0 +1,20 @@
+{
+  "id": "reorganization-http-session-scope-2026-10-02",
+  "kind": "race-verification",
+  "status": "PASS",
+  "scope": "One shared session generation for feature HTTP exchanges and account lifecycle",
+  "checks": {
+    "full_flutter_tests": 363,
+    "focused_tests_with_additional_server_replacement_case": 12,
+    "old_login_cannot_overwrite_new_cookie": "PASS",
+    "old_401_cannot_expire_new_account": "PASS",
+    "closed_scope_rejects_private_requests_before_send": "PASS",
+    "server_A_B_A_does_not_revive_response": "PASS"
+  },
+  "implementation": [
+    "All 54 feature facade methods retain a request scope across async exchanges",
+    "Cookie writes are serialized and tied to account and server generation",
+    "Login, logout, password reset, maintenance and lease cleanup explicitly permit the closed lifecycle scope",
+    "A stale WebSocket connection is closed before it can be retained"
+  ]
+}

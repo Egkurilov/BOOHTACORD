@@ -1,0 +1,19 @@
+{
+  "id": "reorganization-documentation-paths-2026-10-02",
+  "kind": "repository-verification",
+  "source_base": "cce0fa29",
+  "source_state": "documentation, link guard and wrapper removal in the containing commit",
+  "environment": "Windows, Python 3.12, PowerShell 7, Docker Compose config without daemon",
+  "status": "PASS",
+  "checks": {
+    "command": "python -m tools.ci.native.contracts",
+    "python_tool_regressions": 74,
+    "documentation_links": 260,
+    "json_evidence_and_task_references": "PASS",
+    "contract_and_traceability": "PASS: 39 requirements",
+    "production_and_development_compose": "PASS",
+    "removed_forwarding_scripts": 75
+  },
+  "preserved": ["Existing backlog graph", "Dated TODO/DONE contents and prior acceptance limits", "Immutable ADR decisions", "Legacy retained-release compatibility paths"],
+  "limitations": ["Ignored design media artifacts are external evidence, not verified checkout files", "Historical absent reference-parity receipt is explicitly marked unavailable", "Existing observability deployment remains at docker/observability; no monitoring cutover was performed"]
+}

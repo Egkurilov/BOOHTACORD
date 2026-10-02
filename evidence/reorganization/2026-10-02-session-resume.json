@@ -1,0 +1,14 @@
+{
+  "id": "reorganization-session-resume-2026-10-02",
+  "kind": "lifecycle-verification",
+  "status": "PASS",
+  "scope": "Account operation invalidation and recovery after a failed logout",
+  "checks": {"full_flutter_tests": 372, "failed_logout_invalidates_then_resumes": "PASS"},
+  "behavior": [
+    "Pending view operations stop controlling busy flags when account admission closes",
+    "Uncertain optimistic sends retain retry identities with failed status",
+    "Realtime is closed before logout and reconnected if logout fails",
+    "Late old operations remain invalid after admission resumes"
+  ],
+  "limitations": ["Voice and screen capture lifecycle extraction is still in progress"]
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:boohtacord:release-manifest:1",
+  "title": "Immutable server release manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "release_id", "source_revision", "source_archive_sha256", "platform", "components", "files", "compatibility"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "release_id": {"$ref": "#/$defs/revision"},
+    "source_revision": {"$ref": "#/$defs/revision"},
+    "source_archive_sha256": {"$ref": "#/$defs/sha256"},
+    "platform": {"const": "linux/amd64"},
+    "components": {
+      "type": "object", "additionalProperties": false, "required": ["api", "web"],
+      "properties": {"api": {"$ref": "#/$defs/component"}, "web": {"$ref": "#/$defs/component"}}
+    },
+    "files": {
+      "type": "object", "additionalProperties": false,
+      "required": ["api.oci.tar", "web.oci.tar", "runtime.tar.gz", "checks.json"],
+      "properties": {
+        "api.oci.tar": {"$ref": "#/$defs/file"}, "web.oci.tar": {"$ref": "#/$defs/file"},
+        "runtime.tar.gz": {"$ref": "#/$defs/file"}, "checks.json": {"$ref": "#/$defs/file"}
+      }
+    },
+    "compatibility": {
+      "type": "object", "additionalProperties": false,
+      "required": ["migrations", "backend_tree", "contracts_sha256", "topology_sha256"],
+      "properties": {
+        "backend_tree": {"$ref": "#/$defs/revision"},
+        "contracts_sha256": {"$ref": "#/$defs/sha256"},
+        "topology_sha256": {"$ref": "#/$defs/sha256"},
+        "migrations": {"type": "object", "minProperties": 1,
+          "propertyNames": {"pattern": "^[0-9]{4}_[a-z0-9_]+\\.sql$"},
+          "additionalProperties": {"$ref": "#/$defs/sha256"}}
+      }
+    }
+  },
+  "$defs": {
+    "revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "file": {"type": "object", "additionalProperties": false, "required": ["sha256", "bytes"],
+      "properties": {"sha256": {"$ref": "#/$defs/sha256"}, "bytes": {"type": "integer", "minimum": 1, "maximum": 2000000000}}},
+    "component": {
+      "type": "object", "additionalProperties": false,
+      "required": ["archive", "index_digest", "manifest_digest", "attestation_predicates"],
+      "properties": {
+        "archive": {"enum": ["api.oci.tar", "web.oci.tar"]},
+        "index_digest": {"$ref": "#/$defs/digest"},
+        "manifest_digest": {"$ref": "#/$defs/digest"},
+        "attestation_predicates": {"type": "array", "uniqueItems": true, "items": {"type": "string"},
+          "allOf": [{"contains": {"const": "https://spdx.dev/Document"}}, {"contains": {"const": "https://slsa.dev/provenance/v0.2"}}]}
+      }
+    }
+  }
+}

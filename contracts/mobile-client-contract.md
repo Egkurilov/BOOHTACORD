@@ -4,9 +4,9 @@
 
 ## Канонические источники
 
-- Схемы HTTP-запросов и ответов: [`openapi.yaml`](./openapi.yaml) — JSON-документ OpenAPI 3.1, несмотря на расширение файла.
-- Схемы realtime-событий: [`realtime.schema.json`](./realtime.schema.json).
-- Эксплуатационное и media-поведение: [`../docs/API_AND_REALTIME.md`](../docs/API_AND_REALTIME.md).
+- Схемы HTTP-запросов и ответов: [`openapi.yaml`](openapi.yaml) — JSON-документ OpenAPI 3.1, несмотря на расширение файла.
+- Схемы realtime-событий: [`realtime.schema.json`](realtime.schema.json).
+- Эксплуатационное и media-поведение: [`../docs/API_AND_REALTIME.md`](../docs/architecture/api-and-realtime.md).
 
 Генерируйте REST-модели из `openapi.yaml`; этот документ объясняет мобильный lifecycle и не должен считаться дублирующим источником схем. Все идентификаторы — UUID-строки, timestamps — RFC 3339 `date-time`-строки, а request-схемы отклоняют дополнительные поля, если каноническая схема явно не разрешает иное.
 

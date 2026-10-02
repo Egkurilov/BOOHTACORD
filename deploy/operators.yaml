@@ -1,0 +1,92 @@
+services:
+  migrate:
+    image: ${API_IMAGE:?set API_IMAGE to a pinned image reference in .env}
+    entrypoint: ["/migrate"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-voice_platform}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-voice_platform}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [private]
+
+  bootstrap-admin:
+    profiles: [operator]
+    image: ${API_IMAGE:?set API_IMAGE to a pinned image reference in .env}
+    entrypoint: ["/bootstrap-admin"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-voice_platform}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-voice_platform}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [private]
+
+  recover-admin:
+    profiles: [operator]
+    image: ${API_IMAGE:?set API_IMAGE to a pinned image reference in .env}
+    entrypoint: ["/recover-admin"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-voice_platform}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-voice_platform}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [private]
+
+  recover-last-admin-access:
+    profiles: [operator]
+    image: ${API_IMAGE:?set API_IMAGE to a pinned image reference in .env}
+    entrypoint: ["/recover-last-admin-access"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-voice_platform}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-voice_platform}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [private]
+
+  maintenance-admission:
+    profiles: [operator]
+    image: ${API_IMAGE:?set API_IMAGE to a pinned image reference in .env}
+    entrypoint: ["/maintenance-admission"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-voice_platform}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-voice_platform}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [private]
+
+  cleanup-stale-staging:
+    profiles: [operator]
+    image: ${API_IMAGE:?set API_IMAGE to a pinned image reference in .env}
+    entrypoint: ["/cleanup-stale-staging"]
+    environment:
+      ATTACHMENTS_DIRECTORY: /var/lib/voice-platform/attachments
+    volumes:
+      - attachments-data:/var/lib/voice-platform/attachments
+    networks: [private]
+
+  cleanup-unattached-attachments:
+    profiles: [operator]
+    image: ${API_IMAGE:?set API_IMAGE to a pinned image reference in .env}
+    entrypoint: ["/cleanup-unattached-attachments"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-voice_platform}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-voice_platform}?sslmode=disable
+      ATTACHMENTS_DIRECTORY: /var/lib/voice-platform/attachments
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - attachments-data:/var/lib/voice-platform/attachments
+    networks: [private]
+
+  cleanup-hidden-attachments:
+    profiles: [operator]
+    image: ${API_IMAGE:?set API_IMAGE to a pinned image reference in .env}
+    entrypoint: ["/cleanup-hidden-attachments"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-voice_platform}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-voice_platform}?sslmode=disable
+      ATTACHMENTS_DIRECTORY: /var/lib/voice-platform/attachments
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - attachments-data:/var/lib/voice-platform/attachments
+    networks: [private]

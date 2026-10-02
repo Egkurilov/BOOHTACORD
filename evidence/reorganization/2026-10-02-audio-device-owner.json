@@ -1,0 +1,17 @@
+{
+  "id": "reorganization-audio-device-owner-2026-10-02",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "baseline_revision": "cd806e7b",
+  "owner": "clients/flutter/lib/src/features/audio/devices/controller.dart",
+  "preserved": ["Device selection and processing", "Android route adapters", "Preferences identifiers", "Public AppState properties"],
+  "checks": {
+    "new_owner_tests_failed_before_implementation": true,
+    "disposal_during_device_scan": "PASS",
+    "hotplug_supersedes_pending_scan": "PASS",
+    "focused_app_state_and_audio_tests": 54,
+    "flutter_analyze": "No issues found",
+    "new_leaf_size": "7 production files, maximum 79 lines"
+  },
+  "limitations": ["Physical audio-device acceptance remains NOT_RUN; no hardware capability claim"]
+}

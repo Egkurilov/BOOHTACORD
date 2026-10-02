@@ -1,0 +1,17 @@
+{
+  "id": "reorganization-conversation-state-2026-10-02",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "scope": "TEXT and DM history, pagination, optimistic sends, edits, read cursors and attachment upload",
+  "checks": {
+    "full_flutter_tests": 369,
+    "flutter_analyze": "PASS",
+    "local_dart_import_guard": "PASS",
+    "history_A_B_A_rejects_old_response": "PASS",
+    "late_upload_after_logout_is_rejected": "PASS",
+    "focused_races_after_navigation_revision_guard": 2
+  },
+  "baseline": "Both added race tests failed before extraction",
+  "preserved": ["TEXT/DM API and ACL separation", "Optimistic reconciliation and retry IDs", "Pagination and revision-conflict semantics"],
+  "limitations": ["Realtime and media lifecycle extraction remains subsequent work"]
+}

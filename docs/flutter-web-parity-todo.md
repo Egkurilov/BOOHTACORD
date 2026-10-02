@@ -1,6 +1,6 @@
 # Flutter ↔ web parity — только открытые задачи
 
-Source of truth: [parity map](flutter-web-parity.md). Реализованные admin, conversation и release APK leaves перенесены в [DONE_AUDIT_2026-09-27.md](../DONE_AUDIT_2026-09-27.md). Этот checklist входит в QA-13; local widget/source checks не закрывают device acceptance.
+Source of truth: [parity map](flutter-web-parity.md). Реализованные admin, conversation и release APK leaves перенесены в [DONE_AUDIT_2026-09-27.md](history/status/DONE_AUDIT-2026-09-27.md). Этот checklist входит в QA-13; local widget/source checks не закрывают device acceptance.
 
 ## P0 — Запуск приложения
 
@@ -348,7 +348,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-167](../evidence/flutter/qa167-flutter-preview-subscription-race-2026-10-01-001.json),
   [QA-168](../evidence/flutter/qa168-web-preview-selection-during-capture-2026-10-01-001.json),
   [QA-169](../evidence/flutter/qa169-screen-thumbnail-cross-client-source-and-test-audit-2026-10-01-001.json).
-  Сохранить `CanPublishData=false` согласно [ADR-013](../adr/ADR-013-room-scoped-screen-thumbnail-preview.md).
+  Сохранить `CanPublishData=false` согласно [ADR-013](adr/ADR-013-room-scoped-screen-thumbnail-preview.md).
 - [ ] Провести paired runtime acceptance thumbnail на Android→macOS и Android→web;
   отдельно проверить остановку/очистку, повторный выбор того же viewer и отсутствие
   лишней подписки/помехи голосу. Android app-only capture с локальным thumbnail
@@ -608,9 +608,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Flutter и исправить несуществующий `--gc-surface-base` в web rail —
   [QA-97](../evidence/flutter/qa97-flutter-web-design-token-parity-2026-09-29-001.json).
   Общий matched-screenshot/device gate остаётся открытым.
-- [x] Выровнять профиль по web CSS: centered 720 px content, 480 px form, 64 px avatar, responsive 24/16 px insets, 16 px page title, section dividers и toolbar без дублированного заголовка; desktop/mobile геометрия и route покрыты widget tests — [QA-49](../evidence/flutter/qa49-profile-geometry-web-parity-2026-09-28-001.json).
+- [x] Выровнять профиль по web CSS: centered 720 px content, 480 px form, 64 px avatar, responsive 24/16 px insets, 16 px page title, section dividers и toolbar без дублированного заголовка; clients/flutter/mobile геометрия и route покрыты widget tests — [QA-49](../evidence/flutter/qa49-profile-geometry-web-parity-2026-09-28-001.json).
 - [x] Выровнять maintenance banner по web CSS: минимум 44 px, текст 14/20 px,
-  поля 12/16 px и естественный перенос без обрезания; desktop/mobile viewport
+  поля 12/16 px и естественный перенос без обрезания; clients/flutter/mobile viewport
   проверены виджет-тестами —
   [QA-41](../evidence/flutter/qa41-maintenance-banner-web-geometry-2026-09-28-001.json).
   Matched screenshots на реальных платформах остаются в общем screenshot gate.
@@ -713,7 +713,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [x] Сделать Android CI regression gate для двух Gradle режимов и устранить
   конфигурационную несовместимость `flutter_background 1.3.1`: пакет vendored как
   локальный MIT fork без изменений Dart/native runtime, а его Android Gradle
-  script применяет KGP только в legacy режиме. `scripts/android_release/verify_android_kotlin_modes.sh`
+  script применяет KGP только в legacy режиме. `tools/verify/android_kotlin/verify_android_kotlin_modes.sh`
   собирает Debug при текущем `android.builtInKotlin=false` и через Gradle с
   `android.builtInKotlin=true`; оба режима прошли. Signed Release также прошёл
   в обоих режимах: split APK для трёх ABI в legacy и universal APK в built-in

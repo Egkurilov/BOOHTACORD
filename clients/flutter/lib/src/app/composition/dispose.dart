@@ -1,0 +1,18 @@
+import 'owners.dart';
+
+void disposeOwners(AppOwners app) {
+  app.disposed = true;
+  app.api.onUnauthorized = null;
+  app.session.dispose();
+  app.realtime.dispose();
+  app.voiceRoster.dispose();
+  app.profileOwner.dispose();
+  app.workspace.dispose();
+  app.conversation.dispose();
+  app.nativeNotifications.dispose();
+  app.maintenance.dispose();
+  app.reset.dispose();
+  app.voice.dispose();
+  app.screen.dispose();
+  app.audioDevices.dispose();
+}

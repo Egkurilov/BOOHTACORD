@@ -18,86 +18,30 @@ jobs:
         with:
           # Keep the release publisher in the CI checkout for its HTTP contract tests.
           sparse-checkout: |
-            desktop
-            scripts/android_release
+            clients/flutter
+            tools
+            contracts
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.47.5
           channel: stable
           cache: true
-      - name: Verify installed Flutter 3.47.5
-        shell: powershell
-        run: |
-          $versionOutput = @(flutter --version)
-          if ($LASTEXITCODE -ne 0 -or (($versionOutput -join "`n") -notmatch '(?m)^Flutter 3\.47\.5\b')) {
-            throw "Expected Flutter 3.47.5, got $($versionOutput -join ' ')"
-          }
-      - name: Resolve locked Flutter dependencies
-        working-directory: desktop
-        shell: powershell
-        run: |
-          flutter pub get --enforce-lockfile
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Point CMake at Windows plugin sources
-        working-directory: desktop
-        shell: powershell
-        run: |
-          # Flutter creates plugin links; this host's CMake cannot read through them.
-          $metadata = Get-Content -Raw .flutter-plugins-dependencies | ConvertFrom-Json
-          $cmakeFile = Join-Path (Get-Location) 'windows\flutter\generated_plugins.cmake'
-          $content = [System.IO.File]::ReadAllText($cmakeFile)
-          $sourceLines = @()
-          foreach ($plugin in $metadata.plugins.windows) {
-            $pluginRoot = [System.IO.Path]::GetFullPath($plugin.path)
-            $pluginCMake = Join-Path $pluginRoot 'windows\CMakeLists.txt'
-            if (-not (Test-Path -LiteralPath $pluginCMake)) { continue }
-            if ($plugin.name -notmatch '^[a-z0-9_]+$' -or $pluginRoot -match '[";]') { throw 'Unsupported plugin name or path' }
-            $sourceLines += "set(BOOHTACORD_PLUGIN_SOURCE_$($plugin.name) `"$($pluginRoot.Replace('\','/'))`")"
-          }
-          $pluginPath = 'flutter/ephemeral/.plugin_symlinks/${plugin}/windows'
-          $ffiPath = 'flutter/ephemeral/.plugin_symlinks/${ffi_plugin}/windows'
-          if (-not $content.Contains($pluginPath) -or -not $content.Contains($ffiPath)) { throw 'Unexpected generated CMake file' }
-          $content = $content.Replace($pluginPath, '"${BOOHTACORD_PLUGIN_SOURCE_${plugin}}/windows"')
-          $content = $content.Replace($ffiPath, '"${BOOHTACORD_PLUGIN_SOURCE_${ffi_plugin}}/windows"')
-          [System.IO.File]::WriteAllText($cmakeFile, (($sourceLines -join "`n") + "`n" + $content), [System.Text.UTF8Encoding]::new($false))
-      - name: Run Flutter tests
-        working-directory: desktop
-        shell: powershell
-        run: |
-          flutter test --no-pub
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Test GitHub Android release publisher
-        shell: powershell
-        run: |
-          node --version
-          if ($LASTEXITCODE -ne 0) { throw 'Node.js is required for the release publisher tests.' }
-          node --test scripts/android_release/publish.test.mjs scripts/android_release/publish_retries.test.mjs scripts/android_release/publish_conflicts.test.mjs
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Analyze Flutter client
-        working-directory: desktop
-        shell: powershell
-        run: |
-          flutter analyze --no-pub --no-fatal-infos
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Build Windows release client
-        working-directory: desktop
-        shell: powershell
-        run: |
-          flutter build windows --release --no-pub
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Verify complete Windows release directory
-        shell: powershell
-        run: |
-          $release = 'desktop/build/windows/x64/runner/Release'
-          foreach ($required in @('boohtacord_desktop.exe', 'flutter_windows.dll', 'libwebrtc.dll', 'data/flutter_assets')) {
-            if (-not (Test-Path -LiteralPath (Join-Path $release $required))) {
-              throw "Windows release is missing $required"
-            }
-          }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Test and analyze app and vendor packages
+        run: python -m tools.ci.native.flutter
+      - name: Test GitHub release publisher
+        run: node --test tools/release/android/publish.test.mjs tools/release/android/publish_retries.test.mjs tools/release/android/publish_conflicts.test.mjs
+      - name: Build and inspect Windows distribution
+        run: python -m tools.build.windows.run
       - name: Retain Windows build as workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: BOOHTACORD-windows-x64-${{ github.sha }}
-          path: desktop/build/windows/x64/runner/Release/
+          path: clients/flutter/build/windows/x64/runner/Release/
           if-no-files-found: error
           retention-days: 30

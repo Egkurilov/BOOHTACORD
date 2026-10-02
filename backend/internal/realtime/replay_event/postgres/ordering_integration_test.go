@@ -3,43 +3,19 @@ package replayeventpostgres
 import (
 	"context"
 	"os"
-	"strings"
 	"testing"
 	"time"
+	postgresfixture "voice-platform/backend/internal/testsupport/postgres"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
 func TestConcurrentAppendAllocatesSequenceInCommitOrder(t *testing.T) {
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL is required")
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	admin, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer admin.Close()
-	schema := "be14order_" + strings.ReplaceAll(uuid.NewString(), "-", "")
-	if _, err := admin.Exec(ctx, "CREATE SCHEMA "+schema); err != nil {
-		t.Fatal(err)
-	}
-	defer admin.Exec(context.Background(), "DROP SCHEMA "+schema+" CASCADE")
-	config, err := pgxpool.ParseConfig(url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	config.ConnConfig.RuntimeParams["search_path"] = schema
-	config.ConnConfig.RuntimeParams["application_name"] = schema
-	db, err := pgxpool.NewWithConfig(ctx, config)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
+	db := postgresfixture.New(t, ctx, "TEST_DATABASE_URL", postgresfixture.LoopbackOrLocalhost)
+	schema := db.Config().ConnConfig.RuntimeParams["search_path"]
 	migration, err := os.ReadFile("../../../database/migrate/migrations/0036_create_realtime_events.sql")
 	if err != nil {
 		t.Fatal(err)

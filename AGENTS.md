@@ -17,7 +17,7 @@
 
 1. Select one leaf task in `backlog/tasks.yaml`, read its dependencies and tests, and preserve existing behavior.
 2. Write or update focused tests before the implementation. Keep files responsibility-focused and do not place executable behavior under an aggregate directory.
-3. Run the nearest native test plus `scripts/verify-spec-traceability.ps1` when requirements or backlog change, and `scripts/verify-contracts.ps1` when contracts change.
+3. Run the nearest native test plus `tools/verify/spec_traceability/verify-spec-traceability.ps1` when requirements or backlog change, and `tools/verify/contracts/verify-contracts.ps1` when contracts change.
 4. Add an evidence record for POC, integration, load and release-gate work. `NOT_RUN` and `BLOCKED` are valid outcomes, but cannot close a gate.
 5. Before staging, inspect `git status --short` and the changed file sizes. Never stage generated media, secrets, `.env`, database volumes or the entire root blindly.
 

@@ -1,0 +1,56 @@
+name: Install retained release
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Successful master Build server run ID
+        required: true
+        type: string
+      revision:
+        description: Exact full source revision from that build
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: v-bootybay-production
+  cancel-in-progress: false
+
+jobs:
+  install:
+    if: github.ref == 'refs/heads/master'
+    environment: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      DEPLOY_SERVER_IP: 176.108.242.211
+      SSH_USER: shaneque
+    steps:
+      - uses: actions/checkout@v4
+      - id: producer
+        env:
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+          REQUESTED_REVISION: ${{ inputs.revision }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 -m tools.release.delivery.provenance
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.producer.outputs.revision }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: server-${{ steps.producer.outputs.revision }}
+          path: .out/incoming
+          run-id: ${{ steps.producer.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - env:
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: bash tools/release/ssh/configure-deploy-ssh.sh
+      - env:
+          RELEASE_REVISION: ${{ steps.producer.outputs.revision }}
+          BUNDLE_DIRECTORY: .out/incoming
+        run: bash tools/release/delivery/transfer.sh

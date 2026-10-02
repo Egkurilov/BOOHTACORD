@@ -1,0 +1,20 @@
+{
+  "id": "reorganization-session-lifecycle-2026-10-02",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "scope": "Flutter session restoration, authentication, logout and server change ownership",
+  "checks": {
+    "full_flutter_tests": 356,
+    "flutter_analyze": "PASS",
+    "focused_session_tests_after_extra_401_regression": 6,
+    "late_restore_after_logout": "PASS",
+    "new_login_waits_for_teardown": "PASS",
+    "logout_closes_admission_before_async_work": "PASS",
+    "reentrant_401_during_failed_logout": "PASS",
+    "disposed_restore_does_not_notify": "PASS"
+  },
+  "limitations": [
+    "Other feature owners must adopt the shared scope in subsequent packets",
+    "This is lifecycle test evidence, not physical media acceptance"
+  ]
+}

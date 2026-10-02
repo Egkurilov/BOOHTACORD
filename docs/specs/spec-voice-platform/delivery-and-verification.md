@@ -11,8 +11,8 @@ Run from the repository root when the respective runtime is available:
 ```powershell
 Push-Location backend; go test ./...; go vet ./...; go build -o $env:TEMP\voice-platform-api.exe ./cmd/api; Pop-Location
 Push-Location frontend; npm test; npm run build; Pop-Location
-& .\scripts\verify-contracts.ps1
-& .\scripts\verify-spec-traceability.ps1
+& .\tools\verify\contracts\verify-contracts.ps1
+& .\tools\verify\spec_traceability\verify-spec-traceability.ps1
 docker compose --env-file .env.example -f compose.yaml config --quiet
 ```
 

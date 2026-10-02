@@ -1,0 +1,26 @@
+{
+  "id": "reorganization-signed-delivery-driver-2026-10-02",
+  "kind": "integration-verification",
+  "status": "PASS",
+  "source_revision": "11b149ca6eebe067bbc57632ca37f634d28ead8a",
+  "previous_revision": "ee77e185c4a101fb78fdba44c1e70be30550f40e",
+  "checks": {
+    "go_tests": 818,
+    "go_skipped": 0,
+    "web_tests": 721,
+    "tools_python_tests": 55,
+    "full_pinned_release_guards": "PASS",
+    "pinned_compose_download_retry": "PASS",
+    "delivery_checksum_and_forward_history_negatives": "PASS",
+    "stale_current_revision_actual_installer": "Rejected before rollout; running source preserved",
+    "trusted_driver_actual_install": "PASS",
+    "signed_rehearsal_and_return_to_current": "PASS",
+    "no_compilers_or_build_calls_during_install": "Enforced by staging command wrappers"
+  },
+  "environment": "Isolated boohtacord-reorg-install-stage Docker daemon on Hetzner",
+  "limitations": [
+    "GitHub protected signing key and production trust are not yet provisioned",
+    "New production workflow execution remains NOT_RUN",
+    "No production mutation or physical media acceptance"
+  ]
+}

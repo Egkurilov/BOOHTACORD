@@ -1,0 +1,37 @@
+{
+  "id": "reorganization-server-builder-2026-10-01",
+  "kind": "artifact-verification",
+  "status": "PASS",
+  "source_revision": "800d3408918467e655fc7c4acf6fb594cb8aa480",
+  "environment": "Separate disposable checkout on Hetzner; PostgreSQL 17.6; Go 1.26.4; Node 24.18.0",
+  "checks": {
+    "backend_tests": {"passed": 818, "skipped": 0, "failed": 0},
+    "backend_vet_and_build": "PASS",
+    "web_tests": 721,
+    "web_typecheck_and_build": "PASS",
+    "contracts_toolchains_traceability": "PASS",
+    "same_source_sha_gate_receipts": "PASS",
+    "oci_blobs_subjects_revision_and_source_checksums": "PASS",
+    "spdx_sbom_and_slsa_v0_2_provenance": "PASS",
+    "built_api_migrations_run_twice": "PASS",
+    "built_api_operator_binaries_present": "PASS",
+    "built_maintenance_admission_enable_disable": "PASS",
+    "built_api_http_health": "PASS",
+    "built_web_png_content_type_and_magic": "PASS",
+    "signed_manifest_verification": "PASS"
+  },
+  "artifacts": {
+    "api_index_digest": "sha256:490045a3bbd27475c4aba4177a0cad2a8294ea1d4812f953b0d89d79d36363e3",
+    "web_index_digest": "sha256:ff13faddc61b6ebc9392169f61cc01ff1166c203c1c86641be1e138b7492e584",
+    "api_oci_bytes": 38274048,
+    "web_oci_bytes": 22128128,
+    "runtime_archive_bytes": 19488,
+    "complete_bundle_bytes": 58582876
+  },
+  "preservation": {"api_routes_before": 65, "api_routes_after": 65, "protected_routes_exercised": 55, "migration_changes": 0},
+  "limitations": [
+    "The bundle is signed with an ephemeral staging key; it is not a production release.",
+    "Staging installation and compatible rollback are separate pending gates.",
+    "Media hardware acceptance and Flutter frame/rebuild measurements were not run."
+  ]
+}

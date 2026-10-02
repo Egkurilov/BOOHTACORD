@@ -1,0 +1,63 @@
+name: Build server
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'backend/**'
+      - 'clients/web/**'
+      - 'contracts/**'
+      - 'deploy/**'
+      - 'tools/**'
+      - '.github/workflows/**'
+      - '.node-version'
+      - 'Taskfile.yml'
+      - '.env.example'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: server-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    uses: ./.github/workflows/ci-backend.yaml
+    with:
+      release_receipt: true
+  web:
+    uses: ./.github/workflows/ci-frontend.yaml
+    with:
+      release_receipt: true
+  contracts:
+    uses: ./.github/workflows/ci-contracts.yaml
+    with:
+      release_receipt: true
+  bundle:
+    if: github.ref == 'refs/heads/master'
+    needs: [backend, web, contracts]
+    environment: production
+    runs-on: [self-hosted, linux, x64, boohtacord-hetzner]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: check-*-${{ github.sha }}
+          path: .out/checks
+          merge-multiple: true
+      - name: Build, attest, smoke-test and sign the immutable bundle
+        env:
+          RELEASE_SIGNING_PRIVATE_KEY: ${{ secrets.RELEASE_SIGNING_PRIVATE_KEY }}
+        run: bash tools/release/delivery/build.sh
+      - name: Retain the exact verified release
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-${{ github.sha }}
+          path: |
+            .out/releases/${{ github.sha }}.release.tar.gz
+            .out/releases/${{ github.sha }}.release.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30

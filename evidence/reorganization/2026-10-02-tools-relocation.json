@@ -1,0 +1,27 @@
+{
+  "id": "reorganization-tools-relocation-2026-10-02",
+  "kind": "refactor-verification",
+  "status": "PASS",
+  "baseline_revision": "be717b72fdda61a8b01156adb49bd1b4f389ef7d",
+  "scope": "Canonical tools ownership and temporary forwarding entrypoints",
+  "checks": {
+    "native_contracts_windows_linux": "PASS",
+    "python_tests": 45,
+    "android_publisher_tests": 6,
+    "shell_fake_host_suites": 17,
+    "macos_package_fake_host": "PASS",
+    "poc_evidence_positive_and_negative": "PASS",
+    "legacy_powershell_wrapper": "PASS",
+    "executable_modes_preserved": 3,
+    "github_baseline_ci": "36928625926 success"
+  },
+  "preserved": [
+    "76 tools physically relocated; forwarding wrappers preserve older callers",
+    "Runtime bundle excludes source-build entrypoints",
+    "No production deployment or infrastructure mutation"
+  ],
+  "limitations": [
+    "Pinned Compose bootstrap download returned HTTP 500 from GitHub; local installed Compose configuration check passed",
+    "macOS packaging test uses substituted platform tools, not native distribution acceptance"
+  ]
+}
