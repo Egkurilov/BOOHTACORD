@@ -16,6 +16,9 @@ mixin AppVoiceVolumesAccess on AppOwners {
   bool screenShareAudioMuted(RemoteParticipant participant) =>
       voice.screenShareAudioMuted(participant);
 
+  Future<void> toggleScreenShareAudio(RemoteParticipant participant) =>
+      voice.toggleScreenShareAudio(participant);
+
   Future<void> setScreenShareAudioMuted(
     RemoteParticipant participant,
     bool muted,

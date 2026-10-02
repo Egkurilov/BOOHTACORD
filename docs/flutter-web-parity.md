@@ -21,6 +21,18 @@ plugin tests pass, and macOS Debug builds — [QA-209](../evidence/flutter/qa209
 This is a plausible cause, not yet a reproduced diagnosis. Live
 appearance/playback/unpublish acceptance remains open as FE-61.
 
+FE-69 screen-audio parity was runtime-checked on Android Emulator API 35 with
+the current Web/Mac-published stream. The emulator had an older signed APK
+(`1.0.23+2037`); after an in-place update to `1.0.25+2039`, Flutter recognized
+the screen-audio track and exposed its mute and 0–200% gain controls. The
+receiver UI changed to 50% and 0%, mute toggled, and the zero-volume enable
+action restored 100%; the publisher was left running and the Android test
+listener left the room afterward — [QA-233](../evidence/flutter/qa233-flutter-screen-audio-live-emulator-2026-10-02-001.json).
+The emulator's audible output was not directly captured, so verify the actual
+audible effect of mute and gain before closing FE-69. On auto-joining the
+voice channel, the Android mic control was initially enabled; it was muted
+immediately and remained muted until the test listener disconnected.
+
 The Flutter first-frame gate also rejects delayed callbacks from a previously
 selected track after the viewer switches sources. A test failed before the fix;
 the full suite (409), macOS Debug build, and Android arm64 Debug build pass —

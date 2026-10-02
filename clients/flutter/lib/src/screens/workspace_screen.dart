@@ -19,6 +19,7 @@ import '../services/voice_avatar_palette.dart';
 import '../services/voice_participant_presentation.dart';
 import '../services/screen_thumbnail.dart';
 import '../features/voice/screen_viewer/audio_publication.dart';
+import '../features/voice/screen_viewer/audio_controls.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
 import '../widgets/noise_suppression_settings.dart';
@@ -4634,11 +4635,8 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                             onToggleScreenAudio: selectedScreen == null
                                 ? null
                                 : () => unawaited(
-                                    state.setScreenShareAudioMuted(
+                                    state.toggleScreenShareAudio(
                                       selectedScreen,
-                                      !state.screenShareAudioMuted(
-                                        selectedScreen,
-                                      ),
                                     ),
                                   ),
                             onScreenAudioVolumeChanged:
@@ -5480,98 +5478,15 @@ class _VoiceScreenViewer extends StatelessWidget {
     ),
   );
 
-  Widget get _audioControls {
-    if (showingLocalScreen) {
-      return const Padding(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            'Предпросмотр собственного экрана без звука.',
-            style: TextStyle(color: GcColors.muted, fontSize: 12),
-          ),
-        ),
-      );
-    }
-    if (!screenAudioAvailable) {
-      return const Padding(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            'У демонстрации нет аудиодорожки.',
-            style: TextStyle(color: GcColors.muted, fontSize: 12),
-          ),
-        ),
-      );
-    }
-    if (screenAudioVolume == null) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: Row(
-          children: [
-            IconButton(
-              tooltip: screenAudioMuted
-                  ? 'Включить звук демонстрации'
-                  : 'Выключить звук демонстрации',
-              onPressed: deafened ? null : onToggleScreenAudio,
-              icon: Icon(
-                screenAudioMuted || deafened
-                    ? Icons.volume_off_outlined
-                    : Icons.volume_up_outlined,
-              ),
-            ),
-            const Expanded(
-              child: Text(
-                'Личная настройка громкости недоступна.',
-                style: TextStyle(color: GcColors.muted, fontSize: 12),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-      child: Row(
-        children: [
-          IconButton(
-            tooltip: screenAudioMuted
-                ? 'Включить звук демонстрации'
-                : 'Выключить звук демонстрации',
-            onPressed: deafened ? null : onToggleScreenAudio,
-            icon: Icon(
-              screenAudioMuted || deafened
-                  ? Icons.volume_off_outlined
-                  : Icons.volume_up_outlined,
-            ),
-          ),
-          SizedBox(
-            width: 220,
-            child: Text(
-              deafened
-                  ? 'Удалённый звук выключен.'
-                  : 'Громкость аудиодорожки · $screenAudioVolume%',
-              style: const TextStyle(color: GcColors.textSecondary),
-            ),
-          ),
-          Expanded(
-            child: Slider(
-              value: screenAudioVolume!.toDouble(),
-              min: 0,
-              max: 200,
-              divisions: 200,
-              semanticFormatterCallback: (value) =>
-                  '${value.round()} процентов',
-              onChanged: deafened
-                  ? null
-                  : (value) => onScreenAudioVolumeChanged!(value.round()),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget get _audioControls => VoiceScreenAudioControls(
+    showingLocalScreen: showingLocalScreen,
+    screenAudioAvailable: screenAudioAvailable,
+    screenAudioVolume: screenAudioVolume,
+    screenAudioMuted: screenAudioMuted,
+    deafened: deafened,
+    onToggleScreenAudio: onToggleScreenAudio,
+    onScreenAudioVolumeChanged: onScreenAudioVolumeChanged,
+  );
 
   Widget? get _streamRail {
     if (screens.isEmpty && !localScreenAvailable) return null;
@@ -5720,21 +5635,21 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
                   ),
                   if (hasAudio)
                     IconButton(
-                      tooltip: state.screenShareAudioMuted(participant)
+                      tooltip:
+                          state.screenShareAudioMuted(participant) ||
+                              screenVolume == 0
                           ? 'Включить звук'
                           : 'Выключить звук',
                       visualDensity: VisualDensity.compact,
                       onPressed: state.deafened
                           ? null
                           : () => unawaited(
-                              state.setScreenShareAudioMuted(
-                                participant,
-                                !state.screenShareAudioMuted(participant),
-                              ),
+                              state.toggleScreenShareAudio(participant),
                             ),
                       icon: Icon(
                         state.deafened ||
-                                state.screenShareAudioMuted(participant)
+                                state.screenShareAudioMuted(participant) ||
+                                screenVolume == 0
                             ? Icons.volume_off_outlined
                             : Icons.volume_up_outlined,
                         size: 18,
@@ -5781,21 +5696,24 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
                   children: [
                     const Icon(Icons.volume_down_outlined, size: 18),
                     Expanded(
-                      child: Slider(
-                        value: screenVolume.toDouble(),
-                        min: 0,
-                        max: 200,
-                        divisions: 200,
-                        semanticFormatterCallback: (value) =>
-                            '${value.round()} процентов',
-                        onChanged: state.deafened
-                            ? null
-                            : (value) => unawaited(
-                                state.setScreenShareVolume(
-                                  participant,
-                                  value.round(),
+                      child: Semantics(
+                        label: 'Громкость звука выбранной демонстрации',
+                        child: Slider(
+                          value: screenVolume.toDouble(),
+                          min: 0,
+                          max: 200,
+                          divisions: 200,
+                          semanticFormatterCallback: (value) =>
+                              '${value.round()} процентов',
+                          onChanged: state.deafened
+                              ? null
+                              : (value) => unawaited(
+                                  state.setScreenShareVolume(
+                                    participant,
+                                    value.round(),
+                                  ),
                                 ),
-                              ),
+                        ),
                       ),
                     ),
                   ],

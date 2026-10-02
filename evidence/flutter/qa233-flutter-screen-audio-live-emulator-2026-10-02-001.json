@@ -1,0 +1,67 @@
+{
+  "id": "QA-233",
+  "date": "2026-10-02",
+  "task": "FE-69 / T-030 / T-051",
+  "source_revision": "cd9888fc",
+  "working_tree_changes_at_build": true,
+  "client_pair": "Web/Mac screen publisher → Android Flutter receiver",
+  "previous_emulator_version": "1.0.23+2037",
+  "result_version": "1.0.25+2039",
+  "finding": "The Android receiver previously showed no screen-audio track and no per-stream controls. On the updated build, the active publisher's screen-audio track was recognized and receiver-only controls appeared.",
+  "release_build": {
+    "command": "flutter build apk --release --split-per-abi --no-pub --build-name=1.0.25 --build-number=39",
+    "result": "PASS",
+    "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
+    "size_bytes": 40320964,
+    "sha256": "626df123a17004eb7439188e62729900c820d7754f4a22bc2b75bdc19bd3b065",
+    "android_version_code": 2039,
+    "certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b",
+    "installed_certificate_match": "PASS",
+    "installation": "PASS_IN_PLACE_NO_DATA_REMOVAL",
+    "launch": "PASS"
+  },
+  "verification": {
+    "focused_flutter_tests": {
+      "result": "PASS",
+      "passed": 10,
+      "cases": [
+        "screen-audio visibility and 0–200% controls",
+        "deafen disables per-stream controls",
+        "local preview and absent/unavailable track copy",
+        "zero gain enables correctly and restores 100%",
+        "explicit mute clears only after restoring zero-volume gain"
+      ]
+    },
+    "full_flutter_suite": {
+      "command": "flutter test",
+      "result": "PASS",
+      "passed": 455
+    },
+    "flutter_analyze": {
+      "command": "flutter analyze",
+      "result": "PASS",
+      "detail": "No issues found."
+    },
+    "spec_traceability": {
+      "result": "NOT_RUN_TOOL_UNAVAILABLE",
+      "reason": "pwsh and powershell are not installed on this host."
+    }
+  },
+  "runtime_acceptance": {
+    "result": "PASS_UI_AND_CONTROL_STATE_AUDIO_OUTPUT_NOT_DIRECTLY_CAPTURED",
+    "device": "Android Emulator API 35, arm64",
+    "screen_audio_track": "recognized; viewer showed the screen-audio volume control instead of the no-track message",
+    "gain_control": "Displayed 100%, changed to 50%, then 0%; tapping enable at 0% restored 100%.",
+    "mute_control": "Local screen-audio mute changed to muted and back while the current remote publication remained active.",
+    "restored_local_state": "100% and unmuted",
+    "acoustic_measurement": "NOT_RUN: emulator playback output was not captured for independent perceptual/signal-level verification",
+    "publisher_impact": "No publisher controls were touched; the remote screen share remained active.",
+    "cleanup": "Android test listener left the voice room after verification."
+  },
+  "microphone_safety": {
+    "event": "Opening the voice channel auto-joined. The microphone control initially appeared enabled, contrary to the intended listener-only test.",
+    "response": "The control was muted immediately after noticing and remained muted until the Android test listener disconnected.",
+    "voice_input": "No deliberate speech was made; whether any ambient microphone audio was briefly transmitted was not independently measured."
+  },
+  "remaining": "Ask the user to confirm audible mute/gain effect on the emulator or verify with a safe audio monitor before closing FE-69."
+}
