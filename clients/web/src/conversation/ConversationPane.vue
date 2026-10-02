@@ -18,7 +18,7 @@ import type { VoiceRoomRoster } from '../voice/voice_roster_client'
 import { voiceRoomSummary } from '../voice/voice_room_copy'
 import { useConversationScreenState } from '../voice/use_conversation_screen_state'
 import TextConversation from './TextConversation.vue'
-import WorkspaceHeaderActions from '../workspace/WorkspaceHeaderActions.vue'
+import WorkspaceHeaderActions from '../shared/workspace_header/WorkspaceHeaderActions.vue'
 
 const props = withDefaults(defineProps<{
   accountId: string

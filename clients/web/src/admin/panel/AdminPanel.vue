@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import type { TopologyCategory } from '../channel/topology_client'
-import AdminTopologyControls from '../channel/AdminTopologyControls.vue'
-import AdminMembersSection from './AdminMembersSection.vue'
-import AdminAuditSection from './AdminAuditSection.vue'
-import AdminMediaDiagnostics from './AdminMediaDiagnostics.vue'
+import type { TopologyCategory } from '../../channel/topology_client'
+import AdminTopologyControls from '../../channel/AdminTopologyControls.vue'
+import AdminMembersSection from '../members/AdminMembersSection.vue'
+import AdminAuditSection from '../audit/AdminAuditSection.vue'
+import AdminMediaDiagnostics from '../media/AdminMediaDiagnostics.vue'
 
 defineProps<{ categories: TopologyCategory[]; revision: number }>()
 const emit = defineEmits<{ topologyChanged: [] }>()

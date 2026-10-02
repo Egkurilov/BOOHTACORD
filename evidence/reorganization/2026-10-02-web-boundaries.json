@@ -1,0 +1,19 @@
+{
+  "id": "reorganization-web-boundaries-2026-10-02",
+  "kind": "refactor-verification",
+  "source_base": "085ad6d2119013072eb05864629b1c820c85135b",
+  "source_state": "web boundary relocation in the containing commit",
+  "environment": "Windows, Node 24.18.0, locked clients/web dependencies",
+  "status": "PASS",
+  "checks": {
+    "command": "python -m tools.ci.native.web",
+    "web_tests": 721,
+    "typescript_and_production_build": "PASS",
+    "compiler_import_parser_tests": 3,
+    "dart_and_web_boundary_policy_tests": 8,
+    "web_local_imports": 508,
+    "dart_local_imports": 380
+  },
+  "preserved": ["Vue templates and styles", "Administrator role gate", "TEXT/DM access paths", "Voice reports and interval behavior"],
+  "limitations": ["Native and browser physical media acceptance are separate; no quality claim follows from these checks"]
+}

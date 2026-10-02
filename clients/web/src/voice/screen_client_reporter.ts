@@ -2,9 +2,9 @@ import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import type { ScreenDiagnostics } from './screen_diagnostics'
 
-export type { ScreenClientReport, ScreenClientReportInput, WebPlatform } from '../telemetry/report_media/types'
-import type { ScreenClientReport, ScreenClientReportInput, WebPlatform } from '../telemetry/report_media/types'
-import { bounded, pixelDimension, lossFields, sampleAge, senderFields } from '../telemetry/report_media/fields'
+export type { ScreenClientReport, ScreenClientReportInput, WebPlatform } from './report_media/types'
+import type { ScreenClientReport, ScreenClientReportInput, WebPlatform } from './report_media/types'
+import { bounded, pixelDimension, lossFields, sampleAge, senderFields } from './report_media/fields'
 
 export function webPlatform(userAgent: string): WebPlatform {
   if (/iPhone|iPad|iPod/i.test(userAgent)) return 'ios_web'

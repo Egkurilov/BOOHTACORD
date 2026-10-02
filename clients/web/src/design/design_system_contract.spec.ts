@@ -19,7 +19,7 @@ import workspace from '../workspace/WorkspaceApp.vue?raw'
 import workspaceMain from '../workspace/WorkspaceMain.vue?raw'
 import membersPanel from '../workspace/WorkspaceMembersPanel.vue?raw'
 import profileSettings from '../identity/ProfileSettings.vue?raw'
-import adminPanel from '../workspace/AdminPanel.vue?raw'
+import adminPanel from '../admin/panel/AdminPanel.vue?raw'
 import memberPopover from '../workspace/MemberPopover.vue?raw'
 
 function source(relativePath: string): string {

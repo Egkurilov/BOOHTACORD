@@ -26,7 +26,7 @@ describe('GuildChat reference fidelity', () => {
   it('retains the member panel data source and uses drawers for voice and narrow desktop', () => {
     const shell = source('./shell.css') + source('./responsive_shell.css')
     const app = source('../workspace/WorkspaceApp.vue')
-    const actions = source('../workspace/WorkspaceHeaderActions.vue')
+    const actions = source('../shared/workspace_header/WorkspaceHeaderActions.vue')
     expect(app).toContain('<WorkspaceMembersPanel v-if="!selectedDirectMessage && activePanel === \'none\'"')
     expect(app).not.toContain("selectedChannel?.kind !== 'VOICE' || membersOpen")
     expect(shell).toContain('grid-template-columns: var(--gc-layout-nav-wide) minmax(0, 1fr) var(--gc-layout-aside-wide)')
@@ -51,7 +51,7 @@ describe('GuildChat reference fidelity', () => {
 
   it('keeps a visible mobile dock and accessible controls for opening both drawers', () => {
     const shell = source('./responsive_shell.css')
-    const actions = source('../workspace/WorkspaceHeaderActions.vue')
+    const actions = source('../shared/workspace_header/WorkspaceHeaderActions.vue')
     const app = source('../workspace/WorkspaceApp.vue')
     expect(shell).toContain('.mobile-voice-dock')
     expect(actions).toContain('aria-label="Открыть навигацию"')

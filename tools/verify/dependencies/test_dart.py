@@ -18,3 +18,8 @@ class DartImportTests(unittest.TestCase):
         sources = {'clients/flutter/lib/src/features/voice/controller.dart': "import '../../app_state.dart';",
                    'clients/flutter/lib/src/app_state.dart': ''}
         self.assertIn('depends on application UI', violations(sources)[0])
+
+    def test_feature_cannot_bypass_facade_by_importing_composition(self):
+        sources = {'clients/flutter/lib/src/features/voice/controller.dart': "import '../../app/composition/owners.dart';",
+                   'clients/flutter/lib/src/app/composition/owners.dart': ''}
+        self.assertIn('depends on application UI', violations(sources)[0])

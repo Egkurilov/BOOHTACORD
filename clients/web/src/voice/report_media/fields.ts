@@ -1,4 +1,4 @@
-import type { ScreenDiagnostics } from '../../voice/screen_diagnostics'
+import type { ScreenDiagnostics } from '../screen_diagnostics'
 
 export function bounded(value: number | null | undefined, maximum: number): number | undefined {
   return value !== null && value !== undefined && Number.isFinite(value) && value >= 0 && value <= maximum ? value : undefined

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref } from 'vue'
-import { createPasswordResetLink, listAdminAccounts, updateAdminAccount, type AdminAccount, type PasswordResetLink } from '../identity/admin_directory_client'
+import { createPasswordResetLink, listAdminAccounts, updateAdminAccount, type AdminAccount, type PasswordResetLink } from '../../identity/admin_directory_client'
 import { restoreAdminSaveFocus } from './admin_member_save_focus'
 import { copyAdminResetLink } from './admin_reset_link_copy'
 

@@ -1,4 +1,4 @@
-import type { ScreenReceiverMetrics } from '../../voice/screen_receiver_diagnostics'
+import type { ScreenReceiverMetrics } from '../screen_receiver_diagnostics'
 
 export type WebPlatform = 'ios_web' | 'android_web' | 'desktop_web'
 export interface ScreenClientReport {

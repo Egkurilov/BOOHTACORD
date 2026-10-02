@@ -6,7 +6,7 @@ import type { VoiceActivationMode } from '../voice/activation_store'
 import type { ScreenProfile } from '../voice/livekit_gateway'
 import { useVoiceConnectionStore } from '../voice/connection_store'
 import type { VoiceRoomRoster } from '../voice/voice_roster_client'
-import WorkspaceHeaderActions from './WorkspaceHeaderActions.vue'
+import WorkspaceHeaderActions from '../shared/workspace_header/WorkspaceHeaderActions.vue'
 import type { useWorkspaceVoiceControls } from './voice_controls'
 
 type VoiceConnection = ReturnType<typeof useVoiceConnectionStore>

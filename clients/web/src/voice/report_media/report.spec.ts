@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildScreenClientReport, buildSenderScreenReport } from '../../voice/screen_client_reporter'
+import { buildScreenClientReport, buildSenderScreenReport } from '../screen_client_reporter'
 
 describe('media telemetry measurements', () => {
   it('separates selected sender profile from actual quality and preserves zero loss', () => {

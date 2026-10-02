@@ -21,7 +21,7 @@ import { observeStreamStarts } from './stream_start_runtime'
 import { installScreenSenderReporting } from './screen_sender_reporting'
 import type { VoiceConnectionQuality } from './voice_connection_quality'
 import { monitorVoiceConnectionStats } from './voice_connection_stats_polling'
-import { createConnectionReporter } from '../telemetry/report_media/connection'
+import { createConnectionReporter } from './report_media/connection'
 
 export type VoiceConnectionState = 'IDLE' | 'JOINING' | 'RECONNECTING' | 'CONNECTED' | 'LISTENER' | 'LEAVING' | 'ERROR'
 export type { ScreenShareState } from './screen_controls'

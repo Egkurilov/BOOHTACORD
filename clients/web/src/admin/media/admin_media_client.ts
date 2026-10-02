@@ -1,5 +1,5 @@
-import { tracedFetch } from '../telemetry/client_tracing'
-import { apiBaseUrl } from '../config/runtime'
+import { tracedFetch } from '../../telemetry/client_tracing'
+import { apiBaseUrl } from '../../config/runtime'
 
 export interface AdminScreenSample {
   platform: 'ios_web' | 'android_web' | 'desktop_web' | 'android_native' | 'desktop_native' | 'ios_native' | 'windows_native' | 'macos_native'

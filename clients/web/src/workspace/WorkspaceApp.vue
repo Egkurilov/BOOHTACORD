@@ -26,9 +26,9 @@ import { useWorkspaceDrawers } from './useWorkspaceDrawers'
 import ProfileSettings from '../identity/ProfileSettings.vue'
 import { useCurrentProfile } from '../identity/current_profile'
 import { useAuthorDirectoryLifecycle } from '../identity/author_directory_lifecycle'
-import AdminPanel from './AdminPanel.vue'
+import AdminPanel from '../admin/panel/AdminPanel.vue'
 import SearchLauncher from '../search/SearchLauncher.vue'
-import WorkspaceSearchPanel from '../search/WorkspaceSearchPanel.vue'
+import WorkspaceSearchPanel from './search/WorkspaceSearchPanel.vue'
 import { useMemberHeaderExpanded } from './member_header_expanded'
 const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string }>()
 const emit = defineEmits<{ sessionExpired: []; loggedOut: [] }>()

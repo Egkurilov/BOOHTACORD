@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest'
-import { startScreenClientReporting } from '../../voice/screen_client_reporter'
+import { startScreenClientReporting } from '../screen_client_reporter'
 
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
 

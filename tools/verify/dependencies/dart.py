@@ -20,7 +20,7 @@ def violations(sources):
             if target not in sources:
                 errors.append(f'{path}: local Dart dependency is absent or ignored: {target}')
             if '/lib/src/features/' in path and any(target.startswith(LIB + prefix) for prefix in
-                    ('src/app_state.dart', 'src/app.dart', 'src/screens/', 'src/widgets/')):
+                    ('src/app_state.dart', 'src/app.dart', 'src/app/', 'src/screens/', 'src/widgets/')):
                 errors.append(f'{path}: a feature owner depends on application UI: {target}')
     return errors
 

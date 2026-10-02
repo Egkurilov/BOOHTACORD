@@ -2,7 +2,7 @@ import { createSSRApp } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, it } from 'vitest'
 
-import WorkspaceHeaderActions from './WorkspaceHeaderActions.vue'
+import WorkspaceHeaderActions from '../shared/workspace_header/WorkspaceHeaderActions.vue'
 import { memberHeaderExpanded } from './member_header_expanded'
 
 describe('conversation header actions', () => {

@@ -1,5 +1,5 @@
-import { postScreenClientReport, webPlatform } from '../../voice/screen_client_reporter'
-import type { VoiceConnectionStats } from '../../voice/voice_connection_quality'
+import { postScreenClientReport, webPlatform } from '../screen_client_reporter'
+import type { VoiceConnectionStats } from '../voice_connection_quality'
 
 // Called only after a fresh room sample. No retry queue survives a logout.
 export function createConnectionReporter() {

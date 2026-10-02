@@ -1,4 +1,4 @@
-import type { AuditEvent } from '../identity/admin_directory_client'
+import type { AuditEvent } from '../../identity/admin_directory_client'
 
 const eventTitles: Record<string, string> = {
   ACCOUNT_ADMIN_STATE_UPDATED: 'Изменены роль или доступ участника',

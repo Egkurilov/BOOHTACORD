@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { listAuditEvents, type AuditEvent } from '../identity/admin_directory_client'
+import { listAuditEvents, type AuditEvent } from '../../identity/admin_directory_client'
 import { presentAuditEvent } from './audit_event_display'
 
 const events = ref<AuditEvent[]>([]); const cursor = ref<string | undefined>(); const loading = ref(false); const error = ref<string | null>(null)

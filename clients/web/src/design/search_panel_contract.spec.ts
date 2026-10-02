@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 
 import searchPanel from '../search/SearchPanel.vue?raw'
 import searchLauncher from '../search/SearchLauncher.vue?raw'
-import workspaceSearch from '../search/WorkspaceSearchPanel.vue?raw'
+import workspaceSearch from '../workspace/search/WorkspaceSearchPanel.vue?raw'
 import workspace from '../workspace/WorkspaceApp.vue?raw'
 import workspaceMain from '../workspace/WorkspaceMain.vue?raw'
 

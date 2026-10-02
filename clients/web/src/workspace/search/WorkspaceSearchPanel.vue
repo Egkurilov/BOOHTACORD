@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
-import type { TopologyChannel } from '../channel/topology_client'
-import { useDirectMessageStore } from '../direct_message/direct_message_store'
-import { useWorkspaceVoiceControls } from '../workspace/voice_controls'
-import SearchPanel from './SearchPanel.vue'
-import type { SearchMessage } from './search_messages_client'
-import { useSearchTargetStore } from './search_target_store'
+import type { TopologyChannel } from '../../channel/topology_client'
+import { useDirectMessageStore } from '../../direct_message/direct_message_store'
+import { useWorkspaceVoiceControls } from '../voice_controls'
+import SearchPanel from '../../search/SearchPanel.vue'
+import type { SearchMessage } from '../../search/search_messages_client'
+import { useSearchTargetStore } from '../../search/search_target_store'
 
 const emit = defineEmits<{ openChannel: [channel: TopologyChannel]; openDirectMessage: [id: string]; close: [] }>()
 const voice = useWorkspaceVoiceControls()
