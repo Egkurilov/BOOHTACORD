@@ -26,7 +26,7 @@ class ClientUpdateBanner extends StatelessWidget {
       padding:const EdgeInsets.symmetric(horizontal:16,vertical:10),
       child:Wrap(alignment:WrapAlignment.center,crossAxisAlignment:WrapCrossAlignment.center,spacing:12,runSpacing:8,children:[
         SizedBox(width:340,child:Text(updates.policy?.target?.summary ?? 'Доступно обновление BOOHTACORD.',style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w600))),
-        FilledButton(onPressed:()=>performUpdateAction(context,updates,appBusy:appBusy),child:const Text('Обновить')),
+        FilledButton(onPressed:()=>performUpdateAction(context,updates,appBusy:appBusy),child:Text(updates.policy?.target?.actionKind == 'open_store' ? 'Открыть магазин' : 'Скачать обновление')),
         TextButton(onPressed:()=>_details(context),child:const Text('Что нового',style:TextStyle(color:Colors.white))),
         TextButton(onPressed:updates.later,child:const Text('Позже',style:TextStyle(color:Colors.white))),
       ]),

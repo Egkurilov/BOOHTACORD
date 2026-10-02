@@ -8,7 +8,11 @@ import (
 
 type Provider interface{ Policy(Selector) (Policy, bool) }
 
-func Handler(provider Provider) http.Handler {
+func Handler(provider Provider, observers ...Observer) http.Handler {
+	var observer Observer
+	if len(observers) > 0 {
+		observer = observers[0]
+	}
 	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		response.Header().Set("Cache-Control", "no-store")
 		response.Header().Set("X-Content-Type-Options", "nosniff")
@@ -20,13 +24,22 @@ func Handler(provider Provider) http.Handler {
 		query := request.URL.Query()
 		selector := Selector{Platform: query.Get("platform"), Distribution: query.Get("distribution"), Channel: query.Get("channel"), Arch: query.Get("arch")}
 		if len(query) != 4 || selector.Validate() != nil {
+			if observer != nil {
+				observer.ObserveClientUpdateCheck("unknown", "invalid")
+			}
 			writeError(response, http.StatusBadRequest, "invalid client update selector")
 			return
 		}
 		policy, ok := provider.Policy(selector)
 		if !ok {
+			if observer != nil {
+				observer.ObserveClientUpdateCheck(selector.Platform, "unavailable")
+			}
 			writeError(response, http.StatusServiceUnavailable, "client update catalog unavailable")
 			return
+		}
+		if observer != nil {
+			observer.ObserveClientUpdateCheck(selector.Platform, policy.State)
 		}
 		var body bytes.Buffer
 		if err := json.NewEncoder(&body).Encode(policy); err != nil || body.Len() > 16*1024 {

@@ -26,3 +26,11 @@ def test_rejects_stale_revision(tmp_path):
     try: mutate(path, 3, ("windows","direct","stable","x64"), "published", target())
     except ValueError as error: assert "revision" in str(error)
     else: raise AssertionError("stale writer accepted")
+
+
+def test_publisher_lock_rejects_a_concurrent_writer(tmp_path):
+    path = source(tmp_path)
+    path.with_suffix('.json.lock').write_text('busy', encoding='utf-8')
+    try: mutate(path, 4, ("windows","direct","stable","x64"), "published", target())
+    except ValueError as error: assert "publisher" in str(error)
+    else: raise AssertionError("concurrent writer accepted")

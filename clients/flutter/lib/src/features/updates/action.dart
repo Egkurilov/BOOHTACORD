@@ -18,7 +18,8 @@ Future<void> performUpdateAction(BuildContext context, UpdateController updates,
   }
   final raw = target.actionUrl; if (raw == null) return;
   final base = Uri.parse(updates.api.baseUrl()); final uri = base.resolve(raw);
-  if ((uri.scheme != 'https' && uri.origin != base.origin) || !await launchUrl(uri, mode:LaunchMode.externalApplication)) {
+  final trusted = uri.origin == base.origin || uri.host == 'github.com';
+  if (uri.scheme != 'https' || !trusted || !await launchUrl(uri, mode:LaunchMode.externalApplication)) {
     throw StateError('Не удалось открыть страницу обновления.');
   }
 }

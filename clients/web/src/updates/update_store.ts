@@ -17,6 +17,7 @@ export const useUpdateStore = defineStore('client-updates', () => {
   const policy = ref<UpdatePolicy | null>(null)
   const stale = ref(false); const error = ref<string | null>(null)
   const preloadFailure = ref(false); const cooldownUntil = ref(0)
+  const lastSuccessfulCheckAt = ref<Date | null>(null)
   const snoozeRevision = ref(0)
   let scheduler: UpdateScheduler | null = null
 
@@ -27,9 +28,11 @@ export const useUpdateStore = defineStore('client-updates', () => {
     if (checkStatus.value === 'checking') return
     checkStatus.value = 'checking'; error.value = null
     try {
-      const next = await fetchUpdatePolicy(); policy.value = next
+      const next = await fetchUpdatePolicy()
+      if ((next.catalog_revision ?? 0) < (policy.value?.catalog_revision ?? 0)) { checkStatus.value = 'ok'; return }
+      policy.value = next
       result.value = evaluateUpdate(buildIdentity, next, { os_version:'browser', arch:'any' })
-      stale.value = false; checkStatus.value = 'ok'
+      stale.value = false; checkStatus.value = 'ok'; lastSuccessfulCheckAt.value = new Date()
     } catch (cause) {
       stale.value = result.value !== null; checkStatus.value = 'error'
       error.value = cause instanceof Error ? cause.message : 'Не удалось проверить обновление.'
@@ -66,5 +69,5 @@ export const useUpdateStore = defineStore('client-updates', () => {
     } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось начать обновление.' }
   }
   function reportPreloadError(): void { preloadFailure.value = true }
-  return { apply, buildIdentity, checkStatus, cooldownUntil, dispose, error, later, manual, policy, preloadFailure, reportPreloadError, result, stale, start, visible }
+  return { apply, buildIdentity, checkStatus, cooldownUntil, dispose, error, lastSuccessfulCheckAt, later, manual, policy, preloadFailure, reportPreloadError, result, stale, start, visible }
 })

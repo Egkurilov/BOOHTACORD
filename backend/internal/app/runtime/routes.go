@@ -24,7 +24,7 @@ import (
 
 func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub, metrics *httpmetrics.Recorder, updates clientupdates.Provider) (http.Handler, error) {
 	mux := http.NewServeMux()
-	mux.Handle("/api/v1/client-updates", clientupdates.Handler(updates))
+	mux.Handle("/api/v1/client-updates", clientupdates.Handler(updates, metrics))
 	auth := authroutes.Register(mux, database, configuration)
 	sessionService, maintenanceService := auth.Sessions, auth.Maintenance
 	if err := mediaroutes.ConfigureMediaRevocationRoutes(mux, database, authorizelivekitsignal.Config{APIKey: configuration.LiveKitAPIKey, APISecret: configuration.LiveKitAPISecret}, maintenanceService); err != nil {

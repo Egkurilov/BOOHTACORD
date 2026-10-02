@@ -1,9 +1,11 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "application_family": "boohtacord",
-  "release_id": "boohtacord-1.0.25-39",
-  "release_order": 39,
-  "version": "1.0.25",
-  "native_build": "39",
-  "channel": "stable"
+  "builds": {
+    "web": {"platform":"web","distribution":"browser","channel":"stable","arch":"any","release_id":"web-browser-stable-r40","release_order":40,"version":"1.0.26","native_build":null},
+    "android": {"platform":"android","distribution":"direct","channel":"stable","arch":"any","release_id":"android-direct-stable-r40","release_order":40,"version":"1.0.26","native_build":"40"},
+    "windows": {"platform":"windows","distribution":"direct","channel":"stable","arch":"x64","release_id":"windows-direct-stable-r40","release_order":40,"version":"1.0.26","native_build":"40"},
+    "ios": {"platform":"ios","distribution":"development","channel":"development","arch":"arm64","release_id":"ios-development-r40","release_order":40,"version":"1.0.26","native_build":"40"},
+    "macos": {"platform":"macos","distribution":"direct","channel":"stable","arch":"arm64","release_id":"macos-direct-stable-r40","release_order":40,"version":"1.0.26","native_build":"40"}
+  }
 }

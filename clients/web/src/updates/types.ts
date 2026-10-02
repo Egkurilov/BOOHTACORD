@@ -6,7 +6,7 @@ export interface LocalIdentity {
   release_order: number
   platform?: string
   version?: string
-  native_build?: string
+  native_build?: string | null
   installed_version?: string
   installed_build?: string
   package_name?: string
@@ -15,11 +15,11 @@ export interface LocalIdentity {
 
 export interface EvaluationEnvironment { os_version: string; arch: string; now?: string }
 export interface UpdateRequirements { min_os_version?: string; min_android_sdk?: number; supported_arches: string[] }
-export interface UpdateAction { kind: 'reload' | 'open_download_page' | 'open_store' | 'open_instructions'; url: string }
+export interface UpdateAction { kind: 'reload' | 'open_download_page' | 'open_store' | 'open_instructions'; url: string | null }
 export interface UpdateTarget {
-  release_id: string; release_order: number; version?: string; native_build?: string
+  release_id: string; release_order: number; version?: string; native_build?: string | null
   priority?: 'normal' | 'important'; published_at?: string; expires_at?: string
-  summary?: string; release_notes_url?: string; requirements: UpdateRequirements; action?: UpdateAction
+  summary?: string; release_notes_url?: string | null; requirements: UpdateRequirements; action?: UpdateAction
 }
 export interface UpdatePolicy {
   application_family?: string; catalog_revision?: number; platform?: string; distribution?: string

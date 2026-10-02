@@ -862,8 +862,8 @@ On Android Emulator API 35, release-signed `1.0.23+2036` additionally verified t
 
 ## Client update awareness
 
-Web, Android and Windows now use the same release identity, policy states and
-language-neutral evaluator fixtures. Each surface provides a root update banner,
+Web, Android and Windows use independent release identities with shared policy
+states and language-neutral evaluator fixtures. Each surface provides a root update banner,
 details, snooze and manual check. Web performs a guarded reload; native clients
 open an explicit external download page and leave active media intact until the
 user decides. Automated contract and build gates are separate from the pending

@@ -24,7 +24,9 @@ class UpdateController extends ChangeNotifier with WidgetsBindingObserver {
   final UpdateApi api; final NativeUpdateIdentity identity; final UpdatePreferences preferences; final Random _random;
   UpdateCheckStatus status = UpdateCheckStatus.idle; UpdateResult? result; UpdatePolicy? policy;
   bool stale = false; bool visible = false; String? error;
+  DateTime? lastSuccessfulCheckAt;
   Timer? _timer; int _failures = 0; DateTime? _lastAttempt; DateTime? _manualAfter; bool _disposed = false; bool _foreground = true;
+  Duration _serverDelay = Duration.zero;
 
   void start() {
     WidgetsBinding.instance.addObserver(this);
@@ -35,13 +37,17 @@ class UpdateController extends ChangeNotifier with WidgetsBindingObserver {
     if (_disposed || status == UpdateCheckStatus.checking) return;
     status = UpdateCheckStatus.checking; error = null; _lastAttempt = DateTime.now(); notifyListeners();
     try {
+      final origin = api.baseUrl();
       final next = await api.fetch(identity.selector);
+      if (origin != api.baseUrl()) { status = UpdateCheckStatus.idle; return; }
+      if ((next.revision ?? 0) < (policy?.revision ?? 0)) { status = UpdateCheckStatus.ok; return; }
       policy = next; result = evaluateUpdate(identity.local, next, identity.environment);
       final target = next.target;
-      visible = result == UpdateResult.updateAvailable && target != null && !await preferences.isSnoozed(api.baseUrl(), identity.selector.platform, target.releaseId, target.priority ?? 'normal');
-      stale = false; status = UpdateCheckStatus.ok; _failures = 0;
+      visible = result == UpdateResult.updateAvailable && target != null && !await preferences.isSnoozed(api.baseUrl(), identity.selector, target.releaseId, target.priority ?? 'normal');
+      stale = false; status = UpdateCheckStatus.ok; _failures = 0; _serverDelay = Duration.zero; lastSuccessfulCheckAt = DateTime.now();
     } catch (cause) {
       stale = result != null; status = UpdateCheckStatus.error; error = 'Не удалось проверить обновление.';
+      _serverDelay = cause is UpdateApiFailure ? cause.retryAfter ?? Duration.zero : Duration.zero;
       _failures = min(_failures + 1, 4); rethrow;
     } finally { notifyListeners(); }
   }
@@ -54,7 +60,7 @@ class UpdateController extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> later() async {
     final target = policy?.target; if (target == null) return;
-    await preferences.snooze(api.baseUrl(), identity.selector.platform, target.releaseId, target.priority ?? 'normal');
+    await preferences.snooze(api.baseUrl(), identity.selector, target.releaseId, target.priority ?? 'normal');
     visible = false; notifyListeners();
   }
 
@@ -62,7 +68,8 @@ class UpdateController extends ChangeNotifier with WidgetsBindingObserver {
     _timer?.cancel(); if (_disposed || !_foreground) return;
     _timer = Timer(delay, () async { try { await check(); } catch (_) {} finally {
       final seconds = _failures == 0 ? 300 : [30,60,120,300][_failures-1];
-      _schedule(Duration(milliseconds:(seconds*1000*(.9+_random.nextDouble()*.2)).round()));
+      final calculated = Duration(milliseconds:(seconds*1000*(.9+_random.nextDouble()*.2)).round());
+      _schedule(_serverDelay > calculated ? _serverDelay : calculated);
     }});
   }
 

@@ -16,11 +16,11 @@ export async function publishGitHubRelease({
   sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
 }) {
   if (!token) throw new Error('GITHUB_TOKEN is required')
-  if (!/^android-v\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(tag ?? '')) {
-    throw new Error('Release tag must use the android-vX.Y.Z form')
+  if (!/^(android|windows)-v\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(tag ?? '')) {
+    throw new Error('Release tag must use the android-vX.Y.Z or windows-vX.Y.Z form')
   }
   if (!Array.isArray(assets) || assets.length === 0) {
-    throw new Error('At least one APK asset is required')
+    throw new Error('At least one release asset is required')
   }
 
   const repositoryPath = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`

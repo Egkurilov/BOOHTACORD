@@ -11,11 +11,12 @@ void main() {
         captured = request;
         return http.Response('{"application_family":"boohtacord","catalog_revision":1,"platform":"android","distribution":"direct","channel":"stable","arch":"arm64","state":"unconfigured","target":null}', 200, headers:{'content-type':'application/json'});
       }),
-      baseUrl: () => 'https://example.test',
+      baseUrl: () => 'https://example.test/api/v1',
     );
     final policy = await api.fetch(const UpdateSelector.android('arm64'));
     expect(policy.state, UpdatePolicyState.unconfigured);
     expect(captured.url.queryParameters['platform'], 'android');
+    expect(captured.url.path, '/api/v1/client-updates');
     expect(captured.headers.containsKey('cookie'), isFalse);
   });
 }

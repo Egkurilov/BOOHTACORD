@@ -5,6 +5,7 @@ import re
 import subprocess
 from pathlib import Path
 from .audio_component import write_audio_component
+from tools.build.client_identity import load
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -13,11 +14,9 @@ def digest(path):
     with path.open('rb') as stream: return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def version(root=ROOT):
-    content = (root / 'clients/flutter/pubspec.yaml').read_text(encoding='utf-8')
-    match = re.search(r'^version:\s*([0-9]+\.[0-9]+\.[0-9]+\+[0-9]+)\s*$', content, re.M)
-    if not match: raise ValueError('Native version/build number is unavailable')
-    return match[1]
+def version(platform, root=ROOT):
+    identity = load(platform, root)
+    return f"{identity['version']}+{identity['native_build']}"
 
 
 def write(directory, platform, architectures, application_id, signing, *, root=ROOT):
@@ -38,10 +37,8 @@ def write(directory, platform, architectures, application_id, signing, *, root=R
     contracts = {path.name: digest(path) for path in sorted((root / 'contracts').glob('*')) if path.is_file()}
     if not {'openapi.yaml', 'realtime.schema.json', 'mobile-client-contract.md'} <= contracts.keys():
         raise ValueError('Native artifact contract inputs are missing from checkout')
-    client_build = json.loads((root / 'contracts/client-build.json').read_text(encoding='utf-8'))
-    if version(root) != f"{client_build['version']}+{client_build['native_build']}":
-        raise ValueError('Native version differs from client build identity')
-    result = {'schema_version': 1, 'source_revision': revision, 'source_dirty': dirty, 'version': version(root),
+    client_build = load(platform, root)
+    result = {'schema_version': 1, 'source_revision': revision, 'source_dirty': dirty, 'version': version(platform, root),
               'release_id': client_build['release_id'], 'release_order': client_build['release_order'],
               'platform': platform, 'architectures': architectures, 'application_id': application_id,
               'signing': signing, 'toolchains': json.loads((root / 'tools/toolchains.json').read_text()),

@@ -48,15 +48,21 @@ func (entry Entry) validate(allowedHosts []string) error {
 	if entry.Target == nil {
 		return fmt.Errorf("published entry has no target")
 	}
-	return entry.Target.validate(allowedHosts)
+	return entry.Target.validate(allowedHosts, entry.Platform)
 }
 
-func (target Target) validate(allowedHosts []string) error {
+func (target Target) validate(allowedHosts []string, platform string) error {
 	if !releaseIDPattern.MatchString(target.ReleaseID) || target.ReleaseOrder < 1 {
 		return fmt.Errorf("invalid release identity")
 	}
-	if len(target.Version) > 64 || len(target.NativeBuild) > 64 || utf8.RuneCountInString(target.Summary) > 1000 {
+	if len(target.Version) > 64 || target.NativeBuild != nil && len(*target.NativeBuild) > 64 || utf8.RuneCountInString(target.Summary) > 1000 {
 		return fmt.Errorf("target text exceeds bounds")
+	}
+	if platform == "web" && target.NativeBuild != nil {
+		return fmt.Errorf("web target has native build")
+	}
+	if platform != "web" && (target.NativeBuild == nil || *target.NativeBuild == "") {
+		return fmt.Errorf("native target has no package build")
 	}
 	if target.Priority != "normal" && target.Priority != "important" {
 		return fmt.Errorf("invalid priority")
@@ -80,10 +86,16 @@ func (target Target) validate(allowedHosts []string) error {
 	if !validAction[target.Action.Kind] {
 		return fmt.Errorf("invalid action")
 	}
-	if err := validateURL(target.ReleaseNotesURL, allowedHosts); err != nil {
-		return fmt.Errorf("release notes: %w", err)
+	if target.ReleaseNotesURL != nil {
+		if err := validateURL(*target.ReleaseNotesURL, allowedHosts); err != nil {
+			return fmt.Errorf("release notes: %w", err)
+		}
 	}
-	if err := validateURL(target.Action.URL, allowedHosts); err != nil {
+	if target.Action.URL == nil {
+		if target.Action.Kind != "reload" {
+			return fmt.Errorf("action URL is required")
+		}
+	} else if err := validateURL(*target.Action.URL, allowedHosts); err != nil {
 		return fmt.Errorf("action: %w", err)
 	}
 	return nil
