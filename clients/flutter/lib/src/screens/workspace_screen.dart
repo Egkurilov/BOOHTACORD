@@ -5444,6 +5444,10 @@ class _VoiceScreenViewer extends StatelessWidget {
             !showingLocalScreen && selectedIdentity?.isNotEmpty == true,
         onReport: state.api.reportScreenShareMetrics,
         sourceTrackName: sourceTrackName,
+        senderReport: showingLocalScreen ? state.screenShareSenderReport : null,
+        senderSampledAt: showingLocalScreen
+            ? state.screenShareSenderSampledAt
+            : null,
       ),
     ),
     audioControls: _audioControls,

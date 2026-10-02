@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import '../../services/screen_share_metrics.dart';
+
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../services/screen_share_quality.dart';
@@ -8,6 +10,9 @@ import '../composition/owners.dart';
 
 mixin AppScreenAccess on AppOwners {
   ScreenSharePhase get screenSharePhase => screen.phase;
+
+  ScreenShareSenderReport? get screenShareSenderReport => screen.metrics.report;
+  DateTime? get screenShareSenderSampledAt => screen.metrics.sampledAt;
 
   set screenSharePhase(ScreenSharePhase value) => screen.phase = value;
 

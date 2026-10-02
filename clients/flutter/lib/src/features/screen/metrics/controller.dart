@@ -17,7 +17,11 @@ class ScreenShareMetricsController {
     required this.readRoom,
     required this.isSharing,
     required this.readQuality,
+    required this.changed,
   });
+  final void Function() changed;
+  ScreenShareSenderReport? report;
+  DateTime? sampledAt;
   final ApiClient api;
   final SessionScope scope;
   final Room? Function() readRoom;
@@ -44,6 +48,8 @@ class ScreenShareMetricsController {
     timer = null;
     track = null;
     previous = null;
+    report = null;
+    sampledAt = null;
     telemetry.clear();
   }
 }

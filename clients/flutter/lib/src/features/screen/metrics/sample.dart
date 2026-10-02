@@ -44,6 +44,9 @@ extension ScreenShareSample on ScreenShareMetricsController {
         platform: nativeScreenMetricsPlatform(defaultTargetPlatform)!,
       );
       previous = current;
+      this.report = report;
+      sampledAt = DateTime.now();
+      changed();
       try {
         final samples = stats
             .map(

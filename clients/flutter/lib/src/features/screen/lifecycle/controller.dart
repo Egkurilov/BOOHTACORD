@@ -32,6 +32,7 @@ class ScreenShareController extends ChangeNotifier {
       readRoom: readRoom,
       isSharing: () => phase == ScreenSharePhase.sharing,
       readQuality: () => quality,
+      changed: changed,
     );
     thumbnail = ScreenThumbnailController(
       scope,
