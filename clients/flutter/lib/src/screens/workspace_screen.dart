@@ -6342,6 +6342,22 @@ class _AudioSettingsScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<AudioActivationMode>(
                       initialValue: state.audioActivationMode,
+                      isExpanded: true,
+                      selectedItemBuilder: (context) => [
+                        for (final mode in AudioActivationMode.values)
+                          Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(
+                              compact && mode == AudioActivationMode.vad
+                                  ? 'По голосу'
+                                  : mode == AudioActivationMode.vad
+                                  ? 'Голосовая активность'
+                                  : 'Push-to-talk',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Режим',
                         border: OutlineInputBorder(),

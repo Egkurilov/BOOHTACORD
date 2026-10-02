@@ -246,10 +246,15 @@ peer/platform-проверки и выравниваем viewer с вебом.
   обхода удерживаемой клавиши — [QA-32](../evidence/flutter/qa32-voice-microphone-unavailable-fallback-2026-09-27-001.json).
 - [ ] Мобильный PTT больше не требует hardware key: Android/iOS используют
   удержание кнопки микрофона в voice dock, а desktop сохраняет клавиатурный
-  режим — unit/widget tests проверяют отпускание и pointer cancel, analyzer
-  прошёл. На физических Android/iOS проверить release/background/system
-  interruption и screen readers —
-  [QA-213](../evidence/flutter/qa213-mobile-push-to-talk-touch-2026-10-02-001.json).
+  режим. При недоступном микрофоне mobile fallback больше не просит назначенную
+  клавишу; Android PTT selector и шумоподавление используют компактные выбранные
+  подписи и не переполняют 390×844 layout — regression сначала падал overflow,
+  после исправления полный suite (419) и analyzer прошли —
+  [QA-213](../evidence/flutter/qa213-mobile-push-to-talk-touch-2026-10-02-001.json),
+  [QA-218](../evidence/flutter/qa218-mobile-ptt-fallback-guidance-2026-10-02-001.json),
+  [QA-219](../evidence/flutter/qa219-android-ptt-settings-responsive-2026-10-02-001.json).
+  На физических Android/iOS проверить release/background/system interruption и
+  screen readers.
 - [ ] На физических устройствах проверить receiver metrics/audio states,
   fullscreen/share permissions и переключение rail/viewer; локальный fullscreen
   и исправления диагностики, отступов и мобильного возврата — [QA-17](../evidence/flutter/qa17-voice-viewer-mobile-navigation-2026-09-27-001.json).

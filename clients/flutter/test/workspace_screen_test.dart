@@ -409,6 +409,54 @@ void main() {
     debugDefaultTargetPlatformOverride = null;
   });
 
+  testWidgets('Android audio settings configure PTT without a key binding', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      _PortraitApi(),
+      audioDeviceLoader: () async => const [],
+    );
+    await state.initialize();
+    state.toggleWorkspacePanel(WorkspacePanel.audio);
+
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    final audioList = find.byKey(const ValueKey('audio-settings-list'));
+    final scrollable = find.descendant(
+      of: audioList,
+      matching: find.byType(Scrollable),
+    );
+    await tester.scrollUntilVisible(
+      find.text('Активация микрофона'),
+      180,
+      scrollable: scrollable,
+    );
+
+    expect(find.text('Назначить PTT-клавишу'), findsNothing);
+    await tester.tap(find.byType(DropdownButtonFormField<AudioActivationMode>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Push-to-talk').last);
+    await tester.pumpAndSettle();
+
+    expect(state.audioActivationMode, AudioActivationMode.ptt);
+    expect(state.audioActivationError, isNull);
+    expect(find.text('Назначить PTT-клавишу'), findsNothing);
+    expect(find.textContaining('Удерживайте кнопку микрофона'), findsOneWidget);
+    expect(
+      find.textContaining('Удерживайте назначенную клавишу'),
+      findsNothing,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   testWidgets('audio settings test the devices shown in their selectors', (
     tester,
   ) async {

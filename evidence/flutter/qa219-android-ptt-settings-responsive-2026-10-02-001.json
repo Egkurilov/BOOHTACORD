@@ -1,0 +1,32 @@
+{
+  "id": "QA-219",
+  "date": "2026-10-02",
+  "status": "PASS_WITH_PHYSICAL_DEVICE_ACCEPTANCE_OPEN",
+  "summary": "Compact Flutter Android audio settings allow selecting touch-based Push-to-Talk without a hardware key and keep activation/noise controls inside a narrow viewport.",
+  "checks": [
+    {
+      "result": "REPRODUCED",
+      "command": "cd clients/flutter && flutter test test/workspace_screen_test.dart --plain-name 'Android audio settings configure PTT without a key binding'",
+      "observation": "At 390x844, the initial widget regression detected horizontal RenderFlex overflow in the microphone activation and noise-suppression selectors."
+    },
+    {
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter test test/workspace_screen_test.dart --plain-name 'Android audio settings configure PTT without a key binding'",
+      "observation": "After the responsive selected-label fix, the regression selects PTT with no keyboard binding, no activation error, and touch-microphone guidance; the narrow audio settings layout has no overflow. Desktop retains its full-width PTT assignment control."
+    },
+    {
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter test --reporter compact",
+      "observation": "All 419 Flutter tests passed."
+    },
+    {
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter analyze",
+      "observation": "No analyzer issues."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Physical Android/iOS PTT hold/release, background/system interruption, and TalkBack/VoiceOver acceptance remain open. The connected Pixel is on the login screen; no credentials were entered."
+    }
+  ]
+}

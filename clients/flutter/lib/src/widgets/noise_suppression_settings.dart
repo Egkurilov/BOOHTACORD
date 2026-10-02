@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/audio_preferences.dart';
 import '../services/native_noise_suppression.dart';
+import '../theme.dart';
 
 class NoiseSuppressionSettings extends StatelessWidget {
   const NoiseSuppressionSettings({
@@ -33,59 +34,81 @@ class NoiseSuppressionSettings extends StatelessWidget {
     _ => 'Ошибка аудиофильтра.',
   };
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      DropdownButtonFormField<NoiseSuppressionMode>(
-        key: ValueKey(processing.noiseSuppressionMode),
-        initialValue: processing.noiseSuppressionMode,
-        decoration: const InputDecoration(labelText: 'Шумоподавление'),
-        items: [
-          for (final mode in NoiseSuppressionMode.values)
-            DropdownMenuItem(
-              value: mode,
-              enabled:
-                  mode != NoiseSuppressionMode.rnnoise ||
-                  runtime.status != 'unsupported',
-              child: Text(
-                mode == NoiseSuppressionMode.rnnoise
-                    ? 'RNNoise — экспериментальное'
-                    : label(mode.name),
+  Widget build(BuildContext context) {
+    final compact =
+        MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButtonFormField<NoiseSuppressionMode>(
+          key: ValueKey(processing.noiseSuppressionMode),
+          initialValue: processing.noiseSuppressionMode,
+          isExpanded: true,
+          selectedItemBuilder: (context) => [
+            for (final mode in NoiseSuppressionMode.values)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  switch (mode) {
+                    NoiseSuppressionMode.off => 'Выключено',
+                    NoiseSuppressionMode.browser =>
+                      compact ? 'WebRTC' : label(mode.name),
+                    NoiseSuppressionMode.rnnoise =>
+                      compact ? 'RNNoise' : 'RNNoise — экспериментальное',
+                  },
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-        ],
-        onChanged: (mode) {
-          if (mode != null) {
-            onChanged(processing.copyWith(noiseSuppressionMode: mode));
-          }
-        },
-      ),
-      const SizedBox(height: 8),
-      Text(
-        'Выбрано: ${label(processing.noiseSuppressionMode.name)}. Работает: ${label(runtime.effectiveMode)}.',
-      ),
-      if (runtime.status == 'initializing')
-        const Text('Фильтр ожидает первые обработанные кадры.'),
-      if (reason(runtime.failureReason).isNotEmpty)
-        Text(reason(runtime.failureReason)),
-      ExpansionTile(
-        title: const Text('Диагностика обработки'),
-        children: [
-          Text(
-            'Статус: ${runtime.status}; обработано кадров: ${runtime.processedFrames}; fallback: ${runtime.fallbackFrames}.',
-          ),
-          if (runtime.sampleRate != null)
+          ],
+          decoration: const InputDecoration(labelText: 'Шумоподавление'),
+          items: [
+            for (final mode in NoiseSuppressionMode.values)
+              DropdownMenuItem(
+                value: mode,
+                enabled:
+                    mode != NoiseSuppressionMode.rnnoise ||
+                    runtime.status != 'unsupported',
+                child: Text(
+                  mode == NoiseSuppressionMode.rnnoise
+                      ? 'RNNoise — экспериментальное'
+                      : label(mode.name),
+                ),
+              ),
+          ],
+          onChanged: (mode) {
+            if (mode != null) {
+              onChanged(processing.copyWith(noiseSuppressionMode: mode));
+            }
+          },
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Выбрано: ${label(processing.noiseSuppressionMode.name)}. Работает: ${label(runtime.effectiveMode)}.',
+        ),
+        if (runtime.status == 'initializing')
+          const Text('Фильтр ожидает первые обработанные кадры.'),
+        if (reason(runtime.failureReason).isNotEmpty)
+          Text(reason(runtime.failureReason)),
+        ExpansionTile(
+          title: const Text('Диагностика обработки'),
+          children: [
             Text(
-              'PCM: ${runtime.sampleRate} Гц; каналы: ${runtime.channels ?? 0}.',
+              'Статус: ${runtime.status}; обработано кадров: ${runtime.processedFrames}; fallback: ${runtime.fallbackFrames}.',
             ),
-          const Text(
-            'Модель RNNoise: rnnoise-stock-v0.1. Время инициализации нативного DSP: недоступно.',
-          ),
-          const Text(
-            'Capture AEC/AGC остаются независимыми. Нативный SDK не подтверждает акустическое качество.',
-          ),
-        ],
-      ),
-    ],
-  );
+            if (runtime.sampleRate != null)
+              Text(
+                'PCM: ${runtime.sampleRate} Гц; каналы: ${runtime.channels ?? 0}.',
+              ),
+            const Text(
+              'Модель RNNoise: rnnoise-stock-v0.1. Время инициализации нативного DSP: недоступно.',
+            ),
+            const Text(
+              'Capture AEC/AGC остаются независимыми. Нативный SDK не подтверждает акустическое качество.',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
