@@ -1,0 +1,3 @@
+# RNNoise provenance hashes bind exact upstream and compiler-overlay bytes.
+clients/flutter/packages/flutter_webrtc/common/rnnoise/upstream/** -text
+clients/flutter/packages/flutter_webrtc/common/rnnoise/msvc_stack_array_compat.cmake -text

@@ -33,6 +33,9 @@ if(BOOHTA_RNNOISE_TESTS)
     target_compile_options(rnnoise_capture_processor_test PRIVATE -UNDEBUG)
   endif()
   add_test(NAME rnnoise_capture_processor_test COMMAND rnnoise_capture_processor_test)
+  add_test(NAME rnnoise_downstream_public_include_test COMMAND ${CMAKE_COMMAND}
+    -DTEST_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/downstream_public_include
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/downstream_public_include_test.cmake)
   add_executable(rnnoise_msvc_pcm_parity_fixture tests/rnnoise_msvc_pcm_parity_fixture.cc)
   target_link_libraries(rnnoise_msvc_pcm_parity_fixture PRIVATE boohta_rnnoise)
 endif()
