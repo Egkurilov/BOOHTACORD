@@ -31,7 +31,6 @@
   .sidebar .user-footer { position: fixed; right: 40px; bottom: 72px; left: 0; z-index: 32; display: none; border-right: 1px solid var(--gc-border-subtle); background: var(--gc-sidebar); }
   .sidebar.is-open .user-footer { display: flex; }
   .sidebar .mobile-voice-dock, .sidebar .mobile-voice-dock.connected { position: fixed; right: 0; bottom: 0; left: 0; z-index: 10; display: grid; width: 100%; min-height: 72px; grid-template-columns: minmax(0, 1fr) auto; align-content: center; gap: var(--gc-space-2); border-top: 1px solid var(--gc-border-subtle); padding: var(--gc-space-2) var(--gc-space-4); background: var(--gc-surface); }
-  .mobile-voice-dock .voice-hint { display: none; }
   .mobile-voice-dock .voice-actions { grid-column: 2; grid-row: 1; gap: var(--gc-space-1); margin: 0; }
   .main { width: 100%; height: calc(100dvh - 72px); }
   .members, .search-aside { position: fixed; inset: 0 0 72px auto; z-index: 31; display: none; width: min(320px, calc(100vw - 40px)); border-left: 1px solid var(--gc-border-subtle); box-shadow: var(--gc-shadow-shell); }

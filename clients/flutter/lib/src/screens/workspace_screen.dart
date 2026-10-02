@@ -6553,16 +6553,6 @@ class _VoiceDock extends StatelessWidget {
     _ => 'В голосовом канале',
   };
 
-  String get _hint => switch (state.voicePhase) {
-    VoicePhase.joining => 'Соединяемся с голосовой комнатой.',
-    VoicePhase.reconnecting => 'Ручной выход отменит ожидание.',
-    VoicePhase.leaving => 'Ожидаем завершения голосовой сессии.',
-    _ when state.deafened => 'Удалённый звук и микрофон выключены. Показ экрана этой кнопкой не отключается.',
-    _ when state.microphoneUnavailable =>
-      'Микрофон недоступен: вы остаётесь слушателем.',
-    _ => 'Вы можете открыть другой канал: голос останется активным.',
-  };
-
   @override
   Widget build(BuildContext context) => Container(
     key: compact ? const ValueKey('mobile-voice-dock') : null,
@@ -6637,17 +6627,6 @@ class _VoiceDock extends StatelessWidget {
             ],
           ),
         ),
-        if (!compact) ...[
-          const SizedBox(height: 4),
-          Text(
-            _hint,
-            style: const TextStyle(
-              color: GcColors.muted,
-              fontSize: 11,
-              height: 1.3,
-            ),
-          ),
-        ],
         if (state.voiceStreamStartNotice) ...[
           const SizedBox(height: 8),
           Semantics(

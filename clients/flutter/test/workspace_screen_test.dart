@@ -1255,7 +1255,7 @@ void main() {
     );
     expect(
       find.text('Вы можете открыть другой канал: голос останется активным.'),
-      findsOneWidget,
+      findsNothing,
     );
     final microphoneButton = tester.getSemantics(
       find.bySemanticsLabel('Выключить микрофон').first,
@@ -1313,7 +1313,7 @@ void main() {
     expect(find.text('Подключаемся'), findsOneWidget);
     expect(find.text('Подключено'), findsNothing);
     expect(find.text('Подключаемся к голосовому каналу'), findsOneWidget);
-    expect(find.text('Соединяемся с голосовой комнатой.'), findsOneWidget);
+    expect(find.text('Соединяемся с голосовой комнатой.'), findsNothing);
     final dockShareAction = find.descendant(
       of: find.byTooltip('Начать демонстрацию экрана').first,
       matching: find.byType(InkWell),
@@ -1343,14 +1343,14 @@ void main() {
       find.text(
         'Удалённый звук и микрофон выключены. Показ экрана этой кнопкой не отключается.',
       ),
-      findsOneWidget,
+      findsNothing,
     );
 
     state.voicePhase = VoicePhase.reconnecting;
     state.notifyListeners();
     await tester.pump();
     expect(find.text('Восстанавливаем голосовое соединение'), findsOneWidget);
-    expect(find.text('Ручной выход отменит ожидание.'), findsOneWidget);
+    expect(find.text('Ручной выход отменит ожидание.'), findsNothing);
     expect(
       find.ancestor(
         of: find.text('Восстанавливаем голосовое соединение'),
@@ -1372,7 +1372,7 @@ void main() {
     state.notifyListeners();
     await tester.pump();
     expect(find.text('Завершаем голосовое подключение'), findsOneWidget);
-    expect(find.text('Ожидаем завершения голосовой сессии.'), findsOneWidget);
+    expect(find.text('Ожидаем завершения голосовой сессии.'), findsNothing);
     expect(find.byTooltip('Выходим…'), findsOneWidget);
     final leaveButton = find.descendant(
       of: find.byTooltip('Выходим…'),

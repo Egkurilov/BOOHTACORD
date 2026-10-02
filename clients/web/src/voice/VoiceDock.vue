@@ -41,15 +41,6 @@ const status = computed(() => {
   if (props.channel) return 'В голосовом канале'
   return props.activeSession ? 'Голос подключён · канал не отображается' : 'Голос не подключён'
 })
-const hint = computed(() => {
-  if (props.state === 'JOINING') return 'Соединяемся с голосовой комнатой.'
-  if (props.state === 'RECONNECTING') return 'Ручной выход отменит ожидание.'
-  if (props.state === 'LEAVING') return 'Ожидаем завершения голосовой сессии.'
-  if (!props.channel && props.activeSession) return 'Канал сейчас не отображается. Вы можете безопасно выйти вручную.'
-  if (props.deafened) return 'Удалённый звук и микрофон выключены. Показ экрана этой кнопкой не отключается.'
-  if (props.microphonePermissionDenied) return 'Микрофон недоступен: вы остаётесь слушателем.'
-  return props.channel ? 'Вы можете открыть другой канал: голос останется активным.' : 'Откройте голосовой канал, чтобы подготовить подключение.'
-})
 </script>
 
 <template>
@@ -62,7 +53,6 @@ const hint = computed(() => {
         <span>{{ connectionPingLabel }}</span>
       </span>
     </div>
-    <p class="voice-hint">{{ hint }}</p>
     <p v-if="streamStartNotice && activeSession" class="voice-stream-alert-notice" role="status">В канале началась демонстрация экрана</p>
     <p v-if="error" class="state state-error" role="alert">{{ error }}</p>
     <div v-if="channel || activeSession" class="voice-actions">
