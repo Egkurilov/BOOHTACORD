@@ -9,11 +9,13 @@ class ScreenFrameGate extends StatefulWidget {
     super.key,
     required this.generation,
     required this.builder,
+    this.waitingMessage,
   });
 
   final Object generation;
   final Widget Function(BuildContext context, VoidCallback onFirstFrameRendered)
   builder;
+  final String? waitingMessage;
 
   @override
   State<ScreenFrameGate> createState() => _ScreenFrameGateState();
@@ -45,7 +47,7 @@ class _ScreenFrameGateState extends State<ScreenFrameGate> {
     fit: StackFit.expand,
     children: [
       widget.builder(context, _firstFrameCallback(widget.generation)),
-      if (!_hasRenderedFirstFrame)
+      if (!_hasRenderedFirstFrame || widget.waitingMessage != null)
         ColoredBox(
           color: Color(0xA6080A0E),
           child: Center(
@@ -56,13 +58,21 @@ class _ScreenFrameGateState extends State<ScreenFrameGate> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox.square(
-                      dimension: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
+                    if (widget.waitingMessage == null)
+                      SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else
+                      Icon(
+                        Icons.visibility_off_outlined,
+                        color: GcColors.muted,
+                        size: 24,
+                      ),
                     SizedBox(height: 12),
                     Text(
-                      'Получаем первый кадр демонстрации…',
+                      widget.waitingMessage ??
+                          'Получаем первый кадр демонстрации…',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: GcColors.muted, fontSize: 14),
                     ),

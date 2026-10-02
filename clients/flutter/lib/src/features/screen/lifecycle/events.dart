@@ -14,6 +14,7 @@ extension ScreenShareEvents on ScreenShareController {
     }
     if (identical(activeTrack, track)) return;
     activeTrack = track;
+    capturedContentVisibility.track(track.mediaStreamTrack.id);
     phase = ScreenSharePhase.sharing;
     error = null;
     if (nativeScreenMetricsPlatform(defaultTargetPlatform) != null) {
@@ -30,6 +31,7 @@ extension ScreenShareEvents on ScreenShareController {
       return;
     }
     activeTrack = null;
+    capturedContentVisibility.track(null);
     stopSampling();
     if (phase == ScreenSharePhase.stopping) return;
     phase = ScreenSharePhase.idle;

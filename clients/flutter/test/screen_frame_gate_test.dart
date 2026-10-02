@@ -66,4 +66,29 @@ void main() {
     await tester.pump();
     expect(find.text('Получаем первый кадр демонстрации…'), findsNothing);
   });
+
+  testWidgets('shows a hidden-app explanation instead of a stuck spinner', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox.expand(
+          child: ScreenFrameGate(
+            generation: 'local-track',
+            waitingMessage: 'Android скрыл выбранное приложение. Вернитесь в него или выберите весь экран.',
+            builder: (context, _) => const ColoredBox(color: Colors.black),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.text(
+        'Android скрыл выбранное приложение. Вернитесь в него или выберите весь экран.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Получаем первый кадр демонстрации…'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
 }

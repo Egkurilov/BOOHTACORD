@@ -75,6 +75,7 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
             @Override
             public void onCapturedContentVisibilityChanged(boolean isVisible) {
                 Log.i(TAG, "projection_content_visibility=" + (isVisible ? "visible" : "hidden"));
+                FlutterWebRTCPlugin.notifyMediaProjectionVisibilityChanged(trackId, isVisible);
             }
 
             @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)

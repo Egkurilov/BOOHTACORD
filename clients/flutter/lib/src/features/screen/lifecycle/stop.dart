@@ -16,6 +16,7 @@ extension ScreenShareStop on ScreenShareController {
     final pending = starting;
     final wasIdle = phase == ScreenSharePhase.idle;
     activeTrack = null;
+    capturedContentVisibility.track(null);
     stopSampling();
     phase = ScreenSharePhase.stopping;
     changed();

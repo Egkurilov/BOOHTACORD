@@ -4467,7 +4467,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
     final room = state.room;
     final active = state.voiceChannel?.id == channel.id;
     return AnimatedBuilder(
-      animation: room ?? state,
+      animation: Listenable.merge([?room, state]),
       builder: (context, _) {
         final participants =
             room?.remoteParticipants.values.toList() ?? const [];
@@ -5387,6 +5387,11 @@ class _VoiceScreenViewer extends StatelessWidget {
                   color: Colors.black,
                   child: ScreenFrameGate(
                     generation: track,
+                    waitingMessage:
+                        showingLocalScreen &&
+                            state.screenCapturedContentVisible == false
+                        ? 'Android скрыл выбранное приложение. Вернитесь в него или выберите весь экран.'
+                        : null,
                     builder: (context, onFirstFrameRendered) =>
                         VideoTrackRenderer(
                           track,

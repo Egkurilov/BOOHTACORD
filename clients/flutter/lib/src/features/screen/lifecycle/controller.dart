@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 
 import '../../../core/session/scope.dart';
 import '../../../services/api_client.dart';
@@ -10,6 +12,7 @@ import '../../../services/screen_thumbnail.dart';
 import '../capture/driver.dart';
 import '../metrics/controller.dart';
 import '../thumbnail_state/controller.dart';
+import 'captured_content_visibility.dart';
 import 'stop.dart';
 import 'types.dart';
 export 'types.dart';
@@ -42,6 +45,13 @@ class ScreenShareController extends ChangeNotifier {
       queue: captureQueue,
       changed: changed,
     );
+    if (Platform.isAndroid) {
+      _capturedContentVisibilitySubscription = rtc
+          .FlutterWebRTCEventChannel
+          .instance
+          .capturedContentVisibilityEvents
+          .listen(handleCapturedContentVisibility);
+    }
   }
   final ApiClient api;
   final SessionScope scope;
@@ -52,6 +62,10 @@ class ScreenShareController extends ChangeNotifier {
   late final ScreenThumbnailController thumbnail;
   final Map<String, Uint8List> thumbnails = {};
   final captureQueue = ScreenThumbnailCaptureQueue();
+  final CapturedContentVisibilityState capturedContentVisibility =
+      CapturedContentVisibilityState();
+  StreamSubscription<rtc.CapturedContentVisibilityEvent>?
+  _capturedContentVisibilitySubscription;
   ScreenSharePhase phase = ScreenSharePhase.idle;
   String? error;
   ScreenShareQuality quality =
@@ -64,6 +78,14 @@ class ScreenShareController extends ChangeNotifier {
   Future<void>? starting;
   Future<void>? closing;
   LocalVideoTrack? activeTrack;
+  bool? get capturedContentVisible => capturedContentVisibility.isVisible;
+
+  void handleCapturedContentVisibility(
+    rtc.CapturedContentVisibilityEvent event,
+  ) {
+    if (capturedContentVisibility.handle(event)) changed();
+  }
+
   bool current(SessionTicket ticket, int expected, Room room) =>
       !disposed &&
       ticket.isActive &&
@@ -81,6 +103,7 @@ class ScreenShareController extends ChangeNotifier {
   @override
   void dispose() {
     disposed = true;
+    unawaited(_capturedContentVisibilitySubscription?.cancel());
     unawaited(stopScreenShare());
     super.dispose();
   }

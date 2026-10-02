@@ -194,6 +194,22 @@ public class FlutterWebRTCPlugin implements FlutterPlugin, ActivityAware, EventC
         }
     }
 
+    public static void notifyMediaProjectionVisibilityChanged(
+            String trackId, boolean isVisible) {
+        ConstraintsMap event = new ConstraintsMap();
+        event.putString("event", "onCapturedContentVisibilityChanged");
+        event.putString("trackId", trackId);
+        event.putBoolean("isVisible", isVisible);
+        Object payload = event.toMap();
+        synchronized (pendingEvents) {
+            if (eventSink == null) {
+                pendingEvents.add(payload);
+            } else {
+                eventSink.success(payload);
+            }
+        }
+    }
+
     private class LifeCycleObserver implements Application.ActivityLifecycleCallbacks, DefaultLifecycleObserver {
 
         @Override

@@ -13,6 +13,7 @@ mixin AppScreenAccess on AppOwners {
 
   ScreenShareSenderReport? get screenShareSenderReport => screen.metrics.report;
   DateTime? get screenShareSenderSampledAt => screen.metrics.sampledAt;
+  bool? get screenCapturedContentVisible => screen.capturedContentVisible;
 
   set screenSharePhase(ScreenSharePhase value) => screen.phase = value;
 

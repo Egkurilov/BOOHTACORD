@@ -1,0 +1,50 @@
+{
+  "id": "QA-225",
+  "date": "2026-10-02",
+  "task": "FE-59",
+  "source_revision": "ba3edbf",
+  "working_tree_changes": true,
+  "status": "PASS_EMULATOR_HIDDEN_SOURCE_FEEDBACK_PAIRED_RECEIVER_OPEN",
+  "device": {
+    "model": "Android Emulator (sdk_gphone64_arm64)",
+    "api_level": 35,
+    "app_version": "1.0.23",
+    "app_build": 2036
+  },
+  "artifact": {
+    "kind": "release-signed Android APK installed in place",
+    "path": "clients/flutter/build/app/outputs/flutter-apk/app-release.apk",
+    "sha256": "4fb14e7695a7a2922d0e01f53749552c001b2bc894712f6b7aab2cd0d3718a6b",
+    "size_bytes": 70931514,
+    "installed_without_clearing_app_data": true
+  },
+  "automated_tests": {
+    "focused_command": "flutter test test/screen_frame_gate_test.dart test/screen_scope/captured_content_visibility_test.dart test/screen_scope/lifecycle_test.dart test/android_screen_capture_fgs_contract_test.dart test/screen_scope/thumbnail_test.dart packages/flutter_webrtc/test/captured_content_visibility_event_test.dart",
+    "focused_result": "PASS",
+    "focused_passed": 12,
+    "full_flutter_suite": {
+      "command": "flutter test",
+      "result": "PASS",
+      "passed": 422
+    },
+    "flutter_analyze": "PASS"
+  },
+  "checks": [
+    {
+      "name": "Single-app MediaProjection visibility event",
+      "result": "PASS",
+      "observation": "With the microphone muted, selected Clock as the sole app source in SHARE_TEST, then brought the existing BOOHTACORD activity forward. Android emitted projection_content_visibility=hidden for the active capture; the matching track event reached Flutter and replaced the indefinite first-frame spinner with a Russian explanation that Android hid the selected app. The screenshot showed the recent Clock frame dimmed beneath the explanation."
+    },
+    {
+      "name": "Stop and leave cleanup",
+      "result": "PASS",
+      "observation": "Stopped from the app UI; logcat recorded projection_app_stop, dumpsys media_projection returned null, and the app returned to the SHARE_TEST prejoin screen after leaving."
+    }
+  ],
+  "limitations": [
+    "Emulator-only; physical Pixel acceptance remains open.",
+    "No paired browser or macOS receiver was connected, so remote publication, decoded frames, receiver crop and correlated metrics were not checked.",
+    "The hidden-source notice makes the source state honest but does not fix or prove the Android local viewer texture/compositor path when the app is visible."
+  ],
+  "remaining": "Repeat app-only and resume tests on Pixel with a paired browser/macOS receiver; correlate sender and receiver frame counters and verify decoded pixels before closing FE-59."
+}
