@@ -42,5 +42,9 @@
     "No paired browser or macOS receiver was connected; remote publication, decoded frames, receiver crop and paired metrics remain unverified.",
     "The test does not establish microphone continuity in the background; that remains a separate FE-68 acceptance."
   ],
+  "thumbnail_follow_up": {
+    "result": "INVESTIGATE",
+    "observation": "Filtered ADB output for this run showed local=captured, then local=captureFailed about 8.3 seconds later while the large viewer remained visible. The participant-strip tile looked nearly blank at the tested portrait source size. Flutter uses BoxFit.cover and web uses object-fit: cover; compare the actual crop and refresh behavior before changing either client."
+  },
   "remaining": "Repeat app-only and background/resume with a paired web or macOS receiver, correlate bounded sender/receiver frame counters, then separately test microphone-enabled background behavior if ADR-006 requires it."
 }

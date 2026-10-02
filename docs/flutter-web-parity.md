@@ -56,6 +56,11 @@ Five focused Flutter capture/thumbnail lifecycle tests passed —
 [QA-224](../evidence/flutter/qa224-android-emulator-app-only-share-resume-2026-10-02-001.json).
 This is emulator-only and had no paired receiver, so it does not close FE-59 or
 FE-64's remote playback/publication checks.
+That run also logged a successful local thumbnail capture followed by
+`captureFailed` about 8.3 seconds later. The large preview remained visible, but
+the portrait source was nearly blank in the participant strip; Flutter uses
+`BoxFit.cover` and web uses `object-fit: cover`, so useful crop and refresh
+parity need a targeted comparison before changing the presentation.
 
 Vue (`clients/web/src`) is the product reference. The Flutter clients for macOS,
 Windows and Android must match its user-visible behavior, information
