@@ -8,6 +8,14 @@ Registration and login use independent, bounded per-source fixed-window limits. 
 
 `GET /api/v1/health` is unauthenticated and returns `{ "status": "ok" }`. It is a process liveness signal, not proof that media, database migrations or capacity gates have passed.
 
+`GET /api/v1/client-updates` is unauthenticated and accepts one exact
+platform/distribution/channel/architecture selector. It returns only bounded
+public release metadata with `no-store` and `nosniff`; an invalid cold-start
+catalog affects this endpoint with `503` while the main API remains available.
+The file-backed service keeps the last valid snapshot during later reload
+errors. Catalog structure and client evaluation are defined by
+`client-release-catalog.schema.json` and the shared evaluator fixtures.
+
 `GET /api/v1/maintenance` is unauthenticated, uncacheable and returns only `{ "active": boolean }`. During a trusted release, a server-local command activates this state before migrations and disables it only after proxy validation and public health pass. While active, registration, login, new voice leases and private `/rtc` signal admission return `503 MAINTENANCE`; existing sessions, logout, protected reads and an already established media connection are not synthetically closed by this gate. The public response and banner expose neither deployment schedule nor operator identity.
 
 `POST /api/v1/auth/register` accepts only `login` and `password`, creates a `MEMBER` account and returns public account fields without an authenticated session. `POST /api/v1/auth/login` accepts the same input and responds `204` with a secure, HTTP-only, same-site opaque session cookie; it never puts the raw session token or password hash in JSON. Invalid and unknown credentials share `UNAUTHENTICATED`; a blocked account returns `ACCOUNT_BLOCKED`.

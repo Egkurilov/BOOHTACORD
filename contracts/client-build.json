@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "application_family": "boohtacord",
+  "release_id": "boohtacord-1.0.24-36",
+  "release_order": 36,
+  "version": "1.0.24",
+  "native_build": "36",
+  "channel": "stable"
+}

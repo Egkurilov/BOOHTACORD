@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
 
-import '../app_version.dart';
 import '../app_state.dart';
 import '../services/native_notifications.dart';
 import '../theme.dart';
 import '../widgets/authenticated_avatar.dart';
+import '../features/updates/status_card.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.state});
@@ -401,16 +401,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                       const SizedBox(height: 24),
-                      const Divider(height: 1, color: GcColors.border),
-                      const SizedBox(height: 16),
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          appVersionLabel,
-                          key: ValueKey('app-version-label'),
-                          style: TextStyle(color: GcColors.muted, fontSize: 12),
-                        ),
-                      ),
+                      const ClientUpdateStatusCard(),
                     ],
                   ),
                 ),

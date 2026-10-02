@@ -12,7 +12,7 @@ def web_build_arguments(environment):
 
 def build(source, output, revision, source_hash, environment):
     receipts = {}
-    for service, context in (("api", "backend"), ("web", "clients/web")):
+    for service, context in (("api", "backend"), ("web", ".")):
         tag = f"voice-platform-{service}:{revision}"
         archive = output / (service + ".oci.tar")
         subprocess.run(["docker", "buildx", "build", "--platform", "linux/amd64",
@@ -20,7 +20,8 @@ def build(source, output, revision, source_hash, environment):
                         "--label", f"org.voice-platform.source-archive-sha256={source_hash}",
                         "--sbom=true", "--provenance=mode=max,version=v0.2", "--load", "--tag", tag,
                         "--output", f"type=oci,dest={archive}",
-                        *(web_build_arguments(environment) if service == "web" else []),
+                        *(["--file", str(source / "clients/web/Dockerfile"), *web_build_arguments(environment),
+                           "--build-arg", "SOURCE_REVISION=" + revision] if service == "web" else []),
                         str(source / context)], env=environment, check=True)
         image_id = subprocess.check_output(["docker", "image", "inspect", "--format", "{{.Id}}", tag], text=True).strip()
         receipts[service] = verify(archive, revision, source_hash, image_id)

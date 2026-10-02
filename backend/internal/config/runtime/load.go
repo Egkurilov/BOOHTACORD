@@ -16,6 +16,8 @@ import (
 type Config struct {
 	Address, DatabaseURL, LiveKitAPIKey, LiveKitAPISecret string
 	PublicOrigin                                          string
+	ClientUpdateCatalogPath                               string
+	ClientUpdateAllowedHosts                              []string
 	OriginMiddleware                                      func(http.Handler) http.Handler
 	CredentialSigner                                      livekitcredential.Signer
 	RoomRemover                                           removelivekitparticipant.Client
@@ -75,6 +77,14 @@ func Load(getenv func(string) string) (Config, error) {
 		}
 	}
 	configuration.TelemetryAuth = getenv("OTEL_INGEST_AUTH")
+	configuration.ClientUpdateCatalogPath = getenv("CLIENT_UPDATE_CATALOG_PATH")
+	if configuration.ClientUpdateCatalogPath == "" {
+		configuration.ClientUpdateCatalogPath = "/etc/boohtacord/client-updates/catalog.json"
+	}
+	configuration.ClientUpdateAllowedHosts = splitHosts(getenv("CLIENT_UPDATE_ALLOWED_HOSTS"))
+	if len(configuration.ClientUpdateAllowedHosts) == 0 {
+		configuration.ClientUpdateAllowedHosts = publicHost(configuration.PublicOrigin)
+	}
 	configuration.Address = getenv("API_ADDR")
 	if configuration.Address == "" {
 		configuration.Address = ":8080"
@@ -83,4 +93,22 @@ func Load(getenv func(string) string) (Config, error) {
 	configuration.LiveKitAPIKey = getenv("LIVEKIT_API_KEY")
 	configuration.LiveKitAPISecret = getenv("LIVEKIT_API_SECRET")
 	return configuration, nil
+}
+
+func splitHosts(raw string) []string {
+	var result []string
+	for _, value := range strings.Split(raw, ",") {
+		if host := strings.TrimSpace(value); host != "" {
+			result = append(result, host)
+		}
+	}
+	return result
+}
+
+func publicHost(raw string) []string {
+	request, err := http.NewRequest(http.MethodGet, raw, nil)
+	if err != nil || request.URL.Hostname() == "" {
+		return nil
+	}
+	return []string{request.URL.Hostname()}
 }

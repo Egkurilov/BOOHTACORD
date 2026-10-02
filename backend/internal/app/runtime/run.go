@@ -11,6 +11,7 @@ import (
 	"voice-platform/backend/internal/app/lifecycle"
 	"voice-platform/backend/internal/app/telemetry"
 	workerruntime "voice-platform/backend/internal/app/worker_runtime"
+	clientupdates "voice-platform/backend/internal/client_updates/catalog"
 	runtimeconfig "voice-platform/backend/internal/config/runtime"
 	"voice-platform/backend/internal/database/pool"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
@@ -40,7 +41,9 @@ func Run(ctx context.Context) (result error) {
 	events, stopRealtime := workerruntime.StartRealtime(ctx, database)
 	resources.Add(stopRealtime)
 	metrics := httpmetrics.New()
-	handler, err := routes(database, configuration, events, metrics)
+	updates := clientupdates.NewStore(configuration.ClientUpdateCatalogPath, configuration.ClientUpdateAllowedHosts)
+	updates.Start(ctx)
+	handler, err := routes(database, configuration, events, metrics, updates)
 	if err != nil {
 		return err
 	}

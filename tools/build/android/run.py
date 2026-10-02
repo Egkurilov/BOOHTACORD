@@ -7,6 +7,7 @@ from tools.ci.native.process import ROOT, client, output, require_version, run
 from tools.release.native_artifact.manifest import version, write
 from .signature import APPLICATION, inspect
 from .signing import provision
+from tools.build.client_identity import dart_defines
 
 
 def main():
@@ -20,7 +21,7 @@ def main():
     if not args.debug and os.environ.get('GITHUB_REF_NAME', tag) != tag: raise ValueError('Release tag differs from pubspec version')
     run('flutter', 'pub', 'get', '--enforce-lockfile', cwd=flutter)
     command = ('--debug',) if args.debug else ('--release', '--split-per-abi')
-    with provision(): run('flutter', 'build', 'apk', *command, '--no-pub', cwd=flutter)
+    with provision(): run('flutter', 'build', 'apk', *command, '--no-pub', *dart_defines(), cwd=flutter)
     destination = ROOT / '.out/native/android-debug' if args.debug else flutter / 'build/release-assets'
     destination.mkdir(parents=True, exist_ok=True)
     architectures = ['universal'] if args.debug else ['arm64-v8a', 'armeabi-v7a', 'x86_64']

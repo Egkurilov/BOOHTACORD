@@ -9,6 +9,9 @@ import 'src/services/api_client.dart';
 import 'src/services/third_party_audio_licenses.dart';
 import 'src/services/client_telemetry.dart';
 import 'src/telemetry/traced_app_state.dart';
+import 'src/features/updates/api.dart';
+import 'src/features/updates/controller.dart';
+import 'src/features/updates/identity.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +38,11 @@ Future<void> main() async {
   final api = ApiClient();
   await ClientTelemetry.initialize(api.submitClientSpans);
   final state = TracedAppState(api);
-  runApp(BoohtacordApp(state: state));
+  final updates = UpdateController(
+    api: UpdateApi(baseUrl: () => api.baseUrl),
+    identity: await NativeUpdateIdentity.load(),
+  );
+  runApp(BoohtacordApp(state: state, updates: updates));
   await state.initialize();
+  updates.start();
 }

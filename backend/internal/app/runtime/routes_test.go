@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	clientupdates "voice-platform/backend/internal/client_updates/catalog"
 	runtimeconfig "voice-platform/backend/internal/config/runtime"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
@@ -25,7 +26,7 @@ func TestComposedRoutesPreserveSessionAndOriginBoundaries(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler, err := routes(nil, configuration, eventhub.New(64), httpmetrics.New())
+	handler, err := routes(nil, configuration, eventhub.New(64), httpmetrics.New(), unavailableUpdates{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,4 +53,10 @@ func TestComposedRoutesPreserveSessionAndOriginBoundaries(t *testing.T) {
 	if response.Code != http.StatusForbidden {
 		t.Fatalf("foreign origin got %d", response.Code)
 	}
+}
+
+type unavailableUpdates struct{}
+
+func (unavailableUpdates) Policy(clientupdates.Selector) (clientupdates.Policy, bool) {
+	return clientupdates.Policy{}, false
 }

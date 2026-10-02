@@ -38,7 +38,11 @@ def write(directory, platform, architectures, application_id, signing, *, root=R
     contracts = {path.name: digest(path) for path in sorted((root / 'contracts').glob('*')) if path.is_file()}
     if not {'openapi.yaml', 'realtime.schema.json', 'mobile-client-contract.md'} <= contracts.keys():
         raise ValueError('Native artifact contract inputs are missing from checkout')
+    client_build = json.loads((root / 'contracts/client-build.json').read_text(encoding='utf-8'))
+    if version(root) != f"{client_build['version']}+{client_build['native_build']}":
+        raise ValueError('Native version differs from client build identity')
     result = {'schema_version': 1, 'source_revision': revision, 'source_dirty': dirty, 'version': version(root),
+              'release_id': client_build['release_id'], 'release_order': client_build['release_order'],
               'platform': platform, 'architectures': architectures, 'application_id': application_id,
               'signing': signing, 'toolchains': json.loads((root / 'tools/toolchains.json').read_text()),
               'contracts': contracts, 'files': files, 'audio_component': audio_component}

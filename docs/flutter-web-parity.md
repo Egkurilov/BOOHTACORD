@@ -847,3 +847,13 @@ commit containing this change.
 The latest Pixel 7 app-only tests are recorded in [QA-197](../evidence/flutter/qa197-android-preview-render-event-2026-10-01-001.json), [QA-198](../evidence/flutter/qa198-pixel7-preview-impeller-ab-2026-10-01-001.json), and [QA-199](../evidence/flutter/qa199-pixel7-preview-surfacetexture-ab-2026-10-01-001.json). On `1.0.18+2027`, `first_swap_buffers` fired and the Calculator thumbnail appeared while the large preview stayed black. The `1.0.18+2028` A/B opted out of Impeller with SurfaceProducer; `1.0.18+2029` used legacy SurfaceTextureEntry with the same opt-out. Both reproduced the black preview, while capture targeted Calculator and encoder dimensions were 1080×2400. Thus neither Impeller opt-out nor choosing one of these two texture backends explains/resolves the issue. Source review then identified a potential race between asynchronous EGL surface release and immediate Flutter SurfaceProducer resize; a release barrier has been implemented with ordering tests and release APK `1.0.18+2030` compiles [QA-200](../evidence/flutter/qa200-android-screen-preview-egl-resize-barrier-2026-10-01-001.json). The Pixel was disconnected, so app-only/full-display runtime behavior and paired receiver playback are still unverified. FE-59 remains open pending device acceptance.
 
 On Android Emulator API 35, release-signed `1.0.23+2036` additionally verified the app-only source-hidden state end to end: Android's MediaProjection visibility callback reached the matching Flutter track, and switching from Clock back to BOOHTACORD replaced the endless first-frame spinner with an explicit message that Android hid the selected app. Stop/leave cleared MediaProjection. This improves failure feedback but does not prove pixel rendering or remote playback; physical Pixel and paired receiver acceptance remain open — [QA-225](../evidence/flutter/qa225-android-app-only-hidden-source-feedback-2026-10-02-001.json).
+
+## Client update awareness
+
+Web, Android and Windows now use the same release identity, policy states and
+language-neutral evaluator fixtures. Each surface provides a root update banner,
+details, snooze and manual check. Web performs a guarded reload; native clients
+open an explicit external download page and leave active media intact until the
+user decides. Automated contract and build gates are separate from the pending
+two-release physical A/B acceptance recorded in
+[QA-226](../evidence/flutter/qa226-client-update-device-acceptance-2026-10-02-001.json).
