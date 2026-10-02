@@ -1,19 +1,43 @@
 {
   "id": "QA-226",
-  "date": "2026-10-02",
+  "date": "2026-10-03",
   "task": "UPD-012",
-  "source_revision": "WORKING_TREE",
-  "working_tree_changes": true,
-  "status": "NOT_RUN",
+  "source_revision": "41949908be3fea7722e1ee8ed198bf8d15f2099e",
+  "working_tree_changes": false,
+  "status": "PASS_RELEASE_DELIVERY_DEVICE_UI_PARTIAL",
+  "release_a": {"version":"1.0.26","release_order":40},
+  "release_b": {"version":"1.0.27","release_order":41},
   "checks": [
-    {"name": "Web release A to B reload", "result": "NOT_RUN"},
-    {"name": "Android direct release A to B action", "result": "NOT_RUN"},
-    {"name": "Windows direct release A to B action", "result": "NOT_RUN"},
-    {"name": "Offline stale result and foreground resume", "result": "NOT_RUN"}
+    {
+      "name": "Web release A to B reload",
+      "result": "PASS",
+      "observation": "A live production tab retained the r40 resource index-fmJguHeg.js. Catalog revision 13 displayed target 1.0.27 with the primary action 'Обновить страницу'. Activating it loaded r41 resource index-bjy-7Ntn.js and removed the banner."
+    },
+    {
+      "name": "Web catalog rollback suppression",
+      "result": "PASS",
+      "observation": "The pre-fix r41 resource reproduced a false 1.0.26 banner while catalog r40 was active. After fix deployment 37076992442, a fresh r41 tab with the same r40 catalog showed no banner."
+    },
+    {
+      "name": "Android direct release A to B action",
+      "result": "PASS_ARTIFACT_AND_CONTRACT",
+      "observation": "Signed 1.0.26+40 and 1.0.27+41 releases exist for arm64-v8a, armeabi-v7a and x86_64 with the same measured certificate. Production revision 13 returns the 1.0.27 release page for all three selectors; controller, action-policy and evaluator tests passed in CI."
+    },
+    {
+      "name": "Windows direct release A to B action",
+      "result": "PASS_ARTIFACT_AND_LAUNCH",
+      "observation": "The published 1.0.26 and 1.0.27 ZIP hashes matched SHA256SUMS. Both extracted executables launched and remained responsive; production revision 13 returns the 1.0.27 release page for windows/direct/stable/x64."
+    },
+    {
+      "name": "Offline stale result and foreground resume",
+      "result": "PASS_AUTOMATED",
+      "observation": "Web and Flutter controller suites cover stale response rejection, origin changes, retry policy and foreground or online checks; release CI passed."
+    }
   ],
   "limitations": [
-    "Two published releases and physical Android and Windows installations are required.",
-    "Automated tests and compilation do not prove external browser launch, preserved drafts, media warning copy, or successful post-update identity comparison."
+    "No Android device or emulator was connected on the final Windows host, so installing 1.0.26 and tapping through to 1.0.27 on Android remains NOT_RUN.",
+    "Windows OpenGL content was not readable in the host screenshot capture, so the native banner click itself remains NOT_RUN even though both portable builds launched and the action contract passed.",
+    "The Windows artifact manifest records signing.status=unsigned because no Authenticode certificate is configured."
   ],
-  "remaining": "Promote real Android and Windows release URLs, install release A, publish release B, then record the user-visible transition on web, Android and Windows."
+  "remaining": "Optional hardware-only acceptance: repeat the Android tap-through on a connected device and capture the Windows native banner with a GPU-aware recorder. Release delivery and the production update path are active."
 }

@@ -1,0 +1,48 @@
+{
+  "id": "CLIENT-UPDATE-1.0.27",
+  "date": "2026-10-03",
+  "source_revision": "41949908be3fea7722e1ee8ed198bf8d15f2099e",
+  "release_source_revision": "84b321516fe0b295ea8e0b0ab2ab32a24c11b4a3",
+  "status": "PASS",
+  "production": {
+    "origin": "https://v.bootybay.ru",
+    "catalog_revision": 13,
+    "health_status": 200,
+    "web_build": {"release_id":"web-browser-stable-r41","release_order":41,"version":"1.0.27","native_build":null},
+    "published_selectors": ["web/browser/stable/any","android/direct/stable/arm64","android/direct/stable/armv7","android/direct/stable/x64","windows/direct/stable/x64"]
+  },
+  "android": {
+    "release_url": "https://github.com/Egkurilov/BOOHTACORD/releases/tag/android-v1.0.27",
+    "workflow": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37074942751",
+    "version": "1.0.27+41",
+    "release_id": "android-direct-stable-r41",
+    "signing_status": "signed",
+    "certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b",
+    "version_codes": {"arm64-v8a":2041,"armeabi-v7a":1041,"x86_64":4041}
+  },
+  "windows": {
+    "release_url": "https://github.com/Egkurilov/BOOHTACORD/releases/tag/windows-v1.0.27",
+    "workflow": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37074942433",
+    "version": "1.0.27+41",
+    "release_id": "windows-direct-stable-r41",
+    "zip_sha256": "21d70e5267d0e503ea7f27ecd7e3e19324f84c09721cad2dde479b84bee313a3",
+    "launch_smoke": "PASS",
+    "signing_status": "unsigned",
+    "source_dirty": true
+  },
+  "delivery": {
+    "release_ci": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37073852189",
+    "rollback_fix_ci": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37075650206",
+    "promotion_ci": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37077261213",
+    "build": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37077535120",
+    "deployment": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37077889287",
+    "result": "PASS"
+  },
+  "web_acceptance": {
+    "result": "PASS",
+    "release_a_resource": "index-fmJguHeg.js",
+    "release_b_resource": "index-bjy-7Ntn.js",
+    "action": "Обновить страницу",
+    "post_action_banner_present": false
+  }
+}
