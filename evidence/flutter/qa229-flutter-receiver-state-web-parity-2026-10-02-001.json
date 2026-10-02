@@ -2,7 +2,7 @@
   "id": "QA-229",
   "date": "2026-10-02",
   "task": "FE-59 / screen metrics parity",
-  "source_revision": "2ca40a9",
+  "source_revision": "fd18f71",
   "working_tree_changes": true,
   "status": "SOURCE_PARITY_FIX_PASS_RUNTIME_OPEN",
   "finding": "Web classifies a receiver as stalled only when presented_fps is zero. Flutter also treated the native RTC framesPerSecond field as a stall signal, so a report could say stalled while framesRendered showed ongoing playback.",
@@ -20,12 +20,24 @@
       "result": "PASS",
       "passed": 16
     },
+    "receiver_report_api_flutter_test": {
+      "command": "flutter test test/screen_metrics_report_api_test.dart",
+      "result": "PASS",
+      "passed": 1,
+      "detail": "Builds a receiver report from normalized measurements and asserts the authenticated POST path, Origin, session cookie, JSON body, and omission of account/channel/track identifiers."
+    },
     "full_flutter_suite": {
       "command": "flutter test",
       "result": "PASS",
-      "passed": 425
+      "passed": 426
     },
     "flutter_analyze": "PASS",
+    "backend_screen_metrics_tests": {
+      "command": "go test ./internal/observability/http_metrics/...",
+      "result": "PASS",
+      "passed_packages": 1,
+      "detail": "Backend receiver report validation and in-memory recording tests pass."
+    },
     "macos_debug_build": {
       "command": "flutter build macos --debug",
       "result": "PASS"
