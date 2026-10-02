@@ -21,6 +21,13 @@ plugin tests pass, and macOS Debug builds — [QA-209](../evidence/flutter/qa209
 This is a plausible cause, not yet a reproduced diagnosis. Live
 appearance/playback/unpublish acceptance remains open as FE-61.
 
+The Flutter first-frame gate also rejects delayed callbacks from a previously
+selected track after the viewer switches sources. A test failed before the fix;
+the full suite (409), macOS Debug build, and Android arm64 Debug build pass —
+[QA-210](../evidence/flutter/qa210-flutter-stale-screen-frame-callback-2026-10-02-001.json).
+This keeps the new source's loading state honest but does not prove physical
+pixels are displayed; FE-59/61 still require live acceptance.
+
 Android MediaProjection now emits low-frequency, content-free diagnostic events
 for capture startup, Android's captured-content visibility callback, Android
 projection stop, and normal app teardown — [QA-208](../evidence/flutter/qa208-android-projection-diagnostic-events-2026-10-02-001.json).

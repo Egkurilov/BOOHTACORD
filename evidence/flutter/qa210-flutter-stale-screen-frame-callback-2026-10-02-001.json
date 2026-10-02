@@ -1,0 +1,65 @@
+{
+  "id": "QA-210",
+  "kind": "flutter-screen-frame-generation-gate",
+  "status": "SOURCE_AND_CROSS_PLATFORM_BUILDS_PASS_LIVE_ACCEPTANCE_PENDING",
+  "executed_at": "2026-10-02",
+  "source_revision": "690d4ed",
+  "working_tree_changes": true,
+  "task": "T-030",
+  "summary": "A test-first regression reproduced a viewer-state race: after the selected VideoTrack changes, a delayed first-frame callback from the previous track could clear the current track's loading gate. The callback now captures its track generation and is ignored if the selected generation has changed. This prevents stale renderer callbacks from making a new stream look ready before its own first frame; it does not prove decoded pixels reach the display.",
+  "checks": [
+    {
+      "name": "Stale callback regression before fix",
+      "command": "flutter test --no-pub test/screen_frame_gate_test.dart --reporter expanded",
+      "status": "FAIL_AS_EXPECTED",
+      "observation": "The old track callback removed the replacement track's loading overlay."
+    },
+    {
+      "name": "Focused ScreenFrameGate tests after fix",
+      "command": "flutter test --no-pub test/screen_frame_gate_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "Both tests pass, including stale callback rejection and current track readiness."
+    },
+    {
+      "name": "Full Flutter app test suite",
+      "command": "flutter test --no-pub --reporter compact",
+      "status": "PASS",
+      "observation": "409 tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "flutter analyze --no-pub",
+      "status": "PASS_WITH_EXISTING_INFO",
+      "observation": "No new diagnostics; two existing info diagnostics remain in vendored flutter_webrtc web files."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "Built BOOHTACORD.app."
+    },
+    {
+      "name": "Android arm64 Debug build",
+      "command": "flutter build apk --debug --target-platform android-arm64 --no-pub",
+      "status": "PASS_NOT_INSTALLED",
+      "observation": "The complete client built successfully. The debug APK remains in ignored build output and was not installed on the connected Pixel."
+    },
+    {
+      "name": "Pixel active stream snapshot",
+      "command": "adb shell dumpsys media_projection; adb shell dumpsys package ru.boohtacord.app",
+      "status": "READ_ONLY_CAPTURE_INACTIVE",
+      "observation": "Pixel 7 was connected and had BOOHTACORD 1.0.19+2032 installed; MediaProjection was null. No app or capture state was changed."
+    },
+    {
+      "name": "Spec traceability verifier after parity backlog update",
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "status": "BLOCKED",
+      "observation": "PowerShell Core (pwsh) is not installed on this host."
+    }
+  ],
+  "limitations": [
+    "This is a Flutter widget/source regression and cross-platform compile check, not evidence that macOS or Android rendered the current stream on hardware.",
+    "No active Pixel capture was available for paired viewer acceptance; no APK was installed."
+  ],
+  "remaining": "Verify with a live publication after switching stream sources on macOS and Android; confirm loading persists until the new track's first frame and that the displayed pixels are current. Keep FE-59 and FE-61 open pending device and paired-receiver checks."
+}

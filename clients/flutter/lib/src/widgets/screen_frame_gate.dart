@@ -30,8 +30,13 @@ class _ScreenFrameGateState extends State<ScreenFrameGate> {
     }
   }
 
-  void _markFirstFrameRendered() {
-    if (!mounted || _hasRenderedFirstFrame) return;
+  VoidCallback _firstFrameCallback(Object generation) =>
+      () => _markFirstFrameRendered(generation);
+
+  void _markFirstFrameRendered(Object generation) {
+    if (!mounted || generation != widget.generation || _hasRenderedFirstFrame) {
+      return;
+    }
     setState(() => _hasRenderedFirstFrame = true);
   }
 
@@ -39,7 +44,7 @@ class _ScreenFrameGateState extends State<ScreenFrameGate> {
   Widget build(BuildContext context) => Stack(
     fit: StackFit.expand,
     children: [
-      widget.builder(context, _markFirstFrameRendered),
+      widget.builder(context, _firstFrameCallback(widget.generation)),
       if (!_hasRenderedFirstFrame)
         ColoredBox(
           color: Color(0xA6080A0E),

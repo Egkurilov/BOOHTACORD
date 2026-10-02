@@ -35,4 +35,35 @@ void main() {
       expect(find.text('Получаем первый кадр демонстрации…'), findsOneWidget);
     },
   );
+
+  testWidgets('a stale track frame cannot unlock the replacement track', (
+    tester,
+  ) async {
+    final frameCallbacks = <VoidCallback>[];
+
+    Widget buildGate(Object generation) => MaterialApp(
+      home: SizedBox.expand(
+        child: ScreenFrameGate(
+          generation: generation,
+          builder: (context, onRendered) {
+            frameCallbacks.add(onRendered);
+            return const ColoredBox(color: Colors.black);
+          },
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(buildGate('track-a'));
+    final oldTrackFrameCallback = frameCallbacks.last;
+    await tester.pumpWidget(buildGate('track-b'));
+    final currentTrackFrameCallback = frameCallbacks.last;
+
+    oldTrackFrameCallback();
+    await tester.pump();
+    expect(find.text('Получаем первый кадр демонстрации…'), findsOneWidget);
+
+    currentTrackFrameCallback();
+    await tester.pump();
+    expect(find.text('Получаем первый кадр демонстрации…'), findsNothing);
+  });
 }
