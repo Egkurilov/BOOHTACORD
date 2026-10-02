@@ -10,6 +10,7 @@
 | Дизайн | [GuildChat acceptance](docs/design/GUILDCHAT_V1_TODO.md) |
 | Проверка и выпуск | [VERIFICATION_TODO](backlog/VERIFICATION_TODO.md) |
 | Дополнения из аудита | [IMPROVEMENTS_TODO](backlog/IMPROVEMENTS_TODO.md) |
+| Роли и управление каналами V1 | [ROLE_PERMISSIONS_TODO](backlog/ROLE_PERMISSIONS_TODO.md) |
 
 Физические media/device, accessibility, load и release gates закрываются только
 соответствующим evidence. Наличие реализации и успешная компиляция их не закрывают.
