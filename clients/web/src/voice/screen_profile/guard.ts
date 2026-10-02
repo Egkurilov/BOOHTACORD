@@ -72,7 +72,7 @@ export class ScreenProfileGuard {
       if (!current()) return
       this.frames = frames
       const attempts = this.snapshot?.attempts ?? 0
-      this.snapshot = { ...result, attempts, ...(this.terminal ? { status: 'failed' as const } : {}) }
+      this.snapshot = { ...result, attempts, ...(this.terminal ? { status: 'failed' as const, reason: this.snapshot?.reason ?? result.reason } : {}) }
       if (this.terminal) return
       this.failures = result.status === 'drift' ? this.failures + 1 : 0
       if (this.failures < 3) return
