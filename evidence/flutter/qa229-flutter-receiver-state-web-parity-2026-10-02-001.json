@@ -1,0 +1,45 @@
+{
+  "id": "QA-229",
+  "date": "2026-10-02",
+  "task": "FE-59 / screen metrics parity",
+  "source_revision": "8d6e898",
+  "working_tree_changes": true,
+  "status": "SOURCE_PARITY_FIX_PASS_RUNTIME_OPEN",
+  "finding": "Web classifies a receiver as stalled only when presented_fps is zero. Flutter also treated the native RTC framesPerSecond field as a stall signal, so a report could say stalled while framesRendered showed ongoing playback.",
+  "change": {
+    "file": "clients/flutter/lib/src/services/screen_receiver_report.dart",
+    "detail": "Receiver state now uses the measured presented FPS for stall detection, matching the web reporter; the independent RTC source FPS no longer overrides evidence of rendered frames."
+  },
+  "test_first": {
+    "result": "RED_THEN_GREEN",
+    "observation": "The new regression failed before the change with state=stalled for presented_fps=20 and RTC framesPerSecond=0, then passed after the change."
+  },
+  "verification": {
+    "focused_flutter_tests": {
+      "command": "flutter test test/screen_receiver_report_test.dart test/screen_receiver_diagnostics_test.dart",
+      "result": "PASS",
+      "passed": 16
+    },
+    "full_flutter_suite": {
+      "command": "flutter test",
+      "result": "PASS",
+      "passed": 425
+    },
+    "flutter_analyze": "PASS",
+    "web_contract_test": {
+      "existing_test": "clients/web/src/voice/screen_client_reporter.spec.ts",
+      "result": "NOT_RUN_DEPENDENCIES_UNAVAILABLE",
+      "reason": "The web package dependencies were not installed; pnpm could not reach registry.npmjs.org (ENOTFOUND). The existing test already asserts web state is stalled at presented_fps=0 and playing at a positive presented FPS."
+    },
+    "spec_traceability": {
+      "result": "NOT_RUN_TOOL_UNAVAILABLE",
+      "reason": "pwsh and powershell are not installed on this host."
+    }
+  },
+  "runtime_acceptance": "OPEN",
+  "runtime_limits": [
+    "The connected emulator has a non-debuggable installed APK, so Flutter attach/hot reload cannot connect without replacing the package.",
+    "The running macOS app does not advertise a discoverable Dart VM Service; flutter attach waited without connecting. The app was not restarted."
+  ],
+  "remaining": "Install the current signed build on Android and hot-reload or otherwise update the existing macOS app only when a safe session-preserving path is available. With a live receiver, confirm the admin report follows rendered FPS and that the ten-second packet-loss window appears only after it is complete."
+}

@@ -23,7 +23,7 @@ Map<String, Object>? buildScreenReceiverReport({
       ? 'waiting_subscription'
       : current == null
       ? 'waiting_first_frame'
-      : presentedFps == 0 || current.framesPerSecond == 0
+      : presentedFps == 0
       ? 'stalled'
       : width != null && height != null
       ? 'playing'

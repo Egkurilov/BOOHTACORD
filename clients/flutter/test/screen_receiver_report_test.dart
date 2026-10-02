@@ -59,6 +59,26 @@ void main() {
     });
   });
 
+  test('does not report stalled while frames are being presented', () {
+    final report = buildScreenReceiverReport(
+      platform: 'android_native',
+      selected: true,
+      hasTrack: true,
+      current: const ScreenReceiverSnapshot(
+        timestampMs: 6000,
+        framesDecoded: 120,
+        framesRendered: 80,
+        frameWidth: 576,
+        frameHeight: 1280,
+        framesPerSecond: 0,
+      ),
+      metrics: const ScreenReceiverMetrics(decodedFps: 30, presentedFps: 20),
+    );
+
+    expect(report, containsPair('state', 'playing'));
+    expect(report, containsPair('presented_fps', 20));
+  });
+
   test('reports a selected stream that is still waiting for subscription', () {
     expect(
       buildScreenReceiverReport(
