@@ -46,7 +46,7 @@ the domain for HTTPS certificate validation.
 
 ## Dashboards and incident use
 
-- [Runtime](https://grafana.fa.shaneque.ru/d/boohtacord-runtime/boohtacord-7c-runtime): three target health checks, API request totals and 5xx share since the last API restart, span rate, route traffic and p95 latency, status and route tables, Tempo live traces and storage process memory.
+- [Runtime](https://grafana.fa.shaneque.ru/d/boohtacord-runtime/boohtacord-7c-runtime): three target health checks, API request totals and 5xx share for the selected time range, span rate, route traffic and p95 latency, status and route tables, Tempo live traces and storage process memory.
 - [Traces](https://grafana.fa.shaneque.ru/d/boohtacord-traces/boohtacord-7c-traces): HTTP requests, errors, slow requests, client actions and application event searches. Trace IDs open the full waterfall and its event timeline.
 
 Successful state-changing API responses add a fixed `app.*` event to the
