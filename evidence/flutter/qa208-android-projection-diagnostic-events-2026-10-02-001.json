@@ -21,6 +21,12 @@
       "observation": "With the installed Homebrew JDK 17 selected explicitly, the WebRTC Android module unit tests and compileDebugJavaWithJavac both succeeded."
     },
     {
+      "name": "Android arm64 application Debug build",
+      "command": "flutter build apk --debug --target-platform android-arm64 --no-pub",
+      "status": "PASS_NOT_INSTALLED",
+      "observation": "The complete Flutter Android app and MediaProjection foreground-service integration built successfully. The debug APK remains in the ignored build directory and was not installed on the connected Pixel."
+    },
+    {
       "name": "Read-only Pixel projection and service state",
       "command": "adb shell dumpsys media_projection; adb shell dumpsys activity services ru.boohtacord.app; adb shell pidof ru.boohtacord.app",
       "status": "PASS_READ_ONLY_NO_ACTIVE_PROJECTION",

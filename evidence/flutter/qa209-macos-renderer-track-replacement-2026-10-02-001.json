@@ -27,6 +27,12 @@
       "observation": "20 tests passed."
     },
     {
+      "name": "Full Flutter application test suite",
+      "command": "flutter test --no-pub --reporter compact",
+      "status": "PASS",
+      "observation": "408 tests passed."
+    },
+    {
       "name": "macOS Debug app build",
       "command": "flutter build macos --debug --no-pub",
       "status": "PASS",
