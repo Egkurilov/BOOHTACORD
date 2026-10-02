@@ -43,6 +43,15 @@ abstract class AudioDeviceState extends ChangeNotifier {
     refreshAfterCaptureRequested = false;
   }
 
+  void clearAccount() {
+    cancelOperations();
+    preferences = null;
+    selectedAudioInputId = null;
+    selectedAudioOutputId = null;
+    audioDeviceWarning = null;
+    audioProcessing = const AudioProcessingPreferences();
+  }
+
   Future<void> refreshAudioDevices();
   void applyAudioDevices(List<MediaDevice> devices);
   Future<void> applyAndroidAdditions(

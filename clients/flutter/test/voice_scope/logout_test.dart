@@ -1,23 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
-import 'package:boohtacord_desktop/src/services/api_client.dart';
 
-class DelayedVoiceApi extends ApiClient {
-  final credential = Completer<(String, VoiceCredential)>();
-  @override
-  Future<(String, VoiceCredential)> voiceCredential(
-    String channelId, {
-    bool transfer = false,
-  }) => credential.future;
-  @override
-  Future<void> logout() async {}
-  @override
-  Future<void> releaseVoice(String leaseId) async {}
-}
+import 'api.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

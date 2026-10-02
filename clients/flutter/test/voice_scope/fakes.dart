@@ -7,7 +7,7 @@ import 'package:boohtacord_desktop/src/features/audio/devices/controller.dart';
 import 'package:boohtacord_desktop/src/features/screen/lifecycle/controller.dart';
 import 'package:boohtacord_desktop/src/features/voice/lifecycle/controller.dart';
 
-import 'logout_test.dart' show DelayedVoiceApi;
+import 'api.dart';
 
 class PendingVoiceRoom with EventsEmittable<RoomEvent> implements Room {
   final connecting = Completer<void>();

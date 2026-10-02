@@ -1,19 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:boohtacord_desktop/src/models.dart';
+
+import 'api.dart';
+
 import 'package:boohtacord_desktop/src/features/voice/lifecycle/controller.dart';
 
 import 'fakes.dart';
 
-const channel = GuildChannel(
-  id: 'voice',
-  name: 'Voice',
-  kind: ChannelKind.voice,
-  admissionClosed: false,
-);
-const credential = VoiceCredential(
-  url: 'wss://voice.invalid',
-  token: 'test-only',
-);
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   test('logout during credential request prevents Room creation', () async {
