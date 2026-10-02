@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "application_family": "boohtacord",
-  "release_id": "boohtacord-1.0.24-38",
-  "release_order": 38,
-  "version": "1.0.24",
-  "native_build": "38",
+  "release_id": "boohtacord-1.0.25-39",
+  "release_order": 39,
+  "version": "1.0.25",
+  "native_build": "39",
   "channel": "stable"
 }

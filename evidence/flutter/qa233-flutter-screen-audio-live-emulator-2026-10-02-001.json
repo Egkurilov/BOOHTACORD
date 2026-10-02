@@ -42,6 +42,18 @@
       "result": "PASS",
       "detail": "No issues found."
     },
+    "shared_build_identity": {
+      "result": "PASS",
+      "release_id": "boohtacord-1.0.25-39",
+      "release_order": 39,
+      "version": "1.0.25",
+      "native_build": "39",
+      "detail": "tools.build.client_identity.load and dart_defines agree with pubspec.yaml."
+    },
+    "contracts_verifier": {
+      "result": "NOT_RUN_TOOL_UNAVAILABLE",
+      "reason": "pwsh and powershell are not installed on this host; focused shared-build-identity validation passed."
+    },
     "spec_traceability": {
       "result": "NOT_RUN_TOOL_UNAVAILABLE",
       "reason": "pwsh and powershell are not installed on this host."
