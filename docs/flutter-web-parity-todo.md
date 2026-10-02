@@ -271,6 +271,9 @@ peer/platform-проверки и выравниваем viewer с вебом.
 - [ ] На физических устройствах проверить receiver metrics/audio states,
   fullscreen/share permissions и переключение rail/viewer; локальный fullscreen
   и исправления диагностики, отступов и мобильного возврата — [QA-17](../evidence/flutter/qa17-voice-viewer-mobile-navigation-2026-09-27-001.json).
+- [x] Совместить геометрию thumbnail в voice participant card с web: 64×64 px,
+  `BoxFit.cover`, вместо Flutter 80×64. Test-first widget regression, 62 widget
+  tests и analyzer проходят — [QA-232](../evidence/flutter/qa232-participant-thumbnail-web-geometry-2026-10-02-001.json).
 - [x] Показывать потери пакетов трансляции как процент за скользящее окно 10 секунд,
   синхронно в web и Flutter; покрыть накопление окна, счётчики без изменения,
   reset и недоступные stats — [QA-134](../evidence/flutter/qa134-realtime-voice-roster-screen-thumbnails-2026-09-30-001.json).

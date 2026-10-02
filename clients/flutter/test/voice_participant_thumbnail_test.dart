@@ -51,4 +51,28 @@ void main() {
     expect(tester.getSize(find.byType(ClipRRect)), const Size(44, 32));
     expect(find.text('avatar'), findsNothing);
   });
+
+  testWidgets('participant-card thumbnail matches the web 64px cover tile', (
+    tester,
+  ) async {
+    final thumbnail = Uint8List.fromList(
+      image.encodeJpg(image.Image(width: 8, height: 16)),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Align(
+          alignment: Alignment.topLeft,
+          child: VoiceParticipantThumbnail.participantCard(
+            fallback: const Text('avatar'),
+            thumbnail: thumbnail,
+          ),
+        ),
+      ),
+    );
+
+    final renderedImage = tester.widget<Image>(find.byType(Image));
+    expect(renderedImage.fit, BoxFit.cover);
+    expect(tester.getSize(find.byType(ClipRRect)), const Size(64, 64));
+  });
 }

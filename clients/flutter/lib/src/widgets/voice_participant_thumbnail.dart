@@ -11,6 +11,13 @@ class VoiceParticipantThumbnail extends StatelessWidget {
     required this.height,
   });
 
+  const VoiceParticipantThumbnail.participantCard({
+    super.key,
+    required this.fallback,
+    required this.thumbnail,
+  }) : width = 64,
+       height = 64;
+
   final Widget fallback;
   final Uint8List? thumbnail;
   final double width;

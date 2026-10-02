@@ -1,0 +1,36 @@
+{
+  "id": "QA-232",
+  "kind": "participant-screen-thumbnail-web-geometry",
+  "status": "PASS",
+  "date": "2026-10-02",
+  "task": "FE-59 / T-030 / T-051",
+  "source_revision": "working tree based on 0873c96",
+  "working_tree_changes": true,
+  "summary": "Flutter participant-card screen thumbnails now use the same 64×64 geometry as the web participant card while retaining the shared cover crop behavior.",
+  "checks": [
+    {
+      "name": "Cross-client style comparison",
+      "status": "PASS",
+      "observation": "The web participant thumbnail is 64×64 with object-fit: cover. Before this change the Flutter voice participant card passed 80×64 to the shared widget; the voice navigation strip remains intentionally compact at 44×32."
+    },
+    {
+      "name": "Test-first widget regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/voice_participant_thumbnail_test.dart",
+      "status": "PASS",
+      "observation": "The new participantCard constructor test first failed because the card-specific geometry was not defined. After the implementation, all 3 thumbnail widget tests pass and assert a 64×64 tile with BoxFit.cover."
+    },
+    {
+      "name": "Participant and workspace widget regressions",
+      "command": "cd clients/flutter && flutter test --no-pub test/voice_participant_thumbnail_test.dart test/workspace_screen_test.dart",
+      "status": "PASS",
+      "observation": "All 62 tests passed, including Android/iOS swipe, voice card, screen-viewer, and workspace regressions."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub --no-fatal-infos",
+      "status": "PASS",
+      "observation": "No analyzer issues found."
+    }
+  ],
+  "limits": "No new emulator or physical-device screenshot comparison was performed. QA-224's captureFailed/refresh behavior and portrait crop usefulness remain open; this closes only the participant-card geometry mismatch."
+}

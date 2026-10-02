@@ -6039,10 +6039,8 @@ class _VoiceParticipantCard extends StatelessWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              VoiceParticipantThumbnail(
+              VoiceParticipantThumbnail.participantCard(
                 thumbnail: thumbnail,
-                width: 80,
-                height: 64,
                 fallback: AuthenticatedAvatar(
                   state: state,
                   name: name,
