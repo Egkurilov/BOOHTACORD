@@ -35,7 +35,6 @@ UpdateResult evaluateUpdate(LocalUpdateIdentity? local, UpdatePolicy policy, Upd
   if (local.installedBuild != null && local.nativeBuild != null && local.installedBuild != local.nativeBuild) return UpdateResult.identityConflict;
   if (local.packageName != null && local.expectedPackageName != null && local.packageName != local.expectedPackageName) return UpdateResult.identityConflict;
   if (target.releaseId == local.releaseId) return UpdateResult.upToDate;
-  if (local.platform == 'web') return UpdateResult.updateAvailable;
   if (target.releaseOrder > local.releaseOrder) return UpdateResult.updateAvailable;
   if (target.releaseOrder < local.releaseOrder) return UpdateResult.currentAhead;
   return UpdateResult.identityConflict;
