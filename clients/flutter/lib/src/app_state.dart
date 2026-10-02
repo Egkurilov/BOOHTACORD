@@ -16,7 +16,8 @@ import 'features/realtime/dispatch/workspace.dart';
 import 'services/api_client.dart';
 import 'services/composer_draft_memory.dart';
 import 'services/audio_preferences.dart';
-import 'services/password_reset_link.dart';
+import 'features/session/reset_state/controller.dart';
+import 'features/session/maintenance_state/controller.dart';
 import 'services/screen_share_quality.dart';
 import 'services/native_notifications.dart';
 import 'services/voice_volume_preferences.dart';
@@ -42,6 +43,12 @@ class AppState extends ChangeNotifier {
     Room Function(RoomOptions)? voiceRoomFactory,
   }) : _nativeNotifications =
            nativeNotifications ?? NativeNotificationService() {
+    _reset = PasswordResetController(
+      api,
+      clearError: () => error = null,
+      message: _message,
+    )..addListener(notifyListeners);
+    _maintenance = MaintenanceController(api)..addListener(notifyListeners);
     _session = SessionController(
       api,
       startupTimeout: startupSessionTimeout,
@@ -51,6 +58,7 @@ class AppState extends ChangeNotifier {
           _workspace.cancelOperations();
           _conversation.cancelOperations();
           _audioDevices.cancelOperations();
+          _reset.cancelOperations();
           _stopVoiceRosterEvents();
         },
         resume: () async {
@@ -185,6 +193,8 @@ class AppState extends ChangeNotifier {
   late final VoiceRosterController _voiceRoster;
   late final ScreenShareController _screen;
   late final VoiceController _voice;
+  late final PasswordResetController _reset;
+  late final MaintenanceController _maintenance;
   @visibleForTesting
   final Duration startupSessionTimeout;
   final NativeNotificationService _nativeNotifications;
@@ -275,7 +285,8 @@ class AppState extends ChangeNotifier {
       _conversation.loadingDirectMessages = value;
   bool get realtimeConnected => _realtime.connected;
   set realtimeConnected(bool value) => _realtime.connected = value;
-  bool maintenanceActive = false;
+  bool get maintenanceActive => _maintenance.active;
+  set maintenanceActive(bool value) => _maintenance.active = value;
   bool get profileLoading => _profile.profileLoading;
   set profileLoading(bool value) => _profile.profileLoading = value;
   String? get profileLoadError => _profile.profileLoadError;
@@ -286,13 +297,20 @@ class AppState extends ChangeNotifier {
   set logoutBusy(bool value) => _session.logoutBusy = value;
   String? get logoutError => _session.logoutError;
   set logoutError(String? value) => _session.logoutError = value;
-  bool resetRoute = false;
-  String? resetToken;
-  bool resetPending = false;
-  bool resetCompleted = false;
-  bool resetUnusable = false;
-  String? resetError;
-  bool focusLoginOnMount = false;
+  bool get resetRoute => _reset.resetRoute;
+  set resetRoute(bool value) => _reset.resetRoute = value;
+  String? get resetToken => _reset.resetToken;
+  set resetToken(String? value) => _reset.resetToken = value;
+  bool get resetPending => _reset.resetPending;
+  set resetPending(bool value) => _reset.resetPending = value;
+  bool get resetCompleted => _reset.resetCompleted;
+  set resetCompleted(bool value) => _reset.resetCompleted = value;
+  bool get resetUnusable => _reset.resetUnusable;
+  set resetUnusable(bool value) => _reset.resetUnusable = value;
+  String? get resetError => _reset.resetError;
+  set resetError(String? value) => _reset.resetError = value;
+  bool get focusLoginOnMount => _reset.focusLoginOnMount;
+  set focusLoginOnMount(bool value) => _reset.focusLoginOnMount = value;
   int get avatarRevision => _profile.avatarRevision;
   String? error;
   VoicePhase get voicePhase => _voice.voicePhase;
@@ -373,7 +391,6 @@ class AppState extends ChangeNotifier {
   String? get audioDeviceWarning => _audioDevices.audioDeviceWarning;
   set audioDeviceWarning(String? value) =>
       _audioDevices.audioDeviceWarning = value;
-  Timer? _maintenanceTimer;
   bool get _notificationAppIsForeground => _nativeNotifications.appIsForeground;
 
   String get serverUrl => api.baseUrl;
@@ -411,56 +428,13 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void openPasswordResetLink(String value) {
-    resetToken = parsePasswordResetToken(api.baseUrl, value);
-    resetRoute = true;
-    resetPending = false;
-    resetCompleted = false;
-    resetUnusable = resetToken == null;
-    resetError = resetUnusable
-        ? 'Ссылка недействительна или срок её действия истёк. Попросите администратора выдать новую ссылку.'
-        : null;
-    error = null;
-    notifyListeners();
-  }
+  void openPasswordResetLink(String value) =>
+      _reset.openPasswordResetLink(value);
 
-  Future<bool> completePasswordReset(String password) async {
-    final token = resetToken;
-    if (!resetRoute || token == null || resetPending || resetUnusable) {
-      return false;
-    }
-    resetPending = true;
-    resetError = null;
-    notifyListeners();
-    try {
-      await api.completePasswordReset(token, password);
-      resetToken = null;
-      resetCompleted = true;
-      return true;
-    } catch (cause) {
-      resetError = _message(cause);
-      if (cause is ApiFailure && cause.status == 400) {
-        resetToken = null;
-        resetUnusable = true;
-      }
-      return false;
-    } finally {
-      resetPending = false;
-      notifyListeners();
-    }
-  }
+  Future<bool> completePasswordReset(String password) =>
+      _reset.completePasswordReset(password);
 
-  void returnToLogin() {
-    resetRoute = false;
-    resetToken = null;
-    resetPending = false;
-    resetCompleted = false;
-    resetUnusable = false;
-    resetError = null;
-    focusLoginOnMount = true;
-    error = null;
-    notifyListeners();
-  }
+  void returnToLogin() => _reset.returnToLogin();
 
   void _handleUnauthorized() {
     unawaited(_expireSession());
@@ -546,11 +520,7 @@ class AppState extends ChangeNotifier {
     if (!ticket.isActive) return;
     await _nativeNotifications.initialize();
     if (!ticket.isActive) return;
-    unawaited(refreshMaintenance());
-    _maintenanceTimer ??= Timer.periodic(
-      const Duration(seconds: 5),
-      (_) => unawaited(refreshMaintenance()),
-    );
+    _maintenance.start();
   }
 
   Future<void> _prepareSessionAccount(SessionUser account) async {
@@ -645,20 +615,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> refreshProfile() => _profile.refreshProfile();
 
-  Future<void> refreshMaintenance() async {
-    try {
-      final active = await api.maintenanceActive();
-      if (maintenanceActive != active) {
-        maintenanceActive = active;
-        notifyListeners();
-      }
-    } catch (_) {
-      if (maintenanceActive) {
-        maintenanceActive = false;
-        notifyListeners();
-      }
-    }
-  }
+  Future<void> refreshMaintenance() => _maintenance.refresh();
 
   Future<void> refreshVoiceRosters() => _voiceRoster.refreshVoiceRosters();
 
@@ -869,7 +826,8 @@ class AppState extends ChangeNotifier {
     _conversation.dispose();
     _nativeNotifications.dispose();
     _closeScreenPreviewSubscriptions();
-    _maintenanceTimer?.cancel();
+    _maintenance.dispose();
+    _reset.dispose();
     _stopVoiceRosterEvents();
     _voiceStreamNoticeTimer?.cancel();
     _stopVoiceConnectionStatsPolling();
