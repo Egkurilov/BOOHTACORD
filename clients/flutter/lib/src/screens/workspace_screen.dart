@@ -32,6 +32,7 @@ import '../widgets/android_system_gesture_exclusion.dart';
 import '../widgets/sliding_drawer_layer.dart';
 import '../widgets/voice_connection_badge.dart';
 import '../widgets/voice_microphone_unavailable_notice.dart';
+import '../widgets/screen_frame_gate.dart';
 import 'profile_screen.dart';
 import 'admin_screen.dart';
 import 'voice_screen_ended.dart';
@@ -5380,14 +5381,25 @@ class _VoiceScreenViewer extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 child: ColoredBox(
                   color: Colors.black,
-                  child: VideoTrackRenderer(
-                    track,
-                    renderMode: VideoRenderMode.auto,
-                    onFirstFrameRendered: showingLocalScreen
-                        ? () => debugPrint(
-                            '[screen-preview] local_renderer=first_swap_buffers',
-                          )
-                        : null,
+                  child: ScreenFrameGate(
+                    generation: track,
+                    builder: (context, onFirstFrameRendered) =>
+                        VideoTrackRenderer(
+                          track,
+                          renderMode: VideoRenderMode.auto,
+                          onFirstFrameRendered: () {
+                            if (showingLocalScreen) {
+                              debugPrint(
+                                '[screen-preview] local_renderer=first_swap_buffers',
+                              );
+                            } else {
+                              debugPrint(
+                                '[screen-viewer] remote_renderer=first_frame',
+                              );
+                            }
+                            onFirstFrameRendered();
+                          },
+                        ),
                   ),
                 ),
               ),

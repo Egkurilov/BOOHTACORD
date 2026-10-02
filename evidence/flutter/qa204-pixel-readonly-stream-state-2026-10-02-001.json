@@ -1,0 +1,46 @@
+{
+  "id": "QA-204",
+  "kind": "pixel-readonly-screen-capture-state",
+  "status": "CAPTURE_INACTIVE_AT_SNAPSHOT",
+  "executed_at": "2026-10-02",
+  "source_revision": "86e1919",
+  "task": "T-030",
+  "summary": "The user confirmed that the Calculator capture was their own test. A read-only ADB snapshot then found BOOHTACORD in the foreground but no active Android MediaProjection and no app foreground service. This snapshot cannot establish whether the sender was active when the Mac viewer turned black; no capture or publication was started or stopped by the agent.",
+  "device": {
+    "model": "Google Pixel 7",
+    "package": "ru.boohtacord.app",
+    "foreground": true
+  },
+  "checks": [
+    {
+      "name": "ADB device connection",
+      "command": "adb devices -l",
+      "status": "PASS",
+      "observation": "Pixel 7 serial 2B240DLH2000HP was connected and authorized for ADB."
+    },
+    {
+      "name": "Android MediaProjection state",
+      "command": "adb shell dumpsys media_projection",
+      "status": "INACTIVE",
+      "observation": "Media Projection: null."
+    },
+    {
+      "name": "BOOHTACORD process and foreground service",
+      "command": "adb shell pidof ru.boohtacord.app; adb shell dumpsys activity services ru.boohtacord.app",
+      "status": "PARTIAL",
+      "observation": "The BOOHTACORD process was alive (PID 16310) and MainActivity was resumed; dumpsys listed no active app service."
+    },
+    {
+      "name": "Filtered capture/LiveKit system logs",
+      "command": "adb logcat -d -t 3000 filtered for MediaProjection, screen capture, TrackPublish, VideoFrame, SurfaceProducer, PixelCopy and LiveKit",
+      "status": "NO_MATCHING_LINES",
+      "observation": "No matching lines were returned. This does not prove that no frames were sent or received because the app does not currently emit these events as structured diagnostics."
+    }
+  ],
+  "limitations": [
+    "The device snapshot was taken after the user confirmed their test, but it does not prove whether capture remained active at the exact time the Mac viewer showed black.",
+    "No room roster, LiveKit publication state, sender encoded-frame counters, Mac receiver decoded-frame counters or Mac first-frame-rendered event were available in this read-only check.",
+    "No screen content was captured. The agent did not start, stop, or modify the user-owned stream."
+  ],
+  "remaining": "Repeat only while the user-owned stream is actively visible: correlate Pixel MediaProjection/service state and sender encoded frames with LiveKit publication/subscription, Mac receiver decoded frames, and the Mac renderer first-frame event. Compare the same publication on browser and Mac without transferring or changing the sender's voice lease. Keep FE-59, FE-61 and FE-64 open."
+}

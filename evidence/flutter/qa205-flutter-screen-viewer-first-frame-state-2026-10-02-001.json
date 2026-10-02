@@ -1,0 +1,43 @@
+{
+  "id": "QA-205",
+  "kind": "flutter-screen-viewer-first-frame-state",
+  "status": "IMPLEMENTED_SOURCE_TESTED_RUNTIME_PENDING",
+  "executed_at": "2026-10-02",
+  "source_revision": "86e1919",
+  "working_tree_changes": true,
+  "task": "T-030",
+  "summary": "Flutter now matches the web viewer's explicit first-frame loading state instead of showing an unexplained black canvas while the selected video track has not rendered a frame. The state resets when the selected track changes, and first-frame events are logged without participant identities. This improves parity and separates a pending renderer from a rendered black source, but it does not prove or fix the reported Mac black-screen runtime.",
+  "checks": [
+    {
+      "name": "First-frame gate widget regression",
+      "command": "flutter test --no-pub test/screen_frame_gate_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "The waiting state is visible before a frame, disappears when the renderer reports its first frame, and returns when the selected track generation changes."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "flutter test --no-pub",
+      "status": "PASS",
+      "observation": "407 tests passed."
+    },
+    {
+      "name": "Changed-file Flutter analysis",
+      "command": "flutter analyze --no-pub lib/src/widgets/screen_frame_gate.dart lib/src/screens/workspace_screen.dart test/screen_frame_gate_test.dart",
+      "status": "PASS",
+      "observation": "No issues found in the three changed Dart files."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "Built build/macos/Build/Products/Debug/BOOHTACORD.app."
+    },
+    {
+      "name": "Android arm64 Debug build",
+      "command": "flutter build apk --debug --target-platform android-arm64 --no-pub",
+      "status": "PASS",
+      "observation": "Built build/app/outputs/flutter-apk/app-debug.apk."
+    }
+  ],
+  "remaining": "On a live Mac receiver, verify that the waiting state clears on a decoded/rendered remote frame, reappears on a new selected track, and correlates with receiver decoded FPS while comparing the same active Pixel publication in browser and macOS. Keep FE-61 open until live playback and unpublish behavior pass."
+}

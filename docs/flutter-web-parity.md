@@ -4,8 +4,12 @@ macOS remote-stream discovery now distinguishes an active publication from a
 subscribed video track. With manual subscriptions, a live publication may have
 no attached track after thumbnail sampling; it must still expose the Watch
 screen action and screen choice. Selection shows connecting until the track
-arrives. The regression, 347 Flutter tests, analyzer and macOS debug build pass
-[QA-201](../evidence/flutter/qa201-macos-unsubscribed-screen-discovery-2026-10-01-001.json).
+arrives; after subscription Flutter now keeps an accessible first-frame status
+over the canvas until the renderer reports a frame, matching the web viewer
+instead of leaving an unexplained black stage. The discovery regression is
+recorded in [QA-201](../evidence/flutter/qa201-macos-unsubscribed-screen-discovery-2026-10-01-001.json);
+the first-frame state and macOS build are covered by
+[QA-205](../evidence/flutter/qa205-flutter-screen-viewer-first-frame-state-2026-10-02-001.json).
 Live appearance/playback/unpublish acceptance remains open as FE-61.
 
 Vue (`clients/web/src`) is the product reference. The Flutter clients for macOS,
@@ -17,7 +21,7 @@ states are not.
 
 ## Current parity map
 
-Status below reflects the Flutter and web source as of 2026-10-01, including native
+Status below reflects the Flutter and web source as of 2026-10-02, including native
 identity/reset, audio/PTT, local screen publishing, web screen-share setup, and live voice navigation
 slices. Reconcile this table
 when a feature lands; do not use the old summary as a substitute for reading
