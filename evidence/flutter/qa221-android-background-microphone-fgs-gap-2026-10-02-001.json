@@ -1,0 +1,43 @@
+{
+  "id": "QA-221",
+  "date": "2026-10-02",
+  "task": "T-022/T-051",
+  "source_revision": "731c1d7",
+  "status": "SOURCE_REVIEW_GAP_ADDED_TO_CHECKLIST",
+  "summary": "Android background voice acceptance did not distinguish muted listener continuity from continuing microphone capture. The app's foreground service currently declares only mediaProjection; Android requires a microphone foreground-service type for background microphone capture on supported target levels.",
+  "checks": [
+    {
+      "name": "Current Android service declaration",
+      "source": "clients/flutter/android/app/src/main/AndroidManifest.xml",
+      "result": "PASS",
+      "observation": "The IsolateHolderService declares foregroundServiceType=mediaProjection. The app manifest does not declare FOREGROUND_SERVICE_MICROPHONE."
+    },
+    {
+      "name": "MediaProjection foreground-service readiness contract",
+      "source": "clients/flutter/test/android_screen_capture_fgs_contract_test.dart",
+      "result": "PASS",
+      "command": "flutter test test/android_screen_capture_fgs_contract_test.dart",
+      "observation": "The focused Flutter test passed: screen capture waits for the MediaProjection foreground service. This covers projection readiness, not background microphone capture."
+    },
+    {
+      "name": "Background voice test coverage",
+      "source": "evidence/flutter/qa202-android-surfaceproducer-resume-2026-10-02-001.json",
+      "result": "GAP",
+      "observation": "The recorded Pixel background reproduction had the microphone disabled; it cannot establish whether an active microphone continues when BOOHTACORD is backgrounded."
+    },
+    {
+      "name": "Android platform requirements",
+      "sources": [
+        "https://developer.android.com/about/versions/14/changes/fgs-types-required",
+        "https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start"
+      ],
+      "result": "CONFIRMED",
+      "observation": "For Android 14+ targets, microphone capture in an FGS requires the microphone service type, FOREGROUND_SERVICE_MICROPHONE, and RECORD_AUDIO; an FGS requiring while-in-use microphone access must be started while a visible activity is present."
+    }
+  ],
+  "limitations": [
+    "This is a source/spec gap, not a reproduced device failure or proof that the existing muted-session participant loss was caused by microphone service configuration.",
+    "No Android permission, service type, or runtime behavior was changed."
+  ],
+  "remaining": "On an authenticated Pixel test session, separately verify background voice with the microphone muted and enabled. If active microphone continuity is part of the intended Android parity, review ADR-006 and implement/test a properly timed microphone foreground service before claiming acceptance."
+}

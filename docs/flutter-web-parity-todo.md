@@ -194,6 +194,15 @@ peer/platform-проверки и выравниваем viewer с вебом.
   stop снял активную проекцию и освобождение voice lease прошло. Проверка
   OS-level stop, второго peer, receiver crop/metrics и остальных платформ остаётся
   открытой — [QA-26](../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
+- [ ] **FE-68 · Android background microphone continuity:** отдельно сравнить сценарии с mic muted и mic
+  enabled. Сейчас foreground service объявляет только `mediaProjection`, а
+  предыдущий FE-64 Pixel-прогон был muted, поэтому microphone capture в фоне не
+  проверен. Если он входит в ожидаемый parity, оценить отдельный microphone FGS
+  type/permission и запуск при видимой Activity до изменения манифеста/ADR-006 —
+  [QA-221](../evidence/flutter/qa221-android-background-microphone-fgs-gap-2026-10-02-001.json),
+  [Android requirements](https://developer.android.com/about/versions/14/changes/fgs-types-required),
+  [background-start restrictions](https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start).
+- [ ] **FE-59/FE-64 · Pixel runtime:** full-display stream produced a visible local preview and thumbnail; MediaProjection and its foreground service remained active while BOOHTACORD was backgrounded for about a minute. Returning to the existing Activity restored the connected voice screen/preview; stopping cleared projection/service. Mic was muted, and no paired receiver was present, so remote frames and mic-enabled background voice remain open — [QA-222](../evidence/flutter/qa222-pixel-screen-share-background-lifecycle-2026-10-02-001.json).
 - [ ] На Android сверить room membership/publication с `MediaProjection` при
   переводе приложения в фон и возврате. Pixel 7 / `1.0.19+2032`: в user-started
   Calculator app-only тесте projection/foreground service и BOOHTACORD process

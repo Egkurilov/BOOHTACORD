@@ -1,0 +1,40 @@
+{
+  "id": "QA-222",
+  "date": "2026-10-02",
+  "task": "FE-59/FE-64",
+  "source_revision": "731c1d7",
+  "status": "PARTIAL_DEVICE_PASS_REMOTE_ACCEPTANCE_OPEN",
+  "device": {
+    "model": "Pixel 7",
+    "transport": "ADB USB",
+    "package": "ru.boohtacord.app"
+  },
+  "observations": [
+    {
+      "name": "Room baseline",
+      "result": "PASS",
+      "observation": "BOOHTACORD is foreground in SHARE_TEST; the room shows one participant, microphone disabled, and an 8 ms RTT indicator."
+    },
+    {
+      "name": "Full-display local preview",
+      "result": "PASS",
+      "observation": "The Android system picker was set to show the whole display. After consent, the local stream preview showed live recursive screen pixels rather than a black frame; the participant card also showed its thumbnail."
+    },
+    {
+      "name": "Background projection/service continuity (mic muted)",
+      "result": "PASS",
+      "observation": "After BOOHTACORD was sent to Home for about one minute, dumpsys still showed TYPE_SCREEN_CAPTURE and the IsolateHolderService foreground with mediaProjection type. The app process remained alive."
+    },
+    {
+      "name": "Resume and cleanup",
+      "result": "PASS",
+      "observation": "The existing MainActivity returned with LaunchState HOT, the voice screen still showed Connected, one room participant and RTT 8 ms, and the screen preview was visible. Stopping from the dock cleared MediaProjection and left no active app service; the voice room remained connected."
+    }
+  ],
+  "limitations": [
+    "The Pixel microphone stayed muted throughout; background microphone capture remains untested under FE-68.",
+    "Only full-display capture was tested. App-only capture and its privacy blanking behavior were not re-tested.",
+    "The room showed one participant, so no paired remote observer was confirmed; receiver decoded frames and remote crop/playback remain unverified."
+  ],
+  "remaining": "Repeat with a paired browser/Mac receiver and collect bounded sender encoded-frame and receiver decoded-frame counters; separately test app-only capture and (if required) background voice with microphone enabled."
+}
