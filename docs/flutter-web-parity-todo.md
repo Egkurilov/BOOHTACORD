@@ -95,6 +95,13 @@ MSVC/PCM gate отложены и не должны вытеснять эти з
     Это ограничивает UI ожидание, но не отменяет native Keychain operation и не
     заменяет авторизацию/стабильную подпись —
     [QA-163](../evidence/flutter/qa163-macos-keychain-prompt-runtime-2026-10-01-001.json).
+  - [x] Расширить startup deadline на все pre-ready операции, а не только
+    `currentSession`: regression tests сначала воспроизвели вечный splash при
+    зависшем API bootstrap и account-preference read. Теперь secure storage,
+    platform notification init, проверка сессии и account preparation вместе
+    ограничены 20 секундами — 4 stall tests, весь Flutter suite (416), analyzer
+    и macOS Debug build проходят. Реальный экран retry/повторный вход на этом
+    Mac ещё проверить — [QA-216](../evidence/flutter/qa216-macos-bounded-startup-initialization-2026-10-02-001.json).
 
 ## P0 — Голосовые каналы и демонстрация экрана
 

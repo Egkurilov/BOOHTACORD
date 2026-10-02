@@ -63,6 +63,12 @@ slices. Reconcile this table
 when a feature lands; do not use the old summary as a substitute for reading
 the implementation.
 
+Flutter startup now bounds API/session storage initialization, platform
+initialization, current-session lookup and account preparation with one
+retryable 20-second deadline, preventing a native initialization stall from
+leaving the app on an indefinite launch splash — [QA-216](../evidence/flutter/qa216-macos-bounded-startup-initialization-2026-10-02-001.json).
+Runtime retry and session restoration on a signed macOS release remain open.
+
 The web prejoin roster uses one `EventSource` per workspace. The roster endpoint
 intentionally ends each SSE response after at most 10 seconds so the browser
 reconnects and reauthenticates; repeated sequential `/events` requests at that

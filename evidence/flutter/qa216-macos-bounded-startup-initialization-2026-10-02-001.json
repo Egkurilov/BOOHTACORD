@@ -1,0 +1,42 @@
+{
+  "id": "QA-216",
+  "date": "2026-10-02",
+  "status": "PASS_WITH_MACOS_RUNTIME_ACCEPTANCE_OPEN",
+  "summary": "The macOS launch splash could remain indefinitely if a pre-session initialization step stalled. One 20-second deadline now covers API/session storage initialization, platform initialization, current-session lookup, and account preparation, with a retryable connection error on timeout.",
+  "checks": [
+    {
+      "result": "FAIL_BEFORE_FIX",
+      "command": "cd clients/flutter && flutter test --no-pub test/app_state_test.dart --plain-name 'a stalled session-storage bootstrap exits loading'",
+      "observation": "Before extending the deadline, a stalled API/session-storage initialization left AppPhase.loading instead of transitioning to AppPhase.connectionError."
+    },
+    {
+      "result": "FAIL_BEFORE_FIX",
+      "command": "cd clients/flutter && flutter test --no-pub test/app_state_test.dart --plain-name 'a stalled account-preparation bootstrap exits loading'",
+      "observation": "Before moving account preparation under the deadline, a stalled native preference read left AppPhase.loading instead of transitioning to AppPhase.connectionError."
+    },
+    {
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter test --no-pub test/app_state_test.dart --plain-name 'stalled'",
+      "observation": "All four startup stalls (API initialization, native notification initialization, session check, and account preparation) produce a retryable connection error."
+    },
+    {
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "observation": "All 416 Flutter tests passed."
+    },
+    {
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter analyze --no-pub",
+      "observation": "No analyzer issues."
+    },
+    {
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "observation": "The macOS Debug app built successfully."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Before the fix, UI inspection of the running macOS app showed 'Подключаемся к гильдии…'. The exact blocking native/network operation was not sampled. Relaunch the current-source macOS app, confirm the timeout reaches the retry screen and retry succeeds with the real Keychain/session; check a signed Release separately."
+    }
+  ]
+}

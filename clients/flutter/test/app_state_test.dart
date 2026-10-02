@@ -6,12 +6,15 @@ import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
+import 'package:boohtacord_desktop/src/services/native_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart' show MediaDevice;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'notification_scope/fakes.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -164,15 +167,80 @@ void main() {
       await tester.runAsync(state.initialize);
 
       expect(state.phase, AppPhase.connectionError);
-      expect(state.error, contains('Проверка сессии не завершилась'));
+      expect(state.error, contains('Подключение не завершилось вовремя'));
       await tester.pumpWidget(BoohtacordApp(state: state));
       expect(
-        find.textContaining('Проверка сессии не завершилась'),
+        find.textContaining('Подключение не завершилось вовремя'),
         findsOneWidget,
       );
       expect(find.text('Повторить подключение'), findsOneWidget);
     },
   );
+
+  test('a stalled session-storage bootstrap exits loading', () async {
+    final api = _FakeApi(topology)..initializationGate = Completer<void>();
+    final state = AppState(
+      api,
+      startupSessionTimeout: const Duration(milliseconds: 20),
+    );
+    addTearDown(state.dispose);
+
+    final startup = state.initialize();
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+
+    expect(state.phase, AppPhase.connectionError);
+    expect(state.error, contains('Подключение не завершилось вовремя'));
+    await startup;
+    api.initializationGate!.complete();
+  });
+
+  test('a stalled native-notification bootstrap exits loading', () async {
+    final driver = NotificationDriverFake()..initializeGate = Completer<void>();
+    final state = AppState(
+      _FakeApi(topology),
+      startupSessionTimeout: const Duration(milliseconds: 20),
+      nativeNotifications: NativeNotificationService(
+        driver: driver,
+        supportedOnCurrentPlatform: true,
+      ),
+    );
+    addTearDown(state.dispose);
+
+    final startup = state.initialize();
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+
+    expect(state.phase, AppPhase.connectionError);
+    expect(state.error, contains('Подключение не завершилось вовремя'));
+    await startup;
+    driver.initializeGate!.complete();
+  });
+
+  test('a stalled account-preparation bootstrap exits loading', () async {
+    final preferences = NotificationPreferencesFake()
+      ..enabledRead = Completer<bool?>();
+    final state = AppState(
+      _FakeApi(topology),
+      startupSessionTimeout: const Duration(milliseconds: 20),
+      nativeNotifications: NativeNotificationService(
+        driver: NotificationDriverFake(),
+        preferences: preferences,
+        supportedOnCurrentPlatform: true,
+      ),
+    );
+    addTearDown(state.dispose);
+
+    final startup = state.initialize();
+    await preferences.started.future;
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+
+    try {
+      expect(state.phase, AppPhase.connectionError);
+      expect(state.error, contains('Подключение не завершилось вовремя'));
+      await startup;
+    } finally {
+      preferences.enabledRead!.complete(false);
+    }
+  });
 
   test('keeps profile load errors separate and clears them on retry', () async {
     final api = _FakeApi(topology)
@@ -1215,6 +1283,7 @@ class _FakeApi extends ApiClient {
   Object? profileFailure;
   Object? sessionFailure;
   Completer<SessionUser?>? sessionGate;
+  Completer<void>? initializationGate;
   String? updatedDisplayName;
   int passwordChangeRequests = 0;
   String? sentReplyToId;
@@ -1236,7 +1305,7 @@ class _FakeApi extends ApiClient {
   bool get realtimeEnabled => false;
 
   @override
-  Future<void> initialize() async {}
+  Future<void> initialize() async => initializationGate?.future;
 
   @override
   Future<bool> maintenanceActive() async => false;

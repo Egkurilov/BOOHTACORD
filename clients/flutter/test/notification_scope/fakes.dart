@@ -4,8 +4,9 @@ import 'package:boohtacord_desktop/src/services/native_notifications.dart';
 
 class NotificationDriverFake implements NativeNotificationDriver {
   int shown = 0;
+  Completer<void>? initializeGate;
   @override
-  Future<void> initialize() async {}
+  Future<void> initialize() async => initializeGate?.future;
   @override
   Future<NativeNotificationPermission> permission() async =>
       NativeNotificationPermission.granted;

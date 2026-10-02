@@ -12,27 +12,33 @@ extension SessionRestoration on SessionController {
     effects.error(null);
     changed();
     try {
-      await api.initialize();
-      if (!ticket.isActive) return;
-      await effects.initialize();
-      if (!ticket.isActive) return;
-      final account = await api.currentSession().timeout(
-        startupTimeout,
-        onTimeout: () => throw ApiFailure(
-          'Проверка сессии не завершилась вовремя. '
-          '${Platform.isMacOS ? 'Проверьте системный запрос доступа к Связке ключей и соединение. ' : 'Проверьте соединение. '}'
-          'Повторите попытку.',
-        ),
-      );
+      final account =
+          await (() async {
+            await api.initialize();
+            if (!ticket.isActive) return null;
+            await effects.initialize();
+            if (!ticket.isActive) return null;
+            final account = await api.currentSession();
+            if (!ticket.isActive) return null;
+            if (account == null) {
+              await effects.clearAccount();
+            } else {
+              await effects.prepare(account);
+            }
+            return account;
+          })().timeout(
+            startupTimeout,
+            onTimeout: () => throw ApiFailure(
+              'Подключение не завершилось вовремя. '
+              '${Platform.isMacOS ? 'Проверьте системный запрос доступа к Связке ключей и соединение. ' : 'Проверьте соединение. '}'
+              'Повторите попытку.',
+            ),
+          );
       if (!ticket.isActive) return;
       user = account;
       if (account == null) {
-        await effects.clearAccount();
-        if (!ticket.isActive) return;
         phase = AppPhase.signedOut;
       } else {
-        await effects.prepare(account);
-        if (!ticket.isActive) return;
         phase = AppPhase.ready;
         await effects.ready();
       }
