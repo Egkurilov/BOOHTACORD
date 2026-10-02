@@ -111,7 +111,10 @@ public class SurfaceTextureRenderer extends EglRenderer {
   @Override
   public void onFrame(VideoFrame frame) {
     synchronized (surfaceLock) {
-      if(surface == null) {
+      if (!surfaceAvailability.isAvailable()) {
+        // Flutter may destroy a producer while the app is in the background.
+        // Wait for onSurfaceAvailable before acquiring a replacement surface.
+      } else if(surface == null) {
         producer.setSize(frame.getRotatedWidth(),frame.getRotatedHeight());
         surface = producer.getSurface();
         createEglSurface(surface);
@@ -154,6 +157,8 @@ public class SurfaceTextureRenderer extends EglRenderer {
   // thread, which never acquires it, so the wait cannot deadlock.
   private final Object surfaceLock = new Object();
   private Surface surface = null;
+  private final SurfaceProducerAvailability surfaceAvailability =
+      new SurfaceProducerAvailability();
 
   private TextureRegistry.SurfaceProducer producer;
 
@@ -164,7 +169,12 @@ public class SurfaceTextureRenderer extends EglRenderer {
             new TextureRegistry.SurfaceProducer.Callback() {
               @Override
               public void onSurfaceAvailable() {
-                // Do surface initialization here, and draw the current frame.
+                synchronized (surfaceLock) {
+                  // Flutter may have replaced the Surface while backgrounded.
+                  // Reacquire the current one when the next frame arrives.
+                  surface = null;
+                  surfaceAvailability.onSurfaceAvailable();
+                }
               }
 
               @Override
@@ -178,6 +188,7 @@ public class SurfaceTextureRenderer extends EglRenderer {
   public void surfaceDestroyed() {
     ThreadUtils.checkIsOnMainThread();
     synchronized (surfaceLock) {
+      surfaceAvailability.onSurfaceCleanup();
       SurfaceReleaseBarrier.runAfterRelease(
           completion -> releaseEglSurface(completion), () -> surface = null);
     }

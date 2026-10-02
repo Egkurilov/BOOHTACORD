@@ -1,0 +1,57 @@
+{
+  "id": "QA-202",
+  "kind": "android-surfaceproducer-resume-lifecycle",
+  "status": "IMPLEMENTED_NEEDS_PIXEL_RUNTIME",
+  "executed_at": "2026-10-02",
+  "source_revision": "13fc68a",
+  "task": "T-030",
+  "summary": "The user reported that a stream visible in a browser becomes black when switching back to the Android client. SurfaceTextureRenderer previously ignored SurfaceProducer.onSurfaceAvailable and could reacquire a surface before Flutter announced it was restored. Rendering is now gated between cleanup and availability callbacks; after resume, the renderer reacquires the current surface on the next frame. This is a lifecycle fix candidate, not yet confirmed as the cause of the remote black stream.",
+  "artifact": {
+    "version_name": "1.0.19",
+    "version_code": 2032,
+    "path": "clients/flutter/build/app/outputs/flutter-apk/app-release.apk",
+    "sha256": "7cd61be2287cc98f9ed1bb36b02905c91911d1f634797495c02fa29e187c5e8e",
+    "size_bytes": 70914930,
+    "git_ignored": true,
+    "installed_on": "Google Pixel 7",
+    "signature_matches_installed_apk": true
+  },
+  "checks": [
+    {
+      "name": "Surface producer cleanup/resume regression",
+      "command": "./gradlew :flutter_webrtc:testDebugUnitTest --tests com.cloudwebrtc.webrtc.SurfaceProducerAvailabilityTest",
+      "status": "PASS",
+      "observation": "The state starts available, blocks rendering after cleanup, and permits rendering after onSurfaceAvailable."
+    },
+    {
+      "name": "Android WebRTC plugin unit tests",
+      "command": "./gradlew :flutter_webrtc:testDebugUnitTest",
+      "status": "PASS",
+      "observation": "The complete Android WebRTC plugin unit-test task passed."
+    },
+    {
+      "name": "Flutter application tests",
+      "command": "flutter test --no-pub",
+      "status": "PASS",
+      "observation": "404 tests passed."
+    },
+    {
+      "name": "Android signed release build",
+      "command": "flutter build apk --release --target-platform android-arm64 --build-name=1.0.19 --build-number=2032 --no-pub",
+      "status": "PASS",
+      "observation": "Built a 70,914,930-byte APK. Its signer SHA-256 matches the installed APK; adb install -r succeeded and the Pixel reports versionCode 2032."
+    },
+    {
+      "name": "Pixel screen-share foreground/resume retest",
+      "device": "Google Pixel 7",
+      "status": "NOT_RUN_PENDING_USER_APPROVAL",
+      "observation": "The user-visible issue has not yet been retested on the new build. No screen share is currently active."
+    }
+  ],
+  "limitations": [
+    "A successful SurfaceProducer lifecycle unit test does not prove the actual Flutter compositor displays resumed frames.",
+    "The black-screen cause may also be tied to Android's selected-app projection behavior; full-display and app-only capture need separate verification.",
+    "Remote browser playback and receiver-side frame counters have not been checked in this run."
+  ],
+  "remaining": "With the user's approval, repeat a short screen share on Pixel 7 while observing the browser receiver; distinguish whole-screen from selected-app capture and confirm the image stays live after returning to BOOHTACORD. Keep FE-59 open until remote playback and local preview pass."
+}
