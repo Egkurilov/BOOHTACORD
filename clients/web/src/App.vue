@@ -8,7 +8,7 @@ import PasswordResetCompletion from './identity/PasswordResetCompletion.vue'
 import { completePasswordReset, PasswordResetInvalidError } from './identity/password_reset_client'
 import { consumePasswordResetFragment } from './identity/password_reset_fragment'
 import MaintenanceBanner from './maintenance/MaintenanceBanner.vue'
-import { loadMaintenanceStatus } from './maintenance/status_client'
+import { createMaintenanceRealtime } from './maintenance/maintenance_realtime'
 import UpdateBanner from './updates/UpdateBanner.vue'
 import { useUpdateStore } from './updates/update_store'
 import WorkspaceApp from './workspace/WorkspaceApp.vue'
@@ -18,7 +18,8 @@ type AppState = 'loading' | 'guest' | 'authenticated' | 'error'
 const state = ref<AppState>('loading')
 const error = ref<string | null>(null)
 const session = ref<CurrentSession | null>(null)
-const maintenanceActive = ref(false)
+const maintenance = createMaintenanceRealtime()
+const maintenanceActive = maintenance.active
 const resetRoute = ref(false)
 const focusLoginOnReturn = ref(false)
 let resetToken: string | null = null
@@ -27,7 +28,6 @@ if (typeof window !== 'undefined') {
   resetRoute.value = reset.resetRoute
   resetToken = reset.token
 }
-let maintenanceTimer: number | null = null
 let sessionRevision = 0
 const updates = useUpdateStore()
 
@@ -75,23 +75,14 @@ function returnToLogin(): void {
   window.history.replaceState(window.history.state, '', '/')
 }
 
-async function refreshMaintenance(): Promise<void> {
-  try {
-    maintenanceActive.value = (await loadMaintenanceStatus()).active
-  } catch {
-    maintenanceActive.value = false
-  }
-}
-
 onMounted(() => {
   if (!resetRoute.value) void refreshSession()
-  void refreshMaintenance()
-  maintenanceTimer = window.setInterval(() => { void refreshMaintenance() }, 5_000)
+  maintenance.start()
   updates.start()
 })
 
 onUnmounted(() => {
-  if (maintenanceTimer !== null) window.clearInterval(maintenanceTimer)
+  maintenance.stop()
   updates.dispose()
 })
 </script>

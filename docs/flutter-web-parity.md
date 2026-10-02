@@ -438,9 +438,9 @@ both deployed web and Flutter viewers.
 
 ### 2. Identity and account settings
 
-- Maintenance state now polls the public `/maintenance` contract every 5s and
-  displays the shared banner above both guest and workspace screens; transient
-  polling errors stay non-blocking and clear the banner like web.
+- Maintenance status now uses a public SSE stream and displays the shared
+  banner above both guest and workspace screens. Flutter reconnects after a
+  dropped stream and retains the last known state during transient failures.
 - Protected REST 401s now clear the local cookie and private workspace; an
   invalid login response is excluded from this path. On realtime disconnect,
   Flutter verifies `/auth/session` before retrying, so network outages retry

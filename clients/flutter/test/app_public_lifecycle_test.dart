@@ -6,12 +6,9 @@ import 'package:boohtacord_desktop/src/services/api_client.dart';
 
 class PendingPublicApi extends ApiClient {
   final reset = Completer<void>();
-  final maintenance = Completer<bool>();
   @override
   Future<void> completePasswordReset(String token, String password) =>
       reset.future;
-  @override
-  Future<bool> maintenanceActive() => maintenance.future;
 }
 
 void main() {
@@ -37,12 +34,4 @@ void main() {
       expect(state.resetCompleted, isFalse);
     },
   );
-  test('maintenance response after disposal cannot notify listeners', () async {
-    final api = PendingPublicApi();
-    final state = AppState(api);
-    final pending = state.refreshMaintenance();
-    state.dispose();
-    api.maintenance.complete(true);
-    await expectLater(pending, completes);
-  });
 }

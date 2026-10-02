@@ -23,7 +23,11 @@ extension AppAccountCleanup on AppOwners {
     await nativeNotifications.useAccount(null);
   }
 
-  Future<void> clearServerAccount() => clearSignedOutAccount();
+  Future<void> clearServerAccount() async {
+    await clearSignedOutAccount();
+    maintenance.restart();
+  }
+
   Future<void> clearExpiredAccount() async {
     final ticket = session.scope.capture();
     final leaving = voice.leaveVoice();

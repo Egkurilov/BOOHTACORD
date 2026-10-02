@@ -132,20 +132,33 @@ void main() {
     expect(requests.last.headers['cookie'], 'session=test-session');
   });
 
-  test('loads the public maintenance admission state', () async {
-    late http.Request request;
-    final api = ApiClient(
-      client: MockClient((value) async {
-        request = value;
-        return http.Response('{"active":true}', 200);
-      }),
-    );
+  test(
+    'opens the public maintenance SSE stream without a session cookie',
+    () async {
+      late http.Request request;
+      final api = ApiClient(
+        client: MockClient((value) async {
+          request = value;
+          return http.Response(
+            'data: {"active":true}\n\n',
+            200,
+            headers: {'content-type': 'text/event-stream'},
+          );
+        }),
+      );
 
-    expect(await api.maintenanceActive(), isTrue);
-    expect(request.url.path, '/api/v1/maintenance');
-    expect(request.headers['origin'], 'https://v.bootybay.ru');
-    expect(request.headers, isNot(contains('cookie')));
-  });
+      final response = await api.maintenanceEvents();
+      expect(response.statusCode, 200);
+      expect(request.url.path, '/api/v1/maintenance/events');
+      expect(request.headers['accept'], 'text/event-stream');
+      expect(request.headers['origin'], 'https://v.bootybay.ru');
+      expect(request.headers, isNot(contains('cookie')));
+      expect(
+        await response.stream.bytesToString(),
+        'data: {"active":true}\n\n',
+      );
+    },
+  );
 
   test(
     'posts anonymous sender metrics with the authenticated origin',

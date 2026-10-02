@@ -16,7 +16,7 @@ func TestServiceRequestsDoNotCreateRequestMetricsOrLogs(t *testing.T) {
 	handler := LoggingMiddleware(logger, recorder.Middleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusAccepted)
 	})))
-	for _, path := range []string{"/metrics", "/api/v1/health", "/api/v1/maintenance", "/api/v1/auth/session", "/api/v1/telemetry/traces", "/api/v1/voice/rosters/events"} {
+	for _, path := range []string{"/metrics", "/api/v1/health", "/api/v1/maintenance", "/api/v1/maintenance/events", "/api/v1/auth/session", "/api/v1/telemetry/traces", "/api/v1/voice/rosters/events"} {
 		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, path, nil))
 	}
 	scrape := httptest.NewRecorder()

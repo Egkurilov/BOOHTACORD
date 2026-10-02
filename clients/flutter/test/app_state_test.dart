@@ -1308,7 +1308,12 @@ class _FakeApi extends ApiClient {
   Future<void> initialize() async => initializationGate?.future;
 
   @override
-  Future<bool> maintenanceActive() async => false;
+  Future<http.StreamedResponse> maintenanceEvents() async =>
+      http.StreamedResponse(
+        const Stream<List<int>>.empty(),
+        200,
+        headers: {'content-type': 'text/event-stream'},
+      );
 
   @override
   Future<SessionUser?> currentSession() async {

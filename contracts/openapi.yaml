@@ -48,6 +48,32 @@
         }
       }
     },
+    "/api/v1/maintenance/events": {
+      "get": {
+        "operationId": "watchMaintenanceAdmission",
+        "description": "Public, metadata-only Server-Sent Events stream of the maintenance admission flag. Sends the current {active:boolean} state immediately, then emits only when it changes. The server checks the state every five seconds and sends heartbeat comments while idle. No schedule, operator identity, deployment internals or session data are exposed.",
+        "responses": {
+          "200": {
+            "description": "Long-lived stream of maintenance status snapshots",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "enum": ["no-store"] } },
+              "X-Accel-Buffering": { "schema": { "type": "string", "enum": ["no"] } }
+            },
+            "content": {
+              "text/event-stream": {
+                "schema": { "type": "string" },
+                "examples": {
+                  "active": { "value": "data: {\"active\":true}\n\n" },
+                  "inactive": { "value": "data: {\"active\":false}\n\n" }
+                }
+              }
+            }
+          },
+          "500": { "description": "Response writer does not support streaming", "content": { "text/plain": { "schema": { "type": "string" } } } },
+          "503": { "description": "Maintenance state is temporarily unavailable before the stream opens", "content": { "text/plain": { "schema": { "type": "string" } } } }
+        }
+      }
+    },
     "/api/v1/realtime": {
       "get": {
         "operationId": "connectRealtime",
