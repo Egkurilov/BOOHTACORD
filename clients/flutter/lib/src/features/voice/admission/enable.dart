@@ -23,10 +23,9 @@ extension VoiceAdmissionEnable on VoiceController {
       voicePhase = VoicePhase.connected;
     } else {
       try {
-        await room.localParticipant?.setMicrophoneEnabled(
-          true,
-          audioCaptureOptions: audio.captureOptions,
-        );
+        if (!await applyMicrophoneMuted(false)) {
+          throw StateError('Микрофон недоступен.');
+        }
         if (!active(ticket, revision)) {
           await room.localParticipant?.setMicrophoneEnabled(false);
           return;

@@ -10,6 +10,9 @@
 #include <mutex>
 
 #include "libwebrtc.h"
+#ifdef _WIN32
+#include "webrtc_capture_adapter.h"
+#endif
 
 #include "rtc_audio_device.h"
 #include "rtc_audio_processing.h"
@@ -126,6 +129,10 @@ class FlutterWebRTCBase {
   scoped_refptr<RTCVideoDevice> video_device_;
   scoped_refptr<RTCDesktopDevice> desktop_device_;
   scoped_refptr<RTCAudioProcessing> audio_processing_;
+#ifdef _WIN32
+  // Installed once; destruction occurs after factory/APM teardown.
+  std::unique_ptr<boohta::WebrtcCaptureAdapter> rnnoise_capture_;
+#endif
   RTCConfiguration configuration_;
 
   std::map<std::string, scoped_refptr<libwebrtc::KeyProvider>> key_providers_;

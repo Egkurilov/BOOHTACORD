@@ -5,6 +5,7 @@ import time
 import uuid
 from urllib.request import urlopen
 from tools.build.web.assets import verify_png
+from tools.build.web.audio_assets import verify_served_audio
 
 OPERATORS = ("api", "migrate", "bootstrap-admin", "recover-admin", "recover-last-admin-access",
              "maintenance-admission", "cleanup-stale-staging", "cleanup-unattached-attachments", "cleanup-hidden-attachments")
@@ -64,7 +65,9 @@ def run_smoke(receipts, output):
         containers.append(web_container)
         for container, port, endpoint, png in ((api_container, 8080, "/api/v1/health", False), (web_container, 80, "/favicon.png", True)):
             host_port = docker("inspect", "--format", '{{(index (index .NetworkSettings.Ports "' + str(port) + '/tcp") 0).HostPort}}', container)
-            wait_url("http://127.0.0.1:" + host_port + endpoint, png=png)
+            base_url = "http://127.0.0.1:" + host_port
+            wait_url(base_url + endpoint, png=png)
+            if png: verify_served_audio(base_url)
     finally:
         for container in reversed(containers):
             subprocess.run(["docker", "rm", "-f", "-v", container], capture_output=True)

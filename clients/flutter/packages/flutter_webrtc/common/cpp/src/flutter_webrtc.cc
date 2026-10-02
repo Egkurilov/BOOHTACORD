@@ -45,6 +45,36 @@ void FlutterWebRTC::HandleMethodCall(
   // Everything below needs the factory. If the Dart side never called
   // initialize() with options, fall back to the default field trials.
   EnsureWebRTCInitialized();
+#ifdef _WIN32
+  const auto& noise_method = method_call.method_name();
+  if (noise_method == "setNoiseSuppressionEngine" ||
+      noise_method == "getNoiseSuppressionState" ||
+      noise_method == "resetNoiseSuppression") {
+    auto& processor = rnnoise_capture_->processor;
+    if (noise_method == "setNoiseSuppressionEngine") {
+      if (!method_call.arguments()) { result->Error("Bad Arguments", "engine required"); return; }
+      auto params = GetValue<EncodableMap>(*method_call.arguments());
+      auto name = findString(params, "engine");
+      boohta::RnnoiseCaptureProcessor::Engine engine;
+      if (!boohta::ParseNoiseEngine(name.c_str(), &engine)) {
+        result->Error("Bad Arguments", "invalid noise suppression engine"); return;
+      }
+      processor.SetEngine(engine);
+    } else if (noise_method == "resetNoiseSuppression") { processor.Reset(); }
+    EncodableMap state;
+    state[EncodableValue("requestedEngine")] = EncodableValue(boohta::NoiseEngineName(processor.requested_engine()));
+    state[EncodableValue("effectiveEngine")] = EncodableValue(boohta::NoiseEngineName(processor.EffectiveEngine()));
+    state[EncodableValue("supported")] = EncodableValue(processor.supported());
+    state[EncodableValue("failureReason")] = EncodableValue(processor.failure_reason());
+    state[EncodableValue("processedFrames")] = EncodableValue(static_cast<int64_t>(processor.processed_frames()));
+    state[EncodableValue("fallbackFrames")] = EncodableValue(static_cast<int64_t>(processor.fallback_frames()));
+    state[EncodableValue("sampleRate")] = EncodableValue(processor.sample_rate());
+    state[EncodableValue("channels")] = EncodableValue(processor.channels());
+    result->Success(EncodableValue(state));
+    return;
+  }
+#endif
+
 
   if (method_call.method_name().compare("createPeerConnection") == 0) {
     if (!method_call.arguments()) {
@@ -133,6 +163,9 @@ void FlutterWebRTC::HandleMethodCall(
     const EncodableMap params =
         GetValue<EncodableMap>(*method_call.arguments());
     const std::string deviceId = findString(params, "deviceId");
+#ifdef _WIN32
+    rnnoise_capture_->processor.Reset();
+#endif
     SelectAudioInput(deviceId, std::move(result));
   } else if (method_call.method_name().compare("selectAudioOutput") == 0) {
     const EncodableMap params =
@@ -441,6 +474,9 @@ void FlutterWebRTC::HandleMethodCall(
     const EncodableValue enable = findEncodableValue(params, "enabled");
     RTCMediaTrack* track = MediaTrackForId(track_id);
     if (track != nullptr) {
+#ifdef _WIN32
+      if (track->kind().std_string() == "audio") rnnoise_capture_->processor.Reset();
+#endif
       track->set_enabled(GetValue<bool>(enable));
     }
     result->Success();

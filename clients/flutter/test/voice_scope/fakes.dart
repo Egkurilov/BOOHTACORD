@@ -40,15 +40,22 @@ class PendingVoiceRoom with EventsEmittable<RoomEvent> implements Room {
 }
 
 class PendingMicrophone implements LocalParticipant {
+  @override
+  LocalTrackPublication? getTrackPublicationBySource(TrackSource source) =>
+      null;
   final enabled = <bool>[];
   final capture = Completer<void>();
+  final started = Completer<void>();
   @override
   Future<LocalTrackPublication?> setMicrophoneEnabled(
     bool value, {
     AudioCaptureOptions? audioCaptureOptions,
   }) async {
     enabled.add(value);
-    if (value) await capture.future;
+    if (value) {
+      if (!started.isCompleted) started.complete();
+      await capture.future;
+    }
     return null;
   }
 

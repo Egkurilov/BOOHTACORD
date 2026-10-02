@@ -19,6 +19,7 @@ import '../services/voice_participant_presentation.dart';
 import '../services/screen_thumbnail.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
+import '../widgets/noise_suppression_settings.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
 import '../widgets/confirmation_dialog.dart';
@@ -6401,13 +6402,10 @@ class _AudioSettingsScreen extends StatelessWidget {
                         state.audioProcessing.copyWith(echoCancellation: value),
                       ),
                     ),
-                    SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Подавление шума'),
-                      value: state.audioProcessing.noiseSuppression,
-                      onChanged: (value) => state.setAudioProcessing(
-                        state.audioProcessing.copyWith(noiseSuppression: value),
-                      ),
+                    NoiseSuppressionSettings(
+                      processing: state.audioProcessing,
+                      runtime: state.noiseSuppressionRuntime,
+                      onChanged: state.setAudioProcessing,
                     ),
                     const SizedBox(height: 16),
                     _AudioDeviceDropdown(

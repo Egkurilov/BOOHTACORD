@@ -30,7 +30,20 @@ const session = new VoiceSession()
 
 export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   const active = shallowRef<ActiveVoiceSession | null>(null)
+  const microphoneTrack = shallowRef<MediaStreamTrack | undefined>()
+  let stopProcessingState: (() => void) | null = null
   const audioProcessingDiagnostics = ref(session.audioProcessing.diagnostics)
+  watch(active, (current) => {
+    stopProcessingState?.()
+    stopProcessingState = null
+    refreshAudioProcessingDiagnostics()
+    if (!current) return
+    stopProcessingState = current.room.onNoiseSuppressionState?.(() => {
+      if (active.value !== current) return
+      refreshAudioProcessingDiagnostics()
+    }) ?? null
+  }, { flush: 'sync' })
+  onScopeDispose(() => stopProcessingState?.())
   const error = ref<string | null>(null)
   const microphoneMuted = ref(false)
   const microphonePermissionDenied = ref(false)
@@ -91,6 +104,7 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
 
   function refreshAudioProcessingDiagnostics(): void {
     audioProcessingDiagnostics.value = session.audioProcessing.diagnostics
+    microphoneTrack.value = active.value?.room.readMicrophoneTrack?.()
   }
 
   async function setAudioProcessing(options: AudioProcessingOptions): Promise<void> {
@@ -132,6 +146,7 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   async function switchAudioDevice(kind: AudioDeviceKind, deviceId: string): Promise<void> {
     if (!active.value) throw new Error('Сначала подключитесь к голосовому каналу.')
     await session.switchAudioDevice(kind, deviceId)
+    refreshAudioProcessingDiagnostics()
   }
 
   async function leave(): Promise<void> {
@@ -140,5 +155,5 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
     if (reason && active.value) await revocation.revokeLease(active.value.leaseId, reason)
   }
 
-  return { active, audioProcessingDiagnostics, canJoin, clearScreenStream: screenViewer.clear, connectionQuality, deafenChanging, deafened, disconnectLocal: revocation.disconnectLocal, error, join, leave, microphoneMuted, microphonePermissionDenied, pingMs, refreshScreenDiagnostics, revokeLease: revocation.revokeLease, screenDiagnostics, screenError, screenProfile, screenState, screenViewerCards, screenViewerEnded, screenViewerError, selectScreenStream: screenViewer.select, selectedScreenStreamId, screenAudioMuted: screenViewer.audioMuted, setAudioProcessing, setMicrophoneMuted, startScreen, state, stopScreen, switchAudioDevice, toggleDeafen, toggleMicrophone, toggleScreenAudio: () => screenViewer.toggleAudio(volume.selectedScreenVolume.value, volume.setScreenVolume), transferRequired, voiceVolumeError: volume.error, voiceVolumeParticipants, selfSpeaking: volume.selfSpeaking, selectedScreenAudioVolume: volume.selectedScreenVolume, setParticipantVolume: volume.setParticipantVolume, setScreenVolume: volume.setScreenVolume }
+  return { active, audioProcessingDiagnostics, microphoneTrack, canJoin, clearScreenStream: screenViewer.clear, connectionQuality, deafenChanging, deafened, disconnectLocal: revocation.disconnectLocal, error, join, leave, microphoneMuted, microphonePermissionDenied, pingMs, refreshScreenDiagnostics, revokeLease: revocation.revokeLease, screenDiagnostics, screenError, screenProfile, screenState, screenViewerCards, screenViewerEnded, screenViewerError, selectScreenStream: screenViewer.select, selectedScreenStreamId, screenAudioMuted: screenViewer.audioMuted, setAudioProcessing, setMicrophoneMuted, startScreen, state, stopScreen, switchAudioDevice, toggleDeafen, toggleMicrophone, toggleScreenAudio: () => screenViewer.toggleAudio(volume.selectedScreenVolume.value, volume.setScreenVolume), transferRequired, voiceVolumeError: volume.error, voiceVolumeParticipants, selfSpeaking: volume.selfSpeaking, selectedScreenAudioVolume: volume.selectedScreenVolume, setParticipantVolume: volume.setParticipantVolume, setScreenVolume: volume.setScreenVolume }
 })

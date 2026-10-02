@@ -102,7 +102,7 @@ it('does not enable a microphone that was muted before deafen', async () => {
 
 it('updates an active local track and carries processing preferences through mute and deafen', async () => {
   const api = admission()
-  const processing = { autoGainControl: false, echoCancellation: false, noiseSuppression: true }
+  const processing = { autoGainControl: false, echoCancellation: false, noiseSuppressionMode: 'browser' as const }
   const room = {
     applyMicrophoneProcessing: vi.fn().mockResolvedValue(undefined),
     disconnect: vi.fn().mockResolvedValue(undefined),
@@ -120,8 +120,8 @@ it('updates an active local track and carries processing preferences through mut
   await session.setDeafened(false)
 
   expect(room.applyMicrophoneProcessing).toHaveBeenCalledWith(processing)
-  expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenNthCalledWith(2, true, expect.objectContaining(processing), expect.any(Object))
-  expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenNthCalledWith(4, true, expect.objectContaining(processing), expect.any(Object))
+  expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenNthCalledWith(2, true, expect.objectContaining({ autoGainControl: false, echoCancellation: false, noiseSuppression: true }), expect.any(Object))
+  expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenNthCalledWith(4, true, expect.objectContaining({ autoGainControl: false, echoCancellation: false, noiseSuppression: true }), expect.any(Object))
 })
 
 it('exposes only the room-owned remote voice playback controller to UI controls', async () => {
@@ -135,4 +135,17 @@ it('exposes only the room-owned remote voice playback controller to UI controls'
 
   expect(session.remoteVoices()).toBe(remoteVoices)
   expect(session.participantCards()).toBe(participantCards)
+})
+
+it('does not commit microphone state after the room has been revoked', async () => {
+  const api = admission()
+  let finish!: () => void
+  const room = { disconnect: vi.fn(async () => undefined), on: vi.fn(), setMicrophone: vi.fn(() => new Promise<void>((resolve) => { finish = resolve })) }
+  const session = new VoiceSession(api, async () => ({ room: room as never, microphone: 'PUBLISHED' }))
+  await session.join('voice-1')
+  const muting = session.setMicrophoneMuted(true)
+  await session.revoke('lease-1')
+  finish()
+  await expect(muting).rejects.toThrow('Голосовое подключение закрыто.')
+  expect(session.active).toBeNull()
 })

@@ -1,5 +1,7 @@
 FROM node:24.18.0-alpine AS build
 WORKDIR /app
+ARG VITE_RNNOISE_ENABLED=true
+ENV VITE_RNNOISE_ENABLED=${VITE_RNNOISE_ENABLED}
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY index.html tsconfig.json vite.config.ts ./

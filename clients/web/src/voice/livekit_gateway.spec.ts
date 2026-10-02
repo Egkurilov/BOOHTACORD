@@ -27,7 +27,7 @@ function room(microphone: () => Promise<unknown>): VoiceRoom {
 
 describe('LiveKit voice gateway', () => {
   it('builds microphone constraints from the selected browser processing preferences', () => {
-    expect(microphoneConstraints({ autoGainControl: false, echoCancellation: false, noiseSuppression: false })).toEqual({
+    expect(microphoneConstraints({ autoGainControl: false, echoCancellation: false, noiseSuppressionMode: 'off' })).toEqual({
       autoGainControl: false, channelCount: { ideal: 1 }, echoCancellation: false, noiseSuppression: false, sampleRate: { ideal: 48_000 },
     })
   })
@@ -36,9 +36,9 @@ describe('LiveKit voice gateway', () => {
     const apply = vi.fn().mockResolvedValue(undefined)
     const fakeRoom = Object.assign(room(async () => undefined), { applyMicrophoneProcessing: apply })
 
-    await applyMicrophoneProcessing(fakeRoom, { autoGainControl: false, echoCancellation: true, noiseSuppression: false })
+    await applyMicrophoneProcessing(fakeRoom, { autoGainControl: false, echoCancellation: true, noiseSuppressionMode: 'off' })
 
-    expect(apply).toHaveBeenCalledWith({ autoGainControl: false, echoCancellation: true, noiseSuppression: false })
+    expect(apply).toHaveBeenCalledWith({ autoGainControl: false, echoCancellation: true, noiseSuppressionMode: 'off' })
   })
 
   it('connects before requesting the microphone with browser audio processing preferences', async () => {

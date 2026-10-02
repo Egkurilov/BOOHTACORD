@@ -8,6 +8,7 @@ endif()
 
 # Add the libwebrtc dependency
 include("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/CMakeLists.txt")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../common/rnnoise" "${CMAKE_CURRENT_BINARY_DIR}/rnnoise")
 
 # This value is used when generating builds using this plugin, so it must
 # not be changed
@@ -54,6 +55,7 @@ target_include_directories(${PLUGIN_NAME} INTERFACE
 target_link_libraries(${PLUGIN_NAME} PRIVATE 
   flutter
   flutter_wrapper_plugin
+  boohta_rnnoise
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/libwebrtc/lib/libwebrtc.dll.lib"
   avrt.lib
   ksuser.lib

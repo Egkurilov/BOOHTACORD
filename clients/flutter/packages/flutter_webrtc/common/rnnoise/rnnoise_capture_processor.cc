@@ -1,0 +1,97 @@
+#include "rnnoise_capture_processor.h"
+#include <cmath>
+#include <cstring>
+#include <mutex>
+namespace boohta {
+RnnoiseCaptureProcessor::RnnoiseCaptureProcessor(StateAllocator allocate)
+    : state_(static_cast<DenoiseState*>(allocate(rnnoise_get_size()))) {
+  // v0.1 rnnoise_create does not check malloc. Keep pinned source untouched and
+  // initialize only successful allocations so unavailable is an honest fallback.
+  if (state_) rnnoise_init(state_);
+  else failure_.store(Failure::kUnavailable);
+  // Stock v0.1 lazily allocates its global FFT tables on the first process call.
+  // Warm on the control thread exactly once before any realtime callback.
+  static std::once_flag fft_ready;
+  if (state_) {
+    std::call_once(fft_ready, [this] {
+      float silence[480] = {};
+      rnnoise_process_frame(state_, silence, silence);
+    });
+    rnnoise_init(state_);
+  }
+}
+RnnoiseCaptureProcessor::~RnnoiseCaptureProcessor() { rnnoise_destroy(state_); }
+void RnnoiseCaptureProcessor::SetEngine(Engine engine) {
+  requested_.store(engine);
+  Reset();
+}
+void RnnoiseCaptureProcessor::Reset() {
+  generation_.fetch_add(1);
+  failure_.store(state_ ? Failure::kAwaitingAudio : Failure::kUnavailable);
+}
+void RnnoiseCaptureProcessor::Initialize(int rate, int channels) {
+  rate_.store(rate); channels_.store(channels); Reset();
+}
+bool RnnoiseCaptureProcessor::Process(float* pcm, int frames, int capacity) {
+  const auto generation = generation_.load();
+  if (generation != applied_generation_) {
+    if (state_) rnnoise_init(state_);
+    applied_generation_ = generation;
+  }
+  if (requested_.load() != Engine::kRnnoise) return false;
+  Failure error = Failure::kNone;
+  if (!state_) error = Failure::kUnavailable;
+  else if (!pcm || rate_.load() != 48000 || channels_.load() != 1 ||
+           frames != 480 || capacity < frames) error = Failure::kFormat;
+  else for (int i = 0; i < frames; ++i) {
+    if (!std::isfinite(pcm[i]) || std::fabs(pcm[i]) > 32768.f) {
+      error = Failure::kNonFinite; break;
+    }
+  }
+  if (error != Failure::kNone) {
+    failure_.store(error); fallback_.fetch_add(1);
+    if (state_) rnnoise_init(state_);
+    return false;
+  }
+  // RNNoise v0.1 consumes fullband float PCM on the same S16 amplitude scale
+  // used by WebRTC AudioBuffer. There is no normalized-float conversion here.
+  rnnoise_process_frame(state_, pcm, pcm);
+  if (generation == generation_.load() && requested_.load() == Engine::kRnnoise)
+    failure_.store(Failure::kNone);
+  processed_.fetch_add(1);
+  return true;
+}
+RnnoiseCaptureProcessor::Engine RnnoiseCaptureProcessor::EffectiveEngine() const {
+  auto requested = requested_.load();
+  return requested == Engine::kRnnoise && failure_.load() != Failure::kNone
+      ? Engine::kUnknown : requested;
+}
+const char* RnnoiseCaptureProcessor::failure_reason() const {
+  if (requested_.load() != Engine::kRnnoise) return "";
+  switch (failure_.load()) {
+    case Failure::kNone: return "";
+    case Failure::kAwaitingAudio: return "awaiting-audio";
+    case Failure::kFormat: return "unsupported-audio-format";
+    case Failure::kNonFinite: return "invalid-audio-samples";
+    case Failure::kUnavailable: return "processor-unavailable";
+  }
+  return "processor-unavailable";
+}
+const char* NoiseEngineName(RnnoiseCaptureProcessor::Engine engine) {
+  switch (engine) {
+    case RnnoiseCaptureProcessor::Engine::kOff: return "off";
+    case RnnoiseCaptureProcessor::Engine::kBrowser: return "browser";
+    case RnnoiseCaptureProcessor::Engine::kRnnoise: return "rnnoise";
+    case RnnoiseCaptureProcessor::Engine::kUnknown: return "unknown";
+  }
+  return "browser";
+}
+bool ParseNoiseEngine(const char* value, RnnoiseCaptureProcessor::Engine* engine) {
+  if (!value || !engine) return false;
+  if (!std::strcmp(value, "off")) *engine = RnnoiseCaptureProcessor::Engine::kOff;
+  else if (!std::strcmp(value, "browser")) *engine = RnnoiseCaptureProcessor::Engine::kBrowser;
+  else if (!std::strcmp(value, "rnnoise")) *engine = RnnoiseCaptureProcessor::Engine::kRnnoise;
+  else return false;
+  return true;
+}
+}

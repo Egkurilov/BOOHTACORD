@@ -4,6 +4,7 @@ import json
 import re
 import subprocess
 from pathlib import Path
+from .audio_component import write_audio_component
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -25,6 +26,7 @@ def write(directory, platform, architectures, application_id, signing, *, root=R
         raise ValueError('Signing status must be measured and explicit')
     if signing['status'] in ('signed', 'debug') and not re.fullmatch(r'[0-9a-f]{64}', signing.get('certificate_sha256', '')):
         raise ValueError('Signed artifacts require a measured certificate fingerprint')
+    audio_component = write_audio_component(directory, root=root)
     files = {}
     for path in sorted(directory.rglob('*')):
         if path.name in ('artifact-manifest.json', 'SHA256SUMS'): continue
@@ -39,7 +41,7 @@ def write(directory, platform, architectures, application_id, signing, *, root=R
     result = {'schema_version': 1, 'source_revision': revision, 'source_dirty': dirty, 'version': version(root),
               'platform': platform, 'architectures': architectures, 'application_id': application_id,
               'signing': signing, 'toolchains': json.loads((root / 'tools/toolchains.json').read_text()),
-              'contracts': contracts, 'files': files}
+              'contracts': contracts, 'files': files, 'audio_component': audio_component}
     document = directory / 'artifact-manifest.json'
     document.write_text(json.dumps(result, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     checksums = [f"{value['sha256']}  {name}\n" for name, value in files.items()]

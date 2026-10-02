@@ -1,0 +1,9 @@
+{
+  "version": "v0.1-cdf196b",
+  "sourceCommit": "cdf196b1e9de2f8ff1003328ebf9a4316477429d",
+  "sourceUrl": "https://github.com/xiph/rnnoise",
+  "sourceArchiveSha256": "a6f3bd89c5c12546d049bcdcf6d1b58c301fd9c811e760f3087b036a93501d98",
+  "modelId": "rnnoise-stock-v0.1",
+  "modelSha256": "f0cdb52b30501aab489f90fedbc7a023c719d91b337db2da7f26fc3036556b95",
+  "emscriptenVersion": "4.0.20"
+}

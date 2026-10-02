@@ -25,7 +25,7 @@ def main():
     destination.mkdir(parents=True, exist_ok=True)
     architectures = ['universal'] if args.debug else ['arm64-v8a', 'armeabi-v7a', 'x86_64']
     expected = {'app-debug.apk'} if args.debug else {f'BOOHTACORD-{tag}-{abi}.apk' for abi in architectures}
-    if any(path.name not in expected | {'artifact-manifest.json', 'SHA256SUMS'} for path in destination.iterdir()):
+    if any(path.name not in expected | {'artifact-manifest.json', 'SHA256SUMS', 'LICENSE-RNNoise.txt', 'rnnoise-component.cdx.json'} for path in destination.iterdir()):
         raise ValueError('Artifact directory contains another release; choose a clean build workspace')
     inspected = {}
     for architecture in architectures:

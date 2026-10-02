@@ -12,7 +12,7 @@ A new flutter plugin project.
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'CloudWebRTC' => 'duanweiwei1982@gmail.com' }
   s.source           = { :path => '.' }
-  s.source_files     = 'flutter_webrtc/Sources/flutter_webrtc/**/*.{h,m}'
+  s.source_files     = 'flutter_webrtc/Sources/flutter_webrtc/**/*.{h,m,mm}', '../common/rnnoise/rnnoise_capture_processor.{h,cc}', '../common/rnnoise/public_include/*.h', '../common/rnnoise/upstream/include/*.h', '../common/rnnoise/upstream/src/*.{h,c}'
   s.public_header_files = 'flutter_webrtc/Sources/flutter_webrtc/include/flutter_webrtc/**/*.h'
 
   s.dependency 'FlutterMacOS'
@@ -20,6 +20,8 @@ A new flutter plugin project.
   s.dependency 'WebRTC-SDK', '150.7871.01'
   s.osx.deployment_target = '10.15'
   s.pod_target_xcconfig = {
+    'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
+    'HEADER_SEARCH_PATHS' => '"${PODS_TARGET_SRCROOT}/../common/rnnoise/public_include" "${PODS_TARGET_SRCROOT}/../common/rnnoise/upstream/include"',
     'USER_HEADER_SEARCH_PATHS' => '"${PODS_TARGET_SRCROOT}/flutter_webrtc/Sources/flutter_webrtc/include/flutter_webrtc"'
   }
 end

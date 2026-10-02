@@ -1,3 +1,8 @@
+import 'dart:async';
+
+import 'package:livekit_client/livekit_client.dart';
+
+import '../../../services/audio_preferences.dart';
 import '../lifecycle/controller.dart';
 
 extension VoiceMicrophoneCapture on VoiceController {
@@ -8,20 +13,45 @@ extension VoiceMicrophoneCapture on VoiceController {
     final targetRoom = room;
     final participant = targetRoom?.localParticipant;
     bool current() => active(ticket, revision) && identical(room, targetRoom);
-    final operation = microphoneTail.then((_) async {
+    audio.microphoneMutedIntent = muted;
+    if (muted) {
+      final track = participant
+          ?.getTrackPublicationBySource(TrackSource.microphone)
+          ?.track;
+      if (track is LocalAudioTrack) unawaited(track.mute(stopOnMute: false));
+      unawaited(audio.nativeNoise.reset());
+    }
+    final operation = audio.nativeNoise.run(() async {
       if (!current()) return false;
       try {
+        if (!muted) await audio.prepareNoiseForCapture();
+        if (!current()) return false;
+        await audio.nativeNoise.reset();
         await participant?.setMicrophoneEnabled(
-          !muted,
+          !audio.microphoneMutedIntent,
           audioCaptureOptions: audio.captureOptions,
         );
         if (!current()) {
           if (!muted) {
             try {
+              if (!muted) await audio.prepareNoiseForCapture();
+              if (!current()) return false;
+              await audio.nativeNoise.reset();
               await participant?.setMicrophoneEnabled(false);
             } catch (_) {}
           }
           return false;
+        }
+        if (!muted) {
+          if (audio.captureNoiseOverride == NoiseSuppressionMode.browser &&
+              audio.audioProcessing.noiseSuppressionMode ==
+                  NoiseSuppressionMode.rnnoise) {
+            audio.nativeNoise.confirmFallback(
+              audio.nativeNoise.state.failureReason ?? 'unsupported',
+              unsupported: true,
+            );
+          }
+          audio.monitorNativeNoise();
         }
         if (request == microphoneRevision) {
           microphoneMuted = muted;

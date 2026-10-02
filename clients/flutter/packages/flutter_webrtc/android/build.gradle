@@ -43,6 +43,7 @@ android {
         namespace 'com.cloudwebrtc.webrtc'
     }
     compileSdkVersion 36
+    externalNativeBuild { cmake { path 'src/main/cpp/CMakeLists.txt' } }
 
     defaultConfig {
         minSdkVersion 21

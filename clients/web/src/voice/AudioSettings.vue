@@ -2,8 +2,10 @@
 import type { AudioDevice, AudioDeviceKind } from './audio_devices'
 import type { AudioSettingsState } from './audio_settings_store'
 import type { VoiceActivationMode } from './activation_store'
-import { audioProcessingStatus, type AudioProcessingDiagnostics } from './audio_processing_diagnostics'
+import { audioProcessingStatus, noiseSuppressionModeLabel, noiseSuppressionFallbackLabel, type AudioProcessingDiagnostics } from './audio_processing_diagnostics'
 import { capturePttAssignment } from './ptt_key_capture'
+import { rnnoiseReleaseEnabled } from './noise_suppression/capabilities'
+import type { NoiseSuppressionMode } from './noise_suppression/types'
 import type { AudioProcessingOptions } from './livekit_gateway'
 import AudioDeviceCheck from './AudioDeviceCheck.vue'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -18,6 +20,7 @@ const props = defineProps<{
   processing: AudioProcessingOptions
   state: AudioSettingsState
   connected: boolean
+  microphoneTrack?: MediaStreamTrack
 }>()
 
 const emit = defineEmits<{
@@ -60,7 +63,7 @@ function capturePttKey(event: KeyboardEvent): void {
   capturePttAssignment(event, () => { recordingPttKey.value = false }, (code) => emit('setPttKey', code))
 }
 
-function setProcessing(key: keyof AudioProcessingOptions, event: Event): void {
+function setProcessing(key: 'autoGainControl' | 'echoCancellation', event: Event): void {
   emit('setProcessing', { ...props.processing, [key]: (event.target as HTMLInputElement).checked })
 }
 </script>
@@ -84,13 +87,32 @@ function setProcessing(key: keyof AudioProcessingOptions, event: Event): void {
     </button>
     <p v-if="activationError" class="state state-error" role="alert">{{ activationError }}</p>
     <fieldset>
-      <legend>Обработка микрофона браузером</legend>
+      <legend>Обработка микрофона</legend>
       <label><input type="checkbox" :checked="processing.autoGainControl" @change="setProcessing('autoGainControl', $event)"> Автоматическая регулировка усиления</label>
       <p class="state" aria-live="polite">AGC — {{ audioProcessingStatus(processingDiagnostics.autoGainControl) }}</p>
       <label><input type="checkbox" :checked="processing.echoCancellation" @change="setProcessing('echoCancellation', $event)"> Подавление эха</label>
       <p class="state" aria-live="polite">Эхоподавление — {{ audioProcessingStatus(processingDiagnostics.echoCancellation) }}</p>
-      <label><input type="checkbox" :checked="processing.noiseSuppression" @change="setProcessing('noiseSuppression', $event)"> Подавление шума</label>
-      <p class="state" aria-live="polite">Шумоподавление — {{ audioProcessingStatus(processingDiagnostics.noiseSuppression) }}</p>
+      <label>Шумоподавление
+        <select :value="processing.noiseSuppressionMode" @change="emit('setProcessing', { ...processing, noiseSuppressionMode: ($event.target as HTMLSelectElement).value as NoiseSuppressionMode })">
+          <option value="off">Выключено</option>
+          <option value="browser">Стандартное — браузер</option>
+          <option v-if="rnnoiseReleaseEnabled()" value="rnnoise">RNNoise — экспериментальное</option>
+          <option v-if="!rnnoiseReleaseEnabled() && processing.noiseSuppressionMode === 'rnnoise'" value="rnnoise" disabled>RNNoise — недоступен в этой сборке</option>
+        </select>
+      </label>
+      <p class="state" aria-live="polite">Выбрано: {{ noiseSuppressionModeLabel(processing.noiseSuppressionMode) }}. Работает: {{ noiseSuppressionModeLabel(processingDiagnostics.noiseSuppressionRuntime.effectiveMode) }}.</p>
+      <p v-if="processingDiagnostics.noiseSuppressionRuntime.fallbackReason" class="state" role="status">Причина: {{ noiseSuppressionFallbackLabel(processingDiagnostics.noiseSuppressionRuntime.fallbackReason) }}.</p>
+      <p v-if="processingDiagnostics.noiseSuppressionRuntime.status === 'initializing'" class="state" role="status">Подготавливаем фильтр…</p>
+      <p v-if="processingDiagnostics.noiseSuppressionRuntime.status === 'error'" class="state state-error" role="alert">Ошибка обработки микрофона. Отправка звука выключена.</p>
+      <details><summary>Диагностика обработки</summary>
+        <p>Browser NS — {{ audioProcessingStatus(processingDiagnostics.noiseSuppression) }}</p>
+        <p>Источник capture: {{ processingDiagnostics.captureSource === 'original-microphone' ? 'исходный микрофон' : 'недоступен' }}. Статус: {{ processingDiagnostics.noiseSuppressionRuntime.status }}.</p>
+        <p v-if="processingDiagnostics.noiseSuppressionRuntime.modelId">Модель: {{ processingDiagnostics.noiseSuppressionRuntime.modelId }}.</p>
+        <p>Частота исходного capture: {{ processingDiagnostics.noiseSuppressionRuntime.captureSampleRate === undefined ? 'недоступна' : `${processingDiagnostics.noiseSuppressionRuntime.captureSampleRate} Гц` }}.</p>
+        <p v-if="processingDiagnostics.noiseSuppressionRuntime.initDurationMs !== undefined">Подготовка фильтра: {{ processingDiagnostics.noiseSuppressionRuntime.initDurationMs.toFixed(1) }} мс.</p>
+        <p v-if="processingDiagnostics.noiseSuppressionRuntime.contextSampleRate">AudioContext: {{ processingDiagnostics.noiseSuppressionRuntime.contextSampleRate }} Гц.</p>
+        <p v-if="processingDiagnostics.noiseSuppressionRuntime.processedFrames !== undefined">Кадры: {{ processingDiagnostics.noiseSuppressionRuntime.processedFrames }}; ошибки: {{ processingDiagnostics.noiseSuppressionRuntime.processorErrors ?? 0 }}.</p>
+      </details>
     </fieldset>
     <template v-if="state === 'READY'">
       <label>
@@ -106,7 +128,7 @@ function setProcessing(key: keyof AudioProcessingOptions, event: Event): void {
         </select>
       </label>
       <p v-if="!connected" class="state">До подключения выбор устройства используется для локальной проверки; устройство звонка можно переключить после входа.</p>
-      <AudioDeviceCheck :input-id="selectedInput" :output-id="selectedOutput" />
+      <AudioDeviceCheck :input-id="selectedInput" :output-id="selectedOutput" :processing="processing" :connected="connected" :microphone-track="microphoneTrack" />
     </template>
   </section>
 </template>

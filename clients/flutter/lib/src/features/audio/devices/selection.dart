@@ -6,7 +6,22 @@ import '../../../services/android_audio_devices.dart';
 import 'state.dart';
 
 mixin AudioDeviceSelection on AudioDeviceState {
-  Future<void> selectAudioInput(String deviceId) async {
+  Future<void> selectAudioInput(String deviceId) {
+    final ticket = scope.capture();
+    final settings = preferences;
+    final targetRoom = room;
+    return nativeNoise.run(() async {
+      if (!ticket.isActive ||
+          !identical(settings, preferences) ||
+          !identical(targetRoom, room) ||
+          isDisposed) {
+        return;
+      }
+      await _selectAudioInput(deviceId);
+    });
+  }
+
+  Future<void> _selectAudioInput(String deviceId) async {
     final ticket = scope.capture();
     final settings = preferences;
     final targetRoom = room;
@@ -32,7 +47,12 @@ mixin AudioDeviceSelection on AudioDeviceState {
           ?.getTrackPublicationBySource(TrackSource.microphone)
           ?.track;
       if (track is LocalAudioTrack) {
+        await track.mute(stopOnMute: false);
+        await nativeNoise.reset();
         await track.setDeviceId(deviceId);
+        if (current() && !microphoneMutedIntent) {
+          await track.unmute(stopOnMute: false);
+        }
         if (!current()) return;
       } else if (room != null) {
         await room!.setAudioInputDevice(device);

@@ -25,6 +25,7 @@ import androidx.annotation.RequiresApi;
 
 import com.cloudwebrtc.webrtc.audio.AudioDeviceKind;
 import com.cloudwebrtc.webrtc.audio.AudioProcessingController;
+import com.cloudwebrtc.webrtc.audio.RnnoiseCaptureAdapter;
 import com.cloudwebrtc.webrtc.audio.AudioSwitchManager;
 import com.cloudwebrtc.webrtc.audio.AudioUtils;
 import com.cloudwebrtc.webrtc.audio.LocalAudioTrack;
@@ -145,6 +146,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
   private CustomVideoDecoderFactory videoDecoderFactory;
 
   public AudioProcessingController audioProcessingController;
+  private RnnoiseCaptureAdapter rnnoiseCapture;
 
   // WARP (WebRTC Abridged Roundtrip Protocol, draft-uberti-tsvwg-warp) is opted
   // into through the `enableWARP` initialize() option. The part of it that
@@ -226,8 +228,13 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       }
     }
     mPeerConnectionObservers.clear();
+    if (rnnoiseCapture != null) {
+      audioProcessingController.capturePostProcessing.removeProcessor(rnnoiseCapture);
+      rnnoiseCapture.close();
+      rnnoiseCapture = null;
+    }
   }
-  private void initialize(boolean bypassVoiceProcessing, boolean androidUseHardwareAudioProcessing, int networkIgnoreMask, boolean forceSWCodec, List<String> forceSWCodecList,
+  private void initialize(boolean bypassVoiceProcessing, boolean androidUseHardwareAudioProcessing, boolean androidUseHardwareNoiseSuppression, int networkIgnoreMask, boolean forceSWCodec, List<String> forceSWCodecList,
   @Nullable ConstraintsMap androidAudioConfiguration, Severity logSeverity, @Nullable Integer audioSampleRate, @Nullable Integer audioOutputSampleRate, boolean enableWARP, boolean zeroPlayoutDelay) {
     if (mFactory != null) {
       return;
@@ -297,7 +304,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       boolean useLowLatency = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
       audioDeviceModuleBuilder.setUseHardwareAcousticEchoCanceler(useHardwareAudioProcessing)
                         .setUseLowLatency(useLowLatency)
-                        .setUseHardwareNoiseSuppressor(useHardwareAudioProcessing);
+                        .setUseHardwareNoiseSuppressor(useHardwareAudioProcessing && androidUseHardwareNoiseSuppression);
     }
 
     // Configure audio sample rates if specified
@@ -390,6 +397,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     videoEncoderFactory.setForceSWCodecList(forceSWCodecList);
 
     audioProcessingController = new AudioProcessingController();
+    rnnoiseCapture = new RnnoiseCaptureAdapter(!bypassVoiceProcessing && androidUseHardwareAudioProcessing && androidUseHardwareNoiseSuppression && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q);
+    audioProcessingController.capturePostProcessing.addProcessor(rnnoiseCapture);
 
     factoryBuilder.setAudioProcessingFactory(audioProcessingController.externalAudioProcessingFactory);
 
@@ -404,6 +413,17 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
 
     final AnyThreadResult result = new AnyThreadResult(notSafeResult);
     switch (call.method) {
+      case "setNoiseSuppressionEngine":
+      case "getNoiseSuppressionState":
+      case "resetNoiseSuppression": {
+        if (rnnoiseCapture == null) { result.error("noise_not_initialized", "WebRTC must initialize first", null); break; }
+        if (call.method.equals("setNoiseSuppressionEngine") && !rnnoiseCapture.setEngine(call.argument("engine"))) {
+          result.error("Bad Arguments", "invalid noise suppression engine", null); break;
+        }
+        if (call.method.equals("resetNoiseSuppression")) rnnoiseCapture.resetState();
+        result.success(rnnoiseCapture.state());
+        break;
+      }
       case "initialize": {
         int networkIgnoreMask = Options.ADAPTER_TYPE_UNKNOWN;
         Map<String, Object> options = call.argument("options");
@@ -509,7 +529,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
           zeroPlayoutDelay = constraintsMap.getBoolean("zeroPlayoutDelay");
         }
 
-        initialize(enableBypassVoiceProcessing, androidUseHardwareAudioProcessing, networkIgnoreMask, forceSWCodec, forceSWCodecList, androidAudioConfiguration, logSeverity, audioSampleRate, audioOutputSampleRate, enableWARP, zeroPlayoutDelay);
+        boolean androidUseHardwareNoiseSuppression = options.get("androidUseHardwareNoiseSuppression") == null || (boolean) options.get("androidUseHardwareNoiseSuppression");
+        initialize(enableBypassVoiceProcessing, androidUseHardwareAudioProcessing, androidUseHardwareNoiseSuppression, networkIgnoreMask, forceSWCodec, forceSWCodecList, androidAudioConfiguration, logSeverity, audioSampleRate, audioOutputSampleRate, enableWARP, zeroPlayoutDelay);
         result.success(null);
         break;
       }
@@ -692,6 +713,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         String trackId = call.argument("trackId");
         Boolean enabled = call.argument("enabled");
         String peerConnectionId = call.argument("peerConnectionId");
+        LocalTrack noiseTrack = localTracks.get(trackId);
+        if (rnnoiseCapture != null && noiseTrack != null && noiseTrack.track.kind().equals("audio")) rnnoiseCapture.resetState();
         mediaStreamTrackSetEnabled(trackId, enabled, peerConnectionId);
         result.success(null);
         break;
@@ -879,10 +902,12 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       }
       case "setMicrophoneMute":
         boolean mute = call.argument("mute");
+        if (rnnoiseCapture != null) rnnoiseCapture.resetState();
         AudioSwitchManager.instance.setMicrophoneMute(mute);
         result.success(null);
         break;
       case "selectAudioInput":
+        if (rnnoiseCapture != null) rnnoiseCapture.resetState();
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
           String deviceId = call.argument("deviceId");
           getUserMediaImpl.setPreferredInputDevice(deviceId);
@@ -1110,6 +1135,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         break;
       }
       case "setPreferredInputDevice": {
+        if (rnnoiseCapture != null) rnnoiseCapture.resetState();
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
           String deviceId = call.argument("deviceId");
           getUserMediaImpl.setPreferredInputDevice(deviceId);
@@ -1222,6 +1248,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
           resultError("setMicrophoneMuted", "audioDeviceModule is null", result);
           break;
         }
+        if (rnnoiseCapture != null) rnnoiseCapture.resetState();
         audioDeviceModule.setMicrophoneMute(muted);
         microphoneMuted = muted;
         result.success(null);

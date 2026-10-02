@@ -42,6 +42,22 @@ FlutterWebRTCBase::FlutterWebRTCBase(BinaryMessenger* messenger,
 
 FlutterWebRTCBase::~FlutterWebRTCBase() {
   if (webrtc_initialized_) {
+#ifdef _WIN32
+    rnnoise_capture_->processor.SetEngine(boohta::RnnoiseCaptureProcessor::Engine::kBrowser);
+    data_channel_observers_.clear();
+    peerconnection_observers_.clear();
+    peerconnections_.clear();
+    local_tracks_.clear();
+    local_streams_.clear();
+    audio_device_ = nullptr;
+    desktop_device_ = nullptr;
+    video_device_ = nullptr;
+    // Stop/destroy the ADM while the borrowed callback is still alive.
+    factory_->Terminate();
+    factory_ = nullptr;
+    audio_processing_ = nullptr;
+    rnnoise_capture_.reset();
+#endif
     LibWebRTC::Terminate();
   }
 }
@@ -84,8 +100,15 @@ void FlutterWebRTCBase::EnsureWebRTCInitialized(bool enable_warp,
   video_device_ = factory_->GetVideoDevice();
   desktop_device_ = factory_->GetDesktopDevice();
   audio_processing_ = factory_->GetAudioProcessing();
+#ifdef _WIN32
+  rnnoise_capture_ = std::make_unique<boohta::WebrtcCaptureAdapter>();
+  audio_processing_->SetCapturePostProcessing(rnnoise_capture_.get());
+#endif
 
   audio_device_->OnDeviceChange([&] {
+#ifdef _WIN32
+    rnnoise_capture_->processor.Reset();
+#endif
     EncodableMap info;
     info[EncodableValue("event")] = "onDeviceChange";
     event_channel()->Success(EncodableValue(info), false);

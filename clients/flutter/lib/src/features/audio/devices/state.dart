@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../services/audio_preferences.dart';
+import '../../../services/native_noise_suppression.dart';
 import '../../../services/voice_audio_config.dart';
 import '../../../core/session/scope.dart';
 import 'platform.dart';
@@ -17,6 +18,10 @@ abstract class AudioDeviceState extends ChangeNotifier {
   }) : scope = scope ?? SessionScope(),
        loader = loader ?? enumerateAudioDevices;
   final SessionScope scope;
+  final nativeNoise = NativeNoiseSuppression();
+  int nativeRecoveryRevision = 0;
+  bool microphoneMutedIntent = true;
+  NoiseSuppressionMode? captureNoiseOverride;
   final Room? Function() readRoom;
   final Future<List<MediaDevice>> Function() loader;
   final Stream<List<MediaDevice>>? changes;
@@ -39,6 +44,10 @@ abstract class AudioDeviceState extends ChangeNotifier {
   String? audioDeviceWarning;
   void cancelOperations() {
     deviceRevision++;
+    nativeRecoveryRevision++;
+    nativeNoise.cancel();
+    microphoneMutedIntent = true;
+    captureNoiseOverride = null;
     audioDevicesLoading = false;
     refreshQueued = false;
     refreshAfterCaptureRequested = false;
@@ -60,8 +69,12 @@ abstract class AudioDeviceState extends ChangeNotifier {
     int revision,
   );
 
-  AudioCaptureOptions get captureOptions =>
-      voiceAudioCaptureOptions(selectedAudioInputId, audioProcessing);
+  AudioCaptureOptions get captureOptions => voiceAudioCaptureOptions(
+    selectedAudioInputId,
+    captureNoiseOverride == null
+        ? audioProcessing
+        : audioProcessing.copyWith(noiseSuppressionMode: captureNoiseOverride),
+  );
 
   @override
   void notifyListeners() {
@@ -71,6 +84,7 @@ abstract class AudioDeviceState extends ChangeNotifier {
   @override
   void dispose() {
     isDisposed = true;
+    nativeNoise.dispose();
     deviceRevision++;
     unawaited(subscription?.cancel());
     subscription = null;

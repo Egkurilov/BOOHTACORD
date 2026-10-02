@@ -319,6 +319,9 @@ abstract class LocalTrack extends Track {
     // create new track with options
     final newStream = await LocalTrack.createStream(currentOptions);
     final newTrack = newStream.getTracks().first;
+    // A recaptured native track starts enabled. Disable it before replacement
+    // so processing/device changes and rollback cannot transmit while muted.
+    if (muted) newTrack.enabled = false;
 
     final processor = _processor;
 

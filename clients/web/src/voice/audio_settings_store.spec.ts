@@ -8,7 +8,7 @@ describe('audio settings store', () => {
 
   it('keeps selected browser processing preferences after the active session applies them', async () => {
     const store = useAudioSettingsStore()
-    const processing = { autoGainControl: false, echoCancellation: false, noiseSuppression: true }
+    const processing = { autoGainControl: false, echoCancellation: false, noiseSuppressionMode: 'browser' as const }
     const apply = vi.fn().mockResolvedValue(undefined)
 
     await store.setProcessing(processing, apply)

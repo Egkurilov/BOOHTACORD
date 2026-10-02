@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue'
+import { noiseSuppressionModeLabel, noiseSuppressionFallbackLabel } from './audio_processing_diagnostics'
+import type { AudioProcessingOptions } from './noise_suppression/types'
 import { playSpeakerCheck, startMicrophoneCheck, type MicrophoneCheck } from './audio_check'
 
-const props = defineProps<{ inputId: string; outputId: string }>()
+const props = defineProps<{ inputId: string; outputId: string; processing: AudioProcessingOptions; connected: boolean; microphoneTrack?: MediaStreamTrack }>()
 const level = ref(0)
 const inputState = ref('Проверка микрофона выключена.')
 const outputState = ref('')
@@ -48,16 +50,17 @@ async function toggleInput(): Promise<void> {
   inputBusy.value = true
   inputState.value = 'Запрашиваем доступ к микрофону…'
   try {
-    const started = await startMicrophoneCheck(props.inputId)
+    const started = await startMicrophoneCheck(props.inputId, undefined, undefined, { processing: props.processing, inCall: props.connected, borrowedTrack: props.connected ? props.microphoneTrack : undefined })
     if (version !== generation) { await started.stop(); return }
     probe = started
     removeEndedListener = started.onEnded(() => {
       if (version === generation) failInput()
     })
-    inputState.value = 'Говорите: индикатор показывает локальный уровень, звук не отправляется.'
+    const runtime = started.processingState?.()
+    inputState.value = props.connected ? 'Индикатор показывает текущий выход микрофона звонка; состояние mute сохраняется.' : `Говорите: индикатор показывает локальный уровень. Выбрано: ${noiseSuppressionModeLabel(props.processing.noiseSuppressionMode)}; работает: ${noiseSuppressionModeLabel(runtime?.effectiveMode ?? 'unknown')}.${runtime?.fallbackReason ? ` Причина: ${noiseSuppressionFallbackLabel(runtime.fallbackReason)}.` : ''}`
     timer = setInterval(() => { level.value = started.level() }, 100)
-  } catch {
-    if (version === generation) inputState.value = 'Не удалось проверить микрофон. Проверьте разрешение и выбранное устройство.'
+  } catch (cause) {
+    if (version === generation) inputState.value = cause instanceof Error ? cause.message : 'Не удалось проверить микрофон. Проверьте разрешение и выбранное устройство.'
   } finally {
     if (version === generation) inputBusy.value = false
   }
@@ -73,6 +76,7 @@ async function checkOutput(): Promise<void> {
 }
 
 watch(() => props.inputId, stopInput)
+watch(() => [props.processing, props.connected, props.microphoneTrack], stopInput)
 onBeforeUnmount(stopInput)
 </script>
 

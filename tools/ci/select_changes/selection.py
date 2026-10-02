@@ -19,6 +19,8 @@ def select(paths):
             selected.update(('backend', 'server'))
         elif path.startswith('clients/web/'):
             selected.update(('web', 'server'))
+        elif path.startswith('clients/flutter/packages/flutter_webrtc/common/rnnoise/upstream/'):
+            selected.update(('web', 'server', 'flutter', 'windows'))
         elif path.startswith('clients/flutter/'):
             selected.update(('flutter', 'windows'))
         elif path.startswith(('deploy/', 'docker/', 'tools/release/', 'tools/build/server/')) or path in ('compose.yaml', '.env.example'):

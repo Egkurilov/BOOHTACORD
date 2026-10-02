@@ -475,6 +475,18 @@ static void FlutterWebRTCApplyFieldTrials(void) {
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
+  if ([@"setNoiseSuppressionEngine" isEqualToString:call.method] ||
+      [@"getNoiseSuppressionState" isEqualToString:call.method] ||
+      [@"resetNoiseSuppression" isEqualToString:call.method]) {
+    BoohtaRnnoiseCaptureDelegate* noise = _audioManager.rnnoiseCaptureDelegate;
+    if ([@"setNoiseSuppressionEngine" isEqualToString:call.method] && ![noise setEngine:call.arguments[@"engine"]]) {
+      result([FlutterError errorWithCode:@"Bad Arguments" message:@"invalid noise suppression engine" details:nil]);
+      return;
+    }
+    if ([@"resetNoiseSuppression" isEqualToString:call.method]) [noise resetState];
+    result([noise state]);
+    return;
+  }
   if ([@"initialize" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSDictionary* options = argsMap[@"options"];
@@ -571,6 +583,7 @@ static void FlutterWebRTCApplyFieldTrials(void) {
   } else if ([@"getSources" isEqualToString:call.method]) {
     [self getSources:result];
   } else if ([@"selectAudioInput" isEqualToString:call.method]) {
+    [_audioManager.rnnoiseCaptureDelegate resetState];
     NSDictionary* argsMap = call.arguments;
     NSString* deviceId = argsMap[@"deviceId"];
     [self selectAudioInput:deviceId result:result];
@@ -850,6 +863,7 @@ static void FlutterWebRTCApplyFieldTrials(void) {
       result(nil);
     }
   } else if ([@"mediaStreamTrackSetEnable" isEqualToString:call.method]) {
+    [_audioManager.rnnoiseCaptureDelegate resetState];
     NSDictionary* argsMap = call.arguments;
     NSString* trackId = argsMap[@"trackId"];
     NSNumber* enabled = argsMap[@"enabled"];
@@ -1881,6 +1895,7 @@ static void FlutterWebRTCApplyFieldTrials(void) {
       RTCAudioDeviceModule* adm = _peerConnectionFactory.audioDeviceModule;
       result([NSNumber numberWithBool:adm.isMicrophoneMuted]);
     } else if ([@"setMicrophoneMuted" isEqualToString:call.method]) {
+      [_audioManager.rnnoiseCaptureDelegate resetState];
       RTCAudioDeviceModule* adm = _peerConnectionFactory.audioDeviceModule;
       NSNumber* muted = call.arguments[@"muted"];
       if (![muted isKindOfClass:[NSNumber class]]) {
@@ -1915,6 +1930,7 @@ static void FlutterWebRTCApplyFieldTrials(void) {
 }
 
 - (void)dealloc {
+  [_audioManager.rnnoiseCaptureDelegate setEngine:@"browser"];
   [_localTracks removeAllObjects];
   _localTracks = nil;
   [_localStreams removeAllObjects];

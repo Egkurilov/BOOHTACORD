@@ -1,15 +1,21 @@
 """Identical locked web check for developers and CI."""
 import sys
-from .process import client, output, require_version, run
+from tools.audio.asset_build import build_assets
+from tools.audio.livekit_fixture import local_sfu
+from .process import ROOT, client, output, require_version, run
 
 
 def main():
     require_version("node", output("node", "--version").removeprefix("v"))
+    build_assets(ROOT)
     run("npm", "ci", cwd=client("web"))
     run("node", "--test", "tools/verify/dependencies/web_imports.test.mjs")
     run(sys.executable, "-m", "tools.verify.dependencies.web")
-    for args in (("test",), ("run", "build")):
-        run("npm", *args, cwd=client("web"))
+    run("npm", "test", cwd=client("web"))
+    run("npm", "run", "test:audio:quality", cwd=client("web"))
+    with local_sfu():
+        run("npm", "run", "test:audio:browser", cwd=client("web"))
+    run("npm", "run", "build", cwd=client("web"))
 
 
 if __name__ == "__main__":

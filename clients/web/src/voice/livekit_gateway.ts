@@ -1,3 +1,4 @@
+import type { NoiseSuppressionRuntimeState } from './noise_suppression/types'
 import type { LiveKitCredential } from './admission_client'
 import type { BrowserAudioProcessingSettings } from './audio_processing_diagnostics'
 import { BoundedVoiceReconnectPolicy } from './bounded_voice_reconnect_policy'
@@ -46,6 +47,11 @@ export interface VoiceRoom {
   remoteVoices?: RemoteVoicePlaybackController
   screenViewer?: ScreenViewerController
   setDeafened?(deafened: boolean): void
+  setMicrophone?(enabled: boolean, options: AudioProcessingOptions): Promise<void>
+  disposeMicrophone?(): Promise<void>
+  readMicrophoneTrack?(): MediaStreamTrack | undefined
+  readNoiseSuppressionState?(): NoiseSuppressionRuntimeState
+  onNoiseSuppressionState?(listener: (state: NoiseSuppressionRuntimeState) => void): () => void
   applyMicrophoneProcessing?(options: AudioProcessingOptions): Promise<void>
   readAudioProcessingSettings?(): BrowserAudioProcessingSettings | undefined
   switchActiveDevice(kind: 'audioinput' | 'audiooutput', deviceId: string): Promise<boolean>

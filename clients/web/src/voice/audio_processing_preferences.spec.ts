@@ -13,7 +13,7 @@ describe('audio processing preferences', () => {
     const local = storage()
     const owner = new AudioProcessingPreferences(local)
     const other = new AudioProcessingPreferences(local)
-    const selected = { autoGainControl: false, echoCancellation: false, noiseSuppression: true }
+    const selected = { autoGainControl: false, echoCancellation: false, noiseSuppressionMode: 'browser' as const }
     owner.bind('owner-a')
     other.bind('owner-b')
 
@@ -29,6 +29,21 @@ describe('audio processing preferences', () => {
     preferences.bind('owner-a')
     local.setItem('audio-processing:v1:owner-a', '{"autoGainControl":false}')
 
-    expect(preferences.get()).toEqual(defaultAudioProcessing)
+    expect(preferences.get()).toEqual({ ...defaultAudioProcessing, autoGainControl: false })
   })
+})
+
+
+it.each([[true, 'browser'], [false, 'off']] as const)('migrates stored v1 boolean %s while retaining AEC/AGC', (legacy, mode) => {
+  const local = storage()
+  const preferences = new AudioProcessingPreferences(local)
+  preferences.bind('owner')
+  local.setItem('audio-processing:v1:owner', JSON.stringify({ autoGainControl: false, echoCancellation: false, noiseSuppression: legacy }))
+  expect(preferences.get()).toEqual({ autoGainControl: false, echoCancellation: false, noiseSuppressionMode: mode })
+})
+it('persists RNNoise preference independently of runtime fallback', () => {
+  const preferences = new AudioProcessingPreferences(storage())
+  preferences.bind('owner')
+  preferences.set({ autoGainControl: true, echoCancellation: false, noiseSuppressionMode: 'rnnoise' })
+  expect(preferences.get().noiseSuppressionMode).toBe('rnnoise')
 })

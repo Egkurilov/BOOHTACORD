@@ -9,6 +9,7 @@ from tools.release.archive.extract import extract
 from tools.release.bundle.files import sha256
 from tools.release.bundle.manifest import require
 from tools.release.bundle.package import package
+from tools.audio.asset_build import build_assets
 from .buildx import configure
 from .images import build
 from .inputs import RUNTIME_PATHS, SOURCE_PATHS, archive, compatibility, git
@@ -47,6 +48,7 @@ def main():
         source_hash = sha256(source_archive)
         source = temporary / "source"
         extract(source_archive, source, max_bytes=200_000_000)
+        build_assets(source)
         environment = configure(root, temporary / "docker")
         receipts = build(source, bundle, revision, source_hash, environment)
         binaries = temporary / "operators"

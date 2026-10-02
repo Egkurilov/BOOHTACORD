@@ -4,7 +4,8 @@ import subprocess
 from pathlib import Path
 from tools.release.bundle.files import sha256
 
-SOURCE_PATHS = ("backend", "clients/web", "contracts", "deploy", "tools", ".node-version", "Taskfile.yml")
+SOURCE_PATHS = ("backend", "clients/web", "contracts", "deploy", "tools", ".node-version", "Taskfile.yml",
+                "clients/flutter/packages/flutter_webrtc/common/rnnoise/upstream")
 TOPOLOGY_PATHS = ("deploy/compose.yaml", "deploy/operators.yaml", "deploy/caddy/Caddyfile",
                   "deploy/livekit/compose.yaml", "deploy/livekit/livekit.yaml")
 RUNTIME_PATHS = (*TOPOLOGY_PATHS,

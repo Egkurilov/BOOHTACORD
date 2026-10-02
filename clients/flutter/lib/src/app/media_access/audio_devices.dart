@@ -1,6 +1,7 @@
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../services/audio_preferences.dart';
+import '../../services/native_noise_suppression.dart';
 import '../composition/owners.dart';
 
 mixin AppAudioDevicesAccess on AppOwners {
@@ -23,6 +24,9 @@ mixin AppAudioDevicesAccess on AppOwners {
 
   set selectedAudioOutputId(String? value) =>
       audioDevices.selectedAudioOutputId = value;
+
+  NativeNoiseSuppressionState get noiseSuppressionRuntime =>
+      audioDevices.nativeNoise.state;
 
   AudioProcessingPreferences get audioProcessing =>
       audioDevices.audioProcessing;

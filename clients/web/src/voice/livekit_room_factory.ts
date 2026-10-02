@@ -1,3 +1,5 @@
+import { LiveKitMicrophoneAdapter } from './noise_suppression/livekit_microphone_adapter'
+import { RnnoiseTrackProcessor } from './noise_suppression/rnnoise_track_processor'
 import { bindLiveKitScreenViewer, type LiveKitScreenViewerRoom } from './livekit_screen_viewer_adapter'
 import type { VoiceRoom } from './livekit_gateway'
 import { adaptiveMediaRoomOptions, screenShareMaxBitrate, type ScreenProfile, type ScreenResolution, type ScreenFrameRate } from './media_publishing'
@@ -20,14 +22,15 @@ export function wireLiveKitRoom(
     viewer.refresh()
   }
   room.disconnect = async () => {
+    const microphoneCleanup = room.disposeMicrophone?.()
     viewer.clear()
-    await disconnect()
+    try { await disconnect() } finally { await microphoneCleanup }
   }
   return room
 }
 
 export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
-  const { Room, RoomEvent, Track } = await import('livekit-client')
+  const { Room, RoomEvent, Track, LocalAudioTrack } = await import('livekit-client')
   const liveKitRoom = new Room({ ...adaptiveMediaRoomOptions, reconnectPolicy: new BoundedVoiceReconnectPolicy() })
   const viewer = bindLiveKitScreenViewer(liveKitRoom as unknown as LiveKitScreenViewerRoom, {
     activeSpeakersChanged: RoomEvent.ActiveSpeakersChanged,
@@ -67,10 +70,30 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   room.participantCards = viewer.participants
   room.remoteVoices = viewer.remoteVoices
   room.setDeafened = viewer.setDeafened
-  room.applyMicrophoneProcessing = async (options) => {
-    await liveKitRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack?.applyConstraints(options)
-  }
-  room.readAudioProcessingSettings = () => liveKitRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack?.mediaStreamTrack.getSettings()
+  const microphone = new LiveKitMicrophoneAdapter({
+    createTrack: async (options) => {
+      const tracks = await liveKitRoom.localParticipant.createTracks({ audio: options, video: false })
+      const audio = tracks.find((track) => track instanceof LocalAudioTrack)
+      if (!audio || tracks.length !== 1) {
+        tracks.forEach((track) => track.stop())
+        throw new Error('Микрофон не предоставил аудиодорожку.')
+      }
+      return audio as InstanceType<typeof LocalAudioTrack>
+    },
+    publishTrack: (track, options) => liveKitRoom.localParticipant.publishTrack(track, { ...options, source: Track.Source.Microphone }),
+    unpublishTrack: (track) => liveKitRoom.localParticipant.unpublishTrack(track, false),
+    createProcessor: (callbacks) => new RnnoiseTrackProcessor(callbacks),
+  })
+  room.setMicrophone = (enabled, options) => microphone.setEnabled(enabled, options)
+  room.disposeMicrophone = () => microphone.dispose()
+  room.applyMicrophoneProcessing = (options) => microphone.setProcessing(options)
+  room.readAudioProcessingSettings = () => microphone.readCaptureSettings()
+  room.readMicrophoneTrack = () => microphone.readOutputTrack()
+  room.readNoiseSuppressionState = () => microphone.runtimeState
+  room.onNoiseSuppressionState = (listener) => microphone.subscribe(listener)
+  const switchDevice = liveKitRoom.switchActiveDevice.bind(liveKitRoom)
+  room.switchActiveDevice = (kind, deviceId) => kind === 'audioinput' ? microphone.switchDevice(deviceId) : switchDevice(kind, deviceId)
+  liveKitRoom.on(RoomEvent.Disconnected, () => { void microphone.dispose().catch(() => undefined) })
   room.readScreenDiagnostics = async () => {
     const video = liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.videoTrack as LiveKitScreenVideoTrack | undefined
     const audio = liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShareAudio)?.audioTrack

@@ -1,5 +1,12 @@
 // swift-tools-version: 5.9
 import PackageDescription
+import Foundation
+
+// Flutter evaluates this manifest through ephemeral plugin symlinks. Resolve
+// the real package first so the shared core remains relative to its source.
+let rnnoisePackagePath = URL(fileURLWithPath: #filePath)
+    .resolvingSymlinksInPath().deletingLastPathComponent()
+    .appendingPathComponent("../../common/rnnoise").standardized.path
 
 let package = Package(
     name: "flutter_webrtc",
@@ -13,7 +20,8 @@ let package = Package(
         .library(name: "WebRTC", targets: ["WebRTC"])
     ],
     dependencies: [
-        .package(name: "FlutterFramework", path: "../FlutterFramework")
+        .package(name: "FlutterFramework", path: "../FlutterFramework"),
+        .package(name: "BoohtaRnnoise", path: rnnoisePackagePath)
     ],
     targets: [
         .binaryTarget(
@@ -25,6 +33,7 @@ let package = Package(
             name: "flutter_webrtc",
             dependencies: [
                 "WebRTC",
+                .product(name: "BoohtaRnnoise", package: "BoohtaRnnoise"),
                 .product(name: "FlutterFramework", package: "FlutterFramework")
             ],
             cSettings: [
@@ -39,5 +48,6 @@ let package = Package(
                 .linkedFramework("ScreenCaptureKit")
             ]
         )
-    ]
+    ],
+    cxxLanguageStandard: .cxx17
 )

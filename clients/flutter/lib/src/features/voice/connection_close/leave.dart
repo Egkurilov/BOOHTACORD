@@ -18,6 +18,8 @@ extension VoiceConnectionCloseLeave on VoiceController {
     final connected = room;
     final pending = pendingRoom;
     final lease = leaseId;
+    audio.nativeNoise.cancel();
+    audio.microphoneMutedIntent = true;
     final stopScreen = screen.stopScreenShare();
     room = null;
     pendingRoom = null;

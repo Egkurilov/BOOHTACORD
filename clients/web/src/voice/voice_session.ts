@@ -87,10 +87,13 @@ export class VoiceSession {
     return true
   }
   async setMicrophoneMuted(muted: boolean): Promise<MicrophoneState> {
-    if (!this.current) throw new Error('Сначала подключитесь к голосовому каналу.')
-    if (this.deafen.isDeafened && !muted) return this.current.microphone
-    this.current.microphone = await setMicrophone(this.current.room, !muted, this.audioProcessing.value)
-    return this.current.microphone
+    const current = this.current
+    if (!current) throw new Error('Сначала подключитесь к голосовому каналу.')
+    if (this.deafen.isDeafened && !muted) return current.microphone
+    const microphone = await setMicrophone(current.room, !muted, this.audioProcessing.value)
+    if (this.current !== current) throw new Error('Голосовое подключение закрыто.')
+    current.microphone = microphone
+    return microphone
   }
 
   async setDeafened(deafened: boolean): Promise<MicrophoneState> {

@@ -1,3 +1,4 @@
+import { normalizeAudioProcessing } from './noise_suppression/types'
 import { defaultAudioProcessing, type AudioProcessingOptions } from './livekit_gateway'
 
 interface PreferenceStorage {
@@ -13,12 +14,6 @@ function browserStorage(): PreferenceStorage | null {
   }
 }
 
-function isAudioProcessingOptions(value: unknown): value is AudioProcessingOptions {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
-  const candidate = value as Partial<AudioProcessingOptions>
-  return typeof candidate.autoGainControl === 'boolean' && typeof candidate.echoCancellation === 'boolean' && typeof candidate.noiseSuppression === 'boolean'
-}
-
 export class AudioProcessingPreferences {
   private accountId: string | null = null
 
@@ -32,7 +27,7 @@ export class AudioProcessingPreferences {
     if (!key || !this.storage) return { ...defaultAudioProcessing }
     try {
       const value: unknown = JSON.parse(this.storage.getItem(key) ?? '{}')
-      return isAudioProcessingOptions(value) ? { ...value } : { ...defaultAudioProcessing }
+      return normalizeAudioProcessing(value)
     } catch {
       return { ...defaultAudioProcessing }
     }

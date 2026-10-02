@@ -27,3 +27,9 @@ attachments/
 evidence/design/artifacts/
 evidence/*.json
 !evidence/README.md
+
+# Reproducible RNNoise release outputs and local browser evidence.
+clients/web/public/audio/rnnoise/
+clients/web/test-results/
+clients/web/playwright-report/
+clients/web/build/audio-browser-results/

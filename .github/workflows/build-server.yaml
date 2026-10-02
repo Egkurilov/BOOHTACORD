@@ -6,6 +6,7 @@ on:
     paths:
       - 'backend/**'
       - 'clients/web/**'
+      - 'clients/flutter/packages/flutter_webrtc/common/rnnoise/upstream/**'
       - 'contracts/**'
       - 'deploy/**'
       - 'tools/**'

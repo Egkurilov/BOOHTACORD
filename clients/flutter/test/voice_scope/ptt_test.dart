@@ -15,7 +15,7 @@ void main() {
       h.owner.audioActivationMode = AudioActivationMode.ptt;
       h.owner.microphoneMuted = true;
       final down = h.owner.setPushToTalkPressed(true);
-      await Future<void>.delayed(Duration.zero);
+      await h.room.localParticipant.started.future;
       final focusLost = h.owner.setPushToTalkPressed(false);
       expect(h.owner.pushToTalkPressed, isFalse);
       h.room.localParticipant.capture.complete();

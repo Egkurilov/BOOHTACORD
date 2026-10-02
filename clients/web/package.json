@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:audio": "playwright test -c tests/audio/playwright.config.ts",
+    "test:audio:quality": "node ../../tools/audio/quality_harness.mjs",
+    "test:audio:browser": "playwright test -c tests/audio/playwright.config.ts"
   },
   "dependencies": {
     "@opentelemetry/api": "1.9.1",
@@ -22,9 +25,11 @@
   },
   "devDependencies": {
     "@livekit/throws-transformer": "^0.1.3",
+    "@playwright/test": "1.63.0",
     "@types/node": "24.13.6",
     "@types/sdp-transform": "^2.15.0",
     "@vitejs/plugin-vue": "6.0.9",
+    "livekit-server-sdk": "2.19.1",
     "postcss": "8.5.28",
     "typescript": "5.9.3",
     "vite": "8.3.0",

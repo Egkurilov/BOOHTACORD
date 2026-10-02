@@ -19,7 +19,9 @@ class AudioDeviceController extends AudioDeviceState
     super.loader,
     super.changes,
     super.scope,
-  });
+  }) {
+    nativeNoise.addListener(notifyListeners);
+  }
 
   void watch() {
     if (isDisposed) return;

@@ -11,7 +11,7 @@ function storage() {
 describe('audio processing controls', () => {
   it('loads account-scoped settings before passing constraints to the voice session', async () => {
     const preferences = new AudioProcessingPreferences(storage())
-    const selected = { autoGainControl: false, echoCancellation: true, noiseSuppression: false }
+    const selected = { autoGainControl: false, echoCancellation: true, noiseSuppressionMode: 'off' as const }
     preferences.bind('owner-a')
     preferences.set(selected)
     const apply = vi.fn().mockResolvedValue(undefined)
@@ -27,12 +27,12 @@ describe('audio processing controls', () => {
     const preferences = new AudioProcessingPreferences(storage())
     const controls = createAudioProcessingControls(async () => ({ accountId: 'owner-a' }), preferences)
     const rejected = vi.fn().mockRejectedValue(new Error('unsupported'))
-    const selected = { autoGainControl: false, echoCancellation: false, noiseSuppression: false }
+    const selected = { autoGainControl: false, echoCancellation: false, noiseSuppressionMode: 'off' as const }
 
     await controls.start(vi.fn().mockResolvedValue(undefined))
     await controls.set(selected, rejected)
 
-    expect(preferences.get()).toEqual({ autoGainControl: true, echoCancellation: true, noiseSuppression: true })
-    expect(controls.processing.value).toEqual({ autoGainControl: true, echoCancellation: true, noiseSuppression: true })
+    expect(preferences.get()).toEqual({ autoGainControl: true, echoCancellation: true, noiseSuppressionMode: 'browser' as const })
+    expect(controls.processing.value).toEqual({ autoGainControl: true, echoCancellation: true, noiseSuppressionMode: 'browser' as const })
   })
 })

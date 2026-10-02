@@ -24,7 +24,7 @@ describe('local sound check', () => {
     const close = vi.fn().mockResolvedValue(undefined)
     const context = { createMediaStreamSource: () => ({ connect: vi.fn(), disconnect: vi.fn() }), createAnalyser: () => analyser, close } as unknown as AudioContext
     const check = await startMicrophoneCheck('mic-2', { getUserMedia } as unknown as MediaDevices, () => context)
-    expect(getUserMedia).toHaveBeenCalledWith({ audio: { deviceId: { exact: 'mic-2' } }, video: false })
+    expect(getUserMedia).toHaveBeenCalledWith({ audio: { deviceId: { exact: 'mic-2' }, autoGainControl: true, echoCancellation: true, noiseSuppression: true, channelCount: { ideal: 1 }, sampleRate: { ideal: 48_000 } }, video: false })
     expect(check.level()).toBe(0)
     const ended = vi.fn()
     check.onEnded(ended)
@@ -73,4 +73,27 @@ describe('local sound check', () => {
       vi.unstubAllGlobals()
     }
   })
+})
+
+
+it('checks a borrowed processed call track without requesting capture or stopping it', async () => {
+  const stop = vi.fn()
+  const track = { stop, addEventListener: vi.fn(), removeEventListener: vi.fn() } as unknown as MediaStreamTrack
+  const getUserMedia = vi.fn()
+  const close = vi.fn(async () => undefined)
+  const context = { createMediaStreamSource: () => ({ connect: vi.fn(), disconnect: vi.fn() }), createAnalyser: () => ({ fftSize: 0, getByteTimeDomainData: (s: Uint8Array) => s.fill(128) }), close } as unknown as AudioContext
+  vi.stubGlobal('MediaStream', class { constructor(private tracks: MediaStreamTrack[]) {} getTracks() { return this.tracks } })
+  try {
+    const check = await startMicrophoneCheck('default', { getUserMedia }, () => context, { inCall: true, borrowedTrack: track })
+    expect(getUserMedia).not.toHaveBeenCalled()
+    await check.stop()
+    await check.stop()
+    expect(stop).not.toHaveBeenCalled()
+    expect(close).toHaveBeenCalledOnce()
+  } finally { vi.unstubAllGlobals() }
+})
+it('never opens capture for an active listener without a managed track', async () => {
+  const getUserMedia = vi.fn()
+  await expect(startMicrophoneCheck('default', { getUserMedia }, undefined, { inCall: true })).rejects.toThrow('Микрофон звонка')
+  expect(getUserMedia).not.toHaveBeenCalled()
 })

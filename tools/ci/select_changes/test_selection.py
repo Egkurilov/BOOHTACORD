@@ -9,6 +9,10 @@ class SelectionTests(unittest.TestCase):
     def test_backend_includes_release_gate(self):
         self.assertEqual(select(['backend/internal/config/runtime/load.go']), {'contracts', 'backend', 'server'})
 
+    def test_shared_rnnoise_source_checks_web_and_native_consumers(self):
+        self.assertEqual(select(['clients/flutter/packages/flutter_webrtc/common/rnnoise/upstream/src/rnn_data.c']),
+                         {'contracts', 'web', 'flutter', 'windows', 'server'})
+
     def test_native_changes_require_flutter_and_windows(self):
         self.assertEqual(select(['clients/flutter/lib/src/app_state.dart']), {'contracts', 'flutter', 'windows'})
 

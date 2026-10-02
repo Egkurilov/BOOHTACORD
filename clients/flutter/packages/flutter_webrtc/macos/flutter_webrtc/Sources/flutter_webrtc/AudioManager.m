@@ -25,10 +25,16 @@
     _audioProcessingModule = [[RTCDefaultAudioProcessingModule alloc] init];
     _capturePostProcessingAdapter = [[AudioProcessingAdapter alloc] init];
     _renderPreProcessingAdapter = [[AudioProcessingAdapter alloc] init];
+    _rnnoiseCaptureDelegate = [[BoohtaRnnoiseCaptureDelegate alloc] init];
+    [_capturePostProcessingAdapter addProcessing:_rnnoiseCaptureDelegate];
     _audioProcessingModule.capturePostProcessingDelegate = _capturePostProcessingAdapter;
     _audioProcessingModule.renderPreProcessingDelegate = _renderPreProcessingAdapter;
   }
   return self;
+}
+
+- (void)dealloc {
+  [_capturePostProcessingAdapter removeProcessing:_rnnoiseCaptureDelegate];
 }
 
 - (void)addLocalAudioRenderer:(nonnull id<RTCAudioRenderer>)renderer {

@@ -1,4 +1,6 @@
 import type { VoiceRoom } from './livekit_gateway'
+import { browserProcessingConstraints, normalizeAudioProcessing, type AudioProcessingOptions } from './noise_suppression/types'
+export type { AudioProcessingOptions } from './noise_suppression/types'
 import { unknownScreenDiagnostics, type ScreenDiagnostics } from './screen_diagnostics'
 
 export type MicrophoneState = 'PUBLISHED' | 'MUTED' | 'LISTENER_PERMISSION_DENIED'
@@ -8,11 +10,7 @@ export type ScreenProfile =
   | 'P1440_15' | 'P1440_30' | 'P1440_60'
 export type ScreenResolution = 720 | 1080 | 1440
 export type ScreenFrameRate = 15 | 30 | 60
-export interface AudioProcessingOptions {
-  autoGainControl: boolean
-  echoCancellation: boolean
-  noiseSuppression: boolean
-}
+
 
 export interface ScreenShareOptions {
   audio: true
@@ -30,9 +28,9 @@ export interface ScreenSharePublishOptions {
   screenShareEncoding: { maxBitrate: number; maxFramerate: number; priority: 'medium' }
 }
 
-export const defaultAudioProcessing: AudioProcessingOptions = { autoGainControl: true, echoCancellation: true, noiseSuppression: true }
+export const defaultAudioProcessing: AudioProcessingOptions = { autoGainControl: true, echoCancellation: true, noiseSuppressionMode: 'browser' }
 export const adaptiveMediaRoomOptions = Object.freeze({ adaptiveStream: true, dynacast: true })
-const microphonePublishOptions: MicrophonePublishOptions = { audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false }
+export const microphonePublishOptions: MicrophonePublishOptions = { audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false }
 const screenBitrates: Record<ScreenResolution, Record<ScreenFrameRate, number>> = {
   720: { 15: 1_500_000, 30: 2_500_000, 60: 4_000_000 },
   1080: { 15: 2_500_000, 30: 5_000_000, 60: 8_000_000 },
@@ -46,7 +44,7 @@ export function screenShareMaxBitrate(resolution: ScreenResolution, frameRate: S
 const screenCaptureOptions: ScreenShareOptions = { audio: true, resolution: { width: 2560, height: 1440, frameRate: 60 } }
 
 export function microphoneConstraints(processing: AudioProcessingOptions = defaultAudioProcessing): MediaTrackConstraints {
-  return { ...processing, channelCount: { ideal: 1 }, sampleRate: { ideal: 48_000 } }
+  return { ...browserProcessingConstraints(normalizeAudioProcessing(processing)), channelCount: { ideal: 1 }, sampleRate: { ideal: 48_000 } }
 }
 
 export async function applyMicrophoneProcessing(room: VoiceRoom, processing: AudioProcessingOptions): Promise<void> {
@@ -55,7 +53,8 @@ export async function applyMicrophoneProcessing(room: VoiceRoom, processing: Aud
 
 export async function setMicrophone(room: VoiceRoom, enabled: boolean, processing: AudioProcessingOptions = defaultAudioProcessing): Promise<MicrophoneState> {
   try {
-    await room.localParticipant.setMicrophoneEnabled(enabled, microphoneConstraints(processing), microphonePublishOptions)
+    if (room.setMicrophone) await room.setMicrophone(enabled, normalizeAudioProcessing(processing))
+    else await room.localParticipant.setMicrophoneEnabled(enabled, microphoneConstraints(processing), microphonePublishOptions)
     return enabled ? 'PUBLISHED' : 'MUTED'
   } catch (cause) {
     if (enabled && cause instanceof Error && cause.name === 'NotAllowedError') return 'LISTENER_PERMISSION_DENIED'

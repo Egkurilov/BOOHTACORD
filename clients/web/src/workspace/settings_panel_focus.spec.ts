@@ -15,10 +15,11 @@ describe('settings panel focus targets', () => {
   })
 
   it('exposes a programmatically focusable audio region', async () => {
-    const processing = { autoGainControl: true, echoCancellation: true, noiseSuppression: true }
+    const processing = { autoGainControl: true, echoCancellation: true, noiseSuppressionMode: 'browser' as const }
     const unavailable = { requested: true, reported: 'UNAVAILABLE' as const }
     const html = await renderToString(createSSRApp(AudioSettings, {
-      activationError: null, activationMode: 'VAD', processingDiagnostics: {
+      activationError: null, activationMode: 'VAD', connected: false, processingDiagnostics: {
+        captureSource: 'unavailable', noiseSuppressionRuntime: { requestedMode: 'browser', effectiveMode: 'unknown', status: 'idle' },
         autoGainControl: unavailable, echoCancellation: unavailable, noiseSuppression: unavailable,
       }, devices: { inputs: [], outputs: [] }, error: null, pttKey: null, processing, state: 'IDLE',
     }))

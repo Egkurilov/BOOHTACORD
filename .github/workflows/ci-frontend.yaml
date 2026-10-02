@@ -20,6 +20,11 @@ jobs:
           node-version-file: .node-version
           cache: npm
           cache-dependency-path: clients/web/package-lock.json
+      - name: Install locked browser runtime
+        working-directory: clients/web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
       - name: Test and build Vue client
         run: python3 -m tools.ci.receipts.run web
       - name: Retain source-bound gate receipt

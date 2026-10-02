@@ -8,3 +8,6 @@
 # instead). Nothing in WebRTC calls the one method that would touch it,
 # JniZero.setJniClassLoader, so the dangling reference is unreachable.
 -dontwarn org.jni_zero.JniZeroJni
+
+# JNI entry points are resolved by their fully qualified Java names.
+-keep class com.cloudwebrtc.webrtc.audio.RnnoiseCaptureAdapter { *; }
