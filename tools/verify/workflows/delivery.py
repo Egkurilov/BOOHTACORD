@@ -18,6 +18,8 @@ def check(workflows):
     builders = [job for job in build['jobs'].values() if 'tools/release/delivery/build.sh' in commands(job)]
     require(len(gates) == 3 and len(builders) == 1, 'One builder and all receipt-producing gates are required')
     builder = builders[0]
+    require(set(builder.get('runs-on', [])) == {'self-hosted', 'linux', 'x64', 'boohtacord-builder'},
+            'Signed builds require the dedicated Docker-capable builder runner')
     require(set(builder.get('needs', [])) == gates, 'Builder must depend on all source-bound receipts')
     require(builder.get('if') == "github.ref == 'refs/heads/master'" and builder.get('environment') == 'production',
             'Only protected master builds can use the production signer')

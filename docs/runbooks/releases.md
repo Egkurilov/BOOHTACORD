@@ -15,6 +15,12 @@ Production environment разрешает только `master`. Его секр
 `/etc/voice-platform/release-signing.pub.pem`. Полученный bundle не может
 назначить собственный ключ доверия. Staging имеет отдельную пару ключей.
 
+Server builder назначается только runner с меткой `boohtacord-builder`.
+Его service account должен иметь доступ к Docker socket (на Hetzner это
+`SupplementaryGroups=docker` в systemd override сервиса Web runner).
+Перед назначением метки проверьте `docker info` от имени этого пользователя.
+Общая метка Hetzner не подтверждает готовность runner к сборке OCI images.
+
 Host prerequisites: Python 3, OpenSSL, Docker с OCI storage, Compose, Bash и
 действующий `.env` в `/opt/voice-platform/.env`. Install не загружает SDK,
 не компилирует исходники и не пересобирает images.
