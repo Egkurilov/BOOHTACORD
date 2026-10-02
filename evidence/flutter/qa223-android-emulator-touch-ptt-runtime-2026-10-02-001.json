@@ -1,0 +1,35 @@
+{
+  "id": "QA-223",
+  "date": "2026-10-02",
+  "task": "FE-66",
+  "source_revision": "3defa27",
+  "status": "EMULATOR_RUNTIME_PASS_PHYSICAL_ACCEPTANCE_OPEN",
+  "device": {
+    "model": "Android Emulator (sdk_gphone64_arm64)",
+    "api_level": 35,
+    "app_version": "1.0.23",
+    "app_build": 2035
+  },
+  "checks": [
+    {
+      "name": "Select mobile Push-to-talk without a hardware key",
+      "result": "PASS",
+      "observation": "The PTT option selected successfully without prompting for a keyboard binding. Audio settings displayed the touch guidance to hold the voice-dock microphone button; desktop key assignment behavior was not exercised."
+    },
+    {
+      "name": "Touch hold and release",
+      "result": "PASS",
+      "observation": "In SHARE_TEST the microphone was muted before touch. While ADB held the dock microphone pointer down, the local participant card changed to active mic and the dock button showed its pressed state. After pointer release the card returned to microphone muted."
+    },
+    {
+      "name": "Restore test state",
+      "result": "PASS",
+      "observation": "The emulator left the voice room and the prior Voice Activity (VAD) activation mode was restored."
+    }
+  ],
+  "limitations": [
+    "Emulator UI/state validation only; it does not prove captured audio was delivered to a remote participant or establish microphone quality on physical hardware.",
+    "System interruptions, app backgrounding while held, pointer cancellation outside the emulator path, and TalkBack remain untested on physical Android/iOS."
+  ],
+  "remaining": "Validate touch release/cancel under system interruption and backgrounding, plus TalkBack/VoiceOver behavior, on physical Android and iOS devices."
+}

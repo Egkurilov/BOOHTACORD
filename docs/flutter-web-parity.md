@@ -636,9 +636,11 @@ both deployed web and Flutter viewers.
   dock to talk; pointer release/cancel and dock teardown mute it. Widget/unit
   coverage verifies pointer up and pointer cancel and passes
   [QA-213](../evidence/flutter/qa213-mobile-push-to-talk-touch-2026-10-02-001.json).
-  Verify touch hold/release, system interruption, backgrounding and screen-reader
-  behavior on physical Android/iOS devices, and retain hardware-key focus tests
-  on desktop.
+  Android Emulator API 35 runtime acceptance confirmed selecting PTT without a key,
+  mic activation only while the touch was held, and automatic mute after release;
+  VAD was restored after the test [QA-223](../evidence/flutter/qa223-android-emulator-touch-ptt-runtime-2026-10-02-001.json).
+  Verify system interruption, backgrounding and screen-reader behavior on physical
+  Android/iOS devices, and retain hardware-key focus tests on desktop.
 - Local screen picker/publish/stop is implemented for connected voice rooms;
   desktop uses LiveKit's screen/window picker, while Android requests the
   native MediaProjection grant and runs its declared `mediaProjection`
