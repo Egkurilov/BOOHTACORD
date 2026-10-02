@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | HTTP | [`contracts/openapi.yaml`](../../../contracts/openapi.yaml) | Generate and validate request/response models from OpenAPI 3.1. Do not copy field schemas into UI documentation. |
 | Realtime | [`contracts/realtime.schema.json`](../../../contracts/realtime.schema.json) | Validate event envelope and tolerate future event kinds. |
-| Behaviour | [`docs/API_AND_REALTIME.md`](../../API_AND_REALTIME.md) | Apply session, ACL, retry, media and error semantics that schemas cannot express alone. |
+| Behaviour | [`docs/API_AND_REALTIME.md`](../../architecture/api-and-realtime.md) | Apply session, ACL, retry, media and error semantics that schemas cannot express alone. |
 | Mobile integration | [`contracts/mobile-client-contract.md`](../../../contracts/mobile-client-contract.md) | Android product scope is approved by ADR-006; the contract grants no bearer flow. |
 
 All public REST routes are under `/api/v1`; JSON errors use `{ error: { code, message, request_id } }`. User-facing messages are Russian; error codes are stable ASCII. IDs are UUIDs and timestamps are RFC 3339 values where schemas declare them.

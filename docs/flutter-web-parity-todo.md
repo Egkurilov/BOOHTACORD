@@ -1,6 +1,6 @@
 # Flutter ↔ web parity — только открытые задачи
 
-Source of truth: [parity map](flutter-web-parity.md). Реализованные admin, conversation и release APK leaves перенесены в [DONE_AUDIT_2026-09-27.md](../DONE_AUDIT_2026-09-27.md). Этот checklist входит в QA-13; local widget/source checks не закрывают device acceptance.
+Source of truth: [parity map](flutter-web-parity.md). Реализованные admin, conversation и release APK leaves перенесены в [DONE_AUDIT_2026-09-27.md](history/status/DONE_AUDIT-2026-09-27.md). Этот checklist входит в QA-13; local widget/source checks не закрывают device acceptance.
 
 ## P0 — Запуск приложения
 
@@ -348,7 +348,7 @@ peer/platform-проверки и выравниваем viewer с вебом.
   [QA-167](../evidence/flutter/qa167-flutter-preview-subscription-race-2026-10-01-001.json),
   [QA-168](../evidence/flutter/qa168-web-preview-selection-during-capture-2026-10-01-001.json),
   [QA-169](../evidence/flutter/qa169-screen-thumbnail-cross-client-source-and-test-audit-2026-10-01-001.json).
-  Сохранить `CanPublishData=false` согласно [ADR-013](../adr/ADR-013-room-scoped-screen-thumbnail-preview.md).
+  Сохранить `CanPublishData=false` согласно [ADR-013](adr/ADR-013-room-scoped-screen-thumbnail-preview.md).
 - [ ] Провести paired runtime acceptance thumbnail на Android→macOS и Android→web;
   отдельно проверить остановку/очистку, повторный выбор того же viewer и отсутствие
   лишней подписки/помехи голосу. Android app-only capture с локальным thumbnail

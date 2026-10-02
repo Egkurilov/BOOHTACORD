@@ -5,7 +5,7 @@
 
 ## Вывод
 
-Основные API, авторизация, чат/DM, поиск, профили/аватары, voice/screen client, дизайн-основа и доставка уже реализованы. Прежний TODO смешивал их с отсутствующими функциями и приёмкой. Теперь [DONE](../../DONE.md) содержит реализованное, [TODO](../../TODO.md) — приоритизированный остаток с критериями и зависимостями.
+Основные API, авторизация, чат/DM, поиск, профили/аватары, voice/screen client, дизайн-основа и доставка уже реализованы. Прежний TODO смешивал их с отсутствующими функциями и приёмкой. Теперь [DONE](../history/status/DONE-2026-09-26.md) содержит реализованное, [TODO](../history/status/TODO-2026-09-30.md) — приоритизированный остаток с критериями и зависимостями.
 
 Текущий frontend не проходит tests/build из-за начатого viewer FPS. Backend unit/package checks проходят, но это не доказательство работы SQL на настоящем PostgreSQL, browser workflow или media POC.
 
@@ -13,19 +13,19 @@
 
 | Приоритет | Наблюдение и влияние | Основание | Задача |
 | --- | --- | --- | --- |
-| P0 | Отсутствующий FPS module и несовместимая сигнатура форматтера ломают tests/build. Воспроизведено командами. | Локальный untracked `frontend/src/voice/screen_playback_fps.spec.ts`, [formatter](../../frontend/src/voice/screen_video_quality.ts) | FE-01 |
+| P0 | Отсутствующий FPS module и несовместимая сигнатура форматтера ломают tests/build. Воспроизведено командами. | Локальный untracked `frontend/src/voice/screen_playback_fps.spec.ts`, [formatter](../../clients/web/src/voice/screen_video_quality.ts) | FE-01 |
 | P1 | Два одновременных TEXT send могут оба не найти existing_message и столкнуться на unique INSERT; named-conflict recovery отсутствует. Вывод по SQL, реального concurrency-прогона здесь не было. | [repository](../../backend/internal/chat/create_text_message/postgres/repository.go) | BE-01, QA-01 |
-| P1 | WebSocket close не запускает reconnect; presence и чат могут остаться устаревшими до reload. | [realtime store](../../frontend/src/realtime/realtime_store.ts) | FE-02 |
-| P1 | Серверные logout/reset completion есть, но web entrypoint/footer/auth client не подключают эти действия. | [App](../../frontend/src/App.vue), [auth client](../../frontend/src/identity/auth_client.ts), [footer](../../frontend/src/workspace/WorkspaceUserFooter.vue) | FE-03/04 |
-| P1 | DM mutation не публикует events; hub рассылает Publish всем подписчикам, поэтому его нельзя прямо использовать для DM. | [routes](../../backend/cmd/api/chat_routes.go), [hub](../../backend/internal/realtime/event_hub/hub.go) | BE-02, FE-07 |
-| P1 | channel.updated/voice.lease_revoked объявлены schema, но соответствующие маршруты не публикуют их; web store их не передаёт обработчикам. | [channel routes](../../backend/cmd/api/channel_routes.go), [schema](../../contracts/realtime.schema.json), realtime store | BE-03/04, FE-07 |
-| P1 | History API выдаёт cursor, но оба UI/store читают только первую страницу; старые сообщения недоступны через историю интерфейса. | [TEXT store](../../frontend/src/conversation/message_store.ts), [DM store](../../frontend/src/direct_message/direct_message_store.ts) | FE-05/06 |
-| P1 | Повтор DM send генерирует новый UUID; потерянный ответ может привести к дублированию при повторной отправке. | [DM actions](../../frontend/src/direct_message/direct_message_message_actions.ts) | FE-08 |
-| P1 | Нет rename-channel API; UI топологии ограничен create/delete-empty. Close VOICE оставляет канал видимым. | channel routes, [controls](../../frontend/src/channel/AdminTopologyControls.vue), docs/API_AND_REALTIME.md | BE-05/06, FE-10…14 |
-| P1 | DM attachments, TEXT unread/mentions и notifications не подключены к текущим routes/UI. TEXT upload и DM unread уже есть. | [storage routes](../../backend/cmd/api/storage_routes.go), chat routes, [DM navigation](../../frontend/src/direct_message/DirectMessageNavigation.vue) | BE-07…10, FE-15…17 |
-| P1 | Draft/reply переживают переключение бесед; editor закрывается до ответа. Возможны cross-conversation reply и потеря введённой правки при ошибке. | [TEXT](../../frontend/src/conversation/TextConversation.vue), [DM](../../frontend/src/direct_message/DirectMessageConversation.vue), [MessageItem](../../frontend/src/conversation/MessageItem.vue) | FE-18/19 |
-| P1 | MessageItem выводит UUID автора; HTML maxlength считает UTF-16, API — code points. Полная keyboard/visual приёмка отсутствует. | MessageItem, [profile](../../frontend/src/identity/ProfileSettings.vue), [drawers](../../frontend/src/workspace/useWorkspaceDrawers.ts) | FE-09/20, DES-02/05/08 |
-| P2 | Search работает, но переход теряет message ID и открывает только беседу. | [search navigation](../../frontend/src/search/WorkspaceSearchPanel.vue) | FE-21 |
+| P1 | WebSocket close не запускает reconnect; presence и чат могут остаться устаревшими до reload. | [realtime store](../../clients/web/src/realtime/realtime_store.ts) | FE-02 |
+| P1 | Серверные logout/reset completion есть, но web entrypoint/footer/auth client не подключают эти действия. | [App](../../clients/web/src/App.vue), [auth client](../../clients/web/src/identity/auth_client.ts), [footer](../../clients/web/src/workspace/WorkspaceUserFooter.vue) | FE-03/04 |
+| P1 | DM mutation не публикует events; hub рассылает Publish всем подписчикам, поэтому его нельзя прямо использовать для DM. | [routes](../../backend/internal/app/chat_routes/chat_routes.go), [hub](../../backend/internal/realtime/event_hub/hub.go) | BE-02, FE-07 |
+| P1 | channel.updated/voice.lease_revoked объявлены schema, но соответствующие маршруты не публикуют их; web store их не передаёт обработчикам. | [channel routes](../../backend/internal/app/channels_routes/channel_routes.go), [schema](../../contracts/realtime.schema.json), realtime store | BE-03/04, FE-07 |
+| P1 | History API выдаёт cursor, но оба UI/store читают только первую страницу; старые сообщения недоступны через историю интерфейса. | [TEXT store](../../clients/web/src/conversation/message_store.ts), [DM store](../../clients/web/src/direct_message/direct_message_store.ts) | FE-05/06 |
+| P1 | Повтор DM send генерирует новый UUID; потерянный ответ может привести к дублированию при повторной отправке. | [DM actions](../../clients/web/src/direct_message/direct_message_message_actions.ts) | FE-08 |
+| P1 | Нет rename-channel API; UI топологии ограничен create/delete-empty. Close VOICE оставляет канал видимым. | channel routes, [controls](../../clients/web/src/channel/AdminTopologyControls.vue), docs/API_AND_REALTIME.md | BE-05/06, FE-10…14 |
+| P1 | DM attachments, TEXT unread/mentions и notifications не подключены к текущим routes/UI. TEXT upload и DM unread уже есть. | [storage routes](../../backend/internal/app/storage_routes/storage_routes.go), chat routes, [DM navigation](../../clients/web/src/direct_message/DirectMessageNavigation.vue) | BE-07…10, FE-15…17 |
+| P1 | Draft/reply переживают переключение бесед; editor закрывается до ответа. Возможны cross-conversation reply и потеря введённой правки при ошибке. | [TEXT](../../clients/web/src/conversation/TextConversation.vue), [DM](../../clients/web/src/direct_message/DirectMessageConversation.vue), [MessageItem](../../clients/web/src/conversation/MessageItem.vue) | FE-18/19 |
+| P1 | MessageItem выводит UUID автора; HTML maxlength считает UTF-16, API — code points. Полная keyboard/visual приёмка отсутствует. | MessageItem, [profile](../../clients/web/src/identity/ProfileSettings.vue), [drawers](../../clients/web/src/workspace/useWorkspaceDrawers.ts) | FE-09/20, DES-02/05/08 |
+| P2 | Search работает, но переход теряет message ID и открывает только беседу. | [search navigation](../../clients/web/src/workspace/search/WorkspaceSearchPanel.vue) | FE-21 |
 
 Отсутствие означает отсутствие подключения в проверенных native entrypoints и их прямых зависимостях; весь репозиторий не объявляется прошедшим исчерпывающий security audit.
 

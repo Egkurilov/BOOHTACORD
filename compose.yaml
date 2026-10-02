@@ -1,4 +1,0 @@
-# Compatibility entrypoint; use deploy/compose.yaml for production.
-name: voice-platform
-include:
-  - ./deploy/compose.yaml

@@ -2,7 +2,7 @@
 
 ## Где разрабатывать
 
-Канонический проект: [`clients/web/`](../../clients/web/). Стек: Vue 3, TypeScript, Vite, Pinia и LiveKit Client. Текущая версия пакета: `0.1.0` из [`clients/web/package.json`](../../clients/web/package.json). Производственный web образ собирается существующим pipeline; этот раздел не меняет его пути.
+Канонический проект: [`clients/web/`](.). Стек: Vue 3, TypeScript, Vite, Pinia и LiveKit Client. Текущая версия пакета: `0.1.0` из [`clients/web/package.json`](package.json). Производственный web образ собирается существующим pipeline; этот раздел не меняет его пути.
 
 ## Реализованные возможности в исходниках
 

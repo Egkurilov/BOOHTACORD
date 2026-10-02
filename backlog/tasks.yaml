@@ -17,7 +17,7 @@ tasks:
     title: Architecture, data model and ADR boundaries
     requirements: [REQ-ARCH-01, REQ-SECURITY-01]
     depends_on: [T-001]
-    evidence: [docs/ARCHITECTURE_AND_DATA.md]
+    evidence: [docs/architecture/data-boundaries.md]
   - id: T-003
     title: Local runtime skeleton
     requirements: [REQ-STACK-01, REQ-ISOLATION-01, REQ-NOBACKUP-01]

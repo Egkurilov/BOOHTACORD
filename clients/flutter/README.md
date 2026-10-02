@@ -1,10 +1,10 @@
 # BOOHTACORD Flutter client
 
-Общий Flutter/Dart-проект для Android, iOS, macOS и Windows. Dart-код находится в `lib/`, платформенные runners — в `android/`, `ios/`, `macos/` и `windows/`. Платформенные инструкции: [Android](../clients/android/README.md), [iOS](../clients/ios/README.md), [версии](../../docs/CLIENT_VERSIONING.md).
+Общий Flutter/Dart-проект для Android, iOS, macOS и Windows. Dart-код находится в `lib/`, платформенные runners — в `android/`, `ios/`, `macos/` и `windows/`. Платформенные инструкции: [Android](../../docs/clients/android.md), [iOS](../../docs/clients/ios/README.md), [версии](../../docs/clients/versions.md).
 
 ## Версия и статус
 
-`pubspec.yaml` объявляет `1.0.0+1`. Android использует build name/number как `versionName`/`versionCode`, iOS — как `CFBundleShortVersionString`/`CFBundleVersion`. Это значение манифеста, а не свидетельство о готовности функций на каждом устройстве. [ADR-006](../../docs/adr/ADR-006-android-client.md) утверждает Android; локальная разработка и установка iOS выполнены по запросу владельца, публичный выпуск требует отдельной приёмки.
+Версия и build number задаются в [`pubspec.yaml`](pubspec.yaml). Android использует build name/number как `versionName`/`versionCode`, iOS — как `CFBundleShortVersionString`/`CFBundleVersion`. Это значение манифеста, а не свидетельство о готовности функций на каждом устройстве. [ADR-006](../../docs/adr/ADR-006-android-client.md) утверждает Android; локальная разработка и установка iOS выполнены по запросу владельца, публичный выпуск требует отдельной приёмки.
 
 ## Реализовано в общем Dart-коде
 
@@ -18,7 +18,7 @@
 
 ## Локальная разработка
 
-Из `desktop/`:
+Из `clients/flutter/`:
 
 ```bash
 flutter pub get

@@ -24,7 +24,7 @@
 
 Темная тема остаётся единственной темой MVP. Ключевые tokens: canvas `#0E1117`, sidebar/aside `#141922`, content `#151A23`, surface `#1D2430`, raised surface `#242D3B`, selected surface `#293345`, основной текст `#F1F4F9`, вторичный текст `#B7C0D0`, muted text `#929EB2`, accent `#5C5FE8`, focus `#ADB8FF`, success `#58D5A2`, warning `#F4BD62`, danger `#FF9199`.
 
-Используется стек `Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`, с системным fallback. Базовая сетка отступов: 4/8/12/16/20/24/32/40/48/64px. Основной control — 40px; compact — 32px; large — 48px. Radius: 4/6/10/14/20px и 999px. Все актуальные CSS custom properties находятся в [`frontend/src/design/tokens.css`](../../frontend/src/design/tokens.css).
+Используется стек `Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`, с системным fallback. Базовая сетка отступов: 4/8/12/16/20/24/32/40/48/64px. Основной control — 40px; compact — 32px; large — 48px. Radius: 4/6/10/14/20px и 999px. Все актуальные CSS custom properties находятся в [`clients/web/src/design/tokens.css`](../../clients/web/src/design/tokens.css).
 
 ### Desktop grid
 
@@ -54,13 +54,13 @@
 
 | Область | Реализация |
 | --- | --- |
-| Tokens, motion и global foundations | [`tokens.css`](../../frontend/src/design/tokens.css), [`foundation.css`](../../frontend/src/design/foundation.css) |
-| Shell, responsive grid и navigation | [`shell.css`](../../frontend/src/design/shell.css), [`navigation.css`](../../frontend/src/design/navigation.css) |
-| Chat/DM и composer | [`conversation.css`](../../frontend/src/design/conversation.css) |
-| Voice, participant cards и stream viewer | [`voice.css`](../../frontend/src/design/voice.css) |
-| Центрированные аудио-настройки и управление каналами | [`settings.css`](../../frontend/src/design/settings.css), [`WorkspaceMain.vue`](../../frontend/src/workspace/WorkspaceMain.vue) |
-| Auth surfaces | [`authentication.css`](../../frontend/src/design/authentication.css) |
-| Regression contract | [`design_system_contract.spec.ts`](../../frontend/src/design/design_system_contract.spec.ts) |
+| Tokens, motion и global foundations | [`tokens.css`](../../clients/web/src/design/tokens.css), [`foundation.css`](../../clients/web/src/design/foundation.css) |
+| Shell, responsive grid и navigation | [`shell.css`](../../clients/web/src/design/shell.css), [`navigation.css`](../../clients/web/src/design/navigation.css) |
+| Chat/DM и composer | [`conversation.css`](../../clients/web/src/design/conversation.css) |
+| Voice, participant cards и stream viewer | [`voice.css`](../../clients/web/src/design/voice.css) |
+| Центрированные аудио-настройки и управление каналами | [`settings.css`](../../clients/web/src/design/settings.css), [`WorkspaceMain.vue`](../../clients/web/src/workspace/WorkspaceMain.vue) |
+| Auth surfaces | [`authentication.css`](../../clients/web/src/design/authentication.css) |
+| Regression contract | [`design_system_contract.spec.ts`](../../clients/web/src/design/design_system_contract.spec.ts) |
 
 ## Реализационные планы
 
@@ -80,9 +80,9 @@
 
 ## История проверенных пакетов
 
-- CSS tokens, responsive shell, navigation, auth, conversations, DM, VoiceDock, participant cards, audio settings и stream composition реализованы в `frontend/src`; настройка аудио и управление каналами теперь отображаются в центральной рабочей области, а не замещают навигацию.
+- CSS tokens, responsive shell, navigation, auth, conversations, DM, VoiceDock, participant cards, audio settings и stream composition реализованы в `clients/web/src`; настройка аудио и управление каналами теперь отображаются в центральной рабочей области, а не замещают навигацию.
 - Regression contract проверяет palette, breakpoints, semantic shell regions, persistent dock, data-derived participants и preview hierarchy.
-- Последняя зарегистрированная web-only release evidence — [`release-guildchat-reference-parity-2026-09-19-003.json`](../../evidence/release-guildchat-reference-parity-2026-09-19-003.json): frontend suite — 53 test files / 131 tests `PASS`; production build, traceability и public health — `PASS`.
+- Последняя зарегистрированная web-only release evidence — `release-guildchat-reference-parity-2026-09-19-003.json` (файл отсутствует в checkout; эту историческую ссылку нельзя использовать как подтверждённый receipt): frontend suite — 53 test files / 131 tests `PASS`; production build, traceability и public health — `PASS`.
 - Авторизованная подключённая production-комната просмотрена в Chrome при 1256×1131 CSS px: виден один участник без стрима, отсутствуют вложенный roster и контекстный нижний footer, присутствует лишний desktop-toggle навигации. Production загружал `index-BPuFEA1J.js`, в отличие от локальной сборки. Локально добавлены roster, footer от 1024 CSS px, исправление toggle и сетка без пустого сообщения над одиночной карточкой. Pixel-level приёмка на одинаковых размерах окна и production deploy этих изменений остаются `NOT_RUN`; runtime smoke и health её не заменяют.
 - После workspace-panels packet frontend suite — 53 test files / 132 tests `PASS`; `vue-tsc` и production build — `PASS` (Vite сообщает существующее предупреждение о размере LiveKit chunk).
 - ProfileSettings, member/channel/audit tabs AdminPanel, MemberPopover, role/block/voice-kick actions, reset-link result и общий SearchPanel реализованы на локальной ветке и подключены к API. Для SearchPanel остаются production/real-data и visual проверки.

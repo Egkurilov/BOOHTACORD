@@ -18,14 +18,13 @@ def main():
     production = resolve(root, 'deploy/compose.yaml')
     if production['name'] != 'voice-platform': raise ValueError('Deployment identity changed')
     compare(production, production)
-    compare(resolve(root, 'compose.yaml'), production)
     dev = resolve(root, 'deploy/compose.yaml', 'deploy/compose.dev.yaml')
     compare(dev, production)
     expected = {'api': root / 'backend', 'web': root / 'clients/web'}
     for name, context in expected.items():
         if Path(dev['services'][name]['build']['context']).resolve() != context:
             raise ValueError('Development build context differs: ' + name)
-    print('Compose production/dev topology and compatibility entrypoint agree')
+    print('Compose production/dev topology agrees; production contains no build')
 
 
 if __name__ == '__main__':

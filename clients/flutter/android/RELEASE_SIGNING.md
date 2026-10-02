@@ -11,7 +11,7 @@ For CI, provision the keystore outside the repository and set all four environme
 
 If any of these environment variables is set, the build uses only environment inputs. A partial set fails rather than combining CI values with a local file. Configure CI secret masking and keep the keystore outside its checkout and artifacts.
 
-For local release builds, create the ignored `desktop/android/key.properties` with these keys:
+For local release builds, create the ignored `clients/flutter/android/key.properties` with these keys:
 
 ```properties
 storeFile=C:/private/android/boohtacord-upload.jks
@@ -20,7 +20,7 @@ keyAlias=<private alias>
 keyPassword=<private value>
 ```
 
-`storeFile` may be absolute or relative to `desktop/android/`. The file, `.jks`, and `.keystore` files are ignored by `desktop/android/.gitignore`. Keep the upload key for future updates; a different key cannot update an installed app signed with the original key.
+`storeFile` may be absolute or relative to `clients/flutter/android/`. The file, `.jks`, and `.keystore` files are ignored by `clients/flutter/android/.gitignore`. Keep the upload key for future updates; a different key cannot update an installed app signed with the original key.
 
 ## GitHub Releases
 
@@ -28,9 +28,9 @@ Every CI run builds a debug APK and retains `app-debug.apk` in the
 `boohtacord-android-debug-apk` workflow artifact for 30 days. This APK is for
 testing; it is not signed with the release upload key.
 
-The workflow [`.github/workflows/android-release.yaml`](../../.github/workflows/android-release.yaml)
+The workflow [`.github/workflows/android-release.yaml`](../../../.github/workflows/android-release.yaml)
 starts when a tag like `android-v1.0.3` is pushed. The version before `+` in
-`desktop/pubspec.yaml` must match the tag. It builds and publishes three
+`clients/flutter/pubspec.yaml` must match the tag. It builds and publishes three
 signed, ABI-specific APKs instead of the universal APK, which currently
 is larger than the established per-asset safety ceiling. Each APK is checked
 against a 95 MB safety ceiling before upload. The workflow uses a GitHub-hosted
@@ -52,4 +52,4 @@ the build. Never commit the keystore or its base64 contents. After configuring
 the secrets, bump `version` in `pubspec.yaml` and push the matching tag, for
 example `android-v1.0.3`.
 
-Before distributing an APK, run `flutter analyze`, `flutter test`, and `flutter build apk --release` from `desktop/` on a host with the Flutter and Android SDKs. Inspect the APK signer certificate and verify it is the intended non-debug upload key. Physical-device install/update, secure-cookie authentication, microphone permission, reconnect, voice, and viewer checks are separate QA-13 acceptance evidence.
+Before distributing an APK, run `flutter analyze`, `flutter test`, and `flutter build apk --release` from `clients/flutter/` on a host with the Flutter and Android SDKs. Inspect the APK signer certificate and verify it is the intended non-debug upload key. Physical-device install/update, secure-cookie authentication, microphone permission, reconnect, voice, and viewer checks are separate QA-13 acceptance evidence.

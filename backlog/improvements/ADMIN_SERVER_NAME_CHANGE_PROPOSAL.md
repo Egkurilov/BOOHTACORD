@@ -5,17 +5,17 @@
 ### Где захардкожено
 | Файл | Строка | Значение |
 |---|---|---|
-| `frontend/index.html` | `<title>` | `Voice Platform` |
-| `frontend/src/identity/AuthenticationLanding.vue` | `#authentication-title` | `Voice Platform` |
-| `frontend/src/notification/notification_delivery.ts` | строка 57 | `runtime.show('Voice Platform', …)` |
-| `frontend/src/notification/notification_policy.ts` | `notificationTitle('Voice Platform', …)` | `Voice Platform` |
+| `clients/web/index.html` | `<title>` | `Voice Platform` |
+| `clients/web/src/identity/AuthenticationLanding.vue` | `#authentication-title` | `Voice Platform` |
+| `clients/web/src/notification/notification_delivery.ts` | строка 57 | `runtime.show('Voice Platform', …)` |
+| `clients/web/src/notification/notification_policy.ts` | `notificationTitle('Voice Platform', …)` | `Voice Platform` |
 
 В backend **никаких** упоминаний "Voice Platform" нет — серверное имя нигде не хранится.
 
 ### Существующая инфраструктура
 - **Роутинг**: `mux.Handle("POST /api/v1/...", sessionapi.Require(auth)(sessionapi.RequireAdministrator(handler)))` — паттерн уже используется для всех admin-эндпоинтов (`admin_voice_routes.go`, `admin_audit_routes.go`, `admin_account_list_routes.go`).
 - **Слои**: `Service → Store → PoolDatabase → pgx/v5`. Миграции — `.sql` файлы в `postgres/migrations/`.
-- **Frontend admin UI**: нет отдельной директории `frontend/src/admin/`. Admin-компоненты лежат по модулям, например `frontend/src/channel/AdminChannelRename.vue`.
+- **Frontend admin UI**: нет отдельной директории `clients/web/src/admin/`. Admin-компоненты лежат по модулям, например `clients/web/src/channel/AdminChannelRename.vue`.
 - **Аудит**: `list_audit_events` — только чтение. **Записи аудита нет** — при смене имени сервера желательно добавить.
 
 ## Предлагаемая реализация
@@ -127,7 +127,7 @@ mux.Handle("PATCH /api/v1/admin/settings",
 ```
 
 ### 4. Frontend — API-клиент
-`frontend/src/api/adminSettings.ts` (по образцу `adminVoice.ts`):
+`clients/web/src/api/adminSettings.ts` (по образцу `adminVoice.ts`):
 ```ts
 export interface SettingsPayload {
   server_name: string;
@@ -137,20 +137,20 @@ export function updateSettings(payload: SettingsPayload, signal?: AbortSignal) {
 ```
 
 ### 5. Frontend — UI
-**`frontend/src/admin/AdminSettings.vue`** — новый компонент:
+**`clients/web/src/admin/AdminSettings.vue`** — новый компонент:
 - Поле ввода имени сервера
 - Кнопка «Сохранить» (PATCH)
 - Индикация загрузки / ошибок
 - Показывать только если `isAdmin === true`
 
 **Интеграция в существующие места:**
-- `frontend/src/identity/AuthenticationLanding.vue` — `h1` подтягивает имя из API
-- `frontend/src/notification/notification_policy.ts` — `notificationTitle` получает имя из store
-- `frontend/index.html` — `<title>` можно оставить статичным (SSR), или заменить на JS-замену при инициализации
-- `frontend/src/notification/notification_delivery.ts` — `runtime.show` получает имя из store
+- `clients/web/src/identity/AuthenticationLanding.vue` — `h1` подтягивает имя из API
+- `clients/web/src/notification/notification_policy.ts` — `notificationTitle` получает имя из store
+- `clients/web/index.html` — `<title>` можно оставить статичным (SSR), или заменить на JS-замену при инициализации
+- `clients/web/src/notification/notification_delivery.ts` — `runtime.show` получает имя из store
 
 ### 6. Frontend — Store
-В `frontend/src/store.ts` или отдельном reactive-состоянии:
+В `clients/web/src/store.ts` или отдельном reactive-состоянии:
 ```ts
 export const settings = reactive({
   serverName: 'Voice Platform', // fallback
@@ -181,7 +181,7 @@ VALUES ($1, 'server_name_changed', $2, now());
 ## Что **не** нужно менять
 - WebSocket — имя сервера не влияет на WS.
 - `backend/internal/identity/*` — роли/сессии не трогаем.
-- `frontend/src/notification/` — только замена хардкода на значение из store.
+- `clients/web/src/notification/` — только замена хардкода на значение из store.
 
 ## Критерии готовности
 - [ ] `PATCH /api/v1/admin/settings` возвращает 200 для админа, 403 для обычного пользователя
