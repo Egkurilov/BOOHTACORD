@@ -3,6 +3,8 @@ $ErrorActionPreference = 'Stop'
 $openApiPath = Join-Path $PSScriptRoot '..\..\..\contracts\openapi.yaml'
 $realtimePath = Join-Path $PSScriptRoot '..\..\..\contracts\realtime.schema.json'
 $mobileContractPath = Join-Path $PSScriptRoot '..\..\..\contracts\mobile-client-contract.md'
+$clientUpdateSchemaPath = Join-Path $PSScriptRoot '..\..\..\contracts\client-release-catalog.schema.json'
+$clientUpdateFixturesPath = Join-Path $PSScriptRoot '..\..\..\contracts\client-update-evaluator.fixtures.json'
 
 foreach ($path in @($openApiPath, $realtimePath)) {
     if (-not (Test-Path -LiteralPath $path)) {
@@ -10,12 +12,17 @@ foreach ($path in @($openApiPath, $realtimePath)) {
     }
 }
 
+foreach ($path in @($clientUpdateSchemaPath, $clientUpdateFixturesPath)) {
+    if (-not (Test-Path -LiteralPath $path)) { throw "Client update contract is unavailable: $path" }
+    Get-Content -Raw -LiteralPath $path | ConvertFrom-Json | Out-Null
+}
+
 if (-not (Test-Path -LiteralPath $mobileContractPath)) {
     throw "Mobile client contract is unavailable: $mobileContractPath"
 }
 
 $mobileContract = Get-Content -Raw -LiteralPath $mobileContractPath
-foreach ($requiredText in @('openapi.yaml', 'realtime.schema.json', 'Voice lease', 'LiveKit credential')) {
+foreach ($requiredText in @('openapi.yaml', 'realtime.schema.json', 'Voice lease', 'LiveKit credential', 'Client update policy')) {
     if ($mobileContract -notmatch [regex]::Escape($requiredText)) {
         throw "Mobile client contract is missing required section: $requiredText"
     }

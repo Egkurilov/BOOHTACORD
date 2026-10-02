@@ -40,6 +40,8 @@ services:
       ATTACHMENTS_DIRECTORY: /var/lib/voice-platform/attachments
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       OTEL_INGEST_AUTH: ${OTEL_INGEST_AUTH:-}
+      CLIENT_UPDATE_CATALOG_PATH: /etc/boohtacord/client-updates/catalog.json
+      CLIENT_UPDATE_ALLOWED_HOSTS: ${PUBLIC_HOST:-localhost},github.com
     extra_hosts:
       - metric.bootybay.ru:167.233.56.32
     depends_on:
@@ -47,6 +49,7 @@ services:
         condition: service_completed_successfully
     volumes:
       - attachments-data:/var/lib/voice-platform/attachments
+      - ./client-updates:/etc/boohtacord/client-updates:ro
     networks: [private, telemetry-egress]
     logging: *json-log-rotation
 

@@ -28,3 +28,8 @@ dependencies, published ports and networks retain their identities. Existing
 `postgres-data`, `attachments-data`, `caddy-data`, and `caddy-config` volumes
 are reused. Configuration files moved to `caddy/` and `livekit/`; migrations
 remain embedded in the Go application. Observability infrastructure is separate.
+
+Client update policy is mounted read-only from `client-updates/catalog.json`.
+Validate it before a rollout with `python3 -m tools.release.client_updates.catalog
+validate --path deploy/client-updates/catalog.json`. Native selectors stay
+`unconfigured` until the matching GitHub release URL is live.

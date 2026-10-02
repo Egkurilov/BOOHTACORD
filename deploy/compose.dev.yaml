@@ -4,4 +4,5 @@ services:
       context: ../backend
   web:
     build:
-      context: ../clients/web
+      context: ..
+      dockerfile: clients/web/Dockerfile

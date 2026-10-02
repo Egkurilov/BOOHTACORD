@@ -158,3 +158,63 @@ tasks:
     requirements: [REQ-AUDIO-01, REQ-DEPLOY-01, REQ-QUALITY-02]
     depends_on: [T-075, T-054]
     evidence: [evidence/noise-suppression]
+  - id: UPD-001
+    title: Public client update policy contract and bounded catalog
+    requirements: [REQ-SECURITY-01, REQ-DEPLOY-01]
+    depends_on: [T-003, T-052]
+    evidence: [backend-client-update-tests, contracts/client-release-catalog.schema.json]
+  - id: UPD-002
+    title: Runtime catalog reload and exact selector endpoint
+    requirements: [REQ-SECURITY-01, REQ-QUALITY-02]
+    depends_on: [UPD-001]
+    evidence: [backend-client-update-tests]
+  - id: UPD-003
+    title: Shared client update evaluator fixtures
+    requirements: [REQ-QUALITY-01, REQ-QUALITY-02]
+    depends_on: [UPD-001]
+    evidence: [contracts/client-update-evaluator.fixtures.json, web-update-tests, flutter-update-tests]
+  - id: UPD-004
+    title: Web update scheduler banner details and safe reload
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-QUALITY-01]
+    depends_on: [UPD-002, UPD-003, T-050]
+    evidence: [web-update-tests, web-production-build]
+  - id: UPD-005
+    title: Flutter update identity controller and lifecycle
+    requirements: [REQ-PLATFORM-01, REQ-UI-01, REQ-QUALITY-01]
+    depends_on: [UPD-002, UPD-003, T-051]
+    evidence: [flutter-update-tests]
+  - id: UPD-006
+    title: Android direct distribution update action
+    requirements: [REQ-PLATFORM-01, REQ-DEPLOY-01, REQ-UI-02]
+    depends_on: [UPD-005]
+    evidence: [android-debug-apk, evidence/flutter/qa226-client-update-device-acceptance-2026-10-02-001.json]
+  - id: UPD-007
+    title: Windows direct distribution update action
+    requirements: [REQ-PLATFORM-01, REQ-DEPLOY-01, REQ-UI-02]
+    depends_on: [UPD-005]
+    evidence: [windows-release-bundle, evidence/flutter/qa226-client-update-device-acceptance-2026-10-02-001.json]
+  - id: UPD-008
+    title: Deterministic client build identity and release receipts
+    requirements: [REQ-DEPLOY-01, REQ-QUALITY-02]
+    depends_on: [UPD-004, UPD-005, T-054]
+    evidence: [contracts/client-build.json, native-artifact-manifests]
+  - id: UPD-009
+    title: Atomic catalog promotion and withdrawal tooling
+    requirements: [REQ-DEPLOY-01, REQ-QUALITY-02]
+    depends_on: [UPD-001, T-054]
+    evidence: [client-update-catalog-tool-tests]
+  - id: UPD-010
+    title: Read-only production catalog deployment
+    requirements: [REQ-DEPLOY-01, REQ-SECURITY-01]
+    depends_on: [UPD-002, UPD-009]
+    evidence: [deployment-config-tests]
+  - id: UPD-011
+    title: Client update automated release gate
+    requirements: [REQ-QUALITY-01, REQ-QUALITY-02, REQ-DEPLOY-01]
+    depends_on: [UPD-004, UPD-006, UPD-007, UPD-008, UPD-010]
+    evidence: [evidence/release]
+  - id: UPD-012
+    title: Client update physical A B acceptance
+    requirements: [REQ-QUALITY-01, REQ-PLATFORM-01]
+    depends_on: [UPD-011]
+    evidence: [evidence/flutter/qa226-client-update-device-acceptance-2026-10-02-001.json]

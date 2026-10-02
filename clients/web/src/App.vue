@@ -9,6 +9,8 @@ import { completePasswordReset, PasswordResetInvalidError } from './identity/pas
 import { consumePasswordResetFragment } from './identity/password_reset_fragment'
 import MaintenanceBanner from './maintenance/MaintenanceBanner.vue'
 import { loadMaintenanceStatus } from './maintenance/status_client'
+import UpdateBanner from './updates/UpdateBanner.vue'
+import { useUpdateStore } from './updates/update_store'
 import WorkspaceApp from './workspace/WorkspaceApp.vue'
 
 type AppState = 'loading' | 'guest' | 'authenticated' | 'error'
@@ -27,6 +29,7 @@ if (typeof window !== 'undefined') {
 }
 let maintenanceTimer: number | null = null
 let sessionRevision = 0
+const updates = useUpdateStore()
 
 async function refreshSession(): Promise<void> {
   const revision = ++sessionRevision
@@ -84,15 +87,18 @@ onMounted(() => {
   if (!resetRoute.value) void refreshSession()
   void refreshMaintenance()
   maintenanceTimer = window.setInterval(() => { void refreshMaintenance() }, 5_000)
+  updates.start()
 })
 
 onUnmounted(() => {
   if (maintenanceTimer !== null) window.clearInterval(maintenanceTimer)
+  updates.dispose()
 })
 </script>
 
 <template>
   <MaintenanceBanner v-if="maintenanceActive" />
+  <UpdateBanner />
   <PasswordResetCompletion v-if="resetRoute" :valid-link="Boolean(resetToken)" :complete="finishPasswordReset" @invalid-link="resetToken = null" @return-to-login="returnToLogin" />
   <main v-else-if="state === 'loading'" class="session-state" aria-live="polite">Проверяем безопасную сессию…</main>
   <main v-else-if="state === 'error'" class="session-state" role="alert">

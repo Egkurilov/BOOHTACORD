@@ -1,0 +1,78 @@
+import 'dart:async';
+import 'dart:math';
+
+import 'package:flutter/widgets.dart';
+
+import 'api.dart';
+import 'evaluator.dart';
+import 'identity.dart';
+import 'model.dart';
+import 'preferences.dart';
+
+enum UpdateCheckStatus { idle, checking, ok, error }
+
+class UpdateController extends ChangeNotifier with WidgetsBindingObserver {
+  UpdateController({required this.api, required this.identity, UpdatePreferences? preferences, Random? random})
+    : preferences = preferences ?? UpdatePreferences(), _random = random ?? Random();
+  factory UpdateController.disabled() => UpdateController(
+    api:UpdateApi(baseUrl:()=> 'https://invalid.local'),
+    identity:const NativeUpdateIdentity(
+      LocalUpdateIdentity(releaseId:'disabled',releaseOrder:1,platform:'windows'),
+      UpdateSelector.windows('x64'),
+      UpdateEnvironment(osVersion:'0',arch:'x64'),
+    ),
+  );
+  final UpdateApi api; final NativeUpdateIdentity identity; final UpdatePreferences preferences; final Random _random;
+  UpdateCheckStatus status = UpdateCheckStatus.idle; UpdateResult? result; UpdatePolicy? policy;
+  bool stale = false; bool visible = false; String? error;
+  Timer? _timer; int _failures = 0; DateTime? _lastAttempt; DateTime? _manualAfter; bool _disposed = false; bool _foreground = true;
+
+  void start() {
+    WidgetsBinding.instance.addObserver(this);
+    _schedule(Duration(milliseconds:_random.nextInt(5001)));
+  }
+
+  Future<void> check() async {
+    if (_disposed || status == UpdateCheckStatus.checking) return;
+    status = UpdateCheckStatus.checking; error = null; _lastAttempt = DateTime.now(); notifyListeners();
+    try {
+      final next = await api.fetch(identity.selector);
+      policy = next; result = evaluateUpdate(identity.local, next, identity.environment);
+      final target = next.target;
+      visible = result == UpdateResult.updateAvailable && target != null && !await preferences.isSnoozed(api.baseUrl(), identity.selector.platform, target.releaseId, target.priority ?? 'normal');
+      stale = false; status = UpdateCheckStatus.ok; _failures = 0;
+    } catch (cause) {
+      stale = result != null; status = UpdateCheckStatus.error; error = 'Не удалось проверить обновление.';
+      _failures = min(_failures + 1, 4); rethrow;
+    } finally { notifyListeners(); }
+  }
+
+  void manual() {
+    if (_manualAfter?.isAfter(DateTime.now()) == true || status == UpdateCheckStatus.checking) return;
+    _manualAfter = DateTime.now().add(const Duration(seconds:5));
+    check().catchError((Object _) {});
+  }
+
+  Future<void> later() async {
+    final target = policy?.target; if (target == null) return;
+    await preferences.snooze(api.baseUrl(), identity.selector.platform, target.releaseId, target.priority ?? 'normal');
+    visible = false; notifyListeners();
+  }
+
+  void _schedule(Duration delay) {
+    _timer?.cancel(); if (_disposed || !_foreground) return;
+    _timer = Timer(delay, () async { try { await check(); } catch (_) {} finally {
+      final seconds = _failures == 0 ? 300 : [30,60,120,300][_failures-1];
+      _schedule(Duration(milliseconds:(seconds*1000*(.9+_random.nextDouble()*.2)).round()));
+    }});
+  }
+
+  @override void didChangeAppLifecycleState(AppLifecycleState state) {
+    _foreground = state == AppLifecycleState.resumed;
+    if (!_foreground) { _timer?.cancel(); return; }
+    final elapsed = _lastAttempt == null ? const Duration(days:1) : DateTime.now().difference(_lastAttempt!);
+    _schedule(elapsed > const Duration(seconds:60) ? Duration.zero : const Duration(seconds:60) - elapsed);
+  }
+
+  @override void dispose() { _disposed=true; _timer?.cancel(); WidgetsBinding.instance.removeObserver(this); super.dispose(); }
+}

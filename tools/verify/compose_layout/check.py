@@ -20,10 +20,12 @@ def main():
     compare(production, production)
     dev = resolve(root, 'deploy/compose.yaml', 'deploy/compose.dev.yaml')
     compare(dev, production)
-    expected = {'api': root / 'backend', 'web': root / 'clients/web'}
+    expected = {'api': root / 'backend', 'web': root}
     for name, context in expected.items():
         if Path(dev['services'][name]['build']['context']).resolve() != context:
             raise ValueError('Development build context differs: ' + name)
+    if Path(dev['services']['web']['build']['dockerfile']).as_posix() != 'clients/web/Dockerfile':
+        raise ValueError('Development web Dockerfile differs')
     print('Compose production/dev topology agrees; production contains no build')
 
 

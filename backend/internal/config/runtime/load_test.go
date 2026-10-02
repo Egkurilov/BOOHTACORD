@@ -32,6 +32,9 @@ func TestDefaultsAndExplicitTraceEndpointPreservePrecedence(t *testing.T) {
 	if configuration.Address != ":8080" || configuration.TelemetryEndpoint != "http://collector:4318/v1/traces" {
 		t.Fatal("defaults changed")
 	}
+	if configuration.ClientUpdateCatalogPath == "" || len(configuration.ClientUpdateAllowedHosts) != 1 || configuration.ClientUpdateAllowedHosts[0] != "example.test" {
+		t.Fatal("client update defaults are invalid")
+	}
 	values["API_ADDR"] = "127.0.0.1:9999"
 	values["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"] = "http://specific:4318/custom"
 	configuration, err = Load(func(key string) string { return values[key] })

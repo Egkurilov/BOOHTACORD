@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { changeOwnPassword, deleteAvatar, loadOwnProfile, saveOwnProfile, uploadAvatar, type OwnProfile } from './profile_client'
 import NotificationSettings from '../notification/NotificationSettings.vue'
+import UpdateStatus from '../updates/UpdateStatus.vue'
 
 const props = defineProps<{ profile: OwnProfile | null; loading: boolean; loadError: string | null; logoutBusy?: boolean; logoutError?: string | null }>()
 const emit = defineEmits<{ saved: [profile: OwnProfile]; logout: [] }>()
@@ -64,6 +65,7 @@ async function changePassword(): Promise<void> {
     <p v-if="status" class="profile-status" aria-live="polite">{{ status }}</p>
     <p v-if="error" id="profile-error" class="profile-error" role="alert">{{ error }}</p>
     <NotificationSettings />
+    <UpdateStatus />
     <section class="profile-logout" aria-labelledby="profile-logout-title">
       <h2 id="profile-logout-title">Выход из аккаунта</h2>
       <p>Голосовое подключение завершится, а личные данные исчезнут с этого экрана.</p>

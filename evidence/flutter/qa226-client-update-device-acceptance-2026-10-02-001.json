@@ -1,0 +1,19 @@
+{
+  "id": "QA-226",
+  "date": "2026-10-02",
+  "task": "UPD-012",
+  "source_revision": "WORKING_TREE",
+  "working_tree_changes": true,
+  "status": "NOT_RUN",
+  "checks": [
+    {"name": "Web release A to B reload", "result": "NOT_RUN"},
+    {"name": "Android direct release A to B action", "result": "NOT_RUN"},
+    {"name": "Windows direct release A to B action", "result": "NOT_RUN"},
+    {"name": "Offline stale result and foreground resume", "result": "NOT_RUN"}
+  ],
+  "limitations": [
+    "Two published releases and physical Android and Windows installations are required.",
+    "Automated tests and compilation do not prove external browser launch, preserved drafts, media warning copy, or successful post-update identity comparison."
+  ],
+  "remaining": "Promote real Android and Windows release URLs, install release A, publish release B, then record the user-visible transition on web, Android and Windows."
+}
