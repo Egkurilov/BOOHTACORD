@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../services/audio_preferences.dart';
+import '../../../services/voice_processing_platform.dart';
 import 'state.dart';
 
 mixin AudioDeviceProcessing on AudioDeviceState {
@@ -25,15 +27,13 @@ mixin AudioDeviceProcessing on AudioDeviceState {
           ?.getTrackPublicationBySource(TrackSource.microphone)
           ?.track;
       if (track is LocalAudioTrack) {
-        // ignore: experimental_member_use
-        await track.setAudioProcessingOptions(
+        await applyVoiceProcessingForPlatform(
+          platform: defaultTargetPlatform,
+          current: track.currentOptions,
+          next: next,
+          recapture: track.restartTrack,
           // ignore: experimental_member_use
-          AudioProcessingOptions(
-            autoGainControl: next.autoGainControl,
-            echoCancellation: next.echoCancellation,
-            noiseSuppression: next.noiseSuppression,
-            highPassFilter: false,
-          ),
+          updateRuntime: track.setAudioProcessingOptions,
         );
         if (!current()) return;
       }

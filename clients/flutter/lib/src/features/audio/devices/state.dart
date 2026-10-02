@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../services/audio_preferences.dart';
+import '../../../services/voice_audio_config.dart';
 import '../../../core/session/scope.dart';
 import 'platform.dart';
 
@@ -59,12 +60,8 @@ abstract class AudioDeviceState extends ChangeNotifier {
     int revision,
   );
 
-  AudioCaptureOptions get captureOptions => AudioCaptureOptions(
-    deviceId: selectedAudioInputId,
-    autoGainControl: audioProcessing.autoGainControl,
-    echoCancellation: audioProcessing.echoCancellation,
-    noiseSuppression: audioProcessing.noiseSuppression,
-  );
+  AudioCaptureOptions get captureOptions =>
+      voiceAudioCaptureOptions(selectedAudioInputId, audioProcessing);
 
   @override
   void notifyListeners() {
