@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 
 class VoiceMicrophoneUnavailableNotice extends StatelessWidget {
-  const VoiceMicrophoneUnavailableNotice({super.key, this.onRetry});
+  const VoiceMicrophoneUnavailableNotice({
+    super.key,
+    this.onRetry,
+    this.useTouchPushToTalk = false,
+  });
 
   final VoidCallback? onRetry;
+  final bool useTouchPushToTalk;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -52,11 +57,16 @@ class VoiceMicrophoneUnavailableNotice extends StatelessWidget {
             ),
           )
         else
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 8),
             child: Text(
-              'Удерживайте назначенную PTT-клавишу, чтобы проверить микрофон.',
-              style: TextStyle(color: GcColors.textSecondary, fontSize: 12),
+              useTouchPushToTalk
+                  ? 'Удерживайте кнопку микрофона в панели голосового канала, чтобы говорить.'
+                  : 'Удерживайте назначенную PTT-клавишу, чтобы проверить микрофон.',
+              style: const TextStyle(
+                color: GcColors.textSecondary,
+                fontSize: 12,
+              ),
             ),
           ),
       ],

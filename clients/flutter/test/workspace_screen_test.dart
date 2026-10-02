@@ -761,6 +761,36 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('Android PTT listener guidance does not request a key', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    state
+      ..selectedChannel = _PortraitApi.voiceChannel
+      ..voiceChannel = _PortraitApi.voiceChannel
+      ..voicePhase = VoicePhase.listener
+      ..microphoneMuted = true
+      ..microphoneUnavailable = true
+      ..audioActivationMode = AudioActivationMode.ptt;
+
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Удерживайте кнопку микрофона'), findsOneWidget);
+    expect(find.textContaining('назначенную PTT-клавишу'), findsNothing);
+    expect(find.text('Назначить PTT-клавишу'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   testWidgets('announces prejoin roster loading and errors as live status', (
     tester,
   ) async {

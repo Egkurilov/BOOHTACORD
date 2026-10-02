@@ -1,0 +1,22 @@
+{
+  "id": "QA-218",
+  "date": "2026-10-02",
+  "status": "PASS_WITH_PHYSICAL_DEVICE_ACCEPTANCE_OPEN",
+  "summary": "Mobile Push-to-Talk fallback guidance no longer asks users to assign a hardware key when microphone capture is unavailable.",
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter test test/voice_microphone_unavailable_notice_test.dart test/voice_scope/ptt_test.dart test/workspace_screen_test.dart",
+      "observation": "All 62 focused tests passed. Android PTT listener UI shows the hold-to-talk microphone dock guidance and does not show hardware-key assignment copy; the desktop fallback copy remains unchanged. Existing Android hold, pointer-up, and pointer-cancel assertions passed."
+    },
+    {
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter analyze",
+      "observation": "No analyzer issues."
+    },
+    {
+      "result": "OPEN",
+      "observation": "Physical Android/iOS confirmation of PTT hold/release, system interruption, app backgrounding, and TalkBack/VoiceOver behavior remains open."
+    }
+  ]
+}

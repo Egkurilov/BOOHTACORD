@@ -39,4 +39,22 @@ void main() {
     );
     expect(find.text('Повторить'), findsNothing);
   });
+
+  testWidgets('mobile PTT fallback points to the touch microphone control', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: VoiceMicrophoneUnavailableNotice(useTouchPushToTalk: true),
+        ),
+      ),
+    );
+
+    expect(
+      find.textContaining('Удерживайте кнопку микрофона'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('назначенную PTT-клавишу'), findsNothing);
+  });
 }

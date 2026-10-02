@@ -5197,6 +5197,9 @@ class _VoiceParticipantRoom extends StatelessWidget {
           if (state.microphoneUnavailable) ...[
             const SizedBox(height: 14),
             VoiceMicrophoneUnavailableNotice(
+              useTouchPushToTalk:
+                  state.usesTouchPushToTalk &&
+                  state.audioActivationMode == AudioActivationMode.ptt,
               onRetry: state.audioActivationMode == AudioActivationMode.ptt
                   ? null
                   : () => unawaited(state.toggleMicrophone()),
