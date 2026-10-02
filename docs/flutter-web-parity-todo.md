@@ -2,6 +2,18 @@
 
 Source of truth: [parity map](flutter-web-parity.md). Реализованные admin, conversation и release APK leaves перенесены в [DONE_AUDIT_2026-09-27.md](history/status/DONE_AUDIT-2026-09-27.md). Этот checklist входит в QA-13; local widget/source checks не закрывают device acceptance.
 
+## Текущий фокус: Flutter macOS и Android
+
+Ближайшие leaves выполнять в таком порядке: (1) Android screen-preview regression
+после EGL release barrier — сначала воспроизводимый plugin/UI regression, затем
+Pixel runtime acceptance; (2) macOS обнаружение/просмотр remote screen-share и
+проверка unpublish; (3) Android login/Gboard и повторный screen-share flow;
+(4) macOS Keychain/session restore на стабильной подписи, когда будет доступна
+Developer ID identity. Общие macOS/Android voice, audio-device и screen-share
+проверки остаются в объёме. Windows-only acceptance, Windows runner и FE-63
+MSVC/PCM gate отложены и не должны вытеснять эти задачи; общие изменения не
+должны регрессировать Windows build.
+
 ## P0 — Запуск приложения
 
 - [x] Разобраться, почему свежий macOS debug-клиент после запуска остаётся на
