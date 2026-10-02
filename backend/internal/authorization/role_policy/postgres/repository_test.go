@@ -37,6 +37,10 @@ func (database *fakeDatabase) QueryRow(_ context.Context, statement string, argu
 	return database.row
 }
 
+func (database *fakeDatabase) Begin(context.Context) (Transaction, error) {
+	return nil, errors.New("unused")
+}
+
 type fakeRow struct {
 	values []any
 	err    error

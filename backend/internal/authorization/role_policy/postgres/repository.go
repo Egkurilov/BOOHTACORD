@@ -17,6 +17,14 @@ type Row interface{ Scan(...any) error }
 
 type Database interface {
 	QueryRow(context.Context, string, ...any) Row
+	Begin(context.Context) (Transaction, error)
+}
+
+type Transaction interface {
+	QueryRow(context.Context, string, ...any) Row
+	Exec(context.Context, string, ...any) error
+	Commit(context.Context) error
+	Rollback(context.Context) error
 }
 
 type Repository struct{ database Database }

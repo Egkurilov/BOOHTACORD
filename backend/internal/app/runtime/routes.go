@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	authroutes "voice-platform/backend/internal/app/auth_routes"
+	authorizationroutes "voice-platform/backend/internal/app/authorization_routes"
 	channelsroutes "voice-platform/backend/internal/app/channels_routes"
 	chatroutes "voice-platform/backend/internal/app/chat_routes"
 	identityroutes "voice-platform/backend/internal/app/identity_routes"
@@ -27,6 +28,7 @@ func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *
 	mux.Handle("/api/v1/client-updates", clientupdates.Handler(updates, metrics))
 	auth := authroutes.Register(mux, database, configuration)
 	sessionService, maintenanceService := auth.Sessions, auth.Maintenance
+	authorizationroutes.ConfigureRolePermissionRoutes(mux, database, sessionService)
 	if err := mediaroutes.ConfigureMediaRevocationRoutes(mux, database, authorizelivekitsignal.Config{APIKey: configuration.LiveKitAPIKey, APISecret: configuration.LiveKitAPISecret}, maintenanceService); err != nil {
 		return nil, fmt.Errorf("configure media admission: %w", err)
 	}
