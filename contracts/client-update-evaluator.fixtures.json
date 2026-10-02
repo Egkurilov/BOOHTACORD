@@ -10,6 +10,6 @@
     {"name":"native update","local":{"release_id":"win-10","release_order":10},"environment":{"os_version":"10","arch":"x64"},"policy":{"state":"published","target":{"release_id":"win-11","release_order":11,"requirements":{"supported_arches":["x64"]}}},"want":"update_available"},
     {"name":"native current ahead","local":{"release_id":"win-12","release_order":12},"environment":{"os_version":"10","arch":"x64"},"policy":{"state":"published","target":{"release_id":"win-11","release_order":11,"requirements":{"supported_arches":["x64"]}}},"want":"current_ahead"},
     {"name":"same order conflict","local":{"release_id":"win-hotfix","release_order":11},"environment":{"os_version":"10","arch":"x64"},"policy":{"state":"published","target":{"release_id":"win-11","release_order":11,"requirements":{"supported_arches":["x64"]}}},"want":"identity_conflict"},
-    {"name":"web rollback is available","local":{"release_id":"web-12","release_order":12,"platform":"web"},"environment":{"os_version":"browser","arch":"any"},"policy":{"state":"published","target":{"release_id":"web-11","release_order":11,"requirements":{"supported_arches":["any"]}}},"want":"update_available"}
+    {"name":"web current ahead","local":{"release_id":"web-12","release_order":12,"platform":"web"},"environment":{"os_version":"browser","arch":"any"},"policy":{"state":"published","target":{"release_id":"web-11","release_order":11,"requirements":{"supported_arches":["any"]}}},"want":"current_ahead"}
   ]
 }
