@@ -81,6 +81,9 @@
   if (oldValue != videoTrack) {
     os_unfair_lock_lock(&_lock);
     _videoTrack = videoTrack;
+    // A pending frame belongs to the previous track. If Flutter never sampled
+    // it before a reconnect/track switch, it must not block the new track.
+    _frameAvailable = false;
     os_unfair_lock_unlock(&_lock);
     _isFirstFrameRendered = false;
     if (oldValue) {

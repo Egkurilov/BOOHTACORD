@@ -1,0 +1,53 @@
+{
+  "id": "QA-209",
+  "kind": "macos-video-renderer-track-replacement",
+  "status": "SOURCE_REGRESSION_PASS_LIVE_RECEIVER_PENDING",
+  "executed_at": "2026-10-02",
+  "source_revision": "31d6413",
+  "working_tree_changes": true,
+  "task": "T-030",
+  "summary": "The user reported that a stream visible in the browser became black after switching to the Flutter macOS client. Source review found that FlutterRTCVideoRenderer retained its pending texture-frame gate when the RTCVideoTrack changed. If the prior texture frame was never sampled, this gate could prevent the next track's frame from being uploaded. Added a test-first regression and reset the pending-frame flag under the renderer lock on track replacement in both the shared Darwin and macOS implementations. This is a plausible renderer lifecycle defect, not yet proven to be the cause of the user's live report.",
+  "checks": [
+    {
+      "name": "Regression before fix",
+      "command": "flutter test --no-pub test/macos_video_renderer_lifecycle_test.dart --reporter expanded",
+      "status": "FAIL_AS_EXPECTED",
+      "observation": "New test failed because setVideoTrack did not clear _frameAvailable."
+    },
+    {
+      "name": "Focused native renderer lifecycle tests",
+      "command": "flutter test --no-pub test/macos_video_renderer_lifecycle_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "All 4 lifecycle/source-sync tests pass after the fix."
+    },
+    {
+      "name": "Full WebRTC Flutter package tests",
+      "command": "flutter test --no-pub --reporter expanded",
+      "status": "PASS",
+      "observation": "20 tests passed."
+    },
+    {
+      "name": "macOS Debug app build",
+      "command": "flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "Built build/macos/Build/Products/Debug/BOOHTACORD.app."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "status": "PASS",
+      "observation": "No whitespace errors."
+    },
+    {
+      "name": "Spec traceability verifier after FE-61 backlog update",
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "status": "BLOCKED",
+      "observation": "PowerShell Core (pwsh) is not installed on this host."
+    }
+  ],
+  "limitations": [
+    "The reported browser-to-macOS black screen was not reproduced with an active paired screen share.",
+    "A source-level test proves the pending-frame gate resets on track replacement, not that this condition caused the reported black image or that the physical renderer displays pixels after switching."
+  ],
+  "remaining": "Repeat the same live publication in the browser and macOS app, verify the Mac receives a track replacement and then decodes/displays frames, and confirm normal unpublish. Keep FE-61 open pending live acceptance."
+}

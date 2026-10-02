@@ -58,6 +58,9 @@ the Dart track-ended dispatcher. The Dart dispatcher buffers an early native
 event until LiveKit attaches its `onEnded` callback and delivers it at most
 once. This allows a system-level stop to unpublish the local screen track.
 Physical Android receiver and OS-stop acceptance remain open; see [QA-26](../../../../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
+The capturer also emits low-frequency, content-free log events for projection
+start, captured-content visibility changes, OS stop and normal app teardown to
+support diagnosis of app-only blanking versus capture termination — [QA-208](../../../../evidence/flutter/qa208-android-projection-diagnostic-events-2026-10-02-001.json).
 
 ## Desktop source thumbnail race
 
@@ -93,5 +96,4 @@ Android frame buffers and capture serialization, EGL surface-release barriers,
 and macOS renderer disposal/first-frame propagation. Their JVM/Dart tests are
 listed in the upstream record. The macOS/Darwin texture renderer now emits its
 first-frame event only after copying a pixel buffer and notifying Flutter that
-the texture frame is available — [QA-206](../../../../evidence/flutter/qa206-macos-texture-first-frame-upload-2026-10-02-001.json).
-Compilation alone does not certify hardware.
+the texture frame is available — [QA-206](../../../../evidence/flutter/qa206-macos-texture-first-frame-upload-2026-10-02-001.json). When an RTC video track changes, the renderer also releases a pending texture-frame gate left by the old track; otherwise an unsampled frame could block the new track. This lifecycle regression is covered by [QA-209](../../../../evidence/flutter/qa209-macos-renderer-track-replacement-2026-10-02-001.json). Compilation alone does not certify hardware.

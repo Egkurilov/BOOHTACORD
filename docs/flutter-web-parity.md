@@ -13,7 +13,24 @@ the first-frame state and macOS build are covered by
 The macOS/Darwin callback now means a pixel buffer was actually uploaded to
 Flutter's texture, not merely that WebRTC delivered a frame to the native
 renderer — [QA-206](../evidence/flutter/qa206-macos-texture-first-frame-upload-2026-10-02-001.json).
-Live appearance/playback/unpublish acceptance remains open as FE-61.
+After the user reported that a browser-visible stream became black on switching
+to the Flutter macOS client, source review found a pending texture-frame gate
+that could survive track replacement. It now resets under the renderer lock in
+both shared Darwin and macOS copies; a regression failed before the fix, all 20
+plugin tests pass, and macOS Debug builds — [QA-209](../evidence/flutter/qa209-macos-renderer-track-replacement-2026-10-02-001.json).
+This is a plausible cause, not yet a reproduced diagnosis. Live
+appearance/playback/unpublish acceptance remains open as FE-61.
+
+Android MediaProjection now emits low-frequency, content-free diagnostic events
+for capture startup, Android's captured-content visibility callback, Android
+projection stop, and normal app teardown — [QA-208](../evidence/flutter/qa208-android-projection-diagnostic-events-2026-10-02-001.json).
+These help distinguish an app-only capture becoming hidden from a stopped
+projection; they do not establish why Android hid content or prove receiver
+playback. The user's Calculator test was no longer active at the read-only snapshot
+(MediaProjection was null, the process was alive, and no foreground service or
+retained MediaProjection system log was present). Android plugin unit tests and
+Java compilation pass with the installed JDK 17. FE-59/61/64 remain open for a
+paired live run.
 
 Vue (`clients/web/src`) is the product reference. The Flutter clients for macOS,
 Windows and Android must match its user-visible behavior, information

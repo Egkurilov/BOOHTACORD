@@ -15,6 +15,7 @@ import android.os.Build;
 import android.view.Surface;
 import android.view.WindowManager;
 import android.app.Activity;
+import android.util.Log;
 import android.hardware.display.DisplayManager;
 import android.util.DisplayMetrics;
 import android.hardware.display.VirtualDisplay;
@@ -26,6 +27,7 @@ import android.view.Display;
  */
 @TargetApi(21)
 public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink {
+    private static final String TAG = "OrientationAwareScreenCapturer";
     private static final int DISPLAY_FLAGS =
             DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC | DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION;
     // DPI for VirtualDisplay, does not seem to matter for us.
@@ -65,7 +67,14 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
             @Override
             public void onStop() {
                 super.onStop();
+                Log.i(TAG, "projection_system_stop");
                 handleProjectionStopped();
+            }
+
+            @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+            @Override
+            public void onCapturedContentVisibilityChanged(boolean isVisible) {
+                Log.i(TAG, "projection_content_visibility=" + (isVisible ? "visible" : "hidden"));
             }
 
             @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
@@ -154,6 +163,7 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
         mediaProjection.registerCallback(mediaProjectionCallback, surfaceTextureHelper.getHandler());
 
         createVirtualDisplay();
+        Log.i(TAG, "projection_capture_started display=" + (virtualDisplay != null ? "ready" : "unavailable"));
         capturerObserver.onCapturerStarted(true);
         surfaceTextureHelper.startListening(this);
     }
@@ -165,6 +175,7 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
         // that same thread's onFrame() -> changeCaptureFormat() (synchronized) tried to
         // re-enter the same monitor, causing a deadlock (ANR).
         if (isDisposed || isStopped) return;
+        Log.i(TAG, "projection_app_stop");
         isStopped = true;
         ThreadUtils.invokeAtFrontUninterruptibly(surfaceTextureHelper.getHandler(), new Runnable() {
             @Override
@@ -189,6 +200,7 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
 
     private void handleProjectionStopped() {
         if (isDisposed || isStopped) return;
+        Log.i(TAG, "projection_capture_ended_by_system");
         isStopped = true;
         surfaceTextureHelper.stopListening();
         capturerObserver.onCapturerStopped();

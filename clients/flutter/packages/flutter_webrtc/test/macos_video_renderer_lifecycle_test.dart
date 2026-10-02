@@ -52,6 +52,30 @@ void main() {
     expect(rendererStateAccess, greaterThan(nilGuard));
   });
 
+  test('macOS track replacement releases any pending texture frame', () {
+    final macosSource = File(
+      'macos/flutter_webrtc/Sources/flutter_webrtc/FlutterRTCVideoRenderer.m',
+    ).readAsStringSync();
+    final setTrackStart = macosSource.indexOf(
+      '- (void)setVideoTrack:(RTCVideoTrack*)videoTrack {',
+    );
+    final setTrackEnd = macosSource.indexOf(
+        '\n- (id<RTCI420Buffer>)correctRotation:', setTrackStart);
+    expect(setTrackStart, isNonNegative);
+    expect(setTrackEnd, greaterThan(setTrackStart));
+    final setTrackMethod = macosSource.substring(setTrackStart, setTrackEnd);
+
+    final trackAssignment = setTrackMethod.indexOf('_videoTrack = videoTrack;');
+    final pendingFrameReset =
+        setTrackMethod.indexOf('_frameAvailable = false;');
+    final lockRelease =
+        setTrackMethod.indexOf('os_unfair_lock_unlock(&_lock);');
+
+    expect(trackAssignment, isNonNegative);
+    expect(pendingFrameReset, greaterThan(trackAssignment));
+    expect(lockRelease, greaterThan(pendingFrameReset));
+  });
+
   test('shared Darwin and macOS renderer implementations remain identical', () {
     final sharedSource = File(
       'common/darwin/Classes/FlutterRTCVideoRenderer.m',

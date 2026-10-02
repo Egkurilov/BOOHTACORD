@@ -1,0 +1,42 @@
+{
+  "id": "QA-208",
+  "kind": "android-projection-diagnostic-events",
+  "status": "SOURCE_AND_PLUGIN_TESTS_PASS_ANDROID_CAPTURE_INACTIVE",
+  "executed_at": "2026-10-02",
+  "source_revision": "31d6413",
+  "working_tree_changes": true,
+  "task": "T-030",
+  "summary": "Added low-frequency, content-free Android log events to distinguish capture startup, Android-reported captured-content visibility, Android MediaProjection stop, and the app's normal capture teardown. Events contain no track IDs, account data, or captured content. These logs help separate app-only privacy masking from projection teardown during an authorized device reproduction; they do not identify why Android hid content or prove the stream reached a receiver.",
+  "checks": [
+    {
+      "name": "Whitespace and patch validation",
+      "command": "git diff --check",
+      "status": "PASS",
+      "observation": "No whitespace errors."
+    },
+    {
+      "name": "Android plugin unit tests and Java compilation",
+      "command": "./gradlew :flutter_webrtc:testDebugUnitTest :flutter_webrtc:compileDebugJavaWithJavac",
+      "status": "PASS",
+      "observation": "With the installed Homebrew JDK 17 selected explicitly, the WebRTC Android module unit tests and compileDebugJavaWithJavac both succeeded."
+    },
+    {
+      "name": "Read-only Pixel projection and service state",
+      "command": "adb shell dumpsys media_projection; adb shell dumpsys activity services ru.boohtacord.app; adb shell pidof ru.boohtacord.app",
+      "status": "PASS_READ_ONLY_NO_ACTIVE_PROJECTION",
+      "observation": "ADB connected after an escalated read-only call. BOOHTACORD process was alive, Media Projection Manager returned null, and no BOOHTACORD foreground service was listed. This is only a point-in-time observation and does not identify why the capture ended. No app state was changed."
+    },
+    {
+      "name": "Filtered MediaProjection system log",
+      "command": "adb logcat -d -t 10000 -s MediaProjection:I MediaProjectionManagerService:I",
+      "status": "PASS_NO_MATCHING_EVENTS",
+      "observation": "No retained events were available under the selected system tags; this does not establish the stop cause."
+    }
+  ],
+  "limitations": [
+    "The plugin compiled, but runtime delivery of the Android 14 visibility callback and diagnostic log paths has not been observed on-device.",
+    "Although the user confirmed the Calculator capture was their test, the later read-only snapshot had no active MediaProjection or BOOHTACORD foreground service. No capture was started, stopped, or otherwise manipulated.",
+    "A device run is still needed to correlate visibility, projection stop, foreground service state, LiveKit publication, sender frames, receiver frames, and Mac rendering."
+  ],
+  "remaining": "During a later authorized active capture, install a build containing these diagnostics and read filtered logs to correlate visibility and stop events with service, LiveKit publication, sender frames, receiver frames, and Mac rendering. Keep FE-59, FE-61 and FE-64 open until paired receiver playback and client-switch persistence pass."
+}
