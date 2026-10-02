@@ -1,4 +1,5 @@
 """Rebuild source-bound RNNoise assets with the pinned compiler image."""
+import os
 import subprocess
 from pathlib import Path
 
@@ -7,7 +8,9 @@ COMPILER_IMAGE = ('emscripten/emsdk:4.0.20@sha256:'
 
 
 def compiler_command(root):
-    return ['docker', 'run', '--rm', '-v', str(root.resolve()) + ':/src', '-w', '/src',
+    identity = ['--user', f'{os.getuid()}:{os.getgid()}'] if os.name == 'posix' else []
+    return ['docker', 'run', '--rm', *identity, '--env', 'EM_CACHE=/tmp/rnnoise-emscripten-cache',
+            '-v', str(root.resolve()) + ':/src', '-w', '/src',
             COMPILER_IMAGE, 'python3', 'tools/audio/build_rnnoise.py']
 
 
