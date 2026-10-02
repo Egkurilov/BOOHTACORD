@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../../../app_version.dart';
+import '../../app_version.dart';
 import 'model.dart';
 
 String _architecture() => switch (Abi.current()) {

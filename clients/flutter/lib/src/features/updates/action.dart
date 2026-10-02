@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../app_state.dart';
+import '../../app_state.dart';
 import 'controller.dart';
 import 'evaluator.dart';
 import 'model.dart';

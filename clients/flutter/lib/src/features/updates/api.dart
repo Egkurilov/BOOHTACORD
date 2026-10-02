@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 
 import 'model.dart';
 
+export 'model.dart';
+
 class UpdateApi {
   UpdateApi({http.Client? client, required this.baseUrl}) : _client = client ?? http.Client();
   final http.Client _client; final String Function() baseUrl;

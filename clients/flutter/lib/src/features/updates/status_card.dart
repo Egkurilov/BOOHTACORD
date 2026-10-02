@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../app_version.dart';
-import '../../../theme.dart';
+import '../../app_version.dart';
+import '../../theme.dart';
 import 'scope.dart';
 import 'model.dart';
 
