@@ -169,6 +169,10 @@ class ScreenReceiverDiagnostics extends StatefulWidget {
 
 class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
     with WidgetsBindingObserver {
+  static const _popoverViewportInset = 16.0;
+  static const _popoverAnchorGap = 8.0;
+  static const _preferredPopoverHeight = 520.0;
+
   final OverlayPortalController _popoverController = OverlayPortalController();
   final LayerLink _summaryLink = LayerLink();
   final GlobalKey _summaryKey = GlobalKey();
@@ -404,10 +408,24 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
               _summaryKey.currentContext?.findRenderObject() as RenderBox?;
           final summaryTop = summaryBox?.localToGlobal(Offset.zero).dy ?? 0;
           final summaryBottom = summaryTop + (summaryBox?.size.height ?? 36);
-          final spaceBelow = media.height - summaryBottom - 32;
-          final spaceAbove = summaryTop - 32;
-          final openAbove = spaceBelow < 360 && spaceAbove > spaceBelow;
+          final spaceBelow =
+              media.height -
+              summaryBottom -
+              _popoverAnchorGap -
+              _popoverViewportInset;
+          final spaceAbove =
+              summaryTop - _popoverAnchorGap - _popoverViewportInset;
+          final preferredHeight = math.min(
+            _preferredPopoverHeight,
+            media.height - 2 * _popoverViewportInset,
+          );
+          final openAbove =
+              spaceBelow < preferredHeight && spaceAbove > spaceBelow;
           final availableHeight = openAbove ? spaceAbove : spaceBelow;
+          final maxPopoverHeight = math.max(
+            0.0,
+            math.min(media.height - 2 * _popoverViewportInset, availableHeight),
+          );
           return SizedBox.expand(
             child: Stack(
               children: [
@@ -429,7 +447,10 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
                   followerAnchor: openAbove
                       ? (compact ? Alignment.bottomLeft : Alignment.bottomRight)
                       : (compact ? Alignment.topLeft : Alignment.topRight),
-                  offset: Offset(0, openAbove ? -8 : 8),
+                  offset: Offset(
+                    0,
+                    openAbove ? -_popoverAnchorGap : _popoverAnchorGap,
+                  ),
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: () {},
@@ -438,12 +459,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
                         'screen-receiver-diagnostics-popover',
                       ),
                       width: panelWidth,
-                      constraints: BoxConstraints(
-                        maxHeight: math.max(
-                          160.0,
-                          math.min(media.height - 32, availableHeight),
-                        ),
-                      ),
+                      constraints: BoxConstraints(maxHeight: maxPopoverHeight),
                       decoration: BoxDecoration(
                         color: GcColors.raised,
                         border: Border.all(color: GcColors.border),

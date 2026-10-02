@@ -441,6 +441,54 @@ void main() {
     expect(panelRect.right, lessThanOrEqualTo(360));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('opens receiver diagnostics above a lower mobile toolbar', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(411, 915);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              Expanded(child: SizedBox()),
+              Padding(
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: ScreenReceiverDiagnostics(
+                  track: null,
+                  isLocal: false,
+                  hasAudio: false,
+                ),
+              ),
+              SizedBox(height: 424),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Статистика'));
+    await tester.pumpAndSettle();
+
+    final summaryRect = tester.getRect(find.text('Статистика'));
+    final panelRect = tester.getRect(
+      find.byKey(const ValueKey('screen-receiver-diagnostics-popover')),
+    );
+    expect(panelRect.bottom, lessThan(summaryRect.top));
+    expect(panelRect.top, greaterThanOrEqualTo(16));
+    expect(panelRect.bottom, lessThanOrEqualTo(915 - 16));
+    final lastRow = find.text('Последнее измерение');
+    await tester.ensureVisible(lastRow);
+    await tester.pumpAndSettle();
+    final scrolledPanelRect = tester.getRect(
+      find.byKey(const ValueKey('screen-receiver-diagnostics-popover')),
+    );
+    final lastRowRect = tester.getRect(lastRow);
+    expect(lastRowRect.top, greaterThanOrEqualTo(scrolledPanelRect.top));
+    expect(lastRowRect.bottom, lessThanOrEqualTo(scrolledPanelRect.bottom));
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _StatsTrack extends RemoteVideoTrack {
