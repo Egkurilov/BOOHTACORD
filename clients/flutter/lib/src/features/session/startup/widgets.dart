@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../app_state.dart';
 import '../../../theme.dart';
 
 class ConnectionErrorScreen extends StatelessWidget {
-  const ConnectionErrorScreen({super.key, required this.state});
-  final AppState state;
+  const ConnectionErrorScreen({super.key, required this.error, required this.onRetry});
+  final String? error;
+  final Future<void> Function() onRetry;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -28,10 +28,10 @@ class ConnectionErrorScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(color: GcColors.textSecondary),
             ),
-            if (state.error != null) ...[
+            if (error != null) ...[
               const SizedBox(height: 12),
               Text(
-                state.error!,
+                error!,
                 key: const ValueKey('startup-connection-error-detail'),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
@@ -39,7 +39,7 @@ class ConnectionErrorScreen extends StatelessWidget {
             ],
             const SizedBox(height: 24),
             FilledButton(
-              onPressed: state.initialize,
+              onPressed: () { onRetry(); },
               child: const Text('Повторить подключение'),
             ),
           ],

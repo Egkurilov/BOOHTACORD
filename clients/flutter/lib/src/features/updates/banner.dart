@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../app_state.dart';
 import '../../theme.dart';
 import 'action.dart';
 import 'controller.dart';
 
 class ClientUpdateBanner extends StatelessWidget {
-  const ClientUpdateBanner({super.key, required this.updates, required this.state});
-  final UpdateController updates; final AppState state;
+  const ClientUpdateBanner({super.key, required this.updates, required this.appBusy});
+  final UpdateController updates; final bool appBusy;
 
   void _details(BuildContext context) {
     final target = updates.policy?.target;
@@ -27,7 +26,7 @@ class ClientUpdateBanner extends StatelessWidget {
       padding:const EdgeInsets.symmetric(horizontal:16,vertical:10),
       child:Wrap(alignment:WrapAlignment.center,crossAxisAlignment:WrapCrossAlignment.center,spacing:12,runSpacing:8,children:[
         SizedBox(width:340,child:Text(updates.policy?.target?.summary ?? 'Доступно обновление BOOHTACORD.',style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w600))),
-        FilledButton(onPressed:()=>performUpdateAction(context,updates,state),child:const Text('Обновить')),
+        FilledButton(onPressed:()=>performUpdateAction(context,updates,appBusy:appBusy),child:const Text('Обновить')),
         TextButton(onPressed:()=>_details(context),child:const Text('Что нового',style:TextStyle(color:Colors.white))),
         TextButton(onPressed:updates.later,child:const Text('Позже',style:TextStyle(color:Colors.white))),
       ]),
