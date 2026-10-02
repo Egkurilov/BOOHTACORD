@@ -127,6 +127,11 @@ peer/platform-проверки и выравниваем viewer с вебом.
   generation при загрузке pixel buffer и перед отправкой события проверяет, что
   дорожка не заменена. Регрессия падала до изменения; все 21 WebRTC package
   tests и macOS Debug build проходят — [QA-211](../evidence/flutter/qa211-macos-renderer-track-generation-2026-10-02-001.json).
+- [x] До Android screen capture проверять MediaProjection FGS type в merged app
+  manifest, а foreground service запускать с manifest-declared type. Контрактный
+  тест сначала падал; затем тест и analyzer прошли, полный Flutter suite (410)
+  прошёл; legacy и AGP built-in Kotlin debug builds проходят (для второго нужен
+  JDK 17) — [QA-212](../evidence/flutter/qa212-android-media-projection-service-readiness-2026-10-02-001.json).
 - [x] Сохранять явное ended-состояние при завершении выбранной чужой трансляции;
   не переключать пользователя молча на собственный экран, предложить выбрать
   другой поток вручную или вернуться к участникам — [QA-38](../evidence/flutter/qa38-voice-screen-ended-state-2026-09-28-001.json).

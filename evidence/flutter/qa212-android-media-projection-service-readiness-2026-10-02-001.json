@@ -1,0 +1,53 @@
+{
+  "id": "QA-212",
+  "kind": "android-media-projection-service-readiness",
+  "status": "SOURCE_AND_BUILD_GATES_PASS_DEVICE_ACCEPTANCE_PENDING",
+  "executed_at": "2026-10-02",
+  "source_revision": "43cb84a",
+  "working_tree_changes": true,
+  "task": "T-051",
+  "summary": "Screen-share preflight previously treated any matching foreground service as ready. It now inspects the installed app's merged ServiceInfo and requires the MediaProjection foreground-service type on Android Q+, before requesting the native capture track. The bundled flutter_background service starts with FOREGROUND_SERVICE_TYPE_MANIFEST, so the declared service type is applied.",
+  "checks": [
+    {
+      "name": "Android foreground-service contract before fix",
+      "command": "flutter test --no-pub test/android_screen_capture_fgs_contract_test.dart --reporter expanded",
+      "status": "FAIL_AS_EXPECTED",
+      "observation": "The contract test failed because the readiness poll checked only service.foreground and did not check the MediaProjection service declaration."
+    },
+    {
+      "name": "Android foreground-service contract after fix",
+      "command": "flutter test --no-pub test/android_screen_capture_fgs_contract_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "The app manifest declaration, MainActivity ServiceInfo preflight, and plugin MANIFEST startup mode are all asserted."
+    },
+    {
+      "name": "Full Flutter application tests",
+      "command": "flutter test --no-pub --reporter compact",
+      "status": "PASS",
+      "observation": "All 410 tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Legacy Kotlin Gradle mode",
+      "command": "bash tools/verify/android_kotlin/verify_android_kotlin_modes.sh (first build)",
+      "status": "PASS",
+      "observation": "Flutter Android debug APK assembled successfully."
+    },
+    {
+      "name": "AGP built-in Kotlin Gradle mode",
+      "command": "JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew :app:assembleDebug -Pandroid.builtInKotlin=true --no-daemon",
+      "status": "PASS",
+      "observation": "The direct Android Gradle debug build completed successfully with JDK 17. The combined verification script's second command initially selected JDK 8 and stopped before compilation; the same mode was rerun with the configured JDK 17."
+    }
+  ],
+  "limitations": [
+    "The source contract verifies the merged-manifest query and the plugin's MANIFEST startup mode, but the updated client was not installed on Pixel and the guard was not observed at runtime.",
+    "This preflight prevents a missing manifest declaration from being mistaken for a ready capture service; it does not explain the previously observed voice participant/publication loss during backgrounding or prove actual MediaProjection persistence."
+  ],
+  "remaining": "Install a fresh Android build only with user authorization, then correlate MediaProjection, foreground-service lifetime, room roster, sender encoded frames and receiver decoded frames across app-background/app-resume. Keep FE-64 open until that device acceptance passes."
+}

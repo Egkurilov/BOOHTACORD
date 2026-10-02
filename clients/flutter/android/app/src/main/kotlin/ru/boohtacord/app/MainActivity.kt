@@ -2,7 +2,10 @@ package ru.boohtacord.app
 
 import android.app.Activity
 import android.app.ActivityManager
+import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.graphics.Rect
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
@@ -32,6 +35,21 @@ class MainActivity : FlutterActivity() {
     private var excludeLeftEdgeSwipe = false
     private var excludeRightEdgeSwipe = false
     private var gestureExclusionView: View? = null
+
+    @Suppress("DEPRECATION")
+    private fun screenShareServiceDeclaresMediaProjectionType(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
+        return try {
+            val serviceInfo = packageManager.getServiceInfo(
+                ComponentName(packageName, backgroundServiceClassName),
+                PackageManager.GET_META_DATA,
+            )
+            (serviceInfo.foregroundServiceType and
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION) != 0
+        } catch (_: PackageManager.NameNotFoundException) {
+            false
+        }
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -92,11 +110,12 @@ class MainActivity : FlutterActivity() {
                 val startedAt = SystemClock.elapsedRealtime()
                 val activityManager =
                     getSystemService(ACTIVITY_SERVICE) as ActivityManager
+                val serviceSupportsCapture =
+                    screenShareServiceDeclaresMediaProjectionType()
 
                 fun checkForegroundState() {
-                    val isForeground = activityManager
-                        .getRunningServices(Int.MAX_VALUE)
-                        .any { service ->
+                    val isForeground = serviceSupportsCapture &&
+                        activityManager.getRunningServices(Int.MAX_VALUE).any { service ->
                             service.service.className == backgroundServiceClassName &&
                                 service.foreground
                         }
