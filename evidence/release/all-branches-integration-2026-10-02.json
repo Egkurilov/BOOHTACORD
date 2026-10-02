@@ -1,7 +1,7 @@
 {
   "id": "all-branches-integration-2026-10-02",
   "kind": "branch-integration-verification",
-  "status": "PARTIAL",
+  "status": "PASS",
   "base_revision": "60dab725a7e59f5a87a3054faa13900632bd7605",
   "branches": {
     "feat/guild-rename-github-issue-3": "4f4f07aa42fc8b11ffe7969690491d04ebbf18cc",
@@ -45,19 +45,63 @@
     "runtime_dashboard_tests": "PASS: 2 tests",
     "contracts": "PASS: 76 Python tests and contract, traceability, workflow, SBOM, Compose guards",
     "full_flutter": "PASS: 396 tests; analyzer lib/test no issues",
-    "remote_ci": "NOT_RUN",
-    "deployment": "NOT_RUN",
+    "remote_ci": {
+      "pr_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36975358543",
+      "pr_status": "PASS: backend, web, contracts, Flutter Android, Windows",
+      "master_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36976305074",
+      "master_status": "PASS: backend, web, contracts, Flutter Android, Windows"
+    },
+    "deployment": {
+      "build_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36976305054",
+      "build": "PASS: server receipts and signed immutable bundle",
+      "install_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36976635073",
+      "install": "PASS"
+    },
     "sender_diagnostics": "PASS: 9 focused tests; scoped analyzer no issues"
   },
   "limitations": [
     "Physical Windows/iOS/media acceptance remains unproven.",
     "Existing uncommitted iOS QA work in main checkout preserved outside this integration.",
-    "Approved product brief unavailable on this Mac; traceability checked committed requirement index."
+    "Approved product brief unavailable on this Mac; traceability checked committed requirement index.",
+    "An evidence-only follow-up commit does not change deployed source revision."
   ],
   "legacy_history_resolution": {
     "strategy": "Port unique runtime effects into canonical GitHub paths; preserve full legacy ancestry in GitVerse only",
     "preserved": "runtime effects, native telemetry guards, seven historical evidence records",
     "superseded": "GitVerse production workflows and APK source artifacts intentionally remain retired by current signed GitHub delivery ADR",
     "github_history_constraint": "Legacy APK blobs exceed GitHub 100 MiB file limit; original legacy history remains on existing refs and GitVerse, without force rewriting"
-  }
+  },
+  "pull_request": "https://github.com/Egkurilov/BOOHTACORD/pull/13",
+  "source_revision": "cb17228a7fae024e6082caa5e95436cd111b101c",
+  "included_pull_requests": [
+    9,
+    10,
+    12,
+    13
+  ],
+  "production_verification": {
+    "source_revision": "cb17228a7fae024e6082caa5e95436cd111b101c",
+    "installed_receipt": "PASS",
+    "signature": "PASS: openssl against independently provisioned host trust anchor",
+    "manifest_sha256": "9ff75435c6eb5e463eaae0adccb4d53133157e7326e23ec2d07756c35d64de72",
+    "api_running_digest": "sha256:df0079d64a1bac318645b8c98faec3b89c60135c90fa0671798643a981a70468",
+    "web_running_digest": "sha256:c937a6d10e256f8c2333f73d4559df29239589c42aa4d2e20dce9c605066d805",
+    "running_images_equal_installed_receipt": true,
+    "health": "https://v.bootybay.ru/api/v1/health",
+    "health_status": "ok",
+    "health_http": 200,
+    "site_http": 200,
+    "browser": "PASS: public login page loaded, zero browser errors",
+    "volumes": "PASS: postgres, attachments, caddy data/config Name, CreatedAt and Mountpoint unchanged",
+    "scope": "Delivery and public unauthenticated smoke only; physical media and authenticated two-account scenarios excluded",
+    "running_images_equal_signed_manifest": true
+  },
+  "local_sync": {
+    "canonical_tree_equals_github_master": true,
+    "legacy_ancestry": "Preserved in local master merge history",
+    "ios_qa": "Original uncommitted files restored to canonical Flutter paths; recovery stash retained",
+    "legacy_cache": "Preserved and locally excluded; no generated files staged",
+    "gitverse_push": "BLOCKED: GitVerse repository is archived; not unarchived or force-rewritten"
+  },
+  "scope": "Canonical branch integration, CI and signed production delivery; archived GitVerse remote sync blocked and physical product gates excluded"
 }
