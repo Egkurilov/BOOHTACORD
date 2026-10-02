@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:boohtacord_desktop/src/core/session/scope.dart';
@@ -8,6 +9,40 @@ import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'fakes.dart';
 
 void main() {
+  test(
+    'system projection stop clears local share state and background service',
+    () async {
+      final driver = DelayedScreenDriver();
+      final room = FakeScreenRoom();
+      final owner = ScreenShareController(
+        ApiClient(),
+        SessionScope(),
+        readRoom: () => room,
+        voiceReady: () => true,
+        driver: driver,
+      );
+      addTearDown(owner.dispose);
+      final track = FakeScreenTrack();
+      owner.activeTrack = track;
+      owner.phase = ScreenSharePhase.sharing;
+      owner.thumbnails['local'] = Uint8List.fromList([1]);
+
+      owner.unpublished(room, track);
+      await owner.closing;
+
+      expect(owner.activeTrack, isNull);
+      expect(owner.phase, ScreenSharePhase.idle);
+      expect(owner.error, isNull);
+      expect(owner.thumbnails, isEmpty);
+      expect(driver.stopCalls, 0);
+      expect(driver.backgroundDisableCalls, 1);
+
+      owner.unpublished(room, track);
+      await owner.closing;
+      expect(driver.backgroundDisableCalls, 1);
+    },
+  );
+
   test(
     'capture arriving after stop is discarded without publication',
     () async {

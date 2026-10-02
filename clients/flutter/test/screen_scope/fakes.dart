@@ -27,6 +27,8 @@ class DelayedScreenDriver implements ScreenShareDriver {
   final captured = Completer<LocalVideoTrack>();
   Completer<void>? publication;
   int published = 0;
+  int stopCalls = 0;
+  int backgroundDisableCalls = 0;
   final stopped = <LocalVideoTrack>[];
   final removed = <LocalVideoTrack>[];
   @override
@@ -52,7 +54,12 @@ class DelayedScreenDriver implements ScreenShareDriver {
   }
 
   @override
-  Future<void> stop(Room room) async {}
+  Future<void> stop(Room room) async {
+    stopCalls++;
+  }
+
   @override
-  Future<void> disableBackground() async {}
+  Future<void> disableBackground() async {
+    backgroundDisableCalls++;
+  }
 }

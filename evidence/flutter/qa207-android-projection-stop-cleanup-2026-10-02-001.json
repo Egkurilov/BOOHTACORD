@@ -1,0 +1,47 @@
+{
+  "id": "QA-207",
+  "kind": "android-projection-stop-client-cleanup",
+  "status": "CONTROLLER_REGRESSION_PASS_HARDWARE_PENDING",
+  "executed_at": "2026-10-02",
+  "source_revision": "9b03d86",
+  "working_tree_changes": true,
+  "task": "T-030",
+  "summary": "A Flutter controller regression now covers the Android MediaProjection-ended path after LiveKit reports the local screen track unpublished. It confirms the sharing state and thumbnail are cleared, the background service is disabled once, and the client does not issue a second capture stop after the OS already ended it. This is source-level lifecycle coverage only; it does not prove that Android always delivers the stop event or that voice/publication survives an actual background/resume transition.",
+  "checks": [
+    {
+      "name": "Screen lifecycle focused tests",
+      "command": "flutter test --no-pub test/screen_scope/lifecycle_test.dart --reporter expanded",
+      "status": "PASS",
+      "observation": "All 3 tests pass, including system projection stop cleanup, capture completion racing with user stop, and logout during publication."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "flutter test --no-pub",
+      "status": "PASS",
+      "observation": "408 tests passed."
+    },
+    {
+      "name": "Changed-file Flutter analysis",
+      "command": "flutter analyze --no-pub test/screen_scope/fakes.dart test/screen_scope/lifecycle_test.dart",
+      "status": "PASS",
+      "observation": "No issues found in the two changed test files."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "status": "BLOCKED",
+      "observation": "The host has neither pwsh nor powershell, so the PowerShell verifier cannot run on this Mac."
+    },
+    {
+      "name": "Current Pixel state and retained logs",
+      "command": "adb shell dumpsys media_projection; adb shell dumpsys activity services ru.boohtacord.app; adb logcat -d -t 10000 filtered for MediaProjection and foreground-service tags",
+      "status": "NO_ACTIVE_CAPTURE_CAUSE_UNAVAILABLE",
+      "observation": "The connected Pixel 7 reports no active MediaProjection and no BOOHTACORD foreground service. Retained logcat contains app background/foreground transitions but no matching MediaProjection stop reason or capturer callback. No screen content was read or capture state changed."
+    }
+  ],
+  "limitations": [
+    "The fake driver proves ScreenShareController cleanup after an unpublished event; it does not exercise FlutterBackground, the Android service, MediaProjection.Callback, LiveKit signalling, or a receiver.",
+    "The Pixel currently has no active projection, so this run cannot show whether the user's previous capture was hidden, explicitly stopped, or terminated by Android."
+  ],
+  "remaining": "With the user's next active Pixel stream, correlate onCapturedContentVisibilityChanged/onStop, foreground service type/liveness, local publication state, Android sender counters and receiver decoded frames across app switching. Verify full-display capture separately from app-only capture. Keep FE-59 and FE-64 open until device acceptance passes."
+}
