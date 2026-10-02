@@ -16,6 +16,7 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
   int? _textureId;
   bool _disposed = false;
   MediaStream? _srcObject;
+  int _srcObjectGeneration = 0;
   StreamSubscription<dynamic>? _eventSubscription;
 
   @override
@@ -57,12 +58,14 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
       throw 'Can\'t set srcObject: The RTCVideoRenderer is disposed';
     }
     if (textureId == null) throw 'Call initialize before setting the stream';
+    final generation = ++_srcObjectGeneration;
     _srcObject = stream;
     WebRTC.invokeMethod('videoRendererSetSrcObject', <String, dynamic>{
       'textureId': textureId,
       'streamId': stream?.id ?? '',
       'ownerTag': stream?.ownerTag ?? ''
     }).then((_) {
+      if (_disposed || generation != _srcObjectGeneration) return;
       value = (stream == null)
           ? RTCVideoValue.empty
           : value.copyWith(renderVideo: renderVideo);
@@ -76,6 +79,7 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
       throw 'Can\'t set srcObject: The RTCVideoRenderer is disposed';
     }
     if (_textureId == null) throw 'Call initialize before setting the stream';
+    final generation = ++_srcObjectGeneration;
     _srcObject = stream;
     var oldTextureId = _textureId;
     try {
@@ -85,6 +89,7 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
         'ownerTag': stream?.ownerTag ?? '',
         'trackId': trackId ?? '0'
       });
+      if (_disposed || generation != _srcObjectGeneration) return;
       value = (stream == null)
           ? RTCVideoValue.empty
           : value.copyWith(renderVideo: renderVideo);
@@ -96,6 +101,7 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
   @override
   Future<void> dispose() async {
     if (_disposed) return;
+    _srcObjectGeneration++;
     await _eventSubscription?.cancel();
     _eventSubscription = null;
     if (_textureId != null) {

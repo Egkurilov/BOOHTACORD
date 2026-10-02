@@ -127,6 +127,15 @@ states; full Flutter tests/analyzer pass —
 | Search | `search/WorkspaceSearchPanel.vue`, `SearchPanel.vue`, chat search components | Global/channel/DM search in a responsive side panel while preserving the active conversation; 360 px panel at 1280–1439 and 400 px at 1440+ in Vue and Flutter; wide voice stage retains a 320 px modal; modal overlay below 1280 px with scrim and closed-loop keyboard focus; cursor pagination; server-centered context and return to origin; stale topology refresh; Ctrl/Cmd+K, Escape and search-focus restoration; loading/error/empty announcements [QA-61](../evidence/flutter/qa61-search-drawer-width-parity-2026-09-28-001.json) | Matched web/Flutter screenshots, device screen-reader acceptance and parity for less common loading/error states |
 | Administration | `workspace/AdminPanel.vue`, `channel/AdminTopologyControls.vue`, `AdminMembersSection.vue`, `AdminAuditSection.vue`, `AdminMediaDiagnostics.vue` | Admin-only Members/Channels/Audit/Media tabs; Flutter exposes the section navigation and each selected section as web-equivalent tablist/tab semantics with selected state [QA-101](../evidence/flutter/qa101-admin-section-tab-semantics-2026-09-29-001.json); cursor-paginated directory with preserved role/block drafts and save; initial Members/Audit loading copy now matches web and is announced through a polite live region [QA-102](../evidence/flutter/qa102-admin-loading-live-regions-2026-09-29-001.json); per-row focus restoration and accessible error/success; the native panel initially focuses its semantic heading [QA-64](../evidence/flutter/qa64-admin-heading-focus-accessibility-2026-09-28-001.json); expiring reset-link result/copy/close; same-voice admin kick; category/channel mutations and confirmations with stale-revision recovery; cursor-paged audit without message content; Media tab reads the same bounded, anonymous `/admin/screen-metrics` contract, polls only while selected/foregrounded and provides refresh/empty/error states. Backend route tests prove anonymous 401, MEMBER 403, ADMINISTRATOR 200 [QA-100](../evidence/flutter/qa100-admin-media-diagnostics-2026-09-29-001.json) | Verify role ACL against live sessions; matched screenshot comparison across all four tabs; VoiceOver/TalkBack acceptance |
 
+Native video renderer source replacements are generation-scoped: a delayed
+method-channel completion for `srcObject = null` can no longer clear the size
+and visibility state of a newly attached stream; pending completions are
+invalidated on dispose. The regression fails without this guard, all 22
+WebRTC package tests and 413 Flutter client tests pass, analyzer is clean, and
+the macOS Debug app builds — [QA-214](../evidence/flutter/qa214-native-video-renderer-source-generation-2026-10-02-001.json).
+This source-level result does not yet prove live browser-to-Mac frames or normal
+unpublish after switching; keep FE-61 open until those are observed.
+
 Reply previews now navigate consistently in web and Flutter: targets in the
 loaded window scroll into view, while targets outside it open bounded
 `at`-anchored context for TEXT and DM with a return path. Focused unloaded-target

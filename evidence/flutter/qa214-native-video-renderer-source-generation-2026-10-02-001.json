@@ -1,0 +1,40 @@
+{
+  "id": "QA-214",
+  "date": "2026-10-02",
+  "task": "T-030",
+  "status": "SOURCE_AND_MACOS_BUILD_PASS_LIVE_RECEIVER_PENDING",
+  "summary": "A delayed Flutter WebRTC method-channel response from clearing a source could overwrite the current video renderer state after a new stream was attached. Renderer method completions now check the source generation and are invalidated on dispose.",
+  "checks": [
+    {
+      "name": "Regression before fix",
+      "command": "cd clients/flutter/packages/flutter_webrtc && flutter test --no-pub test/unit/native/rtc_video_renderer_source_race_test.dart --reporter expanded",
+      "status": "FAIL_AS_EXPECTED",
+      "observation": "After the new stream reported dimensions and attached successfully, completing the older null-source request reset the video size/render state."
+    },
+    {
+      "name": "Full flutter_webrtc package tests",
+      "command": "cd clients/flutter/packages/flutter_webrtc && flutter test --no-pub --reporter compact",
+      "status": "PASS",
+      "observation": "All 22 package tests passed, including delayed clear after new source attach."
+    },
+    {
+      "name": "Flutter app tests",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "status": "PASS",
+      "observation": "All 413 Flutter client tests passed."
+    },
+    {
+      "name": "Flutter analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub",
+      "status": "PASS",
+      "observation": "No analyzer issues."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "status": "PASS",
+      "observation": "Built build/macos/Build/Products/Debug/BOOHTACORD.app with the renderer change."
+    }
+  ],
+  "remaining": "The source race is a concrete renderer defect but is not proven to be the cause of the reported black screen. Verify an active browser publication on the Mac, decoded/displayed frames after source switching, and normal unpublish. Keep FE-61 open pending paired runtime acceptance."
+}

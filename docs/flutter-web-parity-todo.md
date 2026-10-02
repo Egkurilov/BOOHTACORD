@@ -127,6 +127,13 @@ peer/platform-проверки и выравниваем viewer с вебом.
   generation при загрузке pixel buffer и перед отправкой события проверяет, что
   дорожка не заменена. Регрессия падала до изменения; все 21 WebRTC package
   tests и macOS Debug build проходят — [QA-211](../evidence/flutter/qa211-macos-renderer-track-generation-2026-10-02-001.json).
+- [x] Не позволять запоздавшему ответу `srcObject = null` очищать размеры и
+  `renderVideo` уже подключённого нового потока: native Dart renderer сверяет
+  source generation после каждого method-channel ответа и инвалидирует ожидания
+  при dispose. Regression падает без guard; все 22 WebRTC package tests, 413
+  client tests, analyzer и macOS Debug build прошли —
+  [QA-214](../evidence/flutter/qa214-native-video-renderer-source-generation-2026-10-02-001.json).
+  Live browser→Mac кадры и unpublish ещё требуется подтвердить.
 - [x] До Android screen capture проверять MediaProjection FGS type в merged app
   manifest, а foreground service запускать с manifest-declared type. Контрактный
   тест сначала падал; затем тест и analyzer прошли, полный Flutter suite (410)
