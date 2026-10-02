@@ -514,10 +514,10 @@
     "/api/v1/voice/rosters/events": {
       "get": {
         "operationId": "watchConnectedVoiceParticipants",
-        "description": "Authenticated non-blocked guild member; no voice lease required. Opens a short-lived Server-Sent Events stream of complete VoiceParticipants snapshots. Each snapshot is independently rebuilt from the caller's currently visible VOICE channels, active LiveKit participants and current unrevoked leases. LiveKit webhooks carry invalidation hints only; they never supply roster data. The stream closes after at most 10 seconds and clients reconnect to reauthenticate. Each event is one UTF-8 line `data: <JSON VoiceParticipants>` followed by a blank line. No event is cached.",
+        "description": "Authenticated non-blocked guild member; no voice lease required. Opens a long-lived Server-Sent Events stream of complete VoiceParticipants snapshots. Each snapshot is independently rebuilt from the caller's currently visible VOICE channels, active LiveKit participants and current unrevoked leases. LiveKit webhooks carry invalidation hints only; they never supply roster data. The original session cookie is revalidated every 10 seconds while the connection remains open; if it is revoked, the server sends `event: session-expired` with an empty JSON data line and closes the stream. Heartbeat comments keep idle connections alive. Each snapshot event is one UTF-8 line `data: <JSON VoiceParticipants>` followed by a blank line. No event is cached.",
         "responses": {
           "200": {
-            "description": "SSE stream of complete current voice-roster snapshots; one JSON snapshot per data event",
+            "description": "Long-lived SSE stream of complete current voice-roster snapshots; one JSON snapshot per data event, heartbeat comments while idle, and a session-expired event if the session is revoked",
             "headers": {
               "Cache-Control": { "schema": { "type": "string", "enum": ["no-store"] } },
               "X-Accel-Buffering": { "schema": { "type": "string", "enum": ["no"] } }
@@ -526,7 +526,8 @@
               "text/event-stream": {
                 "schema": { "type": "string" },
                 "examples": {
-                  "snapshot": { "value": "data: {\"channels\":[{\"channel_id\":\"11111111-1111-4111-8111-111111111111\",\"participants\":[{\"account_id\":\"22222222-2222-4222-8222-222222222222\",\"display_name\":\"Мика\",\"screen_sharing\":false,\"microphone_muted\":true}]}]}\n\n" }
+                  "snapshot": { "value": "data: {\"channels\":[{\"channel_id\":\"11111111-1111-4111-8111-111111111111\",\"participants\":[{\"account_id\":\"22222222-2222-4222-8222-222222222222\",\"display_name\":\"Мика\",\"screen_sharing\":false,\"microphone_muted\":true}]}]}\n\n" },
+                  "sessionExpired": { "value": "event: session-expired\ndata: {}\n\n" }
                 }
               }
             }

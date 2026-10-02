@@ -1,0 +1,64 @@
+{
+  "id": "QA-231",
+  "kind": "long-lived-voice-roster-sse-session-revalidation",
+  "status": "PARTIAL",
+  "executed_at": "2026-10-02",
+  "source_revision": "working tree based on 0873c96",
+  "working_tree_changes": true,
+  "summary": "The voice roster SSE endpoint and browser/Flutter consumers now support a persistent stream with session revalidation and explicit session-expired handling. Focused backend and Flutter tests pass. Browser package execution, deployment, and live-session acceptance remain unverified, so the production roster failure is not resolved by this evidence alone.",
+  "checks": [
+    {
+      "name": "Backend roster handler and media route tests",
+      "command": "cd backend && go test ./internal/voice/watch_connected_participants ./internal/app/media_routes",
+      "status": "PASS",
+      "observation": "Both packages passed, including the handler's session revalidation and session-expired behavior."
+    },
+    {
+      "name": "Backend roster race detector",
+      "command": "cd backend && go test -race ./internal/voice/watch_connected_participants ./internal/app/media_routes",
+      "status": "PASS",
+      "observation": "Both packages passed under the Go race detector."
+    },
+    {
+      "name": "Flutter roster API and watcher tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/voice_roster_api_test.dart test/voice_roster_state/controller_test.dart",
+      "status": "PASS",
+      "observation": "All 8 focused tests passed, including SSE 401 handling, session-expired handling, and stale watcher/subscription regressions."
+    },
+    {
+      "name": "Web typecheck, full test suite and production build",
+      "command": "cd clients/web && ./node_modules/.bin/vue-tsc --noEmit && ./node_modules/.bin/vitest run && ./node_modules/.bin/vite build",
+      "status": "PASS",
+      "observation": "TypeScript typecheck passed; all 241 test files and 760 tests passed; Vite production build passed. Vite emitted its existing advisory that the main JavaScript chunk exceeds 500 kB."
+    },
+    {
+      "name": "OpenAPI YAML syntax",
+      "command": "ruby -e 'require \"yaml\"; YAML.load_file(\"contracts/openapi.yaml\")'",
+      "status": "PASS",
+      "observation": "The updated OpenAPI file parses as YAML. Its JSON representation and roster endpoint predicates were also checked separately. This does not replace the full repository contract verifier."
+    },
+    {
+      "name": "Roster contract predicates",
+      "command": "jq -e '<watchConnectedVoiceParticipants SSE, status, microphone_muted, and session-expired assertions>' contracts/openapi.yaml",
+      "status": "PASS",
+      "observation": "JSON parsing and focused assertions for the SSE endpoint, 401/500/503 outcomes, required microphone_muted field, and session-expired documentation passed."
+    },
+    {
+      "name": "Approved requirement index references",
+      "command": "ruby -rjson -e 'check 39 unique IDs from backlog/approved-requirements.json are referenced in backlog/tasks.yaml'",
+      "status": "PASS",
+      "observation": "All 39 unique indexed requirement IDs are referenced by backlog/tasks.yaml. The approved brief itself is not present at the Windows-only configured path on this host."
+    },
+    {
+      "name": "Contract and traceability PowerShell verifiers",
+      "status": "NOT_RUN",
+      "observation": "Neither pwsh nor powershell is installed in this environment; repository contract and spec-traceability verifier scripts could not be run."
+    },
+    {
+      "name": "Production deployment and live browser/Flutter session acceptance",
+      "status": "OPEN",
+      "observation": "No server deployment or live two-client session revocation/reconnect test was performed. The observed SHARE_TEST roster failure's production cause remains unknown."
+    }
+  ],
+  "limits": "Changes are uncommitted. No server/LiveKit logs were correlated, no two-account ACL/privacy runtime test was performed, and no claim is made that the production failure is fixed."
+}

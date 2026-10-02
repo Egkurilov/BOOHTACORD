@@ -145,4 +145,17 @@ void main() {
       ),
     );
   });
+
+  test(
+    'expires the local session when opening an SSE stream returns 401',
+    () async {
+      var unauthorized = false;
+      final api = ApiClient(
+        client: MockClient((_) async => http.Response('unauthorized', 401)),
+      )..onUnauthorized = () => unauthorized = true;
+
+      await expectLater(api.voiceRosterEvents(), throwsA(isA<ApiFailure>()));
+      expect(unauthorized, isTrue);
+    },
+  );
 }

@@ -36,6 +36,9 @@ class VoiceRosterApi {
     final response = await transport.client.send(request);
     if (response.statusCode != 200) {
       await response.stream.drain<void>();
+      if (response.statusCode == 401) {
+        transport.session.onUnauthorized?.call();
+      }
       throw ApiFailure(
         'Нет связи со списком голосовых каналов.',
         status: response.statusCode,

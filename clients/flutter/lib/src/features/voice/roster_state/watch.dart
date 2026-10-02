@@ -28,6 +28,14 @@ extension VoiceRosterWatch on VoiceRosterController {
             .listen(
               (line) {
                 if (!ticket.isActive || expected != revision) return;
+                if (line == 'event: session-expired') {
+                  voiceRosters = null;
+                  voiceRosterError = null;
+                  changed();
+                  api.onUnauthorized?.call();
+                  stop();
+                  return;
+                }
                 try {
                   final rooms = parseVoiceRosterEvent(line);
                   if (rooms == null) return;

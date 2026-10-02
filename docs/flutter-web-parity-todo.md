@@ -367,6 +367,15 @@ peer/platform-проверки и выравниваем viewer с вебом.
   populated snapshot на обоих клиентах ещё проверить. Сопоставить ошибку с
   серверными и LiveKit логами; причина пока неизвестна —
   [QA-148](../evidence/flutter/qa148-production-prejoin-roster-recovery-2026-09-30-001.json).
+  Текущий незакоммиченный рабочий набор переводит endpoint на один долгоживущий
+  SSE-поток с heartbeat и повторной проверкой cookie-сессии каждые 10 секунд;
+  при отзыве сервер отправляет `session-expired`, которое обрабатывают web и
+  Flutter. ADR-015 зафиксировал это решение. Focused backend (2 packages) и
+  Flutter (8 tests) проходят; web typecheck, full suite (760 tests / 241 files)
+  и production build проходят; PowerShell
+  contract/spec verifiers недоступны. Это ещё не
+  live/deployment acceptance и не доказывает устранение production причины —
+  [QA-231](../evidence/backend/qa231-long-lived-voice-roster-sse-session-revalidation-2026-10-02-001.json).
   Локальные unit suites проходят, но
   доставка событий, приватность между двумя аккаунтами и disconnect/reconnect
   на production ещё не проверены —
@@ -407,11 +416,12 @@ peer/platform-проверки и выравниваем viewer с вебом.
   Зафиксировано test-first; полный frontend suite (680 тестов), TypeScript
   проверка и production build проходят —
   [QA-144](../evidence/flutter/qa144-web-roster-sse-initial-reconnect-2026-09-30-001.json).
-  Сервер штатно закрывает SSE response через 10 секунд, поэтому браузерные
-  последовательные запросы ожидаемы; проверить реальную Network-панель после
-  разблокировки Mac.
+  Поведение изменено по [ADR-015](adr/ADR-015-long-lived-voice-roster-sse.md):
+  один долгоживущий SSE-поток с heartbeat и повторной проверкой сессии каждые
+  10 секунд; при отзыве сессии клиенты закрывают поток через событие
+  `session-expired`.
 - [x] Синхронизировать канонический roster contract: описать authenticated
-  short-lived SSE endpoint и обязательный `microphone_muted`, а web/Flutter
+  long-lived SSE endpoint и обязательный `microphone_muted`, а web/Flutter
   клиенты должны отвергать снимки без этого состояния вместо ложного fallback
   «микрофон выключен». OpenAPI field/path assertions и focused/full client tests
   проходят; PowerShell verifier локально недоступен —

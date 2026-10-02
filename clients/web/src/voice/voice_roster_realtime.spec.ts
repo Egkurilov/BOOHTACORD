@@ -23,7 +23,7 @@ describe('voice roster event stream', () => {
   it('uses one server-pushed stream, updates from events, and closes on stop', () => {
     const sources: VoiceRosterEvents[] = []
     const factory = vi.fn(() => {
-      const source: VoiceRosterEvents = { onmessage: null, onerror: null, close: vi.fn() }
+      const source: VoiceRosterEvents = { onmessage: null, onerror: null, addEventListener: vi.fn(), close: vi.fn() }
       sources.push(source)
       return source
     })
@@ -42,7 +42,7 @@ describe('voice roster event stream', () => {
   it('keeps start idempotent while explicit reconnect replaces the stream', () => {
     const sources: VoiceRosterEvents[] = []
     const factory = vi.fn(() => {
-      const source: VoiceRosterEvents = { onmessage: null, onerror: null, close: vi.fn() }
+      const source: VoiceRosterEvents = { onmessage: null, onerror: null, addEventListener: vi.fn(), close: vi.fn() }
       sources.push(source)
       return source
     })
@@ -56,5 +56,23 @@ describe('voice roster event stream', () => {
     expect(factory).toHaveBeenCalledTimes(2)
     expect(sources[0].close).toHaveBeenCalledOnce()
     roster.stop()
+  })
+
+  it('closes the browser EventSource and expires the workspace session on revocation', () => {
+    const listeners = new Map<string, EventListener>()
+    const source: VoiceRosterEvents = {
+      onmessage: null,
+      onerror: null,
+      addEventListener: vi.fn((type: string, listener: EventListener) => listeners.set(type, listener)),
+      close: vi.fn(),
+    }
+    const onSessionExpired = vi.fn()
+    const roster = createVoiceRosterRealtime(() => source, onSessionExpired)
+
+    roster.start()
+    listeners.get('session-expired')?.(new Event('session-expired'))
+
+    expect(source.close).toHaveBeenCalledOnce()
+    expect(onSessionExpired).toHaveBeenCalledOnce()
   })
 })

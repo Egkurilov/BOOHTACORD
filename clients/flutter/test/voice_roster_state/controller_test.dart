@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -13,6 +14,36 @@ class DelayedRosterApi extends ApiClient {
 }
 
 void main() {
+  test(
+    'a session-expired SSE event stops the roster watcher and expires auth',
+    () async {
+      final api = DelayedRosterApi();
+      final scope = SessionScope();
+      final owner = VoiceRosterController(
+        api,
+        scope,
+        isReady: () => true,
+        hasUser: () => true,
+        message: (cause) => cause.toString(),
+      );
+      addTearDown(owner.dispose);
+      var expired = false;
+      api.onUnauthorized = () => expired = true;
+      final stream = StreamController<List<int>>();
+
+      owner.start();
+      await Future<void>.delayed(Duration.zero);
+      api.response.complete(http.StreamedResponse(stream.stream, 200));
+      await Future<void>.delayed(Duration.zero);
+      stream.add(utf8.encode('event: session-expired\ndata: {}\n\n'));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(expired, isTrue);
+      expect(owner.watching, isFalse);
+      await stream.close();
+    },
+  );
+
   test(
     'an old watcher cannot clear a replacement stream subscription',
     () async {
