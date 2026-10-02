@@ -149,6 +149,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('1440p'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('60 FPS'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('60 FPS'));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('start-screen-share')));
@@ -273,7 +275,48 @@ void main() {
       find.textContaining('Android покажет системный запрос'),
       findsNothing,
     );
+    expect(
+      find.textContaining(
+        'При выборе отдельного приложения Android может скрыть его изображение',
+      ),
+      findsNothing,
+    );
     expect(find.text('Применить качество'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('explains Android app-only capture visibility before starting', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => ScreenShareSetupDialog.show(
+                context,
+                initialQuality: ScreenShareQuality.balanced,
+                allowSourceSelection: false,
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining(
+        'При выборе отдельного приложения Android может скрыть его изображение',
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
     debugDefaultTargetPlatformOverride = null;
   });

@@ -1,0 +1,52 @@
+{
+  "id": "QA-203",
+  "kind": "android-app-only-capture-guidance",
+  "status": "IMPLEMENTED_NEEDS_DEVICE_ACCEPTANCE",
+  "executed_at": "2026-10-02",
+  "source_revision": "28e3ee3",
+  "task": "T-030",
+  "summary": "The Android screen-share setup now explains that an app-only projection can hide its image when the selected app is fully covered or the user switches away. This distinguishes expected Android privacy behavior from a broken full-display stream. Setup guidance is hidden when only changing quality; the old redundant system-permission prompt copy remains absent.",
+  "checks": [
+    {
+      "name": "Android setup privacy guidance regression",
+      "command": "flutter test --no-pub test/screen_share_quality_test.dart",
+      "status": "PASS",
+      "observation": "All 12 screen-share quality/picker tests pass, including new capture guidance and hidden guidance while changing quality."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "flutter test --no-pub",
+      "status": "PASS",
+      "observation": "405 tests passed."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "flutter analyze --no-pub",
+      "status": "WARN",
+      "observation": "No diagnostics in changed files. Two existing info diagnostics remain in vendored flutter_webrtc: unnecessary library name and runtime type check on a JS interop DOMException."
+    },
+    {
+      "name": "Android debug build",
+      "command": "flutter build apk --debug --target-platform android-arm64 --no-pub",
+      "status": "PASS",
+      "observation": "Built clients/flutter/build/app/outputs/flutter-apk/app-debug.apk (147571253 bytes; ignored build artifact)."
+    },
+    {
+      "name": "Pixel UI and capture-mode acceptance",
+      "device": "Google Pixel 7",
+      "status": "NOT_RUN",
+      "observation": "No active MediaProjection was present in the latest read-only snapshot. No screen content was captured and the user-owned projection was not started or stopped by the agent."
+    },
+    {
+      "name": "Spec traceability",
+      "command": "tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "status": "BLOCKED",
+      "observation": "The host has neither pwsh nor powershell; the script could not be executed."
+    }
+  ],
+  "limitations": [
+    "This is guidance only; it does not alter Android MediaProjection privacy behavior or prove that a black frame during full-display capture is fixed.",
+    "Android documents that the selected region becomes invisible when its app is fully covered or the user navigates away: https://developer.android.com/reference/android/media/projection/MediaProjection.Callback#onCapturedContentVisibilityChanged(boolean)."
+  ],
+  "remaining": "Verify the copy and layout on Pixel 7. Compare app-only capture while the selected app is visible/hidden against full-display capture, and record room membership plus sender/receiver video counters. FE-59 and FE-64 remain open."
+}

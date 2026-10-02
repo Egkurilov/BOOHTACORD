@@ -250,7 +250,9 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
                       child: Column(
                         children: [
                           if (!widget.updating &&
-                              defaultTargetPlatform == TargetPlatform.iOS) ...[
+                              (defaultTargetPlatform == TargetPlatform.iOS ||
+                                  defaultTargetPlatform ==
+                                      TargetPlatform.android)) ...[
                             SizedBox(height: compact ? 12 : 20),
                             _buildMobileCaptureNotice(),
                             SizedBox(height: compact ? 8 : 20),
@@ -420,7 +422,7 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
           child: Text(
             defaultTargetPlatform == TargetPlatform.iOS
                 ? 'На iPhone транслируется только содержимое BOOHTACORD. Другие приложения и системный звук не передаются. Остановить трансляцию можно в голосовом канале.'
-                : 'После продолжения Android покажет системный запрос на запись экрана. Вы сможете остановить трансляцию в любой момент.',
+                : 'При выборе отдельного приложения Android может скрыть его изображение, когда оно полностью закрыто другим окном или вы переключились на другое приложение. Для непрерывной трансляции выберите весь экран в системном окне Android.',
             style: const TextStyle(color: GcColors.textSecondary, height: 1.45),
           ),
         ),
