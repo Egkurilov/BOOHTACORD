@@ -1,6 +1,6 @@
 # ADR-012: Prebuilt signed server releases
 
-Status: staging verified; production trust and GitHub cutover remain pending.
+Status on 2026-10-01: staging verified; production trust and GitHub cutover pending.
 Date: 2026-10-01.
 Supersedes the source-build installation and independent GHCR rebuild portions of ADR-011-github-delivery.
 
@@ -63,3 +63,15 @@ signature/checksum tampering, migration incompatibility, disk exhaustion and
 running digest mismatch. Actual builder and staging installation must pass
 before replacing production delivery. Physical media acceptance remains a
 separate product gate; artifact smoke does not prove stream quality.
+
+## Implementation result — 2026-10-02
+
+Production trust was provisioned independently. GitHub built and installed
+revision `975496697ae4735116e413c0f7faff09de3054f4` successfully. Independent
+verification confirmed the manifest signature, running image digests, public
+HTTPS health and preserved volume/network identities. The builder runner's
+Docker permission failure was fixed before the successful deployment.
+
+The [production receipt](../../evidence/reorganization/2026-10-02-production-delivery.json)
+records workflow runs, timings, disk observations and the remaining physical
+media and macOS/iOS acceptance limitations. Server delivery is verified.

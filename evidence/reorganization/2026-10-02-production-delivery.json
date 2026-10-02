@@ -1,0 +1,94 @@
+{
+  "id": "reorganization-production-delivery-2026-10-02",
+  "kind": "release-integration-verification",
+  "status": "PASS",
+  "scope": "Repository reorganization delivery and signed production installation; physical product acceptance excluded",
+  "source_revision": "975496697ae4735116e413c0f7faff09de3054f4",
+  "previous_production_revision": "2c2ac04b6a9f978c6a9107e5073ec8b7c8cafa00",
+  "pull_request": "https://github.com/Egkurilov/BOOHTACORD/pull/11",
+  "merged_revision": "8d2490b40d48baca7c0ec184befc9c0fe56760f6",
+  "staging_evidence": "evidence/reorganization/2026-10-02-final-staging.json",
+  "ci": {
+    "branch_revision": "b09e93b1eb0e5152622e6ccab13ebc3554b1de1e",
+    "branch_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36949174970",
+    "branch_checks": "PASS: contracts, backend, web, Flutter Android, Windows",
+    "production_revision_ci_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36950744357",
+    "production_revision_ci": "PASS",
+    "server_build_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36950745761",
+    "server_checks": "PASS: contracts, backend, web, signed bundle",
+    "bundle_job_seconds": 167,
+    "production_install_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36951176595",
+    "production_install": "PASS",
+    "install_job_seconds": 44,
+    "timing_scope": "GitHub job start to completion, including setup and artifact transport; not isolated build/install duration"
+  },
+  "builder_incident": {
+    "failed_run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/36950217717",
+    "cause": "Generic Hetzner runner lacked Docker socket permission; no installation ran",
+    "resolution_revision": "975496697ae4735116e413c0f7faff09de3054f4",
+    "resolution": "Dedicated boohtacord-builder label and SupplementaryGroups=docker for the idle Web runner service",
+    "runner": "BOOHTACORD-Hetzner-Web",
+    "database_runner_docker_privilege_added": false
+  },
+  "production_trust": {
+    "environment": "production",
+    "deployment_branch_policy": "master only",
+    "trust_anchor": "/etc/voice-platform/release-signing.pub.pem",
+    "public_key_sha256": "e44c979e15b434e9625df70f9816e5887d3b0a4f1301bc4185df4186ed002cd7",
+    "rsa_bits": 3072,
+    "private_key_storage": "GitHub production environment encrypted secret only; no local private key file",
+    "staging_signer_used": false
+  },
+  "production_verification": {
+    "method": "Independent SSH inspection and public HTTPS after successful GitHub deployment",
+    "installed_receipt": "PASS; source revision equals this record",
+    "manifest_signature": "PASS against independently provisioned host trust anchor",
+    "manifest_sha256": "bfaa95533d01727d65a2997dfbf3b980a3cec0d7574e0ef85c31a76fdc866926",
+    "api_running_index_digest": "sha256:5a17d170786d4a1bf466cee52923cc7c7f429e4d2b40a83c2c4a9fb7ec48d4dc",
+    "web_running_index_digest": "sha256:41f2f9491256387055ed0a881df9f31c1030c39f34a410b4ac3f17a215df40a5",
+    "configured_running_and_signed_digests_equal": true,
+    "site": "https://v.bootybay.ru/",
+    "site_http_status": 200,
+    "health": "https://v.bootybay.ru/api/v1/health",
+    "health_http_status": 200,
+    "health_status": "ok",
+    "preserved_volumes": ["postgres-data", "attachments-data", "caddy-data", "caddy-config"],
+    "volume_comparison": "Name, CreatedAt and Mountpoint equal before/after",
+    "preserved_networks": ["edge", "private", "telemetry-egress"],
+    "network_comparison": "Network IDs equal before/after",
+    "database_restore_or_volume_deletion": false
+  },
+  "host_tools": {
+    "python": "3.12.3",
+    "openssl": "3.0.13",
+    "docker": "29.1.3",
+    "compose": "2.40.3+ds1-0ubuntu1~24.04.1"
+  },
+  "disk_observation": {
+    "samples": 1121,
+    "observation_seconds": 1120.345,
+    "free_before_bytes": 17579610112,
+    "free_minimum_bytes": 17316347904,
+    "free_after_bytes": 17375588352,
+    "maximum_observed_additional_consumption_bytes": 263262208,
+    "scope": "Production host observation included waiting, build and installation; not an isolated installation peak"
+  },
+  "server_source_archive": {
+    "source_revision": "284807f5eb2ad862f0f4b9f05ecb8f6ace250ca5",
+    "bytes": 753844,
+    "scope": "Measured server-only immutable source archive; separate from the full checkout and production bundle"
+  },
+  "rollout_intervention": {
+    "initial_trust_provisioning_events": 1,
+    "runner_permission_and_routing_fix_events": 1,
+    "successful_installation": "Automatic GitHub workflow; no manual production installation commands"
+  },
+  "limitations": [
+    "PASS applies to repository/server delivery, not every product acceptance gate.",
+    "Physical microphone, PTT, screen sharing, stream quality, device frame timing and compatible client update acceptance remain NOT_RUN.",
+    "macOS/iOS native build and signing acceptance remain NOT_RUN.",
+    "Flutter debug rebuild counts were unchanged; no media FPS or runtime speedup is claimed.",
+    "Historical pre-change CI timings and production installation disk peak were not recorded.",
+    "A later evidence-only commit does not change the deployed source revision recorded here."
+  ]
+}

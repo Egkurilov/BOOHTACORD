@@ -63,3 +63,11 @@ remain visibly open until measured on the relevant device/platform.
 The existing backlog/tasks.yaml remains the task source; this document is the
 execution sequence, not a second mutable acceptance registry. Record results
 as dated evidence. Preserve older evidence as historical observations.
+
+## Delivery result — 2026-10-02
+
+Implementation merged in [PR #11](https://github.com/Egkurilov/BOOHTACORD/pull/11).
+The [final staging record](../../../evidence/reorganization/2026-10-02-final-staging.json)
+and [production receipt](../../../evidence/reorganization/2026-10-02-production-delivery.json)
+bind native checks, measurements and signed delivery to their exact revisions.
+Physical media/device and macOS/iOS acceptance remain explicitly NOT_RUN.
