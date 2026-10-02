@@ -6,9 +6,9 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
 
 Ближайшие leaves выполнять в таком порядке: (1) Android screen-preview regression
 после EGL release barrier — сначала воспроизводимый plugin/UI regression, затем
-Pixel runtime acceptance; (2) macOS обнаружение/просмотр remote screen-share и
-проверка unpublish; (3) Android login/Gboard и повторный screen-share flow;
-(4) macOS Keychain/session restore на стабильной подписи, когда будет доступна
+Pixel runtime acceptance; (2) Android voice/publication persistence при фоне;
+(3) macOS обнаружение/просмотр remote screen-share и проверка unpublish;
+(4) Android login/Gboard и повторный screen-share flow; (5) macOS Keychain/session restore на стабильной подписи, когда будет доступна
 Developer ID identity. Общие macOS/Android voice, audio-device и screen-share
 проверки остаются в объёме. Windows-only acceptance, Windows runner и FE-63
 MSVC/PCM gate отложены и не должны вытеснять эти задачи; общие изменения не
@@ -166,6 +166,16 @@ peer/platform-проверки и выравниваем viewer с вебом.
   stop снял активную проекцию и освобождение voice lease прошло. Проверка
   OS-level stop, второго peer, receiver crop/metrics и остальных платформ остаётся
   открытой — [QA-26](../evidence/flutter/qa26-android-media-projection-service-2026-09-27-001.json).
+- [ ] На Android сверить room membership/publication с `MediaProjection` при
+  переводе приложения в фон и возврате. Pixel 7 / `1.0.19+2032`: в user-started
+  Calculator app-only тесте projection/foreground service и BOOHTACORD process
+  оставались активны, но браузер временно показывал одного участника и ноль
+  публикаций. После возврата приложения Android-участник восстановился, но
+  захват уже был остановлен (пользователь ещё уточняет, вручную ли), публикации
+  не было. Нужны sender `framesEncoded`, receiver `framesDecoded` и
+  отдельное сравнение app-only vs full-display capture; пока нельзя заключить,
+  что это чёрные декодированные кадры, а не RTC disconnect/unpublish —
+  [QA-202](../evidence/flutter/qa202-android-surfaceproducer-resume-2026-10-02-001.json).
 - [x] Устранить найденное в OS-stop прогоне зависание локального screen-share UI:
   Android `MediaProjection.Callback.onStop` теперь останавливает capturer,
   освобождает virtual display/surface и отправляет ended-событие только треку

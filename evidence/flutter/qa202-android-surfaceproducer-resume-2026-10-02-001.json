@@ -1,7 +1,7 @@
 {
   "id": "QA-202",
   "kind": "android-surfaceproducer-resume-lifecycle",
-  "status": "IMPLEMENTED_NEEDS_PIXEL_RUNTIME",
+  "status": "PARTIAL_REPRODUCED_NEEDS_ROOT_CAUSE",
   "executed_at": "2026-10-02",
   "source_revision": "93680fb",
   "task": "T-030",
@@ -42,16 +42,16 @@
       "observation": "Built a 70,914,930-byte APK. Its signer SHA-256 matches the installed APK; adb install -r succeeded and the Pixel reports versionCode 2032."
     },
     {
-      "name": "Pixel screen-share foreground/resume retest",
+      "name": "User-started Pixel app-only foreground transition",
       "device": "Google Pixel 7",
-      "status": "NOT_RUN_PENDING_USER_APPROVAL",
-      "observation": "The user-visible issue has not yet been retested on the new build. No screen share is currently active."
+      "status": "PARTIAL_REPRODUCED",
+      "observation": "The user confirmed they started this test. Read-only ADB showed MediaProjection actively recording the Calculator task, the BOOHTACORD process alive with its foreground MediaProjection service, and Calculator in the foreground. Chrome SHARE_TEST then showed one participant and zero screen-share publications; Pistol121_android was absent. After BOOHTACORD returned to foreground, Chrome showed two participants again, but zero publications, and ADB showed no active MediaProjection. The user has not yet clarified whether they intentionally stopped capture. No screen content was captured and the agent did not stop the test. Thus the room participant loss/recovery was observed, but there is no retained publication with which to prove a decoder black frame or assign who stopped capture."
     }
   ],
   "limitations": [
     "A successful SurfaceProducer lifecycle unit test does not prove the actual Flutter compositor displays resumed frames.",
-    "The black-screen cause may also be tied to Android's selected-app projection behavior; full-display and app-only capture need separate verification.",
-    "Remote browser playback and receiver-side frame counters have not been checked in this run."
+    "Android's selected-app projection was active while its participant/publication disappeared from the browser roster; the participant returned after app resume while capture was already stopped. The cause and whether the stop was user-initiated remain unconfirmed.",
+    "The test used selected-app Calculator capture, not full-display capture. Receiver-side decoded-frame counters for a still-published track were unavailable because the browser showed no active publication."
   ],
-  "remaining": "With the user's approval, repeat a short screen share on Pixel 7 while observing the browser receiver; distinguish whole-screen from selected-app capture and confirm the image stays live after returning to BOOHTACORD. Keep FE-59 open until remote playback and local preview pass."
+  "remaining": "Clarify whether the user stopped the capture. For a new authorized run, keep BOOHTACORD joined, transition between Calculator and BOOHTACORD without pressing stop, and monitor room membership, MediaProjection state, sender encoded frames and receiver decoded frames. Repeat separately with full-display capture. Keep FE-59 and FE-64 open until the resumed local preview, room persistence and paired browser playback pass."
 }
