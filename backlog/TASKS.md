@@ -1,6 +1,6 @@
 # Граф задач и актуальный остаток
 
-Срез 30.09.2026. [tasks.yaml](tasks.yaml) сохраняет исходные T-ID, зависимости и REQ-трассировку; action_catalog связывает его с детальными задачами.
+Срез 02.10.2026. [tasks.yaml](tasks.yaml) сохраняет исходные T-ID, зависимости и REQ-трассировку; action_catalog связывает его с детальными задачами.
 [TODO](../TODO.md) — входная точка, [DONE](../DONE.md) — реализованные результаты, [ревью](../docs/reviews/2026-09-24-functionality.md) — основания и проверки.
 
 T-пакеты описывают области требований. Частичная реализация не закрывает весь пакет и его evidence gate.
@@ -28,7 +28,7 @@ T-пакеты описывают области требований. Част�
 | T-050 | Design foundation, shell/profile/admin/search/voice UI | FE-09, DES-01…08, QA-05 |
 | T-051 | Android разрешён ADR-006, APK build evidence | QA-13: release signing/device checks/parity |
 | T-052 | ACL/session baseline, private metrics/log rotation | BE-13, QA-03/10 |
-| T-054 | GitHub deploy и smoke evidence | QA-04/11/12 |
+| T-054 | GitHub deploy и smoke evidence | QA-12 rollback; FE-62 — устранить текущий красный CI по версии Flutter |
 | T-060 | Acceptance/runbooks, отдельные scoped evidence | QA-14 после обязательных gates |
 | T-061 | Local native audio-device checks, зависит от T-022 | Физическая проверка выбора/переключения устройств и audio I/O на каждой поддерживаемой Flutter-платформе; unit/build evidence недостаточно |
 
