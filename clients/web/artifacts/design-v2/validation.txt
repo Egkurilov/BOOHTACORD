@@ -1,12 +1,10 @@
-BOOHTACORD Design V2 — implementation progress
+BOOHTACORD Design V2 — final implementation and validation
 Date: 2026-10-03
 
-Reference scope: the supplied live HTML package contains R01–R30. Its DOM boxes, visible text, and viewports are inventoried in reference-inventory.json. Reference scripts were omitted and image requests were blocked; no raster images or screenshots were used.
+Reference scope: the supplied live HTML package contains states R01–R30. The handoff's README, implementation specification, frame manifest, HTML, CSS and token files informed the implementation. Raster images and screenshots were not consumed or created, per user direction; reference image requests were blocked during DOM inspection.
 
-Implemented: canonical V2 tokens; shared button/input/focus states; R01–R03 desktop/tablet/mobile chat shell and measured conversation geometry; responsive settings, role, profile, search, auth, topology dialog, update banner, media viewer, and overlay style layers; mobile admin member cards use the existing account-save/reset workflows.
+Implemented: V2 design tokens and shared controls; production Vue layouts for the responsive chat shell, messages/replies, attachments, direct messages, media/voice, settings, profile, search, authentication, member and role administration, topology dialogs, overlays, update banner, and responsive states. Existing APIs, permissions, message workflows, and media session ownership remain with their existing application components. Open registration remains available as required by the approved product brief.
 
-Actual-vs-reference DOM geometry: R01–R03 production Vue components were rendered in Chromium and matched to the supplied HTML with zero measured delta; see review.json. The connected voice dock was represented with its existing CSS class in the visual fixture; no LiveKit session was started. Actual production component geometry for R04–R30 remains unverified and is still required before the full goal is complete.
+Actual-vs-reference review: `review.json` contains DOM geometry records for all 30 handoff states. Every measurable production geometry difference is zero. R15 is a reference-only component catalog, covered by the real shared tokens/component tests rather than an application route. The protected viewer preview was tested with image requests blocked. Geometry fixtures did not start a LiveKit session.
 
-Native checks: `npm test` — PASS, 260 files / 825 tests. `npm run build` — PASS (`vue-tsc --noEmit` and Vite production build). Vite reports the existing LiveKit/client bundles exceed 500 kB; build succeeds. `git diff --check` — PASS.
-
-Current goal status: active. The R01–R30 component map and live-reference inventory are in the full implementation plan. Do not treat reference-only HTML boxes as production actuals; render each remaining real component state, produce numeric DOM/computed-style diffs, and fix all material mismatches.
+Native checks: `npm test` — PASS, 264 files / 836 tests. `npm run build` — PASS (`vue-tsc --noEmit` and Vite production build). Vite emits a bundle-size advisory for the existing LiveKit/client bundles over 500 kB; build succeeds. `git diff --check` — PASS.
