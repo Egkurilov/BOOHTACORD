@@ -38,4 +38,5 @@ $realtime = Get-Content -Raw -LiteralPath $realtimePath | ConvertFrom-Json
 . (Join-Path $PSScriptRoot 'text_channels.ps1')
 . (Join-Path $PSScriptRoot 'voice.ps1')
 . (Join-Path $PSScriptRoot 'security.ps1')
+. (Join-Path $PSScriptRoot 'role_permissions.ps1')
 Write-Output 'Contracts OK.'

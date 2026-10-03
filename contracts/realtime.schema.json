@@ -9,7 +9,7 @@
     "event_id": { "type": "string", "format": "uuid" },
     "kind": {
       "type": "string",
-      "enum": ["connection.ready", "connection.resync_required", "voice.lease_revoked", "channel.updated", "presence.snapshot", "presence.changed", "message.created", "message.updated", "message.deleted", "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted"]
+      "enum": ["connection.ready", "connection.resync_required", "voice.lease_revoked", "channel.updated", "presence.snapshot", "presence.changed", "message.created", "message.updated", "message.deleted", "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted", "role.permissions.updated", "auth.permissions.invalidated"]
     },
     "occurred_at": { "type": "string", "format": "date-time" },
     "payload": { "type": "object" }
@@ -56,6 +56,30 @@
             "required": ["revision"],
             "properties": { "revision": { "type": "integer", "minimum": 1 } }
           }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "role.permissions.updated" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "revision"],
+            "properties": {
+              "role": { "const": "MEMBER" },
+              "revision": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "auth.permissions.invalidated" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "payload": { "type": "object", "additionalProperties": false, "maxProperties": 0 }
         }
       }
     },
