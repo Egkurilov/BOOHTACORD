@@ -78,7 +78,9 @@ FV2-010 закрыт: stage стал full-bleed с радиусом 12 px; sourc
 
 FV2-012 закрыл новый compact rail gap из web-коммита `10a723a9`: thumbnail `50 px`, внутренний inset компенсирует выбранную рамку, footer padding `8/12 px`; baseline Flutter был `118×48 px` для выбранной карточки, целевое содержимое — `124×50 px`. Полный suite/analyzer и Android/macOS Debug builds документированы — [QA-242](../../../evidence/flutter/qa242-flutter-design-v2-compact-screen-rail-2026-10-04-001.json).
 
-Новые gaps: FV2-011 выровняет adaptive mute/gain controls, а FV2-013 — 44×44 px compact nav/member header targets, которые web зафиксировал свежим CSS.
+FV2-013 закрыл compact nav/member header targets: при ширине 390 px обе кнопки 44×44 px, wide action остаётся 48×48 px. Geometry regression до исправления фиксировал hamburger 40×48; полный suite (468), analyzer, Android/macOS Debug builds прошли — [QA-243](../../../evidence/flutter/qa243-flutter-design-v2-compact-voice-header-2026-10-04-001.json).
+
+Открытые/новые gaps: FV2-011 выровняет adaptive mute/gain controls; web-коммит `cdd10808` добавил admin member-directory typography и 44×44 compact settings header, это отдельный FV2-014 без изменений permission/actions.
 
 Закрытие: focused tests для каждой ветви отображения плюс весь voice/screen test subset; затем Android emulator и macOS/Windows runtime acceptance для доступных реальных состояний. Сетевые/media ошибки и уже открытые FE-52/59/61/69 остаются самостоятельными verification задачами, не объявляются закрытыми дизайн-переносом.
 

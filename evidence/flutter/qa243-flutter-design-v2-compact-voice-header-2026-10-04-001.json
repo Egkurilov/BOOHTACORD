@@ -1,0 +1,57 @@
+{
+  "id": "QA-243",
+  "date": "2026-10-04",
+  "task": "FE-70 / FV2-013 — Flutter Design V2 compact voice/workspace header controls",
+  "source_revision": "c60fb2df",
+  "working_tree_changes": true,
+  "summary": "Matched compact workspace navigation and member actions to the web's 44×44 px header controls while preserving desktop sizing and existing callbacks.",
+  "checks": [
+    {
+      "name": "Focused header geometry widget test",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'compact workspace header actions match web 44 px targets'",
+      "result": "PASS_AFTER_BASELINE_FAILURE",
+      "passed": 1,
+      "observation": "Before implementation the compact navigation action measured 40×48 px. At 390 px width, both navigation and member actions now measure 44×44 px. Existing wide-navigation geometry is unchanged at 48×48 px."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 468
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/workspace_screen.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android Debug APK build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is unavailable. Manual Ruby validation passed: all 39 approved requirement IDs are referenced, all 68 task IDs are unique, and no dependencies dangle."
+    },
+    {
+      "name": "Windows build, matched screenshots, and platform runtime acceptance",
+      "result": "NOT_RUN",
+      "observation": "The geometry/widget tests and Android/macOS Debug builds do not prove rendered screenshot parity or runtime behavior on Android, macOS, or Windows. The open macOS app was not restarted."
+    }
+  ],
+  "limitations": [
+    "Only button hit-area constraints changed; header labels, actions, navigation callbacks, permissions, and app state are unchanged.",
+    "FV2-011 viewer audio controls, FV2-014 admin typography/compact settings header, Windows build, and platform screenshot/runtime acceptance remain open."
+  ],
+  "status": "PASS_HEADER_WIDGET_TEST_FULL_FLUTTER_SUITE_ANALYSIS_ANDROID_AND_MACOS_DEBUG_BUILDS; WINDOWS_SCREENSHOT_RUNTIME_AND_POWERSHELL_TRACEABILITY_OPEN"
+}

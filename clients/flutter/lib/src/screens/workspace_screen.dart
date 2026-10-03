@@ -1746,9 +1746,9 @@ class _Header extends StatelessWidget {
     final compact =
         MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint;
     final compactConversation = compact && mobileConversationLayout;
-    final leadingButtonConstraints = BoxConstraints.tightFor(
-      width: compact ? 40 : 48,
-      height: 48,
+    final headerButtonConstraints = BoxConstraints.tightFor(
+      width: compact ? 44 : 48,
+      height: compact ? 44 : 48,
     );
     return SizedBox(
       key: const ValueKey('workspace-header'),
@@ -1764,7 +1764,7 @@ class _Header extends StatelessWidget {
               if (onBack != null)
                 IconButton(
                   tooltip: 'Назад',
-                  constraints: leadingButtonConstraints,
+                  constraints: headerButtonConstraints,
                   padding: EdgeInsets.zero,
                   onPressed: onBack,
                   icon: const Icon(Icons.arrow_back),
@@ -1772,7 +1772,7 @@ class _Header extends StatelessWidget {
               if (onToggleNavigation != null) ...[
                 IconButton(
                   tooltip: 'Открыть навигацию',
-                  constraints: leadingButtonConstraints,
+                  constraints: headerButtonConstraints,
                   padding: EdgeInsets.zero,
                   onPressed: onToggleNavigation,
                   icon: const Icon(Icons.menu),
@@ -1813,6 +1813,8 @@ class _Header extends StatelessWidget {
               if (onOpenMembers != null)
                 IconButton(
                   tooltip: 'Открыть участников',
+                  constraints: headerButtonConstraints,
+                  padding: EdgeInsets.zero,
                   onPressed: onOpenMembers,
                   icon: const Icon(Icons.people_outline),
                 ),
