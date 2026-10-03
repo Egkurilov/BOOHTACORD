@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import ChannelNavigation from '../channel/ChannelNavigation.vue'
+import ChannelTopologyActions from '../channel/member_topology/ChannelTopologyActions.vue'
 import { buildVoiceNavigationPresence } from '../channel/voice_navigation_presence'
 import { createVoiceRosterRealtime, createVoiceRosterReconnectGate } from '../voice/voice_roster_realtime'
 import type { TopologyChannel } from '../channel/topology_client'
@@ -30,6 +30,7 @@ import AdminPanel from '../admin/panel/AdminPanel.vue'
 import SearchLauncher from '../search/SearchLauncher.vue'
 import WorkspaceSearchPanel from './search/WorkspaceSearchPanel.vue'
 import { useMemberHeaderExpanded } from './member_header_expanded'
+import { usePermissionStore } from '../authorization/permission_store'
 const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string }>()
 const emit = defineEmits<{ sessionExpired: []; loggedOut: [] }>()
 const { activeVoiceChannel, audioSettings, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls()
@@ -44,6 +45,7 @@ const voiceRoster = createVoiceRosterRealtime(undefined, expireSession)
 const shouldReconnectVoiceRoster = createVoiceRosterReconnectGate(realtimeStore.state === 'CONNECTED')
 const { busy: logoutBusy, error: logoutError, signOut } = bindWorkspaceLogout(voiceConnection, leaveVoice, realtimeStore, () => emit('loggedOut'))
 const guildPresence = useGuildPresence()
+const permissions = usePermissionStore()
 const workspaceRealtime = createWorkspaceRealtime({ topology: topologyStore, messages: messageStore, directMessages: directMessageStore }, realtimeStore, guildPresence, voiceConnection, props.accountId, expireSession)
 watch(() => realtimeStore.state, (state) => { if (state === 'ERROR' || state === 'DISCONNECTED') guildPresence.invalidate(); if (state === 'CONNECTED' && shouldReconnectVoiceRoster()) voiceRoster.reconnect() })
 const sidebarSection = ref<'channels' | 'messages'>('channels')
@@ -79,7 +81,7 @@ function confirmScreenShare(profile: ScreenProfile): void {
 function refreshTopology(): void { void topologyStore.refresh() }
 function togglePanel(panel: 'admin' | 'audio' | 'profile' | 'search'): void { closeDrawers(); activePanel.value = activePanel.value === panel ? 'none' : panel }
 function openGuildPanel(): void { if (props.role === 'ADMINISTRATOR') togglePanel('admin') }
-onMounted(() => { void topologyStore.refresh(); void directMessageStore.refreshNavigation(); void refreshProfile(); voiceRoster.start(); workspaceRealtime.start() }); onBeforeUnmount(() => { voiceRoster.stop(); workspaceRealtime.stop() })
+onMounted(() => { permissions.start(props.accountId); void topologyStore.refresh(); void directMessageStore.refreshNavigation(); void refreshProfile(); voiceRoster.start(); workspaceRealtime.start() }); onBeforeUnmount(() => { permissions.stop(); voiceRoster.stop(); workspaceRealtime.stop() })
 </script>
 <template>
   <div class="app-frame">
@@ -94,7 +96,7 @@ onMounted(() => { void topologyStore.refresh(); void directMessageStore.refreshN
             <p v-if="topologyStore.loading" class="state" aria-live="polite">Загружаем каналы…</p>
             <p v-else-if="topologyStore.error" class="state state-error" role="alert">{{ topologyStore.error }} Войдите в аккаунт или повторите попытку.</p>
             <template v-else-if="topologyStore.topology">
-              <ChannelNavigation :active-voice-channel-id="activeVoiceChannel?.id" :selected-channel-id="selectedChannelId ?? undefined" :topology="topologyStore.topology" :voice-presence="voiceNavigationPresence" :voice-rosters="voiceRoster.channels.value" @select="selectChannel" />
+              <ChannelTopologyActions :active-voice-channel-id="activeVoiceChannel?.id" :selected-channel-id="selectedChannelId ?? undefined" :topology="topologyStore.topology" :permissions="permissions.snapshot?.permissions ?? { 'channel.text.create': false, 'channel.text.delete': false, 'channel.voice.create': false, 'channel.voice.delete': false, 'category.create': false, 'category.delete': false }" :voice-presence="voiceNavigationPresence" :voice-rosters="voiceRoster.channels.value" @select="selectChannel" @changed="refreshTopology" />
             </template>
             <p v-else class="state">Каналы пока не созданы.</p>
           </template>

@@ -15,6 +15,8 @@ describe('typed realtime payloads', () => {
     expect(parseRealtimeEvent(event('direct_message.message_deleted', { direct_message_id: id, message_id: message, revision: 3 })).kind).toBe('direct_message.message_deleted')
     expect(parseRealtimeEvent(event('channel.updated', { revision: 7 })).kind).toBe('channel.updated')
     expect(parseRealtimeEvent(event('voice.lease_revoked', { lease_id: id, reason: 'KICK' })).kind).toBe('voice.lease_revoked')
+    expect(parseRealtimeEvent(event('role.permissions.updated', { role: 'MEMBER', revision: 8 })).kind).toBe('role.permissions.updated')
+    expect(parseRealtimeEvent(event('auth.permissions.invalidated', {})).kind).toBe('auth.permissions.invalidated')
   })
 
   it('rejects malformed or content-bearing private hints', () => {
@@ -37,5 +39,12 @@ describe('typed realtime payloads', () => {
     for (const payload of [{ lease_id: id }, { lease_id: id, reason: 'UNKNOWN' }, { lease_id: id, reason: 'KICK', body: 'secret' }]) {
       expect(() => parseRealtimeEvent(event('voice.lease_revoked', payload))).toThrow('Некорректное')
     }
+  })
+
+  it('rejects malformed permission invalidation hints', () => {
+    for (const payload of [{ role: 'ADMINISTRATOR', revision: 1 }, { role: 'MEMBER', revision: 0 }, { role: 'MEMBER', revision: 1, login: 'secret' }]) {
+      expect(() => parseRealtimeEvent(event('role.permissions.updated', payload))).toThrow('Некорректное')
+    }
+    expect(() => parseRealtimeEvent(event('auth.permissions.invalidated', { user_id: id }))).toThrow('Некорректное')
   })
 })
