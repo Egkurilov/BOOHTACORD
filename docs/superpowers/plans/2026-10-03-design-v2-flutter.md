@@ -72,11 +72,13 @@
 
 Использовать существующие `ScreenReceiverDiagnostics`, `ScreenShareSetupDialog`, `VoiceViewerLayout`, `VoiceScreenSelectionRail` и voice controllers. Внешний вид статистики не должен обещать данные, которых receiver/sender API не дал; настройки качества не меняют capture contract. Не менять LiveKit lifecycle только ради раскладки и не заявлять FPS/качество без соответствующего источника/evidence.
 
-FV2-009 закрыт: responsive rail выбора стрима совпадает с production web — desktop rail/card/thumbnail `100/152×96/142×60 px`, compact `84/128×80/118×48 px`; выбор, thumbnail и accessibility semantics сохранены. Widget tests, полный suite, analyzer и Android/macOS Debug builds прошли; screenshots, Windows build и runtime acceptance остаются NOT_RUN — [QA-240](../../../evidence/flutter/qa240-flutter-design-v2-screen-rail-2026-10-03-001.json).
+FV2-009 закрыт: responsive rail выбора стрима совпадает с production web — desktop rail/card/thumbnail `100/152×96/142×60 px`, compact rail/card `84/128×80 px`; compact thumbnail/padding изменились позже вместе с web и закрыты follow-up FV2-012 — [QA-240](../../../evidence/flutter/qa240-flutter-design-v2-screen-rail-2026-10-03-001.json), [QA-242](../../../evidence/flutter/qa242-flutter-design-v2-compact-screen-rail-2026-10-04-001.json).
 
 FV2-010 закрыт: stage стал full-bleed с радиусом 12 px; source label совпадает с web («Ваш экран»/«Экран …», «ЭФИР»), включая desktop 16/40 px и compact 8/28 px, длинная подпись не заходит под viewer controls. Три focused widget tests, полный suite (467), analyzer изменённых файлов, Android/macOS Debug builds прошли. Windows, screenshots и platform runtime acceptance — NOT_RUN; LiveKit lifecycle не менялся — [QA-241](../../../evidence/flutter/qa241-flutter-design-v2-screen-stage-2026-10-04-001.json).
 
-Следующий leaf FV2-011 для FV2-003 — сверить mute/gain control с `ScreenViewerAudioControl.vue` и подобрать компактный Android layout без потери управления громкостью; не менять audio state или LiveKit.
+FV2-012 закрыл новый compact rail gap из web-коммита `10a723a9`: thumbnail `50 px`, внутренний inset компенсирует выбранную рамку, footer padding `8/12 px`; baseline Flutter был `118×48 px` для выбранной карточки, целевое содержимое — `124×50 px`. Полный suite/analyzer и Android/macOS Debug builds документированы — [QA-242](../../../evidence/flutter/qa242-flutter-design-v2-compact-screen-rail-2026-10-04-001.json).
+
+Новые gaps: FV2-011 выровняет adaptive mute/gain controls, а FV2-013 — 44×44 px compact nav/member header targets, которые web зафиксировал свежим CSS.
 
 Закрытие: focused tests для каждой ветви отображения плюс весь voice/screen test subset; затем Android emulator и macOS/Windows runtime acceptance для доступных реальных состояний. Сетевые/media ошибки и уже открытые FE-52/59/61/69 остаются самостоятельными verification задачами, не объявляются закрытыми дизайн-переносом.
 

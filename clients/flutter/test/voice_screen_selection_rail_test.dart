@@ -123,6 +123,8 @@ void main() {
       required double cardWidth,
       required double cardHeight,
       required double previewHeight,
+      required double selectedPreviewWidth,
+      required double unselectedPreviewWidth,
     }) async {
       tester.view.physicalSize = Size(width, 700);
       await tester.pumpWidget(
@@ -134,6 +136,12 @@ void main() {
                   identity: 'peer-1',
                   label: 'Алиса',
                   selected: true,
+                  thumbnail: thumbnail,
+                ),
+                VoiceScreenChoice(
+                  identity: 'peer-2',
+                  label: 'Борис',
+                  selected: false,
                   thumbnail: thumbnail,
                 ),
               ],
@@ -159,7 +167,13 @@ void main() {
         tester.getSize(
           find.byKey(const ValueKey('voice-screen-preview-peer-1')),
         ),
-        Size(cardWidth - 10, previewHeight),
+        Size(selectedPreviewWidth, previewHeight),
+      );
+      expect(
+        tester.getSize(
+          find.byKey(const ValueKey('voice-screen-preview-peer-2')),
+        ),
+        Size(unselectedPreviewWidth, previewHeight),
       );
     }
 
@@ -169,13 +183,17 @@ void main() {
       cardWidth: 152,
       cardHeight: 96,
       previewHeight: 60,
+      selectedPreviewWidth: 142,
+      unselectedPreviewWidth: 142,
     );
     await verifyAtWidth(
       width: 390,
       railHeight: 84,
       cardWidth: 128,
       cardHeight: 80,
-      previewHeight: 48,
+      previewHeight: 50,
+      selectedPreviewWidth: 124,
+      unselectedPreviewWidth: 126,
     );
   });
 
