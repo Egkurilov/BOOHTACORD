@@ -32,4 +32,16 @@ describe('channel navigation counters', () => {
     expect(html).toContain('aria-label="Упоминаний: 2"')
     expect(html.match(/Упоминаний:/g)).toHaveLength(1)
   })
+
+  it('uses the two-letter handoff initials for connected voice members without avatars', async () => {
+    const html = await renderToString(createSSRApp(ChannelNavigation, {
+      activeVoiceChannelId: 'voice-1', selectedChannelId: 'text-1',
+      voicePresence: { channelId: 'voice-1', memberCount: 1, members: [{ id: 'user-2', name: 'Alex', microphoneMuted: false, microphoneUnavailable: false, speaking: false, isSpeaking: false, screenSharing: false, self: false }] },
+      topology: { revision: 1, categories: [{ id: 'cat-1', name: 'ОБЩЕНИЕ', position: 0, channels: [
+        { id: 'voice-1', name: 'Общий', kind: 'VOICE', position: 0, admissionClosed: false },
+      ] }] },
+    }))
+    expect(html).toMatch(/class="voice-member-avatar"[^>]*>[\s\S]*?AL[\s\S]*?<\/span>/)
+    expect(html).toContain('M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14')
+  })
 })

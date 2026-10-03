@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ChannelTopology, TopologyChannel } from './topology_client'
 import { avatarBackground } from '../design/avatar_color'
+import { avatarInitials } from '../design/avatar_initials'
 import { nextTick, ref, watch } from 'vue'
 import { useAuthorDirectory } from '../identity/author_directory'
 import VoiceParticipantStatus from '../voice/VoiceParticipantStatus.vue'
@@ -39,7 +40,6 @@ watch(() => props.voicePresence?.members.map((member) => member.id) ?? [], (ids)
 
 function isConnectedVoice(channel: TopologyChannel): boolean { return channel.kind === 'VOICE' && channel.id === props.activeVoiceChannelId }
 function rosterFor(channelId: string): RoomRoster | undefined { return props.voiceRosters?.find((room) => room.channelId === channelId) }
-function initial(name: string): string { return Array.from(name.trim())[0]?.toLocaleUpperCase('ru-RU') || 'У' }
 function canCreate(): boolean { return Boolean(props.permissions && (props.permissions['category.create'] || props.permissions['channel.text.create'] || props.permissions['channel.voice.create'])) }
 function openCategoryMenu(event: MouseEvent, category: ChannelTopology['categories'][number]): void {
   if (!props.permissions) return
@@ -81,7 +81,7 @@ async function renameFromMenu(): Promise<void> {
         >
           <span class="channel-icon" aria-hidden="true">
             <template v-if="channel.kind === 'TEXT'">#</template>
-            <svg v-else viewBox="0 0 24 24"><path d="M3 9v6h4l5 4V5L7 9H3Zm12 1a4 4 0 0 1 0 4m2-7a8 8 0 0 1 0 10" /></svg>
+            <svg v-else viewBox="0 0 24 24"><path d="m11 5-6 4H2v6h3l6 4V5ZM15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14" /></svg>
           </span>
           <span class="channel-name">{{ channel.name }}</span>
           <span v-if="channel.kind === 'TEXT' && channel.unreadCount" class="channel-state" :aria-label="`Непрочитанных сообщений: ${channel.unreadCount}`">{{ channel.unreadCount }}</span>
@@ -91,7 +91,7 @@ async function renameFromMenu(): Promise<void> {
         </button><button v-if="props.permissions && channelActions(props.permissions, channel.kind).delete" class="channel-actions-button" type="button" :aria-label="`Действия с каналом ${channel.name}`" @click.stop="emit('deleteChannel', channel)">⋯</button></div>
         <ul v-if="props.voicePresence && props.voicePresence.channelId === channel.id" class="voice-member-list" aria-label="Участники подключённого голосового канала" data-testid="voice-member-rows">
           <li v-for="member in props.voicePresence.members" :key="member.id" class="voice-member-row" :class="{ 'is-speaking': member.isSpeaking }">
-            <span class="voice-member-avatar" :style="{ backgroundColor: avatarBackground(member.id) }" aria-hidden="true"><img v-if="authors.avatarUrl(member.id)" :src="authors.avatarUrl(member.id)" alt=""><template v-else>{{ initial(member.name) }}</template></span>
+            <span class="voice-member-avatar" :style="{ backgroundColor: avatarBackground(member.id) }" aria-hidden="true"><img v-if="authors.avatarUrl(member.id)" :src="authors.avatarUrl(member.id)" alt=""><template v-else>{{ avatarInitials(member.name) }}</template></span>
             <span class="voice-member-name">{{ member.name }}</span>
             <span v-if="member.screenSharing" class="voice-member-share" role="img" aria-label="Показывает экран" title="Показывает экран"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4zM9 20h6m-3-4v4" /></svg></span>
             <VoiceParticipantStatus compact :microphone-muted="member.microphoneMuted" :microphone-unavailable="member.microphoneUnavailable" :speaking="member.speaking" />

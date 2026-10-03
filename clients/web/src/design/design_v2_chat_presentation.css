@@ -11,7 +11,9 @@
 .text-conversation .message-avatar,
 .text-conversation .message-avatar-spacer { width: 36px; flex-basis: 36px; }
 .text-conversation .message-avatar { height: 36px; font-size: 14px; }
-.channel-navigation-actions { padding-top: 1px; }
+.channel-navigation-actions { padding-top: 1px; padding-left: 8px; }
+.channel-navigation-actions > span { font-weight: 600; letter-spacing: .6px; text-transform: uppercase; }
+.channel-navigation .channel-member-count { display: none; }
 .channel-category:first-of-type h2 { padding-top: 8px; }
 .channel-category + .channel-category { margin-top: 4px; }
 .channel-row { position: relative; }

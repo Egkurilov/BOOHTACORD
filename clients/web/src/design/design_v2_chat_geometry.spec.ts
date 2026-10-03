@@ -7,6 +7,7 @@ const responsive = readFileSync(new URL('./responsive_shell.css', import.meta.ur
 const conversation = readFileSync(new URL('./conversation.css', import.meta.url), 'utf8')
 const v2Chat = readFileSync(new URL('./design_v2_chat.css', import.meta.url), 'utf8')
 const chatMedia = readFileSync(new URL('./design_v2_chat_media.css', import.meta.url), 'utf8')
+const presentation = readFileSync(new URL('./design_v2_chat_presentation.css', import.meta.url), 'utf8')
 
 function pixelToken(name: string): number {
   return Number(tokens.match(new RegExp(`--gc-${name}:\\s*(\\d+)px;`))?.[1])
@@ -41,5 +42,11 @@ describe('Design V2 chat reference geometry', () => {
     expect(v2Chat).toContain('.conversation-header { height: 56px; min-height: 56px; flex-basis: 56px; }')
     expect(v2Chat).toContain('.text-conversation .composer-wrap { padding: 8px; }')
     expect(v2Chat).toContain('.composer-helper { position: absolute;')
+  })
+
+  it('uses the handoff section label in channel navigation', () => {
+    expect(presentation).toContain('.channel-navigation-actions { padding-top: 1px; padding-left: 8px; }')
+    expect(presentation).toContain('.channel-navigation-actions > span { font-weight: 600; letter-spacing: .6px; text-transform: uppercase; }')
+    expect(presentation).toContain('.channel-navigation .channel-member-count { display: none; }')
   })
 })
