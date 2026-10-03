@@ -1,42 +1,45 @@
 import 'package:flutter/material.dart';
 
 abstract final class GcColors {
-  static const canvas = Color(0xFF0E1117);
-  static const sidebar = Color(0xFF141922);
-  static const content = Color(0xFF151A23);
-  static const aside = Color(0xFF141922);
-  static const surface = Color(0xFF1D2430);
-  static const input = Color(0xFF1D2430);
-  static const raised = Color(0xFF242D3B);
-  static const hover = Color(0xFF252E3D);
-  static const selected = Color(0xFF293345);
-  static const text = Color(0xFFF1F4F9);
-  static const textSecondary = Color(0xFFB7C0D0);
-  static const muted = Color(0xFF929EB2);
+  static const canvas = Color(0xFF0B0D12);
+  static const sidebar = Color(0xFF11131A);
+  static const content = Color(0xFF171A22);
+  static const aside = Color(0xFF11131A);
+  static const surface = Color(0xFF1A1D26);
+  static const input = Color(0xFF1A1D26);
+  static const raised = Color(0xFF222631);
+  static const hover = Color(0xFF272C39);
+  static const selected = Color(0xFF2B3040);
+  static const text = Color(0xFFF4F5FA);
+  static const textSecondary = Color(0xFFB6BDCE);
+  static const muted = Color(0xFFA0A9BE);
   static const disabled = Color(0xFF6F7B8F);
-  static const border = Color(0xFF242D3B);
-  static const borderSubtle = Color(0xFF242D3B);
-  static const control = Color(0xFF6D7C94);
-  static const accent = Color(0xFF5C5FE8);
-  static const accentHover = Color(0xFF5558DB);
+  static const border = Color(0xFF2A2F3A);
+  static const borderSubtle = Color(0xFF2A2F3A);
+  static const control = Color(0xFF707B91);
+  static const accent = Color(0xFF5865F2);
+  static const accentHover = Color(0xFF4752C4);
   static const accentPressed = Color(0xFF484BBF);
-  static const accentText = Color(0xFFB7BAFF);
+  static const brandAccent = Color(0xFF7C3AED);
+  static const accentText = Color(0xFFACAEFF);
   static const onAccent = Color(0xFFFFFFFF);
-  static const success = Color(0xFF58D5A2);
+  static const success = Color(0xFF22C55E);
   static const successBackground = Color(0xFF19352F);
-  static const warning = Color(0xFFF4BD62);
+  static const warning = Color(0xFFF59E0B);
   static const warningBackground = Color(0xFF3D3020);
-  static const danger = Color(0xFFFF9199);
-  static const dangerBackground = Color(0xFF422830);
-  static const dangerSolid = Color(0xFFB8273E);
+  static const danger = Color(0xFFEF4444);
+  static const dangerBackground = Color(0xFF2B1116);
+  static const dangerSolid = Color(0xFFB91C1C);
   static const onDanger = Color(0xFFFFFFFF);
+  static const voice = Color(0xFF06B6D4);
+  static const stream = Color(0xFFEC4899);
   static const streamCanvas = Color(0xFF090B10);
-  static const overlay = Color(0xA8000000);
-  static const focus = Color(0xFFADB8FF);
-  static const avatarBlue = Color(0xFF365ACA);
-  static const avatarGreen = Color(0xFF137C58);
-  static const avatarViolet = Color(0xFF6D3DBE);
-  static const avatarOrange = Color(0xFFA64C18);
+  static const overlay = Color(0xC204060A);
+  static const focus = Color(0xFFB4A4FF);
+  static const avatarBlue = Color(0xFF17464A);
+  static const avatarGreen = Color(0xFF553521);
+  static const avatarViolet = Color(0xFF393059);
+  static const avatarOrange = Color(0xFF423657);
   static const avatarGray = Color(0xFF556176);
 }
 
@@ -45,24 +48,29 @@ abstract final class GcLayout {
   static const mediumBreakpoint = 1280.0;
   static const wideBreakpoint = 1440.0;
 
-  static const navSmall = 256.0;
-  static const navMedium = 264.0;
+  static const navSmall = 280.0;
+  static const navMedium = 280.0;
   static const navWide = 280.0;
-  static const asideMedium = 240.0;
+  static const asideMedium = 248.0;
   static const asideWide = 248.0;
   static const frameInset = 16.0;
+  static const frameMedium = 0.0;
   static const frameWide = 0.0;
-  static const shellRadius = 14.0;
-  static const headerHeight = 72.0;
-  static const channelRowHeight = 42.0;
+  static const shellRadius = 16.0;
+  static const headerHeight = 64.0;
+  static const headerMobileHeight = 56.0;
+  static const channelRowHeight = 36.0;
   static const voiceMemberRowHeight = 24.0;
-  static const userFooterHeight = 68.0;
-  static const voiceDockHeight = 116.0;
+  static const userFooterHeight = 64.0;
+  static const voiceDockHeight = 112.0;
   static const composerMinHeight = 56.0;
   static const composerMaxHeight = 180.0;
   static const controlSmall = 32.0;
-  static const control = 40.0;
+  static const control = 36.0;
   static const controlLarge = 48.0;
+  static const fieldHeight = 44.0;
+  static const touchTargetSize = 44.0;
+  static const authTabHeight = 40.0;
   static const iconSize = 20.0;
   static const iconLarge = 24.0;
 }
@@ -83,9 +91,9 @@ abstract final class GcSpacing {
 abstract final class GcRadii {
   static const xs = 4.0;
   static const sm = 6.0;
-  static const md = 10.0;
-  static const lg = 14.0;
-  static const shell = 20.0;
+  static const md = 8.0;
+  static const lg = 12.0;
+  static const shell = 16.0;
   static const full = 999.0;
 }
 
@@ -172,6 +180,7 @@ ThemeData guildTheme() {
       );
   return ThemeData(
     brightness: Brightness.dark,
+    materialTapTargetSize: MaterialTapTargetSize.padded,
     colorScheme: scheme,
     scaffoldBackgroundColor: GcColors.canvas,
     fontFamily: GcTypography.fontFamily,

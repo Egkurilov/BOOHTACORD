@@ -6190,7 +6190,7 @@ class _ProfilePanelToolbar extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: inset),
       child: SizedBox(
-        height: GcLayout.control,
+        height: GcLayout.controlLarge,
         child: Row(
           children: [
             if (onBack != null)

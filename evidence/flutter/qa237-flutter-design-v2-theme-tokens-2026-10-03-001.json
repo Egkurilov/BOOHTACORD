@@ -1,0 +1,65 @@
+{
+  "id": "QA-237",
+  "date": "2026-10-03",
+  "task": "FE-70 / FV2-001 — Flutter Design V2 theme tokens and shared controls",
+  "source_revision": "59f1b9df",
+  "working_tree_changes": true,
+  "summary": "Aligned Flutter semantic palette and shared layout/radius tokens with the current Design V2 web CSS contract while preserving platform touch-target behavior and auth tab geometry.",
+  "checks": [
+    {
+      "name": "Test-first canonical token assertions",
+      "command": "cd clients/flutter && flutter test --no-pub test/theme_tokens_test.dart",
+      "result": "PASS",
+      "passed": 5,
+      "observation": "The new canonical color and layout assertions failed against the old Flutter theme, then passed after the token update."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test",
+      "result": "PASS",
+      "passed": 461
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze lib/src/theme.dart lib/src/screens/auth_screen.dart lib/src/screens/workspace_screen.dart test/theme_tokens_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Android Debug APK build",
+      "command": "cd clients/flutter && flutter build apk --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk",
+      "observation": "Gradle warned that the installed Android tooling understands SDK XML only through version 3 while it encountered version 4; the build succeeded."
+    },
+    {
+      "name": "Repository-wide analyzer",
+      "command": "cd clients/flutter && flutter analyze",
+      "result": "WARN_EXISTING_INFO",
+      "observation": "10 info diagnostics remain in unrelated admin/topology/test files; the changed-file analyzer is clean."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core (`pwsh`) is not installed on this host. The three task requirement IDs were cross-checked against the committed approved-requirement index; full verifier still needs a PowerShell runner."
+    },
+    {
+      "name": "Windows target build",
+      "result": "NOT_RUN",
+      "observation": "The current build host is macOS; run Windows target/CI verification in FV2-006."
+    }
+  ],
+  "limitations": [
+    "This verifies canonical tokens and compilation, not matched rendered geometry for R01–R30.",
+    "No raster screenshots or design-package demo assets were generated or included.",
+    "Pre-existing user changes to clients/flutter/pubspec.lock and the vendored flutter_webrtc Android build area were left untouched."
+  ],
+  "status": "PASS_TOKEN_TESTS_FULL_FLUTTER_SUITE_CHANGED_FILE_ANALYSIS_ANDROID_AND_MACOS_DEBUG_BUILDS; VISUAL_SCREEN_PARITY_AND_WINDOWS_BUILD_OPEN"
+}

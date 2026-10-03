@@ -472,7 +472,7 @@ class _AuthenticationModeTab extends StatelessWidget {
     role: SemanticsRole.tab,
     onTap: onPressed,
     child: SizedBox(
-      height: GcLayout.control,
+      height: GcLayout.authTabHeight,
       child: Material(
         color: selected ? GcColors.raised : Colors.transparent,
         borderRadius: BorderRadius.circular(GcRadii.sm),

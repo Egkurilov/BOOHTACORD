@@ -423,14 +423,16 @@ both deployed web and Flutter viewers.
 
 ### 1. Design foundation and workspace shell — in progress
 
-- The Flutter theme now mirrors the web semantic palette/contrast, Material
-  ColorScheme surfaces, full typography and line-height scale, radii, icon and
-  control sizes, layout tokens, motion/easing and popup/shell shadows; tests pin
-  those values to the CSS contract [QA-97](../evidence/flutter/qa97-flutter-web-design-token-parity-2026-09-29-001.json).
-  The missing 24 px voice-member row token is now explicit in CSS and Flutter,
-  and the web stream-rail fade uses a declared semantic surface color instead
-  of an undefined custom property. Matched screenshot/device validation remains
-  open.
+- QA-97 records parity with the earlier web token set, before Design V2 changed
+  `clients/web/src/design/tokens.css`. The 2026-10-03 Flutter V2 leaf now aligns
+  the semantic palette, avatar/voice/stream colors, radii, layout dimensions,
+  overlay and focus colors to the current CSS contract; tests assert the exact
+  values and Android/macOS Debug builds pass —
+  [QA-237](../evidence/flutter/qa237-flutter-design-v2-theme-tokens-2026-10-03-001.json).
+  Auth tabs retain their web-specific 40 px height and padded Material hit
+  targets remain available. The token foundation is updated, but shell,
+  per-screen geometry and matched visual/runtime acceptance for R01–R30 remain
+  open under FV2-002…006. The earlier QA-97 record remains historical evidence.
 - Match shell columns and frame geometry at wide, medium and compact widths.
 - Implement web-equivalent responsive navigation/member/search drawers,
   scrim, escape/close behavior, focus return and keyboard reachability. Navigation
