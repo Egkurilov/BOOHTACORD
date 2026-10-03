@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../app_state.dart';
-import '../../../models.dart';
-import '../../authorization/permissions/model.dart';
+import '../../app_state.dart';
+import '../../features/authorization/permissions/model.dart';
+import '../../models.dart';
 import 'create_dialog.dart';
 import 'delete_actions.dart';
 

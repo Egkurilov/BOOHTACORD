@@ -12,6 +12,8 @@ Map<String, bool> values([bool deletes = false]) => {
 };
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('loads effective permissions and saves a complete member policy', () async {
     final requests = <http.Request>[];
     final client = ApiClient(client: MockClient((request) async {

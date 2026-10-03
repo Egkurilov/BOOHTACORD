@@ -6,6 +6,8 @@ import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('member topology mutations preserve request id and confirmations', () async {
     final requests = <http.Request>[]; const command = '11111111-1111-4111-8111-111111111111';
     final client = ApiClient(client: MockClient((request) async {

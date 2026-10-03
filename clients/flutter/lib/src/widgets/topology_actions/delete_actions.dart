@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../app_state.dart';
-import '../../../core/http/api_failure.dart';
-import '../../../models.dart';
-import '../../authorization/permissions/model.dart';
+import '../../app_state.dart';
+import '../../core/http/api_failure.dart';
+import '../../features/authorization/permissions/model.dart';
+import '../../models.dart';
 
 final _retryKeys = <String, String>{};
 bool canDeleteCategory(AppState state, ChannelCategory category) => category.channels.isEmpty && state.permissions.allows(GuildPermission.categoryDelete);
