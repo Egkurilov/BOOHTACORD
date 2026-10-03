@@ -37,6 +37,8 @@ import (
 	"voice-platform/backend/internal/channel/reorder_channels"
 	channelreorderapi "voice-platform/backend/internal/channel/reorder_channels/api"
 	channelreorderpostgres "voice-platform/backend/internal/channel/reorder_channels/postgres"
+	topologycommandapi "voice-platform/backend/internal/channel/topology_command/api"
+	topologycommandpostgres "voice-platform/backend/internal/channel/topology_command/postgres"
 	"voice-platform/backend/internal/chat/advance_text_channel_read_cursor"
 	textcursorapi "voice-platform/backend/internal/chat/advance_text_channel_read_cursor/api"
 	textcursorpostgres "voice-platform/backend/internal/chat/advance_text_channel_read_cursor/postgres"
@@ -70,8 +72,10 @@ func ConfigureChannelRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 	archiveHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(archiveapi.NewHandler(textArchive)))
 	voiceAdmission := closevoiceadmission.New(closepostgres.New(closepostgres.NewPoolDatabase(database)))
 	voiceAdmissionHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(closeapi.NewHandler(voiceAdmission)))
+	commandReader := topologycommandpostgres.New(topologycommandpostgres.NewPoolDatabase(database))
 	mux.Handle("GET /api/v1/channels", topologyHandler)
 	mux.Handle("PUT /api/v1/channels/{channelID}/read-cursor", textCursorHandler)
+	mux.Handle("GET /api/v1/topology-commands/{clientRequestID}", sessionapi.Require(sessions)(topologycommandapi.NewHandler(commandReader)))
 	registerTopologyMutationRoutes(mux, events, topologyMutationHandlers{
 		createCategory:      categoryHandler,
 		reorderCategories:   reorderHandler,
