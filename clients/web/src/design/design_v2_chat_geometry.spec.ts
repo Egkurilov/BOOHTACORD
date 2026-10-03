@@ -6,6 +6,7 @@ const shell = readFileSync(new URL('./shell.css', import.meta.url), 'utf8')
 const responsive = readFileSync(new URL('./responsive_shell.css', import.meta.url), 'utf8')
 const conversation = readFileSync(new URL('./conversation.css', import.meta.url), 'utf8')
 const v2Chat = readFileSync(new URL('./design_v2_chat.css', import.meta.url), 'utf8')
+const chatMedia = readFileSync(new URL('./design_v2_chat_media.css', import.meta.url), 'utf8')
 
 function pixelToken(name: string): number {
   return Number(tokens.match(new RegExp(`--gc-${name}:\\s*(\\d+)px;`))?.[1])
@@ -30,6 +31,9 @@ describe('Design V2 chat reference geometry', () => {
     expect(conversation).toContain('.message-list')
     expect(conversation).toContain('.composer-wrap')
     expect(conversation).toContain('.attachment-card__preview')
+    expect(chatMedia).toContain('.attachment-card--image')
+    expect(chatMedia).toContain('width: min(100%, 440px)')
+    expect(chatMedia).toContain('height: 200px')
     expect(pixelToken('layout-header')).toBe(64)
     expect(v2Chat).toContain('.text-conversation .composer-wrap { padding: 8px 24px 16px; }')
     expect(v2Chat).toContain('.attachment-preview { max-width: min(100%, 440px); max-height: 200px; }')

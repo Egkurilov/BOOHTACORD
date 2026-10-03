@@ -23,7 +23,7 @@ function byteLabel(sizeBytes: number): string {
 
 <template>
   <li class="attachment-card-item">
-    <div class="attachment-card">
+    <div class="attachment-card" :class="{ 'attachment-card--image': showPreview && !failedPreview }">
       <ProtectedImageViewer
         v-if="showPreview"
         :name="props.attachment.originalName"

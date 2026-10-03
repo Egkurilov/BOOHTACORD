@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ChannelTopologyActions from '../channel/member_topology/ChannelTopologyActions.vue'
 import { buildVoiceNavigationPresence } from '../channel/voice_navigation_presence'
 import { createVoiceRosterRealtime, createVoiceRosterReconnectGate } from '../voice/voice_roster_realtime'
@@ -39,6 +39,7 @@ const voiceRoster = createVoiceRosterRealtime(undefined, expireSession)
 const shouldReconnectVoiceRoster = createVoiceRosterReconnectGate(realtimeStore.state === 'CONNECTED')
 const { busy: logoutBusy, error: logoutError, signOut } = bindWorkspaceLogout(voiceConnection, leaveVoice, realtimeStore, () => emit('loggedOut'))
 const guildPresence = useGuildPresence()
+const guildMemberCount = ref<number | null>(null)
 const permissions = usePermissionStore()
 const workspaceRealtime = createWorkspaceRealtime({ topology: topologyStore, messages: messageStore, directMessages: directMessageStore }, realtimeStore, guildPresence, voiceConnection, props.accountId, expireSession)
 watch(() => realtimeStore.state, (state) => { if (state === 'ERROR' || state === 'DISCONNECTED') guildPresence.invalidate(); if (state === 'CONNECTED' && shouldReconnectVoiceRoster()) voiceRoster.reconnect() })
@@ -54,7 +55,7 @@ onMounted(() => { permissions.start(props.accountId); void topologyStore.refresh
     <a class="gc-sr-only" href="#main-region">Перейти к содержимому</a>
       <div class="gc-shell" :class="{ 'no-aside': (activePanel === 'search' && voiceStageWide) || (activePanel !== 'search' && (voiceStageWide || selectedDirectMessage || activePanel !== 'none')), 'search-active': activePanel === 'search', 'voice-stage-wide': voiceStageWide, 'members-collapsed': membersOpen && !voiceStageWide && !selectedDirectMessage && activePanel === 'none' }" data-testid="app-shell">
       <aside id="nav-sidebar" class="sidebar" :class="{ 'is-open': navOpen }" :role="modalDrawer === 'nav' ? 'dialog' : undefined" :aria-modal="modalDrawer === 'nav' ? 'true' : undefined" aria-label="Навигация гильдии" data-testid="nav-sidebar">
-        <button class="guild-header" type="button" :aria-expanded="activePanel === 'admin'" @click="openGuildPanel"><span class="guild-mark" aria-hidden="true">G</span><span id="app-title">Моя гильдия</span></button>
+        <button class="guild-header" type="button" :aria-expanded="activePanel === 'admin'" @click="openGuildPanel"><img class="guild-mark" src="/brand.png" alt=""><span class="guild-header-copy"><span id="app-title">Моя гильдия</span><small v-if="guildMemberCount !== null" class="guild-member-count">{{ guildMemberCount }} {{ guildMemberCount === 1 ? 'участник' : guildMemberCount < 5 ? 'участника' : 'участников' }}</small></span><span class="guild-chevron" aria-hidden="true">⌄</span></button>
         <div class="nav-drawer" tabindex="-1">
           <SearchLauncher :active="activePanel === 'search'" @open="togglePanel('search')" @close="activePanel = 'none'" />
           <WorkspaceSidebarTabs class="sidebar-tabs" :active="sidebarSection" @select="sidebarSection = $event" />
@@ -78,10 +79,10 @@ onMounted(() => { permissions.start(props.accountId); void topologyStore.refresh
           />
           </div>
         </div>
-        <VoiceDock class="mobile-voice-dock" :activation-mode="voiceActivation.mode" :channel="activeVoiceChannel" :active-session="voiceConnection.active !== null" :error="voiceConnection.error" :deafen-changing="voiceConnection.deafenChanging" :deafened="voiceConnection.deafened"
+        <VoiceDock class="mobile-voice-dock" :activation-mode="voiceActivation.mode" :channel="activeVoiceChannel" :participant-count="voiceConnection.voiceVolumeParticipants.length + 1" :active-session="voiceConnection.active !== null" :error="voiceConnection.error" :deafen-changing="voiceConnection.deafenChanging" :deafened="voiceConnection.deafened"
           :microphone-muted="voiceConnection.microphoneMuted" :microphone-permission-denied="voiceConnection.microphonePermissionDenied" :screen-share-state="voiceConnection.screenState" :connection-quality="voiceConnection.connectionQuality" :ping-ms="voiceConnection.pingMs" :state="voiceConnection.state" @leave="leaveVoice" @start-screen="openScreenShareSetup" @stop-screen="voiceConnection.stopScreen"
           @toggle-deafen="voiceConnection.toggleDeafen" @toggle-microphone="voiceConnection.toggleMicrophone" />
-        <WorkspaceUserFooter :role="props.role" :display-name="profile?.display_name" :avatar-u-r-l="profile?.avatar_url" @open-profile="togglePanel('profile')" @open-settings="togglePanel('audio')" />
+        <WorkspaceUserFooter :role="props.role" :display-name="profile?.display_name" :avatar-u-r-l="profile?.avatar_url" :account-i-d="profile?.account_id" @open-profile="togglePanel('profile')" @open-settings="togglePanel('audio')" />
       </aside>
       <main id="main-region" class="main" data-testid="main-region">
         <WorkspaceMain :account-id="props.accountId" :active-voice-channel="activeVoiceChannel" :panel="activePanel === 'search' ? 'none' : activePanel" :channel="selectedChannel" :direct-message="selectedDirectMessage" :join-voice="joinVoice" :leave-voice="leaveVoice" :activation-mode="voiceActivation.mode" :start-screen="openScreenShareSetup" :selected-screen-profile="selectedScreenProfile"
@@ -98,7 +99,7 @@ onMounted(() => { permissions.start(props.accountId); void topologyStore.refresh
           </template>
         </WorkspaceMain>
       </main>
-      <WorkspaceMembersPanel v-if="!selectedDirectMessage && activePanel === 'none'" :open="membersOpen" :active-voice-channel="activeVoiceChannel" :selected-voice-channel="selectedChannel?.kind === 'VOICE' ? selectedChannel : null" :participants="voiceConnection.voiceVolumeParticipants" :presence-resolver="guildPresence.resolve" :role="props.role" :account-i-d="profile?.account_id" :self-name="profile?.display_name ?? null" :self-microphone-muted="voiceConnection.microphoneMuted" :self-microphone-unavailable="voiceConnection.microphonePermissionDenied" :modal="modalDrawer === 'members'" @open-d-m="openDirectMessageFromMember" @set-volume="setParticipantVolume" />
+      <WorkspaceMembersPanel v-if="!selectedDirectMessage && activePanel === 'none'" :open="membersOpen" :active-voice-channel="activeVoiceChannel" :selected-voice-channel="selectedChannel?.kind === 'VOICE' ? selectedChannel : null" :participants="voiceConnection.voiceVolumeParticipants" :presence-resolver="guildPresence.resolve" :role="props.role" :account-i-d="profile?.account_id" :self-name="profile?.display_name ?? null" :self-microphone-muted="voiceConnection.microphoneMuted" :self-microphone-unavailable="voiceConnection.microphonePermissionDenied" :modal="modalDrawer === 'members'" @member-count="guildMemberCount = $event" @open-d-m="openDirectMessageFromMember" @set-volume="setParticipantVolume" />
       <aside v-else-if="activePanel === 'search'" id="search-aside-panel" class="members search-aside" :class="{ 'is-open': activePanel === 'search' }" :role="modalDrawer === 'search' ? 'dialog' : undefined" :aria-modal="modalDrawer === 'search' ? 'true' : undefined" aria-label="Поиск сообщений" tabindex="-1" data-testid="search-aside-panel"><WorkspaceSearchPanel @open-channel="selectChannel" @open-direct-message="selectDirectMessage" @close="activePanel = 'none'" /></aside>
       <button v-if="navOpen || membersOpen || activePanel === 'search'" class="drawer-scrim" type="button" aria-label="Закрыть навигацию и участников" @click="closeDrawers(); activePanel = 'none'" />
     </div>

@@ -7,10 +7,15 @@ function source(path: string): string {
 }
 
 describe('GuildChat reference fidelity', () => {
+  it('names the active channel in the message composer', () => {
+    expect(source('../conversation/TextConversation.vue')).toContain(':placeholder="`Написать в #${channelName}`"')
+  })
   it('uses the reference single-guild label and mark in the workspace header', () => {
     const app = source('../workspace/WorkspaceApp.vue')
-    expect(app).toContain('<span class="guild-mark" aria-hidden="true">G</span>')
+    expect(app).toContain('<img class="guild-mark" src="/brand.png" alt="">')
     expect(app).toContain('<span id="app-title">Моя гильдия</span>')
+    expect(app).toContain('guild-member-count')
+    expect(app).toContain('@member-count="guildMemberCount = $event"')
   })
 
   it('uses the reference desktop columns and compact drawer instead of a squeezed roster column', () => {

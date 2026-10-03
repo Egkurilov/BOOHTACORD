@@ -19,6 +19,7 @@ const props = withDefaults(defineProps<{
   screenShareState?: ScreenShareState
   connectionQuality?: VoiceConnectionQuality
   pingMs?: number | null
+  participantCount?: number
   state: VoiceConnectionState
 }>(), { screenShareState: 'IDLE', connectionQuality: 'UNKNOWN', pingMs: null })
 const emit = defineEmits<{ leave: []; startScreen: []; stopScreen: []; toggleDeafen: []; toggleMicrophone: [] }>()
@@ -38,7 +39,7 @@ const status = computed(() => {
   if (props.state === 'JOINING') return 'Подключаемся к голосовому каналу'
   if (props.state === 'RECONNECTING') return 'Восстанавливаем голосовое соединение'
   if (props.state === 'LEAVING') return 'Завершаем голосовое подключение'
-  if (props.channel) return 'В голосовом канале'
+  if (props.channel) return connected.value ? 'Голос подключён' : 'В голосовом канале'
   return props.activeSession ? 'Голос подключён · канал не отображается' : 'Голос не подключён'
 })
 </script>
@@ -47,7 +48,7 @@ const status = computed(() => {
   <section class="voice-dock" :class="{ connected, 'mobile-visible': Boolean(channel || activeSession || state !== 'IDLE') }" aria-label="Состояние голосового подключения" data-testid="voice-dock">
     <div class="voice-dock-header">
       <span class="status-dot" :class="{ connected }" aria-hidden="true"></span>
-      <p class="voice-status" role="status" aria-atomic="true">{{ status }}<span v-if="channel" class="voice-status-channel"> · {{ channel.name }}</span></p>
+      <div class="voice-dock-copy"><p class="voice-status" role="status" aria-atomic="true">{{ status }}</p><p v-if="channel && connected" class="voice-dock-subtitle">{{ channel.name }}<template v-if="participantCount"> · {{ participantCount }} {{ participantCount === 1 ? 'участник' : participantCount < 5 ? 'участника' : 'участников' }}</template></p></div>
       <span v-if="connected" class="voice-quality" :class="`voice-quality--${connectionQuality.toLowerCase()}`" role="img" :aria-label="connectionQualityDescription" :title="connectionQualityDescription">
         <svg class="voice-quality-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 13h3v5H2zM7 9h3v9H7zM12 5h3v13h-3zM17 1h2v17h-2z" /></svg>
         <span>{{ connectionPingLabel }}</span>
@@ -60,7 +61,7 @@ const status = computed(() => {
       <button v-if="channel" class="voice-icon-button" type="button" :aria-label="deafened ? 'Включить удалённый звук' : 'Выключить удалённый звук'" :aria-pressed="deafened" :disabled="deafenChanging || state === 'LEAVING'" :title="deafened ? 'Включить удалённый звук' : 'Выключить удалённый звук'" @click="emit('toggleDeafen')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4ZM16 9.5a4 4 0 0 1 0 5M18.5 7a7 7 0 0 1 0 10" /></svg></button>
       <button v-if="channel" class="voice-icon-button" type="button" :aria-label="screenShareState === 'SHARING' ? 'Остановить демонстрацию экрана' : screenCaptureAvailable ? 'Начать демонстрацию экрана' : captureUnavailableMessage" :aria-pressed="screenShareState === 'SHARING'" :disabled="screenShareBusy || state === 'JOINING' || state === 'RECONNECTING' || state === 'LEAVING' || (screenShareState !== 'SHARING' && !screenCaptureAvailable)" :title="screenShareState === 'SHARING' ? 'Остановить демонстрацию экрана' : screenCaptureAvailable ? 'Начать демонстрацию экрана' : captureUnavailableMessage" @click="screenShareState === 'SHARING' ? emit('stopScreen') : emit('startScreen')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path v-if="screenShareState === 'SHARING'" d="M4 4h16v12H4zM8 20h8M12 16v4M9 9l6 6m0-6-6 6" /><path v-else d="M4 4h16v12H4zM8 20h8M12 16v4M12 7v6M9 10l3-3 3 3" /></svg></button>
       <button class="voice-icon-button voice-stream-alert-toggle" type="button" :aria-label="streamSoundEnabled ? 'Звук начала трансляций включён' : 'Звук начала трансляций выключен'" :aria-pressed="streamSoundEnabled" :title="streamSoundEnabled ? 'Выключить сигнал новых трансляций' : 'Включить сигнал новых трансляций'" @click="toggleStreamSound"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M4 3l16 18" v-if="!streamSoundEnabled" /><path v-else d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg></button>
-      <button class="voice-icon-button voice-icon-button--danger" type="button" aria-label="Выйти из голосового канала" :disabled="state === 'LEAVING'" :title="state === 'LEAVING' ? 'Выходим…' : 'Выйти из голосового канала'" @click="emit('leave')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17H5V7h4M15 7l4 5-4 5M19 12H9" /></svg></button>
+      <button class="voice-icon-button voice-icon-button--danger" type="button" aria-label="Выйти из голосового канала" :disabled="state === 'LEAVING'" :title="state === 'LEAVING' ? 'Выходим…' : 'Выйти из голосового канала'" @click="emit('leave')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15c5-5 13-5 18 0l-2 4-4-2v-3M9 14v3l-4 2-2-4Z" /></svg></button>
     </div>
   </section>
 </template>

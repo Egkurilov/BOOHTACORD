@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 
 import type { TextMessage, TextMessageAttachment } from './message_client'
 import { avatarFallbackStyle } from './avatar_fallback'
+import { avatarInitials } from '../design/avatar_initials'
 import { useAuthorDirectory } from '../identity/author_directory'
 import MessageBody from './MessageBody.vue'
 import MentionPicker from './MentionPicker.vue'
@@ -58,16 +59,13 @@ function remove(): void {
   if (window.confirm('Удалить это сообщение?')) { actionsOpen.value = false; emit('remove') }
 }
 
-function initial(name: string): string {
-  return name.trim().slice(0, 1).toLocaleUpperCase('ru-RU') || 'У'
-}
 </script>
 
 <template>
   <article ref="row" class="message-item message-row" :class="{ deleted: message.deleted, grouped: compact }" tabindex="-1">
     <span v-if="compact" class="message-avatar-spacer" aria-hidden="true"></span>
     <img v-else-if="authorAvatar && !avatarFailed" class="message-avatar" :src="authorAvatar" alt="" @error="avatarFailed = true">
-    <span v-else class="message-avatar" :style="avatarFallbackStyle(message.authorId)" aria-hidden="true">{{ initial(authorName) }}</span>
+    <span v-else class="message-avatar" :style="avatarFallbackStyle(message.authorId)" aria-hidden="true">{{ avatarInitials(authorName) }}</span>
     <div class="message-content">
       <div v-if="!compact" class="message-meta">
         <span class="message-author">{{ authorName }}</span>

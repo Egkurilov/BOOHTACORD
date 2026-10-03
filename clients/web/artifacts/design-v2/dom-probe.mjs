@@ -1,4 +1,8 @@
 import { chromium } from '@playwright/test'
+import { readFileSync } from 'node:fs'
+import { chatMembers, chatMessages, chatProfile, chatTopology } from './chat-reference-fixture.mjs'
+import { connectReferenceVoiceStore, installReferenceTransports } from './reference-live-state.mjs'
+import { measureDom } from './dom-probe-measure.mjs'
 
 const profile = { account_id: 'review-user', login: 'review', display_name: 'Review User', role: 'ADMINISTRATOR' }
 const permissions = {
@@ -18,11 +22,12 @@ const accounts = [{ ...fixtureMember, account_id: fixtureMember.user_id }, ...['
 }))].map((item) => ({ blocked: false, created_at: '2026-10-03T10:00:00Z', ...item }))
 
 function response(path) {
-  if (path.endsWith('/auth/session')) return { account_id: profile.account_id, role: profile.role }
-  if (path.endsWith('/auth/permissions')) return { account_id: profile.account_id, role: profile.role, permissions_revision: 1, permissions }
-  if (path.endsWith('/channels')) return topology
-  if (path.endsWith('/me')) return profile
-  if (path.endsWith('/members')) return { members: [reviewMember, fixtureMember] }
+  if (path.endsWith('/auth/session')) return { account_id: referenceFixture ? chatProfile.account_id : profile.account_id, role: profile.role }
+  if (path.endsWith('/auth/permissions')) return { account_id: referenceFixture ? chatProfile.account_id : profile.account_id, role: profile.role, permissions_revision: 1, permissions }
+  if (path.endsWith('/channels')) return referenceFixture ? chatTopology : topology
+  if (path.endsWith('/me')) return referenceFixture ? chatProfile : profile
+  if (path.endsWith('/members')) return { members: referenceFixture ? chatMembers : [reviewMember, fixtureMember] }
+  if (referenceFixture && path.includes('/members/')) return chatMembers.find((member) => path.endsWith(`/${member.user_id}`)) ?? {}
   if (path.endsWith('/members/member-0')) return reviewMember
   if (path.includes('/admin/accounts')) return { accounts }
   if (path.includes('/admin/roles')) return { revision: 1, roles: [
@@ -31,6 +36,7 @@ function response(path) {
   ] }
   if (path.endsWith('/direct-messages')) return { direct_messages: [{ id: 'dm-review', other_participant_id: 'member-0', other_participant_display_name: 'Daria', created_at: '2026-10-03T10:00:00Z', unread_count: 0, mention_count: 0 }] }
   if (path.includes('/messages')) {
+    if (referenceFixture) return { messages: chatMessages }
     const dm = path.includes('/direct-messages/')
     const samples = [
       { id: 'review-message-1', author_id: 'member-0', client_message_id: 'review-client-1', body: 'Кто сегодня играет вечером?', revision: 1, created_at: '2026-10-03T16:28:00Z', deleted: false, attachments: [], mention_user_ids: [] },
@@ -47,15 +53,21 @@ function response(path) {
 
 const browser = await chromium.launch({ headless: true })
 const state = process.argv[2] ?? 'chat'
+const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && state === 'chat'
 const width = Number(process.argv[3] ?? 1440)
 const height = Number(process.argv[4] ?? 900)
+const screenshotPath = process.env.DESIGN_V2_SCREENSHOT
 const page = await browser.newPage({ viewport: { width, height } })
-await page.route('**/*', (route) => route.request().resourceType() === 'image' ? route.abort() : route.continue())
+if (referenceFixture && process.env.DESIGN_V2_LIVE_STATE === '1') await installReferenceTransports(page)
+await page.route('**/*', (route) => !screenshotPath && route.request().resourceType() === 'image' ? route.abort() : route.continue())
 const requests = []; const errors = []
 page.on('pageerror', (error) => errors.push(error.message))
 page.on('request', (request) => { if (request.url().includes('/api/v1/')) requests.push(`${request.method()} ${new URL(request.url()).pathname}`) })
 await page.route('**/api/v1/**', async (route) => {
   const path = new URL(route.request().url()).pathname
+  if (referenceFixture && path.endsWith('/attachments/scene/preview') && process.env.DESIGN_V2_SCENE_PNG) {
+    await route.fulfill({ contentType: 'image/png', body: readFileSync(process.env.DESIGN_V2_SCENE_PNG) }); return
+  }
   const status = state === 'auth' && path.endsWith('/auth/session') ? 401 : 200
   await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(response(path)) })
 })
@@ -82,19 +94,25 @@ if (state === 'member-popover') { const member = page.locator('.members-guild-ro
 if (state === 'delete-confirm') await page.getByRole('button', { name: 'Действия с каналом общее' }).click()
 if (state === 'dm') { await page.getByRole('button', { name: 'Личные', exact: true }).click(); await page.getByRole('button', { name: 'Daria', exact: true }).click() }
 await page.waitForTimeout(state === 'update' ? 5500 : 100)
-const selectors = ['.gc-shell', '.sidebar', '.sidebar.is-open', '.guild-header', '.nav-drawer', '.nav-content', '.drawer-scrim', '.mobile-voice-dock', '.voice-dock', '.user-footer', '.main', '.workspace-main-panel', '.workspace-main-panel--audio', '.workspace-main-panel--profile', '.workspace-header-actions', '.main-header', '.text-conversation', '.message-history-wrap', '.message-list', '.composer-wrap', '.composer', '.members-panel', '.channel-icon', '.channel-button.selected', '.nav-channel', '.section-head', '.message-item', '.message-avatar', '.message-body', '.attachment-card', '.gc-button', '.admin-panel', '.admin-panel-heading', '.admin-section-tabs', '.role-permissions', '.admin-section-heading', '.role-selector', '.role-permissions fieldset', '.role-permission-table-heading', '.role-permission-table', '.role-permission-table thead', '.role-permission-table tbody tr', '.role-permission-label', '.role-permission-label small', '.role-permission-notice', '.role-policy-actions', '.admin-directory', '.admin-table-scroll', '.admin-table', '.admin-table thead', '.admin-table tbody tr', '.admin-mobile-list', '.admin-mobile-card', '.admin-mobile-card summary', '.admin-mobile-user', '.admin-mobile-meta', '.audio-settings', '.audio-settings-panel', '.audio-device-section', '.audio-activation-section', '.audio-processing-section', '.profile-settings', '.profile-tabs', '.profile-panel', '.profile-settings .profile-form', '.profile-savebar', '.search-aside', '[data-testid="search-aside-panel"]', '[data-testid="search-panel"]', '.topology-dialog', '.admin-confirm-dialog', '.authentication-page', '.authentication-card', '.password-reset-card', '.member-popover', '.category-context-menu', '.update-banner', '.reply-target', '.mention-autocomplete', '.composer-helper', '.composer-wrap > *', '.mention-picker', '.mention-popover', '.direct-message-conversation', '.direct-message-conversation .message-history-wrap', '.direct-message-conversation .message-list', '.direct-message-conversation .composer-wrap', '.direct-message-conversation .composer', '.screen-stage', '.stream-quality-row', '.screen-rail-section', '.stream-diagnostics-panel', '.screen-share-setup-dialog', '.attachment-image-dialog', '.voice-participant-volumes', '.people-stage', '.members']
-const boxes = Object.fromEntries(await Promise.all(selectors.map(async (selector) => {
-  const locator = page.locator(selector).first()
-  if (!await locator.count()) return [selector, null]
-  const rect = await locator.boundingBox()
-  return [selector, rect && Object.fromEntries(['x', 'y', 'width', 'height'].map((key) => [key, Math.round(rect[key] * 100) / 100]))]
-})))
-const visualProperties = ['display', 'position', 'boxSizing', 'width', 'height', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'gap', 'rowGap', 'columnGap', 'alignItems', 'justifyContent', 'flexDirection', 'fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'color', 'backgroundColor', 'borderTopColor', 'borderTopWidth', 'borderRadius', 'boxShadow', 'opacity', 'overflowX', 'overflowY']
-const styles = Object.fromEntries(await Promise.all(selectors.map(async (selector) => {
-  const locator = page.locator(selector).first()
-  if (!await locator.count()) return [selector, null]
-  return [selector, await locator.evaluate((element, properties) => Object.fromEntries(properties.map((property) => [property, getComputedStyle(element)[property]])), visualProperties)]
-})))
-const composerChildren = []
+if (referenceFixture) {
+  await page.locator('.message-item').nth(3).waitFor({ state: 'visible' })
+  await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
+  if (process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
+  await page.evaluate(() => document.fonts.ready)
+  if (process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+    await page.getByRole('button', { name: 'Открыть изображение evening-session.png' }).click()
+    const viewer = page.getByRole('dialog', { name: 'Просмотр изображения evening-session.png' })
+    await viewer.waitFor({ state: 'visible' })
+    await viewer.locator('img').waitFor({ state: 'visible' })
+    await viewer.getByRole('button', { name: 'Закрыть просмотр изображения' }).click()
+    await viewer.waitFor({ state: 'hidden' })
+    await page.locator('#message-body').fill('Проверка отправки')
+    if (!await page.getByRole('button', { name: 'Отправить сообщение' }).isEnabled()) throw new Error('Composer send did not enable for a nonempty message')
+    await page.locator('#message-body').fill('')
+  }
+}
+if (state === 'chat' && (await Promise.all((await page.locator('dialog:not([open])').all()).map((dialog) => dialog.isVisible()))).some(Boolean)) throw new Error('Closed native dialog is visibly rendered')
+if (screenshotPath) await page.screenshot({ path: screenshotPath, animations: 'disabled' })
+const { boxes, styles, composerChildren } = await measureDom(page)
 console.log(JSON.stringify({ viewport: page.viewportSize(), state, boxes, styles, composerChildren, requests, errors }, null, 2))
 await browser.close()

@@ -20,7 +20,7 @@ async function renderMessage(authorId: string, kind: 'text' | 'dm', avatarUrl?: 
 }
 
 describe('message fallback avatar', () => {
-  it('uses stable distinct pastel styles for author IDs, independent of message location', async () => {
+  it('uses stable distinct dark V2 styles for author IDs, independent of message location', async () => {
     const first = avatarFallbackStyle('author-one')
     const second = avatarFallbackStyle('author-two')
     expect(first).toEqual(avatarFallbackStyle('author-one'))
@@ -33,7 +33,7 @@ describe('message fallback avatar', () => {
       expect(html).toContain('class="message-avatar"')
       expect(html).toContain(`background-color:${first.backgroundColor}`)
       expect(html).toContain(`color:${first.color}`)
-      expect(html).toContain('>Л</span>')
+      expect(html).toContain('>ЛЕ</span>')
     }
   })
 

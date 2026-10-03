@@ -13,11 +13,12 @@ describe('VOICE dock helper copy', () => {
       },
       activeSession: true, error: null, activationMode: 'VAD', deafened: false,
       deafenChanging: false, microphoneMuted: false,
-      microphonePermissionDenied: false, state: 'CONNECTED',
+      microphonePermissionDenied: false, state: 'CONNECTED', participantCount: 4,
     }))
 
-    expect(html).toContain('В голосовом канале')
+    expect(html).toContain('Голос подключён')
     expect(html).toContain('Voice')
+    expect(html).toContain('4 участника')
     expect(html).not.toContain('voice-hint')
     expect(html).not.toContain('Вы можете открыть другой канал')
   })

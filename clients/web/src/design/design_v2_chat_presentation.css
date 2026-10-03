@@ -1,0 +1,61 @@
+/* Chat rhythm and fallback identity from R01–R03. */
+.guild-mark { object-fit: contain; border-radius: 0; background: transparent; }
+.guild-header-copy { display: grid; min-width: 0; gap: 0; line-height: 18px; }
+.guild-member-count { color: var(--gc-text-muted); font-size: 12px; font-weight: 400; line-height: 16px; }
+.guild-chevron { margin-left: auto; color: var(--gc-text-muted); font-size: 18px; }
+.voice-dock-copy { min-width: 0; flex: 1; }
+.voice-dock-subtitle { margin: 0; color: var(--gc-text-muted); font-size: 12px; line-height: 16px; }
+.voice-dock.connected .voice-status { color: var(--gc-success); }
+.text-conversation .message-list > li[data-message-id] + li[data-message-id] { margin-top: 24px; }
+.text-conversation .message-list > li:has(.attachment-card) + li[data-message-id] { margin-top: 34px; }
+.text-conversation .message-avatar,
+.text-conversation .message-avatar-spacer { width: 36px; flex-basis: 36px; }
+.text-conversation .message-avatar { height: 36px; font-size: 14px; }
+.channel-navigation-actions { padding-top: 1px; }
+.channel-category:first-of-type h2 { padding-top: 8px; }
+.channel-category + .channel-category { margin-top: 4px; }
+.channel-row { position: relative; }
+.channel-row .channel-button { width: 100%; flex: 0 0 100%; }
+.channel-actions-button { position: absolute; top: 2px; right: 0; }
+.channel-state[aria-label^='Непрочитанных'] { min-width: 20px; justify-content: center; color: var(--gc-on-accent); background: var(--gc-accent); }
+.text-conversation .text-message-attachments { margin-top: 12px; }
+.text-conversation .history-start {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+@media (min-width: 1280px) {
+  .members-guild-roster .members-heading { position: absolute; }
+  .members-heading {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .members-presence-groups .members-presence-group:first-child .members-group { margin-top: 0; }
+}
+@media (min-width: 1024px) and (hover: hover) {
+  .channel-actions-button { opacity: 0; }
+  .channel-row:hover .channel-actions-button,
+  .channel-actions-button:focus-visible { opacity: 1; }
+}
+@media (max-width: 1023px) {
+  .mobile-voice-dock .voice-actions .voice-icon-button:not(:first-child):not(:last-child) { display: none; }
+  .mobile-voice-dock .voice-actions .voice-icon-button:first-child { background: transparent; }
+  .mobile-voice-dock .voice-actions .voice-icon-button--danger { color: var(--gc-on-danger); background: var(--gc-danger-solid); }
+  .mobile-voice-dock .status-dot, .mobile-voice-dock .voice-quality { display: none; }
+  .conversation-header .conversation-symbol,
+  .conversation-header .header-action:not(.workspace-header-toggle),
+  .conversation-header .conversation-overflow { display: none; }
+  .text-conversation .message-list > li[data-message-id] + li[data-message-id] { margin-top: 20px; }
+  .text-conversation .message-list > li:has(.attachment-card) + li[data-message-id] { margin-top: 25px; }
+  .text-conversation .message-row { gap: 8px; }
+  .text-conversation .message-avatar,
+  .text-conversation .message-avatar-spacer { width: 32px; flex-basis: 32px; }
+  .text-conversation .message-avatar { height: 32px; font-size: 12px; }
+}

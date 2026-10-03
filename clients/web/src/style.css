@@ -1,4 +1,5 @@
 @import './design/tokens.css';
+@import './design/design_v2_font.css';
 @import './design/foundation.css';
 @import './design/authentication.css';
 @import './design/shell.css';
@@ -26,3 +27,5 @@
 @import './design/design_v2_overlays.css';
 
 @import './design/design_v2_fidelity.css';
+@import './design/design_v2_chat_media.css';
+@import './design/design_v2_chat_presentation.css';

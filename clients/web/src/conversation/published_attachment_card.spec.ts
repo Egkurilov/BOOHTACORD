@@ -10,7 +10,8 @@ const raster = { id: 'file ?#', originalName: 'очень-длинное-наз�
 describe('published attachment card', () => {
   it('separates protected image opening from the original download in TEXT', async () => {
     const html = await renderToString(createSSRApp(TextMessageAttachments, { channelId: 'channel/a', attachments: [raster] }))
-    expect(html).toContain('class="attachment-card"')
+    expect(html).toMatch(/class="[^"]*attachment-card[^"]*"/)
+    expect(html).toContain('attachment-card--image')
     expect(html).toContain('class="attachment-card__open"')
     expect(html).toContain('aria-label="Открыть изображение очень-длинное-название-screenshot.png"')
     expect(html).toContain('aria-label="Просмотр изображения очень-длинное-название-screenshot.png"')
