@@ -19,7 +19,7 @@
     "room": "SHARE_TEST",
     "participants_during_capture": 2,
     "microphones_during_capture": "muted on both clients",
-    "note": "Android auto-joined when selecting the voice channel with its microphone initially enabled; it was muted immediately, before screen capture. No microphone recording was made."
+    "note": "Android auto-joined when selecting the voice channel with its microphone initially enabled; it was muted immediately, before screen capture. Microphone activity during that brief pre-capture interval was not measured."
   },
   "capture": {
     "mode": "Android single-app MediaProjection",
