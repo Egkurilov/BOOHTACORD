@@ -1,0 +1,25 @@
+.direct-message-navigation { position: relative; padding: 0 12px; }
+.direct-message-navigation h2 { height: 48px; align-items: center; padding: 0; color: var(--gc-text-muted); font-size: 12px; letter-spacing: .04em; }
+.direct-message-navigation > .channel-button { position: relative; height: 56px; gap: 0; padding: 0 8px; }
+.direct-message-navigation > .channel-button.selected { background: transparent; }
+.direct-message-navigation > .channel-button:hover { background: var(--gc-surface-hover); }
+.direct-message-navigation .dm-avatar { width: 36px; height: 36px; flex-basis: 36px; color: #E2D9FB; background: #493C68; font-size: 12px; }
+.direct-message-navigation .dm-avatar--daria { color: #9FDADB; background: #19484C; }
+.direct-message-navigation .dm-avatar--max { color: #F6C397; background: #66452D; }
+.dm-presence-dot { position: absolute; left: 33px; bottom: 11px; width: 12px; height: 12px; border: 2px solid var(--gc-sidebar); border-radius: 50%; background: #778295; }
+.dm-presence-dot.is-online { background: var(--gc-success); }
+.dm-identity { display: grid; min-width: 0; gap: 1px; margin-left: 10px; }
+.dm-identity .channel-name { color: var(--gc-text-primary); font-size: 14px; line-height: 18px; }
+.dm-identity small { color: var(--gc-text-muted); font-size: 12px; line-height: 16px; }
+.direct-message-navigation > .channel-button .channel-state { margin-left: auto; }
+.direct-message-navigation > .channel-button:not(:has(.channel-state)) .dm-identity { flex: 1; }
+.direct-message-navigation > .direct-message-start-button { position: absolute; top: 5px; right: 0; width: 28px; height: 36px; padding: 0; color: var(--gc-text-muted); background: transparent; font-size: 24px; }
+.direct-message-navigation .starter { position: relative; z-index: 3; }
+.direct-message-conversation .history-start { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.direct-message-conversation .message-list > li[data-message-id] + li[data-message-id] { margin-top: 24px; }
+.direct-message-conversation .message-avatar, .direct-message-conversation .message-avatar-spacer { width: 36px; flex-basis: 36px; }
+.direct-message-conversation .message-avatar { height: 36px; font-size: 14px; }
+.direct-message-conversation .composer-wrap { padding-right: 24px; padding-left: 24px; }
+@media (max-width: 1023px) {
+  .direct-message-conversation .composer-wrap { padding-right: 8px; padding-left: 8px; }
+}

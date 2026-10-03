@@ -1,50 +1,15 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref } from 'vue'
+import { nextTick, ref } from 'vue'
+import { useProtectedImagePreview } from './protected_image_preview/use_protected_image_preview'
 
 const props = defineProps<{ name: string; previewUrl: string }>()
 
 const dialog = ref<HTMLDialogElement | null>(null)
 const closeButton = ref<HTMLButtonElement | null>(null)
 const opener = ref<HTMLButtonElement | null>(null)
-const imageUrl = ref<string | null>(null)
-const loading = ref(false)
-const unavailable = ref(false)
-const failed = ref(false)
-let requestRevision = 0
-let objectUrl: string | null = null
-
-function revokePreview(): void {
-  if (objectUrl) URL.revokeObjectURL(objectUrl)
-  objectUrl = null
-  imageUrl.value = null
-}
-
-async function loadPreview(): Promise<void> {
-  const revision = ++requestRevision
-  loading.value = true
-  unavailable.value = false
-  failed.value = false
-  try {
-    const response = await fetch(props.previewUrl, {
-      credentials: 'same-origin',
-      cache: 'no-store',
-      headers: { accept: 'image/png' },
-    })
-    if (!response.ok) {
-      unavailable.value = response.status === 404 || response.status === 410
-      throw new Error('preview unavailable')
-    }
-    const blob = await response.blob()
-    if (revision !== requestRevision || !dialog.value?.open) return
-    revokePreview()
-    objectUrl = URL.createObjectURL(blob)
-    imageUrl.value = objectUrl
-  } catch {
-    if (revision === requestRevision) failed.value = true
-  } finally {
-    if (revision === requestRevision) loading.value = false
-  }
-}
+const { imageUrl, loading, unavailable, failed, loadPreview, cancelPreview } = useProtectedImagePreview(
+  () => props.previewUrl, () => Boolean(dialog.value?.open),
+)
 
 async function open(): Promise<void> {
   if (dialog.value?.open) return
@@ -58,9 +23,7 @@ async function open(): Promise<void> {
 }
 
 function restoreFocus(): void {
-  requestRevision++
-  loading.value = false
-  revokePreview()
+  cancelPreview()
   if (opener.value?.isConnected) opener.value.focus()
   opener.value = null
 }
@@ -84,10 +47,6 @@ function onDialogClick(event: MouseEvent): void {
   ) close()
 }
 
-onBeforeUnmount(() => {
-  requestRevision++
-  revokePreview()
-})
 </script>
 
 <template>
@@ -110,7 +69,8 @@ onBeforeUnmount(() => {
     @close="restoreFocus"
   >
     <header class="attachment-image-dialog__header">
-      <h2>{{ props.name }}</h2>
+      <h2><span aria-hidden="true">♧</span>{{ props.name }}</h2>
+      <a v-if="imageUrl && !failed" :href="imageUrl" :download="props.name" class="attachment-image-dialog__download">↓ &nbsp; Скачать</a>
       <button
         ref="closeButton"
         type="button"
@@ -135,5 +95,6 @@ onBeforeUnmount(() => {
         <button v-if="!unavailable" type="button" @click="loadPreview">Повторить</button>
       </div>
     </div>
+    <footer class="attachment-image-dialog__footer">Изображение целиком · Масштаб по размеру окна</footer>
   </dialog>
 </template>

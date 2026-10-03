@@ -24,6 +24,10 @@ const searchAuthors = ['22222222-2222-4222-8222-222222222221', '33333333-3333-43
 const searchNames = ['Alex', 'Daria', 'Max']
 const searchTopology = { ...chatTopology, categories: chatTopology.categories.map((category) => ({ ...category, channels: category.channels.map((channel) => channel.id === 'text-1' ? { ...channel, id: searchChannelId } : channel) })) }
 const searchMessages = chatMessages.map((message) => ({ ...message, channel_id: searchChannelId }))
+const dmMessages = [
+  { ...chatMessages[0], id: 'dm-reference-1', direct_message_id: 'dm-review', author_id: chatMembers[1].user_id, created_at: '2026-10-03T16:36:00Z', body: 'Привет! Будешь сегодня в голосовом?', attachments: [] },
+  { ...chatMessages[1], id: 'dm-reference-2', direct_message_id: 'dm-review', author_id: chatProfile.account_id, created_at: '2026-10-03T16:37:00Z', body: 'Да, подключусь к восьми. До встречи!', attachments: [] },
+]
 const topology = { revision: 1, categories: [{ id: 'category-1', name: 'ОБЩЕНИЕ', position: 0, channels: [
   { id: 'text-1', name: 'общее', kind: 'TEXT', position: 0, admission_closed: false, unread_count: 0, mention_count: 0 },
   { id: 'voice-1', name: 'Общий', kind: 'VOICE', position: 1, admission_closed: false },
@@ -53,9 +57,9 @@ function response(path) {
     { role: 'MEMBER', display_name: 'Участник', editable: true, permissions: memberPermissions },
     { role: 'ADMINISTRATOR', display_name: 'Администратор', editable: false, permissions },
   ] }
-  if (path.endsWith('/direct-messages')) return { direct_messages: [{ id: 'dm-review', other_participant_id: 'member-0', other_participant_display_name: 'Daria', created_at: '2026-10-03T10:00:00Z', unread_count: 0, mention_count: 0 }] }
+  if (path.endsWith('/direct-messages')) return { direct_messages: referenceFixture ? ['Alex', 'Daria', 'Max'].map((name, index) => ({ id: index === 1 ? 'dm-review' : `dm-${name.toLowerCase()}`, other_participant_id: chatMembers[index].user_id, other_participant_display_name: name, created_at: '2026-10-03T10:00:00Z', unread_count: 0, mention_count: 0 })) : [{ id: 'dm-review', other_participant_id: 'member-0', other_participant_display_name: 'Daria', created_at: '2026-10-03T10:00:00Z', unread_count: 0, mention_count: 0 }] }
   if (path.includes('/messages')) {
-    if (referenceFixture) return { messages: state === 'search' ? searchMessages : chatMessages }
+    if (referenceFixture) return { messages: state === 'search' ? searchMessages : state === 'dm' && path.includes('/direct-messages/') ? dmMessages : chatMessages }
     const dm = path.includes('/direct-messages/')
     const samples = [
       { id: 'review-message-1', author_id: 'member-0', client_message_id: 'review-client-1', body: 'Кто сегодня играет вечером?', revision: 1, created_at: '2026-10-03T16:28:00Z', deleted: false, attachments: [], mention_user_ids: [] },
@@ -72,7 +76,7 @@ function response(path) {
 
 const browser = await chromium.launch({ headless: true })
 const state = process.argv[2] ?? 'chat'
-const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'audio', 'profile', 'search', 'nav', 'member-popover', 'admin-members'].includes(state)
+const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'topology-category', 'audio', 'profile', 'search', 'nav', 'member-popover', 'admin-members', 'update', 'context', 'reply', 'image-viewer', 'dm'].includes(state)
 const width = Number(process.argv[3] ?? 1440)
 const height = Number(process.argv[4] ?? 900)
 const screenshotPath = process.env.DESIGN_V2_SCREENSHOT
@@ -136,20 +140,21 @@ if (width <= 1023 && ['roles', 'admin-members'].includes(state)) await closeNavi
 if (state === 'chat' && width > 600) await page.locator('.voice-dock').evaluate((element) => element.classList.add('connected'))
 if ((process.argv[2] ?? 'chat') === 'roles') await page.getByRole('button', { name: 'Роли', exact: true }).click()
 if ((process.argv[2] ?? 'chat') === 'admin-members') await page.getByRole('button', { name: 'Участники', exact: true }).click()
-if (['chat', 'dm', 'reply'].includes(state)) await page.locator('.message-item').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
+if (['chat', 'dm', 'reply', 'image-viewer'].includes(state)) await page.locator('.message-item').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
 if (state === 'context') await page.locator('.channel-category').first().evaluate((element) => element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 255, clientY: 235 })))
-if (state === 'reply' && await page.locator('.message-actions-toggle').count()) { await page.locator('.message-actions-toggle').first().evaluate((button) => button.click()); await page.locator('.message-action-buttons button').first().evaluate((button) => button.click()); await page.locator('#message-body').fill('@Da'); await page.locator('.mention-popover').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {}) }
+if (state === 'reply' && await page.locator('.message-actions-toggle').count()) { const item = page.locator('.message-item').nth(referenceFixture ? 1 : 0); await item.locator('.message-actions-toggle').evaluate((button) => button.click()); await item.locator('.message-action-buttons button').first().evaluate((button) => button.click()); await page.locator('#message-body').fill('@Da'); await page.locator('.mention-popover').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {}) }
 if (state === 'audio') { await page.getByRole('button', { name: 'Настройки аудио' }).evaluate((button) => button.click()); await closeNavigation() }
 if (state === 'profile') { await page.getByRole('button', { name: 'Открыть настройки профиля' }).evaluate((button) => button.click()); await closeNavigation() }
 if (state === 'search') { await page.getByRole('button', { name: 'Поиск сообщений' }).click(); await closeNavigation(); if (referenceFixture) { await page.getByRole('searchbox', { name: 'Запрос' }).fill('вечером'); await page.getByRole('searchbox', { name: 'Запрос' }).press('Enter'); await page.locator('.search-result').nth(2).waitFor() } }
-if (state === 'topology-category') { await page.getByRole('button', { name: 'Создать категорию или канал' }).click(); await closeNavigation() }
+if (state === 'topology-category') { await page.getByRole('button', { name: 'Создать категорию или канал' }).click(); await closeNavigation(); if (referenceFixture) await page.getByRole('textbox', { name: 'Название раздела' }).fill('Симрейсинг') }
 if (state === 'topology-channel') { await page.getByRole('button', { name: 'Создать канал в категории ОБЩЕНИЕ' }).click(); await closeNavigation(); if (referenceFixture) await page.getByRole('textbox', { name: 'Название канала' }).fill('вечерние-заезды') }
 if (state === 'member-popover') { const member = page.locator('.members-guild-roster button.member').filter({ hasText: 'Daria' }); await member.waitFor(); await member.click() }
 if (state === 'delete-confirm') await page.getByRole('button', { name: 'Действия с каналом общее' }).click()
-if (state === 'dm') { await page.getByRole('button', { name: 'Личные', exact: true }).click(); await page.getByRole('button', { name: 'Daria', exact: true }).click() }
+if (state === 'dm') { await page.getByRole('button', { name: 'Личные', exact: true }).click(); await page.locator('.direct-message-navigation .channel-button').filter({ hasText: 'Daria' }).click() }
+if (state === 'image-viewer') { await page.getByRole('button', { name: 'Открыть изображение evening-session.png' }).click(); await page.getByRole('dialog', { name: 'Просмотр изображения evening-session.png' }).locator('img').waitFor({ state: 'visible' }) }
 if (referenceFixture && state === 'topology-channel') await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
 await page.waitForTimeout(state === 'update' ? 5500 : 100)
-if (referenceFixture && ['roles', 'topology-channel', 'audio', 'profile', 'search', 'nav', 'member-popover', 'admin-members'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
+if (referenceFixture && ['roles', 'topology-channel', 'topology-category', 'audio', 'profile', 'search', 'nav', 'member-popover', 'admin-members', 'update', 'context', 'reply', 'image-viewer', 'dm'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
 if (referenceFixture && state === 'chat') {
   await page.locator('.message-item').nth(3).waitFor({ state: 'visible' })
   await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
@@ -292,6 +297,45 @@ if (state === 'admin-members' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '
     assert.equal(referenceAccounts.find((account) => account.login === 'daria')?.role, 'ADMINISTRATOR')
     interactions.push('live-account-role-patch')
   }
+}
+if (state === 'update' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  await page.getByRole('button', { name: 'Доступна новая версия BOOHTACORD' }).click()
+  await page.getByText('Версия 99.0.0').waitFor()
+  await page.getByRole('button', { name: 'Позже' }).click()
+  await page.getByRole('region', { name: 'Доступно обновление клиента' }).waitFor({ state: 'detached' })
+  interactions.push('release-details-and-defer')
+}
+if (state === 'context' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  await page.getByRole('menuitem', { name: 'Создать канал...' }).click()
+  await page.getByRole('dialog', { name: 'Создать канал' }).waitFor()
+  interactions.push('category-action-opens-live-channel-form')
+}
+if (state === 'reply' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  await page.locator('#message-body').press('Enter')
+  assert.match(await page.locator('#message-body').inputValue(), /@Daria/)
+  assert.equal(requests.some((request) => request === 'POST /api/v1/channels/text-1/messages'), false)
+  interactions.push('keyboard-mention-without-premature-send')
+  await page.getByRole('button', { name: 'Отменить ответ' }).click()
+  assert.equal(await page.locator('.reply-target').count(), 0)
+  interactions.push('reply-cancel')
+}
+if (state === 'image-viewer' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  const dialog = page.getByRole('dialog', { name: 'Просмотр изображения evening-session.png' })
+  assert.match(await dialog.getByRole('link', { name: 'Скачать' }).getAttribute('href') ?? '', /^blob:/)
+  await dialog.getByRole('button', { name: 'Закрыть просмотр изображения' }).click()
+  await dialog.waitFor({ state: 'hidden' })
+  interactions.push('protected-download-and-close')
+}
+if (state === 'dm' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  assert.equal(await page.locator('.direct-message-navigation > .channel-button:not(.direct-message-start-button)').count(), 3)
+  await page.locator('#direct-message-body').fill('До встречи!')
+  assert.equal(await page.getByRole('button', { name: 'Отправить сообщение' }).isEnabled(), true)
+  interactions.push('live-dm-navigation-and-send-ready')
+}
+if (state === 'topology-category' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  assert.equal(await page.getByRole('textbox', { name: 'Название раздела' }).inputValue(), 'Симрейсинг')
+  assert.equal(await page.getByRole('button', { name: 'Создать раздел' }).isEnabled(), true)
+  interactions.push('category-mutation-form-ready')
 }
 console.log(JSON.stringify({ viewport: page.viewportSize(), state, boxes, styles, composerChildren, requests, errors, interactions }, null, 2))
 await browser.close()

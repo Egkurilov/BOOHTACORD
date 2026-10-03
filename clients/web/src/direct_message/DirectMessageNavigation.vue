@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import { loadMembers, type GuildMember } from '../identity/profile_client'
 import type { DirectMessageListItem } from './direct_message_client'
 import DirectMessageStarter from './DirectMessageStarter.vue'
 
@@ -10,15 +12,17 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{ select: [directMessageId: string]; open: [directMessageId: string] }>()
+const members = ref<Record<string, GuildMember>>({})
+onMounted(async () => {
+  try { members.value = Object.fromEntries((await loadMembers()).members.map((member) => [member.user_id, member])) }
+  catch { members.value = {} }
+})
 
-function initial(displayName: string): string {
-  return displayName.trim().slice(0, 1).toLocaleUpperCase('ru-RU') || 'У'
-}
 </script>
 
 <template>
   <nav class="direct-message-navigation" aria-label="Личные сообщения">
-    <h2>Личные сообщения</h2>
+    <h2>СООБЩЕНИЯ</h2>
     <DirectMessageStarter @open="emit('open', $event)" />
     <p v-if="props.loading" class="empty-category" aria-live="polite">Загружаем диалоги…</p>
     <p v-else-if="props.error" class="empty-category state-error" role="alert">{{ props.error }}</p>
@@ -32,8 +36,9 @@ function initial(displayName: string): string {
       type="button"
       @click="emit('select', directMessage.id)"
     >
-      <span class="dm-avatar" aria-hidden="true">{{ initial(directMessage.otherParticipantDisplayName) }}</span>
-      <span class="channel-name">{{ directMessage.otherParticipantDisplayName }}</span>
+      <span class="dm-avatar" :class="`dm-avatar--${directMessage.otherParticipantDisplayName.toLocaleLowerCase('ru-RU')}`" aria-hidden="true">{{ directMessage.otherParticipantDisplayName.slice(0, 2).toLocaleUpperCase('ru-RU') }}</span>
+      <span class="dm-presence-dot" :class="{ 'is-online': members[directMessage.otherParticipantId]?.presence === 'online' }" aria-hidden="true" />
+      <span class="dm-identity"><span class="channel-name">{{ directMessage.otherParticipantDisplayName }}</span><small>{{ members[directMessage.otherParticipantId]?.presence === 'online' ? 'В сети' : members[directMessage.otherParticipantId]?.presence === 'offline' ? 'Не в сети' : 'Статус неизвестен' }}</small></span>
       <span v-if="directMessage.unreadCount" class="channel-state" :aria-label="`Непрочитанных личных сообщений: ${directMessage.unreadCount}`">{{ directMessage.unreadCount }}</span>
       <span v-if="directMessage.mentionCount" class="channel-state" :aria-label="`Упоминаний в личном диалоге: ${directMessage.mentionCount}`">@{{ directMessage.mentionCount }}</span>
     </button>

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 const component = readFileSync(new URL('./ProtectedImageViewer.vue', import.meta.url), 'utf8')
+const preview = readFileSync(new URL('./protected_image_preview/use_protected_image_preview.ts', import.meta.url), 'utf8')
 const styles = readFileSync(new URL('../design/conversation.css', import.meta.url), 'utf8')
 
 describe('protected attachment image viewer', () => {
@@ -16,11 +17,13 @@ describe('protected attachment image viewer', () => {
   })
 
   it('loads only the same-origin protected preview and releases the blob on close', () => {
-    expect(component).toContain('fetch(props.previewUrl')
-    expect(component).toContain("credentials: 'same-origin'")
-    expect(component).toContain("cache: 'no-store'")
-    expect(component).toContain('response.status === 404 || response.status === 410')
-    expect(component).toContain('URL.revokeObjectURL(objectUrl)')
+    expect(component).toContain('useProtectedImagePreview(')
+    expect(component).toContain('cancelPreview()')
+    expect(preview).toContain('fetch(previewUrl()')
+    expect(preview).toContain("credentials: 'same-origin'")
+    expect(preview).toContain("cache: 'no-store'")
+    expect(preview).toContain('response.status === 404 || response.status === 410')
+    expect(preview).toContain('URL.revokeObjectURL(objectUrl)')
     expect(component).toContain('Вложение удалено или недоступно.')
     expect(component).toContain('@click="loadPreview"')
   })

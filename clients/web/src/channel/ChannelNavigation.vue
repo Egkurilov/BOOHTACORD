@@ -102,10 +102,12 @@ async function renameFromMenu(): Promise<void> {
     </section>
     <div v-if="categoryMenu" ref="categoryMenuElement" class="category-context-menu" role="menu" :style="{ left: `${categoryMenu.x}px`, top: `${categoryMenu.y}px` }" @keydown.esc.stop.prevent="closeCategoryMenu">
       <span class="category-context-caption">Раздел «{{ categoryMenu.category.name }}»</span>
-      <button v-if="canCreate()" type="button" role="menuitem" @click="emit('createInCategory', categoryMenu.category); closeCategoryMenu()">Создать канал</button>
-      <button v-if="props.permissions?.['category.create']" type="button" role="menuitem" @click="emit('createGlobal'); closeCategoryMenu()">Создать раздел</button>
-      <button v-if="props.permissions?.['category.create']" type="button" role="menuitem" @click="renameFromMenu">Переименовать раздел</button>
-      <button v-if="props.permissions?.['category.delete']" type="button" role="menuitem" :disabled="categoryMenu.category.channels.length > 0" @click="emit('deleteCategory', categoryMenu.category); closeCategoryMenu()">Удалить раздел</button>
+      <button v-if="canCreate()" type="button" role="menuitem" @click="emit('createInCategory', categoryMenu.category); closeCategoryMenu()"><span class="category-context-icon" aria-hidden="true">＋</span>Создать канал...</button>
+      <button v-if="props.permissions?.['category.create']" type="button" role="menuitem" @click="emit('createGlobal'); closeCategoryMenu()"><span class="category-context-icon" aria-hidden="true">▱</span>Создать раздел...</button>
+      <div class="category-context-separator" role="separator" />
+      <button v-if="props.permissions?.['category.create']" type="button" role="menuitem" @click="renameFromMenu"><span class="category-context-icon" aria-hidden="true">✎</span>Переименовать раздел...</button>
+      <button v-if="props.permissions?.['category.delete']" type="button" role="menuitem" :disabled="categoryMenu.category.channels.length > 0" @click="emit('deleteCategory', categoryMenu.category); closeCategoryMenu()"><span class="category-context-icon" aria-hidden="true">♜</span>Удалить раздел...</button>
+      <p v-if="categoryMenu.category.channels.length > 0" class="category-context-hint">Сначала уберите каналы из раздела.</p>
       <p v-if="menuError" role="alert">{{ menuError }}</p>
     </div>
   </nav>

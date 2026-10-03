@@ -96,7 +96,7 @@ function onComposerPaste(event: ClipboardEvent): void {
     <SearchMessageContext v-else-if="unreadContextOpen" kind="CHANNEL" :conversation-id="props.channelId" :message-id="unreadBoundary" heading="Первое непрочитанное сообщение" @close="continueAtLatest" />
     <TextHistoryList :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @reply-context="replyContextTarget = $event" @retry="retry" @viewport-change="queueVisibleRead" />
     <div class="composer-wrap">
-      <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
+      <p v-if="replyTarget" class="reply-target"><span class="reply-target-icon" aria-hidden="true">↶</span><span>Ответ <strong>{{ authors.displayName(replyTarget.authorId) }}</strong> · {{ replyTarget.body }}</span><button type="button" aria-label="Отменить ответ" @click="replyTarget = null">×</button></p>
       <MentionAutocomplete v-model="draft" v-model:mention-user-ids="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" />
       <form class="message-composer composer" @submit.prevent="send">
         <TextMessageAttachmentPicker ref="attachmentPicker" :channel-id="props.channelId" :initial-attachments="attachments" :disabled="store.sending || attachmentPending"

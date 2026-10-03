@@ -19,7 +19,7 @@ async function choose(participantId: string): Promise<void> {
 </script>
 
 <template>
-  <button class="channel-button" type="button" @click="show">Начать диалог</button>
+  <button class="channel-button direct-message-start-button" type="button" aria-label="Начать диалог" @click="show">＋</button>
   <section v-if="visible" class="starter" role="dialog" aria-modal="true" aria-labelledby="direct-message-starter-title">
     <header class="starter-header">
       <h3 id="direct-message-starter-title">Новый личный диалог</h3>
