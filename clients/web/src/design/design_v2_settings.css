@@ -1,0 +1,108 @@
+/* Settings, role permissions, profile and administration layouts. */
+.workspace-main-panel { padding: var(--gc-space-8); }
+.workspace-main-panel--audio .audio-settings,
+.workspace-main-panel--profile .profile-settings,
+.workspace-main-panel--admin .admin-panel,
+.workspace-main-panel--admin .admin-topology-controls {
+  max-width: var(--gc-layout-settings-max);
+}
+.workspace-main-panel--admin .admin-panel,
+.workspace-main-panel--admin .admin-topology-controls,
+.workspace-main-panel--profile .profile-settings,
+.role-permissions { margin-right: auto; margin-left: auto; }
+.workspace-main-panel--admin .workspace-header-actions { min-height: 64px; }
+.workspace-main-panel--admin .admin-panel { margin-top: 10px; }
+.role-permissions { width: min(100%, var(--gc-layout-settings-max)); }
+.workspace-main-panel--audio .audio-settings { gap: var(--gc-space-6); }
+.workspace-main-panel--profile .profile-settings { max-width: var(--gc-layout-settings-max); }
+.profile-settings header h1, .admin-panel-heading h1 { font-size: var(--gc-text-page); line-height: var(--gc-line-page); }
+.profile-form { max-width: 520px; }
+.role-permissions { gap: var(--gc-space-6); }
+.role-selector { width: min(100%, 340px); }
+.role-selector button { min-height: 46px; flex: 1; }
+.role-selector button[aria-selected=true] { border-color: var(--gc-accent); background: var(--gc-surface-selected); }
+.role-permissions fieldset {
+  display: block;
+  min-height: 412px;
+  margin: 0;
+  border: 1px solid var(--gc-border-subtle);
+  border-radius: var(--gc-radius-lg);
+  padding: 24px 24px 12px;
+  background: var(--gc-surface);
+}
+.role-permission-table-heading { display: flex; align-items: baseline; justify-content: space-between; gap: var(--gc-space-3); }
+.role-permission-table-heading h3 { margin: 0; font-size: var(--gc-text-title); line-height: 24px; }
+.role-permission-table-heading span { color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
+.role-permission-table { width: 100%; margin-top: 4px; border-collapse: collapse; }
+.role-permission-table th, .role-permission-table td { border-bottom: 1px solid var(--gc-border-subtle); }
+.role-permission-table thead th { height: 44px; color: var(--gc-text-muted); font-size: var(--gc-text-caption); font-weight: var(--gc-weight-medium); text-align: center; }
+.role-permission-table thead th:first-child { text-align: left; }
+.role-permission-table tbody th { width: 60%; height: 76px; color: var(--gc-text-primary); font-weight: var(--gc-weight-medium); text-align: left; }
+.role-permission-label { display: grid; gap: var(--gc-space-1); }
+.role-permission-label small { color: var(--gc-text-muted); font-size: var(--gc-text-caption); font-weight: var(--gc-weight-regular); line-height: 16px; }
+.role-permission-table tbody td { height: 76px; text-align: center; }
+.role-permission-table tbody tr:last-child > * { border-bottom: 0; }
+.role-permission-icon { display: inline-grid; width: 28px; height: 28px; margin-right: var(--gc-space-2); place-items: center; border-radius: var(--gc-radius-sm); color: var(--gc-accent-text); background: var(--gc-surface-raised); }
+.role-permission-table input { width: 20px; height: 20px; accent-color: var(--gc-accent); }
+.role-permission-notice { display: flex; min-height: 46px; align-items: center; gap: 10px; margin-top: var(--gc-space-4); border: 1px solid #4B4024; border-radius: var(--gc-radius-md); padding: 12px 16px; color: #EED59F; background: #292517; font-size: var(--gc-text-caption); line-height: 16px; }
+.role-permission-notice svg { width: 16px; height: 16px; flex: none; }
+.role-policy-actions { position: sticky; bottom: -16px; z-index: 2; margin-top: 13px; padding: 0; background: var(--gc-content); }
+.role-policy-status { margin-right: auto; color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
+.role-policy-actions button { min-width: 96px; min-height: 36px; border: 1px solid var(--gc-border-control); background: var(--gc-surface); }
+.role-policy-actions button:last-child:not(:disabled) { border-color: var(--gc-accent); background: var(--gc-accent); color: white; }
+/* The table covers all six ACL booleans, grouped by the three resource types. */
+@media (max-width: 720px) {
+  .workspace-main-panel--admin .workspace-header-actions { min-height: 56px; }
+  .workspace-main-panel--admin .admin-panel { margin-top: 0; }
+  .workspace-main-panel--admin .admin-panel { margin-top: 10px; }
+  .workspace-main-panel--admin .role-selector { min-height: 50px; }
+  .workspace-main-panel--admin .role-selector button { min-height: 50px; }
+  .workspace-main-panel--admin .role-permissions { gap: 20px; }
+  .workspace-main-panel--admin .role-permissions fieldset {
+    min-height: 394px;
+    padding: 16px 16px 20px;
+  }
+  .workspace-main-panel--admin .role-permission-table { margin-top: 4px; }
+  .workspace-main-panel--admin .role-permission-table thead th { height: 44px; }
+  .workspace-main-panel--admin .role-permission-table tbody th,
+  .workspace-main-panel--admin .role-permission-table tbody td { height: 64px; }
+  .workspace-main-panel--admin .role-permission-label small { display: none; }
+  .workspace-main-panel--admin .role-permission-icon { display: none; }
+  .workspace-main-panel--admin .role-permission-notice { display: none; }
+  .workspace-main-panel--admin .role-policy-actions { display: flex; gap: var(--gc-space-2); bottom: -4px; margin-top: 0; padding: 0; }
+  .workspace-main-panel--admin .role-policy-status { display: none; }
+  .workspace-main-panel--admin .role-policy-actions button { min-height: 44px; flex: 1; }
+}
+.admin-section-tabs { scrollbar-width: thin; }
+.admin-section-tabs button[aria-current=page] { color: var(--gc-text-primary); }
+.admin-table-scroll { height: 478px; margin-top: 48px; border-radius: var(--gc-radius-lg); padding: 0 20px; background: var(--gc-surface); }
+.admin-table { border-collapse: separate; border-spacing: 0; }
+.admin-table thead th { height: 44px; padding-block: 11.5px; }
+.admin-table th { background: var(--gc-surface-raised); }
+.admin-table tbody tr { height: 72px; }
+.admin-table tbody tr:last-child td { border-bottom: 0; }
+.admin-mobile-list { display: none; }
+@media (max-width: 720px) {
+  .workspace-main-panel { padding: var(--gc-space-4); }
+  .role-selector { width: 100%; }
+  .role-selector button { padding: var(--gc-space-2); }
+  .admin-table { display: none; }
+  .admin-table-scroll { display: none; }
+  .admin-mobile-list { display: grid; grid-auto-rows: 110px; gap: 12px; margin-top: 44px; }
+  .admin-mobile-card { min-height: 110px; border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-lg); padding: 16px; background: var(--gc-surface); }
+  .admin-mobile-card summary { display: grid; gap: 16px; list-style: none; cursor: pointer; }
+  .admin-mobile-card summary::-webkit-details-marker { display: none; }
+  .admin-mobile-user { display: flex; min-width: 0; align-items: center; gap: var(--gc-space-3); }
+  .admin-mobile-user > span:last-child { display: grid; min-width: 0; gap: var(--gc-space-1); }
+  .admin-mobile-user small { color: var(--gc-text-muted); }
+  .admin-mobile-avatar { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border-radius: 50%; color: var(--gc-accent-text); background: var(--gc-surface-raised); font-size: var(--gc-text-caption); font-weight: var(--gc-weight-semibold); }
+  .admin-mobile-user { height: 40px; }
+  .admin-mobile-meta { display: flex; justify-content: space-between; gap: var(--gc-space-3); padding-left: 8px; color: var(--gc-text-secondary); font-size: var(--gc-text-caption); line-height: 20px; }
+  .admin-mobile-meta .is-active { color: var(--gc-success); }
+  .admin-mobile-meta .is-blocked { color: var(--gc-danger); }
+  .admin-mobile-edit { display: grid; gap: var(--gc-space-3); margin-top: var(--gc-space-4); border-top: 1px solid var(--gc-border-subtle); padding-top: var(--gc-space-4); }
+  .admin-mobile-edit > label:not(.admin-block-toggle) { display: grid; gap: var(--gc-space-2); color: var(--gc-text-secondary); }
+  .admin-mobile-card select { width: 100%; min-height: 44px; border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-md); padding: 0 var(--gc-space-3); color: var(--gc-text-primary); background: var(--gc-input); }
+  .admin-mobile-actions { display: flex; gap: var(--gc-space-2); }
+  .admin-mobile-actions button { min-height: 44px; flex: 1; border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-md); padding: 0 var(--gc-space-2); color: var(--gc-text-primary); background: var(--gc-surface-raised); }
+}

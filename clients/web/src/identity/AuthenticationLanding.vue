@@ -11,6 +11,7 @@ const loginInput = ref<HTMLInputElement | null>(null)
 const password = ref('')
 const pending = ref(false)
 const error = ref<string | null>(null)
+const showRecoveryHelp = ref(false)
 
 onMounted(() => { if (props.focusLoginOnMount) loginInput.value?.focus() })
 
@@ -39,14 +40,9 @@ async function submit(): Promise<void> {
 <template>
   <main class="authentication-page" aria-labelledby="authentication-title">
     <section class="authentication-card">
-      <p class="eyebrow">На своём сервере · одна гильдия</p>
-      <h1 id="authentication-title">Voice Platform</h1>
-      <p class="authentication-intro">Голосовые каналы, демонстрация экрана и общий чат для своей компании.</p>
-
-      <div class="authentication-tabs" role="tablist" aria-label="Действие с аккаунтом">
-        <button :aria-selected="mode === 'login'" :class="{ selected: mode === 'login' }" role="tab" type="button" @click="chooseMode('login')">Войти</button>
-        <button :aria-selected="mode === 'register'" :class="{ selected: mode === 'register' }" role="tab" type="button" @click="chooseMode('register')">Регистрация</button>
-      </div>
+      <p class="eyebrow">BOOHTACORD</p>
+      <h1 id="authentication-title">Добро пожаловать</h1>
+      <p class="authentication-intro">Войдите в «Моя гильдия».</p>
 
       <form class="authentication-form" @submit.prevent="submit">
         <label class="authentication-field">
@@ -63,6 +59,13 @@ async function submit(): Promise<void> {
           {{ pending ? 'Подождите…' : mode === 'login' ? 'Войти' : 'Создать аккаунт' }}
         </button>
       </form>
+      <aside class="authentication-account-help" aria-label="Восстановление доступа и регистрация">
+        <button class="authentication-mode-toggle" type="button" @click="chooseMode(mode === 'login' ? 'register' : 'login')">{{ mode === 'login' ? 'Нет аккаунта? Регистрация' : 'Уже есть аккаунт? Войти' }}</button>
+        <p class="authentication-recovery-title">Не получается войти?</p>
+        <button class="authentication-recovery-toggle" type="button" :aria-expanded="showRecoveryHelp" @click="showRecoveryHelp = !showRecoveryHelp">Как восстановить доступ</button>
+        <p v-if="showRecoveryHelp" class="authentication-recovery-details">Попросите администратора гильдии выдать ссылку восстановления.</p>
+        <p class="authentication-registration-note">Регистрация открыта. Используйте вкладку «Регистрация».</p>
+      </aside>
     </section>
   </main>
 </template>

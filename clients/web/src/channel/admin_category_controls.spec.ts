@@ -13,10 +13,10 @@ describe('administrator category controls', () => {
       ],
     })
     const html = await renderToString(app)
-    expect(html).toContain('Новое имя категории')
+    expect(html).toContain('Новое название раздела')
     expect(html).toContain('value="Вторая"')
-    expect(html).toContain('aria-label="Переместить категорию «Вторая» выше"')
-    expect(html).toContain('aria-label="Переместить категорию «Вторая» ниже"')
+    expect(html).toContain('aria-label="Переместить раздел «Вторая» выше"')
+    expect(html).toContain('aria-label="Переместить раздел «Вторая» ниже"')
     expect(html).toContain('type="button"')
     expect(html).toContain('id="category-status"')
     expect(html).toContain('id="category-error"')

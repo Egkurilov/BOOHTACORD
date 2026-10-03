@@ -31,8 +31,10 @@ describe('GuildChat design-system foundation', () => {
     const tokens = source('./tokens.css')
     const foundation = source('./foundation.css')
 
-    expect(tokens).toContain('--gc-canvas: #0E1117')
-    expect(tokens).toContain('--gc-accent: #5C5FE8')
+    expect(tokens).toContain('--gc-canvas: #0B0D12')
+    expect(tokens).toContain('--gc-accent: #5865F2')
+    expect(tokens).toContain('--gc-layout-header: 64px')
+    expect(tokens).toContain('--gc-layout-row-channel: 36px')
     expect(tokens).toContain('--gc-layout-nav-wide: 280px')
     expect(tokens).toContain('--gc-layout-aside-wide: 248px')
     expect(tokens).toContain('--gc-layout-frame-wide: 0px')

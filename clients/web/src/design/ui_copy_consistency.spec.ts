@@ -8,8 +8,8 @@ function source(relativePath: string): string {
 describe('working UI name and media wording', () => {
   it('uses one working product name on the tab, login page and notifications', () => {
     const title = source('../../index.html').match(/<title>([^<]+)<\/title>/)?.[1]
-    expect(title).toBe('Voice Platform')
-    expect(source('../identity/AuthenticationLanding.vue')).toContain(`<h1 id="authentication-title">${title}</h1>`)
+    expect(title).toBe('BOOHTACORD')
+    expect(source('../identity/AuthenticationLanding.vue')).toContain(`<p class="eyebrow">${title}</p>`)
     expect(source('../notification/notification_delivery.ts')).toContain(`runtime.show('${title}'`)
   })
 

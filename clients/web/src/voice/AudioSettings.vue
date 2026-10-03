@@ -70,65 +70,31 @@ function setProcessing(key: 'autoGainControl' | 'echoCancellation', event: Event
 
 <template>
   <section ref="entry" class="audio-settings" aria-label="Настройки аудио" tabindex="-1">
-    <button class="voice-leave" type="button" :disabled="state === 'LOADING'" @click="emit('load')">
-      {{ state === 'LOADING' ? 'Ищем устройства…' : 'Настройки аудио' }}
-    </button>
-    <p v-if="error" class="state state-error" role="alert">{{ error }}</p>
-    <p v-if="deviceWarning" class="state state-error" role="status">{{ deviceWarning }}</p>
-    <label>
-      Активация микрофона
-      <select :value="activationMode" @change="emit('setActivation', ($event.target as HTMLSelectElement).value as VoiceActivationMode)">
-        <option value="VAD">Голосовая активность</option>
-        <option value="PTT">Push-to-talk</option>
-      </select>
-    </label>
-    <button class="voice-leave" type="button" @click="recordingPttKey = true" @keydown="capturePttKey">
-      {{ recordingPttKey ? 'Нажмите клавишу…' : pttKey ? `PTT: ${pttKey}` : 'Назначить PTT-клавишу' }}
-    </button>
-    <p v-if="activationError" class="state state-error" role="alert">{{ activationError }}</p>
-    <fieldset>
-      <legend>Обработка микрофона</legend>
-      <label><input type="checkbox" :checked="processing.autoGainControl" @change="setProcessing('autoGainControl', $event)"> Автоматическая регулировка усиления</label>
-      <p class="state" aria-live="polite">AGC — {{ audioProcessingStatus(processingDiagnostics.autoGainControl) }}</p>
-      <label><input type="checkbox" :checked="processing.echoCancellation" @change="setProcessing('echoCancellation', $event)"> Подавление эха</label>
-      <p class="state" aria-live="polite">Эхоподавление — {{ audioProcessingStatus(processingDiagnostics.echoCancellation) }}</p>
-      <label>Шумоподавление
-        <select :value="processing.noiseSuppressionMode" @change="emit('setProcessing', { ...processing, noiseSuppressionMode: ($event.target as HTMLSelectElement).value as NoiseSuppressionMode })">
-          <option value="off">Выключено</option>
-          <option value="browser">Стандартное — браузер</option>
-          <option v-if="rnnoiseReleaseEnabled()" value="rnnoise">RNNoise — экспериментальное</option>
-          <option v-if="!rnnoiseReleaseEnabled() && processing.noiseSuppressionMode === 'rnnoise'" value="rnnoise" disabled>RNNoise — недоступен в этой сборке</option>
-        </select>
-      </label>
-      <p class="state" aria-live="polite">Выбрано: {{ noiseSuppressionModeLabel(processing.noiseSuppressionMode) }}. Работает: {{ noiseSuppressionModeLabel(processingDiagnostics.noiseSuppressionRuntime.effectiveMode) }}.</p>
-      <p v-if="processingDiagnostics.noiseSuppressionRuntime.fallbackReason" class="state" role="status">Причина: {{ noiseSuppressionFallbackLabel(processingDiagnostics.noiseSuppressionRuntime.fallbackReason) }}.</p>
-      <p v-if="processingDiagnostics.noiseSuppressionRuntime.status === 'initializing'" class="state" role="status">Подготавливаем фильтр…</p>
-      <p v-if="processingDiagnostics.noiseSuppressionRuntime.status === 'error'" class="state state-error" role="alert">Ошибка обработки микрофона. Отправка звука выключена.</p>
-      <details><summary>Диагностика обработки</summary>
-        <p>Browser NS — {{ audioProcessingStatus(processingDiagnostics.noiseSuppression) }}</p>
-        <p>Источник capture: {{ processingDiagnostics.captureSource === 'original-microphone' ? 'исходный микрофон' : 'недоступен' }}. Статус: {{ processingDiagnostics.noiseSuppressionRuntime.status }}.</p>
-        <p v-if="processingDiagnostics.noiseSuppressionRuntime.modelId">Модель: {{ processingDiagnostics.noiseSuppressionRuntime.modelId }}.</p>
-        <p>Частота исходного capture: {{ processingDiagnostics.noiseSuppressionRuntime.captureSampleRate === undefined ? 'недоступна' : `${processingDiagnostics.noiseSuppressionRuntime.captureSampleRate} Гц` }}.</p>
-        <p v-if="processingDiagnostics.noiseSuppressionRuntime.initDurationMs !== undefined">Подготовка фильтра: {{ processingDiagnostics.noiseSuppressionRuntime.initDurationMs.toFixed(1) }} мс.</p>
-        <p v-if="processingDiagnostics.noiseSuppressionRuntime.contextSampleRate">AudioContext: {{ processingDiagnostics.noiseSuppressionRuntime.contextSampleRate }} Гц.</p>
-        <p v-if="processingDiagnostics.noiseSuppressionRuntime.processedFrames !== undefined">Кадры: {{ processingDiagnostics.noiseSuppressionRuntime.processedFrames }}; ошибки: {{ processingDiagnostics.noiseSuppressionRuntime.processorErrors ?? 0 }}.</p>
-      </details>
-    </fieldset>
-    <template v-if="state === 'READY'">
-      <label>
-        Микрофон
-        <select :value="selectedInput" @change="choose('audioinput', $event)">
-          <option v-for="device in devices.inputs" :key="device.id" :value="device.id">{{ device.label }}</option>
-        </select>
-      </label>
-      <label>
-        Динамик
-        <select :value="selectedOutput" @change="choose('audiooutput', $event)">
-          <option v-for="device in devices.outputs" :key="device.id" :value="device.id">{{ device.label }}</option>
-        </select>
-      </label>
-      <p v-if="!connected" class="state">До подключения выбор устройства используется для локальной проверки; устройство звонка можно переключить после входа.</p>
-      <AudioDeviceCheck :input-id="selectedInput" :output-id="selectedOutput" :processing="processing" :connected="connected" :microphone-track="microphoneTrack" />
-    </template>
+    <header class="audio-settings-heading"><h1>Настройки аудио</h1><p>Проверьте устройства перед разговором.</p></header>
+    <button class="audio-device-refresh" type="button" :disabled="state === 'LOADING'" @click="emit('load')">{{ state === 'LOADING' ? 'Ищем устройства…' : 'Обновить устройства' }}</button>
+    <p v-if="error" class="state state-error" role="alert">{{ error }}</p><p v-if="deviceWarning" class="state state-error" role="status">{{ deviceWarning }}</p>
+    <div class="audio-settings-panel">
+      <section class="audio-device-section"><header><h2>Устройства</h2><p>Настройки действуют на этом устройстве.</p></header>
+        <template v-if="state === 'READY'">
+          <label>Микрофон<select :value="selectedInput" @change="choose('audioinput', $event)"><option v-for="device in devices.inputs" :key="device.id" :value="device.id">{{ device.label }}</option></select></label>
+          <label>Наушники или динамики<select :value="selectedOutput" @change="choose('audiooutput', $event)"><option v-for="device in devices.outputs" :key="device.id" :value="device.id">{{ device.label }}</option></select></label>
+          <AudioDeviceCheck :input-id="selectedInput" :output-id="selectedOutput" :processing="processing" :connected="connected" :microphone-track="microphoneTrack" />
+        </template>
+      </section>
+      <section class="audio-activation-section"><header><h2>Активация микрофона</h2><p>Выберите удобный способ общения.</p></header>
+        <label>Активация микрофона<select :value="activationMode" @change="emit('setActivation', ($event.target as HTMLSelectElement).value as VoiceActivationMode)"><option value="VAD">По голосу</option><option value="PTT">По нажатию</option></select></label>
+        <button class="audio-ptt-button" type="button" @click="recordingPttKey = true" @keydown="capturePttKey">{{ recordingPttKey ? 'Нажмите клавишу…' : pttKey ? `PTT: ${pttKey}` : 'Назначить PTT-клавишу' }}</button>
+        <p v-if="activationError" class="state state-error" role="alert">{{ activationError }}</p>
+      </section>
+      <fieldset class="audio-processing-section"><legend>Обработка звука</legend>
+        <label><input type="checkbox" :checked="processing.autoGainControl" @change="setProcessing('autoGainControl', $event)"> Автоматическая громкость</label><p class="state">Выравнивает уровень микрофона · {{ audioProcessingStatus(processingDiagnostics.autoGainControl) }}</p>
+        <label><input type="checkbox" :checked="processing.echoCancellation" @change="setProcessing('echoCancellation', $event)"> Подавление эха</label><p class="state">Убирает обратный звук из динамиков · {{ audioProcessingStatus(processingDiagnostics.echoCancellation) }}</p>
+        <label>Шумоподавление<select :value="processing.noiseSuppressionMode" @change="emit('setProcessing', { ...processing, noiseSuppressionMode: ($event.target as HTMLSelectElement).value as NoiseSuppressionMode })"><option value="off">Выключено</option><option value="browser">Стандартное — браузер</option><option v-if="rnnoiseReleaseEnabled()" value="rnnoise">RNNoise — экспериментальное</option><option v-if="!rnnoiseReleaseEnabled() && processing.noiseSuppressionMode === 'rnnoise'" value="rnnoise" disabled>RNNoise — недоступен в этой сборке</option></select></label>
+        <p class="state">Уменьшает фоновый шум · {{ noiseSuppressionModeLabel(processingDiagnostics.noiseSuppressionRuntime.effectiveMode) }}</p>
+        <p v-if="processingDiagnostics.noiseSuppressionRuntime.fallbackReason" class="state" role="status">Причина: {{ noiseSuppressionFallbackLabel(processingDiagnostics.noiseSuppressionRuntime.fallbackReason) }}.</p>
+        <p v-if="processingDiagnostics.noiseSuppressionRuntime.status === 'initializing'" class="state" role="status">Подготавливаем фильтр…</p><p v-if="processingDiagnostics.noiseSuppressionRuntime.status === 'error'" class="state state-error" role="alert">Ошибка обработки микрофона. Отправка звука выключена.</p>
+        <details><summary>Диагностика обработки</summary><p>Browser NS — {{ audioProcessingStatus(processingDiagnostics.noiseSuppression) }}</p><p>Источник capture: {{ processingDiagnostics.captureSource === 'original-microphone' ? 'исходный микрофон' : 'недоступен' }}. Статус: {{ processingDiagnostics.noiseSuppressionRuntime.status }}.</p><p v-if="processingDiagnostics.noiseSuppressionRuntime.modelId">Модель: {{ processingDiagnostics.noiseSuppressionRuntime.modelId }}.</p><p>Частота исходного capture: {{ processingDiagnostics.noiseSuppressionRuntime.captureSampleRate === undefined ? 'недоступна' : `${processingDiagnostics.noiseSuppressionRuntime.captureSampleRate} Гц` }}.</p><p v-if="processingDiagnostics.noiseSuppressionRuntime.initDurationMs !== undefined">Подготовка фильтра: {{ processingDiagnostics.noiseSuppressionRuntime.initDurationMs.toFixed(1) }} мс.</p><p v-if="processingDiagnostics.noiseSuppressionRuntime.contextSampleRate">AudioContext: {{ processingDiagnostics.noiseSuppressionRuntime.contextSampleRate }} Гц.</p><p v-if="processingDiagnostics.noiseSuppressionRuntime.processedFrames !== undefined">Кадры: {{ processingDiagnostics.noiseSuppressionRuntime.processedFrames }}; ошибки: {{ processingDiagnostics.noiseSuppressionRuntime.processorErrors ?? 0 }}.</p></details>
+      </fieldset>
+    </div>
   </section>
 </template>

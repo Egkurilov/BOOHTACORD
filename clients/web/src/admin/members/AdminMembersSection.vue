@@ -52,6 +52,16 @@ onMounted(() => { void load() })
         </tr>
       </tbody></table>
     </div>
+    <div v-if="accounts.length" class="admin-mobile-list" aria-label="Участники гильдии">
+      <details v-for="account in accounts" :key="`mobile-${account.account_id}`" class="admin-mobile-card">
+        <summary><span class="admin-mobile-user"><span class="admin-mobile-avatar" aria-hidden="true">{{ account.display_name.slice(0, 2).toUpperCase() }}</span><span><strong>{{ account.display_name }}</strong><small>@{{ account.login }}</small></span></span><span class="admin-mobile-meta"><span>{{ account.role === 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь' }}</span><span :class="account.blocked ? 'is-blocked' : 'is-active'">{{ account.blocked ? 'Заблокирован' : 'Активен' }}</span></span><span class="gc-sr-only">Управление аккаунтом</span></summary>
+        <div class="admin-mobile-edit">
+          <label>Роль<select v-model="drafts[account.account_id].role" :disabled="busyID === account.account_id" :aria-label="`Роль: ${account.login}`"><option value="MEMBER">Участник</option><option value="ADMINISTRATOR">Администратор</option></select></label>
+          <label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id" :aria-label="`Заблокирован: ${account.login}`"> Заблокирован</label>
+          <div class="admin-mobile-actions"><button type="button" :disabled="busyID === account.account_id" @click="save(account, $event)">Сохранить</button><button type="button" :disabled="busyID === account.account_id" @click="createReset(account, $event)">Сбросить пароль</button></div>
+        </div>
+      </details>
+    </div>
     <section v-if="resetLink" ref="resetResult" class="admin-reset-result" role="dialog" aria-modal="false" aria-labelledby="reset-link-title" @keydown.esc.stop.prevent="closeReset">
       <header><h3 id="reset-link-title">Одноразовая ссылка для @{{ resetLink.login }}</h3><button type="button" aria-label="Закрыть и удалить ссылку" @click="closeReset">×</button></header>
       <p>Покажите ссылку пользователю. После закрытия она будет удалена с этого экрана.</p>

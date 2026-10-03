@@ -1,0 +1,29 @@
+/* Profile, account security, and the audio-device settings panel. */
+.workspace-main-panel--profile { padding-top: 96px; }
+.workspace-main-panel--profile .profile-settings { max-width: var(--gc-layout-settings-max); gap: 0; }
+.workspace-main-panel--profile .profile-settings header h1 { font-size: var(--gc-text-page); line-height: var(--gc-line-page); }
+.workspace-main-panel--profile .profile-tabs { display: flex; gap: var(--gc-space-2); margin: 24px 0 26px; overflow-x: auto; border-bottom: 1px solid var(--gc-border-subtle); }
+.workspace-main-panel--profile .profile-tabs button { min-height: 42px; flex: 0 0 auto; border: 0; border-bottom: 2px solid transparent; padding: 0 var(--gc-space-4); color: var(--gc-text-secondary); background: transparent; }
+.workspace-main-panel--profile .profile-tabs button[aria-selected=true] { border-bottom-color: var(--gc-accent); color: var(--gc-text-primary); }
+.workspace-main-panel--profile .profile-panel { display: grid; min-height: 459px; gap: 33.5px; border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-lg); padding: var(--gc-space-6); background: var(--gc-surface); }
+.workspace-main-panel--profile .profile-avatar-copy { display: grid; flex: 1; gap: var(--gc-space-1); }
+.workspace-main-panel--profile .profile-avatar-copy h2 { margin: 0; color: var(--gc-text-primary); font-size: var(--gc-text-section); }
+.workspace-main-panel--profile .profile-avatar-copy p, .workspace-main-panel--profile .profile-form small { margin: 0; color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
+.workspace-main-panel--profile .profile-form { max-width: none; gap: var(--gc-space-4); }
+.workspace-main-panel--profile .profile-form label { gap: var(--gc-space-2); }
+.workspace-main-panel--profile .profile-savebar { display: flex; height: 57px; min-height: 57px; box-sizing: border-box; align-items: center; gap: var(--gc-space-3); margin-top: 7.1px; border-top: 1px solid var(--gc-border-subtle); padding-top: 0; }
+.workspace-main-panel--profile .profile-savebar span { flex: 1; color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
+.workspace-main-panel--profile .profile-savebar button { min-height: var(--gc-size-control-sm); border: 0; border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-4); color: white; background: var(--gc-accent); }
+.workspace-main-panel--profile .profile-savebar button:disabled { opacity: .5; }
+.workspace-main-panel--profile .profile-password-form { max-width: 520px; border: 0; padding: 0; }
+.workspace-main-panel--profile .profile-logout { align-self: end; }
+@media (max-width: 720px) {
+  .workspace-main-panel--profile { padding-top: var(--gc-space-4); }
+  .workspace-main-panel--profile .profile-tabs { margin-top: var(--gc-space-4); }
+  .workspace-main-panel--profile .profile-panel { min-height: 0; padding: var(--gc-space-4); }
+  .workspace-main-panel--profile .profile-avatar-row { flex-wrap: wrap; }
+  .workspace-main-panel--profile .profile-avatar-copy { min-width: calc(100% - 128px); }
+}
+@media (min-width: 1280px) {
+  .workspace-main-panel--profile .profile-savebar { transform: translateY(2.58px); }
+}

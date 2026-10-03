@@ -17,3 +17,10 @@
 @import './design/role_permissions.css';
 @import './design/member_topology_actions.css';
 @import './design/search.css';
+@import './design/design_v2_chat.css';
+@import './design/design_v2_foundation.css';
+@import './design/design_v2_settings.css';
+@import './design/design_v2_identity.css';
+@import './design/design_v2_audio.css';
+@import './design/design_v2_media.css';
+@import './design/design_v2_overlays.css';

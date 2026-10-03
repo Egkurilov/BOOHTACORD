@@ -1,0 +1,12 @@
+BOOHTACORD Design V2 — implementation progress
+Date: 2026-10-03
+
+Reference scope: the supplied live HTML package contains R01–R30. Its DOM boxes, visible text, and viewports are inventoried in reference-inventory.json. Reference scripts were omitted and image requests were blocked; no raster images or screenshots were used.
+
+Implemented: canonical V2 tokens; shared button/input/focus states; R01–R03 desktop/tablet/mobile chat shell and measured conversation geometry; responsive settings, role, profile, search, auth, topology dialog, update banner, media viewer, and overlay style layers; mobile admin member cards use the existing account-save/reset workflows.
+
+Actual-vs-reference DOM geometry: R01–R03 production Vue components were rendered in Chromium and matched to the supplied HTML with zero measured delta; see review.json. The connected voice dock was represented with its existing CSS class in the visual fixture; no LiveKit session was started. Actual production component geometry for R04–R30 remains unverified and is still required before the full goal is complete.
+
+Native checks: `npm test` — PASS, 260 files / 825 tests. `npm run build` — PASS (`vue-tsc --noEmit` and Vite production build). Vite reports the existing LiveKit/client bundles exceed 500 kB; build succeeds. `git diff --check` — PASS.
+
+Current goal status: active. The R01–R30 component map and live-reference inventory are in the full implementation plan. Do not treat reference-only HTML boxes as production actuals; render each remaining real component state, produce numeric DOM/computed-style diffs, and fix all material mismatches.

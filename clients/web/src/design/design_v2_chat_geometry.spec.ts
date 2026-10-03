@@ -1,0 +1,41 @@
+import { readFileSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
+
+const tokens = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8')
+const shell = readFileSync(new URL('./shell.css', import.meta.url), 'utf8')
+const responsive = readFileSync(new URL('./responsive_shell.css', import.meta.url), 'utf8')
+const conversation = readFileSync(new URL('./conversation.css', import.meta.url), 'utf8')
+const v2Chat = readFileSync(new URL('./design_v2_chat.css', import.meta.url), 'utf8')
+
+function pixelToken(name: string): number {
+  return Number(tokens.match(new RegExp(`--gc-${name}:\\s*(\\d+)px;`))?.[1])
+}
+
+describe('Design V2 chat reference geometry', () => {
+  it('matches the R01 1440 px shell columns and header', () => {
+    expect(pixelToken('layout-nav-wide')).toBe(280)
+    expect(pixelToken('layout-aside-wide')).toBe(248)
+    expect(pixelToken('layout-header')).toBe(64)
+    expect(1440 - pixelToken('layout-nav-wide') - pixelToken('layout-aside-wide')).toBe(912)
+    expect(shell).toContain('grid-template-columns: var(--gc-layout-nav-wide) minmax(0, 1fr) var(--gc-layout-aside-wide)')
+  })
+
+  it('uses a drawer for members at R03 and a single-column mobile shell at R02', () => {
+    expect(responsive).toContain('@media (min-width: 1024px) and (max-width: 1279px)')
+    expect(responsive).toContain('@media (max-width: 1023px)')
+    expect(responsive).toContain('.members.is-open')
+  })
+
+  it('keeps the history, composer, and attachments inside the measured chat body', () => {
+    expect(conversation).toContain('.message-list')
+    expect(conversation).toContain('.composer-wrap')
+    expect(conversation).toContain('.attachment-card__preview')
+    expect(pixelToken('layout-header')).toBe(64)
+    expect(v2Chat).toContain('.text-conversation .composer-wrap { padding: 8px 24px 18px; }')
+    expect(v2Chat).toContain('.attachment-preview { max-width: min(100%, 440px); max-height: 200px; }')
+    expect(v2Chat).toContain('.attachment-preview { max-width: 100%; max-height: 144px; }')
+    expect(v2Chat).toContain('.conversation-header { height: 56px; min-height: 56px; flex-basis: 56px; }')
+    expect(v2Chat).toContain('.text-conversation .composer-wrap { padding: 8px 8px; }')
+    expect(v2Chat).toContain('.composer-helper { position: absolute;')
+  })
+})

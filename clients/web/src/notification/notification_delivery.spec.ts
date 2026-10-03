@@ -48,7 +48,7 @@ describe('browser notification delivery', () => {
     await first.enable()
     await Promise.all([first.deliver('event-1', 'Новое личное сообщение.'), second.deliver('event-1', 'Новое личное сообщение.')])
     expect(value.show).toHaveBeenCalledOnce()
-    expect(value.show.mock.calls[0]?.[0]).toBe('Voice Platform')
+    expect(value.show.mock.calls[0]?.[0]).toBe('BOOHTACORD')
     expect(value.show.mock.calls[0]?.[1]).toMatchObject({ body: 'Новое личное сообщение.' })
   })
 

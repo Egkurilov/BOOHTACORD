@@ -24,7 +24,7 @@ describe('workspace notification lifecycle', () => {
   afterEach(() => vi.unstubAllGlobals())
 
   it('updates title from protected counters and restores it on stop', async () => {
-    vi.stubGlobal('document', { title: 'Voice Platform', visibilityState: 'hidden' })
+    vi.stubGlobal('document', { title: 'BOOHTACORD', visibilityState: 'hidden' })
     setActivePinia(createPinia())
     const topology = useTopologyStore()
     const directMessages = useDirectMessageStore()
@@ -33,13 +33,13 @@ describe('workspace notification lifecycle', () => {
     topology.topology = { revision: 1, categories: [{ id: 'c', name: 'Общее', position: 0, channels: [{ id: 'text-a', name: 'Чат', kind: 'TEXT', position: 0, admissionClosed: false, unreadCount: 3, mentionCount: 0 }] }] }
     directMessages.directMessages = [{ id: 'dm-a', otherParticipantId: 'peer', otherParticipantDisplayName: 'Участник', createdAt: event.occurredAt, unreadCount: 2, mentionCount: 0 }]
     await nextTick()
-    expect(document.title).toBe('(5) Voice Platform')
+    expect(document.title).toBe('(5) BOOHTACORD')
     store.stop()
-    expect(document.title).toBe('Voice Platform')
+    expect(document.title).toBe('BOOHTACORD')
   })
 
   it('alerts only for a new unread count while hidden', async () => {
-    vi.stubGlobal('document', { title: 'Voice Platform', visibilityState: 'hidden' })
+    vi.stubGlobal('document', { title: 'BOOHTACORD', visibilityState: 'hidden' })
     setActivePinia(createPinia())
     const directMessages = useDirectMessageStore()
     directMessages.directMessages = [{ id: 'dm-a', otherParticipantId: 'peer', otherParticipantDisplayName: 'Участник', createdAt: event.occurredAt, unreadCount: 1, mentionCount: 0 }]
@@ -60,7 +60,7 @@ describe('workspace notification lifecycle', () => {
   })
 
   it('alerts for the first incoming message when its DM appears after refresh', async () => {
-    vi.stubGlobal('document', { title: 'Voice Platform', visibilityState: 'hidden' })
+    vi.stubGlobal('document', { title: 'BOOHTACORD', visibilityState: 'hidden' })
     setActivePinia(createPinia())
     const directMessages = useDirectMessageStore()
     const value = runtime()
@@ -72,7 +72,7 @@ describe('workspace notification lifecycle', () => {
     expect(before).toBe(0)
     directMessages.directMessages = [{ id: 'dm-a', otherParticipantId: 'peer', otherParticipantDisplayName: 'Участник', createdAt: event.occurredAt, unreadCount: 1, mentionCount: 0 }]
     await store.deliver(event, before)
-    expect(value.show).toHaveBeenCalledExactlyOnceWith('Voice Platform', { body: 'Новое личное сообщение.', tag: 'event-a' })
+    expect(value.show).toHaveBeenCalledExactlyOnceWith('BOOHTACORD', { body: 'Новое личное сообщение.', tag: 'event-a' })
 
     const unrelated = { ...event, eventId: 'event-b', payload: { direct_message_id: 'dm-b' } }
     await store.deliver(unrelated, store.capture(unrelated))
@@ -81,7 +81,7 @@ describe('workspace notification lifecycle', () => {
   })
 
   it('does not show a queued notification after the account stops', async () => {
-    vi.stubGlobal('document', { title: 'Voice Platform', visibilityState: 'hidden' })
+    vi.stubGlobal('document', { title: 'BOOHTACORD', visibilityState: 'hidden' })
     setActivePinia(createPinia())
     const directMessages = useDirectMessageStore()
     directMessages.directMessages = [{ id: 'dm-a', otherParticipantId: 'peer', otherParticipantDisplayName: 'Участник', createdAt: event.occurredAt, unreadCount: 1, mentionCount: 0 }]

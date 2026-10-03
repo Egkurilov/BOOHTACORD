@@ -1,0 +1,1936 @@
+{
+  "method": "Compared the supplied live HTML DOM bounds with rendered production Vue components in Chromium. Raster requests were blocked; no images or screenshots were consumed or created.",
+  "stateNote": "For R01/R03 geometry only, the production VoiceDock root received its existing connected CSS class to match the reference state; no LiveKit session was created or mutated.",
+  "screens": [
+    {
+      "name": "R01",
+      "width": 1440,
+      "height": 900,
+      "file": "R01.html",
+      "reference": {
+        "shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        "sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        "guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        "navBody": [
+          0,
+          64,
+          279,
+          660
+        ],
+        "header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        "members": [
+          1192,
+          64,
+          248,
+          836
+        ],
+        "composerWrap": [
+          280,
+          802,
+          912,
+          98
+        ],
+        "composer": [
+          304,
+          810,
+          864,
+          52
+        ],
+        "voiceDock": [
+          0,
+          724,
+          279,
+          112
+        ]
+      },
+      "actual": {
+        "shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        "sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        "guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        "navBody": [
+          0,
+          64,
+          279,
+          660
+        ],
+        "header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        "members": [
+          1192,
+          64,
+          248,
+          836
+        ],
+        "composerWrap": [
+          280,
+          802,
+          912,
+          98
+        ],
+        "composer": [
+          304,
+          810,
+          864,
+          52
+        ],
+        "voiceDock": [
+          0,
+          724,
+          279,
+          112
+        ]
+      },
+      "diff": {
+        "shell": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "navBody": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "header": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "members": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composerWrap": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composer": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "voiceDock": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "name": "R02",
+      "width": 390,
+      "height": 844,
+      "file": "R02.html",
+      "reference": {
+        "shell": [
+          0,
+          0,
+          390,
+          844
+        ],
+        "sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "navBody": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "header": [
+          0,
+          0,
+          390,
+          56
+        ],
+        "members": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composerWrap": [
+          0,
+          721,
+          390,
+          70
+        ],
+        "composer": [
+          8,
+          729,
+          374,
+          54
+        ],
+        "voiceDock": [
+          0,
+          791,
+          390,
+          53
+        ]
+      },
+      "actual": {
+        "shell": [
+          0,
+          0,
+          390,
+          844
+        ],
+        "header": [
+          0,
+          0,
+          390,
+          56
+        ],
+        "composerWrap": [
+          0,
+          721,
+          390,
+          70
+        ],
+        "composer": [
+          8,
+          729,
+          374,
+          54
+        ],
+        "voiceDock": [
+          0,
+          791,
+          390,
+          53
+        ],
+        "sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "navBody": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "members": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "diff": {
+        "shell": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "header": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composerWrap": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composer": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "voiceDock": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "navBody": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "members": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "name": "R03",
+      "width": 1024,
+      "height": 768,
+      "file": "R03.html",
+      "reference": {
+        "shell": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "sidebar": [
+          0,
+          0,
+          280,
+          768
+        ],
+        "guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        "navBody": [
+          0,
+          64,
+          279,
+          528
+        ],
+        "header": [
+          280,
+          0,
+          744,
+          64
+        ],
+        "members": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composerWrap": [
+          280,
+          670,
+          744,
+          98
+        ],
+        "composer": [
+          300,
+          678,
+          704,
+          52
+        ],
+        "voiceDock": [
+          0,
+          592,
+          279,
+          112
+        ]
+      },
+      "actual": {
+        "shell": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "sidebar": [
+          0,
+          0,
+          280,
+          768
+        ],
+        "navBody": [
+          0,
+          64,
+          279,
+          528
+        ],
+        "header": [
+          280,
+          0,
+          744,
+          64
+        ],
+        "members": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composerWrap": [
+          280,
+          670,
+          744,
+          98
+        ],
+        "composer": [
+          300,
+          678,
+          704,
+          52
+        ],
+        "voiceDock": [
+          0,
+          592,
+          279,
+          112
+        ],
+        "guild": [
+          0,
+          0,
+          279,
+          64
+        ]
+      },
+      "diff": {
+        "shell": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "navBody": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "header": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "members": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composerWrap": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composer": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "voiceDock": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "guild": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "name": "R04",
+      "width": 1440,
+      "height": 900,
+      "file": "R04.html",
+      "state": "stream",
+      "reference": {
+        "mediaMain": [
+          280,
+          64,
+          1160,
+          836
+        ],
+        "stage": [
+          304,
+          88,
+          1112,
+          608
+        ],
+        "stageControls": [
+          304,
+          712,
+          1112,
+          48
+        ],
+        "streamRail": [
+          304,
+          776,
+          1112,
+          100
+        ]
+      },
+      "actual": {
+        "mediaMain": [
+          280,
+          64,
+          1160,
+          836
+        ],
+        "stage": [
+          304,
+          88,
+          1112,
+          608
+        ],
+        "stageControls": [
+          304,
+          712,
+          1112,
+          48
+        ],
+        "streamRail": [
+          304,
+          776,
+          1112,
+          100
+        ]
+      },
+      "diff": {
+        "mediaMain": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "stage": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "stageControls": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "streamRail": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    },
+    {
+      "name": "R05",
+      "width": 390,
+      "height": 844,
+      "file": "R05.html",
+      "state": "stream",
+      "reference": {
+        "mediaMain": [
+          0,
+          56,
+          390,
+          735
+        ],
+        "stage": [
+          12,
+          68,
+          366,
+          547
+        ],
+        "stageControls": [
+          12,
+          627,
+          366,
+          56
+        ],
+        "streamRail": [
+          12,
+          695,
+          366,
+          84
+        ]
+      },
+      "actual": {
+        "mediaMain": [
+          0,
+          56,
+          390,
+          735
+        ],
+        "stage": [
+          12,
+          68,
+          366,
+          547
+        ],
+        "stageControls": [
+          12,
+          627,
+          366,
+          56
+        ],
+        "streamRail": [
+          12,
+          695,
+          366,
+          84
+        ]
+      },
+      "diff": {
+        "mediaMain": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "stage": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "stageControls": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "streamRail": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    },
+    {
+      "name": "R06",
+      "width": 1440,
+      "height": 900,
+      "file": "R06.html",
+      "reference": {
+        "roleSelector": [
+          420,
+          329,
+          340,
+          46
+        ],
+        "panel": [
+          420,
+          399,
+          880,
+          412
+        ],
+        "table": [
+          445,
+          452,
+          830,
+          272
+        ],
+        "savebar": [
+          420,
+          848,
+          880,
+          36
+        ]
+      },
+      "actual": {
+        "roleSelector": [
+          420,
+          329,
+          340,
+          46
+        ],
+        "panel": [
+          420,
+          399,
+          880,
+          412
+        ],
+        "table": [
+          445,
+          452,
+          830,
+          272
+        ],
+        "savebar": [
+          420,
+          848,
+          880,
+          36
+        ]
+      },
+      "diff": {
+        "roleSelector": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "panel": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "table": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "savebar": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "state": "roles",
+      "apiRequestsObserved": 16,
+      "browserErrors": []
+    },
+    {
+      "name": "R07",
+      "width": 390,
+      "height": 844,
+      "file": "R07.html",
+      "reference": {
+        "roleSelector": [
+          16,
+          321,
+          358,
+          50
+        ],
+        "panel": [
+          16,
+          391,
+          358,
+          394
+        ],
+        "table": [
+          33,
+          436,
+          324,
+          236
+        ],
+        "savebar": [
+          16,
+          735,
+          358,
+          44
+        ]
+      },
+      "actual": {
+        "roleSelector": [
+          16,
+          321,
+          358,
+          50
+        ],
+        "panel": [
+          16,
+          391,
+          358,
+          394
+        ],
+        "table": [
+          33,
+          436,
+          324,
+          236
+        ],
+        "savebar": [
+          16,
+          735,
+          358,
+          44
+        ]
+      },
+      "diff": {
+        "roleSelector": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "panel": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "table": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "savebar": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "state": "roles",
+      "apiRequestsObserved": 16,
+      "browserErrors": []
+    },
+    {
+      "name": "R08",
+      "width": 1440,
+      "height": 900,
+      "file": "R08.html",
+      "reference": {
+        "dialog": [
+          480,
+          194,
+          480,
+          513
+        ]
+      },
+      "actual": {
+        "dialog": [
+          480,
+          194,
+          480,
+          513
+        ]
+      },
+      "diff": {
+        "dialog": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "state": "topology-category",
+      "apiRequestsObserved": 13,
+      "browserErrors": []
+    },
+    {
+      "name": "R09",
+      "width": 390,
+      "height": 844,
+      "file": "R09.html",
+      "reference": {
+        "dialog": [
+          0,
+          314,
+          390,
+          530
+        ]
+      },
+      "actual": {
+        "dialog": [
+          0,
+          314,
+          390,
+          530
+        ]
+      },
+      "diff": {
+        "dialog": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "state": "topology-channel",
+      "apiRequestsObserved": 14,
+      "browserErrors": []
+    },
+    {
+      "name": "R10",
+      "width": 1440,
+      "height": 900,
+      "file": "R10.html",
+      "reference": {
+        "panel": [
+          420,
+          180,
+          880,
+          282
+        ]
+      },
+      "actual": {
+        "panel": [
+          420,
+          180,
+          880,
+          282
+        ]
+      },
+      "diff": {
+        "panel": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "state": "audio",
+      "apiRequestsObserved": 13,
+      "browserErrors": []
+    },
+    {
+      "name": "R11",
+      "width": 390,
+      "height": 844,
+      "file": "R11.html",
+      "reference": {
+        "panel": [
+          16,
+          156,
+          358,
+          402
+        ]
+      },
+      "actual": {
+        "panel": [
+          16,
+          156,
+          358,
+          402
+        ]
+      },
+      "diff": {
+        "panel": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "state": "audio",
+      "apiRequestsObserved": 14,
+      "browserErrors": []
+    },
+    {
+      "name": "R12",
+      "width": 1440,
+      "height": 900,
+      "file": "R12.html",
+      "reference": {
+        "panel": [
+          420,
+          249,
+          880,
+          459
+        ],
+        "savebar": [
+          445,
+          626,
+          830,
+          57
+        ]
+      },
+      "actual": {
+        "panel": [
+          420,
+          249,
+          880,
+          459
+        ],
+        "savebar": [
+          445,
+          626,
+          830,
+          57
+        ]
+      },
+      "diff": {
+        "panel": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "savebar": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "state": "profile",
+      "apiRequestsObserved": 14,
+      "browserErrors": []
+    },
+    {
+      "name": "R13",
+      "width": 1440,
+      "height": 900,
+      "file": "R13.html",
+      "reference": {
+        "searchPanel": [
+          1060,
+          64,
+          380,
+          836
+        ]
+      },
+      "actual": {
+        "searchPanel": [
+          1060,
+          64,
+          380,
+          836
+        ]
+      },
+      "diff": {
+        "searchPanel": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "state": "search",
+      "apiRequestsObserved": 14,
+      "browserErrors": []
+    },
+    {
+      "name": "R14",
+      "width": 390,
+      "height": 844,
+      "file": "R14.html",
+      "reference": {
+        "navigationDrawer": [
+          0,
+          0,
+          320,
+          844
+        ]
+      },
+      "actual": {
+        "navigationDrawer": [
+          0,
+          0,
+          320,
+          844
+        ]
+      },
+      "diff": {
+        "navigationDrawer": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "state": "nav",
+      "apiRequestsObserved": 14,
+      "browserErrors": []
+    },
+    {
+      "name": "R15",
+      "width": 1440,
+      "height": 900,
+      "file": "R15.html",
+      "state": "components",
+      "reference": {
+        "componentCatalog": [
+          40,
+          172,
+          440,
+          602
+        ]
+      },
+      "actual": {
+        "componentCatalog": null
+      },
+      "diff": {
+        "componentCatalog": null
+      },
+      "note": "Reference-only component catalog, not a product screen. Its palette, type scale, focus, controls and layout tokens are covered by design_v2_tokens.spec.ts and shared production foundation styles."
+    },
+    {
+      "name": "R16",
+      "width": 1440,
+      "height": 900,
+      "file": "R16.html",
+      "state": "auth",
+      "reference": {
+        "authCard": [
+          504,
+          159,
+          432,
+          583
+        ]
+      },
+      "actual": {
+        "authCard": [
+          504,
+          159,
+          432,
+          583
+        ]
+      },
+      "diff": {
+        "authCard": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "note": "Production AuthenticationLanding card. Open registration remains enabled per approved product brief."
+    },
+    {
+      "name": "R17",
+      "width": 390,
+      "height": 844,
+      "file": "R17.html",
+      "state": "auth",
+      "reference": {
+        "authCard": [
+          16,
+          145,
+          358,
+          555
+        ]
+      },
+      "actual": {
+        "authCard": [
+          16,
+          145,
+          358,
+          555
+        ]
+      },
+      "diff": {
+        "authCard": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "note": "Production AuthenticationLanding card; open registration remains enabled per approved product brief."
+    },
+    {
+      "name": "R18",
+      "width": 1440,
+      "height": 900,
+      "file": "R18.html",
+      "state": "member",
+      "reference": {
+        "memberPopover": [
+          856,
+          156,
+          320,
+          314
+        ]
+      },
+      "actual": {
+        "memberPopover": [
+          856,
+          156,
+          320,
+          314
+        ]
+      },
+      "diff": {
+        "memberPopover": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "note": "Measured production MemberPopover with a test-only member record."
+    },
+    {
+      "name": "R19",
+      "width": 390,
+      "height": 844,
+      "file": "R19.html",
+      "state": "statistics",
+      "reference": {
+        "stage": [
+          12,
+          68,
+          366,
+          547
+        ],
+        "stageControls": [
+          12,
+          627,
+          366,
+          56
+        ],
+        "streamRail": [
+          12,
+          695,
+          366,
+          84
+        ],
+        "statistics": [
+          0,
+          330,
+          390,
+          514
+        ]
+      },
+      "actual": {
+        "stage": [
+          12,
+          68,
+          366,
+          547
+        ],
+        "stageControls": [
+          12,
+          627,
+          366,
+          56
+        ],
+        "streamRail": [
+          12,
+          695,
+          366,
+          84
+        ],
+        "statistics": [
+          0,
+          330,
+          390,
+          514
+        ]
+      },
+      "diff": {
+        "stage": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "stageControls": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "streamRail": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "statistics": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    },
+    {
+      "name": "R20",
+      "width": 1440,
+      "height": 900,
+      "file": "R20.html",
+      "state": "quality",
+      "reference": {
+        "dialog": [
+          480,
+          216,
+          480,
+          469
+        ]
+      },
+      "actual": {
+        "dialog": [
+          480,
+          216,
+          480,
+          469
+        ]
+      },
+      "diff": {
+        "dialog": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    },
+    {
+      "name": "R21",
+      "width": 1440,
+      "height": 900,
+      "file": "R21.html",
+      "reference": {
+        "panel": [
+          420,
+          369,
+          880,
+          478
+        ],
+        "table": [
+          441,
+          370,
+          838,
+          476
+        ],
+        "memberRow": [
+          441,
+          414,
+          838,
+          72
+        ]
+      },
+      "actual": {
+        "panel": [
+          420,
+          369,
+          880,
+          478
+        ],
+        "table": [
+          441,
+          370,
+          838,
+          476
+        ],
+        "memberRow": [
+          441,
+          414,
+          838,
+          72
+        ]
+      },
+      "diff": {
+        "panel": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "table": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "memberRow": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "state": "admin-members",
+      "apiRequestsObserved": 12,
+      "browserErrors": []
+    },
+    {
+      "name": "R22",
+      "width": 390,
+      "height": 844,
+      "file": "R22.html",
+      "reference": {
+        "adminMobile": [
+          16,
+          341,
+          358,
+          720
+        ],
+        "adminCard": [
+          16,
+          341,
+          358,
+          110
+        ],
+        "memberIdentity": [
+          33,
+          358,
+          324,
+          40
+        ],
+        "memberStatus": [
+          33,
+          414,
+          324,
+          20
+        ]
+      },
+      "actual": {
+        "adminMobile": [
+          16,
+          341,
+          358,
+          720
+        ],
+        "adminCard": [
+          16,
+          341,
+          358,
+          110
+        ],
+        "memberIdentity": [
+          33,
+          358,
+          324,
+          40
+        ],
+        "memberStatus": [
+          33,
+          414,
+          324,
+          20
+        ]
+      },
+      "diff": {
+        "adminMobile": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "adminCard": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "memberIdentity": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "memberStatus": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "state": "admin-members",
+      "apiRequestsObserved": 12,
+      "browserErrors": []
+    },
+    {
+      "name": "R23",
+      "width": 1440,
+      "height": 900,
+      "file": "R23.html",
+      "state": "update",
+      "reference": {
+        "updateBanner": [
+          280,
+          64,
+          1160,
+          44
+        ],
+        "shell": [
+          0,
+          0,
+          1440,
+          900
+        ]
+      },
+      "actual": {
+        "updateBanner": [
+          280,
+          64,
+          1160,
+          44
+        ],
+        "shell": [
+          0,
+          0,
+          1440,
+          900
+        ]
+      },
+      "diff": {
+        "updateBanner": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "shell": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "note": "Production UpdateBanner triggered by a test-only update policy. The banner does not shift the app shell."
+    },
+    {
+      "name": "R24",
+      "width": 1440,
+      "height": 900,
+      "file": "R24.html",
+      "state": "context",
+      "reference": {
+        "shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        "header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        "conversation": [
+          280,
+          64,
+          912,
+          836
+        ],
+        "composerWrap": [
+          280,
+          802,
+          912,
+          98
+        ],
+        "composer": [
+          304,
+          810,
+          864,
+          52
+        ]
+      },
+      "actual": {
+        "shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        "header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        "conversation": [
+          280,
+          64,
+          912,
+          836
+        ],
+        "composerWrap": [
+          280,
+          802,
+          912,
+          98
+        ],
+        "composer": [
+          304,
+          810,
+          864,
+          52
+        ]
+      },
+      "diff": {
+        "shell": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "header": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "conversation": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composerWrap": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composer": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "note": "Same real chat layout as R01; no context menu is open in this reference state."
+    },
+    {
+      "name": "R25",
+      "width": 1440,
+      "height": 900,
+      "file": "R25.html",
+      "state": "mention",
+      "reference": {
+        "replyStrip": null,
+        "composerWrap": [
+          280,
+          761,
+          912,
+          139
+        ],
+        "composer": [
+          304,
+          810,
+          864,
+          52
+        ]
+      },
+      "actual": {
+        "replyStrip": [
+          304,
+          769,
+          864,
+          41
+        ],
+        "composerWrap": [
+          280,
+          761,
+          912,
+          139
+        ],
+        "composer": [
+          304,
+          810,
+          864,
+          52
+        ]
+      },
+      "diff": {
+        "replyStrip": null,
+        "composerWrap": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composer": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "note": "Actual TextConversation reply state, opened from a real MessageItem action using test-only message data."
+    },
+    {
+      "name": "R26",
+      "width": 1440,
+      "height": 900,
+      "file": "R26.html",
+      "state": "image",
+      "reference": {
+        "dialog": null
+      },
+      "actual": {
+        "dialog": [
+          0,
+          0,
+          1440,
+          900
+        ]
+      },
+      "diff": {
+        "dialog": null
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    },
+    {
+      "name": "R27",
+      "width": 1440,
+      "height": 900,
+      "file": "R27.html",
+      "state": "voice",
+      "reference": {
+        "peopleStage": [
+          464,
+          265,
+          792,
+          216
+        ]
+      },
+      "actual": {
+        "peopleStage": [
+          464,
+          265,
+          792,
+          216
+        ]
+      },
+      "diff": {
+        "peopleStage": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    },
+    {
+      "name": "R28",
+      "width": 1440,
+      "height": 900,
+      "file": "R28.html",
+      "state": "dm",
+      "reference": {
+        "conversation": [
+          280,
+          64,
+          1160,
+          836
+        ],
+        "history": [
+          280,
+          64,
+          1160,
+          738
+        ],
+        "composerWrap": [
+          280,
+          802,
+          1160,
+          98
+        ],
+        "composer": [
+          304,
+          810,
+          1112,
+          52
+        ]
+      },
+      "actual": {
+        "conversation": [
+          280,
+          64,
+          1160,
+          836
+        ],
+        "history": [
+          280,
+          64,
+          1160,
+          738
+        ],
+        "composerWrap": [
+          280,
+          802,
+          1160,
+          98
+        ],
+        "composer": [
+          304,
+          810,
+          1112,
+          52
+        ]
+      },
+      "diff": {
+        "conversation": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "history": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composerWrap": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "composer": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "note": "Conversation bounds are the union of the real DM history and composer below the shared header."
+    },
+    {
+      "name": "R29",
+      "width": 1440,
+      "height": 900,
+      "file": "R29.html",
+      "state": "category",
+      "reference": {
+        "dialog": [
+          480,
+          307,
+          480,
+          287
+        ]
+      },
+      "actual": {
+        "dialog": [
+          480,
+          307,
+          480,
+          287
+        ]
+      },
+      "diff": {
+        "dialog": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "note": "Production AdminConfirmation opened from existing channel actions."
+    },
+    {
+      "name": "R30",
+      "width": 390,
+      "height": 844,
+      "file": "R30.html",
+      "state": "quality",
+      "reference": {
+        "dialog": [
+          0,
+          358,
+          390,
+          486
+        ]
+      },
+      "actual": {
+        "dialog": [
+          0,
+          358,
+          390,
+          486
+        ]
+      },
+      "diff": {
+        "dialog": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    }
+  ],
+  "coverage": {
+    "expectedFrames": 30,
+    "recordedFrames": 30,
+    "missing": []
+  }
+}

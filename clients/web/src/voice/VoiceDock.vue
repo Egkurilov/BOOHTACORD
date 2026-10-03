@@ -44,7 +44,7 @@ const status = computed(() => {
 </script>
 
 <template>
-  <section class="voice-dock" :class="{ connected }" aria-label="Состояние голосового подключения" data-testid="voice-dock">
+  <section class="voice-dock" :class="{ connected, 'mobile-visible': Boolean(channel || activeSession || state !== 'IDLE') }" aria-label="Состояние голосового подключения" data-testid="voice-dock">
     <div class="voice-dock-header">
       <span class="status-dot" :class="{ connected }" aria-hidden="true"></span>
       <p class="voice-status" role="status" aria-atomic="true">{{ status }}<span v-if="channel" class="voice-status-channel"> · {{ channel.name }}</span></p>

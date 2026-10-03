@@ -65,7 +65,7 @@ async function submitChannel(): Promise<void> {
     <AdminCategoryControls :categories="props.categories" :revision="props.revision" :selected-category-id="selectedCategoryId" @update:selected-category-id="selectedCategoryId = $event" @changed="emit('changed')" />
     <form class="admin-topology-form admin-topology-form--channel" @submit.prevent="submitChannel">
       <label>
-        Категория
+        Раздел
         <select v-model="selectedCategoryId" :disabled="pending || props.categories.length === 0" name="channel-category">
           <option v-for="category in props.categories" :key="category.id" :value="category.id">{{ category.name }}</option>
         </select>

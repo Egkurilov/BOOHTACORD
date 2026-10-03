@@ -10,4 +10,11 @@ describe('administrator member row controls', () => {
     expect(screen).toContain(':aria-label="`Сохранить изменения для ${account.login}`"')
     expect(screen).toContain(':aria-label="`Сбросить пароль для ${account.login}`"')
   })
+
+  it('keeps mobile rows compact while exposing the existing save and password reset actions', () => {
+    expect(screen).toContain('<details v-for="account in accounts"')
+    expect(screen).toContain('class="admin-mobile-edit"')
+    expect(screen).toContain('@click="save(account, $event)"')
+    expect(screen).toContain('@click="createReset(account, $event)"')
+  })
 })

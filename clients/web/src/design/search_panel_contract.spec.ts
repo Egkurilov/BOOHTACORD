@@ -27,7 +27,7 @@ describe('GuildChat unified search design contract', () => {
     expect(workspace).toContain("'search-active': activePanel === 'search'")
     expect(workspace).toContain('(activePanel === \'search\' && voiceStageWide)')
     expect(shell).toContain('.gc-shell.search-active:not(.voice-stage-wide) { grid-template-columns: var(--gc-layout-nav-wide) minmax(0, 1fr) 400px; }')
-    expect(shell).toContain('.gc-shell.search-active:not(.voice-stage-wide) { grid-template-columns: var(--gc-layout-nav-medium) minmax(0, 1fr) 360px; }')
+    expect(shell).toContain('.gc-shell.search-active:not(.voice-stage-wide) { grid-template-columns: var(--gc-layout-nav-wide) minmax(0, 1fr) 360px; }')
     expect(source('../design/responsive_shell.css')).toContain('.gc-shell.voice-stage-wide .members { position: absolute;')
   })
 

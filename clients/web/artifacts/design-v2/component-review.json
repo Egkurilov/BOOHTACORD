@@ -1,0 +1,381 @@
+{
+  "method": "Rendered real production Vue components using test-only inputs in Chromium. Image requests are blocked; no screenshots or raster pixels are used.",
+  "screens": [
+    {
+      "name": "R04",
+      "width": 1440,
+      "height": 900,
+      "file": "R04.html",
+      "state": "stream",
+      "reference": {
+        "mediaMain": [
+          280,
+          64,
+          1160,
+          836
+        ],
+        "stage": [
+          304,
+          88,
+          1112,
+          608
+        ],
+        "stageControls": [
+          304,
+          712,
+          1112,
+          48
+        ],
+        "streamRail": [
+          304,
+          776,
+          1112,
+          100
+        ]
+      },
+      "actual": {
+        "mediaMain": [
+          280,
+          64,
+          1160,
+          836
+        ],
+        "stage": [
+          304,
+          88,
+          1112,
+          608
+        ],
+        "stageControls": [
+          304,
+          712,
+          1112,
+          48
+        ],
+        "streamRail": [
+          304,
+          776,
+          1112,
+          100
+        ]
+      },
+      "diff": {
+        "mediaMain": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "stage": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "stageControls": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "streamRail": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    },
+    {
+      "name": "R05",
+      "width": 390,
+      "height": 844,
+      "file": "R05.html",
+      "state": "stream",
+      "reference": {
+        "mediaMain": [
+          0,
+          56,
+          390,
+          735
+        ],
+        "stage": [
+          12,
+          68,
+          366,
+          547
+        ],
+        "stageControls": [
+          12,
+          627,
+          366,
+          56
+        ],
+        "streamRail": [
+          12,
+          695,
+          366,
+          84
+        ]
+      },
+      "actual": {
+        "mediaMain": [
+          0,
+          56,
+          390,
+          735
+        ],
+        "stage": [
+          12,
+          68,
+          366,
+          547
+        ],
+        "stageControls": [
+          12,
+          627,
+          366,
+          56
+        ],
+        "streamRail": [
+          12,
+          695,
+          366,
+          84
+        ]
+      },
+      "diff": {
+        "mediaMain": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "stage": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "stageControls": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "streamRail": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    },
+    {
+      "name": "R19",
+      "width": 390,
+      "height": 844,
+      "file": "R19.html",
+      "state": "statistics",
+      "reference": {
+        "stage": [
+          12,
+          68,
+          366,
+          547
+        ],
+        "stageControls": [
+          12,
+          627,
+          366,
+          56
+        ],
+        "streamRail": [
+          12,
+          695,
+          366,
+          84
+        ],
+        "statistics": [
+          0,
+          330,
+          390,
+          514
+        ]
+      },
+      "actual": {
+        "stage": [
+          12,
+          68,
+          366,
+          547
+        ],
+        "stageControls": [
+          12,
+          627,
+          366,
+          56
+        ],
+        "streamRail": [
+          12,
+          695,
+          366,
+          84
+        ],
+        "statistics": [
+          0,
+          330,
+          390,
+          514
+        ]
+      },
+      "diff": {
+        "stage": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "stageControls": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "streamRail": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "statistics": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    },
+    {
+      "name": "R27",
+      "width": 1440,
+      "height": 900,
+      "file": "R27.html",
+      "state": "voice",
+      "reference": {
+        "peopleStage": [
+          464,
+          265,
+          792,
+          216
+        ]
+      },
+      "actual": {
+        "peopleStage": [
+          464,
+          265,
+          792,
+          216
+        ]
+      },
+      "diff": {
+        "peopleStage": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    },
+    {
+      "name": "R26",
+      "width": 1440,
+      "height": 900,
+      "file": "R26.html",
+      "state": "image",
+      "reference": {
+        "dialog": null
+      },
+      "actual": {
+        "dialog": [
+          0,
+          0,
+          1440,
+          900
+        ]
+      },
+      "diff": {
+        "dialog": null
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    },
+    {
+      "name": "R20",
+      "width": 1440,
+      "height": 900,
+      "file": "R20.html",
+      "state": "quality",
+      "reference": {
+        "dialog": [
+          480,
+          216,
+          480,
+          469
+        ]
+      },
+      "actual": {
+        "dialog": [
+          480,
+          216,
+          480,
+          469
+        ]
+      },
+      "diff": {
+        "dialog": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    },
+    {
+      "name": "R30",
+      "width": 390,
+      "height": 844,
+      "file": "R30.html",
+      "state": "quality",
+      "reference": {
+        "dialog": [
+          0,
+          358,
+          390,
+          486
+        ]
+      },
+      "actual": {
+        "dialog": [
+          0,
+          358,
+          390,
+          486
+        ]
+      },
+      "diff": {
+        "dialog": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "source": "Production Vue component rendered in Chromium; test fixture data only; raster requests blocked; no screenshots."
+    }
+  ]
+}

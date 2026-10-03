@@ -54,7 +54,7 @@ export function createNotificationDelivery(accountID: string, runtime: Notificat
         if (!enabled() || runtime.permission() !== 'granted') return
         const seen = readSeen(runtime.storage!, seenKey)
         if (seen.includes(eventID)) return
-        runtime.show('Voice Platform', { body, tag: eventID })
+        runtime.show('BOOHTACORD', { body, tag: eventID })
         runtime.storage!.setItem(seenKey, JSON.stringify([...seen, eventID]))
       })
     },

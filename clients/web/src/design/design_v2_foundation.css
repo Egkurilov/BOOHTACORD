@@ -1,0 +1,42 @@
+/* Shared V2 states, mapped onto production controls without changing handlers. */
+html { font-feature-settings: 'cv11', 'ss01'; -webkit-font-smoothing: antialiased; }
+button, input, textarea, select { color: inherit; }
+button { border: 0; }
+.gc-button, .role-policy-actions button, .admin-section-heading > button,
+.admin-table button, .admin-more, .profile-upload-button,
+.profile-secondary-button, .profile-form > button, .search-submit,
+.search-more, .search-result article > button {
+  min-height: var(--gc-size-control);
+  border-radius: var(--gc-radius-md);
+  font-weight: var(--gc-weight-medium);
+  transition: background var(--gc-duration-fast) var(--gc-ease-standard),
+    border-color var(--gc-duration-fast) var(--gc-ease-standard),
+    color var(--gc-duration-fast) var(--gc-ease-standard);
+}
+.gc-button:not(:disabled):hover, .role-policy-actions button:not(:disabled):hover,
+.admin-section-heading > button:not(:disabled):hover,
+.profile-secondary-button:hover, .search-close:hover { background: var(--gc-surface-hover); }
+.gc-button:active:not(:disabled), .role-policy-actions button:active:not(:disabled) { transform: translateY(1px); }
+.gc-button:disabled, .role-policy-actions button:disabled,
+.admin-section-heading > button:disabled, .profile-form > button:disabled { opacity: .48; }
+input:not([type=checkbox]):not([type=radio]), select, textarea {
+  accent-color: var(--gc-accent);
+}
+input[type=checkbox], input[type=radio] { accent-color: var(--gc-accent); }
+.profile-form input, .admin-table select, .search-form input,
+.search-form select, .workspace-main-panel--audio select {
+  min-height: var(--gc-size-field);
+  border-radius: var(--gc-radius-md);
+}
+.member-card, .member-row { min-height: var(--gc-size-touch); }
+.member-presence-dot--online { background: var(--gc-success); }
+.member-presence-dot--idle { background: var(--gc-warning); }
+.member-presence-dot--offline { background: var(--gc-text-muted); }
+.member-speaking { outline: 2px solid var(--gc-voice); outline-offset: 1px; }
+.maintenance-banner, .update-banner { z-index: var(--gc-z-dock); }
+.search-aside, .nav-drawer { z-index: var(--gc-z-drawer); }
+.admin-confirm-dialog, .member-popover { box-shadow: var(--gc-shadow-popup); }
+.admin-confirm-dialog::backdrop { background: var(--gc-overlay); }
+@media (prefers-reduced-motion: reduce) {
+  .gc-button, .role-policy-actions button, .admin-section-tabs button { transition: none; }
+}

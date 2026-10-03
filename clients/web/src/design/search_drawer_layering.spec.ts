@@ -3,6 +3,7 @@ import postcss from 'postcss'
 import { describe, expect, it } from 'vitest'
 
 const stylesheet = readFileSync(new URL('../style.css', import.meta.url), 'utf8')
+const tokens = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8')
 const imports = [...stylesheet.matchAll(/@import '\.\/design\/([^']+\.css)'/g)].map((match) => match[1])
 
 function mediaMatches(params: string, width: number): boolean {
@@ -19,7 +20,13 @@ function zIndexAt(selector: string, width: number): number | null {
       if (!rule.selectors.includes(selector)) return
       const parent = rule.parent
       if (parent?.type === 'atrule' && parent.name === 'media' && !mediaMatches(parent.params, width)) return
-      rule.walkDecls('z-index', (declaration) => { value = Number(declaration.value) })
+      rule.walkDecls('z-index', (declaration) => {
+        const token = declaration.value.match(/^var\(--gc-([\w-]+)\)$/)?.[1]
+        const resolved = token
+          ? tokens.match(new RegExp(`--gc-${token}:\\s*(\\d+);`))?.[1]
+          : declaration.value
+        value = resolved === undefined ? null : Number(resolved)
+      })
     })
   }
   return value

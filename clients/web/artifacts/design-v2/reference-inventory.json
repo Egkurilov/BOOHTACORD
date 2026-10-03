@@ -1,0 +1,3344 @@
+{
+  "method": "R01-R30 live HTML parsed/rendered as DOM; image resources blocked, scripts omitted; no images/screenshots consumed.",
+  "items": [
+    {
+      "id": "R01",
+      "state": "chat",
+      "title": "BOOHTACORD — chat",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор общее Общение на любые темы 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся в голосовом! Enter — отправить · Shift + Enter — новая с",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": [
+          280,
+          64,
+          912,
+          836
+        ],
+        ".history": [
+          280,
+          64,
+          912,
+          738
+        ],
+        ".composer-wrap": [
+          280,
+          802,
+          912,
+          98
+        ],
+        ".composer": [
+          304,
+          810,
+          864,
+          52
+        ],
+        ".members": [
+          1192,
+          64,
+          248,
+          836
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row"
+      ]
+    },
+    {
+      "id": "R02",
+      "state": "chat",
+      "title": "BOOHTACORD — chat",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "bodyText": "общее 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся в голосовом! Голос подключён Общий · 4 участника",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".nav-body": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".voice-dock": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".account": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".workspace": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".header": [
+          0,
+          0,
+          390,
+          56
+        ],
+        ".conversation": [
+          0,
+          56,
+          390,
+          735
+        ],
+        ".history": [
+          0,
+          56,
+          390,
+          665
+        ],
+        ".composer-wrap": [
+          0,
+          721,
+          390,
+          70
+        ],
+        ".composer": [
+          8,
+          729,
+          374,
+          54
+        ],
+        ".members": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row"
+      ]
+    },
+    {
+      "id": "R03",
+      "state": "chat",
+      "title": "BOOHTACORD — chat",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор общее Общение на любые темы 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся в голосовом! Enter — отправить · Shift + Enter — новая с",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          768
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          528
+        ],
+        ".voice-dock": [
+          0,
+          592,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          704,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          744,
+          768
+        ],
+        ".header": [
+          280,
+          0,
+          744,
+          64
+        ],
+        ".conversation": [
+          280,
+          64,
+          744,
+          704
+        ],
+        ".history": [
+          280,
+          64,
+          744,
+          606
+        ],
+        ".composer-wrap": [
+          280,
+          670,
+          744,
+          98
+        ],
+        ".composer": [
+          300,
+          678,
+          704,
+          52
+        ],
+        ".members": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row"
+      ]
+    },
+    {
+      "id": "R04",
+      "state": "stream",
+      "title": "BOOHTACORD — stream",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор Общий 4 участника · 2 трансляции AL Экран Alex ЭФИР 65% Экран Alex ЭФИР MA Экран Max DA Участники · 4",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": [
+          304,
+          88,
+          1112,
+          608
+        ],
+        ".stage-controls": [
+          304,
+          712,
+          1112,
+          48
+        ],
+        ".stream-rail": [
+          304,
+          776,
+          1112,
+          100
+        ],
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": [
+          280,
+          64,
+          1160,
+          836
+        ],
+        ".stage-info": [
+          321,
+          105,
+          180,
+          40
+        ],
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "stage",
+        "stage-info",
+        "stage-controls",
+        "stream-rail"
+      ]
+    },
+    {
+      "id": "R05",
+      "state": "stream",
+      "title": "BOOHTACORD — stream",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "bodyText": "Общий Экран Alex ЭФИР Экран Alex ЭФИР MA Экран Max DA Участники · 4 Голос подключён Общий · 4 участника",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".nav-body": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".voice-dock": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".account": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".workspace": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".header": [
+          0,
+          0,
+          390,
+          56
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": [
+          12,
+          68,
+          366,
+          547
+        ],
+        ".stage-controls": [
+          12,
+          627,
+          366,
+          56
+        ],
+        ".stream-rail": [
+          12,
+          695,
+          366,
+          84
+        ],
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": [
+          0,
+          56,
+          390,
+          735
+        ],
+        ".stage-info": [
+          21,
+          77,
+          129,
+          28
+        ],
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "stage",
+        "stage-info",
+        "stage-controls",
+        "stream-rail"
+      ]
+    },
+    {
+      "id": "R06",
+      "state": "roles",
+      "title": "BOOHTACORD — roles",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор Администрирование Администрирование Управление гильдией и доступом участников. Участники Роли Каналы Аудит Медиа Роли и разрешения Настройки применяются ко всем участникам выбранной роли. Администратор Пользователь Управление каналами 6 разрешений Объект Создавать Удалять Текстовые каналы Удаление архив",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": [
+          280,
+          64,
+          1160,
+          771
+        ],
+        ".panel": [
+          420,
+          399,
+          880,
+          412
+        ],
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": [
+          420,
+          329,
+          340,
+          46
+        ],
+        ".permission-table": [
+          445,
+          452,
+          830,
+          272
+        ],
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": [
+          420,
+          848,
+          880,
+          36
+        ],
+        ".admin-mobile": null
+      },
+      "classes": [
+        "settings-body",
+        "settings-inner",
+        "role-selector",
+        "panel",
+        "settings-sticky"
+      ]
+    },
+    {
+      "id": "R07",
+      "state": "roles",
+      "title": "BOOHTACORD — roles",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "bodyText": "Администрирование Администрирование Управление гильдией и доступом участников. Участники Роли Каналы Аудит Медиа Роли и разрешения Настройки применяются ко всем участникам выбранной роли. Администратор Пользователь Управление каналами Объект Создавать Удалять Текстовые каналы Голосовые каналы Разделы Разрешение удаления действует на любые каналы, в том числе созданные другими участниками и администраторами. Отменить Сохранить Голос подключён Общий · 4 участника",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".nav-body": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".voice-dock": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".account": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".workspace": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".header": [
+          0,
+          0,
+          390,
+          56
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": [
+          0,
+          56,
+          390,
+          666
+        ],
+        ".panel": [
+          16,
+          391,
+          358,
+          394
+        ],
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": [
+          16,
+          321,
+          358,
+          50
+        ],
+        ".permission-table": [
+          33,
+          436,
+          324,
+          236
+        ],
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": [
+          16,
+          735,
+          358,
+          44
+        ],
+        ".admin-mobile": null
+      },
+      "classes": [
+        "settings-body",
+        "settings-inner",
+        "role-selector",
+        "panel",
+        "settings-sticky"
+      ]
+    },
+    {
+      "id": "R08",
+      "state": "create",
+      "title": "BOOHTACORD — create",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор общее Общение на любые темы 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся в голосовом! Enter — отправить · Shift + Enter — новая с",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": [
+          280,
+          64,
+          912,
+          836
+        ],
+        ".history": [
+          280,
+          64,
+          912,
+          738
+        ],
+        ".composer-wrap": [
+          280,
+          802,
+          912,
+          98
+        ],
+        ".composer": [
+          304,
+          810,
+          864,
+          52
+        ],
+        ".members": [
+          1192,
+          64,
+          248,
+          836
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": [
+          480,
+          194,
+          480,
+          513
+        ],
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row",
+        "modal-layer",
+        "dialog",
+        "sheet-handle",
+        "dialog-header",
+        "dialog-body",
+        "dialog-footer"
+      ]
+    },
+    {
+      "id": "R09",
+      "state": "create",
+      "title": "BOOHTACORD — create",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "bodyText": "общее 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся в голосовом! Голос подключён Общий · 4 участника Создать канал Новое место для общения в вашей гильдии. Тип канала Текстовый Голосовой Название канала Раздел Общение Голосовые Разработка Канал будет доступен всем участникам. Отмена Создать канал",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".nav-body": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".voice-dock": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".account": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".workspace": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".header": [
+          0,
+          0,
+          390,
+          56
+        ],
+        ".conversation": [
+          0,
+          56,
+          390,
+          735
+        ],
+        ".history": [
+          0,
+          56,
+          390,
+          665
+        ],
+        ".composer-wrap": [
+          0,
+          721,
+          390,
+          70
+        ],
+        ".composer": [
+          8,
+          729,
+          374,
+          54
+        ],
+        ".members": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": [
+          0,
+          314,
+          390,
+          530
+        ],
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row",
+        "modal-layer",
+        "dialog",
+        "sheet-handle",
+        "dialog-header",
+        "dialog-body",
+        "dialog-footer"
+      ]
+    },
+    {
+      "id": "R10",
+      "state": "audio",
+      "title": "BOOHTACORD — audio",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор Настройки аудио Настройки аудио Проверьте устройства перед разговором. Устройства Настройки действуют на этом устройстве. Микрофон USB Audio Device Наушники или динамики Системное устройство Уровень входа Проверить микрофон Тестовый звук Активация микрофона Выберите удобный способ общения. По голосу По ",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": [
+          280,
+          64,
+          1160,
+          836
+        ],
+        ".panel": [
+          420,
+          180,
+          880,
+          282
+        ],
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "settings-body",
+        "settings-inner",
+        "panel"
+      ]
+    },
+    {
+      "id": "R11",
+      "state": "audio",
+      "title": "BOOHTACORD — audio",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "bodyText": "Настройки аудио Настройки аудио Проверьте устройства перед разговором. Устройства Настройки действуют на этом устройстве. Микрофон USB Audio Device Наушники или динамики Системное устройство Уровень входа Проверить микрофон Тестовый звук Активация микрофона Выберите удобный способ общения. По голосу По нажатию Обработка звука Шумоподавление Уменьшает фоновый шум Подавление эха Убирает обратный звук из динамиков Автоматическая громкость Выравнивает уровень микрофона Голос подключён Общий · 4 участника",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".nav-body": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".voice-dock": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".account": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".workspace": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".header": [
+          0,
+          0,
+          390,
+          56
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": [
+          0,
+          56,
+          390,
+          735
+        ],
+        ".panel": [
+          16,
+          156,
+          358,
+          402
+        ],
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "settings-body",
+        "settings-inner",
+        "panel"
+      ]
+    },
+    {
+      "id": "R12",
+      "state": "profile",
+      "title": "BOOHTACORD — profile",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор Настройки Настройки Ваш профиль и параметры приложения. Профиль Безопасность Уведомления О приложении ЕГ Егор @owner · Администратор Изменить аватар Отображаемое имя Так вас видят другие участники гильдии. Логин owner Используется для входа. Изменения не внесены Сохранить профиль",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": [
+          280,
+          64,
+          1160,
+          836
+        ],
+        ".panel": [
+          420,
+          249,
+          880,
+          459
+        ],
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": [
+          445,
+          626,
+          830,
+          57
+        ],
+        ".admin-mobile": null
+      },
+      "classes": [
+        "settings-body",
+        "settings-inner",
+        "panel"
+      ]
+    },
+    {
+      "id": "R13",
+      "state": "search",
+      "title": "BOOHTACORD — search",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор общее Общение на любые темы 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся в голосовом! Enter — отправить · Shift + Enter — новая с",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": [
+          280,
+          64,
+          912,
+          836
+        ],
+        ".history": [
+          280,
+          64,
+          912,
+          738
+        ],
+        ".composer-wrap": [
+          280,
+          802,
+          912,
+          98
+        ],
+        ".composer": [
+          304,
+          810,
+          864,
+          52
+        ],
+        ".members": [
+          1192,
+          64,
+          248,
+          836
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": [
+          1060,
+          64,
+          380,
+          836
+        ],
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row"
+      ]
+    },
+    {
+      "id": "R14",
+      "state": "navigation",
+      "title": "BOOHTACORD — navigation",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "bodyText": "общее 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся в голосовом! Голос подключён Общий · 4 участника Моя гильдия 6 участников Поиск сообщений Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".nav-body": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".voice-dock": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".account": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".workspace": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".header": [
+          0,
+          0,
+          390,
+          56
+        ],
+        ".conversation": [
+          0,
+          56,
+          390,
+          735
+        ],
+        ".history": [
+          0,
+          56,
+          390,
+          665
+        ],
+        ".composer-wrap": [
+          0,
+          721,
+          390,
+          70
+        ],
+        ".composer": [
+          8,
+          729,
+          374,
+          54
+        ],
+        ".members": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": [
+          0,
+          0,
+          320,
+          844
+        ],
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row",
+        "drawer-scrim",
+        "drawer-nav"
+      ]
+    },
+    {
+      "id": "R15",
+      "state": "components",
+      "title": "BOOHTACORD — components",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "bodyText": "BOOHTACORD / DESIGN SYSTEM 2.0 Одна система. Все состояния. Нормативный набор компонентов · Inter · базовая сетка 4 px Палитра Primary #5865F2 Accent #7C3AED Surface #1A1D26 Border #2A2F3A Text #F4F5FA Muted #A0A9BE Voice #06B6D4 Stream #EC4899 Типографика Aa Бб 123 Заголовок · 24 / 32 Раздел · 20 / 28 Компонент · 16 / 24 Текст сообщения · 15 / 22 Давайте соберёмся вечером. Интерфейс · 14 / 20 Подпись · 12 / 16 Статусы Подключено ЭФИР 3 Аватары AL DA MA ЕГ Управление Сохранить Отмена Удалить Название канала Текстовый Голосовой Шумоподавление Пе",
+      "boxes": {
+        ".shell": null,
+        ".sidebar": null,
+        ".guild": null,
+        ".nav-body": null,
+        ".voice-dock": null,
+        ".account": null,
+        ".workspace": null,
+        ".header": null,
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": [
+          40,
+          172,
+          440,
+          602
+        ],
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "panel"
+      ]
+    },
+    {
+      "id": "R16",
+      "state": "auth",
+      "title": "BOOHTACORD — auth",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "BOOHTACORD Добро пожаловать Войдите в «Моя гильдия» Логин Пароль Войти Не получается войти? Как восстановить доступ Регистрация сейчас закрыта. Обратитесь к администратору гильдии.",
+      "boxes": {
+        ".shell": null,
+        ".sidebar": null,
+        ".guild": null,
+        ".nav-body": null,
+        ".voice-dock": null,
+        ".account": null,
+        ".workspace": null,
+        ".header": null,
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".auth-card": [
+          504,
+          159,
+          432,
+          583
+        ],
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "auth-screen",
+        "auth-card",
+        "auth-note"
+      ]
+    },
+    {
+      "id": "R17",
+      "state": "auth",
+      "title": "BOOHTACORD — auth",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "bodyText": "BOOHTACORD Добро пожаловать Войдите в «Моя гильдия» Логин Пароль Войти Не получается войти? Как восстановить доступ Регистрация сейчас закрыта. Обратитесь к администратору гильдии.",
+      "boxes": {
+        ".shell": null,
+        ".sidebar": null,
+        ".guild": null,
+        ".nav-body": null,
+        ".voice-dock": null,
+        ".account": null,
+        ".workspace": null,
+        ".header": null,
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".auth-card": [
+          16,
+          145,
+          358,
+          555
+        ],
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "auth-screen",
+        "auth-card",
+        "auth-note"
+      ]
+    },
+    {
+      "id": "R18",
+      "state": "member",
+      "title": "BOOHTACORD — member",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор общее Общение на любые темы 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся в голосовом! Enter — отправить · Shift + Enter — новая с",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": [
+          280,
+          64,
+          912,
+          836
+        ],
+        ".history": [
+          280,
+          64,
+          912,
+          738
+        ],
+        ".composer-wrap": [
+          280,
+          802,
+          912,
+          98
+        ],
+        ".composer": [
+          304,
+          810,
+          864,
+          52
+        ],
+        ".members": [
+          1192,
+          64,
+          248,
+          836
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": [
+          856,
+          156,
+          320,
+          314
+        ],
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row",
+        "popover",
+        "member-popover"
+      ]
+    },
+    {
+      "id": "R19",
+      "state": "statistics",
+      "title": "BOOHTACORD — statistics",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "bodyText": "Общий Экран Alex ЭФИР Экран Alex ЭФИР MA Экран Max DA Участники · 4 Голос подключён Общий · 4 участника Статистика Экран Alex · обновлено сейчас Профиль 1440p / 60 FPS Декодирование 60 FPS Показ кадров 60 FPS Битрейт 8,4 Мбит/с Потеря пакетов · 10 с 0,2% Джиттер 4 мс RTT 28 мс Звук трансляции Дорожка доступна Тестовые значения визуального эталона.",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".nav-body": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".voice-dock": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".account": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".workspace": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".header": [
+          0,
+          0,
+          390,
+          56
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": [
+          12,
+          68,
+          366,
+          547
+        ],
+        ".stage-controls": [
+          12,
+          627,
+          366,
+          56
+        ],
+        ".stream-rail": [
+          12,
+          695,
+          366,
+          84
+        ],
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": [
+          0,
+          330,
+          390,
+          514
+        ],
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": [
+          0,
+          56,
+          390,
+          735
+        ],
+        ".stage-info": [
+          21,
+          77,
+          129,
+          28
+        ],
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "stage",
+        "stage-info",
+        "stage-controls",
+        "stream-rail",
+        "drawer-scrim",
+        "stats-popover"
+      ]
+    },
+    {
+      "id": "R20",
+      "state": "quality",
+      "title": "BOOHTACORD — quality",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор Общий 4 участника · 2 трансляции AL Экран Alex ЭФИР 65% Экран Alex ЭФИР MA Экран Max DA Участники · 4 Качество трансляции Изменения применятся к текущему показу. Разрешение 720p 1080p 1440p Частота кадров 15 FPS 30 FPS 60 FPS При ухудшении сети качество может временно снижаться. Приоритет — голос. Отмен",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": [
+          304,
+          88,
+          1112,
+          608
+        ],
+        ".stage-controls": [
+          304,
+          712,
+          1112,
+          48
+        ],
+        ".stream-rail": [
+          304,
+          776,
+          1112,
+          100
+        ],
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": [
+          480,
+          216,
+          480,
+          469
+        ],
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": [
+          280,
+          64,
+          1160,
+          836
+        ],
+        ".stage-info": [
+          321,
+          105,
+          180,
+          40
+        ],
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "stage",
+        "stage-info",
+        "stage-controls",
+        "stream-rail",
+        "modal-layer",
+        "dialog",
+        "sheet-handle",
+        "dialog-header",
+        "dialog-body",
+        "dialog-footer"
+      ]
+    },
+    {
+      "id": "R21",
+      "state": "admin",
+      "title": "BOOHTACORD — admin",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор Администрирование Администрирование Управление гильдией и доступом участников. Участники Роли Каналы Аудит Медиа Участники 6 Все роли Участник Роль Доступ AL Alex @alex Пользователь Активен DA Daria @daria Пользователь Активен MA Max @max Пользователь Активен ЕГ Егор @owner Администратор Активен NI Nika",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": [
+          280,
+          64,
+          1160,
+          836
+        ],
+        ".panel": [
+          420,
+          369,
+          880,
+          478
+        ],
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "classes": [
+        "settings-body",
+        "settings-inner",
+        "admin-tools",
+        "panel",
+        "admin-table",
+        "admin-mobile",
+        "admin-card"
+      ]
+    },
+    {
+      "id": "R22",
+      "state": "admin",
+      "title": "BOOHTACORD — admin",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "bodyText": "Администрирование Администрирование Управление гильдией и доступом участников. Участники Роли Каналы Аудит Медиа Участники 6 Все роли AL Alex @alex Пользователь Активен DA Daria @daria Пользователь Активен MA Max @max Пользователь Активен ЕГ Егор @owner Администратор Активен NI Nika @nika Пользователь Активен СЕ Сергей @сергей Пользователь Активен Голос подключён Общий · 4 участника",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".nav-body": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".voice-dock": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".account": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".workspace": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".header": [
+          0,
+          0,
+          390,
+          56
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": [
+          0,
+          56,
+          390,
+          735
+        ],
+        ".panel": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": [
+          16,
+          341,
+          358,
+          720
+        ]
+      },
+      "classes": [
+        "settings-body",
+        "settings-inner",
+        "admin-tools",
+        "panel",
+        "admin-table",
+        "admin-mobile",
+        "admin-card"
+      ]
+    },
+    {
+      "id": "R23",
+      "state": "update",
+      "title": "BOOHTACORD — update",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор общее Общение на любые темы Доступна новая версия BOOHTACORD Обновить страницу Позже 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": [
+          280,
+          108,
+          912,
+          792
+        ],
+        ".history": [
+          280,
+          108,
+          912,
+          694
+        ],
+        ".composer-wrap": [
+          280,
+          802,
+          912,
+          98
+        ],
+        ".composer": [
+          304,
+          810,
+          864,
+          52
+        ],
+        ".members": [
+          1192,
+          108,
+          248,
+          792
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": [
+          280,
+          64,
+          1160,
+          44
+        ],
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "updatebar",
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row"
+      ]
+    },
+    {
+      "id": "R24",
+      "state": "context",
+      "title": "BOOHTACORD — context",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор общее Общение на любые темы 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся в голосовом! Enter — отправить · Shift + Enter — новая с",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": [
+          280,
+          64,
+          912,
+          836
+        ],
+        ".history": [
+          280,
+          64,
+          912,
+          738
+        ],
+        ".composer-wrap": [
+          280,
+          802,
+          912,
+          98
+        ],
+        ".composer": [
+          304,
+          810,
+          864,
+          52
+        ],
+        ".members": [
+          1192,
+          64,
+          248,
+          836
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row"
+      ]
+    },
+    {
+      "id": "R25",
+      "state": "mention",
+      "title": "BOOHTACORD — mention",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор общее Общение на любые темы 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся в голосовом! Ответ Daria · Давайте в 20:00 Enter — отпра",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": [
+          280,
+          64,
+          912,
+          836
+        ],
+        ".history": [
+          280,
+          64,
+          912,
+          697
+        ],
+        ".composer-wrap": [
+          280,
+          761,
+          912,
+          139
+        ],
+        ".composer": [
+          304,
+          810,
+          864,
+          52
+        ],
+        ".members": [
+          1192,
+          64,
+          248,
+          836
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row",
+        "popover",
+        "mention-popover"
+      ]
+    },
+    {
+      "id": "R26",
+      "state": "image",
+      "title": "BOOHTACORD — image",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор общее Общение на любые темы 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся в голосовом! Enter — отправить · Shift + Enter — новая с",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": [
+          280,
+          64,
+          912,
+          836
+        ],
+        ".history": [
+          280,
+          64,
+          912,
+          738
+        ],
+        ".composer-wrap": [
+          280,
+          802,
+          912,
+          98
+        ],
+        ".composer": [
+          304,
+          810,
+          864,
+          52
+        ],
+        ".members": [
+          1192,
+          64,
+          248,
+          836
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row",
+        "image-dialog"
+      ]
+    },
+    {
+      "id": "R27",
+      "state": "voice",
+      "title": "BOOHTACORD — voice",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор Общий 4 участника в голосовом канале AL Alex Говорит DA Daria В голосовом канале MA Max В голосовом канале ЕГ Егор В голосовом канале Смотреть экран Alex Микрофон и звук трансляции управляются отдельно.",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": [
+          464,
+          265,
+          792,
+          216
+        ],
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "people-stage"
+      ]
+    },
+    {
+      "id": "R28",
+      "state": "dm",
+      "title": "BOOHTACORD — dm",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные СООБЩЕНИЯ AL Alex В сети DA Daria В сети MA Max В голосовом канале Голос подключён Общий · 4 участника ЕГ Егор Администратор Daria Личный диалог 3 октября 2026 DA Daria 19:36 Привет! Будешь сегодня в голосовом? ЕГ Егор 19:37 Да, подключусь к восьми. До встречи! Enter — отправить · Shift + Enter — новая строка Файлы до 25 МБ",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": [
+          280,
+          64,
+          1160,
+          836
+        ],
+        ".history": [
+          280,
+          64,
+          1160,
+          738
+        ],
+        ".composer-wrap": [
+          280,
+          802,
+          1160,
+          98
+        ],
+        ".composer": [
+          304,
+          810,
+          1112,
+          52
+        ],
+        ".members": null,
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": null,
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "member-row",
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint"
+      ]
+    },
+    {
+      "id": "R29",
+      "state": "category",
+      "title": "BOOHTACORD — category",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "bodyText": "Моя гильдия 6 участников Поиск сообщений Ctrl K Каналы Личные КАНАЛЫ ОБЩЕНИЕ общее игры объявления 2 ГОЛОСОВЫЕ Общий AL Alex ЭФИР DA Daria MA Max ЕГ Егор Играем РАЗРАБОТКА обсуждение идеи Голос подключён Общий · 4 участника ЕГ Егор Администратор общее Общение на любые темы 3 октября 2026 AL Alex 19:28 Кто сегодня играет вечером? DA Daria 19:31 Я буду. Давайте соберёмся в 20:00. MA Max 19:35 Скидываю скриншот прошлого катка. evening-session.png 2,4 МБ ЕГ Егор 19:40 @Daria Отлично, увидимся в голосовом! Enter — отправить · Shift + Enter — новая с",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          1440,
+          900
+        ],
+        ".sidebar": [
+          0,
+          0,
+          280,
+          900
+        ],
+        ".guild": [
+          0,
+          0,
+          279,
+          64
+        ],
+        ".nav-body": [
+          0,
+          64,
+          279,
+          660
+        ],
+        ".voice-dock": [
+          0,
+          724,
+          279,
+          112
+        ],
+        ".account": [
+          0,
+          836,
+          279,
+          64
+        ],
+        ".workspace": [
+          280,
+          0,
+          1160,
+          900
+        ],
+        ".header": [
+          280,
+          0,
+          1160,
+          64
+        ],
+        ".conversation": [
+          280,
+          64,
+          912,
+          836
+        ],
+        ".history": [
+          280,
+          64,
+          912,
+          738
+        ],
+        ".composer-wrap": [
+          280,
+          802,
+          912,
+          98
+        ],
+        ".composer": [
+          304,
+          810,
+          864,
+          52
+        ],
+        ".members": [
+          1192,
+          64,
+          248,
+          836
+        ],
+        ".stage": null,
+        ".stage-controls": null,
+        ".stream-rail": null,
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": [
+          480,
+          307,
+          480,
+          287
+        ],
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": null,
+        ".stage-info": null,
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "author",
+        "composer-wrap",
+        "composer",
+        "composer-hint",
+        "members",
+        "member-row",
+        "modal-layer",
+        "dialog",
+        "sheet-handle",
+        "dialog-header",
+        "dialog-body",
+        "dialog-footer"
+      ]
+    },
+    {
+      "id": "R30",
+      "state": "quality",
+      "title": "BOOHTACORD — quality",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "bodyText": "Общий Экран Alex ЭФИР Экран Alex ЭФИР MA Экран Max DA Участники · 4 Голос подключён Общий · 4 участника Качество трансляции Изменения применятся к текущему показу. Разрешение 720p 1080p 1440p Частота кадров 15 FPS 30 FPS 60 FPS При ухудшении сети качество может временно снижаться. Приоритет — голос. Отмена Применить",
+      "boxes": {
+        ".shell": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".sidebar": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".guild": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".nav-body": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".voice-dock": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".account": [
+          0,
+          0,
+          0,
+          0
+        ],
+        ".workspace": [
+          0,
+          0,
+          390,
+          844
+        ],
+        ".header": [
+          0,
+          0,
+          390,
+          56
+        ],
+        ".conversation": null,
+        ".history": null,
+        ".composer-wrap": null,
+        ".composer": null,
+        ".members": null,
+        ".stage": [
+          12,
+          68,
+          366,
+          547
+        ],
+        ".stage-controls": [
+          12,
+          627,
+          366,
+          56
+        ],
+        ".stream-rail": [
+          12,
+          695,
+          366,
+          84
+        ],
+        ".settings-body": null,
+        ".panel": null,
+        ".dialog": [
+          0,
+          358,
+          390,
+          486
+        ],
+        ".auth-screen": null,
+        ".auth-card": null,
+        ".searchpane": null,
+        ".stats-popover": null,
+        ".role-selector": null,
+        ".permission-table": null,
+        ".member-popover": null,
+        ".drawer-nav": null,
+        ".updatebar": null,
+        ".media-main": [
+          0,
+          56,
+          390,
+          735
+        ],
+        ".stage-info": [
+          21,
+          77,
+          129,
+          28
+        ],
+        ".people-stage": null,
+        ".savebar": null,
+        ".admin-mobile": null
+      },
+      "classes": [
+        "stage",
+        "stage-info",
+        "stage-controls",
+        "stream-rail",
+        "modal-layer",
+        "dialog",
+        "sheet-handle",
+        "dialog-header",
+        "dialog-body",
+        "dialog-footer"
+      ]
+    }
+  ]
+}
