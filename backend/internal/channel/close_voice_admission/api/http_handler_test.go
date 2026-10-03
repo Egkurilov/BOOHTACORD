@@ -42,6 +42,20 @@ func TestHandlerRejectsUnknownRequestField(t *testing.T) {
 	}
 }
 
+func TestNeutralHandlerReturnsClosingMutationResult(t *testing.T) {
+	handler := NewHandler(closerFunc(func(_ context.Context, input closevoiceadmission.Input) (closevoiceadmission.Result, error) {
+		return closevoiceadmission.Result{ID: input.ChannelID, Revision: 5}, nil
+	}))
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/voice-channels/channel-1/close-admission", strings.NewReader(`{"client_request_id":"36b9e15c-280a-4f76-b8bf-b12d91af8da0","expected_revision":4,"confirm_close":true}`))
+	request.SetPathValue("channelID", "channel-1")
+	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: "member-1"}))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusAccepted || !strings.Contains(response.Body.String(), `"state":"CLOSING"`) {
+		t.Fatalf("response = %d %s", response.Code, response.Body.String())
+	}
+}
+
 type closerFunc func(context.Context, closevoiceadmission.Input) (closevoiceadmission.Result, error)
 
 func (function closerFunc) Close(context context.Context, input closevoiceadmission.Input) (closevoiceadmission.Result, error) {

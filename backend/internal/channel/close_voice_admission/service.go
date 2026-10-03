@@ -3,6 +3,7 @@ package closevoiceadmission
 import (
 	"context"
 	"errors"
+	topologycommand "voice-platform/backend/internal/channel/topology_command"
 )
 
 var (
@@ -13,6 +14,9 @@ var (
 type Input struct {
 	ActorID, ChannelID string
 	ExpectedRevision   int64
+	ConfirmClose       bool
+	ClientRequestID    string
+	IntentHash         string
 }
 type Result struct {
 	ID            string
@@ -29,6 +33,12 @@ func New(store Store) Service { return Service{store: store} }
 func (service Service) Close(context context.Context, input Input) (Result, error) {
 	if input.ActorID == "" || input.ChannelID == "" || input.ExpectedRevision < 1 {
 		return Result{}, ErrInvalidInput
+	}
+	if input.ClientRequestID != "" {
+		if !input.ConfirmClose || topologycommand.ValidateClientRequestID(input.ClientRequestID) != nil {
+			return Result{}, ErrInvalidInput
+		}
+		input.IntentHash = topologycommand.Fingerprint(topologycommand.Intent{Operation: topologycommand.OperationVoiceClose, ResourceID: input.ChannelID, Confirmation: true})
 	}
 	result, err := service.store.Close(context, input)
 	if errors.Is(err, ErrRevisionConflict) {

@@ -14,7 +14,7 @@ func TestPublishesUnifiedMutationTopologyRevision(t *testing.T) {
 	subscriber := hub.Subscribe("client")
 	defer subscriber.Close()
 	inner := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusAccepted)
 		_, _ = fmt.Fprint(w, `{"topology_revision":9,"result":{"resource_id":"id"}}`)
 	})
 	NewHandler(inner, hub).ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/", nil))
