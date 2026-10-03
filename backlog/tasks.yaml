@@ -103,6 +103,36 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUTH-01, REQ-SECURITY-01, REQ-VOICE-01]
     depends_on: [T-050]
     evidence: [android-client-tests, android-release-apk, evidence/android]
+  - id: FV2-001
+    title: Flutter Design V2 canonical theme tokens and shared controls
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-PLATFORM-01]
+    depends_on: [T-050, T-051]
+    evidence: [flutter-theme-token-tests, flutter-theme-analysis, android-debug-build, macos-debug-build]
+  - id: FV2-002
+    title: Flutter Design V2 workspace shell, text chat and direct messages
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]
+    depends_on: [FV2-001, T-040, T-041, T-044, T-050, T-051]
+    evidence: [flutter-chat-layout-tests, flutter-responsive-geometry-tests, chat-dm-parity-acceptance]
+  - id: FV2-003
+    title: Flutter Design V2 voice, screen viewer and streaming diagnostics
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-VOICE-01, REQ-VOICE-02, REQ-VOICE-03, REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-SCREEN-04]
+    depends_on: [FV2-001, T-022, T-030, T-051]
+    evidence: [flutter-voice-media-widget-tests, paired-voice-viewer-acceptance, evidence/flutter]
+  - id: FV2-004
+    title: Flutter Design V2 navigation, settings and administration
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-ADMIN-01, REQ-ADMIN-02, REQ-AUDIO-01, REQ-SEARCH-01, REQ-CHANNEL-02]
+    depends_on: [FV2-001, T-014, T-020, T-050, T-051]
+    evidence: [flutter-settings-admin-layout-tests, flutter-settings-admin-semantics, settings-admin-parity-acceptance]
+  - id: FV2-005
+    title: Flutter Design V2 authentication, reset and protected attachment views
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-AUTH-01, REQ-AUTH-02, REQ-AUTH-03, REQ-SECURITY-01, REQ-STORAGE-01]
+    depends_on: [FV2-001, T-010, T-012, T-040, T-041, T-044, T-050, T-051]
+    evidence: [flutter-auth-attachment-layout-tests, flutter-focus-semantics-tests, auth-attachment-parity-acceptance]
+  - id: FV2-006
+    title: Flutter Design V2 responsive, accessibility and platform acceptance gate
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-QUALITY-01, REQ-QUALITY-02, REQ-PLATFORM-01]
+    depends_on: [FV2-002, FV2-003, FV2-004, FV2-005]
+    evidence: [evidence/flutter/design-v2, android-macos-windows-acceptance]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]
