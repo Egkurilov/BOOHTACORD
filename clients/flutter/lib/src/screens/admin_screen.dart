@@ -10,9 +10,7 @@ import '../services/api_client.dart';
 import '../theme.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../features/admin/role_permissions/panel.dart';
-
 enum _AdminSection { members, roles, channels, audit, media }
-
 class _AdminAccountDraft {
   _AdminAccountDraft({required this.role, required this.blocked});
   String role;
@@ -712,9 +710,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
             ),
           ),
           Expanded(
-            child: _selectedAdminSection == _AdminSection.roles
-                ? RolePermissionsPanel(api: widget.state.api, onSaved: widget.state.permissions.refresh)
-                : _selectedAdminSection == _AdminSection.audit
+            child: _selectedAdminSection == _AdminSection.roles ? RolePermissionsPanel(api: widget.state.api, onSaved: widget.state.permissions.refresh) : _selectedAdminSection == _AdminSection.audit
                 ? _buildAuditPanel()
                 : _selectedAdminSection == _AdminSection.media
                 ? _buildMediaPanel()

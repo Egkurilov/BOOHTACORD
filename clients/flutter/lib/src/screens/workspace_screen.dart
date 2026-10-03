@@ -917,8 +917,7 @@ class _Sidebar extends StatelessWidget {
                   child: ListView(
                     padding: const EdgeInsets.all(12),
                     children: [
-                      if (state.navigationSection == NavigationSection.channels)
-                        Row(children: [const Expanded(child: Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('КАНАЛЫ', style: TextStyle(color: GcColors.muted, fontSize: 11, fontWeight: FontWeight.w700)))), TopologyCreateButton(state: state)]),
+                      if (state.navigationSection == NavigationSection.channels) Row(children: [const Expanded(child: Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('КАНАЛЫ', style: TextStyle(color: GcColors.muted, fontSize: 11, fontWeight: FontWeight.w700)))), TopologyCreateButton(state: state)]),
                       if (state.navigationSection == NavigationSection.channels)
                         for (final category in state.topology!.categories)
                           _Category(
