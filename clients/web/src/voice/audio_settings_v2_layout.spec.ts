@@ -31,4 +31,8 @@ describe('Design V2 audio settings', () => {
     expect(deviceCheck).toContain('watch(() => props.inputId, stopInput)')
     expect(deviceCheck).toContain('class="audio-level-meter"')
   })
+
+  it('uses the handoff speaker icon for the output check', () => {
+    expect(deviceCheck).toContain('M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14')
+  })
 })
