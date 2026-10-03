@@ -14,6 +14,8 @@
   .sidebar.is-open .guild-search-button kbd { display: none; }
   .sidebar.is-open .guild-search-button { padding: 0 10px; border-color: transparent; color: #aab2c4; background: #0b0e14; font-weight: 400; }
   .sidebar.is-open .channel-button.selected { font-weight: 400; }
+  .sidebar.is-open .channel-button.voice-connected:not(.selected) { color: var(--gc-text-secondary); }
+  .sidebar.is-open .channel-button.voice-connected::before { display: none; }
   .sidebar.is-open .channel-member-count { display: none; }
   .sidebar.is-open .channel-actions-button { opacity: 0; }
   .sidebar.is-open .channel-actions-button:focus-visible { opacity: 1; }

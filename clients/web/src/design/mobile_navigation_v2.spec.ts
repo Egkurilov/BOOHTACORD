@@ -20,6 +20,8 @@ describe('V2 mobile navigation drawer', () => {
   })
 
   it('matches the compact voice roster geometry in the open drawer', () => {
+    expect(mobileNavigation).toContain('.sidebar.is-open .channel-button.voice-connected:not(.selected) { color: var(--gc-text-secondary); }')
+    expect(mobileNavigation).toContain('.sidebar.is-open .channel-button.voice-connected::before { display: none; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-list { margin-top: 5px; padding-left: 36px; gap: 0; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-row { min-height: 36px; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-avatar { width: 22px; height: 22px; flex-basis: 22px; font-size: 9px; }')
