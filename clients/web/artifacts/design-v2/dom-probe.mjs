@@ -18,6 +18,7 @@ let memberPermissions = {
 }
 let roleRevision = 1
 let createdChannel = null
+let profileDisplayName = 'Егор'
 const topology = { revision: 1, categories: [{ id: 'category-1', name: 'ОБЩЕНИЕ', position: 0, channels: [
   { id: 'text-1', name: 'общее', kind: 'TEXT', position: 0, admission_closed: false, unread_count: 0, mention_count: 0 },
   { id: 'voice-1', name: 'Общий', kind: 'VOICE', position: 1, admission_closed: false },
@@ -33,7 +34,7 @@ function response(path) {
   if (path.endsWith('/auth/session')) return { account_id: referenceFixture ? chatProfile.account_id : profile.account_id, role: profile.role }
   if (path.endsWith('/auth/permissions')) return { account_id: referenceFixture ? chatProfile.account_id : profile.account_id, role: profile.role, permissions_revision: 1, permissions }
   if (path.endsWith('/channels')) return referenceFixture ? chatTopology : topology
-  if (path.endsWith('/me')) return referenceFixture ? chatProfile : profile
+  if (path.endsWith('/me')) return referenceFixture ? state === 'profile' ? { ...chatProfile, login: 'owner', display_name: profileDisplayName } : chatProfile : profile
   if (path.endsWith('/members')) return { members: referenceFixture ? chatMembers : [reviewMember, fixtureMember] }
   if (referenceFixture && path.includes('/members/')) return chatMembers.find((member) => path.endsWith(`/${member.user_id}`)) ?? {}
   if (path.endsWith('/members/member-0')) return reviewMember
@@ -61,7 +62,7 @@ function response(path) {
 
 const browser = await chromium.launch({ headless: true })
 const state = process.argv[2] ?? 'chat'
-const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'audio'].includes(state)
+const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'audio', 'profile'].includes(state)
 const width = Number(process.argv[3] ?? 1440)
 const height = Number(process.argv[4] ?? 900)
 const screenshotPath = process.env.DESIGN_V2_SCREENSHOT
@@ -91,6 +92,10 @@ await page.route('**/api/v1/**', async (route) => {
   if (path.endsWith('/categories/chat/channels') && route.request().method() === 'POST') {
     createdChannel = JSON.parse(route.request().postData() ?? '{}')
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ client_request_id: createdChannel.client_request_id, topology_revision: 2, result: { resource_type: 'TEXT_CHANNEL', resource_id: 'new-channel', state: 'ACTIVE' } }) }); return
+  }
+  if (state === 'profile' && path.endsWith('/me') && route.request().method() === 'PATCH') {
+    profileDisplayName = JSON.parse(route.request().postData() ?? '{}').display_name
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(response(path)) }); return
   }
   if (referenceFixture && path.endsWith('/attachments/scene/preview') && process.env.DESIGN_V2_SCENE_PNG) {
     await route.fulfill({ contentType: 'image/png', body: readFileSync(process.env.DESIGN_V2_SCENE_PNG) }); return
@@ -122,7 +127,7 @@ if (state === 'delete-confirm') await page.getByRole('button', { name: 'Дейс
 if (state === 'dm') { await page.getByRole('button', { name: 'Личные', exact: true }).click(); await page.getByRole('button', { name: 'Daria', exact: true }).click() }
 if (referenceFixture && state === 'topology-channel') await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
 await page.waitForTimeout(state === 'update' ? 5500 : 100)
-if (referenceFixture && ['roles', 'topology-channel', 'audio'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
+if (referenceFixture && ['roles', 'topology-channel', 'audio', 'profile'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
 if (referenceFixture && state === 'chat') {
   await page.locator('.message-item').nth(3).waitFor({ state: 'visible' })
   await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
@@ -189,6 +194,19 @@ if (state === 'audio' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
   interactions.push('processing-options-preserved')
   await page.getByRole('button', { name: 'Закрыть настройки аудио' }).click()
   await page.locator('.workspace-main-panel--audio').waitFor({ state: 'detached' })
+  interactions.push('close-returns-to-workspace')
+}
+if (state === 'profile' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  await page.getByRole('textbox', { name: 'Отображаемое имя' }).fill('Егор Тест')
+  await page.getByRole('button', { name: 'Сохранить профиль' }).click()
+  await page.getByText('Имя профиля сохранено.').waitFor()
+  assert.equal(profileDisplayName, 'Егор Тест')
+  interactions.push('profile-name-patch')
+  await page.getByRole('tab', { name: 'Безопасность' }).click()
+  await page.getByLabel('Текущий пароль').waitFor({ state: 'visible' })
+  interactions.push('security-tab-preserved')
+  await page.getByRole('button', { name: 'Закрыть настройки', exact: true }).click()
+  await page.locator('.workspace-main-panel--profile').waitFor({ state: 'detached' })
   interactions.push('close-returns-to-workspace')
 }
 console.log(JSON.stringify({ viewport: page.viewportSize(), state, boxes, styles, composerChildren, requests, errors, interactions }, null, 2))

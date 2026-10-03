@@ -31,7 +31,7 @@ defineProps<{
   voiceRoster?: VoiceRoomRoster | null
   voiceRosterError?: string | null
 }>()
-const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; toggleMembers: []; closePanel: [panel: 'admin' | 'audio'] }>()
+const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; toggleMembers: []; closePanel: [panel: 'admin' | 'audio' | 'profile'] }>()
 </script>
 
 <template>
@@ -54,7 +54,12 @@ const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; togg
     <slot name="audio" />
   </div>
   <div v-else-if="panel === 'profile'" class="workspace-main-panel workspace-main-panel--profile" data-testid="profile-workspace-panel">
-    <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')" />
+    <header class="settings-workspace-header">
+      <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')" />
+      <svg class="settings-workspace-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3 1-1h4l1 3 3 1 3 1v4l-2 2 1 3-3 3-3-1-2 2H8l-1-3-3-1-2-2 1-4 3-1 1-3Z"/><circle cx="12" cy="11" r="3"/></svg>
+      <strong>Настройки</strong>
+      <button class="settings-workspace-close" type="button" aria-label="Закрыть настройки" @click="emit('closePanel', 'profile')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    </header>
     <slot name="profile" />
   </div>
   <ConversationPane

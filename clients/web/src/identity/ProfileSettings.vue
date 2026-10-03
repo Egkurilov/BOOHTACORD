@@ -56,9 +56,8 @@ async function changePassword(): Promise<void> {
       <section class="profile-panel" role="tabpanel" aria-label="Профиль">
       <div class="profile-avatar-row">
         <img v-if="props.profile.avatar_url" class="profile-avatar" :src="props.profile.avatar_url" alt="Аватар профиля">
-        <span v-else class="profile-avatar profile-avatar--empty" aria-hidden="true">{{ props.profile.display_name.slice(0, 1).toLocaleUpperCase('ru-RU') }}</span>
-        <div class="profile-avatar-copy"><h2>{{ props.profile.display_name }}</h2><p>@{{ props.profile.login }} · {{ props.profile.role === 'ADMINISTRATOR' ? 'Администратор' : 'Участник' }}</p></div>
-        <label class="profile-upload-button">Изменить аватар<input type="file" accept="image/png,image/jpeg" :disabled="busy" @change="selectAvatar"></label>
+        <span v-else class="profile-avatar profile-avatar--empty" aria-hidden="true">{{ props.profile.display_name.slice(0, 2).toLocaleUpperCase('ru-RU') }}</span>
+        <div class="profile-avatar-copy"><h2>{{ props.profile.display_name }}</h2><p>@{{ props.profile.login }} · {{ props.profile.role === 'ADMINISTRATOR' ? 'Администратор' : 'Участник' }}</p><label class="profile-upload-button">Изменить аватар<input type="file" accept="image/png,image/jpeg" :disabled="busy" @change="selectAvatar"></label></div>
         <button v-if="props.profile.avatar_url" class="profile-secondary-button" type="button" :disabled="busy" @click="removeAvatar">Удалить</button>
       </div>
       <form class="profile-form" @submit.prevent="saveName">
