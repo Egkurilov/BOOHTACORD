@@ -29,6 +29,8 @@ describe('Design V2 topology creation dialog', () => {
     expect(component).toContain('permittedKinds()')
     expect(presentation).toContain('.topology-dialog { display: flex;')
     expect(presentation).toContain('margin-top: auto; border-top:')
+    expect(presentation).toContain('.topology-dialog-header { position: relative; min-height: 36px; margin: 28px 20px 0; }')
+    expect(presentation).toContain('.topology-dialog-header button { position: absolute; top: -2px; right: 0; width: 44px; height: 44px; }')
   })
 
   it('uses the handoff speaker outline for a voice channel', () => {

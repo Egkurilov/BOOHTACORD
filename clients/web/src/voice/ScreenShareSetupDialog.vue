@@ -97,7 +97,7 @@ function start(): void {
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0m-11 4a5 5 0 0 1 8 0m-4 4h.01" /></svg>
           <span>Ориентировочно {{ bandwidthEstimate }}; более высокое качество увеличивает нагрузку на сеть и устройство.</span>
         </p>
-        <p v-else class="screen-share-quality__warning">При ухудшении сети качество может временно снижаться. Приоритет — голос.</p>
+        <p v-else class="screen-share-quality__warning"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg><span>При ухудшении сети качество может временно снижаться. Приоритет — голос.</span></p>
       </section>
     </div>
 

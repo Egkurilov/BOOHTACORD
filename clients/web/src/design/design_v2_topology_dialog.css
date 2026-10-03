@@ -23,7 +23,8 @@
   .topology-dialog-backdrop { align-items: end; padding: 0; }
   .topology-dialog { position: relative; width: 100vw; max-width: 100vw; height: 530px; max-height: calc(100dvh - 32px); border-radius: 16px 16px 0 0; }
   .topology-dialog::before { position: absolute; top: 11px; left: calc(50% - 18px); width: 36px; height: 4px; border-radius: 2px; background: var(--gc-text-muted); content: ''; }
-  .topology-dialog-header { min-height: 36px; margin: 28px 20px 0; }
+  .topology-dialog-header { position: relative; min-height: 36px; margin: 28px 20px 0; }
+  .topology-dialog-header button { position: absolute; top: -2px; right: 0; width: 44px; height: 44px; }
   .topology-dialog-description { margin: 20px 20px 20px; }
   .topology-dialog-fields { gap: 20px; padding: 0 20px; }
   .topology-kind-selector { min-height: 50px; }
