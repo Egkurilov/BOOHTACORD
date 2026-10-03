@@ -53,7 +53,12 @@ const props = withDefaults(defineProps<{
   voiceVolumeParticipants: VoiceVolumeParticipant[]
   voiceRoster?: VoiceRoomRoster | null
   voiceRosterError?: string | null
-}>(), { selectedScreenProfile: 'P1080_30' })
+}>(), {
+  screenViewerCards: () => [],
+  screenViewerEnded: false,
+  selectedScreenProfile: 'P1080_30',
+  selectedScreenStreamId: null,
+})
 const emit = defineEmits<{ clearScreenStream: []; join: [channelId: string, transfer?: boolean, joinMode?: VoiceJoinMode]; leave: []; refreshScreen: []; returnVoice: [channelId: string]; selectScreenStream: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setParticipantVolume: [id: string, percent: number]; setScreenVolume: [percent: number]; toggleScreenAudio: []; startScreen: [profile: ScreenProfile]; stopScreen: []; transfer: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
 const selectedScreenProfile = computed(() => props.selectedScreenProfile)
 const { screenCaptureAvailable, captureUnavailableMessage, screenExpanded, screenPinned,
