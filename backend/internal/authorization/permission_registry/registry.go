@@ -38,3 +38,14 @@ func (policy Policy) Values() map[Permission]bool {
 		CategoryCreate: policy.CategoryCreate, CategoryDelete: policy.CategoryDelete,
 	}
 }
+
+func (policy Policy) SameValues(other Policy) bool {
+	policy.Revision, other.Revision = 0, 0
+	return policy == other
+}
+
+func (policy Policy) AddsDeleteGrant(previous Policy) bool {
+	return (!previous.TextDelete && policy.TextDelete) ||
+		(!previous.VoiceDelete && policy.VoiceDelete) ||
+		(!previous.CategoryDelete && policy.CategoryDelete)
+}
