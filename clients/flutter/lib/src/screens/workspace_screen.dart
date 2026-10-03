@@ -42,6 +42,7 @@ import 'profile_screen.dart';
 import 'admin_screen.dart';
 import 'voice_screen_ended.dart';
 import 'voice_screen_selection_rail.dart';
+import 'voice_screen_stage.dart';
 import 'voice_viewer_layout.dart';
 import 'screen_receiver_diagnostics.dart';
 import 'screen_fullscreen_overlay.dart';
@@ -5546,86 +5547,65 @@ class _VoiceScreenViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => VoiceViewerLayout(
-    stage: Container(
-      color: const Color(0xFF080A0E),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: ColoredBox(
-                  color: Colors.black,
-                  child: ScreenFrameGate(
-                    generation: track,
-                    waitingMessage:
-                        showingLocalScreen &&
-                            state.screenCapturedContentVisible == false
-                        ? 'Android скрыл выбранное приложение. Вернитесь в него или выберите весь экран.'
-                        : null,
-                    builder: (context, onFirstFrameRendered) =>
-                        VideoTrackRenderer(
-                          track,
-                          renderMode: VideoRenderMode.auto,
-                          onFirstFrameRendered: () {
-                            if (showingLocalScreen) {
-                              debugPrint(
-                                '[screen-preview] local_renderer=first_swap_buffers',
-                              );
-                            } else {
-                              debugPrint(
-                                '[screen-viewer] remote_renderer=first_frame',
-                              );
-                            }
-                            onFirstFrameRendered();
-                          },
-                        ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 28,
-            top: 28,
-            child: _ViewerLabel(name: publisherName),
-          ),
-          Positioned(
-            right: 76,
-            top: 28,
-            child: IconButton.filledTonal(
-              tooltip: 'Развернуть демонстрацию на весь экран',
-              onPressed: onFullscreen,
-              icon: const Icon(Icons.fullscreen_outlined),
-            ),
-          ),
-          if (selectedIdentity != null)
-            Positioned(
-              right: 124,
-              top: 28,
-              child: IconButton.filledTonal(
-                tooltip: pinned
-                    ? 'Открепить демонстрацию'
-                    : 'Закрепить демонстрацию',
-                onPressed: onTogglePin,
-                icon: Icon(
-                  pinned ? Icons.push_pin : Icons.push_pin_outlined,
-                  size: 20,
-                ),
-              ),
-            ),
-          Positioned(
-            right: 28,
-            top: 28,
-            child: IconButton.filledTonal(
-              tooltip: 'Вернуться к участникам',
-              onPressed: onClose,
-              icon: const Icon(Icons.close_fullscreen_outlined),
-            ),
-          ),
-        ],
+    stage: VoiceScreenStage(
+      publisherName: publisherName,
+      avatarName: showingLocalScreen ? localName : publisherName,
+      isLocal: showingLocalScreen,
+      reservedTrailingWidth: selectedIdentity == null ? 124 : 172,
+      video: ScreenFrameGate(
+        generation: track,
+        waitingMessage:
+            showingLocalScreen && state.screenCapturedContentVisible == false
+            ? 'Android скрыл выбранное приложение. Вернитесь в него или выберите весь экран.'
+            : null,
+        builder: (context, onFirstFrameRendered) => VideoTrackRenderer(
+          track,
+          renderMode: VideoRenderMode.auto,
+          onFirstFrameRendered: () {
+            if (showingLocalScreen) {
+              debugPrint('[screen-preview] local_renderer=first_swap_buffers');
+            } else {
+              debugPrint('[screen-viewer] remote_renderer=first_frame');
+            }
+            onFirstFrameRendered();
+          },
+        ),
       ),
+      overlays: [
+        Positioned(
+          right: 76,
+          top: 28,
+          child: IconButton.filledTonal(
+            tooltip: 'Развернуть демонстрацию на весь экран',
+            onPressed: onFullscreen,
+            icon: const Icon(Icons.fullscreen_outlined),
+          ),
+        ),
+        if (selectedIdentity != null)
+          Positioned(
+            right: 124,
+            top: 28,
+            child: IconButton.filledTonal(
+              tooltip: pinned
+                  ? 'Открепить демонстрацию'
+                  : 'Закрепить демонстрацию',
+              onPressed: onTogglePin,
+              icon: Icon(
+                pinned ? Icons.push_pin : Icons.push_pin_outlined,
+                size: 20,
+              ),
+            ),
+          ),
+        Positioned(
+          right: 28,
+          top: 28,
+          child: IconButton.filledTonal(
+            tooltip: 'Вернуться к участникам',
+            onPressed: onClose,
+            icon: const Icon(Icons.close_fullscreen_outlined),
+          ),
+        ),
+      ],
     ),
     diagnostics: Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -5714,32 +5694,6 @@ class _VoiceScreenViewer extends StatelessWidget {
       ),
     );
   }
-}
-
-class _ViewerLabel extends StatelessWidget {
-  const _ViewerLabel({required this.name});
-  final String name;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    decoration: BoxDecoration(
-      color: const Color(0xD9141922),
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: const Color(0x446D7C94)),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(Icons.monitor_outlined, size: 17),
-        const SizedBox(width: 8),
-        Text(
-          'Экран $name',
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        ),
-      ],
-    ),
-  );
 }
 
 class _PinnedScreenMiniPlayer extends StatelessWidget {
