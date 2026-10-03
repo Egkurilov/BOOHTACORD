@@ -48,7 +48,7 @@ func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationIn
 		defer span.End()
 		var subscription *eventhub.Subscription
 		if events != nil {
-			subscription = events.SubscribeAccount(principal.AccountID, presenceEvent(principal.AccountID, "online", newID, now))
+			subscription = events.SubscribeAccountWithCapabilities(principal.AccountID, presenceEvent(principal.AccountID, "online", newID, now), requestedCapabilities(request))
 			defer subscription.Close(presenceEvent(principal.AccountID, "offline", newID, now))
 		}
 		acceptedAt := time.Now()
