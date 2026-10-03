@@ -1,0 +1,79 @@
+{
+  "id": "QA-234",
+  "date": "2026-10-03",
+  "task": "FE-59 / FE-61 / T-030 — paired Android-to-macOS screen-share runtime",
+  "source_revision": "3053156a11006ff0db4a8900002a4630b4d361f7",
+  "builds": {
+    "android_emulator": {
+      "device": "Android Emulator sdk_gphone64_arm64, API 35",
+      "installed_version": "1.0.25+2039",
+      "source_revision": "pre-existing installed release; exact source revision not established"
+    },
+    "macos_receiver": {
+      "app": "BOOHTACORD Debug",
+      "version": "1.0.28+42",
+      "build_source": "current workspace"
+    }
+  },
+  "session_safety": {
+    "room": "SHARE_TEST",
+    "participants_during_capture": 2,
+    "microphones_during_capture": "muted on both clients",
+    "note": "Android auto-joined when selecting the voice channel with its microphone initially enabled; it was muted immediately, before screen capture. No microphone recording was made."
+  },
+  "capture": {
+    "mode": "Android single-app MediaProjection",
+    "source": "built-in Clock (Calculator was not installed)",
+    "profile": "720p / 15 FPS",
+    "audio_track": "none"
+  },
+  "checks": [
+    {
+      "name": "Voice prejoin roster parity",
+      "result": "PASS",
+      "observation": "Before joining, Android and macOS showed the same active Voice-channel participant. SHARE_TEST was empty before the test."
+    },
+    {
+      "name": "Mac discovery and explicit viewer open",
+      "result": "PASS",
+      "observation": "macOS showed the Android participant as screen-sharing and exposed the explicit Watch screen action. The participant card did not contain a video thumbnail."
+    },
+    {
+      "name": "Remote frame rendering and crop",
+      "result": "PASS",
+      "observation": "The selected app was rendered on macOS as a complete portrait frame with letterboxing; the stopwatch digits changed between observations. No edge crop or black viewer was observed."
+    },
+    {
+      "name": "macOS receiver diagnostics",
+      "result": "PASS",
+      "sample": {
+        "source_profile": "720p / 15 FPS",
+        "viewer_dimensions_and_fps": "576 x 1280 / 15 FPS",
+        "decoded_fps": 15,
+        "received_kbit_s": 151,
+        "packet_loss_10s_percent": 0,
+        "dropped_frames_interval": 0,
+        "jitter_ms": 9,
+        "receiver_rtt": "unavailable",
+        "audio_track": "none"
+      },
+      "observation": "Receiver counters were non-zero while frames were visibly advancing. Voice-dock RTT was 5–8 ms and was not treated as screen receiver RTT."
+    },
+    {
+      "name": "Return from app-only source",
+      "result": "PASS_WITH_LIMITATION",
+      "observation": "Android displayed its explicit hidden-source message and retained the last participant-card thumbnail. macOS retained the last decoded frame while receiver counters fell to zero; it did not go black."
+    },
+    {
+      "name": "Stop and cleanup",
+      "result": "PASS",
+      "observation": "Stopping from Android removed the screen publication; dumpsys media_projection returned null. Both clients left SHARE_TEST and the Android roster returned to empty."
+    }
+  ],
+  "limitations": [
+    "Android used an existing 1.0.25+2039 release, older than current workspace source version 1.0.28+42; current Android source has not yet been installed for this run.",
+    "The sender-side Android statistics were not sampled simultaneously, so sender/receiver counter correlation remains open.",
+    "No browser receiver, physical Pixel, or browser-published source was tested."
+  ],
+  "status": "PAIRED_ANDROID_TO_MACOS_RENDER_AND_RECEIVER_STATS_PASS; SOURCE_VERSION_AND_SENDER_CORRELATION_OPEN"
+}

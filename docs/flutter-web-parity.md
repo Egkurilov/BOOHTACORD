@@ -860,6 +860,8 @@ The latest Pixel 7 app-only tests are recorded in [QA-197](../evidence/flutter/q
 
 On Android Emulator API 35, release-signed `1.0.23+2036` additionally verified the app-only source-hidden state end to end: Android's MediaProjection visibility callback reached the matching Flutter track, and switching from Clock back to BOOHTACORD replaced the endless first-frame spinner with an explicit message that Android hid the selected app. Stop/leave cleared MediaProjection. This improves failure feedback but does not prove pixel rendering or remote playback; physical Pixel and paired receiver acceptance remain open — [QA-225](../evidence/flutter/qa225-android-app-only-hidden-source-feedback-2026-10-02-001.json).
 
+On 2026-10-03, a paired Android Emulator→macOS run in `SHARE_TEST` showed the selected portrait app frame end-to-end: macOS rendered all edges with letterboxing, and its receiver sample reported 576×1280 at 15 FPS, 15 decoded FPS, 151 kbit/s, 0% loss and 9 ms jitter. Returning BOOHTACORD showed Android's explicit app-hidden state; macOS retained the last decoded frame while receive/decode counters dropped to zero. Stopping cleared MediaProjection and removed the publication. Android was still on installed `1.0.25+2039` while the macOS Debug client was `1.0.28+42`; no simultaneous Android sender sample, browser receiver/source or physical Pixel was included, so current-source counter correlation remains open — [QA-234](../evidence/flutter/qa234-android-emulator-macos-live-screen-share-2026-10-03-001.json).
+
 ## Client update awareness
 
 Web, Android and Windows use independent release identities with shared policy
