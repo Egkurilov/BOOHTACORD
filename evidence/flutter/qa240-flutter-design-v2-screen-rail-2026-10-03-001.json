@@ -1,0 +1,56 @@
+{
+  "id": "QA-240",
+  "date": "2026-10-03",
+  "task": "FE-70 / FV2-009 — Flutter Design V2 responsive stream selection rail",
+  "source_revision": "8e9b6f02",
+  "working_tree_changes": true,
+  "summary": "Matched Flutter screen-selection rail and thumbnail cards to the production web Design V2 desktop and compact geometries while preserving stream selection and accessibility semantics.",
+  "checks": [
+    {
+      "name": "Test-first rail geometry regression",
+      "command": "cd clients/flutter && flutter test test/voice_screen_selection_rail_test.dart",
+      "result": "PASS_AFTER_BASELINE_FAILURE",
+      "observation": "Before implementation, the test found the old 184×64 card instead of the web 152×96 desktop card. The final focused suite verifies desktop 900 px (100 px rail, 152×96 card, 142×60 thumbnail) and compact 390 px (84 px rail, 128×80 card, 118×48 thumbnail), cover scaling, selected live marker, selection, and semantic hints."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 464
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/voice_screen_selection_rail.dart test/voice_screen_selection_rail_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android Debug APK build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is unavailable. Manual Ruby validation passed: all 39 unique approved requirement IDs are referenced, all 63 task IDs are unique, and no dependencies dangle."
+    },
+    {
+      "name": "Matched screenshots, Windows build, and platform runtime acceptance",
+      "result": "NOT_RUN",
+      "observation": "Widget geometry assertions and local Android/macOS Debug builds do not prove rendered screenshot parity or platform runtime behavior. The macOS application was not restarted."
+    }
+  ],
+  "limitations": [
+    "FV2-009 covers the screen-selection rail only; voice prejoin/connected states, viewer stage, diagnostics, audio controls, and remaining FV2-003 acceptance stay open.",
+    "No API, ACL, session, storage, LiveKit lifecycle, or screen-publishing behavior changed."
+  ],
+  "status": "PASS_RAIL_WIDGET_TESTS_FULL_FLUTTER_SUITE_ANALYSIS_ANDROID_AND_MACOS_DEBUG_BUILDS; SCREENSHOT_WINDOWS_RUNTIME_AND_POWERSHELL_TRACEABILITY_OPEN"
+}

@@ -123,10 +123,15 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]
     depends_on: [FV2-001, FV2-007, FV2-008, T-040, T-041, T-044, T-050, T-051]
     evidence: [flutter-chat-layout-tests, flutter-responsive-geometry-tests, chat-dm-parity-acceptance]
+  - id: FV2-009
+    title: Flutter Design V2 responsive stream selection rail
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-VOICE-01, REQ-SCREEN-01, REQ-SCREEN-03, REQ-SCREEN-04]
+    depends_on: [FV2-001, T-022, T-030, T-051]
+    evidence: [flutter-screen-rail-geometry-tests, flutter-full-suite, android-debug-build, macos-debug-build]
   - id: FV2-003
     title: Flutter Design V2 voice, screen viewer and streaming diagnostics
     requirements: [REQ-UI-01, REQ-UI-02, REQ-VOICE-01, REQ-VOICE-02, REQ-VOICE-03, REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-SCREEN-04]
-    depends_on: [FV2-001, T-022, T-030, T-051]
+    depends_on: [FV2-001, FV2-009, T-022, T-030, T-051]
     evidence: [flutter-voice-media-widget-tests, paired-voice-viewer-acceptance, evidence/flutter]
   - id: FV2-004
     title: Flutter Design V2 navigation, settings and administration
