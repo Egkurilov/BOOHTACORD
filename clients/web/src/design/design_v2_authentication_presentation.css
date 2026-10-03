@@ -1,5 +1,5 @@
 /* R16–R17: branded login while preserving registration and recovery actions. */
-.authentication-page { background: radial-gradient(ellipse 470px 390px at 50% 20%, #1d1b35 0, #12121e 55%, #0b0d12 100%); }
+.authentication-page { background: radial-gradient(ellipse at 50% 10%, #21203D 0, transparent 48%), var(--gc-canvas); }
 .authentication-card { width: min(432px, 100%); height: 583px; min-height: 583px; padding: 32px; background: #101218; }
 .authentication-card:has(.authentication-hint), .authentication-card:has(.authentication-recovery-details) { height: auto; }
 .authentication-brand { display: flex; height: 36px; align-items: center; justify-content: center; gap: 10px; }
