@@ -31,7 +31,7 @@
   .sidebar .user-footer { position: fixed; right: auto; bottom: 53px; left: 0; z-index: 32; display: none; width: min(320px, calc(100vw - 40px)); border-right: 1px solid var(--gc-border-subtle); background: var(--gc-sidebar); }
   .sidebar.is-open .user-footer { display: flex; }
   .sidebar .mobile-voice-dock { display: none; }
-  .sidebar .mobile-voice-dock.mobile-visible { position: fixed; right: 0; bottom: 0; left: 0; z-index: 10; display: grid; width: 100%; min-height: 53px; grid-template-columns: minmax(0, 1fr) auto; align-content: center; gap: var(--gc-space-2); border-top: 1px solid var(--gc-border-subtle); padding: 4px var(--gc-space-2); background: var(--gc-surface); }
+  .sidebar .mobile-voice-dock.mobile-visible { position: fixed; right: 0; bottom: 0; left: 0; z-index: 10; display: grid; width: 100%; min-height: 53px; grid-template-columns: minmax(0, 1fr) auto; align-content: center; gap: var(--gc-space-2); border-top: 1px solid var(--gc-border-subtle); padding: 4px var(--gc-space-2); background: #10191a; }
   .mobile-voice-dock .voice-actions { grid-column: 2; grid-row: 1; gap: var(--gc-space-1); margin: 0; }
   .main { width: 100%; height: calc(100dvh - 53px); }
   .members, .search-aside { position: fixed; inset: 0 0 53px auto; z-index: 31; display: none; width: min(320px, calc(100vw - 40px)); border-left: 1px solid var(--gc-border-subtle); box-shadow: var(--gc-shadow-shell); }
