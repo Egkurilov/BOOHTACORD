@@ -244,5 +244,17 @@ if (state === 'nav' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
   await page.locator('.mobile-voice-dock').waitFor({ state: 'visible' })
   interactions.push('drawer-closes-and-mobile-voice-controls-remain')
 }
+if (state === 'auth' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  await page.getByLabel('Логин').fill('member')
+  await page.getByLabel('Пароль', { exact: true }).fill('valid password')
+  await page.getByRole('button', { name: 'Показать пароль' }).click()
+  assert.equal(await page.getByLabel('Пароль', { exact: true }).getAttribute('type'), 'text')
+  await page.getByRole('button', { name: 'Скрыть пароль' }).click()
+  interactions.push('password-visibility-toggle')
+  await page.getByRole('button', { name: 'Создать аккаунт' }).click()
+  await page.getByRole('button', { name: 'Уже есть аккаунт? Войти' }).waitFor()
+  await page.getByRole('button', { name: 'Уже есть аккаунт? Войти' }).click()
+  interactions.push('registration-mode-retained')
+}
 console.log(JSON.stringify({ viewport: page.viewportSize(), state, boxes, styles, composerChildren, requests, errors, interactions }, null, 2))
 await browser.close()

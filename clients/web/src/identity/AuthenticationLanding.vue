@@ -12,6 +12,7 @@ const password = ref('')
 const pending = ref(false)
 const error = ref<string | null>(null)
 const showRecoveryHelp = ref(false)
+const showPassword = ref(false)
 
 onMounted(() => { if (props.focusLoginOnMount) loginInput.value?.focus() })
 
@@ -40,7 +41,7 @@ async function submit(): Promise<void> {
 <template>
   <main class="authentication-page" aria-labelledby="authentication-title">
     <section class="authentication-card">
-      <p class="eyebrow">BOOHTACORD</p>
+      <div class="authentication-brand"><img src="/brand.png" alt=""><p class="eyebrow">BOOHTACORD</p></div>
       <h1 id="authentication-title">Добро пожаловать</h1>
       <p class="authentication-intro">Войдите в «Моя гильдия».</p>
 
@@ -51,7 +52,7 @@ async function submit(): Promise<void> {
         </label>
         <label class="authentication-field">
           Пароль
-          <input v-model="password" :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" required type="password" :aria-describedby="error ? 'authentication-error' : undefined" :aria-invalid="Boolean(error)">
+          <span class="authentication-password-control"><input v-model="password" :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" required :type="showPassword ? 'text' : 'password'" :aria-describedby="error ? 'authentication-error' : undefined" :aria-invalid="Boolean(error)"><button class="authentication-password-toggle" type="button" :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'" :aria-pressed="showPassword" @click="showPassword = !showPassword"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Zm10-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" /></svg></button></span>
         </label>
         <p v-if="mode === 'register'" class="authentication-hint">Логин: 3–32 символа A–Z, 0–9, `_`, `.`, `-`. Пароль — от 12 символов.</p>
         <p v-if="error" id="authentication-error" class="authentication-error" role="alert">{{ error }}</p>
@@ -60,11 +61,10 @@ async function submit(): Promise<void> {
         </button>
       </form>
       <aside class="authentication-account-help" aria-label="Восстановление доступа и регистрация">
-        <button class="authentication-mode-toggle" type="button" @click="chooseMode(mode === 'login' ? 'register' : 'login')">{{ mode === 'login' ? 'Нет аккаунта? Регистрация' : 'Уже есть аккаунт? Войти' }}</button>
         <p class="authentication-recovery-title">Не получается войти?</p>
         <button class="authentication-recovery-toggle" type="button" :aria-expanded="showRecoveryHelp" @click="showRecoveryHelp = !showRecoveryHelp">Как восстановить доступ</button>
         <p v-if="showRecoveryHelp" class="authentication-recovery-details">Попросите администратора гильдии выдать ссылку восстановления.</p>
-        <p class="authentication-registration-note">Регистрация открыта. Используйте вкладку «Регистрация».</p>
+        <div class="authentication-registration-footer"><p class="authentication-registration-note">Регистрация открыта.</p><button class="authentication-mode-toggle" type="button" @click="chooseMode(mode === 'login' ? 'register' : 'login')">{{ mode === 'login' ? 'Создать аккаунт' : 'Уже есть аккаунт? Войти' }}</button></div>
       </aside>
     </section>
   </main>
