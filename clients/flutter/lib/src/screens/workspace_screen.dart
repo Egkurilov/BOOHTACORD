@@ -519,18 +519,21 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                             _showMobileSidebar ||
                             _showMembersDrawer ||
                             searchPanelModal,
-                        child: _MainSurface(
-                          state: widget.state,
-                          selectedScreenIdentity: _visibleVoiceScreenIdentity,
-                          onSelectScreen: _selectVoiceScreen,
-                          pinnedScreenIdentity: _visiblePinnedScreenIdentity,
-                          onToggleScreenPin: _toggleVoiceScreenPin,
-                          onToggleNavigation: _toggleNavigation,
-                          onOpenMembers: showMemberToggle
-                              ? _toggleMembers
-                              : null,
-                          onCapturePttKey: _beginPttKeyCapture,
-                          capturingPttKey: _capturingPttKey,
+                        child: KeyedSubtree(
+                          key: const ValueKey('workspace-main-surface'),
+                          child: _MainSurface(
+                            state: widget.state,
+                            selectedScreenIdentity: _visibleVoiceScreenIdentity,
+                            onSelectScreen: _selectVoiceScreen,
+                            pinnedScreenIdentity: _visiblePinnedScreenIdentity,
+                            onToggleScreenPin: _toggleVoiceScreenPin,
+                            onToggleNavigation: _toggleNavigation,
+                            onOpenMembers: showMemberToggle
+                                ? _toggleMembers
+                                : null,
+                            onCapturePttKey: _beginPttKeyCapture,
+                            capturingPttKey: _capturingPttKey,
+                          ),
                         ),
                       ),
                     ),
@@ -619,11 +622,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                       child: Row(
                         children: [
                           SizedBox(
-                            width: wide
-                                ? GcLayout.navWide
-                                : medium
-                                ? GcLayout.navMedium
-                                : GcLayout.navSmall,
+                            key: const ValueKey('workspace-sidebar'),
+                            width:
+                                (wide
+                                    ? GcLayout.navWide
+                                    : medium
+                                    ? GcLayout.navMedium
+                                    : GcLayout.navSmall) -
+                                1,
                             child: _Sidebar(
                               state: widget.state,
                               showVoiceDock: true,
@@ -633,27 +639,32 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                           ),
                           const VerticalDivider(width: 1),
                           Expanded(
-                            child: _MainSurface(
-                              state: widget.state,
-                              selectedScreenIdentity:
-                                  _visibleVoiceScreenIdentity,
-                              onSelectScreen: _selectVoiceScreen,
-                              pinnedScreenIdentity:
-                                  _visiblePinnedScreenIdentity,
-                              onToggleScreenPin: _toggleVoiceScreenPin,
-                              onOpenMembers: showMemberToggle
-                                  ? _toggleMembers
-                                  : null,
-                              onCapturePttKey: _beginPttKeyCapture,
-                              capturingPttKey: _capturingPttKey,
+                            child: KeyedSubtree(
+                              key: const ValueKey('workspace-main-surface'),
+                              child: _MainSurface(
+                                state: widget.state,
+                                selectedScreenIdentity:
+                                    _visibleVoiceScreenIdentity,
+                                onSelectScreen: _selectVoiceScreen,
+                                pinnedScreenIdentity:
+                                    _visiblePinnedScreenIdentity,
+                                onToggleScreenPin: _toggleVoiceScreenPin,
+                                onOpenMembers: showMemberToggle
+                                    ? _toggleMembers
+                                    : null,
+                                onCapturePttKey: _beginPttKeyCapture,
+                                capturingPttKey: _capturingPttKey,
+                              ),
                             ),
                           ),
                           if (showPermanentMembers) ...[
                             const VerticalDivider(width: 1),
                             SizedBox(
-                              width: wide
-                                  ? GcLayout.asideWide
-                                  : GcLayout.asideMedium,
+                              width:
+                                  (wide
+                                      ? GcLayout.asideWide
+                                      : GcLayout.asideMedium) -
+                                  1,
                               child: _MembersPanel(state: widget.state),
                             ),
                           ],
@@ -748,28 +759,16 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                   ),
                 )
               : shellContent;
-          final flushShell = constraints.maxWidth >= GcLayout.wideBreakpoint;
           return PopScope<Object?>(
             canPop: !_showMobileSidebar && !_showMembersDrawer,
             onPopInvokedWithResult: (didPop, _) {
               if (!didPop) _closeDrawers();
             },
             child: Padding(
-              padding: compact || flushShell
-                  ? EdgeInsets.zero
-                  : const EdgeInsets.all(GcLayout.frameInset),
+              padding: EdgeInsets.zero,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(
-                  compact || flushShell ? 0 : GcLayout.shellRadius,
-                ),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: compact || flushShell
-                        ? null
-                        : Border.all(color: GcColors.border),
-                  ),
-                  child: swipeContent,
-                ),
+                borderRadius: BorderRadius.zero,
+                child: swipeContent,
               ),
             ),
           );
@@ -854,9 +853,10 @@ class _Sidebar extends StatelessWidget {
     child: Column(
       children: [
         SizedBox(
-          height: 72,
+          key: const ValueKey('workspace-sidebar-guild-header'),
+          height: GcLayout.headerHeight,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 22),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 const _GuildMark(),
@@ -1179,7 +1179,10 @@ class _ChannelRow extends StatelessWidget {
         onSecondaryTap: canDeleteChannel(state, channel) ? () => deleteTopologyTarget(context, state, channel) : null,
         borderRadius: BorderRadius.circular(7),
         child: SizedBox(
-          height: 42,
+          key: ValueKey('workspace-channel-row:${channel.id}'),
+          height: MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint
+              ? GcLayout.touchTargetSize
+              : GcLayout.channelRowHeight,
           child: Row(
             children: [
               if (voiceConnected)
@@ -1727,6 +1730,7 @@ class _Header extends StatelessWidget {
     this.onOpenMembers,
     this.onBack,
     this.trailing,
+    this.mobileConversationLayout = false,
   });
   final IconData icon;
   final String title;
@@ -1735,23 +1739,25 @@ class _Header extends StatelessWidget {
   final VoidCallback? onOpenMembers;
   final VoidCallback? onBack;
   final Widget? trailing;
+  final bool mobileConversationLayout;
   @override
   Widget build(BuildContext context) {
     final compact =
         MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint;
+    final compactConversation = compact && mobileConversationLayout;
     final leadingButtonConstraints = BoxConstraints.tightFor(
       width: compact ? 40 : 48,
       height: 48,
     );
     return SizedBox(
       key: const ValueKey('workspace-header'),
-      height: 72,
+      height: compact ? GcLayout.headerMobileHeight : GcLayout.headerHeight,
       child: DecoratedBox(
         decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: GcColors.border)),
         ),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 24),
+          padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 24),
           child: Row(
             children: [
               if (onBack != null)
@@ -1770,10 +1776,12 @@ class _Header extends StatelessWidget {
                   onPressed: onToggleNavigation,
                   icon: const Icon(Icons.menu),
                 ),
-                SizedBox(width: compact ? 0 : 4),
+                SizedBox(width: compact ? 8 : 4),
               ],
-              Icon(icon, color: GcColors.muted),
-              const SizedBox(width: 12),
+              if (!compactConversation) ...[
+                Icon(icon, color: GcColors.muted),
+                const SizedBox(width: 12),
+              ],
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1800,7 +1808,7 @@ class _Header extends StatelessWidget {
                   ],
                 ),
               ),
-              ?trailing,
+              if (!compactConversation) ?trailing,
               if (onOpenMembers != null)
                 IconButton(
                   tooltip: 'Открыть участников',
@@ -2220,6 +2228,8 @@ class _ConversationState extends State<_Conversation>
 
   @override
   Widget build(BuildContext context) {
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    final compact = viewportWidth < GcLayout.mobileBreakpoint;
     final renderedMessages = widget.state.messages;
     final timeline = messageTimeline(renderedMessages);
     if (_observedChannelId != widget.channel.id ||
@@ -2239,6 +2249,7 @@ class _ConversationState extends State<_Conversation>
           icon: Icons.tag_rounded,
           title: widget.channel.name,
           subtitle: 'Текстовый канал',
+          mobileConversationLayout: true,
           onToggleNavigation: widget.onToggleNavigation,
           onOpenMembers: widget.onOpenMembers,
           trailing: IconButton(
@@ -2273,10 +2284,14 @@ class _ConversationState extends State<_Conversation>
                     key: const ValueKey('text-channel-messages'),
                     controller: _scroll,
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 24,
-                    ),
+                    padding: compact
+                        ? const EdgeInsets.fromLTRB(12, 16, 12, 8)
+                        : EdgeInsets.fromLTRB(
+                            viewportWidth < GcLayout.mediumBreakpoint ? 20 : 24,
+                            20,
+                            viewportWidth < GcLayout.mediumBreakpoint ? 20 : 24,
+                            12,
+                          ),
                     itemCount:
                         timeline.length +
                         (widget.state.nextMessageCursor == null ? 0 : 1),
@@ -2308,8 +2323,20 @@ class _ConversationState extends State<_Conversation>
                       if (current.message == null) {
                         return const SizedBox(height: 12);
                       }
+                      if (next.message != null && next.grouped) {
+                        return const SizedBox(height: 4);
+                      }
+                      final attachmentGap =
+                          next.message != null &&
+                          current.message!.attachments.isNotEmpty;
                       return SizedBox(
-                        height: next.message != null && next.grouped ? 4 : 24,
+                        height: attachmentGap
+                            ? compact
+                                  ? 25
+                                  : 34
+                            : compact
+                            ? 20
+                            : 24,
                       );
                     },
                     itemBuilder: (context, index) {
@@ -2378,8 +2405,23 @@ class _ConversationState extends State<_Conversation>
                   ),
                 ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        Container(
+          key: const ValueKey('text-composer-wrap'),
+          constraints: BoxConstraints(
+            minHeight: _replyTarget != null
+                ? 131
+                : compact
+                ? 70
+                : 98,
+          ),
+          padding: compact
+              ? const EdgeInsets.all(8)
+              : EdgeInsets.fromLTRB(
+                  viewportWidth < GcLayout.mediumBreakpoint ? 20 : 24,
+                  8,
+                  viewportWidth < GcLayout.mediumBreakpoint ? 20 : 24,
+                  16,
+                ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -2451,6 +2493,13 @@ class _ConversationState extends State<_Conversation>
                   maxLines: 5,
                   onSubmitted: (_) => _send(),
                   decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    constraints: BoxConstraints(minHeight: compact ? 54 : 52),
+                    prefixIconConstraints: const BoxConstraints(
+                      minWidth: 44,
+                      minHeight: 44,
+                    ),
                     counterText: '',
                     hintText: 'Написать сообщение…',
                     prefixIcon: Row(
@@ -2528,12 +2577,54 @@ class _ConversationState extends State<_Conversation>
                   ),
                 ),
               ),
+              _ComposerKeyboardHelp(compact: compact),
             ],
           ),
         ),
       ],
     );
   }
+}
+
+class _ComposerKeyboardHelp extends StatelessWidget {
+  const _ComposerKeyboardHelp({required this.compact});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: 'Enter — отправить · Shift+Enter — новая строка · До 25 МБ на файл',
+    child: compact
+        ? const SizedBox.shrink()
+        : Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: ExcludeSemantics(
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Enter — отправить · Shift+Enter — новая строка',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: GcColors.muted,
+                        fontSize: GcTypography.caption,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: GcSpacing.x2),
+                  const Text(
+                    'До 25 МБ на файл',
+                    style: TextStyle(
+                      color: GcColors.muted,
+                      fontSize: GcTypography.caption,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+  );
 }
 
 Widget _messageContextMenu(
@@ -2600,6 +2691,9 @@ class _MessageRow extends StatelessWidget {
   final VoidCallback? onRetry;
   @override
   Widget build(BuildContext context) {
+    final compact =
+        MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint;
+    final avatarDiameter = compact ? 32.0 : 36.0;
     final member = state.members
         .where((value) => value.id == message.authorId)
         .firstOrNull;
@@ -2610,16 +2704,16 @@ class _MessageRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (grouped)
-          const SizedBox(width: 40, height: 0)
+          SizedBox(width: avatarDiameter, height: 0)
         else
           AuthenticatedAvatar(
             state: state,
             name: authorName,
             avatarUrl: member?.avatarUrl,
-            radius: 20,
+            radius: avatarDiameter / 2,
             backgroundColor: GcColors.accent,
           ),
-        const SizedBox(width: 14),
+        SizedBox(width: compact ? 8 : 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -4024,12 +4118,15 @@ class _DirectConversationState extends State<_DirectConversation> {
     _directMessageKeys.removeWhere(
       (key, _) => !renderedMessageKeys.contains(key),
     );
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    final compact = viewportWidth < GcLayout.mobileBreakpoint;
     return Column(
       children: [
         _Header(
           icon: Icons.person_outline,
           title: widget.conversation.displayName,
-          subtitle: 'Личные сообщения',
+          subtitle: 'Личный диалог',
+          mobileConversationLayout: true,
           onToggleNavigation: widget.onToggleNavigation,
           onOpenMembers: widget.onOpenMembers,
           trailing: IconButton(
@@ -4067,12 +4164,12 @@ class _DirectConversationState extends State<_DirectConversation> {
                   onRefresh: () =>
                       widget.state.openDirectConversation(widget.conversation),
                   child: ListView.builder(
+                    key: const ValueKey('direct-message-messages'),
                     controller: _scroll,
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 24,
-                    ),
+                    padding: compact
+                        ? const EdgeInsets.fromLTRB(12, 16, 12, 8)
+                        : const EdgeInsets.fromLTRB(24, 20, 24, 12),
                     itemCount:
                         widget.state.directMessageHistory.length +
                         (widget.state.nextDirectMessageCursor == null ? 0 : 1),
@@ -4280,8 +4377,18 @@ class _DirectConversationState extends State<_DirectConversation> {
                   ),
                 ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        Container(
+          key: const ValueKey('direct-message-composer-wrap'),
+          constraints: BoxConstraints(
+            minHeight: _replyTarget != null
+                ? 131
+                : compact
+                ? 70
+                : 98,
+          ),
+          padding: compact
+              ? const EdgeInsets.all(8)
+              : const EdgeInsets.fromLTRB(24, 8, 24, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -4355,6 +4462,13 @@ class _DirectConversationState extends State<_DirectConversation> {
                   maxLines: 5,
                   onSubmitted: (_) => _send(),
                   decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    constraints: BoxConstraints(minHeight: compact ? 54 : 52),
+                    prefixIconConstraints: const BoxConstraints(
+                      minWidth: 44,
+                      minHeight: 44,
+                    ),
                     counterText: '',
                     hintText:
                         'Сообщение для ${widget.conversation.displayName}…',
@@ -4428,6 +4542,7 @@ class _DirectConversationState extends State<_DirectConversation> {
                   ),
                 ),
               ),
+              _ComposerKeyboardHelp(compact: compact),
             ],
           ),
         ),

@@ -1,0 +1,63 @@
+{
+  "id": "QA-238",
+  "date": "2026-10-03",
+  "task": "FE-70 / FV2-007 — Flutter Design V2 responsive shell and chat geometry",
+  "source_revision": "ada04c9f",
+  "working_tree_changes": true,
+  "summary": "Aligned text and direct-message shell geometry with production web Design V2 CSS while preserving existing navigation, audio refresh, search, message, and composer behavior.",
+  "checks": [
+    {
+      "name": "Test-first responsive geometry assertions",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'text workspace geometry matches Design V2 breakpoints'",
+      "result": "PASS",
+      "observation": "The new test was first run against the pre-change UI and failed on the 72 px header; after implementation it passed for 320, 360, 390, 1024, 1280, and 1440 px layouts, including text/DM composer, channel drawer and long-name constraints."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test",
+      "result": "PASS",
+      "passed": 462
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze lib/src/screens/workspace_screen.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Android Debug APK build",
+      "command": "cd clients/flutter && flutter build apk --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk",
+      "observation": "Gradle warned that installed Android tooling understands SDK XML only through version 3 while it encountered version 4; build succeeded."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this host; new requirement IDs were manually checked against the approved requirements index."
+    },
+    {
+      "name": "Windows target build",
+      "result": "NOT_RUN",
+      "observation": "Current build host is macOS; Windows build and runtime acceptance remain in FV2-006."
+    },
+    {
+      "name": "Matched screenshots and device runtime acceptance",
+      "result": "NOT_RUN",
+      "observation": "Widget tests verify geometry and semantics but do not establish rendered screenshot parity or runtime behavior on Android/macOS/Windows."
+    }
+  ],
+  "limitations": [
+    "FV2-007 closes only responsive shell/chat geometry; FV2-002 still includes message-history, reply, attachment, scroll, read-cursor, and IME parity work.",
+    "No API, ACL, session, or LiveKit behavior was changed.",
+    "Pre-existing changes in clients/flutter/pubspec.lock, clients/flutter/packages/flutter_webrtc/.gitignore, and evidence/flutter/design-v2/README.md were not part of this leaf."
+  ],
+  "status": "PASS_RESPONSIVE_WIDGET_TESTS_FULL_FLUTTER_SUITE_CHANGED_FILE_ANALYSIS_ANDROID_AND_MACOS_DEBUG_BUILDS; SCREENSHOT_RUNTIME_WINDOWS_AND_TRACEABILITY_VERIFICATION_OPEN"
+}

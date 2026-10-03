@@ -430,10 +430,18 @@ both deployed web and Flutter viewers.
   values and Android/macOS Debug builds pass —
   [QA-237](../evidence/flutter/qa237-flutter-design-v2-theme-tokens-2026-10-03-001.json).
   Auth tabs retain their web-specific 40 px height and padded Material hit
-  targets remain available. The token foundation is updated, but shell,
-  per-screen geometry and matched visual/runtime acceptance for R01–R30 remain
-  open under FV2-002…006. The earlier QA-97 record remains historical evidence.
-- Match shell columns and frame geometry at wide, medium and compact widths.
+  targets remain available. The earlier QA-97 record remains historical evidence.
+- FV2-007 now matches the web Design V2 responsive geometry for the tested text
+  and DM states: edge-to-edge shell, 280/248 px desktop columns, 56/64 px
+  conversation headers, 36 px desktop and 44 px compact-drawer channel rows,
+  chat list padding/rhythm/avatar sizes, and 70/98 px composer bands. Widget
+  assertions cover 320/360/390/1024/1280/1440 px; all 462 Flutter tests,
+  changed-file analysis, Android Debug APK and macOS Debug builds pass —
+  [QA-238](../evidence/flutter/qa238-flutter-design-v2-shell-chat-geometry-2026-10-03-001.json).
+  Screenshot comparison, Windows build, and runtime acceptance are not run.
+- Remaining FV2-002 work includes full message/history and attachment/reply
+  visual states plus on-device scroll/read-cursor/IME acceptance. Match remaining
+  shell interactions at wide, medium and compact widths.
 - Implement web-equivalent responsive navigation/member/search drawers,
   scrim, escape/close behavior, focus return and keyboard reachability. Navigation
   and member drawers preserve the active channel/voice view behind a scrim;
