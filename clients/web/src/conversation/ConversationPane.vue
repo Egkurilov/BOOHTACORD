@@ -57,7 +57,11 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ clearScreenStream: []; join: [channelId: string, transfer?: boolean, joinMode?: VoiceJoinMode]; leave: []; refreshScreen: []; returnVoice: [channelId: string]; selectScreenStream: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setParticipantVolume: [id: string, percent: number]; setScreenVolume: [percent: number]; toggleScreenAudio: []; startScreen: [profile: ScreenProfile]; stopScreen: []; transfer: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
 const selectedScreenProfile = computed(() => props.selectedScreenProfile)
 const { screenCaptureAvailable, captureUnavailableMessage, screenExpanded, screenPinned,
-  voiceChannel, miniVisible, keepVoiceRoom, selectedScreenName, screenViewerRef, watchScreen } = useConversationScreenState(props)
+  voiceChannel, miniVisible, keepVoiceRoom, selectedScreenName, screenViewerRef, watchScreen, dismissLocalPreview } = useConversationScreenState(props)
+function clearScreenPreview(): void {
+  dismissLocalPreview()
+  emit('clearScreenStream')
+}
 </script>
 <template>
   <section class="conversation-pane" aria-live="polite">
@@ -90,7 +94,7 @@ const { screenCaptureAvailable, captureUnavailableMessage, screenExpanded, scree
           <template v-if="screenViewerCards.length || selectedScreenStreamId || screenViewerEnded">
             <ScreenViewer
               ref="screenViewerRef" v-show="selectedScreenStreamId !== null" :audio-muted="screenAudioMuted" :cards="screenViewerCards" :deafened="selfDeafened" :ended="screenViewerEnded" :error="screenViewerError" :expanded="screenExpanded" :mini="miniVisible" :pinned="screenPinned" :selected-audio-volume="selectedScreenAudioVolume" :selected-id="selectedScreenStreamId"
-              @clear="emit('clearScreenStream')" @select="(id, video, audio) => emit('selectScreenStream', id, video, audio)" @set-audio-volume="emit('setScreenVolume', $event)" @toggle-audio="emit('toggleScreenAudio')"
+              @clear="clearScreenPreview" @select="(id, video, audio) => emit('selectScreenStream', id, video, audio)" @set-audio-volume="emit('setScreenVolume', $event)" @toggle-audio="emit('toggleScreenAudio')"
               @pin="screenPinned = !screenPinned" @return-voice="emit('returnVoice', voiceChannel.id)"
               @update:expanded="screenExpanded = $event"
             />

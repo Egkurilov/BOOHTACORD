@@ -15,6 +15,8 @@ describe('voice participant screen actions', () => {
     expect(pane).toContain('<div v-if="!selectedScreenStreamId" class="room-wrap">')
     expect(pane).toContain('@watch-screen="watchScreen"')
     expect(pane).toContain('ref="screenViewerRef"')
+    expect(pane).toContain('@clear="clearScreenPreview"')
+    expect(pane).toContain('dismissLocalPreview()')
   })
 
   it('shows screen share and watch affordances only on participants with a real stream', () => {

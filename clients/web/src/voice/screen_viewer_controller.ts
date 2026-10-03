@@ -83,9 +83,11 @@ export class ScreenViewerController {
   reconcile(): void {
     const current = this.selected && this.source().find((stream) => stream.id === this.selected!.id)
     if (this.selected && !current) {
+      const wasLocal = this.selected.isLocal === true
       this.detachAndUnsubscribe()
       this.selected = null
-      this.hasEnded = true
+      this.hasEnded = !wasLocal
+      if (wasLocal) this.resumeParticipantId = null
     } else if (!this.selected && this.resumeParticipantId) {
       const restarted = this.source().find((stream) => stream.participantId === this.resumeParticipantId)
       if (restarted) {

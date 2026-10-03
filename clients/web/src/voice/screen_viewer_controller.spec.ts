@@ -133,4 +133,20 @@ describe('screen viewer controller', () => {
     expect(attachAudio).not.toHaveBeenCalled()
     expect(controller.cards()[0]?.isLocal).toBe(true)
   })
+
+  it('returns to the voice room when the local preview publication stops', () => {
+    const local = {
+      ...stream('self', false), isLocal: true, participantName: 'Ваш экран',
+      video: { track: { attach: vi.fn(), detach: vi.fn() } },
+    }
+    const streams: ScreenViewerStream[] = [local]
+    const controller = new ScreenViewerController(() => streams)
+
+    controller.select(local.id, {} as HTMLVideoElement, {} as HTMLAudioElement)
+    streams.splice(0)
+    controller.reconcile()
+
+    expect(controller.selectedId).toBeNull()
+    expect(controller.ended).toBe(false)
+  })
 })
