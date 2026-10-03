@@ -54,6 +54,7 @@ func TestRunExecutesEmbeddedMigrations(t *testing.T) {
 		{"unattached_cleanup_attempts", "unattached_cleanup_retry_after", "attachments_unattached_cleanup_retry_state", "attachments_unattached_cleanup_retry_idx", "attachments_unattached_cleanup_turn_seq"},
 		{"DROP CONSTRAINT IF EXISTS messages_body_or_deleted_marker", "char_length(body) BETWEEN 0 AND 8000", "DROP CONSTRAINT IF EXISTS direct_message_messages_body_or_deleted_marker"},
 		{"CREATE TABLE IF NOT EXISTS role_permissions", "role = 'MEMBER'", "ON CONFLICT (role) DO NOTHING", "revision BIGINT NOT NULL"},
+		{"CREATE TABLE IF NOT EXISTS topology_command_receipts", "PRIMARY KEY (actor_id, client_request_id)", "intent_hash", "response_status"},
 	}
 	if len(executor.statements) != len(expected) {
 		t.Fatalf("migration count = %d", len(executor.statements))
