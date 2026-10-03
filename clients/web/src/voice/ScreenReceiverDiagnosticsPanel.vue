@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { placeScreenDiagnostics } from './screen_diagnostics_placement'
 import type { ScreenReceiverMetrics } from './screen_receiver_diagnostics'
@@ -21,6 +21,7 @@ const profile = computed(() => props.targetProfile?.match(/^P(720|1080|1440)_(15
 const bitrate = computed(() => props.metrics?.bitrateKbps == null ? 'Нет данных' : `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(props.metrics.bitrateKbps / 1000)} Мбит/с`)
 const diagnostics = ref<HTMLDetailsElement | null>(null)
 const isOpen = ref(false)
+const mobile = ref(false)
 const panel = ref<HTMLDivElement | null>(null)
 let placementFrame = 0
 
@@ -56,16 +57,29 @@ function close(): void {
   isOpen.value = false
   diagnostics.value?.querySelector('summary')?.focus()
 }
-function handleToggle(): void { isOpen.value = Boolean(diagnostics.value?.open); updatePlacement() }
+function handleToggle(): void {
+  isOpen.value = Boolean(diagnostics.value?.open)
+  if (isOpen.value) void nextTick(() => panel.value?.querySelector<HTMLButtonElement>('header button')?.focus())
+  updatePlacement()
+}
+function handleKeydown(event: KeyboardEvent): void {
+  if (!isOpen.value) return
+  if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close() }
+  else if (mobile.value && event.key === 'Tab') { event.preventDefault(); panel.value?.querySelector<HTMLButtonElement>('header button')?.focus() }
+}
+function handleResize(): void { mobile.value = window.innerWidth <= 600; updatePlacement() }
 
 onMounted(() => {
-  window.addEventListener('resize', updatePlacement)
+  handleResize()
+  window.addEventListener('resize', handleResize)
   window.addEventListener('scroll', updatePlacement, true)
+  window.addEventListener('keydown', handleKeydown, true)
 })
 onBeforeUnmount(() => {
   cancelAnimationFrame(placementFrame)
-  window.removeEventListener('resize', updatePlacement)
+  window.removeEventListener('resize', handleResize)
   window.removeEventListener('scroll', updatePlacement, true)
+  window.removeEventListener('keydown', handleKeydown, true)
 })
 </script>
 
@@ -74,7 +88,7 @@ onBeforeUnmount(() => {
     <summary :title="status" aria-label="Статистика" class="stream-tool-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V8m5 11V4m5 15v-9m5 9V6M2 21h20"/></svg><span class="gc-sr-only">Статистика</span></summary>
     <Teleport v-if="isOpen" to="body">
     <button type="button" class="stream-diagnostics-backdrop" aria-label="Закрыть статистику" @click="close" />
-    <div ref="panel" class="stream-diagnostics-panel" role="dialog" aria-label="Статистика трансляции"><header><h2>Статистика</h2><button type="button" aria-label="Закрыть статистику" @click="close">×</button></header><p>{{ participantName ? `Экран ${participantName}` : 'Трансляция' }} · {{ status }}</p><dl>
+    <div ref="panel" class="stream-diagnostics-panel" role="dialog" aria-label="Статистика трансляции" :aria-modal="mobile ? 'true' : undefined"><header><h2>Статистика</h2><button type="button" aria-label="Закрыть статистику" @click="close">×</button></header><p>{{ participantName ? `Экран ${participantName}` : 'Трансляция' }} · {{ status }}</p><dl>
       <div><dt>Профиль</dt><dd>{{ profile }}</dd></div>
       <div><dt>Сейчас у зрителя</dt><dd>{{ actualVideoQuality }}</dd></div>
       <div><dt>Декодирование</dt><dd>{{ value(metrics?.decodedFps, 'FPS') }}</dd></div>

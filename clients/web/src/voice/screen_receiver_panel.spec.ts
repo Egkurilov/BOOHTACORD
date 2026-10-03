@@ -46,4 +46,12 @@ describe('selected screen receiver panel', () => {
     expect(panel).toContain('placeScreenDiagnostics')
     expect(source('../design/design_v2_stream_diagnostics.css')).toContain('height: min(514px, 80dvh)')
   })
+
+  it('returns focus to the trigger after closing the mobile statistics sheet', () => {
+    const panel = source('./ScreenReceiverDiagnosticsPanel.vue')
+    expect(panel).toContain('aria-modal')
+    expect(panel).toContain("event.key === 'Escape'")
+    expect(panel).toContain("querySelector('summary')?.focus()")
+    expect(panel).toContain("querySelector<HTMLButtonElement>('header button')?.focus()")
+  })
 })

@@ -364,10 +364,13 @@ if (mediaStates.includes(state) && process.env.DESIGN_V2_VERIFY_INTERACTIONS ===
     assert.equal(await page.locator('.screen-player').evaluate((video) => video.videoWidth > 0), true)
     interactions.push('selected-real-media-stream-and-video-frame')
     if (state === 'media-stats') {
-      await page.getByRole('dialog', { name: 'Статистика трансляции' }).getByText('Потери пакетов за 10 с').waitFor()
-      await page.getByRole('button', { name: 'Закрыть статистику' }).last().click()
-      await page.getByRole('dialog', { name: 'Статистика трансляции' }).waitFor({ state: 'detached' })
-      interactions.push('receiver-statistics-and-close')
+      const dialog = page.getByRole('dialog', { name: 'Статистика трансляции' })
+      await dialog.getByText('Потери пакетов за 10 с').waitFor()
+      assert.equal(await dialog.getByRole('button', { name: 'Закрыть статистику' }).evaluate((button) => button === document.activeElement), true)
+      await page.keyboard.press('Escape')
+      await dialog.waitFor({ state: 'detached' })
+      assert.equal(await page.locator('.stream-diagnostics > summary').evaluate((button) => button === document.activeElement), true)
+      interactions.push('receiver-statistics-escape-and-focus-return')
     } else if (state === 'media-quality') {
       const dialog = page.getByRole('dialog', { name: 'Качество трансляции' })
       await dialog.getByRole('radio', { name: '1080p' }).check()
