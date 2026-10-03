@@ -14,6 +14,7 @@ import '../../features/audio/devices/controller.dart';
 import '../../features/voice/lifecycle/controller.dart';
 import '../../features/voice/roster_state/controller.dart';
 import '../../features/screen/lifecycle/controller.dart';
+import '../../features/authorization/permissions/controller.dart';
 
 abstract class AppOwners extends ChangeNotifier {
   AppOwners(
@@ -45,6 +46,7 @@ abstract class AppOwners extends ChangeNotifier {
   late final VoiceController voice;
   late final VoiceRosterController voiceRoster;
   late final ScreenShareController screen;
+  late final PermissionController permissions;
   String? error;
   bool disposed = false;
   @override

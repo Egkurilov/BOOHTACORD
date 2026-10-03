@@ -20,6 +20,8 @@ import '../services/voice_participant_presentation.dart';
 import '../services/screen_thumbnail.dart';
 import '../features/voice/screen_viewer/audio_publication.dart';
 import '../features/voice/screen_viewer/audio_controls.dart';
+import '../features/workspace/topology_actions/buttons.dart';
+import '../features/workspace/topology_actions/delete_actions.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
 import '../widgets/noise_suppression_settings.dart';
@@ -916,6 +918,8 @@ class _Sidebar extends StatelessWidget {
                     padding: const EdgeInsets.all(12),
                     children: [
                       if (state.navigationSection == NavigationSection.channels)
+                        Row(children: [const Expanded(child: Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('КАНАЛЫ', style: TextStyle(color: GcColors.muted, fontSize: 11, fontWeight: FontWeight.w700)))), TopologyCreateButton(state: state)]),
+                      if (state.navigationSection == NavigationSection.channels)
                         for (final category in state.topology!.categories)
                           _Category(
                             state: state,
@@ -1089,15 +1093,7 @@ class _Category extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(10, 12, 10, 7),
-          child: Text(
-            category.name.toUpperCase(),
-            style: const TextStyle(
-              color: GcColors.muted,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: .6,
-            ),
-          ),
+          child: Row(children: [Expanded(child: Text(category.name.toUpperCase(), style: const TextStyle(color: GcColors.muted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: .6))), TopologyCreateButton(state: state, category: category), TopologyObjectMenu(state: state, target: category)]),
         ),
         if (category.channels.isEmpty)
           const Padding(
@@ -1123,6 +1119,7 @@ class _Category extends StatelessWidget {
               return Column(
                 children: [
                   _ChannelRow(
+                    state: state,
                     channel: channel,
                     selected: state.selectedChannel?.id == channel.id,
                     voiceConnected: state.voiceChannel?.id == channel.id,
@@ -1159,12 +1156,14 @@ class _Category extends StatelessWidget {
 
 class _ChannelRow extends StatelessWidget {
   const _ChannelRow({
+    required this.state,
     required this.channel,
     required this.selected,
     required this.voiceConnected,
     this.voiceParticipantCount,
     required this.onTap,
   });
+  final AppState state;
   final GuildChannel channel;
   final bool selected;
   final bool voiceConnected;
@@ -1178,6 +1177,7 @@ class _ChannelRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(7),
       child: InkWell(
         onTap: onTap,
+        onSecondaryTap: canDeleteChannel(state, channel) ? () => deleteTopologyTarget(context, state, channel) : null,
         borderRadius: BorderRadius.circular(7),
         child: SizedBox(
           height: 42,
@@ -1255,6 +1255,7 @@ class _ChannelRow extends StatelessWidget {
                     ),
                   ),
                 ),
+              TopologyObjectMenu(state: state, target: channel),
             ],
           ),
         ),

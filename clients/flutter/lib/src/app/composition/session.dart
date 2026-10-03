@@ -34,6 +34,7 @@ void configureSession(AppOwners app) {
       },
       resume: () async {
         final ticket = app.session.scope.capture();
+        unawaited(app.permissions.refresh());
         await app.realtime.close();
         if (!ticket.isActive) return;
         app.voiceRoster.start();
