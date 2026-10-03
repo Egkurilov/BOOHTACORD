@@ -33,6 +33,16 @@ func TestCreateRejectsUnknownKindAndInvalidNameBeforePersistence(t *testing.T) {
 	}
 }
 
+func TestCreateCarriesIdempotencyIntent(t *testing.T) {
+	store := &fakeStore{result: Result{ID: "channel-1", Revision: 2}}
+	service := New(store)
+	service.newID = func() (string, error) { return "channel-1", nil }
+	_, err := service.Create(context.Background(), Input{ActorID: "member-1", CategoryID: "category-1", Name: "Голос", Kind: KindVoice, ClientRequestID: "9f954ba6-6cd0-42ca-a504-353ac45cb2e5"})
+	if err != nil || store.request.ClientRequestID == "" || store.request.IntentHash == "" {
+		t.Fatalf("request = %#v, error = %v", store.request, err)
+	}
+}
+
 type fakeStore struct {
 	request Request
 	result  Result

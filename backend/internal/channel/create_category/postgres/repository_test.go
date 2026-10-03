@@ -38,6 +38,9 @@ func (database *fakeDatabase) Begin(context.Context) (Transaction, error) {
 
 type fakeTransaction struct {
 	row        fakeRow
+	rows       []fakeRow
+	queryIndex int
+	execCalls  int
 	locked     bool
 	committed  bool
 	rolledBack bool
@@ -53,7 +56,17 @@ func (transaction *fakeTransaction) Lock(context.Context, int64) error {
 func (transaction *fakeTransaction) QueryRow(_ context.Context, statement string, arguments ...any) Row {
 	transaction.statement = statement
 	transaction.arguments = arguments
+	if transaction.queryIndex < len(transaction.rows) {
+		row := transaction.rows[transaction.queryIndex]
+		transaction.queryIndex++
+		return row
+	}
 	return transaction.row
+}
+
+func (transaction *fakeTransaction) Exec(context.Context, string, ...any) error {
+	transaction.execCalls++
+	return nil
 }
 
 func (transaction *fakeTransaction) Commit(context.Context) error {
@@ -68,9 +81,13 @@ func (transaction *fakeTransaction) Rollback(context.Context) error {
 
 type fakeRow struct {
 	values []any
+	err    error
 }
 
 func (row fakeRow) Scan(destinations ...any) error {
+	if row.err != nil {
+		return row.err
+	}
 	for index, value := range row.values {
 		switch destination := destinations[index].(type) {
 		case *string:

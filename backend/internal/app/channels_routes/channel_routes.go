@@ -4,6 +4,10 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	effectivepermissions "voice-platform/backend/internal/authorization/effective_permissions"
+	permissionguard "voice-platform/backend/internal/authorization/permission_guard"
+	permissionregistry "voice-platform/backend/internal/authorization/permission_registry"
+	rolepolicypostgres "voice-platform/backend/internal/authorization/role_policy/postgres"
 	"voice-platform/backend/internal/channel/archive_text_channel"
 	archiveapi "voice-platform/backend/internal/channel/archive_text_channel/api"
 	archivepostgres "voice-platform/backend/internal/channel/archive_text_channel/postgres"
@@ -53,9 +57,15 @@ func ConfigureChannelRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 	textCursor := advancetextchannelreadcursor.New(textcursorpostgres.New(textcursorpostgres.NewPoolDatabase(database)))
 	textCursorHandler := sessionapi.Require(sessions)(textcursorapi.NewHandler(textCursor))
 	categoryService := createcategory.New(categorypostgres.New(categorypostgres.NewPoolDatabase(database)))
-	categoryHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(categoryapi.NewHandler(categoryService)))
+	categoryRawHandler := categoryapi.NewHandler(categoryService)
+	categoryHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(categoryRawHandler))
 	channelService := createchannel.New(channelpostgres.New(channelpostgres.NewPoolDatabase(database)))
-	channelHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(channelapi.NewHandler(channelService)))
+	channelRawHandler := channelapi.NewHandler(channelService)
+	channelHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(channelRawHandler))
+	policyStore := rolepolicypostgres.New(rolepolicypostgres.NewPoolDatabase(database))
+	permissionResolver := effectivepermissions.New(policyStore)
+	memberCategoryHandler := sessionapi.Require(sessions)(permissionguard.Require(permissionResolver, permissionregistry.CategoryCreate)(categoryRawHandler))
+	memberChannelHandler := sessionapi.Require(sessions)(permissionguard.RequireChannelCreate(permissionResolver)(channelRawHandler))
 	categoryReorder := reordercategories.New(reorderpostgres.New(reorderpostgres.NewPoolDatabase(database)))
 	reorderHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(reorderapi.NewHandler(categoryReorder)))
 	categoryRename := renamecategory.New(renamepostgres.New(renamepostgres.NewPoolDatabase(database)))
@@ -77,15 +87,17 @@ func ConfigureChannelRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 	mux.Handle("PUT /api/v1/channels/{channelID}/read-cursor", textCursorHandler)
 	mux.Handle("GET /api/v1/topology-commands/{clientRequestID}", sessionapi.Require(sessions)(topologycommandapi.NewHandler(commandReader)))
 	registerTopologyMutationRoutes(mux, events, topologyMutationHandlers{
-		createCategory:      categoryHandler,
-		reorderCategories:   reorderHandler,
-		renameCategory:      renameHandler,
-		deleteCategory:      deleteHandler,
-		createChannel:       channelHandler,
-		reorderChannels:     channelReorderHandler,
-		renameChannel:       channelRenameHandler,
-		moveChannel:         moveHandler,
-		archiveTextChannel:  archiveHandler,
-		closeVoiceAdmission: voiceAdmissionHandler,
+		memberCreateCategory: memberCategoryHandler,
+		memberCreateChannel:  memberChannelHandler,
+		createCategory:       categoryHandler,
+		reorderCategories:    reorderHandler,
+		renameCategory:       renameHandler,
+		deleteCategory:       deleteHandler,
+		createChannel:        channelHandler,
+		reorderChannels:      channelReorderHandler,
+		renameChannel:        channelRenameHandler,
+		moveChannel:          moveHandler,
+		archiveTextChannel:   archiveHandler,
+		closeVoiceAdmission:  voiceAdmissionHandler,
 	})
 }

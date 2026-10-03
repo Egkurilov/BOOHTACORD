@@ -42,6 +42,19 @@ func TestHandlerRejectsUnknownFields(t *testing.T) {
 	}
 }
 
+func TestHandlerReturnsUnifiedMutationResultForNeutralRequest(t *testing.T) {
+	handler := NewHandler(creatorFunc(func(_ context.Context, input createcategory.Input) (createcategory.Result, error) {
+		return createcategory.Result{ID: "category-1", Revision: 4}, nil
+	}))
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/categories", strings.NewReader(`{"client_request_id":"6bc49936-de95-4d9a-a4a8-e33a457b67c3","name":"Игры"}`))
+	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: "member-1", Role: "MEMBER"}))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusCreated || !strings.Contains(response.Body.String(), `"resource_type":"CATEGORY"`) || !strings.Contains(response.Body.String(), `"topology_revision":4`) {
+		t.Fatalf("response = %d %s", response.Code, response.Body.String())
+	}
+}
+
 type creatorFunc func(context.Context, createcategory.Input) (createcategory.Result, error)
 
 func (function creatorFunc) Create(context context.Context, input createcategory.Input) (createcategory.Result, error) {

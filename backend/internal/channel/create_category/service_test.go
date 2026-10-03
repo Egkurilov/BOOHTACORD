@@ -28,6 +28,16 @@ func TestCreateRejectsInvalidNameBeforePersistence(t *testing.T) {
 	}
 }
 
+func TestCreateCarriesIdempotencyIntent(t *testing.T) {
+	store := &fakeStore{result: Result{ID: "category-1", Revision: 2}}
+	service := New(store)
+	service.newID = func() (string, error) { return "category-1", nil }
+	_, err := service.Create(context.Background(), Input{ActorID: "member-1", Name: "Игры", ClientRequestID: "6bc49936-de95-4d9a-a4a8-e33a457b67c3"})
+	if err != nil || store.request.ClientRequestID == "" || store.request.IntentHash == "" {
+		t.Fatalf("request = %#v, error = %v", store.request, err)
+	}
+}
+
 type fakeStore struct {
 	request Request
 	result  Result
