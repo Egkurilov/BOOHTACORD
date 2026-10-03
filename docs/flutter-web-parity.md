@@ -448,6 +448,15 @@ both deployed web and Flutter viewers.
   macOS Debug builds pass —
   [QA-239](../evidence/flutter/qa239-flutter-design-v2-reply-composer-2026-10-03-001.json).
   Screenshot comparison, Windows build and device runtime are not run.
+- FV2-009 aligns the screen-selection rail with the production web Design V2
+  card geometry: desktop rail/cards/previews are 100 / 152×96 / 142×60 px;
+  compact sizes at 390 px are 84 / 128×80 / 118×48 px. Remote thumbnail uses
+  cover scaling, the selected card shows «ЭФИР», and local/remote selection
+  semantics remain available. Focused geometry/thumbnail tests, the full suite
+  (464), changed-file analysis, Android Debug APK and macOS Debug builds pass —
+  [QA-240](../evidence/flutter/qa240-flutter-design-v2-screen-rail-2026-10-03-001.json).
+  Screenshot comparison, Windows build and runtime acceptance remain NOT_RUN;
+  no LiveKit lifecycle or publishing behavior changed.
 - Remaining FV2-002 work includes full message/history and attachment
   visual states plus on-device scroll/read-cursor/IME acceptance. Match remaining
   shell interactions at wide, medium and compact widths.

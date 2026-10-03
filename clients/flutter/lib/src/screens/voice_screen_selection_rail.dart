@@ -40,157 +40,181 @@ class VoiceScreenSelectionRail extends StatelessWidget {
   final ValueChanged<String?> onSelected;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    label: 'Выбор демонстрации экрана',
-    child: SizedBox(
-      height: 76,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        itemCount: choices.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final choice = choices[index];
-          final identity =
-              choice.avatarIdentity ??
-              choice.accountId ??
-              choice.identity ??
-              choice.label;
-          final subtitle = choice.selected
-              ? 'Вы смотрите'
-              : 'Нажмите, чтобы смотреть';
-          final audioHint = choice.isLocal
-              ? 'Звуковой дорожки нет'
-              : choice.hasAudio
-              ? 'Звуковая дорожка есть'
-              : 'Звуковой дорожки нет';
-          return Semantics(
-            container: true,
-            button: true,
-            selected: choice.selected,
-            label: choice.label,
-            hint:
-                '${choice.isLocal ? 'Предпросмотр собственного экрана без звука' : 'Открыть демонстрацию экрана'}. $audioHint',
-            onTap: () => onSelected(choice.identity),
-            child: ExcludeSemantics(
-              child: Tooltip(
-                message: choice.isLocal
-                    ? 'Ваш экран, предпросмотр без звука'
-                    : choice.label,
-                child: SizedBox(
-                  key: ValueKey(
-                    'voice-screen-choice-${choice.identity ?? 'local'}',
-                  ),
-                  width: 184,
-                  height: 64,
-                  child: Material(
-                    color: choice.selected
-                        ? GcColors.selected
-                        : GcColors.surface,
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(
-                        color: choice.selected
-                            ? GcColors.accentText
-                            : GcColors.border,
+  Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width <= 720;
+    final railHeight = compact ? 84.0 : 100.0;
+    final cardWidth = compact ? 128.0 : 152.0;
+    final cardHeight = compact ? 80.0 : 96.0;
+    final previewHeight = compact ? 48.0 : 60.0;
+    final footerHeight = cardHeight - previewHeight - 10;
+
+    return Semantics(
+      label: 'Выбор демонстрации экрана',
+      child: SizedBox(
+        key: const ValueKey('voice-screen-selection-rail'),
+        height: railHeight,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.all(2),
+          itemCount: choices.length,
+          separatorBuilder: (_, _) => SizedBox(width: compact ? 8 : 12),
+          itemBuilder: (context, index) {
+            final choice = choices[index];
+            final identity =
+                choice.avatarIdentity ??
+                choice.accountId ??
+                choice.identity ??
+                choice.label;
+            final audioHint = choice.isLocal
+                ? 'Звуковой дорожки нет'
+                : choice.hasAudio
+                ? 'Звуковая дорожка есть'
+                : 'Звуковой дорожки нет';
+            final choiceKey = choice.identity ?? 'local';
+            return Semantics(
+              container: true,
+              button: true,
+              selected: choice.selected,
+              label: choice.label,
+              hint:
+                  '${choice.isLocal ? 'Предпросмотр собственного экрана без звука' : 'Открыть демонстрацию экрана'}. $audioHint',
+              onTap: () => onSelected(choice.identity),
+              child: ExcludeSemantics(
+                child: Tooltip(
+                  message: choice.isLocal
+                      ? 'Ваш экран, предпросмотр без звука'
+                      : choice.label,
+                  child: SizedBox(
+                    key: ValueKey('voice-screen-choice-$choiceKey'),
+                    width: cardWidth,
+                    height: cardHeight,
+                    child: Material(
+                      color: GcColors.sidebar,
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                          color: choice.selected
+                              ? GcColors.accent
+                              : GcColors.borderSubtle,
+                          width: choice.selected ? 2 : 1,
+                        ),
+                        borderRadius: BorderRadius.circular(GcRadii.md),
                       ),
-                      borderRadius: BorderRadius.circular(GcRadii.md),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: InkWell(
-                      onTap: () => onSelected(choice.identity),
-                      child: Stack(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Row(
-                              children: [
-                                choice.thumbnail == null
-                                    ? CircleAvatar(
-                                        radius: 18,
-                                        backgroundColor: voiceAvatarColor(
-                                          identity,
-                                        ),
-                                        child: Text(
-                                          identityInitial(
-                                            choice.avatarLabel ?? choice.label,
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: () => onSelected(choice.identity),
+                        child: Padding(
+                          // Web's box sizing includes its 1/2 px border in
+                          // the card's 4/3 px inset; Flutter paints that
+                          // border without reducing the child's constraints.
+                          padding: const EdgeInsets.all(5),
+                          child: Column(
+                            children: [
+                              ClipRRect(
+                                key: ValueKey(
+                                  'voice-screen-preview-$choiceKey',
+                                ),
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(GcRadii.xs),
+                                ),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  height: previewHeight,
+                                  child: choice.thumbnail == null
+                                      ? ColoredBox(
+                                          color: GcColors.raised,
+                                          child: Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 8,
+                                              ),
+                                              child: CircleAvatar(
+                                                radius: 18,
+                                                backgroundColor:
+                                                    voiceAvatarColor(identity),
+                                                child: Text(
+                                                  identityInitial(
+                                                    choice.avatarLabel ??
+                                                        choice.label,
+                                                  ),
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
                                           ),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                          ),
+                                        )
+                                      : Image.memory(
+                                          choice.thumbnail!,
+                                          fit: BoxFit.cover,
+                                          gaplessPlayback: true,
                                         ),
-                                      )
-                                    : ClipRRect(
-                                        borderRadius: BorderRadius.circular(5),
-                                        child: SizedBox(
-                                          width: 52,
-                                          height: 40,
-                                          child: Image.memory(
-                                            choice.thumbnail!,
-                                            fit: BoxFit.cover,
-                                            gaplessPlayback: true,
-                                          ),
-                                        ),
-                                      ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                ),
+                              ),
+                              SizedBox(
+                                height: footerHeight,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                  ),
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        choice.label,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: GcColors.text,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
+                                      Expanded(
+                                        child: Text(
+                                          choice.isLocal
+                                              ? choice.label
+                                              : 'Экран ${choice.label}',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: GcColors.text,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w400,
+                                          ),
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        subtitle,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: GcColors.muted,
-                                          fontSize: 12,
-                                        ),
-                                      ),
+                                      if (choice.selected) ...[
+                                        const SizedBox(width: 4),
+                                        const _LiveBadge(),
+                                      ],
                                     ],
                                   ),
                                 ),
-                                Icon(
-                                  choice.hasAudio && !choice.isLocal
-                                      ? Icons.volume_up_outlined
-                                      : Icons.volume_off_outlined,
-                                  size: 16,
-                                  color: GcColors.muted,
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (choice.selected)
-                            const Positioned(
-                              top: 4,
-                              right: 4,
-                              child: Icon(
-                                Icons.check,
-                                size: 14,
-                                color: GcColors.accentText,
                               ),
-                            ),
-                        ],
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _LiveBadge extends StatelessWidget {
+  const _LiveBadge();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      color: const Color(0xFF48243D),
+      borderRadius: BorderRadius.circular(GcRadii.xs + 2),
+    ),
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+    child: const Text(
+      'ЭФИР',
+      style: TextStyle(
+        color: Color(0xFFFF9AD7),
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
       ),
     ),
   );
