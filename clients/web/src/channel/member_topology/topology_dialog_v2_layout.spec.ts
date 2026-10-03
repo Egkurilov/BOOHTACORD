@@ -29,11 +29,19 @@ describe('Design V2 topology creation dialog', () => {
     expect(component).toContain('permittedKinds()')
     expect(presentation).toContain('.topology-dialog { display: flex;')
     expect(presentation).toContain('margin-top: auto; border-top:')
-    expect(presentation).toContain('.topology-dialog-header { position: relative; min-height: 36px; margin: 28px 20px 0; }')
+    expect(presentation).toContain('.topology-dialog-header { position: relative; min-height: 36px; margin: 30px 20px 0; }')
     expect(presentation).toContain('.topology-dialog-header button { position: absolute; top: -2px; right: 0; width: 44px; height: 44px; }')
   })
 
   it('uses the handoff speaker outline for a voice channel', () => {
     expect(component).toContain('M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14')
+  })
+
+  it('hides background message controls while the creation dialog owns the screen', () => {
+    expect(presentation).toContain('body:has(.topology-dialog-backdrop) .message-actions-toggle { visibility: hidden; }')
+  })
+
+  it('uses the handoff sidebar surface for channel and category fields', () => {
+    expect(presentation).toContain('color: var(--gc-text-primary); background: var(--gc-sidebar); font-size: 14px;')
   })
 })
