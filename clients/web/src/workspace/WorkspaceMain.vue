@@ -31,7 +31,7 @@ defineProps<{
   voiceRoster?: VoiceRoomRoster | null
   voiceRosterError?: string | null
 }>()
-const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; toggleMembers: []; closePanel: [panel: 'admin' | 'audio' | 'profile'] }>()
+const emit = defineEmits<{ openSearch: []; returnVoice: [channelId: string]; toggleNav: []; toggleMembers: []; closePanel: [panel: 'admin' | 'audio' | 'profile'] }>()
 </script>
 
 <template>
@@ -113,5 +113,6 @@ const emit = defineEmits<{ returnVoice: [channelId: string]; toggleNav: []; togg
     @transfer="joinVoice($event, true)"
     @toggle-nav="emit('toggleNav')"
     @toggle-members="emit('toggleMembers')"
+    @open-search="emit('openSearch')"
   />
 </template>

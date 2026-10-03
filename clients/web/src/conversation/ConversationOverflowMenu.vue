@@ -3,9 +3,10 @@ import { onBeforeUnmount, onMounted, useId } from 'vue'
 
 import { useConversationOverflowMenu } from './conversation_overflow_menu'
 
-const props = withDefaults(defineProps<{ showMembers?: boolean; membersOpen?: boolean }>(), {
+const props = withDefaults(defineProps<{ showMembers?: boolean; membersOpen?: boolean; menuLabel?: string }>(), {
   showMembers: false,
   membersOpen: false,
+  menuLabel: 'Действия переписки',
 })
 const emit = defineEmits<{ search: []; toggleMembers: [] }>()
 const menuId = useId()
@@ -21,7 +22,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutside))
     <button ref="trigger" class="header-action conversation-overflow__trigger" type="button"
       aria-label="Другие действия" aria-haspopup="menu" :aria-expanded="expanded"
       :aria-controls="menuId" @click="toggle">⋯</button>
-    <div v-show="expanded" :id="menuId" ref="menu" class="conversation-overflow__menu" role="menu" aria-label="Действия переписки">
+    <div v-show="expanded" :id="menuId" ref="menu" class="conversation-overflow__menu" role="menu" :aria-label="props.menuLabel">
       <button type="button" role="menuitem" @click="openSearch">Найти сообщение</button>
       <button v-if="props.showMembers" type="button" role="menuitem" @click="toggleMembers">{{ props.membersOpen ? 'Скрыть участников' : 'Показать участников' }}</button>
     </div>

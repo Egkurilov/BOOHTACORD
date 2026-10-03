@@ -381,6 +381,21 @@ if (mediaStates.includes(state) && process.env.DESIGN_V2_VERIFY_INTERACTIONS ===
     } else {
       assert.equal(await page.locator('.stream-more-actions button').filter({ hasText: 'Качество трансляции' }).count(), 0)
       interactions.push('viewer-cannot-edit-remote-quality')
+      if (state === 'screen-viewer' && width > 720) {
+        await page.locator('.voice-room').getByRole('button', { name: 'Найти сообщение' }).click()
+        await page.getByRole('searchbox', { name: 'Запрос' }).waitFor({ state: 'visible' })
+        assert.equal(await page.locator('.screen-player').evaluate((video) => video.srcObject instanceof MediaStream), true)
+        await page.getByRole('button', { name: 'Закрыть поиск' }).click()
+        await page.locator('.search-aside').waitFor({ state: 'detached' })
+        interactions.push('voice-header-search-preserves-selected-media-stream')
+        await page.locator('.voice-room').getByRole('button', { name: 'Другие действия' }).click()
+        const voiceMenu = page.getByRole('menu', { name: 'Действия голосового канала' })
+        await voiceMenu.getByRole('menuitem', { name: 'Найти сообщение' }).click()
+        await page.getByRole('searchbox', { name: 'Запрос' }).waitFor({ state: 'visible' })
+        assert.equal(await page.locator('.screen-player').evaluate((video) => video.srcObject instanceof MediaStream), true)
+        await page.getByRole('button', { name: 'Закрыть поиск' }).click()
+        interactions.push('voice-overflow-search-preserves-media-stream')
+      }
       if (width <= 720) {
         for (const selector of ['.screen-audio-toggle', '.stream-diagnostics > summary', '.screen-fullscreen-button', '.stream-more-actions > summary']) {
           const box = await page.locator(selector).boundingBox()

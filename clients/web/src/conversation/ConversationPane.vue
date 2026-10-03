@@ -17,6 +17,7 @@ import type { VoiceRoomRoster } from '../voice/voice_roster_client'
 import { useConversationScreenState } from '../voice/use_conversation_screen_state'
 import TextConversation from './TextConversation.vue'
 import WorkspaceHeaderActions from '../shared/workspace_header/WorkspaceHeaderActions.vue'
+import ConversationOverflowMenu from './ConversationOverflowMenu.vue'
 
 const props = withDefaults(defineProps<{
   accountId: string
@@ -59,7 +60,7 @@ const props = withDefaults(defineProps<{
   selectedScreenProfile: 'P1080_30',
   selectedScreenStreamId: null,
 })
-const emit = defineEmits<{ clearScreenStream: []; join: [channelId: string, transfer?: boolean, joinMode?: VoiceJoinMode]; leave: []; refreshScreen: []; returnVoice: [channelId: string]; selectScreenStream: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setParticipantVolume: [id: string, percent: number]; setScreenVolume: [percent: number]; toggleScreenAudio: []; startScreen: [profile: ScreenProfile]; stopScreen: []; transfer: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
+const emit = defineEmits<{ clearScreenStream: []; join: [channelId: string, transfer?: boolean, joinMode?: VoiceJoinMode]; leave: []; openSearch: []; refreshScreen: []; returnVoice: [channelId: string]; selectScreenStream: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setParticipantVolume: [id: string, percent: number]; setScreenVolume: [percent: number]; toggleScreenAudio: []; startScreen: [profile: ScreenProfile]; stopScreen: []; transfer: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
 const selectedScreenProfile = computed(() => props.selectedScreenProfile)
 const { screenExpanded, screenPinned,
   voiceChannel, miniVisible, keepVoiceRoom, selectedScreenName, screenViewerRef, watchScreen, dismissLocalPreview } = useConversationScreenState(props)
@@ -89,7 +90,10 @@ function clearScreenPreview(): void {
           <header class="main-header conversation-header">
             <span class="conversation-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 4V5L7 9H3ZM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" /></svg></span>
             <div class="main-title"><h2>{{ voiceChannel.name }}</h2><small>{{ selectedScreenName ? `${voiceVolumeParticipants.length + 1} участника · ${screenViewerCards.length} трансляции` : voiceIsActive ? `${voiceVolumeParticipants.length + 1} участника в голосовом канале` : voiceRosterError ? 'Голосовой канал · состав недоступен' : voiceRoster ? voiceRoster.participants.length ? `Голосовой канал · сейчас: ${voiceRoster.participants.length}` : 'Голосовой канал · пока пусто' : 'Голосовой канал · проверяем состав' }}</small></div>
-            <WorkspaceHeaderActions :members-expanded="membersOpen" :nav-expanded="navOpen" :show-members="showMembers" @toggle-members="emit('toggleMembers')" @toggle-navigation="emit('toggleNav')" />
+            <WorkspaceHeaderActions :members-expanded="membersOpen" :nav-expanded="navOpen" :show-members="showMembers" @toggle-members="emit('toggleMembers')" @toggle-navigation="emit('toggleNav')">
+              <button class="header-action" type="button" aria-label="Найти сообщение" @click="emit('openSearch')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg></button>
+              <template #overflow><ConversationOverflowMenu menu-label="Действия голосового канала" :show-members="showMembers" :members-open="membersOpen" @search="emit('openSearch')" @toggle-members="emit('toggleMembers')" /></template>
+            </WorkspaceHeaderActions>
           </header>
           <div v-if="voiceChannel.admissionClosed" class="state state-error" role="status">
             Вход в этот канал закрыт администратором. Отзыв media-доступа ещё подтверждается.
