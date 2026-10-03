@@ -33,6 +33,16 @@ audible effect of mute and gain before closing FE-69. On auto-joining the
 voice channel, the Android mic control was initially enabled; it was muted
 immediately and remained muted until the test listener disconnected.
 
+On 2026-10-03, a paired current-source Android Emulator API 35 → macOS Debug
+full-display test established that local capture and preview work, but did not
+establish remote publication: Android showed a non-black preview while its
+sender diagnostics remained at 0 FPS / 0 kbit/s, and the connected Mac did not
+discover a remote screen publication or expose Watch screen. Android WebRTC
+logs counted captured frames but showed the send stream inactive; receiver
+counters were therefore unavailable. Both clients left the room and
+MediaProjection was cleared. This leaves FE-52/59/61 open and makes publication
+discovery the next diagnostic step — [QA-235](../evidence/flutter/qa235-android-emulator-current-source-screen-publication-2026-10-03-001.json).
+
 The Flutter first-frame gate also rejects delayed callbacks from a previously
 selected track after the viewer switches sources. A test failed before the fix;
 the full suite (409), macOS Debug build, and Android arm64 Debug build pass —

@@ -1,0 +1,82 @@
+{
+  "id": "QA-235",
+  "date": "2026-10-03",
+  "task": "FE-52 / FE-59 / FE-61 / T-030 — current-source Android-to-macOS screen-share publication",
+  "source_revision": "b6b801514159f2341754dee2af2e151f08e1cc4f",
+  "builds": {
+    "android_emulator": {
+      "device": "Android Emulator sdk_gphone64_arm64, API 35",
+      "installed_version": "1.0.28+2040",
+      "source_revision": "current workspace HEAD; build number raised from source +42 to avoid downgrading installed +2039"
+    },
+    "macos_receiver": {
+      "app": "BOOHTACORD Debug",
+      "version": "1.0.28+42",
+      "build_source": "current workspace; existing process was not restarted"
+    }
+  },
+  "automated_checks": {
+    "flutter_test": {
+      "command": "cd clients/flutter && flutter test --no-pub test/screen_receiver_report_test.dart test/screen_receiver_diagnostics_test.dart",
+      "result": "PASS",
+      "passed": 17
+    }
+  },
+  "session_safety": {
+    "room": "SHARE_TEST",
+    "microphones_during_capture": "muted on Android and macOS",
+    "note": "Android auto-joined with its microphone enabled. The UI microphone control was muted before MediaProjection started. An attempted app-op override was ineffective; Android later reported RECORD_AUDIO allow. Microphone activity before the UI mute was not measured, so transmission during that brief pre-capture interval cannot be ruled out. No audio was recorded or inspected."
+  },
+  "capture": {
+    "mode": "Android Entire screen MediaProjection",
+    "profile": "720p / 15 FPS",
+    "local_preview": "non-black recursive full-screen frame visible",
+    "media_projection_during_capture": "TYPE_SCREEN_CAPTURE"
+  },
+  "checks": [
+    {
+      "name": "Signed current-source APK update",
+      "result": "PASS",
+      "observation": "Release APK installed in place over 1.0.25+2039 without uninstalling or clearing app data. The signing certificate matched the installed app; runtime version reported 1.0.28+2040."
+    },
+    {
+      "name": "Paired muted voice connection",
+      "result": "PASS",
+      "observation": "Android and macOS both joined SHARE_TEST; both UI controls showed microphone muted. Android voice badge showed 8 ms and macOS showed 6 ms. These are voice connection RTT values, not screen receiver RTT."
+    },
+    {
+      "name": "Android local full-display capture and preview",
+      "result": "PASS",
+      "observation": "The Android system picker was explicitly changed from 'A single app' to 'Entire screen'. MediaProjection became active, the app showed its local full-screen preview and a 'Ваш экран' share card, and the filtered app log recorded local renderer first-swap and local thumbnail capture."
+    },
+    {
+      "name": "Android sender statistics while Mac was connected",
+      "result": "FAIL",
+      "sample": {
+        "requested_profile": "720p / 15 FPS",
+        "encoded_fps": 0,
+        "sent_kbit_s": 0,
+        "sender_rtt": "unavailable"
+      },
+      "observation": "The Android sender diagnostic panel showed no sender data, 0 FPS and 0 kbit/s after the paired Mac client had joined. Filtered WebRTC logs reported 335 captured frames and no congestion/encoder-blocked frame drops, but also showed the video send stream inactive. These observations do not prove that encoded frames reached the SFU."
+    },
+    {
+      "name": "macOS remote publication discovery and playback",
+      "result": "FAIL",
+      "observation": "While Android showed an active local share and both clients were connected, the macOS client listed the Android participant but did not expose a screen-sharing indicator or 'Смотреть экран' action; no remote stream appeared in the room view. Receiver diagnostics could not be sampled because the Mac had no selectable remote publication."
+    },
+    {
+      "name": "Stop and cleanup",
+      "result": "PASS",
+      "observation": "Stopping from Android cleared MediaProjection (dumpsys returned null). Android and macOS left the voice room; the macOS prejoin roster eventually showed 'Пока никого нет'."
+    }
+  ],
+  "limitations": [
+    "The exact point of failure (Android publication signaling, SFU publication, Mac track event/subscription, or server-side visibility) is not established; no server-side logs were available.",
+    "No receiver frame/bitrate/loss sample was available because macOS did not discover a remote screen publication.",
+    "This API 35 emulator result does not establish physical Pixel or Windows behavior.",
+    "The workspace had unrelated pre-existing edits in the backlog, pubspec.lock, QA-229 and QA-230; they were not included in this evidence change."
+  ],
+  "status": "LOCAL_CAPTURE_AND_CLEANUP_PASS; PAIRED_ANDROID_TO_MACOS_REMOTE_PUBLICATION_AND_SENDER_STATS_FAIL; ROOT_CAUSE_OPEN",
+  "remaining": "Instrument and reproduce the track-publication lifecycle on Android and macOS. Establish whether a remote TrackPublished event reaches Mac, capture one sender stats report with a live receiver, then verify Mac Watch-screen discovery, decoded FPS and stop/unpublish cleanup. Keep FE-52, FE-59 and FE-61 open."
+}
