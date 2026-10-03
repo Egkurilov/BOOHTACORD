@@ -616,6 +616,18 @@ class Utils {
     'q': lk_models.VideoQuality.LOW,
   }[rid];
 
+  @internal
+  static lk_models.VideoQuality videoQualityForSenderEncoding({
+    required String? rid,
+    required int encodingCount,
+  }) {
+    // A non-simulcast sender has one RID-less encoding, advertised above as
+    // the HIGH layer. Treating its missing RID as `q` can disable that only
+    // encoding when the SFU reports LOW as unsubscribed.
+    final normalizedRid = (rid == null || rid.isEmpty) ? (encodingCount == 1 ? 'f' : 'q') : rid;
+    return videoQualityForRid(normalizedRid) ?? lk_models.VideoQuality.HIGH;
+  }
+
   // makes a debounce func, with 1 param
   @internal
   static Function(T) createDebounceFunc<T>(

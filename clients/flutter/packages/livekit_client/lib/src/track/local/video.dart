@@ -23,12 +23,11 @@ import '../../exceptions.dart';
 import '../../extensions.dart';
 import '../../logger.dart';
 import '../../options.dart';
-import '../../proto/livekit_models.pb.dart' as lk_models;
 import '../../proto/livekit_rtc.pb.dart' as lk_rtc;
 import '../../stats/stats.dart';
 import '../../support/platform.dart';
 import '../../types/other.dart';
-import '../../utils.dart' show isSVCCodec;
+import '../../utils.dart' show Utils, isSVCCodec;
 import '../options.dart';
 import 'audio.dart';
 import 'local.dart';
@@ -394,19 +393,6 @@ extension LocalVideoTrackExt on LocalVideoTrack {
     return setPublishingLayersForSender(track!.sender!, encodings, layers, isSVC: isSVC);
   }
 
-  lk_models.VideoQuality _videoQualityForRid(String rid) {
-    switch (rid) {
-      case 'f':
-        return lk_models.VideoQuality.HIGH;
-      case 'h':
-        return lk_models.VideoQuality.MEDIUM;
-      case 'q':
-        return lk_models.VideoQuality.LOW;
-      default:
-        return lk_models.VideoQuality.HIGH;
-    }
-  }
-
   Future<void> setPublishingLayersForSender(
     rtc.RTCRtpSender sender,
     List<rtc.RTCRtpEncoding> encodings,
@@ -433,11 +419,10 @@ extension LocalVideoTrackExt on LocalVideoTrack {
     // simulcast dynacast encodings
     var idx = 0;
     for (var encoding in encodings) {
-      var rid = encoding.rid ?? '';
-      if (rid == '') {
-        rid = 'q';
-      }
-      final quality = _videoQualityForRid(rid);
+      final quality = Utils.videoQualityForSenderEncoding(
+        rid: encoding.rid,
+        encodingCount: encodings.length,
+      );
       final subscribedQuality = layers.firstWhereOrNull(
         (q) => q.quality == quality,
       );

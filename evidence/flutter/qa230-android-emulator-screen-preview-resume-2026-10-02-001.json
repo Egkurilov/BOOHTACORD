@@ -1,0 +1,52 @@
+{
+  "id": "QA-230",
+  "date": "2026-10-02",
+  "task": "FE-59 / FE-64 / FE-52",
+  "source_revision": "0873c96",
+  "working_tree_changes_at_build": false,
+  "device": {
+    "model": "Android Emulator (sdk_gphone64_arm64)",
+    "api_level": 35,
+    "app_version": "1.0.23",
+    "app_build": 2037
+  },
+  "microphone_safety": {
+    "record_audio_uid_app_op_before": "foreground",
+    "record_audio_uid_app_op_during_capture": "ignore",
+    "record_audio_rejection_observed": true,
+    "record_audio_uid_app_op_after": "foreground"
+  },
+  "checks": [
+    {
+      "name": "Single-app Clock capture",
+      "result": "PASS_HIDDEN_SOURCE_HANDLED",
+      "observation": "Selected Clock in Android's single-app picker. MediaProjection reported TYPE_SCREEN_CAPTURE. Returning BOOHTACORD displayed the expected message that Android hid the selected application; the participant thumbnail still contained a Clock frame."
+    },
+    {
+      "name": "Full-display local viewer",
+      "result": "PASS_NON_BLACK_FRAME",
+      "observation": "Selected Entire screen. The local viewer showed a recursive portrait capture with the full screen visible and letterboxed in the landscape viewer; the participant thumbnail also showed the captured screen."
+    },
+    {
+      "name": "Background and resume",
+      "result": "PARTIAL_PASS",
+      "observation": "After Home for 10 seconds, dumpsys still reported the app's TYPE_SCREEN_CAPTURE projection. Returning to BOOHTACORD preserved the non-black recursive local viewer. This run did not establish remote playback or independently prove foreground-service state throughout the background interval."
+    },
+    {
+      "name": "Local sender diagnostics without a remote receiver",
+      "result": "UNRESOLVED_ZERO_COUNTERS",
+      "observation": "The 720p/15 FPS local capture viewer updated, but the diagnostics popover showed encoded 0 FPS and sent 0 kbit/s on two samples about eight seconds apart. No remote receiver was connected, so this cannot distinguish absent receiver demand from a sender-stats/publication defect. The displayed 6 ms screen sender RTT is not voice-dock RTT."
+    },
+    {
+      "name": "Stop, leave and restore permission",
+      "result": "PASS",
+      "observation": "After dismissing the diagnostics popover and tapping stop, dumpsys media_projection returned null. Leaving SHARE_TEST returned to the empty prejoin roster. The RECORD_AUDIO UID app-op was restored to its original foreground mode."
+    }
+  ],
+  "limitations": [
+    "Emulator-only; physical Pixel acceptance remains open.",
+    "No paired browser/macOS receiver was present. Sender counters cannot be correlated with decoded receiver frames or the ten-second loss window.",
+    "Local full-display pixels do not prove publication, remote delivery or receiver crop."
+  ],
+  "remaining": "Repeat with a separate live receiver and compare bounded sender counters with two receiver samples; verify publication, decoded pixels, crop, background state, and stop/unpublish on Android and macOS. Keep FE-52, FE-59 and FE-64 open."
+}

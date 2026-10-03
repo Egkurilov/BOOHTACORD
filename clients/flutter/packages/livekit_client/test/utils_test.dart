@@ -16,9 +16,57 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 
 import 'package:livekit_client/livekit_client.dart';
+import 'package:livekit_client/src/proto/livekit_models.pb.dart' as lk_models;
 import 'package:livekit_client/src/utils.dart';
 
 void main() {
+  group('sender encoding quality', () {
+    test('single non-simulcast encoding matches its advertised high layer', () {
+      final encodings = Utils.computeVideoEncodings(
+        isScreenShare: true,
+        dimensions: const VideoDimensions(1080, 1920),
+        options: const VideoPublishOptions(
+          simulcast: false,
+          screenShareEncoding: VideoEncoding(
+            maxBitrate: 1500000,
+            maxFramerate: 15,
+          ),
+        ),
+      )!;
+      final advertisedLayers = Utils.computeVideoLayers(
+        const VideoDimensions(1080, 1920),
+        encodings,
+        false,
+      );
+
+      expect(encodings, hasLength(1));
+      expect(encodings.single.rid, isNull);
+      expect(advertisedLayers.single.quality, lk_models.VideoQuality.HIGH);
+      expect(
+        Utils.videoQualityForSenderEncoding(
+          rid: encodings.single.rid,
+          encodingCount: encodings.length,
+        ),
+        advertisedLayers.single.quality,
+      );
+    });
+
+    test('simulcast RIDs keep their existing quality mapping', () {
+      expect(
+        Utils.videoQualityForSenderEncoding(rid: 'q', encodingCount: 3),
+        lk_models.VideoQuality.LOW,
+      );
+      expect(
+        Utils.videoQualityForSenderEncoding(rid: 'h', encodingCount: 3),
+        lk_models.VideoQuality.MEDIUM,
+      );
+      expect(
+        Utils.videoQualityForSenderEncoding(rid: 'f', encodingCount: 3),
+        lk_models.VideoQuality.HIGH,
+      );
+    });
+  });
+
   group('retry', () {
     // test if List of errors are thrown
     test(

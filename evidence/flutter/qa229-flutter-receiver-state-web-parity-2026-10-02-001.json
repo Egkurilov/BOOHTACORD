@@ -2,9 +2,9 @@
   "id": "QA-229",
   "date": "2026-10-02",
   "task": "FE-59 / screen metrics parity",
-  "source_revision": "fd18f71",
-  "working_tree_changes": true,
-  "status": "SOURCE_PARITY_FIX_PASS_RUNTIME_OPEN",
+  "source_revision": "0873c96",
+  "working_tree_changes": false,
+  "status": "SOURCE_PARITY_FIX_PASS_RUNTIME_PARTIAL",
   "finding": "Web classifies a receiver as stalled only when presented_fps is zero. Flutter also treated the native RTC framesPerSecond field as a stall signal, so a report could say stalled while framesRendered showed ongoing playback.",
   "change": {
     "file": "clients/flutter/lib/src/services/screen_receiver_report.dart",
@@ -51,13 +51,25 @@
       "installed_package_debuggable": false,
       "local_release_signing_config_and_keystore": "PRESENT",
       "release_build": {
-        "command": "flutter build apk --release",
-        "result": "BLOCKED_GRADLE_DAEMON_REGISTRY_LOCK",
-        "detail": "Gradle emitted repeated waits for the shared daemon-address registry lock for more than four minutes. The build wrapper was stopped; no other Gradle daemon or app process was stopped."
+        "command": "flutter build apk --release --no-pub --build-name=1.0.23 --build-number=2037",
+        "result": "PASS",
+        "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-release.apk",
+        "size_bytes": 114054484,
+        "detail": "Built using a temporary GRADLE_USER_HOME to avoid the existing daemon-address registry lock. The old daemon was not stopped. The first default-version install was rejected as a downgrade (35 < 2036); no app data changed."
       },
       "installed_signer_sha256_observed": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b",
-      "local_signer_match": "NOT_VERIFIED",
-      "installation": "NOT_ATTEMPTED"
+      "local_signer_match": "PASS",
+      "installation": "PASS_IN_PLACE_VERSION_CODE_2037",
+      "post_install_launch": "PASS"
+    },
+    "android_runtime_smoke": {
+      "result": "PASS",
+      "installed_version": "1.0.23+2037",
+      "detail": "Cold launch restored the authenticated guild UI and SHARE_TEST opened without a fatal Android exception. The room roster rendered. Selecting the voice channel followed the normal auto-join path (listenerOnly=false); it briefly displayed 8 ms voice RTT in the channel header and call tray, then was disconnected immediately after noticing. Mic publication during that brief connection was not verified. This is voice RTT, not receiver RTT."
+    },
+    "receiver_metrics_runtime": {
+      "result": "OPEN_NO_REMOTE_SCREEN_TRACK",
+      "detail": "SHARE_TEST had no remote screen publisher during the emulator check. No receiver FPS/bitrate/stalled state or ten-second packet-loss window could be compared with a live source."
     },
     "web_contract_test": {
       "existing_test": "clients/web/src/voice/screen_client_reporter.spec.ts",
@@ -71,8 +83,8 @@
   },
   "runtime_acceptance": "OPEN",
   "runtime_limits": [
-    "The connected emulator has a non-debuggable installed APK, so Flutter attach/hot reload cannot connect without replacing the package.",
+    "The installed Android release APK is non-debuggable; Flutter attach/hot reload is unavailable. Signed in-place APK update was verified instead.",
     "The running macOS app does not advertise a discoverable Dart VM Service; flutter attach waited without connecting. The app was not restarted."
   ],
-  "remaining": "Complete a current signed Android build, verify its certificate matches the installed app before any in-place install, and hot-reload or otherwise update the existing macOS app only when a safe session-preserving path is available. With a live receiver, confirm the admin report follows rendered FPS and that the ten-second packet-loss window appears only after it is complete."
+  "remaining": "With a live remote screen publisher, confirm the Android receiver report follows rendered FPS, bitrate and playing/stalled state, and that the ten-second packet-loss window appears only after it is complete. Repeat against the macOS receiver through a session-preserving update path; do not treat voice RTT as receiver RTT."
 }
