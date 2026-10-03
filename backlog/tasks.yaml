@@ -218,3 +218,63 @@ tasks:
     requirements: [REQ-QUALITY-01, REQ-PLATFORM-01]
     depends_on: [UPD-011]
     evidence: [evidence/flutter/qa226-client-update-device-acceptance-2026-10-02-001.json]
+  - id: RP-001
+    title: Role permissions V1 specification traceability and implementation plan
+    requirements: [REQ-ADMIN-01, REQ-CHANNEL-01, REQ-CHANNEL-02]
+    depends_on: [T-014, T-020]
+    evidence: [docs/features/role-permissions-and-channel-management-v1.md, backlog/ROLE_PERMISSIONS_TODO.md]
+  - id: RP-002
+    title: Member policy registry storage and effective permission resolver
+    requirements: [REQ-ADMIN-01, REQ-ADMIN-02, REQ-SECURITY-01]
+    depends_on: [RP-001]
+    evidence: [backend-role-policy-tests]
+  - id: RP-003
+    title: Effective permissions and administrator policy APIs
+    requirements: [REQ-ADMIN-01, REQ-ADMIN-02, REQ-SECURITY-01]
+    depends_on: [RP-002]
+    evidence: [backend-permission-api-tests]
+  - id: RP-004
+    title: Idempotent topology command receipts and actor isolation
+    requirements: [REQ-CHANNEL-01, REQ-SECURITY-01, REQ-QUALITY-01]
+    depends_on: [RP-002]
+    evidence: [backend-topology-command-tests]
+  - id: RP-005
+    title: Permission checked neutral topology mutation endpoints
+    requirements: [REQ-ADMIN-01, REQ-CHANNEL-01, REQ-SECURITY-01]
+    depends_on: [RP-003, RP-004]
+    evidence: [backend-topology-permission-tests]
+  - id: RP-006
+    title: Archive category integrity and voice closing lifecycle
+    requirements: [REQ-CHANNEL-01, REQ-VOICE-03, REQ-SECURITY-01]
+    depends_on: [RP-005]
+    evidence: [backend-topology-lifecycle-tests]
+  - id: RP-007
+    title: Permission invalidation realtime hints and compatibility
+    requirements: [REQ-ADMIN-02, REQ-ARCH-01, REQ-QUALITY-01]
+    depends_on: [RP-003]
+    evidence: [permission-realtime-tests, contracts/realtime.schema.json]
+  - id: RP-008
+    title: Web permission store and administrator role policy editor
+    requirements: [REQ-ADMIN-01, REQ-UI-01, REQ-UI-02]
+    depends_on: [RP-003, RP-007]
+    evidence: [web-role-permission-tests]
+  - id: RP-009
+    title: Web channel navigation creation deletion and accessibility
+    requirements: [REQ-CHANNEL-01, REQ-CHANNEL-02, REQ-UI-02]
+    depends_on: [RP-005, RP-008]
+    evidence: [web-topology-action-tests]
+  - id: RP-010
+    title: Flutter role permission and topology action parity
+    requirements: [REQ-PLATFORM-01, REQ-CHANNEL-02, REQ-UI-02]
+    depends_on: [RP-005, RP-007]
+    evidence: [flutter-role-permission-tests, android-release, windows-release]
+  - id: RP-011
+    title: Role permission contracts documentation and evidence
+    requirements: [REQ-ARCH-01, REQ-OPS-01, REQ-QUALITY-02]
+    depends_on: [RP-006, RP-009, RP-010]
+    evidence: [evidence/role-permissions]
+  - id: RP-012
+    title: Role permission release merge and production deployment
+    requirements: [REQ-DEPLOY-01, REQ-QUALITY-01, REQ-QUALITY-02]
+    depends_on: [RP-011]
+    evidence: [evidence/release]
