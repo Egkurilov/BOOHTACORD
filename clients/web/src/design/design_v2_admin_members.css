@@ -42,6 +42,7 @@
 .admin-panel--members .admin-mobile-list { display: none; }
 @media (max-width: 720px) {
   .workspace-main-panel--admin .admin-panel--members { gap: 20px; padding-top: 24px; }
+  .workspace-main-panel--admin .admin-panel--members .admin-directory { margin-top: 1px; }
   .admin-panel--members .admin-panel-heading h1 { font-size: 22px; line-height: 28px; }
   .admin-panel--members .admin-panel-description { margin-top: 8px; }
   .admin-member-filters { gap: 8px; }

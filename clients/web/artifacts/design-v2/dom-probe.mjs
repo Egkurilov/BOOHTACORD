@@ -38,7 +38,7 @@ const accounts = [{ ...fixtureMember, account_id: fixtureMember.user_id }, ...['
   account_id: `member-${index}`, login: name.toLowerCase(), display_name: name,
   role: 'MEMBER', blocked: false, created_at: '2026-10-03T10:00:00Z',
 }))].map((item) => ({ blocked: false, created_at: '2026-10-03T10:00:00Z', ...item }))
-const referenceAccounts = chatMembers.map((member) => ({ account_id: member.user_id, login: member.login, display_name: member.display_name, role: member.role, blocked: false, created_at: '2026-10-03T10:00:00Z' }))
+const referenceAccounts = chatMembers.map((member) => ({ account_id: member.user_id, login: member.user_id === 'egor-2' ? 'owner' : member.login, display_name: member.display_name, role: member.role, blocked: false, created_at: '2026-10-03T10:00:00Z' }))
 
 function response(path) {
   if (path.endsWith('/auth/session')) return { account_id: referenceFixture ? chatProfile.account_id : profile.account_id, role: profile.role }
