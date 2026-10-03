@@ -16,7 +16,7 @@
 .screen-share-setup-dialog--updating .screen-share-quality__warning { display: flex; gap: 10px; margin: 4px 0 0; border: 1px solid #67582F; border-radius: 8px; padding: 12px 16px; color: #EED59F; background: #292517; font-size: 13px; line-height: 20px; }
 .screen-share-setup-dialog--updating .screen-share-quality__warning svg { width: 18px; height: 18px; flex: none; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .screen-share-setup-dialog--updating .screen-share-setup__footer { position: absolute; right: 0; bottom: 0; left: 0; min-height: 69px; padding: 12px 24px; background: var(--gc-sidebar); }
-.screen-share-setup-dialog--updating .screen-share-setup__footer button { font-weight: 500; }
+.screen-share-setup-dialog--updating .screen-share-setup__footer button { min-height: 36px; font-weight: 500; }
 .screen-share-setup-dialog--updating .screen-share-setup__cancel { border: 0; color: var(--gc-text-secondary); }
 .screen-share-setup-dialog--updating .screen-share-setup__start { min-height: 36px; padding-inline: 16px; background: var(--gc-accent); }
 @media (max-width: 600px) {
