@@ -72,7 +72,9 @@
 
 Использовать существующие `ScreenReceiverDiagnostics`, `ScreenShareSetupDialog`, `VoiceViewerLayout`, `VoiceScreenSelectionRail` и voice controllers. Внешний вид статистики не должен обещать данные, которых receiver/sender API не дал; настройки качества не меняют capture contract. Не менять LiveKit lifecycle только ради раскладки и не заявлять FPS/качество без соответствующего источника/evidence.
 
-Первый отдельный leaf FV2-009 закрыт: responsive rail выбора стрима совпадает с production web — desktop rail/card/thumbnail `100/152×96/142×60 px`, compact `84/128×80/118×48 px`; выбор, thumbnail и accessibility semantics сохранены. Widget tests, полный suite, analyzer и Android/macOS Debug builds прошли; screenshots, Windows build и runtime acceptance остаются NOT_RUN — [QA-240](../../evidence/flutter/qa240-flutter-design-v2-screen-rail-2026-10-03-001.json).
+FV2-009 закрыт: responsive rail выбора стрима совпадает с production web — desktop rail/card/thumbnail `100/152×96/142×60 px`, compact `84/128×80/118×48 px`; выбор, thumbnail и accessibility semantics сохранены. Widget tests, полный suite, analyzer и Android/macOS Debug builds прошли; screenshots, Windows build и runtime acceptance остаются NOT_RUN — [QA-240](../../../evidence/flutter/qa240-flutter-design-v2-screen-rail-2026-10-03-001.json).
+
+Следующий leaf FV2-010 выравнивает full-bleed stage и web-equivalent source label, сохраняя неизменными video ownership и LiveKit.
 
 Закрытие: focused tests для каждой ветви отображения плюс весь voice/screen test subset; затем Android emulator и macOS/Windows runtime acceptance для доступных реальных состояний. Сетевые/media ошибки и уже открытые FE-52/59/61/69 остаются самостоятельными verification задачами, не объявляются закрытыми дизайн-переносом.
 
