@@ -61,12 +61,19 @@ function response(path) {
 
 const browser = await chromium.launch({ headless: true })
 const state = process.argv[2] ?? 'chat'
-const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel'].includes(state)
+const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'audio'].includes(state)
 const width = Number(process.argv[3] ?? 1440)
 const height = Number(process.argv[4] ?? 900)
 const screenshotPath = process.env.DESIGN_V2_SCREENSHOT
 const page = await browser.newPage({ viewport: { width, height } })
 if (referenceFixture && process.env.DESIGN_V2_LIVE_STATE === '1') await installReferenceTransports(page)
+if (referenceFixture && state === 'audio') await page.addInitScript(() => {
+  const devices = [
+    { kind: 'audioinput', deviceId: 'default', label: 'USB Audio Device', groupId: 'input' },
+    { kind: 'audiooutput', deviceId: 'default', label: 'Системное устройство', groupId: 'output' },
+  ]
+  Object.defineProperty(navigator.mediaDevices, 'enumerateDevices', { configurable: true, value: async () => devices })
+})
 await page.route('**/*', (route) => !screenshotPath && route.request().resourceType() === 'image' ? route.abort() : route.continue())
 const requests = []; const errors = []
 page.on('pageerror', (error) => errors.push(error.message))
@@ -115,7 +122,7 @@ if (state === 'delete-confirm') await page.getByRole('button', { name: 'Дейс
 if (state === 'dm') { await page.getByRole('button', { name: 'Личные', exact: true }).click(); await page.getByRole('button', { name: 'Daria', exact: true }).click() }
 if (referenceFixture && state === 'topology-channel') await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
 await page.waitForTimeout(state === 'update' ? 5500 : 100)
-if (referenceFixture && ['roles', 'topology-channel'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
+if (referenceFixture && ['roles', 'topology-channel', 'audio'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
 if (referenceFixture && state === 'chat') {
   await page.locator('.message-item').nth(3).waitFor({ state: 'visible' })
   await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
@@ -134,6 +141,7 @@ if (referenceFixture && state === 'chat') {
   }
 }
 if (state === 'chat' && (await Promise.all((await page.locator('dialog:not([open])').all()).map((dialog) => dialog.isVisible()))).some(Boolean)) throw new Error('Closed native dialog is visibly rendered')
+await page.mouse.move(width - 2, 55)
 if (screenshotPath) await page.screenshot({ path: screenshotPath, animations: 'disabled' })
 const { boxes, styles, composerChildren } = await measureDom(page)
 const interactions = []
@@ -164,6 +172,24 @@ if (state === 'topology-channel' && process.env.DESIGN_V2_VERIFY_INTERACTIONS ==
   assert.equal(createdChannel?.kind, 'TEXT')
   assert.equal(typeof createdChannel?.client_request_id, 'string')
   interactions.push('kind-toggle', 'text-channel-mutation', 'dialog-closes-on-success')
+}
+if (state === 'audio' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  const microphone = page.getByRole('combobox', { name: 'Микрофон' })
+  assert.equal(await microphone.inputValue(), 'default')
+  assert.equal(await microphone.locator('option:checked').textContent(), 'USB Audio Device')
+  interactions.push('enumerated-microphone')
+  const ptt = page.getByRole('button', { name: 'По нажатию' })
+  await ptt.click()
+  assert.equal(await ptt.getAttribute('aria-pressed'), 'true')
+  await page.getByRole('button', { name: 'Назначить PTT-клавишу' }).waitFor({ state: 'visible' })
+  await page.getByRole('button', { name: 'По голосу' }).click()
+  interactions.push('activation-mode-switch')
+  await page.getByText('Режим и диагностика обработки').click()
+  await page.getByRole('combobox', { name: 'Режим шумоподавления' }).waitFor({ state: 'visible' })
+  interactions.push('processing-options-preserved')
+  await page.getByRole('button', { name: 'Закрыть настройки аудио' }).click()
+  await page.locator('.workspace-main-panel--audio').waitFor({ state: 'detached' })
+  interactions.push('close-returns-to-workspace')
 }
 console.log(JSON.stringify({ viewport: page.viewportSize(), state, boxes, styles, composerChildren, requests, errors, interactions }, null, 2))
 await browser.close()

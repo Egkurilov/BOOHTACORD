@@ -31,8 +31,8 @@ describe('Design V2 role permission table', () => {
   })
 
   it('uses a functional settings header and keeps the mobile deletion notice visible', () => {
-    expect(workspace).toContain('class="admin-workspace-header"')
-    expect(workspace).toContain("emit('closePanel')")
+    expect(workspace).toContain('class="settings-workspace-header"')
+    expect(workspace).toContain("emit('closePanel', 'admin')")
     expect(presentation).toContain('.role-permission-notice { display: flex;')
     expect(presentation).toContain('.role-policy-actions button:first-of-type { position: absolute;')
   })

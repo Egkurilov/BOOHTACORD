@@ -1,11 +1,11 @@
 /* Real administrator panel: shell header, role editor and responsive action bar. */
 .workspace-main-panel--admin { position: relative; display: flex; flex-direction: column; overflow: hidden; padding: 0; }
-.admin-workspace-header { display: flex; height: 64px; min-height: 64px; align-items: center; gap: 12px; border-bottom: 1px solid var(--gc-border-subtle); padding: 0 24px; background: var(--gc-content); }
-.admin-workspace-header strong { font-size: 16px; font-weight: 600; }
-.admin-workspace-shield { width: 20px; height: 20px; color: var(--gc-text-muted); fill: none; stroke: currentColor; stroke-width: 1.8; }
-.admin-workspace-close { display: grid; width: 36px; height: 36px; place-items: center; margin-left: auto; border: 0; border-radius: 8px; color: var(--gc-text-secondary); background: transparent; }
-.admin-workspace-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
-.admin-workspace-close:hover { background: var(--gc-surface-hover); }
+.settings-workspace-header { display: flex; height: 64px; min-height: 64px; align-items: center; gap: 12px; border-bottom: 1px solid var(--gc-border-subtle); padding: 0 24px; background: var(--gc-content); }
+.settings-workspace-header strong { font-size: 16px; font-weight: 600; }
+.settings-workspace-icon { width: 20px; height: 20px; color: var(--gc-text-muted); fill: none; stroke: currentColor; stroke-width: 1.8; }
+.settings-workspace-close { display: grid; width: 36px; height: 36px; place-items: center; margin-left: auto; border: 0; border-radius: 8px; color: var(--gc-text-secondary); background: transparent; }
+.settings-workspace-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.settings-workspace-close:hover { background: var(--gc-surface-hover); }
 .workspace-main-panel--admin .admin-panel { width: 100%; max-width: 880px; min-height: 0; flex: 1; gap: 24px; overflow: auto; margin: 0 auto; padding: 32px 0 90px; }
 .workspace-main-panel--admin .admin-panel-heading { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .workspace-main-panel--admin .admin-section-tabs { min-height: 44px; gap: 8px; }
@@ -44,9 +44,9 @@
 .workspace-main-panel--admin .role-policy-actions button:last-child { min-width: 105px; color: white; background: var(--gc-accent); }
 .workspace-main-panel--admin .role-policy-actions button:last-child:disabled { opacity: .45; }
 @media (max-width: 1023px) {
-  .admin-workspace-header { height: 56px; min-height: 56px; gap: 8px; padding: 0 12px; }
-  .admin-workspace-header .workspace-header-actions { order: -1; }
-  .admin-workspace-shield { display: none; }
+  .settings-workspace-header { height: 56px; min-height: 56px; gap: 8px; padding: 0 12px; }
+  .settings-workspace-header .workspace-header-actions { order: -1; }
+  .settings-workspace-icon { display: none; }
   .workspace-main-panel--admin .admin-panel { gap: 20px; padding: 24px 16px 84px; }
   .workspace-main-panel--admin .admin-section-tabs { gap: 0; }
   .workspace-main-panel--admin .role-permissions { gap: 24px; }
