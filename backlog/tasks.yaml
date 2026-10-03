@@ -113,10 +113,15 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]
     depends_on: [FV2-001, T-040, T-041, T-050, T-051]
     evidence: [flutter-responsive-geometry-tests, flutter-full-suite, android-debug-build, macos-debug-build]
+  - id: FV2-008
+    title: Flutter Design V2 reply target and composer state geometry
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]
+    depends_on: [FV2-007, T-040, T-041, T-050, T-051]
+    evidence: [flutter-reply-composer-geometry-tests, flutter-full-suite, android-debug-build, macos-debug-build]
   - id: FV2-002
     title: Flutter Design V2 workspace shell, text chat and direct messages
     requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]
-    depends_on: [FV2-001, FV2-007, T-040, T-041, T-044, T-050, T-051]
+    depends_on: [FV2-001, FV2-007, FV2-008, T-040, T-041, T-044, T-050, T-051]
     evidence: [flutter-chat-layout-tests, flutter-responsive-geometry-tests, chat-dm-parity-acceptance]
   - id: FV2-003
     title: Flutter Design V2 voice, screen viewer and streaming diagnostics

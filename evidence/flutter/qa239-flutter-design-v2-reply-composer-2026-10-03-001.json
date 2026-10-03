@@ -1,0 +1,62 @@
+{
+  "id": "QA-239",
+  "date": "2026-10-03",
+  "task": "FE-70 / FV2-008 — Flutter Design V2 reply target and composer state geometry",
+  "source_revision": "3c787013",
+  "working_tree_changes": true,
+  "summary": "Matched TEXT and DM reply-target bands, joined input shape and surface colors to the Design V2 web contract; normalized the DM placeholder so narrow viewports keep the composer at one line.",
+  "checks": [
+    {
+      "name": "Test-first reply geometry regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'reply composer geometry matches Design V2 for text and DM'",
+      "result": "PASS",
+      "observation": "The first runnable baseline failed because the reply composer used compact 8 px padding instead of the web 24/0/24/18 px state. After implementation the test passed at 390 and 1440 px for TEXT and DM, including 41 px target, joined border radii, color, 131 px band, one-line DM hint, and cancel."
+    },
+    {
+      "name": "WorkspaceScreen widget suite",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart",
+      "result": "PASS",
+      "passed": 61
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 463
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze lib/src/screens/workspace_screen.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Android Debug APK build",
+      "command": "cd clients/flutter && flutter build apk --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is unavailable on this host; the changed tasks were manually checked against the approved requirement index."
+    },
+    {
+      "name": "Matched screenshots, Windows build, and device runtime acceptance",
+      "result": "NOT_RUN",
+      "observation": "Widget geometry assertions and local debug builds do not prove rendered screenshot parity or runtime behavior on Android/macOS/Windows."
+    }
+  ],
+  "limitations": [
+    "FV2-008 covers the reply target and base composer shape only; history, attachment states, keyboard/IME and device scroll/read-cursor acceptance remain open under FV2-002.",
+    "No API, ACL, session, storage or LiveKit behavior changed."
+  ],
+  "status": "PASS_REPLY_WIDGET_TESTS_FULL_FLUTTER_SUITE_CHANGED_FILE_ANALYSIS_ANDROID_AND_MACOS_DEBUG_BUILDS; SCREENSHOT_WINDOWS_RUNTIME_AND_TRACEABILITY_SCRIPT_OPEN"
+}

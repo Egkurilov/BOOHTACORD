@@ -60,7 +60,7 @@
 
 ### Пакет 2 — shell и переписка (R01–R03, R25, R28)
 
-Перенести три зоны desktop, tablet/compact navigation, headers, размеры и прокрутку колонок, сообщения/группировку, reply state, composer, вложения и DM. Проверить канонические размеры из web-плана: R01 `1440×900`, R02 `390×844`, R03 `1024×768`; дополнительно проверить Android 320/360 dp и доступную ширину macOS/Windows окна. Длинные имена, пустые/loading/error-состояния, клавиатура/IME, несброшенный draft и scroll/read cursor — обязательные проверки.
+Перенести три зоны desktop, tablet/compact navigation, headers, размеры и прокрутку колонок, сообщения/группировку, reply state, composer, вложения и DM. Проверить канонические размеры из web-плана: R01 `1440×900`, R02 `390×844`, R03 `1024×768`; дополнительно проверить Android 320/360 dp и доступную ширину macOS/Windows окна. Длинные имена, пустые/loading/error-состояния, клавиатура/IME, несброшенный draft и scroll/read cursor — обязательные проверки. Первые отдельные leaves выровняли responsive shell/message rhythm (FV2-007) и TEXT/DM reply band (FV2-008); история, attachment states и runtime scroll/read/IME ещё остаются.
 
 Владельцы отправки, пагинации, reply, draft, upload, mention, прочтения и DM-доступа остаются текущими; исправления состояния включать только если parity test выявит уже существующее расхождение, отдельной задачей.
 
