@@ -55,19 +55,6 @@ func (hub *Hub) SubscribeAccount(accountID string, onlineEvent Event) *Subscript
 	return hub.subscribe(accountID, &onlineEvent, nil)
 }
 
-func (hub *Hub) SubscribeAccountWithCapabilities(accountID string, onlineEvent Event, capabilities []string) *Subscription {
-	set := make(map[string]struct{}, len(capabilities))
-	for _, capability := range capabilities {
-		if capability != "" {
-			set[capability] = struct{}{}
-		}
-	}
-	if onlineEvent.Kind == "" {
-		return hub.subscribe(accountID, nil, set)
-	}
-	return hub.subscribe(accountID, &onlineEvent, set)
-}
-
 func (hub *Hub) subscribe(accountID string, onlineEvent *Event, capabilities map[string]struct{}) *Subscription {
 	subscription := &Subscription{hub: hub, accountID: accountID, capabilities: capabilities, events: make(chan Event, hub.queueSize), overflowed: make(chan struct{}, 1)}
 	hub.mu.Lock()

@@ -109,8 +109,6 @@ describe('GuildChat design-system foundation', () => {
     expect(settingsStyles).toContain('.admin-topology-form { display: grid;')
     expect(settingsStyles).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))')
   })
-
-
   it('connects profile settings and admin tabs to real API workflows', () => {
     for (const expected of ['readonly', 'current-password', 'new-password', 'uploadAvatar', 'changeOwnPassword', 'aria-live']) expect(profileSettings).toContain(expected)
     for (const expected of ['Участники', 'Каналы', 'Аудит', 'AdminMembersSection', 'AdminAuditSection']) expect(adminPanel).toContain(expected)

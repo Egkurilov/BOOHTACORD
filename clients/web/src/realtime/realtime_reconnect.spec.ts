@@ -1,6 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
 import { realtimeURL } from './realtime_client'
 import { reconnectDelay } from './reconnect_policy'
 import { useRealtimeStore, type RealtimeSocket } from './realtime_store'

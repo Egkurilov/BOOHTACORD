@@ -1,15 +1,11 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import ChannelTopologyActions from '../channel/member_topology/ChannelTopologyActions.vue'
 import { buildVoiceNavigationPresence } from '../channel/voice_navigation_presence'
 import { createVoiceRosterRealtime, createVoiceRosterReconnectGate } from '../voice/voice_roster_realtime'
-import type { TopologyChannel } from '../channel/topology_client'
 import DirectMessageNavigation from '../direct_message/DirectMessageNavigation.vue'
-import { useDirectMessageStore } from '../direct_message/direct_message_store'
-import { useDirectMessageCandidateStore } from '../direct_message/direct_message_candidate_store'
 import VoiceDock from '../voice/VoiceDock.vue'
 import ScreenShareSetupDialog from '../voice/ScreenShareSetupDialog.vue'
-import type { ScreenProfile } from '../voice/livekit_gateway'
 import AudioSettings from '../voice/AudioSettings.vue'
 import { useMessageStore } from '../conversation/message_store'
 import { useRealtimeStore } from '../realtime/realtime_store'
@@ -22,22 +18,20 @@ import WorkspaceMembersPanel from './WorkspaceMembersPanel.vue'
 import WorkspaceSidebarTabs from './WorkspaceSidebarTabs.vue'
 import WorkspaceUserFooter from './WorkspaceUserFooter.vue'
 import { useGuildPresence } from '../identity/guild_presence'
-import { useWorkspaceDrawers } from './useWorkspaceDrawers'
 import ProfileSettings from '../identity/ProfileSettings.vue'
 import { useCurrentProfile } from '../identity/current_profile'
 import { useAuthorDirectoryLifecycle } from '../identity/author_directory_lifecycle'
 import AdminPanel from '../admin/panel/AdminPanel.vue'
 import SearchLauncher from '../search/SearchLauncher.vue'
 import WorkspaceSearchPanel from './search/WorkspaceSearchPanel.vue'
-import { useMemberHeaderExpanded } from './member_header_expanded'
 import { usePermissionStore } from '../authorization/permission_store'
+import { useScreenShareSetup } from './screen_share_setup'
+import { useWorkspaceNavigation } from './workspace_navigation'
 const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string }>()
 const emit = defineEmits<{ sessionExpired: []; loggedOut: [] }>()
 const { activeVoiceChannel, audioSettings, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls()
-const selectedScreenProfile = ref<ScreenProfile>('P1080_30')
-const screenShareSetupOpen = ref(false)
-const directMessageStore = useDirectMessageStore()
-const directMessageCandidateStore = useDirectMessageCandidateStore()
+const { confirmScreenShare, openScreenShareSetup, screenShareSetupOpen, selectedScreenProfile } = useScreenShareSetup(() => voiceConnection.screenState, startScreen)
+const { activePanel, closeDrawers, directMessageStore, memberHeaderExpandedState, membersOpen, modalDrawer, navOpen, openDirectMessageFromMember, openGuildPanel, returnToVoice, selectedDirectMessage, selectChannel, selectDirectMessage, selectOpenedDirectMessage, sidebarSection, toggleMembers, toggleNavigation, togglePanel, voiceStageWide } = useWorkspaceNavigation(props.role, selectedChannel, topologyStore, selectWorkspaceChannel, selectWorkspaceDirectMessage)
 const messageStore = useMessageStore()
 const realtimeStore = useRealtimeStore()
 const expireSession = () => expireWorkspaceSession(voiceConnection, () => emit('sessionExpired'))
@@ -48,39 +42,11 @@ const guildPresence = useGuildPresence()
 const permissions = usePermissionStore()
 const workspaceRealtime = createWorkspaceRealtime({ topology: topologyStore, messages: messageStore, directMessages: directMessageStore }, realtimeStore, guildPresence, voiceConnection, props.accountId, expireSession)
 watch(() => realtimeStore.state, (state) => { if (state === 'ERROR' || state === 'DISCONNECTED') guildPresence.invalidate(); if (state === 'CONNECTED' && shouldReconnectVoiceRoster()) voiceRoster.reconnect() })
-const sidebarSection = ref<'channels' | 'messages'>('channels')
-const activePanel = ref<'none' | 'admin' | 'audio' | 'profile' | 'search'>('none')
-const { navOpen, membersOpen, modalDrawer, closeDrawers, toggleNavigation, toggleMembers } = useWorkspaceDrawers(activePanel)
 const { profile, profileError, profileLoading, refreshProfile, setProfile } = useCurrentProfile()
 useAuthorDirectoryLifecycle(profile)
-const selectedDirectMessage = computed(() => directMessageStore.directMessages.find((item) => item.id === directMessageStore.directMessageId) ?? null)
-const voiceStageWide = computed(() => selectedChannel.value?.kind === 'VOICE' && !selectedDirectMessage.value && activePanel.value === 'none')
-const memberHeaderExpandedState = useMemberHeaderExpanded(voiceStageWide, membersOpen, closeDrawers)
 const voiceNavigationPresence = computed(() => buildVoiceNavigationPresence(activeVoiceChannel.value?.id ?? null, profile.value, voiceConnection))
-function selectChannel(channel: TopologyChannel): void { closeDrawers(); activePanel.value = 'none'; sidebarSection.value = 'channels'; directMessageStore.close(); selectWorkspaceChannel(channel) }
-function returnToVoice(channelId: string): void { const channel = topologyStore.topology?.categories.flatMap(({ channels }) => channels).find(({ id, kind }) => id === channelId && kind === 'VOICE'); if (channel) selectChannel(channel) }
-function selectDirectMessage(directMessageId: string): void { closeDrawers(); activePanel.value = 'none'; sidebarSection.value = 'messages'; selectWorkspaceDirectMessage(directMessageId); void directMessageStore.open(directMessageId) }
-async function selectOpenedDirectMessage(directMessageId: string): Promise<void> { await directMessageStore.refreshNavigation(); selectDirectMessage(directMessageId) }
-async function openDirectMessageFromMember(userID: string): Promise<void> {
-  activePanel.value = 'none'; sidebarSection.value = 'messages'; directMessageStore.close()
-  const directMessageID = await directMessageCandidateStore.open(userID)
-  if (directMessageID) await selectOpenedDirectMessage(directMessageID)
-  else directMessageStore.error = directMessageCandidateStore.error ?? 'Не удалось открыть личное сообщение.'
-}
 function setParticipantVolume(participantID: string, volume: number): void { voiceConnection.setParticipantVolume(participantID, volume) }
-function openScreenShareSetup(profile = selectedScreenProfile.value): void {
-  if (voiceConnection.screenState === 'STARTING' || voiceConnection.screenState === 'STOPPING') return
-  selectedScreenProfile.value = profile
-  screenShareSetupOpen.value = true
-}
-function confirmScreenShare(profile: ScreenProfile): void {
-  selectedScreenProfile.value = profile
-  screenShareSetupOpen.value = false
-  void startScreen(profile)
-}
 function refreshTopology(): void { void topologyStore.refresh() }
-function togglePanel(panel: 'admin' | 'audio' | 'profile' | 'search'): void { closeDrawers(); activePanel.value = activePanel.value === panel ? 'none' : panel }
-function openGuildPanel(): void { if (props.role === 'ADMINISTRATOR') togglePanel('admin') }
 onMounted(() => { permissions.start(props.accountId); void topologyStore.refresh(); void directMessageStore.refreshNavigation(); void refreshProfile(); voiceRoster.start(); workspaceRealtime.start() }); onBeforeUnmount(() => { permissions.stop(); voiceRoster.stop(); workspaceRealtime.stop() })
 </script>
 <template>

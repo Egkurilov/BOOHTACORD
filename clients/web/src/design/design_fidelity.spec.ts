@@ -40,8 +40,9 @@ describe('GuildChat reference fidelity', () => {
 
   it('gives voice and stream screens the wide PNG stage with an accessible member drawer', () => {
     const app = source('../workspace/WorkspaceApp.vue')
+    const navigation = source('../workspace/workspace_navigation.ts')
     const shell = source('./responsive_shell.css')
-    expect(app).toContain("selectedChannel.value?.kind === 'VOICE'")
+    expect(navigation).toContain("selectedChannel.value?.kind === 'VOICE'")
     expect(app).toContain("'voice-stage-wide': voiceStageWide")
     expect(app).toContain('voiceStageWide || selectedDirectMessage')
     expect(shell).toContain('.gc-shell.voice-stage-wide .members.is-open')
