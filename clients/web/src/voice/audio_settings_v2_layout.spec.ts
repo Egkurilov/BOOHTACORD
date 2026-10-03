@@ -35,4 +35,8 @@ describe('Design V2 audio settings', () => {
   it('uses the handoff speaker icon for the output check', () => {
     expect(deviceCheck).toContain('M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14')
   })
+
+  it('matches the handoff medium weight for device labels', () => {
+    expect(presentation).toMatch(/\.audio-device-section label \{[^}]*font-weight: 500;/)
+  })
 })

@@ -50,6 +50,7 @@
   .voice-room .screen-cards .stream-option { width: 128px; min-width: 128px; height: 80px; min-height: 80px; padding: 0; }
   .voice-room .screen-cards .stream-option.selected { padding: 0; }
   .stream-card-preview { height: 50px; min-height: 50px; }
+  .stream-card-preview .stream-avatar { align-self: start; margin-top: 14px; }
   .voice-room .screen-cards .stream-option-copy { flex: 1; padding: 0 8px; }
   .voice-room .screen-cards .stream-option.selected .stream-option-copy { padding-inline: 12px; }
   .screen-cards.stream-rail.has-overflow::after { display: none; }
