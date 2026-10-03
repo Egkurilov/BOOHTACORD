@@ -128,10 +128,20 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-VOICE-01, REQ-SCREEN-01, REQ-SCREEN-03, REQ-SCREEN-04]
     depends_on: [FV2-001, T-022, T-030, T-051]
     evidence: [flutter-screen-rail-geometry-tests, flutter-full-suite, android-debug-build, macos-debug-build]
+  - id: FV2-010
+    title: Flutter Design V2 screen stage and source label
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-VOICE-01, REQ-SCREEN-01, REQ-SCREEN-03]
+    depends_on: [FV2-001, FV2-009, T-022, T-030, T-051]
+    evidence: [flutter-screen-stage-geometry-tests, flutter-full-suite, android-debug-build, macos-debug-build]
+  - id: FV2-011
+    title: Flutter Design V2 responsive screen audio controls
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-VOICE-02, REQ-SCREEN-03]
+    depends_on: [FV2-010, T-022, T-030, T-051]
+    evidence: [flutter-screen-audio-control-tests, flutter-full-suite, android-debug-build, macos-debug-build]
   - id: FV2-003
     title: Flutter Design V2 voice, screen viewer and streaming diagnostics
     requirements: [REQ-UI-01, REQ-UI-02, REQ-VOICE-01, REQ-VOICE-02, REQ-VOICE-03, REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-SCREEN-04]
-    depends_on: [FV2-001, FV2-009, T-022, T-030, T-051]
+    depends_on: [FV2-001, FV2-009, FV2-010, FV2-011, T-022, T-030, T-051]
     evidence: [flutter-voice-media-widget-tests, paired-voice-viewer-acceptance, evidence/flutter]
   - id: FV2-004
     title: Flutter Design V2 navigation, settings and administration

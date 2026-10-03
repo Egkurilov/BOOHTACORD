@@ -1,0 +1,57 @@
+{
+  "id": "QA-241",
+  "date": "2026-10-04",
+  "task": "FE-70 / FV2-010 — Flutter Design V2 screen stage and source label",
+  "source_revision": "32b94ff5",
+  "working_tree_changes": true,
+  "summary": "Matched the Flutter screen viewer stage and source label to the production web Design V2 geometry without changing video playback or LiveKit ownership.",
+  "checks": [
+    {
+      "name": "Focused screen-stage widget tests",
+      "command": "cd clients/flutter && flutter test test/voice_screen_stage_test.dart",
+      "result": "PASS",
+      "passed": 3,
+      "observation": "Verifies full-bleed video and 12 px stage radius at 900 px, compact local label inset/height and hidden avatar at 390 px, plus long-name truncation before the trailing viewer controls."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 467
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/voice_screen_stage.dart lib/src/screens/workspace_screen.dart test/voice_screen_stage_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android Debug APK build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is unavailable. Manual Ruby validation passed: all 39 approved requirement IDs are referenced, all 64 task IDs are unique, and no dependencies dangle."
+    },
+    {
+      "name": "Windows build, matched screenshots, and platform runtime acceptance",
+      "result": "NOT_RUN",
+      "observation": "Flutter geometry/widget tests and Android/macOS Debug builds do not prove rendered screenshot parity or runtime behavior on Android, macOS, or Windows. The open macOS app was not restarted."
+    }
+  ],
+  "limitations": [
+    "The work is presentation-only; capture, playback, audio, and LiveKit ownership were not changed.",
+    "FV2-003 voice states, viewer audio/diagnostics toolbar parity, Windows build, and paired platform acceptance remain open."
+  ],
+  "status": "PASS_STAGE_WIDGET_TESTS_FULL_FLUTTER_SUITE_ANALYSIS_ANDROID_AND_MACOS_DEBUG_BUILDS; WINDOWS_SCREENSHOT_RUNTIME_AND_POWERSHELL_TRACEABILITY_OPEN"
+}

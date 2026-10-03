@@ -143,6 +143,14 @@ category/channel order, matching Flutter. Existing TEXT/VOICE/DM selection is
 preserved while valid; a removed channel falls back to the first available
 TEXT channel, if any — [QA-145](../evidence/flutter/qa145-web-default-text-channel-2026-09-30-001.json).
 
+The Design V2 screen viewer now uses the full available stage for video and a
+12 px clipped canvas. Its source label matches the web copy «Ваш экран» /
+«Экран …», live badge, desktop 16/40 px inset/height and compact 8/28 px geometry;
+long publisher names are constrained before the trailing viewer controls.
+Geometry tests, the full 467-test Flutter suite, changed-file analysis, and
+Android/macOS Debug builds pass. Windows build, matched screenshots, and device
+runtime acceptance remain open — [QA-241](../evidence/flutter/qa241-flutter-design-v2-screen-stage-2026-10-04-001.json).
+
 Flutter's voice prejoin header now mirrors the web copy for roster loading,
 unavailable, empty and populated states instead of showing a static invitation
 that diverged from the room card. The roster subtitle remains visible even when
