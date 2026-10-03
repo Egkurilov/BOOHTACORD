@@ -381,6 +381,13 @@ if (mediaStates.includes(state) && process.env.DESIGN_V2_VERIFY_INTERACTIONS ===
     } else {
       assert.equal(await page.locator('.stream-more-actions button').filter({ hasText: 'Качество трансляции' }).count(), 0)
       interactions.push('viewer-cannot-edit-remote-quality')
+      if (width <= 720) {
+        for (const selector of ['.screen-audio-toggle', '.stream-diagnostics > summary', '.screen-fullscreen-button', '.stream-more-actions > summary']) {
+          const box = await page.locator(selector).boundingBox()
+          assert.ok(box && box.width >= 44 && box.height >= 44, `${selector} must expose a 44px touch target`)
+        }
+        interactions.push('viewer-toolbar-touch-targets-at-least-44px')
+      }
     }
   }
 }

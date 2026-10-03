@@ -16,6 +16,7 @@ describe('selected-stream toolbar layout', () => {
     expect(rail).toContain("emit('returnVoice')")
     expect(css).toContain('grid-template-rows: minmax(0, 1fr) 48px 100px')
     expect(css).toContain('grid-template-rows: minmax(0, 1fr) 56px 84px')
+    expect(css).toContain('min-height: 44px;')
   })
 
   it('offers quality changes only to the active sender and exposes receiver statistics', () => {
