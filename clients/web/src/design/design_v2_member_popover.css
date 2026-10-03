@@ -1,0 +1,22 @@
+/* R18: live member profile card floats outside the roster column. */
+.members-panel.has-popover { overflow: visible; }
+.members-panel .member-popover { box-sizing: border-box; width: 320px; min-height: 314px; border: 1px solid #303542; border-radius: 12px; padding: 24px; background: #222631; }
+.member-popover > header { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; opacity: 0; }
+.member-popover > header > span { display: none; }
+.member-popover > header:hover, .member-popover > header:focus-within { opacity: 1; }
+.member-popover > header button { width: 32px; height: 32px; }
+.member-popover .member-popover-identity { display: block; }
+.member-popover .member-popover-avatar { display: grid; width: 64px; height: 64px; place-items: center; font-size: 24px; }
+.member-popover .member-popover-avatar--empty { position: relative; }
+.member-popover .member-popover-avatar--empty::after { position: absolute; right: 0; bottom: 0; width: 13px; height: 13px; border: 2px solid #222631; border-radius: 50%; background: #22c55e; content: ''; }
+.member-popover .member-popover-identity > div { margin-top: 16px; }
+.member-popover .member-popover-identity h2 { font-size: 20px; line-height: 28px; }
+.member-popover .member-popover-identity p { margin: 4px 0 0; font-size: 12px; line-height: 16px; }
+.member-popover .member-popover-identity small { display: block; margin-top: 16px; font-size: 12px; line-height: 16px; }
+.member-popover .member-popover-identity small:not(.member-popover-presence) { width: max-content; border-radius: 4px; padding: 0 6px; background: #252a35; }
+.member-popover .member-popover-identity .member-popover-presence { display: flex; align-items: center; gap: 12px; margin-top: 20px; color: #aeb6c7; font-size: 14px; line-height: 20px; }
+.member-popover-presence::before { width: 11px; height: 11px; flex: 0 0 11px; border-radius: 50%; background: #53d98b; content: ''; }
+.member-popover .member-popover-actions { margin-top: 28px; }
+.member-popover .member-popover-actions button { min-height: 36px; border: 0; border-radius: 8px; color: #fff; background: #5865f2; font-size: 14px; }
+.member-popover .member-popover-actions button:first-child::before { margin-right: 10px; font-size: 18px; content: '@'; }
+@media (max-width: 1023px) { .members-panel.has-popover { overflow: visible; } .members-panel .member-popover { right: 16px; max-width: calc(100vw - 32px); } }

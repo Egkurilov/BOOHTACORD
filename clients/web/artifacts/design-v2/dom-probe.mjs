@@ -71,7 +71,7 @@ function response(path) {
 
 const browser = await chromium.launch({ headless: true })
 const state = process.argv[2] ?? 'chat'
-const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'audio', 'profile', 'search', 'nav'].includes(state)
+const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'audio', 'profile', 'search', 'nav', 'member-popover'].includes(state)
 const width = Number(process.argv[3] ?? 1440)
 const height = Number(process.argv[4] ?? 900)
 const screenshotPath = process.env.DESIGN_V2_SCREENSHOT
@@ -143,7 +143,7 @@ if (state === 'delete-confirm') await page.getByRole('button', { name: 'Дейс
 if (state === 'dm') { await page.getByRole('button', { name: 'Личные', exact: true }).click(); await page.getByRole('button', { name: 'Daria', exact: true }).click() }
 if (referenceFixture && state === 'topology-channel') await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
 await page.waitForTimeout(state === 'update' ? 5500 : 100)
-if (referenceFixture && ['roles', 'topology-channel', 'audio', 'profile', 'search', 'nav'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
+if (referenceFixture && ['roles', 'topology-channel', 'audio', 'profile', 'search', 'nav', 'member-popover'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
 if (referenceFixture && state === 'chat') {
   await page.locator('.message-item').nth(3).waitFor({ state: 'visible' })
   await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
@@ -255,6 +255,15 @@ if (state === 'auth' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
   await page.getByRole('button', { name: 'Уже есть аккаунт? Войти' }).waitFor()
   await page.getByRole('button', { name: 'Уже есть аккаунт? Войти' }).click()
   interactions.push('registration-mode-retained')
+}
+if (state === 'member-popover' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  const dialog = page.getByRole('dialog', { name: 'Профиль участника' })
+  await dialog.getByRole('button', { name: 'Написать сообщение' }).waitFor()
+  assert.equal(await dialog.getByRole('button', { name: 'Отключить от голоса' }).count(), 0)
+  interactions.push('real-member-profile-and-dm-action')
+  await dialog.press('Escape')
+  await dialog.waitFor({ state: 'detached' })
+  interactions.push('escape-closes-member-profile')
 }
 console.log(JSON.stringify({ viewport: page.viewportSize(), state, boxes, styles, composerChildren, requests, errors, interactions }, null, 2))
 await browser.close()

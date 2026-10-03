@@ -18,6 +18,7 @@ const presenceGroups = computed(() => groupMembersByPresence(guildMembers.value.
 const membersLoading = ref(false)
 const membersError = ref<string | null>(null)
 const selectedID = ref<string | null>(null)
+const openedFromVoiceRoster = ref(false)
 const popoverTop = ref(80)
 const trigger = ref<HTMLButtonElement | null>(null)
 const selectedVoiceParticipant = computed(() => props.participants.find((participant) => participant.accountId === selectedID.value) ?? null)
@@ -39,7 +40,8 @@ async function loadRoster(cursor?: string): Promise<void> {
 function openProfile(userID: string, event: MouseEvent): void {
   const button = event.currentTarget as HTMLButtonElement
   trigger.value = button
-  popoverTop.value = Math.max(64, button.getBoundingClientRect().top - button.closest('.members')!.getBoundingClientRect().top - 32)
+  popoverTop.value = Math.max(64, button.getBoundingClientRect().top - button.closest('.members')!.getBoundingClientRect().top - 24)
+  openedFromVoiceRoster.value = Boolean(button.closest('.members-voice-roster'))
   selectedID.value = userID
 }
 function closeProfile(): void { selectedID.value = null; void nextTick(() => trigger.value?.focus()) }
@@ -53,7 +55,7 @@ onMounted(() => { if (!props.selectedVoiceChannel) void loadRoster() })
 </script>
 
 <template>
-  <aside id="members-panel" class="members members-panel" :class="{ 'is-open': open }" :role="modal ? 'dialog' : undefined" :aria-modal="modal ? 'true' : undefined" aria-label="Участники" tabindex="-1" data-testid="members-panel">
+  <aside id="members-panel" class="members members-panel" :class="{ 'is-open': open, 'has-popover': Boolean(selectedID) }" :role="modal ? 'dialog' : undefined" :aria-modal="modal ? 'true' : undefined" aria-label="Участники" tabindex="-1" data-testid="members-panel">
     <h2 class="members-heading">Участники <span>{{ membersLoading && !guildMembers.length ? '—' : memberCount }}</span></h2>
     <p v-if="visibleVoiceChannel" class="members-summary">Голосовой канал · {{ visibleVoiceChannel.name }}</p>
     <p v-if="selectedVoiceChannel && !voiceRoomVisible" class="members-empty">{{ activeVoiceChannel ? `Вы подключены к «${activeVoiceChannel.name}». Перенесите подключение, чтобы увидеть участников этого канала.` : 'Подключитесь к каналу, чтобы увидеть его участников.' }}</p>
@@ -79,6 +81,6 @@ onMounted(() => { if (!props.selectedVoiceChannel) void loadRoster() })
       </div>
       <button v-if="memberCursor && !membersError" class="members-more" type="button" :disabled="membersLoading" @click="loadRoster(memberCursor)">{{ membersLoading ? 'Загружаем…' : 'Показать ещё' }}</button>
     </section>
-    <MemberPopover v-if="selectedID" :member-i-d="selectedID" :self="selectedID === props.accountID" :viewer-role="props.role" :same-voice="Boolean(activeVoiceChannel && selectedVoiceParticipant)" :volume="selectedVoiceParticipant?.volume ?? 100" :top="popoverTop" @close="closeProfile" @open-d-m="emit('openDM', $event)" @set-volume="setVolume" />
+    <MemberPopover v-if="selectedID" :member-i-d="selectedID" :self="selectedID === props.accountID" :viewer-role="props.role" :same-voice="Boolean(openedFromVoiceRoster && activeVoiceChannel && selectedVoiceParticipant)" :volume="selectedVoiceParticipant?.volume ?? 100" :top="popoverTop" @close="closeProfile" @open-d-m="emit('openDM', $event)" @set-volume="setVolume" />
   </aside>
 </template>
