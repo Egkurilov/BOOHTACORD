@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:ui' show SemanticsRole, Tristate;
-
 import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
+import 'package:boohtacord_desktop/src/features/authorization/permissions/model.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/workspace_screen.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
@@ -22,7 +22,6 @@ import 'package:livekit_client/livekit_client.dart'
 import 'package:livekit_client/src/proto/livekit_models.pb.dart' as lk;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
@@ -3138,6 +3137,7 @@ class _PortraitApi extends ApiClient {
   @override
   Future<SessionUser?> currentSession() async =>
       const SessionUser(accountId: 'account-1', role: 'MEMBER');
+  @override Future<PermissionSnapshot> loadPermissions() async => PermissionSnapshot(accountId: 'account-1', role: GuildRole.member, revision: 1, values: {for (final permission in GuildPermission.values) permission: true});
 
   @override
   Future<OwnProfile> ownProfile() async => const OwnProfile(

@@ -8,6 +8,7 @@ import '../composition/owners.dart';
 
 extension AppAccountCleanup on AppOwners {
   void clearPrivateCaches() {
+    permissions.stop();
     profileOwner.clear();
     workspace.clear();
     conversation.clear();

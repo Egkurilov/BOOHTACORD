@@ -10,11 +10,13 @@ class WorkspaceRealtimeDispatch {
     this.conversation, {
     required this.notifyMessage,
     required this.voiceRevoked,
+    required this.permissionsChanged,
   });
   final WorkspaceController workspace;
   final ConversationController conversation;
   final void Function(RealtimeEvent) notifyMessage;
   final void Function(Map<String, dynamic>) voiceRevoked;
+  final void Function() permissionsChanged;
   void call(RealtimeEvent event) {
     final payload = event.payload;
     switch (event.kind) {
@@ -34,6 +36,9 @@ class WorkspaceRealtimeDispatch {
         notifyMessage(event);
       case 'channel.updated':
         unawaited(workspace.refreshTopology());
+      case 'role.permissions.updated':
+      case 'auth.permissions.invalidated':
+        permissionsChanged();
       case 'connection.resync_required':
         unawaited(workspace.refreshTopology());
         unawaited(workspace.refreshMembers());

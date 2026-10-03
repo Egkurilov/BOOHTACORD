@@ -9,9 +9,8 @@ import '../models.dart';
 import '../services/api_client.dart';
 import '../theme.dart';
 import '../widgets/confirmation_dialog.dart';
-
-enum _AdminSection { members, channels, audit, media }
-
+import '../features/admin/role_permissions/panel.dart';
+enum _AdminSection { members, roles, channels, audit, media }
 class _AdminAccountDraft {
   _AdminAccountDraft({required this.role, required this.blocked});
   String role;
@@ -702,6 +701,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                 runSpacing: 8,
                 children: [
                   _adminSectionTab('Участники', _AdminSection.members),
+                  _adminSectionTab('Роли', _AdminSection.roles),
                   _adminSectionTab('Каналы', _AdminSection.channels),
                   _adminSectionTab('Аудит', _AdminSection.audit),
                   _adminSectionTab('Медиа', _AdminSection.media),
@@ -710,7 +710,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
             ),
           ),
           Expanded(
-            child: _selectedAdminSection == _AdminSection.audit
+            child: _selectedAdminSection == _AdminSection.roles ? RolePermissionsPanel(api: widget.state.api, onSaved: widget.state.permissions.refresh) : _selectedAdminSection == _AdminSection.audit
                 ? _buildAuditPanel()
                 : _selectedAdminSection == _AdminSection.media
                 ? _buildMediaPanel()

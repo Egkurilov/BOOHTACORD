@@ -6,9 +6,12 @@ import '../../features/workspace/lifecycle/controller.dart';
 import '../../features/conversation/lifecycle/controller.dart';
 import '../../features/profile/state/controller.dart';
 import '../../features/voice/roster_state/controller.dart';
+import '../../features/authorization/permissions/controller.dart';
 import 'owners.dart';
 
 void configureWorkspace(AppOwners app) {
+  app.permissions = PermissionController(app.api, app.session.scope)
+    ..addListener(app.notifyListeners);
   app.workspace = WorkspaceController(
     app.api,
     app.session.scope,

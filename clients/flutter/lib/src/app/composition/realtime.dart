@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../../features/session/lifecycle/controller.dart';
 import '../../features/realtime/lifecycle/controller.dart';
 import '../../features/realtime/dispatch/workspace.dart';
@@ -22,6 +24,7 @@ void configureRealtime(AppOwners app) {
       app.workspace,
       app.conversation,
       voiceRevoked: app.voice.dispatchVoiceRevocation,
+      permissionsChanged: () => unawaited(app.permissions.refresh()),
       notifyMessage: notifications.call,
     ).call,
   )..addListener(app.notifyListeners);

@@ -16,7 +16,7 @@ class RealtimeConnectApi {
         final realtimeUri = httpUri.replace(
           scheme: 'wss',
           path: '${httpUri.path}/realtime',
-          query: null,
+          queryParameters: const {'capabilities': 'role_permissions_v1'},
         );
         final headers = await transport.headers();
         headers.addAll(ClientTelemetry.currentTraceHeaders());

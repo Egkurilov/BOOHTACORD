@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
+import 'package:boohtacord_desktop/src/features/authorization/permissions/model.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:boohtacord_desktop/src/services/native_notifications.dart';
@@ -13,7 +13,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart' show MediaDevice;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'notification_scope/fakes.dart';
 
 void main() {
@@ -1303,6 +1302,7 @@ class _FakeApi extends ApiClient {
 
   @override
   bool get realtimeEnabled => false;
+  @override Future<PermissionSnapshot> loadPermissions() async => PermissionSnapshot(accountId: 'account-1', role: GuildRole.member, revision: 1, values: {for (final permission in GuildPermission.values) permission: true});
 
   @override
   Future<void> initialize() async => initializationGate?.future;

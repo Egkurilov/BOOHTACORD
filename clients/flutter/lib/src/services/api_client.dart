@@ -31,6 +31,9 @@ import '../features/direct/read_cursor/facade.dart';
 import '../features/realtime/connect/facade.dart';
 import '../features/text/messages/facade.dart';
 import '../features/voice/leases/facade.dart';
+import '../features/authorization/permissions/facade.dart';
+import '../features/admin/role_permissions/facade.dart';
+import '../features/workspace/topology_mutations/facade.dart';
 
 export '../core/http/api_failure.dart';
 export '../features/admin/voice_admission/result.dart';
@@ -68,7 +71,10 @@ class ApiClient extends ApiFacadeBase
         DirectReadCursorFacade,
         RealtimeConnectFacade,
         TextMessagesFacade,
-        VoiceLeasesFacade {
+        VoiceLeasesFacade,
+        PermissionsFacade,
+        RolePermissionsFacade,
+        TopologyMutationsFacade {
   ApiClient({super.client});
   static const macOsSessionOptions = platform.macOsSessionOptions;
 }

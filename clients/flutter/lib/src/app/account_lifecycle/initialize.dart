@@ -30,6 +30,7 @@ extension AppAccountInitialization on AppOwners {
   Future<void> loadWorkspace() async {
     final ticket = session.scope.capture();
     await Future.wait([
+      permissions.start(),
       workspace.refreshTopology(),
       workspace.refreshMembers(),
       workspace.refreshDirectMessages(),

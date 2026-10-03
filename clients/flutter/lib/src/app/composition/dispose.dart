@@ -15,4 +15,5 @@ void disposeOwners(AppOwners app) {
   app.voice.dispose();
   app.screen.dispose();
   app.audioDevices.dispose();
+  app.permissions.dispose();
 }
