@@ -43,4 +43,11 @@ describe('selected-stream toolbar layout', () => {
     expect(css).toContain('.screen-cards.stream-rail.has-overflow::after { display: none; }')
     expect(css).toContain('.voice-room .workspace-header-toggle--nav, .voice-room .workspace-header-toggle--members { width: 44px; height: 44px; }')
   })
+
+  it('keeps mobile viewer actions in equal touch targets with reference spacing', () => {
+    const css = source('../design/design_v2_screen_viewer.css')
+    expect(css).toContain('.stream-toolbar-actions { gap: 2px; margin-right: -6px; }')
+    expect(css).toContain('.stream-toolbar-actions .stream-diagnostics { flex: 0 0 44px; }')
+    expect(css).toContain('.voice-room .stream-quality-row .screen-audio-toggle { margin-left: -4px; }')
+  })
 })

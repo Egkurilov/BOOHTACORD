@@ -43,8 +43,9 @@
   .voice-room .stream-quality-row { height: 56px; min-height: 56px; padding: 4px 8px; }
   .voice-room .stream-quality-row .volume-control { display: none; }
   .voice-room .stream-quality-row .screen-audio-toggle, .voice-room .stream-toolbar-actions .stream-tool-button { width: 44px; height: 44px; min-height: 44px; }
-  .voice-room .stream-quality-row .screen-audio-toggle { margin-left: -8px; }
-  .stream-toolbar-actions { gap: 0; margin-right: -6px; }
+  .voice-room .stream-quality-row .screen-audio-toggle { margin-left: -4px; }
+  .stream-toolbar-actions { gap: 2px; margin-right: -6px; }
+  .stream-toolbar-actions .stream-diagnostics { flex: 0 0 44px; }
   .voice-room .screen-rail-section { min-height: 84px; height: 84px; }
   .voice-room .screen-cards.stream-rail { height: 84px; min-height: 84px; gap: 8px; }
   .voice-room .screen-cards .stream-option { width: 128px; min-width: 128px; height: 80px; min-height: 80px; padding: 0; }
