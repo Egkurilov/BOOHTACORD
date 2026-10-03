@@ -26,16 +26,24 @@ func NewHandler(inner http.Handler, publisher Publisher) http.Handler {
 			return
 		}
 		var result struct {
-			Revision int64 `json:"revision"`
+			Revision         int64 `json:"revision"`
+			TopologyRevision int64 `json:"topology_revision"`
 		}
-		if json.Unmarshal(capture.body.Bytes(), &result) != nil || result.Revision < 1 {
+		if json.Unmarshal(capture.body.Bytes(), &result) != nil {
+			return
+		}
+		revision := result.Revision
+		if revision < 1 {
+			revision = result.TopologyRevision
+		}
+		if revision < 1 {
 			return
 		}
 		publisher.Publish(eventhub.Event{
 			EventID:    uuid.NewString(),
 			Kind:       "channel.updated",
 			OccurredAt: time.Now().UTC(),
-			Payload:    map[string]any{"revision": result.Revision},
+			Payload:    map[string]any{"revision": revision},
 		})
 	})
 }

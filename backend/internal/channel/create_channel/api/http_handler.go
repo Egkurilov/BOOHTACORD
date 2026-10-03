@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"voice-platform/backend/internal/channel/create_channel"
+	topologycommand "voice-platform/backend/internal/channel/topology_command"
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
 	"voice-platform/backend/internal/security/request_id"
 )
@@ -27,8 +28,9 @@ func NewHandler(creator Creator) http.Handler {
 			return
 		}
 		var body struct {
-			Name string             `json:"name"`
-			Kind createchannel.Kind `json:"kind"`
+			Name            string             `json:"name"`
+			Kind            createchannel.Kind `json:"kind"`
+			ClientRequestID string             `json:"client_request_id"`
 		}
 		decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 8<<10))
 		decoder.DisallowUnknownFields()
@@ -36,7 +38,7 @@ func NewHandler(creator Creator) http.Handler {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректные данные канала")
 			return
 		}
-		channel, err := creator.Create(request.Context(), createchannel.Input{ActorID: principal.AccountID, CategoryID: request.PathValue("categoryID"), Name: body.Name, Kind: body.Kind})
+		channel, err := creator.Create(request.Context(), createchannel.Input{ActorID: principal.AccountID, CategoryID: request.PathValue("categoryID"), Name: body.Name, Kind: body.Kind, ClientRequestID: body.ClientRequestID})
 		if errors.Is(err, createchannel.ErrInvalidInput) {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректные данные канала")
 			return
@@ -45,12 +47,24 @@ func NewHandler(creator Creator) http.Handler {
 			writeError(writer, request, http.StatusNotFound, "NOT_FOUND", "Категория не найдена")
 			return
 		}
+		if errors.Is(err, topologycommand.ErrKeyReused) {
+			writeError(writer, request, http.StatusConflict, "IDEMPOTENCY_KEY_REUSED", "Идентификатор уже использован для другой команды")
+			return
+		}
 		if err != nil {
 			writeError(writer, request, http.StatusInternalServerError, "INTERNAL", "Не удалось создать канал")
 			return
 		}
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		writer.WriteHeader(http.StatusCreated)
+		if body.ClientRequestID != "" {
+			resourceType := "TEXT_CHANNEL"
+			if body.Kind == createchannel.KindVoice {
+				resourceType = "VOICE_CHANNEL"
+			}
+			_ = json.NewEncoder(writer).Encode(map[string]any{"client_request_id": body.ClientRequestID, "topology_revision": channel.Revision, "result": map[string]string{"resource_type": resourceType, "resource_id": channel.ID, "state": "ACTIVE"}})
+			return
+		}
 		_ = json.NewEncoder(writer).Encode(struct {
 			ID         string `json:"id"`
 			CategoryID string `json:"category_id"`

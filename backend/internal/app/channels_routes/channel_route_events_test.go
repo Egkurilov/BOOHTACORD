@@ -14,6 +14,8 @@ func TestTopologyMutationRoutesPublishOnlySuccessfulRevision(t *testing.T) {
 		method string
 		path   string
 	}{
+		{http.MethodPost, "/api/v1/categories"},
+		{http.MethodPost, "/api/v1/categories/category-1/channels"},
 		{http.MethodPost, "/api/v1/admin/categories"},
 		{http.MethodPut, "/api/v1/admin/categories/order"},
 		{http.MethodPatch, "/api/v1/admin/categories/category-1"},
@@ -39,6 +41,7 @@ func TestTopologyMutationRoutesPublishOnlySuccessfulRevision(t *testing.T) {
 				})
 				mux := http.NewServeMux()
 				registerTopologyMutationRoutes(mux, hub, topologyMutationHandlers{
+					memberCreateCategory: inner, memberCreateChannel: inner,
 					createCategory: inner, reorderCategories: inner, renameCategory: inner,
 					deleteCategory: inner, createChannel: inner, reorderChannels: inner,
 					renameChannel: inner, moveChannel: inner, archiveTextChannel: inner,

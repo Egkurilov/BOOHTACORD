@@ -37,6 +37,11 @@ func (transaction poolTransaction) QueryRow(context context.Context, statement s
 	return transaction.transaction.QueryRow(context, statement, arguments...)
 }
 
+func (transaction poolTransaction) Exec(context context.Context, statement string, arguments ...any) error {
+	_, err := transaction.transaction.Exec(context, statement, arguments...)
+	return err
+}
+
 func (transaction poolTransaction) Commit(context context.Context) error {
 	return transaction.transaction.Commit(context)
 }

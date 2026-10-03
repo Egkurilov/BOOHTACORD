@@ -2,9 +2,12 @@ package categorypostgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"voice-platform/backend/internal/channel/create_category"
+	topologycommand "voice-platform/backend/internal/channel/topology_command"
+	topologycommandpostgres "voice-platform/backend/internal/channel/topology_command/postgres"
 )
 
 const topologyLockKey int64 = 441903817
@@ -34,6 +37,7 @@ type Row interface {
 type Transaction interface {
 	Lock(context.Context, int64) error
 	QueryRow(context.Context, string, ...any) Row
+	Exec(context.Context, string, ...any) error
 	Commit(context.Context) error
 	Rollback(context.Context) error
 }
@@ -64,9 +68,33 @@ func (repository Repository) Create(context context.Context, request createcateg
 	if err := transaction.Lock(context, topologyLockKey); err != nil {
 		return createcategory.Result{}, fmt.Errorf("lock channel topology: %w", err)
 	}
+	if request.ClientRequestID != "" {
+		recorder := topologycommandpostgres.Recorder{}
+		receipt, findErr := recorder.Find(context, receiptTransaction{transaction}, request.ActorID, request.ClientRequestID)
+		if findErr == nil {
+			receipt, checkErr := recorder.CheckExisting(receipt, request.IntentHash)
+			if checkErr != nil {
+				return createcategory.Result{}, checkErr
+			}
+			if err := transaction.Commit(context); err != nil {
+				return createcategory.Result{}, err
+			}
+			committed = true
+			return createcategory.Result{ID: receipt.ResourceID, Name: request.Name, Revision: receipt.TopologyRevision}, nil
+		}
+		if !errors.Is(findErr, topologycommand.ErrNotFound) {
+			return createcategory.Result{}, findErr
+		}
+	}
 	var result createcategory.Result
 	if err := transaction.QueryRow(context, insertCategory, request.ID, request.Name, request.ActorID).Scan(&result.ID, &result.Name, &result.Position, &result.Revision); err != nil {
 		return createcategory.Result{}, fmt.Errorf("insert category: %w", err)
+	}
+	if request.ClientRequestID != "" {
+		receipt := topologycommand.Receipt{ClientRequestID: request.ClientRequestID, Operation: topologycommand.OperationCategoryCreate, IntentHash: request.IntentHash, ResourceID: result.ID, ResourceType: "CATEGORY", ResultState: "ACTIVE", TopologyRevision: result.Revision, ResponseStatus: 201}
+		if err := (topologycommandpostgres.Recorder{}).Record(context, receiptTransaction{transaction}, request.ActorID, receipt); err != nil {
+			return createcategory.Result{}, err
+		}
 	}
 	if err := transaction.Commit(context); err != nil {
 		return createcategory.Result{}, fmt.Errorf("commit category creation: %w", err)

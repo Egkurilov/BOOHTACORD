@@ -7,6 +7,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"voice-platform/backend/internal/channel/create_channel"
+	topologycommand "voice-platform/backend/internal/channel/topology_command"
+	topologycommandpostgres "voice-platform/backend/internal/channel/topology_command/postgres"
 )
 
 const topologyLockKey int64 = 441903817
@@ -41,6 +43,7 @@ type Row interface {
 type Transaction interface {
 	Lock(context.Context, int64) error
 	QueryRow(context.Context, string, ...any) Row
+	Exec(context.Context, string, ...any) error
 	Commit(context.Context) error
 	Rollback(context.Context) error
 }
@@ -71,6 +74,24 @@ func (repository Repository) Create(context context.Context, request createchann
 	if err := transaction.Lock(context, topologyLockKey); err != nil {
 		return createchannel.Result{}, fmt.Errorf("lock channel topology: %w", err)
 	}
+	if request.ClientRequestID != "" {
+		recorder := topologycommandpostgres.Recorder{}
+		receipt, findErr := recorder.Find(context, receiptTransaction{transaction}, request.ActorID, request.ClientRequestID)
+		if findErr == nil {
+			receipt, checkErr := recorder.CheckExisting(receipt, request.IntentHash)
+			if checkErr != nil {
+				return createchannel.Result{}, checkErr
+			}
+			if err := transaction.Commit(context); err != nil {
+				return createchannel.Result{}, err
+			}
+			committed = true
+			return createchannel.Result{ID: receipt.ResourceID, CategoryID: request.CategoryID, Name: request.Name, Kind: request.Kind, Revision: receipt.TopologyRevision}, nil
+		}
+		if !errors.Is(findErr, topologycommand.ErrNotFound) {
+			return createchannel.Result{}, findErr
+		}
+	}
 	var result createchannel.Result
 	var kind string
 	err = transaction.QueryRow(context, insertChannel, request.ID, request.CategoryID, request.Name, string(request.Kind), request.ActorID).Scan(&result.ID, &result.CategoryID, &result.Name, &kind, &result.Position, &result.Revision)
@@ -81,6 +102,16 @@ func (repository Repository) Create(context context.Context, request createchann
 		return createchannel.Result{}, fmt.Errorf("insert channel: %w", err)
 	}
 	result.Kind = createchannel.Kind(kind)
+	if request.ClientRequestID != "" {
+		operation, resourceType := topologycommand.OperationTextCreate, "TEXT_CHANNEL"
+		if request.Kind == createchannel.KindVoice {
+			operation, resourceType = topologycommand.OperationVoiceCreate, "VOICE_CHANNEL"
+		}
+		receipt := topologycommand.Receipt{ClientRequestID: request.ClientRequestID, Operation: operation, IntentHash: request.IntentHash, ResourceID: result.ID, ResourceType: resourceType, ResultState: "ACTIVE", TopologyRevision: result.Revision, ResponseStatus: 201}
+		if err := (topologycommandpostgres.Recorder{}).Record(context, receiptTransaction{transaction}, request.ActorID, receipt); err != nil {
+			return createchannel.Result{}, err
+		}
+	}
 	if err := transaction.Commit(context); err != nil {
 		return createchannel.Result{}, fmt.Errorf("commit channel creation: %w", err)
 	}

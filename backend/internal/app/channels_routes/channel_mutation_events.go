@@ -8,19 +8,23 @@ import (
 )
 
 type topologyMutationHandlers struct {
-	createCategory      http.Handler
-	reorderCategories   http.Handler
-	renameCategory      http.Handler
-	deleteCategory      http.Handler
-	createChannel       http.Handler
-	reorderChannels     http.Handler
-	renameChannel       http.Handler
-	moveChannel         http.Handler
-	archiveTextChannel  http.Handler
-	closeVoiceAdmission http.Handler
+	memberCreateCategory http.Handler
+	memberCreateChannel  http.Handler
+	createCategory       http.Handler
+	reorderCategories    http.Handler
+	renameCategory       http.Handler
+	deleteCategory       http.Handler
+	createChannel        http.Handler
+	reorderChannels      http.Handler
+	renameChannel        http.Handler
+	moveChannel          http.Handler
+	archiveTextChannel   http.Handler
+	closeVoiceAdmission  http.Handler
 }
 
 func registerTopologyMutationRoutes(mux *http.ServeMux, events *eventhub.Hub, handlers topologyMutationHandlers) {
+	mux.Handle("POST /api/v1/categories", publishtopologyevent.NewHandler(handlers.memberCreateCategory, events))
+	mux.Handle("POST /api/v1/categories/{categoryID}/channels", publishtopologyevent.NewHandler(handlers.memberCreateChannel, events))
 	mux.Handle("POST /api/v1/admin/categories", publishtopologyevent.NewHandler(handlers.createCategory, events))
 	mux.Handle("PUT /api/v1/admin/categories/order", publishtopologyevent.NewHandler(handlers.reorderCategories, events))
 	mux.Handle("PATCH /api/v1/admin/categories/{categoryID}", publishtopologyevent.NewHandler(handlers.renameCategory, events))
