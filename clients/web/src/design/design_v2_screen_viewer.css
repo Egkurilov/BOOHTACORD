@@ -34,6 +34,7 @@
 .stream-option-copy > span { overflow: hidden; text-overflow: ellipsis; }
 .stream-option-copy b { margin-left: auto; }
 @media (max-width: 720px) {
+  .voice-room .workspace-header-toggle--nav, .voice-room .workspace-header-toggle--members { width: 44px; height: 44px; }
   .voice-room .main-title small { display: none; }
   .voice-room .screen-viewer.stream-wrap { grid-template-rows: minmax(0, 1fr) 56px 84px; gap: 12px; padding: 12px; }
   .voice-room .screen-stage-top { inset: 8px auto auto 8px; }
@@ -46,7 +47,11 @@
   .stream-toolbar-actions { gap: 0; margin-right: -6px; }
   .voice-room .screen-rail-section { min-height: 84px; height: 84px; }
   .voice-room .screen-cards.stream-rail { height: 84px; min-height: 84px; gap: 8px; }
-  .voice-room .screen-cards .stream-option { width: 128px; min-width: 128px; height: 80px; min-height: 80px; }
-  .stream-card-preview { height: 48px; min-height: 48px; }
+  .voice-room .screen-cards .stream-option { width: 128px; min-width: 128px; height: 80px; min-height: 80px; padding: 0; }
+  .voice-room .screen-cards .stream-option.selected { padding: 0; }
+  .stream-card-preview { height: 50px; min-height: 50px; }
+  .voice-room .screen-cards .stream-option-copy { flex: 1; padding: 0 8px; }
+  .voice-room .screen-cards .stream-option.selected .stream-option-copy { padding-inline: 12px; }
+  .screen-cards.stream-rail.has-overflow::after { display: none; }
   .voice-room .screen-cards .stream-option.selected .stream-option-copy > span { max-width: 66px; white-space: normal; line-height: 14px; }
 }

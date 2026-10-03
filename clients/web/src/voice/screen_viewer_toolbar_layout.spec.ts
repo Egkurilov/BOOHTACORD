@@ -33,4 +33,13 @@ describe('selected-stream toolbar layout', () => {
     expect(css).toContain('.stream-diagnostics-backdrop')
     expect(css).toContain('height: min(514px, 80dvh)')
   })
+
+  it('lets mobile stream cards use the full thumbnail and scroll without a visual chevron', () => {
+    const css = source('../design/design_v2_screen_viewer.css')
+    expect(css).toContain('.voice-room .screen-cards .stream-option { width: 128px; min-width: 128px; height: 80px; min-height: 80px; padding: 0; }')
+    expect(css).toContain('.voice-room .screen-cards .stream-option.selected { padding: 0; }')
+    expect(css).toContain('.stream-card-preview { height: 50px; min-height: 50px; }')
+    expect(css).toContain('.screen-cards.stream-rail.has-overflow::after { display: none; }')
+    expect(css).toContain('.voice-room .workspace-header-toggle--nav, .voice-room .workspace-header-toggle--members { width: 44px; height: 44px; }')
+  })
 })
