@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:ui' show SemanticsRole, Tristate;
+
 import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/features/authorization/permissions/model.dart';
@@ -22,6 +23,7 @@ import 'package:livekit_client/livekit_client.dart'
 import 'package:livekit_client/src/proto/livekit_models.pb.dart' as lk;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
@@ -1795,7 +1797,7 @@ void main() {
     await tester.tap(find.text('общий').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Администрирование'), findsOneWidget);
+    expect(find.byKey(const ValueKey('admin-screen-title')), findsOneWidget);
     expect(find.text('Создать категорию'), findsOneWidget);
     expect(find.text('Создать канал'), findsOneWidget);
     expect(find.text('Категорию выше'), findsOneWidget);

@@ -18,9 +18,16 @@ class _AdminAccountDraft {
 }
 
 class AdminScreen extends StatefulWidget {
-  const AdminScreen({super.key, required this.state});
+  const AdminScreen({
+    super.key,
+    required this.state,
+    this.onToggleNavigation,
+    this.onClose,
+  });
 
   final AppState state;
+  final VoidCallback? onToggleNavigation;
+  final VoidCallback? onClose;
 
   @override
   State<AdminScreen> createState() => _AdminScreenState();
@@ -606,8 +613,9 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final compact =
-        MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint;
+    final width = MediaQuery.sizeOf(context).width;
+    final compact = width < GcLayout.mobileBreakpoint;
+    final compactMemberHeading = width <= 720;
     final categories =
         widget.state.topology?.categories ?? const <ChannelCategory>[];
     final selectedId = categories.any((item) => item.id == _categoryId)
@@ -639,52 +647,65 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       color: GcColors.content,
       child: Column(
         children: [
+          _AdminWorkspaceHeader(
+            compact: compact,
+            onToggleNavigation: widget.onToggleNavigation,
+            onClose: widget.onClose ??
+                () => widget.state.toggleWorkspacePanel(WorkspacePanel.none),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 18),
             child: Row(
               children: [
-                if (compact)
-                  IconButton(
-                    tooltip: 'Назад',
-                    onPressed: () =>
-                        widget.state.toggleWorkspacePanel(WorkspacePanel.none),
-                    icon: const Icon(Icons.arrow_back),
-                  ),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'УПРАВЛЕНИЕ ГИЛЬДИЕЙ',
-                        style: TextStyle(
-                          color: GcColors.muted,
-                          fontSize: 11,
-                          letterSpacing: .8,
+                      if (_selectedAdminSection != _AdminSection.members) ...[
+                        const Text(
+                          'УПРАВЛЕНИЕ ГИЛЬДИЕЙ',
+                          style: TextStyle(
+                            color: GcColors.muted,
+                            fontSize: 11,
+                            letterSpacing: .8,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 5),
+                        const SizedBox(height: 5),
+                      ],
                       Focus(
                         key: const ValueKey('admin-screen-title-focus'),
                         focusNode: _titleFocus,
                         child: Semantics(
                           header: true,
-                          child: const Text(
+                          child: Text(
                             'Администрирование',
+                            key: const ValueKey('admin-screen-title'),
                             style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
+                              fontSize: compactMemberHeading ? 22 : 24,
+                              height: compactMemberHeading ? 28 / 22 : 32 / 24,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Управление гильдией и доступом участников.',
+                        style: TextStyle(
+                          color: GcColors.textSecondary,
+                          fontSize: 14,
+                          height: 20 / 14,
                         ),
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  tooltip: 'Обновить список каналов',
-                  onPressed: _busy ? null : widget.state.refreshTopology,
-                  icon: const Icon(Icons.refresh),
-                ),
+                if (_selectedAdminSection == _AdminSection.channels)
+                  IconButton(
+                    tooltip: 'Обновить список каналов',
+                    onPressed: _busy ? null : widget.state.refreshTopology,
+                    icon: const Icon(Icons.refresh),
+                  ),
               ],
             ),
           ),
@@ -1427,7 +1448,12 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                 children: [
                   Text(
                     'Участники',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                    key: ValueKey('admin-members-section-title'),
+                    style: TextStyle(
+                      fontSize: 20,
+                      height: 28 / 20,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Text(
                     'Роли и доступ к этой гильдии',
@@ -1542,7 +1568,11 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         children: [
           Text(
             account.displayName,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 16,
+              height: 20 / 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           Text(
             '@${account.login}',
@@ -1763,4 +1793,85 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     'VOICE_LEASE_TRANSFERRED' => 'Голосовое подключение перенесено',
     _ => 'Другое событие управления',
   };
+}
+
+class _AdminWorkspaceHeader extends StatelessWidget {
+  const _AdminWorkspaceHeader({
+    required this.compact,
+    required this.onToggleNavigation,
+    required this.onClose,
+  });
+
+  final bool compact;
+  final VoidCallback? onToggleNavigation;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final buttonConstraints = BoxConstraints.tightFor(
+      width: compact ? 44 : 36,
+      height: compact ? 44 : 36,
+    );
+    return SizedBox(
+      key: const ValueKey('admin-workspace-header'),
+      height: compact ? 56 : 64,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: GcColors.borderSubtle)),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 24),
+          child: Row(
+            children: [
+              if (compact && onToggleNavigation != null) ...[
+                IconButton(
+                  key: const ValueKey('admin-workspace-nav-toggle'),
+                  tooltip: 'Открыть навигацию',
+                  constraints: buttonConstraints,
+                  padding: EdgeInsets.zero,
+                  style: IconButton.styleFrom(
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    fixedSize: Size.square(compact ? 44 : 36),
+                    padding: EdgeInsets.zero,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onToggleNavigation,
+                  icon: const Icon(Icons.menu),
+                ),
+                const SizedBox(width: 8),
+              ],
+              const Icon(
+                Icons.admin_panel_settings_outlined,
+                color: GcColors.muted,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Администрирование',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+              IconButton(
+                key: const ValueKey('admin-workspace-close'),
+                tooltip: 'Закрыть администрирование',
+                constraints: buttonConstraints,
+                padding: EdgeInsets.zero,
+                style: IconButton.styleFrom(
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  fixedSize: Size.square(compact ? 44 : 36),
+                  padding: EdgeInsets.zero,
+                ),
+                visualDensity: VisualDensity.compact,
+                onPressed: onClose,
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

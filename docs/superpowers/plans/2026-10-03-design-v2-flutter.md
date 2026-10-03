@@ -82,7 +82,9 @@ FV2-013 закрыл compact nav/member header targets: при ширине 390 
 
 FV2-011 выровнял viewer mute/gain controls и процент: desktop toolbar 40 px, compact toolbar 48 px внутри 56 px полосы; Android сохраняет slider 0–200%, хотя production web его скрывает на compact viewport, чтобы не терять уже запрошенную пользователем настройку громкости. Deafen и audio-state владельцы не менялись — [QA-244](../../../evidence/flutter/qa244-flutter-design-v2-screen-audio-controls-2026-10-04-001.json).
 
-Открытые/новые gaps: web-коммит `cdd10808` добавил admin member-directory typography и 44×44 compact settings header — отдельный FV2-014 без изменений permission/actions. Последующий web-коммит `bfeee4f5` добавил mobile auth eyebrow 16 px, заголовок weight 600 и submit weight 500; это отдельный FV2-015 перед закрытием auth aggregate.
+FV2-014 выровнял admin typography и workspace header: compact title 22/28 px, section title 20/28 px, user name 16/20 px, header 56 px с menu/close targets 44×44; desktop close — 36×36. Callback и refresh/permission поведение сохранены — [QA-245](../../../evidence/flutter/qa245-flutter-design-v2-admin-typography-header-2026-10-04-001.json).
+
+Открытые/новые gaps: web-коммит `bfeee4f5` добавил mobile auth eyebrow 16 px, заголовок weight 600 и submit weight 500 — FV2-015. Проверка web `AdminMembersSection.vue` также выявила отсутствующие во Flutter count/search по имени или логину и role filter — FV2-016. Оба входят в соответствующие auth/admin aggregates.
 
 Закрытие: focused tests для каждой ветви отображения плюс весь voice/screen test subset; затем Android emulator и macOS/Windows runtime acceptance для доступных реальных состояний. Сетевые/media ошибки и уже открытые FE-52/59/61/69 остаются самостоятельными verification задачами, не объявляются закрытыми дизайн-переносом.
 

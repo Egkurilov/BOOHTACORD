@@ -1646,7 +1646,11 @@ class _MainSurface extends StatelessWidget {
         onPopInvokedWithResult: (didPop, _) {
           if (!didPop) leaveWorkspacePanel();
         },
-        child: AdminScreen(state: state),
+        child: AdminScreen(
+          state: state,
+          onToggleNavigation: onToggleNavigation,
+          onClose: leaveWorkspacePanel,
+        ),
       );
     }
     final direct = state.selectedDirectMessage;
