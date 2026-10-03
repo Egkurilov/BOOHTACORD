@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/admin_screen.dart';
@@ -36,6 +37,117 @@ Future<AppState> _openChannels(WidgetTester tester, TopologyTestApi api) async {
 }
 
 void main() {
+  testWidgets('compact member directory matches web typography and targets', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    var navigationToggled = false;
+    var closed = false;
+    final api = TopologyTestApi()
+      ..accounts = [
+        AdminAccount(
+          accountId: 'member-1',
+          login: 'member',
+          displayName: 'Member Name',
+          role: 'MEMBER',
+          blocked: false,
+          createdAt: DateTime.utc(2026, 10, 1),
+        ),
+      ];
+    final state = AppState(api)..topology = api.current;
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AdminScreen(
+            state: state,
+            onToggleNavigation: () => navigationToggled = true,
+            onClose: () => closed = true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final pageTitle = tester.widget<Text>(
+      find.byKey(const ValueKey('admin-screen-title')),
+    );
+    expect(pageTitle.style?.fontSize, 22);
+    expect(pageTitle.style?.height, 28 / 22);
+    expect(pageTitle.style?.fontWeight, FontWeight.w600);
+
+    final memberSectionTitle = tester.widget<Text>(
+      find.byKey(const ValueKey('admin-members-section-title')),
+    );
+    expect(memberSectionTitle.style?.fontSize, 20);
+    expect(memberSectionTitle.style?.height, 28 / 20);
+    expect(memberSectionTitle.style?.fontWeight, FontWeight.w600);
+
+    final accountName = tester.widget<Text>(find.text('Member Name'));
+    expect(accountName.style?.fontSize, 16);
+    expect(accountName.style?.height, 20 / 16);
+    expect(accountName.style?.fontWeight, FontWeight.w600);
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('admin-workspace-nav-toggle'))),
+      const Size(44, 44),
+    );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('admin-workspace-close'))),
+      const Size(44, 44),
+    );
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.byKey(const ValueKey('admin-workspace-nav-toggle')));
+    await tester.pump();
+    expect(navigationToggled, isTrue);
+    await tester.tap(find.byKey(const ValueKey('admin-workspace-close')));
+    await tester.pump();
+    expect(closed, isTrue);
+
+    tester.view.physicalSize = const Size(900, 900);
+    await tester.pumpAndSettle();
+    final mediumPageTitle = tester.widget<Text>(
+      find.byKey(const ValueKey('admin-screen-title')),
+    );
+    expect(mediumPageTitle.style?.fontSize, 24);
+    expect(mediumPageTitle.style?.height, 32 / 24);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('admin-workspace-header'))),
+      const Size(900, 56),
+    );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('admin-workspace-nav-toggle'))),
+      const Size(44, 44),
+    );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('admin-workspace-close'))),
+      const Size(44, 44),
+    );
+
+    tester.view.physicalSize = const Size(1200, 900);
+    await tester.pumpAndSettle();
+    final desktopPageTitle = tester.widget<Text>(
+      find.byKey(const ValueKey('admin-screen-title')),
+    );
+    expect(desktopPageTitle.style?.fontSize, 24);
+    expect(desktopPageTitle.style?.height, 32 / 24);
+    expect(desktopPageTitle.style?.fontWeight, FontWeight.w600);
+    expect(
+      find.byKey(const ValueKey('admin-workspace-nav-toggle')),
+      findsNothing,
+    );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('admin-workspace-close'))),
+      const Size(36, 36),
+    );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('admin-workspace-header'))),
+      const Size(1200, 64),
+    );
+  });
+
   testWidgets('announces member and audit loading states to screen readers', (
     tester,
   ) async {
@@ -108,7 +220,7 @@ void main() {
     expect(headingFocus.hasFocus, isTrue);
     expect(
       tester
-          .getSemantics(find.text('Администрирование'))
+          .getSemantics(find.byKey(const ValueKey('admin-screen-title')))
           .flagsCollection
           .isHeader,
       isTrue,

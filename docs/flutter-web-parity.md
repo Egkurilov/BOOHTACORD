@@ -161,9 +161,12 @@ FV2-013 aligns compact workspace navigation/member actions to the web's
 callbacks. The baseline test observed the prior 40×48 px hamburger; the focused
 geometry test, full 468-test Flutter suite, targeted analyzer, and Android/macOS
 Debug builds pass — [QA-243](../evidence/flutter/qa243-flutter-design-v2-compact-voice-header-2026-10-04-001.json).
-Windows, matched screenshots, and runtime acceptance remain open. Web commit
-`cdd10808` exposed follow-up admin member typography and compact settings-header
-differences tracked separately as FV2-014.
+FV2-014 now aligns the admin member headings and compact workspace header with
+web: member page title 22/28 px compact and 24/32 px desktop at weight 600,
+section title 20/28 px, account name 16/20 px, and 44×44 compact navigation and
+close targets. Existing refresh and permission callbacks are preserved —
+[QA-245](../evidence/flutter/qa245-flutter-design-v2-admin-typography-header-2026-10-04-001.json).
+Windows, paired screenshots, and platform runtime acceptance remain open.
 
 FV2-011 aligns the viewer mute/gain controls and percentage: desktop toolbar row
 40 px, compact row 48 px within the 56 px strip. Flutter keeps the 0–200% gain
@@ -172,6 +175,9 @@ the requested mobile volume adjustment. Deafen and audio-state ownership are
 unchanged — [QA-244](../evidence/flutter/qa244-flutter-design-v2-screen-audio-controls-2026-10-04-001.json).
 Web commit `bfeee4f5` also revealed an auth typography follow-up (mobile eyebrow,
 heading weight, and submit weight), tracked as FV2-015.
+The member directory review also found that Flutter has no count, name/login
+search, or role filter where web has them; this independent functional gap is
+tracked as FV2-016.
 
 Flutter's voice prejoin header now mirrors the web copy for roster loading,
 unavailable, empty and populated states instead of showing a static invitation
