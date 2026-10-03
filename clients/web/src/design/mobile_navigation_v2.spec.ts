@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs'
 import workspace from '../workspace/WorkspaceApp.vue?raw'
 const mobileNavigation = readFileSync(new URL('./design_v2_mobile_navigation.css', import.meta.url), 'utf8')
 const responsiveShell = readFileSync(new URL('./responsive_shell.css', import.meta.url), 'utf8')
+const searchLauncher = readFileSync(new URL('../search/SearchLauncher.vue', import.meta.url), 'utf8')
+const navigation = readFileSync(new URL('./navigation.css', import.meta.url), 'utf8')
 
 describe('V2 mobile navigation drawer', () => {
   it('keeps real navigation controls and voice session actions inside the open drawer', () => {
@@ -21,5 +23,14 @@ describe('V2 mobile navigation drawer', () => {
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-list { margin-top: 5px; padding-left: 36px; gap: 0; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-row { min-height: 36px; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-avatar { width: 22px; height: 22px; flex-basis: 22px; font-size: 9px; }')
+  })
+
+  it('uses the reference search outline and drawer alignment', () => {
+    expect(searchLauncher).toContain('<circle cx="10.5" cy="10.5" r="6.5"')
+    expect(searchLauncher).toContain('<path d="m16 16 5 5"')
+    expect(navigation).toContain('.guild-search-button > svg { width: 16px; height: 16px;')
+    expect(mobileNavigation).toContain('.sidebar.is-open > .guild-header { padding-left: 12px; }')
+    expect(mobileNavigation).toContain('.sidebar.is-open .guild-search-button { padding: 0 10px;')
+    expect(mobileNavigation).toContain('padding: 8px 14px; background: #101218;')
   })
 })
