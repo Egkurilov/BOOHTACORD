@@ -24,6 +24,8 @@ class VoiceScreenAudioControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width <= 720;
+
     if (showingLocalScreen) {
       return const Padding(
         padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -52,10 +54,11 @@ class VoiceScreenAudioControls extends StatelessWidget {
 
     if (screenAudioVolume == null) {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        padding: EdgeInsets.fromLTRB(compact ? 8 : 12, 4, compact ? 8 : 12, 4),
         child: Row(
           children: [
-            _muteButton,
+            _muteButton(compact: compact),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 deafened
@@ -70,7 +73,7 @@ class VoiceScreenAudioControls extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      padding: EdgeInsets.fromLTRB(compact ? 8 : 12, 4, compact ? 8 : 12, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -83,34 +86,31 @@ class VoiceScreenAudioControls extends StatelessWidget {
                 style: TextStyle(color: GcColors.muted, fontSize: 12),
               ),
             ),
-          Row(
-            children: [
-              _muteButton,
-              SizedBox(
-                width: 220,
-                child: Text(
-                  'Громкость аудиодорожки · $screenAudioVolume%',
-                  style: const TextStyle(color: GcColors.textSecondary),
-                ),
-              ),
-              Expanded(
-                child: Semantics(
-                  label: 'Громкость звука выбранной демонстрации',
-                  child: Slider(
-                    key: const ValueKey('screen-share-audio-volume-slider'),
-                    value: screenAudioVolume!.toDouble(),
-                    min: 0,
-                    max: 200,
-                    divisions: 200,
-                    semanticFormatterCallback: (value) =>
-                        '${value.round()} процентов',
-                    onChanged: deafened || onScreenAudioVolumeChanged == null
-                        ? null
-                        : (value) => onScreenAudioVolumeChanged!(value.round()),
+          SizedBox(
+            key: const ValueKey('screen-share-audio-toolbar-row'),
+            width: double.infinity,
+            height: compact ? 48 : 40,
+            child: Row(
+              children: [
+                _muteButton(compact: compact),
+                const SizedBox(width: 8),
+                if (compact)
+                  Expanded(child: _volumeSlider)
+                else
+                  SizedBox(width: 100, child: _volumeSlider),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 36,
+                  child: Text(
+                    '$screenAudioVolume%',
+                    key: const ValueKey('screen-share-audio-volume-percent'),
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    style: const TextStyle(color: GcColors.muted, fontSize: 12),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -119,18 +119,45 @@ class VoiceScreenAudioControls extends StatelessWidget {
 
   bool get _muted => screenAudioMuted || screenAudioVolume == 0;
 
-  Widget get _muteButton => Semantics(
+  Widget _muteButton({required bool compact}) => Semantics(
     toggled: !_muted,
     child: IconButton(
       tooltip: _muted
           ? 'Включить звук трансляции'
           : 'Выключить звук трансляции',
+      constraints: BoxConstraints.tightFor(
+        width: compact ? 44 : 32,
+        height: compact ? 44 : 32,
+      ),
+      padding: EdgeInsets.zero,
+      style: IconButton.styleFrom(
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        fixedSize: Size.square(compact ? 44 : 32),
+        padding: EdgeInsets.zero,
+      ),
+      visualDensity: VisualDensity.compact,
       onPressed: deafened ? null : onToggleScreenAudio,
       icon: Icon(
         _muted || deafened
             ? Icons.volume_off_outlined
             : Icons.volume_up_outlined,
+        size: compact ? 20 : 18,
       ),
+    ),
+  );
+
+  Widget get _volumeSlider => Semantics(
+    label: 'Громкость звука выбранной демонстрации',
+    child: Slider(
+      key: const ValueKey('screen-share-audio-volume-slider'),
+      value: screenAudioVolume!.toDouble(),
+      min: 0,
+      max: 200,
+      divisions: 200,
+      semanticFormatterCallback: (value) => '${value.round()} процентов',
+      onChanged: deafened || onScreenAudioVolumeChanged == null
+          ? null
+          : (value) => onScreenAudioVolumeChanged!(value.round()),
     ),
   );
 }

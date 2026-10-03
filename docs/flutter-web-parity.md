@@ -156,8 +156,22 @@ thumbnail from 48 to 50 px, Flutter now uses 124 px selected / 126 px
 unselected thumbnail widths, matching its 128×80 px cards after border
 compensation. The regression failed before the fix at 118×48 px; focused rail
 tests, full suite, analyzer, and Android/macOS Debug builds pass — [QA-242](../evidence/flutter/qa242-flutter-design-v2-compact-screen-rail-2026-10-04-001.json).
-The same web change exposed a separate still-open 44×44 compact header-control
-gap tracked by FV2-013.
+FV2-013 aligns compact workspace navigation/member actions to the web's
+44×44 px controls while retaining 48×48 px desktop navigation and existing
+callbacks. The baseline test observed the prior 40×48 px hamburger; the focused
+geometry test, full 468-test Flutter suite, targeted analyzer, and Android/macOS
+Debug builds pass — [QA-243](../evidence/flutter/qa243-flutter-design-v2-compact-voice-header-2026-10-04-001.json).
+Windows, matched screenshots, and runtime acceptance remain open. Web commit
+`cdd10808` exposed follow-up admin member typography and compact settings-header
+differences tracked separately as FV2-014.
+
+FV2-011 aligns the viewer mute/gain controls and percentage: desktop toolbar row
+40 px, compact row 48 px within the 56 px strip. Flutter keeps the 0–200% gain
+slider available on compact Android even though web hides it there, preserving
+the requested mobile volume adjustment. Deafen and audio-state ownership are
+unchanged — [QA-244](../evidence/flutter/qa244-flutter-design-v2-screen-audio-controls-2026-10-04-001.json).
+Web commit `bfeee4f5` also revealed an auth typography follow-up (mobile eyebrow,
+heading weight, and submit weight), tracked as FV2-015.
 
 Flutter's voice prejoin header now mirrors the web copy for roster loading,
 unavailable, empty and populated states instead of showing a static invitation

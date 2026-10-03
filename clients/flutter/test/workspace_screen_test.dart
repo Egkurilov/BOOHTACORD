@@ -638,6 +638,28 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('compact workspace header actions match web 44 px targets', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    for (final tooltip in ['Открыть навигацию', 'Открыть участников']) {
+      expect(tester.getSize(find.byTooltip(tooltip)), const Size(44, 44));
+    }
+
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('profile panel restores the opening keyboard focus on close', (
     tester,
   ) async {

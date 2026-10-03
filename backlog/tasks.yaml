@@ -148,6 +148,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-VOICE-01]
     depends_on: [FV2-010, T-022, T-030, T-051]
     evidence: [flutter-voice-header-geometry-tests, flutter-full-suite, android-debug-build, macos-debug-build]
+  - id: FV2-014
+    title: Flutter Design V2 admin directory typography and compact header
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-ADMIN-01]
+    depends_on: [FV2-001, T-014, T-020, T-050, T-051]
+    evidence: [flutter-admin-members-geometry-tests, flutter-full-suite, android-debug-build, macos-debug-build]
   - id: FV2-003
     title: Flutter Design V2 voice, screen viewer and streaming diagnostics
     requirements: [REQ-UI-01, REQ-UI-02, REQ-VOICE-01, REQ-VOICE-02, REQ-VOICE-03, REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-SCREEN-04]
@@ -156,12 +161,17 @@ tasks:
   - id: FV2-004
     title: Flutter Design V2 navigation, settings and administration
     requirements: [REQ-UI-01, REQ-UI-02, REQ-ADMIN-01, REQ-ADMIN-02, REQ-AUDIO-01, REQ-SEARCH-01, REQ-CHANNEL-02]
-    depends_on: [FV2-001, T-014, T-020, T-050, T-051]
+    depends_on: [FV2-001, FV2-014, T-014, T-020, T-050, T-051]
     evidence: [flutter-settings-admin-layout-tests, flutter-settings-admin-semantics, settings-admin-parity-acceptance]
+  - id: FV2-015
+    title: Flutter Design V2 authentication typography follow-up
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-AUTH-01]
+    depends_on: [FV2-001, T-010, T-012, T-050, T-051]
+    evidence: [flutter-auth-typography-geometry-tests, flutter-full-suite, android-debug-build, macos-debug-build]
   - id: FV2-005
     title: Flutter Design V2 authentication, reset and protected attachment views
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUTH-01, REQ-AUTH-02, REQ-AUTH-03, REQ-SECURITY-01, REQ-STORAGE-01]
-    depends_on: [FV2-001, T-010, T-012, T-040, T-041, T-044, T-050, T-051]
+    depends_on: [FV2-001, FV2-015, T-010, T-012, T-040, T-041, T-044, T-050, T-051]
     evidence: [flutter-auth-attachment-layout-tests, flutter-focus-semantics-tests, auth-attachment-parity-acceptance]
   - id: FV2-006
     title: Flutter Design V2 responsive, accessibility and platform acceptance gate
