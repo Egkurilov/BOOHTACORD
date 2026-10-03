@@ -151,6 +151,14 @@ Geometry tests, the full 467-test Flutter suite, changed-file analysis, and
 Android/macOS Debug builds pass. Windows build, matched screenshots, and device
 runtime acceptance remain open — [QA-241](../evidence/flutter/qa241-flutter-design-v2-screen-stage-2026-10-04-001.json).
 
+After web commit `10a723a9` revised compact stream-card padding and raised the
+thumbnail from 48 to 50 px, Flutter now uses 124 px selected / 126 px
+unselected thumbnail widths, matching its 128×80 px cards after border
+compensation. The regression failed before the fix at 118×48 px; focused rail
+tests, full suite, analyzer, and Android/macOS Debug builds pass — [QA-242](../evidence/flutter/qa242-flutter-design-v2-compact-screen-rail-2026-10-04-001.json).
+The same web change exposed a separate still-open 44×44 compact header-control
+gap tracked by FV2-013.
+
 Flutter's voice prejoin header now mirrors the web copy for roster loading,
 unavailable, empty and populated states instead of showing a static invitation
 that diverged from the room card. The roster subtitle remains visible even when

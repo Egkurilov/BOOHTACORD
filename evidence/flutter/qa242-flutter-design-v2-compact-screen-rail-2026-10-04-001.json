@@ -1,0 +1,57 @@
+{
+  "id": "QA-242",
+  "date": "2026-10-04",
+  "task": "FE-70 / FV2-012 — Flutter Design V2 compact screen-selection rail follow-up",
+  "source_revision": "44228c3f",
+  "working_tree_changes": true,
+  "summary": "Updated Flutter compact stream cards to match the web rail after web commit 10a723a9 changed mobile card insets and thumbnail height.",
+  "checks": [
+    {
+      "name": "Focused screen-selection rail widget tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/voice_screen_selection_rail_test.dart",
+      "result": "PASS_AFTER_BASELINE_FAILURE",
+      "passed": 3,
+      "observation": "Before implementation the compact selected preview measured 118×48 px instead of the web-equivalent 124×50 px. Final geometry asserts a 128×80 px card, 50 px thumbnail height, selected 124 px content width, unselected 126 px content width, and unchanged desktop 152×96 / 142×60 geometry."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 467
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/voice_screen_selection_rail.dart test/voice_screen_selection_rail_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android Debug APK build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is unavailable. Manual Ruby validation passed: all 39 approved requirement IDs are referenced, all 67 task IDs are unique, and no dependencies dangle."
+    },
+    {
+      "name": "Windows build, matched screenshots, and platform runtime acceptance",
+      "result": "NOT_RUN",
+      "observation": "Widget geometry assertions and Android/macOS Debug builds do not prove rendered screenshot parity or runtime behavior on Android, macOS, or Windows. The open macOS app was not restarted."
+    }
+  ],
+  "limitations": [
+    "This follow-up is presentation-only; stream selection, thumbnails, audio state, playback, and LiveKit ownership are unchanged.",
+    "FV2-011 audio controls and FV2-013 compact voice header targets remain open."
+  ],
+  "status": "PASS_RAIL_WIDGET_TESTS_FULL_FLUTTER_SUITE_ANALYSIS_ANDROID_AND_MACOS_DEBUG_BUILDS; WINDOWS_SCREENSHOT_RUNTIME_AND_POWERSHELL_TRACEABILITY_OPEN"
+}

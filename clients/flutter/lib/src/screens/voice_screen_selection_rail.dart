@@ -45,8 +45,7 @@ class VoiceScreenSelectionRail extends StatelessWidget {
     final railHeight = compact ? 84.0 : 100.0;
     final cardWidth = compact ? 128.0 : 152.0;
     final cardHeight = compact ? 80.0 : 96.0;
-    final previewHeight = compact ? 48.0 : 60.0;
-    final footerHeight = cardHeight - previewHeight - 10;
+    final previewHeight = compact ? 50.0 : 60.0;
 
     return Semantics(
       label: 'Выбор демонстрации экрана',
@@ -71,6 +70,11 @@ class VoiceScreenSelectionRail extends StatelessWidget {
                 ? 'Звуковая дорожка есть'
                 : 'Звуковой дорожки нет';
             final choiceKey = choice.identity ?? 'local';
+            final cardPadding = compact ? (choice.selected ? 2.0 : 1.0) : 5.0;
+            final footerHeight = cardHeight - previewHeight - cardPadding * 2;
+            final footerHorizontalPadding = compact
+                ? (choice.selected ? 12.0 : 8.0)
+                : 6.0;
             return Semantics(
               container: true,
               button: true,
@@ -103,10 +107,11 @@ class VoiceScreenSelectionRail extends StatelessWidget {
                       child: InkWell(
                         onTap: () => onSelected(choice.identity),
                         child: Padding(
-                          // Web's box sizing includes its 1/2 px border in
-                          // the card's 4/3 px inset; Flutter paints that
-                          // border without reducing the child's constraints.
-                          padding: const EdgeInsets.all(5),
+                          // Flutter paints the card border without reducing
+                          // child constraints. Compensate for web's border
+                          // width, then apply the matching desktop/mobile
+                          // content inset.
+                          padding: EdgeInsets.all(cardPadding),
                           child: Column(
                             children: [
                               ClipRRect(
@@ -156,8 +161,8 @@ class VoiceScreenSelectionRail extends StatelessWidget {
                               SizedBox(
                                 height: footerHeight,
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: footerHorizontalPadding,
                                   ),
                                   child: Row(
                                     children: [
