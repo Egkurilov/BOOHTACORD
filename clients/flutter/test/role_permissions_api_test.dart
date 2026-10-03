@@ -24,7 +24,7 @@ void main() {
       if (request.method == 'GET') return http.Response(jsonEncode({'revision': 4, 'roles': [
         {'role': 'ADMINISTRATOR', 'display_name': 'Администратор', 'editable': false, 'permissions': values(true)},
         {'role': 'MEMBER', 'display_name': 'Пользователь', 'editable': true, 'permissions': values()},
-      ]}), 200);
+      ]}), 200, headers: {'content-type': 'application/json; charset=utf-8'});
       return http.Response('{}', 200);
     }));
     client.baseUrl = 'https://voice.test/api/v1';
