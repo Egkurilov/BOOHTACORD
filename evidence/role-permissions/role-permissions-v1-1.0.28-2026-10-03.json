@@ -1,0 +1,96 @@
+{
+  "id": "ROLE-PERMISSIONS-V1-1.0.28",
+  "date": "2026-10-03",
+  "status": "PASS",
+  "pass_scope": "source, automated tests, web deployment, Android release and Windows release",
+  "source_revision": "9bd858ad50cebe3304324f71eecde5287f0d0033",
+  "promotion_revision": "a5286a028f67f23230369b48d59f8ca33e5dfd11",
+  "pull_requests": [
+    "https://github.com/Egkurilov/BOOHTACORD/pull/24",
+    "https://github.com/Egkurilov/BOOHTACORD/pull/25",
+    "https://github.com/Egkurilov/BOOHTACORD/pull/26",
+    "https://github.com/Egkurilov/BOOHTACORD/pull/27",
+    "https://github.com/Egkurilov/BOOHTACORD/pull/28",
+    "https://github.com/Egkurilov/BOOHTACORD/pull/29",
+    "https://github.com/Egkurilov/BOOHTACORD/pull/30",
+    "https://github.com/Egkurilov/BOOHTACORD/pull/31",
+    "https://github.com/Egkurilov/BOOHTACORD/pull/32",
+    "https://github.com/Egkurilov/BOOHTACORD/pull/33",
+    "https://github.com/Egkurilov/BOOHTACORD/pull/34",
+    "https://github.com/Egkurilov/BOOHTACORD/pull/35"
+  ],
+  "features": {
+    "member_permissions": "PASS",
+    "effective_permission_api": "PASS",
+    "administrator_policy_editor": "PASS",
+    "idempotent_topology_commands": "PASS",
+    "category_text_voice_create_delete": "PASS",
+    "text_archive_category_integrity_voice_closing": "PASS",
+    "realtime_permission_invalidation": "PASS",
+    "web_controls": "PASS",
+    "flutter_shared_controls": "PASS",
+    "contracts_and_documentation": "PASS"
+  },
+  "verification": {
+    "master_ci": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37090442222",
+    "master_build": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37090442297",
+    "promotion_ci": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37091820101",
+    "promotion_build": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37091820124",
+    "promotion_deployment": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37092060213",
+    "go": "PASS: full GitHub backend suite, vet and build",
+    "web": "PASS: 811 tests and production build",
+    "flutter": "PASS: 459 tests and analyzer",
+    "android": "PASS: Kotlin build modes, debug APK and signed release APKs",
+    "windows": "PASS: release build, package inspection and immutable ZIP",
+    "contracts": "PASS: contract and approved-brief traceability verifiers"
+  },
+  "android": {
+    "release_url": "https://github.com/Egkurilov/BOOHTACORD/releases/tag/android-v1.0.28",
+    "workflow": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37090449245",
+    "version": "1.0.28+42",
+    "release_id": "android-direct-stable-r42",
+    "signing_status": "signed",
+    "certificate_sha256": "394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b",
+    "apk_sha256": {
+      "arm64-v8a": "59beb980f337d6a3f27ecc0e3724f71173476cb4c5324dca2dab05db5d37088f",
+      "armeabi-v7a": "24756b7e00d43fbc2cfe4973af303bb24885f75a70673d5111b3fcb078d4f293",
+      "x86_64": "45822bd0e942e6ad530dac2874902d6c8ec3b79b374da02eadb946378d6dcb0f"
+    },
+    "version_codes": {"arm64-v8a": 2042, "armeabi-v7a": 1042, "x86_64": 4042}
+  },
+  "windows": {
+    "release_url": "https://github.com/Egkurilov/BOOHTACORD/releases/tag/windows-v1.0.28",
+    "workflow": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37090449142",
+    "version": "1.0.28+42",
+    "release_id": "windows-direct-stable-r42",
+    "zip_sha256": "4c493f2acfce6d15060df551269c64549e71ac6cdaed6c3c9d20945499aef7f1",
+    "signing_status": "unsigned",
+    "source_dirty": true
+  },
+  "production": {
+    "origin": "https://v.bootybay.ru",
+    "health_status": 200,
+    "health_body": {"status": "ok"},
+    "web_asset": "/assets/index-D3Usidba.js",
+    "catalog_revision": 14,
+    "release_order": 42,
+    "version": "1.0.28",
+    "selectors": [
+      "web/browser/stable/any",
+      "android/direct/stable/arm64",
+      "android/direct/stable/armv7",
+      "android/direct/stable/x64",
+      "windows/direct/stable/x64"
+    ],
+    "selector_smoke": "PASS: HTTP 200, Cache-Control no-store, catalog revision 14 and release order 42"
+  },
+  "physical_acceptance": {
+    "overall": "NOT_RUN",
+    "ios_native_build": "NOT_RUN: Windows host",
+    "macos_native_build": "NOT_RUN: Windows host",
+    "android_physical_device": "NOT_RUN",
+    "windows_physical_ux": "NOT_RUN",
+    "multi_user_livekit_media": "NOT_RUN",
+    "nvda_voiceover": "NOT_RUN"
+  }
+}
