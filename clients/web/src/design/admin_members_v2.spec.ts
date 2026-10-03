@@ -14,4 +14,13 @@ describe('V2 administrator member directory', () => {
     expect(members).toContain('createPasswordResetLink')
     expect(readFileSync(new URL('./design_v2_admin_members.css', import.meta.url), 'utf8')).toContain('.admin-panel--members')
   })
+
+  it('uses the handoff typography for the mobile directory', () => {
+    const css = readFileSync(new URL('./design_v2_admin_members.css', import.meta.url), 'utf8')
+    expect(css).toContain('.admin-panel--members .admin-panel-heading h1 { font-size: 24px; line-height: 32px; font-weight: 600; }')
+    expect(css).toContain('.admin-panel--members .admin-section-heading h2 { font-size: 20px; line-height: 28px; font-weight: 600; }')
+    expect(css).toContain('.admin-panel--members .admin-mobile-user strong { font-size: 16px; line-height: 20px; font-weight: 600; }')
+    const header = readFileSync(new URL('./design_v2_admin_permissions.css', import.meta.url), 'utf8')
+    expect(header).toContain('.settings-workspace-header .workspace-header-toggle--nav, .settings-workspace-close { width: 44px; height: 44px; }')
+  })
 })

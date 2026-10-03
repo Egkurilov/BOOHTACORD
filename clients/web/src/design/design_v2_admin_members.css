@@ -1,11 +1,11 @@
 /* R21–R22: real directory with server mutations in per-account actions. */
 .workspace-main-panel--admin .admin-panel--members .admin-panel-heading { position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: normal; }
 .admin-panel--members .admin-eyebrow { display: none; }
-.admin-panel--members .admin-panel-heading h1 { font-size: 24px; line-height: 32px; }
+.admin-panel--members .admin-panel-heading h1 { font-size: 24px; line-height: 32px; font-weight: 600; }
 .admin-panel--members .admin-panel-description { margin: 8px 0 0; color: #b6bdce; font-size: 14px; line-height: 20px; }
 .workspace-main-panel--admin .admin-panel--members { gap: 24px; }
 .workspace-main-panel--admin .admin-panel--members .admin-directory { gap: 20px; }
-.admin-panel--members .admin-section-heading h2 { font-size: 20px; line-height: 28px; }
+.admin-panel--members .admin-section-heading h2 { font-size: 20px; line-height: 28px; font-weight: 600; }
 .admin-panel--members .admin-section-heading h2 span { color: #a0a9be; }
 .admin-panel--members .admin-section-heading > button { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .admin-member-filters { display: flex; height: 44px; gap: 12px; }
@@ -54,7 +54,7 @@
   .admin-panel--members .admin-mobile-card summary::after { position: absolute; top: 0; right: 8px; color: #a0a9be; font-size: 20px; content: '⋯'; }
   .admin-panel--members .admin-mobile-user { gap: 12px; }
   .admin-panel--members .admin-mobile-avatar { width: 36px; height: 36px; font-size: 12px; }
-  .admin-panel--members .admin-mobile-user strong { font-size: 16px; line-height: 20px; }
+  .admin-panel--members .admin-mobile-user strong { font-size: 16px; line-height: 20px; font-weight: 600; }
   .admin-panel--members .admin-mobile-user small { font-size: 12px; line-height: 16px; }
   .admin-panel--members .admin-mobile-meta { align-items: center; padding-left: 0; font-size: 14px; }
   .admin-panel--members .admin-mobile-meta .is-active { border-radius: 4px; padding: 2px 6px; color: #63da8d; background: #123a26; font-size: 12px; font-weight: 600; }

@@ -45,6 +45,7 @@
 .workspace-main-panel--admin .role-policy-actions button:last-child:disabled { opacity: .45; }
 @media (max-width: 1023px) {
   .settings-workspace-header { height: 56px; min-height: 56px; gap: 8px; padding: 0 12px; }
+  .settings-workspace-header .workspace-header-toggle--nav, .settings-workspace-close { width: 44px; height: 44px; }
   .settings-workspace-header .workspace-header-actions { order: -1; }
   .settings-workspace-icon { display: none; }
   .workspace-main-panel--admin .admin-panel { gap: 20px; padding: 24px 16px 84px; }
