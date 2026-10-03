@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 
 const component = readFileSync(new URL('./AdminRolePermissions.vue', import.meta.url), 'utf8')
 const styles = readFileSync(new URL('../../design/design_v2_settings.css', import.meta.url), 'utf8')
+const presentation = readFileSync(new URL('../../design/design_v2_admin_permissions.css', import.meta.url), 'utf8')
+const workspace = readFileSync(new URL('../../workspace/WorkspaceMain.vue', import.meta.url), 'utf8')
 
 describe('Design V2 role permission table', () => {
   it('groups all six existing permission keys into three create/delete rows', () => {
@@ -26,5 +28,12 @@ describe('Design V2 role permission table', () => {
     expect(component).toContain('@click="reset"')
     expect(component).toContain('@click="cancel"')
     expect(component).toContain('@click="save"')
+  })
+
+  it('uses a functional settings header and keeps the mobile deletion notice visible', () => {
+    expect(workspace).toContain('class="admin-workspace-header"')
+    expect(workspace).toContain("emit('closePanel')")
+    expect(presentation).toContain('.role-permission-notice { display: flex;')
+    expect(presentation).toContain('.role-policy-actions button:first-of-type { position: absolute;')
   })
 })

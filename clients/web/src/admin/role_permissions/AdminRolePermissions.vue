@@ -18,6 +18,7 @@ const roles = ref<RolePolicy[]>([]); const selected = ref<RoleName>('MEMBER'); c
 const baseline = ref<PermissionValues>(memberPermissionDefaults()); const draft = ref<PermissionValues>(memberPermissionDefaults())
 const loading = ref(false); const saving = ref(false); const error = ref(''); const status = ref('')
 const current = computed(() => roles.value.find((role) => role.role === selected.value) ?? null)
+const orderedRoles = computed(() => [...roles.value].sort((left, right) => left.role === 'ADMINISTRATOR' ? -1 : right.role === 'ADMINISTRATOR' ? 1 : 0))
 const dirty = computed(() => selected.value === 'MEMBER' && changed(baseline.value, draft.value))
 const displayed = computed(() => selected.value === 'MEMBER' ? draft.value : current.value?.permissions ?? draft.value)
 
@@ -54,12 +55,12 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', guard))
 <template>
   <section class="role-permissions" aria-labelledby="role-permissions-title">
     <header class="admin-section-heading"><div><h2 id="role-permissions-title">Роли и разрешения</h2><p>Настройки применяются ко всем участникам выбранной роли.</p></div><button type="button" :disabled="loading" @click="load(false)">Обновить</button></header>
-    <div class="role-selector" role="tablist" aria-label="Роль"><button v-for="role in roles" :key="role.role" type="button" role="tab" :aria-selected="selected === role.role" @click="choose(role.role)">{{ role.role === 'MEMBER' ? 'Пользователь' : role.displayName }}</button></div>
+    <div class="role-selector" role="tablist" aria-label="Роль"><button v-for="role in orderedRoles" :key="role.role" type="button" role="tab" :aria-selected="selected === role.role" @click="choose(role.role)">{{ role.role === 'MEMBER' ? 'Пользователь' : role.displayName }}</button></div>
     <p v-if="loading && !roles.length" class="state" aria-live="polite">Загружаем разрешения…</p>
     <fieldset v-else class="role-permission-fieldset" :disabled="selected === 'ADMINISTRATOR' || saving"><legend class="gc-sr-only">Разрешения роли</legend>
       <header class="role-permission-table-heading"><h3>Управление каналами</h3><span>6 разрешений</span></header>
       <table class="role-permission-table"><thead><tr><th scope="col">Объект</th><th scope="col">Создавать</th><th scope="col">Удалять</th></tr></thead>
-        <tbody><tr v-for="row in permissionRows" :key="row.name"><th scope="row"><span class="role-permission-icon" aria-hidden="true"><svg v-if="row.icon === 'text'" viewBox="0 0 24 24"><path d="M4 9h16M3 15h16M10 3 8 21M16 3l-2 18" /></svg><svg v-else-if="row.icon === 'voice'" viewBox="0 0 24 24"><path d="M7 10v4a5 5 0 0 0 10 0v-4M12 19v3M8 22h8M12 2v8" /></svg><svg v-else viewBox="0 0 24 24"><path d="M3 5h7l2 2h9v12H3z" /></svg></span><span class="role-permission-label"><span>{{ row.name }}</span><small>{{ row.description }}</small></span></th>
+        <tbody><tr v-for="row in permissionRows" :key="row.name"><th scope="row"><span class="role-permission-object"><span class="role-permission-icon" aria-hidden="true"><svg v-if="row.icon === 'text'" viewBox="0 0 24 24"><path d="M4 9h16M3 15h16M10 3 8 21M16 3l-2 18" /></svg><svg v-else-if="row.icon === 'voice'" viewBox="0 0 24 24"><path d="M7 10v4a5 5 0 0 0 10 0v-4M12 19v3M8 22h8M12 2v8" /></svg><svg v-else viewBox="0 0 24 24"><path d="M3 5h7l2 2h9v12H3z" /></svg></span><span class="role-permission-label"><span>{{ row.name }}</span><small>{{ row.description }}</small></span></span></th>
           <td><input v-model="displayed[row.create]" type="checkbox" :aria-label="labels[row.create]" :disabled="selected === 'ADMINISTRATOR'"></td>
           <td><input v-model="displayed[row.remove]" type="checkbox" :aria-label="labels[row.remove]" :disabled="selected === 'ADMINISTRATOR'"></td>
         </tr></tbody>
@@ -67,7 +68,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', guard))
       <p class="role-permission-notice"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v5m0-8h.01" /></svg><span>Разрешение удаления действует на любые каналы, в том числе созданные другими участниками и администраторами.</span></p>
     </fieldset>
     <p v-if="selected === 'ADMINISTRATOR'" class="role-policy-note">Разрешения администратора обязательны и не изменяются.</p>
-    <div v-else class="role-policy-actions"><span class="role-policy-status">{{ dirty ? 'Есть несохранённые изменения' : 'Изменения не внесены' }}</span><button type="button" :disabled="saving" @click="reset">По умолчанию</button><button type="button" :disabled="!dirty || saving" @click="cancel">Отменить</button><button type="button" :disabled="!dirty || saving" @click="save">{{ saving ? 'Сохраняем…' : 'Сохранить' }}</button></div>
+    <div v-else class="role-policy-actions"><span class="role-policy-status">{{ dirty ? 'Есть несохранённые изменения' : 'Изменения не внесены' }}</span><button type="button" :disabled="saving" @click="reset">По умолчанию</button><button type="button" :disabled="saving" @click="cancel">Отменить</button><button type="button" :disabled="!dirty || saving" @click="save">{{ saving ? 'Сохраняем…' : 'Сохранить' }}</button></div>
     <p v-if="status" class="admin-status" aria-live="polite">{{ status }}</p><p v-if="error" class="admin-error" role="alert">{{ error }}</p>
   </section>
 </template>

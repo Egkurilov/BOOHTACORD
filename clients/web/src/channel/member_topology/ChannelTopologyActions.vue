@@ -14,6 +14,7 @@ const props = defineProps<{ activeVoiceChannelId?: string; selectedChannelId?: s
 const emit = defineEmits<{ select: [channel: TopologyChannel]; changed: [] }>()
 const permissionStore = usePermissionStore()
 const open = ref(false); const name = ref(''); const kind = ref<'CATEGORY' | ChannelKind>('TEXT'); const categoryId = ref('')
+const showCategoryKind = ref(false)
 const busy = ref(false); const error = ref(''); const status = ref(''); const nameInput = ref<HTMLInputElement | null>(null)
 const dialogForm = ref<HTMLFormElement | null>(null); const opener = ref<HTMLElement | null>(null)
 const confirmation = ref<{ ask: (message: string) => Promise<boolean> } | null>(null); const confirmationLabel = ref('Подтвердить')
@@ -24,11 +25,14 @@ function permittedKinds(): Array<'CATEGORY' | ChannelKind> {
 }
 function begin(category?: TopologyCategory): void {
   opener.value = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  showCategoryKind.value = !category
   const available = permittedKinds(); kind.value = category ? (available.includes('TEXT') ? 'TEXT' : 'VOICE') : available[0] ?? 'CATEGORY'
   categoryId.value = category?.id ?? props.topology.categories[0]?.id ?? ''; name.value = ''; error.value = ''; status.value = ''; requestId = id(); open.value = true
   void nextTick(() => nameInput.value?.focus())
 }
 function changedIntent(): void { requestId = id(); error.value = ''; status.value = '' }
+function chooseKind(value: 'CATEGORY' | ChannelKind): void { kind.value = value; changedIntent() }
+function categoryLabel(value: string): string { const name = value.toLocaleLowerCase('ru'); return name.charAt(0).toLocaleUpperCase('ru') + name.slice(1) }
 function close(force = false): void { if (busy.value && !force) return; open.value = false; void nextTick(() => opener.value?.focus()) }
 function containTab(event: KeyboardEvent): void {
   if (event.key !== 'Tab') return
@@ -72,12 +76,15 @@ async function remove(target: TopologyCategory | TopologyChannel): Promise<void>
   <ChannelNavigation :active-voice-channel-id="activeVoiceChannelId" :selected-channel-id="selectedChannelId" :topology="topology" :permissions="permissions" :voice-presence="voicePresence" :voice-rosters="voiceRosters" @select="emit('select', $event)" @create-global="begin()" @create-in-category="begin" @delete-category="remove" @delete-channel="remove" @changed="emit('changed')" />
   <AdminConfirmation ref="confirmation" id="member-topology-confirm" title="Подтвердите действие" :confirm-label="confirmationLabel" />
   <Teleport to="body"><div v-if="open" class="topology-dialog-backdrop" @click.self="close()"><form ref="dialogForm" class="topology-dialog" role="dialog" aria-modal="true" aria-labelledby="topology-create-title" @submit.prevent="submit" @keydown.esc.prevent="close()" @keydown="containTab">
-    <header><div><h2 id="topology-create-title">{{ kind === 'CATEGORY' ? 'Создать раздел' : 'Создать канал' }}</h2><p>Новое место для общения в вашей гильдии</p></div><button type="button" aria-label="Закрыть" :disabled="busy" @click="close()">×</button></header>
-    <label>{{ kind === 'CATEGORY' ? 'Тип раздела' : 'Тип канала' }}<select v-model="kind" :disabled="busy" @change="changedIntent"><option v-for="option in permittedKinds()" :key="option" :value="option">{{ option === 'CATEGORY' ? 'Раздел' : option === 'TEXT' ? 'Текстовый' : 'Голосовой' }}</option></select></label>
-    <label v-if="kind !== 'CATEGORY'">Раздел<select v-model="categoryId" :disabled="busy" @change="changedIntent"><option v-for="category in topology.categories" :key="category.id" :value="category.id">{{ category.name }}</option></select></label>
-    <label>{{ kind === 'CATEGORY' ? 'Название раздела' : 'Название канала' }}<input ref="nameInput" v-model="name" :disabled="busy" maxlength="80" required @input="changedIntent"></label>
-    <p v-if="kind !== 'CATEGORY'" class="topology-dialog-note">Канал будет доступен участникам гильдии согласно их ролям.</p>
-    <p v-if="kind !== 'CATEGORY' && !topology.categories.length" class="topology-action-error">Сначала создайте раздел.</p><p v-if="error" class="topology-action-error" role="alert">{{ error }}</p>
+    <header class="topology-dialog-header"><h2 id="topology-create-title">{{ kind === 'CATEGORY' ? 'Создать раздел' : 'Создать канал' }}</h2><button type="button" aria-label="Закрыть" :disabled="busy" @click="close()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button></header>
+    <p class="topology-dialog-description">Новое место для общения в вашей гильдии.</p>
+    <div class="topology-dialog-fields">
+      <div class="topology-kind-field"><span>{{ kind === 'CATEGORY' ? 'Тип раздела' : 'Тип канала' }}</span><div class="topology-kind-selector" role="group" aria-label="Тип канала"><button v-for="option in permittedKinds().filter((candidate) => showCategoryKind || candidate !== 'CATEGORY')" :key="option" type="button" :aria-pressed="kind === option" :disabled="busy" @click="chooseKind(option)"><svg v-if="option === 'TEXT'" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14M4 15h14M11 3 7 21M17 3l-4 18"/></svg><svg v-else-if="option === 'VOICE'" viewBox="0 0 24 24" aria-hidden="true"><path d="m11 5-6 4H2v6h3l6 4V5ZM15 8a6 6 0 0 0 0 8M18 5a10 10 0 0 0 0 14"/></svg><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h6l2 2h10v13H3V5Z"/></svg>{{ option === 'CATEGORY' ? 'Раздел' : option === 'TEXT' ? 'Текстовый' : 'Голосовой' }}</button></div></div>
+      <label class="topology-name-field">{{ kind === 'CATEGORY' ? 'Название раздела' : 'Название канала' }}<input ref="nameInput" v-model="name" :disabled="busy" maxlength="80" required @input="changedIntent"></label>
+      <label v-if="kind !== 'CATEGORY'" class="topology-category-field">Раздел<select v-model="categoryId" :disabled="busy" @change="changedIntent"><option v-for="category in topology.categories" :key="category.id" :value="category.id">{{ categoryLabel(category.name) }}</option></select></label>
+      <p v-if="kind !== 'CATEGORY'" class="topology-dialog-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Канал будет доступен всем участникам.</p>
+      <p v-if="kind !== 'CATEGORY' && !topology.categories.length" class="topology-action-error">Сначала создайте раздел.</p><p v-if="error" class="topology-action-error" role="alert">{{ error }}</p>
+    </div>
     <div class="topology-dialog-actions"><button type="button" :disabled="busy" @click="close()">Отмена</button><button type="submit" :disabled="busy || (kind !== 'CATEGORY' && !categoryId)">{{ busy ? 'Создаём…' : kind === 'CATEGORY' ? 'Создать раздел' : 'Создать канал' }}</button></div>
   </form></div></Teleport>
 </template>
