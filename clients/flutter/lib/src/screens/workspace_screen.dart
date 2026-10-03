@@ -2230,6 +2230,12 @@ class _ConversationState extends State<_Conversation>
   Widget build(BuildContext context) {
     final viewportWidth = MediaQuery.sizeOf(context).width;
     final compact = viewportWidth < GcLayout.mobileBreakpoint;
+    final composerBorderRadius = _replyTarget == null
+        ? const BorderRadius.all(Radius.circular(12))
+        : const BorderRadius.only(
+            bottomLeft: Radius.circular(12),
+            bottomRight: Radius.circular(12),
+          );
     final renderedMessages = widget.state.messages;
     final timeline = messageTimeline(renderedMessages);
     if (_observedChannelId != widget.channel.id ||
@@ -2414,7 +2420,9 @@ class _ConversationState extends State<_Conversation>
                 ? 70
                 : 98,
           ),
-          padding: compact
+          padding: _replyTarget != null
+              ? const EdgeInsets.fromLTRB(24, 0, 24, 18)
+              : compact
               ? const EdgeInsets.all(8)
               : EdgeInsets.fromLTRB(
                   viewportWidth < GcLayout.mediumBreakpoint ? 20 : 24,
@@ -2494,8 +2502,25 @@ class _ConversationState extends State<_Conversation>
                   onSubmitted: (_) => _send(),
                   decoration: InputDecoration(
                     isDense: true,
+                    filled: true,
+                    fillColor: GcColors.raised,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                     constraints: BoxConstraints(minHeight: compact ? 54 : 52),
+                    border: OutlineInputBorder(
+                      borderRadius: composerBorderRadius,
+                      borderSide: const BorderSide(color: GcColors.control),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: composerBorderRadius,
+                      borderSide: const BorderSide(color: GcColors.control),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: composerBorderRadius,
+                      borderSide: const BorderSide(
+                        color: GcColors.focus,
+                        width: 2,
+                      ),
+                    ),
                     prefixIconConstraints: const BoxConstraints(
                       minWidth: 44,
                       minHeight: 44,
@@ -2609,6 +2634,7 @@ class _ComposerKeyboardHelp extends StatelessWidget {
                       style: TextStyle(
                         color: GcColors.muted,
                         fontSize: GcTypography.caption,
+                        height: 16 / GcTypography.caption,
                       ),
                     ),
                   ),
@@ -2618,6 +2644,7 @@ class _ComposerKeyboardHelp extends StatelessWidget {
                     style: TextStyle(
                       color: GcColors.muted,
                       fontSize: GcTypography.caption,
+                      height: 16 / GcTypography.caption,
                     ),
                   ),
                 ],
@@ -3031,30 +3058,42 @@ class _ReplyTargetBanner extends StatelessWidget {
   final VoidCallback onCancel;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    margin: const EdgeInsets.only(bottom: 8),
-    padding: const EdgeInsets.fromLTRB(10, 5, 4, 5),
-    decoration: const BoxDecoration(
-      border: Border(left: BorderSide(color: GcColors.accentText, width: 2)),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
+  Widget build(BuildContext context) => SizedBox(
+    key: const ValueKey('reply-target-banner'),
+    height: 41,
+    child: Container(
+      decoration: BoxDecoration(
+        color: GcColors.surface,
+        border: Border.all(color: GcColors.control),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: GcColors.text, fontSize: 12),
+            ),
           ),
-        ),
-        IconButton(
-          tooltip: 'Отменить ответ',
-          onPressed: onCancel,
-          icon: const Icon(Icons.close, size: 16),
-          visualDensity: VisualDensity.compact,
-        ),
-      ],
+          TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(48, 32),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              foregroundColor: GcColors.textSecondary,
+              backgroundColor: GcColors.raised,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(GcRadii.sm),
+              ),
+            ),
+            onPressed: onCancel,
+            child: const Text('Отмена'),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -4120,6 +4159,12 @@ class _DirectConversationState extends State<_DirectConversation> {
     );
     final viewportWidth = MediaQuery.sizeOf(context).width;
     final compact = viewportWidth < GcLayout.mobileBreakpoint;
+    final composerBorderRadius = _replyTarget == null
+        ? const BorderRadius.all(Radius.circular(12))
+        : const BorderRadius.only(
+            bottomLeft: Radius.circular(12),
+            bottomRight: Radius.circular(12),
+          );
     return Column(
       children: [
         _Header(
@@ -4386,7 +4431,9 @@ class _DirectConversationState extends State<_DirectConversation> {
                 ? 70
                 : 98,
           ),
-          padding: compact
+          padding: _replyTarget != null
+              ? const EdgeInsets.fromLTRB(24, 0, 24, 18)
+              : compact
               ? const EdgeInsets.all(8)
               : const EdgeInsets.fromLTRB(24, 8, 24, 16),
           child: Column(
@@ -4463,15 +4510,31 @@ class _DirectConversationState extends State<_DirectConversation> {
                   onSubmitted: (_) => _send(),
                   decoration: InputDecoration(
                     isDense: true,
+                    filled: true,
+                    fillColor: GcColors.raised,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                     constraints: BoxConstraints(minHeight: compact ? 54 : 52),
+                    border: OutlineInputBorder(
+                      borderRadius: composerBorderRadius,
+                      borderSide: const BorderSide(color: GcColors.control),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: composerBorderRadius,
+                      borderSide: const BorderSide(color: GcColors.control),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: composerBorderRadius,
+                      borderSide: const BorderSide(
+                        color: GcColors.focus,
+                        width: 2,
+                      ),
+                    ),
                     prefixIconConstraints: const BoxConstraints(
                       minWidth: 44,
                       minHeight: 44,
                     ),
                     counterText: '',
-                    hintText:
-                        'Сообщение для ${widget.conversation.displayName}…',
+                    hintText: 'Написать сообщение…',
                     prefixIcon: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

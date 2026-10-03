@@ -2231,6 +2231,138 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('reply composer geometry matches Design V2 for text and DM', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      _PortraitApi(
+        withHistory: true,
+        historyCount: 2,
+        includeDirectMessage: true,
+      ),
+    );
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> selectReplyTarget() async {
+      await tester.tap(find.byTooltip('Действия с сообщением').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ответить'));
+      await tester.pumpAndSettle();
+    }
+
+    void expectReplyGeometry({required double fieldHeight}) {
+      final wrapper = tester.widget<Container>(
+        find.byKey(const ValueKey('text-composer-wrap')),
+      );
+      expect(wrapper.padding, const EdgeInsets.fromLTRB(24, 0, 24, 18));
+      expect(
+        tester
+            .getRect(find.byKey(const ValueKey('reply-target-banner')))
+            .height,
+        41,
+      );
+      final banner = tester.widget<Container>(
+        find.descendant(
+          of: find.byKey(const ValueKey('reply-target-banner')),
+          matching: find.byType(Container),
+        ),
+      );
+      expect(
+        (banner.decoration! as BoxDecoration).borderRadius,
+        const BorderRadius.vertical(top: Radius.circular(10)),
+      );
+      expect((banner.decoration! as BoxDecoration).color, GcColors.surface);
+      expect(tester.getRect(find.byType(TextField).last).height, fieldHeight);
+      expect(
+        tester.getRect(find.byKey(const ValueKey('text-composer-wrap'))).height,
+        131,
+      );
+      expect(find.text('Отмена'), findsOneWidget);
+      final decoration = tester
+          .widget<TextField>(find.byType(TextField).last)
+          .decoration!;
+      expect(decoration.hintText, 'Написать сообщение…');
+      expect(decoration.fillColor, GcColors.raised);
+      expect(
+        (decoration.enabledBorder as OutlineInputBorder).borderRadius,
+        const BorderRadius.only(
+          bottomLeft: Radius.circular(12),
+          bottomRight: Radius.circular(12),
+        ),
+      );
+    }
+
+    void expectDirectReplyGeometry({required double fieldHeight}) {
+      final wrapper = tester.widget<Container>(
+        find.byKey(const ValueKey('direct-message-composer-wrap')),
+      );
+      expect(wrapper.padding, const EdgeInsets.fromLTRB(24, 0, 24, 18));
+      expect(
+        tester
+            .getRect(find.byKey(const ValueKey('direct-message-composer-wrap')))
+            .height,
+        131,
+      );
+      expect(
+        tester
+            .getRect(find.byKey(const ValueKey('reply-target-banner')))
+            .height,
+        41,
+      );
+      final decoration = tester
+          .widget<TextField>(find.byType(TextField).last)
+          .decoration!;
+      expect(decoration.hintText, 'Написать сообщение…');
+      expect(decoration.fillColor, GcColors.raised);
+      expect(tester.getRect(find.byType(TextField).last).height, fieldHeight);
+      expect(
+        (decoration.enabledBorder as OutlineInputBorder).borderRadius,
+        const BorderRadius.only(
+          bottomLeft: Radius.circular(12),
+          bottomRight: Radius.circular(12),
+        ),
+      );
+    }
+
+    await selectReplyTarget();
+    expectReplyGeometry(fieldHeight: 54);
+    tester.view.physicalSize = const Size(1440, 900);
+    await tester.pumpAndSettle();
+    expectReplyGeometry(fieldHeight: 52);
+
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpAndSettle();
+    await selectReplyTarget();
+    expectDirectReplyGeometry(fieldHeight: 52);
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    expectDirectReplyGeometry(fieldHeight: 54);
+    await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('reply-target-banner')), findsNothing);
+    expect(
+      tester
+          .getRect(find.byKey(const ValueKey('direct-message-composer-wrap')))
+          .height,
+      70,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets(
     'opens a reply context when its target is outside loaded history',
     (tester) async {
@@ -3379,7 +3511,13 @@ class _PortraitApi extends ApiClient {
   @override
   Future<SessionUser?> currentSession() async =>
       const SessionUser(accountId: 'account-1', role: 'MEMBER');
-  @override Future<PermissionSnapshot> loadPermissions() async => PermissionSnapshot(accountId: 'account-1', role: GuildRole.member, revision: 1, values: {for (final permission in GuildPermission.values) permission: true});
+  @override
+  Future<PermissionSnapshot> loadPermissions() async => PermissionSnapshot(
+    accountId: 'account-1',
+    role: GuildRole.member,
+    revision: 1,
+    values: {for (final permission in GuildPermission.values) permission: true},
+  );
 
   @override
   Future<OwnProfile> ownProfile() async => const OwnProfile(

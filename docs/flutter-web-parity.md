@@ -439,7 +439,16 @@ both deployed web and Flutter viewers.
   changed-file analysis, Android Debug APK and macOS Debug builds pass —
   [QA-238](../evidence/flutter/qa238-flutter-design-v2-shell-chat-geometry-2026-10-03-001.json).
   Screenshot comparison, Windows build, and runtime acceptance are not run.
-- Remaining FV2-002 work includes full message/history and attachment/reply
+- FV2-008 aligns the TEXT/DM reply state with the web geometry: a 41 px bordered
+  reply target joins the lower-rounded 52/54 px composer inside a 131 px band;
+  both use the shared 24 px horizontal/18 px bottom reply padding and web
+  surface colors. DM now uses the same one-line composer hint as web. Tests cover
+  390 px and 1440 px for both conversation types, including cancel; the full
+  suite (463), WorkspaceScreen tests (61), changed-file analysis and Android /
+  macOS Debug builds pass —
+  [QA-239](../evidence/flutter/qa239-flutter-design-v2-reply-composer-2026-10-03-001.json).
+  Screenshot comparison, Windows build and device runtime are not run.
+- Remaining FV2-002 work includes full message/history and attachment
   visual states plus on-device scroll/read-cursor/IME acceptance. Match remaining
   shell interactions at wide, medium and compact widths.
 - Implement web-equivalent responsive navigation/member/search drawers,
