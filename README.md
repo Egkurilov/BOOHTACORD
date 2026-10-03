@@ -17,6 +17,8 @@ LiveKit передаёт медиа; API не проксирует RTP/RTCP. DM 
 участникам, включая ограничения для администратора. Камера, запись,
 федерация и резервные копии не входят в продукт.
 
+Администратор настраивает для роли MEMBER шесть разрешений создания и удаления категорий, текстовых и голосовых каналов. Web и общий Flutter-клиент для Android, iOS, Windows и macOS обновляют effective permissions без повторного входа; сервер проверяет ACL для каждой команды и сохраняет actor-scoped idempotency receipt.
+
 ## Начало работы
 
 Установите версии инструментов из [tools/toolchains.json](tools/toolchains.json)
@@ -65,6 +67,7 @@ Native-дистрибутивы и их metadata сохраняются как C
 
 - [Навигация документации](docs/README.md), [текущая архитектура](docs/architecture/README.md).
 - [Спецификация](docs/specs/spec-voice-platform/SPEC.md), [OpenAPI](contracts/openapi.yaml), [realtime schema](contracts/realtime.schema.json).
+- [Роли и управление каналами](docs/features/role-permissions-and-channel-management-v1.md), [TODO фичи](backlog/ROLE_PERMISSIONS_TODO.md).
 - [Android](docs/clients/android.md), [iOS](docs/clients/ios/README.md), [версии](docs/clients/versions.md), [Flutter parity](docs/flutter-web-parity.md).
 - [Граф задач](backlog/tasks.yaml), [оставшаяся работа](TODO.md), [проверенные результаты и история](DONE.md).
 - [Evidence](evidence/README.md), [условия приёмки](docs/ACCEPTANCE.md).
