@@ -32,6 +32,7 @@ type Subscription struct {
 	events       chan Event
 	overflowed   chan struct{}
 	dropped      bool
+	capabilities map[string]struct{}
 	once         sync.Once
 }
 
@@ -47,15 +48,28 @@ func (hub *Hub) Subscribe(accountIDs ...string) *Subscription {
 	if len(accountIDs) > 0 {
 		accountID = accountIDs[0]
 	}
-	return hub.subscribe(accountID, nil)
+	return hub.subscribe(accountID, nil, nil)
 }
 
 func (hub *Hub) SubscribeAccount(accountID string, onlineEvent Event) *Subscription {
-	return hub.subscribe(accountID, &onlineEvent)
+	return hub.subscribe(accountID, &onlineEvent, nil)
 }
 
-func (hub *Hub) subscribe(accountID string, onlineEvent *Event) *Subscription {
-	subscription := &Subscription{hub: hub, accountID: accountID, events: make(chan Event, hub.queueSize), overflowed: make(chan struct{}, 1)}
+func (hub *Hub) SubscribeAccountWithCapabilities(accountID string, onlineEvent Event, capabilities []string) *Subscription {
+	set := make(map[string]struct{}, len(capabilities))
+	for _, capability := range capabilities {
+		if capability != "" {
+			set[capability] = struct{}{}
+		}
+	}
+	if onlineEvent.Kind == "" {
+		return hub.subscribe(accountID, nil, set)
+	}
+	return hub.subscribe(accountID, &onlineEvent, set)
+}
+
+func (hub *Hub) subscribe(accountID string, onlineEvent *Event, capabilities map[string]struct{}) *Subscription {
+	subscription := &Subscription{hub: hub, accountID: accountID, capabilities: capabilities, events: make(chan Event, hub.queueSize), overflowed: make(chan struct{}, 1)}
 	hub.mu.Lock()
 	hub.subscribers[subscription] = struct{}{}
 	if hub.broken {

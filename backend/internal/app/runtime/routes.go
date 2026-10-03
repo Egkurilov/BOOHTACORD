@@ -26,9 +26,9 @@ import (
 func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub, metrics *httpmetrics.Recorder, updates clientupdates.Provider) (http.Handler, error) {
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/client-updates", clientupdates.Handler(updates, metrics))
-	auth := authroutes.Register(mux, database, configuration)
+	auth := authroutes.Register(mux, database, configuration, events)
 	sessionService, maintenanceService := auth.Sessions, auth.Maintenance
-	authorizationroutes.ConfigureRolePermissionRoutes(mux, database, sessionService)
+	authorizationroutes.ConfigureRolePermissionRoutes(mux, database, sessionService, events)
 	if err := mediaroutes.ConfigureMediaRevocationRoutes(mux, database, authorizelivekitsignal.Config{APIKey: configuration.LiveKitAPIKey, APISecret: configuration.LiveKitAPISecret}, maintenanceService); err != nil {
 		return nil, fmt.Errorf("configure media admission: %w", err)
 	}

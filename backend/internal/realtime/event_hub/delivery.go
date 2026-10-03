@@ -24,10 +24,19 @@ func (hub *Hub) publishLocked(event Event) {
 }
 
 func (hub *Hub) deliverLocked(subscription *Subscription, event Event) {
+	if permissionCapabilityRequired(event.Kind) {
+		if _, supported := subscription.capabilities["role_permissions_v1"]; !supported {
+			return
+		}
+	}
 	select {
 	case subscription.events <- event:
 	default:
 		subscription.dropped = true
 		subscription.overflowed <- struct{}{}
 	}
+}
+
+func permissionCapabilityRequired(kind string) bool {
+	return kind == "role.permissions.updated" || kind == "auth.permissions.invalidated"
 }

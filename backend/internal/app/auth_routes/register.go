@@ -23,11 +23,13 @@ import (
 	"voice-platform/backend/internal/identity/logout_user"
 	logoutapi "voice-platform/backend/internal/identity/logout_user/api"
 	logoutpostgres "voice-platform/backend/internal/identity/logout_user/postgres"
+	publishpermissioninvalidation "voice-platform/backend/internal/identity/publish_permission_invalidation"
 	"voice-platform/backend/internal/identity/register_user"
 	registerapi "voice-platform/backend/internal/identity/register_user/api"
 	registerpostgres "voice-platform/backend/internal/identity/register_user/postgres"
 	maintenanceadmission "voice-platform/backend/internal/maintenance/admission"
 	maintenancepostgres "voice-platform/backend/internal/maintenance/admission/postgres"
+	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
 type Services struct {
@@ -35,7 +37,7 @@ type Services struct {
 	Maintenance maintenanceadmission.Service
 }
 
-func Register(mux *http.ServeMux, database *pgxpool.Pool, configuration runtimeconfig.Config) Services {
+func Register(mux *http.ServeMux, database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub) Services {
 	registerService := registeruser.New(registerpostgres.New(registerpostgres.NewPoolExecutor(database)))
 	loginRepository := loginpostgres.New(loginpostgres.NewPoolDatabase(database))
 	loginService := loginuser.New(loginRepository, loginRepository)
@@ -52,6 +54,7 @@ func Register(mux *http.ServeMux, database *pgxpool.Pool, configuration runtimec
 	mux.Handle("GET /api/v1/auth/session", sessionapi.Optional(sessionService)(sessionapi.CurrentHandler()))
 	mux.Handle("POST /api/v1/auth/password-reset/complete", configuration.PasswordResetLimiter.Middleware(completeresetapi.NewHandler(passwordResetService)))
 	mux.Handle("POST /api/v1/admin/password-reset-links", sessionapi.Require(sessionService)(sessionapi.RequireAdministrator(configuration.PasswordResetLimiter.Middleware(createresetapi.NewHandler(passwordResetCreator, configuration.PublicOrigin)))))
-	mux.Handle("PATCH /api/v1/admin/accounts/{accountID}", sessionapi.Require(sessionService)(sessionapi.RequireAdministrator(adminapi.NewHandler(accountAdministration))))
+	adminAccountHandler := publishpermissioninvalidation.NewHandler(adminapi.NewHandler(accountAdministration), events)
+	mux.Handle("PATCH /api/v1/admin/accounts/{accountID}", sessionapi.Require(sessionService)(sessionapi.RequireAdministrator(adminAccountHandler)))
 	return Services{Sessions: sessionService, Maintenance: maintenanceService}
 }
