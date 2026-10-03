@@ -19,6 +19,11 @@ let memberPermissions = {
 let roleRevision = 1
 let createdChannel = null
 let profileDisplayName = 'Егор'
+const searchChannelId = '11111111-1111-4111-8111-111111111111'
+const searchAuthors = ['22222222-2222-4222-8222-222222222221', '33333333-3333-4333-8333-333333333332', '44444444-4444-4444-8444-444444444440']
+const searchNames = ['Alex', 'Daria', 'Max']
+const searchTopology = { ...chatTopology, categories: chatTopology.categories.map((category) => ({ ...category, channels: category.channels.map((channel) => channel.id === 'text-1' ? { ...channel, id: searchChannelId } : channel) })) }
+const searchMessages = chatMessages.map((message) => ({ ...message, channel_id: searchChannelId }))
 const topology = { revision: 1, categories: [{ id: 'category-1', name: 'ОБЩЕНИЕ', position: 0, channels: [
   { id: 'text-1', name: 'общее', kind: 'TEXT', position: 0, admission_closed: false, unread_count: 0, mention_count: 0 },
   { id: 'voice-1', name: 'Общий', kind: 'VOICE', position: 1, admission_closed: false },
@@ -33,9 +38,13 @@ const accounts = [{ ...fixtureMember, account_id: fixtureMember.user_id }, ...['
 function response(path) {
   if (path.endsWith('/auth/session')) return { account_id: referenceFixture ? chatProfile.account_id : profile.account_id, role: profile.role }
   if (path.endsWith('/auth/permissions')) return { account_id: referenceFixture ? chatProfile.account_id : profile.account_id, role: profile.role, permissions_revision: 1, permissions }
-  if (path.endsWith('/channels')) return referenceFixture ? chatTopology : topology
+  if (path.endsWith('/channels')) return state === 'search' && referenceFixture ? searchTopology : referenceFixture ? chatTopology : topology
   if (path.endsWith('/me')) return referenceFixture ? state === 'profile' ? { ...chatProfile, login: 'owner', display_name: profileDisplayName } : chatProfile : profile
   if (path.endsWith('/members')) return { members: referenceFixture ? chatMembers : [reviewMember, fixtureMember] }
+  if (state === 'search' && referenceFixture && path.includes('/members/')) {
+    const index = searchAuthors.findIndex((id) => path.endsWith(`/${id}`))
+    if (index >= 0) return { user_id: searchAuthors[index], login: searchNames[index].toLowerCase(), display_name: searchNames[index], role: 'MEMBER', presence: 'online' }
+  }
   if (referenceFixture && path.includes('/members/')) return chatMembers.find((member) => path.endsWith(`/${member.user_id}`)) ?? {}
   if (path.endsWith('/members/member-0')) return reviewMember
   if (path.includes('/admin/accounts')) return { accounts }
@@ -45,7 +54,7 @@ function response(path) {
   ] }
   if (path.endsWith('/direct-messages')) return { direct_messages: [{ id: 'dm-review', other_participant_id: 'member-0', other_participant_display_name: 'Daria', created_at: '2026-10-03T10:00:00Z', unread_count: 0, mention_count: 0 }] }
   if (path.includes('/messages')) {
-    if (referenceFixture) return { messages: chatMessages }
+    if (referenceFixture) return { messages: state === 'search' ? searchMessages : chatMessages }
     const dm = path.includes('/direct-messages/')
     const samples = [
       { id: 'review-message-1', author_id: 'member-0', client_message_id: 'review-client-1', body: 'Кто сегодня играет вечером?', revision: 1, created_at: '2026-10-03T16:28:00Z', deleted: false, attachments: [], mention_user_ids: [] },
@@ -62,7 +71,7 @@ function response(path) {
 
 const browser = await chromium.launch({ headless: true })
 const state = process.argv[2] ?? 'chat'
-const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'audio', 'profile'].includes(state)
+const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'audio', 'profile', 'search'].includes(state)
 const width = Number(process.argv[3] ?? 1440)
 const height = Number(process.argv[4] ?? 900)
 const screenshotPath = process.env.DESIGN_V2_SCREENSHOT
@@ -100,6 +109,13 @@ await page.route('**/api/v1/**', async (route) => {
   if (referenceFixture && path.endsWith('/attachments/scene/preview') && process.env.DESIGN_V2_SCENE_PNG) {
     await route.fulfill({ contentType: 'image/png', body: readFileSync(process.env.DESIGN_V2_SCENE_PNG) }); return
   }
+  if (referenceFixture && state === 'search' && path.endsWith('/search/messages')) {
+    const results = ['Кто сегодня играет вечером?', 'Буду вечером, ближе к восьми.', 'Давайте обсудим вечером.'].map((body, index) => ({
+      id: `55555555-5555-4555-8555-55555555555${index}`, kind: 'CHANNEL', channel_id: searchChannelId,
+      author_id: searchAuthors[index], body, revision: 1, created_at: `2026-10-03T16:3${index}:00Z`,
+    }))
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ messages: results }) }); return
+  }
   const status = state === 'auth' && path.endsWith('/auth/session') ? 401 : 200
   await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(response(path)) })
 })
@@ -119,7 +135,7 @@ if (state === 'context') await page.locator('.channel-category').first().evaluat
 if (state === 'reply' && await page.locator('.message-actions-toggle').count()) { await page.locator('.message-actions-toggle').first().evaluate((button) => button.click()); await page.locator('.message-action-buttons button').first().evaluate((button) => button.click()); await page.locator('#message-body').fill('@Da'); await page.locator('.mention-popover').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {}) }
 if (state === 'audio') { await page.getByRole('button', { name: 'Настройки аудио' }).evaluate((button) => button.click()); await closeNavigation() }
 if (state === 'profile') { await page.getByRole('button', { name: 'Открыть настройки профиля' }).evaluate((button) => button.click()); await closeNavigation() }
-if (state === 'search') { await page.getByRole('button', { name: 'Поиск сообщений' }).click(); await closeNavigation() }
+if (state === 'search') { await page.getByRole('button', { name: 'Поиск сообщений' }).click(); await closeNavigation(); if (referenceFixture) { await page.getByRole('searchbox', { name: 'Запрос' }).fill('вечером'); await page.getByRole('searchbox', { name: 'Запрос' }).press('Enter'); await page.locator('.search-result').nth(2).waitFor() } }
 if (state === 'topology-category') { await page.getByRole('button', { name: 'Создать категорию или канал' }).click(); await closeNavigation() }
 if (state === 'topology-channel') { await page.getByRole('button', { name: 'Создать канал в категории ОБЩЕНИЕ' }).click(); await closeNavigation(); if (referenceFixture) await page.getByRole('textbox', { name: 'Название канала' }).fill('вечерние-заезды') }
 if (state === 'member-popover') { const member = page.locator('.members-guild-roster button.member').filter({ hasText: 'Daria' }); await member.waitFor(); await member.click() }
@@ -127,7 +143,7 @@ if (state === 'delete-confirm') await page.getByRole('button', { name: 'Дейс
 if (state === 'dm') { await page.getByRole('button', { name: 'Личные', exact: true }).click(); await page.getByRole('button', { name: 'Daria', exact: true }).click() }
 if (referenceFixture && state === 'topology-channel') await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
 await page.waitForTimeout(state === 'update' ? 5500 : 100)
-if (referenceFixture && ['roles', 'topology-channel', 'audio', 'profile'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
+if (referenceFixture && ['roles', 'topology-channel', 'audio', 'profile', 'search'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
 if (referenceFixture && state === 'chat') {
   await page.locator('.message-item').nth(3).waitFor({ state: 'visible' })
   await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
@@ -208,6 +224,19 @@ if (state === 'profile' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
   await page.getByRole('button', { name: 'Закрыть настройки', exact: true }).click()
   await page.locator('.workspace-main-panel--profile').waitFor({ state: 'detached' })
   interactions.push('close-returns-to-workspace')
+}
+if (state === 'search' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  assert.equal(await page.locator('.search-result').count(), 3)
+  assert.equal(await page.locator('.search-result-body mark').count(), 3)
+  interactions.push('server-search-and-safe-highlights')
+  await page.getByRole('combobox', { name: 'Область поиска' }).selectOption('current')
+  await page.getByRole('searchbox', { name: 'Запрос' }).press('Enter')
+  await page.locator('.search-result').nth(2).waitFor()
+  assert.ok(requests.includes('GET /api/v1/search/messages'))
+  interactions.push('current-conversation-scope')
+  await page.getByRole('button', { name: 'Открыть сообщение от Alex' }).click()
+  await page.locator('.search-aside').waitFor({ state: 'detached' })
+  interactions.push('open-result-in-real-channel')
 }
 console.log(JSON.stringify({ viewport: page.viewportSize(), state, boxes, styles, composerChildren, requests, errors, interactions }, null, 2))
 await browser.close()

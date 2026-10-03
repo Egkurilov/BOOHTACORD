@@ -33,8 +33,17 @@ describe('GuildChat unified search design contract', () => {
 
   it('keeps search labelled, keyboard reachable, paged, and safe-rendered', () => {
     for (const expected of ['aria-keyshortcuts="Control+K Meta+K"', 'aria-expanded', 'Escape', 'focus()']) expect(searchLauncher).toContain(expected)
-    for (const expected of ['role="search"', 'aria-live="polite"', 'aria-busy', 'searchMessages', 'MessageBody', 'Показать ещё']) expect(searchPanel).toContain(expected)
+    for (const expected of ['role="search"', 'aria-live="polite"', 'aria-busy', 'searchMessages', 'SearchResultBody', 'Показать ещё']) expect(searchPanel).toContain(expected)
     expect(searchPanel).not.toContain('v-html')
+    expect(source('../search/SearchResultBody.vue')).not.toContain('v-html')
     expect(source('./search.css')).toContain('.search-panel')
+  })
+
+  it('renders the V2 search summary, member identity and query highlights through real results', () => {
+    expect(searchPanel).toContain('Найдено {{ messages.length }}')
+    expect(searchPanel).toContain('authors.displayName(message.authorId)')
+    expect(searchPanel).toContain('SearchResultBody')
+    expect(searchPanel).toContain('emit(\'open\', message)')
+    expect(searchPanel).toContain('value="all"')
   })
 })
