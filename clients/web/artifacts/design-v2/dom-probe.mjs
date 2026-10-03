@@ -136,7 +136,7 @@ await page.locator('.gc-shell, .authentication-page').first().waitFor({ state: '
 const needsNavigation = ['nav', 'roles', 'admin-members', 'audio', 'profile', 'search', 'topology-category', 'topology-channel', ...mediaStates].includes(state)
 if (width <= 1023 && needsNavigation) await page.getByRole('button', { name: 'Открыть навигацию' }).click()
 if (['roles', 'admin-members'].includes(state)) await page.getByRole('button', { name: 'Моя гильдия' }).evaluate((button) => button.click())
-const closeNavigation = async () => { const close = page.getByRole('button', { name: 'Закрыть навигацию' }); if (await close.count()) await close.evaluate((button) => button.click()) }
+const closeNavigation = async () => { const close = page.getByRole('button', { name: 'Закрыть навигацию', exact: true }); if (await close.count()) await close.evaluate((button) => button.click()) }
 if (width <= 1023 && ['roles', 'admin-members'].includes(state)) await closeNavigation()
 if (state === 'chat' && width > 600) await page.locator('.voice-dock').evaluate((element) => element.classList.add('connected'))
 if ((process.argv[2] ?? 'chat') === 'roles') await page.getByRole('button', { name: 'Роли', exact: true }).click()
