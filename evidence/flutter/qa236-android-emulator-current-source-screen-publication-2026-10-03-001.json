@@ -1,0 +1,76 @@
+{
+  "id": "QA-236",
+  "date": "2026-10-03",
+  "task": "FE-52 / FE-59 / FE-61 / T-030 — current-source Android-to-macOS screen-share runtime",
+  "source_revision": "96d6e58d",
+  "builds": {
+    "android_emulator": {
+      "device": "Android Emulator sdk_gphone64_arm64, API 35",
+      "installed_version": "1.0.28+2041",
+      "source_revision": "workspace HEAD"
+    },
+    "macos_receiver": {
+      "app": "BOOHTACORD Debug",
+      "version": "1.0.28+42",
+      "build_source": "existing process; not restarted"
+    }
+  },
+  "session_safety": {
+    "room": "SHARE_TEST",
+    "android_microphone": "muted; RECORD_AUDIO denied during the test",
+    "macos_microphone": "muted",
+    "cleanup": "Android capture and both test-client voice sessions stopped; Android microphone permission restored to its pre-test granted state"
+  },
+  "capture": {
+    "mode": "Android Entire screen MediaProjection",
+    "profile": "720p / 15 FPS",
+    "media_projection_during_capture": "TYPE_SCREEN_CAPTURE",
+    "local_preview": "active; non-black recursive screen visible"
+  },
+  "checks": [
+    {
+      "name": "Current-source Android local capture",
+      "result": "PASS",
+      "observation": "The installed 1.0.28+2041 app started full-display MediaProjection and showed its own screen preview and share card."
+    },
+    {
+      "name": "Android sender diagnostics",
+      "result": "BLOCKED_NO_SAMPLE",
+      "observation": "The sender statistics panel remained in 'Ожидание статистики отправителя'; no sender FPS or bitrate sample was available in this run."
+    },
+    {
+      "name": "macOS publication discovery during capture",
+      "result": "FAIL",
+      "observation": "While Android capture was active and the muted Mac client was connected, Mac showed no Android participant, screen-sharing indicator, or viewer action. Android showed the local share and a three-person room count."
+    },
+    {
+      "name": "Stop and cleanup",
+      "result": "PASS",
+      "observation": "Stopping from Android made dumpsys media_projection return null and Android returned to prejoin. The Mac test session also returned to prejoin; the screen-share helper copy was absent from the observed Mac and Android UI."
+    }
+  ],
+  "automated_checks": {
+    "flutter_voice_dock_connected_state": {
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'voice dock'",
+      "result": "PASS",
+      "passed": 1
+    },
+    "flutter_android_voice_dock": {
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'keeps voice controls in a compact bottom dock on Android'",
+      "result": "PASS",
+      "passed": 1
+    },
+    "web_voice_dock_copy": {
+      "command": "cd clients/web && npx vitest run src/voice/voice_dock_reconnect_copy.spec.ts",
+      "result": "PASS",
+      "passed": 2
+    }
+  },
+  "limitations": [
+    "The failing stage is not isolated: Android publication signaling, SFU publication, Mac participant/track events, or server-side visibility may be responsible; server logs were not available.",
+    "No receiver decoded-frame or bitrate sample could be collected because Mac exposed no active publication during capture.",
+    "This API 35 emulator run does not establish physical Pixel behavior."
+  ],
+  "status": "LOCAL_CAPTURE_AND_UI_COPY_CHECKS_PASS; CURRENT_SOURCE_PAIRED_PUBLICATION_DISCOVERY_FAIL; ROOT_CAUSE_OPEN",
+  "remaining": "Instrument Android publish acknowledgements and Mac LiveKit participant/track events, then repeat with a live receiver. Keep FE-52, FE-59, and FE-61 open."
+}
