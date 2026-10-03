@@ -1133,6 +1133,248 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('text workspace geometry matches Design V2 breakpoints', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      _PortraitApi(withHistory: true, includeDirectMessage: true),
+    );
+    await state.initialize();
+    state.messages = [
+      ChatMessage(
+        id: 'design-v2-first',
+        channelId: _PortraitApi.channel.id,
+        authorId: 'account-1',
+        body: 'Первое сообщение Design V2',
+        createdAt: DateTime.utc(2026, 9, 25, 12),
+        deleted: false,
+        revision: 1,
+      ),
+      ChatMessage(
+        id: 'design-v2-second',
+        channelId: _PortraitApi.channel.id,
+        authorId: 'account-2',
+        body: 'Второе сообщение Design V2',
+        createdAt: DateTime.utc(2026, 9, 25, 12, 1),
+        deleted: false,
+        revision: 1,
+      ),
+    ];
+    state.selectedChannel = _PortraitApi.channel;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (final viewport in [
+      (size: const Size(320, 640), mainLeft: 0.0, mainWidth: 320.0),
+      (size: const Size(360, 800), mainLeft: 0.0, mainWidth: 360.0),
+      (size: const Size(390, 844), mainLeft: 0.0, mainWidth: 390.0),
+      (size: const Size(1024, 768), mainLeft: 280.0, mainWidth: 744.0),
+      (size: const Size(1280, 800), mainLeft: 280.0, mainWidth: 752.0),
+      (size: const Size(1440, 900), mainLeft: 280.0, mainWidth: 912.0),
+    ]) {
+      tester.view.physicalSize = viewport.size;
+      await tester.pumpAndSettle();
+
+      final compact = viewport.size.width < 1024;
+      final header = tester.getRect(
+        find.byKey(const ValueKey('workspace-header')),
+      );
+      expect(header.height, compact ? 56 : 64);
+      final main = tester.getRect(
+        find.byKey(const ValueKey('workspace-main-surface')),
+      );
+      expect(main.left, viewport.mainLeft);
+      expect(main.width, viewport.mainWidth);
+      if (!compact) {
+        expect(
+          tester
+              .getRect(
+                find.byKey(const ValueKey('workspace-channel-row:channel-1')),
+              )
+              .height,
+          36,
+        );
+      }
+
+      final messages = tester.widget<ListView>(
+        find.byKey(const ValueKey('text-channel-messages')),
+      );
+      expect(
+        messages.padding,
+        compact
+            ? const EdgeInsets.fromLTRB(12, 16, 12, 8)
+            : EdgeInsets.fromLTRB(
+                viewport.size.width < 1280 ? 20 : 24,
+                20,
+                viewport.size.width < 1280 ? 20 : 24,
+                12,
+              ),
+      );
+      final messageAvatars = tester.widgetList<AuthenticatedAvatar>(
+        find.descendant(
+          of: find.byKey(const ValueKey('text-channel-messages')),
+          matching: find.byType(AuthenticatedAvatar),
+        ),
+      );
+      expect(messageAvatars, hasLength(2));
+      expect(
+        messageAvatars.map((avatar) => avatar.radius),
+        everyElement(compact ? 16 : 18),
+      );
+      final firstMessageRow = find.ancestor(
+        of: find.text('Первое сообщение Design V2'),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is KeyedSubtree && widget.key is GlobalKey,
+        ),
+      );
+      final secondMessageRow = find.ancestor(
+        of: find.text('Второе сообщение Design V2'),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is KeyedSubtree && widget.key is GlobalKey,
+        ),
+      );
+      expect(
+        tester.getTopLeft(secondMessageRow.first).dy -
+            tester.getBottomLeft(firstMessageRow.first).dy,
+        compact ? 20 : 24,
+      );
+      final composer = tester.widget<Container>(
+        find.byKey(const ValueKey('text-composer-wrap')),
+      );
+      final composerHorizontal = compact
+          ? 8.0
+          : viewport.size.width < 1280
+          ? 20.0
+          : 24.0;
+      expect(
+        composer.padding,
+        compact
+            ? const EdgeInsets.all(8)
+            : EdgeInsets.fromLTRB(
+                composerHorizontal,
+                8,
+                composerHorizontal,
+                16,
+              ),
+      );
+      expect(
+        tester.getRect(find.byKey(const ValueKey('text-composer-wrap'))).height,
+        compact ? 70 : 98,
+      );
+      expect(
+        find.text('До 25 МБ на файл'),
+        compact ? findsNothing : findsOneWidget,
+      );
+    }
+
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Открыть навигацию'));
+    await tester.pumpAndSettle();
+    for (final width in [320.0, 360.0, 390.0]) {
+      tester.view.physicalSize = Size(width, 844);
+      await tester.pumpAndSettle();
+      expect(
+        tester.getRect(find.byKey(const ValueKey('mobile-sidebar'))).width,
+        width < 360 ? width - 40 : 320,
+      );
+      expect(
+        tester
+            .getRect(
+              find.byKey(const ValueKey('workspace-channel-row:channel-1')),
+            )
+            .height,
+        44,
+      );
+    }
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Закрыть навигацию'));
+    await tester.pumpAndSettle();
+
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpAndSettle();
+    expect(state.selectedDirectMessage, isNotNull);
+    expect(state.directMessageHistory, isNotEmpty);
+    expect(
+      tester
+          .widget<ListView>(
+            find.byKey(const ValueKey('direct-message-messages')),
+          )
+          .padding,
+      const EdgeInsets.fromLTRB(12, 16, 12, 8),
+    );
+    expect(
+      tester
+          .widget<Container>(
+            find.byKey(const ValueKey('direct-message-composer-wrap')),
+          )
+          .padding,
+      const EdgeInsets.all(8),
+    );
+    expect(
+      tester
+          .getRect(find.byKey(const ValueKey('direct-message-composer-wrap')))
+          .height,
+      70,
+    );
+    expect(find.text('До 25 МБ на файл'), findsNothing);
+    tester.view.physicalSize = const Size(1440, 900);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<ListView>(
+            find.byKey(const ValueKey('direct-message-messages')),
+          )
+          .padding,
+      const EdgeInsets.fromLTRB(24, 20, 24, 12),
+    );
+    expect(
+      tester
+          .widget<Container>(
+            find.byKey(const ValueKey('direct-message-composer-wrap')),
+          )
+          .padding,
+      const EdgeInsets.fromLTRB(24, 8, 24, 16),
+    );
+    expect(
+      tester
+          .getRect(find.byKey(const ValueKey('direct-message-composer-wrap')))
+          .height,
+      98,
+    );
+    expect(find.text('До 25 МБ на файл'), findsOneWidget);
+
+    const longDisplayName =
+        'ОченьДлинноеИмяПользователяБезПробеловДляПроверкиЭллипсиса';
+    await state.openDirectConversation(
+      const DirectConversation(
+        id: 'dm-1',
+        participantId: 'account-2',
+        displayName: longDisplayName,
+        unreadCount: 0,
+      ),
+    );
+    tester.view.physicalSize = const Size(320, 640);
+    await tester.pumpAndSettle();
+    final longTitle = tester.widget<Text>(find.text(longDisplayName));
+    expect(longTitle.maxLines, 1);
+    expect(longTitle.overflow, TextOverflow.ellipsis);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('voice prejoin matches web desktop spacing and card padding', (
     tester,
   ) async {
@@ -2956,7 +3198,7 @@ void main() {
     final popoverRect = tester.getRect(profilePopover);
     final membersPanelRect = tester.getRect(membersPanel);
     expect(popoverRect.width, closeTo(membersPanelRect.width - 32, 1));
-    expect(popoverRect.width, 216);
+    expect(popoverRect.width, 215);
     expect(popoverRect.top, closeTo(rowRect.top, 1));
     expect(popoverRect.right, closeTo(membersPanelRect.right - 16, 1));
     final profileAvatar = tester.widget<AuthenticatedAvatar>(
@@ -2978,7 +3220,7 @@ void main() {
     );
     expect(messageButton, findsOneWidget);
     expect(tester.getSize(messageButton).width, popoverRect.width - 32);
-    expect(tester.getSize(messageButton).width, 184);
+    expect(tester.getSize(messageButton).width, 183);
     expect(tester.getSize(messageButton).height, 40);
     expect(
       popoverRect.right,
