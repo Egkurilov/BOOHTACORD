@@ -41,16 +41,6 @@ export function buildVoiceNavigationPresence(
   const selfMuted = connection.microphoneMuted
   const selfUnavailable = connection.microphonePermissionDenied
   const members: VoiceNavigationMember[] = [
-    {
-      id: profile?.account_id || 'self',
-      name: profile?.display_name?.trim() || 'Вы',
-      microphoneMuted: selfMuted,
-      microphoneUnavailable: selfUnavailable,
-      speaking: connection.selfSpeaking,
-      isSpeaking: connection.selfSpeaking && !selfMuted && !selfUnavailable,
-      screenSharing: connection.screenViewerCards.some((screen) => screen.isLocal),
-      self: true,
-    },
     ...connection.voiceVolumeParticipants.map((participant) => ({
       id: participant.accountId || participant.id,
       name: participant.name?.trim() || 'Участник',
@@ -61,6 +51,16 @@ export function buildVoiceNavigationPresence(
       screenSharing: connection.screenViewerCards.some((screen) => screen.participantId === participant.id && !screen.isLocal),
       self: false,
     })),
+    {
+      id: profile?.account_id || 'self',
+      name: profile?.display_name?.trim() || 'Вы',
+      microphoneMuted: selfMuted,
+      microphoneUnavailable: selfUnavailable,
+      speaking: connection.selfSpeaking,
+      isSpeaking: connection.selfSpeaking && !selfMuted && !selfUnavailable,
+      screenSharing: connection.screenViewerCards.some((screen) => screen.isLocal),
+      self: true,
+    },
   ]
 
   return { channelId, memberCount: members.length, members }

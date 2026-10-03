@@ -71,7 +71,7 @@ function response(path) {
 
 const browser = await chromium.launch({ headless: true })
 const state = process.argv[2] ?? 'chat'
-const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'audio', 'profile', 'search'].includes(state)
+const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'audio', 'profile', 'search', 'nav'].includes(state)
 const width = Number(process.argv[3] ?? 1440)
 const height = Number(process.argv[4] ?? 900)
 const screenshotPath = process.env.DESIGN_V2_SCREENSHOT
@@ -143,7 +143,7 @@ if (state === 'delete-confirm') await page.getByRole('button', { name: 'Дейс
 if (state === 'dm') { await page.getByRole('button', { name: 'Личные', exact: true }).click(); await page.getByRole('button', { name: 'Daria', exact: true }).click() }
 if (referenceFixture && state === 'topology-channel') await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
 await page.waitForTimeout(state === 'update' ? 5500 : 100)
-if (referenceFixture && ['roles', 'topology-channel', 'audio', 'profile', 'search'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
+if (referenceFixture && ['roles', 'topology-channel', 'audio', 'profile', 'search', 'nav'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
 if (referenceFixture && state === 'chat') {
   await page.locator('.message-item').nth(3).waitFor({ state: 'visible' })
   await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
@@ -237,6 +237,12 @@ if (state === 'search' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
   await page.getByRole('button', { name: 'Открыть сообщение от Alex' }).click()
   await page.locator('.search-aside').waitFor({ state: 'detached' })
   interactions.push('open-result-in-real-channel')
+}
+if (state === 'nav' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  await page.getByRole('button', { name: 'Закрыть навигацию', exact: true }).click()
+  await page.locator('.nav-drawer').waitFor({ state: 'hidden' })
+  await page.locator('.mobile-voice-dock').waitFor({ state: 'visible' })
+  interactions.push('drawer-closes-and-mobile-voice-controls-remain')
 }
 console.log(JSON.stringify({ viewport: page.viewportSize(), state, boxes, styles, composerChildren, requests, errors, interactions }, null, 2))
 await browser.close()

@@ -96,13 +96,13 @@ describe('voice connection store', () => {
       expect(store.voiceVolumeParticipants[0]?.name).toBeUndefined()
       await vi.waitFor(() => expect(store.voiceVolumeParticipants[0]?.name).toBe('Новый ник'))
       expect(store.screenViewerCards[0]?.participantName).toBe('Новый ник')
-      expect(buildVoiceNavigationPresence('channel-1', null, store)?.members[1]?.name).toBe('Новый ник')
+      expect(buildVoiceNavigationPresence('channel-1', null, store)?.members[0]?.name).toBe('Новый ник')
       expect(request).toHaveBeenCalledTimes(1)
       expect(String(request.mock.calls[0]?.[0])).toContain(`/members/${accountId}`)
       await useAuthorDirectory().refreshKnown()
       expect(store.voiceVolumeParticipants[0]?.name).toBe('Ник после переименования')
       expect(store.screenViewerCards[0]?.participantName).toBe('Ник после переименования')
-      expect(buildVoiceNavigationPresence('channel-1', null, store)?.members[1]?.name).toBe('Ник после переименования')
+      expect(buildVoiceNavigationPresence('channel-1', null, store)?.members[0]?.name).toBe('Ник после переименования')
     } finally {
       request.mockRestore()
     }

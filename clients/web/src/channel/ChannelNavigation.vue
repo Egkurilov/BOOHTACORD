@@ -81,7 +81,7 @@ async function renameFromMenu(): Promise<void> {
         >
           <span class="channel-icon" aria-hidden="true">
             <template v-if="channel.kind === 'TEXT'">#</template>
-            <svg v-else viewBox="0 0 24 24"><path d="M8 10v4a4 4 0 0 0 8 0v-4M12 18v3M8 21h8M12 3a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" /></svg>
+            <svg v-else viewBox="0 0 24 24"><path d="M3 9v6h4l5 4V5L7 9H3Zm12 1a4 4 0 0 1 0 4m2-7a8 8 0 0 1 0 10" /></svg>
           </span>
           <span class="channel-name">{{ channel.name }}</span>
           <span v-if="channel.kind === 'TEXT' && channel.unreadCount" class="channel-state" :aria-label="`Непрочитанных сообщений: ${channel.unreadCount}`">{{ channel.unreadCount }}</span>

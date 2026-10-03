@@ -32,6 +32,9 @@ export async function connectReferenceVoiceStore(page) {
       { id: 'daria-2', accountId: 'daria-2', name: 'Daria', microphoneMuted: false, speaking: false, volume: 100 },
       { id: 'max-7', accountId: 'max-7', name: 'Max', microphoneMuted: false, speaking: false, volume: 100 },
     ] })
+    Object.defineProperty(store, 'screenViewerCards', { configurable: true, get: () => [
+      { id: 'alex-stream', accountId: 'alex-3', hasAudio: false, isLocal: false, participantId: 'alex-3', participantName: 'Alex' },
+    ] })
     store.active = { channelId: 'voice-1', room: { onNoiseSuppressionState: () => () => {} } }
     store.state = 'CONNECTED'
     store.connectionQuality = 'GOOD'

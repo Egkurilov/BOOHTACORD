@@ -35,9 +35,9 @@ describe('active voice channel navigation presence', () => {
 
     expect(presence?.memberCount).toBe(3)
     expect(presence?.members).toMatchObject([
-      { id: 'account-self', name: 'Алекс', self: true, speaking: true, screenSharing: true },
       { id: 'account-1', name: 'Мика', self: false, speaking: true, microphoneMuted: false, screenSharing: false },
       { id: 'account-2', name: 'Дима', self: false, speaking: false, microphoneMuted: true, screenSharing: true },
+      { id: 'account-self', name: 'Алекс', self: true, speaking: true, screenSharing: true },
     ])
   })
 
