@@ -11,27 +11,27 @@ describe('screen viewer reference composition', () => {
     const viewer = source('./ScreenViewer.vue')
 
     expect(viewer).toContain('screen-stage-label')
-    expect(viewer).toContain('screen-publisher-name')
-    expect(viewer).toContain('stream-target')
-    expect(viewer).toContain('stream-actual')
+    expect(viewer).toContain('selectedStream.participantName')
+    expect(viewer).toContain('ScreenReceiverDiagnosticsPanel')
+    expect(source('./ScreenReceiverDiagnosticsPanel.vue')).toContain('actualVideoQuality')
     expect(source('./screen_playback_quality.ts')).toContain('Определяем качество…')
     expect(viewer).toContain('participantAudioMessage(deafened)')
-    expect(viewer).toContain('Невыбранные демонстрации не воспроизводятся')
+    expect(viewer).toContain('Выберите демонстрацию. Загружается только один выбранный поток.')
     expect(viewer).toContain('К участникам')
     expect(viewer).toContain('stream-voice-return')
   })
 
-  it('renders each available publisher as a labelled metadata choice, not a video thumbnail', () => {
-    const viewer = source('./ScreenViewer.vue')
+  it('renders each available publisher as a labelled rail choice', () => {
+    const viewer = source('./ScreenViewer.vue') + source('./ScreenViewerRail.vue')
     const styles = source('../design/voice_viewer_reference.css')
 
     expect(viewer).toContain('screen-cards stream-rail')
     expect(viewer).toContain('stream-avatar')
     expect(viewer).toContain('participantName')
     expect(viewer).toContain('aria-pressed')
-    expect(viewer).toContain('hasAudio')
-    expect(viewer).toContain("stream.id === selectedId ? 'Вы смотрите' : 'Нажмите, чтобы смотреть'")
-    expect(viewer).toContain("stream.hasAudio ? 'Звуковая дорожка есть' : 'Звуковой дорожки нет'")
+    expect(viewer).toContain('stream.thumbnailUrl')
+    expect(viewer).toContain('stream.id === selectedId')
+    expect(viewer).toContain('Участники · {{ participantCount }}')
     expect(viewer).toContain('screen-player')
     expect(styles).toContain('.stream-voice-return')
     expect(styles).toContain('min-width: 152px')
@@ -39,12 +39,12 @@ describe('screen viewer reference composition', () => {
   })
 
   it('shows the C-32 overflow affordance only while more rail content remains', () => {
-    const viewer = source('./ScreenViewer.vue')
+    const viewer = source('./ScreenViewer.vue') + source('./ScreenViewerRail.vue')
     const styles = source('../design/voice_viewer_reference.css')
     const tokens = source('../design/tokens.css')
 
     expect(viewer).toContain('observeHorizontalOverflow')
-    expect(viewer).toContain('railHasOverflow')
+    expect(viewer).toContain('hasOverflow')
     expect(viewer).toContain(':aria-description=')
     expect(styles).toContain('.screen-cards.stream-rail.has-overflow::after')
     expect(styles).toContain('var(--gc-surface) 70%')
@@ -53,9 +53,9 @@ describe('screen viewer reference composition', () => {
   })
 
   it('labels the owner screen preview and keeps its video muted', () => {
-    const viewer = source('./ScreenViewer.vue')
+    const viewer = source('./ScreenViewer.vue') + source('./ScreenViewerRail.vue')
 
-    expect(viewer).toContain("stream.isLocal ? 'Ваш экран' : (stream.participantName || 'Участник')")
+    expect(viewer).toContain("selectedStream.isLocal ? 'Ваш экран'")
     expect(viewer).toContain(':muted="selectedStream?.isLocal ?? false"')
     expect(source('./screen_audio_copy.ts')).toContain('Предпросмотр собственного экрана без звука')
     expect(viewer).toContain('ScreenViewerAudioControl v-if="selectedStream.hasAudio && !selectedStream.isLocal"')
@@ -69,7 +69,7 @@ describe('screen viewer reference composition', () => {
     const pane = source('../conversation/ConversationPane.vue')
 
     expect(pane).toContain('selectedScreenName ?')
-    expect(pane).toContain('Демонстрация ${selectedScreenName}')
+    expect(pane).toContain('${screenViewerCards.length} трансляции')
   })
 
   it('shows dimensions only after real video metadata arrives', () => {

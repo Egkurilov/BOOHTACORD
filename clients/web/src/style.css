@@ -40,3 +40,7 @@
 @import './design/design_v2_admin_members.css';
 @import './design/design_v2_contextual_overlays.css';
 @import './design/design_v2_direct_messages.css';
+@import './design/design_v2_voice_room.css';
+@import './design/design_v2_screen_viewer.css';
+@import './design/design_v2_stream_diagnostics.css';
+@import './design/design_v2_screen_quality.css';

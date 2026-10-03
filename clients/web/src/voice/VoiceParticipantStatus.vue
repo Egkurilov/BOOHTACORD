@@ -3,7 +3,7 @@ import { computed } from 'vue'
 
 const props = withDefaults(defineProps<{ compact?: boolean; deafened?: boolean; microphoneMuted: boolean; microphoneUnavailable?: boolean; speaking?: boolean }>(), { compact: false, deafened: false, microphoneUnavailable: false, speaking: false })
 const isSpeaking = computed(() => props.speaking && !props.microphoneMuted && !props.microphoneUnavailable && !props.deafened)
-const state = computed(() => props.deafened ? 'Звук и микрофон выключены' : props.microphoneUnavailable ? 'Микрофон недоступен' : props.microphoneMuted ? 'Микрофон выключен' : isSpeaking.value ? 'Говорит' : 'В канале')
+const state = computed(() => props.deafened ? 'Звук и микрофон выключены' : props.microphoneUnavailable ? 'Микрофон недоступен' : props.microphoneMuted ? 'Микрофон выключен' : isSpeaking.value ? 'Говорит' : 'В голосовом канале')
 </script>
 
 <template>

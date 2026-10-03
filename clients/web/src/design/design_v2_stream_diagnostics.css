@@ -1,0 +1,20 @@
+.stream-diagnostics > summary.stream-tool-button { display: grid; width: 32px; min-width: 32px; height: 32px; min-height: 32px; place-items: center; border: 0; padding: 0; background: transparent; }
+.stream-diagnostics-backdrop { display: none; }
+.stream-diagnostics-panel { box-sizing: border-box; width: 320px; padding: 20px; color: var(--gc-text-primary); background: var(--gc-surface-raised); }
+.stream-diagnostics-panel header { display: flex; align-items: center; justify-content: space-between; }
+.stream-diagnostics-panel h2 { margin: 0; font-size: 16px; line-height: 24px; }
+.stream-diagnostics-panel header button { width: 28px; height: 28px; border: 0; color: var(--gc-text-secondary); background: transparent; font-size: 23px; cursor: pointer; }
+.stream-diagnostics-panel > p { margin: 14px 0 12px; color: var(--gc-text-muted); font-size: 12px; }
+.stream-diagnostics-panel dl { display: block; margin: 0; }
+.stream-diagnostics-panel dl > div { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--gc-border-subtle); }
+.stream-diagnostics-panel dt, .stream-diagnostics-panel dd { max-width: 55%; font-size: 12px; line-height: 16px; }
+.stream-diagnostics-panel dt { color: var(--gc-text-secondary); }
+.stream-diagnostics-panel dd { margin: 0; color: var(--gc-text-primary); text-align: right; }
+.stream-diagnostics-footnote { display: none; }
+@media (max-width: 600px) {
+  .stream-diagnostics-backdrop { position: fixed; z-index: 1000; inset: 0; display: block; width: 100vw; height: 100dvh; border: 0; background: #05070BC2; }
+  .stream-diagnostics-panel { position: fixed; z-index: 1001; inset: auto 0 0 !important; width: 100vw; height: min(514px, 80dvh); max-height: 80dvh !important; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 28px 20px 20px; }
+  .stream-diagnostics-panel dl > div { min-height: 45px; }
+  .stream-diagnostics-panel dl > div:nth-child(2) { display: none; }
+  .stream-diagnostics-footnote { display: block; margin-top: 16px; color: var(--gc-text-muted); font-size: 11px; }
+}

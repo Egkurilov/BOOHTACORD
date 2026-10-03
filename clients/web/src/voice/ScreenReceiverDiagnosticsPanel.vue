@@ -11,20 +11,26 @@ const props = defineProps<{
   metrics: ScreenReceiverMetrics | null
   sampledAt: number | null
   targetProfile?: string
+  participantName?: string
+  presentedFps?: number | null
 }>()
 const status = computed(() => props.sampledAt === null ? 'Нет свежих данных' : `Измерено в ${new Date(props.sampledAt).toLocaleTimeString('ru-RU')}`)
 const value = (number: number | null | undefined, suffix: string) => number === null || number === undefined ? 'Нет данных' : `${number} ${suffix}`
 const percent = (number: number | null | undefined) => number === null || number === undefined ? 'Нет данных' : `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(number)} %`
+const profile = computed(() => props.targetProfile?.match(/^P(720|1080|1440)_(15|30|60)$/)?.slice(1).join('p / ').replace(/$/, ' FPS') ?? props.targetProfile ?? 'Нет данных от источника')
+const bitrate = computed(() => props.metrics?.bitrateKbps == null ? 'Нет данных' : `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(props.metrics.bitrateKbps / 1000)} Мбит/с`)
 const diagnostics = ref<HTMLDetailsElement | null>(null)
+const isOpen = ref(false)
 const panel = ref<HTMLDivElement | null>(null)
 let placementFrame = 0
 
 function updatePlacement(): void {
   const root = diagnostics.value
-  const popover = panel.value
-  if (!root?.open || !popover) return
+  if (!root?.open) return
   cancelAnimationFrame(placementFrame)
   placementFrame = requestAnimationFrame(() => {
+    const popover = panel.value
+    if (!popover) return
     const summary = root.querySelector('summary')
     if (!summary || !root.open) return
     const rect = summary.getBoundingClientRect()
@@ -45,6 +51,12 @@ function updatePlacement(): void {
     popover.style.left = `${result.left}px`
   })
 }
+function close(): void {
+  if (diagnostics.value) diagnostics.value.open = false
+  isOpen.value = false
+  diagnostics.value?.querySelector('summary')?.focus()
+}
+function handleToggle(): void { isOpen.value = Boolean(diagnostics.value?.open); updatePlacement() }
 
 onMounted(() => {
   window.addEventListener('resize', updatePlacement)
@@ -58,19 +70,21 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <details ref="diagnostics" class="stream-diagnostics" @toggle="updatePlacement">
-    <summary :title="status"><span class="stream-diagnostics-badge" aria-hidden="true"></span><span>Статистика</span><span class="gc-sr-only">{{ status }}</span></summary>
-    <div ref="panel" class="stream-diagnostics-panel"><dl>
-      <div><dt>Профиль при запуске</dt><dd>{{ targetProfile ?? 'Нет данных от источника' }}</dd></div>
+  <details ref="diagnostics" class="stream-diagnostics" @toggle="handleToggle">
+    <summary :title="status" aria-label="Статистика" class="stream-tool-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V8m5 11V4m5 15v-9m5 9V6M2 21h20"/></svg><span class="gc-sr-only">Статистика</span></summary>
+    <Teleport v-if="isOpen" to="body">
+    <button type="button" class="stream-diagnostics-backdrop" aria-label="Закрыть статистику" @click="close" />
+    <div ref="panel" class="stream-diagnostics-panel" role="dialog" aria-label="Статистика трансляции"><header><h2>Статистика</h2><button type="button" aria-label="Закрыть статистику" @click="close">×</button></header><p>{{ participantName ? `Экран ${participantName}` : 'Трансляция' }} · {{ status }}</p><dl>
+      <div><dt>Профиль</dt><dd>{{ profile }}</dd></div>
       <div><dt>Сейчас у зрителя</dt><dd>{{ actualVideoQuality }}</dd></div>
-      <div><dt>Декодировано</dt><dd>{{ value(metrics?.decodedFps, 'FPS') }}</dd></div>
-      <div><dt>Получено</dt><dd>{{ value(metrics?.bitrateKbps, 'кбит/с') }}</dd></div>
+      <div><dt>Декодирование</dt><dd>{{ value(metrics?.decodedFps, 'FPS') }}</dd></div>
+      <div><dt>Показ кадров</dt><dd>{{ value(presentedFps, 'FPS') }}</dd></div>
+      <div><dt>Битрейт</dt><dd>{{ bitrate }}</dd></div>
       <div><dt>Потери пакетов за 10 с</dt><dd>{{ percent(metrics?.packetLossPercent) }}</dd></div>
-      <div><dt>Пропущено кадров за интервал</dt><dd>{{ metrics?.droppedFrames ?? 'Нет данных' }}</dd></div>
-      <div><dt>Jitter</dt><dd>{{ value(metrics?.jitterMs, 'мс') }}</dd></div>
+      <div><dt>Джиттер</dt><dd>{{ value(metrics?.jitterMs, 'мс') }}</dd></div>
       <div><dt>RTT</dt><dd>Нет данных от приёмника</dd></div>
-      <div><dt>Аудиодорожка</dt><dd>{{ isLocal ? 'Предпросмотр без звука' : hasAudio ? 'Аудиодорожка есть' : 'Аудиодорожки нет' }}</dd></div>
-      <div><dt>Последнее измерение</dt><dd>{{ status }}</dd></div>
-    </dl></div>
+      <div><dt>Звук трансляции</dt><dd>{{ isLocal ? 'Предпросмотр без звука' : hasAudio ? 'Аудиодорожка есть' : 'Аудиодорожки нет' }}</dd></div>
+    </dl><small class="stream-diagnostics-footnote">Текущее качество у зрителя: {{ actualVideoQuality }}</small></div>
+    </Teleport>
   </details>
 </template>

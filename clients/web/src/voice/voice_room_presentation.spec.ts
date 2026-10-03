@@ -41,14 +41,15 @@ describe('voice-room visual status and screen presentation', () => {
 
   it('keeps voice connected and provides a direct return to the participant room', () => {
     const pane = source('../conversation/ConversationPane.vue')
+    const connected = source('./VoiceRoomConnected.vue')
     const viewer = source('./ScreenViewer.vue')
     const members = source('../workspace/WorkspaceMembersPanel.vue')
     expect(pane).toContain('<template v-if="screenViewerCards.length || selectedScreenStreamId || screenViewerEnded">')
     expect(pane).toContain('<div v-if="!selectedScreenStreamId" class="room-wrap">')
     expect(pane).not.toContain('<VoiceParticipantStrip')
     expect(pane).toContain('voiceVolumeParticipants.length + 1')
-    expect(pane).toContain('voiceRoomSummary(voiceVolumeParticipants.length + 1, screenViewerCards.length)')
-    expect(pane).toContain('Все в сборе')
+    expect(connected).toContain('voiceRoomSummary(voiceVolumeParticipants.length + 1, screenViewerCards.length)')
+    expect(connected).toContain('Все в сборе')
     expect(pane).toContain('Голосовой канал · сейчас: ${voiceRoster.participants.length}')
     expect(pane).toContain('Голосовой канал · состав недоступен')
     expect(viewer).toContain('participantAudioMessage(deafened)')
@@ -86,7 +87,8 @@ describe('voice-room visual status and screen presentation', () => {
     const main = source('../workspace/WorkspaceMain.vue')
     const dock = source('./VoiceDock.vue')
 
-    expect(pane).toContain('@click="emit(\'startScreen\', selectedScreenProfile)"')
+    expect(source('./VoiceRoomControls.vue')).toContain("emit('startScreen', selectedScreenProfile)")
+    expect(pane).toContain('@start-screen="emit(\'startScreen\', $event)"')
     expect(main).toContain(':selected-screen-profile="selectedScreenProfile"')
     expect(workspace).toContain('@start-screen="openScreenShareSetup"')
     expect(workspace).toContain('@start="confirmScreenShare"')

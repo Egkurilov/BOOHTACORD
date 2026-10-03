@@ -1,26 +1,23 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { avatarBackground } from '../design/avatar_color'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { participantAudioMessage, screenAudioMessage } from './screen_audio_copy'
 import ScreenViewerAudioControl from './ScreenViewerAudioControl.vue'
+import ScreenViewerRail from './ScreenViewerRail.vue'
 import ScreenReceiverDiagnosticsPanel from './ScreenReceiverDiagnosticsPanel.vue'
 import type { ScreenViewerCard } from './screen_viewer_controller'
 import { createScreenFullscreenControls } from './screen_fullscreen_controls'
 import { useScreenPlaybackQuality } from './screen_playback_quality'
-import { observeHorizontalOverflow } from './screen_rail_overflow'
 import { useScreenReceiverDiagnostics } from './use_screen_receiver_diagnostics'
 import { buildScreenClientReport, startScreenClientReporting, webPlatform } from './screen_client_reporter'
-const props = defineProps<{ audioMuted: boolean; cards: ScreenViewerCard[]; deafened: boolean; ended: boolean; error: string | null; expanded: boolean; mini?: boolean; pinned?: boolean; selectedAudioVolume: number; selectedId: string | null }>()
-const emit = defineEmits<{ clear: []; pin: []; returnVoice: []; select: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setAudioVolume: [percent: number]; toggleAudio: []; 'update:expanded': [expanded: boolean] }>()
+const props = defineProps<{ audioMuted: boolean; cards: ScreenViewerCard[]; deafened: boolean; ended: boolean; error: string | null; expanded: boolean; mini?: boolean; ownScreenSharing?: boolean; pinned?: boolean; participantCount: number; selectedAudioVolume: number; selectedId: string | null }>()
+const emit = defineEmits<{ changeQuality: []; clear: []; pin: []; returnVoice: []; select: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setAudioVolume: [percent: number]; toggleAudio: []; 'update:expanded': [expanded: boolean] }>()
 const video = ref<HTMLVideoElement | null>(null)
 const audio = ref<HTMLAudioElement | null>(null)
 const stage = ref<HTMLDivElement | null>(null)
+const moreActions = ref<HTMLDetailsElement | null>(null)
 const fullscreenActive = ref(false)
 const fullscreenFeedback = ref('')
 const { actualVideoQuality, markVideoReady, playbackFps, refreshVideoQuality, resetVideoFrame, videoReady } = useScreenPlaybackQuality(video, () => props.selectedId, () => props.ended)
-const rail = ref<HTMLDivElement | null>(null)
-const railHasOverflow = ref(false)
-let stopObservingRail: (() => void) | null = null
 let fullscreenControls: ReturnType<typeof createScreenFullscreenControls> | null = null
 let stopReporting: (() => void) | null = null
 const selectedStream = computed(() => props.cards.find((stream) => stream.id === props.selectedId) ?? null)
@@ -30,13 +27,9 @@ const audioMessage = computed(() => selectedStream.value ? screenAudioMessage({
   isLocal: Boolean(selectedStream.value.isLocal), hasAudio: selectedStream.value.hasAudio,
   adjustable: adjustable.value, deafened: props.deafened,
 }) : '')
-watch(rail, (element) => {
-  stopObservingRail?.()
-  stopObservingRail = element ? observeHorizontalOverflow(element, (visible) => { railHasOverflow.value = visible }) : null
-}, { flush: 'post' })
 function select(id: string): void { emit('select', id, video.value, audio.value) }
+function changeQuality(): void { if (moreActions.value) moreActions.value.open = false; emit('changeQuality') }
 function selectStream(id: string): void { select(id) }
-function streamInitial(stream: ScreenViewerCard): string { return Array.from(stream.participantName.trim())[0]?.toLocaleUpperCase('ru-RU') || 'У' }
 defineExpose({ selectStream })
 function handleKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && props.expanded) emit('update:expanded', false)
@@ -55,7 +48,6 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   stopReporting?.()
-  stopObservingRail?.()
   fullscreenControls?.dispose()
   window.removeEventListener('keydown', handleKeydown)
   if (props.expanded) emit('update:expanded', false)
@@ -88,34 +80,22 @@ async function toggleFullscreen(): Promise<void> {
       <video ref="video" v-show="selectedId" class="screen-player" autoplay playsinline :muted="selectedStream?.isLocal ?? false" aria-label="Выбранная демонстрация" @loadedmetadata="refreshVideoQuality" @resize="refreshVideoQuality" @loadeddata="markVideoReady" @emptied="resetVideoFrame"></video>
       <template v-if="selectedStream">
         <div class="screen-stage-top">
-          <span class="screen-stage-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4zM9 20h6m-3-4v4" /></svg>{{ selectedStream.isLocal ? 'Предпросмотр' : 'Смотрите экран' }}</span>
-          <span class="screen-publisher-name">{{ selectedStream.isLocal ? 'Ваш экран' : (selectedStream.participantName || 'Участник') }}</span>
+          <span class="screen-stage-label"><span class="screen-stage-avatar" aria-hidden="true">{{ selectedStream.participantName.slice(0, 2).toLocaleUpperCase('ru-RU') }}</span>{{ selectedStream.isLocal ? 'Ваш экран' : `Экран ${selectedStream.participantName || 'участника'}` }}<b>ЭФИР</b></span>
         </div>
-        <button class="screen-fullscreen-button" type="button" :aria-label="fullscreenActive ? 'Выйти из полноэкранного режима' : 'Развернуть демонстрацию на весь экран'" :aria-pressed="fullscreenActive" :title="fullscreenActive ? 'Выйти из полноэкранного режима' : 'Развернуть демонстрацию на весь экран'" @click="toggleFullscreen">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path v-if="fullscreenActive" d="M9 3v6H3M15 3v6h6M3 15h6v6M21 15h-6v6" /><path v-else d="M3 9V3h6M15 3h6v6M21 15v6h-6M9 21H3v-6" /></svg>
-        </button>
       </template>
       <p v-if="fullscreenFeedback" class="screen-fullscreen-feedback" role="status" aria-live="polite">{{ fullscreenFeedback }}</p>
     </div>
     <audio ref="audio" autoplay></audio>
     <div v-if="selectedStream" class="stream-quality-row">
-      <div class="stream-quality"><span class="stream-target">При запуске: {{ selectedStream.targetProfile ?? 'нет данных' }}</span><span class="stream-actual">Сейчас: {{ actualVideoQuality }}</span></div>
-      <ScreenReceiverDiagnosticsPanel :actual-video-quality="actualVideoQuality" :has-audio="selectedStream.hasAudio" :is-local="Boolean(selectedStream.isLocal)" :metrics="receiverMetrics" :sampled-at="receiverSampledAt" :target-profile="selectedStream.targetProfile" />
       <ScreenViewerAudioControl v-if="selectedStream.hasAudio && !selectedStream.isLocal" :adjustable="adjustable" :deafened="deafened" :muted="audioMuted" :volume="selectedAudioVolume" @toggle="emit('toggleAudio')" @set-volume="emit('setAudioVolume', $event)" />
-      <p v-if="audioMessage" class="stream-audio-status" role="status">{{ audioMessage }}</p>
-    </div>
-      <div v-if="cards.length" class="screen-rail-section">
-        <h3>Демонстрации в канале</h3>
-        <div ref="rail" class="screen-cards stream-rail" :class="{ 'has-overflow': railHasOverflow }" data-testid="stream-rail" aria-label="Выбор демонстрации" :aria-description="railHasOverflow ? 'Есть ещё демонстрации справа. Прокрутите список по горизонтали.' : undefined">
-          <button v-for="stream in cards" :key="stream.id" data-testid="stream-select" class="screen-card stream-option" :class="{ selected: stream.id === selectedId }" type="button" :aria-pressed="stream.id === selectedId" @click="select(stream.id)">
-          <img v-if="stream.thumbnailUrl" class="stream-thumbnail" :src="stream.thumbnailUrl" alt="Предпросмотр демонстрации">
-          <span v-else class="stream-avatar" :style="{ backgroundColor: avatarBackground(stream.accountId ?? stream.participantId) }" aria-hidden="true">{{ streamInitial(stream) }}</span>
-          <span class="stream-option-copy"><span>{{ stream.isLocal ? 'Ваш экран' : (stream.participantName || 'Участник') }}</span><small>{{ stream.id === selectedId ? 'Вы смотрите' : 'Нажмите, чтобы смотреть' }}</small><span class="gc-sr-only">{{ stream.isLocal ? 'Собственный экран без звука' : stream.hasAudio ? 'Звуковая дорожка есть' : 'Звуковой дорожки нет' }}</span></span>
-          <svg class="stream-audio-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9H3Z" /><path v-if="stream.hasAudio" d="M16 9a4 4 0 0 1 0 6m2.5-8.5a8 8 0 0 1 0 11" /><path v-else d="m16 9 5 6m0-6-5 6" /></svg>
-          <span v-if="stream.id === selectedId" class="stream-selected-marker" aria-hidden="true">✓</span>
-        </button>
+      <p v-if="audioMessage" class="stream-audio-status gc-sr-only" role="status">{{ audioMessage }}</p>
+      <div class="stream-toolbar-actions">
+        <button type="button" class="stream-tool-button" :aria-label="pinned ? 'Открепить просмотр' : 'Закрепить просмотр'" :aria-pressed="Boolean(pinned)" @click="emit('pin')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 5 5-3 2-3 4-1 5-2-5-3-3-5-2 5-1 4-3 3-2ZM5 20l6-6"/></svg></button>
+        <ScreenReceiverDiagnosticsPanel :actual-video-quality="actualVideoQuality" :has-audio="selectedStream.hasAudio" :is-local="Boolean(selectedStream.isLocal)" :metrics="receiverMetrics" :sampled-at="receiverSampledAt" :target-profile="selectedStream.targetProfile" :participant-name="selectedStream.participantName" :presented-fps="playbackFps" />
+        <button class="screen-fullscreen-button stream-tool-button" type="button" :aria-label="fullscreenActive ? 'Выйти из полноэкранного режима' : 'Развернуть демонстрацию на весь экран'" :aria-pressed="fullscreenActive" :title="fullscreenActive ? 'Выйти из полноэкранного режима' : 'Развернуть демонстрацию на весь экран'" @click="toggleFullscreen"><svg viewBox="0 0 24 24" aria-hidden="true"><path v-if="fullscreenActive" d="M9 3v6H3M15 3v6h6M3 15h6v6M21 15h-6v6" /><path v-else d="M3 9V3h6M15 3h6v6M21 15v6h-6M9 21H3v-6" /></svg></button>
+        <details ref="moreActions" class="stream-more-actions"><summary class="stream-tool-button" aria-label="Дополнительные действия">⋯</summary><div class="stream-voice-return"><p class="gc-sr-only">{{ participantAudioMessage(deafened) }}</p><button v-if="ownScreenSharing" type="button" @click="changeQuality">Качество трансляции</button><button type="button" @click="emit('update:expanded', !expanded)">{{ expanded ? 'Вернуть в окно канала' : 'Развернуть на всю область' }}</button><button type="button" @click="emit('clear')">К участникам</button></div></details>
       </div>
     </div>
-    <div v-if="selectedStream || ended" class="stream-voice-return"><div class="stream-voice-return-copy"><p>{{ participantAudioMessage(deafened) }}</p><small>Невыбранные демонстрации не воспроизводятся</small></div><button v-if="selectedStream && !selectedStream.isLocal" class="gc-button gc-button--secondary" type="button" :aria-pressed="Boolean(pinned)" @click="emit('pin')">{{ pinned ? 'Открепить просмотр' : 'Закрепить просмотр' }}</button><button v-if="selectedStream || expanded" class="screen-window-toggle gc-button gc-button--secondary" type="button" :aria-pressed="expanded" @click="emit('update:expanded', !expanded)">{{ expanded ? 'Вернуть в окно канала' : 'Развернуть на всю область' }}</button><button class="gc-button gc-button--secondary" type="button" @click="emit('clear')">К участникам</button></div>
+    <ScreenViewerRail v-if="cards.length" :cards="cards" :selected-id="selectedId" :participant-count="participantCount" @select="select" @return-voice="emit('returnVoice')" />
   </section>
 </template>

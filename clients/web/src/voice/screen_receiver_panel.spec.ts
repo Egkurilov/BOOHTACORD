@@ -14,8 +14,10 @@ describe('selected screen receiver panel', () => {
       metrics: { bitrateKbps: 500, decodedFps: 30, droppedFrames: 0, jitterMs: 2, packetsLost: 2476, packetLossPercent: 0.5 },
       sampledAt: 1000,
     }))
-    expect(html).toContain('Потери пакетов за 10 с')
-    expect(html).toContain('0,5 %')
+    expect(html).toContain('aria-label="Статистика"')
+    expect(source('./ScreenReceiverDiagnosticsPanel.vue')).toContain('Потери пакетов за 10 с')
+    expect(source('./ScreenReceiverDiagnosticsPanel.vue')).toContain('percent(metrics?.packetLossPercent)')
+    expect(new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(0.5)).toBe('0,5')
     expect(html).not.toContain('>2476<')
   })
 
@@ -25,9 +27,10 @@ describe('selected screen receiver panel', () => {
     const styles = source('../design/voice_viewer_reference.css')
 
     expect(viewer).toContain('<ScreenReceiverDiagnosticsPanel')
-    expect(panel).toContain('<details ref="diagnostics" class="stream-diagnostics" @toggle="updatePlacement">')
+    expect(panel).toContain('<details ref="diagnostics" class="stream-diagnostics" @toggle="handleToggle">')
     expect(panel).toContain('Нет свежих данных')
-    expect(panel).toContain('Декодировано')
+    expect(panel).toContain('Декодирование')
+    expect(panel).toContain('Показ кадров')
     expect(panel).toContain('Потери пакетов за 10 с')
     expect(panel).toContain('packetLossPercent')
     expect(panel).toContain('Нет данных от приёмника')
@@ -37,9 +40,10 @@ describe('selected screen receiver panel', () => {
     expect(styles).toContain('font-variant-numeric: tabular-nums')
     expect(styles).toContain('.stream-diagnostics-panel { position: fixed;')
     expect(styles).toContain('overflow-y: auto')
-    expect(panel).toContain('@toggle="updatePlacement"')
+    expect(panel).toContain('@toggle="handleToggle"')
     expect(panel).toContain('popover.style.top = `${result.top}px`')
     expect(panel).toContain('popover.style.left = `${result.left}px`')
     expect(panel).toContain('placeScreenDiagnostics')
+    expect(source('../design/design_v2_stream_diagnostics.css')).toContain('height: min(514px, 80dvh)')
   })
 })

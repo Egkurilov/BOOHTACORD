@@ -2,7 +2,7 @@ import { chromium } from '@playwright/test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { chatMembers, chatMessages, chatProfile, chatTopology } from './chat-reference-fixture.mjs'
-import { connectReferenceVoiceStore, installReferenceTransports } from './reference-live-state.mjs'
+import { connectReferenceMediaStore, connectReferenceVoiceStore, installReferenceTransports } from './reference-live-state.mjs'
 import { measureDom } from './dom-probe-measure.mjs'
 
 const profile = { account_id: 'review-user', login: 'review', display_name: 'Review User', role: 'ADMINISTRATOR' }
@@ -76,7 +76,8 @@ function response(path) {
 
 const browser = await chromium.launch({ headless: true })
 const state = process.argv[2] ?? 'chat'
-const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'topology-category', 'audio', 'profile', 'search', 'nav', 'member-popover', 'admin-members', 'update', 'context', 'reply', 'image-viewer', 'dm'].includes(state)
+const mediaStates = ['voice-room', 'screen-viewer', 'media-stats', 'media-quality']
+const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'topology-category', 'audio', 'profile', 'search', 'nav', 'member-popover', 'admin-members', 'update', 'context', 'reply', 'image-viewer', 'dm', ...mediaStates].includes(state)
 const width = Number(process.argv[3] ?? 1440)
 const height = Number(process.argv[4] ?? 900)
 const screenshotPath = process.env.DESIGN_V2_SCREENSHOT
@@ -132,7 +133,7 @@ await page.route('**/api/v1/**', async (route) => {
 const url = state === 'reset' ? 'http://127.0.0.1:4173/reset-password' : process.env.DESIGN_V2_URL ?? 'http://127.0.0.1:4173'
 await page.goto(url, { waitUntil: 'domcontentloaded' })
 await page.locator('.gc-shell, .authentication-page').first().waitFor({ state: 'visible' })
-const needsNavigation = ['nav', 'roles', 'admin-members', 'audio', 'profile', 'search', 'topology-category', 'topology-channel'].includes(state)
+const needsNavigation = ['nav', 'roles', 'admin-members', 'audio', 'profile', 'search', 'topology-category', 'topology-channel', ...mediaStates].includes(state)
 if (width <= 1023 && needsNavigation) await page.getByRole('button', { name: 'Открыть навигацию' }).click()
 if (['roles', 'admin-members'].includes(state)) await page.getByRole('button', { name: 'Моя гильдия' }).evaluate((button) => button.click())
 const closeNavigation = async () => { const close = page.getByRole('button', { name: 'Закрыть навигацию' }); if (await close.count()) await close.evaluate((button) => button.click()) }
@@ -151,10 +152,25 @@ if (state === 'topology-channel') { await page.getByRole('button', { name: 'Со
 if (state === 'member-popover') { const member = page.locator('.members-guild-roster button.member').filter({ hasText: 'Daria' }); await member.waitFor(); await member.click() }
 if (state === 'delete-confirm') await page.getByRole('button', { name: 'Действия с каналом общее' }).click()
 if (state === 'dm') { await page.getByRole('button', { name: 'Личные', exact: true }).click(); await page.locator('.direct-message-navigation .channel-button').filter({ hasText: 'Daria' }).click() }
+if (mediaStates.includes(state)) { await page.locator('.channel-button').filter({ hasText: 'Общий' }).first().click(); await closeNavigation(); await page.locator('.voice-room').waitFor({ state: 'visible' }) }
 if (state === 'image-viewer') { await page.getByRole('button', { name: 'Открыть изображение evening-session.png' }).click(); await page.getByRole('dialog', { name: 'Просмотр изображения evening-session.png' }).locator('img').waitFor({ state: 'visible' }) }
 if (referenceFixture && state === 'topology-channel') await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
 await page.waitForTimeout(state === 'update' ? 5500 : 100)
 if (referenceFixture && ['roles', 'topology-channel', 'topology-category', 'audio', 'profile', 'search', 'nav', 'member-popover', 'admin-members', 'update', 'context', 'reply', 'image-viewer', 'dm'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
+if (referenceFixture && mediaStates.includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') {
+  const sceneBase64 = readFileSync(process.env.DESIGN_V2_SCENE_PNG).toString('base64')
+  await connectReferenceMediaStore(page, sceneBase64, state !== 'voice-room', state === 'media-quality')
+  if (state === 'media-stats') {
+    await page.waitForTimeout(10200)
+    await page.locator('.stream-diagnostics > summary').click()
+  }
+  if (state === 'media-quality') {
+    await page.locator('.stream-more-actions > summary').click()
+    await page.getByRole('button', { name: 'Качество трансляции' }).click()
+    await page.getByRole('dialog', { name: 'Качество трансляции' }).waitFor({ state: 'visible' })
+  }
+  await page.waitForTimeout(300)
+}
 if (referenceFixture && state === 'chat') {
   await page.locator('.message-item').nth(3).waitFor({ state: 'visible' })
   await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
@@ -336,6 +352,34 @@ if (state === 'topology-category' && process.env.DESIGN_V2_VERIFY_INTERACTIONS =
   assert.equal(await page.getByRole('textbox', { name: 'Название раздела' }).inputValue(), 'Симрейсинг')
   assert.equal(await page.getByRole('button', { name: 'Создать раздел' }).isEnabled(), true)
   interactions.push('category-mutation-form-ready')
+}
+if (mediaStates.includes(state) && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  if (state === 'voice-room') {
+    await page.getByRole('group', { name: 'Управление голосом' }).waitFor()
+    assert.equal(await page.getByRole('group', { name: 'Управление голосом' }).getByRole('button', { name: 'Выключить микрофон' }).count(), 1)
+    assert.equal(await page.getByRole('button', { name: 'Показать экран' }).count() > 0, true)
+    interactions.push('connected-voice-controls-use-live-store')
+  } else {
+    assert.equal(await page.locator('.screen-player').evaluate((video) => video.srcObject instanceof MediaStream), true)
+    assert.equal(await page.locator('.screen-player').evaluate((video) => video.videoWidth > 0), true)
+    interactions.push('selected-real-media-stream-and-video-frame')
+    if (state === 'media-stats') {
+      await page.getByRole('dialog', { name: 'Статистика трансляции' }).getByText('Потери пакетов за 10 с').waitFor()
+      await page.getByRole('button', { name: 'Закрыть статистику' }).last().click()
+      await page.getByRole('dialog', { name: 'Статистика трансляции' }).waitFor({ state: 'detached' })
+      interactions.push('receiver-statistics-and-close')
+    } else if (state === 'media-quality') {
+      const dialog = page.getByRole('dialog', { name: 'Качество трансляции' })
+      await dialog.getByRole('radio', { name: '1080p' }).check()
+      assert.equal(await dialog.getByRole('radio', { name: '1080p' }).isChecked(), true)
+      await dialog.getByRole('button', { name: 'Отмена' }).click()
+      await dialog.waitFor({ state: 'detached' })
+      interactions.push('sender-quality-selection-and-cancel')
+    } else {
+      assert.equal(await page.locator('.stream-more-actions button').filter({ hasText: 'Качество трансляции' }).count(), 0)
+      interactions.push('viewer-cannot-edit-remote-quality')
+    }
+  }
 }
 console.log(JSON.stringify({ viewport: page.viewportSize(), state, boxes, styles, composerChildren, requests, errors, interactions }, null, 2))
 await browser.close()

@@ -35,7 +35,8 @@ describe('screen-share setup dialog', () => {
     expect(workspace).toContain('<ScreenShareSetupDialog')
     expect(workspace).toContain('@start-screen="openScreenShareSetup"')
     expect(workspace).toContain('@start="confirmScreenShare"')
-    expect(pane).toContain('@click="emit(\'startScreen\', selectedScreenProfile)"')
+    expect(pane).toContain('@start-screen="emit(\'startScreen\', $event)"')
+    expect(pane).toContain('@change-quality="emit(\'startScreen\', screenProfile ?? selectedScreenProfile)"')
     expect(pane).not.toContain('Целевой профиль<select')
   })
 
@@ -46,6 +47,15 @@ describe('screen-share setup dialog', () => {
 
     expect(html).toContain('<input checked type="radio" name="screen-share-resolution" value="1440">')
     expect(html).toContain('<input checked type="radio" name="screen-share-frame-rate" value="60">')
+  })
+
+  it('shows the current stream quality editor only for an updating sender', async () => {
+    const html = await renderToString(createSSRApp(ScreenShareSetupDialog, { initialProfile: 'P1440_60', updating: true }))
+    expect(html).toContain('Качество трансляции')
+    expect(html).toContain('Изменения применятся к текущему показу.')
+    expect(html).toContain('При ухудшении сети качество может временно снижаться.')
+    expect(html).toContain('Применить')
+    expect(html).not.toContain('браузер покажет системный запрос')
   })
 
   it('keeps the dialog styling on shared tokens and adapts quality rows on mobile', () => {

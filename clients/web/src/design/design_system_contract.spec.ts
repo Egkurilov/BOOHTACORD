@@ -90,9 +90,11 @@ describe('GuildChat design-system foundation', () => {
     expect(directConversation).toContain('<DirectMessageHistoryList')
     expect(directHistoryList).toContain('class="messages message-list"')
     expect(workspace).toContain('<WorkspaceSidebarTabs')
-    expect(conversationPane).toContain('class="room-intro"')
+    expect(conversationPane).toContain('<VoiceRoomConnected')
+    expect(source('../voice/VoiceRoomConnected.vue')).toContain('class="room-intro"')
     expect(screenViewer).toContain('class="stream-quality-row"')
-    expect(screenViewer).toContain('class="screen-cards stream-rail"')
+    expect(screenViewer).toContain('<ScreenViewerRail')
+    expect(source('../voice/ScreenViewerRail.vue')).toContain('class="screen-cards stream-rail"')
   })
 
   it('keeps settings and administration in the central workspace', () => {

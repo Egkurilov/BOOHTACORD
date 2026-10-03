@@ -7,15 +7,13 @@ import type { ScreenShareState, VoiceConnectionState } from '../voice/connection
 import type { VoiceActivationMode } from '../voice/activation_store'
 import type { ScreenProfile, VoiceJoinMode } from '../voice/livekit_gateway'
 import type { ScreenDiagnostics } from '../voice/screen_diagnostics'
-import ScreenDiagnosticsPanel from '../voice/ScreenDiagnosticsPanel.vue'
 import ScreenViewer from '../voice/ScreenViewer.vue'
 import VoicePrejoin from '../voice/VoicePrejoin.vue'
 import VoiceRoomFooter from '../voice/VoiceRoomFooter.vue'
-import VoiceParticipantVolumes from '../voice/VoiceParticipantVolumes.vue'
+import VoiceRoomConnected from '../voice/VoiceRoomConnected.vue'
 import type { ScreenViewerCard } from '../voice/screen_viewer_controller'
 import type { VoiceVolumeParticipant } from '../voice/voice_volume_controls'
 import type { VoiceRoomRoster } from '../voice/voice_roster_client'
-import { voiceRoomSummary } from '../voice/voice_room_copy'
 import { useConversationScreenState } from '../voice/use_conversation_screen_state'
 import TextConversation from './TextConversation.vue'
 import WorkspaceHeaderActions from '../shared/workspace_header/WorkspaceHeaderActions.vue'
@@ -51,6 +49,8 @@ const props = withDefaults(defineProps<{
   selfSpeaking: boolean
   voiceVolumeError: string | null
   voiceVolumeParticipants: VoiceVolumeParticipant[]
+  toggleMicrophone: () => void
+  toggleDeafen: () => void
   voiceRoster?: VoiceRoomRoster | null
   voiceRosterError?: string | null
 }>(), {
@@ -61,7 +61,7 @@ const props = withDefaults(defineProps<{
 })
 const emit = defineEmits<{ clearScreenStream: []; join: [channelId: string, transfer?: boolean, joinMode?: VoiceJoinMode]; leave: []; refreshScreen: []; returnVoice: [channelId: string]; selectScreenStream: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setParticipantVolume: [id: string, percent: number]; setScreenVolume: [percent: number]; toggleScreenAudio: []; startScreen: [profile: ScreenProfile]; stopScreen: []; transfer: [channelId: string]; toggleNav: []; toggleMembers: [] }>()
 const selectedScreenProfile = computed(() => props.selectedScreenProfile)
-const { screenCaptureAvailable, captureUnavailableMessage, screenExpanded, screenPinned,
+const { screenExpanded, screenPinned,
   voiceChannel, miniVisible, keepVoiceRoom, selectedScreenName, screenViewerRef, watchScreen, dismissLocalPreview } = useConversationScreenState(props)
 function clearScreenPreview(): void {
   dismissLocalPreview()
@@ -88,7 +88,7 @@ function clearScreenPreview(): void {
         <section class="voice-room" :class="{ 'voice-room--screen-expanded': screenExpanded, 'voice-room--mini': miniVisible }">
           <header class="main-header conversation-header">
             <span class="conversation-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 4V5L7 9H3ZM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" /></svg></span>
-            <div class="main-title"><h2>{{ voiceChannel.name }}</h2><small>{{ selectedScreenName ? `Демонстрация ${selectedScreenName}` : voiceIsActive ? `Голосовой канал · участников: ${voiceVolumeParticipants.length + 1}` : voiceRosterError ? 'Голосовой канал · состав недоступен' : voiceRoster ? voiceRoster.participants.length ? `Голосовой канал · сейчас: ${voiceRoster.participants.length}` : 'Голосовой канал · пока пусто' : 'Голосовой канал · проверяем состав' }}</small></div>
+            <div class="main-title"><h2>{{ voiceChannel.name }}</h2><small>{{ selectedScreenName ? `${voiceVolumeParticipants.length + 1} участника · ${screenViewerCards.length} трансляции` : voiceIsActive ? `${voiceVolumeParticipants.length + 1} участника в голосовом канале` : voiceRosterError ? 'Голосовой канал · состав недоступен' : voiceRoster ? voiceRoster.participants.length ? `Голосовой канал · сейчас: ${voiceRoster.participants.length}` : 'Голосовой канал · пока пусто' : 'Голосовой канал · проверяем состав' }}</small></div>
             <WorkspaceHeaderActions :members-expanded="membersOpen" :nav-expanded="navOpen" :show-members="showMembers" @toggle-members="emit('toggleMembers')" @toggle-navigation="emit('toggleNav')" />
           </header>
           <div v-if="voiceChannel.admissionClosed" class="state state-error" role="status">
@@ -98,27 +98,14 @@ function clearScreenPreview(): void {
           </div>
           <template v-if="screenViewerCards.length || selectedScreenStreamId || screenViewerEnded">
             <ScreenViewer
-              ref="screenViewerRef" v-show="selectedScreenStreamId !== null" :audio-muted="screenAudioMuted" :cards="screenViewerCards" :deafened="selfDeafened" :ended="screenViewerEnded" :error="screenViewerError" :expanded="screenExpanded" :mini="miniVisible" :pinned="screenPinned" :selected-audio-volume="selectedScreenAudioVolume" :selected-id="selectedScreenStreamId"
+              ref="screenViewerRef" v-show="selectedScreenStreamId !== null" :audio-muted="screenAudioMuted" :cards="screenViewerCards" :deafened="selfDeafened" :ended="screenViewerEnded" :error="screenViewerError" :expanded="screenExpanded" :mini="miniVisible" :own-screen-sharing="screenState === 'SHARING'" :pinned="screenPinned" :participant-count="voiceVolumeParticipants.length + 1" :selected-audio-volume="selectedScreenAudioVolume" :selected-id="selectedScreenStreamId"
               @clear="clearScreenPreview" @select="(id, video, audio) => emit('selectScreenStream', id, video, audio)" @set-audio-volume="emit('setScreenVolume', $event)" @toggle-audio="emit('toggleScreenAudio')"
-              @pin="screenPinned = !screenPinned" @return-voice="emit('returnVoice', voiceChannel.id)"
+              @pin="screenPinned = !screenPinned" @return-voice="emit('returnVoice', voiceChannel.id)" @change-quality="emit('startScreen', screenProfile ?? selectedScreenProfile)"
               @update:expanded="screenExpanded = $event"
             />
           </template>
           <div v-if="!selectedScreenStreamId" class="room-wrap">
-            <template v-if="!voiceChannel.admissionClosed && voiceIsActive">
-              <div class="room-intro">
-                <div class="room-intro-copy">
-                  <h3>{{ voiceState === 'RECONNECTING' ? 'Восстанавливаем связь' : 'Все в сборе' }}</h3>
-                  <p>{{ voiceState === 'RECONNECTING' ? 'Состояние микрофона сохранено.' : voiceRoomSummary(voiceVolumeParticipants.length + 1, screenViewerCards.length) }}</p>
-                </div>
-                <button v-if="screenState !== 'SHARING'" class="gc-button gc-button--primary" type="button" :disabled="!screenCaptureAvailable || screenState === 'STARTING'" :title="screenCaptureAvailable ? undefined : captureUnavailableMessage" @click="emit('startScreen', selectedScreenProfile)">{{ screenState === 'STARTING' ? 'Открываем выбор экрана…' : 'Показать экран' }}</button>
-                <button v-else class="gc-button gc-button--secondary" type="button" @click="emit('stopScreen')">Остановить показ</button>
-              </div>
-              <p v-if="!screenCaptureAvailable" class="state" role="status">{{ captureUnavailableMessage }}</p>
-              <p v-if="screenError" class="state state-error" role="alert">{{ screenError }}</p>
-              <VoiceParticipantVolumes :error="voiceVolumeError" :participants="voiceVolumeParticipants" :screen-streams="screenViewerCards" :selected-screen-stream-id="selectedScreenStreamId" :self-name="selfDisplayName" :self-deafened="selfDeafened" :self-microphone-muted="selfMicrophoneMuted" :self-microphone-unavailable="selfMicrophoneUnavailable" :self-speaking="selfSpeaking" @set-volume="(id, percent) => emit('setParticipantVolume', id, percent)" @watch-screen="watchScreen" />
-              <details v-if="screenState === 'SHARING'" class="voice-advanced"><summary>Параметры демонстрации</summary><ScreenDiagnosticsPanel :diagnostics="screenDiagnostics" :profile="screenProfile" @refresh="emit('refreshScreen')" /><button class="voice-join" type="button" @click="emit('startScreen', screenProfile ?? selectedScreenProfile)">Изменить качество и FPS</button></details>
-            </template>
+            <VoiceRoomConnected v-if="!voiceChannel.admissionClosed && voiceIsActive" :room-name="voiceChannel.name" :voice-state="voiceState" :screen-state="screenState" :screen-error="screenError" :screen-diagnostics="screenDiagnostics" :screen-profile="screenProfile" :selected-screen-profile="selectedScreenProfile" :screen-viewer-cards="screenViewerCards" :voice-volume-error="voiceVolumeError" :voice-volume-participants="voiceVolumeParticipants" :self-name="selfDisplayName" :self-deafened="selfDeafened" :self-microphone-muted="selfMicrophoneMuted" :self-microphone-unavailable="selfMicrophoneUnavailable" :self-speaking="selfSpeaking" :toggle-microphone="toggleMicrophone" :toggle-deafen="toggleDeafen" @set-volume="(id, percent) => emit('setParticipantVolume', id, percent)" @watch-screen="watchScreen" @start-screen="emit('startScreen', $event)" @stop-screen="emit('stopScreen')" @leave="emit('leave')" @refresh-screen="emit('refreshScreen')" />
             <VoicePrejoin v-else-if="!voiceChannel.admissionClosed" :channel-id="voiceChannel.id" :voice-error="voiceError" :voice-state="voiceState" :voice-transfer-required="voiceTransferRequired" :roster="voiceRoster ?? null" :roster-error="voiceRosterError ?? null" @join="(id, transfer, mode) => emit('join', id, transfer, mode)" @transfer="emit('transfer', $event)" />
           </div>
           <VoiceRoomFooter v-if="voiceIsActive && !selectedScreenStreamId" :activation-mode="activationMode" :channel-name="voiceChannel.name" :state="voiceState" @leave="emit('leave')" />
