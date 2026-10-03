@@ -165,6 +165,14 @@ Windows, matched screenshots, and runtime acceptance remain open. Web commit
 `cdd10808` exposed follow-up admin member typography and compact settings-header
 differences tracked separately as FV2-014.
 
+FV2-011 aligns the viewer mute/gain controls and percentage: desktop toolbar row
+40 px, compact row 48 px within the 56 px strip. Flutter keeps the 0–200% gain
+slider available on compact Android even though web hides it there, preserving
+the requested mobile volume adjustment. Deafen and audio-state ownership are
+unchanged — [QA-244](../evidence/flutter/qa244-flutter-design-v2-screen-audio-controls-2026-10-04-001.json).
+Web commit `bfeee4f5` also revealed an auth typography follow-up (mobile eyebrow,
+heading weight, and submit weight), tracked as FV2-015.
+
 Flutter's voice prejoin header now mirrors the web copy for roster loading,
 unavailable, empty and populated states instead of showing a static invitation
 that diverged from the room card. The roster subtitle remains visible even when

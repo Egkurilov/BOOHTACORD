@@ -33,6 +33,9 @@ void main() {
   testWidgets('screen audio exposes mute and a 0–200% volume control', (
     tester,
   ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(900, 700);
+    addTearDown(tester.view.reset);
     var muted = false;
     var changedVolume = -1;
 
@@ -54,8 +57,15 @@ void main() {
       ),
     );
 
-    expect(find.text('Громкость аудиодорожки · 125%'), findsOneWidget);
+    expect(find.text('125%'), findsOneWidget);
     expect(find.byTooltip('Выключить звук трансляции'), findsOneWidget);
+    expect(
+      tester.getSize(
+        find.byKey(const ValueKey('screen-share-audio-toolbar-row')),
+      ),
+      const Size(876, 40),
+    );
+    expect(tester.getSize(find.byType(IconButton)), const Size(32, 32));
     final slider = tester.widget<Slider>(
       find.byKey(const ValueKey('screen-share-audio-volume-slider')),
     );
@@ -74,6 +84,48 @@ void main() {
 
     slider.onChanged!(176);
     expect(changedVolume, 176);
+  });
+
+  testWidgets('compact screen audio keeps mute and gain inside 56 px toolbar', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 640);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: VoiceScreenAudioControls(
+            showingLocalScreen: false,
+            screenAudioAvailable: true,
+            screenAudioVolume: 125,
+            screenAudioMuted: false,
+            deafened: false,
+            onToggleScreenAudio: _ignore,
+            onScreenAudioVolumeChanged: _ignoreVolume,
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(
+        find.byKey(const ValueKey('screen-share-audio-toolbar-row')),
+      ),
+      const Size(304, 48),
+    );
+    expect(tester.getSize(find.byType(IconButton)), const Size(44, 44));
+    expect(find.text('125%'), findsOneWidget);
+    expect(
+      tester
+          .getSize(
+            find.byKey(const ValueKey('screen-share-audio-volume-slider')),
+          )
+          .width,
+      greaterThan(150),
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('deafen disables screen-share mute and gain controls', (
@@ -174,7 +226,7 @@ void main() {
     );
 
     expect(find.byTooltip('Включить звук трансляции'), findsOneWidget);
-    expect(find.text('Громкость аудиодорожки · 0%'), findsOneWidget);
+    expect(find.text('0%'), findsOneWidget);
     await tester.tap(find.byTooltip('Включить звук трансляции'));
     await tester.pump();
 
@@ -248,3 +300,4 @@ void main() {
 }
 
 void _ignore() {}
+void _ignoreVolume(int _) {}

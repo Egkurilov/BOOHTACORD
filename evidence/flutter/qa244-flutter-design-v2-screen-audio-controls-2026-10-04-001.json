@@ -1,0 +1,58 @@
+{
+  "id": "QA-244",
+  "date": "2026-10-04",
+  "task": "FE-70 / FV2-011 — Flutter Design V2 screen viewer audio controls",
+  "source_revision": "abd81ce9",
+  "working_tree_changes": true,
+  "summary": "Aligned viewer mute and gain controls across desktop and compact Flutter layouts while keeping per-stream gain adjustment available on Android.",
+  "checks": [
+    {
+      "name": "Focused audio control widget tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/voice_screen_audio_controls_test.dart",
+      "result": "PASS_AFTER_BASELINE_FAILURE",
+      "passed": 8,
+      "observation": "Test-first regression exposed that the compact/desktop percent readout did not exist. The first layout iteration then caught a compact unbounded-width Row and a collapsed desktop toolbar. Fixed toolbar geometry is 40 px desktop and 48 px compact inside the 56 px viewer strip; mute and 0–200% gain remain available, and deafen disables both controls."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 469
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/features/voice/screen_viewer/audio_controls.dart test/voice_screen_audio_controls_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android Debug APK build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is unavailable. Manual Ruby traceability validation passed: all 39 approved requirements are referenced, all 69 task IDs are unique, and no dependencies dangle."
+    },
+    {
+      "name": "Windows build, matched screenshots, and platform runtime acceptance",
+      "result": "NOT_RUN",
+      "observation": "Geometry/widget tests and Android/macOS Debug builds do not prove screenshot parity or platform runtime behavior. The already-open macOS app was not restarted."
+    }
+  ],
+  "limitations": [
+    "Audio state ownership, LiveKit lifecycle, and track handling are unchanged.",
+    "Production web hides the gain slider at compact widths; Flutter keeps it visible on Android to preserve the requested per-stream volume adjustment.",
+    "Windows build, paired screenshots, and Android/macOS/Windows runtime visual acceptance remain open."
+  ],
+  "status": "PASS_FOCUSED_WIDGETS_FULL_FLUTTER_SUITE_ANALYSIS_ANDROID_AND_MACOS_DEBUG_BUILDS; WINDOWS_SCREENSHOT_RUNTIME_AND_POWERSHELL_TRACEABILITY_OPEN"
+}
