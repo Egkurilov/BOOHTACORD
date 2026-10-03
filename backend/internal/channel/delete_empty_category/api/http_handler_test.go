@@ -38,6 +38,18 @@ func TestHandlerRejectsMalformedRevision(t *testing.T) {
 	}
 }
 
+func TestNeutralHandlerReadsConfirmedBody(t *testing.T) {
+	d := &fakeDeleter{result: deleteemptycategory.Result{ID: "category-1", Revision: 5}}
+	r := httptest.NewRequest(http.MethodDelete, "/api/v1/categories/category-1", strings.NewReader(`{"client_request_id":"d38c4397-b019-45b4-a7b8-cecb7c8b7573","expected_revision":4,"confirm_delete":true}`))
+	r.SetPathValue("categoryID", "category-1")
+	r = r.WithContext(sessionapi.WithPrincipal(r.Context(), auth.Principal{AccountID: "member-1"}))
+	w := httptest.NewRecorder()
+	NewHandler(d).ServeHTTP(w, r)
+	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), `"state":"DELETED"`) {
+		t.Fatalf("response=%d %s", w.Code, w.Body.String())
+	}
+}
+
 type fakeDeleter struct {
 	err    error
 	result deleteemptycategory.Result

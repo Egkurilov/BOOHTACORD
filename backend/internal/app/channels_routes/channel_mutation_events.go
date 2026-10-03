@@ -10,6 +10,9 @@ import (
 type topologyMutationHandlers struct {
 	memberCreateCategory http.Handler
 	memberCreateChannel  http.Handler
+	memberDeleteCategory http.Handler
+	memberArchiveText    http.Handler
+	memberCloseVoice     http.Handler
 	createCategory       http.Handler
 	reorderCategories    http.Handler
 	renameCategory       http.Handler
@@ -25,6 +28,9 @@ type topologyMutationHandlers struct {
 func registerTopologyMutationRoutes(mux *http.ServeMux, events *eventhub.Hub, handlers topologyMutationHandlers) {
 	mux.Handle("POST /api/v1/categories", publishtopologyevent.NewHandler(handlers.memberCreateCategory, events))
 	mux.Handle("POST /api/v1/categories/{categoryID}/channels", publishtopologyevent.NewHandler(handlers.memberCreateChannel, events))
+	mux.Handle("DELETE /api/v1/categories/{categoryID}", publishtopologyevent.NewHandler(handlers.memberDeleteCategory, events))
+	mux.Handle("DELETE /api/v1/channels/{channelID}", publishtopologyevent.NewHandler(handlers.memberArchiveText, events))
+	mux.Handle("POST /api/v1/voice-channels/{channelID}/close-admission", publishtopologyevent.NewHandler(handlers.memberCloseVoice, events))
 	mux.Handle("POST /api/v1/admin/categories", publishtopologyevent.NewHandler(handlers.createCategory, events))
 	mux.Handle("PUT /api/v1/admin/categories/order", publishtopologyevent.NewHandler(handlers.reorderCategories, events))
 	mux.Handle("PATCH /api/v1/admin/categories/{categoryID}", publishtopologyevent.NewHandler(handlers.renameCategory, events))

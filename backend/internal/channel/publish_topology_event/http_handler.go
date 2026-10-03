@@ -22,7 +22,7 @@ func NewHandler(inner http.Handler, publisher Publisher) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		capture := &responseCapture{ResponseWriter: writer}
 		inner.ServeHTTP(capture, request)
-		if publisher == nil || capture.overflow || (capture.status != http.StatusOK && capture.status != http.StatusCreated) {
+		if publisher == nil || capture.overflow || (capture.status != http.StatusOK && capture.status != http.StatusCreated && capture.status != http.StatusAccepted) {
 			return
 		}
 		var result struct {

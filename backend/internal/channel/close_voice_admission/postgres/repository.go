@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	closevoiceadmission "voice-platform/backend/internal/channel/close_voice_admission"
+	topologycommand "voice-platform/backend/internal/channel/topology_command"
+	topologycommandpostgres "voice-platform/backend/internal/channel/topology_command/postgres"
 )
 
 const topologyLockKey int64 = 441903817
@@ -44,6 +46,8 @@ WITH state AS (
 SELECT changed.id::text, revised.revision, (SELECT COUNT(*) FROM revoked)
 FROM changed CROSS JOIN revised`
 
+const insertVoiceCloseReceipt = `INSERT INTO topology_command_receipts (actor_id,client_request_id,operation,intent_hash,resource_id,resource_type,result_state,topology_revision,response_status) VALUES ($1,$2,$3,$4,$5,'VOICE_CHANNEL','CLOSING',$6,202) RETURNING 1`
+
 type Row interface{ Scan(...any) error }
 type Transaction interface {
 	Lock(context.Context, int64) error
@@ -72,6 +76,24 @@ func (repository Repository) Close(context context.Context, input closevoiceadmi
 	if err := transaction.Lock(context, topologyLockKey); err != nil {
 		return closevoiceadmission.Result{}, fmt.Errorf("lock channel topology: %w", err)
 	}
+	if input.ClientRequestID != "" {
+		recorder := topologycommandpostgres.Recorder{}
+		receipt, findErr := recorder.Find(context, receiptTransaction{transaction}, input.ActorID, input.ClientRequestID)
+		if findErr == nil {
+			receipt, checkErr := recorder.CheckExisting(receipt, input.IntentHash)
+			if checkErr != nil {
+				return closevoiceadmission.Result{}, checkErr
+			}
+			if err := transaction.Commit(context); err != nil {
+				return closevoiceadmission.Result{}, err
+			}
+			committed = true
+			return closevoiceadmission.Result{ID: receipt.ResourceID, Revision: receipt.TopologyRevision}, nil
+		}
+		if !errors.Is(findErr, topologycommand.ErrNotFound) {
+			return closevoiceadmission.Result{}, findErr
+		}
+	}
 	var result closevoiceadmission.Result
 	err = transaction.QueryRow(context, closeVoiceAdmission, input.ExpectedRevision, input.ChannelID, input.ActorID).Scan(&result.ID, &result.Revision, &result.RevokedLeases)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -79,6 +101,12 @@ func (repository Repository) Close(context context.Context, input closevoiceadmi
 	}
 	if err != nil {
 		return closevoiceadmission.Result{}, fmt.Errorf("close voice admission: %w", err)
+	}
+	if input.ClientRequestID != "" {
+		var inserted int
+		if err := transaction.QueryRow(context, insertVoiceCloseReceipt, input.ActorID, input.ClientRequestID, topologycommand.OperationVoiceClose, input.IntentHash, result.ID, result.Revision).Scan(&inserted); err != nil {
+			return closevoiceadmission.Result{}, err
+		}
 	}
 	if err := transaction.Commit(context); err != nil {
 		return closevoiceadmission.Result{}, fmt.Errorf("commit voice admission close: %w", err)

@@ -31,6 +31,10 @@ type CommandTransaction interface {
 	Exec(context.Context, string, ...any) error
 }
 
+type ReceiptReader interface {
+	QueryRow(context.Context, string, ...any) Row
+}
+
 type Repository struct{ database Database }
 
 func New(database Database) Repository { return Repository{database: database} }
@@ -53,7 +57,7 @@ func scanReceipt(row Row) (topologycommand.Receipt, error) {
 
 type Recorder struct{}
 
-func (Recorder) Find(ctx context.Context, transaction CommandTransaction, actorID, requestID string) (topologycommand.Receipt, error) {
+func (Recorder) Find(ctx context.Context, transaction ReceiptReader, actorID, requestID string) (topologycommand.Receipt, error) {
 	return scanReceipt(transaction.QueryRow(ctx, selectReceipt, actorID, requestID))
 }
 
