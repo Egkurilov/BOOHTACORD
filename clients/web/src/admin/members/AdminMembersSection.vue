@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { createPasswordResetLink, listAdminAccounts, updateAdminAccount, type AdminAccount, type PasswordResetLink } from '../../identity/admin_directory_client'
+import { avatarBackground } from '../../design/avatar_color'
+import { avatarInitials } from '../../design/avatar_initials'
 import { restoreAdminSaveFocus } from './admin_member_save_focus'
 import { copyAdminResetLink } from './admin_reset_link_copy'
 
@@ -10,6 +12,8 @@ const resetLink = ref<(PasswordResetLink & { login: string }) | null>(null)
 const resetTrigger = ref<HTMLButtonElement | null>(null)
 const resetResult = ref<HTMLElement | null>(null)
 const drafts = reactive<Record<string, { role: AdminAccount['role']; blocked: boolean }>>({})
+const search = ref(''); const roleFilter = ref<'ALL' | AdminAccount['role']>('ALL'); const activeActionsID = ref('')
+const filteredAccounts = computed(() => accounts.value.filter((account) => (roleFilter.value === 'ALL' || account.role === roleFilter.value) && `${account.display_name} ${account.login}`.toLocaleLowerCase().includes(search.value.trim().toLocaleLowerCase())))
 async function load(next?: string): Promise<void> {
   loading.value = true; error.value = null
   try { const page = await listAdminAccounts(next); accounts.value = next ? [...accounts.value, ...page.accounts] : page.accounts; cursor.value = page.next_cursor; for (const account of page.accounts) drafts[account.account_id] = { role: account.role, blocked: account.blocked } }
@@ -39,22 +43,23 @@ onMounted(() => { void load() })
 
 <template>
   <section class="admin-directory" aria-labelledby="admin-members-title">
-    <header class="admin-section-heading"><div><h2 id="admin-members-title">Участники</h2><p>Роли и доступ к этой гильдии</p></div><button type="button" :disabled="loading" @click="load()">Обновить</button></header>
+    <header class="admin-section-heading"><div><h2 id="admin-members-title">Участники <span>{{ accounts.length }}</span></h2></div><button type="button" :disabled="loading" @click="load()">Обновить</button></header>
+    <div class="admin-member-filters"><label><span class="gc-sr-only">Поиск участников</span><input v-model="search" type="search" placeholder="Поиск по имени или логину" autocomplete="off"></label><label><span class="gc-sr-only">Фильтр по роли</span><select v-model="roleFilter"><option value="ALL">Все роли</option><option value="MEMBER">Пользователь</option><option value="ADMINISTRATOR">Администратор</option></select></label></div>
     <p v-if="loading && !accounts.length" class="state" aria-live="polite">Загружаем список участников…</p>
     <p v-else-if="!loading && !accounts.length && !error" class="state">Участников пока нет.</p>
     <div v-if="accounts.length" class="admin-table-scroll" tabindex="0" aria-label="Таблица участников">
       <table class="admin-table"><thead><tr><th>Пользователь</th><th>Роль</th><th>Доступ</th><th></th></tr></thead><tbody>
-        <tr v-for="account in accounts" :key="account.account_id">
-          <td><span>{{ account.display_name }}</span><small>@{{ account.login }}</small></td>
-          <td><select v-model="drafts[account.account_id].role" :disabled="busyID === account.account_id" :aria-label="`Роль: ${account.login}`"><option value="MEMBER">Участник</option><option value="ADMINISTRATOR">Администратор</option></select></td>
-          <td><label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id" :aria-label="`Заблокирован: ${account.login}`"> Заблокирован</label></td>
-          <td><div class="admin-row-actions"><button type="button" :disabled="busyID === account.account_id" :aria-label="`Сохранить изменения для ${account.login}`" @click="save(account, $event)">Сохранить</button><button type="button" :disabled="busyID === account.account_id" :aria-label="`Сбросить пароль для ${account.login}`" @click="createReset(account, $event)">Сбросить пароль</button></div></td>
+        <tr v-for="account in filteredAccounts" :key="account.account_id">
+          <td><span class="admin-account-user"><span class="admin-account-avatar" :style="{ backgroundColor: avatarBackground(account.account_id) }">{{ avatarInitials(account.display_name) }}</span><span><strong>{{ account.display_name }}</strong><small>@{{ account.login }}</small></span></span></td>
+          <td>{{ account.role === 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь' }}</td>
+          <td><span class="admin-account-status" :class="account.blocked ? 'is-blocked' : 'is-active'">{{ account.blocked ? 'Заблокирован' : 'Активен' }}</span></td>
+          <td class="admin-account-actions"><button type="button" :aria-label="`Действия с участником ${account.display_name}`" :aria-expanded="activeActionsID === account.account_id" @click="activeActionsID = activeActionsID === account.account_id ? '' : account.account_id">⋯</button><div v-if="activeActionsID === account.account_id" class="admin-account-actions-menu"><label>Роль<select v-model="drafts[account.account_id].role" :disabled="busyID === account.account_id" :aria-label="`Роль: ${account.login}`"><option value="MEMBER">Участник</option><option value="ADMINISTRATOR">Администратор</option></select></label><label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id" :aria-label="`Заблокирован: ${account.login}`"> Заблокирован</label><button type="button" :disabled="busyID === account.account_id" :aria-label="`Сохранить изменения для ${account.login}`" @click="save(account, $event)">Сохранить</button><button type="button" :disabled="busyID === account.account_id" :aria-label="`Сбросить пароль для ${account.login}`" @click="createReset(account, $event)">Сбросить пароль</button></div></td>
         </tr>
       </tbody></table>
     </div>
     <div v-if="accounts.length" class="admin-mobile-list" aria-label="Участники гильдии">
-      <details v-for="account in accounts" :key="`mobile-${account.account_id}`" class="admin-mobile-card">
-        <summary><span class="admin-mobile-user"><span class="admin-mobile-avatar" aria-hidden="true">{{ account.display_name.slice(0, 2).toUpperCase() }}</span><span><strong>{{ account.display_name }}</strong><small>@{{ account.login }}</small></span></span><span class="admin-mobile-meta"><span>{{ account.role === 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь' }}</span><span :class="account.blocked ? 'is-blocked' : 'is-active'">{{ account.blocked ? 'Заблокирован' : 'Активен' }}</span></span><span class="gc-sr-only">Управление аккаунтом</span></summary>
+      <details v-for="account in filteredAccounts" :key="`mobile-${account.account_id}`" class="admin-mobile-card">
+        <summary><span class="admin-mobile-user"><span class="admin-mobile-avatar" :style="{ backgroundColor: avatarBackground(account.account_id) }" aria-hidden="true">{{ avatarInitials(account.display_name) }}</span><span><strong>{{ account.display_name }}</strong><small>@{{ account.login }}</small></span></span><span class="admin-mobile-meta"><span>{{ account.role === 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь' }}</span><span :class="account.blocked ? 'is-blocked' : 'is-active'">{{ account.blocked ? 'Заблокирован' : 'Активен' }}</span></span><span class="gc-sr-only">Управление аккаунтом</span></summary>
         <div class="admin-mobile-edit">
           <label>Роль<select v-model="drafts[account.account_id].role" :disabled="busyID === account.account_id" :aria-label="`Роль: ${account.login}`"><option value="MEMBER">Участник</option><option value="ADMINISTRATOR">Администратор</option></select></label>
           <label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id" :aria-label="`Заблокирован: ${account.login}`"> Заблокирован</label>

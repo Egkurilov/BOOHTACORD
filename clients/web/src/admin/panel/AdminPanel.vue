@@ -17,8 +17,8 @@ onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(foc
 </script>
 
 <template>
-  <section class="admin-panel" aria-labelledby="admin-panel-title" data-testid="admin-panel">
-    <header class="admin-panel-heading"><div><p class="admin-eyebrow">УПРАВЛЕНИЕ ГИЛЬДИЕЙ</p><h1 id="admin-panel-title" ref="title" tabindex="-1">Администрирование</h1></div></header>
+  <section class="admin-panel" :class="{ 'admin-panel--members': section === 'members' }" aria-labelledby="admin-panel-title" data-testid="admin-panel">
+    <header class="admin-panel-heading"><div><p class="admin-eyebrow">УПРАВЛЕНИЕ ГИЛЬДИЕЙ</p><h1 id="admin-panel-title" ref="title" tabindex="-1">Администрирование</h1><p class="admin-panel-description">Управление гильдией и доступом участников.</p></div></header>
     <nav class="admin-section-tabs" aria-label="Разделы администрирования">
       <button type="button" :aria-current="section === 'members' ? 'page' : undefined" @click="section = 'members'">Участники</button>
       <button type="button" :aria-current="section === 'roles' ? 'page' : undefined" @click="section = 'roles'">Роли</button>

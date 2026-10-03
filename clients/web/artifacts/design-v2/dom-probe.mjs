@@ -34,6 +34,7 @@ const accounts = [{ ...fixtureMember, account_id: fixtureMember.user_id }, ...['
   account_id: `member-${index}`, login: name.toLowerCase(), display_name: name,
   role: 'MEMBER', blocked: false, created_at: '2026-10-03T10:00:00Z',
 }))].map((item) => ({ blocked: false, created_at: '2026-10-03T10:00:00Z', ...item }))
+const referenceAccounts = chatMembers.map((member) => ({ account_id: member.user_id, login: member.login, display_name: member.display_name, role: member.role, blocked: false, created_at: '2026-10-03T10:00:00Z' }))
 
 function response(path) {
   if (path.endsWith('/auth/session')) return { account_id: referenceFixture ? chatProfile.account_id : profile.account_id, role: profile.role }
@@ -47,7 +48,7 @@ function response(path) {
   }
   if (referenceFixture && path.includes('/members/')) return chatMembers.find((member) => path.endsWith(`/${member.user_id}`)) ?? {}
   if (path.endsWith('/members/member-0')) return reviewMember
-  if (path.includes('/admin/accounts')) return { accounts }
+  if (path.includes('/admin/accounts')) return { accounts: referenceFixture && state === 'admin-members' ? referenceAccounts : accounts }
   if (path.includes('/admin/roles')) return { revision: roleRevision, roles: [
     { role: 'MEMBER', display_name: 'Участник', editable: true, permissions: memberPermissions },
     { role: 'ADMINISTRATOR', display_name: 'Администратор', editable: false, permissions },
@@ -71,7 +72,7 @@ function response(path) {
 
 const browser = await chromium.launch({ headless: true })
 const state = process.argv[2] ?? 'chat'
-const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'audio', 'profile', 'search', 'nav', 'member-popover'].includes(state)
+const referenceFixture = process.env.DESIGN_V2_REFERENCE_FIXTURE === '1' && ['chat', 'roles', 'topology-channel', 'audio', 'profile', 'search', 'nav', 'member-popover', 'admin-members'].includes(state)
 const width = Number(process.argv[3] ?? 1440)
 const height = Number(process.argv[4] ?? 900)
 const screenshotPath = process.env.DESIGN_V2_SCREENSHOT
@@ -105,6 +106,11 @@ await page.route('**/api/v1/**', async (route) => {
   if (state === 'profile' && path.endsWith('/me') && route.request().method() === 'PATCH') {
     profileDisplayName = JSON.parse(route.request().postData() ?? '{}').display_name
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(response(path)) }); return
+  }
+  if (state === 'admin-members' && path.includes('/admin/accounts/') && route.request().method() === 'PATCH') {
+    const account = referenceAccounts.find((item) => path.endsWith(`/${item.account_id}`))
+    if (account) Object.assign(account, JSON.parse(route.request().postData() ?? '{}'))
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }); return
   }
   if (referenceFixture && path.endsWith('/attachments/scene/preview') && process.env.DESIGN_V2_SCENE_PNG) {
     await route.fulfill({ contentType: 'image/png', body: readFileSync(process.env.DESIGN_V2_SCENE_PNG) }); return
@@ -143,7 +149,7 @@ if (state === 'delete-confirm') await page.getByRole('button', { name: 'Дейс
 if (state === 'dm') { await page.getByRole('button', { name: 'Личные', exact: true }).click(); await page.getByRole('button', { name: 'Daria', exact: true }).click() }
 if (referenceFixture && state === 'topology-channel') await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
 await page.waitForTimeout(state === 'update' ? 5500 : 100)
-if (referenceFixture && ['roles', 'topology-channel', 'audio', 'profile', 'search', 'nav', 'member-popover'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
+if (referenceFixture && ['roles', 'topology-channel', 'audio', 'profile', 'search', 'nav', 'member-popover', 'admin-members'].includes(state) && process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
 if (referenceFixture && state === 'chat') {
   await page.locator('.message-item').nth(3).waitFor({ state: 'visible' })
   await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
@@ -264,6 +270,28 @@ if (state === 'member-popover' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === 
   await dialog.press('Escape')
   await dialog.waitFor({ state: 'detached' })
   interactions.push('escape-closes-member-profile')
+}
+if (state === 'admin-members' && process.env.DESIGN_V2_VERIFY_INTERACTIONS === '1') {
+  const search = page.getByRole('searchbox', { name: 'Поиск участников' })
+  await search.fill('Daria')
+  assert.equal(await page.locator(width <= 720 ? '.admin-mobile-card' : '.admin-table tbody tr').count(), 1)
+  await search.fill('')
+  await page.getByRole('combobox', { name: 'Фильтр по роли' }).selectOption('ADMINISTRATOR')
+  assert.equal(await page.locator(width <= 720 ? '.admin-mobile-card' : '.admin-table tbody tr').count(), 1)
+  await page.getByRole('combobox', { name: 'Фильтр по роли' }).selectOption('ALL')
+  interactions.push('search-and-role-filter')
+  if (width <= 720) {
+    await page.locator('.admin-mobile-card').first().locator('summary').click()
+    await page.locator('.admin-mobile-card').first().getByRole('combobox', { name: 'Роль: alex' }).waitFor()
+    interactions.push('mobile-account-actions')
+  } else {
+    await page.getByRole('button', { name: 'Действия с участником Daria' }).click()
+    await page.getByRole('combobox', { name: 'Роль: daria' }).selectOption('ADMINISTRATOR')
+    await page.getByRole('button', { name: 'Сохранить изменения для daria' }).click()
+    await page.getByText('Права аккаунта daria сохранены.').waitFor()
+    assert.equal(referenceAccounts.find((account) => account.login === 'daria')?.role, 'ADMINISTRATOR')
+    interactions.push('live-account-role-patch')
+  }
 }
 console.log(JSON.stringify({ viewport: page.viewportSize(), state, boxes, styles, composerChildren, requests, errors, interactions }, null, 2))
 await browser.close()

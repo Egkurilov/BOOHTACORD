@@ -12,7 +12,7 @@ describe('administrator member row controls', () => {
   })
 
   it('keeps mobile rows compact while exposing the existing save and password reset actions', () => {
-    expect(screen).toContain('<details v-for="account in accounts"')
+    expect(screen).toContain('<details v-for="account in filteredAccounts"')
     expect(screen).toContain('class="admin-mobile-edit"')
     expect(screen).toContain('@click="save(account, $event)"')
     expect(screen).toContain('@click="createReset(account, $event)"')
