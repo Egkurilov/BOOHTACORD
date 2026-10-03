@@ -16,6 +16,7 @@ describe('selected-stream toolbar layout', () => {
     expect(rail).toContain("emit('returnVoice')")
     expect(css).toContain('grid-template-rows: minmax(0, 1fr) 48px 100px')
     expect(css).toContain('grid-template-rows: minmax(0, 1fr) 56px 84px')
+    expect(css).toContain('.voice-room .screen-player { width: 100%; height: 100%; max-height: 100%; object-fit: contain; background: #050608; }')
     expect(css).toContain('min-height: 44px;')
   })
 

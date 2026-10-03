@@ -1,5 +1,5 @@
 .screen-share-setup-dialog--updating { width: min(480px, calc(100vw - 32px)); height: 469px; color: var(--gc-text-primary); background: var(--gc-surface); }
-.screen-share-setup-dialog--updating::backdrop { background: #000000C4; backdrop-filter: none; }
+.screen-share-setup-dialog--updating::backdrop { background: var(--gc-overlay); backdrop-filter: none; }
 .screen-share-setup-dialog--updating .screen-share-setup__header { position: relative; min-height: 119px; align-items: flex-start; padding: 26px 24px 0; }
 .screen-share-setup-dialog--updating .screen-share-setup__title h2 { font-size: 20px; font-weight: 600; letter-spacing: -.2px; line-height: 28px; }
 .screen-share-setup-dialog--updating .screen-share-setup__title p { margin-top: 20px; font-size: 14px; }

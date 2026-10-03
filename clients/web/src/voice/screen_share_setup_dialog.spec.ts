@@ -69,6 +69,7 @@ describe('screen-share setup dialog', () => {
     expect(styles).toContain('@media (max-width: 600px)')
     expect(styles).toContain('grid-template-columns: minmax(0, 1fr)')
     const updating = readFileSync(new URL('../design/design_v2_screen_quality.css', import.meta.url), 'utf8')
+    expect(updating).toContain('.screen-share-setup-dialog--updating::backdrop { background: var(--gc-overlay); backdrop-filter: none; }')
     expect(updating).toContain('background: var(--gc-surface)')
     expect(updating).toContain('background: var(--gc-accent)')
     expect(updating).toContain('background: var(--gc-sidebar)')
