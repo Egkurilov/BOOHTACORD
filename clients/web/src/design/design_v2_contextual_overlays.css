@@ -1,11 +1,12 @@
 /* Contextual states of the live workspace. */
-.update-banner[aria-live] { z-index: 35; display: flex; align-items: center; gap: 12px; height: 44px; border-bottom: 1px solid #625C9C; padding: 0 24px; color: var(--gc-text-primary); background: #272542; }
-.update-banner .update-summary { display: flex; align-items: center; gap: 14px; min-height: 44px; border: 0; padding: 0; color: var(--gc-text-primary); background: transparent; font-size: 14px; font-weight: 400; }
-.update-summary > span { color: #AE9CEB; font-size: 22px; line-height: 1; }
+.update-banner[aria-live] { z-index: 35; display: flex; align-items: center; gap: 12px; height: 44px; border-bottom: 1px solid #57519B; padding: 0 24px; color: var(--gc-text-primary); background: #272542; }
+.update-banner .update-summary { display: flex; align-items: center; gap: 12px; min-height: 44px; border: 0; padding: 0; color: var(--gc-text-primary); background: transparent; font-size: 14px; font-weight: 400; }
+.update-banner .update-summary svg { width: 18px; height: 18px; flex: none; color: #B9ABFF; stroke-width: 1.8; }
 .update-banner nav { display: flex; align-items: center; gap: 24px; margin-left: auto; }
 .update-banner nav button { border: 0; color: var(--gc-text-secondary); background: transparent; font-size: 12px; font-weight: 400; }
 .update-banner nav .update-primary { min-height: 32px; border-radius: 8px; padding: 0 16px; color: white; background: #5865F2; font-weight: 500; }
-.update-banner nav .update-dismiss { width: 24px; min-height: 32px; padding: 0; font-size: 23px; }
+.update-banner nav .update-dismiss { display: grid; width: 24px; min-height: 32px; place-items: center; padding: 0; }
+.update-banner nav .update-dismiss svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .update-banner .update-details { position: absolute; top: 44px; left: 0; display: grid; gap: 6px; width: 100%; border-bottom: 1px solid var(--gc-border-subtle); padding: 16px 24px; background: var(--gc-surface-raised); }
 #app:has(> .update-banner) .text-conversation .message-list { padding-top: 64px; }
 #app:has(> .update-banner) .members-presence-groups { padding-top: 44px; }
