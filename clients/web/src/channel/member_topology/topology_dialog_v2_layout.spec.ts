@@ -30,4 +30,8 @@ describe('Design V2 topology creation dialog', () => {
     expect(presentation).toContain('.topology-dialog { display: flex;')
     expect(presentation).toContain('margin-top: auto; border-top:')
   })
+
+  it('uses the handoff speaker outline for a voice channel', () => {
+    expect(component).toContain('M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14')
+  })
 })

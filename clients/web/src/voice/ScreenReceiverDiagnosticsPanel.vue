@@ -85,7 +85,7 @@ onBeforeUnmount(() => {
 
 <template>
   <details ref="diagnostics" class="stream-diagnostics" @toggle="handleToggle">
-    <summary :title="status" aria-label="Статистика" class="stream-tool-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V8m5 11V4m5 15v-9m5 9V6M2 21h20"/></svg><span class="gc-sr-only">Статистика</span></summary>
+    <summary :title="status" aria-label="Статистика" class="stream-tool-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4M4 20h17M8 16v-5M13 16V7M18 16v-9"/></svg><span class="gc-sr-only">Статистика</span></summary>
     <Teleport v-if="isOpen" to="body">
     <button type="button" class="stream-diagnostics-backdrop" aria-label="Закрыть статистику" @click="close" />
     <div ref="panel" class="stream-diagnostics-panel" role="dialog" aria-label="Статистика трансляции" :aria-modal="mobile ? 'true' : undefined"><header><h2>Статистика</h2><button type="button" aria-label="Закрыть статистику" @click="close">×</button></header><p>{{ participantName ? `Экран ${participantName}` : 'Трансляция' }} · {{ status }}</p><dl>
