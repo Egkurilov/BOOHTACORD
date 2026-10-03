@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RealtimeEvent } from '../realtime/realtime_client'
 import { useNotificationStore } from '../notification/notification_store'
 import { useVoiceNavigationStore } from '../voice/navigation_store'
+import { usePermissionStore } from '../authorization/permission_store'
 import { createWorkspaceRealtime } from './workspace_realtime'
 
 const directID = '11111111-1111-4111-8111-111111111111'
@@ -45,6 +46,13 @@ describe('workspace typed realtime dispatch', () => {
     await value.deliver(hint('channel.updated', { revision: 7 }))
     expect(value.stores.topology.refresh).toHaveBeenCalledOnce()
     expect(value.stores.directMessages.refreshHistory).not.toHaveBeenCalled()
+  })
+
+  it.each(['role.permissions.updated', 'auth.permissions.invalidated'] as const)('refreshes effective permissions on %s', async (kind) => {
+    const value = fixture(); const permissions = usePermissionStore(); const refresh = vi.spyOn(permissions, 'refresh').mockResolvedValue()
+    await value.deliver(hint(kind, kind === 'role.permissions.updated' ? { role: 'MEMBER', revision: 8 } : {}))
+    expect(refresh).toHaveBeenCalledOnce()
+    expect(value.stores.topology.refresh).not.toHaveBeenCalled()
   })
 
   it('captures unread before a create hint and notifies only after protected refresh', async () => {

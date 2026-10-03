@@ -10,6 +10,7 @@ import { refreshDirectMessageHint } from './direct_message_realtime'
 import { refreshTopologyHint } from './topology_realtime'
 import { applyVoiceLeaseRevocation } from './voice_lease_realtime'
 import { shouldRefreshTextHistory } from './active_message_resync'
+import { usePermissionStore } from '../authorization/permission_store'
 
 interface Refreshable { error: string | null; refresh(): Promise<void> }
 interface TextHistory extends Refreshable { channelId: string | null }
@@ -47,6 +48,7 @@ export async function refreshProtectedState(stores: WorkspaceRealtimeStores): Pr
 export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtime: ReturnType<typeof useRealtimeStore>, presence: ReturnType<typeof useGuildPresence>, voice: ReturnType<typeof useVoiceConnectionStore>, accountID: string, onSessionExpired: () => void) {
   const voiceNavigation = useVoiceNavigationStore()
   const notifications = useNotificationStore()
+  const permissions = usePermissionStore()
   let active = false
   let lifecycle = 0
   function onEvent(event: RealtimeEvent): void | Promise<void> {
@@ -61,6 +63,7 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
       })
     }
     if (event.kind === 'channel.updated') return refreshTopologyHint(stores.topology)
+    if (event.kind === 'role.permissions.updated' || event.kind === 'auth.permissions.invalidated') return permissions.refresh()
     if (event.kind === 'voice.lease_revoked') return applyVoiceLeaseRevocation(voice, voiceNavigation, event.payload.lease_id as string, event.payload.reason as VoiceLeaseRevocationReason)
     if (event.kind === 'message.created' || event.kind === 'message.updated' || event.kind === 'message.deleted') {
       const previousUnread = notifications.capture(event)
@@ -81,7 +84,7 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
       lifecycle += 1
       notifications.start(accountID)
       realtime.connect(onEvent, undefined, undefined, {
-        onRecovery: () => refreshProtectedState(stores),
+        onRecovery: () => Promise.all([refreshProtectedState(stores), permissions.refresh()]).then(() => undefined),
         checkSession: async () => (await loadCurrentSession())?.accountId === accountID,
         onSessionExpired,
       })

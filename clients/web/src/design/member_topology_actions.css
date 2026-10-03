@@ -1,0 +1,14 @@
+.channel-navigation-actions { display: flex; align-items: center; justify-content: space-between; padding: var(--gc-space-2) var(--gc-space-3); color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
+.channel-navigation-actions button, .channel-category-actions button, .channel-actions-button { width: 32px; height: 32px; border: 0; border-radius: var(--gc-radius-sm); color: var(--gc-text-secondary); background: transparent; }
+.channel-navigation-actions button:hover, .channel-category-actions button:hover, .channel-actions-button:hover { color: var(--gc-text-primary); background: var(--gc-surface-hover); }
+.channel-category-actions { display: flex; gap: var(--gc-space-1); }
+.channel-row { display: flex; align-items: center; }
+.channel-row .channel-button { min-width: 0; flex: 1; }
+.channel-actions-button { flex: 0 0 32px; margin-right: var(--gc-space-1); }
+.topology-action-status, .topology-action-error { margin: var(--gc-space-2) var(--gc-space-3); font-size: var(--gc-text-caption); }
+.topology-action-status { color: var(--gc-success); }.topology-action-error { color: var(--gc-danger); }
+.topology-dialog-backdrop { position: fixed; z-index: 90; inset: 0; display: grid; place-items: center; padding: var(--gc-space-4); background: rgb(0 0 0 / .7); }
+.topology-dialog { display: grid; width: min(420px, 100%); gap: var(--gc-space-4); border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-lg); padding: var(--gc-space-5); color: var(--gc-text-primary); background: var(--gc-surface-raised); box-shadow: var(--gc-shadow-lg); }
+.topology-dialog h2 { margin: 0; }.topology-dialog label { display: grid; gap: var(--gc-space-2); }
+.topology-dialog input, .topology-dialog select { min-height: 44px; border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-3); color: var(--gc-text-primary); background: var(--gc-input); }
+.topology-dialog-actions { display: flex; justify-content: flex-end; gap: var(--gc-space-2); }

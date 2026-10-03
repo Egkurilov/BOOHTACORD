@@ -99,7 +99,7 @@ describe('GuildChat design-system foundation', () => {
     expect(workspace).toContain('<template #audio>')
     expect(workspace).toContain('<template #profile>')
     expect(workspace).toContain('<AdminPanel')
-    expect(workspace).toContain('<ChannelNavigation')
+    expect(workspace).toContain('<ChannelTopologyActions')
     expect(workspaceMain).toContain('<slot name="admin" />')
     expect(workspaceMain).toContain('<slot name="audio" />')
     expect(workspaceMain).toContain('workspace-main-panel')

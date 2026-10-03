@@ -7,6 +7,8 @@ import VoiceParticipantStatus from '../voice/VoiceParticipantStatus.vue'
 import VoiceRoomRoster from '../voice/VoiceRoomRoster.vue'
 import type { VoiceRoomRoster as RoomRoster } from '../voice/voice_roster_client'
 import type { VoiceNavigationPresence } from './voice_navigation_presence'
+import type { PermissionValues } from '../authorization/permission_keys'
+import { categoryActions, channelActions } from './member_topology/action_resolver'
 
 const props = defineProps<{
   activeVoiceChannelId?: string
@@ -14,9 +16,16 @@ const props = defineProps<{
   topology: ChannelTopology
   voicePresence: VoiceNavigationPresence | null
   voiceRosters?: RoomRoster[] | null
+  permissions?: PermissionValues
 }>()
 
-const emit = defineEmits<{ select: [channel: TopologyChannel] }>()
+const emit = defineEmits<{
+  select: [channel: TopologyChannel]
+  createGlobal: []
+  createInCategory: [category: ChannelTopology['categories'][number]]
+  deleteCategory: [category: ChannelTopology['categories'][number]]
+  deleteChannel: [channel: TopologyChannel]
+}>()
 const authors = useAuthorDirectory()
 watch(() => props.voicePresence?.members.map((member) => member.id) ?? [], (ids) => {
   ids.filter((id) => id !== 'self').forEach((id) => { void authors.ensure(id) })
@@ -25,15 +34,20 @@ watch(() => props.voicePresence?.members.map((member) => member.id) ?? [], (ids)
 function isConnectedVoice(channel: TopologyChannel): boolean { return channel.kind === 'VOICE' && channel.id === props.activeVoiceChannelId }
 function rosterFor(channelId: string): RoomRoster | undefined { return props.voiceRosters?.find((room) => room.channelId === channelId) }
 function initial(name: string): string { return Array.from(name.trim())[0]?.toLocaleUpperCase('ru-RU') || 'У' }
+function canCreate(): boolean { return Boolean(props.permissions && (props.permissions['category.create'] || props.permissions['channel.text.create'] || props.permissions['channel.voice.create'])) }
 </script>
 
 <template>
   <nav class="channel-navigation" aria-label="Категории и каналы">
+    <div v-if="canCreate()" class="channel-navigation-actions"><span>Каналы</span><button type="button" aria-label="Создать категорию или канал" @click="emit('createGlobal')">+</button></div>
     <section v-for="category in props.topology.categories" :key="category.id" class="channel-category">
-      <h2>{{ category.name }}</h2>
+      <h2><span>{{ category.name }}</span><span v-if="props.permissions" class="channel-category-actions">
+        <button v-if="categoryActions(props.permissions, category.channels.length === 0).createText || categoryActions(props.permissions, category.channels.length === 0).createVoice" type="button" :aria-label="`Создать канал в категории ${category.name}`" @click="emit('createInCategory', category)">+</button>
+        <button v-if="categoryActions(props.permissions, category.channels.length === 0).delete" type="button" :aria-label="`Действия с категорией ${category.name}`" @click="emit('deleteCategory', category)">⋯</button>
+      </span></h2>
       <p v-if="category.channels.length === 0" class="empty-category">Нет каналов</p>
       <template v-for="channel in category.channels" :key="channel.id">
-        <button
+        <div class="channel-row" @contextmenu.stop.prevent="props.permissions && channelActions(props.permissions, channel.kind).delete && emit('deleteChannel', channel)"><button
           class="channel-button"
           :class="{ selected: props.selectedChannelId === channel.id, 'voice-connected': isConnectedVoice(channel) }"
           :aria-current="props.selectedChannelId === channel.id ? 'page' : undefined"
@@ -49,7 +63,7 @@ function initial(name: string): string { return Array.from(name.trim())[0]?.toLo
           <span v-if="channel.kind === 'TEXT' && channel.mentionCount" class="channel-state" :aria-label="`Упоминаний: ${channel.mentionCount}`">@{{ channel.mentionCount }}</span>
           <span v-if="channel.kind === 'VOICE' && (props.voicePresence?.channelId === channel.id ? props.voicePresence.memberCount > 0 : (rosterFor(channel.id)?.participants.length ?? 0) > 0)" class="channel-member-count" :title="`Участников в голосовом канале: ${props.voicePresence?.channelId === channel.id ? props.voicePresence.memberCount : rosterFor(channel.id)?.participants.length}`">{{ props.voicePresence?.channelId === channel.id ? props.voicePresence.memberCount : rosterFor(channel.id)?.participants.length }}</span>
           <span v-if="channel.admissionClosed" class="channel-state">Вход закрыт</span>
-        </button>
+        </button><button v-if="props.permissions && channelActions(props.permissions, channel.kind).delete" class="channel-actions-button" type="button" :aria-label="`Действия с каналом ${channel.name}`" @click.stop="emit('deleteChannel', channel)">⋯</button></div>
         <ul v-if="props.voicePresence && props.voicePresence.channelId === channel.id" class="voice-member-list" aria-label="Участники подключённого голосового канала" data-testid="voice-member-rows">
           <li v-for="member in props.voicePresence.members" :key="member.id" class="voice-member-row" :class="{ 'is-speaking': member.isSpeaking }">
             <span class="voice-member-avatar" :style="{ backgroundColor: avatarBackground(member.id) }" aria-hidden="true"><img v-if="authors.avatarUrl(member.id)" :src="authors.avatarUrl(member.id)" alt=""><template v-else>{{ initial(member.name) }}</template></span>
