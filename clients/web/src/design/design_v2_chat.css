@@ -7,19 +7,19 @@
   .main { overflow: visible; }
   .text-conversation > .conversation-header { position: relative; z-index: 1; width: calc(100% + var(--gc-layout-aside-wide)); }
 }
-.text-conversation .composer-wrap { padding: 8px 24px 18px; }
+.text-conversation .composer-wrap { padding: 8px 24px 16px; }
 .text-conversation .composer { min-height: 52px; }
 .text-conversation .reply-target { display: flex; min-height: 41px; flex: 0 0 100%; align-items: center; justify-content: space-between; margin: 0; }
 .attachment-preview { max-width: min(100%, 440px); max-height: 200px; }
 @media (min-width: 1024px) and (max-width: 1279px) {
-  .text-conversation .composer-wrap { padding: 8px 20px 18px; }
+  .text-conversation .composer-wrap { padding: 8px 20px 16px; }
 }
 @media (max-width: 1023px) {
   .sidebar > .guild-header { display: none; }
   .sidebar.is-open > .guild-header { position: fixed; top: 0; right: auto; left: 0; z-index: 60; display: flex; width: min(320px, calc(100vw - 40px)); background: var(--gc-sidebar); }
   .sidebar.is-open > .nav-drawer { inset: 0 auto 0 0; width: min(320px, calc(100vw - 40px)); padding-top: 64px; }
   .conversation-header { height: 56px; min-height: 56px; flex-basis: 56px; }
-  .text-conversation .composer-wrap { padding: 8px 8px; }
+  .text-conversation .composer-wrap { padding: 8px; }
   .text-conversation .composer { min-height: 54px; }
   .text-conversation .composer textarea { min-height: 44px; }
   .composer-helper { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }

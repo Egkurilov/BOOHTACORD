@@ -69,9 +69,9 @@ async function remove(target: TopologyCategory | TopologyChannel): Promise<void>
 
 <template>
   <p v-if="status" class="topology-action-status" aria-live="polite">{{ status }}</p><p v-if="error" class="topology-action-error" role="alert">{{ error }}</p>
-  <ChannelNavigation :active-voice-channel-id="activeVoiceChannelId" :selected-channel-id="selectedChannelId" :topology="topology" :permissions="permissions" :voice-presence="voicePresence" :voice-rosters="voiceRosters" @select="emit('select', $event)" @create-global="begin()" @create-in-category="begin" @delete-category="remove" @delete-channel="remove" />
+  <ChannelNavigation :active-voice-channel-id="activeVoiceChannelId" :selected-channel-id="selectedChannelId" :topology="topology" :permissions="permissions" :voice-presence="voicePresence" :voice-rosters="voiceRosters" @select="emit('select', $event)" @create-global="begin()" @create-in-category="begin" @delete-category="remove" @delete-channel="remove" @changed="emit('changed')" />
   <AdminConfirmation ref="confirmation" id="member-topology-confirm" title="Подтвердите действие" :confirm-label="confirmationLabel" />
-  <div v-if="open" class="topology-dialog-backdrop" @click.self="close()"><form ref="dialogForm" class="topology-dialog" role="dialog" aria-modal="true" aria-labelledby="topology-create-title" @submit.prevent="submit" @keydown.esc.prevent="close()" @keydown="containTab">
+  <Teleport to="body"><div v-if="open" class="topology-dialog-backdrop" @click.self="close()"><form ref="dialogForm" class="topology-dialog" role="dialog" aria-modal="true" aria-labelledby="topology-create-title" @submit.prevent="submit" @keydown.esc.prevent="close()" @keydown="containTab">
     <header><div><h2 id="topology-create-title">{{ kind === 'CATEGORY' ? 'Создать раздел' : 'Создать канал' }}</h2><p>Новое место для общения в вашей гильдии</p></div><button type="button" aria-label="Закрыть" :disabled="busy" @click="close()">×</button></header>
     <label>{{ kind === 'CATEGORY' ? 'Тип раздела' : 'Тип канала' }}<select v-model="kind" :disabled="busy" @change="changedIntent"><option v-for="option in permittedKinds()" :key="option" :value="option">{{ option === 'CATEGORY' ? 'Раздел' : option === 'TEXT' ? 'Текстовый' : 'Голосовой' }}</option></select></label>
     <label v-if="kind !== 'CATEGORY'">Раздел<select v-model="categoryId" :disabled="busy" @change="changedIntent"><option v-for="category in topology.categories" :key="category.id" :value="category.id">{{ category.name }}</option></select></label>
@@ -79,5 +79,5 @@ async function remove(target: TopologyCategory | TopologyChannel): Promise<void>
     <p v-if="kind !== 'CATEGORY'" class="topology-dialog-note">Канал будет доступен участникам гильдии согласно их ролям.</p>
     <p v-if="kind !== 'CATEGORY' && !topology.categories.length" class="topology-action-error">Сначала создайте раздел.</p><p v-if="error" class="topology-action-error" role="alert">{{ error }}</p>
     <div class="topology-dialog-actions"><button type="button" :disabled="busy" @click="close()">Отмена</button><button type="submit" :disabled="busy || (kind !== 'CATEGORY' && !categoryId)">{{ busy ? 'Создаём…' : kind === 'CATEGORY' ? 'Создать раздел' : 'Создать канал' }}</button></div>
-  </form></div>
+  </form></div></Teleport>
 </template>

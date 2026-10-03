@@ -23,7 +23,7 @@
 .search-panel-heading h1 { font-size: var(--gc-text-section); line-height: var(--gc-line-section); }
 .search-form { grid-template-columns: minmax(0, 1fr); }
 .update-banner { position: fixed; inset: 64px 0 auto var(--gc-layout-nav-wide); min-height: 44px; box-sizing: border-box; padding: var(--gc-space-2) var(--gc-space-6); border-color: var(--gc-border-subtle); background: var(--gc-surface-selected); }
-.update-banner[aria-live] { position: fixed; inset: 64px 0 auto var(--gc-layout-nav-wide); width: auto; height: 44px; min-height: 44px; padding: 0 var(--gc-space-6); }
+.update-banner[aria-live] { position: fixed; inset: 64px 0 auto var(--gc-layout-nav-wide); width: auto; height: 44px; min-height: 44px; padding: 4px var(--gc-space-6); }
 .app-frame .update-banner strong { color: var(--gc-text-primary); }
 .app-frame .update-banner span { color: var(--gc-text-secondary); }
 .app-frame .update-banner button { min-height: 36px; border-color: var(--gc-border-control); border-radius: var(--gc-radius-md); background: var(--gc-surface-raised); color: var(--gc-text-primary); }
@@ -49,7 +49,7 @@
 .direct-message-navigation .dm-avatar { background: var(--gc-brand-accent); }
 .direct-message-conversation { background: var(--gc-content); }
 .direct-message-conversation .conversation-header { background: var(--gc-content); }
-.direct-message-conversation .composer-wrap { padding: 8px 24px 18px; }
+.direct-message-conversation .composer-wrap { padding: 8px 24px 16px; }
 .direct-message-conversation .composer { min-height: 52px; }
 @media (max-width: 720px) {
   .topology-dialog-backdrop { align-items: end; padding: 32px 0 0; }
@@ -70,7 +70,6 @@
 @media (min-width: 1280px) {
   .gc-shell.search-active { grid-template-columns: var(--gc-layout-nav-wide) minmax(0, 1fr) 380px; }
   .topology-dialog { height: 513px; box-sizing: border-box; transform: translateY(.5px); }
-  .admin-confirm-dialog { transform: translateY(.5px); }
   .gc-shell.search-active > .search-aside { position: fixed; inset: 64px 0 0 auto; width: 380px; height: calc(100dvh - 64px); margin: 0; }
   .members .member-popover { right: calc(100% + 17px); max-width: min(320px, calc(100vw - 32px)); }
 }

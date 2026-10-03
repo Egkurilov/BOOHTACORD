@@ -1,0 +1,2068 @@
+{
+  "method": "Chromium DOM geometry and computed visual CSS comparison; image requests blocked; no raster content loaded or captured.",
+  "comparedProperties": [
+    "display",
+    "boxSizing",
+    "width",
+    "height",
+    "paddingTop",
+    "paddingRight",
+    "paddingBottom",
+    "paddingLeft",
+    "gap",
+    "alignItems",
+    "justifyContent",
+    "flexDirection",
+    "fontFamily",
+    "fontSize",
+    "fontWeight",
+    "lineHeight",
+    "letterSpacing",
+    "color",
+    "backgroundColor",
+    "borderTopColor",
+    "borderTopWidth",
+    "borderRadius",
+    "boxShadow",
+    "overflowX",
+    "overflowY"
+  ],
+  "screens": [
+    {
+      "id": "R01",
+      "state": "chat",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".shell => .gc-shell",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            1440,
+            900
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            1440,
+            900
+          ],
+          "differences": []
+        },
+        {
+          "element": ".sidebar => .sidebar",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            280,
+            900
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            280,
+            900
+          ],
+          "differences": []
+        },
+        {
+          "element": ".guild => .guild-header",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            279,
+            64
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            279,
+            64
+          ],
+          "differences": []
+        },
+        {
+          "element": ".voice-dock => .voice-dock",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            724,
+            279,
+            112
+          ],
+          "actualGeometry": [
+            0,
+            724,
+            279,
+            112
+          ],
+          "differences": []
+        },
+        {
+          "element": ".account => .user-footer",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            836,
+            279,
+            64
+          ],
+          "actualGeometry": [
+            0,
+            836,
+            279,
+            64
+          ],
+          "differences": []
+        },
+        {
+          "element": ".header => .main-header",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            280,
+            0,
+            1160,
+            64
+          ],
+          "actualGeometry": [
+            280,
+            0,
+            1160,
+            64
+          ],
+          "differences": []
+        },
+        {
+          "element": ".history => .message-list",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            280,
+            64,
+            912,
+            738
+          ],
+          "actualGeometry": [
+            280,
+            64,
+            912,
+            738
+          ],
+          "differences": []
+        },
+        {
+          "element": ".composer-wrap => .composer-wrap",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            280,
+            802,
+            912,
+            98
+          ],
+          "actualGeometry": [
+            280,
+            802,
+            912,
+            98
+          ],
+          "differences": []
+        },
+        {
+          "element": ".composer => .composer",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            304,
+            810,
+            864,
+            52
+          ],
+          "actualGeometry": [
+            304,
+            810,
+            864,
+            52
+          ],
+          "differences": []
+        },
+        {
+          "element": ".members => .members-panel",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            1192,
+            64,
+            248,
+            836
+          ],
+          "actualGeometry": [
+            1192,
+            64,
+            248,
+            836
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R02",
+      "state": "chat",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".shell => .gc-shell",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            390,
+            844
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            390,
+            844
+          ],
+          "differences": []
+        },
+        {
+          "element": ".sidebar => .sidebar",
+          "missing": false,
+          "ignoredBecauseHidden": true,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "actualGeometry": null,
+          "differences": []
+        },
+        {
+          "element": ".guild => .guild-header",
+          "missing": false,
+          "ignoredBecauseHidden": true,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "differences": []
+        },
+        {
+          "element": ".voice-dock => .voice-dock",
+          "missing": false,
+          "ignoredBecauseHidden": true,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "differences": []
+        },
+        {
+          "element": ".account => .user-footer",
+          "missing": false,
+          "ignoredBecauseHidden": true,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "differences": []
+        },
+        {
+          "element": ".header => .main-header",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            390,
+            56
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            390,
+            56
+          ],
+          "differences": []
+        },
+        {
+          "element": ".history => .message-list",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            56,
+            390,
+            665
+          ],
+          "actualGeometry": [
+            0,
+            56,
+            390,
+            665
+          ],
+          "differences": []
+        },
+        {
+          "element": ".composer-wrap => .composer-wrap",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            721,
+            390,
+            70
+          ],
+          "actualGeometry": [
+            0,
+            721,
+            390,
+            70
+          ],
+          "differences": []
+        },
+        {
+          "element": ".composer => .composer",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            8,
+            729,
+            374,
+            54
+          ],
+          "actualGeometry": [
+            8,
+            729,
+            374,
+            54
+          ],
+          "differences": []
+        },
+        {
+          "element": ".members => .members-panel",
+          "missing": false,
+          "ignoredBecauseHidden": true,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R03",
+      "state": "chat",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".shell => .gc-shell",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            1024,
+            768
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            1024,
+            768
+          ],
+          "differences": []
+        },
+        {
+          "element": ".sidebar => .sidebar",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            280,
+            768
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            280,
+            768
+          ],
+          "differences": []
+        },
+        {
+          "element": ".guild => .guild-header",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            279,
+            64
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            279,
+            64
+          ],
+          "differences": []
+        },
+        {
+          "element": ".voice-dock => .voice-dock",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            592,
+            279,
+            112
+          ],
+          "actualGeometry": [
+            0,
+            592,
+            279,
+            112
+          ],
+          "differences": []
+        },
+        {
+          "element": ".account => .user-footer",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            704,
+            279,
+            64
+          ],
+          "actualGeometry": [
+            0,
+            704,
+            279,
+            64
+          ],
+          "differences": []
+        },
+        {
+          "element": ".header => .main-header",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            280,
+            0,
+            744,
+            64
+          ],
+          "actualGeometry": [
+            280,
+            0,
+            744,
+            64
+          ],
+          "differences": []
+        },
+        {
+          "element": ".history => .message-list",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            280,
+            64,
+            744,
+            606
+          ],
+          "actualGeometry": [
+            280,
+            64,
+            744,
+            606
+          ],
+          "differences": []
+        },
+        {
+          "element": ".composer-wrap => .composer-wrap",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            280,
+            670,
+            744,
+            98
+          ],
+          "actualGeometry": [
+            280,
+            670,
+            744,
+            98
+          ],
+          "differences": []
+        },
+        {
+          "element": ".composer => .composer",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            300,
+            678,
+            704,
+            52
+          ],
+          "actualGeometry": [
+            300,
+            678,
+            704,
+            52
+          ],
+          "differences": []
+        },
+        {
+          "element": ".members => .members-panel",
+          "missing": false,
+          "ignoredBecauseHidden": true,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R04",
+      "state": "stream",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".media-main => .media-main",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            280,
+            64,
+            1160,
+            836
+          ],
+          "actualGeometry": [
+            280,
+            64,
+            1160,
+            836
+          ],
+          "differences": []
+        },
+        {
+          "element": ".stage => .screen-stage",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            304,
+            88,
+            1112,
+            608
+          ],
+          "actualGeometry": [
+            304,
+            88,
+            1112,
+            608
+          ],
+          "differences": []
+        },
+        {
+          "element": ".stage-controls => .stream-quality-row",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            304,
+            712,
+            1112,
+            48
+          ],
+          "actualGeometry": [
+            304,
+            712,
+            1112,
+            48
+          ],
+          "differences": []
+        },
+        {
+          "element": ".stream-rail => .screen-cards.stream-rail",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            304,
+            776,
+            1112,
+            100
+          ],
+          "actualGeometry": [
+            304,
+            776,
+            1112,
+            100
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R05",
+      "state": "stream",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".media-main => .media-main",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            56,
+            390,
+            735
+          ],
+          "actualGeometry": [
+            0,
+            56,
+            390,
+            735
+          ],
+          "differences": []
+        },
+        {
+          "element": ".stage => .screen-stage",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            12,
+            68,
+            366,
+            547
+          ],
+          "actualGeometry": [
+            12,
+            68,
+            366,
+            547
+          ],
+          "differences": []
+        },
+        {
+          "element": ".stage-controls => .stream-quality-row",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            12,
+            627,
+            366,
+            56
+          ],
+          "actualGeometry": [
+            12,
+            627,
+            366,
+            56
+          ],
+          "differences": []
+        },
+        {
+          "element": ".stream-rail => .screen-cards.stream-rail",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            12,
+            695,
+            366,
+            84
+          ],
+          "actualGeometry": [
+            12,
+            695,
+            366,
+            84
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R06",
+      "state": "roles",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".role-selector => .role-selector",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            420,
+            245,
+            340,
+            46
+          ],
+          "actualGeometry": [
+            420,
+            245,
+            340,
+            46
+          ],
+          "differences": []
+        },
+        {
+          "element": ".panel => .role-permissions fieldset",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            420,
+            315,
+            880,
+            412
+          ],
+          "actualGeometry": [
+            420,
+            315,
+            880,
+            412
+          ],
+          "differences": []
+        },
+        {
+          "element": ".permission-table => .role-permission-table",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            445,
+            368,
+            830,
+            272
+          ],
+          "actualGeometry": [
+            445,
+            368,
+            830,
+            272
+          ],
+          "differences": []
+        },
+        {
+          "element": ".savebar => .role-policy-actions",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            420,
+            848,
+            880,
+            36
+          ],
+          "actualGeometry": [
+            420,
+            848,
+            880,
+            36
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R07",
+      "state": "roles",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".role-selector => .role-selector",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            16,
+            245,
+            358,
+            50
+          ],
+          "actualGeometry": [
+            16,
+            245,
+            358,
+            50
+          ],
+          "differences": []
+        },
+        {
+          "element": ".panel => .role-permissions fieldset",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            16,
+            315,
+            358,
+            394
+          ],
+          "actualGeometry": [
+            16,
+            315,
+            358,
+            394
+          ],
+          "differences": []
+        },
+        {
+          "element": ".permission-table => .role-permission-table",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            33,
+            360,
+            324,
+            236
+          ],
+          "actualGeometry": [
+            33,
+            360,
+            324,
+            236
+          ],
+          "differences": []
+        },
+        {
+          "element": ".savebar => .role-policy-actions",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            16,
+            735,
+            358,
+            44
+          ],
+          "actualGeometry": [
+            16,
+            735,
+            358,
+            44
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R08",
+      "state": "topology-category",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".dialog => .topology-dialog",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            480,
+            193.5,
+            480,
+            513
+          ],
+          "actualGeometry": [
+            480,
+            193.5,
+            480,
+            513
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R09",
+      "state": "topology-channel",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".dialog => .topology-dialog",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            314,
+            390,
+            530
+          ],
+          "actualGeometry": [
+            0,
+            314,
+            390,
+            530
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "state": "audio",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".panel => .audio-settings-panel",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            420,
+            180,
+            880,
+            282
+          ],
+          "actualGeometry": [
+            420,
+            180,
+            880,
+            282
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "state": "audio",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".panel => .audio-settings-panel",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            16,
+            156,
+            358,
+            402
+          ],
+          "actualGeometry": [
+            16,
+            156,
+            358,
+            402
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R12",
+      "state": "profile",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".panel => .profile-panel",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            420,
+            249,
+            880,
+            459
+          ],
+          "actualGeometry": [
+            420,
+            249,
+            880,
+            459
+          ],
+          "differences": []
+        },
+        {
+          "element": ".savebar => .profile-savebar",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            445,
+            626,
+            830,
+            57
+          ],
+          "actualGeometry": [
+            445,
+            626,
+            830,
+            57
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R13",
+      "state": "search",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".searchpane => .search-aside",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            1060,
+            64,
+            380,
+            836
+          ],
+          "actualGeometry": [
+            1060,
+            64,
+            380,
+            836
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R14",
+      "state": "nav",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".drawer-nav => .nav-drawer",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            320,
+            844
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            320,
+            844
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R15",
+      "state": "components",
+      "status": "REFERENCE_ONLY",
+      "reason": "Token/component catalog reference; it has no application route. Live product states are compared individually.",
+      "comparisons": []
+    },
+    {
+      "id": "R16",
+      "state": "auth",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".auth-screen => .authentication-page",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            1440,
+            900
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            1440,
+            900
+          ],
+          "differences": []
+        },
+        {
+          "element": ".auth-card => .authentication-card",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            504,
+            158.5,
+            432,
+            583
+          ],
+          "actualGeometry": [
+            504,
+            158.5,
+            432,
+            583
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R17",
+      "state": "auth",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".auth-screen => .authentication-page",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            390,
+            844
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            390,
+            844
+          ],
+          "differences": []
+        },
+        {
+          "element": ".auth-card => .authentication-card",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            16,
+            144.5,
+            358,
+            555
+          ],
+          "actualGeometry": [
+            16,
+            144.5,
+            358,
+            555
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R18",
+      "state": "member-popover",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".member-popover => .member-popover",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            856,
+            156,
+            320,
+            314
+          ],
+          "actualGeometry": [
+            856,
+            156,
+            320,
+            314
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R19",
+      "state": "statistics",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".media-main => .media-main",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            56,
+            390,
+            735
+          ],
+          "actualGeometry": [
+            0,
+            56,
+            390,
+            735
+          ],
+          "differences": []
+        },
+        {
+          "element": ".stage => .screen-stage",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            12,
+            68,
+            366,
+            547
+          ],
+          "actualGeometry": [
+            12,
+            68,
+            366,
+            547
+          ],
+          "differences": []
+        },
+        {
+          "element": ".stage-controls => .stream-quality-row",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            12,
+            627,
+            366,
+            56
+          ],
+          "actualGeometry": [
+            12,
+            627,
+            366,
+            56
+          ],
+          "differences": []
+        },
+        {
+          "element": ".stream-rail => .screen-cards.stream-rail",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            12,
+            695,
+            366,
+            84
+          ],
+          "actualGeometry": [
+            12,
+            695,
+            366,
+            84
+          ],
+          "differences": []
+        },
+        {
+          "element": ".stats-popover => .stream-diagnostics-panel",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            330,
+            390,
+            514
+          ],
+          "actualGeometry": [
+            0,
+            330,
+            390,
+            514
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R20",
+      "state": "quality",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".dialog => .screen-share-setup-dialog",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            480,
+            215.5,
+            480,
+            469
+          ],
+          "actualGeometry": [
+            480,
+            215.5,
+            480,
+            469
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R21",
+      "state": "admin-members",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".panel => .admin-table-scroll",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            420,
+            369,
+            880,
+            478
+          ],
+          "actualGeometry": [
+            420,
+            369,
+            880,
+            478
+          ],
+          "differences": []
+        },
+        {
+          "element": ".admin-table => .admin-table",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            441,
+            370,
+            838,
+            476
+          ],
+          "actualGeometry": [
+            441,
+            370,
+            838,
+            476
+          ],
+          "differences": []
+        },
+        {
+          "element": ".admin-mobile => .admin-mobile-list",
+          "missing": false,
+          "ignoredBecauseHidden": true,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "differences": []
+        },
+        {
+          "element": ".admin-card => .admin-mobile-card",
+          "missing": false,
+          "ignoredBecauseHidden": true,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "actualGeometry": null,
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R22",
+      "state": "admin-members",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".panel => .admin-table-scroll",
+          "missing": false,
+          "ignoredBecauseHidden": true,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "differences": []
+        },
+        {
+          "element": ".admin-table => .admin-table",
+          "missing": false,
+          "ignoredBecauseHidden": true,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "differences": []
+        },
+        {
+          "element": ".admin-mobile => .admin-mobile-list",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            16,
+            341,
+            358,
+            720
+          ],
+          "actualGeometry": [
+            16,
+            341,
+            358,
+            720
+          ],
+          "differences": []
+        },
+        {
+          "element": ".admin-card => .admin-mobile-card",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            16,
+            341,
+            358,
+            110
+          ],
+          "actualGeometry": [
+            16,
+            341,
+            358,
+            110
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R23",
+      "state": "update",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".updatebar => .update-banner",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            280,
+            64,
+            1160,
+            44
+          ],
+          "actualGeometry": [
+            280,
+            64,
+            1160,
+            44
+          ],
+          "differences": []
+        },
+        {
+          "element": ".shell => .gc-shell",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            1440,
+            900
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            1440,
+            900
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R24",
+      "state": "context",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".contextmenu => .category-context-menu",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            255,
+            235,
+            268,
+            259
+          ],
+          "actualGeometry": [
+            255,
+            235,
+            268,
+            259
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R25",
+      "state": "reply",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".reply-strip => .reply-target",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            304,
+            769,
+            864,
+            41
+          ],
+          "actualGeometry": [
+            304,
+            769,
+            864,
+            41
+          ],
+          "differences": []
+        },
+        {
+          "element": ".mention-popover => .mention-popover",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            340,
+            624,
+            360,
+            130
+          ],
+          "actualGeometry": [
+            340,
+            624,
+            360,
+            130
+          ],
+          "differences": []
+        },
+        {
+          "element": ".composer => .composer",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            304,
+            810,
+            864,
+            52
+          ],
+          "actualGeometry": [
+            304,
+            810,
+            864,
+            52
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R26",
+      "state": "image",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".image-dialog => .attachment-image-dialog",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            0,
+            1440,
+            900
+          ],
+          "actualGeometry": [
+            0,
+            0,
+            1440,
+            900
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R27",
+      "state": "voice",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".people-stage => .voice-participant-volumes",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            464,
+            265,
+            792,
+            216
+          ],
+          "actualGeometry": [
+            464,
+            265,
+            792,
+            216
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R28",
+      "state": "dm",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".history => .direct-message-conversation .message-list",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            280,
+            64,
+            1160,
+            738
+          ],
+          "actualGeometry": [
+            280,
+            64,
+            1160,
+            738
+          ],
+          "differences": []
+        },
+        {
+          "element": ".composer-wrap => .direct-message-conversation .composer-wrap",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            280,
+            802,
+            1160,
+            98
+          ],
+          "actualGeometry": [
+            280,
+            802,
+            1160,
+            98
+          ],
+          "differences": []
+        },
+        {
+          "element": ".composer => .direct-message-conversation .composer",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            304,
+            810,
+            1112,
+            52
+          ],
+          "actualGeometry": [
+            304,
+            810,
+            1112,
+            52
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R29",
+      "state": "delete-confirm",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".dialog => .admin-confirm-dialog",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            480,
+            306.5,
+            480,
+            287
+          ],
+          "actualGeometry": [
+            480,
+            306.5,
+            480,
+            287
+          ],
+          "differences": []
+        }
+      ]
+    },
+    {
+      "id": "R30",
+      "state": "quality",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "MATCH",
+      "comparisons": [
+        {
+          "element": ".dialog => .screen-share-setup-dialog",
+          "missing": false,
+          "ignoredBecauseHidden": false,
+          "geometryEqual": true,
+          "styleEqual": true,
+          "referenceGeometry": [
+            0,
+            358,
+            390,
+            486
+          ],
+          "actualGeometry": [
+            0,
+            358,
+            390,
+            486
+          ],
+          "differences": []
+        }
+      ]
+    }
+  ]
+}

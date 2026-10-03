@@ -9,6 +9,7 @@ import TextHistoryList from './TextHistoryList.vue'
 import TextMessageAttachmentPicker from './TextMessageAttachmentPicker.vue'
 import TextMessageSearch from './TextMessageSearch.vue'
 import MentionPicker from './MentionPicker.vue'
+import MentionAutocomplete from './MentionAutocomplete.vue'
 import ConversationOverflowMenu from './ConversationOverflowMenu.vue'
 import type { TextAttachmentUpload } from './text_attachment_upload_client'
 import { advanceTextReadIfVisible } from './text_read_gate'
@@ -96,6 +97,7 @@ function onComposerPaste(event: ClipboardEvent): void {
     <TextHistoryList :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @reply-context="replyContextTarget = $event" @retry="retry" @viewport-change="queueVisibleRead" />
     <div class="composer-wrap">
       <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
+      <MentionAutocomplete v-model="draft" v-model:mention-user-ids="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" />
       <form class="message-composer composer" @submit.prevent="send">
         <TextMessageAttachmentPicker ref="attachmentPicker" :channel-id="props.channelId" :initial-attachments="attachments" :disabled="store.sending || attachmentPending"
           :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" />

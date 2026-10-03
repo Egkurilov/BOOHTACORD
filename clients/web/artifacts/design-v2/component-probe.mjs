@@ -8,18 +8,23 @@ const browser = await chromium.launch({ headless: true })
 const page = await browser.newPage({ viewport: { width, height } })
 await page.route('**/*', (route) => /\.(?:png|jpe?g|gif|webp|avif)(?:\?|$)/i.test(route.request().url()) ? route.abort() : route.continue())
 await page.route('**/api/v1/media/**', (route) => route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"not found"}' }))
-await page.goto(`http://127.0.0.1:4173/artifacts/design-v2/component-harness.html?state=${state}`, { waitUntil: 'domcontentloaded' })
+await page.goto(`${process.env.DESIGN_V2_URL ?? 'http://127.0.0.1:4173'}/artifacts/design-v2/component-harness.html?state=${state}`, { waitUntil: 'domcontentloaded' })
 await page.locator('#app > *').waitFor({ state: 'attached' })
 if (state === 'statistics') await page.locator('.stream-diagnostics').evaluate((details) => { details.open = true })
 if (state === 'image') await page.locator('.attachment-card__open').evaluate((button) => button.click())
 await page.waitForTimeout(100)
-const selectors = ['.media-main', '.screen-viewer', '.screen-stage', '.stream-quality-row', '.stream-voice-return', '.screen-rail-section', '.stream-controls', '.stream-rail', '.stream-diagnostics-panel', '.screen-share-setup-dialog', '.screen-share-setup__header', '.screen-share-setup__body', '.screen-share-setup__footer', '.voice-participant-volumes', '.voice-participant-volumes .participant', '.attachment-image-dialog', '.attachment-image-dialog__header', '.attachment-image-dialog__content']
+const selectors = ['.media-main', '.screen-viewer', '.screen-stage', '.stream-quality-row', '.stream-voice-return', '.screen-rail-section', '.screen-cards.stream-rail', '.stream-controls', '.stream-rail', '.stream-diagnostics-panel', '.screen-share-setup-dialog', '.screen-share-setup__header', '.screen-share-setup__body', '.screen-share-setup__footer', '.screen-share-quality__row', '.screen-share-quality__segments', '.voice-participant-volumes', '.voice-participant-volumes .participant', '.attachment-image-dialog', '.attachment-image-dialog__header', '.attachment-image-dialog__content']
 const boxes = Object.fromEntries(await Promise.all(selectors.map(async (selector) => {
   const locator = page.locator(selector).first()
   const rect = await locator.count() ? await locator.boundingBox() : null
   return [selector, rect && Object.fromEntries(['x', 'y', 'width', 'height'].map((key) => [key, Math.round(rect[key] * 100) / 100]))]
 })))
-const result = { state, viewport: { width, height }, boxes, text: (await page.locator('#app').innerText()).slice(0, 1800), errors: await page.locator('[role=alert]').allTextContents() }
+const visualProperties = ['display', 'position', 'boxSizing', 'width', 'height', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'gap', 'rowGap', 'columnGap', 'alignItems', 'justifyContent', 'flexDirection', 'fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'color', 'backgroundColor', 'borderTopColor', 'borderTopWidth', 'borderRadius', 'boxShadow', 'opacity', 'overflowX', 'overflowY']
+const styles = Object.fromEntries(await Promise.all(selectors.map(async (selector) => {
+  const locator = page.locator(selector).first()
+  return [selector, await locator.count() ? await locator.evaluate((element, properties) => Object.fromEntries(properties.map((property) => [property, getComputedStyle(element)[property]])), visualProperties) : null]
+})))
+const result = { state, viewport: { width, height }, boxes, styles, errors: await page.locator('[role=alert]').allTextContents() }
 const id = state === 'quality' ? (width < 600 ? 'R30' : 'R20') : state === 'statistics' ? 'R19' : state === 'voice' ? 'R27' : state === 'image' ? 'R26' : width < 600 ? 'R05' : 'R04'
 const inventory = JSON.parse(readFileSync(new URL('./reference-inventory.json', import.meta.url), 'utf8'))
 const reference = inventory.items.find((entry) => entry.id === id)

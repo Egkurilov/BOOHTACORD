@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 function template(path: string): string { return readFileSync(new URL(path, import.meta.url), 'utf8') }
 function field(source: string, model: string): string {
-  return source.match(new RegExp(`<\\w+[^>]*v-model="${model}"[^>]*>`))?.[0] ?? ''
+  return source.match(new RegExp(`<(?:input|textarea|select)[^>]*v-model="${model}"[^>]*>`))?.[0] ?? ''
 }
 
 describe('Unicode form boundary contract', () => {
