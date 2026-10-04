@@ -91,6 +91,10 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   room.applyMicrophoneProcessing = (options) => microphone.setProcessing(options)
   room.readAudioProcessingSettings = () => microphone.readCaptureSettings()
   room.readMicrophoneTrack = () => microphone.readOutputTrack()
+  room.readAudioInputSelection = () => microphone.inputSelection
+  room.onAudioInputSelection = (listener) => microphone.subscribeInput(listener)
+  liveKitRoom.on(RoomEvent.Reconnecting, () => microphone.prepareReconnect())
+  liveKitRoom.on(RoomEvent.Reconnected, () => { void microphone.reapplyDevice().catch(() => undefined) })
   room.readNoiseSuppressionState = () => microphone.runtimeState
   room.onNoiseSuppressionState = (listener) => microphone.subscribe(listener)
   const switchDevice = liveKitRoom.switchActiveDevice.bind(liveKitRoom)

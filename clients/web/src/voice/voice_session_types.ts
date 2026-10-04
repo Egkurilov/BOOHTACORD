@@ -13,7 +13,7 @@ export interface ActiveVoiceSession extends JoinedVoiceRoom {
   screenProfile: ScreenProfile | null
 }
 
-export type RoomJoiner = (credential: LiveKitCredential, processing?: AudioProcessingOptions, joinMode?: VoiceJoinMode) => Promise<JoinedVoiceRoom>
+export type RoomJoiner = (credential: LiveKitCredential, processing?: AudioProcessingOptions, joinMode?: VoiceJoinMode, inputDeviceId?: string) => Promise<JoinedVoiceRoom>
 export interface VoiceConnectionObserver {
   disconnected(): void
   reconnected(): void

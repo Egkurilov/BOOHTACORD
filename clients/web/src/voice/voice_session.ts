@@ -21,6 +21,8 @@ import { VoiceAudioProcessing } from './voice_audio_processing'
 import { VoiceScreenSession } from './voice_screen_session'
 import type { ActiveVoiceSession, RoomJoiner, VoiceAdmission, VoiceConnectionObserver } from './voice_session_types'
 import { tracedOperation } from '../telemetry/client_tracing'
+import type { AudioInputSelection } from './audio_input_selection'
+import { reportAudioInputSwitch } from './audio_input_reporting'
 export type { ActiveVoiceSession, RoomJoiner, VoiceAdmission, VoiceConnectionObserver } from './voice_session_types'
 const defaultAdmission: VoiceAdmission = {
   acquire: acquireVoiceLease,
@@ -29,6 +31,8 @@ const defaultAdmission: VoiceAdmission = {
 }
 export class VoiceSession {
   private current: ActiveVoiceSession | null = null
+  private inputDeviceId = 'default'
+  private stopInputSelection?: () => void
   private readonly monitor = new VoiceReconnectMonitor()
   readonly audioProcessing = new VoiceAudioProcessing(() => this.current)
   readonly deafen = new VoiceDeafen(() => this.current, () => this.audioProcessing.value)
@@ -40,6 +44,7 @@ export class VoiceSession {
   get active(): ActiveVoiceSession | null {
     return this.current
   }
+  get inputSelection(): AudioInputSelection { return this.current?.room.readAudioInputSelection?.() ?? { deviceId: this.inputDeviceId, outcome: 'success' } }
   setConnectionObserver(observer: VoiceConnectionObserver): void {
     this.monitor.setObserver(observer)
   }
@@ -53,8 +58,19 @@ export class VoiceSession {
       try {
         const acquired = await this.admission.acquire(channelId, transfer)
         lease = acquired
-        const joined = await this.joinRoom(await within(() => this.admission.credential(acquired.id)), this.audioProcessing.value, joinMode)
+        const joined = await this.joinRoom(await within(() => this.admission.credential(acquired.id)), this.audioProcessing.value, joinMode, this.inputDeviceId)
         this.current = { channelId: lease.channelId, leaseId: lease.id, screenProfile: null, ...joined }
+        const observeInput = (selection: AudioInputSelection) => {
+          if (this.current?.room !== joined.room) return
+          this.inputDeviceId = selection.deviceId
+          if (selection.outcome === 'error') {
+            this.current.microphone = 'MUTED'
+            this.deafen.invalidateMicrophoneRestore()
+          }
+        }
+        this.stopInputSelection = joined.room.onAudioInputSelection?.(observeInput)
+        const selected = joined.room.readAudioInputSelection?.()
+        if (selected) observeInput(selected)
         this.monitor.bind(joined.room, () => this.current?.room === joined.room, () => this.handleDisconnected(joined.room))
         return this.current
       } catch (cause) {
@@ -70,6 +86,8 @@ export class VoiceSession {
       if (!current) return
       await this.monitor.whileLeaving(async () => {
         await current.room.disconnect()
+        this.stopInputSelection?.()
+        this.stopInputSelection = undefined
         this.current = null
         this.deafen.reset()
         await within(() => this.admission.release(current.leaseId))
@@ -81,6 +99,8 @@ export class VoiceSession {
     if (!current || current.leaseId !== leaseId) return false
     await this.monitor.whileLeaving(async () => {
       await current.room.disconnect()
+      this.stopInputSelection?.()
+      this.stopInputSelection = undefined
       this.current = null
       this.deafen.reset()
     })
@@ -102,10 +122,28 @@ export class VoiceSession {
 
   async setAudioProcessing(options: AudioProcessingOptions): Promise<void> { await this.audioProcessing.set(options) }
 
-  async switchAudioDevice(kind: AudioDeviceKind, deviceId: string): Promise<void> {
-    if (!this.current) throw new Error('Сначала подключитесь к голосовому каналу.')
-    if (!await this.current.room.switchActiveDevice(kind, deviceId)) {
-      throw new Error('Браузер не смог переключить выбранное аудиоустройство.')
+  async switchAudioDevice(kind: AudioDeviceKind, deviceId: string): Promise<AudioInputSelection | undefined> {
+    const current = this.current
+    if (!current) {
+      if (kind !== 'audioinput') throw new Error('Сначала подключитесь к голосовому каналу.')
+      this.inputDeviceId = deviceId
+      reportAudioInputSwitch('prejoin', 'success')
+      return this.inputSelection
+    }
+    if (kind === 'audioinput' && this.inputSelection.deviceId === deviceId && this.inputSelection.outcome !== 'error') return this.inputSelection
+    try {
+      const switched = await current.room.switchActiveDevice(kind, deviceId)
+      if (this.current !== current) throw new Error('Голосовое подключение закрыто.')
+      if (!switched && (kind !== 'audioinput' || !current.room.readAudioInputSelection)) throw new Error('Браузер не смог переключить выбранное аудиоустройство.')
+      if (kind === 'audioinput') {
+        this.inputDeviceId = current.room.readAudioInputSelection?.().deviceId ?? deviceId
+        return this.inputSelection
+      }
+    } catch (cause) {
+      if (this.current !== current) throw new Error('Голосовое подключение закрыто.')
+      const selection = kind === 'audioinput' ? current.room.readAudioInputSelection?.() : undefined
+      if (selection?.outcome === 'error') { current.microphone = 'MUTED'; this.deafen.invalidateMicrophoneRestore(); return selection }
+      throw cause
     }
   }
 
@@ -114,6 +152,8 @@ export class VoiceSession {
   private async handleDisconnected(room: JoinedVoiceRoom['room']): Promise<void> {
     const current = this.current
     if (!current || current.room !== room) return
+    this.stopInputSelection?.()
+    this.stopInputSelection = undefined
     this.current = null
     this.deafen.reset()
     await this.admission.release(current.leaseId).catch(() => undefined)

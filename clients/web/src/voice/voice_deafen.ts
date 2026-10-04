@@ -20,6 +20,10 @@ export class VoiceDeafen {
     this.microphoneBeforeDeafen = null
   }
 
+  invalidateMicrophoneRestore(): void {
+    this.microphoneBeforeDeafen = 'MUTED'
+  }
+
   async set(deafened: boolean): Promise<MicrophoneState> {
     const current = this.current()
     if (!current) throw new Error('Сначала подключитесь к голосовому каналу.')

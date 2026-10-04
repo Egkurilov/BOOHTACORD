@@ -19,6 +19,7 @@ import type { ScreenDiagnostics } from './screen_diagnostics'
 import type { VoiceConnectionStats } from './voice_connection_quality'
 import { awaitMediaConnection, mediaConnectionTimeoutMs } from './connection_deadline'
 import { defaultLiveKitRoomFactory } from './livekit_room_factory'
+import type { AudioInputSelection } from './audio_input_selection'
 
 export {
   readScreenShareDiagnostics,
@@ -51,6 +52,8 @@ export interface VoiceRoom {
   setMicrophone?(enabled: boolean, options: AudioProcessingOptions): Promise<void>
   disposeMicrophone?(): Promise<void>
   readMicrophoneTrack?(): MediaStreamTrack | undefined
+  readAudioInputSelection?(): AudioInputSelection
+  onAudioInputSelection?(listener: (selection: AudioInputSelection) => void): () => void
   readNoiseSuppressionState?(): NoiseSuppressionRuntimeState
   onNoiseSuppressionState?(listener: (state: NoiseSuppressionRuntimeState) => void): () => void
   applyMicrophoneProcessing?(options: AudioProcessingOptions): Promise<void>
@@ -80,10 +83,12 @@ export async function connectLiveKitRoom(
   processing?: AudioProcessingOptions,
   timeoutMs = mediaConnectionTimeoutMs,
   joinMode: VoiceJoinMode = 'with-microphone',
+  inputDeviceId?: string,
 ): Promise<JoinedVoiceRoom> {
   const room = await makeRoom()
   try {
     await awaitMediaConnection(room.connect(credential.url, credential.token, { autoSubscribe: false }), timeoutMs)
+    if (inputDeviceId !== undefined) await awaitMediaConnection(room.switchActiveDevice('audioinput', inputDeviceId), timeoutMs)
   } catch (cause) {
     await room.disconnect()
     throw cause
@@ -103,6 +108,7 @@ export async function connectLiveKitRoomWithProcessing(
   credential: LiveKitCredential,
   processing?: AudioProcessingOptions,
   joinMode: VoiceJoinMode = 'with-microphone',
+  inputDeviceId?: string,
 ): Promise<JoinedVoiceRoom> {
-  return connectLiveKitRoom(credential, defaultLiveKitRoomFactory, processing, undefined, joinMode)
+  return connectLiveKitRoom(credential, defaultLiveKitRoomFactory, processing, undefined, joinMode, inputDeviceId)
 }

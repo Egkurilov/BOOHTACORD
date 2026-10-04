@@ -29,7 +29,7 @@ import { useScreenShareSetup } from './screen_share_setup'
 import { useWorkspaceNavigation } from './workspace_navigation'
 const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string }>()
 const emit = defineEmits<{ sessionExpired: []; loggedOut: [] }>()
-const { activeVoiceChannel, audioSettings, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls()
+const { activeVoiceChannel, audioSettings, loadAudioDevices, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls()
 const { confirmScreenShare, openScreenShareSetup, screenShareSetupOpen, selectedScreenProfile } = useScreenShareSetup(() => voiceConnection.screenState, startScreen)
 const { activePanel, closeDrawers, directMessageStore, memberHeaderExpandedState, membersOpen, modalDrawer, navOpen, openDirectMessageFromMember, openGuildPanel, returnToVoice, selectedDirectMessage, selectChannel, selectDirectMessage, selectOpenedDirectMessage, sidebarSection, toggleMembers, toggleNavigation, togglePanel, voiceStageWide } = useWorkspaceNavigation(props.role, selectedChannel, topologyStore, selectWorkspaceChannel, selectWorkspaceDirectMessage)
 const messageStore = useMessageStore()
@@ -94,8 +94,8 @@ onMounted(() => { permissions.start(props.accountId); void topologyStore.refresh
           </template>
           <template #profile><ProfileSettings :profile="profile" :loading="profileLoading" :load-error="profileError" :logout-busy="logoutBusy" :logout-error="logoutError" @saved="setProfile" @logout="signOut" /></template>
           <template #audio>
-            <AudioSettings :activation-error="voiceActivation.error" :activation-mode="voiceActivation.mode" :connected="Boolean(voiceConnection.active)" :devices="audioSettings.devices" :error="audioSettings.error" :processing="audioSettings.processing"
-              :processing-diagnostics="voiceConnection.audioProcessingDiagnostics" :microphone-track="voiceConnection.microphoneTrack" :ptt-key="voiceActivation.pttKey" :state="audioSettings.state" @load="audioSettings.load" @select="selectAudioDevice" @set-activation="voiceActivation.setMode"
+            <AudioSettings :activation-error="voiceActivation.error" :activation-mode="voiceActivation.mode" :connected="Boolean(voiceConnection.active)" :input-device-id="audioSettings.selectedInput" :input-warning="audioSettings.inputWarning" :input-switching="audioSettings.inputSwitching" :devices="audioSettings.devices" :error="audioSettings.error" :processing="audioSettings.processing"
+              :processing-diagnostics="voiceConnection.audioProcessingDiagnostics" :microphone-track="voiceConnection.microphoneTrack" :ptt-key="voiceActivation.pttKey" :state="audioSettings.state" @load="loadAudioDevices" @select="selectAudioDevice" @set-activation="voiceActivation.setMode"
               @set-processing="audioSettings.setProcessing($event, voiceConnection.setAudioProcessing)" @set-ptt-key="voiceActivation.setPttKey" />
           </template>
         </WorkspaceMain>

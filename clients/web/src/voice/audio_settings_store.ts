@@ -4,6 +4,8 @@ import { ref } from 'vue'
 import { listAudioDevices, type AudioDevice, type AudioDeviceKind } from './audio_devices'
 import { createAudioProcessingControls, type AudioProcessingApplier } from './audio_processing_controls'
 import type { AudioProcessingOptions } from './livekit_gateway'
+import { createAudioInputControls } from './audio_input_controls'
+import type { AudioInputApplier } from './audio_input_selection'
 
 export type AudioSettingsState = 'IDLE' | 'LOADING' | 'READY' | 'ERROR'
 export type AudioDeviceSwitcher = (kind: AudioDeviceKind, deviceId: string) => Promise<void>
@@ -13,6 +15,7 @@ export const useAudioSettingsStore = defineStore('audio-settings', () => {
   const devices = ref<{ inputs: AudioDevice[]; outputs: AudioDevice[] }>({ inputs: [], outputs: [] })
   const error = ref<string | null>(null)
   const processingControls = createAudioProcessingControls()
+  const inputControls = createAudioInputControls()
   const processing = processingControls.processing
   const state = ref<AudioSettingsState>('IDLE')
   let scanSequence = 0
@@ -54,5 +57,15 @@ export const useAudioSettingsStore = defineStore('audio-settings', () => {
     error.value = processingControls.error.value
   }
 
-  return { devices, error, load, loadProcessing, processing, select, setProcessing, state }
+  async function reconcileInput(apply: AudioInputApplier): Promise<void> {
+    const selected = inputControls.selectedInput.value
+    if (state.value !== 'READY' || selected === 'default') return
+    if (devices.value.inputs.some(device => device.id === selected)) return
+    // Before permissions, browsers may withhold IDs. That does not prove unplug.
+    if (!devices.value.inputs.some(device => device.id && !['default', 'communications'].includes(device.id))) return
+    await inputControls.select('default', apply)
+    inputControls.warning.value ??= 'Выбранный микрофон отключён. Используется системный микрофон.'
+  }
+
+  return { devices, error, load, loadProcessing, processing, select, setProcessing, state, selectedInput: inputControls.selectedInput, inputWarning: inputControls.warning, inputSwitching: inputControls.switching, loadInput: inputControls.start, selectInput: inputControls.select, observeInput: inputControls.observe, reconcileInput }
 })
