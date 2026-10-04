@@ -181,6 +181,7 @@ if (referenceFixture && mediaStates.includes(state) && process.env.DESIGN_V2_LIV
 }
 if (referenceFixture && state === 'chat') {
   await page.locator('.message-item').nth(3).waitFor({ state: 'visible' })
+  await page.locator('.message-item .message-mention').filter({ hasText: '@Daria' }).waitFor({ state: 'visible' })
   await page.waitForFunction(() => { const image = document.querySelector('.attachment-card__preview'); return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0 })
   if (process.env.DESIGN_V2_LIVE_STATE === '1') await connectReferenceVoiceStore(page)
   await page.evaluate(() => document.fonts.ready)

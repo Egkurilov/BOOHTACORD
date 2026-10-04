@@ -23,5 +23,5 @@ export const chatMessages = [
   message('chat-1', 'alex-3', '16:28', 'Кто сегодня играет вечером?'),
   message('chat-2', 'daria-2', '16:31', 'Я буду. Давайте соберёмся в 20:00.'),
   message('chat-3', 'max-7', '16:35', 'Скидываю скриншот прошлого катка.', [{ id: 'scene', original_name: 'evening-session.png', byte_size: 2_400_000 }]),
-  message('chat-4', 'egor-2', '16:40', '@Daria Отлично, увидимся в голосовом!'),
+  { ...message('chat-4', 'egor-2', '16:40', '@Daria Отлично, увидимся в голосовом!'), mention_user_ids: ['daria-2'] },
 ]

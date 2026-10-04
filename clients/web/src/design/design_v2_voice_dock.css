@@ -1,9 +1,9 @@
 /* Connected dock presentation; state, controls and measured quality remain live. */
-.voice-dock.connected .voice-status { color: #78e6a0; font-weight: 500; }
 .voice-dock .voice-icon { stroke-width: 1.8; }
 .voice-dock .voice-icon-button { border-radius: 8px; }
-.voice-dock .voice-icon-button:first-child[aria-pressed=true]:not(:hover) { color: var(--gc-text-secondary); background: var(--gc-surface-raised); }
 @media (min-width: 1024px) {
+  .voice-dock.connected .voice-status { color: #78e6a0; font-weight: 500; }
+  .voice-dock .voice-icon-button:first-child[aria-pressed=true]:not(:hover) { color: var(--gc-text-secondary); background: var(--gc-surface-raised); }
   .sidebar .mobile-voice-dock.connected .voice-dock-header { position: relative; min-height: 38px; align-items: flex-start; }
   .sidebar .mobile-voice-dock.connected .status-dot { display: none; }
   .sidebar .mobile-voice-dock .voice-dock-headset { position: absolute; top: 2px; left: 0; display: block; width: 16px; height: 16px; color: #78e6a0; stroke-width: 1.8; }
@@ -12,11 +12,12 @@
   .sidebar .mobile-voice-dock .voice-quality--unmeasured:not(.voice-quality--poor):not(.voice-quality--lost) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 }
 @media (max-width: 720px) {
+  .sidebar.is-open .voice-dock.connected .voice-status { color: #78e6a0; font-weight: 500; }
   .sidebar.is-open .mobile-voice-dock.connected .voice-dock-header { height: auto; min-height: 38px; }
   .sidebar.is-open .mobile-voice-dock .voice-dock-headset { top: 2px; }
   .sidebar.is-open .mobile-voice-dock .voice-dock-subtitle { margin-top: 2px; }
   .sidebar.is-open .mobile-voice-dock .voice-actions { margin-top: 8px; }
-  .sidebar.is-open .mobile-voice-dock .voice-actions .voice-icon-button:first-child[aria-pressed=true] { background: transparent; }
+  .sidebar.is-open .mobile-voice-dock .voice-actions .voice-icon-button:first-child[aria-pressed=true]:not(:hover) { color: var(--gc-text-secondary); background: transparent; }
   .sidebar.is-open .mobile-voice-dock .voice-actions .voice-icon-button:not(.voice-icon-button--danger)::before { background: var(--gc-surface-raised); }
   .sidebar.is-open .mobile-voice-dock .voice-actions .voice-icon-button:not(.voice-icon-button--danger):hover:not(:disabled)::before { background: var(--gc-surface-hover); }
 }

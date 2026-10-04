@@ -45,6 +45,12 @@ try {
       const box = await button.boundingBox(); assert.ok(box.width >= 44 && box.height >= 44)
     }
     checks.push('profile-settings-events-and-live-presence', 'mobile-hit-targets')
+    if (width < 720) {
+      await page.locator('.sidebar').evaluate(element => element.classList.remove('is-open'))
+      assert.equal(await dock.locator('button').first().evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(0, 0, 0, 0)')
+      await page.locator('.sidebar').evaluate(element => element.classList.add('is-open'))
+      checks.push('compact-mobile-microphone-stays-transparent')
+    }
     await set({ state: 'LEAVING' })
     assert.equal(await dock.getByRole('button', { name: 'Выйти из голосового канала' }).isDisabled(), true)
     await set({ state: 'CONNECTED', channel: null })
