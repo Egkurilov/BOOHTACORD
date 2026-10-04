@@ -7,25 +7,32 @@
 .workspace-main-panel--profile .profile-tabs { height: 43px; gap: 4px; margin: 24px 0 26px; }
 .workspace-main-panel--profile .profile-tabs button { padding: 0 12px; }
 .workspace-main-panel--profile .profile-panel { position: relative; display: block; min-height: 459px; padding: 24px; }
-.workspace-main-panel--profile .profile-avatar-row { display: flex; min-height: 96px; align-items: center; gap: 16px; }
+.workspace-main-panel--profile .profile-avatar-row { display: flex; min-height: 92px; align-items: center; gap: 16px; }
 .workspace-main-panel--profile .profile-avatar { width: 72px; height: 72px; flex: 0 0 72px; }
-.workspace-main-panel--profile .profile-avatar--empty { color: #E9CBFF; background: #423657; font-size: 24px; }
+.workspace-main-panel--profile .profile-avatar--empty { color: #E9CBFF; background: #423657; font-size: 26px; font-weight: 600; }
 .workspace-main-panel--profile .profile-avatar-copy { display: grid; flex: 0 1 auto; gap: 0; }
 .workspace-main-panel--profile .profile-avatar-copy h2 { font-size: 16px; line-height: 24px; }
 .workspace-main-panel--profile .profile-avatar-copy p { margin-top: 4px; font-size: 12px; line-height: 16px; }
-.workspace-main-panel--profile .profile-upload-button { min-height: 36px; justify-self: start; margin-top: 12px; padding: 0 14px; font-size: 14px; }
+.workspace-main-panel--profile .profile-upload-button { min-height: 36px; justify-self: start; margin-top: 12px; padding: 0 14px; background: var(--gc-surface-raised); font-size: 14px; }
 .workspace-main-panel--profile .profile-panel > * + * { margin-top: 20px; }
-.workspace-main-panel--profile .profile-form { max-width: none; gap: 16px; }
-.workspace-main-panel--profile .profile-form label { gap: 10px; color: var(--gc-text-primary); font-size: 14px; line-height: 20px; }
-.workspace-main-panel--profile .profile-form input { height: 44px; min-height: 44px; border-radius: 8px; font-size: 14px; }
-.workspace-main-panel--profile .profile-form small { font-size: 12px; line-height: 16px; }
+.workspace-main-panel--profile .profile-avatar-row + .profile-form { margin-top: 24px; }
+.workspace-main-panel--profile .profile-form { max-width: none; gap: 20px; }
+.workspace-main-panel--profile .profile-form label { gap: 8px; color: var(--gc-text-primary); font-size: 14px; line-height: 20px; font-weight: 500; }
+.workspace-main-panel--profile .profile-form input { height: 44px; min-height: 44px; border-radius: 8px; background: var(--gc-sidebar); font-size: 14px; font-weight: 400; }
+.workspace-main-panel--profile .profile-form small { margin-top: -2px; font-size: 12px; line-height: 18px; font-weight: 400; }
 .workspace-main-panel--profile .profile-savebar { position: absolute; right: 24px; bottom: 24px; left: 24px; width: auto; height: 57px; min-height: 57px; margin: 0; border-top: 1px solid var(--gc-border-subtle); padding: 20px 0 0; transform: none; }
-.workspace-main-panel--profile .profile-savebar button { min-height: 36px; border-radius: 8px; }
+.workspace-main-panel--profile .profile-savebar button { min-height: 36px; border: 1px solid var(--gc-accent); border-radius: 8px; padding: 0 14px; font-weight: 500; }
+.workspace-main-panel--profile .profile-savebar button:disabled { opacity: .45; }
+.workspace-main-panel--profile .profile-savebar span { line-height: 18px; }
 @media (max-width: 720px) {
-  .workspace-main-panel--profile .profile-settings { padding: 24px 16px 80px; }
+  .workspace-main-panel--profile .profile-settings { grid-auto-rows: max-content; padding: 24px 16px 80px; }
   .workspace-main-panel--profile .profile-settings > header h1 { font-size: 22px; line-height: 28px; }
   .workspace-main-panel--profile .profile-tabs { margin-top: 20px; }
   .workspace-main-panel--profile .profile-panel { min-height: 0; padding: 16px; }
   .workspace-main-panel--profile .profile-avatar-row { flex-wrap: nowrap; }
-  .workspace-main-panel--profile .profile-savebar { position: static; margin-top: 24px; }
+  .workspace-main-panel--profile .profile-upload-button { min-height: 44px; }
+  .workspace-main-panel--profile .profile-form input { font-size: 16px; }
+  .workspace-main-panel--profile .profile-savebar { position: static; height: auto; min-height: 0; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .workspace-main-panel--profile .profile-savebar span { flex-basis: 100%; }
+  .workspace-main-panel--profile .profile-savebar button { min-height: 44px; flex: 1; }
 }
