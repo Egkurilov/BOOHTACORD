@@ -370,6 +370,44 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('keeps compact viewer controls clear of system insets', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 24);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      ApiClient(client: MockClient((_) async => httpResponse(404))),
+    );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(_app(state));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('attachment-preview-attachment-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .getTopLeft(
+            find.byKey(const ValueKey('protected-image-viewer-header')),
+          )
+          .dy,
+      24,
+    );
+    expect(
+      tester
+          .getBottomRight(
+            find.byKey(const ValueKey('protected-image-viewer-footer')),
+          )
+          .dy,
+      lessThanOrEqualTo(820),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('hides download and offers retry when image decoding fails', (
     tester,
   ) async {

@@ -1,0 +1,71 @@
+{
+  "id": "QA-266",
+  "date": "2026-10-05",
+  "task": "FV2-022 — Flutter Design V2 protected image viewer overlay parity",
+  "source_revision": "cbf29b6c",
+  "working_tree_changes": true,
+  "summary": "Fixed a mobile safe-area defect found during live viewer acceptance: Android system status/navigation insets now remain clear of the filename/download header and footer while the image overlay stays full-screen. Protected loading/save behavior is unchanged.",
+  "checks": [
+    {
+      "name": "Test-first system-inset regression",
+      "command": "cd clients/flutter && flutter test test/message_attachment_list_test.dart --plain-name 'keeps compact viewer controls clear of system insets'",
+      "result": "PASS",
+      "observation": "Before the fix, the test failed with header.top=0 when the simulated system top inset was 24 px. After preserving MediaQuery.viewPadding, the header begins below the inset and the footer stays above the bottom inset."
+    },
+    {
+      "name": "Protected image viewer focused tests",
+      "command": "cd clients/flutter && flutter test test/message_attachment_list_test.dart",
+      "result": "PASS",
+      "passed": 13,
+      "observation": "Loading/unavailable/retry/decode-error states, keyboard and semantics behavior, desktop/compact geometry, plus the new safe-area regression pass."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test",
+      "result": "PASS",
+      "passed": 526
+    },
+    {
+      "name": "Changed-file analysis",
+      "command": "cd clients/flutter && flutter analyze lib/src/widgets/message_attachment_list.dart test/message_attachment_list_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug runtime visual acceptance",
+      "command": "flutter attach --disable-dds --debug-url=<provided-local-Dart-VM-service> -d macos; hot reload",
+      "result": "PASS",
+      "observation": "Attached to the already-running macOS arm64 client and hot-reloaded 4 libraries without restarting the process or prompting for Keychain access. The viewer showed the full image, filename, separate download control and close action; Escape returned to Text. The live screenshot was not retained because it contains account and conversation content."
+    },
+    {
+      "name": "Android API 35 runtime visual acceptance",
+      "command": "cd clients/flutter && flutter build apk --release --split-per-abi --build-name=1.0.29 --build-number=55; adb install -r build/app/outputs/flutter-apk/app-arm64-v8a-release.apk; inspect protected image viewer",
+      "result": "PASS",
+      "version": "1.0.29",
+      "versionCode": 2055,
+      "observation": "Installed the signed arm64 split over versionCode 2054 without uninstalling or clearing app data. On emulator-5554 (Android 15/API 35), the protected image loaded and the viewer header/footer stayed clear of the status and gesture bars. Android Back closed the viewer and returned to the existing Text channel. APK is an ignored local test artifact, not a published release."
+    },
+    {
+      "name": "Windows runtime visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "No Windows runtime is available on this macOS host."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this macOS host. No requirement or contract text changed."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "FV2-022 remains open until Windows runtime visual acceptance is completed.",
+    "No web/API/ACL/session/storage/LiveKit behavior changed.",
+    "No APK, screenshot, or generated build output was committed."
+  ],
+  "status": "PASS_MACOS_ANDROID_VISUAL_AND_FULL_SUITE_WINDOWS_VISUAL_OPEN"
+}

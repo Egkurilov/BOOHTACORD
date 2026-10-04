@@ -383,163 +383,169 @@ class _ProtectedImagePreviewState extends State<_ProtectedImagePreview> {
     child: Dialog.fullscreen(
       key: const ValueKey('protected-image-viewer'),
       backgroundColor: const Color.fromRGBO(3, 5, 9, 0.94),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = MediaQuery.sizeOf(context).width <= 1023;
-          final headerHeight = compact ? 56.0 : 64.0;
-          final controlSize = compact ? 44.0 : 36.0;
-          final horizontalPadding = compact ? 12.0 : 24.0;
-          return Column(
-            children: [
-              SizedBox(
-                key: const ValueKey('protected-image-viewer-header'),
-                height: headerHeight,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.insert_drive_file_outlined,
-                        key: ValueKey('protected-image-viewer-file-icon'),
-                        size: 20,
-                        color: GcColors.textSecondary,
-                      ),
-                      const SizedBox(width: GcSpacing.x3),
-                      Expanded(
-                        child: Text(
-                          widget.attachment.originalName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: GcColors.textSecondary,
-                            fontSize: 14,
-                            height: GcTypography.titleLine / GcTypography.title,
-                          ),
+      child: SafeArea(
+        minimum: MediaQuery.viewPaddingOf(context),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = MediaQuery.sizeOf(context).width <= 1023;
+            final headerHeight = compact ? 56.0 : 64.0;
+            final controlSize = compact ? 44.0 : 36.0;
+            final horizontalPadding = compact ? 12.0 : 24.0;
+            return Column(
+              children: [
+                SizedBox(
+                  key: const ValueKey('protected-image-viewer-header'),
+                  height: headerHeight,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.insert_drive_file_outlined,
+                          key: ValueKey('protected-image-viewer-file-icon'),
+                          size: 20,
+                          color: GcColors.textSecondary,
                         ),
-                      ),
-                      FutureBuilder<Uint8List?>(
-                        future: _image,
-                        builder: (context, snapshot) =>
-                            snapshot.hasData && !_imageDecodeFailed
-                            ? TextButton.icon(
-                                key: const ValueKey(
-                                  'protected-image-viewer-download',
-                                ),
-                                onPressed: widget.onSave,
-                                style: TextButton.styleFrom(
-                                  foregroundColor: GcColors.textSecondary,
-                                  minimumSize: Size(0, controlSize),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: compact ? 8 : 14,
-                                  ),
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  textStyle: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.download_outlined,
-                                  size: 20,
-                                ),
-                                label: const Text('Скачать'),
-                              )
-                            : const SizedBox.shrink(),
-                      ),
-                      SizedBox(width: compact ? 4 : 8),
-                      SizedBox(
-                        key: const ValueKey('protected-image-viewer-close'),
-                        width: controlSize,
-                        height: controlSize,
-                        child: IconButton(
-                          tooltip: 'Закрыть просмотр изображения',
-                          autofocus: true,
-                          onPressed: () => Navigator.of(context).pop(),
-                          padding: EdgeInsets.zero,
-                          constraints: BoxConstraints.tightFor(
-                            width: controlSize,
-                            height: controlSize,
-                          ),
-                          icon: const Icon(Icons.close, size: 20),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(compact ? 12 : 48),
-                  child: FutureBuilder<Uint8List?>(
-                    future: _image,
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        if (_imageDecodeFailed) {
-                          return _PreviewUnavailable(onRetry: _retry);
-                        }
-                        return Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 980),
-                            child: Image.memory(
-                              snapshot.data!,
-                              fit: BoxFit.contain,
-                              semanticLabel: widget.attachment.originalName,
-                              errorBuilder: (_, _, _) {
-                                _markImageDecodeFailed();
-                                return _PreviewUnavailable(onRetry: _retry);
-                              },
+                        const SizedBox(width: GcSpacing.x3),
+                        Expanded(
+                          child: Text(
+                            widget.attachment.originalName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: GcColors.textSecondary,
+                              fontSize: 14,
+                              height:
+                                  GcTypography.titleLine / GcTypography.title,
                             ),
                           ),
-                        );
-                      }
-                      if (snapshot.connectionState == ConnectionState.done) {
-                        final unavailable =
-                            _loadError is ApiFailure &&
-                            ((_loadError! as ApiFailure).status == 404 ||
-                                (_loadError! as ApiFailure).status == 410);
-                        return _PreviewUnavailable(
-                          deleted: unavailable,
-                          onRetry: unavailable ? null : _retry,
-                        );
-                      }
-                      return Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const CircularProgressIndicator(),
-                            const SizedBox(height: 12),
-                            Semantics(
-                              container: true,
-                              liveRegion: true,
-                              label: 'Загружаем изображение…',
-                              child: const ExcludeSemantics(
-                                child: Text('Загружаем изображение…'),
+                        ),
+                        FutureBuilder<Uint8List?>(
+                          future: _image,
+                          builder: (context, snapshot) =>
+                              snapshot.hasData && !_imageDecodeFailed
+                              ? TextButton.icon(
+                                  key: const ValueKey(
+                                    'protected-image-viewer-download',
+                                  ),
+                                  onPressed: widget.onSave,
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: GcColors.textSecondary,
+                                    minimumSize: Size(0, controlSize),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: compact ? 8 : 14,
+                                    ),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    textStyle: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.download_outlined,
+                                    size: 20,
+                                  ),
+                                  label: const Text('Скачать'),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                        SizedBox(width: compact ? 4 : 8),
+                        SizedBox(
+                          key: const ValueKey('protected-image-viewer-close'),
+                          width: controlSize,
+                          height: controlSize,
+                          child: IconButton(
+                            tooltip: 'Закрыть просмотр изображения',
+                            autofocus: true,
+                            onPressed: () => Navigator.of(context).pop(),
+                            padding: EdgeInsets.zero,
+                            constraints: BoxConstraints.tightFor(
+                              width: controlSize,
+                              height: controlSize,
+                            ),
+                            icon: const Icon(Icons.close, size: 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(compact ? 12 : 48),
+                    child: FutureBuilder<Uint8List?>(
+                      future: _image,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          if (_imageDecodeFailed) {
+                            return _PreviewUnavailable(onRetry: _retry);
+                          }
+                          return Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 980),
+                              child: Image.memory(
+                                snapshot.data!,
+                                fit: BoxFit.contain,
+                                semanticLabel: widget.attachment.originalName,
+                                errorBuilder: (_, _, _) {
+                                  _markImageDecodeFailed();
+                                  return _PreviewUnavailable(onRetry: _retry);
+                                },
                               ),
                             ),
-                          ],
-                        ),
-                      );
-                    },
+                          );
+                        }
+                        if (snapshot.connectionState == ConnectionState.done) {
+                          final unavailable =
+                              _loadError is ApiFailure &&
+                              ((_loadError! as ApiFailure).status == 404 ||
+                                  (_loadError! as ApiFailure).status == 410);
+                          return _PreviewUnavailable(
+                            deleted: unavailable,
+                            onRetry: unavailable ? null : _retry,
+                          );
+                        }
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const CircularProgressIndicator(),
+                              const SizedBox(height: 12),
+                              Semantics(
+                                container: true,
+                                liveRegion: true,
+                                label: 'Загружаем изображение…',
+                                child: const ExcludeSemantics(
+                                  child: Text('Загружаем изображение…'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                key: const ValueKey('protected-image-viewer-footer'),
-                padding: const EdgeInsets.all(16),
-                child: const Text(
-                  'Изображение целиком · Масштаб по размеру окна',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: GcColors.muted,
-                    fontSize: GcTypography.caption,
-                    height: GcTypography.bodyLine / GcTypography.body,
+                Padding(
+                  key: const ValueKey('protected-image-viewer-footer'),
+                  padding: const EdgeInsets.all(16),
+                  child: const Text(
+                    'Изображение целиком · Масштаб по размеру окна',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: GcColors.muted,
+                      fontSize: GcTypography.caption,
+                      height: GcTypography.bodyLine / GcTypography.body,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     ),
   );

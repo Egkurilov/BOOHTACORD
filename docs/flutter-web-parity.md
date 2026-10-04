@@ -66,6 +66,20 @@ pass. Android API 35 and the restarted Mac client both displayed the loaded
 protected image preview; no message or upload behavior changed —
 [QA-262](../evidence/flutter/qa262-flutter-design-v2-attachment-cards-2026-10-04-001.json).
 
+## Protected image viewer overlay (FV2-022)
+
+Flutter now matches the web protected image viewer with a viewport-filling dark
+overlay, filename header, separate authenticated download action, fit-to-window
+image, compact/desktop controls, and loading/unavailable/retry/decode-error
+states. Android runtime acceptance exposed a system-inset overlap that widget
+tests had missed; the viewer now preserves `MediaQuery.viewPadding`, keeping its
+header and footer clear of status and gesture bars without shrinking the
+full-screen background. The 13 focused tests and full 526-test suite pass.
+Runtime visual acceptance passed on Android 15/API 35 (signed local build
+1.0.29/versionCode 2055) and the already-running macOS Debug app via hot reload;
+Escape/Android Back both return to Text. Windows runtime visual acceptance is
+still open — [QA-266](../evidence/flutter/qa266-flutter-protected-image-viewer-safe-area-2026-10-05-001.json).
+
 ## Frameless desktop window chrome (FV2-018)
 
 macOS and Windows now use a compact 32 px draggable title bar instead of the
