@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	maxUploadBytes = 2 << 20
-	maxDimension   = 4096
-	maxPNGBytes    = 8 << 20
+	maxUploadBytes  = 2 << 20
+	maxDimension    = 4096
+	maxPNGBytes     = 8 << 20
+	avatarDimension = 128
 )
 
 var (
@@ -56,8 +57,9 @@ func (service Service) Upload(ctx context.Context, input Input) (string, error) 
 	if err != nil || decodedFormat != format {
 		return "", ErrInvalidImage
 	}
+	normalizedImage := centerCropResize(decoded, avatarDimension)
 	var normalized bytes.Buffer
-	if err := png.Encode(&normalized, decoded); err != nil || normalized.Len() > maxPNGBytes {
+	if err := png.Encode(&normalized, normalizedImage); err != nil || normalized.Len() > maxPNGBytes {
 		return "", ErrInvalidImage
 	}
 	key, err := service.files.SavePNG(ctx, normalized.Bytes())

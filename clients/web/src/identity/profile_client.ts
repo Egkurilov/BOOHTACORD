@@ -1,5 +1,6 @@
 import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
+import { normalizeAvatarImage } from './avatar_image'
 
 export interface OwnProfile { account_id: string; login: string; display_name: string; role: 'MEMBER' | 'ADMINISTRATOR'; avatar_url?: string }
 export type MemberPresence = 'online' | 'offline' | 'unknown'
@@ -34,8 +35,8 @@ export async function changeOwnPassword(currentPassword: string, newPassword: st
   await call('/me/password', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }) }, request)
 }
 export async function uploadAvatar(file: File, request: ProfileRequest = tracedFetch): Promise<void> {
-  if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 2 * 1024 * 1024) throw new Error('Выберите PNG или JPEG до 2 MiB.')
-  await call('/me/avatar', { method: 'PUT', headers: { 'content-type': file.type }, body: file }, request)
+  const normalized = await normalizeAvatarImage(file)
+  await call('/me/avatar', { method: 'PUT', headers: { 'content-type': 'image/png' }, body: normalized }, request)
 }
 export async function deleteAvatar(request: ProfileRequest = tracedFetch): Promise<void> { await call('/me/avatar', { method: 'DELETE' }, request) }
 export async function loadMembers(cursor?: string, request: ProfileRequest = tracedFetch): Promise<MemberPage> {

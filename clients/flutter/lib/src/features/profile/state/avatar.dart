@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../avatar/normalize_image.dart';
 import 'controller.dart';
 
 extension ProfileAvatar on ProfileController {
@@ -10,8 +11,16 @@ extension ProfileAvatar on ProfileController {
       changed();
       return false;
     }
+    final normalized = normalizeAvatarImage(bytes, contentType);
+    if (normalized == null) {
+      error(
+        'Не удалось обработать изображение. Выберите PNG или JPEG до 2 МиБ.',
+      );
+      changed();
+      return false;
+    }
     return save((active) async {
-      await api.uploadOwnAvatar(bytes, contentType);
+      await api.uploadOwnAvatar(normalized, 'image/png');
       if (!active()) return;
       await _refreshAvatar(active);
     });

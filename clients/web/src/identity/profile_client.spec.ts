@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { changeOwnPassword, loadMember, loadMembers, loadOwnProfile, saveOwnProfile, uploadAvatar } from './profile_client'
 
 describe('signed-in profile API client', () => {
@@ -13,11 +13,30 @@ describe('signed-in profile API client', () => {
   it('uses the documented password and private avatar operations', async () => {
     const request = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
     const image = new File(['png'], 'avatar.png', { type: 'image/png' })
+    const bitmap = { width: 320, height: 160, close: vi.fn() }
+    const drawImage = vi.fn()
+    const output = new Blob(['normalized-png'], { type: 'image/png' })
+    const canvas = {
+      width: 0,
+      height: 0,
+      getContext: vi.fn().mockReturnValue({ drawImage }),
+      toBlob: vi.fn((callback: BlobCallback) => callback(output)),
+    }
+    vi.stubGlobal('createImageBitmap', vi.fn().mockResolvedValue(bitmap))
+    vi.stubGlobal('document', { createElement: vi.fn().mockReturnValue(canvas) })
+
     await changeOwnPassword('current secure password', 'new secure password', request)
     await uploadAvatar(image, request)
     expect(request).toHaveBeenNthCalledWith(1, expect.stringMatching(/\/me\/password$/), expect.objectContaining({ method: 'POST', credentials: 'same-origin', body: JSON.stringify({ current_password: 'current secure password', new_password: 'new secure password' }) }))
-    expect(request).toHaveBeenNthCalledWith(2, expect.stringMatching(/\/me\/avatar$/), expect.objectContaining({ method: 'PUT', credentials: 'same-origin', body: image, headers: expect.objectContaining({ 'content-type': 'image/png' }) }))
+    expect(drawImage).toHaveBeenCalledWith(bitmap, 80, 0, 160, 160, 0, 0, 128, 128)
+    expect(canvas.width).toBe(128)
+    expect(canvas.height).toBe(128)
+    expect(canvas.toBlob).toHaveBeenCalledWith(expect.any(Function), 'image/png')
+    expect(bitmap.close).toHaveBeenCalledOnce()
+    expect(request).toHaveBeenNthCalledWith(2, expect.stringMatching(/\/me\/avatar$/), expect.objectContaining({ method: 'PUT', credentials: 'same-origin', body: output, headers: expect.objectContaining({ 'content-type': 'image/png' }) }))
   })
+
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
   it('loads members with bounded same-origin pagination', async () => {
     const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ members: [], next_cursor: 'next' }), { status: 200 }))
