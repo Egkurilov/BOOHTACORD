@@ -15,7 +15,6 @@
 }
 .participant-share-badge svg { flex: 0 0 16px; }
 .participant-share-badge b { font-weight: 800; }
-.voice-stream-alert-toggle[aria-pressed="true"] { color: #ffd166; }
 .voice-stream-alert-notice {
   margin: var(--gc-space-1) 0 0;
   color: #ffd166;

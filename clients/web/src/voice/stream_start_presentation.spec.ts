@@ -4,10 +4,11 @@ import { renderToString } from 'vue/server-renderer'
 
 import VoiceDock from './VoiceDock.vue'
 import VoiceParticipantVolumes from './VoiceParticipantVolumes.vue'
+import StreamStartSoundSetting from './StreamStartSoundSetting.vue'
 import { streamStartChime, streamStartNotice } from './stream_start_runtime'
 
 describe('new screen presentation', () => {
-  it('marks a remote participant live and offers a personal sound switch in the dock', async () => {
+  it('marks a remote participant live and keeps the personal sound switch in audio settings', async () => {
     streamStartChime.setEnabled(true)
     const participants = await renderToString(createSSRApp(VoiceParticipantVolumes, {
       error: null, participants: [{ id: 'alice', accountId: 'alice', name: 'Алиса', volume: 100, speaking: false, microphoneMuted: false }],
@@ -22,8 +23,10 @@ describe('new screen presentation', () => {
 
     expect(participants).toContain('ЭФИР')
     expect(participants).toContain('Участник показывает экран')
-    expect(dock).toContain('Звук начала трансляций включён')
-    expect(dock).toContain('aria-pressed="true"')
+    const soundSetting = await renderToString(createSSRApp(StreamStartSoundSetting))
+    expect(dock).not.toContain('Звук начала трансляций включён')
+    expect(soundSetting).toContain('Звук начала трансляций включён')
+    expect(soundSetting).toContain('aria-checked="true"')
 
     streamStartNotice.value = true
     streamStartChime.setEnabled(false)
@@ -32,8 +35,10 @@ describe('new screen presentation', () => {
         channel: null, activeSession: true, error: null, activationMode: 'VAD', deafened: false,
         deafenChanging: false, microphoneMuted: false, microphonePermissionDenied: false, state: 'CONNECTED',
       }))
-      expect(silentDock).toContain('Звук начала трансляций выключен')
-      expect(silentDock).toContain('aria-pressed="false"')
+      const silentSetting = await renderToString(createSSRApp(StreamStartSoundSetting))
+      expect(silentDock).not.toContain('Звук начала трансляций выключен')
+      expect(silentSetting).toContain('Звук начала трансляций выключен')
+      expect(silentSetting).toContain('aria-checked="false"')
       expect(silentDock).toContain('В канале началась демонстрация экрана')
     } finally {
       streamStartNotice.value = false

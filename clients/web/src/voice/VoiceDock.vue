@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { TopologyChannel } from '../channel/topology_client'
 import type { ScreenShareState, VoiceConnectionState } from './connection_store'
 import type { VoiceActivationMode } from './activation_store'
-import { streamStartChime, streamStartNotice } from './stream_start_runtime'
+import { streamStartNotice } from './stream_start_runtime'
 import { screenCaptureSupported, screenCaptureUnavailableMessage } from './screen_capture_support'
 import { voiceConnectionQualityLabel, type VoiceConnectionQuality } from './voice_connection_quality'
 
@@ -23,13 +23,8 @@ const props = withDefaults(defineProps<{
   state: VoiceConnectionState
 }>(), { screenShareState: 'IDLE', connectionQuality: 'UNKNOWN', pingMs: null })
 const emit = defineEmits<{ leave: []; startScreen: []; stopScreen: []; toggleDeafen: []; toggleMicrophone: [] }>()
-const streamSoundEnabled = streamStartChime.enabled
 const screenCaptureAvailable = screenCaptureSupported()
 const captureUnavailableMessage = screenCaptureUnavailableMessage()
-function toggleStreamSound(): void {
-  streamStartChime.setEnabled(!streamSoundEnabled.value)
-  if (streamSoundEnabled.value) streamStartChime.activate()
-}
 const connected = computed(() => (props.channel !== null || props.activeSession) && (props.state === 'CONNECTED' || props.state === 'LISTENER'))
 const screenShareBusy = computed(() => props.screenShareState === 'STARTING' || props.screenShareState === 'STOPPING')
 const connectionQualityLabel = computed(() => voiceConnectionQualityLabel(props.connectionQuality))
@@ -60,7 +55,6 @@ const status = computed(() => {
       <button v-if="channel" class="voice-icon-button" type="button" :aria-label="microphoneMuted ? 'Включить микрофон' : 'Выключить микрофон'" :aria-pressed="!microphoneMuted" :disabled="activationMode === 'PTT' || deafened" :title="activationMode === 'PTT' ? 'Микрофон управляется PTT' : microphoneMuted ? 'Включить микрофон' : 'Выключить микрофон'" @click="emit('toggleMicrophone')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button>
       <button v-if="channel" class="voice-icon-button" type="button" :aria-label="deafened ? 'Включить удалённый звук' : 'Выключить удалённый звук'" :aria-pressed="deafened" :disabled="deafenChanging || state === 'LEAVING'" :title="deafened ? 'Включить удалённый звук' : 'Выключить удалённый звук'" @click="emit('toggleDeafen')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-2a8 8 0 0 1 16 0v2M4 13h3v7H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 1-2Zm16 0h-3v7h2a2 2 0 0 0 2-2v-3a2 2 0 0 0-1-2Z" /></svg></button>
       <button v-if="channel" class="voice-icon-button" type="button" :aria-label="screenShareState === 'SHARING' ? 'Остановить демонстрацию экрана' : screenCaptureAvailable ? 'Начать демонстрацию экрана' : captureUnavailableMessage" :aria-pressed="screenShareState === 'SHARING'" :disabled="screenShareBusy || state === 'JOINING' || state === 'RECONNECTING' || state === 'LEAVING' || (screenShareState !== 'SHARING' && !screenCaptureAvailable)" :title="screenShareState === 'SHARING' ? 'Остановить демонстрацию экрана' : screenCaptureAvailable ? 'Начать демонстрацию экрана' : captureUnavailableMessage" @click="screenShareState === 'SHARING' ? emit('stopScreen') : emit('startScreen')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path v-if="screenShareState === 'SHARING'" d="M4 4h16v12H4zM8 20h8M12 16v4M9 9l6 6m0-6-6 6" /><rect v-else x="2" y="3" width="20" height="14" rx="2"/><path v-if="screenShareState !== 'SHARING'" d="M8 21h8M12 17v4"/></svg></button>
-      <button class="voice-icon-button voice-stream-alert-toggle" type="button" :aria-label="streamSoundEnabled ? 'Звук начала трансляций включён' : 'Звук начала трансляций выключен'" :aria-pressed="streamSoundEnabled" :title="streamSoundEnabled ? 'Выключить сигнал новых трансляций' : 'Включить сигнал новых трансляций'" @click="toggleStreamSound"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M4 3l16 18" v-if="!streamSoundEnabled" /><path v-else d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg></button>
       <button class="voice-icon-button voice-icon-button--danger" type="button" aria-label="Выйти из голосового канала" :disabled="state === 'LEAVING'" :title="state === 'LEAVING' ? 'Выходим…' : 'Выйти из голосового канала'" @click="emit('leave')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15c5-5 13-5 18 0l-2 4-4-2v-3M9 14v3l-4 2-2-4Z" /></svg></button>
     </div>
   </section>
