@@ -13,7 +13,7 @@ describe('Unicode form boundary contract', () => {
     ['../../identity/ProfileSettings.vue', 'currentPassword'],
     ['../../identity/ProfileSettings.vue', 'newPassword'],
     ['../../channel/AdminCategoryControls.vue', 'newName'],
-    ['../../channel/AdminTopologyControls.vue', 'channelName'],
+    ['../../channel/AdminChannelCreate.vue', 'channelName'],
     ['../../conversation/TextConversation.vue', 'draft'],
     ['../../direct_message/DirectMessageConversation.vue', 'draft'],
     ['../../conversation/MessageItem.vue', 'body'],

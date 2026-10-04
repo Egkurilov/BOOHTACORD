@@ -4,13 +4,15 @@ import { computed, ref, watch } from 'vue'
 import { createChannelMoveEditor } from './channel_move_editor'
 import type { TopologyCategory } from './topology_client'
 
-const props = defineProps<{ categories: TopologyCategory[]; revision: number }>()
+const props = defineProps<{ categories: TopologyCategory[]; revision: number; channelId?: string }>()
 const emit = defineEmits<{ changed: [] }>()
-const selectedChannelId = ref('')
+const localChannelId = ref('')
+const selectedChannelId = computed({ get: () => props.channelId ?? localChannelId.value, set: (id: string) => { localChannelId.value = id } })
 const selected = computed(() => props.categories.flatMap(({ channels }) => channels).find(({ id }) => id === selectedChannelId.value))
 const editor = createChannelMoveEditor(() => ({ categories: props.categories, revision: props.revision, selectedChannelId: selectedChannelId.value }), () => emit('changed'))
 
 watch(() => props.categories, (categories) => {
+  if (props.channelId !== undefined) return
   if (!categories.some(({ channels }) => channels.some(({ id }) => id === selectedChannelId.value))) {
     selectedChannelId.value = categories.flatMap(({ channels }) => channels)[0]?.id ?? ''
   }
@@ -21,7 +23,7 @@ function changeTarget(event: Event): void { editor.setTargetCategoryId((event.ta
 
 <template>
   <form class="admin-topology-form admin-topology-form--rename" @submit.prevent="editor.move">
-    <label>Перенести канал
+    <label v-if="props.channelId === undefined">Перенести канал
       <select v-model="selectedChannelId" :disabled="editor.pending.value || editor.needsRefresh.value || !selected" name="move-channel">
         <optgroup v-for="category in categories" :key="category.id" :label="category.name">
           <option v-for="channel in category.channels" :key="channel.id" :value="channel.id">{{ channel.name }}</option>

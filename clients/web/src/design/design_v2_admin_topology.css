@@ -1,0 +1,34 @@
+.admin-topology-workspace { display: grid; grid-template-columns: minmax(240px, 292px) minmax(0, 1fr); align-items: start; gap: var(--gc-space-5); }
+.admin-topology-tree, .admin-topology-inspector { min-width: 0; border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-lg); background: var(--gc-surface); }
+.admin-topology-tree { display: grid; align-content: start; gap: var(--gc-space-2); min-height: 480px; padding: var(--gc-space-4) var(--gc-space-2); }
+.admin-topology-tree__caption { margin: 0 0 var(--gc-space-3); padding: 0 var(--gc-space-3); color: var(--gc-text-muted); font-size: var(--gc-text-caption); font-weight: var(--gc-weight-semibold); letter-spacing: .06em; }
+.admin-topology-tree__empty { margin: var(--gc-space-2) var(--gc-space-3); color: var(--gc-text-muted); }
+.admin-topology-tree__category { display: grid; gap: 2px; }
+.admin-topology-tree__category-button, .admin-topology-tree__channel { display: flex; min-width: 0; min-height: 36px; align-items: center; gap: var(--gc-space-2); border: 0; border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-3); color: var(--gc-text-secondary); background: transparent; text-align: left; cursor: pointer; }
+.admin-topology-tree__category-button { width: 100%; color: var(--gc-text-muted); font-size: var(--gc-text-caption); font-weight: var(--gc-weight-semibold); text-transform: uppercase; }
+.admin-topology-tree__category-button > span:nth-child(2) { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-topology-tree__category-button small { color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
+.admin-topology-tree__channel { width: calc(100% - var(--gc-space-3)); margin-left: var(--gc-space-3); font-size: var(--gc-text-small); }
+.admin-topology-tree__name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-topology-tree__icon { width: 20px; flex: none; color: var(--gc-text-muted); font-weight: var(--gc-weight-semibold); }
+.admin-topology-tree__icon svg { display: block; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.admin-topology-tree__channel small { color: var(--gc-danger); font-size: 10px; }
+.admin-topology-tree button:hover, .admin-topology-tree button[aria-current=true] { color: var(--gc-text-primary); background: var(--gc-surface-selected); }
+.admin-topology-tree button:focus-visible { outline: 2px solid var(--gc-accent); outline-offset: -2px; }
+.admin-topology-inspector { display: grid; gap: var(--gc-space-4); padding: var(--gc-space-5); }
+.admin-topology-inspector > header { border-bottom: 1px solid var(--gc-border-subtle); padding-bottom: var(--gc-space-4); }
+.admin-topology-inspector__eyebrow { color: var(--gc-accent-text); font-size: var(--gc-text-caption); font-weight: var(--gc-weight-semibold); letter-spacing: .06em; }
+.admin-topology-inspector h3 { margin: var(--gc-space-2) 0; color: var(--gc-text-primary); font-size: var(--gc-text-title); }
+.admin-topology-inspector header p { margin: 0; color: var(--gc-text-muted); font-size: var(--gc-text-small); }
+.admin-topology-inspector .admin-topology-form { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--gc-radius-md); }
+.admin-topology-inspector .admin-topology-form h4 { grid-column: 1 / -1; margin: 0; font-size: var(--gc-text-section); }
+.admin-topology-inspector .admin-topology-form > button { justify-self: start; }
+.admin-topology-inspector .admin-topology-form button { border: 1px solid var(--gc-border-control); color: var(--gc-text-primary); background: var(--gc-surface-raised); }
+.admin-topology-inspector .admin-topology-form--channel > button[type=submit], .admin-topology-inspector .admin-category-controls > form:first-of-type > button[type=submit] { border-color: var(--gc-accent); color: var(--gc-on-accent); background: var(--gc-accent); }
+.admin-topology-inspector .admin-topology-form > p { grid-column: 1 / -1; }
+.admin-topology-danger { display: grid; gap: var(--gc-space-3); border-top: 1px solid var(--gc-border-subtle); padding-top: var(--gc-space-4); }
+.admin-topology-danger h4 { margin: 0; color: var(--gc-danger); font-size: var(--gc-text-section); }
+.admin-topology-danger .admin-topology-form { border-color: var(--gc-danger); }
+.admin-topology-danger .admin-topology-form > button[type=submit] { border-color: var(--gc-danger); color: white; background: var(--gc-danger); }
+@media (max-width: 900px) { .admin-topology-workspace { grid-template-columns: minmax(0, 1fr); } .admin-topology-tree { min-height: 0; } }
+@media (max-width: 720px) { .admin-topology-tree { max-height: 296px; overflow: auto; } .admin-topology-inspector { scroll-margin-top: 16px; padding: var(--gc-space-4); } .admin-topology-inspector .admin-topology-form { grid-template-columns: minmax(0, 1fr); } .admin-topology-tree__category-button, .admin-topology-tree__channel { min-height: 44px; } }

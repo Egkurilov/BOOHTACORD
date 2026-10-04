@@ -1,94 +1,64 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
-
-import { createChannel } from './admin_topology_client'
+import { computed, nextTick, ref, watch } from 'vue'
+import AdminTopologyTree from './AdminTopologyTree.vue'
 import AdminCategoryControls from './AdminCategoryControls.vue'
+import AdminChannelCreate from './AdminChannelCreate.vue'
 import AdminChannelRename from './AdminChannelRename.vue'
 import AdminChannelMove from './AdminChannelMove.vue'
 import AdminChannelOrder from './AdminChannelOrder.vue'
 import AdminTextArchive from './AdminTextArchive.vue'
 import AdminVoiceClose from './AdminVoiceClose.vue'
-import type { ChannelKind, TopologyCategory } from './topology_client'
+import type { TopologyCategory } from './topology_client'
 
 const props = defineProps<{ categories: TopologyCategory[]; revision: number }>()
 const emit = defineEmits<{ changed: [] }>()
-
-const channelName = ref('')
-const channelKind = ref<ChannelKind>('VOICE')
-const selectedCategoryId = ref('')
-const pending = ref(false)
-const error = ref<string | null>(null)
-const status = ref<string | null>(null)
-const selectedCategoryExists = computed(() => props.categories.some((category) => category.id === selectedCategoryId.value))
+const selectedId = ref('')
+const inspector = ref<HTMLElement | null>(null)
+const selectedCategory = computed(() => props.categories.find(({ id }) => id === selectedId.value))
+const selectedChannel = computed(() => props.categories.flatMap(({ channels }) => channels).find(({ id }) => id === selectedId.value))
+const parentCategory = computed(() => selectedCategory.value ?? props.categories.find(({ channels }) => channels.some(({ id }) => id === selectedId.value)))
+const channelPosition = computed(() => [...(parentCategory.value?.channels ?? [])]
+  .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id)).findIndex(({ id }) => id === selectedId.value) + 1)
 
 watch(() => props.categories, (categories) => {
-  if (!categories.some((category) => category.id === selectedCategoryId.value)) {
-    selectedCategoryId.value = categories[0]?.id ?? ''
+  if (!categories.some(({ id, channels }) => id === selectedId.value || channels.some(({ id: channelId }) => channelId === selectedId.value))) {
+    selectedId.value = [...categories].sort((a, b) => a.position - b.position)[0]?.id ?? ''
   }
 }, { immediate: true })
 
-function resetFeedback(): void {
-  error.value = null
-  status.value = null
+async function select(id: string): Promise<void> {
+  selectedId.value = id
+  await nextTick()
+  if (window.matchMedia('(max-width: 900px)').matches) inspector.value?.scrollIntoView({ block: 'start' })
 }
-
-async function submitChannel(): Promise<void> {
-  resetFeedback()
-  if (!selectedCategoryExists.value) {
-    error.value = 'Сначала выберите категорию.'
-    return
-  }
-  if (!channelName.value.trim() || !validCodePointLength(channelName.value, 1, 80)) {
-    error.value = 'Введите имя канала до 80 символов.'
-    return
-  }
-
-  pending.value = true
-  try {
-    await createChannel(selectedCategoryId.value, { name: channelName.value, kind: channelKind.value })
-    channelName.value = ''
-    status.value = 'Канал создан. Топология обновляется.'
-    emit('changed')
-  } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Не удалось создать канал.'
-  } finally {
-    pending.value = false
-  }
-}
-
 </script>
 
 <template>
   <section class="admin-topology-controls" aria-labelledby="admin-topology-title">
     <h2 id="admin-topology-title">Управление каналами</h2>
-    <AdminCategoryControls :categories="props.categories" :revision="props.revision" :selected-category-id="selectedCategoryId" @update:selected-category-id="selectedCategoryId = $event" @changed="emit('changed')" />
-    <form class="admin-topology-form admin-topology-form--channel" @submit.prevent="submitChannel">
-      <label>
-        Раздел
-        <select v-model="selectedCategoryId" :disabled="pending || props.categories.length === 0" name="channel-category">
-          <option v-for="category in props.categories" :key="category.id" :value="category.id">{{ category.name }}</option>
-        </select>
-      </label>
-      <label>
-        Новый канал
-        <input v-model="channelName" :disabled="pending || !selectedCategoryExists" name="channel-name" required :aria-describedby="error ? 'admin-topology-error' : undefined">
-      </label>
-      <label>
-        Тип канала
-        <select v-model="channelKind" :disabled="pending || !selectedCategoryExists" name="channel-kind">
-          <option value="VOICE">Голосовой</option>
-          <option value="TEXT">Текстовый</option>
-        </select>
-      </label>
-      <button type="submit" :disabled="pending || !selectedCategoryExists">Создать канал</button>
-    </form>
-    <AdminChannelRename :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
-    <AdminChannelMove :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
-    <AdminChannelOrder :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
-    <AdminTextArchive :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
-    <AdminVoiceClose :categories="props.categories" :revision="props.revision" @changed="emit('changed')" />
-    <p v-if="status" class="admin-topology-status" aria-live="polite">{{ status }}</p>
-    <p v-if="error" id="admin-topology-error" class="admin-topology-error" role="alert">{{ error }}</p>
+    <div class="admin-topology-workspace">
+      <AdminTopologyTree :categories="categories" :selected-id="selectedId" @select="select" />
+      <div ref="inspector" class="admin-topology-inspector">
+        <template v-if="selectedCategory || !categories.length">
+          <header><span class="admin-topology-inspector__eyebrow">РАЗДЕЛ</span><h3>{{ selectedCategory?.name ?? 'Новый раздел' }}</h3>
+            <p>Каналов: {{ selectedCategory?.channels.length ?? 0 }} · Порядок: {{ (selectedCategory?.position ?? 0) + 1 }}</p></header>
+          <AdminCategoryControls embedded :categories="categories" :revision="revision" :selected-category-id="selectedId"
+            @update:selected-category-id="selectedId = $event" @changed="emit('changed')" />
+          <AdminChannelCreate v-if="selectedCategory" :categories="categories" :category-id="selectedId" @changed="emit('changed')" />
+        </template>
+        <template v-else-if="selectedChannel">
+          <header><span class="admin-topology-inspector__eyebrow">{{ selectedChannel.kind === 'VOICE' ? 'ГОЛОСОВОЙ КАНАЛ' : 'ТЕКСТОВЫЙ КАНАЛ' }}</span>
+            <h3>{{ selectedChannel.name }}</h3><p>Раздел: {{ parentCategory?.name }} · Порядок: {{ channelPosition }}</p></header>
+          <AdminChannelRename :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
+          <AdminChannelMove :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
+          <AdminChannelOrder :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
+          <section class="admin-topology-danger" aria-label="Опасные действия">
+            <h4>Опасные действия</h4>
+            <AdminTextArchive v-if="selectedChannel.kind === 'TEXT'" :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
+            <AdminVoiceClose v-else :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
+          </section>
+        </template>
+      </div>
+    </div>
   </section>
 </template>

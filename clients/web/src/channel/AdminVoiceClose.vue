@@ -5,9 +5,10 @@ import AdminConfirmation from './AdminConfirmation.vue'
 import { createVoiceCloseEditor } from './voice_close_editor'
 import type { TopologyCategory } from './topology_client'
 
-const props = defineProps<{ categories: TopologyCategory[]; revision: number }>()
+const props = defineProps<{ categories: TopologyCategory[]; revision: number; channelId?: string }>()
 const emit = defineEmits<{ changed: [] }>()
-const selectedChannelId = ref('')
+const localChannelId = ref('')
+const selectedChannelId = computed({ get: () => props.channelId ?? localChannelId.value, set: (id: string) => { localChannelId.value = id } })
 const confirmation = ref<{ ask: (message: string) => Promise<boolean> } | null>(null)
 const statusNode = ref<HTMLElement | null>(null)
 const errorNode = ref<HTMLElement | null>(null)
@@ -17,6 +18,7 @@ const editor = createVoiceCloseEditor(() => ({ categories: props.categories, rev
   () => emit('changed'), (message) => confirmation.value?.ask(message) ?? false)
 
 watch(voiceChannels, (channels) => {
+  if (props.channelId !== undefined) return
   if (!channels.some(({ id }) => id === selectedChannelId.value)) selectedChannelId.value = channels[0]?.id ?? ''
 }, { immediate: true })
 watch(() => [props.categories, props.revision, selectedChannelId.value], editor.sync, { immediate: true })
@@ -26,7 +28,7 @@ watch(editor.error, async (message) => { if (message) { await nextTick(); errorN
 
 <template>
   <form class="admin-topology-form admin-topology-form--rename" @submit.prevent="editor.close">
-    <label>Голосовой канал для закрытия
+    <label v-if="props.channelId === undefined">Голосовой канал для закрытия
       <select v-model="selectedChannelId" :disabled="editor.pending.value || editor.needsRefresh.value || !voiceChannels.length" name="close-voice-channel">
         <option v-for="channel in voiceChannels" :key="channel.id" :value="channel.id">{{ channel.name }}{{ channel.admissionClosed ? ' · вход закрыт' : '' }}</option>
       </select>

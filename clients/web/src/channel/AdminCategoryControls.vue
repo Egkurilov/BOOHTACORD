@@ -7,7 +7,7 @@ import AdminConfirmation from './AdminConfirmation.vue'
 import { createCategoryEditor } from './category_editor'
 import type { TopologyCategory } from './topology_client'
 
-const props = defineProps<{ categories: TopologyCategory[]; revision: number; selectedCategoryId: string }>()
+const props = defineProps<{ categories: TopologyCategory[]; revision: number; selectedCategoryId: string; embedded?: boolean }>()
 const emit = defineEmits<{ changed: []; 'update:selectedCategoryId': [id: string] }>()
 const selected = computed(() => props.categories.find(({ id }) => id === props.selectedCategoryId))
 const editor = createCategoryEditor(() => ({ categories: props.categories, revision: props.revision, selectedCategoryId: props.selectedCategoryId }), () => emit('changed'))
@@ -69,7 +69,7 @@ async function remove(): Promise<void> {
       <button type="submit" :disabled="busy">Создать категорию</button>
     </form>
     <form class="admin-topology-form admin-topology-form--rename" @submit.prevent="rename">
-      <label>Раздел
+      <label v-if="!embedded">Раздел
         <select :value="selectedCategoryId" :disabled="busy || !categories.length" name="edit-category" @change="changeSelection">
           <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
         </select>

@@ -6,10 +6,11 @@ import AdminConfirmation from './AdminConfirmation.vue'
 import { createTextArchiveEditor } from './text_archive_editor'
 import type { TopologyCategory } from './topology_client'
 
-const props = defineProps<{ categories: TopologyCategory[]; revision: number }>()
+const props = defineProps<{ categories: TopologyCategory[]; revision: number; channelId?: string }>()
 const emit = defineEmits<{ changed: [] }>()
 const navigation = useVoiceNavigationStore()
-const selectedChannelId = ref('')
+const localChannelId = ref('')
+const selectedChannelId = computed({ get: () => props.channelId ?? localChannelId.value, set: (id: string) => { localChannelId.value = id } })
 const confirmation = ref<{ ask: (message: string) => Promise<boolean> } | null>(null)
 const statusNode = ref<HTMLElement | null>(null)
 const errorNode = ref<HTMLElement | null>(null)
@@ -18,6 +19,7 @@ const editor = createTextArchiveEditor(() => ({ categories: props.categories, re
   () => emit('changed'), (id) => navigation.clearSelectedText(id), (message) => confirmation.value?.ask(message) ?? false)
 
 watch(textChannels, (channels) => {
+  if (props.channelId !== undefined) return
   if (!channels.some(({ id }) => id === selectedChannelId.value)) selectedChannelId.value = channels[0]?.id ?? ''
 }, { immediate: true })
 watch(() => [props.categories, props.revision, selectedChannelId.value], editor.sync, { immediate: true })
@@ -27,7 +29,7 @@ watch(editor.error, async (message) => { if (message) { await nextTick(); errorN
 
 <template>
   <form class="admin-topology-form admin-topology-form--rename" @submit.prevent="editor.archive">
-    <label>Текстовый канал для архивации
+    <label v-if="props.channelId === undefined">Текстовый канал для архивации
       <select v-model="selectedChannelId" :disabled="editor.pending.value || editor.needsRefresh.value || !textChannels.length" name="archive-text-channel">
         <option v-for="channel in textChannels" :key="channel.id" :value="channel.id">{{ channel.name }}</option>
       </select>
