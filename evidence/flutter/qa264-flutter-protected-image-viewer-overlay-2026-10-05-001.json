@@ -2,7 +2,7 @@
   "id": "QA-264",
   "date": "2026-10-05",
   "task": "FV2-022 — Flutter Design V2 protected image viewer overlay parity",
-  "source_revision": "c59e0e43",
+  "source_revision": "9f2b6e3b",
   "working_tree_changes": true,
   "summary": "Implemented a responsive, viewport-filling Flutter protected image viewer aligned to the web overlay. Preserved authenticated image loading and the separate protected save action. No web, API, ACL, storage, conversation, or media behavior changed.",
   "checks": [
@@ -11,19 +11,39 @@
       "command": "cd clients/flutter && flutter test --no-pub test/message_attachment_list_test.dart",
       "result": "PASS",
       "passed": 12,
-      "observation": "Desktop 1440×900 and compact 390×844 overlay bounds, header/filename, close target, separate download visibility, fit-to-window stage, transient error retry, unavailable state, and malformed image decode retry are covered. New regressions failed before the corresponding implementation changes."
+      "observation": "Re-run on the tree including origin/master ba9d8e89. Desktop 1440×900 and compact 390×844 overlay bounds, header/filename, close target, separate download visibility, fit-to-window stage, transient error retry, unavailable state, and malformed image decode retry are covered. New regressions failed before the corresponding implementation changes."
     },
     {
       "name": "Full Flutter test suite",
       "command": "cd clients/flutter && flutter test --no-pub",
       "result": "PASS",
-      "passed": 519
+      "passed": 519,
+      "revision": "8c83cafd",
+      "observation": "PASS before synchronizing the later origin/master microphone-controls merge."
+    },
+    {
+      "name": "Full Flutter test suite after origin/master microphone-controls merge",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "FAIL",
+      "passed": 451,
+      "failed": 73,
+      "revision": "9f2b6e3b",
+      "observation": "On merged revision 9f2b6e3b (origin/master ba9d8e89 plus the viewer commit), 73 widget tests ended with 'A Timer is still pending'. The stack traces pointed to the new 500 ms Future.timeout in NativeMicrophoneControls.configure while the FlutterWebRTC.Method test channel was unresolved under FakeAsync. The test-only harness regression was resolved as FE-71/T-077 — [QA-265](qa265-flutter-native-audio-test-harness-2026-10-05-001.json); no microphone runtime implementation was changed."
+    },
+    {
+      "name": "Full Flutter test suite after FE-71 test-harness fix",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 525,
+      "revision": "9f2b6e3b",
+      "working_tree_tests_changed": true,
+      "observation": "All tests pass after the test-only MethodChannel fixture and the long-list audio settings test switched from a fixed scroll distance to targeting the relevant sections. The runtime microphone implementation was not changed."
     },
     {
       "name": "Changed-file analysis",
-      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/widgets/message_attachment_list.dart test/message_attachment_list_test.dart",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/widgets/message_attachment_list.dart test/message_attachment_list_test.dart test/flutter_test_config.dart test/native_microphone_controls_test.dart test/workspace_screen_test.dart",
       "result": "PASS",
-      "observation": "No issues found."
+      "observation": "No issues found. The current rerun covers the viewer source/tests plus the test bootstrap and audio widget regressions."
     },
     {
       "name": "macOS Debug build",
@@ -62,7 +82,7 @@
       "name": "Spec traceability verifier",
       "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
       "result": "NOT_RUN",
-      "observation": "PowerShell Core is not installed on this macOS host. The change adds a UI-only backlog leaf; no approved requirement or contract text changed."
+      "observation": "PowerShell Core is not installed on this macOS host. The changes add a Design V2 UI leaf and a quality-only test-harness task; no approved requirement or contract text changed."
     },
     {
       "name": "Whitespace validation",
@@ -72,8 +92,9 @@
   ],
   "limitations": [
     "FV2-022 remains open until live Android/macOS/Windows overlay acceptance is completed.",
+    "The upstream microphone-controls merge exposed a FakeAsync test-harness regression, now fixed; physical microphone processing remains outside this Design V2 acceptance.",
     "The existing user-owned clients/flutter/packages/flutter_webrtc/.gitignore change was not modified or included in this evidence scope.",
     "No APK, generated media, or build output was committed."
   ],
-  "status": "IMPLEMENTATION_AND_BUILDS_PASS_RUNTIME_VISUAL_ACCEPTANCE_OPEN"
+  "status": "IMPLEMENTATION_TESTS_AND_BUILDS_PASS_RUNTIME_VISUAL_ACCEPTANCE_OPEN"
 }

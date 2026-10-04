@@ -1,0 +1,58 @@
+{
+  "id": "QA-265",
+  "date": "2026-10-05",
+  "task": "T-077 / FE-71 — Flutter widget-test native microphone channel isolation",
+  "source_revision": "9f2b6e3b",
+  "working_tree_changes": true,
+  "summary": "Fixed a test-only FakeAsync regression exposed after merging native microphone controls. The native microphone product behavior and web client were not changed.",
+  "checks": [
+    {
+      "name": "Test-first pending timer reproduction",
+      "command": "cd clients/flutter && flutter test --no-pub test/native_microphone_controls_test.dart --plain-name 'disposing the default channel-backed runtime is safe under FakeAsync'",
+      "result": "FAIL_BEFORE_FIX",
+      "observation": "Before adding the test configuration fixture, disposing the default channel-backed controller left a 500 ms Timer created by NativeMicrophoneControls.configure(...).timeout pending at widget-test teardown."
+    },
+    {
+      "name": "FakeAsync channel isolation regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/native_microphone_controls_test.dart --plain-name 'disposing the default channel-backed runtime is safe under FakeAsync'",
+      "result": "PASS",
+      "passed": 1,
+      "observation": "test/flutter_test_config.dart responds immediately to WebRTC initialize, getSources and native microphone-control calls; unrelated methods retain MissingPluginException behavior."
+    },
+    {
+      "name": "Audio settings widget after native controls increased list height",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'opens native audio settings and processing controls'",
+      "result": "PASS",
+      "passed": 1,
+      "observation": "The test now scrolls to the activation and processing sections independently instead of assuming a fixed 640 px gesture reveals both."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 525
+    },
+    {
+      "name": "Changed-file analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/widgets/message_attachment_list.dart test/message_attachment_list_test.dart test/flutter_test_config.dart test/native_microphone_controls_test.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this macOS host. The added task is quality-only and introduces no requirement or contract changes; task YAML parsed successfully."
+    }
+  ],
+  "limitations": [
+    "This test harness does not verify microphone processing or real hardware behavior; those remain separate audio/device acceptance tasks.",
+    "No web source, microphone runtime implementation, API, ACL, or media contract was changed."
+  ],
+  "status": "TEST_HARNESS_AND_FULL_FLUTTER_SUITE_PASS"
+}

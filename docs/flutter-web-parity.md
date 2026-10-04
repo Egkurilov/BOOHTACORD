@@ -80,9 +80,9 @@ the window; a second double-click restores its original size. A running Android 
 mobile header has no desktop chrome, and the current-source platform widget
 regression passes. The emulator still has app version 1.0.28 from before this
 desktop-only change, so its screenshot is a visual regression check rather than
-a build-identity check. The Windows distribution build and native Windows
-window behavior remain open; macOS drag and direct traffic-light actions have
-not been manually exercised.
+a build-identity check. macOS native zoom/restore has since been exercised and
+passed; macOS drag/minimize/close and Windows native drag/window controls remain
+open — [QA-263](../evidence/flutter/qa263-flutter-macos-native-titlebar-2026-10-04-001.json).
 The Windows 2022 runner passed app/vendor tests and analysis in attempt 1, but
 the distribution build was cancelled by a newer master push. Attempt 2 was also
 cancelled during Flutter SDK setup by a newer master push. Attempt 3 passed app/
@@ -787,8 +787,12 @@ both deployed web and Flutter viewers.
   filename/header, separate download action, fit-to-window image stage, loading,
   transient retry and deleted/unavailable states. The old Flutter constrained
   dialog and pinch/scroll zoom are removed to match the web viewer. Test-first
-  responsive/error coverage, all 519 Flutter tests, targeted analysis, macOS
-  Debug build and signed Android ABI-split Release builds pass — [QA-264](../evidence/flutter/qa264-flutter-protected-image-viewer-overlay-2026-10-05-001.json).
+  responsive/error coverage, viewer-focused suite (12/12), and full combined
+  suite (525/525) pass. The upstream microphone-controls merge initially exposed
+  unresolved method-channel timeout timers under FakeAsync; a test-only default
+  channel fixture and robust audio-panel scrolling resolved it — [QA-265](../evidence/flutter/qa265-flutter-native-audio-test-harness-2026-10-05-001.json).
+  Targeted analysis, macOS Debug build and signed Android ABI-split Release
+  builds pass — [QA-264](../evidence/flutter/qa264-flutter-protected-image-viewer-overlay-2026-10-05-001.json).
   Live visual acceptance remains open: the already-running Mac app has no
   attachable Flutter VM service and is intentionally not restarted; the Android
   emulator has installed versionCode 2053 while the canonical arm64 split build

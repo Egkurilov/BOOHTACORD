@@ -26,4 +26,11 @@ void main() {
     expect(controls.status, 'unsupported');
     controls.dispose();
   });
+  testWidgets(
+    'disposing the default channel-backed runtime is safe under FakeAsync',
+    (tester) async {
+      NativeMicrophoneControls().dispose();
+      await tester.pump();
+    },
+  );
 }

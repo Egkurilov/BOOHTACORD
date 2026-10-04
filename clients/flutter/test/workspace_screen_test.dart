@@ -383,13 +383,29 @@ void main() {
     expect(state.audioDeviceScanFailed, isTrue);
     expect(find.text('Список недоступен'), findsNWidgets(2));
     expect(find.text('Микрофоны не найдены'), findsNothing);
-    await tester.drag(audioList, const Offset(0, 640));
-    await tester.pumpAndSettle();
+    await tester.dragUntilVisible(
+      find.text('Активация микрофона'),
+      audioScrollable,
+      const Offset(0, 160),
+    );
     expect(find.text('Активация микрофона'), findsOneWidget);
     expect(find.text('Назначить PTT-клавишу'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Подавление эха'),
+      160,
+      scrollable: audioScrollable,
+    );
     expect(find.text('Подавление эха'), findsOneWidget);
     expect(find.textContaining('Нативный SDK не сообщает'), findsOneWidget);
 
+    await tester.dragUntilVisible(
+      find.text('Назначить PTT-клавишу'),
+      audioScrollable,
+      const Offset(0, 160),
+    );
+    await tester.drag(audioList, const Offset(0, 100));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Назначить PTT-клавишу'));
     await tester.pump();
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyA);
