@@ -16,9 +16,7 @@
   .sidebar.is-open .channel-category-actions button { width: 44px; height: 44px; margin: -6px -12px; font-size: 22px; font-weight: 300; }
   .sidebar.is-open .channel-category:first-of-type h2 { padding-top: 23px; }
   .sidebar.is-open .channel-button { height: 44px; gap: 10px; padding-inline: 8px; }
-  .sidebar.is-open .channel-category h2 { position: relative; }
-  .sidebar.is-open .channel-category h2::before { position: absolute; left: 12px; color: #a4adbf; font-size: 12px; content: '⌄'; }
-  .sidebar.is-open .channel-category h2 > span:first-child { margin-left: 16px; }
+  .sidebar.is-open .channel-category-disclosure { padding-left: 8px; }
   .sidebar.is-open .guild-search-button kbd { display: none; }
   .sidebar.is-open .guild-search-button { padding: 0 10px; border: 0; color: #a0a9be; background: #0b0d12; font-weight: 400; }
   .sidebar.is-open .channel-button.selected { font-weight: 400; }

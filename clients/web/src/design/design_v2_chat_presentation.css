@@ -19,8 +19,13 @@
 .channel-navigation-actions { padding-top: 1px; padding-left: 8px; }
 .channel-navigation-actions > span { font-weight: 600; letter-spacing: .6px; text-transform: uppercase; }
 .channel-navigation .channel-member-count { display: none; }
-.channel-category:first-of-type h2 { padding-top: 8px; }
+.channel-category:first-of-type h2 { padding-top: 11px; }
 .channel-category + .channel-category { margin-top: 4px; }
+.channel-category h2 { padding-top: calc(var(--gc-space-4) + 3px); padding-bottom: calc(var(--gc-space-2) - 5px); padding-left: 4px; }
+.channel-category-disclosure { display: inline-flex; min-width: 0; height: 30px; align-items: center; gap: 2px; border: 0; padding: 0 0 0 8px; color: inherit; background: transparent; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.channel-category-disclosure svg { width: 14px; height: 14px; flex: 0 0 14px; stroke-width: 1.75; transition: transform 120ms ease; }
+.channel-category-disclosure[aria-expanded="false"] svg { transform: rotate(-90deg); }
+.channel-category-disclosure:hover { color: var(--gc-text-primary); }
 .channel-row { position: relative; }
 .channel-row .channel-button { width: 100%; flex: 0 0 100%; }
 .channel-actions-button { position: absolute; top: 2px; right: 0; }

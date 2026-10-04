@@ -11,6 +11,7 @@ import type { VoiceNavigationPresence } from './voice_navigation_presence'
 import type { PermissionValues } from '../authorization/permission_keys'
 import { categoryActions, channelActions } from './member_topology/action_resolver'
 import { renameCategory } from './category_mutation_client'
+import { useCategoryDisclosure } from './category_disclosure/use_category_disclosure'
 
 const props = defineProps<{
   activeVoiceChannelId?: string
@@ -34,6 +35,7 @@ const categoryMenu = ref<{ x: number; y: number; category: ChannelTopology['cate
 const categoryMenuElement = ref<HTMLElement | null>(null)
 const categoryMenuTrigger = ref<HTMLElement | null>(null)
 const menuError = ref('')
+const disclosure = useCategoryDisclosure()
 watch(() => props.voicePresence?.members.map((member) => member.id) ?? [], (ids) => {
   ids.filter((id) => id !== 'self').forEach((id) => { void authors.ensure(id) })
 }, { immediate: true })
@@ -66,12 +68,12 @@ async function renameFromMenu(): Promise<void> {
   <nav class="channel-navigation" aria-label="Категории и каналы">
     <div v-if="canCreate()" class="channel-navigation-actions"><span>Каналы</span><button type="button" aria-label="Создать категорию или канал" @click="emit('createGlobal')">+</button></div>
     <section v-for="category in props.topology.categories" :key="category.id" class="channel-category" @contextmenu.stop.prevent="openCategoryMenu($event, category)">
-      <h2><span>{{ category.name }}</span><span v-if="props.permissions" class="channel-category-actions">
+      <h2><button class="channel-category-disclosure" type="button" :aria-label="`${disclosure.isOpen(category.id) ? 'Свернуть' : 'Развернуть'} раздел ${category.name}`" :aria-expanded="disclosure.isOpen(category.id)" @click="disclosure.toggle(category.id)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="m8 10 4 4 4-4" /></svg><span>{{ category.name }}</span></button><span v-if="props.permissions" class="channel-category-actions">
         <button v-if="categoryActions(props.permissions, category.channels.length === 0).createText || categoryActions(props.permissions, category.channels.length === 0).createVoice" type="button" :aria-label="`Создать канал в категории ${category.name}`" @click="emit('createInCategory', category)">+</button>
         <button v-if="categoryActions(props.permissions, category.channels.length === 0).delete" type="button" :aria-label="`Действия с категорией ${category.name}`" @click="emit('deleteCategory', category)">⋯</button>
       </span></h2>
-      <p v-if="category.channels.length === 0" class="empty-category">Нет каналов</p>
-      <template v-for="channel in category.channels" :key="channel.id">
+      <p v-if="disclosure.isOpen(category.id) && category.channels.length === 0" class="empty-category">Нет каналов</p>
+      <template v-for="channel in disclosure.isOpen(category.id) ? category.channels : []" :key="channel.id">
         <div class="channel-row" @contextmenu.stop.prevent="props.permissions && channelActions(props.permissions, channel.kind).delete && emit('deleteChannel', channel)"><button
           class="channel-button"
           :class="{ selected: props.selectedChannelId === channel.id, 'voice-connected': isConnectedVoice(channel) }"
