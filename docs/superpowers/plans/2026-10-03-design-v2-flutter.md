@@ -66,6 +66,8 @@
 
 Закрытие: widget/layout regressions для desktop, tablet и compact; текущие tests conversation, attachments, composer, DM и scroll проходят; измеренные границы основных зон и controls задокументированы.
 
+FV2-021 закрыла отображение карточек опубликованных вложений: изображения повторяют web max-width 440 px, desktop preview 200 px / compact 144 px и отдельный footer; прочие файлы используют отдельную карточку до 340 px с 44 px icon. Список вложений теперь располагается вертикально, а цвета используют Design V2 theme tokens. Test-first геометрия на 1440×900 и 390×844, обычный file card, полный Flutter suite (516), targeted analyzer, Android release `1.0.29+2053` и macOS Debug build прошли. Живое превью показано на Android API 35 и перезапущенном Mac Debug; Mac-сессия восстановилась без Keychain prompt — [QA-262](../../../evidence/flutter/qa262-flutter-design-v2-attachment-cards-2026-10-04-001.json). FV2-002 остаётся открытой для оставшихся history/pagination, attachment/composer edge states и device-level scroll/read-cursor/IME acceptance.
+
 ### Пакет 3 — голос и демонстрация экрана (R04–R05, R19–R20, R27, R30)
 
 Сверить disconnected/prejoin, roster loading/error/empty/populated, joining/connected/reconnecting, participant cards, dock, viewer rail/stage, local/remote preview, качество источника и popover диагностики. Отдельно пройти no publication, connecting, first frame, ended, no audio, mute/gain и fullscreen. Это следующий приоритет после shell из-за текущего продуктового фокуса на Flutter voice/screen-share.

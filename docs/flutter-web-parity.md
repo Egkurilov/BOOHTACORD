@@ -55,6 +55,17 @@ records the Mac connected-dock screenshot check and full-suite regression result
 Both runtime checks used a muted/listener-only session and confirmed the session
 was left afterwards.
 
+## Message attachment cards (FV2-021)
+
+Flutter published-image cards now follow the current web layout: up to 440 px
+wide, with a 200 px desktop or 144 px compact preview and a dedicated metadata /
+download footer. Non-image files use the separate 340 px file card with a 44 px
+file icon. Attachments form a vertical list and use Flutter Design V2 semantic
+colors. Geometry, full-suite, analyzer, Android release and macOS Debug builds
+pass. Android API 35 and the restarted Mac client both displayed the loaded
+protected image preview; no message or upload behavior changed —
+[QA-262](../evidence/flutter/qa262-flutter-design-v2-attachment-cards-2026-10-04-001.json).
+
 ## Frameless desktop window chrome (FV2-018)
 
 macOS and Windows now use a compact 32 px draggable title bar instead of the

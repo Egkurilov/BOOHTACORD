@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../app_state.dart';
 import '../models.dart';
 import '../services/api_client.dart';
+import '../theme.dart';
 
 class MessageAttachmentList extends StatefulWidget {
   const MessageAttachmentList({
@@ -88,112 +89,229 @@ class _MessageAttachmentListState extends State<MessageAttachmentList> {
   @override
   Widget build(BuildContext context) {
     if (widget.attachments.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : 440.0;
+        final compact = MediaQuery.sizeOf(context).width <= 1023;
+        final imageWidth = availableWidth.clamp(0.0, 440.0).toDouble();
+        final imageHeight = compact ? 144.0 : 200.0;
+
+        return Padding(
+          padding: const EdgeInsets.only(top: GcSpacing.x2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (
+                var index = 0;
+                index < widget.attachments.length;
+                index++
+              ) ...[
+                if (index > 0) const SizedBox(height: GcSpacing.x2),
+                if (_isImage(widget.attachments[index].originalName))
+                  SizedBox(
+                    key: ValueKey(
+                      'attachment-card-${widget.attachments[index].id}',
+                    ),
+                    width: imageWidth,
+                    height: imageHeight + 38,
+                    child: _imageCard(widget.attachments[index], imageHeight),
+                  )
+                else
+                  SizedBox(
+                    width: availableWidth.clamp(0.0, 340.0).toDouble(),
+                    child: _fileCard(widget.attachments[index]),
+                  ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _imageCard(MessageAttachment attachment, double previewHeight) {
+    const borderRadius = BorderRadius.all(Radius.circular(10));
+    return Container(
+      decoration: BoxDecoration(
+        color: GcColors.streamCanvas,
+        borderRadius: borderRadius,
+        border: Border.all(color: GcColors.borderSubtle),
+      ),
+      child: Column(
         children: [
-          for (final attachment in widget.attachments)
-            Container(
-              constraints: const BoxConstraints(maxWidth: 320),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF202329),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF363A42)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_isImage(attachment.originalName))
-                    Semantics(
-                      button: true,
-                      label: 'Открыть изображение ${attachment.originalName}',
-                      child: Tooltip(
-                        message:
-                            'Открыть изображение ${attachment.originalName}',
-                        child: InkWell(
-                          key: ValueKey('attachment-preview-${attachment.id}'),
-                          onTap: () => _showPreview(attachment),
-                          borderRadius: BorderRadius.circular(6),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: SizedBox(
-                              width: 48,
-                              height: 48,
-                              child: FutureBuilder<Uint8List>(
-                                future: _previews.putIfAbsent(
-                                  attachment.id,
-                                  () => widget.state.api.messageAttachmentBytes(
-                                    widget.parentPath,
-                                    attachment.id,
-                                    preview: true,
-                                  ),
-                                ),
-                                builder: (context, snapshot) => snapshot.hasData
-                                    ? Image.memory(
-                                        snapshot.data!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, _, _) => const Icon(
-                                          Icons.broken_image_outlined,
-                                        ),
-                                      )
-                                    : snapshot.hasError
-                                    ? const Icon(Icons.broken_image_outlined)
-                                    : const Center(
-                                        child: Icon(
-                                          Icons.image_outlined,
-                                          size: 24,
-                                        ),
-                                      ),
+          SizedBox(
+            width: double.infinity,
+            height: previewHeight,
+            child: Semantics(
+              button: true,
+              label: 'Открыть изображение ${attachment.originalName}',
+              child: Tooltip(
+                message: 'Открыть изображение ${attachment.originalName}',
+                child: InkWell(
+                  key: ValueKey('attachment-preview-${attachment.id}'),
+                  onTap: () => _showPreview(attachment),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(9),
+                    ),
+                    child: SizedBox.expand(
+                      child: FutureBuilder<Uint8List>(
+                        future: _previews.putIfAbsent(
+                          attachment.id,
+                          () => widget.state.api.messageAttachmentBytes(
+                            widget.parentPath,
+                            attachment.id,
+                            preview: true,
+                          ),
+                        ),
+                        builder: (context, snapshot) => snapshot.hasData
+                            ? Image.memory(
+                                snapshot.data!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) =>
+                                    const Icon(Icons.broken_image_outlined),
+                              )
+                            : snapshot.hasError
+                            ? const Icon(Icons.broken_image_outlined)
+                            : const Center(
+                                child: Icon(Icons.image_outlined, size: 24),
                               ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 36,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: GcSpacing.x3),
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            attachment.originalName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: GcColors.text,
+                              fontSize: GcTypography.caption,
+                              height:
+                                  GcTypography.captionLine /
+                                  GcTypography.caption,
                             ),
                           ),
                         ),
-                      ),
-                    )
-                  else
-                    const Padding(
-                      padding: EdgeInsets.all(10),
-                      child: Icon(Icons.insert_drive_file_outlined),
-                    ),
-                  const SizedBox(width: 9),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          attachment.originalName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12),
-                        ),
+                        const SizedBox(width: GcSpacing.x2),
                         Text(
                           _sizeLabel(attachment.sizeBytes),
                           style: const TextStyle(
-                            color: Color(0xFF9AA0AA),
-                            fontSize: 11,
+                            color: GcColors.muted,
+                            fontSize: GcTypography.caption,
+                            height:
+                                GcTypography.captionLine / GcTypography.caption,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  IconButton(
+                ),
+                SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: IconButton(
                     tooltip: 'Скачать ${attachment.originalName}',
                     onPressed: () => _save(attachment),
-                    icon: const Icon(Icons.download_outlined, size: 17),
-                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 36,
+                      height: 36,
+                    ),
+                    icon: const Icon(Icons.download_outlined, size: 20),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
         ],
       ),
     );
   }
+
+  Widget _fileCard(MessageAttachment attachment) => Container(
+    key: ValueKey('attachment-card-${attachment.id}'),
+    constraints: const BoxConstraints(maxWidth: 340, minHeight: 62),
+    padding: const EdgeInsets.all(GcSpacing.x2),
+    decoration: BoxDecoration(
+      color: GcColors.raised,
+      borderRadius: BorderRadius.circular(GcRadii.md),
+      border: Border.all(color: GcColors.borderSubtle),
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: GcColors.surface,
+            borderRadius: BorderRadius.circular(GcRadii.sm),
+          ),
+          child: const Icon(
+            Icons.insert_drive_file_outlined,
+            color: GcColors.textSecondary,
+          ),
+        ),
+        const SizedBox(width: GcSpacing.x3),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                attachment.originalName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: GcColors.text,
+                  fontSize: GcTypography.body,
+                  fontWeight: GcTypography.semibold,
+                  height: GcTypography.bodyLine / GcTypography.body,
+                ),
+              ),
+              const SizedBox(height: GcSpacing.x1),
+              Text(
+                _sizeLabel(attachment.sizeBytes),
+                style: const TextStyle(
+                  color: GcColors.muted,
+                  fontSize: GcTypography.caption,
+                  height: GcTypography.captionLine / GcTypography.caption,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: GcSpacing.x3),
+        SizedBox(
+          width: 32,
+          height: 32,
+          child: IconButton(
+            tooltip: 'Скачать ${attachment.originalName}',
+            onPressed: () => _save(attachment),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+            icon: const Icon(Icons.download_outlined, size: 20),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _ProtectedImagePreview extends StatefulWidget {
