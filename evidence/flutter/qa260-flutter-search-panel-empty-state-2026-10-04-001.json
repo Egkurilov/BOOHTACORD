@@ -1,0 +1,69 @@
+{
+  "id": "QA-260",
+  "date": "2026-10-04",
+  "task": "FV2-019 — Flutter search panel visual follow-up from user screenshot",
+  "source_revision": "WORKTREE",
+  "working_tree_changes": true,
+  "summary": "Flutter-only search presentation follow-up. The scope selector now uses available width and exposes its selected channel label, the query field has a search affordance, Enter is styled as a key hint, and the empty area has an intentional search state. Search requests, scope, pagination, context navigation and authorization were not changed.",
+  "checks": [
+    {
+      "name": "407x318 compact search geometry and empty-state regression",
+      "command": "cd clients/flutter && flutter test test/workspace_screen_test.dart --plain-name 'compact search panel has a readable scope and designed empty state'",
+      "result": "PASS",
+      "passed": 1,
+      "observation": "The selected-scope control is wider than 120 px and 32 px tall; query icon, Enter hint and designed empty state are present with no Flutter exception."
+    },
+    {
+      "name": "Workspace screen tests",
+      "command": "cd clients/flutter && flutter test test/workspace_screen_test.dart",
+      "result": "PASS",
+      "passed": 63
+    },
+    {
+      "name": "Changed-file Dart analysis",
+      "command": "cd clients/flutter && dart analyze lib/src/screens/workspace_screen.dart lib/src/features/workspace/search/panel_empty_state.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android release install attempt with package default build number",
+      "command": "cd clients/flutter && flutter run --release -d emulator-5554",
+      "result": "SIDE_EFFECT_VERSION_DOWNGRADE",
+      "artifact": "Built 1.0.28+42 (72.2 MB). The emulator held 1.0.28+2051; Flutter automatically uninstalled the old package after INSTALL_FAILED_VERSION_DOWNGRADE, clearing its local session. No explicit wipe command was run."
+    },
+    {
+      "name": "Signed local Android test build restored at monotonic build number",
+      "command": "cd clients/flutter && flutter build apk --release --build-name=1.0.28 --build-number=2052 && adb install -r build/app/outputs/flutter-apk/app-release.apk",
+      "result": "PASS",
+      "artifact": "1.0.28+2052; 115.4 MB; installed with adb install -r. APK remains in ignored build output, not Git."
+    },
+    {
+      "name": "Android emulator search-panel visual acceptance",
+      "result": "PASS",
+      "artifact": "Local ADB screenshot at /private/tmp/boohtacord-search-panel.png; not committed to Git.",
+      "observation": "After the user signed back in, the installed 1.0.28+2052 app showed the compact search overlay with a full-width #Text scope selector, query icon, Enter key hint, and designed empty state. No microphone or screen-share action was used."
+    },
+    {
+      "name": "macOS current-source visual acceptance",
+      "result": "PASS",
+      "observation": "Inspected the already-running BOOHTACORD Flutter Debug window without relaunching it. The 380 px desktop search rail showed the full-width #Text selector, query icon, Enter hint, and centered empty state. No Keychain prompt appeared."
+    },
+    {
+      "name": "Hot-reload attach attempt",
+      "command": "flutter attach -d macos",
+      "result": "NOT_CONNECTED",
+      "observation": "The attach command waited for a VM service and was stopped without restarting or changing the Mac app. The subsequent screenshot of the existing window showed the updated search UI."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "The widget renderer screenshot capture was attempted but hung; no screenshot artifact was retained.",
+    "The Android runtime screenshot was retained only under /private/tmp and is not a repository artifact.",
+    "This follow-up changed Flutter presentation only; no web, API, ACL, session or LiveKit behavior was changed."
+  ],
+  "status": "PASS_WIDGET_TESTS_ANALYZER_ANDROID_MACOS_VISUAL; ANDROID_SESSION_RESET_RECOVERED_BY_USER"
+}

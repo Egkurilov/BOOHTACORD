@@ -2836,7 +2836,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Поиск сообщений'));
     await tester.pumpAndSettle();
-    expect(find.text('Введите запрос и нажмите Enter.'), findsOneWidget);
+    expect(find.text('Найдите нужное сообщение'), findsOneWidget);
     final searchField = find.byWidgetPredicate(
       (widget) =>
           widget is TextField &&
@@ -3183,7 +3183,12 @@ void main() {
           .height,
       44,
     );
-    expect(find.text('Enter — найти'), findsOneWidget);
+    expect(find.text('Enter'), findsOneWidget);
+    expect(find.text('найти'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('workspace-search-query-icon')),
+      findsOneWidget,
+    );
     expect(find.text('Поиск сообщений'), findsWidgets);
     expect(find.byType(FilledButton), findsNothing);
     expect(tester.takeException(), isNull);
@@ -3191,6 +3196,49 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
   });
+
+  testWidgets(
+    'compact search panel has a readable scope and designed empty state',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(407, 318);
+      addTearDown(tester.view.reset);
+      final state = AppState(_PortraitApi(withHistory: true));
+      await state.initialize();
+      await state.selectChannel(_PortraitApi.channel);
+      state.openSearchPanel();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AnimatedBuilder(
+            animation: state,
+            builder: (_, _) => WorkspaceScreen(state: state),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final scope = find.byKey(const ValueKey('workspace-search-scope'));
+      expect(tester.getSize(scope).width, greaterThan(120));
+      expect(tester.getSize(scope).height, 32);
+      expect(
+        find.byKey(const ValueKey('workspace-search-query-icon')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('workspace-search-empty-state')),
+        findsOneWidget,
+      );
+      expect(find.text('Найдите нужное сообщение'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('workspace-search-enter-hint')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+    },
+  );
 
   testWidgets('wide voice search keeps its 320 px modal drawer', (
     tester,

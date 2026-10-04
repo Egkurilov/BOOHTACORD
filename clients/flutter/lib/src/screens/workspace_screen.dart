@@ -22,6 +22,7 @@ import '../services/screen_thumbnail.dart';
 import '../features/voice/screen_viewer/audio_publication.dart';
 import '../features/voice/screen_viewer/audio_controls.dart';
 import '../features/workspace/mobile_navigation/top.dart';
+import '../features/workspace/search/panel_empty_state.dart';
 import '../widgets/topology_actions/buttons.dart';
 import '../widgets/topology_actions/delete_actions.dart';
 import '../widgets/authenticated_avatar.dart';
@@ -3414,68 +3415,96 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
               ? 'Совпадений нет.'
               : 'Найдено ${_results.length} сообщения'
         : 'Введите запрос и нажмите Enter.';
-    final showStatus =
-        _loading || (_error == null && (!_searched || _results.isEmpty));
     final horizontalPadding = compact ? 16.0 : 20.0;
+    final emptyTitle = _loading
+        ? 'Ищем сообщения…'
+        : _error != null
+        ? 'Поиск временно недоступен'
+        : _searched
+        ? 'Совпадений нет.'
+        : 'Найдите нужное сообщение';
+    final emptyMessage = _loading
+        ? ''
+        : _error != null
+        ? 'Попробуйте запустить поиск ещё раз.'
+        : _searched
+        ? 'Измените запрос или область поиска и попробуйте снова.'
+        : 'Введите запрос, чтобы найти сообщения в текстовых каналах и личных диалогах.';
+    final emptyIcon = _searched
+        ? Icons.search_off_rounded
+        : _error != null
+        ? Icons.search_off_rounded
+        : Icons.search_rounded;
     final scopeField = Semantics(
       label: 'Область поиска',
-      child: SizedBox(
-        width: 48,
-        height: 20,
-        child: DropdownButtonFormField<String>(
-          key: const ValueKey('workspace-search-scope'),
-          initialValue: _scope,
-          isDense: true,
-          isExpanded: true,
-          icon: const SizedBox.shrink(),
-          alignment: AlignmentDirectional.centerStart,
-          dropdownColor: GcColors.raised,
-          style: const TextStyle(
-            color: GcColors.text,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-          decoration: const InputDecoration(
-            isDense: true,
-            contentPadding: EdgeInsets.zero,
-            constraints: BoxConstraints.tightFor(height: 20),
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-          ),
-          selectedItemBuilder: (context) => [
-            const Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Text('Везде', maxLines: 1, overflow: TextOverflow.clip),
-            ),
-            if (current != null)
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(
-                  current.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.clip,
-                ),
-              ),
-          ],
-          items: [
-            const DropdownMenuItem(value: 'all', child: Text('Везде')),
-            if (current != null)
-              DropdownMenuItem(
-                value: 'current',
-                child: Text(current.label, overflow: TextOverflow.ellipsis),
-              ),
-          ],
-          onChanged: _loading
-              ? null
-              : (value) {
-                  if (value == null) return;
-                  setState(() {
-                    _scope = value;
-                    _reset();
-                  });
-                },
+      child: DropdownButtonFormField<String>(
+        key: const ValueKey('workspace-search-scope'),
+        initialValue: _scope,
+        isDense: true,
+        isExpanded: true,
+        icon: const Icon(
+          Icons.expand_more_rounded,
+          color: GcColors.muted,
+          size: 16,
         ),
+        alignment: AlignmentDirectional.centerStart,
+        dropdownColor: GcColors.raised,
+        style: const TextStyle(
+          color: GcColors.textSecondary,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          isDense: true,
+          filled: true,
+          fillColor: GcColors.raised,
+          contentPadding: const EdgeInsetsDirectional.fromSTEB(10, 0, 8, 0),
+          constraints: const BoxConstraints.tightFor(height: 32),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(GcRadii.md),
+            borderSide: const BorderSide(color: GcColors.borderSubtle),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(GcRadii.md),
+            borderSide: const BorderSide(color: GcColors.focus),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(GcRadii.md),
+            borderSide: const BorderSide(color: GcColors.borderSubtle),
+          ),
+        ),
+        selectedItemBuilder: (context) => [
+          const Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text('Везде', maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          if (current != null)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                current.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+        ],
+        items: [
+          const DropdownMenuItem(value: 'all', child: Text('Везде')),
+          if (current != null)
+            DropdownMenuItem(
+              value: 'current',
+              child: Text(current.label, overflow: TextOverflow.ellipsis),
+            ),
+        ],
+        onChanged: _loading
+            ? null
+            : (value) {
+                if (value == null) return;
+                setState(() {
+                  _scope = value;
+                  _reset();
+                });
+              },
       ),
     );
     return Material(
@@ -3560,9 +3589,17 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
                       filled: true,
                       fillColor: GcColors.sidebar,
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        key: ValueKey('workspace-search-query-icon'),
+                        color: GcColors.muted,
+                        size: 18,
                       ),
+                      prefixIconConstraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 44,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(GcRadii.md),
                         borderSide: const BorderSide(color: GcColors.control),
@@ -3591,23 +3628,52 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
-                  height: compact ? 44 : 20,
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Row(
-                      children: [
-                        scopeField,
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Enter — найти',
-                          style: TextStyle(
-                            color: GcColors.muted,
-                            fontSize: 12,
-                            height: 20 / 12,
-                          ),
+                  height: compact ? 44 : 32,
+                  child: Row(
+                    children: [
+                      Expanded(child: scopeField),
+                      const SizedBox(width: 12),
+                      Semantics(
+                        label: 'Нажмите Enter, чтобы найти',
+                        child: Row(
+                          key: const ValueKey('workspace-search-enter-hint'),
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: GcColors.raised,
+                                border: Border.all(
+                                  color: GcColors.borderSubtle,
+                                ),
+                                borderRadius: BorderRadius.circular(GcRadii.xs),
+                              ),
+                              child: const Text(
+                                'Enter',
+                                style: TextStyle(
+                                  color: GcColors.textSecondary,
+                                  fontSize: 11,
+                                  height: 16 / 11,
+                                  fontFamily: GcTypography.fontMonoFamily,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Text(
+                              'найти',
+                              style: TextStyle(
+                                color: GcColors.muted,
+                                fontSize: 12,
+                                height: 18 / 12,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -3631,28 +3697,28 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
             key: const ValueKey('search-live-status'),
             liveRegion: true,
             label: statusMessage,
-            child: showStatus
-                ? Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: horizontalPadding,
-                      vertical: 16,
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: ExcludeSemantics(
-                        child: Text(
-                          statusMessage,
-                          style: const TextStyle(
-                            color: GcColors.textSecondary,
-                            fontSize: 14,
-                            height: 20 / 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                : const SizedBox.shrink(),
+            child: const SizedBox.shrink(),
           ),
+          if (_loading && _results.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.fromLTRB(horizontalPadding, 12, 16, 0),
+              child: Row(
+                children: [
+                  const SizedBox.square(
+                    dimension: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    statusMessage,
+                    style: const TextStyle(
+                      color: GcColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           if (_searched && _results.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
@@ -3683,7 +3749,15 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
             ),
           Expanded(
             child: _results.isEmpty
-                ? const SizedBox.shrink()
+                ? ExcludeSemantics(
+                    child: SearchPanelEmptyState(
+                      key: const ValueKey('workspace-search-empty-state'),
+                      title: emptyTitle,
+                      message: emptyMessage,
+                      loading: _loading,
+                      icon: emptyIcon,
+                    ),
+                  )
                 : ListView.separated(
                     controller: _scroll,
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
