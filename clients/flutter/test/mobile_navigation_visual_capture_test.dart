@@ -52,14 +52,18 @@ void main() {
     final directory = Platform.environment['BOOHTACORD_VISUAL_CAPTURE_DIR'];
     if (directory == null || directory.isEmpty) return;
     final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(captureKey));
-    final image = await boundary.toImage(pixelRatio: 1);
-    try {
-      final data = await image.toByteData(format: ui.ImageByteFormat.png);
-      expect(data, isNotNull);
-      Directory(directory).createSync(recursive: true);
-      File('$directory/R14-navigation-top.png').writeAsBytesSync(data!.buffer.asUint8List());
-    } finally {
-      image.dispose();
-    }
+    final bytes = await tester.runAsync(() async {
+      final image = await boundary.toImage(pixelRatio: 1);
+      try {
+        final data = await image.toByteData(format: ui.ImageByteFormat.png);
+        if (data == null) throw StateError('Flutter returned no PNG bytes');
+        return data.buffer.asUint8List();
+      } finally {
+        image.dispose();
+      }
+    });
+    expect(bytes, isNotNull);
+    Directory(directory).createSync(recursive: true);
+    File('$directory/R14-navigation-top.png').writeAsBytesSync(bytes!);
   });
 }
