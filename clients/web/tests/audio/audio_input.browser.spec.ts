@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
 
+async function ready(page: Page) {
+  await page.waitForFunction(() => typeof (window as any).audioInputGate?.mount === 'function')
+}
 async function choose(page: Page, id: string) {
   const selector = page.getByRole('combobox', { name: 'Микрофон', exact: true })
   await selector.selectOption(id)
@@ -24,6 +27,7 @@ for (const mode of ['off', 'browser', 'rnnoise'] as const) {
       await sender.route('**/api/v1/auth/session', route => route.fulfill({ json: { account_id: 'qa-account', role: 'MEMBER' } }))
       if (mode === 'rnnoise') await sender.route('**/audio/rnnoise/**', route => route.fulfill({ status: 404, body: 'Synthetic asset fallback' }))
       await sender.goto('/tests/audio/fixture.html'); await receiver.goto('/tests/audio/fixture.html')
+      await Promise.all([ready(sender), ready(receiver)])
       await sender.evaluate(mode => (window as any).audioInputGate.mount(mode), mode)
       await choose(sender, 'mic-2')
       expect((await sender.evaluate(() => (window as any).audioInputGate.read())).captures).toEqual([])
@@ -67,6 +71,7 @@ for (const mode of ['off', 'browser', 'rnnoise'] as const) {
 test('prejoin probe and reload do not select a different call source; listener selection never captures', async ({ page }) => {
   await page.route('**/api/v1/auth/session', route => route.fulfill({ json: { account_id: 'qa-account', role: 'MEMBER' } }))
   await page.goto('/tests/audio/fixture.html')
+  await ready(page)
   await page.evaluate(() => (window as any).audioInputGate.mount())
   await choose(page, 'mic-2')
   await page.getByRole('button', { name: 'Проверить микрофон', exact: true }).click()
@@ -77,6 +82,7 @@ test('prejoin probe and reload do not select a different call source; listener s
   expect(before.captures[0]).toEqual({ deviceId: 'mic-2', ended: true })
   await page.evaluate(() => (window as any).audioInputGate.stop())
   await page.reload()
+  await ready(page)
   await page.evaluate(() => (window as any).audioInputGate.mount())
   await expect(page.getByRole('combobox', { name: 'Микрофон', exact: true })).toHaveValue('mic-2')
   await page.evaluate(() => (window as any).audioInputGate.join('listener'))

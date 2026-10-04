@@ -3,7 +3,7 @@ import '../../src/style.css'
 import ScreenViewer from '../../src/voice/ScreenViewer.vue'
 import ScreenShareSetupDialog from '../../src/voice/ScreenShareSetupDialog.vue'
 import VoiceParticipantVolumes from '../../src/voice/VoiceParticipantVolumes.vue'
-import PublishedAttachmentCard from '../../src/conversation/PublishedAttachmentCard.vue'
+import PublishedAttachmentCard from '../../src/conversation/attachment_card/PublishedAttachmentCard.vue'
 import type { ScreenViewerCard } from '../../src/voice/screen_viewer_controller'
 import type { ScreenProfile } from '../../src/voice/livekit_gateway'
 
