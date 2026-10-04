@@ -1,0 +1,46 @@
+{
+  "id": "QA-257",
+  "date": "2026-10-04",
+  "task": "FE-61 / FV2-018 — paired Android-to-macOS playback and desktop chrome visual check",
+  "source_revision": "729467d09a65eb25e177bc81d9fab62a3bd8bd0a",
+  "runtime": {
+    "android": "Android Emulator API 35, signed release 1.0.28+2047",
+    "macos": "Existing running BOOHTACORD app; build/version not captured; app was not restarted",
+    "channel": "SHARE_TEST",
+    "microphones": "Muted on both clients",
+    "capture_source": "Android single-app Clock Stopwatch"
+  },
+  "checks": [
+    {
+      "name": "Android screen-share playback on macOS",
+      "result": "PASS",
+      "observation": "macOS discovered the Android participant and one live screen publication. Selecting it rendered the Clock Stopwatch as a complete portrait frame; the elapsed time advanced in the receiver view. The 576x1280 frame was not cropped."
+    },
+    {
+      "name": "macOS receiver statistics",
+      "result": "PASS",
+      "observation": "Receiver reported source profile 720p / 15 FPS, current viewer frame 576x1280 at 14 FPS, decoded 15 FPS, 143.1 kbit/s, 0% packet loss, 6 ms jitter, no receiver RTT, and no audio track. No audio track is expected from the Clock app source."
+    },
+    {
+      "name": "Android sender statistics while selected app was hidden",
+      "result": "OBSERVED_NOT_CORRELATED",
+      "observation": "After returning Android to BOOHTACORD, sender diagnostics showed target 720p / 15 FPS, no fresh sending data, 0 encoded FPS, 0 kbit/s, RTT 11.7 ms, and a silent local preview. This was sampled while Android reported that Clock was hidden, not during the active foreground-capture interval. The installed release predates the new diagnostic milestones, so sender and receiver events were not correlated in logs."
+    },
+    {
+      "name": "Stop and cleanup",
+      "result": "PASS",
+      "observation": "Stopping the share cleared Android MediaProjection (`dumpsys media_projection` returned null); the Mac removed the remote publication. Android and macOS both returned to the SHARE_TEST prejoin state, with no test voice session left active."
+    },
+    {
+      "name": "Desktop/mobile header visual check",
+      "result": "PASS",
+      "observation": "The existing macOS window showed the BOOHTACORD text title and native traffic lights without an app icon. Android retained its mobile header and showed no desktop window chrome. Screenshots were inspected locally and not committed because they contain account/channel content."
+    }
+  ],
+  "limitations": [
+    "This confirms the Android Emulator API 35 to macOS playback path only; it does not reproduce the reported browser-publisher to macOS-black-screen switch.",
+    "The Android release did not contain the uncommitted FE-61 diagnostic instrumentation, so capture/publish/subscription milestones were not correlated from logs.",
+    "The macOS app build/version was not captured; this was a visual check of the already-running app without restart."
+  ],
+  "status": "PASS_ANDROID_TO_MACOS_FRAME_AND_RECEIVER_METRICS; FE-61_BROWSER_TO_MACOS_SWITCH_AND_LOG_CORRELATION_OPEN"
+}

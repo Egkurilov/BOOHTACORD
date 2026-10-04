@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
 
+import '../../../services/screen_share_diagnostics.dart';
 import '../../../services/screen_share_metrics.dart';
 import '../../../telemetry/report_media/sender_sample.dart';
 import 'controller.dart';
@@ -43,6 +44,16 @@ extension ScreenShareSample on ScreenShareMetricsController {
         current: current,
         platform: nativeScreenMetricsPlatform(defaultTargetPlatform)!,
       );
+      logScreenShareDiagnostic(
+        current == null
+            ? ScreenShareDiagnosticEvent.senderStatsUnavailable
+            : ScreenShareDiagnosticEvent.senderStatsSampled,
+        platform: defaultTargetPlatform,
+        senderStatsEntries: stats.length,
+        framesSent: current?.framesSent?.round(),
+        bytesSent: current?.bytesSent?.round(),
+        encodedFramesPerSecond: report.encodedFps?.round(),
+      );
       previous = current;
       this.report = report;
       sampledAt = DateTime.now();
@@ -73,8 +84,13 @@ extension ScreenShareSample on ScreenShareMetricsController {
       } catch (_) {
         // Diagnostic telemetry is best-effort and must not interrupt sharing.
       }
-    } catch (_) {
+    } catch (error) {
       // Some platform WebRTC implementations do not expose sender stats.
+      logScreenShareDiagnostic(
+        ScreenShareDiagnosticEvent.senderStatsUnavailable,
+        platform: defaultTargetPlatform,
+        errorType: error.runtimeType.toString(),
+      );
     } finally {
       gate.leave(revision);
     }

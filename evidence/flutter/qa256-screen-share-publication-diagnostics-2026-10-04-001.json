@@ -1,0 +1,61 @@
+{
+  "id": "QA-256",
+  "date": "2026-10-04",
+  "task": "FE-61 / T-030 — Instrument Flutter screen-share publication and receiver lifecycle",
+  "source_revision": "729467d09a65eb25e177bc81d9fab62a3bd8bd0a",
+  "working_tree_changes": "Uncommitted content-free diagnostic instrumentation and tests",
+  "checks": [
+    {
+      "name": "Diagnostic coverage",
+      "result": "PASS_SOURCE",
+      "observation": "Added fixed low-cardinality milestones for capture request/preparation/creation, publish start/completion/failure, local publish/unpublish, remote participant and screen-track publication/subscription/unsubscription, and sender-stat samples/unavailable results. Logs contain platform, bounded counters, track enabled state, and filtered exception type only; no identities, track IDs, room IDs, or user/error text. Diagnostic field access is guarded so incomplete native/fake objects cannot interrupt media lifecycle."
+    },
+    {
+      "name": "Focused diagnostics and screen lifecycle tests",
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter test --no-pub test/screen_share_diagnostics_test.dart test/screen_scope/lifecycle_test.dart",
+      "passed": 8
+    },
+    {
+      "name": "Complete Flutter test suite",
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "passed": 489
+    },
+    {
+      "name": "Flutter static analysis",
+      "result": "PASS_WITH_EXISTING_INFO",
+      "command": "cd clients/flutter && flutter analyze --no-pub",
+      "observation": "No analysis errors. Ten info-level lints remain in unrelated pre-existing admin/topology/updates files."
+    },
+    {
+      "name": "macOS Debug build",
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Android Debug APK build",
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    {
+      "name": "Paired Android-to-macOS publication correlation",
+      "result": "NOT_RUN",
+      "observation": "The macOS client remains connected to another voice channel and was not moved, avoiding an unrequested voice-lease transfer. No fresh Android screen share was started. The next safe paired run should compare sender capture/publish/local-published/sender-stats milestones with macOS remote participant/track-published/track-subscribed milestones."
+    },
+    {
+      "name": "Visual runtime check",
+      "result": "NOT_REQUIRED_FOR_DIAGNOSTICS_ONLY_CHANGE",
+      "observation": "This change does not modify widgets, styles, layout, or native window chrome. No app restart or emulator reinstall was performed. For the next UI-affecting parity change, use the macOS client and Android emulator as requested."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "result": "NOT_RUN",
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "observation": "PowerShell Core (pwsh) is not installed on this host. No requirement IDs or contracts changed."
+    }
+  ],
+  "status": "SAFE_DIAGNOSTIC_INSTRUMENTATION_AND_BUILDS_PASS; LIVE_PAIRED_PUBLICATION_CAUSE_OPEN"
+}

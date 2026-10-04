@@ -1,0 +1,44 @@
+{
+  "id": "QA-254",
+  "date": "2026-10-04",
+  "task": "FE-59 / T-030 — Android app-only screen preview on current release",
+  "source_revision": "dbc3a42509cfcc4236411f66afc53290f84b7d76",
+  "runtime_build": {
+    "device": "Android Emulator sdk_gphone64_arm64, API 35",
+    "installed_version": "1.0.28+2047",
+    "build_source_revision": "not independently verified"
+  },
+  "session_safety": {
+    "room": "SHARE_TEST",
+    "microphone": "muted for the entire test",
+    "capture_source": "Android system picker — single app — Clock/Stopwatch",
+    "cleanup": "Screen share stopped, MediaProjection returned null, then the emulator left voice; the room returned to prejoin."
+  },
+  "checks": [
+    {
+      "name": "App-only screen capture starts",
+      "result": "PASS",
+      "observation": "The Android system picker allowed a single-app source, Clock was selected, and dumpsys media_projection reported TYPE_SCREEN_CAPTURE while capture was active."
+    },
+    {
+      "name": "Preview and hidden-source feedback after returning to BOOHTACORD",
+      "result": "PASS_WITH_EXPECTED_HIDDEN_SOURCE_STATE",
+      "observation": "The local stage and participant thumbnail showed the selected Clock content. When BOOHTACORD returned to the foreground, Android marked the selected app hidden and the viewer showed the explanatory message instead of an indefinite loading state. This does not prove preview freshness while Clock remains foreground."
+    },
+    {
+      "name": "Stop and leave cleanup",
+      "result": "PASS",
+      "observation": "Stopping the share cleared MediaProjection; leaving voice returned the emulator to prejoin with no active screen capture."
+    },
+    {
+      "name": "Paired macOS receiver and sender/receiver counters",
+      "result": "NOT_RUN",
+      "observation": "The open macOS client was already in another voice channel. It was not moved to SHARE_TEST, avoiding transfer of its active voice session. No remote playback or correlated media counters were claimed."
+    }
+  ],
+  "limitations": [
+    "This was an API 35 emulator run, not physical Pixel acceptance.",
+    "The local hidden-source fallback and cleanup pass do not resolve the open paired publication/discovery issue or establish live receiver metrics."
+  ],
+  "status": "ANDROID_APP_ONLY_HIDDEN_SOURCE_FEEDBACK_AND_CLEANUP_PASS; PAIRED_RECEIVER_AND_PHYSICAL_PIXEL_ACCEPTANCE_OPEN"
+}

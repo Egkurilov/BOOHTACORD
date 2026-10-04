@@ -132,6 +132,17 @@ the portrait source was nearly blank in the participant strip; Flutter uses
 `BoxFit.cover` and web uses `object-fit: cover`, so useful crop and refresh
 parity need a targeted comparison before changing the presentation.
 
+On 2026-10-04, a paired signed Android Emulator API 35 (`1.0.28+2047`) → existing
+macOS-client run successfully published and rendered the single-app Clock
+Stopwatch at the receiver. The complete 576×1280 frame was visible at 14 FPS;
+receiver diagnostics reported 15 decoded FPS, 143.1 kbit/s, 0% loss, and 6 ms
+jitter. Stopping the share removed the remote publication and cleared
+MediaProjection; both clients returned to prejoin — [QA-257](../evidence/flutter/qa257-android-macos-screen-share-live-2026-10-04-001.json).
+This confirms Android→Mac playback but does not reproduce the browser-publisher →
+macOS-black-screen source switch. The installed release predates the new
+diagnostic milestones, so sender/receiver event correlation remains open under
+FE-61.
+
 Vue (`clients/web/src`) is the product reference. The Flutter clients for macOS,
 Windows and Android must match its user-visible behavior, information
 hierarchy, copy, states and design tokens while using the same API, realtime,

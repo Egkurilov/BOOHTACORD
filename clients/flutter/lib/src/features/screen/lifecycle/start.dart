@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../core/session/scope.dart';
+import '../../../services/screen_share_diagnostics.dart';
 import '../../../services/screen_share_quality.dart';
 import 'controller.dart';
 
@@ -51,9 +53,18 @@ extension ScreenShareStart on ScreenShareController {
   ) async {
     bool active() => current(ticket, expected, room);
     LocalVideoTrack? pending;
+    var publishing = false;
     try {
+      logScreenShareDiagnostic(
+        ScreenShareDiagnosticEvent.captureRequested,
+        platform: defaultTargetPlatform,
+      );
       await driver.prepare(active);
       if (!active()) return;
+      logScreenShareDiagnostic(
+        ScreenShareDiagnosticEvent.capturePrepared,
+        platform: defaultTargetPlatform,
+      );
       pending = await driver.capture(
         ScreenShareCaptureOptions(
           sourceId: sourceId,
@@ -62,11 +73,38 @@ extension ScreenShareStart on ScreenShareController {
         ),
       );
       if (!active()) return;
+      logScreenShareDiagnostic(
+        ScreenShareDiagnosticEvent.captureCreated,
+        platform: defaultTargetPlatform,
+        trackEnabled: screenShareTrackEnabled(pending),
+      );
+      publishing = true;
+      logScreenShareDiagnostic(
+        ScreenShareDiagnosticEvent.publishStarted,
+        platform: defaultTargetPlatform,
+        trackEnabled: screenShareTrackEnabled(pending),
+        localScreenPublications: screenShareLocalPublicationCount(room),
+      );
       await driver.publish(room, pending, quality, dimensions);
       if (!active()) return;
+      logScreenShareDiagnostic(
+        ScreenShareDiagnosticEvent.publishCompleted,
+        platform: defaultTargetPlatform,
+        trackEnabled: screenShareTrackEnabled(pending),
+        localScreenPublications: screenShareLocalPublicationCount(room),
+      );
       published(room, pending);
       pending = null;
     } catch (cause) {
+      logScreenShareDiagnostic(
+        publishing
+            ? ScreenShareDiagnosticEvent.publishFailed
+            : ScreenShareDiagnosticEvent.captureFailed,
+        platform: defaultTargetPlatform,
+        trackEnabled: screenShareTrackEnabled(pending),
+        localScreenPublications: screenShareLocalPublicationCount(room),
+        errorType: cause.runtimeType.toString(),
+      );
       if (active()) {
         stopSampling();
         phase = ScreenSharePhase.error;

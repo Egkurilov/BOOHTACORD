@@ -1,0 +1,67 @@
+{
+  "id": "QA-255",
+  "date": "2026-10-04",
+  "task": "FE-64 / T-022/030/051 — Android background voice and screen-capture persistence",
+  "source_revision": "dbc3a42509cfcc4236411f66afc53290f84b7d76",
+  "runtime_build": {
+    "device": "Android Emulator sdk_gphone64_arm64, API 35",
+    "installed_version": "1.0.28+2047",
+    "build_source_revision": "not independently verified"
+  },
+  "session_safety": {
+    "room": "SHARE_TEST",
+    "microphone": "joined without microphone and confirmed muted throughout",
+    "capture_source": "single app — Clock/Stopwatch",
+    "cleanup": "Screen share stopped, MediaProjection cleared, voice left, and delayed room roster update returned to empty."
+  },
+  "checks": [
+    {
+      "name": "Capture and foreground-service startup",
+      "result": "PASS",
+      "observation": "After selecting Clock, dumpsys media_projection reported TYPE_SCREEN_CAPTURE. IsolateHolderService reported isForeground=true and types=0x00000020 (mediaProjection)."
+    },
+    {
+      "name": "Background persistence",
+      "result": "PASS",
+      "duration_seconds": 10,
+      "observation": "While Clock was foreground and BOOHTACORD was backgrounded, both MediaProjection and the mediaProjection foreground service remained active after 10 seconds."
+    },
+    {
+      "name": "Resume and voice UI state",
+      "result": "PASS_LOCAL_STATE",
+      "observation": "Bringing the existing BOOHTACORD activity forward did not restart it. The room remained connected with the voice dock showing 8 ms RTT; the active app-only share remained present and displayed the expected hidden-source explanation because Clock was no longer visible. This is local UI/connection-state evidence, not remote publication proof."
+    },
+    {
+      "name": "Stop, leave, and cleanup",
+      "result": "PASS",
+      "observation": "Stopping the share made MediaProjection null and removed the active foreground-service state. Leaving voice returned to prejoin; the roster showed the emulator briefly, then returned to empty within 10 seconds."
+    },
+    {
+      "name": "Roster convergence after leave",
+      "result": "PASS_WITH_DELAY",
+      "observation": "The first prejoin screenshot after leave still listed the test emulator; a later screenshot within 10 seconds showed an empty room. No persistent stale member was reproduced."
+    },
+    {
+      "name": "Remote membership/publication and media counters",
+      "result": "NOT_RUN",
+      "observation": "No paired receiver was connected to SHARE_TEST. The active macOS client remained in another room and was not moved, so remote LiveKit publication, server-visible membership, and sender/receiver media counters remain unverified."
+    }
+  ],
+  "limitations": [
+    "This API 35 emulator result does not establish physical Pixel behavior.",
+    "The test validates local MediaProjection/foreground-service survival and local voice state only; it cannot close FE-64 without correlated peer/server observations."
+  ],
+  "automated_checks": [
+    {
+      "command": "cd clients/flutter && flutter test --no-pub test/android_screen_capture_fgs_contract_test.dart",
+      "result": "PASS",
+      "passed": 1
+    },
+    {
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this host; only QA/checklist evidence was appended, with no requirement IDs changed."
+    }
+  ],
+  "status": "LOCAL_ANDROID_BACKGROUND_MEDIA_PROJECTION_FGS_AND_RESUME_PASS; REMOTE_PUBLICATION_AND_PEER_CORRELATION_OPEN"
+}
