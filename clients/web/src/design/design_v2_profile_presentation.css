@@ -1,11 +1,12 @@
 /* R12 uses the live profile and account workflows within the settings shell. */
 .workspace-main-panel--profile { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
-.workspace-main-panel--profile .profile-settings { display: grid; width: 100%; max-width: 880px; min-height: 0; flex: 1; align-content: start; gap: 0; overflow: auto; margin: 0 auto; padding: 32px 0 48px; transform: none; }
+.workspace-main-panel--profile .profile-settings { display: grid; width: 100%; max-width: 944px; min-height: 0; flex: 1; align-content: start; gap: 0; overflow: auto; margin: 0 auto; padding: 32px 32px 48px; transform: none; }
 .workspace-main-panel--profile .profile-settings header h1:focus { outline: none; }
 .workspace-main-panel--profile .profile-settings > header h1 { font-size: 24px; line-height: 32px; }
 .workspace-main-panel--profile .profile-settings > header p { margin-top: 8px; color: var(--gc-text-secondary); font-size: 14px; line-height: 20px; }
-.workspace-main-panel--profile .profile-tabs { height: 43px; gap: 4px; margin: 24px 0 26px; }
-.workspace-main-panel--profile .profile-tabs button { padding: 0 12px; }
+.workspace-main-panel--profile .profile-tabs { height: 45px; gap: 8px; margin: 24px 0; }
+.workspace-main-panel--profile .profile-tabs button { min-height: 44px; padding: 0 12px; color: var(--gc-text-muted); }
+.workspace-main-panel--profile .profile-tabs button[aria-selected=true] { color: #fff; }
 .workspace-main-panel--profile .profile-panel { position: relative; display: block; min-height: 459px; padding: 24px; }
 .workspace-main-panel--profile .profile-avatar-row { display: flex; min-height: 92px; align-items: center; gap: 16px; }
 .workspace-main-panel--profile .profile-avatar { width: 72px; height: 72px; flex: 0 0 72px; }
@@ -24,15 +25,18 @@
 .workspace-main-panel--profile .profile-savebar button { min-height: 36px; border: 1px solid var(--gc-accent); border-radius: 8px; padding: 0 14px; font-weight: 500; }
 .workspace-main-panel--profile .profile-savebar button:disabled { opacity: .45; }
 .workspace-main-panel--profile .profile-savebar span { line-height: 18px; }
-@media (max-width: 720px) {
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .workspace-main-panel--profile .profile-settings { max-width: 928px; padding: 24px 24px 48px; }
+}
+@media (max-width: 1023px) {
   .workspace-main-panel--profile .profile-settings { grid-auto-rows: max-content; padding: 24px 16px 80px; }
   .workspace-main-panel--profile .profile-settings > header h1 { font-size: 22px; line-height: 28px; }
-  .workspace-main-panel--profile .profile-tabs { margin-top: 20px; }
+  .workspace-main-panel--profile .profile-tabs { gap: 0; margin: 20px 0; }
   .workspace-main-panel--profile .profile-panel { min-height: 0; padding: 16px; }
   .workspace-main-panel--profile .profile-avatar-row { flex-wrap: nowrap; }
   .workspace-main-panel--profile .profile-upload-button { min-height: 44px; }
   .workspace-main-panel--profile .profile-form input { font-size: 16px; }
-  .workspace-main-panel--profile .profile-savebar { position: static; height: auto; min-height: 0; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .workspace-main-panel--profile .profile-savebar { position: static; height: auto; min-height: 0; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
   .workspace-main-panel--profile .profile-savebar span { flex-basis: 100%; }
   .workspace-main-panel--profile .profile-savebar button { min-height: 44px; flex: 1; }
 }

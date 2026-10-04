@@ -19,7 +19,7 @@ describe('Design V2 audio settings', () => {
   })
 
   it('shows a settings toolbar, segmented activation and visible processing controls', () => {
-    expect(workspace).toContain('class="settings-workspace-header"')
+    expect(workspace).toContain('<SettingsWorkspaceHeader panel="audio"')
     expect(component).toContain('class="audio-activation-selector"')
     expect(component).toContain('class="audio-processing-row"')
     expect(presentation).toContain('.audio-settings-panel { display: contents;')
@@ -43,7 +43,7 @@ describe('Design V2 audio settings', () => {
   it('allows cards to grow for PTT assignment and device feedback', () => {
     expect(presentation).toContain('height: max-content; min-height: 282px;')
     expect(presentation).toContain('height: max-content; min-height: 164px;')
-    expect(presentation).toContain('min-height: 402px;')
+    expect(presentation).toContain('min-height: 346px;')
     expect(presentation).toContain('min-height: 152px;')
   })
 
@@ -54,5 +54,12 @@ describe('Design V2 audio settings', () => {
 
   it('keeps checkbox row labels at the same body size as button row labels', () => {
     expect(presentation).toMatch(/\.workspace-main-panel--audio \.audio-processing-row \{[^}]*color: var\(--gc-text-primary\);[^}]*font-size: 14px;/)
+  })
+
+  it('keeps content gutters on tablet and uses the handoff mobile breakpoint', () => {
+    expect(presentation).toContain('max-width: 944px;')
+    expect(presentation).toContain('padding: 32px 32px 48px;')
+    expect(presentation).toContain('max-width: 928px; padding: 24px 24px 48px;')
+    expect(presentation).toContain('@media (max-width: 1023px)')
   })
 })

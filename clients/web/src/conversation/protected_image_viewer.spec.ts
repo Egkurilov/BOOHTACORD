@@ -34,4 +34,11 @@ describe('protected attachment image viewer', () => {
     expect(styles).toContain('@media (max-width: 600px)')
     expect(styles).toContain('max-height: calc(100dvh - 110px)')
   })
+
+  it('uses real file and download icons while preserving the protected link', () => {
+    expect(component).toContain('M14 2H6a2 2 0 0 0-2 2')
+    expect(component).toContain('M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5')
+    expect(component).toContain(':href="imageUrl" :download="props.name"')
+    expect(component).not.toContain('♧')
+  })
 })

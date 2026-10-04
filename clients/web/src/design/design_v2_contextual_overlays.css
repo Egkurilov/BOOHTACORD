@@ -45,15 +45,6 @@
 .mention-popover kbd { border-radius: 4px; padding: 2px 4px; color: var(--gc-text-muted); background: var(--gc-sidebar); font-size: 11px; }
 .mention-popover .mention-popover-help { margin-top: 5px; padding: 0 8px; color: var(--gc-text-muted); font-size: 12px; white-space: nowrap; }
 
-.attachment-image-dialog { background: rgb(2 4 8 / 94%); }
-.attachment-image-dialog__header { height: 63px; min-height: 63px; border-color: #292D39; padding: 0 24px; }
-.attachment-image-dialog__header h2 { display: flex; align-items: center; gap: 14px; font-size: 14px; font-weight: 400; }
-.attachment-image-dialog__header h2 > span { color: var(--gc-text-secondary); font-size: 24px; }
-.attachment-image-dialog__download { margin-left: auto; color: var(--gc-text-secondary); font-size: 14px; text-decoration: none; }
-.attachment-image-dialog__close { margin-left: 18px; }
-.attachment-image-dialog__content { display: flex; align-items: center; justify-content: center; padding: 0; }
-.attachment-image-dialog__image { width: min(980px, calc(100vw - 32px)); max-width: min(980px, calc(100vw - 32px)); max-height: calc(100dvh - 160px); object-fit: contain; transform: translateY(-8px); }
-.attachment-image-dialog__footer { height: 35px; color: var(--gc-text-muted); font-size: 12px; text-align: center; }
 
 .topology-dialog--category { height: 287px; min-height: 287px; max-height: 287px; }
 .topology-dialog--category .topology-dialog-header { min-height: 36px; margin-top: 20px; }

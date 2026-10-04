@@ -1,11 +1,11 @@
 /* Production audio stores remain active; the settings surface follows R10/R11. */
 .workspace-main-panel--audio { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
-.workspace-main-panel--audio .audio-settings { position: relative; display: grid; width: 100%; max-width: 880px; min-height: 0; flex: 1; grid-template-columns: 1fr; align-content: start; gap: 20px; overflow: auto; margin: 0 auto; padding: 32px 0 48px; transform: none; }
+.workspace-main-panel--audio .audio-settings { position: relative; display: grid; width: 100%; max-width: 944px; min-height: 0; flex: 1; grid-template-columns: 1fr; align-content: start; gap: 20px; overflow: auto; margin: 0 auto; padding: 32px 32px 48px; transform: none; }
 .workspace-main-panel--audio .audio-settings:focus { outline: none; }
 .audio-settings-heading { position: relative; margin-bottom: 4px; }
 .audio-settings-heading h1 { font-size: 24px; line-height: 32px; }
 .audio-settings-heading p { margin-top: 8px; color: var(--gc-text-secondary); font-size: 14px; line-height: 20px; }
-.workspace-main-panel--audio .audio-device-refresh { position: absolute; z-index: 2; top: 32px; right: 0; opacity: 0; }
+.workspace-main-panel--audio .audio-device-refresh { position: absolute; z-index: 2; top: 32px; right: 32px; opacity: 0; }
 .workspace-main-panel--audio .audio-device-refresh:focus-visible,
 .workspace-main-panel--audio .audio-settings-heading:hover + .audio-device-refresh { opacity: 1; }
 .workspace-main-panel--audio .audio-settings-panel { display: contents; margin: 0; }
@@ -48,16 +48,20 @@
 .audio-processing-details { margin-top: 0; color: var(--gc-text-muted); font-size: 12px; }
 .audio-processing-details label { display: grid; gap: 8px; margin-top: 12px; }
 .audio-processing-details p { margin-top: 8px; }
-@media (max-width: 720px) {
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .workspace-main-panel--audio .audio-settings { max-width: 928px; padding: 24px 24px 48px; }
+  .workspace-main-panel--audio .audio-device-refresh { top: 24px; right: 24px; }
+}
+@media (max-width: 1023px) {
   .workspace-main-panel--audio .audio-settings { gap: 16px; padding: 24px 16px 80px; }
   .audio-settings-heading h1 { font-size: 22px; line-height: 28px; }
   .workspace-main-panel--audio .audio-device-refresh { top: 24px; right: 16px; }
-  .workspace-main-panel--audio .audio-device-section { min-height: 402px; grid-template-columns: 1fr; gap: 20px; padding: 16px; }
+  .workspace-main-panel--audio .audio-device-section { min-height: 346px; grid-template-columns: 1fr; gap: 20px; padding: 16px; }
   .audio-device-section > header { grid-column: 1; }
   .workspace-main-panel--audio .audio-device-section select { font-size: 16px; }
   .workspace-main-panel--audio .audio-device-check { grid-column: 1; margin-top: -20px; }
   .audio-level-row > span { width: 100px; }
-  .workspace-main-panel--audio .audio-device-check__actions { flex-direction: column; align-items: start; gap: 12px; margin-top: 20px; }
+  .workspace-main-panel--audio .audio-device-check__actions { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
   .audio-device-check__actions button { min-height: 44px; }
   .workspace-main-panel--audio .audio-activation-section { min-height: 152px; gap: 20px; padding: 16px; }
   .audio-activation-selector { min-height: 50px; }

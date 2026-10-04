@@ -29,4 +29,12 @@ describe('Design V2 account settings', () => {
     expect(component).toContain("slice(0, 2).toLocaleUpperCase('ru-RU')")
     expect(presentation).toContain('.workspace-main-panel--profile .profile-savebar { position: absolute;')
   })
+
+  it('preserves tablet gutters and avoids doubling the mobile savebar gap', () => {
+    expect(presentation).toContain('max-width: 944px;')
+    expect(presentation).toContain('max-width: 928px; padding: 24px 24px 48px;')
+    expect(presentation).toContain('@media (max-width: 1023px)')
+    expect(presentation).toContain('height: 45px; gap: 8px; margin: 24px 0;')
+    expect(presentation).toContain('gap: 8px; margin-top: 4px;')
+  })
 })
