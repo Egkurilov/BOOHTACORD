@@ -144,7 +144,14 @@ if ((process.argv[2] ?? 'chat') === 'admin-members') await page.getByRole('butto
 if (['chat', 'dm', 'reply', 'image-viewer'].includes(state)) await page.locator('.message-item').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
 if (state === 'context') await page.locator('.channel-category').first().evaluate((element) => element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 255, clientY: 235 })))
 if (state === 'reply' && await page.locator('.message-actions-toggle').count()) { const item = page.locator('.message-item').nth(referenceFixture ? 1 : 0); await item.locator('.message-actions-toggle').evaluate((button) => button.click()); await item.locator('.message-action-buttons button').first().evaluate((button) => button.click()); await page.locator('#message-body').fill('@Da'); await page.locator('.mention-popover').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {}) }
-if (state === 'audio') { await page.getByRole('button', { name: 'Настройки аудио' }).evaluate((button) => button.click()); await closeNavigation() }
+if (state === 'audio') {
+  await page.getByRole('button', { name: 'Настройки аудио' }).evaluate((button) => button.click())
+  await closeNavigation()
+  if (referenceFixture) await page.waitForFunction(() => {
+    const labels = [...document.querySelectorAll('.audio-device-section select option')].map((option) => option.textContent?.trim())
+    return labels.includes('USB Audio Device') && labels.includes('Системное устройство')
+  })
+}
 if (state === 'profile') { await page.getByRole('button', { name: 'Открыть настройки профиля' }).evaluate((button) => button.click()); await closeNavigation() }
 if (state === 'search') { await page.getByRole('button', { name: 'Поиск сообщений' }).click(); await closeNavigation(); if (referenceFixture) { await page.getByRole('searchbox', { name: 'Запрос' }).fill('вечером'); await page.getByRole('searchbox', { name: 'Запрос' }).press('Enter'); await page.locator('.search-result').nth(2).waitFor() } }
 if (state === 'topology-category') { await page.getByRole('button', { name: 'Создать категорию или канал' }).click(); await closeNavigation(); if (referenceFixture) await page.getByRole('textbox', { name: 'Название раздела' }).fill('Симрейсинг') }
