@@ -24,14 +24,12 @@ void main() {
   ];
 
   test('filters loaded accounts by name, login and role', () {
-    expect(
-      filterAdminMembers(accounts, search: '  АЛИС ', role: 'ALL'),
-      [accounts.first],
-    );
-    expect(
-      filterAdminMembers(accounts, search: 'BOB', role: 'MEMBER'),
-      [accounts.last],
-    );
+    expect(filterAdminMembers(accounts, search: '  АЛИС ', role: 'ALL'), [
+      accounts.first,
+    ]);
+    expect(filterAdminMembers(accounts, search: 'BOB', role: 'MEMBER'), [
+      accounts.last,
+    ]);
     expect(
       filterAdminMembers(accounts, search: 'bob', role: 'ADMINISTRATOR'),
       isEmpty,
@@ -48,11 +46,48 @@ void main() {
     final state = AppState(api)..topology = api.current;
     addTearDown(state.dispose);
     await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: AdminScreen(state: state))),
+      MaterialApp(
+        home: Scaffold(body: AdminScreen(state: state)),
+      ),
     );
     await tester.pumpAndSettle();
 
     expect(find.text('Участники 2'), findsOneWidget);
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('admin-member-role-filter')))
+          .width,
+      81,
+      reason: 'the web compact layout reserves 81 px for the role filter',
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('admin-member-role-filter')))
+          .height,
+      44,
+      reason: 'the web compact role filter is 44 px tall',
+    );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('admin-member-search'))).height,
+      44,
+      reason: 'the web compact search field is 44 px tall',
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('admin-member-role-filter')),
+        matching: find.byIcon(Icons.arrow_drop_down),
+      ),
+      findsNothing,
+      reason: 'the web compact select hides its native dropdown arrow',
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('admin-member-role-filter')),
+        matching: find.text('Все'),
+      ),
+      findsOneWidget,
+      reason: 'the compact filter uses a readable short selected label',
+    );
     expect(find.text('Алиса'), findsOneWidget);
     expect(find.text('Борис'), findsOneWidget);
 
@@ -75,6 +110,30 @@ void main() {
     expect(find.text('Алиса'), findsOneWidget);
     expect(find.text('Борис'), findsNothing);
     expect(find.text('Участники 2'), findsOneWidget);
+    tester.view.physicalSize = const Size(1440, 900);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('admin-member-role-filter')))
+          .width,
+      121,
+      reason: 'the web desktop layout reserves 121 px for the role filter',
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('admin-member-role-filter')))
+          .height,
+      44,
+      reason: 'the web desktop role filter is 44 px tall',
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('admin-member-role-filter')),
+        matching: find.byIcon(Icons.arrow_drop_down),
+      ),
+      findsOneWidget,
+      reason: 'the web desktop select keeps its native dropdown arrow',
+    );
     expect(tester.takeException(), isNull);
   });
 }

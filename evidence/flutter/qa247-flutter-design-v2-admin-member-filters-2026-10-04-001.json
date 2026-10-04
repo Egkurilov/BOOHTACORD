@@ -2,23 +2,74 @@
   "id": "QA-247",
   "date": "2026-10-04",
   "task": "FV2-016 — Flutter Design V2 admin member count and directory filters",
-  "summary": "The existing member directory shows the number of loaded accounts and filters its loaded cards by display name, login, and role. Server pagination, drafts, save/block/reset operations, and ACL remain unchanged.",
+  "summary": "The member directory shows the loaded-account count and filters loaded cards by display name, login, and role. Its search and role control now match web geometry at compact and desktop widths: 44 px height, 81 px compact selector, 121 px desktop selector. Compact mode hides the native arrow and uses readable selected labels ('Все', 'Участ.', 'Админ.'); the full option labels remain in the menu. Server pagination, drafts, save/block/reset operations, and ACL remain unchanged.",
   "checks": [
+    {
+      "name": "Test-first compact-width regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/admin_member_filter_test.dart",
+      "result": "PASS",
+      "observation": "Before implementation, the new 390 px geometry assertion failed at 120 px versus the web target 81 px. The next assertion exposed the dropdown at 32 px versus the web target 44 px. Both controls are now asserted at 44 px; compact/desktop selector widths are asserted at 81/121 px."
+    },
     {
       "name": "Focused filter unit and widget tests",
       "command": "cd clients/flutter && flutter test --no-pub test/admin_member_filter_test.dart",
-      "result": "NOT_RUN",
-      "observation": "The Windows host has no Flutter SDK. Tests cover case-insensitive name/login matching, role intersection, visible cards, and unchanged loaded count."
+      "result": "PASS",
+      "passed": 2,
+      "observation": "Tests cover case-insensitive name/login matching, role intersection, visible cards, unchanged loaded count, web-matching 390 px compact and 1440 px desktop filter geometry, hidden compact arrow, and readable compact selected label."
     },
     {
-      "name": "Flutter analyzer, full suite, platform builds and actual screens",
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 484
+    },
+    {
+      "name": "Targeted Flutter analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/admin_member_filter.dart lib/src/screens/admin_member_filters.dart lib/src/screens/admin_screen.dart test/admin_member_filter_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app",
+      "observation": "Built final source; the already-running app was not restarted."
+    },
+    {
+      "name": "Android Debug APK",
+      "command": "cd clients/flutter && flutter build apk --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk",
+      "observation": "Built final source as 1.0.28+42."
+    },
+    {
+      "name": "Android emulator install and runtime visual acceptance",
+      "command": "flutter build apk --release --build-number=2045; adb install -r build/app/outputs/flutter-apk/app-release.apk",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-release.apk (115.4 MB; local test build, not published)",
+      "observation": "The release-signed APK installed over the existing app without deleting data. Android Emulator API 35 ran version 1.0.28+2045. The live admin screen showed the 44 px search/filter controls, compact 'Все' selected value, member count and cards; opening the role selector showed the full 'Все роли' option and distinguishable member/admin choices. Final screenshot was inspected from /private/tmp and not committed because it contains account/channel content."
+    },
+    {
+      "name": "macOS app visual acceptance",
+      "result": "PARTIAL",
+      "observation": "Built the macOS Debug app and sent SIGUSR1 to the existing `flutter run -d macos` process for hot reload; did not restart the app or trigger a Keychain prompt. A screenshot confirmed the existing app remained open on the Text channel. Could not navigate to the admin screen: `System Events` denied osascript Accessibility control (-1728). Desktop control geometry remains covered by the 1440 px widget test; target-screen macOS visual acceptance is pending user-enabled UI control."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
       "result": "NOT_RUN",
-      "observation": "Pending CI and platform runtime. The Chromium PNG reference is not a strict Flutter golden."
+      "observation": "PowerShell Core is not installed on this host (`pwsh: command not found`); no requirement IDs or task dependencies changed."
     },
     {
       "name": "Diff hygiene and evidence JSON",
-      "result": "PASS"
+      "result": "PASS",
+      "observation": "git diff --check and jq validation pass."
     }
   ],
-  "status": "IMPLEMENTED_PENDING_FLUTTER_VERIFICATION"
+  "limitations": [
+    "The compact popup is constrained by the 81 px web-matching field width, so the long member/admin menu labels ellipsize in the Android popup; selected values are shortened to readable labels while full role values and filter behavior remain intact.",
+    "Current-source Android visual acceptance passed on API 35. macOS was hot-reloaded without restart, but direct interaction with the admin screen is pending because macOS Accessibility control for osascript is disabled; the 1440 px desktop geometry passes widget assertions."
+  ],
+  "status": "PASS_IMPLEMENTATION_TESTS_ANALYSIS_ANDROID_RELEASE_BUILD_AND_EMULATOR_VISUAL; MACOS_ADMIN_SCREEN_VISUAL_PENDING"
 }

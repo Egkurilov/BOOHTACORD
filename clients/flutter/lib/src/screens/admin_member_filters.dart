@@ -15,55 +15,90 @@ class AdminMemberFilters extends StatelessWidget {
   final ValueChanged<String> onRoleChanged;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-    child: Row(
-      children: [
-        Expanded(
-          child: Semantics(
-            label: 'Поиск участников',
-            child: TextField(
-              key: const ValueKey('admin-member-search'),
-              controller: search,
-              onChanged: (_) => onSearchChanged(),
-              decoration: const InputDecoration(
-                hintText: 'Поиск по имени или логину',
-                isDense: true,
+  Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width <= 720;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 44,
+              child: Semantics(
+                label: 'Поиск участников',
+                child: TextField(
+                  key: const ValueKey('admin-member-search'),
+                  controller: search,
+                  onChanged: (_) => onSearchChanged(),
+                  decoration: const InputDecoration(
+                    hintText: 'Поиск по имени или логину',
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 11,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 120,
-          child: Semantics(
-            label: 'Фильтр по роли',
-            child: DropdownButtonFormField<String>(
-              key: const ValueKey('admin-member-role-filter'),
-              initialValue: role,
-              isExpanded: true,
-              decoration: const InputDecoration(isDense: true),
-              items: const [
-                DropdownMenuItem(
-                  value: 'ALL',
-                  child: Text('Все роли', overflow: TextOverflow.ellipsis),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: compact ? 81 : 121,
+            height: 44,
+            child: Semantics(
+              label: 'Фильтр по роли',
+              child: DropdownButtonFormField<String>(
+                key: const ValueKey('admin-member-role-filter'),
+                initialValue: role,
+                isExpanded: true,
+                style: const TextStyle(fontSize: 14),
+                selectedItemBuilder: (_) => compact
+                    ? const [Text('Все'), Text('Участ.'), Text('Админ.')]
+                    : const [
+                        Text('Все роли'),
+                        Text('Пользователь'),
+                        Text('Администратор'),
+                      ],
+                icon: compact
+                    ? const SizedBox.shrink()
+                    : const Icon(Icons.arrow_drop_down),
+                decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: compact ? 10 : 12,
+                    vertical: 11,
+                  ),
                 ),
-                DropdownMenuItem(
-                  value: 'MEMBER',
-                  child: Text('Пользователь', overflow: TextOverflow.ellipsis),
-                ),
-                DropdownMenuItem(
-                  value: 'ADMINISTRATOR',
-                  child: Text('Администратор', overflow: TextOverflow.ellipsis),
-                ),
-              ],
-              onChanged: (value) {
-                if (value != null) onRoleChanged(value);
-              },
+                items: const [
+                  DropdownMenuItem(
+                    value: 'ALL',
+                    child: Text('Все роли', overflow: TextOverflow.ellipsis),
+                  ),
+                  DropdownMenuItem(
+                    value: 'MEMBER',
+                    child: Text(
+                      'Пользователь',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'ADMINISTRATOR',
+                    child: Text(
+                      'Администратор',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) onRoleChanged(value);
+                },
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
