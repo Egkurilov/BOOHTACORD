@@ -1,6 +1,14 @@
 /* Connected dock presentation; state, controls and measured quality remain live. */
 .voice-dock .voice-icon { stroke-width: 1.8; }
 .voice-dock .voice-icon-button { border-radius: 8px; }
+@media (max-width: 1023px) {
+  .sidebar:not(.is-open) .mobile-voice-dock.mobile-visible { padding: 4px 12px; }
+  .sidebar:not(.is-open) .mobile-voice-dock .voice-actions { gap: 8px; }
+  .sidebar:not(.is-open) .mobile-voice-dock .voice-status { font-size: 12px; font-weight: 400; }
+  .sidebar:not(.is-open) .mobile-voice-dock.connected .voice-status { color: #78e6a0; }
+  .sidebar:not(.is-open) .mobile-voice-dock .voice-dock-subtitle { font-size: 11px; }
+  .sidebar:not(.is-open) .mobile-voice-dock .voice-icon-button:first-child[aria-pressed=true]:not(:hover) { color: var(--gc-text-secondary); background: transparent; }
+}
 @media (min-width: 1024px) {
   .voice-dock.connected .voice-status { color: #78e6a0; font-weight: 500; }
   .voice-dock .voice-icon-button:first-child[aria-pressed=true]:not(:hover) { color: var(--gc-text-secondary); background: var(--gc-surface-raised); }

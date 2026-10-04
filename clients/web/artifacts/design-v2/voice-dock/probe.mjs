@@ -47,9 +47,19 @@ try {
     checks.push('profile-settings-events-and-live-presence', 'mobile-hit-targets')
     if (width < 720) {
       await page.locator('.sidebar').evaluate(element => element.classList.remove('is-open'))
+      await page.mouse.move(width - 1, 1)
       assert.equal(await dock.locator('button').first().evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(0, 0, 0, 0)')
+      assert.equal(await dock.evaluate(el => getComputedStyle(el).paddingLeft), '12px')
+      assert.deepEqual(await dock.locator('.voice-status').evaluate(el => {
+        const s = getComputedStyle(el); return [s.fontSize, s.fontWeight, s.color]
+      }), ['12px', '400', 'rgb(120, 230, 160)'])
+      assert.equal(await dock.locator('.voice-dock-subtitle').evaluate(el => getComputedStyle(el).fontSize), '11px')
+      assert.equal((await dock.locator('button').first().boundingBox()).x, width - 108)
+      assert.equal((await dock.locator('button').last().boundingBox()).x, width - 56)
+      assert.equal(await dock.locator('button').first().evaluate(el => getComputedStyle(el).color), 'rgb(182, 189, 206)')
       await page.locator('.sidebar').evaluate(element => element.classList.add('is-open'))
       checks.push('compact-mobile-microphone-stays-transparent')
+      checks.push('compact-mobile-html-spacing-and-typography')
     }
     await set({ state: 'LEAVING' })
     assert.equal(await dock.getByRole('button', { name: 'Выйти из голосового канала' }).isDisabled(), true)
