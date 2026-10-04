@@ -5,6 +5,8 @@ import type { AudioProcessingOptions } from './media_publishing'
 export type AudioProcessingReport = 'ENABLED' | 'DISABLED' | 'UNAVAILABLE'
 
 export interface BrowserAudioProcessingSettings {
+  sampleRate?: number
+  channelCount?: number
   autoGainControl?: boolean
   echoCancellation?: boolean
   noiseSuppression?: boolean

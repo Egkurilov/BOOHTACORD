@@ -1,4 +1,6 @@
 import type { VoiceRoom } from './livekit_gateway'
+import { publishOptions } from './audio_profile/profile'
+import { voiceAudioProfiles } from './audio_profile/generated'
 import { browserProcessingConstraints, normalizeAudioProcessing, type AudioProcessingOptions } from './noise_suppression/types'
 export type { AudioProcessingOptions } from './noise_suppression/types'
 import { unknownScreenDiagnostics, type ScreenDiagnostics } from './screen_diagnostics'
@@ -16,6 +18,8 @@ export interface ScreenShareOptions {
 export interface MicrophonePublishOptions {
   audioPreset: { maxBitrate: number; priority: 'high' }
   forceStereo: false
+  dtx: true
+  red: true
 }
 
 export interface ScreenSharePublishOptions {
@@ -26,10 +30,10 @@ export interface ScreenSharePublishOptions {
 
 export const defaultAudioProcessing: AudioProcessingOptions = { autoGainControl: true, echoCancellation: true, noiseSuppressionMode: 'browser' }
 export const adaptiveMediaRoomOptions = Object.freeze({ adaptiveStream: true, dynacast: true })
-export const microphonePublishOptions: MicrophonePublishOptions = { audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false }
+export const microphonePublishOptions: MicrophonePublishOptions = publishOptions(voiceAudioProfiles[0])
 
 export function microphoneConstraints(processing: AudioProcessingOptions = defaultAudioProcessing): MediaTrackConstraints {
-  return { ...browserProcessingConstraints(normalizeAudioProcessing(processing)), channelCount: { ideal: 1 }, sampleRate: { ideal: 48_000 } }
+  return { ...browserProcessingConstraints(normalizeAudioProcessing(processing)), channelCount: { ideal: voiceAudioProfiles[0].captureChannels }, sampleRate: { ideal: voiceAudioProfiles[0].sampleRate } }
 }
 
 export async function applyMicrophoneProcessing(room: VoiceRoom, processing: AudioProcessingOptions): Promise<void> {

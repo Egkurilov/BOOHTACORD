@@ -14,6 +14,7 @@ import '../../audio/devices/controller.dart';
 import '../../screen/lifecycle/controller.dart';
 import '../microphone/shortcut.dart';
 import 'types.dart';
+import '../audio_diagnostics/model.dart';
 
 abstract class VoiceState extends ChangeNotifier {
   VoiceState(
@@ -72,6 +73,7 @@ abstract class VoiceState extends ChangeNotifier {
   bool microphoneMutedBeforePtt = false;
   Room? room;
   int? voicePingMs;
+  VoiceAudioDiagnostics? voiceAudioDiagnostics;
   EventsListener<RoomEvent>? voiceEvents;
   VoiceVolumePreferences? voiceVolumePreferences;
   final Set<String> mutedScreenShareAudioIdentities = <String>{};

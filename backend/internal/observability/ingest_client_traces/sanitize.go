@@ -3,6 +3,7 @@ package ingestclienttraces
 import (
 	"bytes"
 	"time"
+	voiceaudio "voice-platform/backend/internal/observability/ingest_client_traces/voice_audio"
 
 	collectortrace "go.opentelemetry.io/proto/otlp/collector/trace/v1"
 	commonpb "go.opentelemetry.io/proto/otlp/common/v1"
@@ -15,6 +16,7 @@ var operations = map[string]bool{
 	"voice.reconnect": true, "realtime.connect": true, "realtime.reconnect": true,
 	"screen.share.start": true, "screen.share.stop": true, "screen.view": true,
 	"audio.input.switch": true,
+	"voice.audio.sample": true,
 }
 
 var platforms = map[string]bool{"web": true, "android": true, "ios": true, "windows": true, "macos": true}
@@ -50,6 +52,9 @@ func sanitize(input *collectortrace.ExportTraceServiceRequest, platform string) 
 				}
 				clean.Events = safeClientEvents(span)
 				clean.Attributes = audioInputAttributes(span, platform)
+				if span.Name == "voice.audio.sample" {
+					clean.Attributes = voiceaudio.Clean(span.Attributes, platform)
+				}
 				destination.Spans = append(destination.Spans, clean)
 			}
 		}

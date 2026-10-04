@@ -8,6 +8,8 @@ import { inspectLiveKitScreenDiagnostics, type LiveKitScreenVideoTrack } from '.
 import { readVoiceConnectionStats } from './voice_connection_quality'
 import { accountIdFromMetadata } from './participant_identity'
 import { captureLocalScreenThumbnails } from './screen_thumbnail'
+import { selectedVoiceAudioProfile } from './audio_profile/profile'
+import { bindVoiceAudioDiagnostics } from './audio_diagnostics/bind'
 
 export function wireLiveKitRoom(
   room: VoiceRoom,
@@ -71,7 +73,9 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   room.participantCards = viewer.participants
   room.remoteVoices = viewer.remoteVoices
   room.setDeafened = viewer.setDeafened
-  bindLiveKitMicrophone(room, liveKitRoom, sdk)
+  const audioProfile = selectedVoiceAudioProfile()
+  bindLiveKitMicrophone(room, liveKitRoom, sdk, audioProfile)
+  bindVoiceAudioDiagnostics(room, liveKitRoom, audioProfile)
   room.readScreenDiagnostics = async () => {
     const video = liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.videoTrack as LiveKitScreenVideoTrack | undefined
     const audio = liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShareAudio)?.audioTrack

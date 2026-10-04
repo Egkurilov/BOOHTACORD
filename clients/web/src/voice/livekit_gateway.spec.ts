@@ -49,7 +49,7 @@ describe('LiveKit voice gateway', () => {
     expect(fakeRoom.localParticipant.setMicrophoneEnabled).toHaveBeenCalledWith(
       true,
       expect.objectContaining({ autoGainControl: true, channelCount: { ideal: 1 }, echoCancellation: true, noiseSuppression: true }),
-      { audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false },
+      { audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false, dtx: true, red: true },
     )
   })
 
@@ -97,7 +97,7 @@ describe('LiveKit voice gateway', () => {
 
     await expect(setMicrophone(fakeRoom, false)).resolves.toBe('MUTED')
     expect(fakeRoom.localParticipant.setMicrophoneEnabled).toHaveBeenCalledWith(false, expect.any(Object), {
-      audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false,
+      audioPreset: { maxBitrate: 128_000, priority: 'high' }, forceStereo: false, dtx: true, red: true,
     })
     expect(fakeRoom.disconnect).not.toHaveBeenCalled()
   })
