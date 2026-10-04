@@ -54,7 +54,7 @@ async function loadNext(): Promise<void> {
 
 <template>
   <div class="mention-picker" :class="{ 'mention-picker--expanded': expanded }" role="group" aria-label="Упоминания">
-    <button ref="disclosure" class="mention-picker-trigger" type="button" :disabled="disabled" :aria-label="expanded ? 'Скрыть выбор упоминания' : 'Выбрать упоминание'" :aria-expanded="expanded" :aria-controls="controlsId" @click="expanded = !expanded">@</button>
+    <button ref="disclosure" class="mention-picker-trigger" type="button" :disabled="disabled" :aria-label="expanded ? 'Скрыть выбор упоминания' : 'Выбрать упоминание'" :aria-expanded="expanded" :aria-controls="controlsId" @click="expanded = !expanded"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M16 8v6a2 2 0 0 0 4 0v-2a8 8 0 1 0-3 6"/></svg></button>
     <span v-for="id in modelValue" :key="id" class="mention-chip">@{{ label(id) }} <button type="button" :disabled="disabled" :aria-label="`Убрать упоминание ${label(id)}`" @click="remove(id)">×</button></span>
     <div :id="controlsId" class="mention-picker-controls" :hidden="!expanded" @keydown.esc.stop="close">
       <button v-if="!onlyParticipant && (!loaded || nextCursor)" type="button" :disabled="disabled || loading" @click="loadNext">{{ loading ? 'Загружаем…' : loaded ? 'Показать ещё участников' : 'Загрузить участников' }}</button>

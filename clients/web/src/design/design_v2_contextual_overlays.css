@@ -27,6 +27,8 @@
 .reply-target strong { color: var(--gc-text-primary); font-weight: 500; }
 .text-conversation .reply-target button { min-height: 26px; padding: 0 4px; background: transparent; font-size: 24px; font-weight: 300; }
 .message-composer .mention-picker { order: 2; margin-left: auto; }
+.message-composer .mention-picker .mention-picker-trigger { border: 0; color: var(--gc-text-secondary); background: transparent; }
+.message-composer .attachment-trigger svg, .message-composer .mention-picker-trigger svg, .message-composer .emoji-trigger svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .message-composer textarea { order: 1; }
 .message-composer .emoji-picker { order: 3; }
 .message-composer .composer-send { order: 4; color: white; background: var(--gc-accent); }

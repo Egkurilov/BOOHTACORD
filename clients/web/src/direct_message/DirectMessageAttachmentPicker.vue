@@ -79,7 +79,7 @@ defineExpose({ addPastedFiles })
 <template>
   <section class="attachment-picker" aria-labelledby="dm-attachments-label">
     <input ref="fileInput" id="dm-attachments" class="attachment-input" type="file" multiple tabindex="-1" aria-hidden="true" :disabled="props.disabled || pending" @change="addFiles">
-    <button id="dm-attachments-label" class="attachment-trigger" type="button" aria-label="Прикрепить файлы" :disabled="props.disabled || pending" @click="fileInput?.click()">+</button>
+    <button id="dm-attachments-label" class="attachment-trigger" type="button" aria-label="Прикрепить файлы" :disabled="props.disabled || pending" @click="fileInput?.click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     <p class="attachment-hint">До 10 файлов по 25 МБ. Файлы прикрепятся после отправки сообщения.</p>
     <p v-if="pending" class="attachment-state" aria-live="polite">Загружаем вложение…</p>
     <p v-if="error" class="attachment-state attachment-error" role="alert">{{ error }}</p>
