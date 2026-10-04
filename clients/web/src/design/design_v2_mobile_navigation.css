@@ -17,6 +17,7 @@
   .sidebar.is-open .channel-category:first-of-type h2 { padding-top: 23px; }
   .sidebar.is-open .channel-button { height: 44px; gap: 10px; padding-inline: 8px; }
   .sidebar.is-open .channel-category-disclosure { padding-left: 8px; }
+  .sidebar.is-open .channel-category h2 { padding-bottom: var(--gc-space-2); }
   .sidebar.is-open .guild-search-button kbd { display: none; }
   .sidebar.is-open .guild-search-button { padding: 0 10px; border: 0; color: #a0a9be; background: #0b0d12; font-weight: 400; }
   .sidebar.is-open .channel-button.selected { font-weight: 400; }
