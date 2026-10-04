@@ -18,6 +18,22 @@ void main() {
     await (FontLoader('Inter')
           ..addFont(rootBundle.load('assets/fonts/InterVariable.ttf')))
         .load();
+    final directory = Platform.environment['BOOHTACORD_VISUAL_CAPTURE_DIR'];
+    if (directory != null && directory.isNotEmpty) {
+      final flutterRoot = Platform.environment['FLUTTER_ROOT'];
+      expect(
+        flutterRoot,
+        isNotNull,
+        reason: 'Flutter SDK is required for icon capture',
+      );
+      final iconFont = File(
+        '$flutterRoot/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
+      );
+      expect(iconFont.existsSync(), isTrue);
+      await (FontLoader('MaterialIcons')
+            ..addFont(iconFont.readAsBytes().then(ByteData.sublistView)))
+          .load();
+    }
     const captureKey = ValueKey('navigation-visual-capture');
     await tester.pumpWidget(MaterialApp(
       theme: guildTheme(),
@@ -49,7 +65,6 @@ void main() {
     expect(tester.getRect(find.byKey(captureKey)), const Rect.fromLTWH(0, 0, 320, 172));
     expect(tester.getRect(find.byKey(const ValueKey('navigation-search'))), const Rect.fromLTWH(12, 76, 296, 36));
 
-    final directory = Platform.environment['BOOHTACORD_VISUAL_CAPTURE_DIR'];
     if (directory == null || directory.isEmpty) return;
     final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(captureKey));
     final bytes = await tester.runAsync(() async {
