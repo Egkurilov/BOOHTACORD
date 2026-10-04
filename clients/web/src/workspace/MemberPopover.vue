@@ -2,7 +2,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { kickVoiceParticipant } from '../identity/admin_directory_client'
 import { loadMember, type GuildMember } from '../identity/profile_client'
-import { avatarBackground } from '../design/avatar_color'
+import { avatarBackground, avatarForeground } from '../design/avatar_color'
 import { avatarInitials } from '../design/avatar_initials'
 
 const props = defineProps<{ memberID: string; self: boolean; viewerRole: 'MEMBER' | 'ADMINISTRATOR'; sameVoice: boolean; volume: number; top: number; modal: boolean }>()
@@ -25,7 +25,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', escape))
     <header><span>Профиль участника</span><button type="button" aria-label="Закрыть профиль" @click="emit('close')">×</button></header>
     <p v-if="loading" class="state" aria-live="polite">Загружаем профиль…</p><p v-else-if="error" class="state state-error" role="alert">{{ error }}</p>
     <template v-else-if="member">
-      <div class="member-popover-identity" :data-presence="member.presence"><span class="member-popover-avatar-wrap"><img v-if="member.avatar_url" :src="member.avatar_url" alt="" class="member-popover-avatar"><span v-else class="member-popover-avatar member-popover-avatar--empty" :style="{ backgroundColor: avatarBackground(props.memberID) }">{{ avatarInitials(member.display_name) }}</span><span class="member-popover-avatar-presence" aria-hidden="true"></span></span><div><h2 :title="member.display_name">{{ member.display_name }}</h2><p>@{{ member.login }}</p><small>{{ member.role === 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь' }}</small><small class="member-popover-presence">{{ member.presence === 'online' ? 'В сети' : member.presence === 'offline' ? 'Не в сети' : 'Статус неизвестен' }}</small></div></div>
+      <div class="member-popover-identity" :data-presence="member.presence"><span class="member-popover-avatar-wrap"><img v-if="member.avatar_url" :src="member.avatar_url" alt="" class="member-popover-avatar"><span v-else class="member-popover-avatar member-popover-avatar--empty" :style="{ backgroundColor: avatarBackground(props.memberID), color: avatarForeground(props.memberID) }">{{ avatarInitials(member.display_name) }}</span><span class="member-popover-avatar-presence" aria-hidden="true"></span></span><div><h2 :title="member.display_name">{{ member.display_name }}</h2><p>@{{ member.login }}</p><small>{{ member.role === 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь' }}</small><small class="member-popover-presence">{{ member.presence === 'online' ? 'В сети' : member.presence === 'offline' ? 'Не в сети' : 'Статус неизвестен' }}</small></div></div>
       <div class="member-popover-actions"><button v-if="!props.self" type="button" @click="emit('openDM', member.user_id)">Написать сообщение</button><button v-if="props.viewerRole === 'ADMINISTRATOR' && props.sameVoice && !props.self" type="button" @click="kick">Отключить от голоса</button></div>
       <label v-if="props.sameVoice" class="member-volume">Громкость участника <output>{{ props.volume }}%</output><input type="range" min="0" max="200" step="1" :value="props.volume" @input="emit('setVolume', Number(($event.target as HTMLInputElement).value))"></label>
       <p v-if="status" class="member-popover-status" aria-live="polite">{{ status }}</p>

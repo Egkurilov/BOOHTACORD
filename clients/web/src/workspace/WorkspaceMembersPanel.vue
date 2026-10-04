@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
 import type { TopologyChannel } from '../channel/topology_client'
-import { avatarBackground } from '../design/avatar_color'
+import { avatarBackground, avatarForeground } from '../design/avatar_color'
 import { avatarInitials } from '../design/avatar_initials'
 import { loadMembers, type GuildMember, type MemberPresence } from '../identity/profile_client'
 import type { VoiceVolumeParticipant } from '../voice/voice_volume_controls'
@@ -62,10 +62,10 @@ onMounted(() => { if (!props.selectedVoiceChannel) void loadRoster() })
     <section v-if="voiceRoomVisible" class="members-voice-roster" aria-label="Подключённые к голосовому каналу" :inert="Boolean(selectedID) && modal">
       <h3 class="members-group">В голосовом канале · {{ participants.length + 1 }}</h3>
       <ul class="member-list">
-        <li class="member-card member member-self"><span class="member-avatar" :style="{ backgroundColor: avatarBackground(accountID ?? selfName ?? 'Вы') }" aria-hidden="true">{{ avatarInitials(selfName ?? 'Вы') }}</span><span class="member-copy"><span class="member-name">{{ selfName || 'Вы' }}</span><small class="member-state">{{ voiceStateLabel(selfMicrophoneMuted, false, selfMicrophoneUnavailable) }}</small></span><VoiceParticipantStatus compact :microphone-muted="selfMicrophoneMuted" :microphone-unavailable="selfMicrophoneUnavailable" /></li>
+        <li class="member-card member member-self"><span class="member-avatar" :style="{ backgroundColor: avatarBackground(accountID ?? selfName ?? 'Вы'), color: avatarForeground(accountID ?? selfName ?? 'Вы') }" aria-hidden="true">{{ avatarInitials(selfName ?? 'Вы') }}</span><span class="member-copy"><span class="member-name">{{ selfName || 'Вы' }}</span><small class="member-state">{{ voiceStateLabel(selfMicrophoneMuted, false, selfMicrophoneUnavailable) }}</small></span><VoiceParticipantStatus compact :microphone-muted="selfMicrophoneMuted" :microphone-unavailable="selfMicrophoneUnavailable" /></li>
         <li v-for="participant in participants" :key="participant.id">
           <button class="member-card member" :class="{ 'member-speaking': participant.speaking }" type="button" :disabled="!participant.accountId" :aria-label="`Профиль: ${participant.name || 'Участник'} · ${voiceStateLabel(participant.microphoneMuted, participant.speaking)}`" @click="participant.accountId && openProfile(participant.accountId, $event)">
-            <span class="member-avatar" :style="{ backgroundColor: avatarBackground(participant.accountId ?? participant.id) }" aria-hidden="true">{{ avatarInitials(participant.name) }}</span><span class="member-copy"><span class="member-name">{{ participant.name || 'Участник' }}</span><small class="member-state">{{ voiceStateLabel(participant.microphoneMuted, participant.speaking) }}</small></span><VoiceParticipantStatus compact :microphone-muted="participant.microphoneMuted" :speaking="participant.speaking" />
+            <span class="member-avatar" :style="{ backgroundColor: avatarBackground(participant.accountId ?? participant.id), color: avatarForeground(participant.accountId ?? participant.id) }" aria-hidden="true">{{ avatarInitials(participant.name) }}</span><span class="member-copy"><span class="member-name">{{ participant.name || 'Участник' }}</span><small class="member-state">{{ voiceStateLabel(participant.microphoneMuted, participant.speaking) }}</small></span><VoiceParticipantStatus compact :microphone-muted="participant.microphoneMuted" :speaking="participant.speaking" />
           </button>
         </li>
       </ul>

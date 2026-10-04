@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { avatarBackground } from '../design/avatar_color'
+import { avatarBackground, avatarForeground } from '../design/avatar_color'
 import { avatarInitials } from '../design/avatar_initials'
 import type { GuildMember, MemberPresence } from '../identity/profile_client'
 
@@ -20,7 +20,7 @@ function statusLabel(presence: MemberPresence): string {
         <button class="member-card member" :class="`member--${member.presence}`" type="button" :aria-label="`Профиль: ${member.display_name} · ${statusLabel(member.presence)}`" @click="emit('open', member.user_id, $event)">
           <span class="member-avatar-wrap">
             <img v-if="member.avatar_url" class="member-avatar" :src="member.avatar_url" alt="">
-            <span v-else class="member-avatar" :style="{ backgroundColor: avatarBackground(member.user_id) }" aria-hidden="true">{{ avatarInitials(member.display_name) }}</span>
+            <span v-else class="member-avatar" :style="{ backgroundColor: avatarBackground(member.user_id), color: avatarForeground(member.user_id) }" aria-hidden="true">{{ avatarInitials(member.display_name) }}</span>
             <span class="member-presence-dot" :class="`member-presence-dot--${member.presence}`" aria-hidden="true"></span>
           </span>
           <span class="member-copy"><span class="member-name">{{ member.display_name }}</span><small class="member-state">{{ statusLabel(member.presence) }}</small></span>
