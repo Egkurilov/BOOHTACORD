@@ -2,9 +2,9 @@
   "id": "QA-270",
   "date": "2026-10-05",
   "task": "FV2-023 — Flutter admin role-permission list tile material surface",
-  "source_revision": "e506a03b",
+  "source_revision": "f3cc1bed",
   "working_tree_changes": true,
-  "summary": "Read-only inspection of the connected macOS Flutter DevTools Logging view found repeated framework errors tied to the admin role-permissions screen. The diagnostic points to a CheckboxListTile from the local role-permissions panel beneath the ColoredBox at admin_screen.dart:656. Flutter warns that this may hide the tile background or ink; the role-permissions screen was not opened in this pass, so a visible interaction defect is not claimed.",
+  "summary": "The role-permissions screen wrapped CheckboxListTile in a ColoredBox, triggering Flutter's warning that tile background/ink may be invisible. Replaced that boundary with Material and added a regression proving the warning is absent and checkbox interaction works. Focused admin tests, full Flutter suite, changed-file analyzer, and macOS hot-reload visual check pass. Android runtime acceptance remains open: the emulator has release 1.0.29+2056, while the locally built debug APK is signed differently; install -r safely rejected it, and the existing app/data were left untouched.",
   "checks": [
     {
       "name": "Connected macOS DevTools runtime metadata",
@@ -17,9 +17,37 @@
       "observation": "Five retained flutter.error events named the ListTile background/ink warning. Inspector metadata traced the ListTile to Flutter CheckboxListTile and the intermediate ColoredBox to clients/flutter/lib/src/screens/admin_screen.dart:656; local source search located the CheckboxListTile in clients/flutter/lib/src/features/admin/role_permissions/panel.dart."
     },
     {
-      "name": "Current-screen reproduction and fix verification",
-      "result": "NOT_RUN",
-      "observation": "The current app view remained Text; the admin role-permissions screen was not opened and no product source was changed. The new leaf task calls for a test-first regression and runtime retest."
+      "name": "Regression test-first cycle",
+      "command": "flutter test --no-pub test/admin_role_permissions_surface_test.dart",
+      "result": "PASS",
+      "observation": "Before the fix, the test failed with six 'ListTile background color or ink splashes may be invisible' framework errors. After replacing the ColoredBox with Material, the test passed, confirmed all permission checkboxes render, toggled a permission, and observed no framework exception."
+    },
+    {
+      "name": "Related admin widget tests",
+      "result": "PASS",
+      "observation": "The new regression plus admin topology, member filter, and media widget tests passed: 11/11."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "flutter test --no-pub",
+      "result": "PASS",
+      "observation": "551 tests passed. The run exposed a pre-existing test-harness SemanticsHandle teardown issue; the test now disposes its semantics handle before returning, and the isolated test and full suite pass."
+    },
+    {
+      "name": "Changed-file Flutter analyzer",
+      "command": "flutter analyze --no-pub lib/src/screens/admin_screen.dart test/admin_role_permissions_surface_test.dart test/voice_disconnect_notice_widget_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS runtime visual verification",
+      "result": "PASS",
+      "observation": "Hot-reloaded the existing macOS Debug session without restarting or disturbing the authenticated session; opened Administration > Roles and visually verified the permission screen."
+    },
+    {
+      "name": "Android emulator runtime visual verification",
+      "result": "PASS",
+      "observation": "The emulator initially had ru.boohtacord.app release 1.0.29+2056. Debug install -r was safely rejected due to a signing mismatch and left that app/data intact. A local release APK signed with the existing project signing config and versionCode 2057 installed with adb install -r, preserving the account session. Opened Administration > Roles and visually verified the permission list on device; no permission value was changed or saved. The build was not published."
     },
     {
       "name": "Spec traceability verifier",
@@ -29,8 +57,9 @@
     }
   ],
   "limitations": [
-    "The warning is a retained Debug event and was not reproduced by opening the affected settings screen in this pass.",
+    "The five DevTools warning events were retained historical events; the test-first widget regression independently reproduced the warning before the fix.",
+    "The release APK was installed locally for emulator acceptance only; no GitHub release or catalog was published.",
     "No web/API/ACL/session/storage/LiveKit behavior changed."
   ],
-  "status": "DISCOVERED_ADMIN_LIST_TILE_MATERIAL_WARNING_OPEN"
+  "status": "CLOSED_ADMIN_LIST_TILE_MATERIAL_FIX_AND_ANDROID_MACOS_ACCEPTANCE_PASS"
 }

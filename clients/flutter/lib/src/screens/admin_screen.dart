@@ -653,7 +653,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     final voiceChannels = allChannels
         .where((channel) => channel.kind == ChannelKind.voice)
         .toList(growable: false);
-    return ColoredBox(
+    return Material(
       color: GcColors.content,
       child: Column(
         children: [
