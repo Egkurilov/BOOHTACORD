@@ -3,6 +3,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { login, register } from './auth_client'
 import { generateSecurePassword } from './password_generator'
+import PasswordGenerationActions from './password_generation/PasswordGenerationActions.vue'
 
 const props = withDefaults(defineProps<{ focusLoginOnMount?: boolean }>(), { focusLoginOnMount: false })
 const emit = defineEmits<{ authenticated: [] }>()
@@ -17,13 +18,20 @@ const showPassword = ref(false)
 const passwordInput = ref<HTMLInputElement | null>(null)
 const passwordStatus = ref('')
 const confirmGeneration = ref(false)
+let active = true
 
 onMounted(() => { if (props.focusLoginOnMount) loginInput.value?.focus() })
 
 function chooseMode(nextMode: 'login' | 'register'): void {
+  if (pending.value || mode.value === nextMode) return
   mode.value = nextMode
   error.value = null
+  clearPassword()
+}
+
+function clearPassword(): void {
   password.value = ''
+  if (passwordInput.value) passwordInput.value.value = ''
   showPassword.value = false
   confirmGeneration.value = false
   passwordStatus.value = ''
@@ -35,7 +43,8 @@ function requestPasswordGeneration(): void {
 }
 
 function generatePassword(): void {
-  password.value = generateSecurePassword()
+  try { password.value = generateSecurePassword() }
+  catch { error.value = 'Не удалось безопасно сгенерировать пароль. Попробуйте ещё раз или введите его вручную.'; return }
   showPassword.value = true
   confirmGeneration.value = false
   error.value = null
@@ -44,24 +53,26 @@ function generatePassword(): void {
 }
 
 async function submit(): Promise<void> {
+  if (pending.value) return
   pending.value = true
   error.value = null
   const input = { login: loginValue.value, password: password.value }
   try {
     if (mode.value === 'register') await register(input)
+    if (!active) return
     await login(input)
-    password.value = ''
-    showPassword.value = false
-    passwordStatus.value = ''
+    if (!active) return
+    clearPassword()
     emit('authenticated')
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Не удалось выполнить вход.'
+    if (active) error.value = cause instanceof Error ? cause.message.split(input.password).join('[скрыто]') : 'Не удалось выполнить вход.'
   } finally {
-    pending.value = false
+    input.password = ''
+    if (active) pending.value = false
   }
 }
 
-onBeforeUnmount(() => { password.value = '' })
+onBeforeUnmount(() => { active = false; clearPassword() })
 </script>
 
 <template>
@@ -76,17 +87,13 @@ onBeforeUnmount(() => { password.value = '' })
           Логин
           <input v-model="loginValue" ref="loginInput" autocomplete="username" maxlength="32" minlength="3" pattern="[A-Za-z0-9_.-]{3,32}" required :aria-describedby="error ? 'authentication-error' : undefined" :aria-invalid="Boolean(error)">
         </label>
-        <label class="authentication-field">
-          Пароль
-          <span class="authentication-password-control"><input ref="passwordInput" v-model="password" :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" required :type="showPassword ? 'text' : 'password'" :aria-describedby="error ? 'authentication-error' : undefined" :aria-invalid="Boolean(error)"><button class="authentication-password-toggle" type="button" :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'" :aria-pressed="showPassword" @click="showPassword = !showPassword"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Zm10-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" /></svg></button></span>
-          <div v-if="mode === 'register'" class="authentication-password-generation">
-            <button class="authentication-password-generate" type="button" :disabled="pending" @click="requestPasswordGeneration">Сгенерировать пароль</button>
-            <p v-if="confirmGeneration" class="authentication-password-confirm" role="alert">Заменить введённый пароль сгенерированным?</p>
-            <span v-if="confirmGeneration" class="authentication-password-confirm-actions"><button type="button" @click="generatePassword">Заменить</button><button type="button" @click="confirmGeneration = false">Оставить</button></span>
-          </div>
-        </label>
+        <div class="authentication-field">
+          <label for="authentication-password">Пароль</label>
+          <span class="authentication-password-control"><input id="authentication-password" ref="passwordInput" v-model="password" @input="passwordStatus = ''; confirmGeneration = false" :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" required :type="showPassword ? 'text' : 'password'" :aria-describedby="error ? 'authentication-error' : undefined" :aria-invalid="Boolean(error)"><button class="authentication-password-toggle" type="button" :disabled="pending" :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'" :aria-pressed="showPassword" @click="showPassword = !showPassword"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Zm10-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" /></svg></button></span>
+          <PasswordGenerationActions v-if="mode === 'register'" :pending="pending" :confirm="confirmGeneration" @generate="requestPasswordGeneration" @replace="generatePassword" @keep="confirmGeneration = false" />
+        </div>
         <p v-if="mode === 'register'" class="authentication-hint">Логин: 3–32 символа A–Z, 0–9, `_`, `.`, `-`. Пароль — от 12 символов.</p>
-        <p v-if="passwordStatus" class="authentication-password-status" role="status" aria-live="polite">{{ passwordStatus }}</p>
+        <p class="authentication-password-status" role="status" aria-live="polite" aria-atomic="true">{{ passwordStatus }}</p>
         <p v-if="error" id="authentication-error" class="authentication-error" role="alert">{{ error }}</p>
         <button class="authentication-submit" :disabled="pending" type="submit">
           {{ pending ? 'Подождите…' : mode === 'login' ? 'Войти' : 'Создать аккаунт' }}
@@ -96,7 +103,7 @@ onBeforeUnmount(() => { password.value = '' })
         <p class="authentication-recovery-title">Не получается войти?</p>
         <button class="authentication-recovery-toggle" type="button" :aria-expanded="showRecoveryHelp" @click="showRecoveryHelp = !showRecoveryHelp">Как восстановить доступ</button>
         <p v-if="showRecoveryHelp" class="authentication-recovery-details">Попросите администратора гильдии выдать ссылку восстановления.</p>
-        <div class="authentication-registration-footer"><p class="authentication-registration-note">Регистрация открыта.</p><button class="authentication-mode-toggle" type="button" @click="chooseMode(mode === 'login' ? 'register' : 'login')">{{ mode === 'login' ? 'Создать аккаунт' : 'Уже есть аккаунт? Войти' }}</button></div>
+        <div class="authentication-registration-footer"><p class="authentication-registration-note">Регистрация открыта.</p><button class="authentication-mode-toggle" type="button" :disabled="pending" @click="chooseMode(mode === 'login' ? 'register' : 'login')">{{ mode === 'login' ? 'Создать аккаунт' : 'Уже есть аккаунт? Войти' }}</button></div>
       </aside>
     </section>
   </main>

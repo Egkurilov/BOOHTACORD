@@ -7,6 +7,7 @@ import '../app_version.dart';
 import '../app_state.dart';
 import '../theme.dart';
 import '../services/password_generator.dart';
+import '../features/authentication/password_generation/controls.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key, required this.state});
@@ -32,6 +33,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _showPassword = false;
   bool _confirmGeneration = false;
   String? _passwordStatus;
+  bool _validationAttempted = false;
   late final bool _focusLogin;
 
   @override
@@ -44,16 +46,17 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void dispose() {
     _login.dispose();
+    _password.clear();
     _password.dispose();
     _loginFocus.dispose();
     _passwordFocus.dispose();
     _passwordResetButtonFocus.dispose();
     _serverAddressButtonFocus.dispose();
-    _password.clear();
     super.dispose();
   }
 
   void _chooseMode(bool register) {
+    if (_pending) return;
     if (_register != register) {
       _password.clear();
       _showPassword = false;
@@ -73,7 +76,13 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   void _generatePassword() {
-    final value = SecurePasswordGenerator().generate();
+    String value;
+    try {
+      value = SecurePasswordGenerator().generate();
+    } catch (_) {
+      widget.state.reportError('Не удалось безопасно сгенерировать пароль. Попробуйте ещё раз или введите его вручную.');
+      return;
+    }
     setState(() {
       _password.value = TextEditingValue(
         text: value,
@@ -83,10 +92,14 @@ class _AuthScreenState extends State<AuthScreen> {
       _confirmGeneration = false;
       _passwordStatus = 'Надёжный пароль сгенерирован';
     });
+    widget.state.clearError();
+    if (_validationAttempted) _formKey.currentState?.validate();
     _passwordFocus.requestFocus();
   }
 
   Future<void> _submit() async {
+    if (_pending) return;
+    _validationAttempted = true;
     if (!_formKey.currentState!.validate()) return;
     setState(() => _pending = true);
     try {
@@ -95,9 +108,14 @@ class _AuthScreenState extends State<AuthScreen> {
         _password.text,
         register: _register,
       );
-      _password.clear();
-      _showPassword = false;
-      _passwordStatus = null;
+      if (!mounted) return;
+      setState(() {
+        _password.clear();
+        _showPassword = false;
+        _passwordStatus = null;
+        _confirmGeneration = false;
+        _pending = false;
+      });
     } catch (_) {
       if (mounted) setState(() => _pending = false);
     }
@@ -247,11 +265,15 @@ class _AuthScreenState extends State<AuthScreen> {
                             decoration: _authFieldDecoration().copyWith(
                               suffixIcon: IconButton(
                                 tooltip: _showPassword ? 'Скрыть пароль' : 'Показать пароль',
-                                onPressed: () => setState(() => _showPassword = !_showPassword),
+                                onPressed: _pending ? null : () => setState(() => _showPassword = !_showPassword),
                                 icon: Icon(_showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
                               ),
                             ),
                             onFieldSubmitted: (_) => _submit(),
+                            onChanged: (_) => setState(() {
+                              _passwordStatus = null;
+                              _confirmGeneration = false;
+                            }),
                             validator: (value) {
                               final password = value ?? '';
                               if (password.isEmpty) return 'Введите пароль.';
@@ -266,35 +288,14 @@ class _AuthScreenState extends State<AuthScreen> {
                               return null;
                             },
                           ),
-                          if (_register) ...[
-                            const SizedBox(height: 8),
-                            OutlinedButton.icon(
-                              key: const ValueKey('auth-generate-password'),
-                              onPressed: _pending ? null : _requestPasswordGeneration,
-                              icon: const Icon(Icons.auto_awesome, size: 18),
-                              label: const Text('Сгенерировать пароль'),
-                            ),
-                            if (_confirmGeneration) ...[
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Заменить введённый пароль сгенерированным?',
-                                style: TextStyle(color: GcColors.muted, fontSize: 12),
-                              ),
-                              Row(
-                                children: [
-                                  TextButton(onPressed: _generatePassword, child: const Text('Заменить')),
-                                  TextButton(onPressed: () => setState(() => _confirmGeneration = false), child: const Text('Оставить')),
-                                ],
-                              ),
-                            ],
-                          ],
-                          if (_passwordStatus != null)
-                            Semantics(
-                              liveRegion: true,
-                              child: Text(
-                                _passwordStatus!,
-                                style: const TextStyle(color: GcColors.muted, fontSize: 12),
-                              ),
+                          if (_register)
+                            PasswordGenerationControls(
+                              pending: _pending,
+                              confirm: _confirmGeneration,
+                              status: _passwordStatus,
+                              onGenerate: _requestPasswordGeneration,
+                              onReplace: _generatePassword,
+                              onKeep: () => setState(() => _confirmGeneration = false),
                             ),
                           if (_register) ...[
                             const SizedBox(height: 8),

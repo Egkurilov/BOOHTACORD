@@ -51,6 +51,7 @@
 .authentication-password-generate, .authentication-password-confirm-actions button { min-height: var(--gc-size-control-sm); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-3); color: var(--gc-text-primary); background: var(--gc-surface-raised); }
 .authentication-password-confirm, .authentication-password-status { margin: 0; color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
 .authentication-password-confirm-actions { display: flex; gap: var(--gc-space-2); }
+.authentication-password-status:empty { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .authentication-error { color: var(--gc-danger); }
 .authentication-card > .authentication-error { margin-top: var(--gc-space-4); }
 .authentication-card > .authentication-submit { margin-top: var(--gc-space-6); }

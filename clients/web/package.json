@@ -10,6 +10,7 @@
     "test:watch": "vitest",
     "test:screen-profile": "playwright test -c tests/screen_profile/playwright.config.ts",
     "test:member-popover": "playwright test -c tests/member_popover/playwright.config.ts",
+    "test:password-generation": "playwright test -c tests/password_generation/playwright.config.ts",
     "test:audio": "playwright test -c tests/audio/playwright.config.ts",
     "test:audio:quality": "node ../../tools/audio/quality_harness.mjs",
     "test:audio:browser": "playwright test -c tests/audio/playwright.config.ts"
