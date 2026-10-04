@@ -1,0 +1,16 @@
+{
+  "id": "design-v2-audio-control-fidelity-2026-10-04-001",
+  "scope": "Real R10/R11 audio control presentation and R18 regression verification",
+  "status": "PARTIAL",
+  "baseline_commit": "ed8c0526f23f10729fae5cd04b0d84470a6d2fd6",
+  "visual_report": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-audio-controls-2026-10-04/REVIEW.md",
+  "r18_report": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-r18-focus-2026-10-04/fix-run/current-recheck/REVIEW.md",
+  "checks": [
+    { "name": "Computed styles against handoff", "result": "PASS", "observation": "Before check failed for inherited select weight/background, button padding and SVG size. After check passes on desktop and mobile." },
+    { "name": "Controlled frozen-reference diff", "result": "PASS", "observation": "Full-frame R10 MAE 3.528 to 3.183, R11 5.313 to 4.501. Device panel MAE 4.543 to 2.739 and 6.915 to 5.055. Reference hashes unchanged." },
+    { "name": "Audio browser interactions", "result": "PASS", "observation": "Enumerated microphone, activation switch, processing options and close-to-workspace pass on both viewports. No page errors." },
+    { "name": "R18 browser regression", "result": "PASS", "observation": "Six focus, keyboard, ACL presentation, DM-ID and preserved voice-store checks pass on desktop/mobile. Card MAE remains 0.876. No page errors." },
+    { "name": "Native Web tests and build", "result": "PASS", "observation": "Focused audio 3 files/14 tests and full Web 297 files/940 tests pass. TypeScript/Vite build and git diff --check pass." },
+    { "name": "Strict full-design and physical media acceptance", "result": "NOT_RUN", "observation": "Remaining pixel differences and measured versus decorative media state prevent a full 1:1 claim. Fixture verification does not prove physical audio or a live LiveKit session." }
+  ]
+}
