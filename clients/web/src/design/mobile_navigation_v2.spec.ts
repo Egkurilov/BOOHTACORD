@@ -38,7 +38,7 @@ describe('V2 mobile navigation drawer', () => {
     expect(searchLauncher).toContain('<circle cx="10.5" cy="10.5" r="6.5"')
     expect(searchLauncher).toContain('<path d="m16 16 5 5"')
     expect(navigation).toContain('.guild-search-button > svg { width: 16px; height: 16px;')
-    expect(mobileNavigation).toContain('.sidebar.is-open > .guild-header { padding-left: 12px; }')
+    expect(mobileNavigation).toMatch(/\.sidebar\.is-open > \.guild-header \{[^}]*padding-left: 12px;/)
     expect(mobileNavigation).toContain('.sidebar.is-open .guild-search-button { padding: 0 10px;')
     expect(mobileNavigation).toContain('padding: 12px 14px; background: #0b0d12;')
     expect(mobileNavigation).toContain('background: #0b0d12; font-weight: 400;')

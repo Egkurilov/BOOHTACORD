@@ -1,0 +1,14 @@
+{
+  "id": "design-v2-navigation-controls-2026-10-04-001",
+  "task": "T-050",
+  "status": "PASS",
+  "scope": "Guild header, search launcher, channels/DM section tabs",
+  "base_commit": "b9116e845208a912d7821e27052336a1017f324a",
+  "before": "Real/source bounds and styles differ; retained before captures and check.json",
+  "after": "Nine desktop and eight visible mobile elements match source painted bounds within 0.02px and selected type/color properties",
+  "mobile": "44px search/tab hit rectangles verified by clicks outside the 36/32px painted surfaces",
+  "checks": ["4 native test files / 11 tests PASS", "TypeScript/Vite build PASS", "Actual tabs, search focus/Escape and admin panel opening PASS", "CONNECTED voice-1 retained after navigation", "git diff --check PASS"],
+  "navigation_region_mae": {"R01_before": 11.797983, "R01_after": 2.095377, "R14_before": 3.332488, "R14_after": 1.767593},
+  "artifacts": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-navigation-controls-2026-10-04",
+  "limitations": "Immutable references retained. Full 1:1 remains open; fixtures do not prove server ACL or physical media."
+}

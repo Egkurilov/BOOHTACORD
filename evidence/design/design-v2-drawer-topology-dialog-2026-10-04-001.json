@@ -1,0 +1,14 @@
+{
+  "id": "design-v2-drawer-topology-dialog-2026-10-04-001",
+  "task": "T-050",
+  "status": "PASS",
+  "scope": "Create topology dialog opened from the mobile drawer",
+  "baseline": "Ordinary Cancel click timed out because user-footer z-index 62 intercepted modal z-index 60; outer drawer also received modal keyboard events",
+  "fix": "Drawer chrome uses drawer token 50 plus 1/2; modal keeps token 60. Modal keydown handlers stop propagation and preserve existing Tab/Escape behavior.",
+  "browser_command": "node artifacts/design-v2/drawer-topology/probe.mjs <output-directory>",
+  "browser_result": "15 grouped checks PASS at 1440x900, 390x844 and 320x640; no page errors and zero mutation requests",
+  "behaviors": ["Tab and Shift+Tab wrap inside modal", "Escape closes only modal", "Trigger focus restored", "Real Cancel click unobstructed for global/category create", "Drawer remains open until explicitly closed"],
+  "native_checks": ["2 test files / 9 tests PASS", "TypeScript/Vite build PASS", "git diff --check PASS"],
+  "artifacts": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-channel-tree-2026-10-04/dialog-regression",
+  "limitations": "Synthetic same-origin API data drives actual Vue components; no production mutation, server ACL or physical media acceptance claimed."
+}

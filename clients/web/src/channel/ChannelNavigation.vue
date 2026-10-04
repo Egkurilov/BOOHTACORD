@@ -66,10 +66,10 @@ async function renameFromMenu(): Promise<void> {
 
 <template>
   <nav class="channel-navigation" aria-label="Категории и каналы">
-    <div v-if="canCreate()" class="channel-navigation-actions"><span>Каналы</span><button type="button" aria-label="Создать категорию или канал" @click="emit('createGlobal')">+</button></div>
+    <div v-if="canCreate()" class="channel-navigation-actions"><span>Каналы</span><button type="button" aria-label="Создать категорию или канал" @click="emit('createGlobal')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></button></div>
     <section v-for="category in props.topology.categories" :key="category.id" class="channel-category" @contextmenu.stop.prevent="openCategoryMenu($event, category)">
       <h2><button class="channel-category-disclosure" type="button" :aria-label="`${disclosure.isOpen(category.id) ? 'Свернуть' : 'Развернуть'} раздел ${category.name}`" :aria-expanded="disclosure.isOpen(category.id)" @click="disclosure.toggle(category.id)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="m8 10 4 4 4-4" /></svg><span>{{ category.name }}</span></button><span v-if="props.permissions" class="channel-category-actions">
-        <button v-if="categoryActions(props.permissions, category.channels.length === 0).createText || categoryActions(props.permissions, category.channels.length === 0).createVoice" type="button" :aria-label="`Создать канал в категории ${category.name}`" @click="emit('createInCategory', category)">+</button>
+        <button v-if="categoryActions(props.permissions, category.channels.length === 0).createText || categoryActions(props.permissions, category.channels.length === 0).createVoice" type="button" :aria-label="`Создать канал в категории ${category.name}`" @click="emit('createInCategory', category)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></button>
         <button v-if="categoryActions(props.permissions, category.channels.length === 0).delete" type="button" :aria-label="`Действия с категорией ${category.name}`" @click="emit('deleteCategory', category)">⋯</button>
       </span></h2>
       <p v-if="disclosure.isOpen(category.id) && category.channels.length === 0" class="empty-category">Нет каналов</p>
@@ -82,7 +82,7 @@ async function renameFromMenu(): Promise<void> {
           @click="emit('select', channel)"
         >
           <span class="channel-icon" aria-hidden="true">
-            <template v-if="channel.kind === 'TEXT'">#</template>
+            <svg v-if="channel.kind === 'TEXT'" viewBox="0 0 24 24"><path d="M5 9h14M4 15h14M11 3 7 21M17 3l-4 18" /></svg>
             <svg v-else viewBox="0 0 24 24"><path d="m11 5-6 4H2v6h3l6 4V5ZM15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14" /></svg>
           </span>
           <span class="channel-name">{{ channel.name }}</span>
