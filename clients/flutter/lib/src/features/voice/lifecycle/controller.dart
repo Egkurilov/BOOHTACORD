@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:livekit_client/livekit_client.dart';
 
 import 'state.dart';
+import '../shortcuts/execute.dart';
 import '../connection_close/leave.dart';
 import '../volumes/reset.dart';
 import '../connection_stats/poll.dart';
 import '../screen_preview/capture.dart';
 import '../stream_notice/events.dart';
 export 'types.dart';
+export '../shortcuts/execute.dart';
+export '../preferences/shortcuts.dart';
 export '../disconnect_notice/control.dart';
 export '../stream_notice/preferences.dart';
 export '../stream_notice/events.dart';
@@ -50,6 +53,7 @@ class VoiceController extends VoiceState {
   @override
   void dispose() {
     unawaited(flushVoiceVolumes());
+    cancelVoiceShortcuts(release: true);
     disconnect.reset();
     disposed = true;
     operationRevision++;

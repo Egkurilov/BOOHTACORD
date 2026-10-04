@@ -13,4 +13,10 @@ describe('microphone controls', () => {
 
     expect(session.setMicrophoneMuted).not.toHaveBeenCalled()
   })
+  it('manual capture promotes listener state after the existing session publishes', async () => {
+    const state=ref('LISTENER'),session={setMicrophoneMuted:vi.fn(async () => 'PUBLISHED' as const)}
+    const controls=createMicrophoneControls(session,ref({}),state,ref(false),ref(true),ref(false),ref(null))
+    await controls.setMicrophoneMuted(false); expect(state.value).toBe('CONNECTED')
+  })
+
 })

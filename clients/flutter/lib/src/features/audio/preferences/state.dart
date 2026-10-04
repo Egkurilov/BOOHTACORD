@@ -1,9 +1,13 @@
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../voice/microphone/shortcut.dart';
 import 'processing.dart';
 import 'microphone.dart';
 part 'storage.dart';
+part 'shortcuts.dart';
+
 class AudioPreferences {
   AudioPreferences(this._storage, this._accountId);
 
@@ -65,17 +69,11 @@ class AudioPreferences {
     return _save();
   }
 
-  Future<void> setMicrophoneShortcut(VoiceShortcutBinding? value) {
-    if (_storage == null) return _unavailable();
-    microphoneShortcut = value;
-    return _save();
-  }
-
-  Future<void> setDeafenShortcut(VoiceShortcutBinding? value) {
-    if (_storage == null) return _unavailable();
-    deafenShortcut = value;
-    return _save();
-  }
+  Future<void> setMicrophoneShortcut(VoiceShortcutBinding? value) =>
+      _replaceShortcuts(value, deafenShortcut);
+  Future<void> setDeafenShortcut(VoiceShortcutBinding? value) =>
+      _replaceShortcuts(microphoneShortcut, value);
+  Future<void> resetVoiceShortcuts() => _replaceShortcuts(null, null);
 
   Future<void> setMicrophoneSettings(MicrophoneSettings value) {
     if (_storage == null) return _unavailable();

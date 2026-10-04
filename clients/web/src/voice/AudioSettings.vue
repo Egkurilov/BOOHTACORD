@@ -45,7 +45,7 @@ const emit = defineEmits<{
   setActivation: [mode: VoiceActivationMode]
   setProcessing: [processing: AudioProcessingOptions]
   setPttKey: [key: string]
-  setShortcut: [action: VoiceShortcutAction, binding: VoiceShortcutBinding | null]
+  resetShortcuts: []; setShortcut: [action: VoiceShortcutAction, binding: VoiceShortcutBinding | null]
 }>()
 const recordingPttKey = ref(false)
 const entry = ref<HTMLElement | null>(null)
@@ -103,7 +103,7 @@ function toggleNoise(): void { emit('setProcessing', { ...props.processing, nois
         <button v-if="activationMode === 'PTT'" class="audio-ptt-button" type="button" @click="recordingPttKey = true" @keydown="capturePttKey">{{ recordingPttKey ? 'Нажмите клавишу…' : pttKey ? `PTT: ${pttKey}` : 'Назначить PTT-клавишу' }}</button>
         <p v-if="activationError" class="state state-error" role="alert">{{ activationError }}</p>
       </section>
-      <ShortcutSettings :microphone-shortcut="microphoneShortcut" :deafen-shortcut="deafenShortcut" @set-shortcut="(action, binding) => emit('setShortcut', action, binding)" />
+      <ShortcutSettings :microphone-shortcut="microphoneShortcut" :deafen-shortcut="deafenShortcut" @reset-shortcuts="emit('resetShortcuts')" @set-shortcut="(action, binding) => emit('setShortcut', action, binding)" />
       <section class="audio-processing-section" aria-labelledby="audio-processing-title"><h2 id="audio-processing-title">Обработка звука</h2>
         <GainControl :agc="processing.autoGainControl" />
         <div class="audio-processing-row"><div>Шумоподавление<small>Уменьшает фоновый шум</small></div><button type="button" role="switch" aria-label="Шумоподавление" :aria-checked="processing.noiseSuppressionMode !== 'off'" @click="toggleNoise" /></div>
