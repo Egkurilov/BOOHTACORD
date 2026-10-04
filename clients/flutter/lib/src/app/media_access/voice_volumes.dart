@@ -4,6 +4,9 @@ import '../../features/voice/lifecycle/controller.dart';
 import '../composition/owners.dart';
 
 mixin AppVoiceVolumesAccess on AppOwners {
+  String? get voiceVolumeWarning => voice.voiceVolumeWarning;
+  Future<void> resetAudioVolumes() => voice.resetAudioVolumes();
+  Future<void> flushVoiceVolumes() => voice.flushVoiceVolumes();
   RemoteParticipant? voiceParticipantForAccount(String id) =>
       voice.voiceParticipantForAccount(id);
 

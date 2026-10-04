@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AudioVolumeReset from './participant_volume/Reset.vue'
 import type { AudioDevice, AudioDeviceKind } from './audio_devices'
 import type { AudioSettingsState } from './audio_settings_store'
 import type { VoiceActivationMode } from './activation_store'
@@ -30,6 +31,7 @@ const props = defineProps<{
   state: AudioSettingsState
   connected: boolean
   actualAudioDiagnostics?: AudioSnapshot | null
+  resetAudioVolumes?: () => Promise<void>; volumeWarning?: string | null
   audioProfileLocked?: boolean
   microphoneTrack?: MediaStreamTrack
   inputDeviceId?: string
@@ -109,6 +111,7 @@ function toggleNoise(): void { emit('setProcessing', { ...props.processing, nois
         <label class="audio-processing-row"><span>Автоматическая громкость<small>Выравнивает уровень микрофона</small></span><input type="checkbox" role="switch" :checked="processing.autoGainControl" @change="setProcessing('autoGainControl', $event)"></label>
       </section>
         <details class="audio-processing-details"><summary>Режим и диагностика обработки</summary><StreamStartSoundSetting /><label>Режим шумоподавления<select :value="processing.noiseSuppressionMode" @change="emit('setProcessing', { ...processing, noiseSuppressionMode: ($event.target as HTMLSelectElement).value as NoiseSuppressionMode })"><option value="off">Выключено</option><option value="browser">Стандартное — браузер</option><option v-if="rnnoiseReleaseEnabled()" value="rnnoise">RNNoise — экспериментальное</option><option v-if="!rnnoiseReleaseEnabled() && processing.noiseSuppressionMode === 'rnnoise'" value="rnnoise" disabled>RNNoise — недоступен в этой сборке</option></select></label><p>Уровень усиления: {{ audioProcessingStatus(processingDiagnostics.autoGainControl) }}. Эхо: {{ audioProcessingStatus(processingDiagnostics.echoCancellation) }}.</p><p>Уменьшает фоновый шум · {{ noiseSuppressionModeLabel(processingDiagnostics.noiseSuppressionRuntime.effectiveMode) }}</p><p v-if="processingDiagnostics.noiseSuppressionRuntime.fallbackReason" role="status">Причина: {{ noiseSuppressionFallbackLabel(processingDiagnostics.noiseSuppressionRuntime.fallbackReason) }}.</p><p v-if="processingDiagnostics.noiseSuppressionRuntime.status === 'initializing'" role="status">Подготавливаем фильтр…</p><p v-if="processingDiagnostics.noiseSuppressionRuntime.status === 'error'" class="state-error" role="alert">Ошибка обработки микрофона. Отправка звука выключена.</p><p>Browser NS — {{ audioProcessingStatus(processingDiagnostics.noiseSuppression) }}. Источник capture: {{ processingDiagnostics.captureSource === 'original-microphone' ? 'исходный микрофон' : 'недоступен' }}. Статус: {{ processingDiagnostics.noiseSuppressionRuntime.status }}.</p><p v-if="processingDiagnostics.noiseSuppressionRuntime.modelId">Модель: {{ processingDiagnostics.noiseSuppressionRuntime.modelId }}.</p><p>Частота исходного capture: {{ processingDiagnostics.noiseSuppressionRuntime.captureSampleRate === undefined ? 'недоступна' : `${processingDiagnostics.noiseSuppressionRuntime.captureSampleRate} Гц` }}.</p><p v-if="processingDiagnostics.noiseSuppressionRuntime.initDurationMs !== undefined">Подготовка фильтра: {{ processingDiagnostics.noiseSuppressionRuntime.initDurationMs.toFixed(1) }} мс.</p><p v-if="processingDiagnostics.noiseSuppressionRuntime.contextSampleRate">AudioContext: {{ processingDiagnostics.noiseSuppressionRuntime.contextSampleRate }} Гц.</p><p v-if="processingDiagnostics.noiseSuppressionRuntime.processedFrames !== undefined">Кадры: {{ processingDiagnostics.noiseSuppressionRuntime.processedFrames }}; ошибки: {{ processingDiagnostics.noiseSuppressionRuntime.processorErrors ?? 0 }}.</p></details>
+      <AudioVolumeReset v-if="resetAudioVolumes" :reset="resetAudioVolumes" :warning="volumeWarning" />
       <VoiceAudioDiagnostics :connected="connected || audioProfileLocked === true" :diagnostics="actualAudioDiagnostics" />
     </div>
   </section>

@@ -30,6 +30,9 @@ import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
 import '../widgets/noise_suppression_settings.dart';
 import '../widgets/voice_audio_diagnostics/control.dart';
+import '../widgets/participant_volume/menu.dart';
+import '../widgets/participant_volume/slider.dart';
+import '../widgets/participant_volume/reset.dart';
 import '../widgets/microphone_controls/control.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
@@ -6533,77 +6536,18 @@ class _VoiceParticipantCard extends StatelessWidget {
             Positioned(
               top: 0,
               right: 0,
-              child: _VoiceVolumeMenu(
+              child: ParticipantVolumeMenu(
+                warning: state.voiceVolumeWarning,
                 name: name,
                 volume: volume!,
                 onChanged: onVolumeChanged!,
+                onChangeEnd: () => unawaited(state.flushVoiceVolumes()),
               ),
             ),
         ],
       ),
     );
   }
-}
-
-class _VoiceVolumeMenu extends StatefulWidget {
-  const _VoiceVolumeMenu({
-    required this.name,
-    required this.volume,
-    required this.onChanged,
-  });
-
-  final String name;
-  final int volume;
-  final ValueChanged<int> onChanged;
-
-  @override
-  State<_VoiceVolumeMenu> createState() => _VoiceVolumeMenuState();
-}
-
-class _VoiceVolumeMenuState extends State<_VoiceVolumeMenu> {
-  late int _volume = widget.volume;
-
-  @override
-  void didUpdateWidget(covariant _VoiceVolumeMenu oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.volume != widget.volume) _volume = widget.volume;
-  }
-
-  @override
-  Widget build(BuildContext context) => MenuAnchor(
-    menuChildren: [
-      SizedBox(
-        width: 240,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Громкость · $_volume%'),
-              Slider(
-                value: _volume.toDouble(),
-                min: 0,
-                max: 200,
-                divisions: 200,
-                semanticFormatterCallback: (value) =>
-                    '${value.round()} процентов',
-                onChanged: (value) {
-                  setState(() => _volume = value.round());
-                  widget.onChanged(_volume);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    ],
-    builder: (context, controller, child) => IconButton(
-      tooltip: 'Настройки громкости ${widget.name}',
-      onPressed: controller.isOpen ? controller.close : controller.open,
-      icon: const Icon(Icons.more_horiz, size: 20),
-    ),
-  );
 }
 
 class _StatusDot extends StatelessWidget {
@@ -6883,6 +6827,7 @@ class _AudioSettingsScreen extends StatelessWidget {
                       runtime: state.noiseSuppressionRuntime,
                       onChanged: state.setAudioProcessing,
                     ),
+                    AudioVolumeReset(reset: state.resetAudioVolumes, warning: state.voiceVolumeWarning),
                     VoiceAudioDiagnosticsControl(
                       connected: state.voicePhase != VoicePhase.idle &&
                           state.voicePhase != VoicePhase.error,
@@ -8175,24 +8120,16 @@ class _MemberProfilePopoverState extends State<_MemberProfilePopover> {
                         alpha: 0.55,
                       ),
                     ),
-                    child: Slider(
-                      value:
-                          (widget.state.participantVolume(participant) ?? 100)
-                              .toDouble(),
-                      min: 0,
-                      max: 200,
-                      divisions: 200,
-                      semanticFormatterCallback: (value) =>
-                          '${value.round()} процентов',
-                      onChanged: (value) => unawaited(
-                        widget.state.setParticipantVolume(
-                          participant,
-                          value.round(),
-                        ),
-                      ),
+                    child: ParticipantVolumeSlider(
+                      name: member.displayName,
+                      volume: widget.state.participantVolume(participant) ?? 100,
+                      onChanged: (value) => unawaited(widget.state.setParticipantVolume(participant, value)),
+                      onChangeEnd: () => unawaited(widget.state.flushVoiceVolumes()),
                     ),
                   ),
                 ],
+                if (widget.state.voiceVolumeWarning != null)
+                  Semantics(liveRegion: true, child: Text(widget.state.voiceVolumeWarning!)),
                 if (_error != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),

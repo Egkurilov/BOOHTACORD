@@ -7,8 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   test('keeps participant levels per signed-in and remote account', () async {
     SharedPreferences.setMockInitialValues({});
-    final owner = await VoiceVolumePreferences.open('owner');
-    final other = await VoiceVolumePreferences.open('other');
+    final owner = await VoiceVolumePreferences.open('owner', origin: 'https://guild.example');
+    final other = await VoiceVolumePreferences.open('other', origin: 'https://guild.example');
 
     await owner.setParticipant('remote-a', 175);
     await owner.setParticipant('remote-b', 25);
@@ -17,19 +17,18 @@ void main() {
     expect(owner.participant('remote-b'), 25);
     expect(other.participant('remote-a'), 100);
     expect(
-      (await VoiceVolumePreferences.open('owner')).participant('remote-a'),
+      (await VoiceVolumePreferences.open('owner', origin: 'https://guild.example')).participant('remote-a'),
       175,
     );
   });
 
   test('clamps levels and preserves a saved screen level', () async {
     SharedPreferences.setMockInitialValues({
-      'voice-volume:v1:owner:remote-a': jsonEncode({
-        'participant': 250,
-        'screen': 160,
+      'voice-volume:v2:https%3A%2F%2Fguild.example:owner': jsonEncode({
+        'version': 2, 'volumes': {'remote-a': {'participant': 250, 'screen': 160}},
       }),
     });
-    final preferences = await VoiceVolumePreferences.open('owner');
+    final preferences = await VoiceVolumePreferences.open('owner', origin: 'https://guild.example');
     expect(preferences.participant('remote-a'), 200);
 
     await preferences.setParticipant('remote-a', -20);
@@ -38,15 +37,14 @@ void main() {
     expect(preferences.participant('remote-a'), 0);
     expect(preferences.screen('remote-a'), 190);
     final storage = await SharedPreferences.getInstance();
-    expect(jsonDecode(storage.getString('voice-volume:v1:owner:remote-a')!), {
-      'participant': 0,
-      'screen': 190,
+    expect(jsonDecode(storage.getString(preferences.key)!), {
+      'version': 2, 'volumes': {'remote-a': {'participant': 0, 'screen': 190}},
     });
   });
 
   test('fast changes persist the final level', () async {
     SharedPreferences.setMockInitialValues({});
-    final preferences = await VoiceVolumePreferences.open('owner');
+    final preferences = await VoiceVolumePreferences.open('owner', origin: 'https://guild.example');
 
     await Future.wait([
       for (final level in [40, 70, 125, 190])
@@ -54,7 +52,7 @@ void main() {
     ]);
 
     expect(
-      (await VoiceVolumePreferences.open('owner')).participant('remote-a'),
+      (await VoiceVolumePreferences.open('owner', origin: 'https://guild.example')).participant('remote-a'),
       190,
     );
   });

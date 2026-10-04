@@ -4,6 +4,7 @@ import 'package:livekit_client/livekit_client.dart';
 
 import 'state.dart';
 import '../connection_close/leave.dart';
+import '../volumes/reset.dart';
 import '../connection_stats/poll.dart';
 import '../screen_preview/capture.dart';
 import '../stream_notice/events.dart';
@@ -27,6 +28,7 @@ export '../volumes/read.dart';
 export '../volumes/mute.dart';
 export '../volumes/change.dart';
 export '../volumes/apply.dart';
+export '../volumes/reset.dart';
 export '../connection_close/disconnect.dart';
 export '../connection_close/leave.dart';
 
@@ -46,6 +48,7 @@ class VoiceController extends VoiceState {
   static const voiceStreamSoundPreferenceKey = 'voice-screen-start-sound:v1';
   @override
   void dispose() {
+    unawaited(flushVoiceVolumes());
     disposed = true;
     operationRevision++;
     stopVoiceConnectionStatsPolling();

@@ -26,6 +26,7 @@ describe('voice volume account lookup', () => {
     await staleStart
     controls.setParticipantVolume('track-a', 175)
 
+    controls.flush()
     const current = new VoiceVolumePreferences(local)
     current.bind('current-owner')
     const previous = new VoiceVolumePreferences(local)
@@ -50,6 +51,7 @@ describe('voice volume account lookup', () => {
     await staleStart
     controls.setParticipantVolume('track-a', 200)
 
+    controls.flush()
     const current = new VoiceVolumePreferences(local)
     current.bind('current-owner')
     expect(current.participant('remote-a')).toBe(200)

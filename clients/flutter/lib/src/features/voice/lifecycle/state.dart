@@ -15,6 +15,7 @@ import '../../screen/lifecycle/controller.dart';
 import '../microphone/shortcut.dart';
 import 'types.dart';
 import '../audio_diagnostics/model.dart';
+import '../volumes/telemetry.dart';
 
 abstract class VoiceState extends ChangeNotifier {
   VoiceState(
@@ -76,6 +77,8 @@ abstract class VoiceState extends ChangeNotifier {
   VoiceAudioDiagnostics? voiceAudioDiagnostics;
   EventsListener<RoomEvent>? voiceEvents;
   VoiceVolumePreferences? voiceVolumePreferences;
+  String? voiceVolumeWarning;
+  final volumeTelemetry = VolumeTelemetry();
   final Set<String> mutedScreenShareAudioIdentities = <String>{};
   final Map<String, int> transientScreenShareVolumes = <String, int>{};
   AudioPreferences? get audioPreferences => audio.preferences;
