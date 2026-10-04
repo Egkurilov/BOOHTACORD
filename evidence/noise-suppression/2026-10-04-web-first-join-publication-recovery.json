@@ -1,0 +1,109 @@
+{
+  "id": "web-first-join-publication-recovery-2026-10-04",
+  "date": "2026-10-04",
+  "task": "T-072",
+  "depends_on": [
+    "T-071"
+  ],
+  "requirements": [
+    "REQ-AUDIO-01",
+    "REQ-VOICE-01",
+    "REQ-VOICE-03"
+  ],
+  "status": "PASS",
+  "scope": "Local regression for initial microphone publication interrupted by a LiveKit signaling restart; not production or hardware acceptance",
+  "baseline_revision": "03a7cbf2c49cf7746a2db7ef69d70a1e46344ec3",
+  "source_scope": "Uncommitted Web microphone adapter and integration-test changes atop baseline; unrelated existing Flutter/backlog changes excluded",
+  "reported_scenario": "First join with microphone shows Cancelled publication by calling unpublish",
+  "reproduction": {
+    "fault": "Hold the first SDK sendAddTrack request, then use Room.simulateScenario('resume-reconnect') to force full signaling restart and real RTCEngine cleanup cancellation",
+    "original_implementation": "FAIL: actual browser join rejected with the exact reported cancellation",
+    "fixed_implementation": "PASS: one bounded retry through SDK publishTrack, same muted capture, one final audio publication",
+    "production_trigger": "NOT_RUN: the reason the user's production signaling restarted is not established"
+  },
+  "environment": {
+    "host": "macOS ARM64",
+    "browser": "Google Chrome 154.0.8037.97",
+    "livekit_client": "2.22.3",
+    "livekit_server": "1.13.7",
+    "livekit_server_image": "livekit/livekit-server:v1.13.7@sha256:6fd3b7088874c4d119160dd688798dfec852bc014786d392caad15f6f63912a3",
+    "network": "Disposable loopback-only SFU and Vite fixture; isolated browser contexts",
+    "audio_source": "Chromium fake microphone device; no physical capture, recordings or audio artifacts"
+  },
+  "checks": [
+    {
+      "name": "Full Web Vitest suite",
+      "status": "PASS",
+      "files": 297,
+      "tests": 948,
+      "command": "cd clients/web && npm test"
+    },
+    {
+      "name": "Production TypeScript and Vite build",
+      "status": "PASS",
+      "command": "cd clients/web && npm run build"
+    },
+    {
+      "name": "Browser fixture strict TypeScript check",
+      "status": "PASS",
+      "command": "cd clients/web && npx tsc --noEmit --target ES2023 --module ESNext --moduleResolution Bundler --strict --skipLibCheck --lib ES2023,DOM,DOM.Iterable src/env.d.ts tests/audio/microphone_join_fixture.ts tests/audio/microphone_join.browser.spec.ts"
+    },
+    {
+      "name": "Two-client browser integration",
+      "status": "PASS",
+      "tests": 6,
+      "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:audio:browser -- microphone_join.browser.spec.ts",
+      "matrix": [
+        "First join: browser processing",
+        "Signaling restart during first publication: browser processing",
+        "First join: processing off",
+        "Signaling restart during first publication: processing off",
+        "First join: requested RNNoise with forced asset-load fallback",
+        "Signaling restart during first publication: requested RNNoise with forced asset-load fallback"
+      ],
+      "assertions": [
+        "Capture disabled on every publication attempt",
+        "Exactly one final microphone publication",
+        "Finite non-silent receiver PCM",
+        "Receiver silence after mute",
+        "Source track ended after disconnect"
+      ]
+    },
+    {
+      "name": "Lifecycle regression boundaries",
+      "status": "PASS",
+      "assertions": [
+        "At most one retry",
+        "No retry outside reconnection",
+        "No retry for permission/access errors",
+        "Mute during retry preserved",
+        "Disposal before cancellation prevents retry",
+        "Disposal during retry prevents unmute and cleans up eventual publication"
+      ]
+    },
+    {
+      "name": "Whitespace diff validation",
+      "status": "PASS",
+      "command": "git diff --check"
+    }
+  ],
+  "limitations": {
+    "physical_microphone_and_user_device": "NOT_RUN",
+    "active_rnnoise_dsp_browser_acceptance": "NOT_RUN: generated RNNoise assets are absent on this checkout; new integration cases explicitly force asset failure and validate fallback",
+    "production_deployment": "NOT_RUN",
+    "acoustic_quality_or_capacity": "NOT_RUN",
+    "traceability_and_contract_verifiers": "NOT_RUN: this task changes neither requirements/backlog nor external contracts; PowerShell is unavailable on this host"
+  },
+  "upstream_reference": "https://github.com/livekit/client-sdk-js/blob/v2.22.3/src/room/RTCEngine.ts",
+  "push_validation": {
+    "base_revision": "51557d53c21119b555d1c2ece0075d50bd018150",
+    "scope": "Isolated checkout of updated remote master; original local work preserved",
+    "web_unit_tests": {
+      "status": "PASS",
+      "files": 298,
+      "tests": 953
+    },
+    "web_production_build": "PASS",
+    "browser_integration": "Previously verified six scenarios on the original baseline; not repeated for unrelated remote navigation changes"
+  }
+}

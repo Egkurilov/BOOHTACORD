@@ -23,12 +23,102 @@ function fixture() {
     createTrack: vi.fn(async () => track as unknown as LocalAudioTrack),
     publishTrack: vi.fn(async () => { events.push(`publish:${source.enabled}`) }),
     unpublishTrack: vi.fn(async () => undefined),
+    isReconnecting: vi.fn(() => false),
     createProcessor: vi.fn((_callbacks: unknown) => processor as never),
   }
   const adapter = new LiveKitMicrophoneAdapter(dependencies)
   return { adapter, dependencies, track, processor, source, events }
 }
 describe('single microphone lifecycle owner', () => {
+  it('retries a cancelled initial publication once during LiveKit reconnection with the same muted track', async () => {
+    const f = fixture()
+    f.dependencies.isReconnecting.mockReturnValue(true)
+    f.dependencies.publishTrack.mockRejectedValueOnce(new Error('Cancelled publication by calling unpublish'))
+
+    await f.adapter.setEnabled(true, browser)
+
+    expect(f.dependencies.publishTrack).toHaveBeenCalledTimes(2)
+    expect(f.dependencies.publishTrack.mock.calls[0]).toEqual(f.dependencies.publishTrack.mock.calls[1])
+    expect(f.events.indexOf('publish:false')).toBeLessThan(f.events.indexOf('unmute'))
+    expect(f.dependencies.createTrack).toHaveBeenCalledOnce()
+    expect(f.track.stop).not.toHaveBeenCalled()
+  })
+  it.each([
+    [false, new Error('Cancelled publication by calling unpublish')],
+    [true, new Error('failed to publish track, insufficient permissions')],
+    [true, Object.assign(new Error('denied'), { name: 'NotAllowedError' })],
+  ])('does not retry a terminal publication failure (reconnecting: %s)', async (reconnecting, cause) => {
+    const f = fixture()
+    f.dependencies.isReconnecting.mockReturnValue(reconnecting)
+    f.dependencies.publishTrack.mockRejectedValue(cause)
+
+    await expect(f.adapter.setEnabled(true, browser)).rejects.toBe(cause)
+
+    expect(f.dependencies.publishTrack).toHaveBeenCalledOnce()
+    expect(f.track.stop).toHaveBeenCalledOnce()
+    expect(f.track.unmute).not.toHaveBeenCalled()
+  })
+  it('bounds publication recovery to one retry and cleans up on repeated cancellation', async () => {
+    const f = fixture()
+    f.dependencies.isReconnecting.mockReturnValue(true)
+    const cause = new Error('Cancelled publication by calling unpublish')
+    f.dependencies.publishTrack.mockRejectedValue(cause)
+
+    await expect(f.adapter.setEnabled(true, browser)).rejects.toBe(cause)
+
+    expect(f.dependencies.publishTrack).toHaveBeenCalledTimes(2)
+    expect(f.track.stop).toHaveBeenCalledOnce()
+    expect(f.track.unmute).not.toHaveBeenCalled()
+  })
+  it('honors mute while the publication retry waits for reconnection', async () => {
+    const f = fixture()
+    f.dependencies.isReconnecting.mockReturnValue(true)
+    let finish!: () => void
+    f.dependencies.publishTrack.mockRejectedValueOnce(new Error('Cancelled publication by calling unpublish'))
+      .mockImplementationOnce(() => new Promise<void>((resolve) => { finish = resolve }))
+    const enabling = f.adapter.setEnabled(true, browser)
+    await vi.waitFor(() => expect(finish).toBeTypeOf('function'))
+    const muting = f.adapter.setEnabled(false, browser)
+    finish()
+    await Promise.all([enabling, muting])
+
+    expect(f.track.unmute).not.toHaveBeenCalled()
+    expect(f.source.enabled).toBe(false)
+  })
+  it('does not retry a cancelled publication after disposal invalidates the join', async () => {
+    const f = fixture()
+    f.dependencies.isReconnecting.mockReturnValue(true)
+    let fail!: (cause: Error) => void
+    f.dependencies.publishTrack.mockImplementationOnce(() => new Promise<void>((_, reject) => { fail = reject }))
+    const enabling = f.adapter.setEnabled(true, browser)
+    await vi.waitFor(() => expect(fail).toBeTypeOf('function'))
+    const disposing = f.adapter.dispose()
+    fail(new Error('Cancelled publication by calling unpublish'))
+    await expect(enabling).rejects.toThrow('Голосовое подключение закрыто.')
+    await disposing
+
+    expect(f.dependencies.publishTrack).toHaveBeenCalledOnce()
+    expect(f.source.enabled).toBe(false)
+    expect(f.track.stop).toHaveBeenCalledOnce()
+  })
+  it('cleans up a retry that completes after disposal without reviving the microphone', async () => {
+    const f = fixture()
+    f.dependencies.isReconnecting.mockReturnValue(true)
+    let finish!: () => void
+    f.dependencies.publishTrack.mockRejectedValueOnce(new Error('Cancelled publication by calling unpublish'))
+      .mockImplementationOnce(() => new Promise<void>((resolve) => { finish = resolve }))
+    const enabling = f.adapter.setEnabled(true, browser)
+    await vi.waitFor(() => expect(finish).toBeTypeOf('function'))
+    const disposing = f.adapter.dispose()
+    finish()
+    await expect(enabling).rejects.toThrow('Голосовое подключение закрыто.')
+    await disposing
+
+    expect(f.dependencies.unpublishTrack).toHaveBeenCalledOnce()
+    expect(f.track.stop).toHaveBeenCalledOnce()
+    expect(f.track.unmute).not.toHaveBeenCalled()
+    expect(f.source.enabled).toBe(false)
+  })
   it('listener and muted intent do not acquire capture', async () => {
     const f = fixture()
     await f.adapter.setEnabled(false, browser)

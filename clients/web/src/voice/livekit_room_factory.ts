@@ -31,7 +31,7 @@ export function wireLiveKitRoom(
 }
 
 export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
-  const { Room, RoomEvent, Track, LocalAudioTrack } = await import('livekit-client')
+  const { Room, RoomEvent, Track, LocalAudioTrack, ConnectionState } = await import('livekit-client')
   const liveKitRoom = new Room({ ...adaptiveMediaRoomOptions, reconnectPolicy: new BoundedVoiceReconnectPolicy() })
   const viewer = bindLiveKitScreenViewer(liveKitRoom as unknown as LiveKitScreenViewerRoom, {
     activeSpeakersChanged: RoomEvent.ActiveSpeakersChanged,
@@ -83,6 +83,7 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
     },
     publishTrack: (track, options) => liveKitRoom.localParticipant.publishTrack(track, { ...options, source: Track.Source.Microphone }),
     unpublishTrack: (track) => liveKitRoom.localParticipant.unpublishTrack(track, false),
+    isReconnecting: () => liveKitRoom.state === ConnectionState.Reconnecting || liveKitRoom.state === ConnectionState.SignalReconnecting,
     createProcessor: (callbacks) => new RnnoiseTrackProcessor(callbacks),
   })
   room.setMicrophone = (enabled, options) => microphone.setEnabled(enabled, options)

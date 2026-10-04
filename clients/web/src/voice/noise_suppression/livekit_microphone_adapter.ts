@@ -13,6 +13,7 @@ export interface MicrophoneAdapterDependencies {
   createTrack(options: MediaTrackConstraints): Promise<LocalAudioTrack>
   publishTrack(track: LocalAudioTrack, options: MicrophonePublishOptions): Promise<unknown>
   unpublishTrack(track: LocalAudioTrack): Promise<unknown>
+  isReconnecting?(): boolean
   createProcessor(callbacks: { onFailure(reason: NoiseSuppressionFallbackReason): void; onState(state: NoiseSuppressionRuntimeState): void }): MicrophoneProcessor
 }
 /** Sole owner of local microphone capture, publication and processor transitions. */
@@ -129,7 +130,17 @@ export class LiveKitMicrophoneAdapter {
       this.assertCurrent(generation)
       // All publication starts muted. Only restoreIntent can begin transmission.
       this.silence()
-      await this.dependencies.publishTrack(this.track, microphonePublishOptions)
+      try {
+        await this.dependencies.publishTrack(this.track, microphonePublishOptions)
+      } catch (cause) {
+        this.assertCurrent(generation)
+        // LiveKit cancels in-flight addTrack requests when it restarts signaling.
+        // Its next publishTrack waits for reconnection; retain the muted capture
+        // and allow one retry instead of closing the room during that recovery.
+        if (!(cause instanceof Error) || cause.message !== 'Cancelled publication by calling unpublish' || !this.dependencies.isReconnecting?.()) throw cause
+        this.silence()
+        await this.dependencies.publishTrack(this.track, microphonePublishOptions)
+      }
       this.published = true
       this.assertCurrent(generation)
       this.options = options
