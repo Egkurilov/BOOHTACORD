@@ -22,7 +22,7 @@ const mapping: Record<string, string[]> = {
   'R21-R22': ['../admin/panel/AdminPanel.vue', '../admin/members/AdminMembersSection.vue'],
   R23: ['../updates/UpdateBanner.vue'],
   R25: ['../conversation/TextConversation.vue', '../conversation/MessageItem.vue', '../conversation/MentionPicker.vue'],
-  R26: ['../conversation/PublishedAttachmentCard.vue', '../conversation/ProtectedImageViewer.vue'],
+  R26: ['../conversation/attachment_card/PublishedAttachmentCard.vue', '../conversation/ProtectedImageViewer.vue'],
   R27: ['../workspace/WorkspaceMembersPanel.vue', '../voice/VoiceParticipantVolumes.vue'],
   R28: ['../direct_message/DirectMessageNavigation.vue', '../direct_message/DirectMessageConversation.vue', '../direct_message/DirectMessageStarter.vue'],
   R30: ['../voice/ScreenShareSetupDialog.vue'],

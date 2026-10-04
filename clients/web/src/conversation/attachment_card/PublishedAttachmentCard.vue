@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import type { TextMessageAttachment } from './message_client'
-import ProtectedImageViewer from './ProtectedImageViewer.vue'
+import type { TextMessageAttachment } from '../message_client'
+import ProtectedImageViewer from '../ProtectedImageViewer.vue'
 
 const props = defineProps<{
   attachment: TextMessageAttachment
@@ -46,6 +46,10 @@ function byteLabel(sizeBytes: number): string {
         <path d="M14 3v5h5M9 13h6M9 17h6" />
       </svg>
       <span class="attachment-card__details">
+        <svg v-if="showPreview && !failedPreview" class="attachment-card__name-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+          <path d="M14 3v5h5" />
+        </svg>
         <span class="attachment-card__name">{{ props.attachment.originalName }}</span>
         <span class="attachment-card__size">{{ byteLabel(props.attachment.sizeBytes) }}</span>
       </span>
@@ -63,3 +67,16 @@ function byteLabel(sizeBytes: number): string {
     </div>
   </li>
 </template>
+
+<style scoped>
+.attachment-card__name-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+</style>

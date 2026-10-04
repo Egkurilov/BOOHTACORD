@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TextMessageAttachment } from '../conversation/message_client'
-import PublishedAttachmentCard from '../conversation/PublishedAttachmentCard.vue'
+import PublishedAttachmentCard from '../conversation/attachment_card/PublishedAttachmentCard.vue'
 import { directMessageAttachmentDownloadUrl, directMessageAttachmentPreviewUrl } from './direct_message_attachment_url'
 
 const props = defineProps<{ directMessageId: string; attachments: TextMessageAttachment[] }>()

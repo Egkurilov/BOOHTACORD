@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TextMessageAttachment } from './message_client'
-import PublishedAttachmentCard from './PublishedAttachmentCard.vue'
+import PublishedAttachmentCard from './attachment_card/PublishedAttachmentCard.vue'
 import { textMessageAttachmentDownloadUrl } from './text_message_attachment_url'
 import { textMessageAttachmentPreviewUrl } from './text_message_attachment_preview_url'
 
