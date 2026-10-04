@@ -24,7 +24,7 @@
 - [x] Use description font 13px, action gap 12px desktop, mobile check margin-top -20px, explicit segmented padding 4px 12px and gap 8px.
 - [x] Change device/activation fixed heights to equivalent min-heights with intrinsic growth. Move preserved diagnostics after the processing card; processing heading margin 4px, last row 64px without divider, switch margin 0 and control-border background.
 - [x] Repeat 1440/390/320 captures and real UI checks; verify PTT selection, meter remains real, processing settings and diagnostics survive. Compare original unmodified HTML/PNG.
-- [ ] Run focused tests, complete web tests and build; merge current master, revalidate changed dependencies and publish exact changes with evidence.
+- [x] Run focused tests, complete web tests and build; merge current master, revalidate changed dependencies and publish exact changes with evidence.
 
 ## Verified outcomes
 

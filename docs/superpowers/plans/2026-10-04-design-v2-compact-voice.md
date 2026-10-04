@@ -22,5 +22,5 @@
 - [x] Add browser regression for compact padding 12px, title 12px/400/#78E6A0, subtitle 11px, mic x=`width-108`, leave x=`width-56`; run `node artifacts/design-v2/voice-dock/probe.mjs <evidence>/red` and verify failure.
 - [x] Add scoped rules under `@media(max-width:1023px)`: compact dock padding `4px 12px`, action gap `8px`, title size/weight/color, subtitle size, unmuted mic secondary color.
 - [x] Repeat component browser probe and R02/R05 actuals, compare unchanged source/goldens without masks; check open drawer and desktop retain prior layout.
-- [ ] Run nearest dock tests and production build; inspect Git status, diff and line counts; commit exact paths and integrate current master.
-- [ ] Record remaining client work separately; admin remains last.
+- [x] Run nearest dock tests and production build; inspect Git status, diff and line counts; commit exact paths and integrate current master.
+- [x] Record remaining client work separately; admin remains last.
