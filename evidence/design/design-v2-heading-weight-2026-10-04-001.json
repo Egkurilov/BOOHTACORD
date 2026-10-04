@@ -1,0 +1,28 @@
+{
+  "id": "design-v2-heading-weight-2026-10-04-001",
+  "scope": "Shared V2 semantic heading font weight in real Vue UI",
+  "status": "PARTIAL",
+  "visual_report": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-heading-weights-2026-10-04/REVIEW.md",
+  "checks": [
+    {
+      "name": "Real computed heading weights",
+      "result": "PASS",
+      "observation": "The failing browser check found seven defaults at 700. After the shared 600 default all fourteen measured headings pass; specific production overrides remain in force."
+    },
+    {
+      "name": "Controlled PNG comparison",
+      "result": "PASS",
+      "observation": "R06/R07/R10/R11/R12 full MAE improved to 2.860/3.668/3.528/5.313/3.582. R08/R09/R29 retained their full-frame values. Reference hashes and actual/diff are in the report."
+    },
+    {
+      "name": "Native Web checks",
+      "result": "PASS",
+      "observation": "19 design test files and 80 tests passed; TypeScript/Vite build and whitespace diff check passed."
+    },
+    {
+      "name": "Full visual and physical media gate",
+      "result": "NOT_RUN",
+      "observation": "Scoped computed styles and pixel improvements do not prove strict 1:1 or a live LiveKit session."
+    }
+  ]
+}
