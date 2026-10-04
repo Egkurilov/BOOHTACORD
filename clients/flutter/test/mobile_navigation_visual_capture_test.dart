@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:boohtacord_desktop/src/features/workspace/mobile_navigation/guild_mark.dart';
 import 'package:boohtacord_desktop/src/features/workspace/mobile_navigation/top.dart';
 import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:flutter/material.dart';
@@ -65,6 +66,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.getRect(find.byKey(captureKey)), const Rect.fromLTWH(0, 0, 320, 172));
     expect(tester.getRect(find.byKey(const ValueKey('navigation-search'))), const Rect.fromLTWH(12, 76, 296, 36));
+    final mark = find.byType(WorkspaceGuildMark);
+    final badge = tester.widget<Container>(find.descendant(
+      of: mark,
+      matching: find.byType(Container),
+    ));
+    expect((badge.decoration! as BoxDecoration).color, const Color(0xFF1A193E));
+    final gamepad = tester.widget<Icon>(find.descendant(
+      of: mark,
+      matching: find.byType(Icon),
+    ));
+    expect(gamepad.color, const Color(0xFFA391F9));
 
     if (directory == null || directory.isEmpty) return;
     final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(captureKey));

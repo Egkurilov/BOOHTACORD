@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme.dart';
-
 class WorkspaceGuildMark extends StatelessWidget {
   const WorkspaceGuildMark({super.key});
 
@@ -11,11 +9,13 @@ class WorkspaceGuildMark extends StatelessWidget {
     height: 32,
     alignment: Alignment.center,
     decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [GcColors.brandAccent, GcColors.accent],
-      ),
+      color: const Color(0xFF1A193E),
       borderRadius: BorderRadius.circular(8),
     ),
-    child: const Icon(Icons.sports_esports, size: 23, color: GcColors.text),
+    child: const Icon(
+      Icons.sports_esports,
+      size: 23,
+      color: Color(0xFFA391F9),
+    ),
   );
 }
