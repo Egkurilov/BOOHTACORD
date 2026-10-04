@@ -234,13 +234,21 @@ the existing Flutter member directory. It filters only loaded accounts, keeps
 pagination and the current save/block/reset handlers, and has focused unit and
 widget regressions. The Android API 35 release-signed emulator run visually
 verified the compact 44 px controls, selected value and role menu; macOS Debug
-was hot-reloaded without restarting, but admin-screen navigation remains
-pending Accessibility permission. A follow-up found that the 81 px compact
-selected label could wrap and then ellipsize; `FittedBox(scaleDown)` now keeps
-the complete short label on one line. API 35 visually verified `Участ.` on
-version `1.0.28+2047`; desktop control geometry remains covered at 1440 px —
+build passes, while Admin-screen navigation remains pending Accessibility
+permission. A follow-up found that the 81 px compact selected label could wrap
+and then ellipsize; `FittedBox(scaleDown)` now keeps the complete short label
+on one line. API 35 visually verified `Участ.` on version `1.0.28+2047`;
+desktop control geometry remains covered at 1440 px —
 [QA-247](../evidence/flutter/qa247-flutter-design-v2-admin-member-filters-2026-10-04-001.json),
 [QA-253](../evidence/flutter/qa253-flutter-compact-role-label-fit-2026-10-04-001.json).
+
+FV2-017's R14 guild navigation header, search, tabs and profile footer have
+passed local focused geometry/action tests, the full 484-test suite, and
+targeted analysis. Android API 35 and the already-open macOS client were
+visually checked without resetting session state; both show the guild title
+and count, separate search, channel/DM tabs and account footer. Windows CI and
+artifact startup passed earlier, but Windows-native visual capture remains
+open — [QA-248](../evidence/flutter/qa248-flutter-design-v2-guild-navigation-2026-10-04-001.json).
 
 Flutter's voice prejoin header now mirrors the web copy for roster loading,
 unavailable, empty and populated states instead of showing a static invitation
