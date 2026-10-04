@@ -1,13 +1,26 @@
 import { expect, test } from '@playwright/test'
 
-for (const mode of ['browser', 'off', 'rnnoise'] as const) {
+for (const { mode, sampleRate, fallbackReason } of [
+  { mode: 'browser' },
+  { mode: 'off' },
+  { mode: 'rnnoise', sampleRate: 48000, fallbackReason: 'asset-load' },
+  { mode: 'rnnoise', sampleRate: 44100, fallbackReason: 'sample-rate' },
+] as const) {
   for (const interruptPublication of [false, true]) {
     const scenario = interruptPublication ? 'survives signalling restart' : 'publishes on first join'
-    const processing = mode === 'rnnoise' ? 'rnnoise asset fallback' : mode
+    const processing = mode === 'rnnoise' ? `rnnoise ${fallbackReason} fallback` : mode
     test(`production microphone join ${scenario} (${processing})`, async ({ browser }) => {
       const senderContext = await browser.newContext({ permissions: ['microphone'] }), receiverContext = await browser.newContext()
       const sender = await senderContext.newPage(), receiver = await receiverContext.newPage()
       try {
+        if (mode === 'rnnoise') await sender.addInitScript((sampleRate) => {
+          const NativeAudioContext = window.AudioContext
+          // Pin only this synthetic sender's context. Host defaults differ
+          // across macOS and Linux; each test must reach its intended fallback.
+          window.AudioContext = class extends NativeAudioContext {
+            constructor(options?: AudioContextOptions) { super({ ...options, sampleRate }) }
+          }
+        }, sampleRate)
         for (const page of [sender, receiver]) {
           await page.goto('/tests/audio/fixture.html')
           await page.waitForFunction(() => 'microphoneJoinGate' in window && 'livekitAudioGate' in window)
@@ -16,7 +29,7 @@ for (const mode of ['browser', 'off', 'rnnoise'] as const) {
         await receiver.evaluate(() => (window as any).livekitAudioGate.receiver())
         const result = await sender.evaluate(({ mode, interruptPublication }) => (window as any).microphoneJoinGate.join(mode, interruptPublication), { mode, interruptPublication })
         expect(result).toMatchObject({ microphone: 'PUBLISHED', attempts: interruptPublication ? 2 : 1, cancellations: interruptPublication ? 1 : 0, reconnects: interruptPublication ? 1 : 0, publications: 1, enabledAtPublish: interruptPublication ? [false, false] : [false] })
-        if (mode === 'rnnoise') expect(result.processingState).toMatchObject({ requestedMode: 'rnnoise', status: 'fallback', fallbackReason: 'asset-load' })
+        if (mode === 'rnnoise') expect(result.processingState).toMatchObject({ requestedMode: 'rnnoise', status: 'fallback', fallbackReason })
         await expect.poll(async () => {
           const sample = await receiver.evaluate(() => (window as any).livekitAudioGate.read())
           return sample.readings.some((reading: any) => reading.rms > 0.001 && reading.nonfinite === 0)
