@@ -2,6 +2,7 @@ import 'package:livekit_client/livekit_client.dart' hide ChatMessage;
 
 import '../../models.dart';
 import '../../features/voice/lifecycle/controller.dart';
+import '../../features/voice/microphone/shortcut.dart';
 import '../composition/owners.dart';
 
 mixin AppVoiceControlsAccess on AppOwners {
@@ -58,6 +59,18 @@ mixin AppVoiceControlsAccess on AppOwners {
 
   set audioActivationError(String? value) => voice.audioActivationError = value;
 
+  VoiceShortcutBinding? get microphoneShortcut => voice.microphoneShortcut;
+
+  set microphoneShortcut(VoiceShortcutBinding? value) => voice.microphoneShortcut = value;
+
+  VoiceShortcutBinding? get deafenShortcut => voice.deafenShortcut;
+
+  set deafenShortcut(VoiceShortcutBinding? value) => voice.deafenShortcut = value;
+
+  String? get voiceShortcutStatus => voice.voiceShortcutStatus;
+
+  set voiceShortcutStatus(String? value) => voice.voiceShortcutStatus = value;
+
   bool get pushToTalkPressed => voice.pushToTalkPressed;
 
   set pushToTalkPressed(bool value) => voice.pushToTalkPressed = value;
@@ -75,6 +88,9 @@ mixin AppVoiceControlsAccess on AppOwners {
 
   Future<void> setPushToTalkKey(int? keyId, String? label) =>
       voice.setPushToTalkKey(keyId, label);
+
+  Future<void> setVoiceShortcut(String action, VoiceShortcutBinding? value) =>
+      voice.setVoiceShortcut(action, value);
 
   Future<void> setAudioActivationMode(AudioActivationMode next) =>
       voice.setAudioActivationMode(next);

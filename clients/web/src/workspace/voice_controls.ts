@@ -9,17 +9,32 @@ import { useVoiceConnectionStore } from '../voice/connection_store'
 import type { ScreenProfile, VoiceJoinMode } from '../voice/livekit_gateway'
 import { useVoiceNavigationStore } from '../voice/navigation_store'
 import { streamStartChime } from '../voice/stream_start_runtime'
+import { VoiceShortcuts } from '../voice/voice_shortcuts'
+import type { VoiceShortcutSource } from '../voice/voice_shortcuts'
 
-export function useWorkspaceVoiceControls() {
+export function useWorkspaceVoiceControls(accountId = '') {
   const topologyStore = useTopologyStore()
   const audioSettings = useAudioSettingsStore()
   const voiceActivation = useVoiceActivationStore()
   const voiceConnection = useVoiceConnectionStore()
   const voiceNavigation = useVoiceNavigationStore()
+  let shortcuts: VoiceShortcuts | null = null
   watch(() => voiceConnection.inputSelection, (selection) => { if (selection) audioSettings.observeInput(selection) })
   const refreshDevices = () => { void loadAudioDevices() }
-  onMounted(() => navigator.mediaDevices?.addEventListener?.('devicechange', refreshDevices))
-  onBeforeUnmount(() => navigator.mediaDevices?.removeEventListener?.('devicechange', refreshDevices))
+  onMounted(() => {
+    voiceActivation.bindAccount?.(accountId)
+    navigator.mediaDevices?.addEventListener?.('devicechange', refreshDevices)
+    shortcuts = new VoiceShortcuts(window as unknown as VoiceShortcutSource, () => ({ microphone: voiceActivation.microphoneShortcut, deafen: voiceActivation.deafenShortcut }), {
+      microphone: voiceConnection.toggleMicrophone,
+      deafen: voiceConnection.toggleDeafen,
+    }, voiceActivation.announceShortcut)
+    shortcuts.start()
+  })
+  onBeforeUnmount(() => {
+    navigator.mediaDevices?.removeEventListener?.('devicechange', refreshDevices)
+    shortcuts?.stop()
+    shortcuts = null
+  })
 
   async function loadAudioDevices(): Promise<void> {
     await audioSettings.loadInput(voiceConnection.setInputDevice)

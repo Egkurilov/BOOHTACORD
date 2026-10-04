@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../features/voice/microphone/shortcut.dart';
+
 enum NoiseSuppressionMode { off, browser, rnnoise }
 
 class AudioProcessingPreferences {
@@ -78,6 +80,8 @@ class AudioPreferences {
   String activationMode = 'VAD';
   int? pttKeyId;
   String? pttKeyLabel;
+  VoiceShortcutBinding? microphoneShortcut;
+  VoiceShortcutBinding? deafenShortcut;
 
   bool get persistent => _storage != null;
 
@@ -105,6 +109,8 @@ class AudioPreferences {
       activationMode = decoded['activationMode'] == 'PTT' ? 'PTT' : 'VAD';
       pttKeyId = decoded['pttKeyId'] is int ? decoded['pttKeyId'] as int : null;
       pttKeyLabel = decoded['pttKeyLabel'] as String?;
+      microphoneShortcut = _shortcut(decoded['microphoneShortcut']);
+      deafenShortcut = _shortcut(decoded['deafenShortcut']);
     } catch (_) {}
   }
 
@@ -139,6 +145,22 @@ class AudioPreferences {
     return _save();
   }
 
+  Future<void> setMicrophoneShortcut(VoiceShortcutBinding? value) {
+    if (_storage == null) return _unavailable();
+    microphoneShortcut = value;
+    return _save();
+  }
+
+  Future<void> setDeafenShortcut(VoiceShortcutBinding? value) {
+    if (_storage == null) return _unavailable();
+    deafenShortcut = value;
+    return _save();
+  }
+
+  VoiceShortcutBinding? _shortcut(Object? value) {
+    try { return value == null ? null : VoiceShortcutBinding.fromJson(value); } catch (_) { return null; }
+  }
+
   Future<void> _unavailable() => Future<void>.error(
     StateError('Audio preferences storage is unavailable.'),
   );
@@ -159,6 +181,8 @@ class AudioPreferences {
           'activationMode': activationMode,
           'pttKeyId': pttKeyId,
           'pttKeyLabel': pttKeyLabel,
+          'microphoneShortcut': microphoneShortcut?.toJson(),
+          'deafenShortcut': deafenShortcut?.toJson(),
         }),
       );
       if (result == false) {

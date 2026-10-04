@@ -12,6 +12,7 @@ import '../../../services/voice_stream_start_tracker.dart';
 import '../../../services/screen_thumbnail.dart';
 import '../../audio/devices/controller.dart';
 import '../../screen/lifecycle/controller.dart';
+import '../microphone/shortcut.dart';
 import 'types.dart';
 
 abstract class VoiceState extends ChangeNotifier {
@@ -58,6 +59,9 @@ abstract class VoiceState extends ChangeNotifier {
   AudioActivationMode audioActivationMode = AudioActivationMode.vad;
   int? pushToTalkKeyId;
   String? pushToTalkKeyLabel;
+  VoiceShortcutBinding? microphoneShortcut;
+  VoiceShortcutBinding? deafenShortcut;
+  String? voiceShortcutStatus;
   String? audioActivationError;
   bool pushToTalkPressed = false;
   bool get usesTouchPushToTalk =>
