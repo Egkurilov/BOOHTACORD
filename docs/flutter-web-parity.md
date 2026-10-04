@@ -22,6 +22,18 @@ search spacing at 1440×900. [QA-248](../evidence/flutter/qa248-flutter-design-v
 tracks CI and the still-open platform visual acceptance; no local Flutter SDK
 or Android device is available on the Windows host.
 
+## Frameless desktop window chrome (FV2-018)
+
+macOS and Windows now use a compact 32 px draggable title bar instead of the
+system title bar. It shows a text-only Inter BOOHTACORD wordmark; macOS keeps its
+native traffic lights and Windows has minimize/maximize/close controls. Mobile
+is unchanged. Widget tests, the 482-test Flutter suite, changed-file analysis,
+macOS Debug build and an inspected component capture pass —
+[QA-252](../evidence/flutter/qa252-flutter-desktop-window-chrome-2026-10-04-001.json).
+The Windows 2022 runner passed app/vendor tests and analysis, but its Windows
+distribution build was cancelled by a newer master push. Repeat that build and
+manually verify native drag/window controls before closing FV2-018.
+
 macOS remote-stream discovery now distinguishes an active publication from a
 subscribed video track. With manual subscriptions, a live publication may have
 no attached track after thumbnail sampling; it must still expose the Watch
