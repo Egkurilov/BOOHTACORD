@@ -2,7 +2,7 @@
   "id": "QA-252",
   "date": "2026-10-04",
   "task": "FV2-018 — Flutter frameless desktop window chrome and text-only brand",
-  "source_revision": "83dd4a7f",
+  "source_revision": "fc51ced59516a47c396e907af14b158bb7abf467",
   "working_tree_changes": true,
   "summary": "Added a compact draggable desktop title bar for macOS and Windows, hid the native title bar, preserved macOS traffic lights, added Windows window controls, and kept mobile layout unchanged. The brand is a legible Inter wordmark without an icon.",
   "checks": [
@@ -38,15 +38,27 @@
       "observation": "Rendered a temporary 1000x32 Windows title-bar capture with the bundled Inter font and inspected it at native and enlarged scale. BOOHTACORD is readable and has no icon; the temporary generated capture was not retained in the repository."
     },
     {
-      "name": "Windows build and native-window runtime acceptance",
+      "name": "Windows runner tests and analysis",
+      "result": "PASS",
+      "run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37190446718",
+      "observation": "The windows / windows job completed Test and analyze app and vendor packages successfully on Windows 2022."
+    },
+    {
+      "name": "Windows distribution build",
+      "result": "BLOCKED",
+      "run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37190446718",
+      "observation": "Build and inspect Windows distribution started but was cancelled after a newer master push superseded the run; artifact retention was skipped. Re-run Flutter Windows CI against current master."
+    },
+    {
+      "name": "Native desktop window runtime acceptance",
       "result": "NOT_RUN",
-      "observation": "The current host is macOS. Windows build/runtime checks and visual confirmation of native macOS traffic lights remain open for the Windows CI runner and a later native app review."
+      "observation": "The built macOS app was not launched to avoid restarting the user's active app; Windows native controls and live drag/maximize behavior also have not been manually checked."
     },
     {
       "name": "Spec traceability verifier",
       "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
       "result": "NOT_RUN",
-      "observation": "PowerShell Core is not installed on this host; FV2-018 requirement IDs and dependencies were manually confirmed against backlog/approved-requirements.json and backlog/tasks.yaml."
+      "observation": "PowerShell Core is not installed on this host; FV2-018 requirement IDs and dependencies were manually confirmed against backlog/approved-requirements.json and backlog/tasks.yaml. The GitHub contracts job's API/requirement traceability step passed in run 37190446718."
     },
     {
       "name": "Whitespace validation",
@@ -55,8 +67,8 @@
     }
   ],
   "limitations": [
-    "FV2-018 remains open until Windows build/runtime checks and native desktop-window visual acceptance pass.",
+    "FV2-018 remains open until a Windows distribution build and native desktop-window visual acceptance pass.",
     "No API, ACL, session, authentication, or LiveKit behavior changed."
   ],
-  "status": "PASS_FLUTTER_TESTS_ANALYSIS_MACOS_DEBUG_BUILD_AND_COMPONENT_VISUAL_REVIEW; WINDOWS_AND_NATIVE_WINDOW_ACCEPTANCE_OPEN"
+  "status": "PASS_FLUTTER_TESTS_ANALYSIS_MACOS_DEBUG_BUILD_COMPONENT_VISUAL_REVIEW_AND_WINDOWS_TESTS; WINDOWS_DISTRIBUTION_BUILD_BLOCKED_AND_NATIVE_WINDOW_ACCEPTANCE_OPEN"
 }
