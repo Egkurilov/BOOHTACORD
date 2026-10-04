@@ -1,0 +1,62 @@
+{
+  "id": "QA-252",
+  "date": "2026-10-04",
+  "task": "FV2-018 — Flutter frameless desktop window chrome and text-only brand",
+  "source_revision": "83dd4a7f",
+  "working_tree_changes": true,
+  "summary": "Added a compact draggable desktop title bar for macOS and Windows, hid the native title bar, preserved macOS traffic lights, added Windows window controls, and kept mobile layout unchanged. The brand is a legible Inter wordmark without an icon.",
+  "checks": [
+    {
+      "name": "Desktop title-bar widget tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/desktop_window_chrome_test.dart",
+      "result": "PASS",
+      "passed": 4,
+      "observation": "Covers Windows controls and actions, text-only Inter wordmark styling with no icon, macOS native-control inset, and no title bar on Android."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 482
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/widgets/desktop_window_chrome.dart lib/src/app.dart lib/src/screens/workspace_screen.dart test/desktop_window_chrome_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app",
+      "observation": "Built only; the running macOS app was not restarted."
+    },
+    {
+      "name": "Title-bar visual review",
+      "result": "PASS",
+      "observation": "Rendered a temporary 1000x32 Windows title-bar capture with the bundled Inter font and inspected it at native and enlarged scale. BOOHTACORD is readable and has no icon; the temporary generated capture was not retained in the repository."
+    },
+    {
+      "name": "Windows build and native-window runtime acceptance",
+      "result": "NOT_RUN",
+      "observation": "The current host is macOS. Windows build/runtime checks and visual confirmation of native macOS traffic lights remain open for the Windows CI runner and a later native app review."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this host; FV2-018 requirement IDs and dependencies were manually confirmed against backlog/approved-requirements.json and backlog/tasks.yaml."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "FV2-018 remains open until Windows build/runtime checks and native desktop-window visual acceptance pass.",
+    "No API, ACL, session, authentication, or LiveKit behavior changed."
+  ],
+  "status": "PASS_FLUTTER_TESTS_ANALYSIS_MACOS_DEBUG_BUILD_AND_COMPONENT_VISUAL_REVIEW; WINDOWS_AND_NATIVE_WINDOW_ACCEPTANCE_OPEN"
+}
