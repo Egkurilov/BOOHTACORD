@@ -1,0 +1,11 @@
+/* Guild roster from R01; voice participants keep their separate controls. */
+.members-guild-roster .members-presence-groups { gap: 28px; }
+.members-guild-roster .members-group { margin: 0 0 16px; font-weight: 600; line-height: 16px; letter-spacing: .6px; text-transform: uppercase; }
+.members-guild-roster .member-list { gap: 4px; margin: 0; }
+.members-guild-roster .member-card { min-height: 52px; gap: 10px; border-radius: 8px; padding: 8px; }
+.members-guild-roster .member-card:hover { background: var(--gc-surface-raised); }
+.members-guild-roster .member-avatar { border-radius: 50%; font-size: 13px; font-weight: 600; }
+.members-guild-roster .member-name { font-weight: 500; }
+.members-guild-roster .member-state { display: block; line-height: 16px; }
+.members-guild-roster .member-presence-dot--online { box-sizing: content-box; bottom: 0; }
+.members-guild-roster .member-presence-dot--offline { display: none; }

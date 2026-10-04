@@ -40,8 +40,9 @@ async function loadRoster(cursor?: string): Promise<void> {
 function openProfile(userID: string, event: MouseEvent): void {
   const button = event.currentTarget as HTMLButtonElement
   trigger.value = button
-  popoverTop.value = Math.max(64, button.getBoundingClientRect().top - button.closest('.members')!.getBoundingClientRect().top - 24)
   openedFromVoiceRoster.value = Boolean(button.closest('.members-voice-roster'))
+  const anchorOffset = openedFromVoiceRoster.value ? 24 : 20
+  popoverTop.value = Math.max(64, button.getBoundingClientRect().top - button.closest('.members')!.getBoundingClientRect().top - anchorOffset)
   selectedID.value = userID
 }
 function closeProfile(): void { selectedID.value = null; void nextTick(() => trigger.value?.focus()) }
