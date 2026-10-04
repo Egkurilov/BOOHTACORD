@@ -458,7 +458,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   @override
   Widget build(BuildContext context) => Scaffold(
     body: SafeArea(
-      top: !widget.maintenanceBannerVisible,
+      top:
+          !widget.maintenanceBannerVisible &&
+          defaultTargetPlatform != TargetPlatform.macOS &&
+          defaultTargetPlatform != TargetPlatform.windows,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < GcLayout.mobileBreakpoint;

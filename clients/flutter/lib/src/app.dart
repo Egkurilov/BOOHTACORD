@@ -10,6 +10,7 @@ import 'features/session/maintenance/banner.dart';
 import 'features/updates/banner.dart';
 import 'features/updates/controller.dart';
 import 'features/updates/scope.dart';
+import 'widgets/desktop_window_chrome.dart';
 
 class BoohtacordApp extends StatelessWidget {
   BoohtacordApp({super.key, required this.state, UpdateController? updates})
@@ -18,50 +19,56 @@ class BoohtacordApp extends StatelessWidget {
   final UpdateController updates;
 
   @override
-  Widget build(BuildContext context) => UpdateScope(controller:updates, child:MaterialApp(
-    title: 'BOOHTACORD',
-    debugShowCheckedModeBanner: false,
-    theme: guildTheme(),
-    home: AnimatedBuilder(
-      animation: Listenable.merge([state, updates]),
-      builder: (context, _) => Column(
-        children: [
-          if (state.maintenanceActive) const MaintenanceBanner(),
-          ClientUpdateBanner(
-            updates: updates,
-            appBusy: {
-                  VoicePhase.joining,
-                  VoicePhase.connected,
-                  VoicePhase.listener,
-                  VoicePhase.reconnecting,
-                  VoicePhase.leaving,
-                }.contains(state.voicePhase) ||
-                {
-                  ScreenSharePhase.starting,
-                  ScreenSharePhase.sharing,
-                  ScreenSharePhase.stopping,
-                }.contains(state.screenSharePhase),
-          ),
-          Expanded(
-            child: switch (state.phase) {
-              AppPhase.loading => const LoadingScreen(),
-              AppPhase.connectionError => ConnectionErrorScreen(
-                error: state.error,
-                onRetry: state.initialize,
+  Widget build(BuildContext context) => UpdateScope(
+    controller: updates,
+    child: MaterialApp(
+      title: 'BOOHTACORD',
+      debugShowCheckedModeBanner: false,
+      theme: guildTheme(),
+      home: DesktopWindowChrome(
+        child: AnimatedBuilder(
+          animation: Listenable.merge([state, updates]),
+          builder: (context, _) => Column(
+            children: [
+              if (state.maintenanceActive) const MaintenanceBanner(),
+              ClientUpdateBanner(
+                updates: updates,
+                appBusy:
+                    {
+                      VoicePhase.joining,
+                      VoicePhase.connected,
+                      VoicePhase.listener,
+                      VoicePhase.reconnecting,
+                      VoicePhase.leaving,
+                    }.contains(state.voicePhase) ||
+                    {
+                      ScreenSharePhase.starting,
+                      ScreenSharePhase.sharing,
+                      ScreenSharePhase.stopping,
+                    }.contains(state.screenSharePhase),
               ),
-              AppPhase.signedOut =>
-                state.resetRoute
-                    ? PasswordResetScreen(state: state)
-                    : AuthScreen(state: state),
-              AppPhase.ready => WorkspaceScreen(
-                state: state,
-                maintenanceBannerVisible: state.maintenanceActive,
-                openNavigationInitially: true,
+              Expanded(
+                child: switch (state.phase) {
+                  AppPhase.loading => const LoadingScreen(),
+                  AppPhase.connectionError => ConnectionErrorScreen(
+                    error: state.error,
+                    onRetry: state.initialize,
+                  ),
+                  AppPhase.signedOut =>
+                    state.resetRoute
+                        ? PasswordResetScreen(state: state)
+                        : AuthScreen(state: state),
+                  AppPhase.ready => WorkspaceScreen(
+                    state: state,
+                    maintenanceBannerVisible: state.maintenanceActive,
+                    openNavigationInitially: true,
+                  ),
+                },
               ),
-            },
+            ],
           ),
-        ],
+        ),
       ),
     ),
-  ));
+  );
 }

@@ -29,6 +29,8 @@ Future<void> main() async {
       center: true,
       backgroundColor: Color(0xFF0E1117),
       title: 'BOOHTACORD',
+      titleBarStyle: TitleBarStyle.hidden,
+      windowButtonVisibility: true,
     );
     await windowManager.waitUntilReadyToShow(options, () async {
       await windowManager.show();
