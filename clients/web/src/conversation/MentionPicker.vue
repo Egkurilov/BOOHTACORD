@@ -5,8 +5,8 @@ import { useAuthorDirectory } from '../identity/author_directory'
 import { loadMembers, type GuildMember } from '../identity/profile_client'
 import { addMentionId } from './mention_ids'
 
-const props = defineProps<{ modelValue: string[]; selfId: string; disabled: boolean; onlyParticipant?: { id: string; displayName: string } }>()
-const emit = defineEmits<{ 'update:modelValue': [ids: string[]] }>()
+const props = defineProps<{ modelValue: string[]; selfId: string; disabled: boolean; quick?: boolean; onlyParticipant?: { id: string; displayName: string } }>()
+const emit = defineEmits<{ 'update:modelValue': [ids: string[]]; activate: [] }>()
 const authors = useAuthorDirectory()
 const members = ref<GuildMember[]>([])
 const loaded = ref(false)
@@ -37,6 +37,10 @@ function close(): void {
   expanded.value = false
   void nextTick(() => disclosure.value?.focus())
 }
+function onTrigger(): void {
+  if (props.quick) { emit('activate'); return }
+  expanded.value = !expanded.value
+}
 
 async function loadNext(): Promise<void> {
   if (loading.value || props.onlyParticipant || !props.selfId) return
@@ -54,9 +58,9 @@ async function loadNext(): Promise<void> {
 
 <template>
   <div class="mention-picker" :class="{ 'mention-picker--expanded': expanded }" role="group" aria-label="Упоминания">
-    <button ref="disclosure" class="mention-picker-trigger" type="button" :disabled="disabled" :aria-label="expanded ? 'Скрыть выбор упоминания' : 'Выбрать упоминание'" :aria-expanded="expanded" :aria-controls="controlsId" @click="expanded = !expanded"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M16 8v6a2 2 0 0 0 4 0v-2a8 8 0 1 0-3 6"/></svg></button>
+    <button ref="disclosure" class="mention-picker-trigger" type="button" :disabled="disabled" :aria-label="expanded ? 'Скрыть выбор упоминания' : 'Выбрать упоминание'" :aria-expanded="quick ? undefined : expanded" :aria-controls="quick ? undefined : controlsId" @click="onTrigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M16 8v6a2 2 0 0 0 4 0v-2a8 8 0 1 0-3 6"/></svg></button>
     <span v-for="id in modelValue" :key="id" class="mention-chip">@{{ label(id) }} <button type="button" :disabled="disabled" :aria-label="`Убрать упоминание ${label(id)}`" @click="remove(id)">×</button></span>
-    <div :id="controlsId" class="mention-picker-controls" :hidden="!expanded" @keydown.esc.stop="close">
+    <div v-if="!quick" :id="controlsId" class="mention-picker-controls" :hidden="!expanded" @keydown.esc.stop="close">
       <button v-if="!onlyParticipant && (!loaded || nextCursor)" type="button" :disabled="disabled || loading" @click="loadNext">{{ loading ? 'Загружаем…' : loaded ? 'Показать ещё участников' : 'Загрузить участников' }}</button>
       <label v-if="available.length" class="mention-picker-choice">Участник
         <select v-model="candidateId" :disabled="disabled" name="mention-recipient"><option value="">Выберите участника</option><option v-for="member in available" :key="member.id" :value="member.id">{{ member.name }}</option></select>

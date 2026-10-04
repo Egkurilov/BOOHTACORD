@@ -102,7 +102,7 @@ function onComposerPaste(event: ClipboardEvent): void {
       <form class="message-composer composer" @submit.prevent="send">
         <TextMessageAttachmentPicker ref="attachmentPicker" :channel-id="props.channelId" :initial-attachments="attachments" :disabled="store.sending || attachmentPending"
           :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" @mention="insertMobileMention" @emoji="emojiOpen = true" />
-        <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" />
+        <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" quick @activate="insertMobileMention" />
         <label class="gc-sr-only" for="message-body">Сообщение</label>
         <textarea id="message-body" ref="composerTextarea" v-model="draft" rows="1" :disabled="store.sending" :aria-describedby="store.error ? 'text-conversation-error text-composer-help' : 'text-composer-help'" :placeholder="`Написать в #${channelName}`" @keydown="submitOnComposerEnter($event, send)" @paste="onComposerPaste" />
         <span class="emoji-picker">

@@ -2,7 +2,7 @@ export interface MentionQuery { start: number; query: string }
 
 export function activeMentionQuery(text: string): MentionQuery | null {
   const match = /(?:^|\s)@([^\s@]*)$/.exec(text)
-  if (!match || !match[1]) return null
+  if (!match) return null
   return { start: match.index + match[0].length - match[1].length - 1, query: match[1] }
 }
 

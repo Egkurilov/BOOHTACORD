@@ -95,10 +95,11 @@ onBeforeUnmount(() => searchTarget.clearFor('DIRECT_MESSAGE', props.directMessag
     <SearchMessageContext v-else-if="unreadContextOpen" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="unreadBoundary" heading="Первое непрочитанное сообщение" @close="continueAtLatest" />
     <DirectMessageHistoryList :direct-message-id="props.directMessageId" :session="session" :other-participant-id="props.otherParticipantId" :other-participant-display-name="props.otherParticipantDisplayName" @reply="replyTarget = $event" @reply-context="replyContextTarget = $event" @retry="retry" @viewport-change="queueVisibleRead" />
     <div class="composer-wrap">
+      <MentionAutocomplete v-model="draft" v-model:mention-user-ids="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" />
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
         <DirectMessageAttachmentPicker ref="attachmentPicker" :direct-message-id="props.directMessageId" :initial-attachments="attachments" :disabled="store.sending || attachmentPending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" @mention="insertMobileMention" @emoji="emojiOpen = true" />
-        <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" />
+        <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" quick @activate="insertMobileMention" />
         <label class="gc-sr-only" for="direct-message-body">Сообщение</label>
         <textarea id="direct-message-body" ref="composerTextarea" v-model="draft" rows="1" :disabled="store.sending" :aria-describedby="store.error ? 'direct-conversation-error direct-composer-help' : 'direct-composer-help'" placeholder="Написать сообщение…" @keydown="submitOnComposerEnter($event, send)" @paste="onComposerPaste" />
         <span class="emoji-picker">

@@ -16,7 +16,8 @@ describe('Design V2 live composer controls', () => {
     }
     expect(mention).toContain('<circle cx="12" cy="12" r="4"/>')
     expect(mention).toContain('M16 8v6a2 2 0 0 0 4 0v-2a8 8 0 1 0-3 6')
-    expect(mention).toContain('@click="expanded = !expanded"')
+    expect(mention).toContain('@click="onTrigger"')
+    expect(mention).toContain("if (props.quick) { emit('activate'); return }")
     expect(css).toContain('.message-composer .mention-picker .mention-picker-trigger')
   })
 
@@ -43,6 +44,8 @@ describe('Design V2 live composer controls', () => {
     for (const composer of [text, direct]) {
       expect(composer).toContain('@mention="insertMobileMention"')
       expect(composer).toContain('@emoji="emojiOpen = true"')
+      expect(composer).toContain('quick @activate="insertMobileMention"')
+      expect(composer).toContain('<MentionAutocomplete v-model="draft"')
     }
     expect(css).toContain('.message-composer .composer-mobile-actions')
     expect(css).toContain('.message-composer .mention-picker-trigger, .message-composer .emoji-trigger { display: none; }')

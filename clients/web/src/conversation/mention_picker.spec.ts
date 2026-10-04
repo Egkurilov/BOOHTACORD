@@ -46,4 +46,14 @@ describe('mention picker', () => {
     expect(html).toContain('class="mention-picker-trigger" type="button" disabled')
     expect(html).toContain('disabled aria-label="Убрать упоминание Лера"')
   })
+
+  it('keeps selected ID chips but delegates a quick composer action to autocomplete', async () => {
+    const app = createSSRApp(MentionPicker, { modelValue: ['user-2'], selfId: 'user-1', disabled: false, quick: true, onlyParticipant: { id: 'user-2', displayName: 'Лера' } })
+    app.use(createPinia())
+    const html = await renderToString(app)
+    expect(html).toContain('Убрать упоминание Лера')
+    expect(html).toContain('Выбрать упоминание')
+    expect(html).not.toContain('mention-picker-controls')
+    expect(html).not.toContain('Загрузить участников')
+  })
 })
