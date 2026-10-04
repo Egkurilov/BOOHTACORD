@@ -1,9 +1,8 @@
 /* R18: live member profile card floats outside the roster column. */
 .members-panel.has-popover { overflow: visible; }
 .members-panel .member-popover { box-sizing: border-box; width: 320px; min-height: 314px; border: 1px solid #303542; border-radius: 12px; padding: 24px; background: #222631; }
-.member-popover > header { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; opacity: 0; }
+.member-popover > header { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; opacity: 1; }
 .member-popover > header > span { display: none; }
-.member-popover > header:hover, .member-popover > header:focus-within { opacity: 1; }
 .member-popover > header button { width: 32px; height: 32px; }
 .member-popover .member-popover-identity { display: block; }
 .member-popover-avatar-wrap { position: relative; display: block; width: 64px; height: 64px; }

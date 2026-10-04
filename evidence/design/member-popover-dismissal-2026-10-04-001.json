@@ -1,0 +1,28 @@
+{
+  "id": "member-popover-dismissal-2026-10-04-001",
+  "date": "2026-10-04",
+  "task": "T-050",
+  "depends_on": ["T-020", "T-022", "T-040"],
+  "requirements": ["REQ-UI-01", "REQ-UI-02"],
+  "status": "PASS",
+  "scope": "Browser integration of the production WorkspaceMembersPanel and MemberPopover with production styles; synthetic voice participants and mocked profile API",
+  "base_revision": "fad8df852a0912215f70ec0182dea7379c44ff6f",
+  "regression": {
+    "before_fix": "Two focused Chromium tests failed: workspace clicks left the desktop profile open, and the close header had opacity 0 without hover.",
+    "change": "Register a document capture-phase pointerdown listener while the profile is mounted, ignore events inside the profile, and remove it on unmount. Make the close button always visible. Preserve the outside control's focus on desktop, and restore participant focus for Escape, the close button and modal dismissal."
+  },
+  "checks": [
+    {"name": "Member profile browser regressions", "status": "PASS", "tests": 7, "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:member-popover", "cases": ["Dismiss from voice stage, header, sidebar and roster, including stopped event propagation", "Visible close button and restored focus", "Escape preserves roster", "Profile clicks and volume drag keep profile open and update volume", "Switch and reopen participants", "Dismiss loading and failed profile states", "Mobile backdrop, Escape, button and volume controls"]},
+    {"name": "Web unit suite", "status": "PASS", "files": 298, "tests": 953, "command": "cd clients/web && npm test"},
+    {"name": "Production TypeScript and Vite build", "status": "PASS", "command": "cd clients/web && npm run build"},
+    {"name": "Web dependency boundaries", "status": "PASS", "commands": ["node --test tools/verify/dependencies/web_imports.test.mjs", "python3 -m tools.verify.dependencies.web"]},
+    {"name": "Visual inspection", "status": "PASS", "viewports": ["3440x1235 desktop", "390x844 mobile"], "observations": "Close button visible; desktop card floats beside roster; mobile sheet keeps readable controls and backdrop. Screenshots generated in ignored .out/member-popover-browser-results; no generated images committed."}
+  ],
+  "continuous_integration": "tools/ci/native/web.py runs npm run test:member-popover on every web check",
+  "limitations": {
+    "new_linux_ci": "NOT_RUN at commit preparation; verify the follow-up Actions run",
+    "full_workspace_backend_and_physical_media": "NOT_RUN; this record covers profile dismissal only",
+    "requirements_backlog_and_external_contracts": "Unchanged; corresponding PowerShell verifiers not required",
+    "release_gates": "No gate closed by this component integration evidence"
+  }
+}

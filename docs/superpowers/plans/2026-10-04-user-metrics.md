@@ -36,6 +36,14 @@ pipeline. No account or session labels. Preserve authentication results on telem
   release gate. Add dashboard tests before the new audience panels and validate generated JSON.
 - [x] Add total users with history, today/yesterday registrations, today/yesterday DAU and
   absolute/percent change. Gate yesterday comparison on complete historical collection.
-- [ ] Update the runbook/evidence, inspect changed paths and sizes, commit scoped changes,
+- [x] Update the runbook/evidence, inspect changed paths and sizes, commit scoped changes,
   synchronize master and use the existing signed build/deploy pipeline. Import Grafana JSON,
   validate live metrics and save the final screenshot.
+
+## Delivery
+
+Implementation 5bcb1497 is included in production fad8df85. CI, signed Build server and
+Deploy production passed. All 99 live query checks passed; five deliberately empty
+comparisons wait for a complete previous day. Collection started 2026-10-04 19:12:15 MSK.
+The unrelated microphone fixture failure was corrected concurrently in fad8df85;
+the browser gate passed with explicit 48/44.1 kHz scenarios before production delivery.

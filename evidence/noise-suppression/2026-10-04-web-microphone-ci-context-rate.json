@@ -1,0 +1,40 @@
+{
+  "id": "web-microphone-ci-context-rate-2026-10-04",
+  "date": "2026-10-04",
+  "task": "T-072",
+  "depends_on": ["T-071"],
+  "requirements": ["REQ-AUDIO-01", "REQ-VOICE-01", "REQ-VOICE-03"],
+  "status": "PASS",
+  "scope": "Deterministic synthetic browser regressions; production microphone code unchanged",
+  "base_revision": "5bcb1497",
+  "failed_ci": {
+    "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37214717414/job/111472832961",
+    "revision": "cde4a6a2bb64acffd75787feb65bf4b4a12b8690",
+    "result": "FAIL: two RNNoise asset-fallback assertions expected asset-load but received sample-rate",
+    "other_results": "953 unit tests, screen-profile browser check and nine audio browser scenarios passed",
+    "cause": "Tests relied on the host's default AudioContext sample rate. The Linux sender reached RNNoise's rate guard before attempting the intentionally unavailable assets."
+  },
+  "change": {
+    "asset_fallback": "Before page initialization, override only the synthetic sender's AudioContext constructor to request 48000 Hz, then retain the forced asset 404 and exact asset-load assertion",
+    "rate_fallback": "Separate 44100 Hz sender cases assert sample-rate fallback for both normal first join and signaling restart",
+    "isolation": "Fresh browser contexts per case; production SDK and microphone ownership remain unchanged"
+  },
+  "checks": [
+    {"name": "Full Web unit suite", "status": "PASS", "files": 298, "tests": 953, "command": "cd clients/web && npm test"},
+    {"name": "Production TypeScript and Vite build", "status": "PASS", "command": "cd clients/web && npm run build"},
+    {"name": "Browser fixture strict TypeScript check", "status": "PASS"},
+    {"name": "Two-client microphone browser integration", "status": "PASS", "tests": 8, "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:audio:browser -- microphone_join.browser.spec.ts", "matrix": ["browser", "off", "rnnoise asset-load at 48000 Hz", "rnnoise sample-rate at 44100 Hz"], "scenarios_per_mode": ["normal first join", "signaling restart during initial publication"], "assertions": ["Expected fallback reason", "Capture disabled during publication", "One final audio publication", "Non-silent finite receiver PCM", "Receiver silence after mute", "Track ended after disconnect"]},
+    {"name": "Whitespace validation", "status": "PASS", "command": "git diff --check"}
+  ],
+  "environment": {
+    "browser": "Google Chrome 154.0.8037.97 on macOS ARM64",
+    "livekit_client": "2.22.3",
+    "livekit_server": "1.13.7, digest-pinned loopback-only disposable container",
+    "audio_source": "Chromium fake microphone; no physical capture or recordings"
+  },
+  "limitations": {
+    "new_linux_ci_run": "NOT_RUN at commit preparation; confirm in the follow-up GitHub Actions run",
+    "physical_devices_acoustic_quality_and_capacity": "NOT_RUN",
+    "requirements_and_external_contracts": "Unchanged; corresponding PowerShell verifiers not required"
+  }
+}

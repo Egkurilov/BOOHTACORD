@@ -64,6 +64,10 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
     await tester.pumpAndSettle();
 
+    expect(
+      find.text('${_PortraitApi.voiceChannel.name} · 2 участника'),
+      findsOneWidget,
+    );
     expect(created.participant.videoTrackPublications.single.track, isNull);
     expect(
       find.widgetWithText(OutlinedButton, 'Смотреть экран'),
@@ -1476,7 +1480,8 @@ void main() {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1440, 900);
     addTearDown(tester.view.reset);
-    final state = AppState(_PortraitApi());
+    final room = _PublishedScreenRoom();
+    final state = _PublishedScreenState(room);
     await state.initialize();
     state.selectedChannel = _PortraitApi.voiceChannel;
     state.voiceChannel = _PortraitApi.voiceChannel;
@@ -1492,14 +1497,40 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('В голосовом канале'), findsOneWidget);
+    expect(find.text('Голос подключён'), findsOneWidget);
+    expect(find.byIcon(Icons.headphones_outlined), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.text('Голос подключён')).style?.fontWeight,
+      FontWeight.w500,
+    );
+    expect(
+      find.text('${state.voiceChannel!.name} · 1 участник'),
+      findsOneWidget,
+    );
+    final dock = find.byKey(const ValueKey('voice-dock'));
+    expect(
+      find.descendant(
+        of: dock,
+        matching: find.byIcon(Icons.signal_cellular_alt_rounded),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: dock,
+        matching: find.bySemanticsLabel(
+          'Качество соединения: Нет данных · ping —',
+        ),
+      ),
+      findsOneWidget,
+    );
     expect(
       find.byWidgetPredicate(
         (widget) =>
             widget is Semantics &&
             widget.properties.liveRegion == true &&
             widget.properties.label ==
-                'В голосовом канале · ${state.voiceChannel!.name}',
+                'Голос подключён · ${state.voiceChannel!.name}',
       ),
       findsOneWidget,
     );
@@ -1518,10 +1549,7 @@ void main() {
       qualitySemantics.every((item) => item.properties.liveRegion != true),
       isTrue,
     );
-    expect(
-      find.text('Вы можете открыть другой канал: голос останется активным.'),
-      findsNothing,
-    );
+    expect(find.text('В голосовом канале'), findsNothing);
     final microphoneButton = tester.getSemantics(
       find.bySemanticsLabel('Выключить микрофон').first,
     );
@@ -1665,6 +1693,7 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
+    await tester.runAsync(() => room.dispose());
   });
 
   testWidgets('keeps voice controls in a compact bottom dock on Android', (
@@ -1698,7 +1727,7 @@ void main() {
       lessThan(24),
     );
     expect(
-      tester.getRect(find.text('В голосовом канале')).left,
+      tester.getRect(find.text('Голос подключён')).left,
       greaterThan(tester.getRect(dock).left + 32),
     );
     expect(find.byTooltip('Выключить микрофон'), findsOneWidget);

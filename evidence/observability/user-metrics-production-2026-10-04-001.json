@@ -1,0 +1,46 @@
+{
+  "id": "user-metrics-production-2026-10-04-001",
+  "kind": "production-verification",
+  "status": "PASS",
+  "implementation_revision": "5bcb1497de85d3e38062057991fafdc3ae3d59c6",
+  "deployed_revision": "fad8df852a0912215f70ec0182dea7379c44ff6f",
+  "production_confirmation": "Running voice-platform-api-1 image 0923948e7e00 has matching org.opencontainers.image.revision",
+  "delivery": {
+    "ci": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37215467022",
+    "signed_build": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37215467018",
+    "deploy": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37215846527",
+    "conclusions": "All successful; Build server backend, web, contracts and bundle jobs passed"
+  },
+  "dashboard": {
+    "url": "https://grafana.fa.shaneque.ru/d/boohtacord-runtime",
+    "uid": "boohtacord-runtime",
+    "items_including_rows_and_text": 49,
+    "publication": "Authenticated overwrite of existing UID; cards and initial graph series verified in Grafana",
+    "default_range": "6h",
+    "visual_verification_range": "15m to make the first samples visible",
+    "refresh": "30s"
+  },
+  "live_query_check": {
+    "checked_at_unix_seconds": 1791130388,
+    "instant_and_range_queries": 99,
+    "query_errors_or_non_finite_samples": 0,
+    "expected_empty_results": 5,
+    "empty_reason": "Yesterday DAU, absolute/percentage difference and yesterday graph instant/range queries require a complete prior collection day",
+    "unexpected_empty_results": 0
+  },
+  "observed": {
+    "registered_accounts": 17,
+    "registrations_today": 6,
+    "registrations_yesterday": 0,
+    "active_accounts_since_collection_started_today": 12,
+    "activity_write_failures": 0,
+    "collection_started_moscow": "2026-10-04T19:12:15+03:00",
+    "first_complete_previous_day_available_moscow": "2026-10-06T00:00:00+03:00"
+  },
+  "limitations": [
+    "Today DAU is partial because collection started during the day; it is not an online user count.",
+    "Historical DAU before collection is unknown; dashboard displays accumulation instead of invented zeroes.",
+    "Graph history begins at metric rollout; registration day counts are reconstructed from existing account timestamps.",
+    "No account/session IDs, credentials, usernames or content are exported or included in this receipt."
+  ]
+}

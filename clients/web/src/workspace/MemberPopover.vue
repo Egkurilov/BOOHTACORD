@@ -7,18 +7,29 @@ import { avatarInitials } from '../design/avatar_initials'
 import { focusMemberPopover } from './member_popover_focus'
 
 const props = defineProps<{ memberID: string; self: boolean; viewerRole: 'MEMBER' | 'ADMINISTRATOR'; sameVoice: boolean; volume: number; top: number; modal: boolean }>()
-const emit = defineEmits<{ close: []; openDM: [userID: string]; setVolume: [volume: number] }>()
+const emit = defineEmits<{ close: [restoreFocus?: boolean]; openDM: [userID: string]; setVolume: [volume: number] }>()
 const member = ref<GuildMember | null>(null); const loading = ref(true); const error = ref<string | null>(null); const status = ref<string | null>(null)
 const panel = ref<HTMLElement | null>(null)
 async function load(): Promise<void> { try { member.value = await loadMember(props.memberID) } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить профиль участника.' } finally { loading.value = false; await nextTick(); focusMemberPopover(panel.value, props.modal) } }
 function escape(event: KeyboardEvent): void { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); emit('close') } }
+function outsidePointer(event: PointerEvent): void {
+  if (panel.value && !event.composedPath().includes(panel.value)) emit('close', props.modal)
+}
 async function kick(): Promise<void> {
   if (!window.confirm('Отключить участника от голосового канала?')) return
   try { const result = await kickVoiceParticipant(props.memberID); status.value = result.revoked_leases ? 'Подключение отозвано.' : 'Активное голосовое подключение не найдено.' }
   catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось отключить участника.' }
 }
-onMounted(() => { document.addEventListener('keydown', escape); if (props.modal) panel.value?.focus(); void load() })
-onBeforeUnmount(() => document.removeEventListener('keydown', escape))
+onMounted(() => {
+  document.addEventListener('keydown', escape)
+  document.addEventListener('pointerdown', outsidePointer, true)
+  if (props.modal) panel.value?.focus()
+  void load()
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', escape)
+  document.removeEventListener('pointerdown', outsidePointer, true)
+})
 </script>
 
 <template>
