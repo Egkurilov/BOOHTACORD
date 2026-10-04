@@ -1,0 +1,13 @@
+/* Account footer uses the live realtime connection for its presence marker. */
+.user-footer-profile { min-height: 44px; gap: 10px; }
+.user-footer-identity { position: relative; display: block; width: 36px; height: 36px; flex: 0 0 36px; }
+.user-footer-avatar { font-size: 13px; }
+.user-footer-presence { position: absolute; right: -1px; bottom: 0; box-sizing: border-box; width: 14px; height: 14px; border: 2px solid var(--gc-sidebar); border-radius: 50%; background: var(--gc-success); }
+.user-footer-profile .username { gap: 0; }
+.user-footer-name { font-weight: 600; }
+.user-footer small { line-height: 16px; }
+.user-footer-settings { border-radius: 8px; }
+.user-footer-settings svg { stroke-width: 1.8; }
+@media (max-width: 720px) {
+  .sidebar.is-open .user-footer { border-top: 0; }
+}

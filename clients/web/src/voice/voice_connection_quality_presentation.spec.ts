@@ -37,6 +37,7 @@ describe('voice connection quality presentation', () => {
     }))
 
     expect(html).toContain('Качество соединения: Нет данных · ping —')
+    expect(html).toContain('voice-quality--unmeasured')
     expect(html).not.toContain('0 мс')
   })
 })

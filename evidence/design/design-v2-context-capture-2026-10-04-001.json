@@ -1,0 +1,18 @@
+{
+  "id": "design-v2-context-capture-2026-10-04-001",
+  "task": "T-050",
+  "status": "PASS",
+  "scope": "R24 real category menu capture; QA-only change",
+  "product_commit": "f9cdad74410ab4949a091c7ef148f57b04d81165",
+  "checks": [
+    "Actual heading right-click opens menu before screenshot",
+    "Four actions present; deletion disabled for nonempty category",
+    "Create channel opens real Vue form",
+    "No page errors",
+    "All 29 reference SHA-256 and dimensions verified"
+  ],
+  "r24_mae": 2.188,
+  "placement": "Actual menu (255,237); immutable PNG (255,235). No alignment/masking.",
+  "artifacts": "C:\\Users\\egkur\\.codex\\visualizations\\2026\\10\\03\\01a1013e-bbb8-7052-94a3-88cb0dd3fc54\\design-v2-current-f9cdad74",
+  "limitations": "Not full 1:1 acceptance. Real ACL/server/media are outside fixture verification."
+}

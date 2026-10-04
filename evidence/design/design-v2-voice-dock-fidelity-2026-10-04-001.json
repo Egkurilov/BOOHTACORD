@@ -1,0 +1,57 @@
+{
+  "id": "design-v2-voice-dock-fidelity-2026-10-04-001",
+  "task": "T-050",
+  "status": "PASS",
+  "base_commit": "7ae34536",
+  "scope": "VoiceDock and WorkspaceUserFooter presentation",
+  "checks": [
+    "28 actual/source element geometries within 0.02px",
+    "298 Vitest files / 945 tests PASS",
+    "TypeScript/Vite build PASS",
+    "Component interaction browser matrix 1440/390/320 PASS",
+    "Real profile/audio transitions preserve connected voice session",
+    "Reference files unchanged; raw pixel diffs recorded"
+  ],
+  "metrics": [
+    {
+      "screen": "R01",
+      "source_geometry_elements": 14,
+      "errors": [],
+      "interactions": [
+        "real-profile-panel",
+        "real-audio-settings-panel",
+        "voice-session-preserved"
+      ],
+      "before": {
+        "full_mae": 1.8124830246913581,
+        "footer_mae": 7.323266264798523
+      },
+      "after": {
+        "full_mae": 1.6039169238683129,
+        "footer_mae": 1.8186502117953731
+      },
+      "reference_sha256": "57e2fd413fca034b2ad629cd4d9a0078b66b51e0372440557e2a99f538fbe5da"
+    },
+    {
+      "screen": "R14",
+      "source_geometry_elements": 14,
+      "errors": [],
+      "interactions": [
+        "real-profile-panel",
+        "real-audio-settings-panel",
+        "voice-session-preserved"
+      ],
+      "before": {
+        "full_mae": 1.7508273585287804,
+        "footer_mae": 4.4802734375
+      },
+      "after": {
+        "full_mae": 1.2568446955887713,
+        "footer_mae": 1.5932114109848485
+      },
+      "reference_sha256": "7a93fe6451ab0c134a12b7130907f28f0d6b15bfd274f45f3ba86956eff2358a"
+    }
+  ],
+  "artifacts": "C:\\Users\\egkur\\.codex\\visualizations\\2026\\10\\03\\01a1013e-bbb8-7052-94a3-88cb0dd3fc54\\design-v2-voice-dock-2026-10-04",
+  "limitations": "No physical media/ACL acceptance. Full visual goal remains active."
+}
