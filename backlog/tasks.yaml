@@ -118,6 +118,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]
     depends_on: [FV2-007, T-040, T-041, T-050, T-051]
     evidence: [flutter-reply-composer-geometry-tests, flutter-full-suite, android-debug-build, macos-debug-build]
+  - id: FV2-017
+    title: Flutter Design V2 guild navigation header, search, tabs and footer
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-DM-01]
+    depends_on: [FV2-001, FV2-007, T-040, T-041, T-050, T-051]
+    evidence: [flutter-navigation-top-geometry-tests, flutter-full-suite, android-debug-build, platform-navigation-visual-acceptance]
   - id: FV2-002
     title: Flutter Design V2 workspace shell, text chat and direct messages
     requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]

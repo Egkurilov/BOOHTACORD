@@ -20,6 +20,7 @@ import '../services/voice_participant_presentation.dart';
 import '../services/screen_thumbnail.dart';
 import '../features/voice/screen_viewer/audio_publication.dart';
 import '../features/voice/screen_viewer/audio_controls.dart';
+import '../features/workspace/mobile_navigation/top.dart';
 import '../widgets/topology_actions/buttons.dart';
 import '../widgets/topology_actions/delete_actions.dart';
 import '../widgets/authenticated_avatar.dart';
@@ -853,61 +854,15 @@ class _Sidebar extends StatelessWidget {
     color: GcColors.sidebar,
     child: Column(
       children: [
-        SizedBox(
-          key: const ValueKey('workspace-sidebar-guild-header'),
-          height: GcLayout.headerHeight,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const _GuildMark(),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Моя гильдия',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Поиск сообщений',
-                  focusNode: searchFocusNode,
-                  onPressed: onSearch ?? state.openSearchPanel,
-                  icon: const Icon(Icons.search),
-                ),
-                if (onClose != null)
-                  IconButton(
-                    tooltip: 'Закрыть навигацию',
-                    onPressed: onClose,
-                    icon: const Icon(Icons.close),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: _Tab(
-                  label: 'Каналы',
-                  selected:
-                      state.navigationSection == NavigationSection.channels,
-                  onTap: state.showChannels,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: _Tab(
-                  label: 'Личные',
-                  selected:
-                      state.navigationSection ==
-                      NavigationSection.directMessages,
-                  onTap: state.showDirectMessages,
-                ),
-              ),
-            ],
-          ),
+        WorkspaceNavigationTop(
+          memberCount: state.members.isEmpty ? null : state.members.length,
+          channelsSelected:
+              state.navigationSection == NavigationSection.channels,
+          onSearch: onSearch ?? state.openSearchPanel,
+          onChannels: state.showChannels,
+          onDirectMessages: state.showDirectMessages,
+          onClose: onClose,
+          searchFocusNode: searchFocusNode,
         ),
         const Divider(height: 1),
         Expanded(
@@ -950,57 +905,6 @@ class _Sidebar extends StatelessWidget {
         const Divider(height: 1),
         _UserFooter(state: state, onNavigate: onClose),
       ],
-    ),
-  );
-}
-
-class _GuildMark extends StatelessWidget {
-  const _GuildMark();
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 34,
-    height: 34,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: GcColors.raised,
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: const Text(
-      'G',
-      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-    ),
-  );
-}
-
-class _Tab extends StatelessWidget {
-  const _Tab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => Material(
-    color: selected ? GcColors.selected : Colors.transparent,
-    borderRadius: BorderRadius.circular(6),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: SizedBox(
-        height: 36,
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: selected ? GcColors.text : GcColors.muted,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
     ),
   );
 }
@@ -7035,7 +6939,7 @@ class _UserFooter extends StatelessWidget {
   final VoidCallback? onNavigate;
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: 68,
+    height: GcLayout.userFooterHeight,
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
