@@ -129,13 +129,14 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
+                          Text(
                             'На своём сервере · одна гильдия',
                             style: TextStyle(
                               color: GcColors.muted,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              height: 16 / 12,
+                              fontSize: constraints.maxWidth <= 720 ? 16 : 18,
+                              fontWeight: FontWeight.w700,
+                              height:
+                                  24 / (constraints.maxWidth <= 720 ? 16 : 18),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -143,7 +144,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             'Voice Platform',
                             style: TextStyle(
                               fontSize: 24,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               height: 32 / 24,
                             ),
                           ),
@@ -257,6 +258,9 @@ class _AuthScreenState extends State<AuthScreen> {
                                     : _register
                                     ? 'Создать аккаунт'
                                     : 'Войти',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ),

@@ -173,8 +173,12 @@ FV2-011 aligns the viewer mute/gain controls and percentage: desktop toolbar row
 slider available on compact Android even though web hides it there, preserving
 the requested mobile volume adjustment. Deafen and audio-state ownership are
 unchanged — [QA-244](../evidence/flutter/qa244-flutter-design-v2-screen-audio-controls-2026-10-04-001.json).
-Web commit `bfeee4f5` also revealed an auth typography follow-up (mobile eyebrow,
-heading weight, and submit weight), tracked as FV2-015.
+FV2-015 now sets the auth eyebrow to 16 px at compact widths and 18 px on
+desktop, the title to weight 600, and the submit label to weight 500, matching
+the current web presentation. A focused widget regression was added, but the
+Windows checkout has no Flutter SDK, so the test, analyzer, builds and native
+screenshots still need a Flutter host before the leaf can close —
+[QA-246](../evidence/flutter/qa246-flutter-design-v2-auth-typography-2026-10-04-001.json).
 The member directory review also found that Flutter has no count, name/login
 search, or role filter where web has them; this independent functional gap is
 tracked as FV2-016.

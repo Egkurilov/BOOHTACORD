@@ -1,0 +1,25 @@
+{
+  "id": "QA-246",
+  "date": "2026-10-04",
+  "task": "FV2-015 — Flutter Design V2 authentication typography",
+  "summary": "Aligned compact and desktop eyebrow sizes, heading weight, and submit label weight with the current web styles. Authentication handlers, validation, registration, and server selection were unchanged.",
+  "checks": [
+    {
+      "name": "Focused Flutter widget test",
+      "command": "cd clients/flutter && flutter test --no-pub test/auth_typography_v2_test.dart",
+      "result": "NOT_RUN",
+      "observation": "The Windows host reports that flutter is not recognized. Ubuntu WSL and common local SDK paths also have no Flutter binary."
+    },
+    {
+      "name": "Flutter analyzer, full suite, Android/macOS/Windows builds and actual screens",
+      "result": "NOT_RUN",
+      "observation": "Requires a Flutter SDK and suitable platform hosts. No pixel-perfect or runtime acceptance claim is made."
+    },
+    {
+      "name": "Diff hygiene",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "status": "IMPLEMENTED_PENDING_FLUTTER_VERIFICATION"
+}
