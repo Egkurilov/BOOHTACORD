@@ -189,7 +189,7 @@ if (referenceFixture && state === 'chat') {
   }
 }
 if (state === 'chat' && (await Promise.all((await page.locator('dialog:not([open])').all()).map((dialog) => dialog.isVisible()))).some(Boolean)) throw new Error('Closed native dialog is visibly rendered')
-await page.mouse.move(width - 2, 55)
+await page.mouse.move(width - 2, 55); if (state === 'chat') await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur() })
 if (screenshotPath) await page.screenshot({ path: screenshotPath, animations: 'disabled' })
 const { boxes, styles, composerChildren } = await measureDom(page)
 const interactions = []
