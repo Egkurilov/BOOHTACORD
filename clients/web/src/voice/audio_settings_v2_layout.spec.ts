@@ -39,4 +39,20 @@ describe('Design V2 audio settings', () => {
   it('matches the handoff medium weight for device labels', () => {
     expect(presentation).toMatch(/\.audio-device-section label \{[^}]*font-weight: 500;/)
   })
+
+  it('allows cards to grow for PTT assignment and device feedback', () => {
+    expect(presentation).toContain('height: max-content; min-height: 282px;')
+    expect(presentation).toContain('height: max-content; min-height: 164px;')
+    expect(presentation).toContain('min-height: 402px;')
+    expect(presentation).toContain('min-height: 152px;')
+  })
+
+  it('removes native checkbox margins and uses the reference inactive switch color', () => {
+    expect(presentation).toMatch(/input\[role=switch\] \{[^}]*margin: 0;/)
+    expect(presentation).toMatch(/input\[role=switch\] \{[^}]*background: var\(--gc-border-control\);/)
+  })
+
+  it('keeps checkbox row labels at the same body size as button row labels', () => {
+    expect(presentation).toMatch(/\.workspace-main-panel--audio \.audio-processing-row \{[^}]*color: var\(--gc-text-primary\);[^}]*font-size: 14px;/)
+  })
 })
