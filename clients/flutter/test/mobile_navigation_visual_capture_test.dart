@@ -30,8 +30,9 @@ void main() {
         '$flutterRoot/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
       );
       expect(iconFont.existsSync(), isTrue);
+      final iconBytes = iconFont.readAsBytesSync();
       await (FontLoader('MaterialIcons')
-            ..addFont(iconFont.readAsBytes().then(ByteData.sublistView)))
+            ..addFont(Future.value(ByteData.sublistView(iconBytes))))
           .load();
     }
     const captureKey = ValueKey('navigation-visual-capture');
