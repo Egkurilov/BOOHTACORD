@@ -77,7 +77,7 @@ The live package supplies 30 HTML pages and `src/frames.json`. The actual `AGENT
 | R08–R09, R24, R29 | `ChannelTopologyActions`, channel/category dialog, confirmation/context controls | Create dialogs and destructive confirmation match; permission filtering and API handlers preserved |
 | R10–R11 | `AudioSettings`, audio device check and activation controls | Desktop/mobile audio settings layouts match; device/controller flows remain connected |
 | R12 | `ProfileSettings` | Controls calibrated against HTML; card PNG MAE 0.571, full frame 2.095; strict 1:1 remains open |
-| R13 | `WorkspaceSearchPanel` | Search panel matches without changing conversation/member data owners |
+| R13 | `WorkspaceSearchPanel` / `SearchPanel` | Search area MAE 0.031 against live HTML / 1.173 against PNG; current scope/open handlers and selected media preserved |
 | R14, R18 | `WorkspaceApp` drawers, `WorkspaceMembersPanel`, `MemberPopover` | Mobile drawer and production member popover match |
 | R15 | Existing shared controls distributed across production components | Reference-only catalog; canonical tokens/shared control styles validated against the real component system |
 | R16–R17 | `AuthenticationLanding`, `PasswordResetCompletion` | Desktop/mobile auth card bounds match; registration remains open per the approved product brief |
@@ -111,3 +111,9 @@ The live package supplies 30 HTML pages and `src/frames.json`. The actual `AGENT
 - [x] Run profile native tests (2 files/9 tests), full Web tests (297 files/940 tests), TypeScript/Vite build and diff whitespace check.
 - [x] Freeze reference hash and store actual/diff/metrics in `design-v2-profile-controls-2026-10-04/REVIEW.md` under the task visualization directory.
 - Remaining: strict full-frame visual acceptance; card MAE 5.342 → 0.571 and full frame 3.582 → 2.095 are improvements, not exact equality.
+
+## Search presentation packet — 2026-10-04
+
+- [x] Route `small_direct`: calibrate `SearchPanel.vue`, `WorkspaceSearchPanel.vue` and `design_v2_search_presentation.css` against measured R13 HTML before edits.
+- [x] Apply token colors, source SVG/metadata/avatar/highlight styles; override leaking `.members p` typography; align desktop/mobile boxes and preserve 44 px mobile interaction areas.
+- [x] Verify search scope, result opening, mobile label focus and selected media through browser/native checks; store unchanged-reference actual/diff and HTML control in `design-v2-search-controls-2026-10-04/REVIEW.md`.

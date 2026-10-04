@@ -16,8 +16,8 @@ let openSequence = 0
 const selectedDirectMessage = computed(() => directMessageStore.directMessages.find((item) => item.id === directMessageStore.directMessageId) ?? null)
 const currentConversation = computed(() => selectedDirectMessage.value
   ? { id: selectedDirectMessage.value.id, kind: 'DIRECT_MESSAGE' as const, label: selectedDirectMessage.value.otherParticipantDisplayName }
-  : voice.selectedChannel.value?.kind === 'TEXT' ? { id: voice.selectedChannel.value.id, kind: 'CHANNEL' as const, label: `# ${voice.selectedChannel.value.name}` } : null)
-const channelLabels = computed(() => Object.fromEntries((voice.topologyStore.topology?.categories ?? []).flatMap((category) => category.channels.filter((channel) => channel.kind === 'TEXT').map((channel) => [channel.id, `# ${channel.name}`]))))
+  : voice.selectedChannel.value?.kind === 'TEXT' ? { id: voice.selectedChannel.value.id, kind: 'CHANNEL' as const, label: `#${voice.selectedChannel.value.name}` } : null)
+const channelLabels = computed(() => Object.fromEntries((voice.topologyStore.topology?.categories ?? []).flatMap((category) => category.channels.filter((channel) => channel.kind === 'TEXT').map((channel) => [channel.id, `#${channel.name}`]))))
 const directMessageLabels = computed(() => Object.fromEntries(directMessageStore.directMessages.map((item) => [item.id, item.otherParticipantDisplayName])))
 async function open(message: SearchMessage): Promise<void> {
   const sequence = ++openSequence
