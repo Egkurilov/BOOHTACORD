@@ -7,6 +7,7 @@ extension VoiceMicrophoneMode on VoiceController {
     if (!active(ticket, revision)) return;
     if (audioActivationMode == next) return;
     final previous = audioActivationMode;
+    audio.microphoneVad = next == AudioActivationMode.vad;
     if (next == AudioActivationMode.ptt) {
       microphoneMutedBeforePtt = microphoneMuted;
       audioActivationMode = next;
@@ -38,6 +39,7 @@ extension VoiceMicrophoneMode on VoiceController {
     } catch (cause) {
       if (!active(ticket, revision)) return;
       audioActivationMode = previous;
+      audio.microphoneVad = previous == AudioActivationMode.vad;
       audioActivationError =
           'Не удалось сохранить режим микрофона: ${cause.runtimeType}.';
       if (room != null) {

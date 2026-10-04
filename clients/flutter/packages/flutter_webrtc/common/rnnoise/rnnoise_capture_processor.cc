@@ -26,13 +26,19 @@ void RnnoiseCaptureProcessor::SetEngine(Engine engine) {
   Reset();
 }
 void RnnoiseCaptureProcessor::Reset() {
+  controls.Reset();
   generation_.fetch_add(1);
   failure_.store(state_ ? Failure::kAwaitingAudio : Failure::kUnavailable);
 }
 void RnnoiseCaptureProcessor::Initialize(int rate, int channels) {
-  rate_.store(rate); channels_.store(channels); Reset();
+  rate_.store(rate); channels_.store(channels); controls.Initialize(rate, channels); Reset();
 }
 bool RnnoiseCaptureProcessor::Process(float* pcm, int frames, int capacity) {
+  const bool processed = ProcessNoise(pcm, frames, capacity);
+  controls.Process(pcm, frames, capacity);
+  return processed;
+}
+bool RnnoiseCaptureProcessor::ProcessNoise(float* pcm, int frames, int capacity) {
   const auto generation = generation_.load();
   if (generation != applied_generation_) {
     if (state_) rnnoise_init(state_);

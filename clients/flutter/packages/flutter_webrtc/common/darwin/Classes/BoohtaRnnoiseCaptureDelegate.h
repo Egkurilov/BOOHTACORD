@@ -6,6 +6,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface BoohtaRnnoiseCaptureDelegate : NSObject <ExternalAudioProcessingDelegate>
 - (BOOL)setEngine:(NSString*)engine;
 - (NSDictionary*)state;
+- (void)setControls:(NSDictionary*)settings;
+- (NSDictionary*)controlsState;
 - (void)resetState;
 @end
 NS_ASSUME_NONNULL_END

@@ -413,6 +413,13 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
 
     final AnyThreadResult result = new AnyThreadResult(notSafeResult);
     switch (call.method) {
+      case "setMicrophoneControls":
+      case "getMicrophoneControlsState": {
+        if (rnnoiseCapture == null) { result.error("microphone_not_initialized", "WebRTC must initialize first", null); break; }
+        if (call.method.equals("setMicrophoneControls")) rnnoiseCapture.setControls(call.arguments());
+        result.success(rnnoiseCapture.controlsState());
+        break;
+      }
       case "setNoiseSuppressionEngine":
       case "getNoiseSuppressionState":
       case "resetNoiseSuppression": {

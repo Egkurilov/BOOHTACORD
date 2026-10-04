@@ -1,6 +1,7 @@
 #ifndef BOOHTA_RNNOISE_CAPTURE_PROCESSOR_H_
 #define BOOHTA_RNNOISE_CAPTURE_PROCESSOR_H_
 #include <atomic>
+#include "microphone_controls/processor.h"
 #include <cstdint>
 #include <cstdlib>
 extern "C" {
@@ -30,7 +31,9 @@ class RnnoiseCaptureProcessor {
   int sample_rate() const { return rate_.load(); }
   int channels() const { return channels_.load(); }
   bool supported() const { return state_ != nullptr; }
+  MicrophoneControls controls;
  private:
+  bool ProcessNoise(float* pcm, int frames, int capacity);
   DenoiseState* state_;
   std::atomic<Engine> requested_{Engine::kBrowser};
   std::atomic<Failure> failure_{Failure::kAwaitingAudio};

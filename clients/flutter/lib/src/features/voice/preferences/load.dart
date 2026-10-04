@@ -17,6 +17,7 @@ extension VoicePreferencesLoad on VoiceController {
     audioActivationMode = preferences.activationMode == 'PTT'
         ? AudioActivationMode.ptt
         : AudioActivationMode.vad;
+    audio.microphoneVad = audioActivationMode == AudioActivationMode.vad;
     pushToTalkKeyId = preferences.pttKeyId;
     pushToTalkKeyLabel = preferences.pttKeyLabel;
     microphoneShortcut = preferences.microphoneShortcut?.isValid == true

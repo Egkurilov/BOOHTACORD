@@ -1,5 +1,8 @@
 #include "flutter_webrtc.h"
 #include "flutter_data_channel.h"
+#ifdef _WIN32
+#include "microphone_controls/dispatch.h"
+#endif
 
 #include "flutter_webrtc/flutter_web_r_t_c_plugin.h"
 
@@ -46,6 +49,7 @@ void FlutterWebRTC::HandleMethodCall(
   // initialize() with options, fall back to the default field trials.
   EnsureWebRTCInitialized();
 #ifdef _WIN32
+  if (HandleMicrophoneControls(method_call, result.get(), rnnoise_capture_->processor)) return;
   const auto& noise_method = method_call.method_name();
   if (noise_method == "setNoiseSuppressionEngine" ||
       noise_method == "getNoiseSuppressionState" ||

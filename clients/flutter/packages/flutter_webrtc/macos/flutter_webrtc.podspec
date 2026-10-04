@@ -12,7 +12,7 @@ A new flutter plugin project.
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'CloudWebRTC' => 'duanweiwei1982@gmail.com' }
   s.source           = { :path => '.' }
-  s.source_files     = 'flutter_webrtc/Sources/flutter_webrtc/**/*.{h,m,mm}', '../common/rnnoise/rnnoise_capture_processor.{h,cc}', '../common/rnnoise/public_include/*.h', '../common/rnnoise/upstream/include/*.h', '../common/rnnoise/upstream/src/*.{h,c}'
+  s.source_files     = 'flutter_webrtc/Sources/flutter_webrtc/**/*.{h,m,mm}', '../common/rnnoise/rnnoise_capture_processor.{h,cc}', '../common/rnnoise/microphone_controls/processor.{h,cc}', '../common/rnnoise/public_include/*.h', '../common/rnnoise/upstream/include/*.h', '../common/rnnoise/upstream/src/*.{h,c}'
   s.public_header_files = 'flutter_webrtc/Sources/flutter_webrtc/include/flutter_webrtc/**/*.h'
 
   s.dependency 'FlutterMacOS'

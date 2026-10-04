@@ -8,6 +8,7 @@ import '../../../services/native_noise_suppression.dart';
 import '../../../services/voice_audio_config.dart';
 import '../../../core/session/scope.dart';
 import 'platform.dart';
+import '../microphone_controls/native.dart';
 
 abstract class AudioDeviceState extends ChangeNotifier {
   AudioDeviceState({
@@ -18,6 +19,8 @@ abstract class AudioDeviceState extends ChangeNotifier {
   }) : scope = scope ?? SessionScope(),
        loader = loader ?? enumerateAudioDevices;
   final SessionScope scope;
+  final nativeMicrophone = NativeMicrophoneControls();
+  bool microphoneVad = true;
   final nativeNoise = NativeNoiseSuppression();
   int nativeRecoveryRevision = 0;
   bool microphoneMutedIntent = true;
@@ -46,6 +49,7 @@ abstract class AudioDeviceState extends ChangeNotifier {
     deviceRevision++;
     nativeRecoveryRevision++;
     nativeNoise.cancel();
+    unawaited(nativeMicrophone.clear());
     microphoneMutedIntent = true;
     captureNoiseOverride = null;
     audioDevicesLoading = false;
@@ -62,6 +66,7 @@ abstract class AudioDeviceState extends ChangeNotifier {
     audioProcessing = const AudioProcessingPreferences();
   }
 
+  Future<void> applyMicrophoneControls({bool? agc});
   Future<void> refreshAudioDevices();
   void applyAudioDevices(List<MediaDevice> devices);
   Future<void> applyAndroidAdditions(
@@ -85,6 +90,7 @@ abstract class AudioDeviceState extends ChangeNotifier {
   void dispose() {
     isDisposed = true;
     nativeNoise.dispose();
+    nativeMicrophone.dispose();
     deviceRevision++;
     unawaited(subscription?.cancel());
     subscription = null;

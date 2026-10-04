@@ -475,6 +475,13 @@ static void FlutterWebRTCApplyFieldTrials(void) {
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
+  if ([@"setMicrophoneControls" isEqualToString:call.method] ||
+      [@"getMicrophoneControlsState" isEqualToString:call.method]) {
+    BoohtaRnnoiseCaptureDelegate* processor = _audioManager.rnnoiseCaptureDelegate;
+    if ([@"setMicrophoneControls" isEqualToString:call.method]) [processor setControls:call.arguments];
+    result([processor controlsState]);
+    return;
+  }
   if ([@"setNoiseSuppressionEngine" isEqualToString:call.method] ||
       [@"getNoiseSuppressionState" isEqualToString:call.method] ||
       [@"resetNoiseSuppression" isEqualToString:call.method]) {

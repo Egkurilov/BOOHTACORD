@@ -19,6 +19,7 @@ extension VoiceConnectionCloseLeave on VoiceController {
     final pending = pendingRoom;
     final lease = leaseId;
     audio.nativeNoise.cancel();
+    audio.nativeMicrophone.pause();
     audio.microphoneMutedIntent = true;
     final stopScreen = screen.stopScreenShare();
     room = null;
@@ -39,6 +40,7 @@ extension VoiceConnectionCloseLeave on VoiceController {
     try {
       await AndroidAudioDevices.clearNativeOutput();
     } catch (_) {}
+    await audio.nativeMicrophone.clear();
     await disposeVoiceEvents();
     if (lease != null && ticket.isCurrent) {
       try {
