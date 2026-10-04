@@ -53,5 +53,6 @@
     }
   ],
   "artifacts": "C:\\Users\\egkur\\.codex\\visualizations\\2026\\10\\03\\01a1013e-bbb8-7052-94a3-88cb0dd3fc54\\design-v2-voice-dock-2026-10-04",
-  "limitations": "No physical media/ACL acceptance. Full visual goal remains active."
+  "limitations": "No physical media/ACL acceptance. Full visual goal remains active.",
+  "follow_up": "Full recapture found compact mobile microphone background regression; failing browser assertion added, styles scoped to full dock and assertion passed at 320/390."
 }
