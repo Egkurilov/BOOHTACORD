@@ -8,27 +8,27 @@
     {
       "name": "R01 desktop 1440x900",
       "result": "PASS",
-      "observation": "Real Vue application with deterministic API fixture and protected preview; page errors 0. Reference SHA256 57e2fd413fca034b2ad629cd4d9a0078b66b51e0372440557e2a99f538fbe5da unchanged. Actual SHA256 019f59ecddae0c2a22df4c6b27e2eee5c2158bd075ccfe99a29756793b818a45. RGB MAE 3.477; 4.81% of pixels have a channel difference greater than 16."
+      "observation": "Real Vue application with normalized six-member, three-category API fixture and protected preview; page errors 0. Reference SHA256 57e2fd413fca034b2ad629cd4d9a0078b66b51e0372440557e2a99f538fbe5da unchanged. Actual SHA256 2caf631be2f50e345feb93e3740d2a3611d64941679b5cf2910e3b2a4e59cf29. RGB MAE 3.579; 4.92% of pixels have a channel difference greater than 16."
     },
     {
       "name": "R02 mobile 390x844",
       "result": "PASS",
-      "observation": "Real Vue application with deterministic API fixture and protected preview; page errors 0; no action disclosure remained open. Reference SHA256 6aadf9a1f00acb7d2af9cc0c13d2744af562a981a22360d796bcc9a8c3e4a884 unchanged. Actual SHA256 aca9056694e7665bee995b613cd67cb3b6a34efabeaf33965f72f03133bfff17. RGB MAE 4.047; 5.83% of pixels have a channel difference greater than 16."
+      "observation": "Real Vue application with normalized six-member, three-category API fixture and protected preview; page errors 0; no action disclosure remained open. Reference SHA256 6aadf9a1f00acb7d2af9cc0c13d2744af562a981a22360d796bcc9a8c3e4a884 unchanged. Actual SHA256 70d90e1735e0696723c4049c68dcf11c09eb557006194c90625a1dff6d8ea88d. RGB MAE 4.046; 5.83% of pixels have a channel difference greater than 16."
     },
     {
       "name": "R03 tablet 1024x768",
       "result": "PASS",
-      "observation": "Real Vue application with deterministic API fixture and protected preview; page errors 0. Reference SHA256 766c918bcdcc8bebcd82164fc1dd6859f28a6cf0f36fb4c1bb4bec5692a13546 unchanged. Actual SHA256 94925341ffe580c6b3bd6c0e9d68bc18988edb943a516a896dfe44c98d6874dd. RGB MAE 4.730; 6.33% of pixels have a channel difference greater than 16."
+      "observation": "Real Vue application with normalized six-member, three-category API fixture and protected preview; page errors 0. Reference SHA256 766c918bcdcc8bebcd82164fc1dd6859f28a6cf0f36fb4c1bb4bec5692a13546 unchanged. Actual SHA256 4a5353ab99c7461be5eefd8f43fbd562c8b512c42204bb81c70abce55b219d17. RGB MAE 4.715; 6.34% of pixels have a channel difference greater than 16."
     },
     {
       "name": "Web native checks",
       "result": "PASS",
-      "observation": "Focused attachment test 2/2; full Vitest 288 files, 910 tests; vue-tsc and Vite build passed. Documentation link verifier passed 287 documents after updating the moved component link."
+      "observation": "Focused attachment test 2/2; full Vitest 288 files, 910 tests; vue-tsc and Vite build passed. Documentation link verifier passed 287 documents after updating the moved component link. Linux CI https://github.com/Egkurilov/BOOHTACORD/actions/runs/37189713283 passed."
     },
     {
       "name": "Live media, server ACL and strict visual identity",
       "result": "NOT_RUN",
-      "observation": "Synthetic visual fixture does not exercise LiveKit transport or server ACL. The source handoff includes four visible voice participants but the fixture has one measured participant. Reference mention highlight lacks an entity ID in fixture. Pixel differences remain; strict one-to-one acceptance is open."
+      "observation": "Synthetic visual fixture does not exercise LiveKit transport or server ACL. The source handoff includes four visible voice participants but the LiveKit-facing test store has one measured participant; the normalized roster API response cannot replace active media state. Reference mention highlight lacks an entity ID in fixture. Pixel differences remain; strict one-to-one acceptance is open."
     }
   ]
 }
