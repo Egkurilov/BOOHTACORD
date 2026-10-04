@@ -9,7 +9,7 @@ import type { NoiseSuppressionMode } from './noise_suppression/types'
 import type { AudioProcessingOptions } from './livekit_gateway'
 import AudioDeviceCheck from './AudioDeviceCheck.vue'
 import StreamStartSoundSetting from './StreamStartSoundSetting.vue'
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
   activationError: string | null
@@ -22,6 +22,9 @@ const props = defineProps<{
   state: AudioSettingsState
   connected: boolean
   microphoneTrack?: MediaStreamTrack
+  inputDeviceId?: string
+  inputWarning?: string | null
+  inputSwitching?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -33,19 +36,15 @@ const emit = defineEmits<{
 }>()
 const recordingPttKey = ref(false)
 const entry = ref<HTMLElement | null>(null)
-const selectedInput = ref('default')
+const selectedInput = computed(() => props.inputDeviceId ?? 'default')
 const selectedOutput = ref('default')
 const deviceWarning = ref('')
 const lastNoiseMode = ref<NoiseSuppressionMode>(props.processing.noiseSuppressionMode === 'off' ? 'browser' : props.processing.noiseSuppressionMode)
 let focusFrame: number | null = null
 function refreshDevices(): void { emit('load') }
-onMounted(() => { focusFrame = window.requestAnimationFrame(() => entry.value?.focus()); refreshDevices(); navigator.mediaDevices?.addEventListener?.('devicechange', refreshDevices) })
-onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(focusFrame); navigator.mediaDevices?.removeEventListener?.('devicechange', refreshDevices) })
+onMounted(() => { focusFrame = window.requestAnimationFrame(() => entry.value?.focus()); refreshDevices() })
+onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(focusFrame) })
 watch(() => props.devices, ({ inputs, outputs }) => {
-  if (inputs.length && !inputs.some(({ id }) => id === selectedInput.value)) {
-    if (selectedInput.value !== 'default') deviceWarning.value = 'Выбранный микрофон отключён. Выберите доступное устройство и проверьте звук.'
-    selectedInput.value = inputs[0].id
-  }
   if (outputs.length && !outputs.some(({ id }) => id === selectedOutput.value)) {
     if (selectedOutput.value !== 'default') deviceWarning.value = 'Выбранный динамик отключён. Выберите доступное устройство и проверьте звук.'
     selectedOutput.value = outputs[0].id
@@ -54,10 +53,9 @@ watch(() => props.devices, ({ inputs, outputs }) => {
 
 function choose(kind: AudioDeviceKind, event: Event): void {
   const id = (event.target as HTMLSelectElement).value
-  if (kind === 'audioinput') selectedInput.value = id
-  else selectedOutput.value = id
+  if (kind === 'audiooutput') selectedOutput.value = id
   deviceWarning.value = ''
-  if (props.connected) emit('select', kind, id)
+  if (kind === 'audioinput' || props.connected) emit('select', kind, id)
 }
 
 function capturePttKey(event: KeyboardEvent): void {
@@ -80,7 +78,8 @@ function toggleNoise(): void { emit('setProcessing', { ...props.processing, nois
     <div class="audio-settings-panel">
       <section class="audio-device-section"><header><h2>Устройства</h2><p>Настройки действуют на этом устройстве.</p></header>
         <template v-if="state === 'READY'">
-          <label>Микрофон<select :value="selectedInput" @change="choose('audioinput', $event)"><option v-for="device in devices.inputs" :key="device.id" :value="device.id">{{ device.label }}</option></select></label>
+          <label>Микрофон<select :value="selectedInput" :disabled="inputSwitching" @change="choose('audioinput', $event)"><option v-if="!devices.inputs.some(device => device.id === 'default')" value="default">Системный микрофон</option><option v-if="selectedInput !== 'default' && !devices.inputs.some(device => device.id === selectedInput)" :value="selectedInput" disabled>Выбранный микрофон недоступен</option><option v-for="device in devices.inputs" :key="device.id" :value="device.id">{{ device.label }}</option></select></label>
+          <p v-if="inputSwitching" role="status">Переключаем микрофон…</p><p v-else-if="inputWarning" class="state state-error" role="status">{{ inputWarning }}</p>
           <label>Наушники или динамики<select :value="selectedOutput" @change="choose('audiooutput', $event)"><option v-for="device in devices.outputs" :key="device.id" :value="device.id">{{ device.label }}</option></select></label>
           <AudioDeviceCheck :input-id="selectedInput" :output-id="selectedOutput" :processing="processing" :connected="connected" :microphone-track="microphoneTrack" />
         </template>

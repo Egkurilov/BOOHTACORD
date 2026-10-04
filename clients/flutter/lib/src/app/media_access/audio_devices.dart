@@ -56,8 +56,21 @@ mixin AppAudioDevicesAccess on AppOwners {
 
   Future<void> refreshAudioDevices() => audioDevices.refreshAudioDevices();
 
-  Future<void> selectAudioInput(String deviceId) =>
-      audioDevices.selectAudioInput(deviceId);
+  Future<void> selectAudioInput(String deviceId) async {
+    final target = voice.room;
+    await audioDevices.selectAudioInput(deviceId);
+    if (target == null || !identical(target, voice.room)) return;
+    final track = target.localParticipant
+        ?.getTrackPublicationBySource(TrackSource.microphone)
+        ?.track;
+    if (audioSettingsError != null && track is LocalAudioTrack && track.muted) {
+      voice.microphoneMuted = true;
+      if (audioDevices.nativeNoise.state.status == 'error') {
+        voice.microphoneUnavailable = true;
+      }
+      voice.notifyListeners();
+    }
+  }
 
   Future<void> selectAudioOutput(String deviceId) =>
       audioDevices.selectAudioOutput(deviceId);

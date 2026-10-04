@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
+
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
 
 typedef TraceSender = Future<void> Function(Uint8List body);
@@ -8,6 +10,26 @@ class ClientTelemetry {
   ClientTelemetry._();
 
   static bool enabled = false;
+  static void audioInputSwitch(String phase, String result) {
+    if (!enabled ||
+        !{'prejoin', 'active', 'reconnect'}.contains(phase) ||
+        !{'success', 'fallback', 'error'}.contains(result)) {
+      return;
+    }
+    final platform = kIsWeb ? 'web' : defaultTargetPlatform.name.toLowerCase();
+    if (!{'web', 'android', 'ios', 'windows', 'macos'}.contains(platform)) {
+      return;
+    }
+    final span = OTel.tracer().startSpan(
+      'audio.input.switch',
+      kind: SpanKind.client,
+    );
+    span.setStringAttribute('platform', platform);
+    span.setStringAttribute('phase', phase);
+    span.setStringAttribute('result', result);
+    if (result == 'error') span.setStatus(SpanStatusCode.Error);
+    span.end();
+  }
 
   static Map<String, String> currentTraceHeaders() {
     final headers = <String, String>{};

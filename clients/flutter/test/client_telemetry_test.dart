@@ -44,6 +44,8 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         websocketParent = ClientTelemetry.currentTraceparent();
       });
+      ClientTelemetry.audioInputSwitch('active', 'success');
+      ClientTelemetry.audioInputSwitch('private-device', 'private-label');
       await OTel.shutdown();
 
       expect(propagated, matches(RegExp(r'^00-[0-9a-f]{32}-[0-9a-f]{16}-01$')));
@@ -59,6 +61,16 @@ void main() {
           .expand((resource) => resource.scopeSpans)
           .expand((scope) => scope.spans);
       final voice = spans.singleWhere((span) => span.name == 'voice.join');
+      final input = spans.singleWhere(
+        (span) => span.name == 'audio.input.switch',
+      );
+      expect(input.attributes.map((attribute) => attribute.key).toSet(), {
+        'platform',
+        'phase',
+        'result',
+      });
+      expect(serialized, isNot(contains('private-device')));
+      expect(serialized, isNot(contains('private-label')));
       final apiSpans = spans
           .where((span) => span.name == 'api.request')
           .toList();

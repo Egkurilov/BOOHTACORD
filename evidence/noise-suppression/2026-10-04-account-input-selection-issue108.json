@@ -1,0 +1,138 @@
+{
+  "id": "account-input-selection-issue108-2026-10-04",
+  "date": "2026-10-04",
+  "task": "T-072",
+  "depends_on": [
+    "T-071"
+  ],
+  "requirements": [
+    "REQ-AUDIO-01",
+    "REQ-VOICE-01",
+    "REQ-VOICE-03"
+  ],
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/108",
+  "status": "PASS",
+  "scope": "Implementation and local automated regression only; physical platform acceptance remains NOT_RUN and no release gate is closed",
+  "baseline_revision": "ca3798e6",
+  "implementation": [
+    "Account-bound Web microphone preference is confirmed and saved independently of probe or call presence; first capture receives the selected exact device constraint.",
+    "One serialized microphone adapter owns switching, rollback/default fallback, reconnect, processor lifecycle and source-ended handling. Terminal failure revokes prior enable intent and deafen restoration until explicit unmute.",
+    "Probe reads the confirmed input or borrows the call track; it neither changes the selection nor stops a borrowed call stream.",
+    "Flutter regression exposed that setDeviceId on a temporarily muted SDK track changes options without recapture. The controller now uses existing restartTrack while muted, then restores current intent or rolls back through the same SDK. Vendored SDK and native platform hooks were not changed.",
+    "audio.input.switch has a closed platform/phase/result vocabulary. Backend relay drops all device identifiers, labels, errors and unknown fields and derives platform from the validated resource."
+  ],
+  "reproduction": {
+    "web_before_fix": "Prejoin selection was component-local, not persisted or passed into first capture.",
+    "native_before_fix": "Active selection test saw one getUserMedia rather than two: setDeviceId on muted track did not restart capture.",
+    "safety_before_fix": "Two added tests failed: recovery automatically enabled capture and deafen retained enable intent after a terminal input fault."
+  },
+  "environment": {
+    "host": "macOS ARM64",
+    "browser": "Google Chrome 154",
+    "livekit_client_web": "2.22.3",
+    "livekit_server": "1.13.7, pinned digest from tools/audio/livekit_fixture.py",
+    "media": "Two Web Audio oscillator tracks at 440/880 Hz; real SDK publisher and receiver, disposable loopback-only SFU. No physical microphone, recording or audio artifacts."
+  },
+  "checks": [
+    {
+      "name": "Full Web Vitest suite",
+      "status": "PASS",
+      "files": 300,
+      "tests": 974,
+      "command": "cd clients/web && npm test -- --reporter=dot"
+    },
+    {
+      "name": "Production TypeScript/Vite build",
+      "status": "PASS",
+      "command": "cd clients/web && npm run build"
+    },
+    {
+      "name": "Strict browser fixture TypeScript",
+      "status": "PASS",
+      "command": "cd clients/web && npx vue-tsc --noEmit --target ES2023 --module ESNext --moduleResolution Bundler --strict --skipLibCheck --lib ES2023,DOM,DOM.Iterable src/env.d.ts tests/audio/audio_input_fixture.ts tests/audio/audio_input.browser.spec.ts tests/audio/synthetic_inputs.ts"
+    },
+    {
+      "name": "Two-client LiveKit browser integration",
+      "status": "PASS",
+      "tests": 12,
+      "duration_seconds": 40.9,
+      "command": "Within tools.audio.livekit_fixture.local_sfu: cd clients/web && CHROMIUM_EXECUTABLE_PATH=<installed Chrome> npm run test:audio:browser -- audio_input.browser.spec.ts microphone_join.browser.spec.ts",
+      "new_cases": 4,
+      "assertions": [
+        "Prejoin dropdown selection triggers no capture and first call capture requests mic-2; receiver hears 880 Hz.",
+        "Active switch changes peer frequency to 440 Hz without probe.",
+        "Muted switch and full reconnect remain silent; explicit unmute restores the selected input.",
+        "Deafen switches remain silent and successful undeafen restores prior intent.",
+        "Selected input unplug falls back with warning; losing all inputs silences capture with error.",
+        "Prejoin probe cleans up its owned stream; active probe does not create or stop call capture.",
+        "Reload retains account selection; listener-only selection does not acquire capture."
+      ],
+      "matrix": [
+        "off",
+        "browser",
+        "RNNoise requested with forced asset-load fallback"
+      ],
+      "preserved_cases": "Eight existing first-publication/reconnect/sample-rate fallback cases passed."
+    },
+    {
+      "name": "Flutter selection/probe/rollback and telemetry regression",
+      "status": "PASS",
+      "tests": 8,
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart test/client_telemetry_test.dart",
+      "scope": "Real Flutter LiveKit LocalAudioTrack with mocked WebRTC method channel and sender. Android/iOS/Windows widget target overrides are not native hardware evidence."
+    },
+    {
+      "name": "Full Flutter tests",
+      "status": "PASS",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "tests": 498
+    },
+    {
+      "name": "Flutter analyzer",
+      "status": "PASS",
+      "command": "cd clients/flutter && flutter analyze --no-pub --no-fatal-infos",
+      "existing_info_diagnostics": 12,
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "Backend bounded telemetry ingress",
+      "status": "PASS",
+      "command": "cd backend && go test ./internal/observability/ingest_client_traces"
+    },
+    {
+      "name": "Web import responsibility boundaries",
+      "status": "PASS",
+      "files": 680,
+      "command": "python3 -m tools.verify.dependencies.web"
+    },
+    {
+      "name": "Whitespace validation",
+      "status": "PASS",
+      "command": "git diff --check"
+    }
+  ],
+  "limitations": {
+    "hardware_web_android_windows_peer_and_ios_device_evidence": "NOT_RUN: this host has an Android emulator only, no physical mobile microphone, Windows peer or iOS device. Synthetic browser peers and widget platform overrides cannot close the issue hardware acceptance checks.",
+    "browser_capture_api": "Synthetic tracks expose device settings and replace applyConstraints with a no-op. These tests prove application selection, SDK lifecycle, real SFU transmission and receiver content; they do not prove OS routing or acoustic browser APM.",
+    "active_rnnoise_quality": "NOT_RUN locally: the new matrix forces asset failure and validates fallback. Existing CI RNNoise browser gates remain required.",
+    "production_hardware_or_capacity": "NOT_RUN",
+    "spec_traceability": "NOT_RUN: no requirements or backlog changes in this task.",
+    "contract_verifier": "NOT_RUN locally: PowerShell is not installed. Existing GitHub CI contracts gate must validate the bounded telemetry ingestion extension."
+  },
+  "release_gate_closed": false,
+  "push_validation": {
+    "base_revision": "2b1d471d20207172f05088b3fa0535f3df796b27",
+    "web_tests": {
+      "status": "PASS",
+      "files": 300,
+      "tests": 977
+    },
+    "web_build": "PASS",
+    "flutter_focused_tests": {
+      "status": "PASS",
+      "tests": 8
+    },
+    "scope": "Rebased onto updated master without conflicts; full Flutter and browser peer results above are from the original task baseline. Unrelated audio presentation/search-panel changes were preserved."
+  }
+}

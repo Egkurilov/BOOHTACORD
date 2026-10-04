@@ -14,6 +14,7 @@ var operations = map[string]bool{
 	"api.request": true, "voice.join": true, "voice.leave": true,
 	"voice.reconnect": true, "realtime.connect": true, "realtime.reconnect": true,
 	"screen.share.start": true, "screen.share.stop": true, "screen.view": true,
+	"audio.input.switch": true,
 }
 
 var platforms = map[string]bool{"web": true, "android": true, "ios": true, "windows": true, "macos": true}
@@ -48,6 +49,7 @@ func sanitize(input *collectortrace.ExportTraceServiceRequest, platform string) 
 					clean.Status = &tracepb.Status{Code: tracepb.Status_STATUS_CODE_ERROR}
 				}
 				clean.Events = safeClientEvents(span)
+				clean.Attributes = audioInputAttributes(span, platform)
 				destination.Spans = append(destination.Spans, clean)
 			}
 		}

@@ -29,15 +29,17 @@ Flutter search behavior was implemented. The current web target is a 380 px
 desktop rail at widths ≥1280, a full-viewport compact overlay with a 44 px close
 target, a compact scope selector and Enter hint, a visually hidden submit,
 visible initial/loading/empty status and error feedback, result count,
-conversation/date before author/avatar, and inline query highlighting. FV2-019 now implements these presentation changes while
-preserving server search scope, cursor pagination, context navigation, focus
-behavior, and authorization. Focused and full Flutter tests, macOS Debug build,
-Android release install, and Android compact visual review pass. The screenshot
-feedback prompted a regression for the initially empty panel; Android visual
-review on 1.0.28+2050 now confirms the visible prompt. The already-running Mac app could not
-hot-reload and was not restarted to avoid another Keychain prompt; its screenshot
-still shows the old search panel, so current desktop geometry remains unverified
-— [QA-258](../evidence/flutter/qa258-flutter-design-v2-search-2026-10-04-001.json).
+conversation/date before author/avatar, and inline query highlighting. FV2-019
+implements these presentation changes while preserving server search scope,
+cursor pagination, context navigation, focus behavior, and authorization. The
+Flutter-only follow-up fixes the clipped scope selector and blank initial state
+reported by the user. Widget regressions, 63 workspace tests, and changed-file
+Dart analysis pass. Runtime visual review on Android 1.0.28+2052 confirms the
+compact overlay; the already-running Mac Debug window confirms the 380 px
+desktop rail. The Mac window was not relaunched and no Keychain prompt appeared.
+The local Android downgrade side effect reset the prior app session; the user
+signed back in before visual acceptance. See
+[QA-260](../evidence/flutter/qa260-flutter-search-panel-empty-state-2026-10-04-001.json).
 
 ## Connected voice dock presentation (FV2-020)
 

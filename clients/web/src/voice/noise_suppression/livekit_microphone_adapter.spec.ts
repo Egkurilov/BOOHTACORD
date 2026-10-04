@@ -14,13 +14,13 @@ function fixture() {
     unmute: vi.fn(async () => { events.push('unmute'); source.enabled = true }),
     stop: vi.fn(() => source.stop()),
     applyConstraints: vi.fn(async () => undefined),
-    restartTrack: vi.fn(async () => undefined),
+    restartTrack: vi.fn(async (_options?: MediaTrackConstraints): Promise<void> => undefined),
     setProcessor: vi.fn(async () => { events.push('process'); track.mediaStreamTrack = processed as typeof source }),
     stopProcessor: vi.fn(async () => { track.mediaStreamTrack = source; events.push('destroy') }),
   }
   const processor = { processedTrack: processed, name: 'test', mute: vi.fn(), unmute: vi.fn(), destroy: vi.fn(), init: vi.fn() }
   const dependencies = {
-    createTrack: vi.fn(async () => track as unknown as LocalAudioTrack),
+    createTrack: vi.fn(async (_options: MediaTrackConstraints) => track as unknown as LocalAudioTrack),
     publishTrack: vi.fn(async () => { events.push(`publish:${source.enabled}`) }),
     unpublishTrack: vi.fn(async () => undefined),
     isReconnecting: vi.fn(() => false),
@@ -180,6 +180,98 @@ describe('single microphone lifecycle owner', () => {
     await f.adapter.switchDevice('device-local')
     expect(f.track.restartTrack).toHaveBeenCalledWith(expect.objectContaining({ deviceId: { exact: 'device-local' }, noiseSuppression: false }))
     expect(f.adapter.readCaptureSettings()).toEqual({ noiseSuppression: true })
+  })
+  it('applies a prejoin selection to the very first capture without creating a probe', async () => {
+    const f = fixture()
+    await f.adapter.switchDevice('mic-2')
+    expect(f.dependencies.createTrack).not.toHaveBeenCalled()
+    await f.adapter.setEnabled(true, browser)
+    expect(f.dependencies.createTrack).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ deviceId: { exact: 'mic-2' } }))
+  })
+  it('falls back to default if the saved device disappeared before the first capture', async () => {
+    const f = fixture()
+    await f.adapter.switchDevice('missing')
+    f.dependencies.createTrack.mockRejectedValueOnce(Object.assign(new Error('gone'), { name: 'NotFoundError' }))
+    await f.adapter.setEnabled(true, browser)
+    expect(f.dependencies.createTrack).toHaveBeenCalledTimes(2)
+    expect(f.dependencies.createTrack.mock.calls[1][0]).not.toHaveProperty('deviceId')
+    expect(f.adapter.inputSelection).toMatchObject({ deviceId: 'default', outcome: 'fallback' })
+    expect(f.track.unmute).toHaveBeenCalledOnce()
+  })
+  it('keeps capture disabled on an unrecoverable switch and exposes the failure', async () => {
+    const f = fixture()
+    await f.adapter.setEnabled(true, browser)
+    f.track.restartTrack.mockRejectedValue(new Error('all captures failed'))
+    await expect(f.adapter.switchDevice('missing')).rejects.toThrow()
+    expect(f.adapter.inputSelection.outcome).toBe('error')
+    expect(f.adapter.runtimeState.status).toBe('error')
+    expect(f.source.enabled).toBe(false)
+  })
+  it('requires explicit unmute after a failed input becomes available again', async () => {
+    const f = fixture()
+    await f.adapter.setEnabled(true, browser)
+    f.track.restartTrack.mockRejectedValue(new Error('all captures failed'))
+    await expect(f.adapter.switchDevice('missing')).rejects.toThrow()
+    f.track.restartTrack.mockResolvedValue(undefined)
+    f.track.unmute.mockClear()
+    await f.adapter.switchDevice('mic-2')
+    expect(f.adapter.inputSelection.outcome).toBe('success')
+    expect(f.source.enabled).toBe(false)
+    expect(f.track.unmute).not.toHaveBeenCalled()
+    await f.adapter.setEnabled(true, browser)
+    expect(f.source.enabled).toBe(true)
+  })
+  it('does not restart or revive a stale track after disposal during switching', async () => {
+    const f = fixture()
+    await f.adapter.setEnabled(true, browser)
+    let finish!: () => void
+    f.track.restartTrack.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve }))
+    const switchDevice = f.adapter.switchDevice('mic-2')
+    await vi.waitFor(() => expect(finish).toBeTypeOf('function'))
+    const disposing = f.adapter.dispose()
+    finish()
+    await expect(switchDevice).rejects.toThrow('Голосовое подключение закрыто.')
+    await disposing
+    expect(f.track.restartTrack).toHaveBeenCalledOnce()
+    expect(f.source.enabled).toBe(false)
+  })
+  it.each([browser, rnnoise])('preserves mute/PTT/deafen intent while switching (%s)', async (processing) => {
+    const f = fixture()
+    await f.adapter.setEnabled(true, processing)
+    await f.adapter.setEnabled(false, processing)
+    f.track.unmute.mockClear()
+    await f.adapter.switchDevice('mic-2')
+    expect(f.track.unmute).not.toHaveBeenCalled()
+    expect(f.source.enabled).toBe(false)
+  })
+  it('retains the confirmed source and muted intent through reconnect', async () => {
+    const f = fixture()
+    await f.adapter.switchDevice('mic-2')
+    await f.adapter.setEnabled(true, browser)
+    await f.adapter.setEnabled(false, browser)
+    f.track.unmute.mockClear()
+    await f.adapter.reapplyDevice()
+    expect(f.track.restartTrack).toHaveBeenLastCalledWith(expect.objectContaining({ deviceId: { exact: 'mic-2' } }))
+    expect(f.track.unmute).not.toHaveBeenCalled()
+  })
+  it('reconnect reapplies the newest queued choice instead of an older captured ID', async () => {
+    const f = fixture()
+    await f.adapter.switchDevice('mic-1')
+    await f.adapter.setEnabled(true, browser)
+    const changing = f.adapter.switchDevice('mic-2')
+    const reconnect = f.adapter.reapplyDevice()
+    await Promise.all([changing, reconnect])
+    expect(f.adapter.inputSelection.deviceId).toBe('mic-2')
+    expect(f.track.restartTrack).toHaveBeenLastCalledWith(expect.objectContaining({ deviceId: { exact: 'mic-2' } }))
+  })
+  it('observes the real replacement source when the SDK reacquires capture during unmute', async () => {
+    const f = fixture()
+    await f.adapter.setEnabled(true, browser)
+    await f.adapter.setEnabled(false, browser)
+    const replacement = { ...f.source, getSettings: () => ({ noiseSuppression: false }) }
+    f.track.unmute.mockImplementationOnce(async () => { f.track.mediaStreamTrack = replacement })
+    await f.adapter.setEnabled(true, browser)
+    expect(f.adapter.readCaptureSettings()).toEqual({ noiseSuppression: false })
   })
   it('does not create extra tracks and releases every graph over 100 mode transitions', async () => {
     const f = fixture()

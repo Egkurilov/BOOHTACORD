@@ -1,4 +1,4 @@
-import { computed, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 
 import type { TopologyChannel } from '../channel/topology_client'
 import { useTopologyStore } from '../channel/topology_store'
@@ -16,6 +16,16 @@ export function useWorkspaceVoiceControls() {
   const voiceActivation = useVoiceActivationStore()
   const voiceConnection = useVoiceConnectionStore()
   const voiceNavigation = useVoiceNavigationStore()
+  watch(() => voiceConnection.inputSelection, (selection) => { if (selection) audioSettings.observeInput(selection) })
+  const refreshDevices = () => { void loadAudioDevices() }
+  onMounted(() => navigator.mediaDevices?.addEventListener?.('devicechange', refreshDevices))
+  onBeforeUnmount(() => navigator.mediaDevices?.removeEventListener?.('devicechange', refreshDevices))
+
+  async function loadAudioDevices(): Promise<void> {
+    await audioSettings.loadInput(voiceConnection.setInputDevice)
+    await audioSettings.load()
+    await audioSettings.reconcileInput(voiceConnection.setInputDevice)
+  }
 
   function findChannel(channelId: string | undefined): TopologyChannel | null {
     if (!channelId || !topologyStore.topology) return null
@@ -56,6 +66,7 @@ export function useWorkspaceVoiceControls() {
     const activeChannelId = voiceConnection.active?.channelId
     streamStartChime.activate()
     if (activeChannelId && activeChannelId !== channelId) await leaveVoice()
+    await audioSettings.loadInput(voiceConnection.setInputDevice)
     await audioSettings.loadProcessing(voiceConnection.setAudioProcessing)
     await voiceConnection.join(channelId, transfer, joinMode)
     if (voiceConnection.active) voiceNavigation.confirmVoiceConnected(voiceConnection.active.channelId)
@@ -72,8 +83,9 @@ export function useWorkspaceVoiceControls() {
   }
 
   async function selectAudioDevice(kind: AudioDeviceKind, deviceId: string): Promise<void> {
-    await audioSettings.select(kind, deviceId, voiceConnection.switchAudioDevice)
+    if (kind === 'audioinput') await audioSettings.selectInput(deviceId, voiceConnection.setInputDevice)
+    else await audioSettings.select(kind, deviceId, voiceConnection.switchAudioDevice)
   }
 
-  return { activeVoiceChannel, audioSettings, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel, selectDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection }
+  return { activeVoiceChannel, audioSettings, loadAudioDevices, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel, selectDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection }
 }

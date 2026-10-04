@@ -3,6 +3,8 @@ import type { AudioProcessorOptions, LocalAudioTrack, Track, TrackProcessor } fr
 import { microphoneConstraints, microphonePublishOptions, defaultAudioProcessing, type MicrophonePublishOptions } from '../media_publishing'
 import type { BrowserAudioProcessingSettings } from '../audio_processing_diagnostics'
 import { browserProcessingConstraints, normalizeAudioProcessing, type AudioProcessingOptions, type NoiseSuppressionFallbackReason, type NoiseSuppressionRuntimeState } from './types'
+import { inputConstraints, missingAudioInput, type AudioInputPhase, type AudioInputSelection } from '../audio_input_selection'
+import { reportAudioInputSwitch } from '../audio_input_reporting'
 
 export interface MicrophoneProcessor extends TrackProcessor<Track.Kind.Audio, AudioProcessorOptions> {
   mute(): void
@@ -27,7 +29,10 @@ export class LiveKitMicrophoneAdapter {
   private processor?: MicrophoneProcessor
   private published = false
   private options: AudioProcessingOptions = { ...defaultAudioProcessing }
-  private deviceId?: string
+  private deviceId = 'default'
+  private inputValue: AudioInputSelection = { deviceId: 'default', outcome: 'success' }
+  private readonly inputListeners = new Set<(selection: AudioInputSelection) => void>()
+  private stopEnded: (() => void) | undefined
   private readonly listeners = new Set<(state: NoiseSuppressionRuntimeState) => void>()
   private stateValue: NoiseSuppressionRuntimeState = { requestedMode: 'browser', effectiveMode: 'unknown', status: 'idle' }
   constructor(private readonly dependencies: MicrophoneAdapterDependencies) {}
@@ -42,6 +47,29 @@ export class LiveKitMicrophoneAdapter {
   get runtimeState(): NoiseSuppressionRuntimeState { return { ...this.state } }
   readCaptureSettings(): BrowserAudioProcessingSettings | undefined { return (this.processor?.sourceTrack ?? this.source)?.getSettings() }
   readOutputTrack(): MediaStreamTrack | undefined { return this.track?.mediaStreamTrack }
+  get inputSelection(): AudioInputSelection { return { ...this.inputValue } }
+  subscribeInput(listener: (selection: AudioInputSelection) => void): () => void {
+    if (this.closed) return () => undefined
+    this.inputListeners.add(listener)
+    return () => this.inputListeners.delete(listener)
+  }
+  private confirmInput(outcome: AudioInputSelection['outcome'], phase: AudioInputPhase, warning?: string): void {
+    this.inputValue = { deviceId: this.deviceId, outcome, ...(warning ? { warning } : {}) }
+    reportAudioInputSwitch(phase, outcome)
+    for (const listener of this.inputListeners) listener(this.inputSelection)
+  }
+  private watchSource(): void {
+    this.stopEnded?.()
+    const source = this.source
+    if (!source?.addEventListener) return
+    const ended = () => {
+      if (this.closed || this.source !== source) return
+      this.silence()
+      void this.switchDevice('default', 'active', true, 'Микрофон отключён. Используется системный микрофон.').catch(() => undefined)
+    }
+    source.addEventListener('ended', ended)
+    this.stopEnded = () => source.removeEventListener('ended', ended)
+  }
 
   setEnabled(enabled: boolean, options: AudioProcessingOptions): Promise<void> {
     if (this.closed) return Promise.reject(new Error('Голосовое подключение закрыто.'))
@@ -49,6 +77,7 @@ export class LiveKitMicrophoneAdapter {
     if (!enabled) this.silence()
     return this.enqueue(async (generation) => {
       if (!this.track && !this.desiredEnabled) { this.options = normalizeAudioProcessing(options); this.state = { requestedMode: this.options.noiseSuppressionMode, effectiveMode: 'unknown', status: 'idle' }; return }
+      if (this.track && this.desiredEnabled && this.state.status === 'error') await this.cleanup()
       if (!this.track) await this.create(normalizeAudioProcessing(options), generation)
       else if (JSON.stringify(this.options) !== JSON.stringify(options)) await this.changeProfile(normalizeAudioProcessing(options), generation)
       await this.restoreIntent(generation)
@@ -61,41 +90,62 @@ export class LiveKitMicrophoneAdapter {
       await this.changeProfile(next, generation)
     })
   }
-  switchDevice(deviceId: string): Promise<boolean> {
+  reapplyDevice(): Promise<boolean> { return this.switchDevice(this.deviceId, 'reconnect', true) }
+  prepareReconnect(): void { this.silence() }
+  switchDevice(deviceId: string, phase: AudioInputPhase = 'active', force = false, fallbackWarning?: string): Promise<boolean> {
     return this.enqueue(async (generation) => {
+      if (phase === 'reconnect') deviceId = this.deviceId
       const previous = this.deviceId
-      this.deviceId = deviceId
-      if (!this.track) return true
-      await this.track.mute()
+      if (!force && previous === deviceId && this.inputValue.outcome === 'success') return true
+      if (!this.track) {
+        this.deviceId = deviceId
+        this.confirmInput(fallbackWarning ? 'fallback' : 'success', phase, fallbackWarning)
+        return true
+      }
       this.silence()
+      this.stopEnded?.()
+      this.stopEnded = undefined
       try {
-        await this.removeProcessor()
-        await this.track.restartTrack({ ...microphoneConstraints(this.options), deviceId: { exact: deviceId } })
-        this.source = this.track.mediaStreamTrack
-        this.silence()
-        this.assertCurrent(generation)
-        await this.configure(this.options, generation)
-        await this.restoreIntent(generation)
+        await this.restartInput(deviceId, generation)
+        this.deviceId = deviceId
+        this.confirmInput(fallbackWarning ? 'fallback' : 'success', phase, fallbackWarning)
         return true
       } catch (cause) {
-        this.deviceId = previous
-        try {
-          await this.removeProcessor()
-          await this.track.restartTrack({ ...microphoneConstraints(this.options), ...(previous ? { deviceId: { exact: previous } } : {}) })
-          this.source = this.track.mediaStreamTrack
-          this.silence()
-          await this.configure(this.options, generation)
-          await this.restoreIntent(generation)
-        } catch { this.failMuted() }
+        this.assertCurrent(generation)
+        for (const fallback of [...new Set([previous, 'default'])]) {
+          try {
+            await this.restartInput(fallback, generation)
+            this.deviceId = fallback
+            this.confirmInput('fallback', phase, fallback === previous ? 'Не удалось переключить микрофон. Сохранён предыдущий источник.' : 'Выбранный микрофон недоступен. Используется системный микрофон.')
+            return false
+          } catch { this.assertCurrent(generation) }
+        }
+        this.failMuted()
+        this.confirmInput('error', phase, 'Микрофон недоступен. Отправка звука выключена. Выберите устройство и включите микрофон снова.')
         throw cause
       }
     })
+  }
+  private async restartInput(deviceId: string, generation: number): Promise<void> {
+    this.assertCurrent(generation)
+    await this.track!.mute()
+    this.silence()
+    await this.removeProcessor()
+    this.assertCurrent(generation)
+    await this.track!.restartTrack({ ...microphoneConstraints(this.options), ...inputConstraints(deviceId) })
+    this.source = this.track!.mediaStreamTrack
+    this.silence()
+    this.assertCurrent(generation)
+    await this.configure(this.options, generation)
+    await this.restoreIntent(generation)
+    this.watchSource()
   }
   dispose(): Promise<void> {
     if (this.closed) return this.queue.then(() => undefined)
     // Revoke before waiting for a pending create/init/recovery to settle.
     this.closed = true
     this.listeners.clear()
+    this.inputListeners.clear()
     this.generation++
     this.desiredEnabled = false
     this.silence()
@@ -121,7 +171,15 @@ export class LiveKitMicrophoneAdapter {
   }
   private async create(options: AudioProcessingOptions, generation: number): Promise<void> {
     try {
-      this.track = await this.dependencies.createTrack({ ...microphoneConstraints(options), ...(this.deviceId ? { deviceId: { exact: this.deviceId } } : {}) })
+      let fallback = false
+      try { this.track = await this.dependencies.createTrack({ ...microphoneConstraints(options), ...inputConstraints(this.deviceId) }) }
+      catch (cause) {
+        this.assertCurrent(generation)
+        if (this.deviceId === 'default' || !missingAudioInput(cause)) throw cause
+        this.track = await this.dependencies.createTrack(microphoneConstraints(options))
+        this.deviceId = 'default'
+        fallback = true
+      }
       this.source = this.track.mediaStreamTrack
       this.silence()
       this.assertCurrent(generation)
@@ -144,9 +202,12 @@ export class LiveKitMicrophoneAdapter {
       this.published = true
       this.assertCurrent(generation)
       this.options = options
+      this.watchSource()
+      this.confirmInput(fallback ? 'fallback' : 'success', 'prejoin', fallback ? 'Сохранённый микрофон недоступен. Используется системный микрофон.' : undefined)
     } catch (cause) {
       await this.cleanup()
       this.state = { requestedMode: options.noiseSuppressionMode, effectiveMode: 'unknown', status: 'error' }
+      if (!this.closed) this.confirmInput('error', 'prejoin', 'Не удалось включить микрофон. Отправка звука выключена.')
       throw cause
     }
   }
@@ -219,6 +280,8 @@ export class LiveKitMicrophoneAdapter {
     if (!this.track) return
     if (this.desiredEnabled && this.state.status !== 'error') {
       await this.track.unmute()
+      this.source = this.processor ? this.processor.sourceTrack ?? this.source : this.track.mediaStreamTrack
+      this.watchSource()
       if (this.closed || !this.desiredEnabled) this.silence()
       this.assertCurrent(generation)
       // Intent can change while SDK unmute awaits.
@@ -232,6 +295,7 @@ export class LiveKitMicrophoneAdapter {
     } else { this.silence(); await this.track.mute() }
   }
   private failMuted(reason?: NoiseSuppressionFallbackReason): void {
+    this.desiredEnabled = false
     this.silence()
     this.state = { requestedMode: this.options.noiseSuppressionMode, effectiveMode: 'unknown', status: 'error', ...(reason ? { fallbackReason: reason } : {}) }
   }
@@ -243,6 +307,8 @@ export class LiveKitMicrophoneAdapter {
     try { await this.track?.stopProcessor() } finally { await processor.destroy() }
   }
   private async cleanup(): Promise<void> {
+    this.stopEnded?.()
+    this.stopEnded = undefined
     const track = this.track
     this.silence()
     try { await this.removeProcessor() } finally {

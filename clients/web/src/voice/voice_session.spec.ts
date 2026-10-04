@@ -11,6 +11,15 @@ function admission(): VoiceAdmission {
 }
 
 describe('voice session', () => {
+  it('carries the prejoin input selection into the room joiner, including listener joins', async () => {
+    const api = admission()
+    const room = { disconnect: vi.fn().mockResolvedValue(undefined), on: vi.fn() }
+    const join = vi.fn(async () => ({ room: room as never, microphone: 'MUTED' as const }))
+    const session = new VoiceSession(api, join)
+    await session.switchAudioDevice('audioinput', 'mic-2')
+    await session.join('voice-1', true, 'listener')
+    expect(join).toHaveBeenCalledWith(expect.any(Object), expect.any(Object), 'listener', 'mic-2')
+  })
   it('marks a room active only after a lease, credential and room join succeed', async () => {
     const api = admission()
     const room = { disconnect: vi.fn().mockResolvedValue(undefined), on: vi.fn() }
@@ -148,4 +157,28 @@ it('does not commit microphone state after the room has been revoked', async () 
   finish()
   await expect(muting).rejects.toThrow('Голосовое подключение закрыто.')
   expect(session.active).toBeNull()
+})
+
+
+it('does not restore pre-failure microphone intent after deafen, even if input selection recovers', async () => {
+  let observe!: (selection: { deviceId: string; outcome: 'success' | 'error' }) => void
+  const stop = vi.fn()
+  const room = {
+    disconnect: vi.fn().mockResolvedValue(undefined),
+    localParticipant: { setMicrophoneEnabled: vi.fn().mockResolvedValue(undefined) },
+    on: vi.fn(), setDeafened: vi.fn(),
+    onAudioInputSelection: (listener: typeof observe) => { observe = listener; return stop },
+  }
+  const session = new VoiceSession(admission(), async () => ({ room: room as never, microphone: 'PUBLISHED' }))
+  await session.join('voice-1')
+  await session.setDeafened(true)
+  observe({ deviceId: 'default', outcome: 'error' })
+  observe({ deviceId: 'mic-2', outcome: 'success' })
+  await session.setDeafened(false)
+  expect(session.active?.microphone).toBe('MUTED')
+  expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenCalledTimes(1)
+  await session.setMicrophoneMuted(false)
+  expect(session.active?.microphone).toBe('PUBLISHED')
+  await session.leave()
+  expect(stop).toHaveBeenCalledOnce()
 })

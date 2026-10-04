@@ -9,7 +9,12 @@ handshakes. Browser WebSocket cannot set a custom HTTP header, so it sends the
 W3C `traceparent` and optional `tracestate` as bounded handshake query parameters, which the API
 extracts only on the realtime upgrade. Web voice operations explicitly restore
 their span context around API calls made after `await`.
-The client relay strips request supplied attributes and links before export.
+The client relay strips request supplied attributes and links before export,
+except for the bounded `audio.input.switch` outcome. That span keeps only
+`platform=web|android|ios|windows|macos` (derived from the validated relay
+platform), `phase=prejoin|active|reconnect`, and
+`result=success|fallback|error`. Device IDs, device labels and audio are never
+included in this outcome.
 It keeps at most four fixed `app.client.<operation>.started/completed/failed`
 events per allowlisted span, without event attributes. This limits accidental
 leakage of message content, IDs and tokens into Tempo.
