@@ -138,10 +138,15 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-VOICE-01]
     depends_on: [FV2-001, FV2-017, T-050, T-051]
     evidence: [flutter-voice-dock-presentation-tests, flutter-full-suite, android-macos-voice-dock-visual-acceptance]
+  - id: FV2-021
+    title: Flutter Design V2 responsive message attachment cards
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01]
+    depends_on: [FV2-001, T-040, T-044, T-050, T-051]
+    evidence: [flutter-attachment-card-geometry-tests, flutter-full-suite, android-macos-attachment-visual-acceptance]
   - id: FV2-002
     title: Flutter Design V2 workspace shell, text chat and direct messages
     requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]
-    depends_on: [FV2-001, FV2-007, FV2-008, T-040, T-041, T-044, T-050, T-051]
+    depends_on: [FV2-001, FV2-007, FV2-008, FV2-021, T-040, T-041, T-044, T-050, T-051]
     evidence: [flutter-chat-layout-tests, flutter-responsive-geometry-tests, chat-dm-parity-acceptance]
   - id: FV2-009
     title: Flutter Design V2 responsive stream selection rail

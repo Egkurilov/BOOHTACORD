@@ -1,0 +1,70 @@
+{
+  "id": "QA-262",
+  "date": "2026-10-04",
+  "task": "FV2-021 — Flutter Design V2 responsive message attachment cards",
+  "source_revision": "WORKTREE",
+  "working_tree_changes": true,
+  "summary": "Matched Flutter message attachment cards to the current web geometry while preserving authenticated preview/download and upload behavior. No web, API, ACL, storage or conversation state code changed.",
+  "checks": [
+    {
+      "name": "Test-first attachment geometry and state regressions",
+      "command": "cd clients/flutter && flutter test --no-pub test/message_attachment_list_test.dart",
+      "result": "PASS",
+      "passed": 9,
+      "observation": "The new desktop image-card regression first failed because Flutter had no matching 440 px card; after implementation, desktop 440×238 / 438×200 preview, compact 390×182 / 388×144 preview, and 340×62 generic file-card bounds all pass. Existing protected-preview, loading, retry, unavailable, semantics and focus tests remain green."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 516
+    },
+    {
+      "name": "Changed-file analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/widgets/message_attachment_list.dart test/message_attachment_list_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android release APK",
+      "command": "cd clients/flutter && flutter build apk --release --build-number=2053",
+      "result": "PASS",
+      "artifact": "1.0.29+2053, 115.5 MB at clients/flutter/build/app/outputs/flutter-apk/app-release.apk; ignored local build output, not added to Git."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Android API 35 runtime visual acceptance",
+      "command": "adb install -r build/app/outputs/flutter-apk/app-release.apk; launch ru.boohtacord.app; inspect Text channel attachment",
+      "result": "PASS",
+      "observation": "Installed build 2053 in place over build 2052 without deleting app data. The existing Text channel showed the full-size image preview at compact 144 px height and its filename, size and download footer. The image request resolved after the first placeholder frame. No message was sent."
+    },
+    {
+      "name": "macOS runtime visual acceptance",
+      "command": "User-authorized restart of the running Mac client into the freshly built Debug app; inspect the existing Text attachment",
+      "result": "PASS",
+      "observation": "The persisted session restored without a Keychain prompt. The Mac screenshot showed the protected image at 200 px preview height with filename, size and download footer; the workspace remained in Text. No message was sent."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this macOS host. The task adds a UI-only leaf to backlog; no approved requirement text or contract changed."
+    }
+  ],
+  "limitations": [
+    "Windows native visual acceptance was not available on this macOS host and remains part of FV2-006.",
+    "The Mac/Android screenshots were inspected live but not retained because they contain conversation and account data.",
+    "The Android APK is a local release artifact only; it was not committed or published."
+  ],
+  "status": "PASS_ANDROID_MACOS_VISUAL_TESTS_AND_BUILDS"
+}

@@ -265,23 +265,107 @@ void main() {
     expect(dialog.bottom, lessThanOrEqualTo(640));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('matches web image attachment geometry on desktop', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      ApiClient(client: MockClient((_) async => httpResponse(404))),
+    );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(_app(state));
+    await tester.pump();
+
+    final card = tester.getSize(
+      find.byKey(const ValueKey('attachment-card-attachment-1')),
+    );
+    final preview = tester.getSize(
+      find.byKey(const ValueKey('attachment-preview-attachment-1')),
+    );
+    expect(card, const Size(440, 238));
+    expect(preview, const Size(438, 200));
+  });
+
+  testWidgets('matches web image attachment geometry on compact layouts', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      ApiClient(client: MockClient((_) async => httpResponse(404))),
+    );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(_app(state));
+    await tester.pump();
+
+    final card = tester.getSize(
+      find.byKey(const ValueKey('attachment-card-attachment-1')),
+    );
+    final preview = tester.getSize(
+      find.byKey(const ValueKey('attachment-preview-attachment-1')),
+    );
+    expect(card, const Size(390, 182));
+    expect(preview, const Size(388, 144));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps generic file cards at the web desktop width', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      ApiClient(client: MockClient((_) async => httpResponse(404))),
+    );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      _app(
+        state,
+        attachments: const [
+          MessageAttachment(
+            id: 'file-1',
+            originalName: 'report.pdf',
+            sizeBytes: 1500,
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('attachment-card-file-1'))),
+      const Size(340, 62),
+    );
+    expect(tester.takeException(), isNull);
+  });
 }
 
-Widget _app(AppState state) => MaterialApp(
-  home: Scaffold(
-    body: MessageAttachmentList(
-      state: state,
-      parentPath: '/channels/channel-1',
-      attachments: const [
-        MessageAttachment(
-          id: 'attachment-1',
-          originalName: 'photo.png',
-          sizeBytes: 10,
+Widget _app(AppState state, {List<MessageAttachment>? attachments}) =>
+    MaterialApp(
+      home: Scaffold(
+        body: MessageAttachmentList(
+          state: state,
+          parentPath: '/channels/channel-1',
+          attachments:
+              attachments ??
+              const [
+                MessageAttachment(
+                  id: 'attachment-1',
+                  originalName: 'photo.png',
+                  sizeBytes: 10,
+                ),
+              ],
         ),
-      ],
-    ),
-  ),
-);
+      ),
+    );
 
 http.Response httpResponse(int status) => http.Response(
   jsonEncode({

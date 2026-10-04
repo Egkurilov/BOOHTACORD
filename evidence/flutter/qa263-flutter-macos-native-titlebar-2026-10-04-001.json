@@ -1,0 +1,25 @@
+{
+  "id": "QA-263",
+  "date": "2026-10-04",
+  "task": "FV2-018 — Flutter frameless desktop window chrome and branded title bar",
+  "source_revision": "235573364a2b15612d7afdd62a70a4d3d61e02ac",
+  "working_tree_changes": true,
+  "summary": "Extended live macOS acceptance for the native title-bar controls without restarting the running application.",
+  "checks": [
+    {
+      "name": "macOS native zoom and restore control",
+      "result": "PASS",
+      "observation": "On the already-running BOOHTACORD Debug window, invoked the accessible 'zoom the window' secondary action exposed by the native green traffic-light control. The window expanded from its 1440x900 presentation to the display-sized 3440x1290 presentation; invoking the same action restored the original 1440x900 size. The text-only BOOHTACORD title and native traffic lights remained visible. The app was not restarted, and its authenticated session was preserved."
+    },
+    {
+      "name": "Visual result retention",
+      "result": "NOT_RETAINED",
+      "observation": "The live window contains user conversation content; no screenshot was saved into the repository. Before and after states were visually inspected through the live macOS UI."
+    }
+  ],
+  "limitations": [
+    "macOS title-bar dragging and close/minimize actions remain untested.",
+    "Native Windows drag and window-control runtime acceptance remains NOT_RUN; FV2-018 stays open."
+  ],
+  "status": "PARTIAL_MACOS_NATIVE_ZOOM_RESTORE_PASS; MACOS_DRAG_AND_WINDOWS_RUNTIME_OPEN"
+}
