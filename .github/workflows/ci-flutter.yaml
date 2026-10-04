@@ -21,7 +21,16 @@ jobs:
           flutter-version: 3.47.5
           cache: true
       - name: Test and analyze app and vendor packages
+        env:
+          BOOHTACORD_VISUAL_CAPTURE_DIR: ${{ github.workspace }}/.out/visual/flutter
         run: python3 -m tools.ci.native.flutter
+      - name: Upload Flutter navigation actual
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-navigation-actual-${{ github.sha }}
+          path: .out/visual/flutter/R14-navigation-top.png
+          if-no-files-found: error
+          retention-days: 30
       - name: Verify Android Kotlin build modes
         run: bash tools/verify/android_kotlin/verify_android_kotlin_modes.sh
       - name: Build Android debug APK
