@@ -1,0 +1,48 @@
+{
+  "id": "runtime-dashboard-2026-10-04-001",
+  "kind": "observability-dashboard",
+  "status": "PASS",
+  "observer": "Codex",
+  "baseline_revision": "b9116e845208a912d7821e27052336a1017f324a",
+  "dashboard": {
+    "uid": "boohtacord-runtime",
+    "url": "https://grafana.fa.shaneque.ru/d/boohtacord-runtime",
+    "baseline_live_version": 7,
+    "items_including_rows_and_intro": 37,
+    "preserved_panel_ids": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    "refresh": "30s",
+    "default_range": "6h"
+  },
+  "sources": {
+    "host": "prometheus_main; instance 176.108.242.211:9100; job BOOHTA_cloud",
+    "application": "boohtacord_metrics",
+    "physical_network_device": "enp3s0",
+    "disk_device": "vda",
+    "filesystem": "/; ext4"
+  },
+  "validation": {
+    "focused_python_tests": "PASS: 7 tests",
+    "live_promql_checked_at_unix_seconds": 1791127807,
+    "live_instant_and_range_queries": 85,
+    "empty_query_results": 0,
+    "non_finite_samples_or_query_errors": 0,
+    "documentation_links": "PASS",
+    "git_diff_check": "PASS",
+    "grafana_publication": "Authenticated import overwrite of the same UID; final values and graphs verified in UI",
+    "visual_check": "Overview, resources, disk/network and API/telemetry displayed live data; free byte cards use neutral blue"
+  },
+  "observations": [
+    "Initial live query checks exposed load/vCPU label matching; fixed with on(instance), then all 85 checks returned data.",
+    "Initial visual check exposed Grafana default red thresholds on free byte cards; corrected and reimported.",
+    "Final overview screenshot showed approximately 9% CPU, 46% RAM and 44% root disk used, 27.4 GiB disk available, 0% recent API 5xx and 5 ms recent P95.",
+    "HTTP 5xx occurred earlier in the observed interval; low current resource use does not prove every application function is healthy."
+  ],
+  "scope_and_limits": [
+    "Host resources include neighboring processes; HTTP metrics belong to BOOHTACORD.",
+    "Availability means node-exporter scrape success; telemetry target health covers three telemetry components only.",
+    "Missing measurements are not substituted with healthy zeroes. Node resource gauges are gated on exporter availability.",
+    "No production container, LiveKit or PostgreSQL exporter series were available; unrelated database metrics were not substituted.",
+    "Thresholds are attention guides, not validated capacity limits. UDP host errors are not viewer WebRTC loss.",
+    "No application restart, new datasource, exporter, public port or credential change was required."
+  ]
+}
