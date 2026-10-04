@@ -1,4 +1,5 @@
 import type { Ref } from 'vue'
+import type { VoiceDisconnectState } from './disconnect_notice/state'
 
 import type { VoiceConnectionState } from './connection_store'
 import { unknownScreenDiagnostics, type ScreenDiagnostics } from './screen_diagnostics'
@@ -22,18 +23,22 @@ export function installVoiceConnectionLifecycle(
   screenViewer: Stoppable,
   volume: Stoppable,
   refreshAudioProcessingDiagnostics: () => void,
+  terminal?: VoiceDisconnectState,
 ): void {
   session.setConnectionObserver({
+    admitted: (leaseID, channelID) => terminal?.bind(leaseID, channelID),
     reconnecting: () => {
-      if (active.value && state.value !== 'LEAVING') {
+      if (active.value && state.value !== 'LEAVING' && !terminal?.notice.value) {
         state.value = 'RECONNECTING'
         error.value = null
       }
     },
     reconnected: () => {
-      if (active.value) state.value = active.value.microphone === 'PUBLISHED' ? 'CONNECTED' : 'LISTENER'
+      if (active.value && !terminal?.notice.value) state.value = active.value.microphone === 'PUBLISHED' ? 'CONNECTED' : 'LISTENER'
     },
     disconnected: () => {
+      if (active.value) terminal?.bind(active.value.leaseId, active.value.channelId)
+      terminal?.transport()
       screenViewer.stop()
       volume.stop()
       active.value = null
@@ -44,8 +49,8 @@ export function installVoiceConnectionLifecycle(
       screenDiagnostics.value = unknownScreenDiagnostics()
       screenProfile.value = null
       screenState.value = 'IDLE'
-      state.value = 'ERROR'
-      error.value = 'Голосовое соединение не восстановлено. Подключитесь снова вручную.'
+      state.value = terminal?.notice.value?.source === 'local' ? 'IDLE' : 'ERROR'
+      error.value = terminal?.notice.value?.source === 'local' ? null : terminal?.notice.value?.message ?? 'Голосовое соединение не восстановлено. Подключитесь снова вручную.'
     },
   })
 }

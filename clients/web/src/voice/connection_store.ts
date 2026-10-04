@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { createVoiceDisconnectState } from './disconnect_notice/state'
 import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
 
 import { useAuthorDirectory } from '../identity/author_directory'
@@ -55,6 +56,8 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   onScopeDispose(() => stopProcessingState?.())
   onScopeDispose(() => stopInputSelection?.())
   const error = ref<string | null>(null)
+  const terminal = createVoiceDisconnectState()
+  onScopeDispose(terminal.reset)
   const microphoneMuted = ref(false)
   const microphonePermissionDenied = ref(false)
   const deafened = ref(false)
@@ -71,7 +74,7 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   const voiceAudioDiagnostics = installAudioDiagnostics(active, state)
   const connectionQuality = ref<VoiceConnectionQuality>('UNKNOWN')
   const pingMs = ref<number | null>(null)
-  const canJoin = computed(() => state.value === 'IDLE' || state.value === 'ERROR')
+  const canJoin = computed(() => (state.value === 'IDLE' || state.value === 'ERROR') && terminal.notice.value?.reconnectAllowed !== false)
   let stopVoiceStatsPolling: (() => void) | null = null
   watch([active, state], ([current, phase]) => {
     const readStats = current?.room.readVoiceConnectionStats
@@ -112,7 +115,7 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
     next.forEach((id) => { if (!visibleAccountIds.has(id)) void authors.ensure(id, undefined, true) })
     visibleAccountIds = next
   }, { immediate: true })
-  const revocation = createVoiceConnectionRevocation({ session, active, state, error, deafened, microphoneMuted, microphonePermissionDenied, screenDiagnostics, screenProfile, screenState, screenViewer, volume, refreshAudioProcessingDiagnostics })
+  const revocation = createVoiceConnectionRevocation({ terminal, session, active, state, error, deafened, microphoneMuted, microphonePermissionDenied, screenDiagnostics, screenProfile, screenState, screenViewer, volume, refreshAudioProcessingDiagnostics })
 
   function refreshAudioProcessingDiagnostics(): void {
     audioProcessingDiagnostics.value = session.audioProcessing.diagnostics
@@ -129,34 +132,42 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
     refreshAudioProcessingDiagnostics()
   }
 
-  installVoiceConnectionLifecycle(session, active, state, error, microphoneMuted, microphonePermissionDenied, deafened, screenDiagnostics, screenProfile, screenState, screenViewer, volume, refreshAudioProcessingDiagnostics)
+  installVoiceConnectionLifecycle(session, active, state, error, microphoneMuted, microphonePermissionDenied, deafened, screenDiagnostics, screenProfile, screenState, screenViewer, volume, refreshAudioProcessingDiagnostics, terminal)
 
   async function join(channelId: string, transfer = true, joinMode: VoiceJoinMode = 'with-microphone'): Promise<void> {
     if (!canJoin.value) return
 
+    terminal.reset(); revocation.resetPending()
+    const generation = terminal.generation
     state.value = 'JOINING'
     error.value = null
     transferRequired.value = false
     try {
-      active.value = await session.join(channelId, transfer, joinMode)
+      const joined = await session.join(channelId, transfer, joinMode)
+      if (generation !== terminal.generation) { await session.revoke(joined.leaseId); state.value = 'IDLE'; error.value = null; return }
+      active.value = joined
+      terminal.bind(active.value.leaseId, active.value.channelId)
       const revokedReason = revocation.takeJoinRevocation(active.value.leaseId)
       if (revokedReason) { await revocation.revokeLease(active.value.leaseId, revokedReason); return }
       refreshAudioProcessingDiagnostics()
       screenViewer.start()
       await volume.start()
+      if (!active.value || terminal.notice.value?.source === 'server') return
       deafened.value = false
       microphoneMuted.value = active.value.microphone === 'MUTED'
       microphonePermissionDenied.value = active.value.microphone === 'LISTENER_PERMISSION_DENIED'
       state.value = active.value.microphone === 'PUBLISHED' ? 'CONNECTED' : 'LISTENER'
     } catch (cause) {
-      const cancelledReason = revocation.takeJoinRevocation('')
+      if (generation !== terminal.generation) { state.value = 'IDLE'; error.value = null; return }
+      const cancelledReason = revocation.takeJoinRevocation(terminal.leaseID ?? '')
       active.value = null
       deafened.value = false
       microphoneMuted.value = false
       microphonePermissionDenied.value = false
       state.value = 'ERROR'
       transferRequired.value = false
-      error.value = cancelledReason ? voiceLeaseRevocationMessage(cancelledReason) : cause instanceof Error ? cause.message : 'Не удалось подключиться к голосовому каналу.'
+      if (cancelledReason && terminal.leaseID) terminal.server(terminal.leaseID, cancelledReason)
+      error.value = terminal.notice.value?.message ?? (cancelledReason ? voiceLeaseRevocationMessage(cancelledReason) : cause instanceof Error ? cause.message : 'Не удалось подключиться к голосовому каналу.')
     }
   }
 
@@ -172,10 +183,11 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   }
 
   async function leave(): Promise<void> {
-    await leaveVoiceConnection({ session, active, state, error, deafened, screenDiagnostics, screenProfile, screenState, screenViewer, volume, refreshAudioProcessingDiagnostics })
+    await leaveVoiceConnection({ terminal, session, active, state, error, deafened, screenDiagnostics, screenProfile, screenState, screenViewer, volume, refreshAudioProcessingDiagnostics })
     const reason = revocation.takePostLeaveReason(active.value?.leaseId ?? '')
     if (reason && active.value) await revocation.revokeLease(active.value.leaseId, reason)
   }
 
-  return { resetAudioVolumes: volume.reset, active, voiceAudioDiagnostics, audioProcessingDiagnostics, inputSelection, setInputDevice, microphoneTrack, canJoin, clearScreenStream: screenViewer.clear, connectionQuality, deafenChanging, deafened, disconnectLocal: revocation.disconnectLocal, error, join, leave, microphoneMuted, microphonePermissionDenied, pingMs, refreshScreenDiagnostics, revokeLease: revocation.revokeLease, screenDiagnostics, screenError, screenProfile, screenState, screenViewerCards, screenViewerEnded, screenViewerError, selectScreenStream: screenViewer.select, selectedScreenStreamId, screenAudioMuted: screenViewer.audioMuted, setAudioProcessing, setMicrophoneMuted, startScreen, state, stopScreen, switchAudioDevice, toggleDeafen, toggleMicrophone, toggleScreenAudio: () => screenViewer.toggleAudio(volume.selectedScreenVolume.value, volume.setScreenVolume), transferRequired, voiceVolumeError: volume.error, voiceVolumeParticipants, selfSpeaking: volume.selfSpeaking, selectedScreenAudioVolume: volume.selectedScreenVolume, setParticipantVolume: volume.setParticipantVolume, setScreenVolume: volume.setScreenVolume }
+  function selectDisconnectChannel(id: string): void { const old = terminal.notice.value; terminal.selectChannel(id); if (old && !terminal.notice.value) { revocation.resetPending(); error.value = null } }
+  return { disconnectNotice: terminal.notice, selectDisconnectChannel, resetAudioVolumes: volume.reset, active, voiceAudioDiagnostics, audioProcessingDiagnostics, inputSelection, setInputDevice, microphoneTrack, canJoin, clearScreenStream: screenViewer.clear, connectionQuality, deafenChanging, deafened, disconnectLocal: revocation.disconnectLocal, error, join, leave, microphoneMuted, microphonePermissionDenied, pingMs, refreshScreenDiagnostics, revokeLease: revocation.revokeLease, screenDiagnostics, screenError, screenProfile, screenState, screenViewerCards, screenViewerEnded, screenViewerError, selectScreenStream: screenViewer.select, selectedScreenStreamId, screenAudioMuted: screenViewer.audioMuted, setAudioProcessing, setMicrophoneMuted, startScreen, state, stopScreen, switchAudioDevice, toggleDeafen, toggleMicrophone, toggleScreenAudio: () => screenViewer.toggleAudio(volume.selectedScreenVolume.value, volume.setScreenVolume), transferRequired, voiceVolumeError: volume.error, voiceVolumeParticipants, selfSpeaking: volume.selfSpeaking, selectedScreenAudioVolume: volume.selectedScreenVolume, setParticipantVolume: volume.setParticipantVolume, setScreenVolume: volume.setScreenVolume }
 })

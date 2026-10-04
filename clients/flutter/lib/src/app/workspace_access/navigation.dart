@@ -1,4 +1,5 @@
 import '../../models.dart';
+import '../../features/voice/lifecycle/controller.dart';
 import '../../features/workspace/lifecycle/controller.dart';
 import '../composition/owners.dart';
 
@@ -27,6 +28,8 @@ mixin AppNavigationAccess on AppOwners {
 
   Future<void> refreshTopology() => workspace.refreshTopology();
 
-  Future<void> selectChannel(GuildChannel channel) =>
-      workspace.selectChannel(channel);
+  Future<void> selectChannel(GuildChannel channel) {
+    voice.selectDisconnectChannel(channel.id);
+    return workspace.selectChannel(channel);
+  }
 }

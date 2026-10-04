@@ -58,6 +58,7 @@ export class VoiceSession {
       try {
         const acquired = await this.admission.acquire(channelId, transfer)
         lease = acquired
+        this.monitor.notifyAdmitted(acquired.id, acquired.channelId)
         const joined = await this.joinRoom(await within(() => this.admission.credential(acquired.id)), this.audioProcessing.value, joinMode, this.inputDeviceId)
         this.current = { channelId: lease.channelId, leaseId: lease.id, screenProfile: null, ...joined }
         const observeInput = (selection: AudioInputSelection) => {
@@ -156,7 +157,7 @@ export class VoiceSession {
     this.stopInputSelection = undefined
     this.current = null
     this.deafen.reset()
-    await this.admission.release(current.leaseId).catch(() => undefined)
     this.monitor.notifyDisconnected()
+    await this.admission.release(current.leaseId).catch(() => undefined)
   }
 }

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { VoiceDisconnectNotice } from '../voice/disconnect_notice/model'
+import DisconnectNotice from '../voice/disconnect_notice/Notice.vue'
 import { computed } from 'vue'
 import type { TopologyChannel } from '../channel/topology_client'
 import DirectMessageConversation from '../direct_message/DirectMessageConversation.vue'
@@ -18,10 +20,8 @@ import { useConversationScreenState } from '../voice/use_conversation_screen_sta
 import TextConversation from './TextConversation.vue'
 import WorkspaceHeaderActions from '../shared/workspace_header/WorkspaceHeaderActions.vue'
 import ConversationOverflowMenu from './ConversationOverflowMenu.vue'
-
 const props = withDefaults(defineProps<{
-  accountId: string
-  activeVoiceChannel: TopologyChannel | null
+  accountId: string; activeVoiceChannel: TopologyChannel | null
   visible: boolean
   channel: TopologyChannel | null
   directMessage: DirectMessageListItem | null
@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<{
   membersOpen: boolean
   showMembers: boolean
   selfDisplayName: string | null; selfDeafened: boolean
-  voiceError: string | null
+  voiceError: string | null; voiceDisconnectNotice?: VoiceDisconnectNotice | null
   voiceIsActive: boolean
   voiceState: VoiceConnectionState
   activationMode: VoiceActivationMode
@@ -95,9 +95,9 @@ function clearScreenPreview(): void {
               <template #overflow><ConversationOverflowMenu menu-label="Действия голосового канала" :show-members="showMembers" :members-open="membersOpen" @search="emit('openSearch')" @toggle-members="emit('toggleMembers')" /></template>
             </WorkspaceHeaderActions>
           </header>
-          <div v-if="voiceChannel.admissionClosed" class="state state-error" role="status">
-            Вход в этот канал закрыт администратором. Отзыв media-доступа ещё подтверждается.
-            <span v-if="voiceError">{{ voiceError }}</span>
+          <div v-if="voiceChannel.admissionClosed" class="state state-error" :role="voiceDisconnectNotice ? undefined : 'status'">
+            <DisconnectNotice v-if="voiceDisconnectNotice" :notice="voiceDisconnectNotice" />
+            <template v-else>Вход в этот канал закрыт администратором. Отзыв media-доступа ещё подтверждается. <span v-if="voiceError">{{ voiceError }}</span></template>
             <button v-if="voiceIsActive" type="button" @click="emit('leave')">Выйти из голосового канала</button>
           </div>
           <template v-if="screenViewerCards.length || selectedScreenStreamId || screenViewerEnded">
@@ -110,7 +110,7 @@ function clearScreenPreview(): void {
           </template>
           <div v-if="!selectedScreenStreamId" class="room-wrap">
             <VoiceRoomConnected v-if="!voiceChannel.admissionClosed && voiceIsActive" :room-name="voiceChannel.name" :voice-state="voiceState" :screen-state="screenState" :screen-error="screenError" :screen-diagnostics="screenDiagnostics" :screen-profile="screenProfile" :selected-screen-profile="selectedScreenProfile" :screen-viewer-cards="screenViewerCards" :voice-volume-error="voiceVolumeError" :voice-volume-participants="voiceVolumeParticipants" :self-name="selfDisplayName" :self-deafened="selfDeafened" :self-microphone-muted="selfMicrophoneMuted" :self-microphone-unavailable="selfMicrophoneUnavailable" :self-speaking="selfSpeaking" :toggle-microphone="toggleMicrophone" :toggle-deafen="toggleDeafen" @set-volume="(id, percent) => emit('setParticipantVolume', id, percent)" @watch-screen="watchScreen" @start-screen="emit('startScreen', $event)" @stop-screen="emit('stopScreen')" @leave="emit('leave')" @refresh-screen="emit('refreshScreen')" />
-            <VoicePrejoin v-else-if="!voiceChannel.admissionClosed" :channel-id="voiceChannel.id" :voice-error="voiceError" :voice-state="voiceState" :voice-transfer-required="voiceTransferRequired" :roster="voiceRoster ?? null" :roster-error="voiceRosterError ?? null" @join="(id, transfer, mode) => emit('join', id, transfer, mode)" @transfer="emit('transfer', $event)" />
+            <VoicePrejoin :notice="voiceDisconnectNotice" v-else-if="!voiceChannel.admissionClosed" :channel-id="voiceChannel.id" :voice-error="voiceError" :voice-state="voiceState" :voice-transfer-required="voiceTransferRequired" :roster="voiceRoster ?? null" :roster-error="voiceRosterError ?? null" @join="(id, transfer, mode) => emit('join', id, transfer, mode)" @transfer="emit('transfer', $event)" />
           </div>
           <VoiceRoomFooter v-if="voiceIsActive && !selectedScreenStreamId" :activation-mode="activationMode" :channel-name="voiceChannel.name" :state="voiceState" @leave="emit('leave')" />
         </section>

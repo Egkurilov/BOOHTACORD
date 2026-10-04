@@ -30,6 +30,8 @@ import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
 import '../widgets/noise_suppression_settings.dart';
 import '../widgets/voice_audio_diagnostics/control.dart';
+import '../widgets/voice_disconnect/notice.dart';
+import '../widgets/voice_disconnect/join_actions.dart';
 import '../widgets/participant_volume/menu.dart';
 import '../widgets/participant_volume/slider.dart';
 import '../widgets/participant_volume/reset.dart';
@@ -5084,7 +5086,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
               ),
             if (channel.admissionClosed)
               _VoiceAdmissionClosedNotice(
-                error: state.error,
+                error: state.voiceDisconnectNotice == null ? state.error : null,
                 onLeave: active ? state.leaveVoice : null,
               ),
             Expanded(
@@ -5460,7 +5462,10 @@ class _VoicePrejoinCard extends StatelessWidget {
                         .firstOrNull,
                     error: state.voiceRosterError,
                   ),
-                  if (state.error != null) ...[
+                  if (state.voiceDisconnectNotice != null) ...[
+                    const SizedBox(height: 16),
+                    VoiceDisconnectNoticeView(notice: state.voiceDisconnectNotice!),
+                  ] else if (state.error != null) ...[
                     const SizedBox(height: 16),
                     Semantics(
                       liveRegion: true,
@@ -5483,41 +5488,13 @@ class _VoicePrejoinCard extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed:
-                          channel.admissionClosed ||
-                              state.voicePhase == VoicePhase.joining
-                          ? null
-                          : () => state.joinVoice(channel),
-                      icon: state.voicePhase == VoicePhase.joining
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.login),
-                      label: Text(
-                        channel.admissionClosed
-                            ? 'Вход временно закрыт'
-                            : state.voicePhase == VoicePhase.joining
-                            ? 'Подключаемся…'
-                            : 'Подключиться к голосу',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed:
-                          channel.admissionClosed ||
-                              state.voicePhase == VoicePhase.joining
-                          ? null
-                          : () => state.joinVoice(channel, listenerOnly: true),
-                      icon: const Icon(Icons.headset_outlined),
-                      label: const Text('Подключиться без микрофона'),
-                    ),
+                  VoiceManualJoinActions(
+                    joining: state.voicePhase == VoicePhase.joining,
+                    leaving: state.voicePhase == VoicePhase.leaving,
+                    admissionClosed: channel.admissionClosed,
+                    notice: state.voiceDisconnectNotice,
+                    onJoin: () => unawaited(state.joinVoice(channel)),
+                    onListen: () => unawaited(state.joinVoice(channel, listenerOnly: true)),
                   ),
                 ],
               ),

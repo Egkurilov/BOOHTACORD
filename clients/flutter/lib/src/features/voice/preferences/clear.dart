@@ -3,6 +3,7 @@ import '../lifecycle/controller.dart';
 
 extension VoiceAccountPreferences on VoiceController {
   void clearAccountPreferences() {
+    disconnect.reset();
     final previous = voiceVolumePreferences;
     unawaited(previous?.flush().catchError((Object _) {}) ?? Future<void>.value());
     voiceVolumePreferences = null;

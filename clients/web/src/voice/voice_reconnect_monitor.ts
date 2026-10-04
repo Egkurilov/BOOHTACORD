@@ -15,8 +15,13 @@ export class VoiceReconnectMonitor {
     this.observer = observer
   }
 
+  notifyAdmitted(leaseID: string, channelID: string): void { this.observer?.admitted?.(leaseID, channelID) }
+  private interruptReconnect(): void {
+    this.reconnectSpan?.addEvent('app.client.voice.reconnect.interrupted')
+    this.reconnectSpan?.end(); this.reconnectSpan = null
+  }
   notifyDisconnected(): void {
-    this.finishReconnect(true)
+    this.interruptReconnect()
     this.observer?.disconnected()
   }
 
@@ -26,12 +31,13 @@ export class VoiceReconnectMonitor {
   }
 
   async whileLeaving(action: () => Promise<void>): Promise<void> {
+    this.interruptReconnect()
     this.leaving = true
     try { await action() } finally { this.leaving = false }
   }
 
   bind(room: ReconnectableVoiceRoom, current: () => boolean, disconnected: () => Promise<void>): void {
-    room.on('reconnecting', () => { if (current()) { this.reconnectSpan ??= startTracedOperation('voice.reconnect'); this.observer?.reconnecting() } })
+    room.on('reconnecting', () => { if (current() && !this.leaving) { this.reconnectSpan ??= startTracedOperation('voice.reconnect'); this.observer?.reconnecting() } })
     room.on('reconnected', () => { if (current()) { this.finishReconnect(); this.observer?.reconnected() } })
     room.on('disconnected', () => {
       if (current() && !this.leaving) void disconnected()
