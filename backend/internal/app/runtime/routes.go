@@ -16,6 +16,7 @@ import (
 	storageroutes "voice-platform/backend/internal/app/storage_routes"
 	clientupdates "voice-platform/backend/internal/client_updates/catalog"
 	runtimeconfig "voice-platform/backend/internal/config/runtime"
+	observeusage "voice-platform/backend/internal/identity/observe_usage"
 	authorizelivekitsignal "voice-platform/backend/internal/media/authorize_livekit_signal"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
 	tracehttp "voice-platform/backend/internal/observability/trace_http"
@@ -23,10 +24,10 @@ import (
 	"voice-platform/backend/internal/security/request_id"
 )
 
-func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub, metrics *httpmetrics.Recorder, updates clientupdates.Provider) (http.Handler, error) {
+func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub, metrics *httpmetrics.Recorder, updates clientupdates.Provider, usage *observeusage.Tracker) (http.Handler, error) {
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/client-updates", clientupdates.Handler(updates, metrics))
-	auth := authroutes.Register(mux, database, configuration, events)
+	auth := authroutes.Register(mux, database, configuration, events, usage)
 	sessionService, maintenanceService := auth.Sessions, auth.Maintenance
 	authorizationroutes.ConfigureRolePermissionRoutes(mux, database, sessionService, events)
 	if err := mediaroutes.ConfigureMediaRevocationRoutes(mux, database, authorizelivekitsignal.Config{APIKey: configuration.LiveKitAPIKey, APISecret: configuration.LiveKitAPISecret}, maintenanceService); err != nil {

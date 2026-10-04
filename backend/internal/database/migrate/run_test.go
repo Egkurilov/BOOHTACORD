@@ -56,6 +56,7 @@ func TestRunExecutesEmbeddedMigrations(t *testing.T) {
 		{"CREATE TABLE IF NOT EXISTS role_permissions", "role = 'MEMBER'", "ON CONFLICT (role) DO NOTHING", "revision BIGINT NOT NULL"},
 		{"CREATE TABLE IF NOT EXISTS topology_command_receipts", "PRIMARY KEY (actor_id, client_request_id)", "intent_hash", "response_status"},
 		{"ADD COLUMN IF NOT EXISTS description", "channels_description_length"},
+		{"CREATE TABLE IF NOT EXISTS user_daily_activity", "PRIMARY KEY (activity_day, user_id)", "CREATE TABLE IF NOT EXISTS user_activity_collection"},
 	}
 	if len(executor.statements) != len(expected) {
 		t.Fatalf("migration count = %d", len(executor.statements))

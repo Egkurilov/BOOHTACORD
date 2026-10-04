@@ -23,6 +23,7 @@ import (
 	"voice-platform/backend/internal/identity/logout_user"
 	logoutapi "voice-platform/backend/internal/identity/logout_user/api"
 	logoutpostgres "voice-platform/backend/internal/identity/logout_user/postgres"
+	observeusage "voice-platform/backend/internal/identity/observe_usage"
 	publishpermissioninvalidation "voice-platform/backend/internal/identity/publish_permission_invalidation"
 	"voice-platform/backend/internal/identity/register_user"
 	registerapi "voice-platform/backend/internal/identity/register_user/api"
@@ -37,12 +38,12 @@ type Services struct {
 	Maintenance maintenanceadmission.Service
 }
 
-func Register(mux *http.ServeMux, database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub) Services {
+func Register(mux *http.ServeMux, database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub, usage *observeusage.Tracker) Services {
 	registerService := registeruser.New(registerpostgres.New(registerpostgres.NewPoolExecutor(database)))
 	loginRepository := loginpostgres.New(loginpostgres.NewPoolDatabase(database))
 	loginService := loginuser.New(loginRepository, loginRepository)
 	logoutService := logoutuser.New(logoutpostgres.New(logoutpostgres.NewPoolDatabase(database)))
-	sessionService := authenticatesession.New(sessionpostgres.New(sessionpostgres.NewPoolDatabase(database)))
+	sessionService := authenticatesession.New(observeusage.TrackSessions(sessionpostgres.New(sessionpostgres.NewPoolDatabase(database)), usage))
 	passwordResetService := completepasswordreset.New(completeresetpostgres.New(completeresetpostgres.NewPoolDatabase(database)))
 	passwordResetCreator := createpasswordreset.New(createresetpostgres.New(createresetpostgres.NewPoolDatabase(database)), time.Now)
 	accountAdministration := adminaccount.New(adminpostgres.New(adminpostgres.NewPoolDatabase(database)))
