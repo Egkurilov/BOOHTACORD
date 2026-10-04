@@ -29,8 +29,31 @@ public final class RnnoiseCaptureAdapter implements AudioProcessingAdapter.Exter
     }
     @Override public void reset(int rate) { initialize(rate, channels); }
     @Override public void process(int bands, int frames, ByteBuffer buffer) {
-        if (handle != 0 && !hardwareNoiseSuppression) nativeProcess(handle, frames, buffer);
+        if (handle == 0) return;
+        if (hardwareNoiseSuppression) nativeProcessControls(handle, frames, buffer);
+        else nativeProcess(handle, frames, buffer);
     }
+    public void setControls(Map<String, Object> settings) {
+        if (handle == 0) return;
+        Number threshold = (Number) settings.get("vadThresholdDb");
+        Number gain = (Number) settings.get("microphoneGainPercent");
+        nativeSetControls(handle, threshold == null ? -50 : threshold.doubleValue(),
+            gain == null ? 100 : gain.doubleValue(), Boolean.TRUE.equals(settings.get("vad")),
+            Boolean.TRUE.equals(settings.get("agc")), Boolean.TRUE.equals(settings.get("enabled")));
+    }
+    public Map<String, Object> controlsState() {
+        double[] v = handle == 0 ? null : nativeControlsState(handle);
+        Map<String, Object> result = new HashMap<>();
+        result.put("status", v == null ? "unsupported" : v[5] == 0 ? "initializing" :
+            v[0] == 0 ? "unsupported" : v[1] != 0 ? "active" : "initializing");
+        result.put("levelDb", v == null ? -90. : v[2]);
+        result.put("clipping", v != null && v[3] != 0);
+        result.put("gateOpen", v != null && v[4] != 0);
+        return result;
+    }
+    private static native void nativeSetControls(long handle, double threshold, double gain, boolean vad, boolean agc, boolean enabled);
+    private static native double[] nativeControlsState(long handle);
+    private static native void nativeProcessControls(long handle, int frames, ByteBuffer buffer);
     public void resetState() { if (handle != 0) nativeReset(handle); }
     public boolean setEngine(String name) {
         for (int i = 0; i < 3; i++) {

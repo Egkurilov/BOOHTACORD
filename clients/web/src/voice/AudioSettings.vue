@@ -3,12 +3,14 @@ import type { AudioDevice, AudioDeviceKind } from './audio_devices'
 import type { AudioSettingsState } from './audio_settings_store'
 import type { VoiceActivationMode } from './activation_store'
 import type { VoiceShortcutAction, VoiceShortcutBinding } from './voice_shortcut'
-import { captureVoiceShortcutAssignment, formatVoiceShortcut } from './voice_shortcut'
+import ShortcutSettings from './activation/ShortcutSettings.vue'
 import { audioProcessingStatus, noiseSuppressionModeLabel, noiseSuppressionFallbackLabel, type AudioProcessingDiagnostics } from './audio_processing_diagnostics'
 import { capturePttAssignment } from './ptt_key_capture'
 import { rnnoiseReleaseEnabled } from './noise_suppression/capabilities'
 import type { NoiseSuppressionMode } from './noise_suppression/types'
 import type { AudioProcessingOptions } from './livekit_gateway'
+import SensitivityControl from './microphone_processing/SensitivityControl.vue'
+import GainControl from './microphone_processing/GainControl.vue'
 import AudioDeviceCheck from './AudioDeviceCheck.vue'
 import StreamStartSoundSetting from './StreamStartSoundSetting.vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -40,8 +42,6 @@ const emit = defineEmits<{
   setShortcut: [action: VoiceShortcutAction, binding: VoiceShortcutBinding | null]
 }>()
 const recordingPttKey = ref(false)
-const recordingShortcut = ref<VoiceShortcutAction | null>(null)
-const shortcutActions: VoiceShortcutAction[] = ['microphone', 'deafen']
 const entry = ref<HTMLElement | null>(null)
 const selectedInput = computed(() => props.inputDeviceId ?? 'default')
 const selectedOutput = ref('default')
@@ -70,16 +70,6 @@ function capturePttKey(event: KeyboardEvent): void {
   capturePttAssignment(event, () => { recordingPttKey.value = false }, (code) => emit('setPttKey', code))
 }
 
-function captureShortcut(event: KeyboardEvent): void {
-  const action = recordingShortcut.value
-  if (!action) return
-  captureVoiceShortcutAssignment(event, () => { recordingShortcut.value = null }, (binding) => emit('setShortcut', action, binding), () => emit('setShortcut', action, null))
-}
-
-function shortcutValue(action: VoiceShortcutAction): VoiceShortcutBinding | null {
-  return action === 'microphone' ? props.microphoneShortcut ?? null : props.deafenShortcut ?? null
-}
-
 function setProcessing(key: 'autoGainControl' | 'echoCancellation', event: Event): void {
   emit('setProcessing', { ...props.processing, [key]: (event.target as HTMLInputElement).checked })
 }
@@ -103,16 +93,13 @@ function toggleNoise(): void { emit('setProcessing', { ...props.processing, nois
       </section>
       <section class="audio-activation-section"><header><h2>Активация микрофона</h2><p>Выберите удобный способ общения.</p></header>
         <div class="audio-activation-selector" role="group" aria-label="Активация микрофона"><button type="button" :aria-pressed="activationMode === 'VAD'" @click="emit('setActivation', 'VAD')">По голосу</button><button type="button" :aria-pressed="activationMode === 'PTT'" @click="emit('setActivation', 'PTT')">По нажатию</button></div>
+        <SensitivityControl :vad="activationMode === 'VAD'" />
         <button v-if="activationMode === 'PTT'" class="audio-ptt-button" type="button" @click="recordingPttKey = true" @keydown="capturePttKey">{{ recordingPttKey ? 'Нажмите клавишу…' : pttKey ? `PTT: ${pttKey}` : 'Назначить PTT-клавишу' }}</button>
         <p v-if="activationError" class="state state-error" role="alert">{{ activationError }}</p>
       </section>
-      <section class="audio-shortcuts-section" aria-labelledby="audio-shortcuts-title"><header><h2 id="audio-shortcuts-title">Сочетания клавиш</h2><p>Работают в активной вкладке, кроме полей ввода и диалогов.</p></header>
-        <div v-for="shortcut in shortcutActions" :key="shortcut" class="audio-shortcut-row">
-          <span>{{ shortcut === 'microphone' ? 'Микрофон' : 'Выключить звук' }}<small>{{ formatVoiceShortcut(shortcutValue(shortcut)) }}</small></span>
-          <span class="audio-shortcut-actions"><button type="button" :aria-label="`Назначить сочетание: ${shortcut === 'microphone' ? 'микрофон' : 'выключить звук'}`" :aria-keyshortcuts="formatVoiceShortcut(shortcutValue(shortcut))" @click="recordingShortcut = shortcut" @keydown="captureShortcut">{{ recordingShortcut === shortcut ? 'Нажмите сочетание…' : 'Назначить' }}</button><button v-if="shortcutValue(shortcut)" type="button" @click="emit('setShortcut', shortcut, null)">Очистить</button></span>
-        </div>
-      </section>
+      <ShortcutSettings :microphone-shortcut="microphoneShortcut" :deafen-shortcut="deafenShortcut" @set-shortcut="(action, binding) => emit('setShortcut', action, binding)" />
       <section class="audio-processing-section" aria-labelledby="audio-processing-title"><h2 id="audio-processing-title">Обработка звука</h2>
+        <GainControl :agc="processing.autoGainControl" />
         <div class="audio-processing-row"><div>Шумоподавление<small>Уменьшает фоновый шум</small></div><button type="button" role="switch" aria-label="Шумоподавление" :aria-checked="processing.noiseSuppressionMode !== 'off'" @click="toggleNoise" /></div>
         <label class="audio-processing-row"><span>Подавление эха<small>Убирает обратный звук из динамиков</small></span><input type="checkbox" role="switch" :checked="processing.echoCancellation" @change="setProcessing('echoCancellation', $event)"></label>
         <label class="audio-processing-row"><span>Автоматическая громкость<small>Выравнивает уровень микрофона</small></span><input type="checkbox" role="switch" :checked="processing.autoGainControl" @change="setProcessing('autoGainControl', $event)"></label>

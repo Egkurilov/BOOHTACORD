@@ -7,13 +7,15 @@ import 'scan.dart';
 import 'inventory.dart';
 import 'selection.dart';
 import 'processing.dart';
+import 'microphone.dart';
 
 class AudioDeviceController extends AudioDeviceState
     with
         AudioDeviceScan,
         AudioDeviceInventory,
         AudioDeviceSelection,
-        AudioDeviceProcessing {
+        AudioDeviceProcessing,
+        AudioDeviceMicrophone {
   AudioDeviceController({
     required super.readRoom,
     super.loader,
@@ -21,6 +23,7 @@ class AudioDeviceController extends AudioDeviceState
     super.scope,
   }) {
     nativeNoise.addListener(notifyListeners);
+    // Meter widgets subscribe directly; avoid rebuilding the workspace at 10 Hz.
   }
 
   void watch() {

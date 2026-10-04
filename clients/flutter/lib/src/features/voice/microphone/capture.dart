@@ -14,7 +14,9 @@ extension VoiceMicrophoneCapture on VoiceController {
     final participant = targetRoom?.localParticipant;
     bool current() => active(ticket, revision) && identical(room, targetRoom);
     audio.microphoneMutedIntent = muted;
+    audio.microphoneVad = audioActivationMode == AudioActivationMode.vad;
     if (muted) {
+      audio.nativeMicrophone.pause();
       final track = participant
           ?.getTrackPublicationBySource(TrackSource.microphone)
           ?.track;
@@ -24,7 +26,7 @@ extension VoiceMicrophoneCapture on VoiceController {
     final operation = audio.nativeNoise.run(() async {
       if (!current()) return false;
       try {
-        if (!muted) await audio.prepareNoiseForCapture();
+        if (!muted) { await audio.prepareNoiseForCapture(); await audio.applyMicrophoneControls(); }
         if (!current()) return false;
         await audio.nativeNoise.reset();
         await participant?.setMicrophoneEnabled(
@@ -52,6 +54,7 @@ extension VoiceMicrophoneCapture on VoiceController {
             );
           }
           audio.monitorNativeNoise();
+          audio.nativeMicrophone.monitor();
         }
         if (request == microphoneRevision) {
           microphoneMuted = muted;

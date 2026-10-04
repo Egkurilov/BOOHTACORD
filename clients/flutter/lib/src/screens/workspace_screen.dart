@@ -29,6 +29,7 @@ import '../widgets/topology_actions/delete_actions.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
 import '../widgets/noise_suppression_settings.dart';
+import '../widgets/microphone_controls/control.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
 import '../widgets/confirmation_dialog.dart';
@@ -6800,6 +6801,12 @@ class _AudioSettingsScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                    MicrophoneControl(
+                      settings: state.microphoneSettings, runtime: state.microphoneControlsRuntime,
+                      onChanged: state.setMicrophoneSettings, sensitivity: true,
+                      vad: state.audioActivationMode == AudioActivationMode.vad,
+                      agc: state.audioProcessing.autoGainControl,
+                    ),
                     if (state.audioActivationError != null) ...[
                       const SizedBox(height: 8),
                       _ErrorBanner(message: state.audioActivationError!),
@@ -6863,6 +6870,12 @@ class _AudioSettingsScreen extends StatelessWidget {
                       onChanged: (value) => state.setAudioProcessing(
                         state.audioProcessing.copyWith(echoCancellation: value),
                       ),
+                    ),
+                    MicrophoneControl(
+                      settings: state.microphoneSettings, runtime: state.microphoneControlsRuntime,
+                      onChanged: state.setMicrophoneSettings, sensitivity: false,
+                      vad: state.audioActivationMode == AudioActivationMode.vad,
+                      agc: state.audioProcessing.autoGainControl,
                     ),
                     NoiseSuppressionSettings(
                       processing: state.audioProcessing,

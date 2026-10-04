@@ -1,6 +1,7 @@
 #import "BoohtaRnnoiseCaptureDelegate.h"
 #include "boohta_rnnoise_capture_processor.h"
 #include <memory>
+#include <algorithm>
 @implementation BoohtaRnnoiseCaptureDelegate {
   std::unique_ptr<boohta::RnnoiseCaptureProcessor> _processor;
 }
@@ -13,6 +14,19 @@
   if (![engine isKindOfClass:[NSString class]] || !boohta::ParseNoiseEngine(engine.UTF8String, &value)) return NO;
   _processor->SetEngine(value);
   return YES;
+}
+- (void)setControls:(NSDictionary*)settings {
+  NSNumber* threshold = settings[@"vadThresholdDb"];
+  NSNumber* gain = settings[@"microphoneGainPercent"];
+  _processor->controls.Configure(threshold ? threshold.floatValue : -50,
+      gain ? gain.floatValue : 100, [settings[@"vad"] boolValue],
+      [settings[@"agc"] boolValue], [settings[@"enabled"] boolValue]);
+}
+- (NSDictionary*)controlsState {
+  auto& c = _processor->controls;
+  return @{@"status": _processor->sample_rate() == 0 ? @"initializing" :
+      !c.supported() ? @"unsupported" : c.applied() ? @"active" : @"initializing",
+      @"levelDb": @(c.level_db()), @"clipping": @(c.clipping()), @"gateOpen": @(c.gate_open())};
 }
 - (NSDictionary*)state {
   const auto requested = _processor->requested_engine();
@@ -33,10 +47,16 @@
   _processor->Initialize((int)rate, (int)channels);
 }
 - (void)audioProcessingProcess:(RTCAudioBuffer*)buffer {
-  // This is a writable hook, but bypass intentionally preserves Apple's AEC
-  // and avoids stacking RNNoise with the coupled hardware NS. No PCM is copied
-  // or retained and no control channel runs on this callback.
-  (void)buffer;
+  // Preserve Apple AEC/NS: RNNoise remains bypassed. Gain/VAD uses fixed
+  // 20 ms lookbehind storage and never retains caller buffers or invokes
+  // the control channel on this callback.
+  // Gain/VAD only: preserve the platform AEC/NS and RNNoise bypass above.
+  if (buffer.channels == 0) return;
+  _processor->controls.Process([buffer rawBufferForChannel:0], (int)buffer.frames, (int)buffer.frames);
+  if (!_processor->controls.supported() && buffer.channels > 1) {
+    for (size_t channel = 1; channel < buffer.channels; ++channel)
+      std::fill_n([buffer rawBufferForChannel:channel], buffer.frames, 0.f);
+  }
 }
 - (void)audioProcessingRelease { _processor->Reset(); }
 @end

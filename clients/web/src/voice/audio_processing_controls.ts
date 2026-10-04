@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { loadCurrentSession } from '../identity/current_session'
 import { defaultAudioProcessing, type AudioProcessingOptions } from './livekit_gateway'
 import { AudioProcessingPreferences } from './audio_processing_preferences'
+import { bindMicrophoneAccount, microphoneAccountGeneration } from './microphone_processing/runtime'
 
 export type AudioProcessingApplier = (processing: AudioProcessingOptions) => Promise<void>
 type AccountLoader = () => Promise<{ accountId: string }>
@@ -22,16 +23,23 @@ export function createAudioProcessingControls(
   preferences = new AudioProcessingPreferences(),
 ) {
   const error = ref<string | null>(null)
+  let loadRevision = 0
   const processing = ref<AudioProcessingOptions>({ ...defaultAudioProcessing })
 
   async function start(apply: AudioProcessingApplier): Promise<void> {
+    const revision = ++loadRevision
+    const accountGeneration = microphoneAccountGeneration()
     preferences.clear()
     processing.value = { ...defaultAudioProcessing }
     error.value = null
     try {
-      preferences.bind((await loadAccount()).accountId)
+      const account = (await loadAccount()).accountId
+      if (revision !== loadRevision || accountGeneration !== microphoneAccountGeneration()) return
+      preferences.bind(account)
+      bindMicrophoneAccount(account)
       processing.value = preferences.get()
     } catch {
+      if (revision !== loadRevision || accountGeneration !== microphoneAccountGeneration()) return
       error.value = 'Не удалось загрузить настройки обработки микрофона; используются значения по умолчанию.'
     }
     try {

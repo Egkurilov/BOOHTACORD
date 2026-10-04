@@ -1,5 +1,4 @@
-import { LiveKitMicrophoneAdapter } from './noise_suppression/livekit_microphone_adapter'
-import { RnnoiseTrackProcessor } from './noise_suppression/rnnoise_track_processor'
+import { bindLiveKitMicrophone } from './noise_suppression/microphone_adapter/factory'
 import { bindLiveKitScreenViewer, type LiveKitScreenViewerRoom } from './livekit_screen_viewer_adapter'
 import type { VoiceRoom } from './livekit_gateway'
 import { adaptiveMediaRoomOptions } from './media_publishing'
@@ -31,7 +30,8 @@ export function wireLiveKitRoom(
 }
 
 export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
-  const { Room, RoomEvent, Track, LocalAudioTrack, ConnectionState } = await import('livekit-client')
+  const sdk = await import('livekit-client')
+  const { Room, RoomEvent, Track } = sdk
   const liveKitRoom = new Room({ ...adaptiveMediaRoomOptions, reconnectPolicy: new BoundedVoiceReconnectPolicy() })
   const viewer = bindLiveKitScreenViewer(liveKitRoom as unknown as LiveKitScreenViewerRoom, {
     activeSpeakersChanged: RoomEvent.ActiveSpeakersChanged,
@@ -71,45 +71,7 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   room.participantCards = viewer.participants
   room.remoteVoices = viewer.remoteVoices
   room.setDeafened = viewer.setDeafened
-  // Retain the SDK-owned context for processing before first publication.
-  let captureContext: AudioContext | undefined
-  const setAudioContext = liveKitRoom.localParticipant.setAudioContext.bind(liveKitRoom.localParticipant)
-  liveKitRoom.localParticipant.setAudioContext = (context) => {
-    captureContext = context
-    setAudioContext(context)
-  }
-  const microphone = new LiveKitMicrophoneAdapter({
-    createTrack: async (options) => {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: options, video: false })
-      const tracks = stream.getTracks()
-      const audio = stream.getAudioTracks()[0]
-      if (!audio || tracks.length !== 1) {
-        tracks.forEach((track) => track.stop())
-        throw new Error('Микрофон не предоставил аудиодорожку.')
-      }
-      // The adapter owns capture/recovery. A user-provided SDK track prevents
-      // Room devicechange/track-ended handlers from independently restarting it.
-      return new LocalAudioTrack(audio, options, true, captureContext)
-    },
-    publishTrack: (track, options) => liveKitRoom.localParticipant.publishTrack(track, { ...options, source: Track.Source.Microphone }),
-    unpublishTrack: (track) => liveKitRoom.localParticipant.unpublishTrack(track, false),
-    isReconnecting: () => liveKitRoom.state === ConnectionState.Reconnecting || liveKitRoom.state === ConnectionState.SignalReconnecting,
-    createProcessor: (callbacks) => new RnnoiseTrackProcessor(callbacks),
-  })
-  room.setMicrophone = (enabled, options) => microphone.setEnabled(enabled, options)
-  room.disposeMicrophone = () => microphone.dispose()
-  room.applyMicrophoneProcessing = (options) => microphone.setProcessing(options)
-  room.readAudioProcessingSettings = () => microphone.readCaptureSettings()
-  room.readMicrophoneTrack = () => microphone.readOutputTrack()
-  room.readAudioInputSelection = () => microphone.inputSelection
-  room.onAudioInputSelection = (listener) => microphone.subscribeInput(listener)
-  liveKitRoom.on(RoomEvent.Reconnecting, () => microphone.prepareReconnect())
-  liveKitRoom.on(RoomEvent.Reconnected, () => { void microphone.reapplyDevice().catch(() => undefined) })
-  room.readNoiseSuppressionState = () => microphone.runtimeState
-  room.onNoiseSuppressionState = (listener) => microphone.subscribe(listener)
-  const switchDevice = liveKitRoom.switchActiveDevice.bind(liveKitRoom)
-  room.switchActiveDevice = (kind, deviceId) => kind === 'audioinput' ? microphone.switchDevice(deviceId) : switchDevice(kind, deviceId)
-  liveKitRoom.on(RoomEvent.Disconnected, () => { void microphone.dispose().catch(() => undefined) })
+  bindLiveKitMicrophone(room, liveKitRoom, sdk)
   room.readScreenDiagnostics = async () => {
     const video = liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.videoTrack as LiveKitScreenVideoTrack | undefined
     const audio = liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShareAudio)?.audioTrack

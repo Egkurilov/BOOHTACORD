@@ -10,7 +10,7 @@ endif()
 add_library(boohta_rnnoise STATIC
   upstream/src/denoise.c upstream/src/kiss_fft.c ${_rnnoise_pitch_lpc}
   upstream/src/rnn.c upstream/src/rnn_data.c
-  rnnoise_capture_processor.cc)
+  rnnoise_capture_processor.cc microphone_controls/processor.cc)
 target_include_directories(boohta_rnnoise PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/upstream/include PRIVATE upstream/src)
 target_compile_features(boohta_rnnoise PUBLIC cxx_std_17)
@@ -25,6 +25,14 @@ endif()
 option(BOOHTA_RNNOISE_TESTS "Build native capture processor tests" OFF)
 if(BOOHTA_RNNOISE_TESTS)
   enable_testing()
+  add_executable(microphone_controls_test microphone_controls/processor_test.cc)
+  target_link_libraries(microphone_controls_test PRIVATE boohta_rnnoise)
+  if(MSVC)
+    target_compile_options(microphone_controls_test PRIVATE /UNDEBUG)
+  else()
+    target_compile_options(microphone_controls_test PRIVATE -UNDEBUG)
+  endif()
+  add_test(NAME microphone_controls_test COMMAND microphone_controls_test)
   add_executable(rnnoise_capture_processor_test tests/rnnoise_capture_processor_test.cc)
   target_link_libraries(rnnoise_capture_processor_test PRIVATE boohta_rnnoise)
   if(MSVC)

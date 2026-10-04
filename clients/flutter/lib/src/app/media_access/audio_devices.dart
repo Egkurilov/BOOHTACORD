@@ -3,8 +3,13 @@ import 'package:livekit_client/livekit_client.dart';
 import '../../services/audio_preferences.dart';
 import '../../services/native_noise_suppression.dart';
 import '../composition/owners.dart';
+import '../../features/audio/preferences/microphone.dart';
+import '../../features/audio/microphone_controls/native.dart';
 
 mixin AppAudioDevicesAccess on AppOwners {
+  MicrophoneSettings get microphoneSettings => audioDevices.preferences?.microphone ?? const MicrophoneSettings();
+  NativeMicrophoneControls get microphoneControlsRuntime => audioDevices.nativeMicrophone;
+  Future<void> setMicrophoneSettings(MicrophoneSettings next) => audioDevices.setMicrophoneSettings(next);
   List<MediaDevice> get audioInputDevices => audioDevices.audioInputDevices;
 
   set audioInputDevices(List<MediaDevice> value) =>

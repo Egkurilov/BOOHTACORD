@@ -1,28 +1,19 @@
+import { setMicrophoneVad } from './microphone_processing/runtime'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-import { PushToTalk, type EventSource } from './push_to_talk'
+import { createPttActivation } from './activation/ptt'
 import { useVoiceConnectionStore } from './connection_store'
 import { loadVoiceShortcutPreferences, saveVoiceShortcutPreferences } from './voice_shortcut_preferences'
 import { isVoiceShortcutValid, shortcutConflict, type VoiceShortcutAction, type VoiceShortcutBinding } from './voice_shortcut'
 
 export type VoiceActivationMode = 'VAD' | 'PTT'
 
-let pushToTalk: PushToTalk | null = null
-let mutedBeforePtt: boolean | null = null
-let queuedChange = Promise.resolve()
-
-function browserEvents(): EventSource {
-  return {
-    addEventListener: (type, listener) => (type === 'visibilitychange' ? document : window).addEventListener(type, listener as unknown as EventListener),
-    removeEventListener: (type, listener) => (type === 'visibilitychange' ? document : window).removeEventListener(type, listener as unknown as EventListener),
-  }
-}
-
 export const useVoiceActivationStore = defineStore('voice-activation', () => {
   const error = ref<string | null>(null)
   const mode = ref<VoiceActivationMode>('VAD')
   const pttKey = ref<string | null>(null)
+  const { start: startPtt, stop } = createPttActivation(pttKey, error)
   const microphoneShortcut = ref<VoiceShortcutBinding | null>(null)
   const deafenShortcut = ref<VoiceShortcutBinding | null>(null)
   const shortcutStatus = ref('')
@@ -40,10 +31,12 @@ export const useVoiceActivationStore = defineStore('voice-activation', () => {
     mode.value = nextMode
     error.value = null
     if (nextMode === 'VAD') {
+      setMicrophoneVad(true)
       await stop()
       return
     }
     await startPtt()
+    setMicrophoneVad(false)
   }
 
   async function setPttKey(key: string): Promise<void> {
@@ -87,36 +80,6 @@ export const useVoiceActivationStore = defineStore('voice-activation', () => {
         ? 'Микрофон остаётся выключенным.'
         : voice.microphoneMuted ? 'Микрофон выключен.' : 'Микрофон включён.'
       : voice.deafened ? 'Звук выключен.' : 'Звук включён.'
-  }
-
-  async function startPtt(): Promise<void> {
-    const voice = useVoiceConnectionStore()
-    if (!pttKey.value) {
-      error.value = 'Для push-to-talk назначьте клавишу.'
-      return
-    }
-    if (!voice.active) {
-      error.value = 'Сначала подключитесь к голосовому каналу.'
-      return
-    }
-
-    await stop(false)
-    mutedBeforePtt = voice.microphoneMuted
-    await voice.setMicrophoneMuted(true)
-    pushToTalk = new PushToTalk(browserEvents(), pttKey.value, (pressed) => {
-      queuedChange = queuedChange.then(() => voice.setMicrophoneMuted(!pressed))
-    })
-    pushToTalk.start()
-  }
-
-  async function stop(restoreMute = true): Promise<void> {
-    pushToTalk?.stop()
-    pushToTalk = null
-    await queuedChange
-    if (restoreMute && mutedBeforePtt !== null) {
-      await useVoiceConnectionStore().setMicrophoneMuted(mutedBeforePtt)
-    }
-    mutedBeforePtt = null
   }
 
   return { error, mode, pttKey, microphoneShortcut, deafenShortcut, shortcutStatus, bindAccount, setMode, setPttKey, setShortcut, announceShortcut, stop }

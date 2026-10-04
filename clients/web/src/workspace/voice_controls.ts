@@ -1,3 +1,4 @@
+import { bindMicrophoneAccount } from '../voice/microphone_processing/runtime'
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 
 import type { TopologyChannel } from '../channel/topology_client'
@@ -23,6 +24,8 @@ export function useWorkspaceVoiceControls(accountId = '') {
   const refreshDevices = () => { void loadAudioDevices() }
   onMounted(() => {
     voiceActivation.bindAccount?.(accountId)
+    bindMicrophoneAccount(accountId || null)
+    void audioSettings.loadProcessing(voiceConnection.setAudioProcessing)
     navigator.mediaDevices?.addEventListener?.('devicechange', refreshDevices)
     shortcuts = new VoiceShortcuts(window as unknown as VoiceShortcutSource, () => ({ microphone: voiceActivation.microphoneShortcut, deafen: voiceActivation.deafenShortcut }), {
       microphone: voiceConnection.toggleMicrophone,
@@ -31,6 +34,7 @@ export function useWorkspaceVoiceControls(accountId = '') {
     shortcuts.start()
   })
   onBeforeUnmount(() => {
+    bindMicrophoneAccount(null)
     navigator.mediaDevices?.removeEventListener?.('devicechange', refreshDevices)
     shortcuts?.stop()
     shortcuts = null
@@ -83,7 +87,8 @@ export function useWorkspaceVoiceControls(accountId = '') {
     if (activeChannelId && activeChannelId !== channelId) await leaveVoice()
     await audioSettings.loadInput(voiceConnection.setInputDevice)
     await audioSettings.loadProcessing(voiceConnection.setAudioProcessing)
-    await voiceConnection.join(channelId, transfer, joinMode)
+    await voiceConnection.join(channelId, transfer, voiceActivation.mode === 'PTT' ? 'listener' : joinMode)
+    if (voiceConnection.active && voiceActivation.mode === 'PTT' && joinMode === 'with-microphone') await voiceActivation.setMode('PTT')
     if (voiceConnection.active) voiceNavigation.confirmVoiceConnected(voiceConnection.active.channelId)
   }
 
