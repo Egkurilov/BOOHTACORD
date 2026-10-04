@@ -22,7 +22,7 @@
     {
       "name": "Live PostgreSQL and strict pixel acceptance",
       "result": "NOT_RUN",
-      "observation": "Browser API is fixture-backed, not a deployed database or LiveKit session. Remaining visual differences are visible in R01-R03 diffs; 1:1 gate remains open."
+      "observation": "Browser API is fixture-backed, not a deployed database or LiveKit session. A disposable-schema PostgreSQL integration test is included; local run skipped because VOICE_PLATFORM_TEST_DATABASE_URL is unset. Backend CI provides PostgreSQL and will execute it. Remaining visual differences are visible in R01-R03 diffs; 1:1 gate remains open."
     }
   ]
 }
