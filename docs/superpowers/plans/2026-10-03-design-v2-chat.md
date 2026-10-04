@@ -76,7 +76,7 @@ The live package supplies 30 HTML pages and `src/frames.json`. The actual `AGENT
 | R06–R07, R21–R22 | `AdminPanel`, `AdminRolePermissions`, `AdminMembersSection` | Role table/footer and desktop/mobile member list implemented; R06, R07, R21, and R22 real Vue DOM geometry measured and matched |
 | R08–R09, R24, R29 | `ChannelTopologyActions`, channel/category dialog, confirmation/context controls | Create dialogs and destructive confirmation match; permission filtering and API handlers preserved |
 | R10–R11 | `AudioSettings`, audio device check and activation controls | Desktop/mobile audio settings layouts match; device/controller flows remain connected |
-| R12 | `ProfileSettings` | Profile panel and save bar match |
+| R12 | `ProfileSettings` | Controls calibrated against HTML; card PNG MAE 0.571, full frame 2.095; strict 1:1 remains open |
 | R13 | `WorkspaceSearchPanel` | Search panel matches without changing conversation/member data owners |
 | R14, R18 | `WorkspaceApp` drawers, `WorkspaceMembersPanel`, `MemberPopover` | Mobile drawer and production member popover match |
 | R15 | Existing shared controls distributed across production components | Reference-only catalog; canonical tokens/shared control styles validated against the real component system |
@@ -93,10 +93,21 @@ The live package supplies 30 HTML pages and `src/frames.json`. The actual `AGENT
 2. **Settings, auth, overlays and admin:** implemented the R06–R18, R21–R24 and R29 layouts using current data/API owners, ACL checks and mutation handlers.
 3. **Media/service states:** aligned R04–R05, R19–R20, R23, R27 and R30 with production components. QA fixtures did not start LiveKit or claim hardware metrics.
 4. **Conversation states:** aligned R25–R28 with production reply, attachment viewer and DM components. Image requests were blocked; the protected viewer was tested in its unavailable-preview state.
-5. **All-frame verification:** `artifacts/design-v2/review.json` records every R01–R30 reference and DOM geometry delta. Raster images/screenshots were neither used nor produced, per the user's instruction.
+5. **All-frame verification:** `artifacts/design-v2/review.json` records the initial HTML geometry pass. Later user requests explicitly require actual screenshots and diff; current raster review and frozen-reference hashes are in the external visualization reports. Geometry alone does not close visual acceptance.
 
-**Scope controls:** The reference's simulated accounts/messages/stats are not product defaults. The component board is not a production route. The supplied HTML remains immutable. No screenshot, PNG, or other raster image may be generated or consumed for this task; actual/reference evidence is HTML-derived DOM geometry and computed style.
+**Scope controls:** The reference's simulated accounts/messages/stats are not product defaults. The component board is not a production route. Supplied HTML/PNG references remain immutable. Do not substitute reference images or a static reference app for production components; screenshots and fixtures are QA artifacts only.
 
 **UI/UX review carry-forward:** Keep the one-guild three-zone desktop structure; leave the idle mobile voice dock hidden while exposing it during active, connecting, reconnecting, and error states; keep touch targets at least 44 px; use labels, inline errors, semantic danger actions, and explicit overlay close/focus return; preserve separate voice/stream audio and do not resize or discard drafts to make the layout denser. The review's R16/R17 screenshot says registration is closed, but the approved product brief requires free registration, so the existing working registration flow remains available while its card layout follows the handoff geometry. Review advice is implementation context; it cannot override the product brief or ACL/media invariants.
 
-**Full-goal stop condition:** All R01–R30 states have explicit production component mappings and DOM review records. `R15` is a reference-only component catalog and is covered through the production token/shared-control tests rather than a new product route. Geometry differences for the measurable production states are zero after the final pass. Real device/browser engine/live-media behavior remains outside the fixture-only visual check; the existing behavior tests and controllers remain the validation for those lifecycles.
+**Full-goal stop condition:** Verify every visual requirement against current real components, actual screenshots and unchanged references; close remaining pixel differences with authoritative evidence before claiming 1:1. `R15` is covered through production tokens/shared controls. Preserve and verify existing message, ACL and media ownership; fixture checks alone do not prove server ACL or physical media. The full goal remains incomplete.
+
+## Profile control fidelity packet — 2026-10-04
+
+- Route: `small_direct`, `src/identity/ProfileSettings.vue` → `src/design/design_v2_profile_presentation.css`; no handlers changed.
+- [x] Measure desktop/mobile controls against immutable R12 HTML; reproduce failing computed styles and geometry before edits.
+- [x] Set fallback initials 26/600, label 500, input 400/sidebar fill, helper 12/18, raised upload button and exact save button border/padding/disabled state.
+- [x] Match desktop control boxes; use 16 px mobile inputs, 44 px actions and intrinsic grid rows to contain the save button.
+- [x] Browser: save through existing PATCH, security tab and close-to-workspace; computed styles/desktop bounds/mobile containment pass.
+- [x] Run profile native tests (2 files/9 tests), full Web tests (297 files/940 tests), TypeScript/Vite build and diff whitespace check.
+- [x] Freeze reference hash and store actual/diff/metrics in `design-v2-profile-controls-2026-10-04/REVIEW.md` under the task visualization directory.
+- Remaining: strict full-frame visual acceptance; card MAE 5.342 → 0.571 and full frame 3.582 → 2.095 are improvements, not exact equality.
