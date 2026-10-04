@@ -10,6 +10,7 @@ import (
 	authorizationroutes "voice-platform/backend/internal/app/authorization_routes"
 	channelsroutes "voice-platform/backend/internal/app/channels_routes"
 	chatroutes "voice-platform/backend/internal/app/chat_routes"
+	guildroutes "voice-platform/backend/internal/app/guild_routes"
 	identityroutes "voice-platform/backend/internal/app/identity_routes"
 	mediaroutes "voice-platform/backend/internal/app/media_routes"
 	observabilityroutes "voice-platform/backend/internal/app/observability_routes"
@@ -18,6 +19,7 @@ import (
 	runtimeconfig "voice-platform/backend/internal/config/runtime"
 	observeusage "voice-platform/backend/internal/identity/observe_usage"
 	authorizelivekitsignal "voice-platform/backend/internal/media/authorize_livekit_signal"
+	guildlifecycle "voice-platform/backend/internal/observability/guild_lifecycle"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
 	tracehttp "voice-platform/backend/internal/observability/trace_http"
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
@@ -27,8 +29,10 @@ import (
 func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub, metrics *httpmetrics.Recorder, updates clientupdates.Provider, usage *observeusage.Tracker) (http.Handler, error) {
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/client-updates", clientupdates.Handler(updates, metrics))
-	auth := authroutes.Register(mux, database, configuration, events, usage)
+	lifecycle := guildlifecycle.New(otel.Tracer("boohtacord/guild"), otel.Meter("boohtacord/guild"), metrics)
+	auth := authroutes.Register(mux, database, configuration, events, usage, lifecycle)
 	sessionService, maintenanceService := auth.Sessions, auth.Maintenance
+	guildroutes.Register(mux, database, sessionService, events, lifecycle)
 	authorizationroutes.ConfigureRolePermissionRoutes(mux, database, sessionService, events)
 	if err := mediaroutes.ConfigureMediaRevocationRoutes(mux, database, authorizelivekitsignal.Config{APIKey: configuration.LiveKitAPIKey, APISecret: configuration.LiveKitAPISecret}, maintenanceService); err != nil {
 		return nil, fmt.Errorf("configure media admission: %w", err)

@@ -41,6 +41,7 @@ services:
       - --web.listen-address=0.0.0.0:9090
     volumes:
       - ./prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - ./guild-lifecycle-alerts.yaml:/etc/prometheus/guild-lifecycle-alerts.yaml:ro
       - prometheus-data:/prometheus
     ports:
       - "127.0.0.1:9091:9090"

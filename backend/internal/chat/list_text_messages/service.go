@@ -25,6 +25,7 @@ type Attachment struct {
 }
 
 type Message struct {
+	Kind                                                      string
 	ID, ChannelID, AuthorID, ClientMessageID, Body, ReplyToID string
 	CreatedAt                                                 time.Time
 	EditedAt                                                  *time.Time

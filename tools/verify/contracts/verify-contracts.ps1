@@ -32,6 +32,7 @@ $openApi = Get-Content -Raw -LiteralPath $openApiPath | ConvertFrom-Json
 $realtime = Get-Content -Raw -LiteralPath $realtimePath | ConvertFrom-Json
 
 . (Join-Path $PSScriptRoot 'realtime.ps1')
+. (Join-Path $PSScriptRoot 'guild_lifecycle.ps1')
 . (Join-Path $PSScriptRoot 'identity.ps1')
 . (Join-Path $PSScriptRoot 'workspace.ps1')
 . (Join-Path $PSScriptRoot 'direct_messages.ps1')

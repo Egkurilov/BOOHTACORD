@@ -22,7 +22,7 @@ WITH current_channel AS (
     WHERE id = $2::uuid
       AND channel_id = (SELECT id FROM current_channel)
 )
-SELECT m.id::text, m.channel_id::text, m.author_id::text, m.body, m.created_at, m.edited_at, m.revision
+SELECT m.id::text, m.channel_id::text, m.author_id::text, m.body, m.created_at, m.edited_at, m.revision, m.kind
 FROM messages m
 WHERE m.channel_id = (SELECT id FROM current_channel)
   AND m.deleted_at IS NULL
@@ -66,7 +66,7 @@ func (repository Repository) Search(context context.Context, request searchtextm
 	result := make([]searchtextmessages.Message, 0, request.Limit+1)
 	for rows.Next() {
 		var message searchtextmessages.Message
-		if err := rows.Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.Body, &message.CreatedAt, &message.EditedAt, &message.Revision); err != nil {
+		if err := rows.Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.Body, &message.CreatedAt, &message.EditedAt, &message.Revision, &message.Kind); err != nil {
 			return nil, fmt.Errorf("scan text message search result: %w", err)
 		}
 		result = append(result, message)

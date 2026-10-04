@@ -51,7 +51,7 @@ func NewHandler(creator Creator) http.Handler {
 		}
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		writer.WriteHeader(http.StatusCreated)
-		response := messageResponse{ID: result.ID, ChannelID: result.ChannelID, AuthorID: result.AuthorID, ClientMessageID: result.ClientMessageID, Body: result.Body, Revision: result.Revision, CreatedAt: result.CreatedAt, MentionUserIDs: nonNilMentions(result.MentionUserIDs)}
+		response := messageResponse{Kind: "USER", ID: result.ID, ChannelID: result.ChannelID, AuthorID: result.AuthorID, ClientMessageID: result.ClientMessageID, Body: result.Body, Revision: result.Revision, CreatedAt: result.CreatedAt, MentionUserIDs: nonNilMentions(result.MentionUserIDs)}
 		if result.ReplyToID != "" {
 			response.ReplyToID = &result.ReplyToID
 		}
@@ -60,6 +60,7 @@ func NewHandler(creator Creator) http.Handler {
 }
 
 type messageResponse struct {
+	Kind            string    `json:"kind"`
 	ID              string    `json:"id"`
 	ChannelID       string    `json:"channel_id"`
 	AuthorID        string    `json:"author_id"`

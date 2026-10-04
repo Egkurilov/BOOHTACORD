@@ -8,6 +8,7 @@ import (
 )
 
 type Recorder struct {
+	guildLifecycle                 *guildLifecycleMetrics
 	attachmentFilesystemRegistered bool
 	clientScreen                   *clientScreenMetrics
 	clientUpdates                  *clientUpdateMetrics
@@ -25,6 +26,7 @@ type Recorder struct {
 }
 
 func New() *Recorder {
+	guildLifecycle := newGuildLifecycleMetrics()
 	registry := prometheus.NewRegistry()
 	requests := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "voice_platform_api_requests_total",
@@ -46,7 +48,8 @@ func New() *Recorder {
 	clientUpdates := newClientUpdateMetrics()
 	roster := newVoiceRosterMetrics()
 	registry.MustRegister(requests, duration, voiceSFURevocations, realtime.active, realtime.total, realtime.ready, reconnectOutcomes, eventDeliveryLatency, uploadFailures.total, clientScreen.total, clientScreen.fps, clientScreen.bitrate, roster.snapshots, roster.failures, roster.duration, roster.rooms, clientUpdates.checks, clientUpdates.reloads, clientUpdates.valid, clientUpdates.lastSuccess, clientUpdates.revision)
-	return &Recorder{clientScreen: clientScreen, clientUpdates: clientUpdates, duration: duration, eventDeliveryLatency: eventDeliveryLatency, handler: promhttp.HandlerFor(registry, promhttp.HandlerOpts{}), reconnectOutcomes: reconnectOutcomes, realtime: realtime, roster: roster, registry: registry, requests: requests, uploadFailures: uploadFailures, voiceSFURevocations: voiceSFURevocations}
+	registry.MustRegister(guildLifecycle.settings, guildLifecycle.welcome)
+	return &Recorder{guildLifecycle: guildLifecycle, clientScreen: clientScreen, clientUpdates: clientUpdates, duration: duration, eventDeliveryLatency: eventDeliveryLatency, handler: promhttp.HandlerFor(registry, promhttp.HandlerOpts{}), reconnectOutcomes: reconnectOutcomes, realtime: realtime, roster: roster, registry: registry, requests: requests, uploadFailures: uploadFailures, voiceSFURevocations: voiceSFURevocations}
 }
 
 func (recorder *Recorder) Handler() http.Handler { return recorder.handler }

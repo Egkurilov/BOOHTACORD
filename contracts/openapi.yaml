@@ -6,6 +6,9 @@
     "description": "Versioned foundation contract. Feature endpoints are added only with matching ACL and contract tests."
   },
   "paths": {
+    "/api/v1/guild-profile": {"get": {"operationId": "getGuildProfile", "description": "Public name and revision of the single deployment guild. No private settings or guild ID.", "responses": {"200": {"description": "Public guild profile", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GuildProfile"}}}}, "500": {"description": "Profile unavailable", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}}}},
+    "/api/v1/admin/guild-settings": {"get": {"operationId": "getGuildSettings", "description": "Administrator session required.", "responses": {"200": {"description": "Private guild settings", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GuildSettings"}}}}, "401": {"description": "No active session", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}, "403": {"description": "Administrator or valid Origin required", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}, "500": {"description": "Settings persistence failed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}}}, "patch": {"operationId": "updateGuildSettings", "description": "Administrator session and trusted Origin required. Atomically update requested fields, revision and metadata-only audit. A realtime hint failure after commit does not change HTTP success.", "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GuildSettingsUpdateRequest"}}}}, "responses": {"200": {"description": "Committed settings", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GuildSettings"}}}}, "400": {"description": "Invalid request or unavailable welcome channel", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}, "401": {"description": "No active session", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}, "403": {"description": "Administrator or valid Origin required", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}, "409": {"description": "Stale guild settings revision", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}, "500": {"description": "Settings persistence failed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}}}},
+
     "/api/v1/health": {
       "get": {
         "operationId": "getHealth",
@@ -1198,6 +1201,10 @@
   },
   "components": {
     "schemas": {
+      "GuildProfile": {"type": "object", "additionalProperties": false, "required": ["name", "revision"], "properties": {"name": {"type": "string", "minLength": 1, "maxLength": 80}, "revision": {"type": "integer", "minimum": 1}}},
+      "GuildSettings": {"type": "object", "additionalProperties": false, "required": ["name", "revision", "welcome_channel_id"], "properties": {"name": {"type": "string", "minLength": 1, "maxLength": 80}, "revision": {"type": "integer", "minimum": 1}, "welcome_channel_id": {"type": ["string", "null"], "format": "uuid"}}},
+      "GuildSettingsUpdateRequest": {"type": "object", "additionalProperties": false, "required": ["expected_revision"], "anyOf": [{"required": ["name"]}, {"required": ["welcome_channel_id"]}], "properties": {"name": {"type": "string", "minLength": 1, "maxLength": 80, "description": "Trim outer whitespace; preserve internal whitespace and case; reject controls and line separators."}, "welcome_channel_id": {"type": ["string", "null"], "format": "uuid", "description": "Active TEXT channel UUID, or null to disable."}, "expected_revision": {"type": "integer", "minimum": 1}}},
+
       "PermissionValues": {"type":"object","additionalProperties":false,"required":["channel.text.create","channel.text.delete","channel.voice.create","channel.voice.delete","category.create","category.delete"],"properties":{"channel.text.create":{"type":"boolean"},"channel.text.delete":{"type":"boolean"},"channel.voice.create":{"type":"boolean"},"channel.voice.delete":{"type":"boolean"},"category.create":{"type":"boolean"},"category.delete":{"type":"boolean"}}},
       "EffectivePermissions": {"type":"object","additionalProperties":false,"required":["account_id","role","permissions_revision","permissions"],"properties":{"account_id":{"type":"string","format":"uuid"},"role":{"type":"string","enum":["MEMBER","ADMINISTRATOR"]},"permissions_revision":{"type":"integer","minimum":1},"permissions":{"$ref":"#/components/schemas/PermissionValues"}}},
       "RolePolicy": {"type":"object","additionalProperties":false,"required":["role","display_name","editable","permissions"],"properties":{"role":{"type":"string","enum":["MEMBER","ADMINISTRATOR"]},"display_name":{"type":"string"},"editable":{"type":"boolean"},"permissions":{"$ref":"#/components/schemas/PermissionValues"}}},
@@ -1661,22 +1668,7 @@
           "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" }, "description": "Stable active recipient IDs; no self or broadcast mention." }
         }
       },
-      "TextMessage": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id", "channel_id", "author_id", "client_message_id", "body", "revision", "created_at", "mention_user_ids"],
-        "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "channel_id": { "type": "string", "format": "uuid" },
-          "author_id": { "type": "string", "format": "uuid" },
-          "client_message_id": { "type": "string", "format": "uuid" },
-          "body": { "type": "string" },
-          "revision": { "type": "integer", "minimum": 1 },
-          "reply_to_id": { "type": "string", "format": "uuid" },
-          "created_at": { "type": "string", "format": "date-time" },
-          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } }
-        }
-      },
+      "TextMessage": {"type":"object","additionalProperties":false,"required":["id","channel_id","author_id","client_message_id","body","revision","created_at","mention_user_ids","kind"],"properties":{"id":{"type":"string","format":"uuid"},"channel_id":{"type":"string","format":"uuid"},"author_id":{"type":"string","format":"uuid"},"client_message_id":{"type":"string","format":"uuid"},"body":{"type":"string"},"revision":{"type":"integer","minimum":1},"reply_to_id":{"type":"string","format":"uuid"},"created_at":{"type":"string","format":"date-time"},"mention_user_ids":{"type":"array","maxItems":100,"uniqueItems":true,"items":{"type":"string","format":"uuid"}},"kind":{"type":"string","enum":["USER","SYSTEM_WELCOME"],"default":"USER","description":"SYSTEM_WELCOME is server-created and immutable; author_id and its mention identify the registered subject."}}},
       "AttachmentUpload": {
         "type": "object",
         "additionalProperties": false,
@@ -1697,23 +1689,7 @@
           "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" }, "description": "Complete replacement; omitted means empty." }
         }
       },
-      "TextMessageEdited": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id", "channel_id", "author_id", "client_message_id", "body", "revision", "created_at", "edited_at", "mention_user_ids"],
-        "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "channel_id": { "type": "string", "format": "uuid" },
-          "author_id": { "type": "string", "format": "uuid" },
-          "client_message_id": { "type": "string", "format": "uuid" },
-          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
-          "reply_to_id": { "type": "string", "format": "uuid" },
-          "revision": { "type": "integer", "minimum": 2 },
-          "created_at": { "type": "string", "format": "date-time" },
-          "edited_at": { "type": "string", "format": "date-time" },
-          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } }
-        }
-      },
+      "TextMessageEdited": {"type":"object","additionalProperties":false,"required":["id","channel_id","author_id","client_message_id","body","revision","created_at","edited_at","mention_user_ids","kind"],"properties":{"id":{"type":"string","format":"uuid"},"channel_id":{"type":"string","format":"uuid"},"author_id":{"type":"string","format":"uuid"},"client_message_id":{"type":"string","format":"uuid"},"body":{"type":"string","minLength":1,"maxLength":8000},"reply_to_id":{"type":"string","format":"uuid"},"revision":{"type":"integer","minimum":2},"created_at":{"type":"string","format":"date-time"},"edited_at":{"type":"string","format":"date-time"},"mention_user_ids":{"type":"array","maxItems":100,"uniqueItems":true,"items":{"type":"string","format":"uuid"}},"kind":{"const":"USER"}}},
       "TextMessagePage": {
         "type": "object",
         "additionalProperties": false,
@@ -1732,20 +1708,7 @@
           "next_cursor": { "type": "string", "format": "uuid" }
         }
       },
-      "TextMessageSearchResult": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id", "channel_id", "author_id", "body", "created_at", "revision"],
-        "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "channel_id": { "type": "string", "format": "uuid" },
-          "author_id": { "type": "string", "format": "uuid" },
-          "body": { "type": "string", "minLength": 1, "maxLength": 8000 },
-          "created_at": { "type": "string", "format": "date-time" },
-          "edited_at": { "type": "string", "format": "date-time" },
-          "revision": { "type": "integer", "minimum": 1 }
-        }
-      },
+      "TextMessageSearchResult": {"type":"object","additionalProperties":false,"required":["id","channel_id","author_id","body","created_at","revision","kind"],"properties":{"id":{"type":"string","format":"uuid"},"channel_id":{"type":"string","format":"uuid"},"author_id":{"type":"string","format":"uuid"},"body":{"type":"string","minLength":1,"maxLength":8000},"created_at":{"type":"string","format":"date-time"},"edited_at":{"type":"string","format":"date-time"},"revision":{"type":"integer","minimum":1},"kind":{"type":"string","enum":["USER","SYSTEM_WELCOME"],"default":"USER","description":"SYSTEM_WELCOME is server-created and immutable; author_id and its mention identify the registered subject."}}},
       "MessageSearchPage": {
         "type": "object",
         "additionalProperties": false,
@@ -1755,41 +1718,8 @@
           "next_cursor": { "type": "string", "minLength": 1, "maxLength": 512 }
         }
       },
-      "MessageSearchResult": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id", "kind", "author_id", "body", "created_at", "revision"],
-        "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "kind": { "type": "string", "enum": ["CHANNEL", "DIRECT_MESSAGE"] },
-          "channel_id": { "type": "string", "format": "uuid" },
-          "direct_message_id": { "type": "string", "format": "uuid" },
-          "author_id": { "type": "string", "format": "uuid" },
-          "body": { "type": "string", "minLength": 0, "maxLength": 8000 },
-          "created_at": { "type": "string", "format": "date-time" },
-          "edited_at": { "type": "string", "format": "date-time" },
-          "revision": { "type": "integer", "minimum": 1 }
-        }
-      },
-      "TextMessageHistoryItem": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id", "channel_id", "author_id", "client_message_id", "body", "created_at", "revision", "deleted", "attachments", "mention_user_ids"],
-        "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "channel_id": { "type": "string", "format": "uuid" },
-          "author_id": { "type": "string", "format": "uuid" },
-          "client_message_id": { "type": "string", "format": "uuid" },
-          "body": { "type": "string" },
-          "reply_to_id": { "type": "string", "format": "uuid" },
-          "created_at": { "type": "string", "format": "date-time" },
-          "edited_at": { "type": "string", "format": "date-time" },
-          "revision": { "type": "integer", "minimum": 1 },
-          "deleted": { "type": "boolean" },
-          "attachments": { "type": "array", "items": { "$ref": "#/components/schemas/TextMessageAttachment" } },
-          "mention_user_ids": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "type": "string", "format": "uuid" }, "description": "Stable recipient IDs; deleted messages return empty." }
-        }
-      },
+      "MessageSearchResult": {"type":"object","additionalProperties":false,"required":["id","kind","author_id","body","created_at","revision","message_kind"],"properties":{"id":{"type":"string","format":"uuid"},"kind":{"type":"string","enum":["CHANNEL","DIRECT_MESSAGE"]},"channel_id":{"type":"string","format":"uuid"},"direct_message_id":{"type":"string","format":"uuid"},"author_id":{"type":"string","format":"uuid"},"body":{"type":"string","minLength":0,"maxLength":8000},"created_at":{"type":"string","format":"date-time"},"edited_at":{"type":"string","format":"date-time"},"revision":{"type":"integer","minimum":1},"message_kind":{"type":"string","enum":["USER","SYSTEM_WELCOME"],"default":"USER","description":"SYSTEM_WELCOME is server-created and immutable; author_id and its mention identify the registered subject."}}},
+      "TextMessageHistoryItem": {"type":"object","additionalProperties":false,"required":["id","channel_id","author_id","client_message_id","body","created_at","revision","deleted","attachments","mention_user_ids","kind"],"properties":{"id":{"type":"string","format":"uuid"},"channel_id":{"type":"string","format":"uuid"},"author_id":{"type":"string","format":"uuid"},"client_message_id":{"type":"string","format":"uuid"},"body":{"type":"string"},"reply_to_id":{"type":"string","format":"uuid"},"created_at":{"type":"string","format":"date-time"},"edited_at":{"type":"string","format":"date-time"},"revision":{"type":"integer","minimum":1},"deleted":{"type":"boolean"},"attachments":{"type":"array","items":{"$ref":"#/components/schemas/TextMessageAttachment"}},"mention_user_ids":{"type":"array","maxItems":100,"uniqueItems":true,"items":{"type":"string","format":"uuid"},"description":"Stable recipient IDs; deleted messages return empty."},"kind":{"type":"string","enum":["USER","SYSTEM_WELCOME"],"default":"USER","description":"SYSTEM_WELCOME is server-created and immutable; author_id and its mention identify the registered subject."}}},
       "TextMessageAttachment": {
         "type": "object",
         "additionalProperties": false,

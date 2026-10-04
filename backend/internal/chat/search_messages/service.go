@@ -29,6 +29,7 @@ type Request struct {
 	Limit                                      int
 }
 type Message struct {
+	MessageKind                                          string
 	ID, Kind, ChannelID, DirectMessageID, AuthorID, Body string
 	CreatedAt                                            time.Time
 	EditedAt                                             *time.Time

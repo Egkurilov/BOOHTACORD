@@ -23,7 +23,7 @@ SELECT messages.id::text, messages.channel_id::text, messages.author_id::text, m
                ORDER BY message_attachments.position
            ) FILTER (WHERE attachments.id IS NOT NULL AND messages.deleted_at IS NULL),
            '[]'::jsonb
-       )::text
+       )::text, messages.kind
 FROM messages
 LEFT JOIN message_attachments ON message_attachments.message_id = messages.id
 LEFT JOIN attachments ON attachments.id = message_attachments.attachment_id AND attachments.state = 'ATTACHED'
@@ -71,7 +71,7 @@ func (repository Repository) List(context context.Context, request listtextmessa
 	for rows.Next() {
 		var message listtextmessages.Message
 		var attachments []byte
-		if err := rows.Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.ClientMessageID, &message.Body, &message.ReplyToID, &message.CreatedAt, &message.EditedAt, &message.Revision, &message.Deleted, &message.MentionUserIDs, &attachments); err != nil {
+		if err := rows.Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.ClientMessageID, &message.Body, &message.ReplyToID, &message.CreatedAt, &message.EditedAt, &message.Revision, &message.Deleted, &message.MentionUserIDs, &attachments, &message.Kind); err != nil {
 			return nil, fmt.Errorf("scan text message: %w", err)
 		}
 		decoded, err := decodeAttachments(attachments)
