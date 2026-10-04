@@ -7,19 +7,61 @@
     {
       "name": "Focused Flutter widget test",
       "command": "cd clients/flutter && flutter test --no-pub test/auth_typography_v2_test.dart",
-      "result": "NOT_RUN",
-      "observation": "The Windows host reports that flutter is not recognized. Ubuntu WSL and common local SDK paths also have no Flutter binary."
+      "result": "PASS",
+      "passed": 2,
+      "observation": "390 px compact and 1440 px desktop layouts both verify eyebrow size/weight, title size/weight, submit weight, and no layout exception."
     },
     {
-      "name": "Flutter analyzer, full suite, Android/macOS/Windows builds and actual screens",
-      "result": "NOT_RUN",
-      "observation": "Requires a Flutter SDK and suitable platform hosts. No pixel-perfect or runtime acceptance claim is made."
+      "name": "Targeted Flutter analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/auth_screen.dart test/auth_typography_v2_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 484,
+      "observation": "The full suite passed after the related Flutter presentation changes; the auth typography regressions are included."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app",
+      "observation": "Current source compiled successfully; the running app was hot-reloaded without restarting or prompting for Keychain."
+    },
+    {
+      "name": "Android Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk (temporary package ru.boohtacord.app.visualtest)",
+      "observation": "A temporary applicationIdSuffix kept the test instance separate from the signed release package and preserved its authenticated app data. The temporary Gradle edit is removed after testing."
+    },
+    {
+      "name": "Android emulator visual acceptance",
+      "result": "PASS",
+      "observation": "Android Emulator API 35 displayed the login screen in the separate debug package. The compact eyebrow, 24 px Voice Platform heading, helper copy, fields, mode tabs, submit label, version and endpoint fit the viewport without overflow. Screenshot was inspected from /private/tmp and not committed because it contains app environment details. The original release package/session was left installed and unchanged."
+    },
+    {
+      "name": "macOS auth-screen visual acceptance",
+      "result": "PARTIAL",
+      "observation": "The existing macOS app was not restarted and a screenshot confirmed the window remained active after hot reload. It was on the Text channel rather than the auth page; navigating the desktop UI through System Events is blocked by Accessibility policy (-1728). The auth widget test and macOS build pass; target-screen screenshot remains pending in FV2-006."
     },
     {
       "name": "Diff hygiene",
       "command": "git diff --check",
       "result": "PASS"
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is unavailable on this host (`pwsh: command not found`); task dependencies and requirement IDs were not changed."
     }
   ],
-  "status": "IMPLEMENTED_PENDING_FLUTTER_VERIFICATION"
+  "limitations": [
+    "The admin/auth view on the already-running macOS client cannot be navigated by UI automation until Accessibility is enabled or the user leaves the requested screen open. No Keychain-protected session was reset."
+  ],
+  "status": "PASS_FOCUSED_TESTS_FULL_SUITE_ANALYSIS_ANDROID_MACOS_BUILDS_ANDROID_EMULATOR_VISUAL; MACOS_AUTH_SCREEN_VISUAL_PENDING"
 }

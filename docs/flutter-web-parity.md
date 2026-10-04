@@ -223,10 +223,12 @@ the requested mobile volume adjustment. Deafen and audio-state ownership are
 unchanged — [QA-244](../evidence/flutter/qa244-flutter-design-v2-screen-audio-controls-2026-10-04-001.json).
 FV2-015 now sets the auth eyebrow to 16 px at compact widths and 18 px on
 desktop, the title to weight 600, and the submit label to weight 500, matching
-the current web presentation. A focused widget regression was added, but the
-Windows checkout has no Flutter SDK, so the test, analyzer, builds and native
-screenshots still need a Flutter host before the leaf can close —
-[QA-246](../evidence/flutter/qa246-flutter-design-v2-auth-typography-2026-10-04-001.json).
+the current web presentation. Two widget checks cover 390/1440 px; the full
+Flutter suite (484), targeted analyzer, macOS Debug build and Android Debug
+build pass. Android API 35 visually confirmed the login card in an isolated
+debug package without modifying the installed release session. The macOS app
+remained open after hot reload, but its auth screen was not opened because UI
+automation lacks Accessibility permission — [QA-246](../evidence/flutter/qa246-flutter-design-v2-auth-typography-2026-10-04-001.json).
 FV2-016 adds the loaded-account count, name/login search, and role filter to
 the existing Flutter member directory. It filters only loaded accounts, keeps
 pagination and the current save/block/reset handlers, and has focused unit and
