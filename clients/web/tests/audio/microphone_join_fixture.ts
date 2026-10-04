@@ -14,17 +14,12 @@ const gate = {
     const sdk = voiceRoom as unknown as Room
     // Chromium's fake capture device supplies synthetic audio. Use the actual
     // production capture/processor/publication path and retain its cleanup probe.
-    const createTracks = sdk.localParticipant.createTracks.bind(sdk.localParticipant)
-    sdk.localParticipant.createTracks = async (options) => {
-      const tracks = await createTracks(options)
-      track = tracks.find((track) => track instanceof LocalAudioTrack) as LocalAudioTrack | undefined
-      return tracks
-    }
     let attempts = 0, cancellations = 0, reconnects = 0
     const enabledAtPublish: boolean[] = []
     sdk.on(RoomEvent.Reconnecting, () => reconnects++)
     const publish = sdk.localParticipant.publishTrack.bind(sdk.localParticipant)
     sdk.localParticipant.publishTrack = async (local, options) => {
+      if (local instanceof LocalAudioTrack) track = local
       enabledAtPublish.push((local instanceof MediaStreamTrack ? local : local.mediaStreamTrack).enabled)
       try { return await publish(local, options) }
       catch (cause) {

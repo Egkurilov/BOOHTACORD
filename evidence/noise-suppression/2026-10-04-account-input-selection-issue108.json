@@ -134,5 +134,31 @@
       "tests": 8
     },
     "scope": "Rebased onto updated master without conflicts; full Flutter and browser peer results above are from the original task baseline. Unrelated audio presentation/search-panel changes were preserved."
+  },
+  "follow_up_validation": {
+    "baseline_revision": "0f4b58cb0aef6078bc9d907c5dda44e3696e6b39",
+    "scope": "Same-account join/settings refresh waits for pending selection; only account changes revoke callbacks. Capture is wrapped as a user-provided SDK track so SDK devicechange and ended handlers cannot independently recapture or clear fallback warnings. The SDK-owned AudioContext is retained before publication for RNNoise processing.",
+    "test_first": "Pending selection + immediate join returned default before the fix. Browser hot-unplug tests exposed SDK automatic switching clearing fallback warnings.",
+    "web_unit_tests": {
+      "status": "PASS",
+      "files": 300,
+      "tests": 978
+    },
+    "web_build": "PASS",
+    "strict_browser_fixture_types": "PASS",
+    "browser_peer_tests": {
+      "status": "PASS",
+      "tests": 12,
+      "duration_seconds": 43.6
+    },
+    "initial_push_ci": {
+      "run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37220522891",
+      "revision": "0f4b58cb0aef6078bc9d907c5dda44e3696e6b39",
+      "frontend": "PASS: 977 units, 17 audio browser cases and production build",
+      "backend": "PASS",
+      "contracts_and_spec_traceability": "PASS",
+      "flutter": "App/vendor tests and analysis PASS; Android builds still running at record time",
+      "windows": "App/vendor tests and analysis PASS; distribution build still running at record time"
+    }
   }
 }

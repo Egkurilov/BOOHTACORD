@@ -17,6 +17,8 @@ export function createAudioInputControls(
   const warning = ref<string | null>(null)
   const switching = ref(false)
   let epoch = 0
+  let loadSequence = 0
+  let accountId: string | null = null
   let bound = false
   let queue: Promise<unknown> = Promise.resolve()
 
@@ -41,23 +43,39 @@ export function createAudioInputControls(
     return operation
   }
   async function start(apply: AudioInputApplier): Promise<void> {
-    const version = ++epoch
-    bound = false
-    switching.value = false
-    warning.value = null
+    const sequence = ++loadSequence
     try {
       const account = await loadAccount()
-      await queue.catch(() => undefined)
-      if (version !== epoch) return
-      preferences.bind(account.accountId)
-      bound = true
+      if (sequence !== loadSequence) return
+      if (!bound || accountId !== account.accountId) {
+        // Only an account change revokes pending results. A join/settings refresh
+        // for the same account must first let its selection finish saving.
+        ++epoch
+        bound = false
+        switching.value = false
+        warning.value = null
+        await queue.catch(() => undefined)
+        if (sequence !== loadSequence) return
+        preferences.bind(account.accountId)
+        accountId = account.accountId
+        bound = true
+      } else {
+        await queue.catch(() => undefined)
+        if (sequence !== loadSequence) return
+      }
       selectedInput.value = preferences.get()
-      await applySelection(selectedInput.value, apply, version)
+      await applySelection(selectedInput.value, apply, epoch)
     } catch {
-      if (version !== epoch) return
+      if (sequence !== loadSequence) return
+      ++epoch
+      bound = false
+      switching.value = false
+      await queue.catch(() => undefined)
+      if (sequence !== loadSequence) return
       selectedInput.value = 'default'
       warning.value = 'Не удалось загрузить настройки микрофона; используется системный микрофон.'
-      await apply('default').catch(() => undefined)
+      queue = queue.catch(() => undefined).then(() => sequence === loadSequence ? apply('default') : undefined).catch(() => undefined)
+      await queue
     }
   }
   async function select(deviceId: string, apply: AudioInputApplier): Promise<void> {

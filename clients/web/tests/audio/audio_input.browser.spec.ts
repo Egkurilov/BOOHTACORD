@@ -30,6 +30,7 @@ for (const mode of ['off', 'browser', 'rnnoise'] as const) {
       await receiver.evaluate(() => (window as any).audioInputGate.receiver())
       const joined = await sender.evaluate(() => (window as any).audioInputGate.join())
       expect(joined.captures[0].deviceId).toBe('mic-2')
+      expect(joined.ownedCapture).toBe(true)
       await hear(receiver, 880)
       await choose(sender, 'mic-1'); await hear(receiver, 440)
       await sender.getByRole('button', { name: 'Проверить микрофон', exact: true }).click()

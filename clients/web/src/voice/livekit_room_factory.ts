@@ -71,15 +71,25 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   room.participantCards = viewer.participants
   room.remoteVoices = viewer.remoteVoices
   room.setDeafened = viewer.setDeafened
+  // Retain the SDK-owned context for processing before first publication.
+  let captureContext: AudioContext | undefined
+  const setAudioContext = liveKitRoom.localParticipant.setAudioContext.bind(liveKitRoom.localParticipant)
+  liveKitRoom.localParticipant.setAudioContext = (context) => {
+    captureContext = context
+    setAudioContext(context)
+  }
   const microphone = new LiveKitMicrophoneAdapter({
     createTrack: async (options) => {
-      const tracks = await liveKitRoom.localParticipant.createTracks({ audio: options, video: false })
-      const audio = tracks.find((track) => track instanceof LocalAudioTrack)
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: options, video: false })
+      const tracks = stream.getTracks()
+      const audio = stream.getAudioTracks()[0]
       if (!audio || tracks.length !== 1) {
         tracks.forEach((track) => track.stop())
         throw new Error('Микрофон не предоставил аудиодорожку.')
       }
-      return audio as InstanceType<typeof LocalAudioTrack>
+      // The adapter owns capture/recovery. A user-provided SDK track prevents
+      // Room devicechange/track-ended handlers from independently restarting it.
+      return new LocalAudioTrack(audio, options, true, captureContext)
     },
     publishTrack: (track, options) => liveKitRoom.localParticipant.publishTrack(track, { ...options, source: Track.Source.Microphone }),
     unpublishTrack: (track) => liveKitRoom.localParticipant.unpublishTrack(track, false),
