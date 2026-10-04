@@ -20,6 +20,7 @@ type Input struct {
 }
 type Request struct{ Input }
 type Message struct {
+	Kind                          string
 	ID, ChannelID, AuthorID, Body string
 	CreatedAt                     time.Time
 	EditedAt                      *time.Time

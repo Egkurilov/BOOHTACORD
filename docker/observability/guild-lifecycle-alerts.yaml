@@ -1,0 +1,19 @@
+groups:
+  - name: guild-lifecycle
+    rules:
+      - alert: GuildSettingsFailuresSustained
+        expr: sum(rate(voice_platform_guild_settings_updates_total{service_name="boohtacord-api",outcome="failed"}[5m])) > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Guild settings operations have sustained failures
+          description: Inspect guild.settings.update traces and db.committed before retrying.
+      - alert: RegistrationWelcomeFailuresSustained
+        expr: sum(rate(voice_platform_registration_welcome_total{service_name="boohtacord-api",outcome="failed"}[5m])) > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Registration welcome operations have sustained failures
+          description: Inspect registration.welcome failure_stage; committed registrations remain successful. Normal disabled/unavailable skips are excluded.

@@ -23,6 +23,7 @@ FROM channel
 WHERE message.id = $1
   AND message.channel_id = channel.id
   AND message.author_id = $3
+  AND message.kind = 'USER'
   AND message.deleted_at IS NULL
   AND message.revision = $5
   AND (SELECT count(*) FROM valid_mentions) = cardinality($6::uuid[])

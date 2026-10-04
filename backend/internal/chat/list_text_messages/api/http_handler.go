@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	messagekind "voice-platform/backend/internal/chat/message_kind"
 
 	listtextmessages "voice-platform/backend/internal/chat/list_text_messages"
 	"voice-platform/backend/internal/security/request_id"
@@ -50,6 +51,7 @@ type response struct {
 	NextCursor string    `json:"next_cursor,omitempty"`
 }
 type message struct {
+	Kind            string       `json:"kind"`
 	ID              string       `json:"id"`
 	ChannelID       string       `json:"channel_id"`
 	AuthorID        string       `json:"author_id"`
@@ -77,7 +79,7 @@ func messages(source []listtextmessages.Message) []message {
 		if value.Deleted || mentions == nil {
 			mentions = []string{}
 		}
-		result = append(result, message{ID: value.ID, ChannelID: value.ChannelID, AuthorID: value.AuthorID, ClientMessageID: value.ClientMessageID, Body: value.Body, ReplyToID: value.ReplyToID, CreatedAt: value.CreatedAt, EditedAt: value.EditedAt, Revision: value.Revision, Deleted: value.Deleted, Attachments: attachments(value.Attachments), MentionUserIDs: mentions})
+		result = append(result, message{Kind: messagekind.OrUser(value.Kind), ID: value.ID, ChannelID: value.ChannelID, AuthorID: value.AuthorID, ClientMessageID: value.ClientMessageID, Body: value.Body, ReplyToID: value.ReplyToID, CreatedAt: value.CreatedAt, EditedAt: value.EditedAt, Revision: value.Revision, Deleted: value.Deleted, Attachments: attachments(value.Attachments), MentionUserIDs: mentions})
 	}
 	return result
 }

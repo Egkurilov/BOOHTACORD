@@ -1,18 +1,26 @@
 package eventhub
 
+import "context"
+
 func (hub *Hub) Publish(event Event) {
-	hub.publishMu.Lock()
-	defer hub.publishMu.Unlock()
 	ctx, cancel := backgroundWriteContext()
 	defer cancel()
+	_ = hub.PublishContext(ctx, event)
+}
+
+// PublishContext reports journal failure to the committed-operation observer.
+func (hub *Hub) PublishContext(ctx context.Context, event Event) error {
+	hub.publishMu.Lock()
+	defer hub.publishMu.Unlock()
 	var err error
 	event, err = hub.persist(ctx, event, nil, false)
 	if err != nil {
-		return
+		return err
 	}
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
 	hub.publishLocked(event)
+	return nil
 }
 
 func (hub *Hub) publishLocked(event Event) {

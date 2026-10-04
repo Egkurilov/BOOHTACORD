@@ -2,6 +2,7 @@ package authroutes
 
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.opentelemetry.io/otel"
 	"net/http"
 	"time"
 	runtimeconfig "voice-platform/backend/internal/config/runtime"
@@ -27,9 +28,10 @@ import (
 	publishpermissioninvalidation "voice-platform/backend/internal/identity/publish_permission_invalidation"
 	"voice-platform/backend/internal/identity/register_user"
 	registerapi "voice-platform/backend/internal/identity/register_user/api"
-	registerpostgres "voice-platform/backend/internal/identity/register_user/postgres"
+	welcomepostgres "voice-platform/backend/internal/identity/registration_welcome/postgres"
 	maintenanceadmission "voice-platform/backend/internal/maintenance/admission"
 	maintenancepostgres "voice-platform/backend/internal/maintenance/admission/postgres"
+	guildlifecycle "voice-platform/backend/internal/observability/guild_lifecycle"
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
@@ -38,8 +40,12 @@ type Services struct {
 	Maintenance maintenanceadmission.Service
 }
 
-func Register(mux *http.ServeMux, database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub, usage *observeusage.Tracker) Services {
-	registerService := registeruser.New(registerpostgres.New(registerpostgres.NewPoolExecutor(database)))
+func Register(mux *http.ServeMux, database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub, usage *observeusage.Tracker, observers ...*guildlifecycle.Observer) Services {
+	observer := guildlifecycle.New(otel.Tracer("boohtacord/guild"), otel.Meter("boohtacord/guild"), nil)
+	if len(observers) > 0 {
+		observer = observers[0]
+	}
+	registerService := registeruser.New(welcomepostgres.Repository{Database: database, Observer: observer, Events: events})
 	loginRepository := loginpostgres.New(loginpostgres.NewPoolDatabase(database))
 	loginService := loginuser.New(loginRepository, loginRepository)
 	logoutService := logoutuser.New(logoutpostgres.New(logoutpostgres.NewPoolDatabase(database)))

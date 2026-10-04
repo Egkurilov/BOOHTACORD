@@ -2,9 +2,12 @@ package registerapi
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"go.opentelemetry.io/otel/trace"
 	"net/http"
+	correlatesession "voice-platform/backend/internal/observability/correlate_session"
 
 	"voice-platform/backend/internal/identity/register_user"
 	"voice-platform/backend/internal/identity/registration"
@@ -51,6 +54,7 @@ func NewHandler(registerer Registerer) http.Handler {
 			return
 		}
 
+		trace.SpanFromContext(request.Context()).SetAttributes(correlatesession.NamedAttributes(account.ID, [sha256.Size]byte{}, account.DisplayName)...)
 		writeJSON(writer, http.StatusCreated, struct {
 			ID          string `json:"id"`
 			Login       string `json:"login"`

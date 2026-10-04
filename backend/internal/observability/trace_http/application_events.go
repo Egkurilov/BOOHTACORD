@@ -4,6 +4,7 @@ import "go.opentelemetry.io/otel/trace"
 
 // These route templates and names are fixed. Never derive an event name from a raw URL.
 var applicationActions = map[string]string{
+	"PATCH /api/v1/admin/guild-settings":                                    "app.guild.name.updated",
 	"POST /api/v1/auth/register":                                            "app.auth.registered",
 	"POST /api/v1/auth/login":                                               "app.auth.signed_in",
 	"POST /api/v1/auth/logout":                                              "app.auth.signed_out",
@@ -46,6 +47,10 @@ func recordApplicationEvent(span trace.Span, route string, status int) {
 	if !known {
 		return
 	}
+	recordNamedEvent(span, name, status)
+}
+
+func recordNamedEvent(span trace.Span, name string, status int) {
 	switch {
 	case status >= 200 && status < 300:
 		span.AddEvent(name)

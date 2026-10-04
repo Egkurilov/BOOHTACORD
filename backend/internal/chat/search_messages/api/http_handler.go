@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	messagekind "voice-platform/backend/internal/chat/message_kind"
 
 	searchmessages "voice-platform/backend/internal/chat/search_messages"
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
@@ -65,6 +66,7 @@ type response struct {
 	NextCursor string    `json:"next_cursor,omitempty"`
 }
 type message struct {
+	MessageKind     string     `json:"message_kind"`
 	ID              string     `json:"id"`
 	Kind            string     `json:"kind"`
 	ChannelID       string     `json:"channel_id,omitempty"`
@@ -79,7 +81,7 @@ type message struct {
 func messages(source []searchmessages.Message) []message {
 	result := make([]message, 0, len(source))
 	for _, value := range source {
-		result = append(result, message{ID: value.ID, Kind: value.Kind, ChannelID: value.ChannelID, DirectMessageID: value.DirectMessageID, AuthorID: value.AuthorID, Body: value.Body, CreatedAt: value.CreatedAt, EditedAt: value.EditedAt, Revision: value.Revision})
+		result = append(result, message{MessageKind: messagekind.OrUser(value.MessageKind), ID: value.ID, Kind: value.Kind, ChannelID: value.ChannelID, DirectMessageID: value.DirectMessageID, AuthorID: value.AuthorID, Body: value.Body, CreatedAt: value.CreatedAt, EditedAt: value.EditedAt, Revision: value.Revision})
 	}
 	return result
 }

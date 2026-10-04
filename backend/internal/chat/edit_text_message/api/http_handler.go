@@ -48,11 +48,12 @@ func NewHandler(editor Editor) http.Handler {
 			return
 		}
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-		_ = json.NewEncoder(writer).Encode(response{ID: result.ID, ChannelID: result.ChannelID, AuthorID: result.AuthorID, ClientMessageID: result.ClientMessageID, Body: result.Body, ReplyToID: result.ReplyToID, Revision: result.Revision, CreatedAt: result.CreatedAt, EditedAt: result.EditedAt, MentionUserIDs: nonNilMentions(result.MentionUserIDs)})
+		_ = json.NewEncoder(writer).Encode(response{Kind: "USER", ID: result.ID, ChannelID: result.ChannelID, AuthorID: result.AuthorID, ClientMessageID: result.ClientMessageID, Body: result.Body, ReplyToID: result.ReplyToID, Revision: result.Revision, CreatedAt: result.CreatedAt, EditedAt: result.EditedAt, MentionUserIDs: nonNilMentions(result.MentionUserIDs)})
 	})
 }
 
 type response struct {
+	Kind            string    `json:"kind"`
 	ID              string    `json:"id"`
 	ChannelID       string    `json:"channel_id"`
 	AuthorID        string    `json:"author_id"`

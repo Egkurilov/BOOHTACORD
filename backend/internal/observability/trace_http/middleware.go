@@ -33,6 +33,9 @@ func Middleware(tracer trace.Tracer, mux *http.ServeMux, next http.Handler) http
 		}
 		context := remoteContext(request)
 		context, span := tracer.Start(context, name, trace.WithSpanKind(trace.SpanKindServer))
+		if pattern == "PATCH /api/v1/admin/guild-settings" {
+			context = withGuildActions(context)
+		}
 		started := time.Now()
 		captured := &statusWriter{ResponseWriter: writer}
 		defer func() {
@@ -47,7 +50,11 @@ func Middleware(tracer trace.Tracer, mux *http.ServeMux, next http.Handler) http
 			requests.Add(context, 1, labels)
 			duration.Record(context, time.Since(started).Seconds(), labels)
 			span.SetAttributes(attribute.Int("http.response.status_code", status))
-			recordApplicationEvent(span, pattern, status)
+			if pattern == "PATCH /api/v1/admin/guild-settings" {
+				recordGuildActions(context, span, status)
+			} else {
+				recordApplicationEvent(span, pattern, status)
+			}
 			if panicValue != nil {
 				span.SetStatus(codes.Error, "panic")
 			} else if status >= 500 {

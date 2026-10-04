@@ -19,7 +19,7 @@ WITH channel AS (
     WHERE message.id = $1
       AND message.channel_id = channel.id
       AND message.deleted_at IS NULL
-      AND (message.author_id = $3 OR $4 = 'ADMINISTRATOR')
+      AND ((message.author_id = $3 AND message.kind = 'USER') OR $4 = 'ADMINISTRATOR')
     RETURNING message.id, message.channel_id, message.author_id, message.revision, message.deleted_at
 ), audited AS (
     INSERT INTO audit_events (actor_user_id, event_type, target_user_id, metadata)

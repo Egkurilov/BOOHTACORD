@@ -20,6 +20,9 @@ func TestMiddlewareRecordsSafeApplicationEvents(t *testing.T) {
 		{"POST /api/v1/channels/{channelID}/messages", "/api/v1/channels/private-id/messages", 201, "app.message.sent"},
 		{"POST /api/v1/channels/{channelID}/messages", "/api/v1/channels/private-id/messages", 403, "app.message.sent.rejected"},
 		{"POST /api/v1/channels/{channelID}/messages", "/api/v1/channels/private-id/messages", 500, "app.message.sent.failed"},
+		{"PATCH /api/v1/admin/guild-settings", "/api/v1/admin/guild-settings", 200, "app.guild.name.updated"},
+		{"PATCH /api/v1/admin/guild-settings", "/api/v1/admin/guild-settings", 409, "app.guild.name.updated.rejected"},
+		{"PATCH /api/v1/admin/guild-settings", "/api/v1/admin/guild-settings", 500, "app.guild.name.updated.failed"},
 	}
 	for _, test := range tests {
 		t.Run(test.want+test.path, func(t *testing.T) {
@@ -28,7 +31,8 @@ func TestMiddlewareRecordsSafeApplicationEvents(t *testing.T) {
 			defer provider.Shutdown(t.Context())
 			mux := http.NewServeMux()
 			mux.HandleFunc(test.pattern, func(writer http.ResponseWriter, _ *http.Request) { writer.WriteHeader(test.status) })
-			request := httptest.NewRequest(http.MethodPost, test.path+"?token=private-query", strings.NewReader("private-message"))
+			method, _, _ := strings.Cut(test.pattern, " ")
+			request := httptest.NewRequest(method, test.path+"?token=private-query", strings.NewReader("private-message"))
 			Middleware(provider.Tracer("test"), mux, mux).ServeHTTP(httptest.NewRecorder(), request)
 			spans := recorder.Ended()
 			if len(spans) != 1 {
