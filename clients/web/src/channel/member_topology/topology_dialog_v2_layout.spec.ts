@@ -11,8 +11,8 @@ describe('Design V2 topology creation dialog', () => {
     expect(component).toContain('createMemberChannel(categoryId.value, name.value, kind.value, requestId)')
     expect(component).toContain('createMemberCategory(name.value, requestId)')
     expect(component).toContain('props.permissions')
-    expect(component).toContain('@keydown.esc.prevent="close()"')
-    expect(component).toContain('@keydown="containTab"')
+    expect(component).toContain('@keydown.esc.stop.prevent="close()"')
+    expect(component).toContain('@keydown.stop="containTab"')
     expect(component).toContain('opener.value?.focus()')
   })
 
