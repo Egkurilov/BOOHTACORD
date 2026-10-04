@@ -69,6 +69,7 @@ const gate = {
     return { selected: store?.selectedInput, selection: session?.inputSelection, warning: store?.inputWarning,
       microphone: session?.active?.microphone, enabled: session?.active?.room.readMicrophoneTrack?.()?.enabled,
       processing: session?.active?.room.readNoiseSuppressionState?.(),
+      ownedCapture: (session?.active?.room as unknown as Room | undefined)?.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack?.isUserProvided,
       captures: input?.captures.map(({ deviceId, track }) => ({ deviceId, ended: track.readyState === 'ended' })),
     }
   },

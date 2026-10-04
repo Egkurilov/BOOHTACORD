@@ -22,6 +22,22 @@ describe('account microphone selection', () => {
     expect(f.apply).toHaveBeenLastCalledWith('mic-2')
     expect(reopened.selectedInput.value).toBe('mic-2')
   })
+  it('waits for a pending selection when the same account starts joining', async () => {
+    const f = fixture()
+    await f.controls.start(f.apply)
+    let finish!: () => void
+    const selected = f.controls.select('mic-2', async deviceId => {
+      await new Promise<void>(resolve => { finish = resolve })
+      return { deviceId, outcome: 'success' }
+    })
+    await vi.waitFor(() => expect(finish).toBeTypeOf('function'))
+    const joining = f.controls.start(f.apply)
+    finish()
+    await Promise.all([selected, joining])
+    expect(f.preferences.get()).toBe('mic-2')
+    expect(f.controls.selectedInput.value).toBe('mic-2')
+    expect(f.apply).toHaveBeenLastCalledWith('mic-2')
+  })
   it('isolates account preferences and discards an old pending switch result', async () => {
     const f = fixture()
     await f.controls.start(f.apply)
