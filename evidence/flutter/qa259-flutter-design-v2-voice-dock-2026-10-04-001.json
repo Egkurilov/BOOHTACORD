@@ -1,0 +1,69 @@
+{
+  "id": "QA-259",
+  "date": "2026-10-04",
+  "task": "FV2-020 — Flutter Design V2 connected voice dock presentation parity",
+  "source_revision": "WORKTREE",
+  "working_tree_changes": true,
+  "summary": "Aligned Flutter's connected voice dock with the latest web presentation: headset marker, connected status copy, room participant context, and a visually hidden unknown-quality placeholder that remains available to assistive technology. Voice and LiveKit behavior were not changed.",
+  "checks": [
+    {
+      "name": "Focused connected dock state, semantics and participant count tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'voice dock announces reconnect and deafen transition states' && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'macOS shows an unsubscribed published screen and opens it' && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'keeps voice controls in a compact bottom dock on Android'",
+      "result": "PASS",
+      "passed": 3,
+      "observation": "Covers desktop connected copy/headset/participant context, semantic quality description with no visible unknown indicator, remote participant count, and compact Android dock spacing and controls."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 491
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && dart analyze lib/src/screens/workspace_screen.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android signed release build",
+      "command": "cd clients/flutter && flutter build apk --release --no-pub --build-name=1.0.28 --build-number=2051",
+      "result": "PASS",
+      "artifact": "1.0.28+2051; 115.4 MB; SHA-256 dd7ce7276cec475cfbe9f8beb1d86ef2f08de88c6e55798c8078e987a9cfd241; artifact remains in ignored build output and was not added to Git."
+    },
+    {
+      "name": "Android API 35 emulator visual acceptance",
+      "command": "adb install -r build/app/outputs/flutter-apk/app-release.apk; launch ru.boohtacord.app/.MainActivity; inspect voice dock in Voice",
+      "result": "PASS",
+      "observation": "Updated the installed signed 1.0.28+2050 in place without clearing app data. At 1080x2400 the connected dock showed the green headset, 'Голос подключён', 'Voice · 3 участника' and live 9 ms RTT. Selection auto-joined Voice; the microphone was muted immediately, confirmed by accessibility label 'Включить микрофон', then the temporary voice session was left. Screenshot remains in /private/tmp/boohtacord-voice-dock-v2051-muted.png."
+    },
+    {
+      "name": "macOS current-source hot reload visual acceptance",
+      "command": "flutter attach -d macos",
+      "result": "NOT_RUN",
+      "observation": "Attach waited 14 seconds for a Flutter VM service and was stopped. The already-running Mac window still showed the older connected copy; it was not restarted, to avoid another Keychain prompt."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "flutter build macos --debug --no-pub",
+      "result": "NOT_RUN",
+      "observation": "The currently open app appears to use the standard Debug app bundle path. Building there could replace files under the live process, so the build was skipped; Flutter does not expose --build-dir for this target."
+    },
+    {
+      "name": "Spec traceability after backlog update",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this macOS host. The task references existing approved UI and voice requirements; no contracts changed."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "FV2-020 remains open until the current source is visually reviewed on the already-running Mac client without a restart, or the user permits a restart after the app can be safely relaunched.",
+    "The Android APK is a locally built test artifact only; it was not published as a Git release or committed to the repository."
+  ],
+  "status": "PASS_TESTS_ANDROID_RELEASE_ANDROID_VISUAL; MACOS_VISUAL_PENDING"
+}

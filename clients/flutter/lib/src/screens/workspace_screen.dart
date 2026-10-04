@@ -16,6 +16,7 @@ import '../services/composer_draft_memory.dart';
 import '../services/pinned_screen_mini_player_policy.dart';
 import '../services/api_client.dart';
 import '../services/voice_avatar_palette.dart';
+import '../services/voice_connection_quality.dart';
 import '../services/voice_participant_presentation.dart';
 import '../services/screen_thumbnail.dart';
 import '../features/voice/screen_viewer/audio_publication.dart';
@@ -6829,12 +6830,34 @@ class _VoiceDock extends StatelessWidget {
     VoicePhase.joining => 'Подключаемся к голосовому каналу',
     VoicePhase.reconnecting => 'Восстанавливаем голосовое соединение',
     VoicePhase.leaving => 'Завершаем голосовое подключение',
+    VoicePhase.connected || VoicePhase.listener => 'Голос подключён',
     _ => 'В голосовом канале',
   };
 
+  bool get _connected =>
+      state.voicePhase == VoicePhase.connected ||
+      state.voicePhase == VoicePhase.listener;
+
+  String get _subtitle {
+    final channel = state.voiceChannel!;
+    final room = state.room;
+    if (!_connected || room == null) return channel.name;
+    final count = room.remoteParticipants.length + 1;
+    final lastTwoDigits = count % 100;
+    final lastDigit = count % 10;
+    final noun = lastTwoDigits >= 11 && lastTwoDigits <= 14
+        ? 'участников'
+        : switch (lastDigit) {
+            1 => 'участник',
+            2 || 3 || 4 => 'участника',
+            _ => 'участников',
+          };
+    return '${channel.name} · $count $noun';
+  }
+
   @override
   Widget build(BuildContext context) => Container(
-    key: compact ? const ValueKey('mobile-voice-dock') : null,
+    key: ValueKey(compact ? 'mobile-voice-dock' : 'voice-dock'),
     padding: compact
         ? const EdgeInsets.fromLTRB(12, 8, 12, 8)
         : const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -6857,12 +6880,19 @@ class _VoiceDock extends StatelessWidget {
                   child: ExcludeSemantics(
                     child: Row(
                       children: [
-                        _StatusDot(
-                          color: state.voicePhase == VoicePhase.reconnecting
-                              ? GcColors.warning
-                              : GcColors.success,
-                        ),
-                        const SizedBox(width: 9),
+                        if (_connected)
+                          const Icon(
+                            Icons.headphones_outlined,
+                            size: 16,
+                            color: GcColors.success,
+                          )
+                        else
+                          _StatusDot(
+                            color: state.voicePhase == VoicePhase.reconnecting
+                                ? GcColors.warning
+                                : GcColors.success,
+                          ),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -6876,12 +6906,14 @@ class _VoiceDock extends StatelessWidget {
                                       ? GcColors.warning
                                       : GcColors.success,
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: _connected
+                                      ? FontWeight.w500
+                                      : FontWeight.w700,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                state.voiceChannel!.name,
+                                _subtitle,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: GcColors.textSecondary,
@@ -6896,13 +6928,22 @@ class _VoiceDock extends StatelessWidget {
                   ),
                 ),
               ),
-              if (state.voicePhase == VoicePhase.connected ||
-                  state.voicePhase == VoicePhase.listener)
-                VoiceQualityIndicator(
-                  quality: state.voiceConnectionQuality,
-                  pingMs: state.voicePingMs,
-                  compact: compact,
-                ),
+              if (_connected)
+                if (compact ||
+                    state.voicePingMs != null ||
+                    state.voiceConnectionQuality != ConnectionQuality.unknown)
+                  VoiceQualityIndicator(
+                    quality: state.voiceConnectionQuality,
+                    pingMs: state.voicePingMs,
+                    compact: compact,
+                  )
+                else
+                  Semantics(
+                    container: true,
+                    label:
+                        'Качество соединения: ${voiceConnectionQualityLabel(state.voiceConnectionQuality)} · ping —',
+                    child: const SizedBox.shrink(),
+                  ),
             ],
           ),
         ),
