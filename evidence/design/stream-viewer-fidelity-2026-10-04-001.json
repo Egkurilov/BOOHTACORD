@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-04",
+  "status": "PASS",
+  "scope": "Design V2 R04/R05 viewer presentation and preservation regression; full design goal remains active",
+  "requirements": ["REQ-SCREEN-03", "REQ-SCREEN-04"],
+  "implementation_commit": "aa9287b2",
+  "tested_commit": "36eacbe0898eb4ca8ba2f410b238f2988eb36434",
+  "tested_web_tree": "a830783c7f6008ba1ca7d460c89675fe953ac423",
+  "priority": "Client screens first; administration last, per user",
+  "artifact_root": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-viewer-fidelity-2026-10-04",
+  "full_capture_root": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-current-36eacbe0",
+  "checks": {
+    "npm_test": { "status": "PASS", "files": 298, "tests": 955 },
+    "npm_run_build": { "status": "PASS", "warning": "Existing JS chunks exceed 500 kB" },
+    "npm_run_test_member_popover": { "status": "PASS", "tests": 7 },
+    "viewer_browser": { "status": "PASS", "viewports": [[1440,900],[390,844],[320,844]] },
+    "actual_capture": { "status": "PASS", "states": 29, "page_errors": 0 },
+    "spec_traceability": { "status": "PASS", "requirements": 39 },
+    "git_diff_check": "PASS"
+  },
+  "visual": {
+    "reference_files_modified": false,
+    "masked_or_aligned": false,
+    "R04": { "html_mae_before": 0.9171, "html_mae_after": 0.3096, "png_mae_before": 1.2089, "png_mae_after": 0.6668, "exact_geometry_elements": 20 },
+    "R05": { "html_mae_before": 2.7459, "html_mae_after": 1.0779, "png_mae_before": 2.7581, "png_mae_after": 1.312, "exact_geometry_elements": 20 }
+  },
+  "preserved": ["Real Vue/store action edges", "Audio 0–200 percent and keyboard input", "Explicit stream selection", "Pin/unpin", "Fullscreen", "Receiver statistics and focus return", "Existing media controllers and track lifecycle"],
+  "limits": ["API/media fixtures do not prove production ACL or physical media", "Canvas/video scaling differs from source img", "Compact mobile voice strip and other client screens need further polish", "No complete 1:1 claim"]
+}

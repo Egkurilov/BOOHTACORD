@@ -35,12 +35,14 @@
 ## Task 3 — verification and delivery
 
 - [x] Run nearest viewer/controller/audio/fullscreen/overflow tests, then all web tests and `npm run build`; save real results.
-- [ ] Save before/after raw diff and overlay for R04/R05 without shifting or changing reference pixels. Record remaining content/fixture differences explicitly.
-- [ ] Inspect Git status, diff and changed file sizes; commit exact paths, fetch, merge current master, validate any changed web dependencies, push design branch and master.
-- [ ] Update the current review pointer with the focused client result; leave overall goal active until all client/admin acceptance work is finished.
+- [x] Save before/after raw diff and overlay for R04/R05 without shifting or changing reference pixels. Record remaining content/fixture differences explicitly.
+- [x] Inspect Git status, diff and changed file sizes; commit exact paths, fetch, merge current master, validate any changed web dependencies, push design branch and master.
+- [x] Update the current review pointer with the focused client result; leave overall goal active until all client/admin acceptance work is finished.
 
 ## Verified implementation additions
 
-- Styled the native 0–200 audio range and retained its keyboard/store action contract; ScreenViewerAudioControl.vue is the fifth production file.
+- Styled the native 0–200 audio range and retained its keyboard/store action contract; ScreenViewerAudioControl.vue is the fourth production file.
 - Added clients/web/artifacts/design-v2/screen-viewer/verify-interactions.mjs: pin, statistics/focus, fullscreen, audio action, keyboard volume and selection preservation on actual components.
 - Fresh result before integration: 955 tests, build and 1440/390/320 browser probes PASS; 20/20 reference element boxes match on R04 and R05.
+- Merged `97e002e2` and repeated all 955 tests, build, viewer probes, seven participant-profile browser tests and all 29 actual captures; PASS. Reviewed web tree: `a830783c7f6008ba1ca7d460c89675fe953ac423`.
+- Next client packet: compact mobile voice strip and audio settings. Admin polish remains last.
