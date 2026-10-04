@@ -17,7 +17,7 @@ func TestRepositoryMasksContentAuditsAndAllowsOnlyAuthorOrAdministrator(t *testi
 	if err != nil || result.Revision != 2 || database.arguments[3] != "ADMINISTRATOR" {
 		t.Fatalf("result = %#v, arguments = %#v, error = %v", result, database.arguments, err)
 	}
-	for _, fragment := range []string{"SET body = ''", "message.deleted_at IS NULL", "message.author_id = $3 OR $4 = 'ADMINISTRATOR'", "INSERT INTO audit_events", "jsonb_build_object"} {
+	for _, fragment := range []string{"SET body = ''", "message.deleted_at IS NULL", "(message.author_id = $3 AND message.kind = 'USER') OR $4 = 'ADMINISTRATOR'", "INSERT INTO audit_events", "jsonb_build_object"} {
 		if !strings.Contains(database.statement, fragment) {
 			t.Fatalf("statement does not include %q: %s", fragment, database.statement)
 		}

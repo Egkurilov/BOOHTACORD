@@ -89,7 +89,7 @@ func (h Handler) Patch(w http.ResponseWriter, r *http.Request) {
 	} else {
 		span.Finish("success", details)
 	}
-	writeJSON(w, r, 200, result.Settings)
+	writeJSON(w, 200, result.Settings)
 }
 func writeError(w http.ResponseWriter, r *http.Request, status int, code string) {
 	writeJSON(w, status, map[string]any{"error": map[string]string{"code": code, "message": "Не удалось выполнить запрос настроек гильдии", "request_id": requestid.From(r.Context())}})

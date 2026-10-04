@@ -31,6 +31,7 @@ func New(t *testing.T) Fixture {
 	}{
 		{`INSERT INTO users(id,login,display_name,role,password_hash) VALUES($1,'owner','Owner','ADMINISTRATOR','test-hash')`, []any{f.Admin}},
 		{`INSERT INTO bootstrap_state(singleton,administrator_id) VALUES(TRUE,$1) ON CONFLICT(singleton) DO UPDATE SET administrator_id=$1`, []any{f.Admin}},
+		{`INSERT INTO channel_topology_state(singleton,revision) VALUES(TRUE,1) ON CONFLICT(singleton) DO NOTHING`, nil},
 		{`INSERT INTO categories(id,name,position) VALUES($1,'General',0)`, []any{uuid.NewString()}},
 		{`INSERT INTO channels(id,category_id,name,kind,position) SELECT $1,id,'Text','TEXT',0 FROM categories`, []any{f.Channel}},
 		{`INSERT INTO channels(id,category_id,name,kind,position) SELECT $1,id,'Voice','VOICE',1 FROM categories`, []any{f.Voice}},
