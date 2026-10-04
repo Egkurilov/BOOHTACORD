@@ -1879,7 +1879,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.tap(find.byKey(const ValueKey('role:account-2:MEMBER')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Администратор').last);
     await tester.pumpAndSettle();

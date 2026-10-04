@@ -47,7 +47,9 @@ void main() {
     final api = TopologyTestApi()..accounts = accounts;
     final state = AppState(api)..topology = api.current;
     addTearDown(state.dispose);
-    await tester.pumpWidget(MaterialApp(home: AdminScreen(state: state)));
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: AdminScreen(state: state))),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Участники 2'), findsOneWidget);
