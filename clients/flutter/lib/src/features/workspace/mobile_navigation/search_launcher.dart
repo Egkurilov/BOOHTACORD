@@ -31,15 +31,22 @@ class WorkspaceNavigationSearch extends StatelessWidget {
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
           icon: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
+            padding: EdgeInsets.only(left: 10, right: 6),
             child: Row(
               children: [
                 Icon(Icons.search, size: 16, color: GcColors.muted),
                 SizedBox(width: 8),
-                Text('Поиск сообщений', style: TextStyle(
-                  color: GcColors.muted, fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                )),
+                Flexible(
+                  child: Text(
+                    'Поиск сообщений',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: GcColors.muted, fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
