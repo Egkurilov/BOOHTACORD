@@ -66,7 +66,7 @@ onMounted(() => { void nextTick(() => queryInput.value?.focus()) })
       <button class="search-submit" type="submit" :disabled="!canSubmit">{{ loading ? 'Ищем…' : 'Найти' }}</button>
     </form>
     <p v-if="error" id="search-error" class="search-error" role="alert">{{ error }}</p>
-    <p class="search-status" aria-live="polite" :aria-busy="loading">{{ loading ? 'Ищем сообщения…' : searched ? (messages.length ? `Найдено ${messages.length} сообщения` : 'Совпадений нет.') : 'Введите запрос и нажмите Enter.' }}</p>
+    <p class="search-status" :class="{ 'search-status--visible': loading || (!error && (!searched || !messages.length)) }" role="status" aria-live="polite" :aria-busy="loading">{{ loading ? 'Ищем сообщения…' : searched ? (messages.length ? `Найдено ${messages.length} сообщения` : 'Совпадений нет.') : 'Введите запрос и нажмите Enter.' }}</p>
     <span v-if="searched && messages.length" class="search-result-count" aria-hidden="true">Найдено {{ messages.length }} сообщения</span>
     <ol v-if="messages.length" class="search-results" aria-label="Результаты поиска">
       <li v-for="message in messages" :key="`${message.kind}:${message.id}`" class="search-result">

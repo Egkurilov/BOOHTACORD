@@ -1,0 +1,16 @@
+{
+  "id": "design-v2-search-feedback-2026-10-04-001",
+  "task": "T-050",
+  "scope": "Search feedback presentation, implementation spec 6.6",
+  "status": "PASS",
+  "base_commit": "1d312e684a2ac63b8bb13fdfbbbdf3f18571b7af",
+  "production_files": ["clients/web/src/search/SearchPanel.vue", "clients/web/src/design/design_v2_search_presentation.css"],
+  "before": "34 browser checks, 16 failures: clipped feedback and inherited paragraph colors/type",
+  "after": "34 browser checks passed at 1440x900 and 390x844; no page errors",
+  "behaviors": ["idle, pending, empty and error feedback visible", "pending controls disabled", "error associated with query", "retry clears alert and returns results", "closed panel response ignored after reopening"],
+  "native_checks": ["npm test -- src/search: 5 files, 11 tests PASS", "npm run build: PASS", "git diff --check: PASS"],
+  "r13_success_regression": {"mae": 0, "changed_pixels": 0},
+  "r13_reference": {"mae": 3.055671296296296, "sha256": "7b433c37f953cb3d02eb267d89c6e8ee15fda322f6e45796f83c9ec3e09efb28"},
+  "artifacts": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-search-feedback-2026-10-04",
+  "limitations": ["Derived states have no supplied PNG: reviewed against spec and design tokens", "Synthetic API responses drive real Vue components; no server ACL or physical media acceptance claimed", "Full Design V2 pixel acceptance remains incomplete"]
+}

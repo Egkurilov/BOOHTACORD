@@ -1,0 +1,15 @@
+{
+  "id": "design-v2-member-roster-fidelity-2026-10-04-001",
+  "task": "T-050",
+  "scope": "Guild presence roster presentation and profile anchor",
+  "status": "PASS",
+  "base_commit": "03557668",
+  "files": ["clients/web/src/design/design_v2_member_roster.css", "clients/web/src/style.css", "clients/web/src/workspace/WorkspaceMembersPanel.vue"],
+  "visual_checks": "Six source/actual elements match bounds within 0.02px and selected computed styles; failures reproduced before changes",
+  "r01_mae": {"full_before": 3.412843, "full_after": 2.812710, "roster_before": 4.822216, "roster_after": 1.070806},
+  "r18_mae": {"controlled_card_before": 0.876188, "controlled_card_after": 0.876188, "full_before": 3.321843, "full_after": 2.733497},
+  "checks": ["2 Vitest files / 5 presence and focus tests PASS", "Desktop and mobile: initial focus, keyboard close, Escape return, no guild kick, DM target ID, voice session preserved PASS", "TypeScript/Vite build PASS", "git diff --check PASS"],
+  "preservation": "No status fabrication; API online/offline/unknown grouping retained. Voice roster offset retained. Guild profile offset adjusted from 24 to 20px for the corrected row geometry.",
+  "artifacts": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-member-roster-2026-10-04",
+  "limitations": "Full Design V2 1:1 remains open. Source HTML and PNG are unchanged; synthetic fixtures do not prove live server ACL or physical media."
+}

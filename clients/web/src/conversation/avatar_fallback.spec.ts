@@ -20,6 +20,19 @@ async function renderMessage(authorId: string, kind: 'text' | 'dm', avatarUrl?: 
 }
 
 describe('message fallback avatar', () => {
+  it('pairs the preserved identity backgrounds with handoff foregrounds in chat and DM', async () => {
+    for (const [id, backgroundColor, color] of [
+      ['fixture-6', '#17464a', '#a5f2f0'], ['fixture-2', '#553521', '#ffd5a8'],
+      ['fixture-3', '#393059', '#e3dcff'], ['fixture-0', '#423657', '#e9cbff'],
+    ]) {
+      expect(avatarFallbackStyle(id)).toEqual({ backgroundColor, color })
+      for (const kind of ['text', 'dm'] as const) {
+        const html = await renderMessage(id, kind)
+        expect(html).toContain(`background-color:${backgroundColor};color:${color}`)
+      }
+    }
+  })
+
   it('uses stable distinct dark V2 styles for author IDs, independent of message location', async () => {
     const first = avatarFallbackStyle('author-one')
     const second = avatarFallbackStyle('author-two')

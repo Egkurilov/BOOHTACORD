@@ -1,8 +1,8 @@
 const palette = [
-  { backgroundColor: '#17464a', color: '#f4f5fa' },
-  { backgroundColor: '#553521', color: '#f4f5fa' },
-  { backgroundColor: '#393059', color: '#f4f5fa' },
-  { backgroundColor: '#423657', color: '#f4f5fa' },
+  { backgroundColor: '#17464a', color: '#a5f2f0' },
+  { backgroundColor: '#553521', color: '#ffd5a8' },
+  { backgroundColor: '#393059', color: '#e3dcff' },
+  { backgroundColor: '#423657', color: '#e9cbff' },
   { backgroundColor: '#556176', color: '#f4f5fa' },
 ] as const
 
