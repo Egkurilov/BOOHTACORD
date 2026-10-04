@@ -26,7 +26,7 @@ func TestComposedRoutesPreserveSessionAndOriginBoundaries(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler, err := routes(nil, configuration, eventhub.New(64), httpmetrics.New(), unavailableUpdates{})
+	handler, err := routes(nil, configuration, eventhub.New(64), httpmetrics.New(), unavailableUpdates{}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

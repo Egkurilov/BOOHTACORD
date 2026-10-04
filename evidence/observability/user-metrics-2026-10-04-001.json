@@ -1,0 +1,29 @@
+{
+  "id": "user-metrics-2026-10-04-001",
+  "kind": "implementation-verification",
+  "status": "PASS",
+  "scope": "Local unit, isolated PostgreSQL and dashboard regression checks; production verification follows delivery",
+  "definition": {
+    "total": "All users, including blocked accounts and bootstrap administrator",
+    "registration": "Account created_at falls within Moscow calendar day",
+    "daily_active": "Distinct authenticated accounts with at least one successfully verified server request, including background requests",
+    "timezone": "Europe/Moscow (UTC+3)",
+    "comparison": "Today so far versus complete previous calendar day",
+    "initial_history": "No historical DAU is inferred; incomplete previous day and percentage with zero baseline stay unavailable"
+  },
+  "checks": [
+    "Focused tests failed before implementation, then passed",
+    "Six observe_usage tests PASS, including isolated PostgreSQL 17.6 integration",
+    "Existing authenticate_session service, API and PostgreSQL tests PASS",
+    "All migrate tests PASS with both test database variables configured; empty/existing schema and repeat migration covered",
+    "Eight Runtime dashboard Python regressions PASS"
+  ],
+  "preservation": [
+    "Telemetry write errors do not change authentication result",
+    "One successful activity write per cached account/day; 200 ms deadline, retry on failure, bounded 16384-entry cache",
+    "Activity survives process restart; date-indexed deduplication and retention in PostgreSQL",
+    "Only aggregate metrics and fixed today/yesterday labels leave the API",
+    "Failed metric reads and observations older than 60 seconds are excluded, including stale series from previous releases",
+    "Original ten dashboard panel IDs and host-resource panels preserved"
+  ]
+}

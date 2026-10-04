@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 	"errors"
+	"go.opentelemetry.io/otel"
 	"log/slog"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 	clientupdates "voice-platform/backend/internal/client_updates/catalog"
 	runtimeconfig "voice-platform/backend/internal/config/runtime"
 	"voice-platform/backend/internal/database/pool"
+	observeusage "voice-platform/backend/internal/identity/observe_usage"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
 )
 
@@ -38,12 +40,19 @@ func Run(ctx context.Context) (result error) {
 		return err
 	}
 	resources.Add(func(ctx context.Context) error { return lifecycle.Wait(ctx, database.Close) })
+	usageStore := observeusage.NewPostgres(database)
+	usage := observeusage.NewTracker(usageStore, time.Now)
+	stopUsage, err := observeusage.RegisterMetrics(otel.Meter("boohtacord/user-usage"), usageStore, usage, time.Now)
+	if err != nil {
+		return err
+	}
+	resources.Add(func(context.Context) error { return stopUsage() })
 	events, stopRealtime := workerruntime.StartRealtime(ctx, database)
 	resources.Add(stopRealtime)
 	metrics := httpmetrics.New()
 	updates := clientupdates.NewStore(configuration.ClientUpdateCatalogPath, configuration.ClientUpdateAllowedHosts, metrics)
 	updates.Start(ctx)
-	handler, err := routes(database, configuration, events, metrics, updates)
+	handler, err := routes(database, configuration, events, metrics, updates, usage)
 	if err != nil {
 		return err
 	}
