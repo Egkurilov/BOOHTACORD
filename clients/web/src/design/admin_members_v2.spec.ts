@@ -23,4 +23,14 @@ describe('V2 administrator member directory', () => {
     const header = readFileSync(new URL('./design_v2_admin_permissions.css', import.meta.url), 'utf8')
     expect(header).toContain('.settings-workspace-header .workspace-header-toggle--nav, .settings-workspace-close { width: 44px; height: 44px; }')
   })
+
+  it('uses the handoff SVG action mark on the live mobile account cards', () => {
+    const css = readFileSync(new URL('./design_v2_admin_members.css', import.meta.url), 'utf8')
+    expect(members).toContain('class="admin-mobile-menu-mark"')
+    expect(members).toContain('<circle cx="5" cy="12" r="1"')
+    expect(members).toContain('<circle cx="12" cy="12" r="1"')
+    expect(members).toContain('<circle cx="19" cy="12" r="1"')
+    expect(css).toContain('.admin-panel--members .admin-mobile-menu-mark')
+    expect(css).not.toContain("content: '⋯'")
+  })
 })

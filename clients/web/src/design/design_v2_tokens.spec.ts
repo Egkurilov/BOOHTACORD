@@ -57,4 +57,25 @@ describe('BOOHTACORD Design V2 shared tokens', () => {
     expect(foundation).toContain(':focus-visible')
     expect(foundation).toContain('prefers-reduced-motion: reduce')
   })
+
+  it('maps the complete normative spacing, type, and motion scales', () => {
+    const expected: Record<string, string> = {
+      'space-0': '0px', 'space-1': '4px', 'space-2': '8px', 'space-3': '12px',
+      'space-4': '16px', 'space-5': '20px', 'space-6': '24px', 'space-8': '32px',
+      'space-10': '40px', 'space-12': '48px', 'space-16': '64px',
+      'radius-xs': '4px', 'radius-sm': '6px', 'radius-md': '8px',
+      'radius-lg': '12px', 'radius-shell': '16px', 'radius-full': '999px',
+      'text-caption': '12px', 'line-caption': '16px',
+      'text-body': '14px', 'line-body': '20px',
+      'text-message': '15px', 'line-message': '22px',
+      'text-title': '16px', 'line-title': '24px',
+      'text-section': '20px', 'line-section': '28px',
+      'text-page': '24px', 'line-page': '32px',
+      'weight-regular': '400', 'weight-medium': '500',
+      'weight-semibold': '600', 'weight-bold': '700',
+      'duration-fast': '120ms', 'duration-base': '180ms',
+    }
+    for (const [name, value] of Object.entries(expected)) expect(cssValue(name), name).toBe(value)
+    expect(cssValue('font-family')).toContain('Inter')
+  })
 })
