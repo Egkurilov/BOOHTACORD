@@ -9,4 +9,10 @@ describe('Design V2 voice dock icons', () => {
     expect(dock).toContain('M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8')
     expect(dock).toContain("@click=\"emit('toggleMicrophone')\"")
   })
+
+  it('uses the handoff monitor icon while retaining screen share events', () => {
+    expect(dock).toContain('<rect v-else x="2" y="3" width="20" height="14" rx="2"/>')
+    expect(dock).toContain('<path v-if="screenShareState !== \'SHARING\'" d="M8 21h8M12 17v4"/>')
+    expect(dock).toContain("emit('stopScreen') : emit('startScreen')")
+  })
 })
