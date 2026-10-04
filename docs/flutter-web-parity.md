@@ -80,6 +80,20 @@ Runtime visual acceptance passed on Android 15/API 35 (signed local build
 Escape/Android Back both return to Text. Windows runtime visual acceptance is
 still open — [QA-266](../evidence/flutter/qa266-flutter-protected-image-viewer-safe-area-2026-10-05-001.json).
 
+## Admin role-permission list surface (FV2-023)
+
+Flutter's role-permission `CheckboxListTile` is now under a `Material` surface
+rather than a `ColoredBox`, preserving the existing content color while
+providing the Material ancestor required for visible tile ink/background.
+The test-first regression reproduced six framework warnings before the fix and
+then verified all six permission controls plus a toggle without framework
+errors. The focused admin tests passed 11/11; the full Flutter suite passed
+551/551 and changed-file analysis was clean. The existing macOS Debug session
+was hot-reloaded and visually checked on Administration → Roles. Android API
+35 was checked on signed local build `1.0.29+2057` installed in place, with the
+existing session/data preserved; no permission was changed or saved. The
+change is client presentation/test-only — [QA-270](../evidence/flutter/qa270-flutter-admin-list-tile-warning-2026-10-05-001.json).
+
 ## Frameless desktop window chrome (FV2-018)
 
 macOS and Windows now use a compact 32 px draggable title bar instead of the
@@ -214,11 +228,11 @@ states are not.
 
 ## Current parity map
 
-Status below reflects the Flutter and web source as of 2026-10-02, including native
-identity/reset, audio/PTT, local screen publishing, web screen-share setup, and live voice navigation
-slices. Reconcile this table
-when a feature lands; do not use the old summary as a substitute for reading
-the implementation.
+This parity map began from a 2026-10-02 source audit and has follow-up records
+through 2026-10-05, including the Design V2 slices above. Older rows below still
+contain explicit historical gaps; re-check current Flutter/web source and the
+linked evidence before treating a stale status as current. Do not use this map
+as a substitute for reading the implementation.
 
 Flutter startup now bounds API/session storage initialization, platform
 initialization, current-session lookup and account preparation with one
