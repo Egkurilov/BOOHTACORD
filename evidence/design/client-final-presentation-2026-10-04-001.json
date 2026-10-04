@@ -8,12 +8,12 @@
     "REQ-AUDIO-01",
     "REQ-SCREEN-01"
   ],
-  "tested_commit": "1ba01e1df6a5b3f6eb8acd44080b8bd00ff51916",
-  "tested_web_tree": "caad987c19874ecf245228c04d9be66d73ab61df",
+  "tested_commit": "8539a52f42d7ec9fdfddf3046770287ff1a17b19",
+  "tested_web_tree": "90b6d2f77e23a2b6f90c05026980f467d4cb2b3f",
   "checks": {
     "web_tests": {
       "files": 301,
-      "tests": 984,
+      "tests": 985,
       "status": "PASS"
     },
     "typescript_vite_build": "PASS",
@@ -36,5 +36,7 @@
     "Full original 1:1 objective remains incomplete; stop requested by user",
     "No physical device/media acceptance claim",
     "Original references unchanged; raw full-frame diffs preserved"
-  ]
+  ],
+  "visual_baseline_commit": "1ba01e1df6a5b3f6eb8acd44080b8bd00ff51916",
+  "integration": "Merged concurrent master 3e784df8; repeated full tests/build and focused browser matrix"
 }
