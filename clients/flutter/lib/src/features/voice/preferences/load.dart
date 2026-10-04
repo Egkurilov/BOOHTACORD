@@ -20,12 +20,27 @@ extension VoicePreferencesLoad on VoiceController {
     audio.microphoneVad = audioActivationMode == AudioActivationMode.vad;
     pushToTalkKeyId = preferences.pttKeyId;
     pushToTalkKeyLabel = preferences.pttKeyLabel;
-    microphoneShortcut = preferences.microphoneShortcut?.isValid == true
+    microphoneShortcut =
+        preferences.microphoneShortcut?.isValid == true &&
+            voiceShortcutConflict(
+                  preferences.microphoneShortcut!,
+                  null,
+                  pushToTalkKeyId,
+                ) ==
+                null
         ? preferences.microphoneShortcut
         : null;
-    deafenShortcut = preferences.deafenShortcut?.isValid == true
+    deafenShortcut =
+        preferences.deafenShortcut?.isValid == true &&
+            voiceShortcutConflict(
+                  preferences.deafenShortcut!,
+                  microphoneShortcut,
+                  pushToTalkKeyId,
+                ) ==
+                null
         ? preferences.deafenShortcut
         : null;
+    cancelVoiceShortcuts(release: true);
     audioActivationError =
         audioActivationMode == AudioActivationMode.ptt &&
             pushToTalkKeyId == null &&
@@ -41,7 +56,11 @@ extension VoicePreferencesLoad on VoiceController {
     final previousId = pushToTalkKeyId;
     final previousLabel = pushToTalkKeyLabel;
     if (keyId != null &&
-        (microphoneShortcut?.keyId == keyId || deafenShortcut?.keyId == keyId)) {
+        [microphoneShortcut, deafenShortcut].any(
+          (binding) =>
+              binding != null &&
+              voiceShortcutConflict(binding, null, keyId) == 'ptt',
+        )) {
       audioActivationError = 'Эта клавиша уже назначена для другого действия.';
       notifyListeners();
       return;
@@ -57,45 +76,6 @@ extension VoicePreferencesLoad on VoiceController {
       pushToTalkKeyLabel = previousLabel;
       audioActivationError =
           'Не удалось сохранить клавишу PTT: ${cause.runtimeType}.';
-    }
-    if (active(ticket, revision)) notifyListeners();
-  }
-
-  Future<void> setVoiceShortcut(String action, VoiceShortcutBinding? value) async {
-    final ticket = scope.capture();
-    final revision = operationRevision;
-    if (!active(ticket, revision)) return;
-    final previous = action == 'microphone' ? microphoneShortcut : deafenShortcut;
-    final other = action == 'microphone' ? deafenShortcut : microphoneShortcut;
-    if (value != null && !value.isValid) {
-      audioActivationError = 'Назначьте сочетание с Ctrl, Alt, Shift или Meta и основной клавишей.';
-      notifyListeners();
-      return;
-    }
-    final conflict = value == null ? null : voiceShortcutConflict(value, other, pushToTalkKeyId);
-    if (conflict != null) {
-      audioActivationError = conflict == 'duplicate'
-          ? 'Это сочетание уже назначено.'
-          : conflict == 'ptt'
-          ? 'Сочетание конфликтует с push-to-talk.'
-          : 'Ctrl/Meta+K зарезервировано для поиска.';
-      notifyListeners();
-      return;
-    }
-    if (action == 'microphone') microphoneShortcut = value;
-    else deafenShortcut = value;
-    audioActivationError = null;
-    try {
-      if (action == 'microphone') {
-        await audioPreferences?.setMicrophoneShortcut(value);
-      } else {
-        await audioPreferences?.setDeafenShortcut(value);
-      }
-    } catch (cause) {
-      if (!active(ticket, revision)) return;
-      if (action == 'microphone') microphoneShortcut = previous;
-      else deafenShortcut = previous;
-      audioActivationError = 'Не удалось сохранить сочетание: ${cause.runtimeType}.';
     }
     if (active(ticket, revision)) notifyListeners();
   }

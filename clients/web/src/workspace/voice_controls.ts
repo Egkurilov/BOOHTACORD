@@ -10,6 +10,7 @@ import { useVoiceConnectionStore } from '../voice/connection_store'
 import type { ScreenProfile, VoiceJoinMode } from '../voice/livekit_gateway'
 import { useVoiceNavigationStore } from '../voice/navigation_store'
 import { streamStartChime } from '../voice/stream_start_runtime'
+import { executeVoiceShortcut } from '../voice/shortcuts/execute'
 import { VoiceShortcuts } from '../voice/voice_shortcuts'
 import type { VoiceShortcutSource } from '../voice/voice_shortcuts'
 
@@ -21,6 +22,9 @@ export function useWorkspaceVoiceControls(accountId = '') {
   const voiceNavigation = useVoiceNavigationStore()
   let shortcuts: VoiceShortcuts | null = null
   watch(() => voiceConnection.inputSelection, (selection) => { if (selection) audioSettings.observeInput(selection) })
+  const cancelShortcuts = () => { shortcuts?.invalidate(); voiceActivation.shortcutStatus = '' }
+  watch(() => voiceConnection.active, cancelShortcuts)
+  watch(() => [voiceActivation.microphoneShortcut, voiceActivation.deafenShortcut], cancelShortcuts)
   const refreshDevices = () => { void loadAudioDevices() }
   onMounted(() => {
     voiceActivation.bindAccount?.(accountId)
@@ -28,16 +32,17 @@ export function useWorkspaceVoiceControls(accountId = '') {
     void audioSettings.loadProcessing(voiceConnection.setAudioProcessing)
     navigator.mediaDevices?.addEventListener?.('devicechange', refreshDevices)
     shortcuts = new VoiceShortcuts(window as unknown as VoiceShortcutSource, () => ({ microphone: voiceActivation.microphoneShortcut, deafen: voiceActivation.deafenShortcut }), {
-      microphone: voiceConnection.toggleMicrophone,
-      deafen: voiceConnection.toggleDeafen,
+      microphone: () => executeVoiceShortcut('microphone', voiceConnection, voiceActivation.mode),
+      deafen: () => executeVoiceShortcut('deafen', voiceConnection, voiceActivation.mode),
     }, voiceActivation.announceShortcut)
-    shortcuts.start()
+    shortcuts.start(); window.addEventListener('blur', cancelShortcuts)
   })
   onBeforeUnmount(() => {
     bindMicrophoneAccount(null)
     navigator.mediaDevices?.removeEventListener?.('devicechange', refreshDevices)
-    shortcuts?.stop()
+    window.removeEventListener('blur', cancelShortcuts); shortcuts?.stop()
     shortcuts = null
+    voiceActivation.unbindAccount()
   })
 
   async function loadAudioDevices(): Promise<void> {

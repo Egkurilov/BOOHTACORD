@@ -21,7 +21,12 @@ import '../services/voice_participant_presentation.dart';
 import '../services/screen_thumbnail.dart';
 import '../features/voice/screen_viewer/audio_publication.dart';
 import '../features/voice/screen_viewer/audio_controls.dart';
-import '../features/voice/microphone/shortcut.dart';
+import '../features/voice/shortcuts/capture.dart';
+import '../features/voice/lifecycle/controller.dart';
+import '../widgets/voice_shortcuts/keyboard.dart';
+import '../widgets/voice_shortcuts/availability.dart';
+import '../widgets/voice_shortcuts/row.dart';
+import '../widgets/voice_shortcuts/status.dart';
 import '../features/workspace/mobile_navigation/top.dart';
 import '../features/workspace/search/panel_empty_state.dart';
 import '../widgets/topology_actions/buttons.dart';
@@ -80,6 +85,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   bool _showMembersDrawer = false;
   bool _capturingPttKey = false;
   String? _capturingVoiceShortcut;
+  final _shortcutAvailability = ShortcutAvailability();
+  String? _shortcutAccount;
   String? _selectedScreenIdentity;
   String? _screenWaitingToRestart;
   String? _pinnedScreenIdentity;
@@ -101,6 +108,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   @override
   void initState() {
     super.initState();
+    _shortcutAccount = widget.state.user?.accountId;
     _lastObservedScreenSharePhase = widget.state.screenSharePhase;
     _lastWorkspacePanel = widget.state.workspacePanel;
     widget.state.addListener(_workspaceChanged);
@@ -127,6 +135,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
 
   @override
   void dispose() {
+    widget.state.voice.cancelVoiceShortcuts();
     HardwareKeyboard.instance.removeHandler(_handleHardwareKey);
     WidgetsBinding.instance.removeObserver(this);
     if (defaultTargetPlatform == TargetPlatform.macOS ||
@@ -140,6 +149,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   void _workspaceChanged() {
+    if (_shortcutAccount != widget.state.user?.accountId || widget.state.workspacePanel != WorkspacePanel.audio) {
+      if (_capturingVoiceShortcut != null) setState(() => _capturingVoiceShortcut = null);
+      _shortcutAccount = widget.state.user?.accountId;
+    }
     final screenSharePhase = widget.state.screenSharePhase;
     final localScreenJustStarted = localScreenShareJustStarted(
       wasSharing: _lastObservedScreenSharePhase == ScreenSharePhase.sharing,
@@ -295,38 +308,23 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   bool _handleHardwareKey(KeyEvent event) {
-    if (_capturingVoiceShortcut != null && event is KeyDownEvent) {
-      final action = _capturingVoiceShortcut!;
-      if (event.logicalKey == LogicalKeyboardKey.tab) {
+    if (!_shortcutAvailability.foreground || ModalRoute.of(context)?.isCurrent == false) return false;
+    if (!kIsWeb && event is KeyDownEvent && !_shortcutAvailability.hardwareKeyboard) {
+      setState(_shortcutAvailability.observeHardwareKey);
+    }
+    if (_capturingVoiceShortcut != null) {
+      if (widget.state.workspacePanel != WorkspacePanel.audio || shortcutInputFocused()) {
         setState(() => _capturingVoiceShortcut = null);
         return false;
       }
-      if (event.logicalKey == LogicalKeyboardKey.escape) {
-        setState(() => _capturingVoiceShortcut = null);
-        return true;
-      }
-      if (event.logicalKey == LogicalKeyboardKey.backspace ||
-          event.logicalKey == LogicalKeyboardKey.delete) {
-        setState(() => _capturingVoiceShortcut = null);
-        unawaited(widget.state.setVoiceShortcut(action, null));
-        return true;
-      }
-      if (isVoiceShortcutModifierKey(event.logicalKey)) {
-        return true;
-      }
-      final label = event.logicalKey.keyLabel.trim().isEmpty
-          ? event.logicalKey.debugName ?? 'Клавиша'
-          : event.logicalKey.keyLabel;
-      final binding = VoiceShortcutBinding(
-        keyId: event.logicalKey.keyId,
-        label: label,
-        control: HardwareKeyboard.instance.isControlPressed,
-        alt: HardwareKeyboard.instance.isAltPressed,
-        shift: HardwareKeyboard.instance.isShiftPressed,
-        meta: HardwareKeyboard.instance.isMetaPressed,
-      );
+      final action = _capturingVoiceShortcut!;
+      final capture = captureVoiceShortcut(event, HardwareKeyboard.instance);
+      if (capture.kind == ShortcutCaptureKind.wait) return true;
       setState(() => _capturingVoiceShortcut = null);
-      unawaited(widget.state.setVoiceShortcut(action, binding));
+      if (capture.kind == ShortcutCaptureKind.navigate) return false;
+      if (capture.kind == ShortcutCaptureKind.clear || capture.kind == ShortcutCaptureKind.assign) {
+        unawaited(widget.state.setVoiceShortcut(action, capture.binding));
+      }
       return true;
     }
     if (_capturingPttKey && event is KeyDownEvent) {
@@ -389,48 +387,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   bool _handleVoiceShortcut(KeyDownEvent event) {
-    if (kIsWeb || widget.state.usesTouchPushToTalk || _keyboardActionBlocked()) return false;
-    final binding = widget.state.microphoneShortcut;
-    final action = binding?.matches(event, HardwareKeyboard.instance) == true
-        ? 'microphone'
-        : widget.state.deafenShortcut?.matches(event, HardwareKeyboard.instance) == true
-        ? 'deafen'
-        : null;
+    if (kIsWeb || !_shortcutAvailability.enabled(mobile: widget.state.usesTouchPushToTalk) || ModalRoute.of(context)?.isCurrent == false || shortcutFocusBlocked()) return false;
+    if (widget.state.pushToTalkKeyId == event.logicalKey.keyId) return false;
+    final keyboard = HardwareKeyboard.instance;
+    final action = widget.state.microphoneShortcut?.matches(event, keyboard) == true ? 'microphone' : widget.state.deafenShortcut?.matches(event, keyboard) == true ? 'deafen' : null;
     if (action == null) return false;
-    unawaited(_runVoiceShortcut(action));
+    unawaited(widget.state.voice.runVoiceShortcut(action));
     return true;
-  }
-
-  bool _keyboardActionBlocked() {
-    final focusContext = FocusManager.instance.primaryFocus?.context;
-    return focusContext != null &&
-        (focusContext.widget is EditableText ||
-            focusContext.findAncestorWidgetOfExactType<EditableText>() != null ||
-            focusContext.findAncestorWidgetOfExactType<DropdownButton<String>>() != null ||
-            focusContext.findAncestorWidgetOfExactType<FormField<AudioActivationMode>>() != null ||
-            focusContext.findAncestorWidgetOfExactType<Dialog>() != null);
-  }
-
-  Future<void> _runVoiceShortcut(String action) async {
-    if (action == 'microphone') {
-      await widget.state.toggleMicrophone();
-      widget.state.voiceShortcutStatus = widget.state.room == null
-          ? 'Микрофон недоступен: подключитесь к голосовому каналу.'
-          : widget.state.deafened ||
-                widget.state.audioActivationMode == AudioActivationMode.ptt
-          ? 'Микрофон остаётся выключенным.'
-          : widget.state.microphoneMuted
-          ? 'Микрофон выключен.'
-          : 'Микрофон включён.';
-    } else {
-      await widget.state.toggleDeafen();
-      widget.state.voiceShortcutStatus = widget.state.room == null
-          ? 'Звук недоступен: подключитесь к голосовому каналу.'
-          : widget.state.deafened
-          ? 'Звук выключен.'
-          : 'Звук включён.';
-    }
-    widget.state.notifyListeners();
   }
 
   void _toggleSearch() {
@@ -523,10 +486,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   void _beginPttKeyCapture() => setState(() => _capturingPttKey = true);
 
   void _beginVoiceShortcutCapture(String action) =>
-      setState(() => _capturingVoiceShortcut = action);
+      setState(() {
+        _capturingPttKey = false;
+        _capturingVoiceShortcut = action.isEmpty ? null : action;
+      });
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _setShortcutForeground(state == AppLifecycleState.resumed);
     widget.state.setNotificationAppForeground(
       state == AppLifecycleState.resumed,
     );
@@ -539,18 +506,36 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
 
   @override
   void onWindowFocus() {
+    _setShortcutForeground(true);
     widget.state.setNotificationAppForeground(true);
     unawaited(widget.state.refreshNotificationStatus());
   }
 
   @override
   void onWindowBlur() {
+    _setShortcutForeground(false);
     widget.state.setNotificationAppForeground(false);
     unawaited(widget.state.setPushToTalkPressed(false));
   }
 
+  void _setShortcutForeground(bool foreground) {
+    _shortcutAvailability.setForeground(foreground, mobile: widget.state.usesTouchPushToTalk);
+    if (!foreground) {
+      setState(() {
+        _capturingVoiceShortcut = null;
+        _capturingPttKey = false;
+      });
+      widget.state.voice.cancelVoiceShortcuts();
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
+    floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    floatingActionButton: AnimatedBuilder(
+      animation: widget.state.voice,
+      builder: (context, _) => VoiceShortcutStatus(message: widget.state.voiceShortcutStatus),
+    ),
     body: SafeArea(
       top:
           !widget.maintenanceBannerVisible &&
@@ -636,6 +621,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                             capturingPttKey: _capturingPttKey,
                             onCaptureVoiceShortcut: _beginVoiceShortcutCapture,
                             capturingVoiceShortcut: _capturingVoiceShortcut,
+                            hardwareKeyboardAvailable: _shortcutAvailability.hardwareKeyboard,
                           ),
                         ),
                       ),
@@ -759,6 +745,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                                 capturingPttKey: _capturingPttKey,
                                 onCaptureVoiceShortcut: _beginVoiceShortcutCapture,
                                 capturingVoiceShortcut: _capturingVoiceShortcut,
+                                hardwareKeyboardAvailable: _shortcutAvailability.hardwareKeyboard,
                               ),
                             ),
                           ),
@@ -1672,6 +1659,7 @@ class _MainSurface extends StatelessWidget {
     this.capturingPttKey = false,
     this.onCaptureVoiceShortcut,
     this.capturingVoiceShortcut,
+    this.hardwareKeyboardAvailable = false,
   });
   final AppState state;
   final String? selectedScreenIdentity;
@@ -1684,6 +1672,7 @@ class _MainSurface extends StatelessWidget {
   final bool capturingPttKey;
   final ValueChanged<String>? onCaptureVoiceShortcut;
   final String? capturingVoiceShortcut;
+  final bool hardwareKeyboardAvailable;
   @override
   Widget build(BuildContext context) {
     final compact =
@@ -1720,6 +1709,7 @@ class _MainSurface extends StatelessWidget {
         capturingPttKey: capturingPttKey,
         onCaptureVoiceShortcut: onCaptureVoiceShortcut,
         capturingVoiceShortcut: capturingVoiceShortcut,
+        hardwareKeyboardAvailable: hardwareKeyboardAvailable,
       );
     }
     if (state.workspacePanel == WorkspacePanel.admin &&
@@ -6597,6 +6587,7 @@ class _AudioSettingsScreen extends StatelessWidget {
     required this.capturingPttKey,
     this.onCaptureVoiceShortcut,
     this.capturingVoiceShortcut,
+    this.hardwareKeyboardAvailable = false,
   });
   final AppState state;
   final VoidCallback onBack;
@@ -6604,6 +6595,7 @@ class _AudioSettingsScreen extends StatelessWidget {
   final bool capturingPttKey;
   final ValueChanged<String>? onCaptureVoiceShortcut;
   final String? capturingVoiceShortcut;
+  final bool hardwareKeyboardAvailable;
 
   @override
   Widget build(BuildContext context) {
@@ -6733,15 +6725,10 @@ class _AudioSettingsScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       _ErrorBanner(message: state.audioActivationError!),
                     ],
-                    if (state.voiceShortcutStatus != null)
-                      Semantics(
-                        liveRegion: true,
-                        child: Text(state.voiceShortcutStatus!),
-                      ),
-                    if (!state.usesTouchPushToTalk) ...[
+                    if (!state.usesTouchPushToTalk || hardwareKeyboardAvailable) ...[
                       const SizedBox(height: 24),
                       Text(
-                        'Сочетания клавиш',
+                        'Быстрые клавиши',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 6),
@@ -6750,20 +6737,23 @@ class _AudioSettingsScreen extends StatelessWidget {
                         style: TextStyle(color: GcColors.muted, fontSize: 12),
                       ),
                       const SizedBox(height: 8),
-                      _VoiceShortcutRow(
+                      VoiceShortcutRow(
                         label: 'Микрофон',
                         binding: state.microphoneShortcut,
                         capturing: capturingVoiceShortcut == 'microphone',
                         onAssign: () => onCaptureVoiceShortcut?.call('microphone'),
+                        onCancel: () => onCaptureVoiceShortcut?.call(''),
                         onClear: () => unawaited(state.setVoiceShortcut('microphone', null)),
                       ),
-                      _VoiceShortcutRow(
+                      VoiceShortcutRow(
                         label: 'Выключить звук',
                         binding: state.deafenShortcut,
                         capturing: capturingVoiceShortcut == 'deafen',
                         onAssign: () => onCaptureVoiceShortcut?.call('deafen'),
+                        onCancel: () => onCaptureVoiceShortcut?.call(''),
                         onClear: () => unawaited(state.setVoiceShortcut('deafen', null)),
                       ),
+                      TextButton(onPressed: () { onCaptureVoiceShortcut?.call(''); unawaited(state.voice.resetVoiceShortcuts()); }, child:const Text('Сбросить сочетания')),
                     ],
                     const SizedBox(height: 24),
                     Text(
@@ -6901,43 +6891,6 @@ MediaDevice? _audioDeviceShownByDropdown(
 ) =>
     devices.where((device) => device.deviceId == selectedId).firstOrNull ??
     devices.firstOrNull;
-
-class _VoiceShortcutRow extends StatelessWidget {
-  const _VoiceShortcutRow({
-    required this.label,
-    required this.binding,
-    required this.capturing,
-    required this.onAssign,
-    required this.onClear,
-  });
-
-  final String label;
-  final VoiceShortcutBinding? binding;
-  final bool capturing;
-  final VoidCallback onAssign;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            '$label · ${formatVoiceShortcut(binding)}',
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        OutlinedButton(
-          onPressed: onAssign,
-          child: Text(capturing ? 'Нажмите сочетание…' : 'Назначить'),
-        ),
-        if (binding != null)
-          TextButton(onPressed: onClear, child: const Text('Очистить')),
-      ],
-    ),
-  );
-}
 
 class _AudioDeviceDropdown extends StatelessWidget {
   const _AudioDeviceDropdown({

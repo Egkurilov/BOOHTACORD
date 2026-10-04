@@ -22,6 +22,7 @@ export function createMicrophoneControls(
       const microphone = await session.setMicrophoneMuted(muted)
       microphoneMuted.value = microphone === 'MUTED'
       microphonePermissionDenied.value = microphone === 'LISTENER_PERMISSION_DENIED'
+      if (microphone === 'PUBLISHED' && state.value === 'LISTENER') state.value = 'CONNECTED'
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : 'Не удалось изменить состояние микрофона.'
     }

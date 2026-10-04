@@ -60,7 +60,7 @@ export class VoiceSession {
         lease = acquired
         this.monitor.notifyAdmitted(acquired.id, acquired.channelId)
         const joined = await this.joinRoom(await within(() => this.admission.credential(acquired.id)), this.audioProcessing.value, joinMode, this.inputDeviceId)
-        this.current = { channelId: lease.channelId, leaseId: lease.id, screenProfile: null, ...joined }
+        this.current = { listenerOnly: joinMode === 'listener', channelId: lease.channelId, leaseId: lease.id, screenProfile: null, ...joined }
         const observeInput = (selection: AudioInputSelection) => {
           if (this.current?.room !== joined.room) return
           this.inputDeviceId = selection.deviceId
@@ -114,6 +114,7 @@ export class VoiceSession {
     const microphone = await setMicrophone(current.room, !muted, this.audioProcessing.value)
     if (this.current !== current) throw new Error('Голосовое подключение закрыто.')
     current.microphone = microphone
+    if (microphone === 'PUBLISHED') current.listenerOnly = false
     return microphone
   }
 
