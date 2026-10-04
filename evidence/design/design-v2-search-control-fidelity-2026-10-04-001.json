@@ -1,0 +1,15 @@
+{
+  "id": "design-v2-search-control-fidelity-2026-10-04-001",
+  "scope": "Real R13 search presentation and derived mobile/media search flows",
+  "status": "PARTIAL",
+  "baseline_commit": "729467d09a65eb25e177bc81d9fab62a3bd8bd0a",
+  "visual_report": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-search-controls-2026-10-04/REVIEW.md",
+  "checks": [
+    { "name": "Measured source styles and geometry", "result": "PASS", "observation": "Before checks reproduced wrong colors, close glyph/size, avatars and highlight. Paragraph inspection found members-p muted/13/18 leakage. After source properties and eight measured boxes pass; mobile close/label areas remain 44 px with source SVG alignment." },
+    { "name": "Frozen PNG comparison", "result": "PASS", "observation": "Full MAE 3.659 to 3.056; search area 3.637 to 1.173; first result 5.191 to 1.996. Reference hash unchanged." },
+    { "name": "HTML renderer control", "result": "PASS", "observation": "Actual vs rendered handoff search MAE 0.031, first result 0.018. Same rendered HTML vs PNG is 1.164/1.991; sources do not match exactly in this renderer." },
+    { "name": "Real search and media browser flows", "result": "PASS", "observation": "Scope, safe highlights, result opening and mobile label focus pass. ScreenViewer desktop header/overflow search and mobile keyboard/open/close preserve selected MediaStream. No page errors." },
+    { "name": "Native Web validation", "result": "PASS", "observation": "Focused 6 files/12 tests and full Web 297 files/940 tests pass. TypeScript/Vite build and git diff --check pass." },
+    { "name": "Full-design and physical media acceptance", "result": "NOT_RUN", "observation": "Strict full-design pixel equality remains open; derived mobile search has no separate PNG golden. Canvas fixture verification does not prove physical LiveKit." }
+  ]
+}
