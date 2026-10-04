@@ -1,0 +1,79 @@
+{
+  "id": "QA-258",
+  "date": "2026-10-04",
+  "task": "FV2-019 — Flutter Design V2 search panel and result presentation parity",
+  "source_revision": "WORKTREE",
+  "working_tree_changes": true,
+  "summary": "Updated Flutter R13 search presentation to match the web's 380 px desktop rail and compact full-viewport search overlay, with compact scope/Enter guidance, hidden submit/status, web result hierarchy, author avatars, and case-insensitive inline highlighting. Search scope, pagination, context navigation and authorization behavior remain unchanged.",
+  "checks": [
+    {
+      "name": "Focused search layout, actions and highlighting tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'search' && flutter test --no-pub test/message_format_test.dart",
+      "result": "PASS",
+      "passed": 12,
+      "observation": "Covers compact overlay geometry and semantics, desktop 380 px rail at 1280/1440 px, Enter submission, result hierarchy/avatar and case-insensitive query highlighting."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 491
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/workspace_screen.dart lib/src/widgets/formatted_message_body.dart lib/src/widgets/authenticated_avatar.dart test/workspace_screen_test.dart test/message_format_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Flutter analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub",
+      "result": "INFO_ONLY_PREEXISTING",
+      "observation": "Exit code 1 reported 10 existing info-level diagnostics in unrelated files; no diagnostics were reported in files changed for FV2-019."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Android release build and emulator install",
+      "command": "cd clients/flutter && flutter build apk --release --build-number=2050; adb install -r clients/flutter/build/app/outputs/flutter-apk/app-release.apk",
+      "result": "PASS",
+      "artifact": "1.0.28+2050; 115.4 MB; existing signing certificate matched; install replaced the prior build without clearing app data."
+    },
+    {
+      "name": "Android API 35 compact search visual acceptance",
+      "result": "PASS",
+      "observation": "On sdk_gphone64_arm64 (1080x2400), release 1.0.28+2050 filled the compact viewport. Header, 44 px query field, compact scope selector, Enter hint, and initial 'Введите запрос и нажмите Enter.' feedback were visible without clipping or overflow. Pressing system Back closed search and restored the pre-existing navigation drawer. Temporary screenshots remain outside Git."
+    },
+    {
+      "name": "macOS current-source visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "Inspected the already-running BOOHTACORD window without restarting it. It displays the old search panel with a visible submit button and narrower rail, confirming this binary does not contain FV2-019. Flutter attach did not find a VM service; restarting could invoke Keychain, so the user's running app was preserved."
+    },
+    {
+      "name": "Mac voice session requested for paired test",
+      "result": "PASS",
+      "observation": "Connected the Mac client to SHARE_TEST after explicit authorization. The voice dock offers 'Включить микрофон', confirming the microphone remained off. No screen share was started."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "name": "Spec traceability after backlog update",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this macOS host (`zsh: command not found: pwsh`). The task addition changes neither approved requirement IDs nor contracts."
+    }
+  ],
+  "limitations": [
+    "Fresh desktop runtime visual acceptance is still required on macOS and Windows; the open Mac client could not hot-reload. FV2-019 remains open.",
+    "Search backend results were not inspected; widget tests cover empty-state rendering, result layout and highlighting.",
+    "No API, search ACL, session, or LiveKit behavior changed."
+  ],
+  "status": "PASS_TESTS_MACOS_DEBUG_ANDROID_RELEASE_AND_ANDROID_VISUAL; DESKTOP_VISUAL_PENDING"
+}

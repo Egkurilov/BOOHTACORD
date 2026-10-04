@@ -473,6 +473,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
               widget.state.workspacePanel == WorkspacePanel.search;
           final searchPanelModal =
               searchPanelActive && (!medium || voiceStageWide);
+          final fullScreenSearch =
+              searchPanelActive && constraints.maxWidth <= 720;
           final modalOverlayActive = _showMembersDrawer || searchPanelModal;
           final showPermanentMembers =
               medium &&
@@ -548,17 +550,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                         ignoring:
                             !_showMobileSidebar &&
                             !_showMembersDrawer &&
-                            !searchPanelModal,
+                            (!searchPanelModal || fullScreenSearch),
                         child: ExcludeSemantics(
                           excluding:
                               !_showMobileSidebar &&
                               !_showMembersDrawer &&
-                              !searchPanelModal,
+                              (!searchPanelModal || fullScreenSearch),
                           child: AnimatedOpacity(
                             opacity:
                                 _showMobileSidebar ||
                                     _showMembersDrawer ||
-                                    searchPanelModal
+                                    (searchPanelModal && !fullScreenSearch)
                                 ? 1
                                 : 0,
                             duration: GcMotion.slow,
@@ -605,7 +607,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                         ),
                       ),
                     ),
-                    if (searchPanelModal)
+                    if (searchPanelModal && !fullScreenSearch)
                       Positioned(
                         top: 0,
                         bottom: 0,
@@ -676,7 +678,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                           if (searchPanelActive && !searchPanelModal) ...[
                             const VerticalDivider(width: 1),
                             SizedBox(
-                              width: wide ? 400 : 360,
+                              width: 380,
                               child: _WorkspaceSearchPanel(state: widget.state),
                             ),
                           ],
@@ -684,7 +686,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                       ),
                     ),
                     if (pinnedMiniVisible) pinnedMiniLayer(),
-                    if (_showMembersDrawer || searchPanelModal)
+                    if (_showMembersDrawer ||
+                        (searchPanelModal && !fullScreenSearch))
                       Positioned.fill(child: _DrawerScrim(onTap: _closeScrim)),
                     if (_showMembersDrawer)
                       Positioned(
@@ -701,7 +704,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                           ),
                         ),
                       ),
-                    if (searchPanelModal)
+                    if (searchPanelModal && !fullScreenSearch)
                       Positioned(
                         top: 0,
                         bottom: 0,
@@ -764,16 +767,49 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                   ),
                 )
               : shellContent;
+          final presentedContent = fullScreenSearch
+              ? Stack(
+                  children: [
+                    Positioned.fill(
+                      child: ExcludeFocus(
+                        excluding: true,
+                        child: ExcludeSemantics(
+                          excluding: true,
+                          child: swipeContent,
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(child: _DrawerScrim(onTap: _closeScrim)),
+                    Positioned.fill(
+                      child: KeyedSubtree(
+                        key: const ValueKey('workspace-search-overlay'),
+                        child: _DrawerSurface(
+                          debugLabel: 'workspace-search',
+                          child: _WorkspaceSearchPanel(state: widget.state),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : swipeContent;
           return PopScope<Object?>(
-            canPop: !_showMobileSidebar && !_showMembersDrawer,
+            canPop:
+                !_showMobileSidebar &&
+                !_showMembersDrawer &&
+                widget.state.workspacePanel != WorkspacePanel.search,
             onPopInvokedWithResult: (didPop, _) {
-              if (!didPop) _closeDrawers();
+              if (didPop) return;
+              if (_showMobileSidebar || _showMembersDrawer) {
+                _closeDrawers();
+              } else if (widget.state.workspacePanel == WorkspacePanel.search) {
+                widget.state.closeSearchPanel();
+              }
             },
             child: Padding(
               padding: EdgeInsets.zero,
               child: ClipRRect(
                 borderRadius: BorderRadius.zero,
-                child: swipeContent,
+                child: presentedContent,
               ),
             ),
           );
@@ -876,7 +912,25 @@ class _Sidebar extends StatelessWidget {
                   child: ListView(
                     padding: const EdgeInsets.all(12),
                     children: [
-                      if (state.navigationSection == NavigationSection.channels) Row(children: [const Expanded(child: Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('КАНАЛЫ', style: TextStyle(color: GcColors.muted, fontSize: 11, fontWeight: FontWeight.w700)))), TopologyCreateButton(state: state)]),
+                      if (state.navigationSection == NavigationSection.channels)
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: Text(
+                                  'КАНАЛЫ',
+                                  style: TextStyle(
+                                    color: GcColors.muted,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            TopologyCreateButton(state: state),
+                          ],
+                        ),
                       if (state.navigationSection == NavigationSection.channels)
                         for (final category in state.topology!.categories)
                           _Category(
@@ -1000,7 +1054,23 @@ class _Category extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(10, 12, 10, 7),
-          child: Row(children: [Expanded(child: Text(category.name.toUpperCase(), style: const TextStyle(color: GcColors.muted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: .6))), TopologyCreateButton(state: state, category: category), TopologyObjectMenu(state: state, target: category)]),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  category.name.toUpperCase(),
+                  style: const TextStyle(
+                    color: GcColors.muted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: .6,
+                  ),
+                ),
+              ),
+              TopologyCreateButton(state: state, category: category),
+              TopologyObjectMenu(state: state, target: category),
+            ],
+          ),
         ),
         if (category.channels.isEmpty)
           const Padding(
@@ -1084,7 +1154,9 @@ class _ChannelRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(7),
       child: InkWell(
         onTap: onTap,
-        onSecondaryTap: canDeleteChannel(state, channel) ? () => deleteTopologyTarget(context, state, channel) : null,
+        onSecondaryTap: canDeleteChannel(state, channel)
+            ? () => deleteTopologyTarget(context, state, channel)
+            : null,
         borderRadius: BorderRadius.circular(7),
         child: SizedBox(
           key: ValueKey('workspace-channel-row:${channel.id}'),
@@ -2817,6 +2889,42 @@ String _messageSnippet(String body) {
 String _searchDateTime(DateTime value) =>
     '${value.day.toString().padLeft(2, '0')}.${value.month.toString().padLeft(2, '0')}.${value.year} · ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 
+String _searchDate(DateTime value) {
+  const monthNames = [
+    'января',
+    'февраля',
+    'марта',
+    'апреля',
+    'мая',
+    'июня',
+    'июля',
+    'августа',
+    'сентября',
+    'октября',
+    'ноября',
+    'декабря',
+  ];
+  final local = value.toLocal();
+  return '${local.day} ${monthNames[local.month - 1]}';
+}
+
+String _searchAvatarInitials(String name) {
+  final letters = RegExp(r'\p{L}', unicode: true)
+      .allMatches(name)
+      .take(2)
+      .map((match) => match.group(0)!.toUpperCase())
+      .join();
+  return letters.isEmpty ? 'У' : letters;
+}
+
+Color _searchAvatarForeground(String identity) => const [
+  Color(0xFFA5F2F0),
+  Color(0xFFFFD5A8),
+  Color(0xFFE3DCFF),
+  Color(0xFFE9CBFF),
+  Color(0xFFF4F5FA),
+][voiceAvatarPaletteIndex(identity)];
+
 class _SearchContextMessage {
   const _SearchContextMessage({
     required this.id,
@@ -3201,7 +3309,7 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
     }
     final channel = state.selectedChannel;
     if (channel?.kind == ChannelKind.text) {
-      return (id: channel!.id, label: '# ${channel.name}', direct: false);
+      return (id: channel!.id, label: '#${channel.name}', direct: false);
     }
     return null;
   }
@@ -3281,7 +3389,7 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
         .expand((category) => category.channels)
         .where((value) => value.id == message.conversationId)
         .firstOrNull;
-    return channel == null ? 'Текстовый канал' : '# ${channel.name}';
+    return channel == null ? 'Текстовый канал' : '#${channel.name}';
   }
 
   @override
@@ -3297,27 +3405,95 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
   Widget build(BuildContext context) {
     final current = _currentConversation();
     if (_scope == 'current' && current == null) _scope = 'all';
+    final compact = MediaQuery.sizeOf(context).width <= 720;
     final statusMessage = _loading
         ? 'Ищем сообщения…'
         : _searched
         ? _results.isEmpty
               ? 'Совпадений нет.'
-              : 'Результатов: ${_results.length}.'
-        : 'Введите запрос и нажмите «Найти».';
-    return Column(
-      children: [
-        SizedBox(
-          height: 64,
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: GcColors.border)),
+              : 'Найдено ${_results.length} сообщения'
+        : 'Введите запрос и нажмите Enter.';
+    final showStatus =
+        _loading || (_error == null && (!_searched || _results.isEmpty));
+    final horizontalPadding = compact ? 16.0 : 20.0;
+    final scopeField = Semantics(
+      label: 'Область поиска',
+      child: SizedBox(
+        width: 48,
+        height: 20,
+        child: DropdownButtonFormField<String>(
+          key: const ValueKey('workspace-search-scope'),
+          initialValue: _scope,
+          isDense: true,
+          isExpanded: true,
+          icon: const SizedBox.shrink(),
+          alignment: AlignmentDirectional.centerStart,
+          dropdownColor: GcColors.raised,
+          style: const TextStyle(
+            color: GcColors.text,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+          decoration: const InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.zero,
+            constraints: BoxConstraints.tightFor(height: 20),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+          ),
+          selectedItemBuilder: (context) => [
+            const Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text('Везде', maxLines: 1, overflow: TextOverflow.clip),
             ),
+            if (current != null)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  current.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.clip,
+                ),
+              ),
+          ],
+          items: [
+            const DropdownMenuItem(value: 'all', child: Text('Везде')),
+            if (current != null)
+              DropdownMenuItem(
+                value: 'current',
+                child: Text(current.label, overflow: TextOverflow.ellipsis),
+              ),
+          ],
+          onChanged: _loading
+              ? null
+              : (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _scope = value;
+                    _reset();
+                  });
+                },
+        ),
+      ),
+    );
+    return Material(
+      key: const ValueKey('workspace-search-panel'),
+      color: GcColors.sidebar,
+      child: Column(
+        children: [
+          SizedBox(
+            key: const ValueKey('workspace-search-header'),
+            height: compact ? 68 : 72,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                compact ? 0 : 4,
+                compact ? 12 : horizontalPadding,
+                0,
+              ),
               child: Row(
                 children: [
-                  const Icon(Icons.search, color: GcColors.muted, size: 20),
-                  const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
                       'Поиск сообщений',
@@ -3326,244 +3502,302 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
                       style: TextStyle(
                         color: GcColors.text,
                         fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                   IconButton(
                     tooltip: 'Закрыть поиск',
+                    constraints: BoxConstraints.tightFor(
+                      width: compact ? 44 : 36,
+                      height: compact ? 44 : 36,
+                    ),
+                    padding: EdgeInsets.zero,
                     onPressed: state.closeSearchPanel,
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(Icons.close, size: 20),
                   ),
                 ],
               ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxWidth < 720;
-              final queryField = TextField(
-                controller: _query,
-                autofocus: true,
-                enabled: !_loading,
-                maxLength: 256,
-                buildCounter: (
-                  _, {
-                  required currentLength,
-                  required isFocused,
-                  maxLength,
-                }) => null,
-                onSubmitted: (_) {
-                  if (_canSubmit) _search();
-                },
-                decoration: InputDecoration(
-                  hintText: 'Слова или «точная фраза»',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    tooltip: 'Очистить запрос',
-                    onPressed: _query.clear,
-                    icon: const Icon(Icons.close),
-                  ),
-                ),
-              );
-              final scopeField = DropdownButtonFormField<String>(
-                initialValue: _scope,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Область поиска'),
-                items: [
-                  const DropdownMenuItem(
-                    value: 'all',
-                    child: Text('Все беседы'),
-                  ),
-                  if (current != null)
-                    DropdownMenuItem(
-                      value: 'current',
-                      child: Text(
-                        'Текущая беседа: ${current.label}',
-                        overflow: TextOverflow.ellipsis,
+          Container(
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: GcColors.borderSubtle)),
+            ),
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              0,
+              horizontalPadding,
+              compact ? 16 : 20,
+            ),
+            child: Column(
+              children: [
+                SizedBox(
+                  key: const ValueKey('workspace-search-query'),
+                  height: 44,
+                  child: TextField(
+                    controller: _query,
+                    autofocus: true,
+                    enabled: !_loading,
+                    maxLength: 256,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (_) {
+                      if (_canSubmit) _search();
+                    },
+                    buildCounter: (
+                      _, {
+                      required currentLength,
+                      required isFocused,
+                      maxLength,
+                    }) => null,
+                    decoration: InputDecoration(
+                      hintText: 'Поиск сообщений',
+                      hintStyle: const TextStyle(
+                        color: GcColors.muted,
+                        fontSize: 14,
                       ),
+                      filled: true,
+                      fillColor: GcColors.sidebar,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(GcRadii.md),
+                        borderSide: const BorderSide(color: GcColors.control),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(GcRadii.md),
+                        borderSide: const BorderSide(color: GcColors.control),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(GcRadii.md),
+                        borderSide: const BorderSide(color: GcColors.focus),
+                      ),
+                      suffixIcon: _query.text.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: 'Очистить запрос',
+                              onPressed: _query.clear,
+                              icon: const Icon(Icons.close),
+                            ),
                     ),
-                ],
-                onChanged: _loading
-                    ? null
-                    : (value) {
-                        if (value == null) return;
-                        setState(() {
-                          _scope = value;
-                          _reset();
-                        });
-                      },
-              );
-              final searchButton = FilledButton.icon(
-                onPressed: _canSubmit ? () => _search() : null,
-                icon: _loading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.search),
-                label: Text(_loading ? 'Ищем…' : 'Найти'),
-              );
-              if (compact) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    queryField,
-                    const SizedBox(height: 8),
-                    scopeField,
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: searchButton,
+                    style: TextStyle(
+                      color: GcColors.text,
+                      fontSize: compact ? 16 : 14,
                     ),
-                  ],
-                );
-              }
-              return Row(
-                children: [
-                  Expanded(flex: 2, child: queryField),
-                  const SizedBox(width: 12),
-                  Expanded(child: scopeField),
-                  const SizedBox(width: 10),
-                  searchButton,
-                ],
-              );
-            },
-          ),
-        ),
-        if (_error case final error?)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Semantics(
-                liveRegion: true,
-                child: Text(
-                  error,
-                  style: const TextStyle(color: GcColors.danger),
+                  ),
                 ),
-              ),
-            ),
-          ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Semantics(
-              liveRegion: true,
-              label: statusMessage,
-              child: Text(
-                statusMessage,
-                style: const TextStyle(color: GcColors.muted, fontSize: 13),
-              ),
-            ),
-          ),
-        ),
-        if (_nextCursor != null && !_canLoadMore)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Измените запрос или запустите поиск заново.',
-                style: TextStyle(color: GcColors.muted, fontSize: 12),
-              ),
-            ),
-          ),
-        Expanded(
-          child: _results.isEmpty
-              ? const SizedBox.shrink()
-              : ListView.separated(
-                  controller: _scroll,
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-                  itemCount: _results.length + (_nextCursor == null ? 0 : 1),
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    if (index == _results.length) {
-                      return Center(
-                        child: TextButton(
-                          onPressed: !_canLoadMore
-                              ? null
-                              : () => _search(before: _nextCursor),
-                          child: const Text('Показать ещё'),
-                        ),
-                      );
-                    }
-                    final message = _results[index];
-                    final author =
-                        state.members
-                            .where((member) => member.id == message.authorId)
-                            .firstOrNull
-                            ?.displayName ??
-                        message.authorId;
-                    return LayoutBuilder(
-                      builder: (context, constraints) {
-                        final narrow = constraints.maxWidth < 400;
-                        final metadata = Text(
-                          '${_searchDateTime(message.createdAt)} · $author',
-                          maxLines: narrow ? 2 : 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: compact ? 44 : 20,
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Row(
+                      children: [
+                        scopeField,
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Enter — найти',
+                          style: TextStyle(
                             color: GcColors.muted,
                             fontSize: 12,
+                            height: 20 / 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_error case final error?)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    error,
+                    style: const TextStyle(color: GcColors.danger),
+                  ),
+                ),
+              ),
+            ),
+          Semantics(
+            key: const ValueKey('search-live-status'),
+            liveRegion: true,
+            label: statusMessage,
+            child: showStatus
+                ? Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                      vertical: 16,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: ExcludeSemantics(
+                        child: Text(
+                          statusMessage,
+                          style: const TextStyle(
+                            color: GcColors.textSecondary,
+                            fontSize: 14,
+                            height: 20 / 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          if (_searched && _results.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: ExcludeSemantics(
+                  child: Text(
+                    'Найдено ${_results.length} сообщения',
+                    style: const TextStyle(
+                      color: GcColors.muted,
+                      fontSize: 12,
+                      height: 16 / 12,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if (_nextCursor != null && !_canLoadMore)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Измените запрос или запустите поиск заново.',
+                  style: TextStyle(color: GcColors.muted, fontSize: 12),
+                ),
+              ),
+            ),
+          Expanded(
+            child: _results.isEmpty
+                ? const SizedBox.shrink()
+                : ListView.separated(
+                    controller: _scroll,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    itemCount: _results.length + (_nextCursor == null ? 0 : 1),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      if (index == _results.length) {
+                        return Center(
+                          child: TextButton(
+                            onPressed: !_canLoadMore
+                                ? null
+                                : () => _search(before: _nextCursor),
+                            child: const Text('Показать ещё'),
                           ),
                         );
-                        final conversation = Text(
-                          _conversationLabel(message),
-                          maxLines: narrow ? 1 : 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        );
-                        return Card(
-                          color: GcColors.surface,
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (narrow) ...[
-                                  conversation,
-                                  const SizedBox(height: 4),
-                                  metadata,
-                                ] else
-                                  Row(
+                      }
+                      final message = _results[index];
+                      final member = state.members
+                          .where((value) => value.id == message.authorId)
+                          .firstOrNull;
+                      final author = member?.displayName ?? message.authorId;
+                      return Semantics(
+                        button: true,
+                        label: 'Открыть сообщение от $author',
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            key: ValueKey('search-result-${message.id}'),
+                            onTap: () => state.openSearchContext(message),
+                            borderRadius: BorderRadius.circular(GcRadii.md),
+                            child: Ink(
+                              decoration: BoxDecoration(
+                                color: GcColors.surface,
+                                border: Border.all(
+                                  color: GcColors.borderSubtle,
+                                ),
+                                borderRadius: BorderRadius.circular(GcRadii.md),
+                              ),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  minHeight: 118,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(child: conversation),
-                                      const SizedBox(width: 8),
-                                      Flexible(child: metadata),
+                                      Text(
+                                        '${_conversationLabel(message)} · ${_searchDate(message.createdAt)}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: GcColors.muted,
+                                          fontSize: 12,
+                                          height: 16 / 12,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      SizedBox(
+                                        height: 28,
+                                        child: Row(
+                                          children: [
+                                            AuthenticatedAvatar(
+                                              state: state,
+                                              name: author,
+                                              avatarUrl: member?.avatarUrl,
+                                              radius: 14,
+                                              fallbackFontSize: 11,
+                                              fallbackText:
+                                                  _searchAvatarInitials(author),
+                                              fallbackColor:
+                                                  _searchAvatarForeground(
+                                                    message.authorId,
+                                                  ),
+                                              backgroundColor: voiceAvatarColor(
+                                                message.authorId,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                author,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: GcColors.text,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      FormattedMessageBody(
+                                        body: message.body,
+                                        color: GcColors.text,
+                                        fontSize: 14,
+                                        lineHeight: 20 / 14,
+                                        searchTerm: _activeQuery,
+                                      ),
                                     ],
                                   ),
-                                const SizedBox(height: 8),
-                                FormattedMessageBody(
-                                  body: message.body,
-                                  color: GcColors.text,
                                 ),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton.icon(
-                                    onPressed: () =>
-                                        state.openSearchContext(message),
-                                    icon: const Icon(
-                                      Icons.open_in_new,
-                                      size: 17,
-                                    ),
-                                    label: const Text('Открыть сообщение'),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
-                        );
-                      },
-                    );
-                  },
-                ),
-        ),
-      ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

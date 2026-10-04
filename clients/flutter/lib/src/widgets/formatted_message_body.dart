@@ -12,12 +12,14 @@ class FormattedMessageBody extends StatefulWidget {
     required this.color,
     this.fontSize = 15,
     this.lineHeight = 1.45,
+    this.searchTerm,
   });
 
   final String body;
   final Color color;
   final double fontSize;
   final double lineHeight;
+  final String? searchTerm;
 
   @override
   State<FormattedMessageBody> createState() => _FormattedMessageBodyState();
@@ -65,8 +67,11 @@ class _FormattedMessageBodyState extends State<FormattedMessageBody> {
       ),
       MessageSpanKind.text => null,
     };
+    final searchTerm = widget.searchTerm?.trim() ?? '';
+    final highlighted = _searchSegments(span.value, searchTerm);
     return TextSpan(
-      text: span.value,
+      text: highlighted == null ? span.value : null,
+      children: highlighted,
       style: style,
       recognizer: uri == null
           ? null
@@ -75,6 +80,39 @@ class _FormattedMessageBodyState extends State<FormattedMessageBody> {
               () => TapGestureRecognizer()..onTap = () => _openLink(uri),
             ),
     );
+  }
+
+  List<TextSpan>? _searchSegments(String value, String query) {
+    if (query.isEmpty) return null;
+    final lowerValue = value.toLowerCase();
+    final lowerQuery = query.toLowerCase();
+    // Avoid applying offsets from a case-folded string when a code point
+    // expands to multiple UTF-16 code units in lowercase form.
+    if (lowerValue.length != value.length ||
+        lowerQuery.length != query.length) {
+      return null;
+    }
+    final result = <TextSpan>[];
+    var start = 0;
+    var match = lowerValue.indexOf(lowerQuery, start);
+    while (match >= 0) {
+      if (match > start) {
+        result.add(TextSpan(text: value.substring(start, match)));
+      }
+      result.add(
+        TextSpan(
+          text: value.substring(match, match + lowerQuery.length),
+          style: const TextStyle(backgroundColor: Color(0xFF464365)),
+        ),
+      );
+      start = match + lowerQuery.length;
+      match = lowerValue.indexOf(lowerQuery, start);
+    }
+    if (start == 0) return null;
+    if (start < value.length) {
+      result.add(TextSpan(text: value.substring(start)));
+    }
+    return result;
   }
 
   @override

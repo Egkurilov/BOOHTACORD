@@ -128,6 +128,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-PLATFORM-01]
     depends_on: [FV2-001, T-050, T-051]
     evidence: [flutter-desktop-window-chrome-widget-tests, macos-debug-build, windows-debug-build, desktop-window-visual-acceptance]
+  - id: FV2-019
+    title: Flutter Design V2 search panel and result presentation parity
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-SEARCH-01]
+    depends_on: [FV2-001, FV2-007, FV2-017, T-041, T-050, T-051]
+    evidence: [flutter-search-presentation-geometry-tests, flutter-search-feedback-state-tests, flutter-search-result-highlight-tests, flutter-full-suite, android-macos-search-visual-acceptance]
   - id: FV2-002
     title: Flutter Design V2 workspace shell, text chat and direct messages
     requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]

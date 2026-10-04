@@ -2807,9 +2807,14 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Поиск сообщений'));
     await tester.pumpAndSettle();
-    expect(find.text('Область поиска'), findsOneWidget);
-    final submitButton = find.widgetWithText(FilledButton, 'Найти');
-    expect(tester.widget<FilledButton>(submitButton).onPressed, isNull);
+    expect(find.text('Введите запрос и нажмите Enter.'), findsOneWidget);
+    final searchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Поиск сообщений',
+    );
+    expect(searchField, findsOneWidget);
+    expect(find.byType(FilledButton), findsNothing);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump();
     expect(api.lastSearchQuery, isNull);
@@ -2833,17 +2838,43 @@ void main() {
       find.byWidgetPredicate(
         (widget) =>
             widget is TextField &&
-            widget.decoration?.hintText == 'Слова или «точная фраза»',
+            widget.decoration?.hintText == 'Поиск сообщений',
       ),
       'найденный текст',
     );
     await tester.pump();
-    expect(tester.widget<FilledButton>(submitButton).onPressed, isNotNull);
-    await tester.tap(find.text('Найти'));
+    await tester.testTextInput.receiveAction(TextInputAction.search);
     await tester.pumpAndSettle();
     expect(api.lastSearchQuery, 'найденный текст');
-    expect(find.text('Открыть сообщение'), findsOneWidget);
-    final resultStatus = find.text('Результатов: 1.');
+    expect(find.text('Найдено 1 сообщения'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.label == 'Открыть сообщение от Участник',
+      ),
+      findsOneWidget,
+    );
+    final resultCard = find.byKey(const ValueKey('search-result-message-1'));
+    final resultHeader = find.descendant(
+      of: resultCard,
+      matching: find.textContaining('#общий · 25 сентября'),
+    );
+    final resultAvatar = find.descendant(
+      of: resultCard,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics && widget.properties.label == 'Аватар Участник',
+      ),
+    );
+    expect(resultHeader, findsOneWidget);
+    expect(resultAvatar, findsOneWidget);
+    expect(
+      tester.getTopLeft(resultHeader).dy,
+      lessThan(tester.getTopLeft(resultAvatar).dy),
+    );
+    expect(resultCard, findsOneWidget);
+    final resultStatus = find.byKey(const ValueKey('search-live-status'));
     expect(resultStatus, findsOneWidget);
     expect(
       tester.getSemantics(resultStatus).flagsCollection.isLiveRegion,
@@ -2855,14 +2886,15 @@ void main() {
       find.byWidgetPredicate(
         (widget) =>
             widget is TextField &&
-            widget.decoration?.hintText == 'Слова или «точная фраза»',
+            widget.decoration?.hintText == 'Поиск сообщений',
       ),
       'следующий запрос',
     );
-    await tester.tap(find.text('Найти'));
+    await tester.testTextInput.receiveAction(TextInputAction.search);
     await tester.pump();
-    final loadingStatus = find.text('Ищем сообщения…');
+    final loadingStatus = find.byKey(const ValueKey('search-live-status'));
     expect(loadingStatus, findsOneWidget);
+    expect(find.text('Ищем сообщения…'), findsOneWidget);
     expect(
       tester.getSemantics(loadingStatus).flagsCollection.isLiveRegion,
       isTrue,
@@ -2883,9 +2915,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Результатов: 1.'), findsOneWidget);
+    expect(find.text('Найдено 1 сообщения'), findsOneWidget);
 
-    await tester.tap(find.text('Открыть сообщение'));
+    await tester.tap(find.byKey(const ValueKey('search-result-message-1')));
     await tester.pumpAndSettle();
     expect(state.workspacePanel, WorkspacePanel.searchContext);
     expect(find.text('Контекст найденного сообщения'), findsOneWidget);
@@ -2925,20 +2957,21 @@ void main() {
       find.byWidgetPredicate(
         (widget) =>
             widget is TextField &&
-            widget.decoration?.hintText == 'Слова или «точная фраза»',
+            widget.decoration?.hintText == 'Поиск сообщений',
       ),
       'нет совпадений',
     );
     await tester.pump();
-    await tester.tap(find.text('Найти'));
+    await tester.testTextInput.receiveAction(TextInputAction.search);
     await tester.pumpAndSettle();
 
-    final emptyStatus = find.text('Совпадений нет.');
+    final emptyStatus = find.byKey(const ValueKey('search-live-status'));
     expect(emptyStatus, findsOneWidget);
     expect(
       tester.getSemantics(emptyStatus).flagsCollection.isLiveRegion,
       isTrue,
     );
+    expect(find.text('Совпадений нет.'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
@@ -3030,11 +3063,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(state.workspacePanel, WorkspacePanel.search);
-    expect(find.text('Область поиска'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('workspace-search-scope')),
+      findsOneWidget,
+    );
     expect(find.text('Последнее сообщение'), findsOneWidget);
     expect(
       find.byWidgetPredicate(
-        (widget) => widget is SizedBox && widget.width == 400,
+        (widget) => widget is SizedBox && widget.width == 380,
       ),
       findsOneWidget,
     );
@@ -3050,7 +3086,7 @@ void main() {
     state.dispose();
   });
 
-  testWidgets('medium desktop search uses the widened 360 px panel', (
+  testWidgets('medium desktop search uses the 380 px web panel', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -3074,10 +3110,54 @@ void main() {
     expect(state.workspacePanel, WorkspacePanel.search);
     expect(
       find.byWidgetPredicate(
-        (widget) => widget is SizedBox && widget.width == 360,
+        (widget) => widget is SizedBox && widget.width == 380,
       ),
       findsOneWidget,
     );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('compact search uses the full viewport web overlay', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi(withHistory: true));
+    await state.initialize();
+    state.openSearchPanel();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final overlay = find.byKey(const ValueKey('workspace-search-overlay'));
+    expect(tester.getSize(overlay), const Size(390, 844));
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('workspace-search-header')))
+          .height,
+      68,
+    );
+    final close = find.byTooltip('Закрыть поиск');
+    expect(tester.getSize(close), const Size(44, 44));
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('workspace-search-query')))
+          .height,
+      44,
+    );
+    expect(find.text('Enter — найти'), findsOneWidget);
+    expect(find.text('Поиск сообщений'), findsWidgets);
+    expect(find.byType(FilledButton), findsNothing);
+    expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
@@ -3122,7 +3202,7 @@ void main() {
     );
     expect(
       find.byWidgetPredicate(
-        (widget) => widget is SizedBox && widget.width == 400,
+        (widget) => widget is SizedBox && widget.width == 380,
       ),
       findsNothing,
     );

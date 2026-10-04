@@ -60,4 +60,32 @@ void main() {
     expect(find.text('Документы'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('highlights matching text in search-result message bodies', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: FormattedMessageBody(
+            body: 'Совпадение внутри **важного** сообщения',
+            color: Colors.white,
+            searchTerm: 'ВАЖНОГО',
+          ),
+        ),
+      ),
+    );
+
+    final hasSearchHighlight = tester
+        .widgetList<SelectableText>(find.byType(SelectableText))
+        .any((selectable) => _containsSearchHighlight(selectable.textSpan!));
+    expect(hasSearchHighlight, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+bool _containsSearchHighlight(InlineSpan span) {
+  if (span is! TextSpan) return false;
+  if (span.style?.backgroundColor == const Color(0xFF464365)) return true;
+  return span.children?.any(_containsSearchHighlight) ?? false;
 }
