@@ -51,6 +51,10 @@ void main() {
     expect(find.text('Вложение удалено или недоступно.'), findsOneWidget);
     expect(requests, hasLength(2));
     expect(requests.last, contains('/preview||session=private'));
+    expect(
+      find.byKey(const ValueKey('protected-image-viewer-download')),
+      findsNothing,
+    );
     expect(find.byTooltip('Скачать photo.png'), findsOneWidget);
     expect(find.byTooltip('Закрыть просмотр изображения'), findsOneWidget);
   });
@@ -263,6 +267,141 @@ void main() {
     expect(dialog.top, greaterThanOrEqualTo(0));
     expect(dialog.right, lessThanOrEqualTo(320));
     expect(dialog.bottom, lessThanOrEqualTo(640));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('matches the web full-screen protected image viewer on desktop', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    const onePixelPng =
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
+    final state = AppState(
+      ApiClient(
+        client: MockClient(
+          (_) async => http.Response.bytes(
+            base64Decode(onePixelPng),
+            200,
+            headers: {'content-type': 'image/png'},
+          ),
+        ),
+      ),
+    );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(_app(state));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('attachment-preview-attachment-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('protected-image-viewer'))),
+      const Size(1440, 900),
+    );
+    expect(
+      tester.getSize(
+        find.byKey(const ValueKey('protected-image-viewer-header')),
+      ),
+      const Size(1440, 64),
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('protected-image-viewer-header')),
+        matching: find.text('photo.png'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('protected-image-viewer-file-icon')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('protected-image-viewer-download')),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Изображение целиком · Масштаб по размеру окна'),
+      findsOneWidget,
+    );
+    expect(find.byType(InteractiveViewer), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('uses the web compact protected image viewer controls', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      ApiClient(client: MockClient((_) async => httpResponse(404))),
+    );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(_app(state));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('attachment-preview-attachment-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('protected-image-viewer'))),
+      const Size(390, 844),
+    );
+    expect(
+      tester.getSize(
+        find.byKey(const ValueKey('protected-image-viewer-header')),
+      ),
+      const Size(390, 56),
+    );
+    expect(
+      tester.getSize(
+        find.byKey(const ValueKey('protected-image-viewer-close')),
+      ),
+      const Size(44, 44),
+    );
+    expect(find.text('Скачать'), findsNothing);
+    expect(find.text('Вложение удалено или недоступно.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('hides download and offers retry when image decoding fails', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      ApiClient(
+        client: MockClient(
+          (_) async => http.Response.bytes(
+            [1, 2, 3],
+            200,
+            headers: {'content-type': 'image/png'},
+          ),
+        ),
+      ),
+    );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(_app(state));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('attachment-preview-attachment-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Не удалось загрузить изображение.'), findsOneWidget);
+    expect(find.text('Повторить'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('protected-image-viewer-download')),
+      findsNothing,
+    );
     expect(tester.takeException(), isNull);
   });
 

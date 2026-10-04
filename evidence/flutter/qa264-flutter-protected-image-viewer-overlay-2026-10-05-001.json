@@ -1,0 +1,79 @@
+{
+  "id": "QA-264",
+  "date": "2026-10-05",
+  "task": "FV2-022 — Flutter Design V2 protected image viewer overlay parity",
+  "source_revision": "c59e0e43",
+  "working_tree_changes": true,
+  "summary": "Implemented a responsive, viewport-filling Flutter protected image viewer aligned to the web overlay. Preserved authenticated image loading and the separate protected save action. No web, API, ACL, storage, conversation, or media behavior changed.",
+  "checks": [
+    {
+      "name": "Test-first viewer states and responsive geometry",
+      "command": "cd clients/flutter && flutter test --no-pub test/message_attachment_list_test.dart",
+      "result": "PASS",
+      "passed": 12,
+      "observation": "Desktop 1440×900 and compact 390×844 overlay bounds, header/filename, close target, separate download visibility, fit-to-window stage, transient error retry, unavailable state, and malformed image decode retry are covered. New regressions failed before the corresponding implementation changes."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 519
+    },
+    {
+      "name": "Changed-file analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/widgets/message_attachment_list.dart test/message_attachment_list_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Android signed ABI-split Release build",
+      "command": "cd clients/flutter && flutter build apk --release --split-per-abi --no-pub --build-name=1.0.29 --build-number=43 --dart-define=APP_RELEASE_ID=android-direct-stable-r43 --dart-define=APP_RELEASE_ORDER=43 --dart-define=APP_VERSION=1.0.29 --dart-define=APP_NATIVE_BUILD=43 --dart-define=APP_DISTRIBUTION=direct --dart-define=APP_CHANNEL=stable",
+      "result": "PASS",
+      "artifacts": [
+        "clients/flutter/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk (~39 MB)",
+        "clients/flutter/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk (~31 MB)",
+        "clients/flutter/build/app/outputs/flutter-apk/app-x86_64-release.apk (~45 MB)"
+      ],
+      "observation": "Artifacts are ignored local build outputs and were not added to Git. The arm64 APK signature was verified against the expected release certificate (SHA-256 394e369de2d566b4897493ee498da2f27745e514c49ca88c6489b0b0a811212b); generated Android versionCode is 2043. The universal APK is ~112 MB and was not staged or published."
+    },
+    {
+      "name": "Android emulator runtime visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "The emulator currently has app version 1.0.29, versionCode 2053. The generated arm64 artifact has versionCode 2043. No install/downgrade was attempted to avoid replacing the newer installed build or risking its app state."
+    },
+    {
+      "name": "macOS runtime visual acceptance",
+      "command": "flutter attach -d macos",
+      "result": "NOT_RUN",
+      "observation": "The already-running app exposed no Flutter VM service; attach remained at 'Waiting for a connection from Flutter on macOS'. The app was not restarted, preserving its active session and avoiding another Keychain prompt."
+    },
+    {
+      "name": "Windows runtime visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "No Windows runtime was available on this host."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this macOS host. The change adds a UI-only backlog leaf; no approved requirement or contract text changed."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "FV2-022 remains open until live Android/macOS/Windows overlay acceptance is completed.",
+    "The existing user-owned clients/flutter/packages/flutter_webrtc/.gitignore change was not modified or included in this evidence scope.",
+    "No APK, generated media, or build output was committed."
+  ],
+  "status": "IMPLEMENTATION_AND_BUILDS_PASS_RUNTIME_VISUAL_ACCEPTANCE_OPEN"
+}

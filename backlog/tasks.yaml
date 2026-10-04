@@ -143,6 +143,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01]
     depends_on: [FV2-001, T-040, T-044, T-050, T-051]
     evidence: [flutter-attachment-card-geometry-tests, flutter-full-suite, android-macos-attachment-visual-acceptance]
+  - id: FV2-022
+    title: Flutter Design V2 protected image viewer overlay parity
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01]
+    depends_on: [FV2-001, FV2-021, T-044, T-050, T-051]
+    evidence: [flutter-protected-image-viewer-responsive-tests, flutter-full-suite, android-release-abi-split-build, macos-debug-build, android-macos-windows-visual-acceptance]
   - id: FV2-002
     title: Flutter Design V2 workspace shell, text chat and direct messages
     requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]
@@ -201,7 +206,7 @@ tasks:
   - id: FV2-005
     title: Flutter Design V2 authentication, reset and protected attachment views
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUTH-01, REQ-AUTH-02, REQ-AUTH-03, REQ-SECURITY-01, REQ-STORAGE-01]
-    depends_on: [FV2-001, FV2-015, T-010, T-012, T-040, T-041, T-044, T-050, T-051]
+    depends_on: [FV2-001, FV2-015, FV2-022, T-010, T-012, T-040, T-041, T-044, T-050, T-051]
     evidence: [flutter-auth-attachment-layout-tests, flutter-focus-semantics-tests, auth-attachment-parity-acceptance]
   - id: FV2-006
     title: Flutter Design V2 responsive, accessibility and platform acceptance gate
