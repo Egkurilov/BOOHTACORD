@@ -45,7 +45,10 @@ function openProfile(userID: string, event: MouseEvent): void {
   popoverTop.value = Math.max(64, button.getBoundingClientRect().top - button.closest('.members')!.getBoundingClientRect().top - anchorOffset)
   selectedID.value = userID
 }
-function closeProfile(): void { selectedID.value = null; void nextTick(() => trigger.value?.focus()) }
+function closeProfile(restoreFocus = true): void {
+  selectedID.value = null
+  if (restoreFocus) void nextTick(() => trigger.value?.focus())
+}
 function setVolume(volume: number): void { if (selectedVoiceParticipant.value) emit('setVolume', selectedVoiceParticipant.value.id, volume) }
 function voiceStateLabel(muted: boolean, speaking: boolean, unavailable = false): string {
   if (unavailable) return 'Микрофон недоступен'
@@ -82,7 +85,7 @@ onMounted(() => { if (!props.selectedVoiceChannel) void loadRoster() })
       </div>
       <button v-if="memberCursor && !membersError" class="members-more" type="button" :disabled="membersLoading" @click="loadRoster(memberCursor)">{{ membersLoading ? 'Загружаем…' : 'Показать ещё' }}</button>
     </section>
-    <div v-if="selectedID && modal" class="member-sheet-scrim" aria-hidden="true" @click="closeProfile" />
+    <div v-if="selectedID && modal" class="member-sheet-scrim" aria-hidden="true" @click="closeProfile()" />
     <MemberPopover v-if="selectedID" :key="selectedID" :member-i-d="selectedID" :self="selectedID === props.accountID" :viewer-role="props.role" :same-voice="Boolean(openedFromVoiceRoster && activeVoiceChannel && selectedVoiceParticipant)" :volume="selectedVoiceParticipant?.volume ?? 100" :top="popoverTop" :modal="modal" @close="closeProfile" @open-d-m="emit('openDM', $event)" @set-volume="setVolume" />
   </aside>
 </template>
