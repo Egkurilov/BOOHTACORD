@@ -12,6 +12,8 @@
   .sidebar .mobile-voice-dock .voice-icon-button--danger { color: #fff; background: #b80c16; }
 }
 .text-conversation .message-list > li[data-message-id] + li[data-message-id] { margin-top: 24px; }
+.text-conversation .message-author { font-weight: 600; }
+.text-conversation .messages { scrollbar-gutter: stable; }
 .text-conversation .message-list > li:has(.attachment-card) + li[data-message-id] { margin-top: 34px; }
 .text-conversation .message-avatar,
 .text-conversation .message-avatar-spacer { width: 36px; flex-basis: 36px; }
@@ -73,4 +75,5 @@
 }
 @media (max-width: 720px) {
   .text-conversation .main-title small { display: none; }
+  .text-conversation .messages { scrollbar-gutter: auto; }
 }

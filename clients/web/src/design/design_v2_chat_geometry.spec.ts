@@ -49,4 +49,10 @@ describe('Design V2 chat reference geometry', () => {
     expect(presentation).toContain('.channel-navigation-actions > span { font-weight: 600; letter-spacing: .6px; text-transform: uppercase; }')
     expect(presentation).toContain('.channel-navigation .channel-member-count { display: none; }')
   })
+
+  it('matches the reference author weight and reserves the history scrollbar', () => {
+    expect(presentation).toContain('.text-conversation .message-author { font-weight: 600; }')
+    expect(presentation).toContain('.text-conversation .messages { scrollbar-gutter: stable; }')
+    expect(presentation).toMatch(/@media \(max-width: 720px\)\s*\{[\s\S]*?\.text-conversation \.messages \{ scrollbar-gutter: auto; \}/)
+  })
 })
