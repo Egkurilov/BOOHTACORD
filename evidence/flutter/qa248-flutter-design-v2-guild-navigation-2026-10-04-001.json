@@ -1,0 +1,37 @@
+{
+  "id": "QA-248",
+  "date": "2026-10-04",
+  "task": "FV2-017 — Flutter Design V2 guild navigation header, search, tabs and footer",
+  "source_revision": "665a828a",
+  "summary": "The existing workspace sidebar now uses the Design V2 guild header, separate search launcher, 40 px segmented tabs, and 64 px account footer. The loaded member count is shown without replacing navigation callbacks, focus restoration, ACL, message sending, or media state.",
+  "checks": [
+    {
+      "name": "Focused R14 navigation geometry and actions",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_navigation_top_test.dart",
+      "result": "PASS",
+      "observation": "Local Windows host lacks Flutter SDK. CI run 37177510358 exposed a 1.8–2.8 px search-row overflow in narrow sidebar tests; the label was flex-constrained in revision 665a828a. CI run 37177927182 passed the full Flutter test and analyze step on Linux and Windows, including this focused test."
+    },
+    {
+      "name": "Full Flutter suite, analyzer, Android debug APK and Windows distribution",
+      "result": "PASS",
+      "observation": "GitHub Actions run https://github.com/Egkurilov/BOOHTACORD/actions/runs/37177927182 completed successfully at revision 665a828a: Flutter test/analyze on Linux and Windows, Android Kotlin modes and debug APK, and Windows distribution build."
+    },
+    {
+      "name": "Spec traceability",
+      "command": "tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "PASS",
+      "observation": "39 approved requirements referenced; approved brief SHA-256 and requirement IDs validated."
+    },
+    {
+      "name": "Android, macOS and Windows runtime visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "No connected Android device or local Flutter SDK; platform screenshots and pointer/keyboard runtime review remain open."
+    }
+  ],
+  "limitations": [
+    "Chromium PNG references are composition targets rather than strict Flutter goldens.",
+    "The guild mark is drawn with a native icon and existing V2 colors; no image asset was added.",
+    "The workspace screen and media owners remain the original production implementation."
+  ],
+  "status": "IMPLEMENTED_CI_PASS_PLATFORM_VISUAL_ACCEPTANCE_OPEN"
+}

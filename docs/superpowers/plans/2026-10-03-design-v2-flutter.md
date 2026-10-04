@@ -86,6 +86,8 @@ FV2-014 выровнял admin typography и workspace header: compact title 22/
 
 FV2-015 добавил mobile auth eyebrow 16 px, заголовок weight 600 и submit weight 500; FV2-016 добавил count/search по имени или логину и role filter к существующему каталогу участников. Локальный Windows host не имеет Flutter SDK, поэтому новые focused tests и Android/Windows builds ожидают CI; paired screenshots и platform runtime acceptance остаются открытыми. Оба follow-up входят в соответствующие auth/admin aggregates.
 
+FV2-017 переносит верх guild navigation к R14: заголовок 64 px, поиск 36 px отдельной строкой, вкладки 40 px и футер 64 px. Верхняя часть физически вынесена из крупного `workspace_screen.dart` в leaf `features/workspace/mobile_navigation`; исходные callbacks, search focus node и voice dock сохранены. Geometry/action widget test покрывает 390 и 1440 px. Локальной Flutter-проверки нет из-за отсутствия SDK; [QA-248](../../../evidence/flutter/qa248-flutter-design-v2-guild-navigation-2026-10-04-001.json) отслеживает CI и открытый visual gate на устройстве.
+
 Закрытие: focused tests для каждой ветви отображения плюс весь voice/screen test subset; затем Android emulator и macOS/Windows runtime acceptance для доступных реальных состояний. Сетевые/media ошибки и уже открытые FE-52/59/61/69 остаются самостоятельными verification задачами, не объявляются закрытыми дизайн-переносом.
 
 ### Пакет 4 — навигация, участники, настройки и администрирование

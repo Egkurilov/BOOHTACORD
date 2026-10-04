@@ -1,5 +1,18 @@
 # Flutter ↔ web parity plan
 
+## Design V2 guild navigation (FV2-017)
+
+The Flutter workspace sidebar now uses a 64 px guild header with loaded member
+count, a separate 36 px search row, 40 px segmented tabs, and a 64 px account
+footer. At a 390×844 viewport, the 320 px drawer places search at
+`(12,76,296,36)` and tabs at `(12,124,296,40)`, matching the R14 HTML
+geometry. Search, tab selection, close, and focus restoration still invoke the
+existing workspace state. The guild mark uses a native icon and V2 colors
+without adding an image asset. The focused widget test also checks desktop
+search spacing at 1440×900. [QA-248](../evidence/flutter/qa248-flutter-design-v2-guild-navigation-2026-10-04-001.json)
+tracks CI and the still-open platform visual acceptance; no local Flutter SDK
+or Android device is available on the Windows host.
+
 macOS remote-stream discovery now distinguishes an active publication from a
 subscribed video track. With manual subscriptions, a live publication may have
 no attached track after thumbnail sampling; it must still expose the Watch
