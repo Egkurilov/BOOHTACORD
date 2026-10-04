@@ -1,0 +1,17 @@
+{
+  "id": "design-v2-message-avatar-tones-2026-10-04-001",
+  "task": "T-050",
+  "status": "PASS",
+  "scope": "Message fallback foreground palette only",
+  "base_commit": "83f51439",
+  "native_checks": ["Focused SSR palette test failed before implementation", "2 Vitest files / 4 tests PASS after implementation", "git diff --check PASS"],
+  "preserved": ["Identity hash and every existing background", "Text and DM rendering", "Private uploaded avatar image path and fallback lifecycle"],
+  "visual_mae": {
+    "R01": {"before": 3.419139, "after": 3.412843},
+    "R02": {"before": 3.626402, "after": 3.610005},
+    "R03": {"before": 4.026426, "after": 4.016051},
+    "R28": {"before": 1.911210, "after": 1.908698}
+  },
+  "artifacts": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-message-avatar-tones-2026-10-04",
+  "limitations": "Full Design V2 pixel acceptance remains incomplete; references unchanged, no server ACL or physical media claims"
+}
