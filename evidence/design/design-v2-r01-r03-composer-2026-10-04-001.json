@@ -1,0 +1,28 @@
+{
+  "id": "design-v2-r01-r03-composer-2026-10-04-001",
+  "scope": "R01/R03 desktop and tablet composer in real Vue chat versus unchanged handoff",
+  "status": "PARTIAL",
+  "visual_report": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-chat-typography-2026-10-04/REVIEW.md",
+  "checks": [
+    {
+      "name": "DOM geometry versus HTML handoff",
+      "result": "PASS",
+      "observation": "Textarea matches reference: R01 x=353 y=819 width=686 height=34; R03 x=349 y=687 width=526 height=34. Both use Inter 15px/20px and padding 7px 0. Attachment, mention, emoji and send controls match reference at 32x34."
+    },
+    {
+      "name": "Actual screenshots versus unchanged PNG",
+      "result": "PASS",
+      "observation": "Full-frame RGB MAE R01 decreased from 3.398 to 3.276; R03 decreased from 3.988 to 3.787. Actual, diff, metrics and SHA-256 are linked from the visual report."
+    },
+    {
+      "name": "Web tests and production build",
+      "result": "PASS",
+      "observation": "294 Vitest files and 927 tests passed; TypeScript and Vite production build passed."
+    },
+    {
+      "name": "Strict one-to-one pixels",
+      "result": "FAIL",
+      "observation": "The full-frame diff still shows text rasterization, icons and fixture voice-state differences. The design goal remains active."
+    }
+  ]
+}

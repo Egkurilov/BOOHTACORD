@@ -60,6 +60,13 @@
 .topology-dialog--category .topology-dialog-description { margin: 16px 24px 24px; }
 .topology-dialog--category .topology-dialog-fields { gap: 0; }
 .topology-dialog--category .topology-dialog-actions { min-height: 69px; }
+@media (min-width: 1024px) {
+  .text-conversation .message-composer textarea { min-height: 34px; height: 34px; padding: 7px 0; font-size: 15px; resize: none; }
+  .text-conversation .message-composer .attachment-trigger,
+  .text-conversation .message-composer .mention-picker-trigger,
+  .text-conversation .message-composer .emoji-trigger,
+  .text-conversation .message-composer .composer-send { width: 32px; height: 34px; min-height: 34px; flex: 0 0 32px; }
+}
 @media (max-width: 1023px) {
   .message-composer .attachment-trigger,
   .message-composer .mention-picker-trigger,
