@@ -1,0 +1,57 @@
+{
+  "id": "QA-261",
+  "date": "2026-10-04",
+  "task": "FV2-020 — Flutter Design V2 connected voice dock Mac visual acceptance",
+  "source_revision": "WORKTREE",
+  "working_tree_changes": true,
+  "summary": "Verified the connected VoiceDock presentation in the already-running Mac client and closed FV2-020 after the Android and Mac visual checks.",
+  "checks": [
+    {
+      "name": "Mac connected VoiceDock visual acceptance",
+      "command": "Use the already-running BOOHTACORD Mac client; join Voice as listener, capture the connected state, then leave",
+      "result": "PASS",
+      "observation": "Screenshot showed the persistent bottom-left dock with green headset icon, ‘Голос подключён’, ‘Voice · 3 участника’, green connection bars and 7 ms ping. The microphone control was muted/red and the participant card stated ‘Микрофон выключен’. No screen share was started. The app was not relaunched; after the screenshot the client returned to the prejoin view with the local participant removed."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 513
+    },
+    {
+      "name": "Focused voice shortcut and VoiceDock regressions",
+      "command": "cd clients/flutter && flutter test --no-pub test/voice_shortcut_test.dart && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'voice dock announces reconnect and deafen transition states'",
+      "result": "PASS",
+      "passed": 4,
+      "observation": "Three shortcut modifier tests and the focused connected/reconnect/deafen VoiceDock test passed."
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && dart analyze lib/src/features/voice/microphone/shortcut.dart lib/src/screens/auth_screen.dart lib/src/screens/workspace_screen.dart test/auth_screen_test.dart test/auth_typography_v2_test.dart test/voice_shortcut_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android API 35 emulator visual acceptance",
+      "command": "See QA-259 Android API 35 emulator check",
+      "result": "PASS",
+      "observation": "The Android dock displayed the headset, connected status, participant count and live ping with the microphone muted; the temporary voice session was ended."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this macOS host. No requirements or API contracts changed."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "The Mac screenshot was inspected in-session and was not saved as a repository artifact.",
+    "The Android release referenced by QA-259 is a local test artifact and was not published by this follow-up."
+  ],
+  "status": "PASS_ANDROID_MACOS_VISUAL_AND_TESTS"
+}

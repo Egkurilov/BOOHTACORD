@@ -63,11 +63,18 @@ class VoiceShortcutBinding {
 }
 
 final Set<int> _modifierIds = {
-  LogicalKeyboardKey.controlLeft.keyId, LogicalKeyboardKey.controlRight.keyId,
-  LogicalKeyboardKey.altLeft.keyId, LogicalKeyboardKey.altRight.keyId,
-  LogicalKeyboardKey.shiftLeft.keyId, LogicalKeyboardKey.shiftRight.keyId,
-  LogicalKeyboardKey.metaLeft.keyId, LogicalKeyboardKey.metaRight.keyId,
+  LogicalKeyboardKey.controlLeft.keyId,
+  LogicalKeyboardKey.controlRight.keyId,
+  LogicalKeyboardKey.altLeft.keyId,
+  LogicalKeyboardKey.altRight.keyId,
+  LogicalKeyboardKey.shiftLeft.keyId,
+  LogicalKeyboardKey.shiftRight.keyId,
+  LogicalKeyboardKey.metaLeft.keyId,
+  LogicalKeyboardKey.metaRight.keyId,
 };
+
+bool isVoiceShortcutModifierKey(LogicalKeyboardKey key) =>
+    _modifierIds.contains(key.keyId);
 
 String formatVoiceShortcut(VoiceShortcutBinding? binding) {
   if (binding == null) return 'Не назначено';

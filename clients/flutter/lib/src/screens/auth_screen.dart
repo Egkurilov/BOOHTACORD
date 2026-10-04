@@ -45,8 +45,8 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   void dispose() {
-    _login.dispose();
     _password.clear();
+    _login.dispose();
     _password.dispose();
     _loginFocus.dispose();
     _passwordFocus.dispose();

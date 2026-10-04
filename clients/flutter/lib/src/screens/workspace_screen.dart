@@ -304,16 +304,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
         unawaited(widget.state.setVoiceShortcut(action, null));
         return true;
       }
-      if ({
-        LogicalKeyboardKey.controlLeft,
-        LogicalKeyboardKey.controlRight,
-        LogicalKeyboardKey.altLeft,
-        LogicalKeyboardKey.altRight,
-        LogicalKeyboardKey.shiftLeft,
-        LogicalKeyboardKey.shiftRight,
-        LogicalKeyboardKey.metaLeft,
-        LogicalKeyboardKey.metaRight,
-      }.contains(event.logicalKey)) {
+      if (isVoiceShortcutModifierKey(event.logicalKey)) {
         return true;
       }
       final label = event.logicalKey.keyLabel.trim().isEmpty

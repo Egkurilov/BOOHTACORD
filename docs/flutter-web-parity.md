@@ -50,10 +50,10 @@ reduces the connected label weight. Until the first quality sample arrives, the
 unknown-quality visual placeholder is omitted on desktop while its accessible
 description remains available; compact layouts retain the placeholder. Voice,
 LiveKit and control behavior are unchanged. [QA-259](../evidence/flutter/qa259-flutter-design-v2-voice-dock-2026-10-04-001.json)
-records test/build results and Android emulator visual acceptance. The current
-Mac app could not be hot-reloaded because it exposes no Flutter VM service; it
-was not restarted to avoid another Keychain prompt, so Mac visual acceptance is
-still pending.
+records Android emulator visual acceptance; [QA-261](../evidence/flutter/qa261-flutter-design-v2-voice-dock-macos-2026-10-04-001.json)
+records the Mac connected-dock screenshot check and full-suite regression result.
+Both runtime checks used a muted/listener-only session and confirmed the session
+was left afterwards.
 
 ## Frameless desktop window chrome (FV2-018)
 

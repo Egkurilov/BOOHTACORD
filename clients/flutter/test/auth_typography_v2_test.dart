@@ -33,6 +33,9 @@ void main() {
       );
       expect(submit.style?.fontWeight, FontWeight.w500);
       expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(tester.takeException(), isNull);
     });
   }
 }
