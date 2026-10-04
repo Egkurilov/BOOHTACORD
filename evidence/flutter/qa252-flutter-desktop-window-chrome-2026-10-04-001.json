@@ -2,7 +2,7 @@
   "id": "QA-252",
   "date": "2026-10-04",
   "task": "FV2-018 — Flutter frameless desktop window chrome and text-only brand",
-  "source_revision": "88b85ffe85cb946008dd3c5f2f2f4308eada14e9",
+  "source_revision": "fc51ced59516a47c396e907af14b158bb7abf467",
   "working_tree_changes": true,
   "summary": "Added a compact draggable desktop title bar for macOS and Windows, hid the native title bar, preserved macOS traffic lights, added Windows window controls, and kept mobile layout unchanged. The brand is a legible Inter wordmark without an icon.",
   "checks": [
@@ -40,7 +40,7 @@
     {
       "name": "Live macOS window visual acceptance",
       "result": "PASS",
-      "observation": "Inspected the already-running macOS Debug window without restarting it. The system title text is replaced by the 32 px custom bar; BOOHTACORD is text-only and the three native traffic-light window controls remain visible. No screenshot was retained because the current workspace contains user conversation content."
+      "observation": "Inspected the already-running macOS Debug window without restarting it. The system title text is replaced by the 32 px custom bar; BOOHTACORD is text-only and the three native traffic-light window controls remain visible. A double-click maximized the window and a second double-click restored its original size; the chat was returned to its prior latest-message position. No screenshot was retained because the current workspace contains user conversation content."
     },
     {
       "name": "Android emulator visual regression",
@@ -55,21 +55,28 @@
       "observation": "Re-run during live Mac and Android emulator visual acceptance; covers Windows controls, text-only brand, macOS control inset, and mobile without desktop chrome."
     },
     {
+      "name": "Focused test rerun after latest remote merge",
+      "command": "cd clients/flutter && flutter test --no-pub test/desktop_window_chrome_test.dart",
+      "result": "BLOCKED",
+      "observation": "The Flutter wrapper failed before test startup because sandbox permissions prevented updating the Flutter SDK engine cache under /opt/homebrew/share/flutter. The same focused suite had already passed 4/4 against the titlebar source revision."
+    },
+    {
       "name": "Windows runner tests and analysis",
       "result": "PASS",
       "run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37190446718",
-      "observation": "The windows / windows job completed Test and analyze app and vendor packages successfully on Windows 2022."
+      "observation": "The windows / windows job completed Test and analyze app and vendor packages successfully on Windows 2022 in attempts 1 and 3. Attempt 2 was cancelled during Flutter SDK setup by a newer master push, before tests or the distribution build ran. Attempt 3 also passed release-publisher tests."
     },
     {
       "name": "Windows distribution build",
-      "result": "BLOCKED",
+      "result": "PASS",
       "run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37190446718",
-      "observation": "Build and inspect Windows distribution started but was cancelled after a newer master push superseded the run; artifact retention was skipped. Re-run Flutter Windows CI against current master."
+      "artifact": "BOOHTACORD-windows-x64-fc51ced59516a47c396e907af14b158bb7abf467 (25,922,100 bytes; SHA-256 82325a11c9268be8343eb0961f9636a55a52ae7c396d8ed735b08d63ed3f0cb2)",
+      "observation": "Attempt 3 passed Build and inspect Windows distribution and artifact retention on Windows 2022. Attempts 1 and 2 were cancelled by newer master pushes before a completed distribution build."
     },
     {
       "name": "Native desktop window runtime acceptance",
       "result": "PARTIAL",
-      "observation": "macOS visual state passed in the already-running Debug app; drag/maximize/traffic-light actions were not exercised. Windows native controls and runtime behavior remain NOT_RUN."
+      "observation": "macOS visual state and title-bar double-click maximize/restore passed in the already-running Debug app. Drag and direct traffic-light actions were not exercised. Windows native controls and runtime behavior remain NOT_RUN."
     },
     {
       "name": "Spec traceability verifier",
@@ -84,8 +91,8 @@
     }
   ],
   "limitations": [
-    "FV2-018 remains open until a current-master Windows distribution build and native Windows window acceptance pass; macOS live visual and Android mobile-regression checks are recorded, but macOS drag/maximize actions remain untested.",
+    "FV2-018 remains open until native Windows window acceptance passes. macOS drag/direct traffic-light actions remain untested, and Android screenshot was from the prior desktop-only build.",
     "No API, ACL, session, authentication, or LiveKit behavior changed."
   ],
-  "status": "PASS_FLUTTER_TESTS_ANALYSIS_MACOS_DEBUG_BUILD_COMPONENT_AND_LIVE_MACOS_VISUAL_REVIEW_ANDROID_EMULATOR_MOBILE_REGRESSION_AND_WINDOWS_TESTS; WINDOWS_DISTRIBUTION_BUILD_BLOCKED_AND_WINDOWS_NATIVE_ACCEPTANCE_OPEN"
+  "status": "PASS_FLUTTER_TESTS_ANALYSIS_MACOS_DEBUG_BUILD_COMPONENT_AND_LIVE_MACOS_VISUAL_REVIEW_ANDROID_EMULATOR_MOBILE_REGRESSION_AND_WINDOWS_RELEASE_BUILD; WINDOWS_NATIVE_ACCEPTANCE_OPEN"
 }
