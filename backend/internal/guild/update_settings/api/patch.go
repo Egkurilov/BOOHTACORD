@@ -1,18 +1,14 @@
 package guildsettingsapi
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
-	"github.com/google/uuid"
 	"io"
 	"net/http"
-	"time"
 	guildsettings "voice-platform/backend/internal/guild/update_settings"
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
 	guildlifecycle "voice-platform/backend/internal/observability/guild_lifecycle"
 	tracehttp "voice-platform/backend/internal/observability/trace_http"
-	eventhub "voice-platform/backend/internal/realtime/event_hub"
 	requestid "voice-platform/backend/internal/security/request_id"
 )
 
@@ -86,11 +82,7 @@ func (h Handler) Patch(w http.ResponseWriter, r *http.Request) {
 	}
 	details.Revision, details.ChangedFields, details.Committed = result.Revision, result.ChangedFields, true
 	// A committed update stays successful if durable hint publication fails.
-	publishCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
-	defer cancel()
-	if h.Events != nil {
-		err = h.Events.PublishContext(publishCtx, eventhub.Event{EventID: uuid.NewString(), Kind: "guild.profile.updated", OccurredAt: time.Now().UTC(), Payload: map[string]any{"revision": result.Revision}})
-	}
+	err = h.publishUpdate(ctx, result.Revision)
 	if err != nil {
 		details.FailureStage = "realtime"
 		span.Fail(err, details)
