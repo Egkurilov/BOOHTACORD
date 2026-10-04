@@ -1,5 +1,14 @@
 # Flutter ↔ web parity plan
 
+## Design V2 Inter font (FV2-001 follow-up)
+
+Flutter now bundles the same Inter Variable 4.001 source as Web, converted from
+the project's WOFF2 to a Flutter TTF asset with the SIL OFL license. The family
+used by `guildTheme()` resolves to a packaged font instead of an OS fallback.
+The asset-loading test, Linux/Windows Flutter suites and analyzer, Android debug
+APK, and Windows distribution passed in CI. [QA-250](../evidence/flutter/qa250-flutter-inter-font-2026-10-04-001.json)
+records hashes and the open native visual acceptance.
+
 ## Design V2 guild navigation (FV2-017)
 
 The Flutter workspace sidebar now uses a 64 px guild header with loaded member

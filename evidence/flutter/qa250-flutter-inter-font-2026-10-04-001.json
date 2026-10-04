@@ -1,0 +1,30 @@
+{
+  "id": "QA-250",
+  "date": "2026-10-04",
+  "task": "FV2-001 follow-up — bundle the canonical Inter 4.001 font in Flutter",
+  "source_revision": "fe72e10e",
+  "summary": "Flutter theme already selected Inter, but no font asset was declared. The project's existing Inter Variable WOFF2 was converted to TTF, bundled under the same Flutter family, and accompanied by its SIL OFL license. No bitmap asset was added.",
+  "checks": [
+    {
+      "name": "Source and converted font identity",
+      "result": "PASS",
+      "observation": "fontTools 4.66.1 and Brotli 1.2.0 read both files as Version 4.001;git-9221beed3, with 2937 glyphs and opsz 14–32 / wght 100–900 axes. Source WOFF2 SHA-256 693B77D4F32EE9B8BFC995589B5FAD5E99ADF2832738661F5402F9978429A8E3; bundled TTF SHA-256 F87CAF5CDC61C6ACB34DCDF6AE38909F6BEF73CC86EE5DA3691601A54CD6A314."
+    },
+    {
+      "name": "Flutter font asset loading, full tests and analyzer",
+      "result": "PASS",
+      "observation": "GitHub Actions run https://github.com/Egkurilov/BOOHTACORD/actions/runs/37183698576 completed successfully at fe72e10e. Linux and Windows Test and analyze app and vendor packages steps passed; theme_font_asset_test.dart loads assets/fonts/InterVariable.ttf from rootBundle and checks the TTF header."
+    },
+    {
+      "name": "Android debug APK and Windows distribution",
+      "result": "PASS",
+      "observation": "The same CI run completed Android Kotlin modes, Android debug APK, and Windows distribution build successfully."
+    },
+    {
+      "name": "Android, macOS and Windows runtime typography visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "Native screenshots from an isolated test fixture and device review are still required; the Chromium PNG is a composition reference, not a strict Flutter golden."
+    }
+  ],
+  "status": "IMPLEMENTED_CI_PASS_PLATFORM_VISUAL_ACCEPTANCE_OPEN"
+}
