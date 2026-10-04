@@ -1,0 +1,24 @@
+{
+  "id": "QA-247",
+  "date": "2026-10-04",
+  "task": "FV2-016 — Flutter Design V2 admin member count and directory filters",
+  "summary": "The existing member directory shows the number of loaded accounts and filters its loaded cards by display name, login, and role. Server pagination, drafts, save/block/reset operations, and ACL remain unchanged.",
+  "checks": [
+    {
+      "name": "Focused filter unit and widget tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/admin_member_filter_test.dart",
+      "result": "NOT_RUN",
+      "observation": "The Windows host has no Flutter SDK. Tests cover case-insensitive name/login matching, role intersection, visible cards, and unchanged loaded count."
+    },
+    {
+      "name": "Flutter analyzer, full suite, platform builds and actual screens",
+      "result": "NOT_RUN",
+      "observation": "Pending CI and platform runtime. The Chromium PNG reference is not a strict Flutter golden."
+    },
+    {
+      "name": "Diff hygiene and evidence JSON",
+      "result": "PASS"
+    }
+  ],
+  "status": "IMPLEMENTED_PENDING_FLUTTER_VERIFICATION"
+}

@@ -84,7 +84,7 @@ FV2-011 выровнял viewer mute/gain controls и процент: desktop to
 
 FV2-014 выровнял admin typography и workspace header: compact title 22/28 px, section title 20/28 px, user name 16/20 px, header 56 px с menu/close targets 44×44; desktop close — 36×36. Callback и refresh/permission поведение сохранены — [QA-245](../../../evidence/flutter/qa245-flutter-design-v2-admin-typography-header-2026-10-04-001.json).
 
-Открытые/новые gaps: web-коммит `bfeee4f5` добавил mobile auth eyebrow 16 px, заголовок weight 600 и submit weight 500 — FV2-015. Проверка web `AdminMembersSection.vue` также выявила отсутствующие во Flutter count/search по имени или логину и role filter — FV2-016. Оба входят в соответствующие auth/admin aggregates.
+FV2-015 добавил mobile auth eyebrow 16 px, заголовок weight 600 и submit weight 500; FV2-016 добавил count/search по имени или логину и role filter к существующему каталогу участников. Локальный Windows host не имеет Flutter SDK, поэтому новые focused tests и Android/Windows builds ожидают CI; paired screenshots и platform runtime acceptance остаются открытыми. Оба follow-up входят в соответствующие auth/admin aggregates.
 
 Закрытие: focused tests для каждой ветви отображения плюс весь voice/screen test subset; затем Android emulator и macOS/Windows runtime acceptance для доступных реальных состояний. Сетевые/media ошибки и уже открытые FE-52/59/61/69 остаются самостоятельными verification задачами, не объявляются закрытыми дизайн-переносом.
 

@@ -10,6 +10,8 @@ import '../services/api_client.dart';
 import '../theme.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../features/admin/role_permissions/panel.dart';
+import 'admin_member_filter.dart';
+import 'admin_member_filters.dart';
 enum _AdminSection { members, roles, channels, audit, media }
 class _AdminAccountDraft {
   _AdminAccountDraft({required this.role, required this.blocked});
@@ -39,6 +41,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   final _categoryRename = TextEditingController();
   final _channelName = TextEditingController();
   final _channelRename = TextEditingController();
+  final _accountSearch = TextEditingController();
   String? _categoryId;
   String? _channelId;
   String? _moveChannelId;
@@ -51,6 +54,12 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   String? _error;
   _AdminSection _selectedAdminSection = _AdminSection.members;
   List<AdminAccount> _adminAccounts = const [];
+  String _accountRoleFilter = 'ALL';
+  List<AdminAccount> get _visibleAdminAccounts => filterAdminMembers(
+    _adminAccounts,
+    search: _accountSearch.text,
+    role: _accountRoleFilter,
+  );
   String? _accountCursor;
   final Map<String, _AdminAccountDraft> _accountDrafts = {};
   final Map<String, FocusNode> _accountSaveFocusNodes = {};
@@ -90,6 +99,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     _categoryRename.dispose();
     _channelName.dispose();
     _channelRename.dispose();
+    _accountSearch.dispose();
     for (final focusNode in _accountSaveFocusNodes.values) {
       focusNode.dispose();
     }
@@ -1442,20 +1452,20 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
         child: Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Участники',
+                    'Участники ${_adminAccounts.length}',
                     key: ValueKey('admin-members-section-title'),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 20,
                       height: 28 / 20,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Text(
+                  const Text(
                     'Роли и доступ к этой гильдии',
                     style: TextStyle(
                       color: GcColors.textSecondary,
@@ -1473,6 +1483,12 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
           ],
         ),
       ),
+      AdminMemberFilters(
+        search: _accountSearch,
+        role: _accountRoleFilter,
+        onSearchChanged: () => setState(() {}),
+        onRoleChanged: (value) => setState(() => _accountRoleFilter = value),
+      ),
       if (_accountsLoading && _adminAccounts.isEmpty)
         _adminLoadingState(
           'Загружаем список участников…',
@@ -1485,10 +1501,15 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       else
         Expanded(
           child: ListView(
+            key: ValueKey(
+              'admin-member-list:${_accountSearch.text}:$_accountRoleFilter',
+            ),
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
             children: [
               if (_resetLink != null) _buildResetLinkCard(),
-              for (final account in _adminAccounts)
+              if (_adminAccounts.isNotEmpty && _visibleAdminAccounts.isEmpty)
+                const Text('По запросу участники не найдены.'),
+              for (final account in _visibleAdminAccounts)
                 _buildAdminAccountCard(account),
               if (_accountsLoading)
                 const Center(child: CircularProgressIndicator()),

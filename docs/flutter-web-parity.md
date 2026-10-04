@@ -179,9 +179,11 @@ the current web presentation. A focused widget regression was added, but the
 Windows checkout has no Flutter SDK, so the test, analyzer, builds and native
 screenshots still need a Flutter host before the leaf can close —
 [QA-246](../evidence/flutter/qa246-flutter-design-v2-auth-typography-2026-10-04-001.json).
-The member directory review also found that Flutter has no count, name/login
-search, or role filter where web has them; this independent functional gap is
-tracked as FV2-016.
+FV2-016 adds the loaded-account count, name/login search, and role filter to
+the existing Flutter member directory. It filters only loaded accounts, keeps
+pagination and the current save/block/reset handlers, and has focused unit and
+widget regressions. Native verification and screenshots are still pending on a
+Flutter host — [QA-247](../evidence/flutter/qa247-flutter-design-v2-admin-member-filters-2026-10-04-001.json).
 
 Flutter's voice prejoin header now mirrors the web copy for roster loading,
 unavailable, empty and populated states instead of showing a static invitation
