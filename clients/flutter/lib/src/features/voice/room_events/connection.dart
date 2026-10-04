@@ -15,6 +15,7 @@ extension VoiceEventsConnection on VoiceController {
   ) {
     listener.on<ParticipantConnectionQualityUpdatedEvent>((event) {
       if (!owns()) return;
+      if (disconnect.notice != null) return;
       if (!identical(this.room, room) && voicePhase != VoicePhase.joining) {
         return;
       }
@@ -23,6 +24,7 @@ extension VoiceEventsConnection on VoiceController {
     });
     listener.on<AudioSenderStatsEvent>((event) {
       if (!owns()) return;
+      if (disconnect.notice != null) return;
       if (!identical(this.room, room) && voicePhase != VoicePhase.joining) {
         return;
       }
@@ -39,12 +41,14 @@ extension VoiceEventsConnection on VoiceController {
           shouldAllowVoiceReconnectAttempt(event.attempt)) {
         return;
       }
-      error =
-          'Не удалось восстановить голосовое соединение после $voiceReconnectAttemptLimit попыток. Подключитесь ещё раз.';
-      unawaited(leaveVoice());
+      if (leaseId != null) disconnect.bind(leaseId!, voiceChannel?.id ?? '');
+      disconnect.transport('Не удалось восстановить голосовое соединение после $voiceReconnectAttemptLimit попыток. Подключитесь ещё раз.');
+      showVoiceDisconnect();
+      unawaited(leaveVoice(explicit: false));
     });
     listener.on<RoomReconnectingEvent>((_) {
       if (!owns()) return;
+      if (disconnect.notice != null) return;
       if (!identical(this.room, room) && voicePhase != VoicePhase.joining) {
         return;
       }
@@ -56,6 +60,7 @@ extension VoiceEventsConnection on VoiceController {
     });
     listener.on<RoomResumingEvent>((_) {
       if (!owns()) return;
+      if (disconnect.notice != null) return;
       if (!identical(this.room, room) && voicePhase != VoicePhase.joining) {
         return;
       }
@@ -66,7 +71,7 @@ extension VoiceEventsConnection on VoiceController {
       notifyListeners();
     });
     listener.on<RoomReconnectedEvent>((_) {
-      if (!owns()) return;
+      if (!owns() || disconnect.notice != null) return;
       if (!identical(this.room, room)) return;
       voicePhase = listenerOnly
           ? VoicePhase.listener

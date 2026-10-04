@@ -16,6 +16,7 @@ import '../microphone/shortcut.dart';
 import 'types.dart';
 import '../audio_diagnostics/model.dart';
 import '../volumes/telemetry.dart';
+import '../disconnect_notice/state.dart';
 
 abstract class VoiceState extends ChangeNotifier {
   VoiceState(
@@ -36,7 +37,8 @@ abstract class VoiceState extends ChangeNotifier {
   final void Function(String?) reportError;
   final String Function(Object) formatError;
   final Room Function(RoomOptions) createRoom;
-  set error(String? value) => reportError(value);
+  final disconnect = VoiceDisconnectState();
+  set error(String? value) => reportError(disconnect.notice?.source == 'server' ? disconnect.notice!.message : disconnect.notice?.source == 'local' ? null : value);
   bool disposed = false;
   int operationRevision = 0;
   int microphoneRevision = 0;

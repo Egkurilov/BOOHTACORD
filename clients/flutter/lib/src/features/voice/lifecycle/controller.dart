@@ -9,6 +9,7 @@ import '../connection_stats/poll.dart';
 import '../screen_preview/capture.dart';
 import '../stream_notice/events.dart';
 export 'types.dart';
+export '../disconnect_notice/control.dart';
 export '../stream_notice/preferences.dart';
 export '../stream_notice/events.dart';
 export '../preferences/load.dart';
@@ -49,6 +50,7 @@ class VoiceController extends VoiceState {
   @override
   void dispose() {
     unawaited(flushVoiceVolumes());
+    disconnect.reset();
     disposed = true;
     operationRevision++;
     stopVoiceConnectionStatsPolling();

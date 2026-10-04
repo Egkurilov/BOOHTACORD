@@ -1,12 +1,11 @@
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../models.dart';
-import '../../../services/android_audio_devices.dart';
 import '../../../services/screen_thumbnail.dart';
-import '../../../services/voice_lease_revocation.dart';
 import '../lifecycle/controller.dart';
 import 'prepare.dart';
 import 'enable.dart';
+import 'failure.dart';
 
 extension VoiceAdmissionJoin on VoiceController {
   Future<void> joinVoice(
@@ -22,6 +21,11 @@ extension VoiceAdmissionJoin on VoiceController {
       return;
     }
     if (voiceChannel?.id == channel.id && room != null) return;
+    disconnect.selectChannel(channel.id);
+    if (disconnect.notice?.reconnectAllowed == false) return;
+    disconnect.reset(); revokedVoiceLeasesDuringJoin.clear();
+    disconnect.channelId = channel.id;
+    final disconnectGeneration = disconnect.generation;
     final revision = ++operationRevision;
     screenThumbnails.clear();
     closeScreenPreviewSubscriptions();
@@ -38,13 +42,19 @@ extension VoiceAdmissionJoin on VoiceController {
     EventsListener<RoomEvent>? events;
     String? admittedLease;
     var connected = false;
+    void checkCurrentAdmission(String lease) {
+      if (disconnect.generation != disconnectGeneration) throw CancelledVoiceAdmission();
+      checkAdmission(ticket, revision, lease);
+    }
     try {
       final result = await api.voiceCredential(channel.id, transfer: true);
       admittedLease = result.$1;
-      checkAdmission(ticket, revision, admittedLease);
+      if (!active(ticket, revision) || disconnect.generation != disconnectGeneration) throw CancelledVoiceAdmission();
+      disconnect.bind(admittedLease, channel.id);
+      checkCurrentAdmission(admittedLease);
       leaseId = admittedLease;
       await loadVoiceVolumes(ticket, revision, admittedLease);
-      checkAdmission(ticket, revision, admittedLease);
+      checkCurrentAdmission(admittedLease);
       candidate = createRoom(voiceRoomOptions());
       pendingRoom = candidate;
       bindVoiceRoomEvents(candidate);
@@ -54,39 +64,22 @@ extension VoiceAdmissionJoin on VoiceController {
         result.$2.token,
         connectOptions: const ConnectOptions(autoSubscribe: false),
       );
-      checkAdmission(ticket, revision, admittedLease);
+      checkCurrentAdmission(admittedLease);
       await selectVoiceOutput();
-      checkAdmission(ticket, revision, admittedLease);
+      checkCurrentAdmission(admittedLease);
       room = candidate;
       voiceChannel = channel;
       subscribeCurrentRemoteVoiceTracks(candidate);
       await applySavedVoiceVolumes(candidate);
-      checkAdmission(ticket, revision, admittedLease);
+      checkCurrentAdmission(admittedLease);
       await enableVoiceMicrophone(candidate, listenerOnly, ticket, revision);
-      checkAdmission(ticket, revision, admittedLease);
+      checkCurrentAdmission(admittedLease);
       startVoiceConnectionStatsPolling(candidate);
       observeVoiceStreamStarts(candidate);
       connected = true;
     } catch (cause) {
       if (active(ticket, revision)) {
-        stopVoiceConnectionStatsPolling();
-        final revoked = revokedVoiceLeasesDuringJoin.remove(admittedLease);
-        error = revoked != null
-            ? VoiceLeaseRevocation(
-                leaseId: admittedLease!,
-                reason: revoked,
-              ).message
-            : cause is VoiceLeaseRevocation
-            ? cause.message
-            : formatError(cause);
-        voicePhase = VoicePhase.error;
-        room = null;
-        leaseId = null;
-        voiceChannel = null;
-        mutedScreenShareAudioIdentities.clear();
-        try {
-          await AndroidAudioDevices.clearNativeOutput();
-        } catch (_) {}
+        await failVoiceAdmission(cause, admittedLease, presentCause: disconnect.generation == disconnectGeneration);
       }
     } finally {
       if (!connected) {

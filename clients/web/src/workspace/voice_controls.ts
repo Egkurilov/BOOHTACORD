@@ -73,6 +73,7 @@ export function useWorkspaceVoiceControls(accountId = '') {
   })
 
   function selectChannel(channel: TopologyChannel): void {
+    voiceConnection.selectDisconnectChannel(channel.id)
     if (channel.kind === 'TEXT') voiceNavigation.selectText(channel.id)
     else voiceNavigation.selectVoice(channel.id)
   }

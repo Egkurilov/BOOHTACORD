@@ -75,6 +75,7 @@ const emit = defineEmits<{ openSearch: []; returnVoice: [channelId: string]; tog
     :self-deafened="voiceConnection.deafened"
     :self-speaking="voiceConnection.selfSpeaking"
     :voice-error="voiceConnection.error"
+    :voice-disconnect-notice="voiceConnection.disconnectNotice"
     :voice-is-active="channel?.id === voiceConnection.active?.channelId"
     :voice-state="voiceConnection.state"
     :voice-transfer-required="voiceConnection.transferRequired"
