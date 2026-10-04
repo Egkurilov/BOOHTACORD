@@ -234,6 +234,17 @@ contain explicit historical gaps; re-check current Flutter/web source and the
 linked evidence before treating a stale status as current. Do not use this map
 as a substitute for reading the implementation.
 
+## Android login IME follow-up (FE-57)
+
+The reported first-character keyboard dismissal did not reproduce on the
+Android 15 API 35 emulator with Gboard: after entering the first character and
+then additional characters in the isolated login package, the field retained
+focus and `mInputShown` remained true. The existing Flutter auth widget test
+also passed while simulating app-state rebuilds and continued IME composing
+updates. This is only emulator evidence; Samsung/One UI on a physical device
+and the separate screen-share retry scenario remain open —
+[QA-271](../evidence/flutter/qa271-android-login-ime-emulator-2026-10-05-001.json).
+
 Flutter startup now bounds API/session storage initialization, platform
 initialization, current-session lookup and account preparation with one
 retryable 20-second deadline, preventing a native initialization stall from

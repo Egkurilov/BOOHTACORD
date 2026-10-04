@@ -1,0 +1,65 @@
+{
+  "id": "QA-271",
+  "date": "2026-10-05",
+  "task": "FE-57 / FV2-005 — Android login keyboard remains visible while entering the first characters",
+  "source_revision": "8a4ea443",
+  "working_tree_changes": true,
+  "environment": {
+    "device": "Android Emulator sdk_gphone64_arm64",
+    "android_api": 35,
+    "resolution": "1080x2400",
+    "density_dpi": 420,
+    "ime": "com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+    "isolated_package": "ru.boohtacord.app.imeqa",
+    "build": "1.0.29-imeqa+2058"
+  },
+  "summary": "The first-character Gboard dismissal did not reproduce on the Android 15 emulator. The login field kept focus and the IME remained visible after the first and subsequent characters. This does not establish behavior on Samsung One UI.",
+  "checks": [
+    {
+      "name": "First-character Gboard entry",
+      "result": "PASS",
+      "command": "adb shell input tap <login-field>; adb shell input text p",
+      "observation": "After entering only 'p', the login field contained 'p', remained focused in the accessibility tree, and the on-screen Gboard was visible in the captured screen."
+    },
+    {
+      "name": "Multi-character Gboard entry",
+      "result": "PASS",
+      "command": "adb shell input text ist123; adb shell dumpsys input_method",
+      "observation": "The field contained 'pist123' and remained focused; dumpsys reported the Google Latin IME and mInputShown=true. The login form was not submitted and no password was entered."
+    },
+    {
+      "name": "Flutter authentication widget suite",
+      "command": "cd clients/flutter && flutter test --no-pub test/auth_screen_test.dart",
+      "result": "PASS",
+      "passed": 13,
+      "observation": "Includes a regression simulating login focus/text retention across AppState rebuilds and continued IME editing updates."
+    },
+    {
+      "name": "Physical Samsung / One UI verification",
+      "result": "NOT_RUN",
+      "observation": "Only the Android API 35 emulator was available for this test; the reported Samsung/Gboard device-specific path remains unverified."
+    },
+    {
+      "name": "Screen-share retry with peer",
+      "result": "NOT_RUN",
+      "observation": "This check covered login IME only; no voice room, microphone, or screen share was started."
+    },
+    {
+      "name": "Temporary test package cleanup",
+      "result": "PASS",
+      "observation": "Removed only the isolated ru.boohtacord.app.imeqa package created for this test and returned to the existing signed release package. The production package and its app data were not removed or cleared."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core (pwsh) is not installed on this macOS host. No requirement IDs or contracts changed."
+    }
+  ],
+  "limitations": [
+    "Generic emulator Gboard behavior is not equivalent evidence for Samsung keyboard/window-management behavior.",
+    "This is partial runtime acceptance and does not close FE-57.",
+    "A temporary applicationIdSuffix=.imeqa Gradle setting was used to isolate the login app and then reverted; no Android manifest/build configuration change remains. The unrelated user-owned flutter_webrtc .gitignore modification was not included."
+  ],
+  "status": "PARTIAL_EMULATOR_GBOARD_PASS_SAMSUNG_AND_SCREEN_SHARE_RETRY_OPEN"
+}
