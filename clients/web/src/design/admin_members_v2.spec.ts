@@ -33,4 +33,13 @@ describe('V2 administrator member directory', () => {
     expect(css).toContain('.admin-panel--members .admin-mobile-menu-mark')
     expect(css).not.toContain("content: '⋯'")
   })
+
+  it('aligns mobile search and account status geometry with R22', () => {
+    const css = readFileSync(new URL('./design_v2_admin_members.css', import.meta.url), 'utf8')
+    expect(css).toContain('.admin-member-filters select { width: 81px;')
+    expect(css).toContain('background: #11131a; font-size: 14px;')
+    expect(css).toContain('.admin-panel--members .admin-mobile-meta .is-active { border-radius: 4px; padding: 2px 6px; color: #78e6a0; background: #123320; font-size: 12px; font-weight: 600; line-height: 16px; }')
+    expect(css).toContain('.admin-account-status { border-radius: 4px; padding: 2px 6px; font-size: 12px; font-weight: 600; line-height: 16px; }')
+    expect(css).toContain('.admin-account-status.is-active { color: #78e6a0; background: #123320; }')
+  })
 })
