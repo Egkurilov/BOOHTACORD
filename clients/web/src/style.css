@@ -33,6 +33,7 @@
 @import './design/design_v2_fidelity.css';
 @import './design/design_v2_chat_media.css';
 @import './design/design_v2_chat_presentation.css';
+@import './shared/workspace_header/settings_header.css';
 @import './design/design_v2_admin_permissions.css';
 @import './design/design_v2_topology_dialog.css';
 @import './design/design_v2_audio_presentation.css';

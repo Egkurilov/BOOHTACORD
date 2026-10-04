@@ -1,0 +1,19 @@
+/* Shared settings chrome; panel content, stores and navigation remain independent. */
+.settings-workspace-header { display: flex; height: 64px; min-height: 64px; flex: none; align-items: center; gap: 12px; border-bottom: 1px solid var(--gc-border-subtle); padding: 0 24px; background: var(--gc-content); }
+.settings-workspace-header strong { min-width: 0; overflow: hidden; font-size: 16px; font-weight: 600; line-height: 24px; text-overflow: ellipsis; white-space: nowrap; }
+.settings-workspace-icon-wrap { width: 24px; height: 24px; flex: none; color: var(--gc-text-muted); }
+.settings-workspace-header svg { display: block; width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.settings-workspace-close { display: flex; width: 36px; height: 36px; flex: none; align-items: center; justify-content: center; margin-left: auto; border: 0; border-radius: 8px; color: var(--gc-text-secondary); background: transparent; }
+.settings-workspace-close:hover { color: var(--gc-text-primary); background: var(--gc-surface-hover); }
+@media (min-width: 1024px) {
+  .settings-workspace-header .workspace-header-actions { display: none; }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .settings-workspace-header { padding: 0 20px; }
+}
+@media (max-width: 1023px) {
+  .settings-workspace-header { height: 56px; min-height: 56px; gap: 8px; padding: 0 12px; }
+  .settings-workspace-header .workspace-header-toggle--nav, .settings-workspace-close { width: 44px; height: 44px; }
+  .settings-workspace-header .workspace-header-actions { order: -1; flex: none; }
+  .settings-workspace-icon-wrap { display: none; }
+}

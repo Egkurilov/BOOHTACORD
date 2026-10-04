@@ -6,7 +6,7 @@ import type { VoiceActivationMode } from '../voice/activation_store'
 import type { ScreenProfile } from '../voice/livekit_gateway'
 import { useVoiceConnectionStore } from '../voice/connection_store'
 import type { VoiceRoomRoster } from '../voice/voice_roster_client'
-import WorkspaceHeaderActions from '../shared/workspace_header/WorkspaceHeaderActions.vue'
+import SettingsWorkspaceHeader from '../shared/workspace_header/SettingsWorkspaceHeader.vue'
 import type { useWorkspaceVoiceControls } from './voice_controls'
 
 type VoiceConnection = ReturnType<typeof useVoiceConnectionStore>
@@ -36,30 +36,15 @@ const emit = defineEmits<{ openSearch: []; returnVoice: [channelId: string]; tog
 
 <template>
   <div v-if="panel === 'admin'" class="workspace-main-panel workspace-main-panel--admin" data-testid="admin-workspace-panel">
-    <header class="settings-workspace-header">
-      <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')" />
-      <svg class="settings-workspace-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 9 4v6c0 5-6 9-9 10-3-1-9-5-9-10V6l9-4Z"/><path d="m8 12 3 3 5-6"/></svg>
-      <strong>Администрирование</strong>
-      <button class="settings-workspace-close" type="button" aria-label="Закрыть администрирование" @click="emit('closePanel', 'admin')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
-    </header>
+    <SettingsWorkspaceHeader panel="admin" :nav-expanded="navOpen" @toggle-navigation="emit('toggleNav')" @close="emit('closePanel', 'admin')" />
     <slot name="admin" />
   </div>
   <div v-else-if="panel === 'audio'" class="workspace-main-panel workspace-main-panel--audio" data-testid="audio-workspace-panel">
-    <header class="settings-workspace-header">
-      <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')" />
-      <svg class="settings-workspace-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3 1-1h4l1 3 3 1 3 1v4l-2 2 1 3-3 3-3-1-2 2H8l-1-3-3-1-2-2 1-4 3-1 1-3Z"/><circle cx="12" cy="11" r="3"/></svg>
-      <strong>Настройки аудио</strong>
-      <button class="settings-workspace-close" type="button" aria-label="Закрыть настройки аудио" @click="emit('closePanel', 'audio')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
-    </header>
+    <SettingsWorkspaceHeader panel="audio" :nav-expanded="navOpen" @toggle-navigation="emit('toggleNav')" @close="emit('closePanel', 'audio')" />
     <slot name="audio" />
   </div>
   <div v-else-if="panel === 'profile'" class="workspace-main-panel workspace-main-panel--profile" data-testid="profile-workspace-panel">
-    <header class="settings-workspace-header">
-      <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')" />
-      <svg class="settings-workspace-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3 1-1h4l1 3 3 1 3 1v4l-2 2 1 3-3 3-3-1-2 2H8l-1-3-3-1-2-2 1-4 3-1 1-3Z"/><circle cx="12" cy="11" r="3"/></svg>
-      <strong>Настройки</strong>
-      <button class="settings-workspace-close" type="button" aria-label="Закрыть настройки" @click="emit('closePanel', 'profile')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
-    </header>
+    <SettingsWorkspaceHeader panel="profile" :nav-expanded="navOpen" @toggle-navigation="emit('toggleNav')" @close="emit('closePanel', 'profile')" />
     <slot name="profile" />
   </div>
   <ConversationPane
