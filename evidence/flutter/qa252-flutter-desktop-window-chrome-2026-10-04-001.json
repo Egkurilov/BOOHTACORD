@@ -2,7 +2,7 @@
   "id": "QA-252",
   "date": "2026-10-04",
   "task": "FV2-018 — Flutter frameless desktop window chrome and text-only brand",
-  "source_revision": "fc51ced59516a47c396e907af14b158bb7abf467",
+  "source_revision": "88b85ffe85cb946008dd3c5f2f2f4308eada14e9",
   "working_tree_changes": true,
   "summary": "Added a compact draggable desktop title bar for macOS and Windows, hid the native title bar, preserved macOS traffic lights, added Windows window controls, and kept mobile layout unchanged. The brand is a legible Inter wordmark without an icon.",
   "checks": [
@@ -38,6 +38,23 @@
       "observation": "Rendered a temporary 1000x32 Windows title-bar capture with the bundled Inter font and inspected it at native and enlarged scale. BOOHTACORD is readable and has no icon; the temporary generated capture was not retained in the repository."
     },
     {
+      "name": "Live macOS window visual acceptance",
+      "result": "PASS",
+      "observation": "Inspected the already-running macOS Debug window without restarting it. The system title text is replaced by the 32 px custom bar; BOOHTACORD is text-only and the three native traffic-light window controls remain visible. No screenshot was retained because the current workspace contains user conversation content."
+    },
+    {
+      "name": "Android emulator visual regression",
+      "result": "PASS",
+      "observation": "Inspected the running Android emulator (sdk_gphone64_arm64, 1080x2400); the installed 1.0.28 app shows the regular mobile channel header and no desktop chrome. The current-source widget regression also verifies TargetPlatform.android receives no desktop title bar. The installed binary predates the desktop-only change."
+    },
+    {
+      "name": "Current-source desktop/mobile title-bar widget tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/desktop_window_chrome_test.dart",
+      "result": "PASS",
+      "passed": 4,
+      "observation": "Re-run during live Mac and Android emulator visual acceptance; covers Windows controls, text-only brand, macOS control inset, and mobile without desktop chrome."
+    },
+    {
       "name": "Windows runner tests and analysis",
       "result": "PASS",
       "run": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37190446718",
@@ -51,8 +68,8 @@
     },
     {
       "name": "Native desktop window runtime acceptance",
-      "result": "NOT_RUN",
-      "observation": "The built macOS app was not launched to avoid restarting the user's active app; Windows native controls and live drag/maximize behavior also have not been manually checked."
+      "result": "PARTIAL",
+      "observation": "macOS visual state passed in the already-running Debug app; drag/maximize/traffic-light actions were not exercised. Windows native controls and runtime behavior remain NOT_RUN."
     },
     {
       "name": "Spec traceability verifier",
@@ -67,8 +84,8 @@
     }
   ],
   "limitations": [
-    "FV2-018 remains open until a Windows distribution build and native desktop-window visual acceptance pass.",
+    "FV2-018 remains open until a current-master Windows distribution build and native Windows window acceptance pass; macOS live visual and Android mobile-regression checks are recorded, but macOS drag/maximize actions remain untested.",
     "No API, ACL, session, authentication, or LiveKit behavior changed."
   ],
-  "status": "PASS_FLUTTER_TESTS_ANALYSIS_MACOS_DEBUG_BUILD_COMPONENT_VISUAL_REVIEW_AND_WINDOWS_TESTS; WINDOWS_DISTRIBUTION_BUILD_BLOCKED_AND_NATIVE_WINDOW_ACCEPTANCE_OPEN"
+  "status": "PASS_FLUTTER_TESTS_ANALYSIS_MACOS_DEBUG_BUILD_COMPONENT_AND_LIVE_MACOS_VISUAL_REVIEW_ANDROID_EMULATOR_MOBILE_REGRESSION_AND_WINDOWS_TESTS; WINDOWS_DISTRIBUTION_BUILD_BLOCKED_AND_WINDOWS_NATIVE_ACCEPTANCE_OPEN"
 }
