@@ -1,5 +1,6 @@
 /* Shared V2 states, mapped onto production controls without changing handlers. */
 html { font-feature-settings: 'cv11', 'ss01'; -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-weight: var(--gc-weight-semibold); }
 button, input, textarea, select { color: inherit; }
 button { border: 0; }
 .gc-button, .role-policy-actions button, .admin-section-heading > button,
