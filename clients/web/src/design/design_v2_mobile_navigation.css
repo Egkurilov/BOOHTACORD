@@ -2,12 +2,16 @@
 .mobile-nav-close { display: none; }
 .voice-dock-headset { display: none; }
 @media (max-width: 720px) {
-  .sidebar.is-open > .nav-drawer { box-sizing: border-box; padding-top: 76px; padding-bottom: 176px; }
+  .sidebar.is-open > .nav-drawer { box-sizing: border-box; border-right: 0; padding-top: 76px; padding-bottom: 176px; }
   .sidebar.is-open > .guild-header { padding-left: 12px; }
   .sidebar.is-open .guild-chevron { display: none; }
   .sidebar.is-open .mobile-nav-close { position: fixed; top: 10px; left: min(260px, calc(100vw - 100px)); z-index: 62; display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: 8px; color: #aab2c4; background: transparent; font-size: 24px; font-weight: 300; cursor: pointer; }
   .sidebar.is-open .mobile-nav-close:hover { background: #242833; }
+  .sidebar.is-open .mobile-nav-close svg { width: 20px; height: 20px; stroke-width: 1.8; }
   .sidebar.is-open .sidebar-tabs { border-bottom-color: transparent; }
+  .sidebar.is-open .sidebar-tabs { box-sizing: border-box; width: calc(100% - 24px); height: 40px; margin: 0 12px 8px; border: 0; border-radius: 8px; padding: 4px; background: #0b0d12; }
+  .sidebar.is-open .sidebar-tabs button { height: 32px; min-height: 32px; border-radius: 6px; padding: 0 6px; font-size: 14px; font-weight: 500; }
+  .sidebar.is-open .sidebar-tabs button.is-selected { background: #222631; }
   .sidebar.is-open .channel-navigation-actions button,
   .sidebar.is-open .channel-category-actions button { width: 44px; height: 44px; margin: -6px -12px; font-size: 22px; font-weight: 300; }
   .sidebar.is-open .channel-category:first-of-type h2 { padding-top: 23px; }
@@ -16,7 +20,7 @@
   .sidebar.is-open .channel-category h2::before { position: absolute; left: 12px; color: #a4adbf; font-size: 12px; content: '⌄'; }
   .sidebar.is-open .channel-category h2 > span:first-child { margin-left: 16px; }
   .sidebar.is-open .guild-search-button kbd { display: none; }
-  .sidebar.is-open .guild-search-button { padding: 0 10px; border-color: transparent; color: #aab2c4; background: #0b0e14; font-weight: 400; }
+  .sidebar.is-open .guild-search-button { padding: 0 10px; border: 0; color: #a0a9be; background: #0b0d12; font-weight: 400; }
   .sidebar.is-open .channel-button.selected { font-weight: 400; }
   .sidebar.is-open .channel-button.voice-connected:not(.selected) { color: var(--gc-text-secondary); }
   .sidebar.is-open .channel-button.voice-connected::before { display: none; }
@@ -41,5 +45,10 @@
   .sidebar.is-open .mobile-voice-dock .voice-actions .voice-icon-button svg { position: relative; }
   .sidebar.is-open .mobile-voice-dock .voice-actions .voice-icon-button--danger { color: #fff; }
   .sidebar.is-open .mobile-voice-dock .voice-actions .voice-icon-button--danger::before { background: #b80c16; }
-  .sidebar.is-open .user-footer { right: auto; bottom: 0; left: 0; z-index: 62; box-sizing: border-box; width: min(320px, calc(100vw - 40px)); height: 64px; min-height: 64px; border-top: 1px solid #292d39; padding: 8px 14px; background: #101218; }
+  .sidebar.is-open .user-footer { right: auto; bottom: 0; left: 0; z-index: 62; box-sizing: border-box; width: min(320px, calc(100vw - 40px)); height: 64px; min-height: 64px; gap: 10px; border-top: 1px solid #292d39; border-right: 0; padding: 12px 14px; background: #0b0d12; }
+  .sidebar.is-open .user-footer-profile { gap: 10px; }
+  .sidebar.is-open .user-footer .username { gap: 0; }
+  .sidebar.is-open .user-footer small { line-height: 16px; }
+  .sidebar.is-open .user-footer-avatar { color: #e9cbff; font-size: 13px; }
+  .sidebar.is-open .user-footer-settings { width: 44px; height: 44px; }
 }
