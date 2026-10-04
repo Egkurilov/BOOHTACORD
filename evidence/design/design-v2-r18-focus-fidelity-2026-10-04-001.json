@@ -1,0 +1,33 @@
+{
+  "id": "design-v2-r18-focus-fidelity-2026-10-04-001",
+  "scope": "Real member profile R18 focus, typography, badges, presence and primary action",
+  "status": "PARTIAL",
+  "visual_report": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-r18-focus-2026-10-04/REVIEW.md",
+  "checks": [
+    {
+      "name": "Opening focus priority",
+      "result": "PASS",
+      "observation": "Focused test reproduced header selection in DOM order. Desktop now prioritizes primary action, self profile falls back to close, and modal sheet focuses the dialog."
+    },
+    {
+      "name": "Controlled R18 actual and unchanged reference",
+      "result": "PASS",
+      "observation": "Card RGB MAE focused 2.319 to 0.876, idle 2.260 to 0.876; avatar 3.833 to 1.894. Same fixture before and after; reference SHA-256 is recorded in the report."
+    },
+    {
+      "name": "Desktop and mobile actions",
+      "result": "PASS",
+      "observation": "Browser verified keyboard close visibility, Escape and restored trigger, scoped kick absence, DM POST participant ID and retained CONNECTED voice session; no page errors."
+    },
+    {
+      "name": "Native Web checks",
+      "result": "PASS",
+      "observation": "297 test files and 940 tests passed; TypeScript/Vite build and diff whitespace check passed."
+    },
+    {
+      "name": "Full pixel and live media acceptance",
+      "result": "NOT_RUN",
+      "observation": "Scoped fixture retains backdrop state differences. This packet does not claim strict 1:1 or real LiveKit physical acceptance."
+    }
+  ]
+}
