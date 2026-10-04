@@ -15,4 +15,9 @@ describe('Design V2 voice dock icons', () => {
     expect(dock).toContain('<path v-if="screenShareState !== \'SHARING\'" d="M8 21h8M12 17v4"/>')
     expect(dock).toContain("emit('stopScreen') : emit('startScreen')")
   })
+
+  it('uses the same headphones outline for the header and deafen control', () => {
+    expect(dock.match(/M3 14v-3a9 9 0 0 1 18 0v3/g)).toHaveLength(2)
+    expect(dock).toContain("@click=\"emit('toggleDeafen')\"")
+  })
 })

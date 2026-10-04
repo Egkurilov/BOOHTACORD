@@ -41,6 +41,8 @@
 @import './design/design_v2_mobile_navigation.css';
 @import './design/design_v2_navigation_controls.css';
 @import './design/design_v2_channel_tree.css';
+@import './design/design_v2_voice_dock.css';
+@import './design/design_v2_user_footer.css';
 @import './design/design_v2_authentication_presentation.css';
 @import './design/design_v2_member_popover.css';
 @import './design/design_v2_member_roster.css';
