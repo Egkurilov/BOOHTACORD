@@ -24,13 +24,14 @@ extension VoiceAdmissionPrepare on VoiceController {
     String lease,
   ) async {
     final account = readUser();
-    if (account == null || voiceVolumePreferences != null) return;
-    final preferences = await VoiceVolumePreferences.open(account.accountId);
+    if (account == null) return;
+    await flushVoiceVolumes();
     checkAdmission(ticket, revision, lease);
+    final preferences = await VoiceVolumePreferences.open(account.accountId, origin: api.baseUrl);
+    checkAdmission(ticket, revision, lease);
+    if (readUser()?.accountId != account.accountId || !preferences.belongsTo(account.accountId, api.baseUrl)) throw CancelledVoiceAdmission();
     voiceVolumePreferences = preferences;
-    if (!preferences.persistent) {
-      error = 'Не удалось загрузить настройки громкости; используется 100%.';
-    }
+    volumePreferenceOutcome(preferences.status);
   }
 
   RoomOptions voiceRoomOptions() => RoomOptions(

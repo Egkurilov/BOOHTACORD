@@ -55,9 +55,10 @@ extension VoiceVolumesApply on VoiceController {
         source,
       );
       if (!active(ticket, revision)) return;
+      volumePreferenceOutcome(preferences.status);
     } catch (_) {
       if (!active(ticket, revision)) return;
-      error = 'Не удалось применить сохранённую громкость участника.';
+      volumePreferenceOutcome('error');
       if (active(ticket, revision)) notifyListeners();
     }
   }

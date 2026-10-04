@@ -20,7 +20,7 @@ function watchParticipantScreen(participantId: string): void { const screen = sc
     <article v-for="participant in participants" :key="participant.id" class="participant" :class="{ talking: participant.speaking && !participant.microphoneMuted }" data-testid="participant-card">
       <details v-if="participant.accountId" class="participant-volume">
         <summary :aria-label="`Настройки громкости ${participant.name || 'участника'}`" title="Настройки участника">•••</summary>
-        <label>Громкость · {{ participant.volume }}%<input :aria-label="`Громкость микрофона ${participant.name || 'участника'}`" type="range" min="0" max="200" step="1" :value="participant.volume" @input="emit('setVolume', participant.id, Number(($event.target as HTMLInputElement).value))"></label>
+        <label>Громкость · {{ participant.volume }}%<input :aria-label="`Громкость участника ${participant.name || 'участника'}`" :aria-valuetext="`${participant.volume} процентов`" type="range" min="0" max="200" step="1" :value="participant.volume" @input="emit('setVolume', participant.id, Number(($event.target as HTMLInputElement).value))"></label>
       </details>
       <span class="avatar lg" :style="{ backgroundColor: avatarBackground(participant.accountId ?? participant.id), color: avatarForeground(participant.accountId ?? participant.id) }" aria-hidden="true">{{ initial(participant.name) }}</span>
       <span class="participant-name">{{ participant.name || 'Участник' }}</span>

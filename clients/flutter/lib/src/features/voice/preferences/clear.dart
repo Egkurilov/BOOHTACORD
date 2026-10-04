@@ -1,8 +1,12 @@
+import 'dart:async';
 import '../lifecycle/controller.dart';
 
 extension VoiceAccountPreferences on VoiceController {
   void clearAccountPreferences() {
+    final previous = voiceVolumePreferences;
+    unawaited(previous?.flush().catchError((Object _) {}) ?? Future<void>.value());
     voiceVolumePreferences = null;
+    voiceVolumeWarning = null;
     audioActivationMode = AudioActivationMode.vad;
     pushToTalkKeyId = null;
     pushToTalkKeyLabel = null;

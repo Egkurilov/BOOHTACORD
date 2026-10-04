@@ -23,14 +23,16 @@ extension VoiceVolumesChange on VoiceController {
     }
     final level = VoiceVolumePreferences.normalize(percent);
     try {
+      final saving = preferences.setParticipant(accountId, level);
+      notifyListeners();
       await Future.wait([
-        preferences.setParticipant(accountId, level),
+        saving,
         applyParticipantVolume(participant, level),
       ]);
-      if (active(ticket, revision)) notifyListeners();
+      if (active(ticket, revision)) { volumePreferenceOutcome('success'); notifyListeners(); }
     } catch (_) {
       if (!active(ticket, revision)) return;
-      error = 'Не удалось изменить или сохранить громкость участника.';
+      volumePreferenceOutcome(preferences.status == 'fallback' ? 'fallback' : 'error');
       if (active(ticket, revision)) notifyListeners();
     }
   }
@@ -51,18 +53,18 @@ extension VoiceVolumesChange on VoiceController {
     try {
       transientScreenShareVolumes[participant.identity] = level;
       final preferences = voiceVolumePreferences;
-      if (preferences != null && accountId != null) {
-        await preferences.setScreen(accountId, level);
-      }
-      await applyParticipantVolume(
+      final saving = preferences != null && accountId != null
+          ? preferences.setScreen(accountId, level) : Future<void>.value();
+      notifyListeners();
+      await Future.wait([saving, applyParticipantVolume(
         participant,
         screenShareAudioMuted(participant) ? 0 : level,
         TrackSource.screenShareAudio,
-      );
-      if (active(ticket, revision)) notifyListeners();
+      )]);
+      if (active(ticket, revision)) { volumePreferenceOutcome(voiceVolumePreferences?.status ?? 'fallback'); notifyListeners(); }
     } catch (_) {
       if (!active(ticket, revision)) return;
-      error = 'Не удалось изменить или сохранить громкость демонстрации.';
+      volumePreferenceOutcome(voiceVolumePreferences?.status == 'fallback' ? 'fallback' : 'error');
       if (active(ticket, revision)) notifyListeners();
     }
   }

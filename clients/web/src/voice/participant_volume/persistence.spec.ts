@@ -1,0 +1,52 @@
+import { afterEach, expect, it, vi } from 'vitest'
+import { VoiceVolumePreferences } from '../voice_volume_preferences'
+function storage() {
+  const values = new Map<string, string>()
+  return { values, getItem: (key: string) => values.get(key) ?? null, setItem: vi.fn((key: string, value: string) => { values.set(key, value) }) }
+}
+afterEach(() => vi.useRealTimers())
+it('changes gain preferences immediately but coalesces persistence and flushes before account switch', async () => {
+  vi.useFakeTimers()
+  const local = storage(), preferences = new VoiceVolumePreferences(local)
+  preferences.bind('owner')
+  for (const level of [0, 50, 100, 175, 200]) preferences.setParticipant('remote', level)
+  expect(preferences.participant('remote')).toBe(200)
+  expect(local.setItem).not.toHaveBeenCalled()
+  await vi.advanceTimersByTimeAsync(250)
+  expect(local.setItem).toHaveBeenCalledTimes(1)
+  preferences.setParticipant('remote', 175)
+  preferences.bind('other')
+  expect(preferences.participant('remote')).toBe(100)
+  const restored = new VoiceVolumePreferences(local); restored.bind('owner')
+  expect(restored.participant('remote')).toBe(175)
+  expect(local.setItem).toHaveBeenCalledTimes(2)
+})
+it('reset covers inactive saved and legacy participants and survives logout/login', () => {
+  const local = storage()
+  local.values.set('voice-volume:v1:owner:legacy', JSON.stringify({ participant: 25, screen: 160 }))
+  const prefs = new VoiceVolumePreferences(local); prefs.bind('owner')
+  prefs.setParticipant('inactive', 175); prefs.setScreen('inactive', 80); prefs.flush()
+  prefs.unbind(); prefs.bind('owner')
+  expect(prefs.participant('legacy')).toBe(25)
+  prefs.reset(); prefs.unbind()
+  const reopened = new VoiceVolumePreferences(local); reopened.bind('owner')
+  expect(reopened.participant('inactive')).toBe(100)
+  expect(reopened.screen('inactive')).toBe(100)
+  expect(reopened.participant('legacy')).toBe(100)
+})
+it('failed storage is visible and falls back to defaults at the next bind', () => {
+  const prefs = new VoiceVolumePreferences({ getItem: () => { throw new Error('private') }, setItem: () => { throw new Error('private') } })
+  prefs.bind('owner')
+  expect(prefs.participant('remote')).toBe(100)
+  expect(prefs.status).toBe('fallback')
+  prefs.setParticipant('remote', 175); expect(prefs.participant('remote')).toBe(175)
+  prefs.flush(); expect(prefs.status).toBe('fallback')
+  prefs.bind('owner'); expect(prefs.participant('remote')).toBe(100)
+})
+it('corrupt documents and malformed legacy levels normalize to 100', () => {
+  const local = storage()
+  local.values.set('voice-volume:v2:owner', 'not-json')
+  const prefs = new VoiceVolumePreferences(local); prefs.bind('owner')
+  expect(prefs.participant('remote')).toBe(100)
+  expect(prefs.status).toBe('fallback')
+})

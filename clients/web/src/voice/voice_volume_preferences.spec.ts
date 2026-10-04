@@ -50,7 +50,7 @@ describe('voice volume preferences', () => {
     expect(preferences.screen('remote-a')).toBe(35)
 
     preferences.bind('owner-a')
-    expect(preferences.participant('remote-a')).toBe(175)
+    expect(preferences.participant('remote-a')).toBe(100)
 
     preferences.bind('owner-b')
     expect(preferences.participant('remote-a')).toBe(100)

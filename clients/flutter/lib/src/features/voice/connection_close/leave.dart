@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../../../services/android_audio_devices.dart';
 import '../../screen/lifecycle/controller.dart';
 import '../lifecycle/controller.dart';
@@ -14,6 +15,7 @@ extension VoiceConnectionCloseLeave on VoiceController {
   }
 
   Future<void> closeVoice(int revision) async {
+    unawaited(flushVoiceVolumes());
     final ticket = scope.capture();
     final connected = room;
     final pending = pendingRoom;
