@@ -17,7 +17,7 @@ extension _VolumeWrites on VoiceVolumePreferences {
     if (payload == null || batch == null) return _tail;
     Future<void> write() async {
       try {
-        final saved = _origin.isEmpty || _storage == null ? false : await _storage!.setString(key, payload);
+        final saved = _origin.isEmpty || _storage == null ? false : await _storage.setString(key, payload);
         if (saved != true) throw StateError('Volume preferences unavailable');
         status = 'success'; batch.complete();
       } catch (_) {

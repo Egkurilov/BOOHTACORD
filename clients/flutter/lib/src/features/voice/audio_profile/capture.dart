@@ -33,8 +33,12 @@ class VoiceCaptureOptions extends AudioCaptureOptions {
   AudioCaptureOptions copyWith({
     String? deviceId, bool? noiseSuppression, bool? echoCancellation,
     bool? autoGainControl, bool? highPassFilter,
+    // Preserve the pinned SDK's experimental override signature and values.
+    // ignore: experimental_member_use
     AudioProcessingMode? echoCancellationMode, AudioProcessingMode? noiseSuppressionMode,
+    // ignore: experimental_member_use
     AudioProcessingMode? autoGainControlMode, AudioProcessingMode? highPassFilterMode,
+    // ignore: experimental_member_use
     AudioProcessingOptions? processing, bool? voiceIsolation,
     bool? typingNoiseDetection, bool? stopAudioCaptureOnMute,
     TrackProcessor<AudioProcessorOptions>? processor,
