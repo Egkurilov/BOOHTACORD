@@ -46,4 +46,10 @@ describe('GuildChat unified search design contract', () => {
     expect(searchPanel).toContain('emit(\'open\', message)')
     expect(searchPanel).toContain('value="all"')
   })
+
+  it('uses the 380 px handoff rail and full-width channel header on desktop', () => {
+    const v2 = source('./design_v2_search_presentation.css')
+    expect(v2).toContain('.gc-shell.search-active:not(.voice-stage-wide) { grid-template-columns: var(--gc-layout-nav-wide) minmax(0, 1fr) 380px; }')
+    expect(v2).toContain('.gc-shell.search-active .text-conversation > .conversation-header { width: calc(100% + 380px); }')
+  })
 })
