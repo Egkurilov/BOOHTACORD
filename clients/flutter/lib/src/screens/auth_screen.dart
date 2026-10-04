@@ -6,6 +6,7 @@ import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import '../app_version.dart';
 import '../app_state.dart';
 import '../theme.dart';
+import '../services/password_generator.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key, required this.state});
@@ -28,6 +29,9 @@ class _AuthScreenState extends State<AuthScreen> {
   );
   bool _register = false;
   bool _pending = false;
+  bool _showPassword = false;
+  bool _confirmGeneration = false;
+  String? _passwordStatus;
   late final bool _focusLogin;
 
   @override
@@ -45,7 +49,41 @@ class _AuthScreenState extends State<AuthScreen> {
     _passwordFocus.dispose();
     _passwordResetButtonFocus.dispose();
     _serverAddressButtonFocus.dispose();
+    _password.clear();
     super.dispose();
+  }
+
+  void _chooseMode(bool register) {
+    if (_register != register) {
+      _password.clear();
+      _showPassword = false;
+      _confirmGeneration = false;
+      _passwordStatus = null;
+    }
+    setState(() => _register = register);
+    widget.state.clearError();
+  }
+
+  void _requestPasswordGeneration() {
+    if (_password.text.isNotEmpty) {
+      setState(() => _confirmGeneration = true);
+      return;
+    }
+    _generatePassword();
+  }
+
+  void _generatePassword() {
+    final value = SecurePasswordGenerator().generate();
+    setState(() {
+      _password.value = TextEditingValue(
+        text: value,
+        selection: TextSelection.collapsed(offset: value.length),
+      );
+      _showPassword = true;
+      _confirmGeneration = false;
+      _passwordStatus = 'Надёжный пароль сгенерирован';
+    });
+    _passwordFocus.requestFocus();
   }
 
   Future<void> _submit() async {
@@ -57,6 +95,9 @@ class _AuthScreenState extends State<AuthScreen> {
         _password.text,
         register: _register,
       );
+      _password.clear();
+      _showPassword = false;
+      _passwordStatus = null;
     } catch (_) {
       if (mounted) setState(() => _pending = false);
     }
@@ -160,10 +201,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           const SizedBox(height: 24),
                           _AuthenticationModeTabs(
                             registerSelected: _register,
-                            onSelected: (register) {
-                              setState(() => _register = register);
-                              widget.state.clearError();
-                            },
+                            onSelected: _chooseMode,
                           ),
                           const SizedBox(height: 24),
                           _AuthFieldLabel('Логин'),
@@ -197,7 +235,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             key: const ValueKey('auth-password-field'),
                             controller: _password,
                             focusNode: _passwordFocus,
-                            obscureText: true,
+                            obscureText: !_showPassword,
                             autocorrect: false,
                             enableSuggestions: false,
                             enableIMEPersonalizedLearning: false,
@@ -206,7 +244,13 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ? AutofillHints.newPassword
                                   : AutofillHints.password,
                             ],
-                            decoration: _authFieldDecoration(),
+                            decoration: _authFieldDecoration().copyWith(
+                              suffixIcon: IconButton(
+                                tooltip: _showPassword ? 'Скрыть пароль' : 'Показать пароль',
+                                onPressed: () => setState(() => _showPassword = !_showPassword),
+                                icon: Icon(_showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                              ),
+                            ),
                             onFieldSubmitted: (_) => _submit(),
                             validator: (value) {
                               final password = value ?? '';
@@ -222,6 +266,36 @@ class _AuthScreenState extends State<AuthScreen> {
                               return null;
                             },
                           ),
+                          if (_register) ...[
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              key: const ValueKey('auth-generate-password'),
+                              onPressed: _pending ? null : _requestPasswordGeneration,
+                              icon: const Icon(Icons.auto_awesome, size: 18),
+                              label: const Text('Сгенерировать пароль'),
+                            ),
+                            if (_confirmGeneration) ...[
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Заменить введённый пароль сгенерированным?',
+                                style: TextStyle(color: GcColors.muted, fontSize: 12),
+                              ),
+                              Row(
+                                children: [
+                                  TextButton(onPressed: _generatePassword, child: const Text('Заменить')),
+                                  TextButton(onPressed: () => setState(() => _confirmGeneration = false), child: const Text('Оставить')),
+                                ],
+                              ),
+                            ],
+                          ],
+                          if (_passwordStatus != null)
+                            Semantics(
+                              liveRegion: true,
+                              child: Text(
+                                _passwordStatus!,
+                                style: const TextStyle(color: GcColors.muted, fontSize: 12),
+                              ),
+                            ),
                           if (_register) ...[
                             const SizedBox(height: 8),
                             const Text(

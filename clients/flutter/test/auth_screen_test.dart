@@ -407,6 +407,31 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('registration can generate, reveal, confirm replacement and clear on mode change', (tester) async {
+    final state = AppState(ApiClient())..phase = AppPhase.signedOut;
+    addTearDown(state.dispose);
+    await tester.pumpWidget(MaterialApp(home: AuthScreen(state: state)));
+    await tester.tap(find.text('Регистрация'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('auth-generate-password')));
+    await tester.pumpAndSettle();
+    final field = tester.widget<TextFormField>(find.byKey(const ValueKey('auth-password-field')));
+    expect(field.controller!.text, hasLength(24));
+    expect(field.obscureText, isFalse);
+    expect(find.text('Надёжный пароль сгенерирован'), findsOneWidget);
+    await tester.enterText(find.byKey(const ValueKey('auth-password-field')), 'manual-password-123');
+    await tester.tap(find.byKey(const ValueKey('auth-generate-password')));
+    await tester.pumpAndSettle();
+    expect(find.text('Заменить введённый пароль сгенерированным?'), findsOneWidget);
+    expect(tester.widget<TextFormField>(find.byKey(const ValueKey('auth-password-field'))).controller!.text, 'manual-password-123');
+    await tester.tap(find.text('Заменить'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextFormField>(find.byKey(const ValueKey('auth-password-field'))).controller!.text, hasLength(24));
+    await tester.tap(find.text('Войти').first);
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextFormField>(find.byKey(const ValueKey('auth-password-field'))).controller!.text, isEmpty);
+  });
 }
 
 class _FailingAuthenticationApi extends ApiClient {

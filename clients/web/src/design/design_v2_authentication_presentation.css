@@ -14,6 +14,10 @@
 .authentication-password-control input { padding-right: 44px; }
 .authentication-password-toggle { position: absolute; top: 0; right: 0; display: grid; width: 44px; height: 44px; place-items: center; border: 0; color: #aab2c4; background: transparent; }
 .authentication-password-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.authentication-password-generation { gap: 8px; margin-top: 8px; }
+.authentication-password-generate, .authentication-password-confirm-actions button { min-height: 36px; border-radius: 8px; padding: 0 12px; color: #f4f5fa; background: #1b1f2a; }
+.authentication-password-confirm, .authentication-password-status { color: #aab2c4; font-size: 12px; line-height: 16px; }
+.authentication-password-confirm-actions { display: flex; gap: 8px; }
 .authentication-submit { height: 44px; min-height: 44px; margin-top: 0; font-weight: 500; }
 .authentication-account-help { display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 20px; border: 0; padding: 0; text-align: center; }
 .authentication-account-help .authentication-recovery-title { color: #a0a9be; font-size: 12px; font-weight: 400; line-height: 18px; }

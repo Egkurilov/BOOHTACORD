@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { login, register } from './auth_client'
+import { generateSecurePassword } from './password_generator'
 
 const props = withDefaults(defineProps<{ focusLoginOnMount?: boolean }>(), { focusLoginOnMount: false })
 const emit = defineEmits<{ authenticated: [] }>()
@@ -13,12 +14,33 @@ const pending = ref(false)
 const error = ref<string | null>(null)
 const showRecoveryHelp = ref(false)
 const showPassword = ref(false)
+const passwordInput = ref<HTMLInputElement | null>(null)
+const passwordStatus = ref('')
+const confirmGeneration = ref(false)
 
 onMounted(() => { if (props.focusLoginOnMount) loginInput.value?.focus() })
 
 function chooseMode(nextMode: 'login' | 'register'): void {
   mode.value = nextMode
   error.value = null
+  password.value = ''
+  showPassword.value = false
+  confirmGeneration.value = false
+  passwordStatus.value = ''
+}
+
+function requestPasswordGeneration(): void {
+  if (password.value) { confirmGeneration.value = true; return }
+  generatePassword()
+}
+
+function generatePassword(): void {
+  password.value = generateSecurePassword()
+  showPassword.value = true
+  confirmGeneration.value = false
+  error.value = null
+  passwordStatus.value = 'Надёжный пароль сгенерирован'
+  void nextTick(() => passwordInput.value?.focus())
 }
 
 async function submit(): Promise<void> {
@@ -29,6 +51,8 @@ async function submit(): Promise<void> {
     if (mode.value === 'register') await register(input)
     await login(input)
     password.value = ''
+    showPassword.value = false
+    passwordStatus.value = ''
     emit('authenticated')
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : 'Не удалось выполнить вход.'
@@ -36,6 +60,8 @@ async function submit(): Promise<void> {
     pending.value = false
   }
 }
+
+onBeforeUnmount(() => { password.value = '' })
 </script>
 
 <template>
@@ -52,9 +78,15 @@ async function submit(): Promise<void> {
         </label>
         <label class="authentication-field">
           Пароль
-          <span class="authentication-password-control"><input v-model="password" :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" required :type="showPassword ? 'text' : 'password'" :aria-describedby="error ? 'authentication-error' : undefined" :aria-invalid="Boolean(error)"><button class="authentication-password-toggle" type="button" :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'" :aria-pressed="showPassword" @click="showPassword = !showPassword"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Zm10-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" /></svg></button></span>
+          <span class="authentication-password-control"><input ref="passwordInput" v-model="password" :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" required :type="showPassword ? 'text' : 'password'" :aria-describedby="error ? 'authentication-error' : undefined" :aria-invalid="Boolean(error)"><button class="authentication-password-toggle" type="button" :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'" :aria-pressed="showPassword" @click="showPassword = !showPassword"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Zm10-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" /></svg></button></span>
+          <div v-if="mode === 'register'" class="authentication-password-generation">
+            <button class="authentication-password-generate" type="button" :disabled="pending" @click="requestPasswordGeneration">Сгенерировать пароль</button>
+            <p v-if="confirmGeneration" class="authentication-password-confirm" role="alert">Заменить введённый пароль сгенерированным?</p>
+            <span v-if="confirmGeneration" class="authentication-password-confirm-actions"><button type="button" @click="generatePassword">Заменить</button><button type="button" @click="confirmGeneration = false">Оставить</button></span>
+          </div>
         </label>
         <p v-if="mode === 'register'" class="authentication-hint">Логин: 3–32 символа A–Z, 0–9, `_`, `.`, `-`. Пароль — от 12 символов.</p>
+        <p v-if="passwordStatus" class="authentication-password-status" role="status" aria-live="polite">{{ passwordStatus }}</p>
         <p v-if="error" id="authentication-error" class="authentication-error" role="alert">{{ error }}</p>
         <button class="authentication-submit" :disabled="pending" type="submit">
           {{ pending ? 'Подождите…' : mode === 'login' ? 'Войти' : 'Создать аккаунт' }}
