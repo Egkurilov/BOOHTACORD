@@ -23,6 +23,11 @@
       "observation": "39 approved requirements referenced; approved brief SHA-256 and requirement IDs validated."
     },
     {
+      "name": "Windows CI artifact startup",
+      "result": "PASS",
+      "observation": "Downloaded the successful 665a828a Windows x64 CI artifact and launched boohtacord_desktop.exe on Windows 11. The BOOHTACORD window opened and remained responsive. A cached user session made this runtime unsuitable for shareable fixture screenshots; the launched process was stopped without interacting with account data."
+    },
+    {
       "name": "Android, macOS and Windows runtime visual acceptance",
       "result": "NOT_RUN",
       "observation": "No connected Android device or local Flutter SDK; platform screenshots and pointer/keyboard runtime review remain open."
