@@ -68,6 +68,7 @@ async function loadSession(): Promise<void> {
 }
 
 function addEmoji(emoji: string): void { draft.value += emoji }
+function insertMobileMention(): void { draft.value += draft.value && !/\s$/.test(draft.value) ? ' @' : '@'; void nextTick(() => composerTextarea.value?.focus()) }
 function closeSearch(): void { searchOpen.value = false; void nextTick(() => searchTrigger.value?.focus()) }
 function onComposerPaste(event: ClipboardEvent): void {
   if (composerTextarea.value) pasteClipboardImages(event, composerTextarea.value, (files) => attachmentPicker.value?.addPastedFiles(files))
@@ -100,7 +101,7 @@ function onComposerPaste(event: ClipboardEvent): void {
       <MentionAutocomplete v-model="draft" v-model:mention-user-ids="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" />
       <form class="message-composer composer" @submit.prevent="send">
         <TextMessageAttachmentPicker ref="attachmentPicker" :channel-id="props.channelId" :initial-attachments="attachments" :disabled="store.sending || attachmentPending"
-          :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" />
+          :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" @mention="insertMobileMention" @emoji="emojiOpen = true" />
         <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" />
         <label class="gc-sr-only" for="message-body">Сообщение</label>
         <textarea id="message-body" ref="composerTextarea" v-model="draft" rows="1" :disabled="store.sending" :aria-describedby="store.error ? 'text-conversation-error text-composer-help' : 'text-composer-help'" :placeholder="`Написать в #${channelName}`" @keydown="submitOnComposerEnter($event, send)" @paste="onComposerPaste" />

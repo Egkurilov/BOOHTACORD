@@ -3,11 +3,17 @@ import { ref, watch } from 'vue'
 import type { TextMessageAttachment } from '../conversation/message_client'
 import { uploadDirectMessageAttachment } from './direct_message_attachment_upload_client'
 import { exceedsAttachmentCount } from '../conversation/attachment_limits'
+import { useCompactComposerActions } from '../conversation/use_compact_composer_actions'
 
 const props = defineProps<{ directMessageId: string; disabled: boolean; clearToken: number; initialAttachments?: TextMessageAttachment[] }>()
-const emit = defineEmits<{ change: [attachments: TextMessageAttachment[]]; pending: [value: boolean] }>()
+const emit = defineEmits<{ change: [attachments: TextMessageAttachment[]]; pending: [value: boolean]; mention: []; emoji: [] }>()
 const attachments = ref<TextMessageAttachment[]>([...(props.initialAttachments ?? [])])
 const fileInput = ref<HTMLInputElement | null>(null)
+const { compact, menuOpen, trigger, firstAction, toggle, close, onFocusOut } = useCompactComposerActions()
+function openActions(): void { if (compact.value) toggle(); else fileInput.value?.click() }
+function chooseFile(): void { close(); fileInput.value?.click() }
+function chooseMention(): void { close(); emit('mention') }
+function chooseEmoji(): void { close(); emit('emoji') }
 const failed = ref<File[]>([])
 const pending = ref(false)
 const error = ref<string | null>(null)
@@ -79,7 +85,12 @@ defineExpose({ addPastedFiles })
 <template>
   <section class="attachment-picker" aria-labelledby="dm-attachments-label">
     <input ref="fileInput" id="dm-attachments" class="attachment-input" type="file" multiple tabindex="-1" aria-hidden="true" :disabled="props.disabled || pending" @change="addFiles">
-    <button id="dm-attachments-label" class="attachment-trigger" type="button" aria-label="Прикрепить файлы" :disabled="props.disabled || pending" @click="fileInput?.click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button id="dm-attachments-label" ref="trigger" class="attachment-trigger" type="button" :aria-label="compact ? 'Действия редактора' : 'Прикрепить файлы'" :aria-expanded="compact ? menuOpen : undefined" :disabled="props.disabled || pending" @click="openActions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    <div v-if="menuOpen" class="composer-mobile-actions" role="group" aria-label="Действия редактора" @keydown.esc.stop.prevent="close(true)" @focusout="onFocusOut">
+      <button ref="firstAction" type="button" @click="chooseFile">Прикрепить файл</button>
+      <button type="button" @click="chooseMention">Упомянуть</button>
+      <button type="button" @click="chooseEmoji">Emoji</button>
+    </div>
     <p class="attachment-hint">До 10 файлов по 25 МБ. Файлы прикрепятся после отправки сообщения.</p>
     <p v-if="pending" class="attachment-state" aria-live="polite">Загружаем вложение…</p>
     <p v-if="error" class="attachment-state attachment-error" role="alert">{{ error }}</p>

@@ -61,6 +61,11 @@
 .topology-dialog--category .topology-dialog-fields { gap: 0; }
 .topology-dialog--category .topology-dialog-actions { min-height: 69px; }
 @media (max-width: 720px) {
+  .message-composer { position: relative; }
+  .message-composer .mention-picker-trigger, .message-composer .emoji-trigger { display: none; }
+  .message-composer .composer-mobile-actions { position: absolute; bottom: calc(100% + 8px); left: 8px; z-index: var(--gc-z-menu); display: grid; width: 220px; gap: 2px; border: 1px solid var(--gc-border-subtle); border-radius: 12px; padding: 6px; background: var(--gc-surface-raised); box-shadow: var(--gc-shadow-popup); }
+  .message-composer .composer-mobile-actions button { min-height: 44px; border: 0; border-radius: 6px; padding: 0 12px; color: var(--gc-text-primary); background: transparent; text-align: left; }
+  .message-composer .composer-mobile-actions button:hover, .message-composer .composer-mobile-actions button:focus-visible { background: var(--gc-surface-selected); }
   .update-banner[aria-live] { height: auto; min-height: 44px; padding: 6px 12px; }
   .update-banner nav { gap: 6px; }
   .update-banner .update-summary { font-size: 12px; }
