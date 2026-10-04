@@ -1,0 +1,28 @@
+{
+  "id": "design-v2-r02-message-actions-2026-10-04-001",
+  "scope": "R02 mobile message action disclosure on the production Vue MessageItem",
+  "source_revision": "9cf0045d",
+  "status": "PARTIAL",
+  "checks": [
+    {
+      "name": "Touch action state before and after the fix",
+      "result": "PASS",
+      "observation": "A Playwright test with the real Vite-compiled MessageItem failed before the change: touching message two left message one with message-actions is-open. It passed after the change: exactly one row remains open, Reply emits, and touching an outside control closes all rows."
+    },
+    {
+      "name": "Web native checks",
+      "result": "PASS",
+      "observation": "Focused browser test 1/1; focused Vitest 4/4; full Vitest 288 files and 910 tests; vue-tsc and Vite build passed locally. GitHub Actions CI https://github.com/Egkurilov/BOOHTACORD/actions/runs/37188278065 passed the frontend job."
+    },
+    {
+      "name": "Isolated component capture and interaction diff",
+      "result": "PASS",
+      "observation": "Safe synthetic component captures and interaction diff are in the local visual report design-v2-message-actions-2026-10-04/REVIEW.md. Open actual SHA256 7EB38534B33C2632586084CEA4F2500E7611694817E1F43F6B88256DA46B30A5; closed actual SHA256 42A4D264AA19D0D9185593983715C2A39276588900B237EDD59E326C4D6E9564. No user data or PNG assets were added to the application."
+    },
+    {
+      "name": "Full R02 golden recapture",
+      "result": "NOT_RUN",
+      "observation": "The prior full R02 actual predates this change. The component-state diff measures behavior only and does not replace a full-screen PNG comparison with the unchanged handoff golden."
+    }
+  ]
+}
