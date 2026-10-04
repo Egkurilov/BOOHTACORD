@@ -1118,6 +1118,22 @@
         }
       }
     },
+    "/api/v1/admin/channels/{channelID}/description": {
+      "patch": {
+        "operationId": "updateChannelDescription",
+        "description": "Administrator-only. Sets or clears the bounded channel description under the topology revision lock; audits metadata and emits a channel.updated refresh hint after commit.",
+        "parameters": [{ "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChannelDescriptionRequest" } } } },
+        "responses": {
+          "200": { "description": "Description updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChannelDescriptionResult" } } } },
+          "400": { "description": "Malformed description or revision", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Administrator role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Channel unavailable or topology revision stale", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
     "/api/v1/admin/channels/{channelID}": {
       "patch": {
         "operationId": "renameChannel",
@@ -1841,6 +1857,25 @@
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "name": { "type": "string" },
+          "revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "ChannelDescriptionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description", "expected_revision"],
+        "properties": {
+          "description": { "type": "string", "maxLength": 200 },
+          "expected_revision": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "ChannelDescriptionResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "revision"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "description": { "type": "string", "maxLength": 200 },
           "revision": { "type": "integer", "minimum": 1 }
         }
       },

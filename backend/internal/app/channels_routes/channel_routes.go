@@ -43,6 +43,9 @@ import (
 	channelreorderpostgres "voice-platform/backend/internal/channel/reorder_channels/postgres"
 	topologycommandapi "voice-platform/backend/internal/channel/topology_command/api"
 	topologycommandpostgres "voice-platform/backend/internal/channel/topology_command/postgres"
+	"voice-platform/backend/internal/channel/update_description"
+	descriptionapi "voice-platform/backend/internal/channel/update_description/api"
+	descriptionpostgres "voice-platform/backend/internal/channel/update_description/postgres"
 	"voice-platform/backend/internal/chat/advance_text_channel_read_cursor"
 	textcursorapi "voice-platform/backend/internal/chat/advance_text_channel_read_cursor/api"
 	textcursorpostgres "voice-platform/backend/internal/chat/advance_text_channel_read_cursor/postgres"
@@ -72,6 +75,8 @@ func ConfigureChannelRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 	renameHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(renameapi.NewHandler(categoryRename)))
 	channelRename := renamechannel.New(renamechannelpostgres.New(renamechannelpostgres.NewPoolDatabase(database)))
 	channelRenameHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(renamechannelapi.NewHandler(channelRename)))
+	channelDescription := updatedescription.New(descriptionpostgres.New(descriptionpostgres.NewPoolDatabase(database)))
+	channelDescriptionHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(descriptionapi.NewHandler(channelDescription)))
 	categoryDelete := deleteemptycategory.New(deletecategorypostgres.New(deletecategorypostgres.NewPoolDatabase(database)))
 	deleteRawHandler := deletecategoryapi.NewHandler(categoryDelete)
 	deleteHandler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(deleteRawHandler))
@@ -105,6 +110,7 @@ func ConfigureChannelRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 		createChannel:        channelHandler,
 		reorderChannels:      channelReorderHandler,
 		renameChannel:        channelRenameHandler,
+		updateDescription:    channelDescriptionHandler,
 		moveChannel:          moveHandler,
 		archiveTextChannel:   archiveHandler,
 		closeVoiceAdmission:  voiceAdmissionHandler,

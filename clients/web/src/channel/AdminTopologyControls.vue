@@ -4,6 +4,7 @@ import AdminTopologyTree from './AdminTopologyTree.vue'
 import AdminCategoryControls from './AdminCategoryControls.vue'
 import AdminChannelCreate from './AdminChannelCreate.vue'
 import AdminChannelRename from './AdminChannelRename.vue'
+import AdminChannelDescription from './AdminChannelDescription.vue'
 import AdminChannelMove from './AdminChannelMove.vue'
 import AdminChannelOrder from './AdminChannelOrder.vue'
 import AdminTextArchive from './AdminTextArchive.vue'
@@ -50,6 +51,7 @@ async function select(id: string): Promise<void> {
           <header><span class="admin-topology-inspector__eyebrow">{{ selectedChannel.kind === 'VOICE' ? 'ГОЛОСОВОЙ КАНАЛ' : 'ТЕКСТОВЫЙ КАНАЛ' }}</span>
             <h3>{{ selectedChannel.name }}</h3><p>Раздел: {{ parentCategory?.name }} · Порядок: {{ channelPosition }}</p></header>
           <AdminChannelRename :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
+          <AdminChannelDescription :channel-id="selectedId" :description="selectedChannel.description" :revision="revision" @changed="emit('changed')" />
           <AdminChannelMove :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
           <AdminChannelOrder :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
           <section class="admin-topology-danger" aria-label="Опасные действия">

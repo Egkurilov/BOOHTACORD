@@ -2,6 +2,7 @@ import { createSSRApp } from 'vue'
 import { createPinia } from 'pinia'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
 
 import AdminTopologyControls from './AdminTopologyControls.vue'
 import AdminChannelRename from './AdminChannelRename.vue'
@@ -16,6 +17,10 @@ const categories = [
 ]
 
 describe('administrator topology inspector', () => {
+  it('offers the selected channel description editor inside the inspector', () => {
+    const source = readFileSync(new URL('./AdminTopologyControls.vue', import.meta.url), 'utf8')
+    expect(source).toContain('<AdminChannelDescription :channel-id="selectedId" :description="selectedChannel.description" :revision="revision"')
+  })
   it('renders one selectable tree beside the selected-object inspector', async () => {
     const app = createSSRApp(AdminTopologyControls, { categories, revision: 7 })
     app.use(createPinia())

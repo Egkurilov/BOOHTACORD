@@ -20,6 +20,7 @@ type topologyMutationHandlers struct {
 	createChannel        http.Handler
 	reorderChannels      http.Handler
 	renameChannel        http.Handler
+	updateDescription    http.Handler
 	moveChannel          http.Handler
 	archiveTextChannel   http.Handler
 	closeVoiceAdmission  http.Handler
@@ -38,6 +39,7 @@ func registerTopologyMutationRoutes(mux *http.ServeMux, events *eventhub.Hub, ha
 	mux.Handle("POST /api/v1/admin/categories/{categoryID}/channels", publishtopologyevent.NewHandler(handlers.createChannel, events))
 	mux.Handle("PUT /api/v1/admin/categories/{categoryID}/channels/order", publishtopologyevent.NewHandler(handlers.reorderChannels, events))
 	mux.Handle("PATCH /api/v1/admin/channels/{channelID}", publishtopologyevent.NewHandler(handlers.renameChannel, events))
+	mux.Handle("PATCH /api/v1/admin/channels/{channelID}/description", publishtopologyevent.NewHandler(handlers.updateDescription, events))
 	mux.Handle("PATCH /api/v1/admin/channels/{channelID}/category", publishtopologyevent.NewHandler(handlers.moveChannel, events))
 	mux.Handle("DELETE /api/v1/admin/channels/{channelID}", publishtopologyevent.NewHandler(handlers.archiveTextChannel, events))
 	mux.Handle("POST /api/v1/admin/voice-channels/{channelID}/close-admission", publishtopologyevent.NewHandler(handlers.closeVoiceAdmission, events))

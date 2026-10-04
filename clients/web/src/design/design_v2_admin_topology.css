@@ -26,6 +26,8 @@
 .admin-topology-inspector .admin-topology-form button { border: 1px solid var(--gc-border-control); color: var(--gc-text-primary); background: var(--gc-surface-raised); }
 .admin-topology-inspector .admin-topology-form--channel > button[type=submit], .admin-topology-inspector .admin-category-controls > form:first-of-type > button[type=submit] { border-color: var(--gc-accent); color: var(--gc-on-accent); background: var(--gc-accent); }
 .admin-topology-inspector .admin-topology-form > p { grid-column: 1 / -1; }
+.admin-topology-form--description > label { grid-column: 1 / -1; }
+.admin-topology-form--description textarea { width: 100%; min-height: 72px; resize: vertical; border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: var(--gc-space-2); color: var(--gc-text-primary); background: var(--gc-input); font: inherit; }
 .admin-topology-danger { display: grid; gap: var(--gc-space-3); border-top: 1px solid var(--gc-border-subtle); padding-top: var(--gc-space-4); }
 .admin-topology-danger h4 { margin: 0; color: var(--gc-danger); font-size: var(--gc-text-section); }
 .admin-topology-danger .admin-topology-form { border-color: var(--gc-danger); }

@@ -26,6 +26,7 @@ func TestTopologyMutationRoutesPublishOnlySuccessfulRevision(t *testing.T) {
 		{http.MethodPost, "/api/v1/admin/categories/category-1/channels"},
 		{http.MethodPut, "/api/v1/admin/categories/category-1/channels/order"},
 		{http.MethodPatch, "/api/v1/admin/channels/channel-1"},
+		{http.MethodPatch, "/api/v1/admin/channels/channel-1/description"},
 		{http.MethodPatch, "/api/v1/admin/channels/channel-1/category"},
 		{http.MethodDelete, "/api/v1/admin/channels/channel-1"},
 		{http.MethodPost, "/api/v1/admin/voice-channels/channel-1/close-admission"},
@@ -48,7 +49,7 @@ func TestTopologyMutationRoutesPublishOnlySuccessfulRevision(t *testing.T) {
 					memberDeleteCategory: inner, memberArchiveText: inner, memberCloseVoice: inner,
 					createCategory: inner, reorderCategories: inner, renameCategory: inner,
 					deleteCategory: inner, createChannel: inner, reorderChannels: inner,
-					renameChannel: inner, moveChannel: inner, archiveTextChannel: inner,
+					renameChannel: inner, updateDescription: inner, moveChannel: inner, archiveTextChannel: inner,
 					closeVoiceAdmission: inner,
 				})
 				response := httptest.NewRecorder()
