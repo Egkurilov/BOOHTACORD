@@ -1,9 +1,10 @@
 import type { Room } from 'livekit-client'
 import type { VoiceRoom } from '../../livekit_gateway'
+import { publishOptions, selectedVoiceAudioProfile, type VoiceAudioProfile } from '../../audio_profile/profile'
 import { LiveKitMicrophoneAdapter } from './controller'
 import { MicrophoneControlsProcessor } from '../../microphone_processing/processor'
 import { RnnoiseTrackProcessor } from '../rnnoise_track_processor'
-export function bindLiveKitMicrophone(room: VoiceRoom, liveKitRoom: Room, sdk: typeof import('livekit-client')): void {
+export function bindLiveKitMicrophone(room: VoiceRoom, liveKitRoom: Room, sdk: typeof import('livekit-client'), profile: VoiceAudioProfile = selectedVoiceAudioProfile()): void {
   const { RoomEvent, Track, LocalAudioTrack, ConnectionState } = sdk
   // Retain the SDK-owned context for processing before first publication.
   let captureContext: AudioContext | undefined
@@ -25,7 +26,7 @@ export function bindLiveKitMicrophone(room: VoiceRoom, liveKitRoom: Room, sdk: t
       // Room devicechange/track-ended handlers from independently restarting it.
       return new LocalAudioTrack(audio, options, true, captureContext)
     },
-    publishTrack: (track, options) => liveKitRoom.localParticipant.publishTrack(track, { ...options, source: Track.Source.Microphone }),
+    publishTrack: (track, options) => liveKitRoom.localParticipant.publishTrack(track, { ...options, ...publishOptions(profile), source: Track.Source.Microphone }),
     unpublishTrack: (track) => liveKitRoom.localParticipant.unpublishTrack(track, false),
     isReconnecting: () => liveKitRoom.state === ConnectionState.Reconnecting || liveKitRoom.state === ConnectionState.SignalReconnecting,
     createProcessor: (callbacks, options) => new MicrophoneControlsProcessor(options?.autoGainControl ?? true, new RnnoiseTrackProcessor(callbacks), () => callbacks.onFailure('processor-error')),

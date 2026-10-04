@@ -1,17 +1,18 @@
 import 'package:livekit_client/livekit_client.dart';
 
 import 'audio_preferences.dart';
+import '../features/voice/audio_profile/profile.dart';
+import '../features/voice/audio_profile/capture.dart';
 
-const voiceMicrophonePublishOptions = AudioPublishOptions(
-  encoding: AudioEncoding(maxBitrate: 128000),
-);
+AudioPublishOptions get voiceMicrophonePublishOptions =>
+    profilePublishOptions(selectedVoiceAudioProfile);
 
 AudioCaptureOptions voiceAudioCaptureOptions(
   String? deviceId,
   AudioProcessingPreferences processing,
-) => AudioCaptureOptions(
+) => VoiceCaptureOptions(AudioCaptureOptions(
   deviceId: deviceId,
   autoGainControl: processing.autoGainControl,
   echoCancellation: processing.echoCancellation,
   noiseSuppression: processing.noiseSuppression,
-);
+));

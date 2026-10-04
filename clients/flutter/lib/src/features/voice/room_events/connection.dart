@@ -49,6 +49,7 @@ extension VoiceEventsConnection on VoiceController {
         return;
       }
       voicePhase = VoicePhase.reconnecting;
+      stopVoiceConnectionStatsPolling();
       voicePingMs = null;
       observeVoiceStreamStarts(room);
       notifyListeners();
@@ -59,6 +60,7 @@ extension VoiceEventsConnection on VoiceController {
         return;
       }
       voicePhase = VoicePhase.reconnecting;
+      stopVoiceConnectionStatsPolling();
       voicePingMs = null;
       observeVoiceStreamStarts(room);
       notifyListeners();
@@ -69,6 +71,7 @@ extension VoiceEventsConnection on VoiceController {
       voicePhase = listenerOnly
           ? VoicePhase.listener
           : VoicePhase.connected;
+      startVoiceConnectionStatsPolling(room);
       observeVoiceStreamStarts(room);
       subscribeCurrentRemoteVoiceTracks(room);
       final selectedIdentity = selectedRemoteScreenViewerIdentity;

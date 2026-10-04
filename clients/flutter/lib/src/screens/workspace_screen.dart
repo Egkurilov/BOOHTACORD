@@ -29,6 +29,7 @@ import '../widgets/topology_actions/delete_actions.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
 import '../widgets/noise_suppression_settings.dart';
+import '../widgets/voice_audio_diagnostics/control.dart';
 import '../widgets/microphone_controls/control.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
@@ -6881,6 +6882,11 @@ class _AudioSettingsScreen extends StatelessWidget {
                       processing: state.audioProcessing,
                       runtime: state.noiseSuppressionRuntime,
                       onChanged: state.setAudioProcessing,
+                    ),
+                    VoiceAudioDiagnosticsControl(
+                      connected: state.voicePhase != VoicePhase.idle &&
+                          state.voicePhase != VoicePhase.error,
+                      diagnostics: state.voiceAudioDiagnostics,
                     ),
                     const SizedBox(height: 16),
                     _AudioDeviceDropdown(

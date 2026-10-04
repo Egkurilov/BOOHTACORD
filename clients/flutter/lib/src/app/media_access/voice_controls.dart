@@ -1,11 +1,13 @@
 import 'package:livekit_client/livekit_client.dart' hide ChatMessage;
 
 import '../../models.dart';
+import '../../features/voice/audio_diagnostics/model.dart';
 import '../../features/voice/lifecycle/controller.dart';
 import '../../features/voice/microphone/shortcut.dart';
 import '../composition/owners.dart';
 
 mixin AppVoiceControlsAccess on AppOwners {
+  VoiceAudioDiagnostics? get voiceAudioDiagnostics => voice.voiceAudioDiagnostics;
   VoicePhase get voicePhase => voice.voicePhase;
 
   set voicePhase(VoicePhase value) => voice.voicePhase = value;

@@ -52,6 +52,7 @@ import '../track/local/local.dart';
 import '../track/local/video.dart';
 import '../track/options.dart';
 import '../types/audio_encoding.dart';
+import 'audio_publication/features.dart';
 import '../types/data_stream.dart';
 import '../types/other.dart';
 import '../types/participant_permissions.dart';
@@ -187,7 +188,7 @@ class LocalParticipant extends Participant<LocalTrackPublication> {
         muted: track.muted,
         stream: buildStreamId(publishOptions, track.source),
         disableDtx: !publishOptions.dtx,
-        disableRed: room.e2eeManager != null ? true : publishOptions.red ?? true,
+        disableRed: disableAudioRed(publishOptions, encrypted: room.e2eeManager != null),
         encryption: room.roomOptions.lkEncryptionType,
       );
 

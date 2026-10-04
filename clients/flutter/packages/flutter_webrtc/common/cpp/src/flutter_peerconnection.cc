@@ -1076,8 +1076,9 @@ void FlutterPeerConnection::GetStats(
     RTCPeerConnection* pc,
     std::unique_ptr<MethodResultProxy> result) {
   std::shared_ptr<MethodResultProxy> result_ptr(result.release());
-  scoped_refptr<RTCMediaTrack> track = base_->MediaTracksForId(track_id);
-  if (track != nullptr && track_id != "") {
+  // Remote tracks need not be in the capture registry. A requested selector
+  // must resolve through this PC or fail; never substitute all-PC statistics.
+  if (!track_id.empty()) {
     bool found = false;
     auto receivers = pc->receivers();
     for (auto receiver : receivers.std_vector()) {
