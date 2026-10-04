@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { formatMessage } from './message_format'
+import { decorateMessageMentions, type MentionRecipient } from './inline_mentions'
 
-const props = defineProps<{ body: string }>()
-const blocks = computed(() => formatMessage(props.body))
+const props = defineProps<{ body: string; mentions?: MentionRecipient[] }>()
+const blocks = computed(() => decorateMessageMentions(props.body, props.mentions ?? []).blocks)
 </script>
 
 <template>
@@ -16,6 +16,7 @@ const blocks = computed(() => formatMessage(props.body))
         <em v-else-if="span.kind === 'ITALIC'">{{ span.value }}</em>
         <code v-else-if="span.kind === 'CODE'">{{ span.value }}</code>
         <a v-else-if="span.kind === 'LINK'" :href="span.href" target="_blank" rel="noopener noreferrer">{{ span.value }}</a>
+        <span v-else-if="span.kind === 'MENTION'" class="message-mention">{{ span.value }}</span>
         <template v-else>{{ span.value }}</template>
       </template>
     </p>

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
-import MessageBody from './MessageBody.vue'
+import MessageBody from './message_body/MessageBody.vue'
 import { useAuthorDirectory } from '../identity/author_directory'
 import { searchTextMessages, type TextMessageSearchResult } from './text_message_search_client'
 

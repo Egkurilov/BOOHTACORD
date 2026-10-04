@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatMessage, type MessageSpan } from '../conversation/message_format'
+import { formatMessage, type MessageSpan } from '../conversation/message_body/message_format'
 
 const props = defineProps<{ body: string; query: string }>()
 const blocks = computed(() => formatMessage(props.body))

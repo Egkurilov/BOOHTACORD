@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
-import MessageBody from '../conversation/MessageBody.vue'
+import MessageBody from '../conversation/message_body/MessageBody.vue'
 import { useAuthorDirectory } from '../identity/author_directory'
 import { searchDirectMessageHistory, type DirectMessageSearchResult } from './direct_message_search_client'
 

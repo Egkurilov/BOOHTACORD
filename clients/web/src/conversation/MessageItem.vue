@@ -5,7 +5,8 @@ import type { TextMessage, TextMessageAttachment } from './message_client'
 import { avatarFallbackStyle } from './avatar_fallback'
 import { avatarInitials } from '../design/avatar_initials'
 import { useAuthorDirectory } from '../identity/author_directory'
-import MessageBody from './MessageBody.vue'
+import MessageBody from './message_body/MessageBody.vue'
+import { decorateMessageMentions } from './message_body/inline_mentions'
 import MentionPicker from './MentionPicker.vue'
 import TextMessageAttachments from './TextMessageAttachments.vue'
 import DirectMessageAttachments from '../direct_message/DirectMessageAttachments.vue'
@@ -27,6 +28,8 @@ const textAttachments = computed(() => props.message.attachments ?? [])
 const authors = useAuthorDirectory()
 const authorName = computed(() => authors.displayName(props.message.authorId))
 const authorAvatar = computed(() => authors.avatarUrl(props.message.authorId))
+const mentionRecipients = computed(() => (props.message.mentionUserIds ?? []).map((id) => ({ id, name: authors.displayName(id) })))
+const unmatchedMentionIds = computed(() => decorateMessageMentions(props.message.body, mentionRecipients.value).unmatchedIds)
 const compact = computed(() => Boolean(props.grouped && !editing.value))
 const avatarFailed = ref(false)
 const editInput = ref<HTMLTextAreaElement | null>(null)
@@ -78,8 +81,8 @@ function remove(): void {
       <p v-else-if="message.deleted">Сообщение удалено</p>
       <template v-else>
         <button v-if="replyPreview && message.replyToId" class="reply-preview" type="button" aria-label="Открыть контекст ответа" @click="emit('replyContext', message.replyToId)">↪ {{ replyPreview }}</button>
-        <MessageBody :body="message.body" />
-        <p v-if="message.mentionUserIds?.length" class="message-mentions">Упомянуты: <span v-for="id in message.mentionUserIds" :key="id">@{{ authors.displayName(id) }} </span></p>
+        <MessageBody :body="message.body" :mentions="mentionRecipients" />
+        <p v-if="unmatchedMentionIds.length" class="message-mentions">Упомянуты: <span v-for="id in unmatchedMentionIds" :key="id">@{{ authors.displayName(id) }} </span></p>
         <TextMessageAttachments v-if="textChannelId && textAttachments.length" :channel-id="textChannelId" :attachments="textAttachments" />
         <DirectMessageAttachments v-if="message.directMessageId && textAttachments.length" :direct-message-id="message.directMessageId" :attachments="textAttachments" />
         <p v-if="message.sendStatus === 'sending'" class="message-send-status" role="status">Отправляется…</p>

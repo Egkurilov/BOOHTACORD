@@ -8,7 +8,7 @@ import directHistoryList from '../direct_message/DirectMessageHistoryList.vue?ra
 import directNavigation from '../direct_message/DirectMessageNavigation.vue?raw'
 import directStarter from '../direct_message/DirectMessageStarter.vue?raw'
 import messageItem from '../conversation/MessageItem.vue?raw'
-import messageBody from '../conversation/MessageBody.vue?raw'
+import messageBody from '../conversation/message_body/MessageBody.vue?raw'
 import attachmentPicker from '../conversation/TextMessageAttachmentPicker.vue?raw'
 import messageAttachments from '../conversation/TextMessageAttachments.vue?raw'
 import conversationPane from '../conversation/ConversationPane.vue?raw'

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import MessageBody from '../conversation/MessageBody.vue'
+import MessageBody from '../conversation/message_body/MessageBody.vue'
 import TextMessageAttachments from '../conversation/TextMessageAttachments.vue'
 import { loadMessagePage, type TextMessage } from '../conversation/message_client'
 import DirectMessageAttachments from '../direct_message/DirectMessageAttachments.vue'
