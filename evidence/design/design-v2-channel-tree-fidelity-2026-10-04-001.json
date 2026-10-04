@@ -1,0 +1,14 @@
+{
+  "id": "design-v2-channel-tree-fidelity-2026-10-04-001",
+  "task": "T-050",
+  "status": "PASS",
+  "scope": "Channel tree presentation, SVG icons, category/voice row rhythm",
+  "base_commit": "d6ce0594",
+  "checks": ["32 actual/source elements match geometry within 0.02px and selected visual properties", "4 native test files / 9 tests PASS", "Category collapse/reopen, global/category create/cancel, focus return PASS", "TypeScript/Vite build PASS", "git diff --check PASS"],
+  "tree_mae": {"R01_before": 6.672912, "R01_after": 1.382702, "R14_before": 3.717572, "R14_after": 1.061904},
+  "full_mae": {"R01_before": 2.435380, "R01_after": 1.851813, "R14_before": 3.010728, "R14_after": 1.750827},
+  "preserved": ["Permission resolvers and topology emit handlers", "Caller-local unread/mention counters", "Category disclosure state", "Real speaking state and audio semantics", "Connected voice store"],
+  "artifacts": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-channel-tree-2026-10-04",
+  "follow_up_closed": "Mobile create dialog layering/keyboard defect found by ordinary browser interaction and repaired in a separate packet",
+  "limitations": "Immutable source HTML/PNG retained. Full 1:1 remains open; real speaking indication intentionally differs from idle fixture reference."
+}
