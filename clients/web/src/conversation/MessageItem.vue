@@ -11,6 +11,7 @@ import TextMessageAttachments from './TextMessageAttachments.vue'
 import DirectMessageAttachments from '../direct_message/DirectMessageAttachments.vue'
 import { useMessageEditController, type EditResult } from './message_edit_controller'
 import { handleMessageEditKeydown } from './message_edit_shortcuts'
+import { useMessageActionDisclosure } from './message_actions/disclosure'
 
 type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments' | 'mentionUserIds'> & { channelId?: string; directMessageId?: string; attachments?: TextMessageAttachment[]; mentionUserIds?: string[] }
 
@@ -28,10 +29,8 @@ const authorName = computed(() => authors.displayName(props.message.authorId))
 const authorAvatar = computed(() => authors.avatarUrl(props.message.authorId))
 const compact = computed(() => Boolean(props.grouped && !editing.value))
 const avatarFailed = ref(false)
-const actionsOpen = ref(false)
-const actionsToggle = ref<HTMLButtonElement | null>(null)
 const editInput = ref<HTMLTextAreaElement | null>(null)
-const row = ref<HTMLElement | null>(null)
+const { actionsOpen, actionsToggle, row, closeActions, onRowPointerDown, onRowFocusOut } = useMessageActionDisclosure()
 watch(() => props.message.authorId, (id) => { void authors.ensure(id) }, { immediate: true })
 watch(() => props.message.mentionUserIds, (ids) => { for (const id of ids ?? []) void authors.ensure(id) }, { immediate: true })
 watch(authorAvatar, () => { avatarFailed.value = false })
@@ -49,26 +48,14 @@ function onEditKeydown(event: KeyboardEvent): void {
 }
 
 function reply(): void { actionsOpen.value = false; emit('reply') }
-function closeActions(event: KeyboardEvent): void {
-  if (!actionsOpen.value) return
-  event.stopPropagation()
-  actionsOpen.value = false
-  actionsToggle.value?.focus()
-}
 function remove(): void {
   if (window.confirm('Удалить это сообщение?')) { actionsOpen.value = false; emit('remove') }
-}
-function onRowPointerDown(event: PointerEvent): void {
-  if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return
-  if (!(event.target instanceof Element) || event.target.closest('button, a, input, textarea, select, [role="button"]')) return
-  actionsOpen.value = true
-  row.value?.focus()
 }
 
 </script>
 
 <template>
-  <article ref="row" class="message-item message-row" :class="{ deleted: message.deleted, grouped: compact }" tabindex="-1" @pointerdown="onRowPointerDown">
+  <article ref="row" class="message-item message-row" :class="{ deleted: message.deleted, grouped: compact }" tabindex="-1" @pointerdown="onRowPointerDown" @focusout="onRowFocusOut">
     <span v-if="compact" class="message-avatar-spacer" aria-hidden="true"></span>
     <img v-else-if="authorAvatar && !avatarFailed" class="message-avatar" :src="authorAvatar" alt="" @error="avatarFailed = true">
     <span v-else class="message-avatar" :style="avatarFallbackStyle(message.authorId)" aria-hidden="true">{{ avatarInitials(authorName) }}</span>
