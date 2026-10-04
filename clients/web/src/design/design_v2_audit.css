@@ -1,0 +1,18 @@
+.admin-audit-filters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--gc-space-3); border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-lg); padding: var(--gc-space-4); background: var(--gc-surface); }
+.admin-audit-filters label { display: grid; min-width: 0; gap: var(--gc-space-2); color: var(--gc-text-secondary); font-size: var(--gc-text-caption); }
+.admin-audit-filters input, .admin-audit-filters select { width: 100%; min-height: 40px; border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-2); color: var(--gc-text-primary); background: var(--gc-input); color-scheme: dark; }
+.admin-audit-scope { margin: 0; color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
+.admin-audit-day { border: 1px solid var(--gc-border-subtle); border-radius: var(--gc-radius-lg); padding: 0 var(--gc-space-4); background: var(--gc-surface); }
+.admin-audit-day h3 { margin: 0; border-bottom: 1px solid var(--gc-border-subtle); padding: var(--gc-space-4) 0 var(--gc-space-3); color: var(--gc-text-secondary); font-size: var(--gc-text-small); }
+.admin-audit-day .audit-event-list li { gap: var(--gc-space-2); padding: var(--gc-space-3) 0; }
+.admin-audit-day .audit-event-list li:last-child { border-bottom: 0; }
+.admin-audit-summary { display: flex; min-width: 0; align-items: baseline; justify-content: space-between; gap: var(--gc-space-4); color: var(--gc-text-primary); font-size: var(--gc-text-small); }
+.admin-audit-summary > span { min-width: 0; overflow-wrap: anywhere; }
+.admin-audit-summary strong { font-weight: var(--gc-weight-semibold); }
+.admin-audit-summary time { flex: none; font-size: var(--gc-text-caption); }
+.admin-audit-details { color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
+.admin-audit-details summary { width: max-content; cursor: pointer; }
+.admin-audit-details dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--gc-space-2) var(--gc-space-4); margin: var(--gc-space-3) 0 0; }
+.admin-audit-details dt { color: var(--gc-text-muted); }.admin-audit-details dd { min-width: 0; margin: 0; overflow-wrap: anywhere; color: var(--gc-text-secondary); }
+@media (max-width: 1000px) { .admin-audit-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px) { .admin-audit-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } .admin-audit-filters label:first-child { grid-column: 1 / -1; } .admin-audit-summary { align-items: start; } }
