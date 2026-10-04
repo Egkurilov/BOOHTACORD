@@ -68,6 +68,10 @@
 }
 @media (max-width: 720px) {
   .message-composer { position: relative; }
+  .text-conversation .message-composer, .direct-message-conversation .message-composer { gap: 0; }
+  .message-composer .attachment-trigger { margin: 0 4px 0 0; }
+  .message-composer .composer-send { margin: 0 0 0 4px; }
+  .message-composer textarea { font-size: 16px; line-height: 24px; padding: 10px 0; }
   .message-composer .mention-picker-trigger, .message-composer .emoji-trigger { display: none; }
   .message-composer .composer-mobile-actions { position: absolute; bottom: calc(100% + 8px); left: 8px; z-index: var(--gc-z-menu); display: grid; width: 220px; gap: 2px; border: 1px solid var(--gc-border-subtle); border-radius: 12px; padding: 6px; background: var(--gc-surface-raised); box-shadow: var(--gc-shadow-popup); }
   .message-composer .composer-mobile-actions button { min-height: 44px; border: 0; border-radius: 6px; padding: 0 12px; color: var(--gc-text-primary); background: transparent; text-align: left; }

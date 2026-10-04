@@ -1,0 +1,28 @@
+{
+  "id": "design-v2-r02-composer-2026-10-04-001",
+  "scope": "R02 mobile composer of real Vue chat against unchanged HTML and PNG",
+  "status": "PARTIAL",
+  "visual_report": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-chat-typography-2026-10-04/REVIEW.md",
+  "checks": [
+    {
+      "name": "Computed geometry versus HTML handoff",
+      "result": "PASS",
+      "observation": "Actual and reference textarea both have x=61 y=734 width=268 height=44, Inter 16px/24px and padding 10px 0. Send button both have x=333 y=734 width=44 height=44."
+    },
+    {
+      "name": "Actual R02 versus unchanged PNG",
+      "result": "PASS",
+      "observation": "Full-frame RGB MAE decreased from 3.596 to 3.193. Diff, actual, unchanged reference and SHA-256 are linked from the visual report."
+    },
+    {
+      "name": "Web tests and production build",
+      "result": "PASS",
+      "observation": "294 Vitest files and 926 tests passed; TypeScript and Vite production build passed."
+    },
+    {
+      "name": "Strict one-to-one pixels",
+      "result": "FAIL",
+      "observation": "The screenshot still differs in fonts, icons and state-specific voice data; full pixel acceptance remains open."
+    }
+  ]
+}

@@ -8,6 +8,7 @@ const conversation = readFileSync(new URL('./conversation.css', import.meta.url)
 const v2Chat = readFileSync(new URL('./design_v2_chat.css', import.meta.url), 'utf8')
 const chatMedia = readFileSync(new URL('./design_v2_chat_media.css', import.meta.url), 'utf8')
 const presentation = readFileSync(new URL('./design_v2_chat_presentation.css', import.meta.url), 'utf8')
+const overlays = readFileSync(new URL('./design_v2_contextual_overlays.css', import.meta.url), 'utf8')
 
 function pixelToken(name: string): number {
   return Number(tokens.match(new RegExp(`--gc-${name}:\\s*(\\d+)px;`))?.[1])
@@ -54,5 +55,12 @@ describe('Design V2 chat reference geometry', () => {
     expect(presentation).toContain('.text-conversation .message-author { font-weight: 600; }')
     expect(presentation).toContain('.text-conversation .messages { scrollbar-gutter: stable; }')
     expect(presentation).toMatch(/@media \(max-width: 720px\)\s*\{[\s\S]*?\.text-conversation \.messages \{ scrollbar-gutter: auto; \}/)
+  })
+
+  it('keeps the R02 mobile composer controls on the reference grid', () => {
+    expect(overlays).toContain('.text-conversation .message-composer, .direct-message-conversation .message-composer { gap: 0; }')
+    expect(overlays).toContain('.message-composer .attachment-trigger { margin: 0 4px 0 0; }')
+    expect(overlays).toContain('.message-composer .composer-send { margin: 0 0 0 4px; }')
+    expect(overlays).toContain('.message-composer textarea { font-size: 16px; line-height: 24px; padding: 10px 0; }')
   })
 })

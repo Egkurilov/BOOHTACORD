@@ -16,7 +16,7 @@
     },
     {
       "name": "Strict one-to-one pixels and live media state",
-      "result": "NOT_RUN",
+      "result": "FAIL",
       "observation": "Remaining differences include four reference voice participants versus one measured fixture connection; the scenario does not exercise a real LiveKit room. Full pixel acceptance remains open."
     }
   ]
