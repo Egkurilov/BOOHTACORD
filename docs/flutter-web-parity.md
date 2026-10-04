@@ -235,8 +235,12 @@ pagination and the current save/block/reset handlers, and has focused unit and
 widget regressions. The Android API 35 release-signed emulator run visually
 verified the compact 44 px controls, selected value and role menu; macOS Debug
 was hot-reloaded without restarting, but admin-screen navigation remains
-pending Accessibility permission. Desktop control geometry is covered at
-1440 px — [QA-247](../evidence/flutter/qa247-flutter-design-v2-admin-member-filters-2026-10-04-001.json).
+pending Accessibility permission. A follow-up found that the 81 px compact
+selected label could wrap and then ellipsize; `FittedBox(scaleDown)` now keeps
+the complete short label on one line. API 35 visually verified `Участ.` on
+version `1.0.28+2047`; desktop control geometry remains covered at 1440 px —
+[QA-247](../evidence/flutter/qa247-flutter-design-v2-admin-member-filters-2026-10-04-001.json),
+[QA-253](../evidence/flutter/qa253-flutter-compact-role-label-fit-2026-10-04-001.json).
 
 Flutter's voice prejoin header now mirrors the web copy for roster loading,
 unavailable, empty and populated states instead of showing a static invitation

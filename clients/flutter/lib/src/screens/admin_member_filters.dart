@@ -55,7 +55,23 @@ class AdminMemberFilters extends StatelessWidget {
                 isExpanded: true,
                 style: const TextStyle(fontSize: 14),
                 selectedItemBuilder: (_) => compact
-                    ? const [Text('Все'), Text('Участ.'), Text('Админ.')]
+                    ? const [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text('Все', maxLines: 1, softWrap: false),
+                        ),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text('Участ.', maxLines: 1, softWrap: false),
+                        ),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text('Админ.', maxLines: 1, softWrap: false),
+                        ),
+                      ]
                     : const [
                         Text('Все роли'),
                         Text('Пользователь'),

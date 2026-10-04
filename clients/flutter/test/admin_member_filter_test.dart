@@ -105,11 +105,58 @@ void main() {
     );
     await tester.tap(find.byKey(const ValueKey('admin-member-role-filter')));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Пользователь').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Алиса'), findsNothing);
+    expect(find.text('Борис'), findsOneWidget);
+    final selectedMemberRole = tester.widget<Text>(
+      find.descendant(
+        of: find.byKey(const ValueKey('admin-member-role-filter')),
+        matching: find.text('Участ.'),
+      ),
+    );
+    expect(selectedMemberRole.softWrap, isFalse);
+    expect(selectedMemberRole.maxLines, 1);
+    expect(
+      tester
+          .widget<FittedBox>(
+            find.ancestor(
+              of: find.text('Участ.'),
+              matching: find.byType(FittedBox),
+            ).first,
+          )
+          .fit,
+      BoxFit.scaleDown,
+      reason: 'the full compact member label scales down instead of truncating',
+    );
+
+    await tester.tap(find.byKey(const ValueKey('admin-member-role-filter')));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Администратор').last);
     await tester.pumpAndSettle();
     expect(find.text('Алиса'), findsOneWidget);
     expect(find.text('Борис'), findsNothing);
     expect(find.text('Участники 2'), findsOneWidget);
+    final selectedAdminRole = tester.widget<Text>(
+      find.descendant(
+        of: find.byKey(const ValueKey('admin-member-role-filter')),
+        matching: find.text('Админ.'),
+      ),
+    );
+    expect(selectedAdminRole.softWrap, isFalse);
+    expect(selectedAdminRole.maxLines, 1);
+    expect(
+      tester
+          .widget<FittedBox>(
+            find.ancestor(
+              of: find.text('Админ.'),
+              matching: find.byType(FittedBox),
+            ).first,
+          )
+          .fit,
+      BoxFit.scaleDown,
+      reason: 'the full compact administrator label scales down instead of truncating',
+    );
     tester.view.physicalSize = const Size(1440, 900);
     await tester.pumpAndSettle();
     expect(

@@ -1,0 +1,67 @@
+{
+  "id": "QA-253",
+  "date": "2026-10-04",
+  "task": "FV2-016 follow-up — compact selected role labels remain legible",
+  "summary": "Compact member-role selections stay on one line and scale down as needed so the complete short label remains visible inside the 81 px web-matching selector. No filtering behavior or desktop layout changed.",
+  "checks": [
+    {
+      "name": "Test-first no-truncation regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/admin_member_filter_test.dart",
+      "result": "FAIL_EXPECTED",
+      "observation": "A regression assertion first failed because the selected label lacked no-wrap constraints. After that fix, Android APK 1.0.28+2046 showed 'Уч…' instead of the complete 'Участ.' label. The final regression now requires both compact labels to be one-line Text widgets inside a scaleDown FittedBox."
+    },
+    {
+      "name": "Focused filter tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/admin_member_filter_test.dart",
+      "result": "PASS",
+      "passed": 2,
+      "observation": "Verifies filter behavior, loaded count, 390/1440 px control geometry, and full one-line 'Участ.'/'Админ.' selected labels using BoxFit.scaleDown."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 484
+    },
+    {
+      "name": "Targeted Flutter analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/admin_member_filters.dart test/admin_member_filter_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug build and running app review",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "observation": "The current source builds for macOS. The existing BOOHTACORD window was captured without restarting or changing its Keychain session; it remained on Voice. This compact-only rendering change is not visible on the desktop-width screen. Direct navigation to the Admin screen remains open in FV2-006 because this host's UI automation does not have Accessibility control."
+    },
+    {
+      "name": "Android API 35 release build and install",
+      "command": "cd clients/flutter && flutter build apk --release --build-number 2047 && adb install -r build/app/outputs/flutter-apk/app-release.apk",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-release.apk (115.4 MB; local test build, not published)",
+      "observation": "Installed version 1.0.28+2047 over the existing emulator app without clearing app data."
+    },
+    {
+      "name": "Android API 35 Admin screen visual acceptance",
+      "result": "PASS",
+      "observation": "On the emulator, selecting the compact member filter displays the full 'Участ.' label on one line within the 81 px control; it no longer wraps or truncates. The role filter changed the visible directory as expected. Screenshot was inspected locally and not committed because it contains account/channel content."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this host (`pwsh: command not found`). No requirement IDs or task dependencies changed."
+    },
+    {
+      "name": "Diff hygiene and evidence JSON",
+      "result": "PASS",
+      "observation": "git diff --check and jq validation pass."
+    }
+  ],
+  "limitations": [
+    "macOS desktop build and current app window were checked; a dedicated Admin screenshot is still pending the Accessibility/UI-control prerequisite tracked in FV2-006.",
+    "The release APK was built and installed locally for visual QA only; it was not published or added to Git."
+  ],
+  "status": "PASS_TESTS_MACOS_BUILD_AND_ANDROID_API35_VISUAL; MACOS_ADMIN_SCREEN_VISUAL_PENDING"
+}
