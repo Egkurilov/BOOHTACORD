@@ -62,7 +62,7 @@ class VoiceShortcutBinding {
   int get hashCode => Object.hash(keyId, control, alt, shift, meta);
 }
 
-const Set<int> _modifierIds = {
+final Set<int> _modifierIds = {
   LogicalKeyboardKey.controlLeft.keyId, LogicalKeyboardKey.controlRight.keyId,
   LogicalKeyboardKey.altLeft.keyId, LogicalKeyboardKey.altRight.keyId,
   LogicalKeyboardKey.shiftLeft.keyId, LogicalKeyboardKey.shiftRight.keyId,

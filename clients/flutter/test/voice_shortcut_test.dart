@@ -13,7 +13,7 @@ void main() {
 
   test('rejects bare alphanumeric and conflicts with PTT/search', () {
     const bare = VoiceShortcutBinding(keyId: 42, label: 'M');
-    const search = VoiceShortcutBinding(keyId: LogicalKeyboardKey.keyK.keyId, label: 'K', control: true);
+    final search = VoiceShortcutBinding(keyId: LogicalKeyboardKey.keyK.keyId, label: 'K', control: true);
     expect(bare.isValid, isFalse);
     expect(voiceShortcutConflict(search, null, null), 'search');
     expect(voiceShortcutConflict(const VoiceShortcutBinding(keyId: 42, label: 'M', alt: true), null, 42), 'ptt');
