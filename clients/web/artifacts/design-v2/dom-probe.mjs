@@ -142,7 +142,7 @@ if (state === 'chat' && width > 600) await page.locator('.voice-dock').evaluate(
 if ((process.argv[2] ?? 'chat') === 'roles') await page.getByRole('button', { name: 'Роли', exact: true }).click()
 if ((process.argv[2] ?? 'chat') === 'admin-members') await page.getByRole('button', { name: 'Участники', exact: true }).click()
 if (['chat', 'dm', 'reply', 'image-viewer'].includes(state)) await page.locator('.message-item').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
-if (state === 'context') await page.locator('.channel-category').first().evaluate((element) => element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 255, clientY: 235 })))
+if (state === 'context') await page.mouse.click(255, 235, { button: 'right' })
 if (state === 'reply' && await page.locator('.message-actions-toggle').count()) { const item = page.locator('.message-item').nth(referenceFixture ? 1 : 0); await item.locator('.message-actions-toggle').evaluate((button) => button.click()); await item.locator('.message-action-buttons button').first().evaluate((button) => button.click()); await page.locator('#message-body').fill('@Da'); await page.locator('.mention-popover').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {}) }
 if (state === 'audio') {
   await page.getByRole('button', { name: 'Настройки аудио' }).evaluate((button) => button.click())
