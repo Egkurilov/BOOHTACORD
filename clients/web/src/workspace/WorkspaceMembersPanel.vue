@@ -55,11 +55,11 @@ onMounted(() => { if (!props.selectedVoiceChannel) void loadRoster() })
 </script>
 
 <template>
-  <aside id="members-panel" class="members members-panel" :class="{ 'is-open': open, 'has-popover': Boolean(selectedID) }" :role="modal ? 'dialog' : undefined" :aria-modal="modal ? 'true' : undefined" aria-label="Участники" tabindex="-1" data-testid="members-panel">
+  <aside id="members-panel" class="members members-panel" :class="{ 'is-open': open, 'has-popover': Boolean(selectedID) }" :role="modal && !selectedID ? 'dialog' : undefined" :aria-modal="modal && !selectedID ? 'true' : undefined" aria-label="Участники" tabindex="-1" data-testid="members-panel">
     <h2 class="members-heading">Участники <span>{{ membersLoading && !guildMembers.length ? '—' : memberCount }}</span></h2>
     <p v-if="visibleVoiceChannel" class="members-summary">Голосовой канал · {{ visibleVoiceChannel.name }}</p>
     <p v-if="selectedVoiceChannel && !voiceRoomVisible" class="members-empty">{{ activeVoiceChannel ? `Вы подключены к «${activeVoiceChannel.name}». Перенесите подключение, чтобы увидеть участников этого канала.` : 'Подключитесь к каналу, чтобы увидеть его участников.' }}</p>
-    <section v-if="voiceRoomVisible" class="members-voice-roster" aria-label="Подключённые к голосовому каналу">
+    <section v-if="voiceRoomVisible" class="members-voice-roster" aria-label="Подключённые к голосовому каналу" :inert="Boolean(selectedID) && modal">
       <h3 class="members-group">В голосовом канале · {{ participants.length + 1 }}</h3>
       <ul class="member-list">
         <li class="member-card member member-self"><span class="member-avatar" :style="{ backgroundColor: avatarBackground(accountID ?? selfName ?? 'Вы') }" aria-hidden="true">{{ avatarInitials(selfName ?? 'Вы') }}</span><span class="member-copy"><span class="member-name">{{ selfName || 'Вы' }}</span><small class="member-state">{{ voiceStateLabel(selfMicrophoneMuted, false, selfMicrophoneUnavailable) }}</small></span><VoiceParticipantStatus compact :microphone-muted="selfMicrophoneMuted" :microphone-unavailable="selfMicrophoneUnavailable" /></li>
@@ -70,7 +70,7 @@ onMounted(() => { if (!props.selectedVoiceChannel) void loadRoster() })
         </li>
       </ul>
     </section>
-    <section v-if="!selectedVoiceChannel" class="members-guild-roster" aria-label="Участники гильдии">
+    <section v-if="!selectedVoiceChannel" class="members-guild-roster" aria-label="Участники гильдии" :inert="Boolean(selectedID) && modal">
       <p v-if="membersError" class="members-error" role="alert">{{ membersError }} <button type="button" @click="loadRoster()">Повторить</button></p>
       <p v-else-if="membersLoading && !guildMembers.length" class="members-empty" aria-live="polite">Загружаем участников…</p>
       <p v-else-if="!guildMembers.length" class="members-empty">В гильдии пока нет участников.</p>
@@ -81,6 +81,7 @@ onMounted(() => { if (!props.selectedVoiceChannel) void loadRoster() })
       </div>
       <button v-if="memberCursor && !membersError" class="members-more" type="button" :disabled="membersLoading" @click="loadRoster(memberCursor)">{{ membersLoading ? 'Загружаем…' : 'Показать ещё' }}</button>
     </section>
-    <MemberPopover v-if="selectedID" :member-i-d="selectedID" :self="selectedID === props.accountID" :viewer-role="props.role" :same-voice="Boolean(openedFromVoiceRoster && activeVoiceChannel && selectedVoiceParticipant)" :volume="selectedVoiceParticipant?.volume ?? 100" :top="popoverTop" @close="closeProfile" @open-d-m="emit('openDM', $event)" @set-volume="setVolume" />
+    <div v-if="selectedID && modal" class="member-sheet-scrim" aria-hidden="true" @click="closeProfile" />
+    <MemberPopover v-if="selectedID" :key="selectedID" :member-i-d="selectedID" :self="selectedID === props.accountID" :viewer-role="props.role" :same-voice="Boolean(openedFromVoiceRoster && activeVoiceChannel && selectedVoiceParticipant)" :volume="selectedVoiceParticipant?.volume ?? 100" :top="popoverTop" :modal="modal" @close="closeProfile" @open-d-m="emit('openDM', $event)" @set-volume="setVolume" />
   </aside>
 </template>

@@ -28,14 +28,14 @@ describe('workspace drawer keyboard focus', () => {
     expect(restorableDrawerFocusTarget({ isConnected: false } as HTMLElement, body, html)).toBeNull()
   })
 
-  it('connects modal semantics to visible drawers while leaving the member popover non-modal', () => {
+  it('connects modal semantics to visible drawers and the nested mobile member sheet', () => {
     const app = source('./WorkspaceApp.vue')
     const drawers = source('./useWorkspaceDrawers.ts')
     const popover = source('./MemberPopover.vue')
     expect(app).toContain('modalDrawer')
     expect(app).toContain('aria-modal')
     expect(drawers).toContain('useWorkspaceDrawerFocus')
-    expect(popover).toContain('aria-modal="false"')
+    expect(popover).toContain(':aria-modal="props.modal ?')
     expect(popover).toContain('event.stopPropagation()')
   })
 })

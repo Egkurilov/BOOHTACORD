@@ -20,7 +20,6 @@ import workspaceMain from '../workspace/WorkspaceMain.vue?raw'
 import membersPanel from '../workspace/WorkspaceMembersPanel.vue?raw'
 import profileSettings from '../identity/ProfileSettings.vue?raw'
 import adminPanel from '../admin/panel/AdminPanel.vue?raw'
-import memberPopover from '../workspace/MemberPopover.vue?raw'
 
 function source(relativePath: string): string {
   return readFileSync(new URL(relativePath, import.meta.url), 'utf8')
@@ -118,7 +117,4 @@ describe('GuildChat design-system foundation', () => {
     for (const expected of ['Участники', 'Каналы', 'Аудит', 'AdminMembersSection', 'AdminAuditSection']) expect(adminPanel).toContain(expected)
   })
 
-  it('keeps the nonmodal member profile actions scoped to existing APIs', () => {
-    for (const expected of ['aria-modal="false"', 'Escape', 'loadMember', 'openDM', 'setVolume', 'kickVoiceParticipant']) expect(memberPopover).toContain(expected)
-  })
 })

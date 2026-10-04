@@ -6,9 +6,13 @@
 .member-popover > header:hover, .member-popover > header:focus-within { opacity: 1; }
 .member-popover > header button { width: 32px; height: 32px; }
 .member-popover .member-popover-identity { display: block; }
+.member-popover-avatar-wrap { position: relative; display: block; width: 64px; height: 64px; }
 .member-popover .member-popover-avatar { display: grid; width: 64px; height: 64px; place-items: center; font-size: 24px; }
-.member-popover .member-popover-avatar--empty { position: relative; }
-.member-popover .member-popover-avatar--empty::after { position: absolute; right: 0; bottom: 0; width: 13px; height: 13px; border: 2px solid #222631; border-radius: 50%; background: #22c55e; content: ''; }
+.member-popover-avatar-presence { position: absolute; right: 0; bottom: 0; width: 13px; height: 13px; border: 2px solid #222631; border-radius: 50%; background: #778094; }
+.member-popover-identity[data-presence='online'] .member-popover-avatar-presence { background: #22c55e; }
+.member-popover-identity[data-presence='online'] .member-popover-presence::before { background: #53d98b; }
+.member-popover-identity[data-presence='offline'] .member-popover-presence::before,
+.member-popover-identity[data-presence='unknown'] .member-popover-presence::before { background: #778094; }
 .member-popover .member-popover-identity > div { margin-top: 16px; }
 .member-popover .member-popover-identity h2 { font-size: 20px; line-height: 28px; }
 .member-popover .member-popover-identity p { margin: 4px 0 0; font-size: 12px; line-height: 16px; }
@@ -19,4 +23,19 @@
 .member-popover .member-popover-actions { margin-top: 28px; }
 .member-popover .member-popover-actions button { min-height: 36px; border: 0; border-radius: 8px; color: #fff; background: #5865f2; font-size: 14px; }
 .member-popover .member-popover-actions button:first-child::before { margin-right: 10px; font-size: 18px; content: '@'; }
-@media (max-width: 1023px) { .members-panel.has-popover { overflow: visible; } .members-panel .member-popover { right: 16px; max-width: calc(100vw - 32px); } }
+@media (max-width: 1023px) {
+  .members-panel.has-popover { overflow: visible; }
+  .members-panel .member-sheet-scrim { position: fixed; inset: 0; z-index: 3; width: 100vw; height: 100dvh; border: 0; background: #0009; }
+  .members-panel .member-popover { position: fixed; inset: auto 0 0; z-index: 4; width: 100vw; max-width: none; max-height: 80dvh; min-height: 0; overflow-y: auto; overscroll-behavior: contain; border-radius: 16px 16px 0 0; padding: 12px 20px max(24px, env(safe-area-inset-bottom)); }
+  .member-popover > header { position: static; width: auto; height: 44px; margin-bottom: 12px; opacity: 1; }
+  .member-popover > header > span { display: block; color: var(--gc-text-primary); font-size: 16px; font-weight: 600; }
+  .member-popover > header button { width: 44px; height: 44px; font-size: 28px; }
+  .member-popover .member-popover-identity { display: flex; align-items: flex-start; gap: 16px; }
+  .member-popover .member-popover-identity > div { min-width: 0; margin-top: 0; }
+  .member-popover .member-popover-identity h2 { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .member-popover .member-popover-identity small { margin-top: 8px; }
+  .member-popover .member-popover-identity .member-popover-presence { margin-top: 12px; }
+  .member-popover .member-popover-actions { margin-top: 20px; }
+  .member-popover .member-popover-actions button { min-height: 44px; }
+  .member-popover .member-popover-actions button:not(:first-child) { color: var(--gc-danger); background: transparent; border: 1px solid var(--gc-border-control); }
+}
