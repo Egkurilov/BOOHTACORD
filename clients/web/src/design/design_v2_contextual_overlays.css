@@ -17,6 +17,7 @@
 .category-context-menu button:first-of-type { background: var(--gc-surface-selected); }
 .category-context-menu button:focus-visible { outline: 0; box-shadow: inset 0 0 0 1px var(--gc-accent); }
 .category-context-icon { display: inline-flex; width: 18px; flex: none; justify-content: center; color: var(--gc-text-secondary); font-size: 21px; font-weight: 400; }
+.category-context-icon svg { width: 18px; height: 18px; stroke-width: 1.8; }
 .category-context-separator { height: 1px; flex: 0 0 1px; margin: 5px 6px; background: var(--gc-border-subtle); }
 .category-context-menu .category-context-hint { margin: 4px 10px 0; color: var(--gc-text-muted); font-size: 12px; line-height: 18px; }
 
