@@ -10,14 +10,7 @@ extension VoiceConnectionCloseDisconnect on VoiceController {
     RoomDisconnectedEvent event,
   ) async {
     if (!identical(this.room, room) || voicePhase == VoicePhase.leaving) return;
-    final ticket = scope.capture();
-    final closing = leaveVoice();
-    final revision = operationRevision;
-    screenThumbnails.clear();
-    await closing;
-    if (!active(ticket, revision)) return;
-    voicePhase = VoicePhase.error;
-    error = switch (event.reason) {
+    final message = switch (event.reason) {
       DisconnectReason.duplicateIdentity =>
         'Голосовое подключение открыто в другом окне. Перенесите его оттуда.',
       DisconnectReason.participantRemoved =>
@@ -27,6 +20,15 @@ extension VoiceConnectionCloseDisconnect on VoiceController {
         'Не удалось восстановить голосовое соединение после $voiceReconnectAttemptLimit попыток. Подключитесь ещё раз.',
       _ => 'Связь с голосовым каналом потеряна. Подключитесь ещё раз.',
     };
-    notifyListeners();
+    if (leaseId != null) disconnect.bind(leaseId!, voiceChannel?.id ?? '');
+    disconnect.transport(message);
+    final generation = disconnect.generation;
+    final ticket = scope.capture();
+    final closing = leaveVoice(explicit: false);
+    final revision = operationRevision;
+    screenThumbnails.clear();
+    await closing;
+    if (!active(ticket, revision) || generation != disconnect.generation) return;
+    showVoiceDisconnect();
   }
 }

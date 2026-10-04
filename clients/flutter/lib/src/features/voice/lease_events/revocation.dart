@@ -9,10 +9,13 @@ extension VoiceLeaseEventsRevocation on VoiceController {
     final revocation = VoiceLeaseRevocation.parse(
       payload['lease_id'],
       payload['reason'],
-      activeLeaseId: leaseId,
+      activeLeaseId: leaseId ?? disconnect.leaseId,
       admissionPending: voiceAdmissionPending,
     );
     if (revocation == null) return;
+    if (leaseId == revocation.leaseId) disconnect.bind(revocation.leaseId, voiceChannel?.id ?? disconnect.channelId ?? '');
+    final accepted = disconnect.server(revocation.leaseId, revocation.reason);
+    if (accepted && room == null && !voiceAdmissionPending) { showVoiceDisconnect(); return; }
     if (voiceAdmissionPending) {
       revokedVoiceLeasesDuringJoin[revocation.leaseId] = revocation.reason;
       if (revokedVoiceLeasesDuringJoin.length > 16) {
@@ -30,13 +33,14 @@ extension VoiceLeaseEventsRevocation on VoiceController {
 
   Future<void> handleVoiceLeaseRevoked(String leaseId, String reason) async {
     if (this.leaseId != leaseId || room == null) return;
+    disconnect.bind(leaseId, voiceChannel?.id ?? disconnect.channelId ?? '');
+    disconnect.server(leaseId, reason);
+    final generation = disconnect.generation;
     final ticket = scope.capture();
-    final closing = leaveVoice();
+    final closing = leaveVoice(explicit: false);
     final revision = operationRevision;
     await closing;
-    if (!active(ticket, revision)) return;
-    voicePhase = VoicePhase.error;
-    error = VoiceLeaseRevocation(leaseId: leaseId, reason: reason).message;
-    notifyListeners();
+    if (!active(ticket, revision) || generation != disconnect.generation) return;
+    showVoiceDisconnect();
   }
 }

@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import DisconnectNotice from './disconnect_notice/Notice.vue'
+import type { VoiceDisconnectNotice } from './disconnect_notice/model'
 import type { VoiceConnectionState } from './connection_store'
 import type { VoiceJoinMode } from './livekit_gateway'
 import VoiceRoomRoster from './VoiceRoomRoster.vue'
 import type { VoiceRoomRoster as RoomRoster } from './voice_roster_client'
 
-defineProps<{ channelId: string; voiceError: string | null; voiceState: VoiceConnectionState; voiceTransferRequired: boolean; roster?: RoomRoster | null; rosterError?: string | null }>()
+defineProps<{ channelId: string; voiceError: string | null; voiceState: VoiceConnectionState; voiceTransferRequired: boolean; notice?: VoiceDisconnectNotice | null; roster?: RoomRoster | null; rosterError?: string | null }>()
 const emit = defineEmits<{ join: [channelId: string, transfer?: boolean, joinMode?: VoiceJoinMode]; transfer: [channelId: string] }>()
 </script>
 
@@ -18,10 +20,11 @@ const emit = defineEmits<{ join: [channelId: string, transfer?: boolean, joinMod
       <VoiceRoomRoster v-if="roster" :roster="roster" />
       <p v-else-if="rosterError" class="state state-error" role="status">Не удалось обновить состав комнаты. Повторяем попытку.</p>
       <p v-else class="state" role="status">Проверяем, кто сейчас в комнате…</p>
-      <p v-if="voiceError" class="state state-error" role="alert">{{ voiceError }}</p>
+      <DisconnectNotice v-if="notice" :notice="notice" />
+      <p v-else-if="voiceError" class="state state-error" role="alert">{{ voiceError }}</p>
       <div class="voice-prejoin-actions">
-        <button class="gc-button gc-button--primary" type="button" :disabled="voiceState === 'JOINING'" @click="emit('join', channelId)">{{ voiceState === 'JOINING' ? 'Подключаемся…' : 'Подключиться к голосу' }}</button>
-        <button class="gc-button gc-button--secondary" type="button" :disabled="voiceState === 'JOINING'" @click="emit('join', channelId, true, 'listener')">Подключиться без микрофона</button>
+        <button class="gc-button gc-button--primary" type="button" :disabled="voiceState === 'JOINING' || voiceState === 'LEAVING' || notice?.reconnectAllowed === false" @click="emit('join', channelId)">{{ voiceState === 'JOINING' ? 'Подключаемся…' : 'Подключиться к голосу' }}</button>
+        <button class="gc-button gc-button--secondary" type="button" :disabled="voiceState === 'JOINING' || voiceState === 'LEAVING' || notice?.reconnectAllowed === false" @click="emit('join', channelId, true, 'listener')">Подключиться без микрофона</button>
       </div>
     </article>
   </div>

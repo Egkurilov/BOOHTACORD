@@ -11,7 +11,7 @@ func safeClientEvents(span *tracepb.Span) []*tracepb.Span_Event {
 			continue
 		}
 		switch event.Name {
-		case prefix + "started", prefix + "completed", prefix + "failed":
+		case prefix + "started", prefix + "completed", prefix + "failed", prefix + "interrupted":
 			output = append(output, &tracepb.Span_Event{TimeUnixNano: event.TimeUnixNano, Name: event.Name})
 		}
 	}

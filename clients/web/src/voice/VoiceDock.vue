@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { VoiceDisconnectNotice } from './disconnect_notice/model'
 import { computed } from 'vue'
 import type { TopologyChannel } from '../channel/topology_client'
 import type { ScreenShareState, VoiceConnectionState } from './connection_store'
@@ -11,6 +12,7 @@ const props = withDefaults(defineProps<{
   channel: TopologyChannel | null
   activeSession: boolean
   error: string | null
+  notice?: VoiceDisconnectNotice | null
   activationMode: VoiceActivationMode
   deafened: boolean
   deafenChanging: boolean
@@ -51,7 +53,8 @@ const status = computed(() => {
       </span>
     </div>
     <p v-if="streamStartNotice && activeSession" class="voice-stream-alert-notice" role="status">В канале началась демонстрация экрана</p>
-    <p v-if="error" class="state state-error" role="alert">{{ error }}</p>
+    <p v-if="notice" class="state state-error">{{ notice.message }}</p>
+    <p v-else-if="error" class="state state-error" role="alert">{{ error }}</p>
     <div v-if="channel || activeSession" class="voice-actions">
       <button v-if="channel" class="voice-icon-button" type="button" :aria-label="microphoneMuted ? 'Включить микрофон' : 'Выключить микрофон'" :aria-pressed="!microphoneMuted" :disabled="activationMode === 'PTT' || deafened" :title="activationMode === 'PTT' ? 'Микрофон управляется PTT' : microphoneMuted ? 'Включить микрофон' : 'Выключить микрофон'" @click="emit('toggleMicrophone')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button>
       <button v-if="channel" class="voice-icon-button" type="button" :aria-label="deafened ? 'Включить удалённый звук' : 'Выключить удалённый звук'" :aria-pressed="deafened" :disabled="deafenChanging || state === 'LEAVING'" :title="deafened ? 'Включить удалённый звук' : 'Выключить удалённый звук'" @click="emit('toggleDeafen')"><svg class="voice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14v-3a9 9 0 0 1 18 0v3"/><rect x="3" y="12" width="4" height="9" rx="2"/><rect x="17" y="12" width="4" height="9" rx="2"/></svg></button>

@@ -4,9 +4,11 @@ import '../../screen/lifecycle/controller.dart';
 import '../lifecycle/controller.dart';
 
 extension VoiceConnectionCloseLeave on VoiceController {
-  Future<void> leaveVoice() {
+  Future<void> leaveVoice({bool explicit = true}) {
+    if (explicit && (room != null || voiceAdmissionPending || disconnect.notice != null)) { disconnect.local(); error = null; }
     final previous = closing;
     if (previous != null) return previous;
+    if (leaseId != null) disconnect.bind(leaseId!, voiceChannel?.id ?? disconnect.channelId ?? '');
     final operation = closeVoice(++operationRevision);
     closing = operation;
     return operation.whenComplete(() {
@@ -65,7 +67,7 @@ extension VoiceConnectionCloseLeave on VoiceController {
     listenerOnly = false;
     mutedBeforeDeafen = false;
     microphoneMutedBeforePtt = false;
-    voicePhase = VoicePhase.idle;
+    voicePhase = disconnect.notice != null && disconnect.notice!.source != 'local' ? VoicePhase.error : VoicePhase.idle;
     notifyListeners();
   }
 
