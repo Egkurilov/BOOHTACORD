@@ -35,20 +35,43 @@ describe('selected-stream toolbar layout', () => {
     expect(css).toContain('height: min(514px, 80dvh)')
   })
 
-  it('lets mobile stream cards use the full thumbnail and scroll without a visual chevron', () => {
+  it('matches the HTML thumbnail insets and captions while retaining horizontal scrolling', () => {
     const css = source('../design/design_v2_screen_viewer.css')
-    expect(css).toContain('.voice-room .screen-cards .stream-option { width: 128px; min-width: 128px; height: 80px; min-height: 80px; padding: 0; }')
-    expect(css).toContain('.voice-room .screen-cards .stream-option.selected { padding: 0; }')
+    expect(css).toContain('.voice-room .screen-cards .stream-option { width: 128px; min-width: 128px; height: 80px; min-height: 80px; }')
+    expect(css).toContain('padding: 1px 6px; background: var(--gc-sidebar);')
     expect(css).toContain('.stream-card-preview { height: 50px; min-height: 50px; }')
-    expect(css).toContain('.stream-card-preview .stream-avatar { align-self: start; margin-top: 14px; }')
+    expect(css).toContain('position: absolute; top: 14px; left: 8px;')
+    expect(css).toContain('height: 28px; min-height: 28px;')
+    expect(css).toContain('gap: 6px; padding: 4px 8px;')
     expect(css).toContain('.screen-cards.stream-rail.has-overflow::after { display: none; }')
     expect(css).toContain('.voice-room .workspace-header-toggle--nav, .voice-room .workspace-header-toggle--members { width: 44px; height: 44px; }')
   })
 
   it('keeps mobile viewer actions in equal touch targets with reference spacing', () => {
     const css = source('../design/design_v2_screen_viewer.css')
-    expect(css).toContain('.stream-toolbar-actions { gap: 2px; margin-right: -6px; }')
+    expect(css).toContain('.stream-toolbar-actions { gap: 2px; }')
     expect(css).toContain('.stream-toolbar-actions .stream-diagnostics { flex: 0 0 44px; }')
-    expect(css).toContain('.voice-room .stream-quality-row .screen-audio-toggle { margin-left: -4px; }')
+    expect(css).toContain('height: 56px; min-height: 56px; gap: 2px; padding: 4px;')
+    expect(css).toContain('width: 20px; height: 20px;')
+    expect(css).toContain('stroke-width: 1.8;')
+    expect(css).not.toContain('margin-right: -6px')
+  })
+
+  it('uses the shared live badge and identity palette for the selected participant', () => {
+    const css = source('../design/design_v2_screen_viewer.css')
+    const viewer = source('./ScreenViewer.vue')
+    expect(css).toContain('padding: 2px 6px; color: #FF9AD5; background: #3D1831; font-size: 12px; line-height: 16px;')
+    expect(viewer).toContain('avatarBackground(selectedStream.accountId ?? selectedStream.participantId)')
+    expect(viewer).toContain('avatarForeground(selectedStream.accountId ?? selectedStream.participantId)')
+  })
+
+  it('styles the real audio slider while preserving its 0–200 percent range', () => {
+    const control = source('./ScreenViewerAudioControl.vue')
+    const css = source('../design/design_v2_screen_viewer.css')
+    expect(control).toContain('min="0" max="200" step="1" :value="volume"')
+    expect(control).toContain("'--screen-audio-level': `${volume / 2}%`")
+    expect(css).toContain('height: 4px; margin: 0;')
+    expect(css).toContain('::-webkit-slider-thumb')
+    expect(css).toContain('::-moz-range-thumb')
   })
 })

@@ -1,4 +1,4 @@
-.stream-diagnostics > summary.stream-tool-button { display: grid; width: 32px; min-width: 32px; height: 32px; min-height: 32px; place-items: center; border: 0; padding: 0; background: transparent; }
+.stream-diagnostics > summary.stream-tool-button { display: grid; width: 36px; min-width: 36px; height: 36px; min-height: 36px; place-items: center; border: 0; padding: 0; background: transparent; }
 .stream-diagnostics-backdrop { display: none; }
 .stream-diagnostics-panel { box-sizing: border-box; width: 320px; padding: 20px; color: var(--gc-text-primary); background: var(--gc-surface-raised); }
 .stream-diagnostics-panel header { display: flex; align-items: center; justify-content: space-between; }

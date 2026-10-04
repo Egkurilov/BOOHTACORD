@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { avatarBackground, avatarForeground } from '../design/avatar_color'
 import { participantAudioMessage, screenAudioMessage } from './screen_audio_copy'
 import ScreenViewerAudioControl from './ScreenViewerAudioControl.vue'
 import ScreenViewerRail from './ScreenViewerRail.vue'
@@ -80,7 +81,7 @@ async function toggleFullscreen(): Promise<void> {
       <video ref="video" v-show="selectedId" class="screen-player" autoplay playsinline :muted="selectedStream?.isLocal ?? false" aria-label="Выбранная демонстрация" @loadedmetadata="refreshVideoQuality" @resize="refreshVideoQuality" @loadeddata="markVideoReady" @emptied="resetVideoFrame"></video>
       <template v-if="selectedStream">
         <div class="screen-stage-top">
-          <span class="screen-stage-label"><span class="screen-stage-avatar" aria-hidden="true">{{ selectedStream.participantName.slice(0, 2).toLocaleUpperCase('ru-RU') }}</span>{{ selectedStream.isLocal ? 'Ваш экран' : `Экран ${selectedStream.participantName || 'участника'}` }}<b>ЭФИР</b></span>
+          <span class="screen-stage-label"><span class="screen-stage-avatar" :style="{ backgroundColor: avatarBackground(selectedStream.accountId ?? selectedStream.participantId), color: avatarForeground(selectedStream.accountId ?? selectedStream.participantId) }" aria-hidden="true">{{ selectedStream.participantName.slice(0, 2).toLocaleUpperCase('ru-RU') }}</span>{{ selectedStream.isLocal ? 'Ваш экран' : `Экран ${selectedStream.participantName || 'участника'}` }}<b>ЭФИР</b></span>
         </div>
       </template>
       <p v-if="fullscreenFeedback" class="screen-fullscreen-feedback" role="status" aria-live="polite">{{ fullscreenFeedback }}</p>

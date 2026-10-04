@@ -3,18 +3,20 @@
 .voice-room .screen-stage { position: relative; overflow: hidden; border-radius: 12px; }
 .voice-room .screen-player { width: 100%; height: 100%; max-height: 100%; object-fit: contain; background: #050608; }
 .voice-room .screen-stage-top { inset: 16px auto auto 16px; }
-.voice-room .screen-stage-label { display: flex; height: 40px; align-items: center; gap: 10px; border-radius: 10px; padding: 0 10px; color: var(--gc-text-primary); background: #101218; font-size: 12px; font-weight: 600; }
-.screen-stage-avatar { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; color: #D9CDF3; background: #443A68; font-size: 11px; }
-.screen-stage-label b, .stream-option-copy b { border-radius: 6px; padding: 3px 6px; color: #FF9AD7; background: #48243D; font-size: 11px; font-weight: 600; }
-.voice-room .stream-quality-row { display: flex; width: 100%; height: 48px; min-height: 48px; align-items: center; gap: 8px; border: 1px solid var(--gc-border-subtle); border-radius: 10px; padding: 4px 12px; background: var(--gc-sidebar); }
-.stream-quality-row .screen-audio-toggle, .stream-tool-button { display: grid; width: 32px; height: 32px; min-height: 32px; flex: none; place-items: center; border: 0; border-radius: 7px; padding: 0; color: var(--gc-text-secondary); background: transparent; cursor: pointer; }
+.voice-room .screen-stage-label { display: flex; height: 40px; align-items: center; gap: 10px; border-radius: 8px; padding: 6px 10px; color: var(--gc-text-primary); background: rgba(8, 10, 15, .85); font-size: 12px; font-weight: 700; }
+.screen-stage-avatar { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; font-size: 11px; font-weight: 600; }
+.screen-stage-label b, .stream-option-copy b { flex: none; border-radius: 6px; padding: 2px 6px; color: #FF9AD5; background: #3D1831; font-size: 12px; line-height: 16px; font-weight: 600; }
+.voice-room .stream-quality-row { display: flex; width: 100%; height: 48px; min-height: 48px; align-items: center; gap: 8px; border: 1px solid var(--gc-border-subtle); border-radius: 10px; padding: 4px 8px; background: var(--gc-sidebar); }
+.stream-quality-row .screen-audio-toggle, .stream-tool-button { display: grid; width: 36px; height: 36px; min-height: 36px; flex: none; place-items: center; border: 0; border-radius: 8px; padding: 0; color: var(--gc-text-secondary); background: transparent; cursor: pointer; }
 .stream-tool-button:hover, .stream-tool-button:focus-visible { color: var(--gc-text-primary); background: var(--gc-surface-hover); }
-.stream-tool-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+.stream-tool-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
 .voice-room .stream-quality-row .volume-control { display: flex; min-width: 0; max-width: 150px; flex: 0 0 150px; align-items: center; gap: 8px; }
-.voice-room .stream-quality-row .volume-control input { width: 100px; min-width: 100px; accent-color: #F4F5FA; }
+.voice-room .stream-quality-row .volume-control input { appearance: none; width: 100px; min-width: 100px; height: 4px; margin: 0; border: 0; border-radius: 99px; padding: 0; background: linear-gradient(to right, var(--gc-text-secondary) var(--screen-audio-level), #404654 var(--screen-audio-level)); }
+.stream-quality-row .volume-control input::-webkit-slider-thumb { appearance: none; width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--gc-text-primary); }
+.stream-quality-row .volume-control input::-moz-range-thumb { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--gc-text-primary); }
 .voice-room .stream-quality-row .volume-control output { color: var(--gc-text-muted); font-size: 12px; }
-.stream-toolbar-actions { display: flex; align-items: center; gap: 12px; margin-left: auto; }
-.voice-room .screen-fullscreen-button { position: static; inset: auto; width: 32px; height: 32px; border: 0; color: var(--gc-text-secondary); background: transparent; }
+.stream-toolbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.voice-room .screen-fullscreen-button { position: static; inset: auto; width: 36px; height: 36px; border: 0; color: var(--gc-text-secondary); background: transparent; }
 .stream-more-actions { position: relative; }
 .stream-more-actions > summary { list-style: none; font-size: 22px; line-height: 1; }
 .stream-more-actions > summary::-webkit-details-marker { display: none; }
@@ -23,37 +25,32 @@
 .stream-more-actions .stream-voice-return button:hover { color: var(--gc-text-primary); background: var(--gc-surface-hover); }
 .voice-room .screen-rail-section { min-height: 100px; height: 100px; overflow: hidden; }
 .voice-room .screen-cards.stream-rail { display: flex; height: 100px; min-height: 100px; align-items: stretch; gap: 12px; overflow-x: auto; overflow-y: hidden; padding: 2px; }
-.voice-room .screen-cards .stream-option { display: flex; box-sizing: border-box; width: 152px; min-width: 152px; height: 96px; min-height: 96px; flex-direction: column; gap: 0; overflow: hidden; border: 1px solid var(--gc-border-subtle); border-radius: 8px; padding: 4px; background: var(--gc-sidebar); }
-.voice-room .screen-cards .stream-option.selected { border: 2px solid var(--gc-accent); padding: 3px; background: var(--gc-sidebar); }
-.stream-card-preview { display: grid; box-sizing: border-box; width: 100%; height: 60px; min-height: 60px; place-items: center start; overflow: hidden; border-radius: 4px 4px 0 0; padding-left: 8px; background: var(--gc-surface-raised); }
-.stream-card-preview:has(.stream-thumbnail) { padding-left: 0; }
+.voice-room .screen-cards .stream-option { display: block; box-sizing: border-box; width: 152px; min-width: 152px; height: 96px; min-height: 96px; overflow: hidden; border: 1px solid var(--gc-border-subtle); border-radius: 8px; padding: 1px 6px; background: var(--gc-sidebar); text-align: left; }
+.voice-room .screen-cards .stream-option.selected { border: 2px solid var(--gc-accent); background: var(--gc-sidebar); }
+.stream-card-preview { display: block; position: relative; box-sizing: border-box; width: 100%; height: 64px; min-height: 64px; overflow: hidden; background: #222835; }
 .stream-card-preview .stream-thumbnail { display: block; width: 100%; height: 100%; object-fit: cover; }
-.stream-card-preview .stream-avatar { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; color: #F5C394; background: #633E29; font-size: 13px; }
-.stream-rail-participants .stream-card-preview .stream-avatar { color: #A3DBDB; background: #19494C; }
-.voice-room .screen-cards .stream-option-copy { display: flex; min-width: 0; min-height: 26px; align-items: center; gap: 4px; padding: 0 6px; color: var(--gc-text-primary); font-size: 12px; font-weight: 400; white-space: nowrap; }
-.stream-option-copy > span { overflow: hidden; text-overflow: ellipsis; }
+.stream-card-preview .stream-avatar { display: grid; position: absolute; top: 14px; left: 8px; width: 36px; height: 36px; place-items: center; border-radius: 50%; font-size: 13px; font-weight: 600; }
+.stream-rail-participants .stream-card-preview .stream-avatar { color: #A5F2F0; background: var(--gc-avatar-blue); }
+.voice-room .screen-cards .stream-option-copy { display: flex; width: 100%; min-width: 0; height: 28px; min-height: 28px; align-items: center; gap: 6px; padding: 4px 8px; color: var(--gc-text-primary); font-size: 12px; font-weight: 400; white-space: nowrap; }
+.stream-option-copy > span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; }
 .stream-option-copy b { margin-left: auto; }
 @media (max-width: 720px) {
   .voice-room .workspace-header-toggle--nav, .voice-room .workspace-header-toggle--members { width: 44px; height: 44px; }
   .voice-room .main-title small { display: none; }
   .voice-room .screen-viewer.stream-wrap { grid-template-rows: minmax(0, 1fr) 56px 84px; gap: 12px; padding: 12px; }
   .voice-room .screen-stage-top { inset: 8px auto auto 8px; }
-  .voice-room .screen-stage-label { height: 28px; gap: 6px; padding: 0 8px; font-size: 11px; }
+  .voice-room .screen-stage { border-radius: 10px; }
+  .voice-room .screen-stage-label { height: 28px; gap: 6px; padding: 4px 8px; font-size: 11px; }
   .voice-room .screen-stage-avatar { display: none; }
-  .voice-room .stream-quality-row { height: 56px; min-height: 56px; padding: 4px 8px; }
+  .voice-room .stream-quality-row { height: 56px; min-height: 56px; gap: 2px; padding: 4px; }
   .voice-room .stream-quality-row .volume-control { display: none; }
   .voice-room .stream-quality-row .screen-audio-toggle, .voice-room .stream-toolbar-actions .stream-tool-button { width: 44px; height: 44px; min-height: 44px; }
-  .voice-room .stream-quality-row .screen-audio-toggle { margin-left: -4px; }
-  .stream-toolbar-actions { gap: 2px; margin-right: -6px; }
+  .stream-toolbar-actions { gap: 2px; }
   .stream-toolbar-actions .stream-diagnostics { flex: 0 0 44px; }
   .voice-room .screen-rail-section { min-height: 84px; height: 84px; }
   .voice-room .screen-cards.stream-rail { height: 84px; min-height: 84px; gap: 8px; }
-  .voice-room .screen-cards .stream-option { width: 128px; min-width: 128px; height: 80px; min-height: 80px; padding: 0; }
-  .voice-room .screen-cards .stream-option.selected { padding: 0; }
+  .voice-room .screen-cards .stream-option { width: 128px; min-width: 128px; height: 80px; min-height: 80px; }
   .stream-card-preview { height: 50px; min-height: 50px; }
-  .stream-card-preview .stream-avatar { align-self: start; margin-top: 14px; }
-  .voice-room .screen-cards .stream-option-copy { flex: 1; padding: 0 8px; }
-  .voice-room .screen-cards .stream-option.selected .stream-option-copy { padding-inline: 12px; }
   .screen-cards.stream-rail.has-overflow::after { display: none; }
-  .voice-room .screen-cards .stream-option.selected .stream-option-copy > span { max-width: 66px; white-space: normal; line-height: 14px; }
+  .voice-room .screen-cards .stream-option.selected .stream-option-copy > span { white-space: normal; }
 }
