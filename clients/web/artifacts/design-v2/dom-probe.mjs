@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { chatMembers, chatMessages, chatProfile, chatTopology } from './chat-reference-fixture.mjs'
 import { connectReferenceMediaStore, connectReferenceVoiceStore, installReferenceTransports } from './reference-live-state.mjs'
 import { measureDom } from './dom-probe-measure.mjs'
+import { openReferenceCategoryMenu } from './context-menu/activate.mjs'
 
 const profile = { account_id: 'review-user', login: 'review', display_name: 'Review User', role: 'ADMINISTRATOR' }
 const permissions = {
@@ -142,7 +143,7 @@ if (state === 'chat' && width > 600) await page.locator('.voice-dock').evaluate(
 if ((process.argv[2] ?? 'chat') === 'roles') await page.getByRole('button', { name: 'Роли', exact: true }).click()
 if ((process.argv[2] ?? 'chat') === 'admin-members') await page.getByRole('button', { name: 'Участники', exact: true }).click()
 if (['chat', 'dm', 'reply', 'image-viewer'].includes(state)) await page.locator('.message-item').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
-if (state === 'context') await page.mouse.click(255, 235, { button: 'right' })
+if (state === 'context') await openReferenceCategoryMenu(page)
 if (state === 'reply' && await page.locator('.message-actions-toggle').count()) { const item = page.locator('.message-item').nth(referenceFixture ? 1 : 0); await item.locator('.message-actions-toggle').evaluate((button) => button.click()); await item.locator('.message-action-buttons button').first().evaluate((button) => button.click()); await page.locator('#message-body').fill('@Da'); await page.locator('.mention-popover').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {}) }
 if (state === 'audio') {
   await page.getByRole('button', { name: 'Настройки аудио' }).evaluate((button) => button.click())
