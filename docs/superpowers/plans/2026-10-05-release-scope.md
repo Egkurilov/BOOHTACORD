@@ -11,8 +11,9 @@ Canonical GitHub sources are authoritative under ADR-011.
 ## Plan
 
 1. Fetch all remotes and inventory ancestry. Merge the current FPS branch;
-   reconcile retired pre-migration histories while retaining canonical sources.
-   Stop when every inventoried branch is an ancestor of integration HEAD.
+   retain retired pre-migration histories locally: GitHub rejects historical
+   APK blobs exceeding 100 MB. Every active GitHub branch must be an ancestor
+   of integration HEAD; canonical migrated sources remain authoritative.
 2. Repair failing checks in the exact audio_diagnostics and shortcuts leaves.
    Baseline: Web receiver union fails typecheck; Flutter object-key const map
    fails compilation. Add a receiver regression; retain existing key tests.
@@ -20,7 +21,8 @@ Canonical GitHub sources are authoritative under ADR-011.
    client identities and Flutter version to 1.0.30+44 without changing channels.
 4. Run focused Web and Flutter checks, full native Flutter tests and analysis,
    and the full GitHub CI dispatch on the committed integration SHA.
-   CI supplies disposable PostgreSQL, Docker audio fixtures, Kotlin and Windows.
+   CI supplies disposable PostgreSQL, Docker audio fixtures, native DSP CTest,
+   Kotlin and Windows.
    Repair failures and repeat affected checks plus the complete final gate.
 5. Merge validated integration into master. Observe Build server and production
    installation for that revision; verify immutable release provenance/health.

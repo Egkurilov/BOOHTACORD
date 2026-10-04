@@ -7,6 +7,7 @@ from .process import ROOT, client, output, require_version, run
 
 def main():
     require_version("node", output("node", "--version").removeprefix("v"))
+    run(sys.executable, "-m", "tools.audio.native_tests.run")
     build_assets(ROOT)
     run("npm", "ci", cwd=client("web"))
     run("node", "--test", "tools/verify/dependencies/web_imports.test.mjs")
