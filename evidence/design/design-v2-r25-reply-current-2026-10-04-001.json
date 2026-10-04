@@ -1,0 +1,24 @@
+{
+  "id": "design-v2-r25-reply-current-2026-10-04-001",
+  "scope": "R25 actual Vue reply and mention popover against unchanged Design V2 PNG",
+  "source_revision": "9bf020a6",
+  "status": "PARTIAL",
+  "visual_report": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-r25-current-2026-10-04/REVIEW.md",
+  "checks": [
+    {
+      "name": "R25 actual versus unchanged reference",
+      "result": "PASS",
+      "observation": "Real Vue reply action and mention autocomplete captured at 1440x900. Reference SHA256 d59c819a006a038f6f310d65790d026a43095e1fb6bf8d73230b2f03fbeab846 unchanged; actual SHA256 d433ebd141d27f429cb36ee50180c046b5019913e53a64f053ee00f7c49c7834. RGB MAE 3.623; 4.93% of pixels have channel difference greater than 16. Four messages, one Daria option, reply target and protected preview were visible; page errors 0."
+    },
+    {
+      "name": "Focused reply and mention checks",
+      "result": "PASS",
+      "observation": "Four focused Vitest files, eight tests passed. Previous full Web check at source revision passed 916 tests, TypeScript/Vite build and Linux CI."
+    },
+    {
+      "name": "Strict pixels, live media and server ACL",
+      "result": "NOT_RUN",
+      "observation": "Fixture has one measured voice participant while reference shows four, and the reference shortens reply text independently of the source message. Visual fixture does not exercise LiveKit transport or server ACL. One-to-one acceptance remains open."
+    }
+  ]
+}
