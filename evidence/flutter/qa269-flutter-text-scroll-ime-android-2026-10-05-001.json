@@ -1,0 +1,32 @@
+{
+  "id": "QA-269",
+  "date": "2026-10-05",
+  "task": "FV2-002 — Flutter Design V2 workspace shell, text chat and direct messages",
+  "source_revision": "2e49f307",
+  "working_tree_changes": false,
+  "summary": "Performed a bounded Android API 35 emulator check using the installed signed 1.0.29+2056 app. Text history scrolls to older rows while the channel header and composer remain anchored. Gboard input was checked in its floating on-screen mode; this is not a Samsung physical-device or docked-keyboard login test.",
+  "checks": [
+    {
+      "name": "Android Text-channel history scroll",
+      "result": "PASS",
+      "version": "1.0.29+2056",
+      "observation": "A downward swipe from the latest messages reached older history. The header and composer remained fixed while the message list moved."
+    },
+    {
+      "name": "Android Gboard unsent text entry",
+      "result": "PARTIAL_PASS",
+      "observation": "The AVD initially presented Gboard as a side toolbar; after choosing its on-screen keyboard option, floating Gboard appeared. A single character could be entered and was deleted before leaving the screen; no message was sent. This does not validate the login form, Samsung hardware, or docked Gboard behavior."
+    },
+    {
+      "name": "Server read-cursor acceptance",
+      "result": "NOT_RUN",
+      "observation": "This pass checked local scroll geometry only; no server-side read-cursor state was inspected."
+    }
+  ],
+  "limitations": [
+    "Samsung/Gboard first-character keyboard-dismissal reproduction remains open.",
+    "Read-cursor, history pagination, and remaining composer/attachment states remain open under FV2-002.",
+    "No app data was cleared and no message was sent."
+  ],
+  "status": "PASS_ANDROID_SCROLL_PARTIAL_IME_READ_CURSOR_OPEN"
+}

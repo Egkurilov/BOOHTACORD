@@ -213,6 +213,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-QUALITY-01, REQ-QUALITY-02, REQ-PLATFORM-01]
     depends_on: [FV2-002, FV2-003, FV2-004, FV2-005]
     evidence: [evidence/flutter/design-v2, android-macos-windows-acceptance]
+  - id: FV2-023
+    title: Flutter admin role-permission list tile material surface
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-ADMIN-01]
+    depends_on: [FV2-001, T-051]
+    evidence: [flutter-admin-role-checkbox-material-test, flutter-full-suite, android-macos-admin-debug-acceptance]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]
