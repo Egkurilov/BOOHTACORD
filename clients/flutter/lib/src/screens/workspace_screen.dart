@@ -304,7 +304,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
         unawaited(widget.state.setVoiceShortcut(action, null));
         return true;
       }
-      if (const {
+      if ({
         LogicalKeyboardKey.controlLeft,
         LogicalKeyboardKey.controlRight,
         LogicalKeyboardKey.altLeft,

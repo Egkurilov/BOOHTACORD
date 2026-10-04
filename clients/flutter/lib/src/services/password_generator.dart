@@ -23,7 +23,12 @@ class SecurePasswordGenerator {
   int _index(int max) {
     final limit = 256 - (256 % max);
     var byte = 0;
-    do { byte = _nextByte() & 0xff; } while (byte >= limit);
+    do {
+      byte = _nextByte();
+      if (byte < 0 || byte > 255) {
+        throw RangeError.range(byte, 0, 255, 'random byte');
+      }
+    } while (byte >= limit);
     return byte % max;
   }
 
@@ -36,7 +41,9 @@ class SecurePasswordGenerator {
       _pick(_digits),
       _pick(_symbols),
     ];
-    while (result.length < generatedPasswordLength) result.add(_pick(_alphabet));
+    while (result.length < generatedPasswordLength) {
+      result.add(_pick(_alphabet));
+    }
     for (var index = result.length - 1; index > 0; index -= 1) {
       final swap = _index(index + 1);
       final current = result[index];
@@ -46,4 +53,3 @@ class SecurePasswordGenerator {
     return result.join();
   }
 }
-

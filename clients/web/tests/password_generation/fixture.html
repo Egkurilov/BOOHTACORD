@@ -1,0 +1,16 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Registration component browser checks</title><div id="app"></div>
+<script type="module">
+import { createApp, h } from 'vue'
+import AuthenticationLanding from '/src/identity/AuthenticationLanding.vue'
+import '/src/style.css'
+window.authenticatedWithClearedPassword = false
+const app = createApp({ render: () => h(AuthenticationLanding, { onAuthenticated: () => {
+  window.authenticatedWithClearedPassword = document.querySelector('#authentication-password').value === ''
+} }) })
+app.mount('#app')
+window.unmountAuthentication = () => {
+  window.retainedPasswordInput = document.querySelector('#authentication-password')
+  app.unmount()
+}
+</script></html>
