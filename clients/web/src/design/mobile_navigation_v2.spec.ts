@@ -12,7 +12,7 @@ describe('V2 mobile navigation drawer', () => {
   it('keeps real navigation controls and voice session actions inside the open drawer', () => {
     expect(workspace).toContain('aria-label="Закрыть навигацию"')
     expect(workspace).toContain('@click="toggleNavigation"')
-    expect(workspace).toContain('<VoiceDock class="mobile-voice-dock"')
+    expect(workspace).toMatch(/<VoiceDock\b[^>]*class="mobile-voice-dock"/)
     expect(mobileNavigation).toContain('.sidebar.is-open .mobile-voice-dock.mobile-visible')
     expect(mobileNavigation).toContain('.sidebar.is-open .user-footer')
   })

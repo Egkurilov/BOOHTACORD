@@ -13,9 +13,10 @@ class AudioAssetBuildTests(unittest.TestCase):
         self.assertNotIn('clients/flutter', SOURCE_PATHS)
 
     def test_compiler_is_digest_pinned_and_source_mounted(self):
-        command = compiler_command(Path('/source'))
+        root = Path('/source').resolve()
+        command = compiler_command(root)
         self.assertIn('emscripten/emsdk:4.0.20@sha256:460fff8f8ac87e11b16447fbd66538a686eafa0e4fb977aa0989ed19fe2079f7', command)
-        self.assertIn('/source:/src', command)
+        self.assertIn(str(root) + ':/src', command)
         self.assertEqual(command[-2:], ['python3', 'tools/audio/build_rnnoise.py'])
 
     @unittest.skipUnless(os.name == 'posix', 'POSIX numeric ownership gate')

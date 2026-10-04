@@ -37,7 +37,7 @@ export function bindVoiceAudioDiagnostics(room: VoiceRoom, liveKit: Room, profil
       for (const publication of participant.audioTrackPublications.values()) {
         if (publication.source === Track.Source.Microphone && publication.isSubscribed) {
           const track = publication.audioTrack
-          pending.push(read(track?.mediaStreamTrack, track?.receiver, 'receiver'))
+          pending.push(read(track?.mediaStreamTrack, track && 'receiver' in track ? track.receiver : undefined, 'receiver'))
         }
       }
     }

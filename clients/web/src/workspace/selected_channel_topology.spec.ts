@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('../voice/audio_settings_store', () => ({ useAudioSettingsStore: () => ({}) }))
 vi.mock('../voice/activation_store', () => ({ useVoiceActivationStore: () => ({}) }))
-vi.mock('../voice/connection_store', () => ({ useVoiceConnectionStore: () => ({ active: { channelId: 'channel-1' } }) }))
+const selectDisconnectChannel = vi.fn()
+vi.mock('../voice/connection_store', () => ({ useVoiceConnectionStore: () => ({ active: { channelId: 'channel-1' }, selectDisconnectChannel }) }))
 
 import { useTopologyStore } from '../channel/topology_store'
 import { useVoiceNavigationStore } from '../voice/navigation_store'
@@ -46,6 +47,7 @@ describe('selected channel topology', () => {
     topology.topology = { revision: 7, categories: [{ id: 'cat-1', name: 'Игры', position: 0, channels: [channel] }] }
     const controls = useWorkspaceVoiceControls()
     controls.selectChannel(channel)
+    expect(selectDisconnectChannel).toHaveBeenCalledWith('channel-1')
     expect(controls.selectedChannel.value?.name).toBe('Старое')
     topology.topology = { revision: 8, categories: [{ id: 'cat-1', name: 'Игры', position: 0, channels: [{ ...channel, name: 'Новое' }] }] }
     expect(controls.selectedChannel.value).toMatchObject({ id: 'channel-1', name: 'Новое', kind: 'VOICE' })

@@ -12,6 +12,7 @@ it('scopes stats to microphone publications and resets on track replacement and 
   const screen = { mediaStreamTrack: {}, receiver: { getStats: vi.fn() } }
   const receiver = { getStats: vi.fn(async () => new Map()) }
   const remote = { mediaStreamTrack: {}, receiver }
+  const unsupported = { mediaStreamTrack: {} }
   const room = { readAudioProcessingSettings: () => ({ sampleRate: 44100, channelCount: 1 }) } as VoiceRoom
   const sdk = {
     on: (event: string, listener: () => void) => callbacks.set(event, listener),
@@ -19,6 +20,7 @@ it('scopes stats to microphone publications and resets on track replacement and 
     remoteParticipants: new Map([['peer', { audioTrackPublications: new Map([
       ['screen', { source: Track.Source.ScreenShareAudio, isSubscribed: true, audioTrack: screen }],
       ['mic', { source: Track.Source.Microphone, isSubscribed: true, audioTrack: remote }],
+      ['unsupported', { source: Track.Source.Microphone, isSubscribed: true, audioTrack: unsupported }],
     ]) }]]),
   } as unknown as Room
   bindVoiceAudioDiagnostics(room, sdk, voiceAudioProfiles[0])

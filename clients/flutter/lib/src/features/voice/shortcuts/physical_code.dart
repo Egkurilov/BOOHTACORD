@@ -52,7 +52,7 @@ String legacyKeyCode(int keyId, String label) {
   if (keyId >= 97 && keyId <= 122)
     return 'Key${String.fromCharCode(keyId - 32)}';
   if (keyId >= 48 && keyId <= 57) return 'Digit${String.fromCharCode(keyId)}';
-  const named = {
+  final named = {
     LogicalKeyboardKey.tab: 'Tab',
     LogicalKeyboardKey.escape: 'Escape',
     LogicalKeyboardKey.backspace: 'Backspace',
