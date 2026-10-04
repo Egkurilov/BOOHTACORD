@@ -31,16 +31,22 @@ is unchanged. Widget tests, the 482-test Flutter suite, changed-file analysis,
 macOS Debug build and an inspected component capture pass —
 [QA-252](../evidence/flutter/qa252-flutter-desktop-window-chrome-2026-10-04-001.json).
 Live visual review of the already-running macOS Debug app confirms the text-only
-brand and native traffic lights; a running Android emulator confirms the
+brand and native traffic lights. Double-clicking the custom header maximizes
+the window; a second double-click restores its original size. A running Android emulator confirms the
 mobile header has no desktop chrome, and the current-source platform widget
 regression passes. The emulator still has app version 1.0.28 from before this
 desktop-only change, so its screenshot is a visual regression check rather than
 a build-identity check. The Windows distribution build and native Windows
-window behavior remain open; macOS drag/maximize actions have not been manually
-exercised.
-The Windows 2022 runner passed app/vendor tests and analysis, but its Windows
-distribution build was cancelled by a newer master push. Repeat that build and
-manually verify native drag/window controls before closing FV2-018.
+window behavior remain open; macOS drag and direct traffic-light actions have
+not been manually exercised.
+The Windows 2022 runner passed app/vendor tests and analysis in attempt 1, but
+the distribution build was cancelled by a newer master push. Attempt 2 was also
+cancelled during Flutter SDK setup by a newer master push. Attempt 3 passed app/
+vendor tests, analysis, release-publisher tests, and the Windows x64 distribution
+build; the 25.9 MB artifact was retained —
+[workflow run](https://github.com/Egkurilov/BOOHTACORD/actions/runs/37190446718).
+Native Windows drag/window-control acceptance is still required before closing
+FV2-018.
 
 macOS remote-stream discovery now distinguishes an active publication from a
 subscribed video track. With manual subscriptions, a live publication may have
