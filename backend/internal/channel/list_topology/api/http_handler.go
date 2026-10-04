@@ -48,6 +48,7 @@ type category struct {
 type channel struct {
 	ID                   string `json:"id"`
 	Name                 string `json:"name"`
+	Description          string `json:"description,omitempty"`
 	Kind                 string `json:"kind"`
 	Position             int    `json:"position"`
 	AdmissionClosed      bool   `json:"admission_closed"`
@@ -61,7 +62,7 @@ func categories(source []listtopology.Category) []category {
 	for _, item := range source {
 		current := category{ID: item.ID, Name: item.Name, Position: item.Position, Channels: make([]channel, 0, len(item.Channels))}
 		for _, item := range item.Channels {
-			value := channel{ID: item.ID, Name: item.Name, Kind: item.Kind, Position: item.Position, AdmissionClosed: item.AdmissionClosed}
+			value := channel{ID: item.ID, Name: item.Name, Description: item.Description, Kind: item.Kind, Position: item.Position, AdmissionClosed: item.AdmissionClosed}
 			if item.Kind == "TEXT" {
 				value.UnreadCount = &item.UnreadCount
 				value.MentionCount = &item.MentionCount

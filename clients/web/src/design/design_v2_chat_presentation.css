@@ -71,3 +71,6 @@
   .text-conversation .message-avatar-spacer { width: 32px; flex-basis: 32px; }
   .text-conversation .message-avatar { height: 32px; font-size: 12px; }
 }
+@media (max-width: 720px) {
+  .text-conversation .main-title small { display: none; }
+}

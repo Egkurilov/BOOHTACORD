@@ -342,7 +342,7 @@
     "/api/v1/channels": {
       "get": {
         "operationId": "getChannelTopology",
-        "description": "Authenticated member only. Returns ordered categories and non-archived channels; each TEXT channel includes caller-local unread_count, mention_count and optional first_unread_message_id from current live messages after that caller's monotonic cursor, excluding their own messages. VOICE channels omit these fields; a VOICE channel with closed admission remains visible with admission_closed:true until confirmed finalization.",
+        "description": "Authenticated member only. Returns ordered categories and non-archived channels, with an optional server-authored description of at most 200 characters. Each TEXT channel includes caller-local unread_count, mention_count and optional first_unread_message_id from current live messages after that caller's monotonic cursor, excluding their own messages. VOICE channels omit these fields; a VOICE channel with closed admission remains visible with admission_closed:true until confirmed finalization.",
         "responses": {
           "200": { "description": "Current readable channel topology", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChannelTopology" } } } },
           "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
@@ -1420,6 +1420,7 @@
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "name": { "type": "string" },
+          "description": { "type": "string", "maxLength": 200, "description": "Server-authored channel description; omitted when empty." },
           "kind": { "type": "string", "enum": ["TEXT", "VOICE"] },
           "position": { "type": "integer", "minimum": 0 },
           "admission_closed": { "type": "boolean" },

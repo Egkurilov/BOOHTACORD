@@ -11,7 +11,7 @@ import (
 const selectRevision = `SELECT COALESCE((SELECT revision FROM channel_topology_state WHERE singleton = TRUE), 0)`
 const selectTopology = `
 SELECT category.id::text, category.name, category.position,
-       channel.id::text, channel.name, channel.kind, channel.position, channel.admission_closed_at IS NOT NULL,
+       channel.id::text, channel.name, channel.description, channel.kind, channel.position, channel.admission_closed_at IS NOT NULL,
        CASE WHEN channel.kind = 'TEXT' THEN (
            SELECT COUNT(*)
            FROM messages AS message
@@ -78,13 +78,13 @@ func (repository Repository) List(context context.Context, request listtopology.
 	defer rows.Close()
 	for rows.Next() {
 		var category listtopology.Category
-		var channelID, channelName, channelKind pgtype.Text
+		var channelID, channelName, channelDescription, channelKind pgtype.Text
 		var channelPosition pgtype.Int4
 		var admissionClosed pgtype.Bool
 		var unreadCount pgtype.Int8
 		var mentionCount pgtype.Int8
 		var firstUnreadID pgtype.Text
-		if err := rows.Scan(&category.ID, &category.Name, &category.Position, &channelID, &channelName, &channelKind, &channelPosition, &admissionClosed, &unreadCount, &mentionCount, &firstUnreadID); err != nil {
+		if err := rows.Scan(&category.ID, &category.Name, &category.Position, &channelID, &channelName, &channelDescription, &channelKind, &channelPosition, &admissionClosed, &unreadCount, &mentionCount, &firstUnreadID); err != nil {
 			return result, fmt.Errorf("scan channel topology: %w", err)
 		}
 		if len(result.Categories) == 0 || result.Categories[len(result.Categories)-1].ID != category.ID {
@@ -92,7 +92,7 @@ func (repository Repository) List(context context.Context, request listtopology.
 		}
 		if channelID.Valid {
 			last := &result.Categories[len(result.Categories)-1]
-			last.Channels = append(last.Channels, listtopology.Channel{ID: channelID.String, Name: channelName.String, Kind: channelKind.String, Position: int(channelPosition.Int32), AdmissionClosed: admissionClosed.Bool, UnreadCount: unreadCount.Int64, MentionCount: mentionCount.Int64, FirstUnreadMessageID: firstUnreadID.String})
+			last.Channels = append(last.Channels, listtopology.Channel{ID: channelID.String, Name: channelName.String, Description: channelDescription.String, Kind: channelKind.String, Position: int(channelPosition.Int32), AdmissionClosed: admissionClosed.Bool, UnreadCount: unreadCount.Int64, MentionCount: mentionCount.Int64, FirstUnreadMessageID: firstUnreadID.String})
 		}
 	}
 	if err := rows.Err(); err != nil {

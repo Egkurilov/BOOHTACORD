@@ -16,13 +16,13 @@ func TestHandlerReturnsVisibleTopologyAndAdmissionState(t *testing.T) {
 	var actorID string
 	handler := NewHandler(listerFunc(func(_ context.Context, input listtopology.Input) (listtopology.Result, error) {
 		actorID = input.ActorID
-		return listtopology.Result{Revision: 2, Categories: []listtopology.Category{{ID: "category-1", Name: "Игры", Channels: []listtopology.Channel{{ID: "voice-1", Name: "Голос", Kind: "VOICE", AdmissionClosed: true}, {ID: "text-1", Kind: "TEXT", UnreadCount: 3, FirstUnreadMessageID: "first-1"}}}}}, nil
+		return listtopology.Result{Revision: 2, Categories: []listtopology.Category{{ID: "category-1", Name: "Игры", Channels: []listtopology.Channel{{ID: "voice-1", Name: "Голос", Kind: "VOICE", AdmissionClosed: true}, {ID: "text-1", Kind: "TEXT", Description: "Общение на любые темы", UnreadCount: 3, FirstUnreadMessageID: "first-1"}}}}}, nil
 	}))
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/channels", nil)
 	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: "actor-1"}))
 	handler.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusOK || actorID != "actor-1" || !strings.Contains(recorder.Body.String(), `"revision":2`) || !strings.Contains(recorder.Body.String(), `"admission_closed":true`) || strings.Count(recorder.Body.String(), `"unread_count"`) != 1 || !strings.Contains(recorder.Body.String(), `"unread_count":3`) || !strings.Contains(recorder.Body.String(), `"first_unread_message_id":"first-1"`) {
+	if recorder.Code != http.StatusOK || actorID != "actor-1" || !strings.Contains(recorder.Body.String(), `"revision":2`) || !strings.Contains(recorder.Body.String(), `"admission_closed":true`) || strings.Count(recorder.Body.String(), `"unread_count"`) != 1 || !strings.Contains(recorder.Body.String(), `"unread_count":3`) || !strings.Contains(recorder.Body.String(), `"first_unread_message_id":"first-1"`) || !strings.Contains(recorder.Body.String(), `"description":"Общение на любые темы"`) {
 		t.Fatalf("status = %d, body = %q", recorder.Code, recorder.Body.String())
 	}
 }

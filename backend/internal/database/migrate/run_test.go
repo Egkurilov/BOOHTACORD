@@ -55,6 +55,7 @@ func TestRunExecutesEmbeddedMigrations(t *testing.T) {
 		{"DROP CONSTRAINT IF EXISTS messages_body_or_deleted_marker", "char_length(body) BETWEEN 0 AND 8000", "DROP CONSTRAINT IF EXISTS direct_message_messages_body_or_deleted_marker"},
 		{"CREATE TABLE IF NOT EXISTS role_permissions", "role = 'MEMBER'", "ON CONFLICT (role) DO NOTHING", "revision BIGINT NOT NULL"},
 		{"CREATE TABLE IF NOT EXISTS topology_command_receipts", "PRIMARY KEY (actor_id, client_request_id)", "intent_hash", "response_status"},
+		{"ADD COLUMN IF NOT EXISTS description", "channels_description_length"},
 	}
 	if len(executor.statements) != len(expected) {
 		t.Fatalf("migration count = %d", len(executor.statements))

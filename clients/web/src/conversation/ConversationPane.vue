@@ -82,7 +82,7 @@ function clearScreenPreview(): void {
       <p>Навигация показывает только данные, полученные от текущей серверной сессии.</p>
     </template>
     <template v-else-if="channel.kind === 'TEXT'">
-      <TextConversation :key="channel.id" :account-id="accountId" :active="visible" :channel-id="channel.id" :channel-name="channel.name" :nav-open="navOpen" :members-open="membersOpen" :show-members="showMembers" @toggle-nav="emit('toggleNav')" @toggle-members="emit('toggleMembers')" />
+      <TextConversation :key="channel.id" :account-id="accountId" :active="visible" :channel-id="channel.id" :channel-name="channel.name" :channel-description="channel.description" :nav-open="navOpen" :members-open="membersOpen" :show-members="showMembers" @toggle-nav="emit('toggleNav')" @toggle-members="emit('toggleMembers')" />
     </template>
     <template v-if="voiceChannel && keepVoiceRoom">
       <Teleport to="body" :disabled="!screenExpanded && !miniVisible">

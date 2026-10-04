@@ -6,6 +6,7 @@ export type ChannelKind = 'TEXT' | 'VOICE'
 export interface TopologyChannel {
   id: string
   name: string
+  description?: string
   kind: ChannelKind
   position: number
   admissionClosed: boolean
@@ -60,10 +61,12 @@ function readChannel(value: unknown): TopologyChannel {
   if (typeof channel.admission_closed !== 'boolean') {
     return invalidTopology()
   }
+  if (channel.description !== undefined && (typeof channel.description !== 'string' || [...channel.description].length > 200)) return invalidTopology()
 
   return {
     id: asString(channel.id),
     name: asString(channel.name),
+    ...(channel.description ? { description: channel.description as string } : {}),
     kind,
     position: asPosition(channel.position),
     admissionClosed: channel.admission_closed,

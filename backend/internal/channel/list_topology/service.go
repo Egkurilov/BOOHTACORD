@@ -3,13 +3,13 @@ package listtopology
 import "context"
 
 type Channel struct {
-	ID, Name             string
-	Kind                 string
-	Position             int
-	AdmissionClosed      bool
-	UnreadCount          int64
-	MentionCount         int64
-	FirstUnreadMessageID string
+	ID, Name, Description string
+	Kind                  string
+	Position              int
+	AdmissionClosed       bool
+	UnreadCount           int64
+	MentionCount          int64
+	FirstUnreadMessageID  string
 }
 type Category struct {
 	ID, Name string

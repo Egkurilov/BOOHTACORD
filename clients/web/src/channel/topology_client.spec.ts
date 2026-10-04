@@ -36,6 +36,14 @@ describe('channel topology client', () => {
     expect(() => parseTopology({ revision: -1, categories: [] })).toThrow('некорректную')
   })
 
+  it('keeps a server-authored channel description and rejects invalid values', () => {
+    const channel = { id: 'text-1', name: 'общее', kind: 'TEXT', position: 0, admission_closed: false, unread_count: 0, mention_count: 0, description: 'Общение на любые темы' }
+    const source = { revision: 1, categories: [{ id: 'cat-1', name: 'Общение', position: 0, channels: [channel] }] }
+    expect(parseTopology(source).categories[0]?.channels[0]?.description).toBe('Общение на любые темы')
+    expect(() => parseTopology({ ...source, categories: [{ ...source.categories[0], channels: [{ ...channel, description: 42 }] }] })).toThrow('некорректную')
+    expect(() => parseTopology({ ...source, categories: [{ ...source.categories[0], channels: [{ ...channel, description: 'x'.repeat(201) }] }] })).toThrow('некорректную')
+  })
+
   it('parses caller-local TEXT counters and rejects missing or negative values', () => {
     const textChannel = { id: 'text-1', name: 'Общий', kind: 'TEXT', position: 0, admission_closed: false, unread_count: 4, mention_count: 2, first_unread_message_id: 'first-1' }
     const source = { revision: 4, categories: [{ id: 'cat-1', name: 'Игры', position: 0, channels: [textChannel] }] }

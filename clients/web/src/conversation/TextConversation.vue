@@ -25,7 +25,7 @@ import { useUnreadBoundary } from './use_unread_boundary'
 import { useScopedSend } from './use_scoped_send'
 import { useVisibleRead } from './use_visible_read'
 
-const props = defineProps<{ accountId: string; active: boolean; channelId: string; channelName: string; navOpen: boolean; membersOpen: boolean; showMembers: boolean }>()
+const props = defineProps<{ accountId: string; active: boolean; channelId: string; channelName: string; channelDescription?: string; navOpen: boolean; membersOpen: boolean; showMembers: boolean }>()
 const emit = defineEmits<{ toggleNav: []; toggleMembers: [] }>()
 const store = useMessageStore()
 const topology = useTopologyStore()
@@ -86,7 +86,7 @@ function onComposerPaste(event: ClipboardEvent): void {
     <header class="main-header conversation-header">
       <span class="conversation-symbol" aria-hidden="true">#</span>
       <div class="main-title">
-        <h2 id="conversation-title">{{ channelName }}</h2>
+        <h2 id="conversation-title">{{ channelName }}</h2><small v-if="channelDescription">{{ channelDescription }}</small>
       </div>
       <WorkspaceHeaderActions :members-expanded="props.membersOpen" :nav-expanded="props.navOpen" :show-members="props.showMembers" @toggle-members="emit('toggleMembers')" @toggle-navigation="emit('toggleNav')"><button ref="searchTrigger" class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen ? closeSearch() : searchOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button><template #overflow><ConversationOverflowMenu :show-members="props.showMembers" :members-open="props.membersOpen" @search="searchOpen = true" @toggle-members="emit('toggleMembers')" /></template></WorkspaceHeaderActions>
     </header>
