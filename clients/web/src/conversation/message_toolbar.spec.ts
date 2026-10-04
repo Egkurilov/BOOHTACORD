@@ -57,4 +57,13 @@ describe('C-22 message action toolbar', () => {
     expect(source).not.toContain('@keydown.esc.stop')
     expect(source).toMatch(/function closeActions\(event: KeyboardEvent\)[\s\S]*?if \(!actionsOpen\.value\) return[\s\S]*?event\.stopPropagation\(\)/)
   })
+
+  it('keeps the idle mobile disclosure out of the reference frame while allowing a touch reveal', () => {
+    const css = readFileSync(new URL('../design/conversation.css', import.meta.url), 'utf8')
+    const source = readFileSync(new URL('./MessageItem.vue', import.meta.url), 'utf8')
+    expect(css).toMatch(/\.message-row \.message-actions-toggle \{[^}]*opacity: 0;[^}]*pointer-events: none;/)
+    expect(css).toContain('.message-row .message-actions.is-open .message-actions-toggle')
+    expect(source).toContain('@pointerdown="onRowPointerDown"')
+    expect(source).toMatch(/function onRowPointerDown\(event: PointerEvent\)[\s\S]*?event\.pointerType !== 'touch'[\s\S]*?closest\('[^']*button[^']*a[^']*'\)[\s\S]*?actionsOpen\.value = true/)
+  })
 })

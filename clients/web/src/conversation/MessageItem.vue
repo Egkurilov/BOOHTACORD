@@ -58,11 +58,17 @@ function closeActions(event: KeyboardEvent): void {
 function remove(): void {
   if (window.confirm('Удалить это сообщение?')) { actionsOpen.value = false; emit('remove') }
 }
+function onRowPointerDown(event: PointerEvent): void {
+  if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return
+  if (!(event.target instanceof Element) || event.target.closest('button, a, input, textarea, select, [role="button"]')) return
+  actionsOpen.value = true
+  row.value?.focus()
+}
 
 </script>
 
 <template>
-  <article ref="row" class="message-item message-row" :class="{ deleted: message.deleted, grouped: compact }" tabindex="-1">
+  <article ref="row" class="message-item message-row" :class="{ deleted: message.deleted, grouped: compact }" tabindex="-1" @pointerdown="onRowPointerDown">
     <span v-if="compact" class="message-avatar-spacer" aria-hidden="true"></span>
     <img v-else-if="authorAvatar && !avatarFailed" class="message-avatar" :src="authorAvatar" alt="" @error="avatarFailed = true">
     <span v-else class="message-avatar" :style="avatarFallbackStyle(message.authorId)" aria-hidden="true">{{ avatarInitials(authorName) }}</span>
