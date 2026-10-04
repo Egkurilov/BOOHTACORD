@@ -6,6 +6,7 @@ const direct = readFileSync(new URL('../direct_message/DirectMessageConversation
 const textAttachment = readFileSync(new URL('./TextMessageAttachmentPicker.vue', import.meta.url), 'utf8')
 const directAttachment = readFileSync(new URL('../direct_message/DirectMessageAttachmentPicker.vue', import.meta.url), 'utf8')
 const mention = readFileSync(new URL('./MentionPicker.vue', import.meta.url), 'utf8')
+const emojiPicker = readFileSync(new URL('./EmojiPicker.vue', import.meta.url), 'utf8')
 const css = readFileSync(new URL('../design/design_v2_contextual_overlays.css', import.meta.url), 'utf8')
 
 describe('Design V2 live composer controls', () => {
@@ -22,11 +23,12 @@ describe('Design V2 live composer controls', () => {
   })
 
   it('uses the handoff emoji and send outlines in both real composers', () => {
+    expect(emojiPicker).toContain('<circle cx="12" cy="12" r="9"/>')
+    expect(emojiPicker).toContain('M8 14a4 4 0 0 0 8 0M8 8h.01M16 8h.01')
+    expect(emojiPicker).toContain('@click="toggle"')
     for (const composer of [text, direct]) {
-      expect(composer).toContain('<circle cx="12" cy="12" r="9"/>')
-      expect(composer).toContain('M8 14a4 4 0 0 0 8 0M8 8h.01M16 8h.01')
       expect(composer).toContain('m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13')
-      expect(composer).toContain('@click="emojiOpen = !emojiOpen"')
+      expect(composer).toContain('<EmojiPicker ref="emojiPicker"')
       expect(composer).toContain('@submit.prevent="send"')
     }
   })
@@ -43,7 +45,7 @@ describe('Design V2 live composer controls', () => {
     }
     for (const composer of [text, direct]) {
       expect(composer).toContain('@mention="insertMobileMention"')
-      expect(composer).toContain('@emoji="emojiOpen = true"')
+      expect(composer).toContain('@emoji="emojiPicker?.show()"')
       expect(composer).toContain('quick @activate="insertMobileMention"')
       expect(composer).toContain('<MentionAutocomplete v-model="draft"')
     }

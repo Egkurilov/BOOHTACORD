@@ -4,6 +4,8 @@ import { loadCurrentSession, type CurrentSession } from '../identity/current_ses
 import { useAuthorDirectory } from '../identity/author_directory'
 import MentionPicker from '../conversation/MentionPicker.vue'
 import MentionAutocomplete from '../conversation/MentionAutocomplete.vue'
+import EmojiPicker from '../conversation/EmojiPicker.vue'
+import { insertEmojiAtRange } from '../conversation/emoji_insert'
 import ConversationOverflowMenu from '../conversation/ConversationOverflowMenu.vue'
 import type { TextMessageAttachment } from '../conversation/message_client'
 import DirectMessageAttachmentPicker from './DirectMessageAttachmentPicker.vue'
@@ -37,8 +39,7 @@ const searchOpen = ref(false)
 const searchTrigger = ref<HTMLButtonElement | null>(null)
 const composerTextarea = ref<HTMLTextAreaElement | null>(null)
 const attachmentPicker = ref<{ addPastedFiles: (files: File[]) => void } | null>(null)
-const emojiOpen = ref(false)
-const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
+const emojiPicker = ref<{ show: () => Promise<void> } | null>(null)
 const { readRoot, queueVisibleRead } = useVisibleRead({
   conversationId: () => props.directMessageId, loadedConversationId: () => store.directMessageId, messages: () => store.messages,
   canRead: () => props.active && store.directMessages.some(({ id }) => id === props.directMessageId) && (!unreadBoundary.value || readUnlocked.value),
@@ -58,7 +59,13 @@ async function loadSession(): Promise<void> {
   try { session.value = await loadCurrentSession() } catch { session.value = null }
 }
 
-function addEmoji(emoji: string): void { draft.value += emoji }
+async function addEmoji(emoji: string): Promise<void> {
+  const input = composerTextarea.value
+  const result = insertEmojiAtRange(draft.value, input?.selectionStart ?? draft.value.length, input?.selectionEnd ?? draft.value.length, emoji)
+  draft.value = result.text
+  await nextTick()
+  input?.focus(); input?.setSelectionRange(result.caret, result.caret)
+}
 function insertMobileMention(): void { draft.value += draft.value && !/\s$/.test(draft.value) ? ' @' : '@'; void nextTick(() => composerTextarea.value?.focus()) }
 function closeSearch(): void { searchOpen.value = false; void nextTick(() => searchTrigger.value?.focus()) }
 function onComposerPaste(event: ClipboardEvent): void {
@@ -98,14 +105,11 @@ onBeforeUnmount(() => searchTarget.clearFor('DIRECT_MESSAGE', props.directMessag
       <MentionAutocomplete v-model="draft" v-model:mention-user-ids="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" />
       <form class="message-composer composer" @submit.prevent="send">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
-        <DirectMessageAttachmentPicker ref="attachmentPicker" :direct-message-id="props.directMessageId" :initial-attachments="attachments" :disabled="store.sending || attachmentPending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" @mention="insertMobileMention" @emoji="emojiOpen = true" />
+        <DirectMessageAttachmentPicker ref="attachmentPicker" :direct-message-id="props.directMessageId" :initial-attachments="attachments" :disabled="store.sending || attachmentPending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" @mention="insertMobileMention" @emoji="emojiPicker?.show()" />
         <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" quick @activate="insertMobileMention" />
         <label class="gc-sr-only" for="direct-message-body">Сообщение</label>
         <textarea id="direct-message-body" ref="composerTextarea" v-model="draft" rows="1" :disabled="store.sending" :aria-describedby="store.error ? 'direct-conversation-error direct-composer-help' : 'direct-composer-help'" placeholder="Написать сообщение…" @keydown="submitOnComposerEnter($event, send)" @paste="onComposerPaste" />
-        <span class="emoji-picker">
-          <button class="emoji-trigger" type="button" aria-label="Добавить emoji" :aria-expanded="emojiOpen" @click="emojiOpen = !emojiOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 14a4 4 0 0 0 8 0M8 8h.01M16 8h.01"/></svg></button>
-          <span v-if="emojiOpen" class="emoji-menu" aria-label="Выбор emoji"><button v-for="emoji in emojis" :key="emoji" type="button" :aria-label="`Добавить ${emoji}`" @click="addEmoji(emoji); emojiOpen = false">{{ emoji }}</button></span>
-        </span>
+        <EmojiPicker ref="emojiPicker" :disabled="store.sending" @select="addEmoji" />
         <button class="composer-send" type="submit" :aria-label="store.sending ? 'Отправляем сообщение' : 'Отправить сообщение'" :disabled="store.sending || attachmentPending || (!draft && attachments.length === 0)"><span v-if="store.sending">…</span><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg></button>
       </form>
       <div class="composer-helper"><p id="direct-composer-help">Enter — отправить · Shift+Enter — новая строка</p><p class="composer-helper__limit">До 25 МБ на файл</p></div>

@@ -1,0 +1,14 @@
+.message-composer .emoji-menu { display: grid; width: min(344px, calc(100vw - 32px)); gap: var(--gc-space-2); max-height: min(440px, calc(100dvh - 150px)); overflow: hidden; border-radius: var(--gc-radius-lg); padding: var(--gc-space-2); }
+.emoji-quick { display: flex; gap: var(--gc-space-1); overflow-x: auto; scrollbar-width: thin; }
+.emoji-quick button, .emoji-grid button { display: grid; width: 44px; min-width: 44px; height: 44px; min-height: 44px; flex: none; place-items: center; border: 0; border-radius: var(--gc-radius-sm); padding: 0; color: var(--gc-text-primary); background: transparent; font-size: 22px; cursor: pointer; }
+.emoji-quick button:hover, .emoji-grid button:hover, .emoji-quick button:focus-visible, .emoji-grid button:focus-visible { outline: 2px solid var(--gc-accent); outline-offset: -2px; background: var(--gc-surface-selected); }
+.emoji-expand { width: 100%; min-height: 36px; border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); color: var(--gc-text-primary); background: var(--gc-surface); cursor: pointer; }
+.emoji-search { display: grid; gap: var(--gc-space-1); color: var(--gc-text-secondary); font-size: var(--gc-text-caption); }
+.emoji-search input { width: 100%; min-height: 40px; border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-3); color: var(--gc-text-primary); background: var(--gc-input); }
+.emoji-recent, .emoji-results { min-height: 0; overflow: auto; scrollbar-width: thin; }
+.emoji-recent strong { display: block; margin-bottom: var(--gc-space-1); color: var(--gc-text-secondary); font-size: var(--gc-text-caption); }
+.emoji-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: var(--gc-space-1); }
+.emoji-grid button { width: 100%; }
+.emoji-results p { margin: var(--gc-space-2); color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
+.emoji-more { width: 100%; min-height: 44px; margin-top: var(--gc-space-2); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); color: var(--gc-text-primary); background: var(--gc-surface); cursor: pointer; }
+@media (max-width: 720px) { .message-composer .emoji-picker { position: static; } .message-composer .emoji-menu { position: absolute; right: 0; bottom: calc(100% + 8px); left: 0; width: auto; } }

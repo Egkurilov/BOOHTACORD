@@ -10,6 +10,8 @@ import TextMessageAttachmentPicker from './TextMessageAttachmentPicker.vue'
 import TextMessageSearch from './TextMessageSearch.vue'
 import MentionPicker from './MentionPicker.vue'
 import MentionAutocomplete from './MentionAutocomplete.vue'
+import EmojiPicker from './EmojiPicker.vue'
+import { insertEmojiAtRange } from './emoji_insert'
 import ConversationOverflowMenu from './ConversationOverflowMenu.vue'
 import type { TextAttachmentUpload } from './text_attachment_upload_client'
 import { advanceTextReadIfVisible } from './text_read_gate'
@@ -40,8 +42,7 @@ const searchOpen = ref(false)
 const searchTrigger = ref<HTMLButtonElement | null>(null)
 const composerTextarea = ref<HTMLTextAreaElement | null>(null)
 const attachmentPicker = ref<{ addPastedFiles: (files: File[]) => void } | null>(null)
-const emojiOpen = ref(false)
-const emojis = ['😀', '👍', '🎮', '❤️', '🎉', '🤝']
+const emojiPicker = ref<{ show: () => Promise<void> } | null>(null)
 const { readRoot, queueVisibleRead } = useVisibleRead({
   conversationId: () => props.channelId, loadedConversationId: () => store.channelId, messages: () => store.messages,
   canRead: () => props.active && Boolean(topology.topology) && (!unreadBoundary.value || readUnlocked.value),
@@ -66,8 +67,13 @@ const { send, retry } = useScopedSend<TextMessage, TextAttachmentUpload, TextMes
 async function loadSession(): Promise<void> {
   try { session.value = await loadCurrentSession() } catch { session.value = null }
 }
-
-function addEmoji(emoji: string): void { draft.value += emoji }
+async function addEmoji(emoji: string): Promise<void> {
+  const input = composerTextarea.value
+  const result = insertEmojiAtRange(draft.value, input?.selectionStart ?? draft.value.length, input?.selectionEnd ?? draft.value.length, emoji)
+  draft.value = result.text
+  await nextTick()
+  input?.focus(); input?.setSelectionRange(result.caret, result.caret)
+}
 function insertMobileMention(): void { draft.value += draft.value && !/\s$/.test(draft.value) ? ' @' : '@'; void nextTick(() => composerTextarea.value?.focus()) }
 function closeSearch(): void { searchOpen.value = false; void nextTick(() => searchTrigger.value?.focus()) }
 function onComposerPaste(event: ClipboardEvent): void {
@@ -101,14 +107,11 @@ function onComposerPaste(event: ClipboardEvent): void {
       <MentionAutocomplete v-model="draft" v-model:mention-user-ids="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" />
       <form class="message-composer composer" @submit.prevent="send">
         <TextMessageAttachmentPicker ref="attachmentPicker" :channel-id="props.channelId" :initial-attachments="attachments" :disabled="store.sending || attachmentPending"
-          :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" @mention="insertMobileMention" @emoji="emojiOpen = true" />
+          :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" @mention="insertMobileMention" @emoji="emojiPicker?.show()" />
         <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" quick @activate="insertMobileMention" />
         <label class="gc-sr-only" for="message-body">Сообщение</label>
         <textarea id="message-body" ref="composerTextarea" v-model="draft" rows="1" :disabled="store.sending" :aria-describedby="store.error ? 'text-conversation-error text-composer-help' : 'text-composer-help'" :placeholder="`Написать в #${channelName}`" @keydown="submitOnComposerEnter($event, send)" @paste="onComposerPaste" />
-        <span class="emoji-picker">
-          <button class="emoji-trigger" type="button" aria-label="Добавить emoji" :aria-expanded="emojiOpen" @click="emojiOpen = !emojiOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 14a4 4 0 0 0 8 0M8 8h.01M16 8h.01"/></svg></button>
-          <span v-if="emojiOpen" class="emoji-menu" aria-label="Выбор emoji"><button v-for="emoji in emojis" :key="emoji" type="button" :aria-label="`Добавить ${emoji}`" @click="addEmoji(emoji); emojiOpen = false">{{ emoji }}</button></span>
-        </span>
+        <EmojiPicker ref="emojiPicker" :disabled="store.sending" @select="addEmoji" />
         <button class="composer-send" type="submit" :aria-label="store.sending ? 'Отправляем сообщение' : 'Отправить сообщение'" :disabled="store.sending || attachmentPending || (!draft && attachments.length === 0)"><span v-if="store.sending">…</span><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg></button>
       </form>
       <div class="composer-helper"><p id="text-composer-help">Enter — отправить · Shift+Enter — новая строка</p><p class="composer-helper__limit">До 25 МБ на файл</p></div>
