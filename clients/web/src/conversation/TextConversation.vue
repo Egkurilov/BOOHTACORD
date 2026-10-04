@@ -114,7 +114,7 @@ function onComposerPaste(event: ClipboardEvent): void {
         <EmojiPicker ref="emojiPicker" :disabled="store.sending" @select="addEmoji" />
         <button class="composer-send" type="submit" :aria-label="store.sending ? 'Отправляем сообщение' : 'Отправить сообщение'" :disabled="store.sending || attachmentPending || (!draft && attachments.length === 0)"><span v-if="store.sending">…</span><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg></button>
       </form>
-      <div class="composer-helper"><p id="text-composer-help">Enter — отправить · Shift+Enter — новая строка</p><p class="composer-helper__limit">До 25 МБ на файл</p></div>
+      <div class="composer-helper"><p id="text-composer-help">Enter — отправить · Shift + Enter — новая строка</p><p class="composer-helper__limit">Файлы до 25 МБ</p></div>
     </div>
   </section>
 </template>
