@@ -1,0 +1,31 @@
+{
+  "id": "QA-251",
+  "date": "2026-10-04",
+  "task": "FV2-017 follow-up — isolated R14 navigation top visual review",
+  "source_revision": "89fa77972c8a93c0c849177b1ec45b87fd17b96b",
+  "reference_sha256": "7a93fe6451ab0c134a12b7130907f28f0d6b15bfd274f45f3ba86956eff2358a",
+  "actual_sha256": "091576d79fbe638307d4ef6f4e6454ece1020631f508187caa875800837f9482",
+  "checks": [
+    {
+      "name": "Production Flutter component capture and geometric contract",
+      "result": "PASS",
+      "observation": "CI 37186623993 rendered WorkspaceNavigationTop and WorkspaceGuildMark at 390x844, captured a 320x172 top crop, and asserted search x12/y76/296x36. Inter and Material Icons were loaded in the isolated test. No private messages or local account session were rendered."
+    },
+    {
+      "name": "Pixel comparison against unchanged R14 PNG crop",
+      "result": "PASS",
+      "observation": "Absolute RGB diff saved outside the repository in flutter-r14-navigation-ci-89fa7797. MAE fell 6.020 to 5.522 after valid icon loading and to 5.249 after the code-native guild badge palette change. Pixels with channel delta above 16 fell 7.06% to 6.11%."
+    },
+    {
+      "name": "Linux and Windows Flutter tests/analyzer, Android and Windows builds",
+      "result": "PASS",
+      "observation": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37186623993 completed successfully, including Flutter app and vendor tests on Linux and Windows, Kotlin modes, Android debug APK, and Windows distribution."
+    },
+    {
+      "name": "Full R14 screen and native device visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "The component crop is not the complete mobile drawer. Native Android and Windows device screenshots are not available in the current environment; Chromium and Flutter rasterization differ."
+    }
+  ],
+  "status": "COMPONENT_CAPTURE_PASS_FULL_NATIVE_VISUAL_ACCEPTANCE_OPEN"
+}
