@@ -1,29 +1,29 @@
 {
   "id": "design-v2-r01-r03-full-recapture-2026-10-04-001",
   "scope": "R01, R02 and R03 full-frame captures of the production Vue application against unchanged Design V2 PNG references",
-  "source_revision": "d85a95ce (inline mention from f012f3da)",
+  "source_revision": "8861886b (category disclosure; inline mention from f012f3da)",
   "status": "PARTIAL",
   "visual_report": "C:/Users/egkur/.codex/visualizations/2026/10/03/01a1013e-bbb8-7052-94a3-88cb0dd3fc54/design-v2-r02-recapture-2026-10-04/REVIEW.md",
   "checks": [
     {
       "name": "R01 desktop 1440x900",
       "result": "PASS",
-      "observation": "Real Vue application with normalized six-member, three-category API fixture, verified Daria mention ID and protected preview; page errors 0. Reference SHA256 57e2fd413fca034b2ad629cd4d9a0078b66b51e0372440557e2a99f538fbe5da unchanged. Actual SHA256 0060fbd60fa0df1d6cc85f48d84087ca4c42e68875f59e2409db82612cb338ec. RGB MAE 3.811; 5.02% of pixels have a channel difference greater than 16. The test voice dock shifted 8 pixels relative to the preceding normalized fixture."
+      "observation": "Real Vue application with normalized six-member, three-category API fixture, verified Daria mention ID and protected preview; page errors 0. Capture waits for connected voice UI and two animation frames. Reference SHA256 57e2fd413fca034b2ad629cd4d9a0078b66b51e0372440557e2a99f538fbe5da unchanged. Actual SHA256 45cfbe19e22ba07ccd4a8ac7ed346124649f39ed0291e8556d8308c841527dd3. RGB MAE 3.502; 4.79% of pixels have a channel difference greater than 16. DOM measurement confirms the connected dock height is exactly 112 pixels at y=724. Browser click collapsed and reopened a category; category create did not collapse it."
     },
     {
       "name": "R02 mobile 390x844",
       "result": "PASS",
-      "observation": "Real Vue application with normalized six-member, three-category API fixture, verified Daria mention ID and protected preview; page errors 0; no action disclosure remained open. Reference SHA256 6aadf9a1f00acb7d2af9cc0c13d2744af562a981a22360d796bcc9a8c3e4a884 unchanged. Actual SHA256 d27977ec45d9570fa4218c10c17cc5ee5633bf09ee68d80121ed6cb3978e4878. RGB MAE 3.627; 5.47% of pixels have a channel difference greater than 16."
+      "observation": "Real Vue application with normalized six-member, three-category API fixture, verified Daria mention ID and protected preview; page errors 0; no action disclosure remained open. Reference SHA256 6aadf9a1f00acb7d2af9cc0c13d2744af562a981a22360d796bcc9a8c3e4a884 unchanged. Actual SHA256 4748d2b8acecb2b9642efed7258cbaa7257b32131e65040862b6c1d68af4bb83. RGB MAE 3.627; 5.47% of pixels have a channel difference greater than 16."
     },
     {
       "name": "R03 tablet 1024x768",
       "result": "PASS",
-      "observation": "Real Vue application with normalized six-member, three-category API fixture, verified Daria mention ID and protected preview; page errors 0. Reference SHA256 766c918bcdcc8bebcd82164fc1dd6859f28a6cf0f36fb4c1bb4bec5692a13546 unchanged. Actual SHA256 05de0611602b1333bb12630d5384ae0cacde5e4acdfffc31e81bbc746c57e9a0. RGB MAE 4.649; 6.30% of pixels have a channel difference greater than 16."
+      "observation": "Real Vue application with normalized six-member, three-category API fixture, verified Daria mention ID and protected preview; page errors 0. Capture waits for connected voice UI and two animation frames. Reference SHA256 766c918bcdcc8bebcd82164fc1dd6859f28a6cf0f36fb4c1bb4bec5692a13546 unchanged. Actual SHA256 59065bf63837e09b0a7548ae567dc78c25671572b6438901179ba878c8c6a020. RGB MAE 4.159; 5.93% of pixels have a channel difference greater than 16. DOM measurement confirms the connected dock height is exactly 112 pixels at y=592. Browser click collapsed and reopened a category; category create did not collapse it."
     },
     {
       "name": "Web native checks",
       "result": "PASS",
-      "observation": "Focused mention and formatting tests 7/7; composer helper test 2/2; full Vitest 290 files, 914 tests; vue-tsc and Vite build passed. Documentation link verifier passed 287 documents. Linux CI https://github.com/Egkurilov/BOOHTACORD/actions/runs/37191541291 passed."
+      "observation": "Category disclosure focused tests 2/2, neighboring navigation tests 4/4; full Vitest 291 files, 916 tests; vue-tsc and Vite build passed. Linux CI for source revision 8861886b pending; previous Linux CI https://github.com/Egkurilov/BOOHTACORD/actions/runs/37191541291 passed."
     },
     {
       "name": "HTML source renderer baseline",
