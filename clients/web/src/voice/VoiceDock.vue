@@ -42,6 +42,7 @@ const status = computed(() => {
 <template>
   <section class="voice-dock" :class="{ connected, 'mobile-visible': Boolean(channel || activeSession || state !== 'IDLE') }" aria-label="Состояние голосового подключения" data-testid="voice-dock">
     <div class="voice-dock-header">
+      <svg v-if="connected" class="voice-dock-headset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-3a9 9 0 0 1 18 0v3"/><rect x="3" y="12" width="4" height="9" rx="2"/><rect x="17" y="12" width="4" height="9" rx="2"/></svg>
       <span class="status-dot" :class="{ connected }" aria-hidden="true"></span>
       <div class="voice-dock-copy"><p class="voice-status" role="status" aria-atomic="true">{{ status }}</p><p v-if="channel && connected" class="voice-dock-subtitle">{{ channel.name }}<template v-if="participantCount"> · {{ participantCount }} {{ participantCount === 1 ? 'участник' : participantCount < 5 ? 'участника' : 'участников' }}</template></p></div>
       <span v-if="connected" class="voice-quality" :class="`voice-quality--${connectionQuality.toLowerCase()}`" role="img" :aria-label="connectionQualityDescription" :title="connectionQualityDescription">

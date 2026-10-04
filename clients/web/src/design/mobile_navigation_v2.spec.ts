@@ -5,6 +5,7 @@ const mobileNavigation = readFileSync(new URL('./design_v2_mobile_navigation.css
 const responsiveShell = readFileSync(new URL('./responsive_shell.css', import.meta.url), 'utf8')
 const searchLauncher = readFileSync(new URL('../search/SearchLauncher.vue', import.meta.url), 'utf8')
 const navigation = readFileSync(new URL('./navigation.css', import.meta.url), 'utf8')
+const dock = readFileSync(new URL('../voice/VoiceDock.vue', import.meta.url), 'utf8')
 
 describe('V2 mobile navigation drawer', () => {
   it('keeps real navigation controls and voice session actions inside the open drawer', () => {
@@ -25,6 +26,11 @@ describe('V2 mobile navigation drawer', () => {
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-list { margin-top: 5px; padding-left: 36px; gap: 0; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-row { min-height: 36px; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-avatar { width: 22px; height: 22px; flex-basis: 22px; font-size: 9px; }')
+  })
+
+  it('shows the connected headset only in the open drawer dock', () => {
+    expect(dock).toContain('class="voice-dock-headset"')
+    expect(mobileNavigation).toContain('.sidebar.is-open .mobile-voice-dock .voice-dock-headset')
   })
 
   it('uses the reference search outline and drawer alignment', () => {
