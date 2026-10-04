@@ -11,6 +11,11 @@ PATCH /api/v1/admin/guild-settings принимает expected_revision и хо�
 сравните изменения и повторите запрос с актуальной revision.
 Mutation сохраняет существующие secure-cookie и CSRF/Origin проверки.
 
+Попытка активного участника изменить настройки отклоняется существующей
+administrator-проверкой: HTTP 403, child outcome rejected и один settings counter.
+Store не вызывается. Запрос без успешной аутентификации остаётся обычным HTTP
+отказом без actor lifecycle span; пользовательская identity не выдумывается.
+
 Регистрация сохраняет аккаунт и SYSTEM_WELCOME одной транзакцией.
 Ошибка записи welcome откатывает создание аккаунта. Отключённый welcome
 даёт skipped_disabled; исчезнувший/архивированный канал даёт
@@ -32,6 +37,10 @@ Realtime содержит только metadata hint, без текста соо
 operation.failure_stage=realtime и outcome failed. Перечитайте историю или
 профиль; не создавайте повторный аккаунт и не откатывайте успешный коммит.
 При ошибке базы db.committed=false; регистрация возвращает ошибку.
+
+Отсутствующий publisher после сохранения настроек также считается ошибкой
+доставки: failed/realtime при db.committed=true и HTTP 200. Для welcome действует
+та же классификация, при этом committed регистрация сохраняет HTTP 201.
 
 ## Трейсы
 

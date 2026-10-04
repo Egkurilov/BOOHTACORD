@@ -15,5 +15,5 @@ func Register(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticates
 	handler := guildsettingsapi.Handler{Store: guildsettingspostgres.New(database), Observer: observer, Events: events}
 	mux.HandleFunc("GET /api/v1/guild-profile", handler.Public)
 	mux.Handle("GET /api/v1/admin/guild-settings", sessionapi.Require(sessions)(sessionapi.RequireAdministrator(http.HandlerFunc(handler.Read))))
-	mux.Handle("PATCH /api/v1/admin/guild-settings", sessionapi.Require(sessions)(sessionapi.RequireAdministrator(http.HandlerFunc(handler.Patch))))
+	mux.Handle("PATCH /api/v1/admin/guild-settings", sessionapi.Require(sessions)(handler.ObserveRejectedUpdates(sessionapi.RequireAdministrator(http.HandlerFunc(handler.Patch)))))
 }
