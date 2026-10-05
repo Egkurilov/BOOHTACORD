@@ -7,6 +7,7 @@ from tools.ci.native.process import ROOT, client, output, require_version, run
 from tools.release.native_artifact.manifest import version, write
 from .signature import APPLICATION, inspect
 from .signing import provision
+from .apk_size.inspect import inspect_size
 from tools.build.client_identity import dart_defines, flutter_version_args
 
 
@@ -36,6 +37,7 @@ def main():
         if not source.is_file() or not source.stat().st_size: raise RuntimeError('Missing APK: ' + name)
         if not args.debug and source.stat().st_size > 95000000: raise ValueError('APK exceeds the 95 MB release safety ceiling')
         info = inspect(source, release=not args.debug, version=native_version)
+        info['size'] = inspect_size(source, release=not args.debug, architecture=architecture)
         retained = name if args.debug else f'BOOHTACORD-{tag}-{architecture}.apk'
         shutil.copyfile(source, destination / retained)
         inspected[retained] = info
