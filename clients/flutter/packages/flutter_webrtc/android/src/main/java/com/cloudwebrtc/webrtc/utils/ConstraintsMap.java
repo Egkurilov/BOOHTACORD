@@ -33,7 +33,7 @@ public class ConstraintsMap {
     }
 
     public double getDouble(String name){
-        return (double) mMap.get(name);
+        return ((Number) mMap.get(name)).doubleValue();
     }
 
     public int getInt(String name) {
