@@ -27,7 +27,7 @@ export function createCoalescedDelivery(onEvent: EventHandler, recovery: EventHa
       immediate.delete(event)
       await work
     } else { if (event.kind === 'connection.resync_required') seen.clear(); await onEvent(event) }
-  }, recovery, cause => { pending = []; batches.clear(); seen.clear(); failure(cause) })
+  }, recovery, cause => { pending = []; batches.clear(); seen.clear(); immediate.clear(); revocations.clear(); failure(cause) })
   function flush(): void {
     if (timer !== null) clearTimeout(timer)
     timer = null
@@ -51,7 +51,7 @@ export function createCoalescedDelivery(onEvent: EventHandler, recovery: EventHa
         revocations.add(event.eventId)
         if (revocations.size > 2048) revocations.delete(revocations.values().next().value!)
         try { const work = Promise.resolve(onEvent(event)); void work.catch(() => {}); immediate.set(event, work) }
-        catch (cause) { failure(cause); return }
+        catch (cause) { const work = Promise.reject<void>(cause); void work.catch(() => {}); immediate.set(event, work) }
       }
       if (!active) return
       flush()

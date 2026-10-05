@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict'
+import { api, expect, status } from '../client_lifecycle/request.mjs'
+import { requests } from './requests.mjs'
+export async function bursts(a, b, channelId, report, directory) {
+  const category = await api(a, '/admin/categories', 'POST', { name: 'HiddenLab' }); status(category, 201)
+  const hidden = await api(a, `/admin/categories/${category.body.id}/channels`, 'POST', { name: 'HiddenLab', kind: 'TEXT' }); status(hidden, 201)
+  await expect(b.locator('.channel-button').filter({ hasText: 'HiddenLab' })).toBeVisible()
+  await b.locator('.channel-button').filter({ hasText: 'HiddenLab' }).click()
+  const counters = [requests(a, channelId), requests(b, channelId)]
+  const samples = []
+  let oldest
+  for (const size of [1, 20, 50]) {
+    await a.waitForTimeout(300)
+    counters.forEach(counter => counter.start())
+    const result = await a.evaluate(async ({ channelId, size }) => {
+      const rows = await Promise.all(Array.from({ length: size }, (_, index) => fetch(`/api/v1/channels/${channelId}/messages`, {
+        method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ client_message_id: crypto.randomUUID(), body: `Synthetic burst ${size} item ${index}` }),
+      }).then(async response => ({ status: response.status, body: await response.json() }))))
+      return rows
+    }, { channelId, size })
+    result.forEach(row => status(row, 201))
+    oldest ??= result[0].body
+    await expect(a.getByRole('log')).toContainText(`Synthetic burst ${size} item ${size-1}`)
+    await a.waitForTimeout(500)
+    const [active, hiddenResult] = counters.map(counter => counter.stop())
+    assert.equal(hiddenResult.history, 0)
+    assert.ok(active.history >= 1 && active.history <= Math.max(2, size/2), 'Unbounded protected GET burst')
+    assert.ok(active.max_parallel <= 1 && hiddenResult.max_parallel <= 1, 'Parallel GETs for one resource')
+    samples.push({ events: size, active, hidden: hiddenResult })
+  }
+  const row = a.locator(`[data-message-id="${oldest.id}"]`)
+  if (await row.count() === 0) await a.getByRole('button', { name: 'Показать предыдущие сообщения', exact: true }).click()
+  await expect(row).toHaveCount(1)
+  status(await api(a, `/channels/${channelId}/messages/${oldest.id}`, 'PATCH', { body: 'Synthetic old page revision', expected_revision: oldest.revision }), 200)
+  await expect(row).toContainText('Synthetic old page revision')
+  const revision = (await api(a, `/channels/${channelId}/messages?at=${oldest.id}&limit=20`)).body.messages.find(item => item.id === oldest.id)
+  assert.equal(revision.revision, oldest.revision+1)
+  status(await api(a, `/channels/${channelId}/messages/${oldest.id}`, 'DELETE'), 204)
+  await expect(row).toContainText('Сообщение удалено')
+  await a.screenshot({ path: directory+'/old-page-delete.png' })
+  report.protected_refresh = { actual_api_bursts: samples, old_page_edit_delete: true, final_revision: revision.revision, id_only_hints_preserved: true }
+}

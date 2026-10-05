@@ -3,6 +3,10 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { api, chromium, expect, login, origin, status } from './request.mjs'
 import { guild } from './guild.mjs'
 import { sessions } from './sessions.mjs'
+import { registration, rateLimit } from '../critical_client_acceptance/auth.mjs'
+import { resetLinks } from '../critical_client_acceptance/reset.mjs'
+import { bursts } from '../critical_client_acceptance/bursts.mjs'
+import { media } from '../critical_client_acceptance/media.mjs'
 const input = JSON.parse(readFileSync(process.env.QA_INPUT, 'utf8'))
 assert.equal(origin, 'https://localhost:4810')
 const browser = await chromium.launch({ headless: true })
@@ -15,6 +19,7 @@ try {
   const [a, b, guest] = await Promise.all(contexts.map(context => context.newPage()))
   await login(a, 'qa_admin', input.password)
   await login(b, 'qa_admin', input.password)
+  const flowAccount = input.critical ? await registration(browser, input, report) : null
   await guest.goto(origin)
   const value = await guild(a, b, guest, input.password, report, input.directory)
   await login(guest, 'qa_member', input.password)
@@ -23,6 +28,11 @@ try {
   })
   status(denied, 403)
   report.guild.member_denied = true
+  if (input.critical) {
+    await bursts(a, b, value.channelId, report, input.directory)
+    await media(a, b, guest, value.channelId, report, input.directory)
+    await resetLinks(browser, a, flowAccount.account_id, input, report, redactions)
+  }
   await sessions(a, b, guest, report, input.directory, redactions)
   const refreshed = (await api(a, '/guild-profile')).body
   assert.equal(refreshed.name, 'Автономная гильдия')
@@ -34,6 +44,7 @@ try {
   await expect(auth.locator('.authentication-intro')).toContainText(refreshed.name)
   await auth.screenshot({ path: input.directory+'/authentication.png' })
   await anonymous.close()
+  if (input.critical) await rateLimit(browser, a, input, report)
   report.status = 'PASS'
   writeFileSync(input.directory+'/browser.json', JSON.stringify(report, null, 2)+'\n')
   // Private handoff is temporary, never retained as evidence or printed.
