@@ -149,9 +149,15 @@ the window; a second double-click restores its original size. A running Android 
 mobile header has no desktop chrome, and the current-source platform widget
 regression passes. The emulator still has app version 1.0.28 from before this
 desktop-only change, so its screenshot is a visual regression check rather than
-a build-identity check. macOS native zoom/restore has since been exercised and
-passed; macOS drag/minimize/close and Windows native drag/window controls remain
-open — [QA-263](../evidence/flutter/qa263-flutter-macos-native-titlebar-2026-10-04-001.json).
+a build-identity check. macOS native zoom/restore is verified. In the current
+live session, DevTools confirmed pointer-down reaches the title-bar drag region,
+but the desktop UI driver did not emit a pan-update; a read-only position check
+stayed at `Offset(1000,238)`, so runtime dragging is not verified. The standard
+`onPanStart` path is restored and hot-reloaded into the open app without a
+restart. The focused title-bar suite passes 5/5 and changed-file analysis is
+clean. macOS minimize/close and Windows native drag/window controls remain
+open — [QA-263](../evidence/flutter/qa263-flutter-macos-native-titlebar-2026-10-04-001.json),
+[QA-281](../evidence/flutter/qa281-flutter-desktop-window-chrome-macos-drag-2026-10-05-001.json).
 The Windows 2022 runner passed app/vendor tests and analysis in attempt 1, but
 the distribution build was cancelled by a newer master push. Attempt 2 was also
 cancelled during Flutter SDK setup by a newer master push. Attempt 3 passed app/
@@ -457,6 +463,31 @@ header subtitle and composer bounds and no open navigation drawer. No message
 was sent or edited; read-cursor state was not inspected. FV2-028 is accepted;
 history pagination and server read-cursor checks remain open under FV2-002 —
 [QA-278](../evidence/flutter/qa278-flutter-text-scroll-chrome-android-2026-10-05-001.json).
+
+TEXT history overlap follow-up (FV2-031): web merges cursor pages by message ID
+and keeps the row with the greatest revision. Flutter's older-page merge now
+uses the same rule instead of always keeping the already-loaded row. A
+test-first AppState regression reproduced revision 1 winning over an overlapping
+revision 2 before the fix. The focused AppState suite passes 50/50, the full
+Flutter suite passes 621/621, and changed-file analysis is clean. No web, API,
+read-cursor or server behavior changed; live read-cursor and device acceptance
+remain open under FV2-002 —
+[QA-284](../evidence/flutter/qa284-flutter-text-history-revision-overlap-2026-10-05-001.json).
+
+TEXT/DM history ordering follow-up (FV2-032): web's rendered chronology uses
+creation time followed by ascending message ID when multiple rows share the
+same timestamp. Flutter previously sorted only by creation time, so a response
+in the opposite ID order stayed inconsistent. Test-first TEXT and DM
+regressions reproduced the drift; both Flutter history reconcilers now apply
+the deterministic `(createdAt, id)` order. No API, cursor, read-state or
+server behavior changed — [QA-285](../evidence/flutter/qa285-flutter-history-equal-timestamp-order-2026-10-05-001.json).
+
+DM history overlap follow-up (FV2-033): Flutter's older-page merge used
+`putIfAbsent`, retaining the loaded row even when the cursor page carried a
+higher revision. A test-first AppState regression reproduced revision 1
+winning over revision 2; the merge now uses the greatest revision, matching
+web and TEXT. No API, cursor, read-state or server behavior changed —
+[QA-286](../evidence/flutter/qa286-flutter-dm-history-overlap-revision-2026-10-05-001.json).
 
 Audio settings R10–R11 follow-up (FV2-027): source comparison found a visual
 and ordering gap despite preserved audio behavior. Flutter now leads with a
