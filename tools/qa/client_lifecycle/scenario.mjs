@@ -1,0 +1,47 @@
+import assert from 'node:assert/strict'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { api, chromium, expect, login, origin, status } from './request.mjs'
+import { guild } from './guild.mjs'
+import { sessions } from './sessions.mjs'
+const input = JSON.parse(readFileSync(process.env.QA_INPUT, 'utf8'))
+assert.equal(origin, 'https://localhost:4810')
+const browser = await chromium.launch({ headless: true })
+const report = { schema_version: 1, width: input.width, mocks: false, synthetic_accounts: true }
+const redactions = [input.password]
+try {
+  const contexts = await Promise.all([0, 1, 2].map(() => browser.newContext({
+    ignoreHTTPSErrors: true, viewport: { width: input.width, height: 900 },
+  })))
+  const [a, b, guest] = await Promise.all(contexts.map(context => context.newPage()))
+  await login(a, 'qa_admin', input.password)
+  await login(b, 'qa_admin', input.password)
+  await guest.goto(origin)
+  const value = await guild(a, b, guest, input.password, report, input.directory)
+  await login(guest, 'qa_member', input.password)
+  const denied = await api(guest, '/admin/guild-settings', 'PATCH', {
+    name: 'MemberOverwrite', expected_revision: value.revision,
+  })
+  status(denied, 403)
+  report.guild.member_denied = true
+  await sessions(a, b, guest, report, input.directory, redactions)
+  const refreshed = (await api(a, '/guild-profile')).body
+  assert.equal(refreshed.name, 'Автономная гильдия')
+  const anonymous = await browser.newContext({ ignoreHTTPSErrors: true })
+  const auth = await anonymous.newPage()
+  await auth.goto(origin)
+  await expect(auth.locator('.authentication-brand .guild-profile-name')).toHaveText(refreshed.name)
+  await expect(auth.locator('.authentication-intro')).toContainText(refreshed.name)
+  await auth.screenshot({ path: input.directory+'/authentication.png' })
+  await anonymous.close()
+  report.status = 'PASS'
+  writeFileSync(input.directory+'/browser.json', JSON.stringify(report, null, 2)+'\n')
+  // Private handoff is temporary, never retained as evidence or printed.
+  writeFileSync(process.env.QA_PRIVATE, JSON.stringify({ ...value, password: input.password }), { mode: 0o600 })
+  console.log('Actual browser lifecycle PASS')
+} catch (error) {
+  for (const context of browser.contexts()) redactions.push(...(await context.cookies()).map(cookie => cookie.value))
+  let message = String(error)
+  for (const value of redactions.filter(Boolean)) message = message.split(value).join('[redacted]')
+  console.error(message)
+  process.exitCode = 1
+} finally { await browser.close() }

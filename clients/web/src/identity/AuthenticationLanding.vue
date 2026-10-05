@@ -2,11 +2,13 @@
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import GuildName from '../guild/profile/GuildName.vue'
+import { guildProfile } from '../guild/profile/state'
 import { login, register } from './auth_client'
 import { generateSecurePassword } from './password_generator'
 import PasswordGenerationActions from './password_generation/PasswordGenerationActions.vue'
 
 const props = withDefaults(defineProps<{ focusLoginOnMount?: boolean }>(), { focusLoginOnMount: false })
+const guildName = guildProfile.name
 const emit = defineEmits<{ authenticated: [] }>()
 const mode = ref<'login' | 'register'>('login')
 const loginValue = ref('')
@@ -81,7 +83,7 @@ onBeforeUnmount(() => { active = false; clearPassword() })
     <section class="authentication-card">
       <div class="authentication-brand"><img src="/brand.png" alt=""><p class="eyebrow"><GuildName /></p></div>
       <h1 id="authentication-title">Добро пожаловать</h1>
-      <p class="authentication-intro">Войдите в «Моя гильдия».</p>
+      <p class="authentication-intro">Войдите в «{{ guildName }}».</p>
 
       <form class="authentication-form" @submit.prevent="submit">
         <label class="authentication-field">
