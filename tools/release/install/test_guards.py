@@ -5,6 +5,8 @@ from .guards import disk_budget, installed_digests, writer_topology
 class InstallGuardsTests(unittest.TestCase):
     def test_writer_preflight_rejects_multiple_and_start_first(self):
         writer_topology({'services': {'api': {}}}, '')
+        with self.assertRaises(ValueError):
+            writer_topology({'services': {'api': {'scale': 2}}}, '')
         supported = {'replicas': 1, 'update_config': {'order': 'stop-first'}, 'rollback_config': {'order': 'stop-first'}}
         writer_topology({'services': {'api': {'deploy': supported}}}, 'one')
         for deployment, running in (({**supported, 'replicas': 2}, 'one'),

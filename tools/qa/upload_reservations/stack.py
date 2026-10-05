@@ -36,6 +36,10 @@ class UploadStack(Stack):
 
     def stop_api(self):
         if self.api_name:
+            label = output('docker', 'inspect', self.api_name, '--format', '{{index .Config.Labels "'+LABEL+'"}}')
+            assert label == self.owner, 'Foreign API container'
+            run('docker', 'stop', '--time', '15', self.api_name, stdout=subprocess.DEVNULL)
+            assert output('docker', 'inspect', self.api_name, '--format', '{{.State.ExitCode}}') != '137', 'API shutdown exceeded its graceful deadline'
             remove_owned(self.api_name, self.owner)
             self.resources.remove(('container', self.api_name))
             self.api_name = None

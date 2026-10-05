@@ -18,6 +18,7 @@ def writer_topology(configuration, running):
     api = configuration.get('services', {}).get('api')
     require(isinstance(api, dict), 'API topology is unavailable')
     deployment = api.get('deploy', {})
+    require(api.get('scale', 1) == 1, 'Exactly one API attachment writer is supported')
     # Previously signed Compose releases use the native one-replica/stop-first defaults.
     require(deployment.get('replicas', 1) == 1, 'Exactly one API attachment writer is supported')
     for action in ('update_config', 'rollback_config'):
