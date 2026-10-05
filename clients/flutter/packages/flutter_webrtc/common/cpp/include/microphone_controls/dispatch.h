@@ -11,7 +11,8 @@ inline bool HandleMicrophoneControls(const MethodCallProxy& call,
   if (name == "setMicrophoneControls") {
     if (!call.arguments()) { result->Error("Bad Arguments", "controls required"); return true; }
     const auto params = GetValue<EncodableMap>(*call.arguments());
-    c.Configure(findDouble(params, "vadThresholdDb"), findDouble(params, "microphoneGainPercent"),
+    c.Configure(static_cast<float>(findDouble(params, "vadThresholdDb")),
+        static_cast<float>(findDouble(params, "microphoneGainPercent")),
         findBoolean(params, "vad"), findBoolean(params, "agc"), findBoolean(params, "enabled"));
   }
   EncodableMap state;
