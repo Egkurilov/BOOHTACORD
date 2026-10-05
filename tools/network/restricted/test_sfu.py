@@ -1,6 +1,7 @@
 """Transport restrictions are owned by a disposable fixture, never host policy."""
 import unittest
 from .sfu import command
+from .restrict import rules
 
 
 class RestrictionsTest(unittest.TestCase):
@@ -21,3 +22,9 @@ class RestrictionsTest(unittest.TestCase):
     def test_unknown_profile_rejected(self):
         with self.assertRaises(ValueError):
             command('owned', 'production')
+
+    def test_namespace_filters_cover_direct_container_candidates(self):
+        self.assertEqual(rules('baseline'), [])
+        self.assertEqual(rules('udp-blocked'), [['-p', 'udp', '-j', 'DROP']])
+        self.assertEqual(rules('signal-only'), [['-p', 'udp', '-j', 'DROP'],
+                                               ['-p', 'tcp', '--dport', '17881', '-j', 'DROP']])

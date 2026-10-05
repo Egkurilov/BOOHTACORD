@@ -53,12 +53,18 @@ python -m unittest tools.network.restricted.test_sfu
 python -m tools.network.restricted.run
 ```
 
+Linux `nsenter`/`iptables` and root or passwordless `sudo` are required for
+isolated fault injection. The target namespace is checked to differ from the
+host namespace before every profile; Docker must be local, not rootless/remote.
+
 The matrix uses actual LiveKit 1.13.7 (digest pinned) and two real Chromium
 contexts with synthetic mono 48 kHz / 440 Hz and the production Opus profile.
 Only loopback ports of a uniquely owned disposable container are published.
-Baseline/recovery publish UDP and ICE/TCP; UDP-blocked omits the UDP mapping;
-signal-only omits both media mappings; signal-blocked points the client at an
-unbound loopback socket. Host/production firewalls and volumes are untouched.
+Baseline/recovery publish UDP and ICE/TCP; UDP-blocked omits the UDP mapping
+and drops UDP INPUT inside that SFU network namespace. Signal-only also drops
+ICE/TCP there, preventing direct container-address candidate bypass. Signal-blocked
+points the client at an unbound loopback socket. Host/production firewall rules
+and volumes are untouched; the isolated rules disappear with the container.
 This emulates transport unreachability, not a mobile NAT, HTTP proxy or loss
 distribution. Signal is local WS, not a production TLS/admission validation.
 

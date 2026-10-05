@@ -5,6 +5,7 @@ import uuid
 from contextlib import contextmanager
 from urllib.request import urlopen
 from tools.audio.livekit_fixture import IMAGE
+from .restrict import restrict
 
 PROFILES = ('baseline', 'udp-blocked', 'signal-only', 'signal-blocked', 'recovery')
 
@@ -38,6 +39,7 @@ def restricted_sfu(profile):
                 if attempt == 29:
                     raise RuntimeError('Isolated SFU readiness timeout')
                 time.sleep(1)
+        restrict(name, profile)
         yield
     finally:
         subprocess.run(['docker', 'rm', '-f', name], check=True,

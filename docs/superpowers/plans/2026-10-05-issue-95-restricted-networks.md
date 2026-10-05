@@ -8,7 +8,8 @@ restrictions, and provide the same private diagnostic projection for real networ
 **Architecture:** Bind a read-only observer to the existing LiveKit room factory.
 Keep authentication, cookie admission, leases, subscriptions and media ownership.
 Run real Chromium peers against a disposable pinned LiveKit server. Publish only
-the loopback transports allowed by each profile, never alter host firewall rules.
+the allowed loopback transports; drop blocked transports inside the owned SFU
+namespace to prevent Docker bridge candidate bypass. Never alter host rules.
 
 **Tech Stack:** Vue/TypeScript, LiveKit 2.22.3/1.13.7, Playwright, Python, Docker.
 
@@ -48,7 +49,7 @@ the loopback transports allowed by each profile, never alter host firewall rules
 
 ## B. Isolated restricted-network matrix
 
-- [ ] Create `sfu.py`, `run.py`, `browser.mjs` under `tools/network/restricted`;
+- [ ] Create `sfu.py`, `restrict.py`, `run.py`, `browser.mjs` under `tools/network/restricted`;
   ports 17880 signal, 17881 ICE/TCP, 7882 UDP, loopback only, UUID container owner.
 - [ ] Create `fixture.html`, `fixture.ts`, `matrix.browser.spec.ts` and
   `playwright.config.ts` under `clients/web/tests/restricted_networks`.

@@ -26,7 +26,7 @@ def main():
         rows.append(json.loads(path.read_text(encoding='utf-8')))
     report = {'sourceRevision': revision, 'measuredAt': datetime.now(timezone.utc).isoformat(),
               'platform': platform.system(), 'livekitImage': IMAGE, 'rows': rows,
-              'mechanism': 'loopback-only Docker published transport omission; signal-blocked uses an unbound loopback socket',
+              'mechanism': 'owned SFU namespace INPUT drops UDP / ICE TCP; published mappings also omitted; signal-blocked uses an unbound loopback socket',
               'physicalHome': 'NOT_RUN', 'physicalHotspot': 'NOT_RUN',
               'productionAdmissionRevocation': 'NOT_RUN', 'capacity': 'NOT_RUN'}
     (destination / 'matrix.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
