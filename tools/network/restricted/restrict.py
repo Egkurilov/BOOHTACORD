@@ -19,6 +19,13 @@ def restrict(name, profile):
         return
     if not name.startswith('restricted-network-') or os.name != 'posix':
         raise RuntimeError('Transport isolation requires the owned Linux SFU')
+    if os.environ.get('DOCKER_CONTEXT') or not os.environ.get('DOCKER_HOST'):
+        endpoint = subprocess.check_output(['docker', 'context', 'inspect', '--format',
+                                           '{{.Endpoints.docker.Host}}'], text=True).strip()
+    else:
+        endpoint = os.environ['DOCKER_HOST']
+    if endpoint != 'unix:///var/run/docker.sock':
+        raise RuntimeError('Transport isolation requires the local rootful Docker socket')
     pid = int(subprocess.check_output(['docker', 'inspect', '--format', '{{.State.Pid}}', name], text=True))
     if pid <= 1 or Path(f'/proc/{pid}/ns/net').stat().st_ino == Path('/proc/self/ns/net').stat().st_ino:
         raise RuntimeError('Refusing to modify the host network namespace')

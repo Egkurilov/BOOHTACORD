@@ -10,6 +10,8 @@ from .sfu import IMAGE, PROFILES, restricted_sfu
 
 
 def main():
+    run(sys.executable, '-m', 'unittest', 'tools.network.restricted.test_sfu',
+        'tools.network.restricted.test_restrict')
     destination = ROOT / '.out/restricted-networks'
     destination.mkdir(parents=True, exist_ok=True)
     revision = output('git', 'rev-parse', 'HEAD')
