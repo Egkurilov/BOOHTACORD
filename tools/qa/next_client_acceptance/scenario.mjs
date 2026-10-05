@@ -6,7 +6,7 @@ import { unread } from './unread.mjs'
 import { navigation } from './navigation.mjs'
 const input = JSON.parse(readFileSync(process.env.QA_INPUT,'utf8'))
 assert.equal(process.env.QA_ORIGIN,'https://localhost:4810')
-const browser = await chromium.launch({ headless:true, args:['--allow-loopback-in-peer-connection'] })
+const browser = await chromium.launch({ headless:false, args:['--allow-loopback-in-peer-connection'] })
 try {
   const context = await browser.newContext({ ignoreHTTPSErrors:true, viewport:{width:1440,height:900} })
   context.setDefaultTimeout(20000)
