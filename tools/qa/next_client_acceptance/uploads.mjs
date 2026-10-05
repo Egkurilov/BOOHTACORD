@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { expect, select, owned } from './fixture.mjs'
 async function reserved() {
   const response = await fetch('http://127.0.0.1:4820/metrics')
@@ -51,7 +53,10 @@ export async function uploads(page, input, report) {
     await select(page,'NextA'); await expect(queue).toHaveCount(0)
     await session.send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 })
     await session.detach()
-    await page.locator('#message-attachments').setInputFiles(Array.from({ length: 10 }, (_, i) => file(`large-${i}.bin`,25_000_000)))
+    mkdirSync(input.files_directory)
+    const paths = Array.from({length:10},(_,i)=>join(input.files_directory,`large-${i}.bin`))
+    for (const path of paths) writeFileSync(path,Buffer.alloc(25_000_000),{flag:'wx'})
+    await page.locator('#message-attachments').setInputFiles(paths)
     await expect(picker.locator('[data-upload-status="done"]')).toHaveCount(10, { timeout: 60000 })
     await expect(page.getByRole('button', { name: 'Отправить сообщение', exact: true })).toBeEnabled()
     await page.getByRole('button', { name: 'Отправить сообщение', exact: true }).click()

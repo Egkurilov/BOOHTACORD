@@ -22,7 +22,7 @@ def main():
             try:
                 stack.start()
                 inputs = work/'input.json'
-                inputs.write_text(json.dumps(dict(password=stack.password, limited=limited, directory=str(destination))))
+                inputs.write_text(json.dumps(dict(password=stack.password, limited=limited, directory=str(destination), files_directory=str(work/'files'))))
                 inputs.chmod(0o600)
                 private = work/'result.json'
                 environment = dict(os.environ, QA_ORIGIN='https://localhost:4810', QA_INPUT=str(inputs),

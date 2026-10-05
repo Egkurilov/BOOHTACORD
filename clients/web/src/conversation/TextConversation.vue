@@ -86,7 +86,7 @@ function closeSearch(): void { searchOpen.value = false; void nextTick(() => sea
       </div>
       <WorkspaceHeaderActions :members-expanded="props.membersOpen" :nav-expanded="props.navOpen" :show-members="props.showMembers" @toggle-members="emit('toggleMembers')" @toggle-navigation="emit('toggleNav')"><button ref="searchTrigger" class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen ? closeSearch() : searchOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button><template #overflow><ConversationOverflowMenu :show-members="props.showMembers" :members-open="props.membersOpen" @search="searchOpen = true" @toggle-members="emit('toggleMembers')" /></template></WorkspaceHeaderActions>
     </header>
-    <div v-if="searchOpen" class="conversation-tools"><TextMessageSearch :channel-id="props.channelId" @close="closeSearch" /></div>
+    <div v-if="searchOpen" v-show="!contextOpen()" class="conversation-tools"><TextMessageSearch :channel-id="props.channelId" @open="searchTarget.open({ kind: 'CHANNEL', conversationId: props.channelId, messageId: $event })" @close="closeSearch" /></div>
     <p v-if="store.loading" class="state" aria-live="polite">Загружаем историю…</p>
     <p v-if="store.error" id="text-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refresh()">Повторить загрузку</button></p>
     <div v-if="unreadBoundary && !readUnlocked" class="unread-boundary-actions" role="status">
