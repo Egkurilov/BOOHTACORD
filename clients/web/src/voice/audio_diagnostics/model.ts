@@ -27,10 +27,8 @@ export interface VoiceAudioDiagnostics {
 }
 export function statNumber(value: unknown): number | null {
   if (typeof value !== 'number' && typeof value !== 'string') return null
-  if (value === '') return null
+  if (typeof value === 'string' && value.trim() === '') return null
   const number = Number(value)
   return Number.isFinite(number) && number >= 0 ? number : null
 }
-export function exportVoiceAudioDiagnostics(value: VoiceAudioDiagnostics): string {
-  return JSON.stringify({ ...value, samples: value.samples.map(({ audioLevel: _localOnly, ...sample }) => sample) }, null, 2)
-}
+export { exportVoiceAudioDiagnostics } from '../audio_report/export'
