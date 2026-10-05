@@ -27,6 +27,13 @@
 
 ### IMP-31 · P1 · L · DECISION — ограниченные сети и TURN
 - [ ] Сначала измерить join/signal/ICE/media в домашней сети, hotspot, при blocked UDP и ограниченном TCP без публикации ICE-адресов. Только при подтверждённой проблеме подготовить ADR для встроенного LiveKit TURN/TLS: маршрут 443, сертификат, relay traffic/cost, admission/revocation и нагрузка. Не добавлять TURN, Redis или HA «на всякий случай»; QA-06/09/10.
+  **05.10 source/lab:** приватный observer настоящего Web room и изолированная
+  Chromium/LiveKit матрица реализованы. UDP→TCP fallback и отсутствие ICE при
+  блокировке обоих media transports измерены; восстановленный новый join PASS.
+  [Evidence](../../evidence/issue-95-restricted-networks-2026-10-05.md),
+  [операторский протокол](../../docs/runbooks/restricted-networks.md),
+  [условный ADR-017](../../docs/adr/ADR-017-restricted-network-turn-tls.md).
+  Home/hotspot и применимые QA-06/09/10 остаются NOT_RUN; TURN production NO_GO.
 
 ### IMP-43 · P2 · L · DECISION — reactions и pins
 - [ ] Согласовать узкий продуктовый scope после основных P1/QA: ограниченные emoji reactions с idempotent toggle и admin-managed pins общих каналов. После решения — SQL/API/ACL, ID-only hints, переход к записи, удаление вместе с сообщением и проверка DM privacy. Не превращать это в release blocker, группы DM или ленту активности.

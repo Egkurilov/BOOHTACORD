@@ -21,6 +21,7 @@ import { awaitMediaConnection, mediaConnectionTimeoutMs } from './connection_dea
 import { defaultLiveKitRoomFactory } from './livekit_room_factory'
 import type { AudioInputSelection } from './audio_input_selection'
 import type { VoiceAudioDiagnostics } from './audio_diagnostics/model'
+import type { NetworkDiagnostics } from './network_diagnostics/model'
 
 export {
   readScreenShareDiagnostics,
@@ -47,6 +48,7 @@ export interface VoiceRoom {
   stopScreenProfileChecks?(): void
   readVoiceConnectionStats?(): Promise<VoiceConnectionStats>
   readVoiceAudioDiagnostics?(): Promise<VoiceAudioDiagnostics>
+  readNetworkDiagnostics?(): Promise<NetworkDiagnostics>
   participantCards?: RemoteParticipantController
   remoteVoices?: RemoteVoicePlaybackController
   screenViewer?: ScreenViewerController

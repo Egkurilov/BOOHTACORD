@@ -1,0 +1,182 @@
+{
+  "sourceRevision": "f97aaee04a159033cfc8a4540f8fab8d96b25426",
+  "measuredAt": "2026-10-05T10:35:52.262340+00:00",
+  "platform": "Linux",
+  "livekitImage": "livekit/livekit-server:v1.13.7@sha256:6fd3b7088874c4d119160dd688798dfec852bc014786d392caad15f6f63912a3",
+  "rows": [
+    {
+      "profile": "baseline",
+      "browser": "153.0.8010.12",
+      "connectivity": "PASS",
+      "measurementGate": "PASS",
+      "sender": {
+        "outcome": "connected",
+        "signalMs": 85,
+        "iceObservedMs": 205.90000009536743,
+        "sdkJoinMs": 205.90000009536743,
+        "firstRtpObservedMs": null,
+        "elapsedMs": 1342.8000001907349,
+        "transports": [
+          {
+            "selected": true,
+            "protocol": "udp",
+            "localType": "prflx",
+            "remoteType": "host",
+            "rttMs": 1,
+            "audioBytesSent": 34606,
+            "audioBytesReceived": null
+          }
+        ]
+      },
+      "receiver": {
+        "outcome": "connected",
+        "signalMs": 339.3999996185303,
+        "iceObservedMs": 458.19999980926514,
+        "sdkJoinMs": 458.19999980926514,
+        "firstRtpObservedMs": 1820.6999998092651,
+        "elapsedMs": 1820.6999998092651,
+        "transports": [
+          {
+            "selected": true,
+            "protocol": "udp",
+            "localType": "prflx",
+            "remoteType": "host",
+            "rttMs": 1,
+            "audioBytesSent": null,
+            "audioBytesReceived": 31056
+          }
+        ]
+      },
+      "audibleQuality": "NOT_RUN"
+    },
+    {
+      "profile": "udp-blocked",
+      "browser": "153.0.8010.12",
+      "connectivity": "PASS",
+      "measurementGate": "PASS",
+      "sender": {
+        "outcome": "connected",
+        "signalMs": 67.40000009536743,
+        "iceObservedMs": 250.5,
+        "sdkJoinMs": 286,
+        "firstRtpObservedMs": null,
+        "elapsedMs": 1419.0999999046326,
+        "transports": [
+          {
+            "selected": true,
+            "protocol": "tcp",
+            "localType": "prflx",
+            "remoteType": "host",
+            "rttMs": 1,
+            "audioBytesSent": 33959,
+            "audioBytesReceived": null
+          }
+        ]
+      },
+      "receiver": {
+        "outcome": "connected",
+        "signalMs": 276.5,
+        "iceObservedMs": 495.09999990463257,
+        "sdkJoinMs": 495.09999990463257,
+        "firstRtpObservedMs": 1926.9000000953674,
+        "elapsedMs": 1926.9000000953674,
+        "transports": [
+          {
+            "selected": true,
+            "protocol": "tcp",
+            "localType": "prflx",
+            "remoteType": "host",
+            "rttMs": 1,
+            "audioBytesSent": null,
+            "audioBytesReceived": 31709
+          }
+        ]
+      },
+      "audibleQuality": "NOT_RUN"
+    },
+    {
+      "profile": "signal-only",
+      "browser": "153.0.8010.12",
+      "connectivity": "FAIL",
+      "measurementGate": "PASS",
+      "sender": null,
+      "receiver": {
+        "outcome": "failed",
+        "signalMs": 297.6000003814697,
+        "iceObservedMs": null,
+        "sdkJoinMs": null,
+        "firstRtpObservedMs": null,
+        "elapsedMs": 12312.5,
+        "transports": []
+      },
+      "audibleQuality": "NOT_RUN"
+    },
+    {
+      "profile": "signal-blocked",
+      "browser": "153.0.8010.12",
+      "connectivity": "FAIL",
+      "measurementGate": "PASS",
+      "sender": null,
+      "receiver": {
+        "outcome": "failed",
+        "signalMs": null,
+        "iceObservedMs": null,
+        "sdkJoinMs": null,
+        "firstRtpObservedMs": null,
+        "elapsedMs": 100.30000019073486,
+        "transports": []
+      },
+      "audibleQuality": "NOT_RUN"
+    },
+    {
+      "profile": "recovery",
+      "browser": "153.0.8010.12",
+      "connectivity": "PASS",
+      "measurementGate": "PASS",
+      "sender": {
+        "outcome": "connected",
+        "signalMs": 91.89999961853027,
+        "iceObservedMs": 200.7999997138977,
+        "sdkJoinMs": 200.7999997138977,
+        "firstRtpObservedMs": null,
+        "elapsedMs": 1346.6999998092651,
+        "transports": [
+          {
+            "selected": true,
+            "protocol": "udp",
+            "localType": "prflx",
+            "remoteType": "host",
+            "rttMs": 1,
+            "audioBytesSent": 33959,
+            "audioBytesReceived": null
+          }
+        ]
+      },
+      "receiver": {
+        "outcome": "connected",
+        "signalMs": 321,
+        "iceObservedMs": 441.80000019073486,
+        "sdkJoinMs": 441.80000019073486,
+        "firstRtpObservedMs": 1805.0999999046326,
+        "elapsedMs": 1805.2000002861023,
+        "transports": [
+          {
+            "selected": true,
+            "protocol": "udp",
+            "localType": "prflx",
+            "remoteType": "host",
+            "rttMs": 1,
+            "audioBytesSent": null,
+            "audioBytesReceived": 31716
+          }
+        ]
+      },
+      "audibleQuality": "NOT_RUN"
+    }
+  ],
+  "mechanism": "owned SFU namespace INPUT drops UDP / ICE TCP; published mappings also omitted; signal-blocked uses an unbound loopback socket",
+  "physicalHome": "NOT_RUN",
+  "physicalHotspot": "NOT_RUN",
+  "productionAdmissionRevocation": "NOT_RUN",
+  "capacity": "NOT_RUN"
+}

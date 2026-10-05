@@ -27,6 +27,14 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Test and build Vue client
         run: python3 -m tools.ci.receipts.run web
+      - name: Retain anonymous restricted-network measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: restricted-networks-${{ github.sha }}
+          path: .out/restricted-networks/*.json
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Retain source-bound gate receipt
         if: inputs.release_receipt
         uses: actions/upload-artifact@v4

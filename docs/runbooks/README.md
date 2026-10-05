@@ -6,6 +6,7 @@
 - [Трейсы](traces.md).
 - [Захват игры и звука](game-capture.md).
 - [Профили качества медиа](media-profiles.md).
+- [Ограниченные сети и решение о TURN](restricted-networks.md).
 - [Отзыв media credentials](media-revocation.md).
 - [Native builds](../clients/native-builds.md).
 

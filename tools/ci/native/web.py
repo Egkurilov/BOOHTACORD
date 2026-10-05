@@ -25,6 +25,7 @@ def main():
     run("npm", "run", "test:audio:quality", cwd=client("web"))
     with local_sfu():
         run("npm", "run", "test:audio:browser", cwd=client("web"))
+    run(sys.executable, "-m", "tools.network.restricted.run")
     run("npm", "run", "build", cwd=client("web"))
 
 
