@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 
 import { loadMessagePage, type MessageRequest, type TextMessage, type TextMessageAttachment } from './message_client'
-import { findLoadedMessage } from './message_revision_refresh'
+import { createLoadedRevisionRefresh } from './revision_refresh/loaded'
 
 export interface PendingSend { retryBlocked?: boolean; channelId: string; authorId: string; body: string; replyToId?: string; attachments: TextMessageAttachment[]; mentionUserIds: string[]; request?: MessageRequest; sendStatus?: 'sending' | 'checking' | 'failed' }
 
@@ -94,20 +94,9 @@ export function createTextHistory(pending: Map<string, PendingSend>) {
     }
   }
 
-  async function refreshMessage(messageId: string, request?: MessageRequest): Promise<TextMessage | null> {
-    const target = channelId.value
-    const version = generation
-    if (!target || !messages.value.some(({ id }) => id === messageId)) return null
-    try {
-      const count = messages.value.filter(({ sendStatus }) => !sendStatus).length
-      const found = await findLoadedMessage(messageId, count, (before) => loadMessagePage(target, before, request), () => generation === version && channelId.value === target)
-      if (found) mergePage([found])
-      return found ? messages.value.find(({ id }) => id === messageId) ?? null : null
-    } catch (cause) {
-      if (generation === version) error.value = cause instanceof Error ? cause.message : 'Не удалось обновить сообщение.'
-      return null
-    }
-  }
+  const { refreshMessage, refreshMessages } = createLoadedRevisionRefresh<TextMessage, MessageRequest>({ messages,
+    resourceId: channelId, version: () => generation, load: loadMessagePage, merge: mergePage, error,
+    fallback: 'Не удалось обновить сообщение.' })
 
-  return { channelId, messages, nextCursor, loading, olderLoading, historyLoaded, error, olderError, open, refresh, loadOlder, refreshMessage }
+  return { channelId, messages, nextCursor, loading, olderLoading, historyLoaded, error, olderError, open, refresh, loadOlder, refreshMessage, refreshMessages }
 }

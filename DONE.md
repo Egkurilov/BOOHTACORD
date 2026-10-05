@@ -14,3 +14,5 @@
 Исторические PASS относятся к указанным там SHA и окружению. Они не переносятся
 автоматически на новую сборку. [Открытые задачи](TODO.md) остаются открытыми до
 выполнения полного критерия.
+
+- [05.10.2026: QA-08 / IMP-02 / IMP-18 / IMP-20 actual isolated acceptance](evidence/critical-five-software-acceptance-2026-10-05.md). IMP-34 source implemented; compatible signed release rollback remains open.

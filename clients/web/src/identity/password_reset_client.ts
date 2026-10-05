@@ -1,5 +1,6 @@
 import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
+import { rateLimitError } from './authentication_flow/retry_after'
 
 export type PasswordResetRequest = (input: string, init: RequestInit) => Promise<Response>
 
@@ -20,6 +21,6 @@ export async function completePasswordReset(token: string, password: string, req
   }
   if (response.status === 204) return
   if (response.status === 400) throw new PasswordResetInvalidError()
-  if (response.status === 429) throw new Error('Слишком много попыток. Подождите и повторите.')
+  if (response.status === 429) throw rateLimitError(response)
   throw new Error(`Не удалось изменить пароль (${response.status}). Повторите попытку.`)
 }

@@ -5,6 +5,13 @@ on:
   pull_request:
     paths:
       - tools/qa/client_lifecycle/**
+      - tools/qa/upload_reservations/**
+      - tools/qa/critical_client_acceptance/**
+      - tools/qa/refresh_baseline/**
+      - clients/web/src/workspace/**
+      - clients/web/src/realtime/**
+      - clients/web/src/conversation/**
+      - clients/web/src/voice/**
       - clients/web/src/guild/profile/**
       - clients/web/src/identity/**
       - clients/web/src/App.vue
@@ -17,9 +24,11 @@ permissions:
 jobs:
   lifecycle:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
@@ -33,16 +42,29 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
       - name: Verify disposable resource guards
-        run: python3 -m unittest tools.qa.client_lifecycle.test_services tools.qa.client_lifecycle.test_telemetry
+        run: python3 -m unittest tools.qa.client_lifecycle.test_services tools.qa.client_lifecycle.test_telemetry tools.qa.critical_client_acceptance.test_stack
+      - name: Measure previous native client REST requests
+        env:
+          QA_BASELINE_REVISION: ${{ github.event.pull_request.base.sha || github.sha }}
+        run: |
+          python3 -m unittest tools.qa.refresh_baseline.test_archive
+          python3 -m tools.qa.refresh_baseline.run --revision "$QA_BASELINE_REVISION"
       - name: Run independent actual TLS API browser journeys
         run: |
-          python3 -m tools.qa.client_lifecycle.run --width 1440
-          python3 -m tools.qa.client_lifecycle.run --width 1024
+          python3 -m tools.qa.client_lifecycle.run --critical --width 1440
+          python3 -m tools.qa.client_lifecycle.run --critical --width 1024
+      - name: Verify real attachment reservations and single API writer
+        run: |
+          python3 -m unittest tools.qa.upload_reservations.test_measure
+          python3 -m tools.qa.upload_reservations.run
       - name: Retain synthetic actual screenshots and bounded results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: autonomous-client-lifecycle-${{ github.sha }}
-          path: .out/client-lifecycle/
+          path: |
+            .out/client-lifecycle/
+            .out/upload-reservations/
+            .out/refresh-baseline/
           if-no-files-found: ignore
           retention-days: 30

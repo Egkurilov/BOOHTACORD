@@ -2,6 +2,7 @@ import { createRequire } from 'node:module'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { resolve } from 'node:path'
+import { warmAudioModules } from './browser_fixture/startup.mjs'
 const root = fileURLToPath(new URL('../../clients/web/', import.meta.url))
 const { createServer } = await import(new URL('../../clients/web/node_modules/vite/dist/node/index.js', import.meta.url))
 const { AccessToken } = createRequire(new URL('../../clients/web/package.json', import.meta.url))('livekit-server-sdk')
@@ -10,6 +11,7 @@ const server = await createServer({ root,
   optimizeDeps: { entries: ['tests/audio/fixture.html'] },
   server: { host: '127.0.0.1', port: 4800, strictPort: true }, appType: 'custom' })
 const versionPath = resolve(root, 'public/audio/rnnoise/v0.1-cdf196b/rnnoise-manifest.json')
+let modulesWarmed = false
 server.middlewares.use((request, response, next) => {
   response.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self' ws://127.0.0.1:4800 ws://127.0.0.1:17880; style-src 'self' 'unsafe-inline'; media-src 'self' blob:")
   if (request.url?.startsWith('/tests/audio/livekit-token?')) {
@@ -22,6 +24,8 @@ server.middlewares.use((request, response, next) => {
     return
   }
   if (request.url === '/tests/audio/fixture.html') {
+    if (!modulesWarmed) { response.statusCode = 503; response.end('Fixture modules are starting'); return }
+    response.setHeader('X-Audio-Fixture-Ready', 'modules-warmed')
     response.setHeader('Content-Type', 'text/html')
     const html = readFileSync(resolve(root, 'tests/audio/fixture.html'), 'utf8')
     void server.transformIndexHtml(request.url, html).then(value => response.end(value)).catch(() => {
@@ -44,6 +48,8 @@ server.middlewares.use((request, response, next) => {
   }
   next()
 })
-await server.listen()
-console.log('RNNoise browser fixture ready at http://127.0.0.1:4800/tests/audio/fixture.html')
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, async () => { await server.close(); process.exit(0) })
+await server.listen()
+await warmAudioModules(server)
+modulesWarmed = true
+console.log('RNNoise browser fixture ready at http://127.0.0.1:4800/tests/audio/fixture.html')

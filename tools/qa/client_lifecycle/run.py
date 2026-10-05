@@ -15,6 +15,7 @@ from .telemetry import verify
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--width', type=int, choices=(1024, 1440), default=1440)
+    parser.add_argument('--critical', action='store_true')
     args = parser.parse_args()
     started = time.monotonic()
     root = Path(__file__).resolve().parents[3]
@@ -25,16 +26,20 @@ def main():
     print('stage=production-client-built', flush=True)
     with tempfile.TemporaryDirectory(prefix='boohtacord-client-qa-', dir=root/'.out') as temporary:
         work = Path(temporary)
-        stack = Stack(root, work)
+        if args.critical:
+            from tools.qa.critical_client_acceptance.stack import Stack as ActualStack
+        else:
+            ActualStack = Stack
+        stack = ActualStack(root, work)
         try:
             stack.start()
             print('stage=isolated-tls-api-ready', flush=True)
             private = work/'private.json'
             inputs = work/'input.json'
             inputs.write_text(json.dumps({'password': stack.password, 'width': args.width,
-                                         'directory': str(destination)}))
+                                         'directory': str(destination), 'critical': args.critical}))
             inputs.chmod(0o600)
-            environment = dict(os.environ, QA_ORIGIN=origin, QA_INPUT=str(inputs), QA_PRIVATE=str(private))
+            environment = dict(os.environ, QA_ORIGIN=origin, QA_INPUT=str(inputs), QA_PRIVATE=str(private), QA_DB_OWNER=stack.owner)
             script = root/'tools/qa/client_lifecycle/scenario.mjs'
             container = os.environ.get('QA_BROWSER_CONTAINER')
             if container:
@@ -42,7 +47,7 @@ def main():
                 owner = output('docker', 'inspect', container, '--format', '{{index .Config.Labels "'+LABEL+'"}}')
                 assert owner and owner == os.environ.get('QA_BROWSER_OWNER'), 'Foreign browser container'
                 run('docker', 'exec', '-e', 'QA_ORIGIN='+origin, '-e', 'QA_INPUT='+str(inputs),
-                    '-e', 'QA_PRIVATE='+str(private), container, 'node', str(script))
+                    '-e', 'QA_PRIVATE='+str(private), '-e', 'QA_DB_OWNER='+stack.owner, container, 'node', str(script))
             else:
                 run('node', str(script), env=environment)
             state = json.loads(private.read_text())
@@ -61,6 +66,7 @@ def main():
                           source_revision=output('git', '-C', str(root), 'rev-parse', 'HEAD'))
             sources = list((root/'tools/qa/client_lifecycle').glob('*.py'))
             sources += list((root/'tools/qa/client_lifecycle').glob('*.mjs'))
+            sources += list((root/'tools/qa/critical_client_acceptance').glob('*.*'))
             sources += [root/'clients/web/src/identity/AuthenticationLanding.vue', root/'clients/web/package-lock.json']
             report['source_files'] = {str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest()
                                       for path in sources}

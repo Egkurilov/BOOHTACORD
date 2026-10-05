@@ -2,7 +2,7 @@ import { ref } from 'vue'
 
 import { loadDirectMessageHistory, type DirectMessageHistoryItem, type DirectMessageRequest } from './direct_message_client'
 import { pendingDirectMessage, type DirectMessageDisplayItem, type PendingDirectMessageSend } from './direct_message_pending'
-import { findLoadedMessage } from '../conversation/message_revision_refresh'
+import { createLoadedRevisionRefresh } from '../conversation/revision_refresh/loaded'
 
 export function createDirectMessageHistory(pending: Map<string, PendingDirectMessageSend>, acknowledge: (id: string) => void) {
   const directMessageId = ref<string | null>(null)
@@ -98,20 +98,9 @@ export function createDirectMessageHistory(pending: Map<string, PendingDirectMes
     }
   }
 
-  async function refreshMessage(messageId: string, request?: DirectMessageRequest): Promise<DirectMessageHistoryItem | null> {
-    const target = directMessageId.value
-    const version = generation
-    if (!target || !messages.value.some(({ id }) => id === messageId)) return null
-    try {
-      const count = messages.value.filter(({ sendStatus }) => !sendStatus).length
-      const found = await findLoadedMessage(messageId, count, (before) => loadDirectMessageHistory(target, before, request), () => generation === version && directMessageId.value === target)
-      if (found) mergePage([found])
-      return found ? messages.value.find(({ id }) => id === messageId) ?? null : null
-    } catch (cause) {
-      if (generation === version) error.value = cause instanceof Error ? cause.message : 'Не удалось обновить личное сообщение.'
-      return null
-    }
-  }
+  const { refreshMessage, refreshMessages } = createLoadedRevisionRefresh<DirectMessageDisplayItem, DirectMessageRequest>({ messages,
+    resourceId: directMessageId, version: () => generation, load: loadDirectMessageHistory, merge: mergePage, error,
+    fallback: 'Не удалось обновить личное сообщение.' })
 
-  return { close, directMessageId, messages, nextCursor, loadingHistory, olderLoading, historyLoaded, error, olderError, open, refreshHistory, loadOlder, refreshMessage }
+  return { close, directMessageId, messages, nextCursor, loadingHistory, olderLoading, historyLoaded, error, olderError, open, refreshHistory, loadOlder, refreshMessage, refreshMessages }
 }

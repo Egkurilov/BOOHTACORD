@@ -17,6 +17,7 @@ import (
 	"voice-platform/backend/internal/database/pool"
 	observeusage "voice-platform/backend/internal/identity/observe_usage"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
+	writerlock "voice-platform/backend/internal/storage/acquire_writer_lock"
 )
 
 func Run(ctx context.Context) (result error) {
@@ -30,6 +31,11 @@ func Run(ctx context.Context) (result error) {
 		defer cancel()
 		result = errors.Join(result, resources.Close(shutdown))
 	}()
+	writer, err := writerlock.Acquire(configuration.AttachmentRoot)
+	if err != nil {
+		return err
+	}
+	resources.Add(func(context.Context) error { return writer.Close() })
 	stopTelemetry, err := telemetry.Start(ctx)
 	if err != nil {
 		return err

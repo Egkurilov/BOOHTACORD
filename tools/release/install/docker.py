@@ -2,7 +2,7 @@
 import json
 import os
 import subprocess
-from .guards import installed_digests
+from .guards import installed_digests, writer_topology
 from .paths import compose_arguments, rollout_script
 from tools.release.bundle.manifest import require
 
@@ -27,6 +27,9 @@ def load_images(directory, manifest):
 
 
 def deploy(directory, manifest):
+    arguments = compose_arguments(directory)
+    configuration = json.loads(docker('compose', *arguments, 'config', '--format', 'json'))
+    writer_topology(configuration, docker('compose', *arguments, 'ps', '-q', 'api'))
     environment = {**os.environ, "VOICE_PLATFORM_DIR": str(directory)}
     for service, component in manifest["components"].items():
         environment[service.upper() + "_IMAGE"] = f"voice-platform-{service}@{component['index_digest']}"

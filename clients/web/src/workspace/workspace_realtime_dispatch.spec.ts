@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RealtimeEvent } from '../realtime/realtime_client'
+import type { RealtimeConnectOptions } from '../realtime/realtime_connection_types'
 import { useNotificationStore } from '../notification/notification_store'
 import { useVoiceNavigationStore } from '../voice/navigation_store'
 import { usePermissionStore } from '../authorization/permission_store'
@@ -67,6 +68,19 @@ describe('workspace typed realtime dispatch', () => {
     expect(value.stores.directMessages.refreshNavigation.mock.invocationCallOrder[0]).toBeLessThan(deliver.mock.invocationCallOrder[0]!)
   })
 
+  it('preserves one notification for a shared unread refresh instead of notifying every coalesced hint', async () => {
+    const notifications = useNotificationStore()
+    const capture = vi.spyOn(notifications, 'capture').mockReturnValue(0)
+    const deliver = vi.spyOn(notifications, 'deliver').mockResolvedValue()
+    const value = fixture()
+    const options = value.realtime.connect.mock.calls[0] as unknown as [unknown, unknown, unknown, RealtimeConnectOptions]
+    await options[3].onHintBatch!([0, 1, 2].map(index => ({
+      ...hint('direct_message.message_created', { direct_message_id: directID, message_id: messageID }), eventId: String(index),
+    })))
+    expect(capture).toHaveBeenCalledOnce()
+    expect(deliver).toHaveBeenCalledOnce()
+  })
+
   it('does not deliver an old account notification after refresh finishes in a new account', async () => {
     const notifications = useNotificationStore()
     const deliver = vi.spyOn(notifications, 'deliver').mockResolvedValue()
@@ -74,6 +88,7 @@ describe('workspace typed realtime dispatch', () => {
     let finishRefresh!: () => void
     value.stores.directMessages.refreshNavigation.mockImplementationOnce(() => new Promise<void>((resolve) => { finishRefresh = resolve }))
     const pending = value.deliver(hint('direct_message.message_created', { direct_message_id: directID, message_id: messageID }))
+    await vi.waitFor(() => expect(typeof finishRefresh).toBe('function'))
 
     value.workspace.stop()
     createWorkspaceRealtime(value.stores, value.realtime as never, value.presence as never, value.voice as never, 'account-2', vi.fn()).start()
