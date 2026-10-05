@@ -2,9 +2,9 @@
   "id": "QA-299",
   "date": "2026-10-05",
   "task": "FV2-040 — Responsive client update banner on desktop",
-  "source_revision": "24489973",
-  "working_tree_changes": true,
-  "summary": "A user-provided Windows screenshot showed the long release summary wrapping into a very tall, underlined column and pushing the workspace below the fold. The Flutter update banner now clamps its summary to two lines with ellipsis and explicitly disables text decoration; full release details remain available in the existing details sheet. Package-version fallback defaults and all native platform build identities were synchronized with 1.0.35+68/r49 after release and Windows CI exposed version drift.",
+  "source_revision": "fb22c2c7",
+  "working_tree_changes": false,
+  "summary": "A user-provided Windows screenshot showed the long release summary wrapping into a very tall, underlined column and pushing the workspace below the fold. The Flutter update banner now clamps its summary to two lines with ellipsis and explicitly disables text decoration; full release details remain available in the existing details sheet. Package-version fallback defaults and all native platform build identities were synchronized with 1.0.35+68/r49. After the user approved recovery, android-v1.0.35 was retargeted to fb22c2c7 and the signed APK release was published successfully.",
   "checks": [
     {
       "name": "Test-first desktop geometry regression",
@@ -61,14 +61,22 @@
     {
       "name": "Windows native visual acceptance",
       "result": "NOT_RUN",
-      "observation": "The regression uses Windows desktop width and increased text scale in Flutter widget tests, but no Windows desktop runtime is available on this Mac host. GitHub CI run 37358528833 was triggered before the build-identity sync and its contract job failed on that prior commit; new CI is pending after the follow-up push."
+      "observation": "The regression uses Windows desktop width and increased text scale in Flutter widget tests, but no Windows desktop runtime is available on this Mac host. GitHub CI run 37359975017 passed, including the Windows distribution job; a native Windows UI screenshot was not captured."
     },
     {
-      "name": "Android v1.0.35 release quality workflow",
+      "name": "Initial Android v1.0.35 release attempt (before tag correction)",
       "result": "FAILED_BEFORE_BUILD",
       "run_id": 37355877073,
       "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37355877073",
-      "observation": "643 tests passed and one failed because app_version.dart defaults were still 1.0.34+67 while pubspec.yaml was bumped to 1.0.35+68. The defaults and platform build identities are now synchronized in the follow-up changes. This failure was on the already-pushed tag commit; no APK release was published. The user authorized retargeting android-v1.0.35 after the follow-up commit is pushed; GitHub reports no Release object for that tag."
+      "observation": "643 tests passed and one failed because app_version.dart defaults were still 1.0.34+67 while pubspec.yaml was bumped to 1.0.35+68. No APK was published by this initial run."
+    },
+    {
+      "name": "Android v1.0.35 release after approved tag correction",
+      "result": "PASS",
+      "run_id": 37360048607,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37360048607",
+      "observation": "Quality, signed build, artifact upload and GitHub release publication all succeeded. Published arm64-v8a, armeabi-v7a and x86_64 APKs; largest APK is 21,193,245 bytes.",
+      "release_url": "https://github.com/Egkurilov/BOOHTACORD/releases/tag/android-v1.0.35"
     }
   ],
   "implementation": {
@@ -83,8 +91,7 @@
     "web_or_api_changed": false
   },
   "limitations": [
-    "Windows-native rendering was not captured locally; only the supplied screenshot and platform-neutral desktop-size widget regression were available.",
-    "The existing android-v1.0.35 tag points to a commit whose quality workflow failed on stale version defaults. User authorization to repoint it to the corrected follow-up commit is recorded; no GitHub Release currently exists for this tag."
+    "Windows-native visual rendering was not captured locally; the hosted Windows distribution build passed, but the widget regression is not a substitute for a native screenshot review."
   ],
-  "status": "PASS — Flutter UI fix verified; Windows-native screenshot and Android release-tag recovery remain open."
+  "status": "PASS — Flutter UI fix verified; Android v1.0.35 signed release published; only native Windows screenshot acceptance remains open."
 }

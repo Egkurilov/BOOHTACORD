@@ -298,6 +298,11 @@ tasks:
     requirements: [REQ-CHAT-01, REQ-CHAT-02]
     depends_on: [FV2-038, T-040, T-044, T-051]
     evidence: [flutter-attachment-composer-tests, flutter-full-suite, flutter-changed-file-analysis, android-debug-build, macos-debug-build, windows-ci-release-build, android-ci-debug-build, QA-296]
+  - id: FV2-041
+    title: Flutter voice participant volume menu alignment
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-VOICE-01]
+    depends_on: [FV2-003, T-022, T-051]
+    evidence: [flutter-voice-participant-card-geometry-tests, flutter-workspace-screen-suite, flutter-changed-file-analysis, macos-debug-hot-reload, android-widget-platform-geometry, QA-300]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

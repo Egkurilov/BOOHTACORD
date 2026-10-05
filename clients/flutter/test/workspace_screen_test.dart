@@ -29,7 +29,7 @@ void main() {
   SharedPreferences.setMockInitialValues({});
   setUp(ComposerDraftMemory.clear);
 
-  testWidgets('macOS shows an unsubscribed published screen and opens it', (
+  testWidgets('volume menu aligns with the avatar on macOS and Android', (
     tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
@@ -45,6 +45,7 @@ void main() {
         sid: 'remote-sid',
         identity: 'remote-screen',
         name: 'Streamer',
+        metadata: 'account:account-2',
         tracks: [
           lk.TrackInfo(
             sid: 'screen-sid',
@@ -72,6 +73,41 @@ void main() {
     expect(
       find.widgetWithText(OutlinedButton, 'Смотреть экран'),
       findsOneWidget,
+    );
+    final remoteCard = find.byKey(
+      const ValueKey('voice-participant-card:remote-sid'),
+    );
+    final remoteAvatar = find.descendant(
+      of: remoteCard,
+      matching: find.byType(AuthenticatedAvatar),
+    );
+    final volumeMenu = find.descendant(
+      of: remoteCard,
+      matching: find.byTooltip('Настройки громкости Streamer'),
+    );
+    expect(volumeMenu, findsOneWidget);
+    expect(
+      tester.getRect(volumeMenu).center.dy,
+      lessThanOrEqualTo(tester.getRect(remoteAvatar).top + 16),
+    );
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+    final androidCard = find.byKey(
+      const ValueKey('voice-participant-card:remote-sid'),
+    );
+    final androidAvatar = find.descendant(
+      of: androidCard,
+      matching: find.byType(AuthenticatedAvatar),
+    );
+    final androidVolumeMenu = find.descendant(
+      of: androidCard,
+      matching: find.byTooltip('Настройки громкости Streamer'),
+    );
+    expect(androidVolumeMenu, findsOneWidget);
+    expect(
+      tester.getRect(androidVolumeMenu).center.dy,
+      lessThanOrEqualTo(tester.getRect(androidAvatar).top + 16),
     );
     await tester.tap(find.widgetWithText(OutlinedButton, 'Смотреть экран'));
     await tester.pump();
