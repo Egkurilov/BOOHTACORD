@@ -6,12 +6,22 @@ export { api, status, expect, login, chromium } from '../client_lifecycle/reques
 export function owned(role, ...command) {
   const owner = process.env.QA_DB_OWNER
   assert.match(owner, /^qa-client-[a-f0-9]{16}$/)
-  assert.ok(['db', 'sfu', 'keeper'].includes(role))
+  assert.ok(['db', 'sfu', 'keeper', 'api'].includes(role))
   const name = owner+'-'+role
   assert.equal(execFileSync('docker', ['inspect', name, '--format', '{{index .Config.Labels "boohtacord.qa.owner"}}'], { encoding: 'utf8' }).trim(), owner)
   return execFileSync('docker', command.map(value => value === '$owned' ? name : value), { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
 }
 export function sql(statement) { return owned('db', 'exec', '$owned', 'psql', '-U', 'qa', '-d', 'qa', '-At', '-v', 'ON_ERROR_STOP=1', '-c', statement) }
+export async function freshUploadWindow(page) {
+  // Separate cancellation, ten-file and DM checks: the native limit is ten attempts per five minutes.
+  // Restart only the owned API, preserving actual DB, files, cookies and the native policy.
+  owned('api', 'restart', '$owned')
+  for (let attempt=0; attempt<100; attempt++) {
+    try { if ((await api(page,'/health')).status===200) return } catch { /* startup */ }
+    await page.waitForTimeout(100)
+  }
+  throw new Error('Owned API did not recover before independent upload scenario')
+}
 export async function channel(page, category, name, kind='TEXT') {
   const result = await api(page, `/admin/categories/${category}/channels`, 'POST', { name, kind })
   status(result, 201); return result.body.id

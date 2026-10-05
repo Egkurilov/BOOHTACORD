@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { expect, select, owned, sql } from './fixture.mjs'
+import { expect, select, owned, sql, freshUploadWindow } from './fixture.mjs'
 async function reserved() {
   const response = await fetch('http://127.0.0.1:4820/metrics')
   const value = (await response.text()).match(/^voice_platform_attachment_upload_reserved_bytes (\S+)$/m)
@@ -55,6 +55,7 @@ export async function uploads(page, input, report, fixture) {
     assert.equal(sql("SELECT count(*) FROM attachments WHERE original_name IN ('cancel.bin','switch-scope.bin')"),'0')
     await session.send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 })
     await session.detach()
+    await freshUploadWindow(page)
     mkdirSync(input.files_directory)
     const paths = Array.from({length:10},(_,i)=>join(input.files_directory,`large-${i}.bin`))
     for (const path of paths) writeFileSync(path,Buffer.alloc(25_000_000),{flag:'wx'})
@@ -64,6 +65,7 @@ export async function uploads(page, input, report, fixture) {
     await page.getByRole('button', { name: 'Отправить сообщение', exact: true }).click()
     await expect(queue).toHaveCount(0)
     assert.equal(sql(`SELECT count(*) FROM attachments WHERE channel_id='${fixture.a}' AND state='ATTACHED'`),'10')
+    await freshUploadWindow(page)
     await page.getByRole('button', { name: 'Личные', exact: true }).click()
     await page.locator('.direct-message-navigation .channel-button').filter({ hasText: 'qa_next_member' }).click()
     await page.locator('#dm-attachments').setInputFiles(file('dm-real.bin', 1_000_000))
