@@ -2,7 +2,7 @@
 import os
 import subprocess
 from tools.qa.client_lifecycle.stack import Stack, ready
-from tools.qa.client_lifecycle.services import LABEL, remove_owned, run
+from tools.qa.client_lifecycle.services import LABEL, remove_owned, run, output
 
 
 class UploadStack(Stack):
@@ -43,3 +43,13 @@ class UploadStack(Stack):
     def reject_second_writer(self):
         result = subprocess.run(['docker', 'exec', self.api_name, '/qa-api'], capture_output=True, text=True, timeout=10)
         assert result.returncode == 1 and 'attachment volume already has an API writer' in result.stdout, 'Actual second API writer was not rejected'
+
+    def verify_stop_first_handover(self):
+        for _ in range(2):
+            previous = output('docker', 'inspect', self.api_name, '--format', '{{.Id}}')
+            self.stop_api()
+            exited = subprocess.run(['docker', 'inspect', previous], capture_output=True)
+            assert exited.returncode != 0, 'Previous owned API still exists before next writer starts'
+            self.restart()
+            assert output('docker', 'inspect', self.api_name, '--format', '{{.Id}}') != previous
+            self.reject_second_writer()

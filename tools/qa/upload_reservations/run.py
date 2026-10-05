@@ -48,10 +48,12 @@ def scenario(root, limited):
             if build:
                 assert build.wait(timeout=180) == 0, 'Independent real build failed'
             validate(samples, limited)
+            stack.verify_stop_first_handover()
             return dict(status='PASS', capacity_limited=limited, samples=samples,
                         actual_second_api_rejected=True, canceled_and_success_released=True,
                         retry_status=201, rejection_status=507 if limited else None,
-                        staging_files=0, api_binary_sha256=hashlib.sha256(stack.binary.read_bytes()).hexdigest())
+                        staging_files=0, actual_stop_first_handover_cycles=2,
+                        api_binary_sha256=hashlib.sha256(stack.binary.read_bytes()).hexdigest())
         finally:
             for connection in clients:
                 connection.close()

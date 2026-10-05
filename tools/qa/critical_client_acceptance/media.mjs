@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { api, expect, status } from '../client_lifecycle/request.mjs'
+import { api, expect, status, login } from '../client_lifecycle/request.mjs'
 import { owned } from './control.mjs'
 async function connected(page) {
   await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён')
@@ -49,8 +49,9 @@ export async function media(a, b, member, channelId, report, directory) {
       sfu_failure_not_empty_room: true, last_roster_age_visible: /с\. назад/.test(await banner.innerText()) }
     assert.equal(report.connection_status.last_roster_age_visible, true)
   } finally { owned('sfu', 'start', '$owned') }
+  await expect.poll(async () => (await api(a, '/voice/participants')).status, { timeout: 30000 }).toBe(200)
   await banner.getByRole('button', { name: 'Обновить состав' }).click()
-  await expect(banner).not.toContainText('Состав недоступен', { timeout: 20000 })
+  await expect.poll(async () => await banner.count() === 0 || !(await banner.innerText()).includes('Состав недоступен')).toBe(true)
   for (const page of [a, member]) {
     const leave = page.getByTestId('voice-dock').getByRole('button', { name: 'Выйти из голосового канала', exact: true })
     if (await leave.count()) await leave.click()
