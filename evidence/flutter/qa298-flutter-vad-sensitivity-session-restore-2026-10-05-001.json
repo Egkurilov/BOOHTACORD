@@ -1,0 +1,68 @@
+{
+  "id": "QA-298",
+  "date": "2026-10-05",
+  "task": "FV2-027 — VAD sensitivity persistence after account/session restoration",
+  "source_revision": "1b39876a",
+  "working_tree_changes": true,
+  "summary": "The reported Android login error on VAD sensitivity change was reproduced on the previously installed package and did not reproduce after installing signed arm64 Release APK 1.0.35+2068 built from current source. The active Flutter source already contains account-scoped lazy preference loading and restored-account preparation fixes. macOS Debug also changed and restored the threshold without an error.",
+  "checks": [
+    {
+      "name": "Android previous-install reproduction",
+      "result": "PASS_REPRODUCED",
+      "observation": "On Android Emulator API 35, changing the sensitivity slider displayed 'Сначала войдите в аккаунт.' and left the threshold at −50 dBFS. Package version was 1.0.34, versionCode 2067. No voice channel was joined and the microphone remained off."
+    },
+    {
+      "name": "Focused account-preference regression test",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/microphone_account_preferences_test.dart",
+      "result": "PASS",
+      "passed": 1,
+      "observation": "Loads the current signed-in account audio preferences before saving a sensitivity change; value and manual gain are retained."
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/features/audio/devices/microphone.dart test/audio_devices/microphone_account_preferences_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter failures-only",
+      "result": "PASS",
+      "passed": 644
+    },
+    {
+      "name": "Current-source signed Android Release build",
+      "command": "cd clients/flutter && flutter build apk --release --target-platform android-arm64 --split-per-abi --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
+      "observation": "Built arm64 Release APK, 19.8 MB, versionName 1.0.35/versionCode 2068."
+    },
+    {
+      "name": "Signer match and in-place update",
+      "result": "PASS",
+      "observation": "Installed and newly built APK signer SHA-256 fingerprints matched. `adb install -r` succeeded; app data was not cleared and the existing workspace session returned after launch."
+    },
+    {
+      "name": "Android current-source sensitivity change and restore",
+      "result": "PASS",
+      "observation": "On signed APK 1.0.35+2068, installed in place over the existing app, the threshold changed from −50 to −48 dBFS without a login/error banner, then returned to −50 dBFS. The mic stayed off and no voice session was started. Screenshots: /tmp/boohtacord-android-1.0.35-adjusted.png and /tmp/boohtacord-android-1.0.35-restored.png."
+    },
+    {
+      "name": "macOS Debug sensitivity change and restore",
+      "result": "PASS",
+      "observation": "On the already-running macOS client, the threshold changed from −50 to −48 dBFS and was restored to −50 dBFS. No 'выйдите в аккаунт' error appeared; no restart or Keychain prompt occurred."
+    }
+  ],
+  "implementation": {
+    "files_changed_this_turn": [],
+    "relevant_fixes_already_in_source": [
+      "82d572f9 — restore current account mic preferences",
+      "8fe7d23d — load audio settings on session restore"
+    ],
+    "web_or_contract_changed": false
+  },
+  "limitations": [
+    "The Android Release is published by GitHub Actions after pushing tag android-v1.0.35; no APK binary is committed to the repository."
+  ],
+  "status": "PASS — current-source Android and macOS sensitivity behavior verified; broader FE-70 remains open"
+}
