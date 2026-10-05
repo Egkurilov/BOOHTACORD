@@ -23,7 +23,7 @@ describe('voice-room visual status and screen presentation', () => {
     expect(participants).toContain('talking: selfSpeaking && !selfDeafened && !selfMicrophoneMuted && !selfMicrophoneUnavailable')
     expect(participants).not.toContain('`${name} · вы`')
     expect(participants).not.toContain('Это вы')
-    expect(source('./connection_store.ts')).toContain('selfSpeaking: volume.selfSpeaking')
+    expect(source('./connection_state/store.ts')).toContain('selfSpeaking: volume.selfSpeaking')
     expect(source('../workspace/WorkspaceMain.vue')).toContain(':self-speaking="voiceConnection.selfSpeaking"')
     expect(source('../conversation/ConversationPane.vue')).toContain(':self-speaking="selfSpeaking"')
   })
