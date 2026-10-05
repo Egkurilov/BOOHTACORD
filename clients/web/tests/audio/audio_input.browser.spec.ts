@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-import { closeInput, inputGate, inputReady as ready } from './input_lifecycle/steps'
+import { closeInputs, inputGate, inputReady as ready } from './input_lifecycle/steps'
 async function choose(page: Page, id: string) {
   const selector = page.getByRole('combobox', { name: 'Микрофон', exact: true })
   await selector.selectOption(id)
@@ -21,6 +21,7 @@ for (const mode of ['off', 'browser', 'rnnoise'] as const) {
   test(`selected input reaches a real peer without a probe and survives mute/reconnect (${mode})`, async ({ browser }) => {
     const senderContext = await browser.newContext(), receiverContext = await browser.newContext()
     const sender = await senderContext.newPage(), receiver = await receiverContext.newPage()
+    let hadFailure = false
     try {
       await sender.route('**/api/v1/auth/session', route => route.fulfill({ json: { account_id: 'qa-account', role: 'MEMBER' } }))
       if (mode === 'rnnoise') await sender.route('**/audio/rnnoise/**', route => route.fulfill({ status: 404, body: 'Synthetic asset fallback' }))
@@ -58,10 +59,11 @@ for (const mode of ['off', 'browser', 'rnnoise'] as const) {
       await inputGate(sender, 'removeAll')
       await expect(sender.getByRole('status').filter({ hasText: /Микрофон недоступен. Отправка звука выключена/ })).toBeVisible()
       await silence(receiver)
+    } catch (error) {
+      hadFailure = true
+      throw error
     } finally {
-      await closeInput(sender)
-      await closeInput(receiver)
-      await senderContext.close(); await receiverContext.close()
+      await closeInputs([sender, receiver], [senderContext, receiverContext], hadFailure)
     }
   })
 }

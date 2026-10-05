@@ -1,4 +1,4 @@
-import { test, type Page } from '@playwright/test'
+import { test, type BrowserContext, type Page } from '@playwright/test'
 
 /** Bound fixture RPCs so cleanup cannot hide the original hanging operation. */
 export async function inputGate(page: Page, method: string, args: unknown[] = [], timeout = 20000) {
@@ -25,6 +25,13 @@ export async function inputReady(page: Page) {
   ), { timeout: 22000 })
 }
 
-export async function closeInput(page: Page) {
-  if (!page.isClosed()) await inputGate(page, 'stop', [], 5000).catch(() => {})
+export async function closeInputs(pages: Page[], contexts: BrowserContext[], hadFailure: boolean) {
+  const stopped = await Promise.allSettled(pages.map(page =>
+    page.isClosed() ? Promise.resolve() : inputGate(page, 'stop', [], 5000),
+  ))
+  const closed = await Promise.allSettled(contexts.map(context => context.close()))
+  if (!hadFailure) {
+    const failure = [...stopped, ...closed].find(result => result.status === 'rejected')
+    if (failure?.status === 'rejected') throw failure.reason
+  }
 }
