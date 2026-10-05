@@ -443,7 +443,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('matches web image attachment geometry on desktop', (
+  testWidgets('uses the web file-card fallback when thumbnail loading fails', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -451,6 +451,82 @@ void main() {
     addTearDown(tester.view.reset);
     final state = AppState(
       ApiClient(client: MockClient((_) async => httpResponse(404))),
+    );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(_app(state));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getSize(
+        find.byKey(const ValueKey('attachment-card-attachment-1')),
+      ),
+      const Size(340, 62),
+    );
+    expect(
+      tester.getSize(
+        find.byKey(const ValueKey('attachment-preview-attachment-1')),
+      ),
+      const Size(44, 44),
+    );
+    expect(
+      find.bySemanticsLabel('Открыть изображение photo.png'),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('attachment-preview-attachment-1')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Вложение удалено или недоступно.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'uses the web file-card fallback when thumbnail bytes are invalid',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1440, 900);
+      addTearDown(tester.view.reset);
+      final state = AppState(
+        ApiClient(
+          client: MockClient(
+            (_) async => http.Response.bytes(
+              [1, 2, 3],
+              200,
+              headers: {'content-type': 'image/png'},
+            ),
+          ),
+        ),
+      );
+      addTearDown(state.dispose);
+
+      await tester.pumpWidget(_app(state));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSize(
+          find.byKey(const ValueKey('attachment-card-attachment-1')),
+        ),
+        const Size(340, 62),
+      );
+      expect(
+        tester.getSize(
+          find.byKey(const ValueKey('attachment-preview-attachment-1')),
+        ),
+        const Size(44, 44),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('matches web image attachment geometry on desktop', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      ApiClient(client: MockClient((_) async => imageResponse())),
     );
     addTearDown(state.dispose);
 
@@ -474,7 +550,7 @@ void main() {
     tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.reset);
     final state = AppState(
-      ApiClient(client: MockClient((_) async => httpResponse(404))),
+      ApiClient(client: MockClient((_) async => imageResponse())),
     );
     addTearDown(state.dispose);
 
@@ -550,4 +626,12 @@ http.Response httpResponse(int status) => http.Response(
   }),
   status,
   headers: {'content-type': 'application/json'},
+);
+
+http.Response imageResponse() => http.Response.bytes(
+  base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC',
+  ),
+  200,
+  headers: {'content-type': 'image/png'},
 );

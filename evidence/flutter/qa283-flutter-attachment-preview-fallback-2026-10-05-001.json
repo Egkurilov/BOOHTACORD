@@ -1,0 +1,75 @@
+{
+  "id": "QA-283",
+  "date": "2026-10-05",
+  "task": "FV2-030 — Flutter protected image thumbnail failure fallback parity",
+  "source_revision": "5ba6e2a9",
+  "working_tree_changes": true,
+  "summary": "Flutter now matches the web card fallback when an authenticated image thumbnail request fails or the returned bytes cannot be decoded. The fallback is a compact 340×62 file card with a 44×44 open-preview icon; opening the protected viewer and the separate download action remain available.",
+  "checks": [
+    {
+      "name": "Test-first baseline reproduction",
+      "command": "cd clients/flutter && flutter test --no-pub test/message_attachment_list_test.dart --plain-name 'uses the web file-card fallback when thumbnail loading fails'",
+      "result": "FAIL_AS_EXPECTED_BEFORE_FIX",
+      "observation": "The regression expected the web file card at 340×62 but the existing Flutter UI rendered the failed image card at 440×238."
+    },
+    {
+      "name": "Focused attachment viewer and card suite",
+      "command": "cd clients/flutter && flutter test --no-pub test/message_attachment_list_test.dart",
+      "result": "PASS",
+      "passed": 15,
+      "observation": "Covers 404 thumbnail fallback with click-through to the protected viewer, invalid-image decode fallback, successful image geometry, generic file-card geometry, viewer retry and accessibility behavior."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 595
+    },
+    {
+      "name": "Changed-file Flutter analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/widgets/message_attachment_list.dart test/message_attachment_list_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk",
+      "observation": "Built only; APK was not installed on the emulator."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app",
+      "observation": "Built without launching or restarting the signed-in application."
+    },
+    {
+      "name": "macOS live-session preservation",
+      "result": "PASS",
+      "observation": "Accessibility and screenshot inspection confirmed the existing signed-in Mac app remained on the same TEXT channel with its previously loaded protected image. No message, attachment, or account state was mutated. The live endpoint returned a valid preview, so this session did not visually exercise the failure branch."
+    },
+    {
+      "name": "Android runtime failure-state visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "The Android Debug APK was built but not installed; no backend attachment was altered to manufacture a failure state."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this host."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "The web-matching error and decode paths are covered by widget regressions, but the failure branch was not forced against the live backend on a device.",
+    "Windows runtime visual acceptance is unavailable on this macOS host and remains tracked by FV2-006."
+  ],
+  "status": "IMPLEMENTED; FOCUSED_AND_FULL_TESTS_PASS; ANDROID_MACOS_DEBUG_BUILDS_PASS; LIVE_FAILURE_STATE_VISUAL_NOT_RUN"
+}

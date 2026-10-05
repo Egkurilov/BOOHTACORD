@@ -70,6 +70,17 @@ pass. Android API 35 and the restarted Mac client both displayed the loaded
 protected image preview; no message or upload behavior changed —
 [QA-262](../evidence/flutter/qa262-flutter-design-v2-attachment-cards-2026-10-04-001.json).
 
+FV2-030 closes the preview-failure presentation gap: when the protected
+thumbnail request fails or its bytes cannot be decoded, Flutter now follows the
+web fallback to the 340×62 file card with a 44×44 icon, while preserving the
+click-through to the protected viewer and the separate download action. A
+test-first regression reproduced the old 440×238 card before the fix. The
+focused attachment suite passes 15/15, changed-file analysis is clean, the full
+Flutter suite passes 595/595, and Android/macOS Debug builds pass. The already
+running Mac stayed on its signed-in TEXT view; no live attachment was altered
+to force a failure state, and no Android app was installed —
+[QA-283](../evidence/flutter/qa283-flutter-attachment-preview-fallback-2026-10-05-001.json).
+
 ## Protected image viewer overlay (FV2-022)
 
 Flutter now matches the web protected image viewer with a viewport-filling dark

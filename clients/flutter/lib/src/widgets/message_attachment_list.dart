@@ -27,6 +27,21 @@ class MessageAttachmentList extends StatefulWidget {
 
 class _MessageAttachmentListState extends State<MessageAttachmentList> {
   final Map<String, Future<Uint8List>> _previews = {};
+  final Set<String> _failedPreviews = {};
+  final Set<String> _previewFailurePending = {};
+
+  void _markPreviewFailed(String attachmentId) {
+    if (!mounted ||
+        _failedPreviews.contains(attachmentId) ||
+        !_previewFailurePending.add(attachmentId)) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _previewFailurePending.remove(attachmentId);
+      if (!mounted || !_failedPreviews.add(attachmentId)) return;
+      setState(() {});
+    });
+  }
 
   Future<void> _showPreview(MessageAttachment attachment) => showDialog<void>(
     context: context,
@@ -112,7 +127,8 @@ class _MessageAttachmentListState extends State<MessageAttachmentList> {
                 index++
               ) ...[
                 if (index > 0) const SizedBox(height: GcSpacing.x2),
-                if (_isImage(widget.attachments[index].originalName))
+                if (_isImage(widget.attachments[index].originalName) &&
+                    !_failedPreviews.contains(widget.attachments[index].id))
                   SizedBox(
                     key: ValueKey(
                       'attachment-card-${widget.attachments[index].id}',
@@ -124,7 +140,13 @@ class _MessageAttachmentListState extends State<MessageAttachmentList> {
                 else
                   SizedBox(
                     width: availableWidth.clamp(0.0, 340.0).toDouble(),
-                    child: _fileCard(widget.attachments[index]),
+                    child: _fileCard(
+                      widget.attachments[index],
+                      onPreview:
+                          _isImage(widget.attachments[index].originalName)
+                          ? () => _showPreview(widget.attachments[index])
+                          : null,
+                    ),
                   ),
               ],
             ],
@@ -169,18 +191,25 @@ class _MessageAttachmentListState extends State<MessageAttachmentList> {
                             preview: true,
                           ),
                         ),
-                        builder: (context, snapshot) => snapshot.hasData
-                            ? Image.memory(
-                                snapshot.data!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) =>
-                                    const Icon(Icons.broken_image_outlined),
-                              )
-                            : snapshot.hasError
-                            ? const Icon(Icons.broken_image_outlined)
-                            : const Center(
-                                child: Icon(Icons.image_outlined, size: 24),
-                              ),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            return Image.memory(
+                              snapshot.data!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) {
+                                _markPreviewFailed(attachment.id);
+                                return const Icon(Icons.broken_image_outlined);
+                              },
+                            );
+                          }
+                          if (snapshot.hasError) {
+                            _markPreviewFailed(attachment.id);
+                            return const Icon(Icons.broken_image_outlined);
+                          }
+                          return const Center(
+                            child: Icon(Icons.image_outlined, size: 24),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -247,7 +276,10 @@ class _MessageAttachmentListState extends State<MessageAttachmentList> {
     );
   }
 
-  Widget _fileCard(MessageAttachment attachment) => Container(
+  Widget _fileCard(
+    MessageAttachment attachment, {
+    VoidCallback? onPreview,
+  }) => Container(
     key: ValueKey('attachment-card-${attachment.id}'),
     constraints: const BoxConstraints(maxWidth: 340, minHeight: 62),
     padding: const EdgeInsets.all(GcSpacing.x2),
@@ -258,17 +290,37 @@ class _MessageAttachmentListState extends State<MessageAttachmentList> {
     ),
     child: Row(
       children: [
-        Container(
+        SizedBox(
           width: 44,
           height: 44,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
+          child: Material(
             color: GcColors.surface,
             borderRadius: BorderRadius.circular(GcRadii.sm),
-          ),
-          child: const Icon(
-            Icons.insert_drive_file_outlined,
-            color: GcColors.textSecondary,
+            child: onPreview == null
+                ? const Center(
+                    child: Icon(
+                      Icons.insert_drive_file_outlined,
+                      color: GcColors.textSecondary,
+                    ),
+                  )
+                : Semantics(
+                    button: true,
+                    label: 'Открыть изображение ${attachment.originalName}',
+                    child: Tooltip(
+                      message: 'Открыть изображение ${attachment.originalName}',
+                      child: InkWell(
+                        key: ValueKey('attachment-preview-${attachment.id}'),
+                        borderRadius: BorderRadius.circular(GcRadii.sm),
+                        onTap: onPreview,
+                        child: const Center(
+                          child: Icon(
+                            Icons.insert_drive_file_outlined,
+                            color: GcColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
           ),
         ),
         const SizedBox(width: GcSpacing.x3),
