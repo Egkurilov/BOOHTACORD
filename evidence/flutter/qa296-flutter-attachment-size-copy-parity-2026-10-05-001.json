@@ -2,7 +2,7 @@
   "id": "QA-296",
   "date": "2026-10-05",
   "task": "FV2-039 / FV2-002 — Flutter attachment size error copy parity",
-  "source_revision": "PENDING_IMPLEMENTATION_COMMIT",
+  "source_revision": "d8089587b7c4bd8dbe3db623ff590c19bb3f2339",
   "checks": [
     {
       "name": "Native file picker error-copy regression before fix",
@@ -43,14 +43,33 @@
     },
     {
       "name": "Windows CI build",
-      "result": "PENDING",
-      "observation": "Wait for GitHub Actions after pushing the tested revision."
+      "command": "GitHub Actions workflow run 37342383959 — windows / windows",
+      "result": "PASS",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37342383959",
+      "artifact": "BOOHTACORD-windows-x64-d8089587b7c4bd8dbe3db623ff590c19bb3f2339",
+      "observation": "Windows app/vendor tests, analyzer and x64 Release build/inspection passed. The artifact is present and unexpired through 2026-11-04."
     },
     {
-      "name": "Spec traceability verifier",
+      "name": "Spec traceability verifier in CI contracts job",
       "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
-      "result": "NOT_RUN",
-      "observation": "PowerShell Core (`pwsh`) is not installed locally; the contracts job invokes this verifier. Record the CI result after push."
+      "result": "PASS",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37342383959",
+      "observation": "The successful contracts job invokes the project-owned spec_traceability verifier through tools/ci/native/contracts.py. A direct local invocation was unavailable because PowerShell Core (`pwsh`) is not installed."
+    },
+    {
+      "name": "GitHub CI for implementation commit",
+      "result": "PASS",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37342383959",
+      "observation": "Contracts, Flutter and Windows jobs completed successfully for d8089587b7c4bd8dbe3db623ff590c19bb3f2339; backend/frontend jobs were correctly skipped because no corresponding files changed."
+    },
+    {
+      "name": "Platform CI artifacts",
+      "result": "PASS",
+      "artifacts": [
+        "boohtacord-android-debug-apk",
+        "BOOHTACORD-windows-x64-d8089587b7c4bd8dbe3db623ff590c19bb3f2339"
+      ],
+      "observation": "Android Debug APK and Windows x64 Release artifacts are present and unexpired for workflow run 37342383959."
     }
   ],
   "implementation": {
@@ -61,5 +80,5 @@
     "behavior": "Flutter local attachment size rejection now displays the web upload client's exact restriction message for both native selection and clipboard-image paste.",
     "web_or_contract_changed": false
   },
-  "status": "IMPLEMENTED_AND_LOCALLY_TESTED; WINDOWS_CI_PENDING"
+  "status": "IMPLEMENTED_AND_VERIFIED_ON_ANDROID_MACOS_WINDOWS_CI"
 }
