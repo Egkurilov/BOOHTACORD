@@ -3,7 +3,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import GuildName from '../guild/profile/GuildName.vue'
 import { guildProfile } from '../guild/profile/state'
-import { login, register } from './auth_client'
+import { createAuthenticationFlow } from './authentication_flow/flow'
 import { generateSecurePassword } from './password_generator'
 import PasswordGenerationActions from './password_generation/PasswordGenerationActions.vue'
 
@@ -14,21 +14,20 @@ const mode = ref<'login' | 'register'>('login')
 const loginValue = ref('')
 const loginInput = ref<HTMLInputElement | null>(null)
 const password = ref('')
-const pending = ref(false)
-const error = ref<string | null>(null)
+const flow = createAuthenticationFlow()
+const { pending, error, notice, registered } = flow
 const showRecoveryHelp = ref(false)
 const showPassword = ref(false)
 const passwordInput = ref<HTMLInputElement | null>(null)
 const passwordStatus = ref('')
 const confirmGeneration = ref(false)
-let active = true
 
 onMounted(() => { if (props.focusLoginOnMount) loginInput.value?.focus() })
 
 function chooseMode(nextMode: 'login' | 'register'): void {
   if (pending.value || mode.value === nextMode) return
   mode.value = nextMode
-  error.value = null
+  flow.reset()
   clearPassword()
 }
 
@@ -56,26 +55,13 @@ function generatePassword(): void {
 }
 
 async function submit(): Promise<void> {
-  if (pending.value) return
-  pending.value = true
-  error.value = null
-  const input = { login: loginValue.value, password: password.value }
-  try {
-    if (mode.value === 'register') await register(input)
-    if (!active) return
-    await login(input)
-    if (!active) return
+  if (await flow.submit(mode.value, { login: loginValue.value, password: password.value })) {
     clearPassword()
     emit('authenticated')
-  } catch (cause) {
-    if (active) error.value = cause instanceof Error ? cause.message.split(input.password).join('[скрыто]') : 'Не удалось выполнить вход.'
-  } finally {
-    input.password = ''
-    if (active) pending.value = false
   }
 }
 
-onBeforeUnmount(() => { active = false; clearPassword() })
+onBeforeUnmount(() => { flow.dispose(); clearPassword() })
 </script>
 
 <template>
@@ -88,7 +74,7 @@ onBeforeUnmount(() => { active = false; clearPassword() })
       <form class="authentication-form" @submit.prevent="submit">
         <label class="authentication-field">
           Логин
-          <input v-model="loginValue" ref="loginInput" autocomplete="username" maxlength="32" minlength="3" pattern="[A-Za-z0-9_.-]{3,32}" required :aria-describedby="error ? 'authentication-error' : undefined" :aria-invalid="Boolean(error)">
+          <input v-model="loginValue" ref="loginInput" @input="flow.reset()" :disabled="pending" autocomplete="username" maxlength="32" minlength="3" pattern="[A-Za-z0-9_.-]{3,32}" required :aria-describedby="error ? 'authentication-error' : undefined" :aria-invalid="Boolean(error)">
         </label>
         <div class="authentication-field">
           <label for="authentication-password">Пароль</label>
@@ -98,8 +84,9 @@ onBeforeUnmount(() => { active = false; clearPassword() })
         <p v-if="mode === 'register'" class="authentication-hint">Логин: 3–32 символа A–Z, 0–9, `_`, `.`, `-`. Пароль — от 12 символов.</p>
         <p class="authentication-password-status" role="status" aria-live="polite" aria-atomic="true">{{ passwordStatus }}</p>
         <p v-if="error" id="authentication-error" class="authentication-error" role="alert">{{ error }}</p>
+        <p v-if="notice" class="authentication-hint" role="status" aria-live="polite">{{ notice }}</p>
         <button class="authentication-submit" :disabled="pending" type="submit">
-          {{ pending ? 'Подождите…' : mode === 'login' ? 'Войти' : 'Создать аккаунт' }}
+          {{ pending ? 'Подождите…' : mode === 'login' || registered ? 'Войти' : 'Создать аккаунт' }}
         </button>
       </form>
       <aside class="authentication-account-help" aria-label="Восстановление доступа и регистрация">
