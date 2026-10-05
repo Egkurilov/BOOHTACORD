@@ -111,12 +111,14 @@ all five tabs fit at the emulator's compact width, and a horizontal swipe
 confirmed that Media remains reachable. No role setting was changed or saved —
 [QA-272](../evidence/flutter/qa272-flutter-admin-section-tabs-design-v2-2026-10-05-001.json).
 
-Source review surfaced a separate remaining parity gap: web constrains the
-whole `.admin-panel` to 880 px and visually hides its inner heading while the
-workspace header supplies the page title. Flutter's admin body currently spans
-more width and shows an additional heading; track this as FV2-025 rather than
-folding it into the tab-strip change. Windows-native visual acceptance remains
-open in FV2-006.
+FV2-025 closes the admin panel geometry gap: Flutter now constrains and centers
+the content at 880 px, uses the web-aligned compact/desktop insets, and removes
+the duplicate body heading while keeping one visible, focusable semantic
+workspace header. Geometry tests cover 390/900/1440 px; focused admin tests
+pass 13/13 and the full Flutter suite passes 567/567. macOS hot-reload visual
+and accessibility-tree checks and Android API 35 visual acceptance pass —
+[QA-274](../evidence/flutter/qa274-flutter-design-v2-admin-panel-width-heading-2026-10-05-001.json).
+Windows-native visual acceptance remains open in FV2-006.
 
 ## Frameless desktop window chrome (FV2-018)
 
@@ -409,6 +411,13 @@ states; full Flutter tests/analyzer pass —
 | Screen preview A/B follow-up | `SurfaceTextureRenderer.java`, Android MediaProjection visibility bridge, [QA-197](../evidence/flutter/qa197-android-preview-render-event-2026-10-01-001.json), [QA-198](../evidence/flutter/qa198-pixel7-preview-impeller-ab-2026-10-01-001.json), [QA-199](../evidence/flutter/qa199-pixel7-preview-surfacetexture-ab-2026-10-01-001.json), [QA-200](../evidence/flutter/qa200-android-screen-preview-egl-resize-barrier-2026-10-01-001.json), [QA-220](../evidence/flutter/qa220-android-screen-preview-lifecycle-current-head-2026-10-02-001.json), [QA-225](../evidence/flutter/qa225-android-app-only-hidden-source-feedback-2026-10-02-001.json) | Pixel A/B found black local app-only preview across both texture backends and Impeller settings. Source review found a potential race when resizing the Flutter surface before asynchronous EGL teardown completes; a release barrier and unit tests were added. Emulator API 35 / `1.0.23+2036` now confirms that switching away from the selected app delivers the track-scoped Android visibility event and replaces the indefinite first-frame spinner with a truthful hidden-source explanation; stop/leave cleanup passed. | Verify the visible app-only preview on physical Pixel, then verify remote publication, decoded pixels, sender/receiver counters and crop with a paired browser/macOS client. Keep FE-59 open. |
 | Search | `search/WorkspaceSearchPanel.vue`, `SearchPanel.vue`, chat search components | Global/channel/DM search in a responsive side panel while preserving the active conversation; revised web target: 380 px desktop rail at ≥1280 px and full-viewport compact overlay with 44 px close target; wide voice stage retains its modal; cursor pagination; server-centered context and return to origin; stale topology refresh; Ctrl/Cmd+K, Escape and search-focus restoration [QA-61](../evidence/flutter/qa61-search-drawer-width-parity-2026-09-28-001.json). Current Flutter presentation follow-up is FV2-019: scope/Enter row, hidden submit/status, result hierarchy/avatar/query highlight | Matched web/Flutter screenshots, device screen-reader acceptance and parity for less common loading/error states |
 | Administration | `workspace/AdminPanel.vue`, `channel/AdminTopologyControls.vue`, `AdminMembersSection.vue`, `AdminAuditSection.vue`, `AdminMediaDiagnostics.vue` | Admin-only Members/Channels/Audit/Media tabs; Flutter exposes the section navigation and each selected section as web-equivalent tablist/tab semantics with selected state [QA-101](../evidence/flutter/qa101-admin-section-tab-semantics-2026-09-29-001.json); cursor-paginated directory with preserved role/block drafts and save; member count plus loaded-page name/login and role filters now match web's compact/desktop control geometry (44 px height; 81/121 px role selector) without changing pagination or ACL [QA-247](../evidence/flutter/qa247-flutter-design-v2-admin-member-filters-2026-10-04-001.json); initial Members/Audit loading copy now matches web and is announced through a polite live region [QA-102](../evidence/flutter/qa102-admin-loading-live-regions-2026-09-29-001.json); per-row focus restoration and accessible error/success; the native panel initially focuses its semantic heading [QA-64](../evidence/flutter/qa64-admin-heading-focus-accessibility-2026-09-28-001.json); expiring reset-link result/copy/close; same-voice admin kick; category/channel mutations and confirmations with stale-revision recovery; cursor-paged audit without message content; Media tab reads the same bounded, anonymous `/admin/screen-metrics` contract, polls only while selected/foregrounded and provides refresh/empty/error states. Backend route tests prove anonymous 401, MEMBER 403, ADMINISTRATOR 200 [QA-100](../evidence/flutter/qa100-admin-media-diagnostics-2026-09-29-001.json) | Verify role ACL against live sessions; matched screenshot comparison across all four tabs; VoiceOver/TalkBack acceptance |
+
+Admin panel geometry follow-up (FV2-025): web's `.admin-panel` is capped at
+880 px and centered, with a visually hidden inner heading because the workspace
+header already names the page. Flutter now matches that width and avoids a
+duplicate visible title; the visible header remains the focused semantic
+heading. Android and macOS checks pass, while Windows native acceptance remains
+in FV2-006 — [QA-274](../evidence/flutter/qa274-flutter-design-v2-admin-panel-width-heading-2026-10-05-001.json).
 
 Native video renderer source replacements are generation-scoped: a delayed
 method-channel completion for `srcObject = null` can no longer clear the size

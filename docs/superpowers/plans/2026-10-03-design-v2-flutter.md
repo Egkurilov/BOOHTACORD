@@ -143,7 +143,10 @@ test — divider intrinsic width. Focused suite прошёл 74/74, analyzer ч�
 macOS Debug визуально обновлён hot reload без рестарта; Android API 35 проверен
 на подписанном локальном APK `1.0.29+2060` с сохранённой сессией;
 см. [QA-272](../../../evidence/flutter/qa272-flutter-admin-section-tabs-design-v2-2026-10-05-001.json).
-Следующий отдельный leaf FV2-025: web центрирует весь admin content в пределах
-880 px и скрывает внутренний heading, тогда как Flutter пока использует более
-широкую панель с дополнительным заголовком. Windows runtime acceptance всё
-ещё отслеживается в FV2-006.
+FV2-025 закрыт: Flutter ограничивает и центрирует admin content в 880 px,
+соблюдает compact/desktop отступы, убирает дублирующий body heading и сохраняет
+доступный focusable workspace header. Geometry regressions охватывают 390/900/
+1440 px; focused suite 13/13, полный Flutter suite 567/567, changed-file
+analyzer чистый. macOS Debug проверен после hot reload и через native
+accessibility tree; Android API 35 — на `1.0.29+2062` с сохранённой сессией.
+Windows runtime acceptance остаётся отдельным gate FV2-006 — [QA-274](../../../evidence/flutter/qa274-flutter-design-v2-admin-panel-width-heading-2026-10-05-001.json).

@@ -71,12 +71,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final pageTitle = tester.widget<Text>(
+    final pageTitle = tester.getSemantics(
       find.byKey(const ValueKey('admin-screen-title')),
     );
-    expect(pageTitle.style?.fontSize, 22);
-    expect(pageTitle.style?.height, 28 / 22);
-    expect(pageTitle.style?.fontWeight, FontWeight.w600);
+    expect(pageTitle.getSemanticsData().label, 'Администрирование');
+    expect(pageTitle.getSemanticsData().flagsCollection.isHeader, isTrue);
+    expect(find.text('Администрирование'), findsOneWidget);
+    expect(find.text('УПРАВЛЕНИЕ ГИЛЬДИЕЙ'), findsNothing);
+    expect(
+      find.text('Управление гильдией и доступом участников.'),
+      findsNothing,
+    );
 
     final memberSectionTitle = tester.widget<Text>(
       find.byKey(const ValueKey('admin-members-section-title')),
@@ -108,11 +113,13 @@ void main() {
 
     tester.view.physicalSize = const Size(900, 900);
     await tester.pumpAndSettle();
-    final mediumPageTitle = tester.widget<Text>(
-      find.byKey(const ValueKey('admin-screen-title')),
+    expect(
+      tester
+          .getSemantics(find.byKey(const ValueKey('admin-screen-title')))
+          .getSemanticsData()
+          .label,
+      'Администрирование',
     );
-    expect(mediumPageTitle.style?.fontSize, 24);
-    expect(mediumPageTitle.style?.height, 32 / 24);
     expect(
       tester.getSize(find.byKey(const ValueKey('admin-workspace-header'))),
       const Size(900, 56),
@@ -128,12 +135,13 @@ void main() {
 
     tester.view.physicalSize = const Size(1200, 900);
     await tester.pumpAndSettle();
-    final desktopPageTitle = tester.widget<Text>(
-      find.byKey(const ValueKey('admin-screen-title')),
+    expect(
+      tester
+          .getSemantics(find.byKey(const ValueKey('admin-screen-title')))
+          .getSemanticsData()
+          .label,
+      'Администрирование',
     );
-    expect(desktopPageTitle.style?.fontSize, 24);
-    expect(desktopPageTitle.style?.height, 32 / 24);
-    expect(desktopPageTitle.style?.fontWeight, FontWeight.w600);
     expect(
       find.byKey(const ValueKey('admin-workspace-nav-toggle')),
       findsNothing,

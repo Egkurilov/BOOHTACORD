@@ -643,11 +643,19 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     });
   }
 
+  double get _adminContentInset =>
+      MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint ? 0 : 24;
+
+  EdgeInsets get _adminSectionHeaderPadding =>
+      EdgeInsets.fromLTRB(_adminContentInset, 0, _adminContentInset, 12);
+
+  EdgeInsets get _adminSectionListPadding =>
+      EdgeInsets.fromLTRB(_adminContentInset, 0, _adminContentInset, 24);
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final compact = width < GcLayout.mobileBreakpoint;
-    final compactMemberHeading = width <= 720;
     final categories =
         widget.state.topology?.categories ?? const <ChannelCategory>[];
     final selectedId = categories.any((item) => item.id == _categoryId)
@@ -681,556 +689,666 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         children: [
           _AdminWorkspaceHeader(
             compact: compact,
+            titleFocus: _titleFocus,
             onToggleNavigation: widget.onToggleNavigation,
             onClose:
                 widget.onClose ??
                 () => widget.state.toggleWorkspacePanel(WorkspacePanel.none),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 18),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (_selectedAdminSection != _AdminSection.members) ...[
-                        const Text(
-                          'УПРАВЛЕНИЕ ГИЛЬДИЕЙ',
-                          style: TextStyle(
-                            color: GcColors.muted,
-                            fontSize: 11,
-                            letterSpacing: .8,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                      ],
-                      Focus(
-                        key: const ValueKey('admin-screen-title-focus'),
-                        focusNode: _titleFocus,
-                        child: Semantics(
-                          header: true,
-                          child: Text(
-                            'Администрирование',
-                            key: const ValueKey('admin-screen-title'),
-                            style: TextStyle(
-                              fontSize: compactMemberHeading ? 22 : 24,
-                              height: compactMemberHeading ? 28 / 22 : 32 / 24,
-                              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 880),
+                child: SizedBox(
+                  key: const ValueKey('admin-content-panel'),
+                  width: double.infinity,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      compact ? 16 : 0,
+                      compact ? 24 : 32,
+                      compact ? 16 : 0,
+                      0,
+                    ),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: DecoratedBox(
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: GcColors.borderSubtle,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: SingleChildScrollView(
+                                      key: const ValueKey(
+                                        'admin-section-tabs-scroll',
+                                      ),
+                                      scrollDirection: Axis.horizontal,
+                                      child: Semantics(
+                                        key: const ValueKey(
+                                          'admin-section-tabs-semantics',
+                                        ),
+                                        container: true,
+                                        explicitChildNodes: true,
+                                        role: SemanticsRole.tabBar,
+                                        label: 'Разделы администрирования',
+                                        child: Row(
+                                          children: [
+                                            _adminSectionTab(
+                                              'Участники',
+                                              _AdminSection.members,
+                                            ),
+                                            if (MediaQuery.sizeOf(context)
+                                                    .width >
+                                                1023)
+                                              const SizedBox(width: 8),
+                                            _adminSectionTab(
+                                              'Роли',
+                                              _AdminSection.roles,
+                                            ),
+                                            if (MediaQuery.sizeOf(context)
+                                                    .width >
+                                                1023)
+                                              const SizedBox(width: 8),
+                                            _adminSectionTab(
+                                              'Каналы',
+                                              _AdminSection.channels,
+                                            ),
+                                            if (MediaQuery.sizeOf(context)
+                                                    .width >
+                                                1023)
+                                              const SizedBox(width: 8),
+                                            _adminSectionTab(
+                                              'Аудит',
+                                              _AdminSection.audit,
+                                            ),
+                                            if (MediaQuery.sizeOf(context)
+                                                    .width >
+                                                1023)
+                                              const SizedBox(width: 8),
+                                            _adminSectionTab(
+                                              'Медиа',
+                                              _AdminSection.media,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (_selectedAdminSection ==
+                                      _AdminSection.channels)
+                                    IconButton(
+                                      tooltip: 'Обновить список каналов',
+                                      onPressed: _busy
+                                          ? null
+                                          : widget.state.refreshTopology,
+                                      icon: const Icon(Icons.refresh),
+                                    ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Управление гильдией и доступом участников.',
-                        style: TextStyle(
-                          color: GcColors.textSecondary,
-                          fontSize: 14,
-                          height: 20 / 14,
+                        Expanded(
+                          child: _selectedAdminSection == _AdminSection.roles
+                              ? RolePermissionsPanel(
+                                  api: widget.state.api,
+                                  onSaved: widget.state.permissions.refresh,
+                                )
+                              : _selectedAdminSection == _AdminSection.audit
+                              ? _buildAuditPanel()
+                              : _selectedAdminSection == _AdminSection.media
+                              ? _buildMediaPanel()
+                              : _selectedAdminSection == _AdminSection.members
+                              ? _buildMembersPanel()
+                              : ListView(
+                                  padding: EdgeInsets.fromLTRB(
+                                    _adminContentInset,
+                                    0,
+                                    _adminContentInset,
+                                    24,
+                                  ),
+                                  children: [
+                                    _section(
+                                      title: 'Управление каналами',
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          TextField(
+                                            controller: _categoryName,
+                                            enabled: !_busy,
+                                            maxLength: 80,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Новая категория',
+                                            ),
+                                            onSubmitted: (_) =>
+                                                _createCategory(),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: FilledButton.tonal(
+                                              onPressed: _busy
+                                                  ? null
+                                                  : _createCategory,
+                                              child: const Text(
+                                                'Создать категорию',
+                                              ),
+                                            ),
+                                          ),
+                                          const Divider(height: 32),
+                                          DropdownButtonFormField<String>(
+                                            key: ValueKey(selectedId),
+                                            initialValue: selectedId,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Категория',
+                                            ),
+                                            items: [
+                                              for (final category in categories)
+                                                DropdownMenuItem(
+                                                  value: category.id,
+                                                  child: Text(category.name),
+                                                ),
+                                            ],
+                                            onChanged: _busy
+                                                ? null
+                                                : (value) => setState(() {
+                                                    _categoryId = value;
+                                                    final category = categories
+                                                        .where(
+                                                          (item) =>
+                                                              item.id == value,
+                                                        )
+                                                        .firstOrNull;
+                                                    _categoryRename.text =
+                                                        category?.name ?? '';
+                                                    _channelId = null;
+                                                    _channelRename.clear();
+                                                  }),
+                                          ),
+                                          if (selectedCategory != null) ...[
+                                            TextField(
+                                              controller: _categoryRename,
+                                              enabled: !_busy,
+                                              maxLength: 80,
+                                              decoration: const InputDecoration(
+                                                labelText:
+                                                    'Новое имя категории',
+                                              ),
+                                            ),
+                                            Wrap(
+                                              spacing: 8,
+                                              children: [
+                                                OutlinedButton(
+                                                  onPressed: _busy
+                                                      ? null
+                                                      : () => _renameCategory(
+                                                          selectedCategory,
+                                                        ),
+                                                  child: const Text(
+                                                    'Переименовать категорию',
+                                                  ),
+                                                ),
+                                                OutlinedButton(
+                                                  onPressed:
+                                                      _busy ||
+                                                          selectedCategory
+                                                              .channels
+                                                              .isNotEmpty
+                                                      ? null
+                                                      : () => _deleteCategory(
+                                                          selectedCategory,
+                                                        ),
+                                                  child: const Text(
+                                                    'Удалить пустую категорию',
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Wrap(
+                                              spacing: 8,
+                                              children: [
+                                                OutlinedButton(
+                                                  onPressed:
+                                                      _busy ||
+                                                          categories.indexOf(
+                                                                selectedCategory,
+                                                              ) ==
+                                                              0
+                                                      ? null
+                                                      : () => _reorderCategory(
+                                                          -1,
+                                                        ),
+                                                  child: const Text(
+                                                    'Категорию выше',
+                                                  ),
+                                                ),
+                                                OutlinedButton(
+                                                  onPressed:
+                                                      _busy ||
+                                                          categories.indexOf(
+                                                                selectedCategory,
+                                                              ) ==
+                                                              categories
+                                                                      .length -
+                                                                  1
+                                                      ? null
+                                                      : () =>
+                                                            _reorderCategory(1),
+                                                  child: const Text(
+                                                    'Категорию ниже',
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const Divider(height: 32),
+                                            DropdownButtonFormField<String>(
+                                              key: ValueKey(_channelId),
+                                              initialValue:
+                                                  channels.any(
+                                                    (item) =>
+                                                        item.id == _channelId,
+                                                  )
+                                                  ? _channelId
+                                                  : null,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Канал',
+                                              ),
+                                              items: [
+                                                for (final channel in channels)
+                                                  DropdownMenuItem(
+                                                    value: channel.id,
+                                                    child: Text(channel.name),
+                                                  ),
+                                              ],
+                                              onChanged: _busy
+                                                  ? null
+                                                  : (value) => setState(() {
+                                                      _channelId = value;
+                                                      _channelRename.text =
+                                                          channels
+                                                              .where(
+                                                                (item) =>
+                                                                    item.id ==
+                                                                    value,
+                                                              )
+                                                              .firstOrNull
+                                                              ?.name ??
+                                                          '';
+                                                    }),
+                                            ),
+                                            if (selectedChannel != null) ...[
+                                              TextField(
+                                                controller: _channelRename,
+                                                enabled: !_busy,
+                                                maxLength: 80,
+                                                decoration:
+                                                    const InputDecoration(
+                                                      labelText:
+                                                          'Новое имя канала',
+                                                    ),
+                                              ),
+                                              Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: OutlinedButton(
+                                                  onPressed: _busy
+                                                      ? null
+                                                      : () => _renameChannel(
+                                                          selectedChannel,
+                                                        ),
+                                                  child: const Text(
+                                                    'Переименовать канал',
+                                                  ),
+                                                ),
+                                              ),
+                                              Wrap(
+                                                spacing: 8,
+                                                children: [
+                                                  OutlinedButton(
+                                                    onPressed:
+                                                        _busy ||
+                                                            channels.indexOf(
+                                                                  selectedChannel,
+                                                                ) ==
+                                                                0
+                                                        ? null
+                                                        : () => _reorderChannel(
+                                                            -1,
+                                                          ),
+                                                    child: const Text(
+                                                      'Канал выше',
+                                                    ),
+                                                  ),
+                                                  OutlinedButton(
+                                                    onPressed:
+                                                        _busy ||
+                                                            channels.indexOf(
+                                                                  selectedChannel,
+                                                                ) ==
+                                                                channels.length -
+                                                                    1
+                                                        ? null
+                                                        : () => _reorderChannel(
+                                                            1,
+                                                          ),
+                                                    child: const Text(
+                                                      'Канал ниже',
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ],
+                                          const Divider(height: 32),
+                                          TextField(
+                                            controller: _channelName,
+                                            enabled:
+                                                !_busy && categories.isNotEmpty,
+                                            maxLength: 80,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Новый канал',
+                                            ),
+                                            onSubmitted: (_) =>
+                                                _createChannel(),
+                                          ),
+                                          DropdownButtonFormField<ChannelKind>(
+                                            initialValue: _channelKind,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Тип канала',
+                                            ),
+                                            items: const [
+                                              DropdownMenuItem(
+                                                value: ChannelKind.voice,
+                                                child: Text('Голосовой'),
+                                              ),
+                                              DropdownMenuItem(
+                                                value: ChannelKind.text,
+                                                child: Text('Текстовый'),
+                                              ),
+                                            ],
+                                            onChanged: _busy
+                                                ? null
+                                                : (value) {
+                                                    if (value != null) {
+                                                      setState(
+                                                        () => _channelKind =
+                                                            value,
+                                                      );
+                                                    }
+                                                  },
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: FilledButton(
+                                              onPressed:
+                                                  _busy || categories.isEmpty
+                                                  ? null
+                                                  : _createChannel,
+                                              child: _busy
+                                                  ? const SizedBox.square(
+                                                      dimension: 16,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                          ),
+                                                    )
+                                                  : const Text('Создать канал'),
+                                            ),
+                                          ),
+                                          if (categories.isNotEmpty) ...[
+                                            const Divider(height: 32),
+                                            DropdownButtonFormField<String>(
+                                              key: ValueKey(
+                                                'move-channel:$_moveChannelId',
+                                              ),
+                                              initialValue:
+                                                  categories
+                                                      .expand(
+                                                        (category) =>
+                                                            category.channels,
+                                                      )
+                                                      .any(
+                                                        (channel) =>
+                                                            channel.id ==
+                                                            _moveChannelId,
+                                                      )
+                                                  ? _moveChannelId
+                                                  : null,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Перенести канал',
+                                              ),
+                                              items: [
+                                                for (final category
+                                                    in categories)
+                                                  for (final channel
+                                                      in category.channels)
+                                                    DropdownMenuItem(
+                                                      value: channel.id,
+                                                      child: Text(
+                                                        '${category.name} · ${channel.name}',
+                                                      ),
+                                                    ),
+                                              ],
+                                              onChanged: _busy
+                                                  ? null
+                                                  : (value) => setState(() {
+                                                      _moveChannelId = value;
+                                                      _moveTargetCategoryId =
+                                                          null;
+                                                    }),
+                                            ),
+                                            DropdownButtonFormField<String>(
+                                              key: ValueKey(
+                                                'move-target:$_moveTargetCategoryId',
+                                              ),
+                                              initialValue:
+                                                  categories.any(
+                                                    (item) =>
+                                                        item.id ==
+                                                        _moveTargetCategoryId,
+                                                  )
+                                                  ? _moveTargetCategoryId
+                                                  : null,
+                                              decoration: const InputDecoration(
+                                                labelText: 'В категорию',
+                                              ),
+                                              items: [
+                                                for (final category
+                                                    in categories)
+                                                  DropdownMenuItem(
+                                                    value: category.id,
+                                                    child: Text(category.name),
+                                                  ),
+                                              ],
+                                              onChanged: _busy
+                                                  ? null
+                                                  : (value) => setState(
+                                                      () =>
+                                                          _moveTargetCategoryId =
+                                                              value,
+                                                    ),
+                                            ),
+                                            Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: OutlinedButton(
+                                                onPressed:
+                                                    _busy ||
+                                                        _moveChannelId ==
+                                                            null ||
+                                                        _moveTargetCategoryId ==
+                                                            null ||
+                                                        moveSourceCategory
+                                                                ?.id ==
+                                                            _moveTargetCategoryId
+                                                    ? null
+                                                    : _moveChannel,
+                                                child: const Text(
+                                                  'Перенести канал',
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          if (textChannels.isNotEmpty) ...[
+                                            const Divider(height: 32),
+                                            DropdownButtonFormField<String>(
+                                              key: ValueKey(
+                                                'archive-channel:$_archiveChannelId',
+                                              ),
+                                              initialValue:
+                                                  textChannels.any(
+                                                    (channel) =>
+                                                        channel.id ==
+                                                        _archiveChannelId,
+                                                  )
+                                                  ? _archiveChannelId
+                                                  : null,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Текстовый канал для архивации',
+                                              ),
+                                              items: [
+                                                for (final channel
+                                                    in textChannels)
+                                                  DropdownMenuItem(
+                                                    value: channel.id,
+                                                    child: Text(channel.name),
+                                                  ),
+                                              ],
+                                              onChanged: _busy
+                                                  ? null
+                                                  : (value) => setState(
+                                                      () => _archiveChannelId =
+                                                          value,
+                                                    ),
+                                            ),
+                                            Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: OutlinedButton(
+                                                onPressed:
+                                                    _busy ||
+                                                        _archiveChannelId ==
+                                                            null
+                                                    ? null
+                                                    : () => _archiveTextChannel(
+                                                        allChannels,
+                                                      ),
+                                                child: const Text(
+                                                  'Архивировать канал',
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          if (voiceChannels.any(
+                                            (channel) =>
+                                                !channel.admissionClosed,
+                                          )) ...[
+                                            DropdownButtonFormField<String>(
+                                              key: ValueKey(
+                                                'close-channel:$_closeVoiceChannelId',
+                                              ),
+                                              initialValue:
+                                                  voiceChannels.any(
+                                                    (channel) =>
+                                                        channel.id ==
+                                                        _closeVoiceChannelId,
+                                                  )
+                                                  ? _closeVoiceChannelId
+                                                  : null,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Голосовой канал для закрытия',
+                                              ),
+                                              items: [
+                                                for (final channel
+                                                    in voiceChannels)
+                                                  DropdownMenuItem(
+                                                    value: channel.id,
+                                                    child: Text(
+                                                      '${channel.name}${channel.admissionClosed ? ' · вход закрыт' : ''}',
+                                                    ),
+                                                  ),
+                                              ],
+                                              onChanged: _busy
+                                                  ? null
+                                                  : (value) => setState(
+                                                      () =>
+                                                          _closeVoiceChannelId =
+                                                              value,
+                                                    ),
+                                            ),
+                                            Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: OutlinedButton(
+                                                onPressed:
+                                                    _busy ||
+                                                        _closeVoiceChannelId ==
+                                                            null ||
+                                                        voiceChannels.any(
+                                                          (channel) =>
+                                                              channel.id ==
+                                                                  _closeVoiceChannelId &&
+                                                              channel
+                                                                  .admissionClosed,
+                                                        )
+                                                    ? null
+                                                    : () =>
+                                                          _closeVoiceAdmission(
+                                                            allChannels,
+                                                          ),
+                                                child: const Text(
+                                                  'Закрыть вход',
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    if (_status != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 12),
+                                        child: Semantics(
+                                          liveRegion: true,
+                                          label: _status,
+                                          child: Text(
+                                            _status!,
+                                            style: const TextStyle(
+                                              color: GcColors.success,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    if (_error != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 12),
+                                        child: Semantics(
+                                          liveRegion: true,
+                                          label: _error,
+                                          child: Text(
+                                            _error!,
+                                            style: const TextStyle(
+                                              color: GcColors.danger,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (_selectedAdminSection == _AdminSection.channels)
-                  IconButton(
-                    tooltip: 'Обновить список каналов',
-                    onPressed: _busy ? null : widget.state.refreshTopology,
-                    icon: const Icon(Icons.refresh),
-                  ),
-              ],
-            ),
-          ),
-          SizedBox(
-            width: double.infinity,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-              child: DecoratedBox(
-                decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: GcColors.borderSubtle),
-                  ),
-                ),
-                child: SingleChildScrollView(
-                  key: const ValueKey('admin-section-tabs-scroll'),
-                  scrollDirection: Axis.horizontal,
-                  child: Semantics(
-                    key: const ValueKey('admin-section-tabs-semantics'),
-                    container: true,
-                    explicitChildNodes: true,
-                    role: SemanticsRole.tabBar,
-                    label: 'Разделы администрирования',
-                    child: Row(
-                      children: [
-                        _adminSectionTab('Участники', _AdminSection.members),
-                        if (MediaQuery.sizeOf(context).width > 1023)
-                          const SizedBox(width: 8),
-                        _adminSectionTab('Роли', _AdminSection.roles),
-                        if (MediaQuery.sizeOf(context).width > 1023)
-                          const SizedBox(width: 8),
-                        _adminSectionTab('Каналы', _AdminSection.channels),
-                        if (MediaQuery.sizeOf(context).width > 1023)
-                          const SizedBox(width: 8),
-                        _adminSectionTab('Аудит', _AdminSection.audit),
-                        if (MediaQuery.sizeOf(context).width > 1023)
-                          const SizedBox(width: 8),
-                        _adminSectionTab('Медиа', _AdminSection.media),
                       ],
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: _selectedAdminSection == _AdminSection.roles
-                ? RolePermissionsPanel(
-                    api: widget.state.api,
-                    onSaved: widget.state.permissions.refresh,
-                  )
-                : _selectedAdminSection == _AdminSection.audit
-                ? _buildAuditPanel()
-                : _selectedAdminSection == _AdminSection.media
-                ? _buildMediaPanel()
-                : _selectedAdminSection == _AdminSection.members
-                ? _buildMembersPanel()
-                : ListView(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                    children: [
-                      _section(
-                        title: 'Управление каналами',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            TextField(
-                              controller: _categoryName,
-                              enabled: !_busy,
-                              maxLength: 80,
-                              decoration: const InputDecoration(
-                                labelText: 'Новая категория',
-                              ),
-                              onSubmitted: (_) => _createCategory(),
-                            ),
-                            const SizedBox(height: 8),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: FilledButton.tonal(
-                                onPressed: _busy ? null : _createCategory,
-                                child: const Text('Создать категорию'),
-                              ),
-                            ),
-                            const Divider(height: 32),
-                            DropdownButtonFormField<String>(
-                              key: ValueKey(selectedId),
-                              initialValue: selectedId,
-                              decoration: const InputDecoration(
-                                labelText: 'Категория',
-                              ),
-                              items: [
-                                for (final category in categories)
-                                  DropdownMenuItem(
-                                    value: category.id,
-                                    child: Text(category.name),
-                                  ),
-                              ],
-                              onChanged: _busy
-                                  ? null
-                                  : (value) => setState(() {
-                                      _categoryId = value;
-                                      final category = categories
-                                          .where((item) => item.id == value)
-                                          .firstOrNull;
-                                      _categoryRename.text =
-                                          category?.name ?? '';
-                                      _channelId = null;
-                                      _channelRename.clear();
-                                    }),
-                            ),
-                            if (selectedCategory != null) ...[
-                              TextField(
-                                controller: _categoryRename,
-                                enabled: !_busy,
-                                maxLength: 80,
-                                decoration: const InputDecoration(
-                                  labelText: 'Новое имя категории',
-                                ),
-                              ),
-                              Wrap(
-                                spacing: 8,
-                                children: [
-                                  OutlinedButton(
-                                    onPressed: _busy
-                                        ? null
-                                        : () =>
-                                              _renameCategory(selectedCategory),
-                                    child: const Text(
-                                      'Переименовать категорию',
-                                    ),
-                                  ),
-                                  OutlinedButton(
-                                    onPressed:
-                                        _busy ||
-                                            selectedCategory.channels.isNotEmpty
-                                        ? null
-                                        : () =>
-                                              _deleteCategory(selectedCategory),
-                                    child: const Text(
-                                      'Удалить пустую категорию',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Wrap(
-                                spacing: 8,
-                                children: [
-                                  OutlinedButton(
-                                    onPressed:
-                                        _busy ||
-                                            categories.indexOf(
-                                                  selectedCategory,
-                                                ) ==
-                                                0
-                                        ? null
-                                        : () => _reorderCategory(-1),
-                                    child: const Text('Категорию выше'),
-                                  ),
-                                  OutlinedButton(
-                                    onPressed:
-                                        _busy ||
-                                            categories.indexOf(
-                                                  selectedCategory,
-                                                ) ==
-                                                categories.length - 1
-                                        ? null
-                                        : () => _reorderCategory(1),
-                                    child: const Text('Категорию ниже'),
-                                  ),
-                                ],
-                              ),
-                              const Divider(height: 32),
-                              DropdownButtonFormField<String>(
-                                key: ValueKey(_channelId),
-                                initialValue:
-                                    channels.any(
-                                      (item) => item.id == _channelId,
-                                    )
-                                    ? _channelId
-                                    : null,
-                                decoration: const InputDecoration(
-                                  labelText: 'Канал',
-                                ),
-                                items: [
-                                  for (final channel in channels)
-                                    DropdownMenuItem(
-                                      value: channel.id,
-                                      child: Text(channel.name),
-                                    ),
-                                ],
-                                onChanged: _busy
-                                    ? null
-                                    : (value) => setState(() {
-                                        _channelId = value;
-                                        _channelRename.text =
-                                            channels
-                                                .where(
-                                                  (item) => item.id == value,
-                                                )
-                                                .firstOrNull
-                                                ?.name ??
-                                            '';
-                                      }),
-                              ),
-                              if (selectedChannel != null) ...[
-                                TextField(
-                                  controller: _channelRename,
-                                  enabled: !_busy,
-                                  maxLength: 80,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Новое имя канала',
-                                  ),
-                                ),
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: OutlinedButton(
-                                    onPressed: _busy
-                                        ? null
-                                        : () => _renameChannel(selectedChannel),
-                                    child: const Text('Переименовать канал'),
-                                  ),
-                                ),
-                                Wrap(
-                                  spacing: 8,
-                                  children: [
-                                    OutlinedButton(
-                                      onPressed:
-                                          _busy ||
-                                              channels.indexOf(
-                                                    selectedChannel,
-                                                  ) ==
-                                                  0
-                                          ? null
-                                          : () => _reorderChannel(-1),
-                                      child: const Text('Канал выше'),
-                                    ),
-                                    OutlinedButton(
-                                      onPressed:
-                                          _busy ||
-                                              channels.indexOf(
-                                                    selectedChannel,
-                                                  ) ==
-                                                  channels.length - 1
-                                          ? null
-                                          : () => _reorderChannel(1),
-                                      child: const Text('Канал ниже'),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ],
-                            const Divider(height: 32),
-                            TextField(
-                              controller: _channelName,
-                              enabled: !_busy && categories.isNotEmpty,
-                              maxLength: 80,
-                              decoration: const InputDecoration(
-                                labelText: 'Новый канал',
-                              ),
-                              onSubmitted: (_) => _createChannel(),
-                            ),
-                            DropdownButtonFormField<ChannelKind>(
-                              initialValue: _channelKind,
-                              decoration: const InputDecoration(
-                                labelText: 'Тип канала',
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: ChannelKind.voice,
-                                  child: Text('Голосовой'),
-                                ),
-                                DropdownMenuItem(
-                                  value: ChannelKind.text,
-                                  child: Text('Текстовый'),
-                                ),
-                              ],
-                              onChanged: _busy
-                                  ? null
-                                  : (value) {
-                                      if (value != null) {
-                                        setState(() => _channelKind = value);
-                                      }
-                                    },
-                            ),
-                            const SizedBox(height: 12),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: FilledButton(
-                                onPressed: _busy || categories.isEmpty
-                                    ? null
-                                    : _createChannel,
-                                child: _busy
-                                    ? const SizedBox.square(
-                                        dimension: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text('Создать канал'),
-                              ),
-                            ),
-                            if (categories.isNotEmpty) ...[
-                              const Divider(height: 32),
-                              DropdownButtonFormField<String>(
-                                key: ValueKey('move-channel:$_moveChannelId'),
-                                initialValue:
-                                    categories
-                                        .expand((category) => category.channels)
-                                        .any(
-                                          (channel) =>
-                                              channel.id == _moveChannelId,
-                                        )
-                                    ? _moveChannelId
-                                    : null,
-                                decoration: const InputDecoration(
-                                  labelText: 'Перенести канал',
-                                ),
-                                items: [
-                                  for (final category in categories)
-                                    for (final channel in category.channels)
-                                      DropdownMenuItem(
-                                        value: channel.id,
-                                        child: Text(
-                                          '${category.name} · ${channel.name}',
-                                        ),
-                                      ),
-                                ],
-                                onChanged: _busy
-                                    ? null
-                                    : (value) => setState(() {
-                                        _moveChannelId = value;
-                                        _moveTargetCategoryId = null;
-                                      }),
-                              ),
-                              DropdownButtonFormField<String>(
-                                key: ValueKey(
-                                  'move-target:$_moveTargetCategoryId',
-                                ),
-                                initialValue:
-                                    categories.any(
-                                      (item) =>
-                                          item.id == _moveTargetCategoryId,
-                                    )
-                                    ? _moveTargetCategoryId
-                                    : null,
-                                decoration: const InputDecoration(
-                                  labelText: 'В категорию',
-                                ),
-                                items: [
-                                  for (final category in categories)
-                                    DropdownMenuItem(
-                                      value: category.id,
-                                      child: Text(category.name),
-                                    ),
-                                ],
-                                onChanged: _busy
-                                    ? null
-                                    : (value) => setState(
-                                        () => _moveTargetCategoryId = value,
-                                      ),
-                              ),
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: OutlinedButton(
-                                  onPressed:
-                                      _busy ||
-                                          _moveChannelId == null ||
-                                          _moveTargetCategoryId == null ||
-                                          moveSourceCategory?.id ==
-                                              _moveTargetCategoryId
-                                      ? null
-                                      : _moveChannel,
-                                  child: const Text('Перенести канал'),
-                                ),
-                              ),
-                            ],
-                            if (textChannels.isNotEmpty) ...[
-                              const Divider(height: 32),
-                              DropdownButtonFormField<String>(
-                                key: ValueKey(
-                                  'archive-channel:$_archiveChannelId',
-                                ),
-                                initialValue:
-                                    textChannels.any(
-                                      (channel) =>
-                                          channel.id == _archiveChannelId,
-                                    )
-                                    ? _archiveChannelId
-                                    : null,
-                                decoration: const InputDecoration(
-                                  labelText: 'Текстовый канал для архивации',
-                                ),
-                                items: [
-                                  for (final channel in textChannels)
-                                    DropdownMenuItem(
-                                      value: channel.id,
-                                      child: Text(channel.name),
-                                    ),
-                                ],
-                                onChanged: _busy
-                                    ? null
-                                    : (value) => setState(
-                                        () => _archiveChannelId = value,
-                                      ),
-                              ),
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: OutlinedButton(
-                                  onPressed: _busy || _archiveChannelId == null
-                                      ? null
-                                      : () => _archiveTextChannel(allChannels),
-                                  child: const Text('Архивировать канал'),
-                                ),
-                              ),
-                            ],
-                            if (voiceChannels.any(
-                              (channel) => !channel.admissionClosed,
-                            )) ...[
-                              DropdownButtonFormField<String>(
-                                key: ValueKey(
-                                  'close-channel:$_closeVoiceChannelId',
-                                ),
-                                initialValue:
-                                    voiceChannels.any(
-                                      (channel) =>
-                                          channel.id == _closeVoiceChannelId,
-                                    )
-                                    ? _closeVoiceChannelId
-                                    : null,
-                                decoration: const InputDecoration(
-                                  labelText: 'Голосовой канал для закрытия',
-                                ),
-                                items: [
-                                  for (final channel in voiceChannels)
-                                    DropdownMenuItem(
-                                      value: channel.id,
-                                      child: Text(
-                                        '${channel.name}${channel.admissionClosed ? ' · вход закрыт' : ''}',
-                                      ),
-                                    ),
-                                ],
-                                onChanged: _busy
-                                    ? null
-                                    : (value) => setState(
-                                        () => _closeVoiceChannelId = value,
-                                      ),
-                              ),
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: OutlinedButton(
-                                  onPressed:
-                                      _busy ||
-                                          _closeVoiceChannelId == null ||
-                                          voiceChannels.any(
-                                            (channel) =>
-                                                channel.id ==
-                                                    _closeVoiceChannelId &&
-                                                channel.admissionClosed,
-                                          )
-                                      ? null
-                                      : () => _closeVoiceAdmission(allChannels),
-                                  child: const Text('Закрыть вход'),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (_status != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Semantics(
-                            liveRegion: true,
-                            label: _status,
-                            child: Text(
-                              _status!,
-                              style: const TextStyle(color: GcColors.success),
-                            ),
-                          ),
-                        ),
-                      if (_error != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Semantics(
-                            liveRegion: true,
-                            label: _error,
-                            child: Text(
-                              _error!,
-                              style: const TextStyle(color: GcColors.danger),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
           ),
         ],
       ),
@@ -1260,7 +1378,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   Widget _buildMediaPanel() => Column(
     children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+        padding: _adminSectionHeaderPadding,
         child: Row(
           children: [
             const Expanded(
@@ -1291,7 +1409,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       ),
       Expanded(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          padding: _adminSectionListPadding,
           children: [
             Text(
               'Сравните размер кадра и FPS отправки, приёма и показа: так проще найти участок потери разрешения или кадров. Данные сообщают сами клиенты; они не подтверждают содержимое кадра или аппаратный профиль.',
@@ -1429,7 +1547,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   Widget _buildAuditPanel() => Column(
     children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+        padding: _adminSectionHeaderPadding,
         child: Row(
           children: [
             const Expanded(
@@ -1465,7 +1583,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       else
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            padding: _adminSectionListPadding,
             children: [
               for (final event in _auditEvents) _auditEventRow(event),
               if (_auditLoading)
@@ -1497,7 +1615,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   Widget _buildMembersPanel() => Column(
     children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+        padding: _adminSectionHeaderPadding,
         child: Row(
           children: [
             Expanded(
@@ -1552,7 +1670,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
             key: ValueKey(
               'admin-member-list:${_accountSearch.text}:$_accountRoleFilter',
             ),
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            padding: _adminSectionListPadding,
             children: [
               if (_resetLink != null) _buildResetLinkCard(),
               if (_adminAccounts.isNotEmpty && _visibleAdminAccounts.isEmpty)
@@ -1867,11 +1985,13 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
 class _AdminWorkspaceHeader extends StatelessWidget {
   const _AdminWorkspaceHeader({
     required this.compact,
+    required this.titleFocus,
     required this.onToggleNavigation,
     required this.onClose,
   });
 
   final bool compact;
+  final FocusNode titleFocus;
   final VoidCallback? onToggleNavigation;
   final VoidCallback onClose;
 
@@ -1915,12 +2035,23 @@ class _AdminWorkspaceHeader extends StatelessWidget {
                 size: 20,
               ),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Администрирование',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              Expanded(
+                child: Focus(
+                  key: const ValueKey('admin-screen-title-focus'),
+                  focusNode: titleFocus,
+                  child: Semantics(
+                    key: const ValueKey('admin-screen-title'),
+                    header: true,
+                    child: const Text(
+                      'Администрирование',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ),
               ),
               IconButton(

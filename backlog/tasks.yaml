@@ -227,7 +227,7 @@ tasks:
     title: Flutter admin panel max-width and heading parity
     requirements: [REQ-UI-01, REQ-UI-02, REQ-ADMIN-01]
     depends_on: [FV2-001, FV2-024, T-051]
-    evidence: [flutter-admin-panel-width-heading-tests, android-macos-admin-panel-visual-acceptance]
+    evidence: [flutter-admin-panel-width-heading-tests, android-macos-admin-panel-visual-acceptance, QA-274]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]
