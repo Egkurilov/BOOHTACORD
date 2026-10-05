@@ -218,6 +218,16 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-ADMIN-01]
     depends_on: [FV2-001, T-051]
     evidence: [flutter-admin-role-checkbox-material-test, flutter-full-suite, android-macos-admin-debug-acceptance]
+  - id: FV2-024
+    title: Flutter admin section horizontal tab strip parity
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-ADMIN-01]
+    depends_on: [FV2-001, T-051]
+    evidence: [flutter-admin-horizontal-tab-tests, focused-admin-workspace-suite, android-macos-admin-tabs-visual-acceptance]
+  - id: FV2-025
+    title: Flutter admin panel max-width and heading parity
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-ADMIN-01]
+    depends_on: [FV2-001, FV2-024, T-051]
+    evidence: [flutter-admin-panel-width-heading-tests, android-macos-admin-panel-visual-acceptance]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

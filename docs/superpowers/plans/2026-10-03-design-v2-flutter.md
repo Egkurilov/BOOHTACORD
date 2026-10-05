@@ -133,3 +133,17 @@ FV2-022 закрывает implementation часть protected image viewer: в�
 ## Решение для старта
 
 Первой реализационной задачей сделать Пакет 0 + один leaf из Пакета 1 — точные V2 semantic/theme tokens и их widget/unit assertions. После зелёной проверки перейти к R01–R03. Не начинать массовый перерисованный rewrite и не закрывать весь R01–R30 одним коммитом: каждый пакет должен оставаться отдельным проверяемым вертикальным срезом.
+
+### Новый admin follow-up после FV2-023
+
+FV2-024 заменяет Flutter `Wrap` с `ChoiceChip` на горизонтально прокручиваемую
+web-подобную полосу вкладок с underline, compact/desktop spacing и сохранёнными
+семантиками; regression тесты сначала поймали перенос на три строки, а desktop
+test — divider intrinsic width. Focused suite прошёл 74/74, analyzer чистый.
+macOS Debug визуально обновлён hot reload без рестарта; Android API 35 проверен
+на подписанном локальном APK `1.0.29+2060` с сохранённой сессией;
+см. [QA-272](../../../evidence/flutter/qa272-flutter-admin-section-tabs-design-v2-2026-10-05-001.json).
+Следующий отдельный leaf FV2-025: web центрирует весь admin content в пределах
+880 px и скрывает внутренний heading, тогда как Flutter пока использует более
+широкую панель с дополнительным заголовком. Windows runtime acceptance всё
+ещё отслеживается в FV2-006.
