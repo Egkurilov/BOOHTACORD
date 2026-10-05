@@ -50,6 +50,24 @@ void main() {
   });
 
   test(
+    'restores saved microphone sensitivity with the signed-in account',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'audio-preferences:v1:account-1': jsonEncode({'vadThresholdDb': -37}),
+      });
+      final state = AppState(_FakeApi(topology));
+      addTearDown(state.dispose);
+
+      await state.initialize();
+
+      expect(state.phase, AppPhase.ready);
+      expect(state.user?.accountId, 'account-1');
+      expect(state.microphoneSettings.vadThresholdDb, -37);
+      expect(state.audioSettingsError, isNull);
+    },
+  );
+
+  test(
     'voice roster stream retries after 503 and clears error on snapshot',
     () async {
       final api = _RecoveringRosterApi(topology);

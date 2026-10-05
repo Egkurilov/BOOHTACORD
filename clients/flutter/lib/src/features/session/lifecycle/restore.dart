@@ -6,6 +6,7 @@ import 'controller.dart';
 extension SessionRestoration on SessionController {
   Future<void> initialize() async {
     if (closing) await waitForClose();
+    final previousUser = user;
     final ticket = scope.begin();
     if (!ticket.isActive) return;
     phase = AppPhase.loading;
@@ -23,6 +24,11 @@ extension SessionRestoration on SessionController {
             if (account == null) {
               await effects.clearAccount();
             } else {
+              // Account-scoped preparations (audio preferences, notifications,
+              // and other local state) read the current account through this
+              // controller. Publish the restored account before preparing it,
+              // matching the interactive authentication flow.
+              user = account;
               await effects.prepare(account);
             }
             return account;
@@ -44,6 +50,7 @@ extension SessionRestoration on SessionController {
       }
     } catch (cause) {
       if (!ticket.isActive) return;
+      user = previousUser;
       phase = AppPhase.connectionError;
       effects.error(effects.message(cause));
     }
