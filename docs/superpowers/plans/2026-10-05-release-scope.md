@@ -56,3 +56,21 @@ identity and reject unknown ABI, wrong base and malformed codes.
 Publish corrected 1.0.31+45 after the complete gate, retaining 1.0.30 assets.
 Inspect actual APK native-code/versionCode before publication. Promote only
 r45 after verified artifacts exist; record this correction in final evidence.
+
+## Final verification and publication
+
+Full CI 37255420216 passed on 322e65a0 after the custom audio fixture gained
+Vite HTML transformation, explicit dependency entries and bounded named steps.
+Cleanup failures remain fatal after successful assertions; primary failures win.
+The HTML regression failed before repair and passed after it. Six cold starts,
+12 strict cleanup repetitions and the four microphone-input cases passed.
+A local full-audio attempt lacked its SFU tunnel and generated WASM assets;
+CI rebuilt both prerequisites and passed the full browser gate.
+
+Android/Windows 1.0.31+45 publication and all asset checksum/source checks passed.
+Actual APK codes 1045/2045/4045 evaluate up_to_date using the production Dart
+model and catalog r45. Android certificate is unchanged; Windows is unsigned.
+Catalog CAS 14 to 19 promotes five selectors after verified native publication.
+Deliver through the canonical signed server builder/installer, then check public
+policy, source receipts, container digests and health. Physical media remains
+NOT_RUN and does not close hardware/capacity gates.
