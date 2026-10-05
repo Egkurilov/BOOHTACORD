@@ -1,9 +1,13 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
 import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -251,12 +255,36 @@ void main() {
   ) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 800);
+    tester.view.padding = const FakeViewPadding(top: 48);
     tester.view.viewPadding = const FakeViewPadding(top: 48);
     addTearDown(tester.view.reset);
     final state = AppState(ApiClient())
       ..maintenanceActive = true
       ..phase = AppPhase.ready;
-    await tester.pumpWidget(BoohtacordApp(state: state));
+    final captureDirectory =
+        Platform.environment['BOOHTACORD_VISUAL_CAPTURE_DIR'];
+    if (captureDirectory != null && captureDirectory.isNotEmpty) {
+      await (FontLoader(
+        'Inter',
+      )..addFont(rootBundle.load('assets/fonts/InterVariable.ttf'))).load();
+      final flutterRoot = Platform.environment['FLUTTER_ROOT'];
+      expect(flutterRoot, isNotNull);
+      final iconFont = File(
+        '$flutterRoot/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
+      );
+      expect(iconFont.existsSync(), isTrue);
+      await (FontLoader('MaterialIcons')..addFont(
+            Future.value(ByteData.sublistView(iconFont.readAsBytesSync())),
+          ))
+          .load();
+    }
+    final captureKey = GlobalKey();
+    await tester.pumpWidget(
+      RepaintBoundary(
+        key: captureKey,
+        child: BoohtacordApp(state: state),
+      ),
+    );
     await tester.pumpAndSettle();
 
     final banner = tester.getRect(
@@ -265,8 +293,29 @@ void main() {
     final header = tester.getRect(
       find.byKey(const ValueKey('workspace-header')),
     );
+    expect(banner.top, tester.view.viewPadding.top);
     expect(header.top, banner.bottom);
     expect(tester.takeException(), isNull);
+
+    if (captureDirectory != null && captureDirectory.isNotEmpty) {
+      final boundary = tester.renderObject<RenderRepaintBoundary>(
+        find.byKey(captureKey),
+      );
+      final bytes = await tester.runAsync(() async {
+        final image = await boundary.toImage(pixelRatio: 1);
+        try {
+          final data = await image.toByteData(format: ui.ImageByteFormat.png);
+          if (data == null) throw StateError('Flutter returned no PNG bytes');
+          return data.buffer.asUint8List();
+        } finally {
+          image.dispose();
+        }
+      });
+      expect(bytes, isNotNull);
+      Directory(captureDirectory).createSync(recursive: true);
+      File('$captureDirectory/maintenance-banner-safe-area-390x800.png')
+          .writeAsBytesSync(bytes!);
+    }
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
