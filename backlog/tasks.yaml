@@ -282,7 +282,7 @@ tasks:
     title: Android screen receiver decoded FPS parity investigation
     requirements: [REQ-UI-01, REQ-VOICE-01, REQ-SCREEN-01, REQ-SCREEN-02, REQ-CAPACITY-02]
     depends_on: [FV2-003, T-030, T-051]
-    evidence: [android-screen-receiver-60fps-paired-acceptance, emulator-vs-device-decoder-comparison, flutter-receiver-diagnostic-breakdown-tests, flutter-full-suite, flutter-changed-file-analysis, android-debug-build, macos-debug-build, QA-293, QA-297]
+    evidence: [android-screen-receiver-60fps-paired-acceptance, emulator-vs-device-decoder-comparison, flutter-receiver-diagnostic-breakdown-tests, flutter-full-suite, flutter-changed-file-analysis, android-debug-build, macos-debug-build, android-ci-debug-build, windows-ci-release-build, QA-293, QA-297]
   - id: FV2-037
     title: Flutter TEXT read cursor ordering matches web and server
     requirements: [REQ-CHAT-01, REQ-CHAT-02]

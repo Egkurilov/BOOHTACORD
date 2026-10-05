@@ -1304,7 +1304,8 @@ receiver diagnostics now report separately sampled received, decoded and
 rendered frame rates plus codec/decoder implementation when WebRTC exposes
 them. This is local presentation only; no report or server/API contract changed.
 The diagnostics tests, full Flutter suite, changed-file analyzer, Android Debug
-and macOS Debug builds pass. Keep the root cause open until a synchronized
+and macOS Debug builds pass. GitHub CI also passed the contracts/traceability,
+Flutter/Android Debug and Windows Release jobs. Keep the root cause open until a synchronized
 Mac/Web/Android receiver run captures the same publication and sender/receiver
 frame counters, followed by an emulator vs physical-device comparison —
 [QA-293](../evidence/flutter/qa293-android-receiver-decoded-fps-parity-2026-10-05-001.json),
