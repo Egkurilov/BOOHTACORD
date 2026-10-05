@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - tools/qa/client_lifecycle/**
+      - tools/qa/upload_reservations/**
       - clients/web/src/guild/profile/**
       - clients/web/src/identity/**
       - clients/web/src/App.vue
@@ -38,11 +39,17 @@ jobs:
         run: |
           python3 -m tools.qa.client_lifecycle.run --width 1440
           python3 -m tools.qa.client_lifecycle.run --width 1024
+      - name: Verify real attachment reservations and single API writer
+        run: |
+          python3 -m unittest tools.qa.upload_reservations.test_measure
+          python3 -m tools.qa.upload_reservations.run
       - name: Retain synthetic actual screenshots and bounded results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: autonomous-client-lifecycle-${{ github.sha }}
-          path: .out/client-lifecycle/
+          path: |
+            .out/client-lifecycle/
+            .out/upload-reservations/
           if-no-files-found: ignore
           retention-days: 30
