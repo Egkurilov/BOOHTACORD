@@ -53,6 +53,7 @@ def main():
                 assert all(item['room_service_calls'] < item['requests']/2 for item in samples[1:])
                 client.request('/voice/participants')
                 output('docker', 'stop', '-t', '3', stack.owner+'-sfu')
+                time.sleep(.4)  # Expire the production 250 ms snapshot before asserting unavailability.
                 try:
                     client.request('/voice/participants')
                     raise AssertionError('Expired SFU failure reported a valid roster')
