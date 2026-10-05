@@ -28,41 +28,41 @@ Files: `backend/internal/storage/acquire_writer_lock/{lock.go,lock_unix.go,
 lock_windows.go,lock_test.go}`, `backend/internal/app/runtime/run.go`,
 `docs/runbooks/attachment-writer.md`, `deploy/compose.yaml`.
 
-- [ ] First regression: acquire directory, reject second holder, release then
+- [x] First regression: acquire directory, reject second holder, release then
   reacquire; independent-process tests verify crash release and handover.
   `second, err := Acquire(root); if err == nil { second.Close(); t.Fatal("second writer") }`
-- [ ] Implement nonblocking OS lock on a persistent private lock file; never
+- [x] Implement nonblocking OS lock on a persistent private lock file; never
   unlink its inode. Acquire before API workers and release after shutdown.
   `resources.Add(func(context.Context) error { return writer.Close() })`
-- [ ] Declare one Compose replica and document stop/start rollout/rollback.
-- [ ] Run `go test ./internal/storage/acquire_writer_lock ./internal/app/runtime`.
+- [x] Declare one Compose replica and document stop/start rollout/rollback.
+- [x] Run `go test ./internal/storage/acquire_writer_lock ./internal/app/runtime`.
 
 ## #64 — registration and login outcomes
 
 Files: `clients/web/src/identity/authentication_flow/{flow.ts,flow.spec.ts,
 retry_after.ts,retry_after.spec.ts}`, `auth_client.ts`, `AuthenticationLanding.vue`.
 
-- [ ] Test successful registration followed by failed login, 429 delta/date,
+- [x] Test successful registration followed by failed login, 429 delta/date,
   explicit manual retry, unchanged Unicode password and no duplicate register.
   `expect(register).toHaveBeenCalledOnce(); expect(flow.registered.value).toBe(true)`
-- [ ] Implement reusable flow state, safe error copy and Retry-After feedback;
+- [x] Implement reusable flow state, safe error copy and Retry-After feedback;
   after register success switch subsequent submission to login only.
   `if (!registered.value) await register(input); await login(input)`
-- [ ] Preserve recovery explanation, show-password accessibility and reset focus.
-- [ ] Run focused Vitest identity tests and actual browser auth journey.
+- [x] Preserve recovery explanation, show-password accessibility and reset focus.
+- [x] Run focused Vitest identity tests and actual browser auth journey.
 
 ## #79 — independent connection status
 
 Files: `clients/web/src/workspace/connection_status/{model.ts,model.spec.ts,
 Status.vue}`, `WorkspaceApp.vue`, `voice/voice_roster_realtime.ts` and its tests.
 
-- [ ] Test WS-only failure with connected media, stale roster age, retry and
+- [x] Test WS-only failure with connected media, stale roster age, retry and
   unavailable roster distinct from a successful empty snapshot.
   `expect(status.voice).toBe('Голос подключён'); expect(status.chat).toBe('Чат обновляется')`
-- [ ] Track last successful roster timestamp separately from current availability;
+- [x] Track last successful roster timestamp separately from current availability;
   render scoped states and an explicit roster reconnect action.
-- [ ] Verify session/logout teardown clears snapshots and status independently.
-- [ ] Run focused Vitest workspace/roster tests and browser fault scenario.
+- [x] Verify session/logout teardown clears snapshots and status independently.
+- [x] Run focused Vitest workspace/roster tests and browser fault scenario.
 
 ## #80 — bounded protected refreshes
 
@@ -70,29 +70,31 @@ Files: `clients/web/src/workspace/protected_refresh/{gate.ts,gate.spec.ts}`, nat
 `workspace_realtime.ts`, `realtime/realtime_event_delivery.ts`,
 `realtime/realtime_connection_types.ts`, `realtime/realtime_store.ts` and tests.
 
-- [ ] Measure 1/20/50 hints for active/hidden conversations before and after.
-- [ ] Test one fetch for a burst, at most one in-flight fetch/resource, dirty
+- [x] Measure 1/20/50 hints for active/hidden conversations before and after.
+- [x] Test one fetch for a burst, at most one in-flight fetch/resource, dirty
   follow-up, old-page edit/delete, revision preservation and immediate revoke.
   `expect(maxConcurrent).toBe(1); expect(finalRevision).toBe(50)`
-- [ ] Add short-window resource gates and native delivery batching; advance
+- [x] Add short-window resource gates and native delivery batching; advance
   durable cursor only after successful protected refresh, retain failures/replay.
-- [ ] Run focused Vitest delivery/workspace/history tests and actual hint burst.
+- [x] Run focused Vitest delivery/workspace/history tests and actual hint burst.
 
 ## #56 — actual reservation and release
 
 Files: `tools/qa/upload_reservations/{run.py,stack.py,client.py,measure.py,
 test_measure.py}`, existing `tools/qa/client_lifecycle/stack.py` as fixture reuse.
 
-- [ ] First test rejects idle-only evidence, missing release and foreign origin.
+- [x] First test rejects idle-only evidence, missing release and foreign origin.
   `with self.assertRaises(AssertionError): validate([0, 0, 0])`
-- [ ] Start owned PostgreSQL/API/TLS with a bounded tmpfs attachment volume.
+- [x] Start owned PostgreSQL/API/TLS with a bounded tmpfs attachment volume.
   Run two held multipart uploads, measure exact statfs/real reservation gauge,
   require capacity-limited 507, release on cancel/success and bounded retry 201.
-- [ ] Run an independent build during sampling; retain numeric outcomes only.
-- [ ] Run fixture tests and actual isolated scenario; remove owned resources.
+- [x] Run an independent build during sampling; retain numeric outcomes only.
+- [x] Run fixture tests and actual isolated scenario; remove owned resources.
 
 ## Integration
 
-- [ ] Inspect explicit changed file sizes/status; run native Web/Go/contracts,
+- [x] Inspect explicit changed file sizes/status; run native Web/Go/contracts,
   traceability and docs checks. Record observed acceptance and limitations.
-- [ ] Commit explicit paths, push PR, wait for CI, fix failures and integrate.
+- [x] Commit explicit paths, publish PR, fix failures and verify its source in CI.
+  Integration is recorded in [PR 128](https://github.com/Egkurilov/BOOHTACORD/pull/128);
+  compatible signed rollback and broader production/device gates stay open.
