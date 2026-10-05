@@ -4,13 +4,14 @@
   "task": "FV2-041 — Flutter voice participant volume menu alignment",
   "source_revision": "da1570da",
   "working_tree_changes": true,
-  "summary": "The participant volume ellipsis sat 8 dp below the intended alignment. The action is raised by 8 dp while allowing its hit target to paint outside the card stack; a test-first widget regression verifies its position against the avatar on macOS and Android target platforms.",
+  "summary": "A follow-up screenshot showed that the first 8 dp adjustment was not high enough. A stricter test-first assertion exposed the remaining 4 dp miss (center 12 dp below the avatar top versus an 8 dp maximum); the action is now raised by a total of 16 dp while allowing its hit target to paint outside the card stack.",
   "checks": [
     {
       "name": "Flutter workspace widget suite",
       "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart",
       "result": "PASS",
-      "passed": 70
+      "passed": 70,
+      "observation": "The stricter +8 dp geometry assertion failed before the final adjustment (center was +12 dp), then passed on macOS and Android target platforms."
     },
     {
       "name": "Changed-file analyzer",
@@ -19,9 +20,14 @@
       "observation": "No issues found."
     },
     {
-      "name": "macOS Debug runtime",
+      "name": "macOS Debug hot reload (first adjustment)",
       "result": "PASS",
-      "observation": "Existing Debug app stayed open; DevTools hot reload completed. The current app screen was disconnected from voice, so the participant card itself was not visible for a runtime screenshot. No app restart or Keychain prompt occurred."
+      "observation": "Existing Debug app stayed open; DevTools hot reload completed without an app restart or Keychain prompt. The later user screenshot showed a residual vertical offset, which prompted the stricter geometry assertion."
+    },
+    {
+      "name": "macOS Debug hot reload (follow-up adjustment)",
+      "result": "NOT_RUN",
+      "observation": "DevTools endpoint 127.0.0.1:61156 refused the connection after the user screenshot; app was not restarted. The latest adjustment is verified by widget geometry tests but was not live-rendered on Mac."
     },
     {
       "name": "Android widget geometry",
@@ -46,7 +52,7 @@
   },
   "limitations": [
     "No native Android screenshot was taken because the emulator UI was not exposed in the desktop app inventory.",
-    "A connected voice participant card was not open on macOS during the live hot reload; visual alignment is verified by platform-target widget geometry tests."
+    "No native screenshot was captured after the latest adjustment; visual alignment is verified by platform-target widget geometry tests."
   ],
-  "status": "PASS — participant volume action geometry regression fixed and covered on macOS and Android widget targets; native screenshots remain NOT_RUN."
+  "status": "PASS — participant volume action now aligns within 8 dp of the avatar top on macOS and Android widget targets; latest Mac hot reload and native Android screenshot remain NOT_RUN."
 }

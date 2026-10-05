@@ -6612,7 +6612,7 @@ class _VoiceParticipantCard extends StatelessWidget {
             ),
           if (volume != null && onVolumeChanged != null)
             Positioned(
-              top: -8,
+              top: -16,
               right: 0,
               child: ParticipantVolumeMenu(
                 warning: state.voiceVolumeWarning,

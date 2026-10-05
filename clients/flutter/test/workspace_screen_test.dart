@@ -88,7 +88,7 @@ void main() {
     expect(volumeMenu, findsOneWidget);
     expect(
       tester.getRect(volumeMenu).center.dy,
-      lessThanOrEqualTo(tester.getRect(remoteAvatar).top + 16),
+      lessThanOrEqualTo(tester.getRect(remoteAvatar).top + 8),
     );
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
@@ -107,7 +107,7 @@ void main() {
     expect(androidVolumeMenu, findsOneWidget);
     expect(
       tester.getRect(androidVolumeMenu).center.dy,
-      lessThanOrEqualTo(tester.getRect(androidAvatar).top + 16),
+      lessThanOrEqualTo(tester.getRect(androidAvatar).top + 8),
     );
     await tester.tap(find.widgetWithText(OutlinedButton, 'Смотреть экран'));
     await tester.pump();
