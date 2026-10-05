@@ -2,6 +2,7 @@ import { owned } from './control.mjs'
 import { api, expect, origin, status } from '../client_lifecycle/request.mjs'
 export async function resetLinks(browser, admin, accountId, input, report, redactions) {
   const context = await browser.newContext({ ignoreHTTPSErrors: true })
+  context.setDefaultTimeout(15000)
   try {
     const page = await context.newPage()
     const created = await api(admin, '/admin/password-reset-links', 'POST', { account_id: accountId })

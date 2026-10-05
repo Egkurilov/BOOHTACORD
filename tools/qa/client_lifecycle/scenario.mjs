@@ -12,11 +12,11 @@ assert.equal(origin, 'https://localhost:4810')
 const browser = await chromium.launch({ headless: true })
 const report = { schema_version: 1, width: input.width, mocks: false, synthetic_accounts: true }
 const redactions = [input.password]
-browser.on('context', context => { context.setDefaultTimeout(15000); context.setDefaultNavigationTimeout(15000) })
 try {
   const contexts = await Promise.all([0, 1, 2].map(() => browser.newContext({
     ignoreHTTPSErrors: true, viewport: { width: input.width, height: 900 },
   })))
+  contexts.forEach(context => { context.setDefaultTimeout(15000); context.setDefaultNavigationTimeout(15000) })
   const [a, b, guest] = await Promise.all(contexts.map(context => context.newPage()))
   await login(a, 'qa_admin', input.password)
   await login(b, 'qa_admin', input.password)

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { api, expect, origin } from '../client_lifecycle/request.mjs'
 export async function registration(browser, input, report) {
   const context = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: input.width, height: 900 } })
+  context.setDefaultTimeout(15000)
   try {
     const page = await context.newPage()
     let registrations = 0
@@ -40,6 +41,7 @@ export async function rateLimit(browser, admin, input, report) {
     assert.equal(result.status, 401)
   }
   const context = await browser.newContext({ ignoreHTTPSErrors: true })
+  context.setDefaultTimeout(15000)
   try {
     const page = await context.newPage()
     let count = 0, retryAfter = null
