@@ -23,7 +23,7 @@ jobs:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
       - name: Measure real private RoomService fan-out
-        run: python3 -m tools.qa.sfu_snapshot_measure.run
+        run: python3 -m tools.qa.sfu_snapshot_measure.run --expect-reduction
       - name: Retain bounded source-bound measurement
         if: always()
         uses: actions/upload-artifact@v4

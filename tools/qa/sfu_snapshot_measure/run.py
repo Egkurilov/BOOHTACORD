@@ -7,7 +7,9 @@ import math
 from pathlib import Path
 import tempfile
 import time
+import urllib.error
 from tools.qa.client_lifecycle.services import output
+from tools.qa.client_lifecycle.stack import ready
 from tools.qa.critical_client_acceptance.stack import Stack
 from .client import Client
 
@@ -49,11 +51,22 @@ def main():
             samples = [sample(client, count) for count in (1, 20, 100)]
             if args.expect_reduction:
                 assert all(item['room_service_calls'] < item['requests']/2 for item in samples[1:])
+                client.request('/voice/participants')
+                output('docker', 'stop', '-t', '3', stack.owner+'-sfu')
+                try:
+                    client.request('/voice/participants')
+                    raise AssertionError('Expired SFU failure reported a valid roster')
+                except urllib.error.HTTPError as error:
+                    assert error.code == 503
+                output('docker', 'start', stack.owner+'-sfu')
+                ready('http://127.0.0.1:4880')
+                client.request('/voice/participants')
             else:
                 assert all(item['room_service_calls'] >= item['requests'] for item in samples)
             report = {'status': 'PASS', 'actual_api_postgresql_sfu': True, 'samples': samples,
                       'mode': 'bounded' if args.expect_reduction else 'baseline',
                       'same_authorized_session': True, 'media_capacity_claim': False,
+                      'sfu_expired_error_recovery_pass': args.expect_reduction,
                       'source_revision': output('git', '-C', str(root), 'rev-parse', 'HEAD'),
                       'api_binary_sha256': hashlib.sha256(stack.binary.read_bytes()).hexdigest()}
         finally:
