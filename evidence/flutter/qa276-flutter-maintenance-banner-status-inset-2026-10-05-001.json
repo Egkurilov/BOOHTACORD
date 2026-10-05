@@ -1,0 +1,58 @@
+{
+  "id": "QA-276",
+  "date": "2026-10-05",
+  "task": "FV2-026 — Flutter Android maintenance banner status-bar inset",
+  "source_revision": "6bec40e0",
+  "working_tree_changes": true,
+  "environment": {
+    "android_device": "Android Emulator sdk_gphone64_arm64",
+    "android_api": 35,
+    "android_resolution": "1080x2400",
+    "android_build": "1.0.30+2063 / versionCode 2063",
+    "macos": "arm64 BOOHTACORD Flutter native Debug VM connected in Dart DevTools; hot reload completed; host session locked"
+  },
+  "summary": "The maintenance-only top SafeArea and zero-gap banner-to-header geometry are implemented and covered by widget regression tests. Active-maintenance runtime visual acceptance remains unverified because the backend currently reports maintenance inactive; the macOS host session is locked.",
+  "checks": [
+    {
+      "name": "Maintenance banner inset and banner/header adjacency widget regression",
+      "result": "PASS",
+      "observation": "With a simulated 48 dp top inset, the banner begins at the status-bar safe edge and the workspace header begins exactly at the banner bottom. The focused maintenance-banner widget tests passed."
+    },
+    {
+      "name": "Flutter-rendered inset visual capture",
+      "result": "PASS_WITH_LIMITATION",
+      "observation": "A 390×800 Flutter test capture was visually inspected: the 48 dp top status area is clear, the warning-colored banner begins below it, and the workspace header follows immediately. The host test renderer displayed Cyrillic glyphs as fallback squares, so this image is evidence for geometry/colors only, not typography."
+    },
+    {
+      "name": "Changed-file analyzer",
+      "result": "PASS",
+      "observation": "flutter analyze --no-pub lib/src/app.dart test/widget_test.dart reported no issues."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "result": "PASS",
+      "observation": "flutter test --no-pub passed all 569 tests."
+    },
+    {
+      "name": "Android release build and update install",
+      "result": "PASS",
+      "observation": "Built and installed signed Android arm64 release 1.0.30+2063 over the existing emulator app with adb install -r; app data was retained and the client opened."
+    },
+    {
+      "name": "Android active-maintenance banner visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "The running client shows no maintenance banner, so the backend maintenance state is currently inactive. The screenshot confirms the normal app state only and does not exercise the changed branch. No production/server state was modified."
+    },
+    {
+      "name": "macOS runtime visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "Dart DevTools showed the native macOS Debug VM as connected and confirmed Hot reload completed. The Mac session was locked, so no app screenshot could be captured. No app restart was performed."
+    }
+  ],
+  "limitations": [
+    "FV2-026 remains open until an active-maintenance Android screenshot verifies the status-bar separation and zero-gap workspace header, with macOS behavior visually checked when that session is available.",
+    "The generated Flutter test image is not an Android device screenshot and its host font fallback cannot verify Cyrillic typography.",
+    "Temporary Android screenshots were not retained in the repository."
+  ],
+  "status": "IN_PROGRESS — widget, analyzer, suite and install checks pass; runtime visual acceptance pending"
+}

@@ -15,7 +15,7 @@ import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:boohtacord_desktop/src/widgets/audio_device_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart'
@@ -414,9 +414,7 @@ void main() {
     expect(state.pushToTalkKeyId, LogicalKeyboardKey.keyA.keyId);
     expect(find.textContaining('Клавиша PTT'), findsOneWidget);
 
-    await tester.tap(find.byType(DropdownButtonFormField<AudioActivationMode>));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Push-to-talk').last);
+    await tester.tap(find.byKey(const ValueKey('audio-activation-ptt')));
     await tester.pump();
     expect(state.audioActivationMode, AudioActivationMode.ptt);
 
@@ -424,6 +422,161 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pump();
     expect(state.workspacePanel, WorkspacePanel.none);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('Design V2 audio settings lead with responsive device cards', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      _PortraitApi(),
+      audioDeviceLoader: () async => const [],
+    );
+    await state.initialize();
+    state.toggleWorkspacePanel(WorkspacePanel.audio);
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final subtitle = find.text('Проверьте устройства перед разговором.');
+    expect(subtitle, findsOneWidget);
+    expect(
+      tester.renderObject<RenderParagraph>(subtitle).didExceedMaxLines,
+      isFalse,
+    );
+    final devices = find.byKey(const ValueKey('audio-settings-device-card'));
+    final activation = find.byKey(
+      const ValueKey('audio-settings-activation-card'),
+    );
+    final processing = find.byKey(
+      const ValueKey('audio-settings-processing-card'),
+    );
+    expect(devices, findsOneWidget);
+    expect(activation, findsOneWidget);
+    expect(
+      tester.getTopLeft(devices).dy,
+      lessThan(tester.getTopLeft(activation).dy),
+    );
+    expect(tester.getSize(devices).height, greaterThanOrEqualTo(282));
+    expect(
+      (tester.widget<Container>(devices).decoration! as BoxDecoration).color,
+      GcColors.surface,
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('audio-device-control-Микрофон')))
+          .height,
+      44,
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('audio-device-control-Динамик')))
+          .height,
+      44,
+    );
+    expect(
+      tester
+          .getSize(
+            find.byKey(const ValueKey('audio-settings-activation-segment')),
+          )
+          .height,
+      greaterThanOrEqualTo(46),
+    );
+    final audioScrollable = find.descendant(
+      of: find.byKey(const ValueKey('audio-settings-list')),
+      matching: find.byType(Scrollable),
+    );
+    await tester.scrollUntilVisible(
+      processing,
+      160,
+      scrollable: audioScrollable,
+    );
+    expect(processing, findsOneWidget);
+    expect(tester.getSize(processing).height, greaterThanOrEqualTo(272));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('compact Design V2 audio cards preserve mobile control sizes', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      _PortraitApi(),
+      audioDeviceLoader: () async => const [],
+    );
+    await state.initialize();
+    state.toggleWorkspacePanel(WorkspacePanel.audio);
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final subtitle = find.byKey(const ValueKey('audio-settings-intro'));
+    expect(subtitle, findsOneWidget);
+    expect(tester.widget<Text>(subtitle).maxLines, isNull);
+    expect(
+      tester.renderObject<RenderParagraph>(subtitle).didExceedMaxLines,
+      isFalse,
+    );
+    expect(
+      tester.getTopLeft(subtitle).dy,
+      lessThan(
+        tester
+            .getTopLeft(
+              find.byKey(const ValueKey('audio-settings-device-card')),
+            )
+            .dy,
+      ),
+    );
+    final devices = find.byKey(const ValueKey('audio-settings-device-card'));
+    final activation = find.byKey(
+      const ValueKey('audio-settings-activation-card'),
+    );
+    expect(devices, findsOneWidget);
+    final audioScrollable = find.descendant(
+      of: find.byKey(const ValueKey('audio-settings-list')),
+      matching: find.byType(Scrollable),
+    );
+    await tester.scrollUntilVisible(
+      activation,
+      160,
+      scrollable: audioScrollable,
+    );
+    expect(activation, findsOneWidget);
+    expect(tester.getSize(devices).height, greaterThanOrEqualTo(346));
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('audio-device-control-Микрофон')))
+          .height,
+      44,
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('audio-device-control-Динамик')))
+          .height,
+      44,
+    );
+    expect(
+      tester
+          .getSize(
+            find.byKey(const ValueKey('audio-settings-activation-segment')),
+          )
+          .height,
+      50,
+    );
+    expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
@@ -447,21 +600,22 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
     await tester.pumpAndSettle();
 
-    final audioList = find.byKey(const ValueKey('audio-settings-list'));
-    final scrollable = find.descendant(
-      of: audioList,
+    final activationSegment = find.byKey(
+      const ValueKey('audio-settings-activation-segment'),
+    );
+    final audioScrollable = find.descendant(
+      of: find.byKey(const ValueKey('audio-settings-list')),
       matching: find.byType(Scrollable),
     );
     await tester.scrollUntilVisible(
-      find.text('Активация микрофона'),
-      180,
-      scrollable: scrollable,
+      activationSegment,
+      160,
+      scrollable: audioScrollable,
     );
+    await tester.pumpAndSettle();
 
     expect(find.text('Назначить PTT-клавишу'), findsNothing);
-    await tester.tap(find.byType(DropdownButtonFormField<AudioActivationMode>));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Push-to-talk').last);
+    await tester.tap(find.byKey(const ValueKey('audio-activation-ptt')));
     await tester.pumpAndSettle();
 
     expect(state.audioActivationMode, AudioActivationMode.ptt);

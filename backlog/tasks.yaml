@@ -198,6 +198,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-ADMIN-01, REQ-ADMIN-02, REQ-AUDIO-01, REQ-SEARCH-01, REQ-CHANNEL-02]
     depends_on: [FV2-001, FV2-014, FV2-016, T-014, T-020, T-050, T-051]
     evidence: [flutter-settings-admin-layout-tests, flutter-settings-admin-semantics, settings-admin-parity-acceptance]
+  - id: FV2-027
+    title: Flutter Design V2 audio settings device-first cards and activation controls
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
+    depends_on: [FV2-001, T-051]
+    evidence: [flutter-audio-settings-responsive-layout-tests, flutter-audio-settings-state-preservation-tests, flutter-full-suite, flutter-audio-settings-macos-android-visual-acceptance, evidence/flutter/qa277-flutter-audio-settings-design-v2-2026-10-05-001.json]
   - id: FV2-015
     title: Flutter Design V2 authentication typography follow-up
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUTH-01]
@@ -228,6 +233,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-ADMIN-01]
     depends_on: [FV2-001, FV2-024, T-051]
     evidence: [flutter-admin-panel-width-heading-tests, android-macos-admin-panel-visual-acceptance, QA-274]
+  - id: FV2-026
+    title: Flutter Android maintenance banner status-bar safe-area parity
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-QUALITY-02]
+    depends_on: [FV2-001, T-051]
+    evidence: [flutter-maintenance-banner-safe-area-regression, android-maintenance-banner-runtime-acceptance, QA-276]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

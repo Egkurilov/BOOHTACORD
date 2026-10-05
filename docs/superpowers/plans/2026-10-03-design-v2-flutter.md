@@ -114,6 +114,36 @@ FV2-001 follow-up добавил Inter Variable 4.001 как локальный 
 
 FV2-022 закрыла implementation часть protected image viewer: viewport-filling overlay с web-геометрией, filename/header, отдельным защищённым save action, fit-to-window image stage и responsive close target; unavailable/retry/decode failure остаются явными состояниями. После предыдущей safe-area правки текущая runtime-приёмка Android API 35 (`1.0.29+2062`) и macOS Debug подтвердила отображение целого изображения, header/download action и возврат в канал через Android Back/Escape; viewer-focused suite 13/13, полный Flutter suite 567/567, analyzer чистый — [QA-275](../../../evidence/flutter/qa275-flutter-protected-image-viewer-runtime-2026-10-05-001.json). Windows runtime visual acceptance остаётся открытым и tracked в FV2-006; до неё FV2-022 не закрывать. История реализации и test harness — [QA-264](../../../evidence/flutter/qa264-flutter-protected-image-viewer-overlay-2026-10-05-001.json), [QA-265](../../../evidence/flutter/qa265-flutter-native-audio-test-harness-2026-10-05-001.json).
 
+Новый runtime-derived gap FV2-026: на Android API 35 maintenance banner оказался
+под часами и системными значками. Реализован top SafeArea только при активном
+maintenance, с test-first проверкой верхнего inset и нулевого промежутка перед
+workspace header. Изменённые файлы прошли analyzer, полный suite 569/569; Android
+release `1.0.30+2063` установлен. Однако backend сейчас не отображает maintenance,
+поэтому активная Android-ветка на устройстве визуально не принята; host-side
+390×800 capture подтверждает только inset/цвета (тестовый рендер не имеет
+кириллического fallback); macOS-сессия заблокирована. Не закрывать FV2-026 до
+runtime-снимка при видимом баннере — [QA-276](../../../evidence/flutter/qa276-flutter-maintenance-banner-status-inset-2026-10-05-001.json).
+
+### FV2-027 — Audio settings R10–R11 follow-up
+
+Source comparison on 2026-10-05 found that the current Flutter audio settings
+still use a single long list with activation first and device selection/check
+last. Web Design V2 puts the device card first, followed by distinct activation,
+shortcut, and processing cards; activation uses a segmented VAD/PTT control.
+Implement the same responsive hierarchy in the Flutter screen while preserving
+the existing device IDs, local audio check lifecycle, PTT/touch behavior,
+shortcuts, processing state, and diagnostics. The test-first widget regressions
+and responsive implementation are complete; Android API 35 release visual
+acceptance passes at 1080×2400 on `1.0.30+2065`, installed without clearing app
+data. The compact subtitle is fully visible above the first card, and activation
+and processing remain readable while scrolling. The full Flutter suite passes
+570 tests; focused analyzer exits successfully with three pre-existing infos in
+unmodified control-flow lines. DevTools hot-reloaded the native macOS Debug app
+in 559.8 ms without restart or Keychain prompt; screenshot/accessibility
+inspection confirms full subtitle and device-first card hierarchy. FV2-027 is
+accepted on both platforms. This is Flutter-only; no web files were edited. See
+[QA-277](../../../evidence/flutter/qa277-flutter-audio-settings-design-v2-2026-10-05-001.json).
+
 ### Пакет 6 — сводный responsive и платформенный gate
 
 Пройти все R01–R30 и предусмотренные responsive/derived states. Flutter widget tests фиксируют bounds/constraints/semantics на канонических размерах, а ручная проверка приложения подтверждает визуальную и интерактивную пригодность на Android, macOS и Windows; системная рамка окна и системные permission dialogs исключены. Проверить TalkBack/VoiceOver/NVDA по доступным хостам, клавиатуру на desktop, system Back/edge-swipe на Android и при увеличении текста отсутствие потери контролов. Свежий macOS gate из QA-247 частично заблокирован локальным macOS Accessibility policy: Android API 35 визуально принят, открытая macOS-сессия сохранена и получила hot reload, но перейти на Admin для снимка не удалось. Возобновить этот конкретный экран после UI-accessibility разрешения или когда пользователь оставит приложение на Admin, не закрывая сессию и не провоцируя запрос Keychain.

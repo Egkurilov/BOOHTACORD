@@ -6622,7 +6622,9 @@ class _AudioSettingsScreen extends StatelessWidget {
               _Header(
                 icon: Icons.tune,
                 title: 'Настройки аудио',
-                subtitle: 'Устройства и обработка микрофона',
+                subtitle: compact
+                    ? ''
+                    : 'Проверьте устройства перед разговором.',
                 onBack: compact ? onBack : null,
                 trailing: IconButton(
                   tooltip: 'Обновить список устройств',
@@ -6640,240 +6642,313 @@ class _AudioSettingsScreen extends StatelessWidget {
               Expanded(
                 child: ListView(
                   key: const ValueKey('audio-settings-list'),
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.fromLTRB(
+                    compact ? 16 : 24,
+                    compact ? 24 : 32,
+                    compact ? 16 : 24,
+                    compact ? 48 : 32,
+                  ),
                   children: [
-                    Text(
-                      'Активация микрофона',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<AudioActivationMode>(
-                      initialValue: state.audioActivationMode,
-                      isExpanded: true,
-                      selectedItemBuilder: (context) => [
-                        for (final mode in AudioActivationMode.values)
-                          Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(
-                              compact && mode == AudioActivationMode.vad
-                                  ? 'По голосу'
-                                  : mode == AudioActivationMode.vad
-                                  ? 'Голосовая активность'
-                                  : 'Push-to-talk',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                      ],
-                      decoration: const InputDecoration(
-                        labelText: 'Режим',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: AudioActivationMode.vad,
-                          child: Text('Голосовая активность'),
-                        ),
-                        DropdownMenuItem(
-                          value: AudioActivationMode.ptt,
-                          child: Text('Push-to-talk'),
-                        ),
-                      ],
-                      onChanged: (mode) {
-                        if (mode != null) {
-                          unawaited(state.setAudioActivationMode(mode));
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    if (!state.usesTouchPushToTalk)
-                      OutlinedButton.icon(
-                        onPressed: onCapturePttKey,
-                        icon: Icon(
-                          capturingPttKey
-                              ? Icons.keyboard
-                              : Icons.keyboard_alt_outlined,
-                        ),
-                        label: Text(
-                          capturingPttKey
-                              ? 'Нажмите клавишу… · Esc — отмена'
-                              : state.pushToTalkKeyLabel == null
-                              ? 'Назначить PTT-клавишу'
-                              : 'Клавиша PTT · ${state.pushToTalkKeyLabel}',
-                        ),
-                      ),
-                    if (state.audioActivationMode == AudioActivationMode.ptt)
-                      Padding(
-                        padding: EdgeInsets.only(top: 4),
-                        child: Text(
-                          state.usesTouchPushToTalk
-                              ? 'Удерживайте кнопку микрофона в панели голосового канала, чтобы говорить. При сворачивании приложения микрофон выключается.'
-                              : 'Удерживайте назначенную клавишу, чтобы говорить. При потере фокуса микрофон выключается.',
-                          style: const TextStyle(
-                            color: GcColors.muted,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    MicrophoneControl(
-                      settings: state.microphoneSettings, runtime: state.microphoneControlsRuntime,
-                      onChanged: state.setMicrophoneSettings, sensitivity: true,
-                      vad: state.audioActivationMode == AudioActivationMode.vad,
-                      agc: state.audioProcessing.autoGainControl,
-                    ),
-                    if (state.audioActivationError != null) ...[
-                      const SizedBox(height: 8),
-                      _ErrorBanner(message: state.audioActivationError!),
-                    ],
-                    if (!state.usesTouchPushToTalk || hardwareKeyboardAvailable) ...[
-                      const SizedBox(height: 24),
-                      Text(
-                        'Быстрые клавиши',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 6),
+                    if (compact) ...[
                       const Text(
-                        'Назначьте сочетания для микрофона и выключения звука. Они работают только в активном окне.',
-                        style: TextStyle(color: GcColors.muted, fontSize: 12),
+                        'Проверьте устройства перед разговором.',
+                        key: ValueKey('audio-settings-intro'),
+                        style: TextStyle(
+                          color: GcColors.muted,
+                          fontSize: 14,
+                          height: 20 / 14,
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      VoiceShortcutRow(
-                        label: 'Микрофон',
-                        binding: state.microphoneShortcut,
-                        capturing: capturingVoiceShortcut == 'microphone',
-                        onAssign: () => onCaptureVoiceShortcut?.call('microphone'),
-                        onCancel: () => onCaptureVoiceShortcut?.call(''),
-                        onClear: () => unawaited(state.setVoiceShortcut('microphone', null)),
-                      ),
-                      VoiceShortcutRow(
-                        label: 'Выключить звук',
-                        binding: state.deafenShortcut,
-                        capturing: capturingVoiceShortcut == 'deafen',
-                        onAssign: () => onCaptureVoiceShortcut?.call('deafen'),
-                        onCancel: () => onCaptureVoiceShortcut?.call(''),
-                        onClear: () => unawaited(state.setVoiceShortcut('deafen', null)),
-                      ),
-                      TextButton(onPressed: () { onCaptureVoiceShortcut?.call(''); unawaited(state.voice.resetVoiceShortcuts()); }, child:const Text('Сбросить сочетания')),
+                      const SizedBox(height: 16),
                     ],
-                    const SizedBox(height: 24),
-                    Text(
-                      'Обработка микрофона',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Параметры передаются LiveKit. Нативный SDK не сообщает, '
-                      'какие эффекты фактически применены устройством.',
-                      style: TextStyle(color: GcColors.muted, fontSize: 12),
-                    ),
-                    const SizedBox(height: 8),
-                    SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Автоматическая регулировка усиления'),
-                      value: state.audioProcessing.autoGainControl,
-                      onChanged: (value) => state.setAudioProcessing(
-                        state.audioProcessing.copyWith(autoGainControl: value),
-                      ),
-                    ),
-                    SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Подавление эха'),
-                      value: state.audioProcessing.echoCancellation,
-                      onChanged: (value) => state.setAudioProcessing(
-                        state.audioProcessing.copyWith(echoCancellation: value),
-                      ),
-                    ),
-                    MicrophoneControl(
-                      settings: state.microphoneSettings, runtime: state.microphoneControlsRuntime,
-                      onChanged: state.setMicrophoneSettings, sensitivity: false,
-                      vad: state.audioActivationMode == AudioActivationMode.vad,
-                      agc: state.audioProcessing.autoGainControl,
-                    ),
-                    NoiseSuppressionSettings(
-                      processing: state.audioProcessing,
-                      runtime: state.noiseSuppressionRuntime,
-                      onChanged: state.setAudioProcessing,
-                    ),
-                    AudioVolumeReset(reset: state.resetAudioVolumes, warning: state.voiceVolumeWarning),
-                    VoiceAudioDiagnosticsControl(
-                      connected: state.voicePhase != VoicePhase.idle &&
-                          state.voicePhase != VoicePhase.error,
-                      diagnostics: state.voiceAudioDiagnostics,
-                    ),
-                    const SizedBox(height: 16),
-                    _AudioDeviceDropdown(
-                      label: 'Микрофон',
-                      icon: Icons.mic_none,
-                      devices: state.audioInputDevices,
-                      selectedId: state.selectedAudioInputId,
-                      emptyLabel: state.audioDevicesLoading
-                          ? 'Ищем устройства…'
-                          : state.audioDeviceScanFailed
-                          ? 'Список недоступен'
-                          : 'Микрофоны не найдены',
-                      onChanged: state.selectAudioInput,
-                    ),
-                    const SizedBox(height: 16),
-                    _AudioDeviceDropdown(
-                      label: 'Динамик',
-                      icon: Icons.volume_up_outlined,
-                      devices: state.audioOutputDevices,
-                      selectedId: state.selectedAudioOutputId,
-                      emptyLabel: state.audioDevicesLoading
-                          ? 'Ищем устройства…'
-                          : state.audioDeviceScanFailed
-                          ? 'Список недоступен'
-                          : 'Динамики не найдены',
-                      onChanged: state.selectAudioOutput,
-                    ),
-                    if (state.audioDeviceWarning != null) ...[
-                      const SizedBox(height: 8),
-                      Semantics(
-                        key: const ValueKey('audio-device-warning'),
-                        liveRegion: true,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              Icons.warning_amber_outlined,
-                              size: 16,
-                              color: GcColors.warning,
+                    _AudioSettingsCard(
+                      cardKey: const ValueKey('audio-settings-device-card'),
+                      title: 'Устройства',
+                      subtitle: 'Настройки действуют на этом устройстве.',
+                      compact: compact,
+                      minHeight: compact ? 346 : 282,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (compact) ...[
+                            _AudioDeviceDropdown(
+                              label: 'Микрофон',
+                              devices: state.audioInputDevices,
+                              selectedId: state.selectedAudioInputId,
+                              emptyLabel: state.audioDevicesLoading
+                                  ? 'Ищем устройства…'
+                                  : state.audioDeviceScanFailed
+                                  ? 'Список недоступен'
+                                  : 'Микрофоны не найдены',
+                              onChanged: state.selectAudioInput,
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                state.audioDeviceWarning!,
-                                style: const TextStyle(
-                                  color: GcColors.warning,
+                            const SizedBox(height: 12),
+                            _AudioDeviceDropdown(
+                              label: 'Динамик',
+                              devices: state.audioOutputDevices,
+                              selectedId: state.selectedAudioOutputId,
+                              emptyLabel: state.audioDevicesLoading
+                                  ? 'Ищем устройства…'
+                                  : state.audioDeviceScanFailed
+                                  ? 'Список недоступен'
+                                  : 'Динамики не найдены',
+                              onChanged: state.selectAudioOutput,
+                            ),
+                          ] else
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _AudioDeviceDropdown(
+                                    label: 'Микрофон',
+                                    devices: state.audioInputDevices,
+                                    selectedId: state.selectedAudioInputId,
+                                    emptyLabel: state.audioDevicesLoading
+                                        ? 'Ищем устройства…'
+                                        : state.audioDeviceScanFailed
+                                        ? 'Список недоступен'
+                                        : 'Микрофоны не найдены',
+                                    onChanged: state.selectAudioInput,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _AudioDeviceDropdown(
+                                    label: 'Динамик',
+                                    devices: state.audioOutputDevices,
+                                    selectedId: state.selectedAudioOutputId,
+                                    emptyLabel: state.audioDevicesLoading
+                                        ? 'Ищем устройства…'
+                                        : state.audioDeviceScanFailed
+                                        ? 'Список недоступен'
+                                        : 'Динамики не найдены',
+                                    onChanged: state.selectAudioOutput,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if (state.audioDeviceWarning != null) ...[
+                            const SizedBox(height: 12),
+                            Semantics(
+                              key: const ValueKey('audio-device-warning'),
+                              liveRegion: true,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(
+                                    Icons.warning_amber_outlined,
+                                    size: 16,
+                                    color: GcColors.warning,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      state.audioDeviceWarning!,
+                                      style: const TextStyle(
+                                        color: GcColors.warning,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          if (!state.audioDevicesLoading &&
+                              !state.audioDeviceScanFailed) ...[
+                            if (state.voiceChannel == null) ...[
+                              const SizedBox(height: 12),
+                              const Text(
+                                'До подключения выбор устройства используется для локальной проверки; устройство звонка можно переключить после входа.',
+                                style: TextStyle(
+                                  color: GcColors.muted,
                                   fontSize: 12,
                                 ),
+                              ),
+                            ],
+                            const SizedBox(height: 16),
+                            AudioDeviceCheck(
+                              key: const ValueKey('audio-device-check'),
+                              inputDeviceId: inputDevice?.deviceId,
+                              inputDeviceLabel: inputDevice?.label,
+                              outputDeviceId: outputDevice?.deviceId,
+                              outputDeviceLabel: outputDevice?.label,
+                            ),
+                          ],
+                          if (state.audioSettingsError != null) ...[
+                            const SizedBox(height: 12),
+                            _ErrorBanner(message: state.audioSettingsError!),
+                          ],
+                        ],
+                      ),
+                    ),
+                    _AudioSettingsCard(
+                      cardKey: const ValueKey('audio-settings-activation-card'),
+                      title: 'Активация микрофона',
+                      subtitle: 'Выберите удобный способ общения.',
+                      compact: compact,
+                      minHeight: compact ? 152 : 164,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _AudioActivationSelector(
+                            compact: compact,
+                            value: state.audioActivationMode,
+                            onChanged: (mode) =>
+                                unawaited(state.setAudioActivationMode(mode)),
+                          ),
+                          if (!state.usesTouchPushToTalk) ...[
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed: onCapturePttKey,
+                              icon: Icon(
+                                capturingPttKey
+                                    ? Icons.keyboard
+                                    : Icons.keyboard_alt_outlined,
+                              ),
+                              label: Text(
+                                capturingPttKey
+                                    ? 'Нажмите клавишу… · Esc — отмена'
+                                    : state.pushToTalkKeyLabel == null
+                                    ? 'Назначить PTT-клавишу'
+                                    : 'Клавиша PTT · ${state.pushToTalkKeyLabel}',
+                              ),
+                            ),
+                          ],
+                          if (state.audioActivationMode ==
+                              AudioActivationMode.ptt)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                state.usesTouchPushToTalk
+                                    ? 'Удерживайте кнопку микрофона в панели голосового канала, чтобы говорить. При сворачивании приложения микрофон выключается.'
+                                    : 'Удерживайте назначенную клавишу, чтобы говорить. При потере фокуса микрофон выключается.',
+                                style: const TextStyle(
+                                  color: GcColors.muted,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          MicrophoneControl(
+                            settings: state.microphoneSettings,
+                            runtime: state.microphoneControlsRuntime,
+                            onChanged: state.setMicrophoneSettings,
+                            sensitivity: true,
+                            vad:
+                                state.audioActivationMode ==
+                                AudioActivationMode.vad,
+                            agc: state.audioProcessing.autoGainControl,
+                          ),
+                          if (state.audioActivationError != null) ...[
+                            const SizedBox(height: 8),
+                            _ErrorBanner(message: state.audioActivationError!),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (!state.usesTouchPushToTalk || hardwareKeyboardAvailable)
+                      _AudioSettingsCard(
+                        cardKey: const ValueKey(
+                          'audio-settings-shortcuts-card',
+                        ),
+                        title: 'Быстрые клавиши',
+                        subtitle: 'Назначьте сочетания для микрофона и выключения звука. Они работают только в активном окне.',
+                        compact: compact,
+                        child: Column(
+                          children: [
+                            VoiceShortcutRow(
+                              label: 'Микрофон',
+                              binding: state.microphoneShortcut,
+                              capturing: capturingVoiceShortcut == 'microphone',
+                              onAssign: () =>
+                                  onCaptureVoiceShortcut?.call('microphone'),
+                              onCancel: () => onCaptureVoiceShortcut?.call(''),
+                              onClear: () => unawaited(
+                                state.setVoiceShortcut('microphone', null),
+                              ),
+                            ),
+                            VoiceShortcutRow(
+                              label: 'Выключить звук',
+                              binding: state.deafenShortcut,
+                              capturing: capturingVoiceShortcut == 'deafen',
+                              onAssign: () =>
+                                  onCaptureVoiceShortcut?.call('deafen'),
+                              onCancel: () => onCaptureVoiceShortcut?.call(''),
+                              onClear: () => unawaited(
+                                state.setVoiceShortcut('deafen', null),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton(
+                                onPressed: () {
+                                  onCaptureVoiceShortcut?.call('');
+                                  unawaited(state.voice.resetVoiceShortcuts());
+                                },
+                                child: const Text('Сбросить сочетания'),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                    if (!state.audioDevicesLoading &&
-                        !state.audioDeviceScanFailed) ...[
-                      const SizedBox(height: 8),
-                      if (state.voiceChannel == null)
-                        const Text(
-                          'До подключения выбор устройства используется для локальной проверки; устройство звонка можно переключить после входа.',
-                          style: TextStyle(color: GcColors.muted, fontSize: 12),
-                        ),
-                      const SizedBox(height: 16),
-                      AudioDeviceCheck(
-                        key: const ValueKey('audio-device-check'),
-                        inputDeviceId: inputDevice?.deviceId,
-                        inputDeviceLabel: inputDevice?.label,
-                        outputDeviceId: outputDevice?.deviceId,
-                        outputDeviceLabel: outputDevice?.label,
+                    _AudioSettingsCard(
+                      cardKey: const ValueKey('audio-settings-processing-card'),
+                      title: 'Обработка микрофона',
+                      subtitle: 'Параметры передаются LiveKit. Нативный SDK не сообщает, какие эффекты фактически применены устройством.',
+                      compact: compact,
+                      minHeight: compact ? 256 : 272,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SwitchListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text(
+                              'Автоматическая регулировка усиления',
+                            ),
+                            value: state.audioProcessing.autoGainControl,
+                            onChanged: (value) => state.setAudioProcessing(
+                              state.audioProcessing.copyWith(
+                                autoGainControl: value,
+                              ),
+                            ),
+                          ),
+                          SwitchListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Подавление эха'),
+                            value: state.audioProcessing.echoCancellation,
+                            onChanged: (value) => state.setAudioProcessing(
+                              state.audioProcessing.copyWith(
+                                echoCancellation: value,
+                              ),
+                            ),
+                          ),
+                          MicrophoneControl(
+                            settings: state.microphoneSettings,
+                            runtime: state.microphoneControlsRuntime,
+                            onChanged: state.setMicrophoneSettings,
+                            sensitivity: false,
+                            vad:
+                                state.audioActivationMode ==
+                                AudioActivationMode.vad,
+                            agc: state.audioProcessing.autoGainControl,
+                          ),
+                          NoiseSuppressionSettings(
+                            processing: state.audioProcessing,
+                            runtime: state.noiseSuppressionRuntime,
+                            onChanged: state.setAudioProcessing,
+                          ),
+                          AudioVolumeReset(
+                            reset: state.resetAudioVolumes,
+                            warning: state.voiceVolumeWarning,
+                          ),
+                          VoiceAudioDiagnosticsControl(
+                            connected:
+                                state.voicePhase != VoicePhase.idle &&
+                                state.voicePhase != VoicePhase.error,
+                            diagnostics: state.voiceAudioDiagnostics,
+                          ),
+                        ],
                       ),
-                    ],
-                    if (state.audioSettingsError != null) ...[
-                      const SizedBox(height: 12),
-                      _ErrorBanner(message: state.audioSettingsError!),
-                    ],
+                    ),
                   ],
                 ),
               ),
@@ -6892,10 +6967,150 @@ MediaDevice? _audioDeviceShownByDropdown(
     devices.where((device) => device.deviceId == selectedId).firstOrNull ??
     devices.firstOrNull;
 
+class _AudioSettingsCard extends StatelessWidget {
+  const _AudioSettingsCard({
+    required this.cardKey,
+    required this.title,
+    required this.subtitle,
+    required this.compact,
+    required this.child,
+    this.minHeight,
+  });
+
+  final Key cardKey;
+  final String title;
+  final String subtitle;
+  final bool compact;
+  final Widget child;
+  final double? minHeight;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: cardKey,
+    margin: const EdgeInsets.only(bottom: 20),
+    constraints: minHeight == null
+        ? null
+        : BoxConstraints(minHeight: minHeight!),
+    padding: EdgeInsets.all(compact ? 16 : 24),
+    decoration: BoxDecoration(
+      color: GcColors.surface,
+      border: Border.all(color: GcColors.borderSubtle),
+      borderRadius: BorderRadius.circular(GcRadii.lg),
+    ),
+    child: Material(
+      type: MaterialType.transparency,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: GcColors.text,
+              fontSize: GcTypography.title,
+              height: GcTypography.titleLine / GcTypography.title,
+              fontWeight: GcTypography.semibold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              color: GcColors.textSecondary,
+              fontSize: GcTypography.small,
+              height: 20 / 13,
+            ),
+          ),
+          const SizedBox(height: 20),
+          child,
+        ],
+      ),
+    ),
+  );
+}
+
+class _AudioActivationSelector extends StatelessWidget {
+  const _AudioActivationSelector({
+    required this.compact,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final bool compact;
+  final AudioActivationMode value;
+  final ValueChanged<AudioActivationMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey('audio-settings-activation-segment'),
+    height: compact ? 50 : 46,
+    padding: const EdgeInsets.all(4),
+    decoration: BoxDecoration(
+      color: GcColors.sidebar,
+      border: Border.all(color: GcColors.borderSubtle),
+      borderRadius: BorderRadius.circular(GcRadii.md),
+    ),
+    child: Row(
+      children: [
+        _choice(
+          label: 'По голосу',
+          mode: AudioActivationMode.vad,
+          key: const ValueKey('audio-activation-vad'),
+        ),
+        const SizedBox(width: 4),
+        _choice(
+          label: 'По нажатию',
+          mode: AudioActivationMode.ptt,
+          key: const ValueKey('audio-activation-ptt'),
+        ),
+      ],
+    ),
+  );
+
+  Widget _choice({
+    required String label,
+    required AudioActivationMode mode,
+    Key? key,
+  }) {
+    final selected = value == mode;
+    return Expanded(
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: label,
+        child: Material(
+          color: selected ? GcColors.accent : Colors.transparent,
+          borderRadius: BorderRadius.circular(GcRadii.sm),
+          child: InkWell(
+            key: key,
+            borderRadius: BorderRadius.circular(GcRadii.sm),
+            onTap: () => onChanged(mode),
+            child: SizedBox(
+              height: compact ? 40 : 36,
+              child: Center(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: selected
+                        ? GcColors.onAccent
+                        : GcColors.textSecondary,
+                    fontSize: GcTypography.body,
+                    fontWeight: GcTypography.medium,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AudioDeviceDropdown extends StatelessWidget {
   const _AudioDeviceDropdown({
     required this.label,
-    required this.icon,
     required this.devices,
     required this.selectedId,
     required this.emptyLabel,
@@ -6903,7 +7118,6 @@ class _AudioDeviceDropdown extends StatelessWidget {
   });
 
   final String label;
-  final IconData icon;
   final List<MediaDevice> devices;
   final String? selectedId;
   final String emptyLabel;
@@ -6916,43 +7130,72 @@ class _AudioDeviceDropdown extends StatelessWidget {
         : devices.isEmpty
         ? '__none__'
         : devices.first.deviceId;
-    return InputDecorator(
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: const OutlineInputBorder(),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: selected,
-          items: [
-            if (devices.isEmpty)
-              DropdownMenuItem(
-                value: '__none__',
-                enabled: false,
-                child: Text(emptyLabel),
-              ),
-            for (var index = 0; index < devices.length; index++)
-              DropdownMenuItem(
-                value: devices[index].deviceId,
-                child: Text(
-                  devices[index].deviceId == 'default'
-                      ? 'Системный выбор · $label'
-                      : devices[index].label.trim().isEmpty
-                      ? '$label ${index + 1}'
-                      : devices[index].label,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-          onChanged: devices.isEmpty
-              ? null
-              : (value) {
-                  if (value != null) onChanged(value);
-                },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: GcColors.text,
+            fontSize: GcTypography.body,
+            height: GcTypography.bodyLine / GcTypography.body,
+            fontWeight: GcTypography.medium,
+          ),
         ),
-      ),
+        const SizedBox(height: 8),
+        Container(
+          key: ValueKey('audio-device-control-$label'),
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: GcColors.sidebar,
+            border: Border.all(color: GcColors.control),
+            borderRadius: BorderRadius.circular(GcRadii.md),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isDense: true,
+              isExpanded: true,
+              value: selected,
+              style: const TextStyle(
+                color: GcColors.text,
+                fontSize: GcTypography.body,
+                height: GcTypography.bodyLine / GcTypography.body,
+              ),
+              icon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: GcColors.muted,
+                size: GcLayout.iconSize,
+              ),
+              items: [
+                if (devices.isEmpty)
+                  DropdownMenuItem(
+                    value: '__none__',
+                    enabled: false,
+                    child: Text(emptyLabel),
+                  ),
+                for (var index = 0; index < devices.length; index++)
+                  DropdownMenuItem(
+                    value: devices[index].deviceId,
+                    child: Text(
+                      devices[index].deviceId == 'default'
+                          ? 'Системный выбор · $label'
+                          : devices[index].label.trim().isEmpty
+                          ? '$label ${index + 1}'
+                          : devices[index].label,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+              onChanged: devices.isEmpty
+                  ? null
+                  : (value) {
+                      if (value != null) onChanged(value);
+                    },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

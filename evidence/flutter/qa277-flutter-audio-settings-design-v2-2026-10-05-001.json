@@ -1,0 +1,60 @@
+{
+  "id": "QA-277",
+  "date": "2026-10-05",
+  "task": "FV2-027 — Flutter Design V2 audio settings device-first cards and activation controls",
+  "source_revision": "6bec40e0",
+  "working_tree_changes": true,
+  "summary": "The audio settings screen now matches the Web Design V2 information hierarchy: device selection/local check first, then activation, applicable keyboard shortcuts, and processing cards. Existing device selection, local test, PTT/touch, shortcut, and processing state behavior is preserved. Compact layout now moves the full subtitle into a full-width body intro above the first card so it does not truncate in the fixed-height workspace header. Android API 35 and macOS runtime visual acceptance both pass.",
+  "checks": [
+    {
+      "name": "Test-first widget regressions",
+      "result": "PASS",
+      "observation": "New compact Android and desktop tests assert device-first ordering, card surfaces, minimum geometry, 44 px device selectors, activation segment dimensions, and no compact-layout exception. The compact subtitle regression first failed because its paragraph exceeded one line in the fixed header; moving it to a full-width body intro made the regression pass without expanding the shared header or overflowing its row."
+    },
+    {
+      "name": "Focused audio/workspace widget tests",
+      "result": "PASS",
+      "observation": "flutter test --no-pub test/workspace_screen_test.dart passed all 65 tests, including PTT and existing audio-device/local-check behavior."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "result": "PASS",
+      "observation": "flutter test --no-pub passed all 570 tests."
+    },
+    {
+      "name": "Changed test analyzer",
+      "result": "PASS",
+      "observation": "dart analyze lib/src/screens/workspace_screen.dart test/workspace_screen_test.dart exits successfully with only three existing curly_braces_in_flow_control_structures infos at lines 155, 315, and 404; the changed test file has no diagnostics and no diagnostic points to the new audio-settings code."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "result": "PASS_WITH_LIMITATION",
+      "observation": "The repository PowerShell verifier could not run because pwsh is not installed. A Ruby check replicated its committed-index checks: 39 unique requirement IDs, all referenced in backlog/tasks.yaml; the YAML parses. The approved brief is not available at its Windows source path on this host."
+    },
+    {
+      "name": "Android release build and update install",
+      "result": "PASS",
+      "observation": "Built arm64 release APK 1.0.30+2065 at clients/flutter/build/app/outputs/flutter-apk/app-release.apk (71.8 MB as reported by Flutter) and installed it with adb install -r over ru.boohtacord.app on Android Emulator API 35. The installed versionCode is 2065; app data was not cleared."
+    },
+    {
+      "name": "Android audio settings runtime visual acceptance",
+      "result": "PASS",
+      "observation": "Installed release 1.0.30+2065 was opened on API 35. A fresh 1080×2400 capture confirms the full subtitle 'Проверьте устройства перед разговором.' at body width before the device card, with no ellipsis; the device/local-check card is first and the activation card follows. A scrolled capture confirms activation and processing cards remain reachable, readable, and unclipped. No audio test, microphone permission, or setting change was performed. Captures: /private/tmp/boohtacord-audio-settings-2065.png and /private/tmp/boohtacord-audio-settings-scroll.png."
+    },
+    {
+      "name": "macOS runtime visual acceptance",
+      "result": "PASS",
+      "observation": "The current native arm64 macOS Debug app received source via DevTools hot reload ('reloaded in 559.8 ms'); no full app restart or Keychain prompt occurred. The screenshot and accessibility tree show the full header subtitle, device selection/local-check card first, activation card second, and shortcut card on desktop. No settings or microphone state were changed."
+    },
+    {
+      "name": "Repository diff hygiene",
+      "result": "PASS",
+      "observation": "git diff --check passes. No web source was changed. The user-owned clients/flutter/packages/flutter_webrtc/.gitignore modification remains outside this task."
+    }
+  ],
+  "limitations": [
+    "The PowerShell verifier could not be executed on this host; only its committed-index checks were reproduced in Ruby.",
+    "Windows native runtime visual acceptance is tracked by the broader FV2-006 platform gate and is not part of this leaf's macOS/Android acceptance."
+  ],
+  "status": "PASS — FV2-027 acceptance complete on Android API 35 and macOS; broader FE-70 remains open"
+}
