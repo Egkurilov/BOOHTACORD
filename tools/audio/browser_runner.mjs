@@ -6,7 +6,9 @@ const root = fileURLToPath(new URL('../../clients/web/', import.meta.url))
 const { createServer } = await import(new URL('../../clients/web/node_modules/vite/dist/node/index.js', import.meta.url))
 const { AccessToken } = createRequire(new URL('../../clients/web/package.json', import.meta.url))('livekit-server-sdk')
 const livekitUrl = process.env.RNNOISE_LIVEKIT_URL ?? 'ws://127.0.0.1:17880'
-const server = await createServer({ root, server: { host: '127.0.0.1', port: 4800, strictPort: true }, appType: 'custom' })
+const server = await createServer({ root,
+  optimizeDeps: { entries: ['tests/audio/fixture.html'] },
+  server: { host: '127.0.0.1', port: 4800, strictPort: true }, appType: 'custom' })
 const versionPath = resolve(root, 'public/audio/rnnoise/v0.1-cdf196b/rnnoise-manifest.json')
 server.middlewares.use((request, response, next) => {
   response.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self' ws://127.0.0.1:4800 ws://127.0.0.1:17880; style-src 'self' 'unsafe-inline'; media-src 'self' blob:")
@@ -20,7 +22,12 @@ server.middlewares.use((request, response, next) => {
     return
   }
   if (request.url === '/tests/audio/fixture.html') {
-    response.setHeader('Content-Type', 'text/html'); response.end(readFileSync(resolve(root, 'tests/audio/fixture.html'))); return
+    response.setHeader('Content-Type', 'text/html')
+    const html = readFileSync(resolve(root, 'tests/audio/fixture.html'), 'utf8')
+    void server.transformIndexHtml(request.url, html).then(value => response.end(value)).catch(() => {
+      response.statusCode = 500; response.end('Fixture HTML transform failed')
+    })
+    return
   }
   if (request.url === '/audio/rnnoise/html/rnnoise-manifest.json') {
     response.setHeader('Content-Type', 'text/html'); response.end('<html>wrong asset</html>'); return

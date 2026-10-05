@@ -10,6 +10,7 @@ def main():
     run(sys.executable, "-m", "tools.audio.native_tests.run")
     build_assets(ROOT)
     run("npm", "ci", cwd=client("web"))
+    run("node", "--test", "tools/audio/browser_fixture/html.test.mjs")
     run("node", "--test", "tools/verify/dependencies/web_imports.test.mjs")
     run(sys.executable, "-m", "tools.verify.dependencies.web")
     run("npm", "test", cwd=client("web"))
