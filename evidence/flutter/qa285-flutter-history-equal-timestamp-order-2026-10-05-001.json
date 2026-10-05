@@ -1,0 +1,54 @@
+{
+  "id": "QA-285",
+  "date": "2026-10-05",
+  "task": "FV2-032 — Flutter TEXT and DM history use deterministic ordering for equal timestamps",
+  "source_revision": "e6d836d8",
+  "working_tree_changes": true,
+  "summary": "Flutter now sorts both TEXT and DM messages by creation time and then ascending message ID, matching web's rendered chronological order when timestamps tie.",
+  "checks": [
+    {
+      "name": "Test-first baseline reproduction",
+      "command": "cd clients/flutter && flutter test --no-pub test/app_state_test.dart --plain-name 'equal-timestamp'",
+      "result": "FAIL_AS_EXPECTED_BEFORE_FIX",
+      "observation": "Both TEXT and DM regressions expected ascending IDs but received the deliberately reversed input order when creation timestamps tied."
+    },
+    {
+      "name": "Focused TEXT/DM ordering regressions",
+      "command": "cd clients/flutter && flutter test --no-pub test/app_state_test.dart --plain-name 'equal-timestamp'",
+      "result": "PASS",
+      "passed": 2
+    },
+    {
+      "name": "Changed-file Dart analyzer",
+      "command": "cd clients/flutter && dart analyze lib/src/features/text/send_state/reconcile.dart lib/src/features/direct/send_state/reconcile.dart test/app_state_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter compact",
+      "result": "PASS",
+      "passed": 623
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this host."
+    },
+    {
+      "name": "Backlog YAML validation",
+      "command": "ruby -e 'require \"yaml\"; YAML.load_file(\"backlog/tasks.yaml\")'",
+      "result": "PASS"
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "No API, server, cursor, or read-state behavior changed."
+  ],
+  "status": "IMPLEMENTED; TESTS_AND_ANALYZER_PASS"
+}

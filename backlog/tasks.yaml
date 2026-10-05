@@ -258,6 +258,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-CHAT-01, REQ-CHAT-02]
     depends_on: [FV2-002, T-040, T-051]
     evidence: [flutter-history-overlap-revision-tests, flutter-full-suite, QA-284]
+  - id: FV2-032
+    title: Flutter text and DM history use deterministic ordering for equal timestamps
+    requirements: [REQ-UI-01, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]
+    depends_on: [FV2-002, T-040, T-041, T-051]
+    evidence: [flutter-history-equal-timestamp-order-tests, flutter-full-suite, QA-285]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

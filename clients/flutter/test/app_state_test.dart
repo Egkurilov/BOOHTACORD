@@ -949,6 +949,34 @@ void main() {
     },
   );
 
+  test('orders equal-timestamp text messages by id like web', () async {
+    final api = _FakeApi(topology)
+      ..reverseEqualTimestampMessageIds = true;
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+
+    expect(state.messages.map((message) => message.id), [
+      'message-a',
+      'message-z',
+    ]);
+  });
+
+  test('orders equal-timestamp DM messages by id like web', () async {
+    final api = _FakeApi(topology, includeDirectMessage: true)
+      ..reverseEqualTimestampMessageIds = true;
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
+    await state.showDirectMessages();
+    await state.openDirectConversation(state.directMessages.single);
+
+    expect(state.directMessageHistory.map((message) => message.id), [
+      'dm-message-a',
+      'dm-message-z',
+    ]);
+  });
+
   test(
     'older text pages prefer the newer revision of an overlapping row',
     () async {
@@ -1298,6 +1326,7 @@ class _FakeApi extends ApiClient {
   int olderTextRevision = 1;
   int? overlappingTextRevision;
   int olderDirectRevision = 1;
+  bool reverseEqualTimestampMessageIds = false;
   String? deletedTextMessageId;
   String? deletedDirectMessageId;
   String? uploadedTextChannelId;
@@ -1451,17 +1480,31 @@ class _FakeApi extends ApiClient {
   Future<List<DirectCandidate>> directMessageCandidates() async => const [];
 
   @override
-  Future<List<DirectChatMessage>> directMessageHistory(String id) async => [
-    DirectChatMessage(
-      id: 'dm-message-1',
-      directMessageId: id,
-      authorId: 'account-2',
-      body: 'Личное сообщение',
-      createdAt: DateTime.utc(2026, 9, 24),
-      deleted: false,
-      revision: 1,
-    ),
-  ];
+  Future<List<DirectChatMessage>> directMessageHistory(String id) async =>
+      reverseEqualTimestampMessageIds
+      ? [
+          for (final messageId in ['dm-message-z', 'dm-message-a'])
+            DirectChatMessage(
+              id: messageId,
+              directMessageId: id,
+              authorId: 'account-2',
+              body: messageId,
+              createdAt: DateTime.utc(2026, 9, 24),
+              deleted: false,
+              revision: 1,
+            ),
+        ]
+      : [
+          DirectChatMessage(
+            id: 'dm-message-1',
+            directMessageId: id,
+            authorId: 'account-2',
+            body: 'Личное сообщение',
+            createdAt: DateTime.utc(2026, 9, 24),
+            deleted: false,
+            revision: 1,
+          ),
+        ];
 
   @override
   Future<DirectChatMessagePage> directMessageHistoryPage(
@@ -1498,17 +1541,31 @@ class _FakeApi extends ApiClient {
   }
 
   @override
-  Future<List<ChatMessage>> messages(String channelId) async => [
-    ChatMessage(
-      id: 'message-1',
-      channelId: channelId,
-      authorId: 'account-1',
-      body: 'Первое сообщение',
-      createdAt: DateTime.utc(2026, 9, 20),
-      deleted: false,
-      revision: 1,
-    ),
-  ];
+  Future<List<ChatMessage>> messages(String channelId) async =>
+      reverseEqualTimestampMessageIds
+      ? [
+          for (final messageId in ['message-z', 'message-a'])
+            ChatMessage(
+              id: messageId,
+              channelId: channelId,
+              authorId: 'account-1',
+              body: messageId,
+              createdAt: DateTime.utc(2026, 9, 20),
+              deleted: false,
+              revision: 1,
+            ),
+        ]
+      : [
+          ChatMessage(
+            id: 'message-1',
+            channelId: channelId,
+            authorId: 'account-1',
+            body: 'Первое сообщение',
+            createdAt: DateTime.utc(2026, 9, 20),
+            deleted: false,
+            revision: 1,
+          ),
+        ];
 
   @override
   Future<ChatMessagePage> messagePage(

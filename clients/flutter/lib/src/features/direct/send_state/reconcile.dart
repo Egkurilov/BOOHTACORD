@@ -19,7 +19,10 @@ extension ConversationWithPendingDirect on ConversationController {
             !confirmedIds.contains(message.clientMessageId),
       ),
     ];
-    combined.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    combined.sort((a, b) {
+      final byCreatedAt = a.createdAt.compareTo(b.createdAt);
+      return byCreatedAt != 0 ? byCreatedAt : a.id.compareTo(b.id);
+    });
     return combined;
   }
 }
