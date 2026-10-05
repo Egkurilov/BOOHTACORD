@@ -1316,6 +1316,17 @@ GitHub CI run pass. CI retained both the Android Debug APK and Windows x64
 Release distribution; server SQL ordering was inspected —
 [QA-294](../evidence/flutter/qa294-flutter-text-read-cursor-order-2026-10-05-001.json).
 
+## Attachment size rejection and failed queue (FV2-038)
+
+The web upload queue retains every failed file, including a file rejected by
+the local 25 MB limit, so the user can remove it or retry after correcting the
+problem. Flutter previously displayed the size error but discarded the source
+for both native file selection and clipboard-image paste. Both paths now use
+the common upload validation and preserve locally rejected sources in the
+actionable failed queue. Regression tests first reproduced the missing chips;
+the complete attachment-composer test file now passes —
+[QA-295](../evidence/flutter/qa295-flutter-attachment-size-failure-queue-parity-2026-10-05-001.json).
+
 ## Client update awareness
 
 Web, Android and Windows use independent release identities with shared policy

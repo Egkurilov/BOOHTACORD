@@ -60,6 +60,54 @@ void main() {
     expect(state.uploadedNames, ['note.txt']);
   });
 
+  testWidgets('keeps oversized selected files in the failed queue', (
+    tester,
+  ) async {
+    final state = _UploadState();
+    addTearDown(state.dispose);
+    final controller = TextEditingController();
+    final focusNode = FocusNode();
+    final key = GlobalKey<MessageAttachmentComposerState>();
+    final oversizedFile = XFile.fromData(
+      Uint8List(25000001),
+      path: _fixturePath('large.bin'),
+    );
+    addTearDown(controller.dispose);
+    addTearDown(focusNode.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MessageAttachmentComposer(
+            key: key,
+            state: state,
+            channelId: 'text-a',
+            textController: controller,
+            focusNode: focusNode,
+            attachments: const [],
+            filePicker: () async => [oversizedFile],
+            onChanged: (_) {},
+            onPending: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    await key.currentState!.pickFiles();
+    await tester.pumpAndSettle();
+
+    expect(state.uploadedNames, isEmpty);
+    expect(
+      find.text('large.bin · не загружено'),
+      findsOneWidget,
+      reason: 'oversized files should stay removable in the failed queue',
+    );
+    expect(
+      find.text('Каждый файл должен быть не больше 25 МБ.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('pastes clipboard text at the selection and uploads its image', (
     tester,
   ) async {
@@ -221,6 +269,7 @@ void main() {
         find.text('Каждый файл должен быть не больше 25 МБ.'),
         findsOneWidget,
       );
+      expect(find.text('clipboard-image.png · не загружено'), findsOneWidget);
     },
   );
 

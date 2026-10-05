@@ -202,10 +202,6 @@ class MessageAttachmentComposerState extends State<MessageAttachmentComposer> {
     final generation = expectedGeneration ?? _generation;
     final scope = expectedScope ?? _scope;
     if (!_isCurrent(generation, scope)) return;
-    if (bytes.isEmpty || bytes.length > 25000000) {
-      setState(() => _error = 'Каждый файл должен быть не больше 25 МБ.');
-      return;
-    }
     final remaining = 10 - widget.attachments.length - _failedFiles.length;
     if (remaining <= 0) {
       setState(
@@ -282,7 +278,10 @@ class MessageAttachmentComposerState extends State<MessageAttachmentComposer> {
           widget.onChanged(List.unmodifiable(selected));
         } on FormatException catch (cause) {
           if (!_isCurrent(generation, scope)) return;
-          setState(() => _error = cause.message);
+          setState(() {
+            _failedFiles.add(file);
+            _error = cause.message;
+          });
         } catch (cause) {
           if (!_isCurrent(generation, scope)) return;
           setState(() {
