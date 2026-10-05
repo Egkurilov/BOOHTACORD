@@ -6,7 +6,7 @@ extension ConversationCancellation on ConversationController {
     invalidateSelection();
     sending = false;
     pendingTextReads.clear();
-    pendingTextReadAt.clear();
+    pendingTextReadCursor.clear();
     lastReadDirectMessageId = null;
     pendingTextSends.updateAll(
       (_, message) => message.withSendStatus(MessageSendStatus.failed),

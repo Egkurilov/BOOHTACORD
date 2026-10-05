@@ -283,6 +283,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-VOICE-01, REQ-SCREEN-01, REQ-SCREEN-02, REQ-CAPACITY-02]
     depends_on: [FV2-003, T-030, T-051]
     evidence: [android-screen-receiver-60fps-paired-acceptance, emulator-vs-device-decoder-comparison, QA-293]
+  - id: FV2-037
+    title: Flutter TEXT read cursor ordering matches web and server
+    requirements: [REQ-CHAT-01, REQ-CHAT-02]
+    depends_on: [T-040, T-051]
+    evidence: [flutter-text-read-cursor-order-tests, flutter-full-suite, flutter-changed-file-analysis, android-debug-build, macos-debug-build, QA-294]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

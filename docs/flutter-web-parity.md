@@ -1301,6 +1301,20 @@ root cause open until a synchronized Mac/Web/Android receiver run captures the
 same publication and sender/receiver frame counters, followed by an emulator vs
 physical-device comparison — [QA-293](../evidence/flutter/qa293-android-receiver-decoded-fps-parity-2026-10-05-001.json).
 
+## TEXT visible read cursor ordering (FV2-037)
+
+The server advances a channel cursor monotonically by the tuple
+`(message_created_at, message_id)`. Web's visible-read gate follows the ordered
+message list, while Flutter previously cached only `createdAt`; after reading
+one message, a second visible message with the same timestamp was incorrectly
+discarded locally. A test-first regression reproduced one advance instead of
+two for `message-a` then `message-z`. Flutter now compares the same timestamp/ID
+tuple both for confirmed and in-flight cursors, including out-of-order request
+completion, without changing the API contract or web implementation. The focused
+regressions, full Flutter suite, Android Debug build and macOS Debug build pass;
+server SQL ordering was inspected —
+[QA-294](../evidence/flutter/qa294-flutter-text-read-cursor-order-2026-10-05-001.json).
+
 ## Client update awareness
 
 Web, Android and Windows use independent release identities with shared policy
