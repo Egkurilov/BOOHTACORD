@@ -60,6 +60,21 @@ describe('voice-room visual status and screen presentation', () => {
     expect(members).toContain('Говорит')
   })
 
+  it('shows screen thumbnails in the room screen rail, not in participant cards', () => {
+    const connected = source('./VoiceRoomConnected.vue')
+    const rail = source('./ScreenViewerRail.vue')
+    const participants = source('./VoiceParticipantVolumes.vue')
+
+    expect(connected).toContain('<ScreenViewerRail')
+    expect(connected).toContain(':cards="screenViewerCards"')
+    expect(connected).toContain(':show-return-to-voice="false"')
+    expect(connected).not.toContain('room-watch-primary')
+    expect(rail).toContain('<h3>Демонстрации в канале</h3>')
+    expect(rail).toContain('stream.thumbnailUrl')
+    expect(participants).not.toContain('stream-thumbnail')
+    expect(participants).not.toContain('thumbnailUrl')
+  })
+
   it('distinguishes an unselected view from a selected but not joined voice room', () => {
     const panel = source('../workspace/WorkspaceMembersPanel.vue')
     expect(panel).toContain('selectedVoiceChannel')

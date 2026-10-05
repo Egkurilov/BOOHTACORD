@@ -18,6 +18,17 @@ class VoiceScreenChoice {
     this.thumbnail,
   }) : assert(isLocal ? identity == null : identity != null);
 
+  const VoiceScreenChoice.local({
+    required this.selected,
+    this.avatarIdentity,
+    this.avatarLabel,
+    this.thumbnail,
+  }) : identity = null,
+       label = 'Ваш экран',
+       isLocal = true,
+       accountId = null,
+       hasAudio = false;
+
   final String? identity;
   final String label;
   final bool selected;

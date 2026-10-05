@@ -1,0 +1,77 @@
+{
+  "id": "QA-288",
+  "date": "2026-10-05",
+  "task": "FV2-035 — Flutter and web screen thumbnails live in the screen-sharing rail",
+  "source_revision": "10f1eba3",
+  "working_tree_changes": true,
+  "summary": "Screen-share thumbnails are presented in the stream-selection rail rather than participant cards. Flutter shows local and remote thumbnails in the screen viewer/ended-screen rails; web exposes its thumbnail rail in the connected voice room and keeps participant cards focused on identity and controls.",
+  "checks": [
+    {
+      "name": "Flutter rail test-first regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/voice_screen_selection_rail_test.dart",
+      "result": "PASS",
+      "passed": 3,
+      "observation": "Covers the local and remote image thumbnails, responsive card geometry, semantics, and placement below the video stage. Before implementation, the local choice fixture failed to compile because its dedicated constructor did not exist."
+    },
+    {
+      "name": "Changed-file Flutter analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/voice_screen_selection_rail.dart lib/src/screens/workspace_screen.dart test/voice_screen_selection_rail_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Web voice-room regression",
+      "command": "cd clients/web && npm test -- --run src/voice/voice_room_presentation.spec.ts",
+      "result": "PASS",
+      "passed": 9,
+      "observation": "Asserts screen thumbnails are supplied through the room screen rail and absent from participant cards. The newly added test failed before implementation because the connected room had no screen rail."
+    },
+    {
+      "name": "Full web test suite",
+      "command": "cd clients/web && npm test",
+      "result": "PASS",
+      "test_files": 336,
+      "passed": 1081
+    },
+    {
+      "name": "Web production build",
+      "command": "cd clients/web && npm run build",
+      "result": "PASS",
+      "observation": "Vue typecheck and Vite production build succeeded. Existing LiveKit dynamic-import and large-chunk warnings remain."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 623
+    },
+    {
+      "name": "Android Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug",
+      "result": "PASS",
+      "observation": "Built build/app/outputs/flutter-apk/app-debug.apk; it was not installed on a device."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "observation": "Built build/macos/Build/Products/Debug/BOOHTACORD.app; it was not launched."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this host."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "Android and macOS runtime screenshots were not captured; layout and thumbnail behavior were verified by Flutter widget tests and web source/component tests.",
+    "No APK was installed and neither desktop app was launched for runtime visual acceptance."
+  ],
+  "status": "IMPLEMENTED; WEB_BUILD_AND_TESTS_PASS; FLUTTER_TESTS_ANALYZER_AND_ANDROID_MACOS_DEBUG_BUILDS_PASS; DEVICE_VISUAL_ACCEPTANCE_AND_TRACEABILITY_VERIFIER_NOT_RUN"
+}
