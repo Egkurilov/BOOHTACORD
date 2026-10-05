@@ -1,8 +1,10 @@
+import { parseMessageKind, type MessageKind } from './system_welcome/kind'
 import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { MessageRequestError, type MessageRequest } from './message_client'
 
 export interface TextMessageSearchResult {
+  kind?: MessageKind
   id: string
   channelId: string
   authorId: string
@@ -40,7 +42,7 @@ function result(value: unknown): TextMessageSearchResult {
     return malformed()
   }
 
-  return { id, channelId, authorId, body, createdAt, editedAt: text(source.edited_at) ?? undefined, revision: source.revision as number }
+  return { ...(source.kind === undefined ? {} : { kind: parseMessageKind(source.kind) }), id, channelId, authorId, body, createdAt, editedAt: text(source.edited_at) ?? undefined, revision: source.revision as number }
 }
 
 async function checked(response: Response): Promise<unknown> {

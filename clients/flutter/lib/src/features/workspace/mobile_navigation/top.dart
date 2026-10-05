@@ -4,6 +4,7 @@ import '../../../theme.dart';
 import 'guild_mark.dart';
 import 'search_launcher.dart';
 import 'tabs.dart';
+import '../../guild/profile/name.dart';
 
 class WorkspaceNavigationTop extends StatelessWidget {
   const WorkspaceNavigationTop({
@@ -15,9 +16,11 @@ class WorkspaceNavigationTop extends StatelessWidget {
     required this.onDirectMessages,
     this.onClose,
     this.searchFocusNode,
+    this.guildName = 'BOOHTACORD',
   });
 
   final int? memberCount;
+  final String guildName;
   final bool channelsSelected;
   final VoidCallback onSearch;
   final VoidCallback onChannels;
@@ -54,7 +57,7 @@ class WorkspaceNavigationTop extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Моя гильдия', style: TextStyle(
+                      GuildName(guildName, style: const TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w600,
                       )),
                       if (memberCount != null)

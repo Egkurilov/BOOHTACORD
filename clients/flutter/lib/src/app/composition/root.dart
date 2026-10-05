@@ -24,6 +24,7 @@ import 'workspace.dart';
 import 'media.dart';
 import 'realtime.dart';
 import 'dispose.dart';
+import 'guild.dart';
 
 class AppState extends AppOwners
     with
@@ -57,6 +58,7 @@ class AppState extends AppOwners
     super.nativeNotifications,
     super.voiceRoomFactory,
   }) {
+    configureGuild(this);
     configureSession(this);
     configureWorkspace(this);
     configureMedia(this);

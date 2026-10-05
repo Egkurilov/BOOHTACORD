@@ -1,0 +1,21 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BOOHTACORD</title><div id="app"></div>
+<script type="module">
+import { createApp,h,ref,watch } from 'vue'
+import { createPinia } from 'pinia'
+import GuildName from '/src/guild/profile/GuildName.vue'
+import { guildProfile } from '/src/guild/profile/state.ts'
+import AdminGuildSettings from '/src/admin/guild_settings/AdminGuildSettings.vue'
+import SystemWelcomeMessage from '/src/conversation/system_welcome/SystemWelcomeMessage.vue'
+import { useAuthorDirectory } from '/src/identity/author_directory.ts'
+import { parseRealtimeEvent } from '/src/realtime/realtime_client.ts'
+import '/src/style.css'
+const categories=[{id:'category',name:'Общее',position:0,channels:[{id:'00000000-0000-4000-8000-000000000001',name:'Чат',kind:'TEXT',position:0,admissionClosed:false},{id:'voice',name:'Голос',kind:'VOICE',position:1,admissionClosed:false}]}]
+const pinia=createPinia(),deleted=ref(false),authors=useAuthorDirectory(pinia)
+window.renameMember=name=>authors.acceptOwnProfile({account_id:'member',display_name:name,avatar_url:null,login:'member',role:'MEMBER'})
+window.renameMember('Участник')
+window.profileHint=value=>guildProfile.refresh(parseRealtimeEvent(value).payload.revision)
+watch(guildProfile.name,name=>document.title=name)
+createApp({render:()=>h('main',{style:'max-width:600px'},[h('header',{style:'max-width:300px'},[h(GuildName)]),h(AdminGuildSettings,{categories}),h(SystemWelcomeMessage,{authorId:'member',body:'врывается в гильдию.',deleted:deleted.value})])}).use(pinia).mount('#app')
+window.deleteWelcome=()=>deleted.value=true
+guildProfile.refresh()
+</script></html>

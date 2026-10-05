@@ -17,7 +17,8 @@
     "test:audio:quality": "node ../../tools/audio/quality_harness.mjs",
     "test:audio:browser": "playwright test -c tests/audio/playwright.config.ts",
     "test:own-sessions": "playwright test -c tests/own_sessions/playwright.config.ts",
-    "test:delivery": "playwright test -c tests/delivery_uncertainty/playwright.config.ts"
+    "test:delivery": "playwright test -c tests/delivery_uncertainty/playwright.config.ts",
+    "test:guild-lifecycle": "playwright test --config tests/guild_lifecycle/playwright.config.ts"
   },
   "dependencies": {
     "@opentelemetry/api": "1.9.1",

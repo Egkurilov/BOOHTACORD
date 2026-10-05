@@ -12,6 +12,8 @@ import '../app_state.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../services/message_presentation.dart';
+import '../features/text/system_welcome/row.dart';
+import '../features/text/system_welcome/content.dart';
 import '../services/composer_draft_memory.dart';
 import '../services/pinned_screen_mini_player_policy.dart';
 import '../services/api_client.dart';
@@ -980,6 +982,7 @@ class _Sidebar extends StatelessWidget {
     child: Column(
       children: [
         WorkspaceNavigationTop(
+          guildName: state.guildProfile.name,
           memberCount: state.members.isEmpty ? null : state.members.length,
           channelsSelected:
               state.navigationSection == NavigationSection.channels,
@@ -1745,7 +1748,7 @@ class _MainSurface extends StatelessWidget {
         children: [
           _Header(
             icon: Icons.forum_outlined,
-            title: 'Моя гильдия',
+            title: state.guildProfile.name,
             subtitle: 'Выберите канал',
             onToggleNavigation: onToggleNavigation,
             onOpenMembers: onOpenMembers,
@@ -2806,6 +2809,7 @@ class _MessageRow extends StatelessWidget {
         .where((value) => value.id == message.authorId)
         .firstOrNull;
     final authorName = member?.displayName ?? message.authorId;
+    if(message.kind=='SYSTEM_WELCOME') return SystemWelcomeMessage(message:message,displayName:member?.displayName??'Участник',onDelete:state.user?.isAdmin==true?()async{if(await _confirmDelete(context))await state.deleteText(message);}:null);
     final time =
         '${message.createdAt.hour.toString().padLeft(2, '0')}:${message.createdAt.minute.toString().padLeft(2, '0')}';
     return Row(
@@ -3021,7 +3025,9 @@ class _SearchContextMessage {
     required this.deleted,
     required this.attachments,
     this.editedAt,
+    this.messageKind='USER',
   });
+  final String messageKind;
   final String id;
   final String authorId;
   final String body;
@@ -3938,7 +3944,7 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
                                         ),
                                       ),
                                       const SizedBox(height: 8),
-                                      FormattedMessageBody(
+                                      message.messageKind=='SYSTEM_WELCOME'?SystemWelcomeContent(displayName:author,body:message.body):FormattedMessageBody(
                                         body: message.body,
                                         color: GcColors.text,
                                         fontSize: 14,
@@ -3995,6 +4001,7 @@ class _SearchMessageContextState extends State<_SearchMessageContext> {
         : widget.state.searchContextTextMessages
               .map(
                 (message) => _SearchContextMessage(
+                  messageKind:message.kind,
                   id: message.id,
                   authorId: message.authorId,
                   body: message.body,
@@ -4118,7 +4125,7 @@ class _SearchMessageContextState extends State<_SearchMessageContext> {
                           ),
                         )
                       else ...[
-                        FormattedMessageBody(body: body, color: GcColors.text),
+                        message.messageKind=='SYSTEM_WELCOME'?SystemWelcomeContent(displayName:authorName,body:body):FormattedMessageBody(body: body, color: GcColors.text),
                         if (attachments.isNotEmpty && conversationId != null)
                           MessageAttachmentList(
                             state: widget.state,

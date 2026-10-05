@@ -6,6 +6,7 @@ import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import '../app_version.dart';
 import '../app_state.dart';
 import '../theme.dart';
+import '../features/guild/profile/name.dart';
 import '../services/password_generator.dart';
 import '../features/authentication/password_generation/controls.dart';
 
@@ -199,9 +200,9 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'Voice Platform',
-                            style: TextStyle(
+                          GuildName(
+                            widget.state.guildProfile.name,
+                            style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w600,
                               height: 32 / 24,

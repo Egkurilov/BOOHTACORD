@@ -13,6 +13,18 @@ void configureRealtime(AppOwners app) {
     app.workspace,
     app.nativeNotifications,
     hasUser: () => app.session.user != null,
+    isWelcome: (event) async {
+      final page = await app.api.messagePage(
+        event.payload['channel_id'] as String,
+        at: event.payload['message_id'] as String,
+      );
+      return page.messages.any(
+        (message) =>
+            message.id == event.payload['message_id'] &&
+            message.kind == 'SYSTEM_WELCOME' &&
+            !message.deleted,
+      );
+    },
   );
   app.realtime = RealtimeController(
     app.api,
@@ -26,6 +38,7 @@ void configureRealtime(AppOwners app) {
       voiceRevoked: app.voice.dispatchVoiceRevocation,
       permissionsChanged: () => unawaited(app.permissions.refresh()),
       notifyMessage: notifications.call,
+      guildChanged: (revision) => unawaited(app.guildProfile.refresh(revision)),
     ).call,
   )..addListener(app.notifyListeners);
 }

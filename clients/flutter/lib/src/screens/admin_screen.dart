@@ -10,10 +10,11 @@ import '../services/api_client.dart';
 import '../theme.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../features/admin/role_permissions/panel.dart';
+import '../features/admin/guild_settings/panel.dart';
 import 'admin_member_filter.dart';
 import 'admin_member_filters.dart';
 
-enum _AdminSection { members, roles, channels, audit, media }
+enum _AdminSection { members, roles, channels, audit, media, guild }
 
 class _AdminAccountDraft {
   _AdminAccountDraft({required this.role, required this.blocked});
@@ -742,6 +743,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                         label: 'Разделы администрирования',
                                         child: Row(
                                           children: [
+                                            _adminSectionTab('Гильдия', _AdminSection.guild),
                                             _adminSectionTab(
                                               'Участники',
                                               _AdminSection.members,
@@ -798,7 +800,9 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                           ),
                         ),
                         Expanded(
-                          child: _selectedAdminSection == _AdminSection.roles
+                          child: _selectedAdminSection == _AdminSection.guild
+                              ? AdminGuildSettings(api: widget.state.api,channels: widget.state.topology?.categories.expand((category)=>category.channels).toList()??[],onSaved:widget.state.guildProfile.refresh)
+                              : _selectedAdminSection == _AdminSection.roles
                               ? RolePermissionsPanel(
                                   api: widget.state.api,
                                   onSaved: widget.state.permissions.refresh,

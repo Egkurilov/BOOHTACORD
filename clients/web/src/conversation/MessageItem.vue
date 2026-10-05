@@ -13,6 +13,7 @@ import DirectMessageAttachments from '../direct_message/DirectMessageAttachments
 import { useMessageEditController, type EditResult } from './message_edit_controller'
 import { handleMessageEditKeydown } from './message_edit_shortcuts'
 import { useMessageActionDisclosure } from './message_actions/disclosure'
+import SystemWelcomeMessage from './system_welcome/SystemWelcomeMessage.vue'
 
 type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments' | 'mentionUserIds'> & { channelId?: string; directMessageId?: string; attachments?: TextMessageAttachment[]; mentionUserIds?: string[] }
 
@@ -58,7 +59,8 @@ function remove(): void {
 </script>
 
 <template>
-  <article ref="row" class="message-item message-row" :class="{ deleted: message.deleted, grouped: compact }" tabindex="-1" @pointerdown="onRowPointerDown" @focusout="onRowFocusOut">
+  <SystemWelcomeMessage v-if="message.kind === 'SYSTEM_WELCOME'" :body="message.body" :author-id="message.authorId" :created-at="message.createdAt" :deleted="message.deleted" :can-delete="canDelete" @remove="emit('remove')" />
+  <article v-else ref="row" class="message-item message-row" :class="{ deleted: message.deleted, grouped: compact }" tabindex="-1" @pointerdown="onRowPointerDown" @focusout="onRowFocusOut">
     <span v-if="compact" class="message-avatar-spacer" aria-hidden="true"></span>
     <img v-else-if="authorAvatar && !avatarFailed" class="message-avatar" :src="authorAvatar" alt="" @error="avatarFailed = true">
     <span v-else class="message-avatar" :style="avatarFallbackStyle(message.authorId)" aria-hidden="true">{{ avatarInitials(authorName) }}</span>

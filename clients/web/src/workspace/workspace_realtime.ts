@@ -12,6 +12,7 @@ import { applyVoiceLeaseRevocation } from './voice_lease_realtime'
 import { shouldRefreshTextHistory } from './active_message_resync'
 import { usePermissionStore } from '../authorization/permission_store'
 import { notifyOwnSessionsChanged } from '../identity/own_sessions/state'
+import { guildProfile } from '../guild/profile/state'
 
 interface Refreshable { error: string | null; refresh(): Promise<void> }
 interface TextHistory extends Refreshable { channelId: string | null }
@@ -57,6 +58,7 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
     const eventLifecycle = lifecycle
     if (presence.acceptRealtimeEvent(event)) return
     if (event.kind === 'session.state_changed') { notifyOwnSessionsChanged(); return }
+    if (event.kind === 'guild.profile.updated') return guildProfile.refresh(event.payload.revision as number)
     if (event.kind === 'connection.resync_required') return refreshProtectedState(stores)
     if (event.kind === 'direct_message.message_created' || event.kind === 'direct_message.message_updated' || event.kind === 'direct_message.message_deleted') {
       const previousUnread = notifications.capture(event)
@@ -86,7 +88,7 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
       lifecycle += 1
       notifications.start(accountID)
       realtime.connect(onEvent, undefined, undefined, {
-        onRecovery: () => Promise.all([refreshProtectedState(stores), permissions.refresh()]).then(() => undefined),
+        onRecovery: () => Promise.all([refreshProtectedState(stores), permissions.refresh(), guildProfile.refresh()]).then(() => undefined),
         checkSession: async () => (await loadCurrentSession())?.accountId === accountID,
         onSessionExpired,
       })

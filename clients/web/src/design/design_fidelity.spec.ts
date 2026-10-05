@@ -13,7 +13,7 @@ describe('GuildChat reference fidelity', () => {
   it('uses the reference single-guild label and mark in the workspace header', () => {
     const app = source('../workspace/WorkspaceApp.vue')
     expect(app).toContain('<img class="guild-mark" src="/brand.png" alt="">')
-    expect(app).toContain('<span id="app-title">Моя гильдия</span>')
+    expect(app).toContain('<GuildName id="app-title" />')
     expect(app).toContain('guild-member-count')
     expect(app).toContain('@member-count="guildMemberCount = $event"')
   })

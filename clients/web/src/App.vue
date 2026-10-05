@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { guildProfile } from './guild/profile/state'
 
 import AuthenticationLanding from './identity/AuthenticationLanding.vue'
 import { clearAuthenticatedState } from './identity/clear_authenticated_state'
@@ -30,6 +31,7 @@ if (typeof window !== 'undefined') {
 }
 let sessionRevision = 0
 const updates = useUpdateStore()
+watch(guildProfile.name, name => { if (typeof document !== 'undefined') document.title = name }, { immediate: true })
 
 async function refreshSession(): Promise<void> {
   const revision = ++sessionRevision
@@ -76,6 +78,7 @@ function returnToLogin(): void {
 }
 
 onMounted(() => {
+  void guildProfile.refresh()
   if (!resetRoute.value) void refreshSession()
   maintenance.start()
   updates.start()

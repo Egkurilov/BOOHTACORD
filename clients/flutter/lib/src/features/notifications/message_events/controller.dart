@@ -12,11 +12,13 @@ class MessageNotificationDispatch {
     this.workspace,
     this.notifications, {
     required this.hasUser,
+    this.isWelcome,
   });
   final SessionScope scope;
   final WorkspaceController workspace;
   final NotificationController notifications;
   final bool Function() hasUser;
+  final Future<bool> Function(RealtimeEvent)? isWelcome;
   void call(RealtimeEvent event) {
     final unread =
         addressedUnreadCount(workspace, event.kind, event.payload) ??
@@ -34,7 +36,7 @@ class MessageNotificationDispatch {
         await workspace.refreshDirectMessages();
       }
       if (!ticket.isActive) return;
-      final body = notificationBodyForUnreadIncrease(
+      var body = notificationBodyForUnreadIncrease(
         kind: event.kind!,
         previousUnread: previousUnread,
         currentUnread:
@@ -42,6 +44,14 @@ class MessageNotificationDispatch {
             (event.kind == 'direct_message.message_created' ? 0 : null),
       );
       if (body == null) return;
+      if (event.kind == 'message.created' &&
+          notifications.enabled &&
+          !notifications.appIsForeground &&
+          isWelcome != null &&
+          await isWelcome!(event)) {
+        body = 'Новый участник в гильдии.';
+      }
+      if (!ticket.isActive) return;
       await notifications.deliver(
         eventId: event.id,
         body: body,

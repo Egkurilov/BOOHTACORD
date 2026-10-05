@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import SystemWelcomeMessage from '../conversation/system_welcome/SystemWelcomeMessage.vue'
 import MessageBody from '../conversation/message_body/MessageBody.vue'
 import TextMessageAttachments from '../conversation/TextMessageAttachments.vue'
 import { loadMessagePage, type TextMessage } from '../conversation/message_client'
@@ -36,7 +37,7 @@ onBeforeUnmount(context.clear)
       <li v-for="message in messages" :key="message.id" :class="{ 'search-context-target': message.id === props.messageId }" :data-search-anchor="message.id === props.messageId ? '' : undefined" :aria-current="message.id === props.messageId ? 'location' : undefined" :tabindex="message.id === props.messageId ? -1 : undefined">
         <p class="message-meta">{{ authors.displayName(message.authorId) }} · {{ new Date(message.createdAt).toLocaleString('ru-RU') }}</p>
         <p v-if="message.deleted">Сообщение удалено.</p>
-        <MessageBody v-else :body="message.body" />
+        <SystemWelcomeMessage v-else-if="'kind' in message && message.kind === 'SYSTEM_WELCOME'" :author-id="message.authorId" :body="message.body" /><MessageBody v-else :body="message.body" />
         <TextMessageAttachments v-if="props.kind === 'CHANNEL' && !message.deleted" :channel-id="props.conversationId" :attachments="message.attachments" />
         <DirectMessageAttachments v-if="props.kind === 'DIRECT_MESSAGE' && !message.deleted" :direct-message-id="props.conversationId" :attachments="message.attachments" />
       </li>

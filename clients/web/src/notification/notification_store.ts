@@ -6,6 +6,8 @@ import { useDirectMessageStore } from '../direct_message/direct_message_store'
 import type { RealtimeEvent } from '../realtime/realtime_client'
 import { createNotificationDelivery, type NotificationRuntime } from './notification_delivery'
 import { addressedUnread, notificationCandidate, notificationTitle, unreadTotal } from './notification_policy'
+import { welcomeNotice } from './welcome_notice'
+import { guildProfile } from '../guild/profile/state'
 
 export const useNotificationStore = defineStore('notifications', () => {
   const topology = useTopologyStore()
@@ -37,8 +39,8 @@ export const useNotificationStore = defineStore('notifications', () => {
     if (typeof document === 'undefined') return
     originalTitle = document.title
     stopTitleWatch = watch(
-      () => unreadTotal(topology.topology, directMessages.directMessages),
-      (count) => { document.title = notificationTitle(originalTitle, count) },
+      () => [unreadTotal(topology.topology, directMessages.directMessages), guildProfile.name.value] as const,
+      ([count, name]) => { originalTitle = name; document.title = notificationTitle(name, count) },
       { immediate: true },
     )
   }
@@ -72,8 +74,11 @@ export const useNotificationStore = defineStore('notifications', () => {
 
   async function deliver(event: RealtimeEvent, previousUnread: number | null): Promise<void> {
     if (!delivery || previousUnread === null || typeof document === 'undefined' || document.visibilityState !== 'hidden') return
-    const body = notificationCandidate(event, topology.topology, directMessages.directMessages, previousUnread)
-    if (!body) return
+    let body = notificationCandidate(event, topology.topology, directMessages.directMessages, previousUnread)
+    if (!body || !enabled.value) return
+    const currentDelivery = delivery
+    body = await welcomeNotice(event) ?? body
+    if (delivery !== currentDelivery) return
     try { await delivery.deliver(event.eventId, body) } catch { /* Notification delivery must not break realtime recovery. */ }
     refreshStatus()
   }

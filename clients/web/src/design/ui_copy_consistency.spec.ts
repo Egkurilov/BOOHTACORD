@@ -6,10 +6,10 @@ function source(relativePath: string): string {
 }
 
 describe('working UI name and media wording', () => {
-  it('uses one working product name on the tab, login page and notifications', () => {
+  it('uses the public guild name on login with a stable product fallback', () => {
     const title = source('../../index.html').match(/<title>([^<]+)<\/title>/)?.[1]
     expect(title).toBe('BOOHTACORD')
-    expect(source('../identity/AuthenticationLanding.vue')).toContain(`<p class="eyebrow">${title}</p>`)
+    expect(source('../identity/AuthenticationLanding.vue')).toContain('<p class="eyebrow"><GuildName /></p>')
     expect(source('../notification/notification_delivery.ts')).toContain(`runtime.show('${title}'`)
   })
 
