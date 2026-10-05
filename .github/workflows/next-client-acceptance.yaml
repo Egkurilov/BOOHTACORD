@@ -1,0 +1,40 @@
+name: Next critical client actual acceptance
+on:
+  pull_request:
+    paths:
+      - tools/qa/next_client_acceptance/**
+      - clients/web/src/conversation/**
+      - clients/web/src/direct_message/**
+      - clients/web/src/search/**
+      - backend/internal/chat/list_text_messages/**
+      - backend/internal/chat/list_direct_message_history/**
+      - .github/workflows/next-client-acceptance.yaml
+permissions:
+  contents: read
+jobs:
+  actual:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Install actual Chromium
+        working-directory: clients/web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Verify real uploads and protected context
+        run: python3 -m tools.qa.next_client_acceptance.run
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: next-client-actual-${{ github.sha }}
+          path: .out/next-client-acceptance/
+          if-no-files-found: ignore
+          retention-days: 30
