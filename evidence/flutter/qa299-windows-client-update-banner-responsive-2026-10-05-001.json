@@ -4,7 +4,7 @@
   "task": "FV2-040 — Responsive client update banner on desktop",
   "source_revision": "24489973",
   "working_tree_changes": true,
-  "summary": "A user-provided Windows screenshot showed the long release summary wrapping into a very tall, underlined column and pushing the workspace below the fold. The Flutter update banner now clamps its summary to two lines with ellipsis and explicitly disables text decoration; full release details remain available in the existing details sheet. Package-version fallback defaults were also synchronized with 1.0.35+68 after the release quality workflow exposed drift.",
+  "summary": "A user-provided Windows screenshot showed the long release summary wrapping into a very tall, underlined column and pushing the workspace below the fold. The Flutter update banner now clamps its summary to two lines with ellipsis and explicitly disables text decoration; full release details remain available in the existing details sheet. Package-version fallback defaults and all native platform build identities were synchronized with 1.0.35+68/r49 after release and Windows CI exposed version drift.",
   "checks": [
     {
       "name": "Test-first desktop geometry regression",
@@ -31,6 +31,23 @@
       "observation": "No issues found."
     },
     {
+      "name": "Python contract/build tool tests",
+      "command": "python3 -m tools.verify.python_tests.run",
+      "result": "PASS",
+      "passed": 142
+    },
+    {
+      "name": "Contract verifier",
+      "command": "pwsh -File tools/verify/contracts/verify-contracts.ps1",
+      "result": "PASS"
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "PASS",
+      "observation": "39 requirements referenced; approved product brief unavailable on this host."
+    },
+    {
       "name": "macOS Debug build",
       "command": "cd clients/flutter && flutter build macos --debug --no-pub",
       "result": "PASS"
@@ -44,14 +61,14 @@
     {
       "name": "Windows native visual acceptance",
       "result": "NOT_RUN",
-      "observation": "The regression uses Windows desktop width and increased text scale in Flutter widget tests, but no Windows desktop runtime is available on this Mac host. GitHub Windows CI is pending after push."
+      "observation": "The regression uses Windows desktop width and increased text scale in Flutter widget tests, but no Windows desktop runtime is available on this Mac host. GitHub CI run 37358528833 was triggered before the build-identity sync and its contract job failed on that prior commit; new CI is pending after the follow-up push."
     },
     {
       "name": "Android v1.0.35 release quality workflow",
       "result": "FAILED_BEFORE_BUILD",
       "run_id": 37355877073,
       "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37355877073",
-      "observation": "643 tests passed and one failed because app_version.dart defaults were still 1.0.34+67 while pubspec.yaml was bumped to 1.0.35+68. The defaults are corrected in the current working tree; this failure was on the already-pushed tag commit. No APK release was published; the tag has not been moved."
+      "observation": "643 tests passed and one failed because app_version.dart defaults were still 1.0.34+67 while pubspec.yaml was bumped to 1.0.35+68. The defaults and platform build identities are now synchronized in the follow-up changes. This failure was on the already-pushed tag commit; no APK release was published. The user authorized retargeting android-v1.0.35 after the follow-up commit is pushed; GitHub reports no Release object for that tag."
     }
   ],
   "implementation": {
@@ -59,6 +76,7 @@
       "clients/flutter/lib/src/app_version.dart",
       "clients/flutter/lib/src/features/updates/banner.dart",
       "clients/flutter/test/updates/banner_test.dart",
+      "contracts/client-build.json",
       "backlog/FRONTEND_TODO.md",
       "docs/flutter-web-parity.md"
     ],
@@ -66,7 +84,7 @@
   },
   "limitations": [
     "Windows-native rendering was not captured locally; only the supplied screenshot and platform-neutral desktop-size widget regression were available.",
-    "The existing android-v1.0.35 tag points to a commit whose quality workflow failed on stale version defaults. Repointing the remote release tag was not attempted."
+    "The existing android-v1.0.35 tag points to a commit whose quality workflow failed on stale version defaults. User authorization to repoint it to the corrected follow-up commit is recorded; no GitHub Release currently exists for this tag."
   ],
   "status": "PASS — Flutter UI fix verified; Windows-native screenshot and Android release-tag recovery remain open."
 }

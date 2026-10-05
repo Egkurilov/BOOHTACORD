@@ -1372,6 +1372,7 @@ Desktop update-banner follow-up (FV2-040): long changelog summaries are now
 limited to two lines with ellipsis in the banner; the full summary remains in
 “Что нового”. Explicitly removing text decoration also avoids the underline
 visible in the supplied Windows screenshot. A widget regression checks
-1280×900 with text scale 2.5 and keeps the banner below 220 px; native Windows
-visual acceptance is still pending —
+1280×900 with text scale 2.5 and keeps the banner below 220 px. The shared
+Flutter package bump to `1.0.35+68` was synchronized with all native platform
+build identities at r49; native Windows visual acceptance remains pending —
 [QA-299](../evidence/flutter/qa299-windows-client-update-banner-responsive-2026-10-05-001.json).
