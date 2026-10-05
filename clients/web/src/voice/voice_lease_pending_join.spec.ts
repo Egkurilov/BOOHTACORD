@@ -45,6 +45,7 @@ describe('voice revocation during pending join', () => {
 
   it('invalidates an in-flight join before session-expiry guest navigation', async () => {
     const { store, joining, finish } = pendingJoin()
+    await vi.waitFor(()=>expect(fixture.join).toHaveBeenCalledOnce())
     const cleanup = store.disconnectLocal('SESSION_REVOKED')
     finish()
     await joining

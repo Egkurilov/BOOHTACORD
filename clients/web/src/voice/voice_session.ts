@@ -51,7 +51,7 @@ export class VoiceSession {
   screenViewer(): ScreenViewerController | null { return this.current?.room.screenViewer ?? null }
   remoteVoices() { return this.current?.room.remoteVoices ?? null }
   participantCards() { return this.current?.room.participantCards ?? null }
-  async join(channelId: string, transfer = true, joinMode: VoiceJoinMode = 'with-microphone'): Promise<ActiveVoiceSession> {
+  async join(channelId: string, transfer = false, joinMode: VoiceJoinMode = 'with-microphone'): Promise<ActiveVoiceSession> {
     return tracedOperation('voice.join', async (within) => {
       if (this.current) throw new Error('Сначала завершите текущее голосовое подключение.')
       let lease: VoiceLease | null = null

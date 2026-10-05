@@ -28,6 +28,7 @@ export function useWorkspaceVoiceControls(accountId = '') {
   const refreshDevices = () => { void loadAudioDevices() }
   onMounted(() => {
     voiceActivation.bindAccount?.(accountId)
+    voiceConnection.bindControllerAccount?.(accountId)
     bindMicrophoneAccount(accountId || null)
     void audioSettings.loadProcessing(voiceConnection.setAudioProcessing)
     navigator.mediaDevices?.addEventListener?.('devicechange', refreshDevices)
@@ -39,6 +40,7 @@ export function useWorkspaceVoiceControls(accountId = '') {
   })
   onBeforeUnmount(() => {
     bindMicrophoneAccount(null)
+    voiceConnection.bindControllerAccount?.('')
     navigator.mediaDevices?.removeEventListener?.('devicechange', refreshDevices)
     window.removeEventListener('blur', cancelShortcuts); shortcuts?.stop()
     shortcuts = null
@@ -87,7 +89,7 @@ export function useWorkspaceVoiceControls(accountId = '') {
     voiceNavigation.selectDirectMessage(directMessageId)
   }
 
-  async function joinVoice(channelId: string, transfer = true, joinMode: VoiceJoinMode = 'with-microphone'): Promise<void> {
+  async function joinVoice(channelId: string, transfer = false, joinMode: VoiceJoinMode = 'with-microphone'): Promise<void> {
     const activeChannelId = voiceConnection.active?.channelId
     streamStartChime.activate()
     if (activeChannelId && activeChannelId !== channelId) await leaveVoice()

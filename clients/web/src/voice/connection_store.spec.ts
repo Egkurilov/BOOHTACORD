@@ -60,6 +60,7 @@ describe('voice connection store', () => {
 
     expect(store.active?.room).toBe(fixture.room)
     expect(isProxy(store.active?.room)).toBe(false)
+    expect(fixture.join).toHaveBeenCalledWith('channel-1', false, 'with-microphone')
   })
 
   it('keeps a listener-only join muted in the connected store', async () => {
