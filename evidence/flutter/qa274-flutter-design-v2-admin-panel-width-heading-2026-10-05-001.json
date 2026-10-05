@@ -1,0 +1,71 @@
+{
+  "id": "QA-274",
+  "date": "2026-10-05",
+  "task": "FV2-025 — Flutter Design V2 administration panel width and heading",
+  "source_revision": "598cce85",
+  "working_tree_changes": true,
+  "environment": {
+    "flutter": "3.47.5 stable",
+    "dart": "3.13.4",
+    "macos": "arm64 Flutter Debug app via connected DevTools; hot reload, no restart",
+    "android_device": "Android Emulator sdk_gphone64_arm64",
+    "android_api": 35,
+    "android_resolution": "1080x2400",
+    "android_density_dpi": 420,
+    "android_build": "1.0.29+2062 / versionCode 2062"
+  },
+  "summary": "Matched the Flutter admin content width and responsive insets to the web panel. Removed the duplicate body title while retaining a visible, focusable semantic workspace header. Channel refresh remains available beside the tabs. No API, ACL, session, LiveKit, or web behavior changed.",
+  "checks": [
+    {
+      "name": "Web source comparison",
+      "result": "PASS",
+      "observation": "Read-only review of clients/web/src/design/design_v2_admin_permissions.css confirmed a centered 880 px maximum panel and compact 16 px horizontal / 24 px top inset versus 32 px top inset on desktop."
+    },
+    {
+      "name": "Test-first responsive geometry regressions",
+      "result": "PASS",
+      "observation": "New tests cover 390, 900, and 1440 px viewports, centered max-width geometry, one visible semantic heading, focus retention, and channel refresh availability. Before the implementation the regression exposed duplicate heading content and an unconstrained divider."
+    },
+    {
+      "name": "Focused Flutter tests",
+      "result": "PASS",
+      "observation": "admin_panel_geometry_test.dart, admin_topology_widget_test.dart, and admin_media_widget_test.dart passed 13/13."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "result": "PASS",
+      "observation": "flutter test --no-pub passed all 567 tests."
+    },
+    {
+      "name": "Changed-file analyzer",
+      "result": "PASS",
+      "observation": "flutter analyze --no-pub on the changed implementation and tests reported no issues."
+    },
+    {
+      "name": "macOS runtime and accessibility",
+      "result": "PASS",
+      "observation": "Connected macOS Debug app was hot-reloaded without restarting. Visual inspection confirmed centered 880 px panel geometry and no duplicate body heading; the native accessibility tree exposed the visible workspace title as a semantic header."
+    },
+    {
+      "name": "Android API 35 runtime",
+      "result": "PASS",
+      "observation": "Signed local APK 1.0.29+2062 was installed with adb install -r, preserving app data and session. Admin Members view showed compact padding, a single title, and the horizontal tabs. No permissions were changed or saved."
+    },
+    {
+      "name": "Windows native visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "Windows runtime is unavailable on this macOS host; tracked separately in FV2-006."
+    },
+    {
+      "name": "Spec traceability PowerShell verifier",
+      "result": "NOT_RUN",
+      "observation": "pwsh is not installed in the environment."
+    }
+  ],
+  "limitations": [
+    "This closes only FV2-025; broader Design V2 work and Windows acceptance remain open.",
+    "Role/permission settings were not changed or saved.",
+    "No backend, web, API contract, ACL, session, or LiveKit behavior was modified."
+  ],
+  "status": "PASS for Android/macOS admin panel width and heading parity; Windows acceptance pending under FV2-006"
+}

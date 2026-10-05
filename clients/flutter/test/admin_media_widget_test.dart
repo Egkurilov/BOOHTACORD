@@ -75,7 +75,7 @@ void main() {
     );
   });
 
-  testWidgets('desktop admin tab divider fills its available panel width', (
+  testWidgets('desktop admin tab divider fills its centered panel width', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -95,8 +95,8 @@ void main() {
       tester
           .getSize(find.byKey(const ValueKey('admin-section-tabs-scroll')))
           .width,
-      1392,
-      reason: 'the tab strip must fill the width provided by its parent panel',
+      880,
+      reason: 'the tab strip must fill the centered 880 px admin panel',
     );
   });
 
