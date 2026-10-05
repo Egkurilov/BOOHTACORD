@@ -247,11 +247,12 @@
       },
       "get": {
         "operationId": "listDirectMessageHistory",
-        "description": "Authenticated DM participant only. Administrator role grants no exception. Returns newest-first cursor pages and retains history for the other participant after a block. The at anchor returns that message (including its deleted marker) and a bounded older page; an absent or foreign anchor returns an empty page. at and before are mutually exclusive.",
+        "description": "Authenticated DM participant only. Administrator role grants no exception. Returns newest-first cursor pages and retains history for the other participant after a block. The at anchor returns that message (including its deleted marker) and a bounded older page; an absent or foreign anchor returns an empty page. at, before and after are mutually exclusive. after returns the next bounded page in ascending (created_at, id) order; next_cursor continues in the requested direction. Authorization is rechecked on every page.",
         "parameters": [
           { "name": "directMessageID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
           { "name": "before", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
           { "name": "at", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "after", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
           { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
         ],
         "responses": {
@@ -381,11 +382,12 @@
     "/api/v1/channels/{channelID}/messages": {
       "get": {
         "operationId": "listTextMessages",
-        "description": "Authenticated member only. Returns newest-first cursor pages from a current TEXT channel. Deleted messages retain an ID and deleted marker but never expose their former body. The at anchor returns that message and a bounded older page; an absent or foreign anchor returns an empty page. at and before are mutually exclusive.",
+        "description": "Authenticated member only. Returns newest-first cursor pages from a current TEXT channel. Deleted messages retain an ID and deleted marker but never expose their former body. The at anchor returns that message and a bounded older page; an absent or foreign anchor returns an empty page. at, before and after are mutually exclusive. after returns the next bounded page in ascending (created_at, id) order; next_cursor continues in the requested direction. Authorization is rechecked on every page.",
         "parameters": [
           { "name": "channelID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
           { "name": "before", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
           { "name": "at", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "after", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" } },
           { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
         ],
         "responses": {

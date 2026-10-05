@@ -35,8 +35,8 @@ func TestDatabaseDryRunPreservesRowsAuditAndClaimSequence(t *testing.T) {
 	}{
 		{"UNATTACHED", 25 * time.Hour}, {"UNATTACHED", time.Hour}, {"DELETING", 25 * time.Hour}, {"HIDDEN", 25 * time.Hour},
 	} {
-		_, err := pool.Exec(ctx, `INSERT INTO attachments(id,owner_id,channel_id,original_name,storage_key,byte_size,state,created_at,hidden_at,unattached_cleanup_retry_after)
-VALUES($1,$2,$3,'private.bin',$4,4,$5,$6,$7,$8)`, uuid.NewString(), owner, channel, uuid.NewString(), item.state, now.Add(-item.age), now, now.Add(-time.Hour))
+		_, err := pool.Exec(ctx, `INSERT INTO attachments(id,owner_id,channel_id,original_name,storage_key,byte_size,state,created_at,attached_at,hidden_at,unattached_cleanup_retry_after)
+VALUES($1,$2,$3,'private.bin',$4,4,$5,$6,CASE WHEN $5='HIDDEN' THEN $7::timestamptz END,CASE WHEN $5='HIDDEN' THEN $7::timestamptz END,$8)`, uuid.NewString(), owner, channel, uuid.NewString(), item.state, now.Add(-item.age), now, now.Add(-time.Hour))
 		if err != nil {
 			t.Fatal(err)
 		}

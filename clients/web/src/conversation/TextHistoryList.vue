@@ -80,8 +80,8 @@ async function loadOlder(): Promise<void> {
 </script>
 
 <template>
-  <p class="gc-sr-only" role="status" aria-atomic="true">{{ announcement }}</p>
   <div class="message-history-wrap">
+  <p class="gc-sr-only" role="status" aria-atomic="true">{{ announcement }}</p>
   <button v-if="jumpCount" class="message-jump-latest" type="button" @click="jumpToLatest">К новым сообщениям ({{ jumpCount }})</button>
   <ol ref="list" class="messages message-list" role="log" aria-live="off" aria-label="История сообщений" @scroll.passive="onScroll">
     <li v-if="store.nextCursor" class="message-actions"><button type="button" :disabled="store.olderLoading" @click="loadOlder">{{ store.olderLoading ? 'Загружаем старые сообщения…' : 'Показать предыдущие сообщения' }}</button></li>
