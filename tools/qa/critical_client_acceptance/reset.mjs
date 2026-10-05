@@ -13,7 +13,7 @@ export async function resetLinks(browser, admin, accountId, input, report, redac
     await page.goto(url)
     await expect(page).toHaveURL(origin+'/reset-password')
     async function submit() {
-      await page.getByLabel('Новый пароль', { exact: true }).fill(input.password+'🙂é')
+      await page.getByLabel('Новый пароль', { exact: true }).and(page.locator('input')).fill(input.password+'🙂é')
       await page.getByLabel('Повторите пароль', { exact: true }).fill(input.password+'🙂é')
       await page.getByRole('button', { name: 'Изменить пароль', exact: true }).click()
     }
