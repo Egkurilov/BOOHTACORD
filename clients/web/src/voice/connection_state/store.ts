@@ -31,15 +31,17 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   const revocation = createVoiceConnectionRevocation({ terminal, session, active, state, error, deafened, microphoneMuted, microphonePermissionDenied, screenDiagnostics, screenProfile, screenState, screenViewer, volume, refreshAudioProcessingDiagnostics })
   const transferChannelId=ref<string|null>(null),transferJoinMode=ref<VoiceJoinMode>('with-microphone')
   const ownership=createControllerOwnership(async()=>{await revocation.disconnectLocal('TRANSFER');return !active.value})
-  const bindControllerAccount=(id:string)=>ownership.bind(id || null)
+  const originControllerAvailable=ref(false)
+  const bindControllerAccount=(id:string)=>{ownership.bind(id || null);originControllerAvailable.value=ownership.available()}
   const originControllerOwned=ownership.owned,originControllerChannel=ownership.otherChannelId
   watch(active,current=>{if(!current&&state.value!=='JOINING') void ownership.release()})
   onScopeDispose(ownership.cancel)
 
   installVoiceConnectionLifecycle(session, active, state, error, microphoneMuted, microphonePermissionDenied, deafened, screenDiagnostics, screenProfile, screenState, screenViewer, volume, refreshAudioProcessingDiagnostics, terminal)
 
-  const {join}=createConnectionJoin({session,terminal,revocation,active,state,error,deafened,microphoneMuted,microphonePermissionDenied,canJoin,transferRequired,screenViewer,volume,refreshAudioProcessingDiagnostics,ownership,transferChannelId,transferJoinMode})
+  const {join,settled}=createConnectionJoin({session,terminal,revocation,active,state,error,deafened,microphoneMuted,microphonePermissionDenied,canJoin,transferRequired,screenViewer,volume,refreshAudioProcessingDiagnostics,ownership,transferChannelId,transferJoinMode})
   async function leave(): Promise<void> {
+    if(state.value==='JOINING'&&!active.value){terminal.reset();state.value='LEAVING';await ownership.cancelPending();await settled();state.value='IDLE';error.value=null;transferRequired.value=false;return}
     await leaveVoiceConnection({ terminal, session, active, state, error, deafened, screenDiagnostics, screenProfile, screenState, screenViewer, volume, refreshAudioProcessingDiagnostics })
     const reason = revocation.takePostLeaveReason(active.value?.leaseId ?? '')
     if (reason && active.value) await revocation.revokeLease(active.value.leaseId, reason)
@@ -47,5 +49,5 @@ export const useVoiceConnectionStore = defineStore('voice-connection', () => {
   }
 
   function selectDisconnectChannel(id: string): void { const old = terminal.notice.value; terminal.selectChannel(id); if (old && !terminal.notice.value) { revocation.resetPending(); error.value = null } }
-  return { bindControllerAccount,originControllerOwned,originControllerChannel,transferChannelId,transferJoinMode,disconnectNotice: terminal.notice, selectDisconnectChannel, resetAudioVolumes: volume.reset, active, voiceAudioDiagnostics, audioProcessingDiagnostics, inputSelection, setInputDevice, microphoneTrack, canJoin, clearScreenStream: screenViewer.clear, connectionQuality, deafenChanging, deafened, disconnectLocal: revocation.disconnectLocal, error, join, leave, microphoneMuted, microphonePermissionDenied, pingMs, refreshScreenDiagnostics, revokeLease: revocation.revokeLease, screenDiagnostics, screenError, screenProfile, screenState, screenViewerCards, screenViewerEnded, screenViewerError, selectScreenStream: screenViewer.select, selectedScreenStreamId, screenAudioMuted: screenViewer.audioMuted, setAudioProcessing, setMicrophoneMuted, startScreen, state, stopScreen, switchAudioDevice, toggleDeafen, toggleMicrophone, toggleScreenAudio: () => screenViewer.toggleAudio(volume.selectedScreenVolume.value, volume.setScreenVolume), transferRequired, voiceVolumeError: volume.error, voiceVolumeParticipants, selfSpeaking: volume.selfSpeaking, selectedScreenAudioVolume: volume.selectedScreenVolume, setParticipantVolume: volume.setParticipantVolume, setScreenVolume: volume.setScreenVolume }
+  return { originControllerAvailable,bindControllerAccount,originControllerOwned,originControllerChannel,transferChannelId,transferJoinMode,disconnectNotice: terminal.notice, selectDisconnectChannel, resetAudioVolumes: volume.reset, active, voiceAudioDiagnostics, audioProcessingDiagnostics, inputSelection, setInputDevice, microphoneTrack, canJoin, clearScreenStream: screenViewer.clear, connectionQuality, deafenChanging, deafened, disconnectLocal: revocation.disconnectLocal, error, join, leave, microphoneMuted, microphonePermissionDenied, pingMs, refreshScreenDiagnostics, revokeLease: revocation.revokeLease, screenDiagnostics, screenError, screenProfile, screenState, screenViewerCards, screenViewerEnded, screenViewerError, selectScreenStream: screenViewer.select, selectedScreenStreamId, screenAudioMuted: screenViewer.audioMuted, setAudioProcessing, setMicrophoneMuted, startScreen, state, stopScreen, switchAudioDevice, toggleDeafen, toggleMicrophone, toggleScreenAudio: () => screenViewer.toggleAudio(volume.selectedScreenVolume.value, volume.setScreenVolume), transferRequired, voiceVolumeError: volume.error, voiceVolumeParticipants, selfSpeaking: volume.selfSpeaking, selectedScreenAudioVolume: volume.selectedScreenVolume, setParticipantVolume: volume.setParticipantVolume, setScreenVolume: volume.setScreenVolume }
 })

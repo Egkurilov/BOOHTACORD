@@ -60,5 +60,6 @@ export function createControllerOwnership(yieldMedia:()=>Promise<boolean>,port:O
     return false
   }
   function cancel():void {bind(null)}
-  return {owned,ownChannelId,otherChannelId,bind,claim,release,cancel,available:()=>Boolean(port&&account)}
+  async function cancelPending():Promise<void> {version++;await release()}
+  return {owned,ownChannelId,otherChannelId,bind,claim,release,cancel,cancelPending,available:()=>Boolean(port&&account)}
 }

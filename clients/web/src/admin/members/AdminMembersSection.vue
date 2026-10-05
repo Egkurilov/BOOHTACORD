@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref } from 'vue'
-import { createPasswordResetLink, listAdminAccounts, updateAdminAccount, type AdminAccount, type PasswordResetLink } from '../../identity/admin_directory_client'
+import { computed, nextTick, onMounted, ref } from 'vue'
+import { AdminDirectoryError,createPasswordResetLink, listAdminAccounts, updateAdminAccount, type AdminAccount, type PasswordResetLink } from '../../identity/admin_directory_client'
+import { createMemberConflictState } from './conflict_state'
+import Comparison from '../../channel/conflict_review/Comparison.vue'
 import { avatarBackground, avatarForeground } from '../../design/avatar_color'
 import { avatarInitials } from '../../design/avatar_initials'
 import { restoreAdminSaveFocus } from './admin_member_save_focus'
@@ -11,21 +13,23 @@ const error = ref<string | null>(null); const status = ref<string | null>(null)
 const resetLink = ref<(PasswordResetLink & { login: string }) | null>(null)
 const resetTrigger = ref<HTMLButtonElement | null>(null)
 const resetResult = ref<HTMLElement | null>(null)
-const drafts = reactive<Record<string, { role: AdminAccount['role']; blocked: boolean }>>({})
+const conflictState=createMemberConflictState(),drafts=conflictState.drafts
 const search = ref(''); const roleFilter = ref<'ALL' | AdminAccount['role']>('ALL'); const activeActionsID = ref('')
 const filteredAccounts = computed(() => accounts.value.filter((account) => (roleFilter.value === 'ALL' || account.role === roleFilter.value) && `${account.display_name} ${account.login}`.toLocaleLowerCase().includes(search.value.trim().toLocaleLowerCase())))
 async function load(next?: string): Promise<void> {
   loading.value = true; error.value = null
-  try { const page = await listAdminAccounts(next); accounts.value = next ? [...accounts.value, ...page.accounts] : page.accounts; cursor.value = page.next_cursor; for (const account of page.accounts) drafts[account.account_id] = { role: account.role, blocked: account.blocked } }
+  try { const page = await listAdminAccounts(next); accounts.value = next ? [...accounts.value, ...page.accounts] : page.accounts; cursor.value = page.next_cursor;conflictState.sync(page.accounts) }
   catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить участников.' } finally { loading.value = false }
 }
 async function save(account: AdminAccount, event: MouseEvent): Promise<void> {
-  const draft = drafts[account.account_id]; if (!draft) return
+  const draft = drafts[account.account_id]; if (!draft||conflictState.conflicts[account.account_id]) return
+  const expected=conflictState.baseline[account.account_id]?.updated_at
+  if(!expected){error.value='Обновите список: серверная версия аккаунта недоступна.';return}
   const trigger = event.currentTarget as HTMLButtonElement
   const wasFocused = document.activeElement === trigger
   error.value = null; status.value = null; busyID.value = account.account_id
-  try { await updateAdminAccount(account.account_id, draft.role, draft.blocked); status.value = `Права аккаунта ${account.login} сохранены.`; await load() }
-  catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось изменить аккаунт.' } finally { busyID.value = ''; await nextTick(); restoreAdminSaveFocus(trigger, wasFocused, document.activeElement, document.body) }
+  try { await updateAdminAccount(account.account_id,draft.role,draft.blocked,undefined,expected);conflictState.saved(account.account_id);status.value = `Права аккаунта ${account.login} сохранены.`; await load() }
+  catch (cause) {if(cause instanceof AdminDirectoryError&&cause.status===409){conflictState.capture(account.account_id);await load()};error.value = cause instanceof Error ? cause.message : 'Не удалось изменить аккаунт.' } finally { busyID.value = ''; await nextTick(); restoreAdminSaveFocus(trigger, wasFocused, document.activeElement, document.body) }
 }
 async function createReset(account: AdminAccount, event: MouseEvent): Promise<void> {
   resetTrigger.value = event.currentTarget as HTMLButtonElement
@@ -75,6 +79,7 @@ onMounted(() => { void load() })
       <button type="button" @click="copyResetLink">Скопировать ссылку</button>
     </section>
     <button v-if="cursor" class="admin-more" type="button" :disabled="loading" @click="load(cursor)">Загрузить ещё</button>
+    <Comparison v-for="(conflict,id) in conflictState.conflicts" :key="id" :before="conflictState.summary(conflict.before)" :current="conflict.current ? conflictState.summary(conflict.current) : null" :proposed="conflictState.summary(drafts[id])" :ready="Boolean(conflict.current?.updated_at)" :busy="loading || Boolean(busyID)" @refresh="load()" @discard="conflictState.accept(id,true)" @apply="conflictState.accept(id,false);status='Сравнение подтверждено. Нажмите «Сохранить» у выбранного участника.'" />
     <p v-if="status" class="admin-status" aria-live="polite">{{ status }}</p><p v-if="error" class="admin-error" role="alert">{{ error }}</p>
   </section>
 </template>

@@ -25,6 +25,7 @@ type Account struct {
 	Role        string    `json:"role"`
 	Blocked     bool      `json:"blocked"`
 	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 type Result struct {
 	Accounts   []Account `json:"accounts"`

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed,nextTick,onMounted,onUpdated,ref,watch } from 'vue'
+import { markRendered } from '../telemetry/journey_intervals/runtime'
 
 import type { TextMessage, TextMessageAttachment } from './message_client'
 import { avatarFallbackStyle } from './avatar_fallback'
@@ -19,6 +20,7 @@ type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments' | 'mentionU
 
 const props = defineProps<{ message: RenderedMessage; grouped?: boolean; replyPreview?: string; canEdit: boolean; canDelete: boolean; retryDisabled?: boolean; mentionRecipient?: { id: string; displayName: string }; editMessage?: (body: string, mentionIds: string[], revision: number) => Promise<EditResult>; refreshMessage?: () => Promise<{ revision: number; deleted: boolean } | null> }>()
 const emit = defineEmits<{ remove: []; reply: []; retry: []; replyContext: [messageId: string] }>()
+onMounted(()=>markRendered(props.message));onUpdated(()=>markRendered(props.message))
 const editor = useMessageEditController({
   save: (body, ids, revision) => props.editMessage?.(body, ids, revision) ?? Promise.resolve({ kind: 'stale', message: 'Сообщение недоступно.' }),
   refresh: () => props.refreshMessage?.() ?? Promise.resolve(null),

@@ -16,7 +16,8 @@ interface JoinContext {
 }
 export function createConnectionJoin(context:JoinContext) {
  const {session,terminal,revocation,active,state,error,deafened,microphoneMuted,microphonePermissionDenied,canJoin,transferRequired,screenViewer,volume,refreshAudioProcessingDiagnostics}=context
-  async function join(channelId: string, transfer = false, joinMode: VoiceJoinMode = 'with-microphone'): Promise<void> {
+  let pending:Promise<void>|null=null
+  async function performJoin(channelId: string, transfer = false, joinMode: VoiceJoinMode = 'with-microphone'): Promise<void> {
     if (!canJoin.value) return
 
     terminal.reset(); revocation.resetPending()
@@ -27,9 +28,9 @@ export function createConnectionJoin(context:JoinContext) {
     context.transferChannelId.value=null;context.transferJoinMode.value=joinMode
     try {
       if(!await context.ownership.claim(channelId,transfer)) throw new VoiceRequestError(409,'ORIGIN_MEDIA_BUSY',context.ownership.otherChannelId.value ?? undefined)
-      if(generation!==terminal.generation){await context.ownership.release();return}
+      if(generation!==terminal.generation) return
       const joined = await session.join(channelId, transfer, joinMode)
-      if (generation !== terminal.generation) { await session.revoke(joined.leaseId); state.value = 'IDLE'; error.value = null; return }
+      if (generation !== terminal.generation) {await session.revoke(joined.leaseId);return}
       active.value = joined
       terminal.bind(active.value.leaseId, active.value.channelId)
       const revokedReason = revocation.takeJoinRevocation(active.value.leaseId)
@@ -43,7 +44,7 @@ export function createConnectionJoin(context:JoinContext) {
       microphonePermissionDenied.value = active.value.microphone === 'LISTENER_PERMISSION_DENIED'
       state.value = active.value.microphone === 'PUBLISHED' ? 'CONNECTED' : 'LISTENER'
     } catch (cause) {
-      if (generation !== terminal.generation) { state.value = 'IDLE'; error.value = null; return }
+      if (generation !== terminal.generation) return
       const cancelledReason = revocation.takeJoinRevocation(terminal.leaseID ?? '')
       active.value = null
       deafened.value = false
@@ -54,8 +55,13 @@ export function createConnectionJoin(context:JoinContext) {
       context.transferChannelId.value=transferRequired.value && cause instanceof VoiceRequestError ? cause.activeChannelId ?? null : null
       if (cancelledReason && terminal.leaseID) terminal.server(terminal.leaseID, cancelledReason)
       error.value = terminal.notice.value?.message ?? (cancelledReason ? voiceLeaseRevocationMessage(cancelledReason) : cause instanceof Error ? cause.message : 'Не удалось подключиться к голосовому каналу.')
-    } finally {if(!active.value) await context.ownership.release()}
+    } finally {if(generation===terminal.generation&&!active.value) await context.ownership.release()}
   }
 
- return {join}
+ function join(channelId:string,transfer=false,joinMode:VoiceJoinMode='with-microphone'):Promise<void> {
+   if(pending) return pending
+   const current=performJoin(channelId,transfer,joinMode).finally(()=>{if(pending===current) pending=null})
+   pending=current;return current
+ }
+ return {join,settled:()=>pending ?? Promise.resolve()}
 }

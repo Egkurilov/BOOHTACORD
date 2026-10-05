@@ -16,6 +16,7 @@ export function createVoiceCloseEditor(snapshot: () => VoiceCloseSnapshot, chang
   const phase = ref<VoiceClosePhase>('idle')
   let conflictRevision = -1
   let closingId = ''
+  const closingChannelId=ref('')
   let acceptedRevision = -1
 
   function selectedVoice() {
@@ -52,6 +53,7 @@ export function createVoiceCloseEditor(snapshot: () => VoiceCloseSnapshot, chang
     try {
       const result = await closeVoiceAdmission(channel.id, current.revision, request)
       closingId = result.id
+      closingChannelId.value=result.id
       acceptedRevision = result.revision
       conflictRevision = current.revision
       needsRefresh.value = true
@@ -70,5 +72,5 @@ export function createVoiceCloseEditor(snapshot: () => VoiceCloseSnapshot, chang
     } finally { pending.value = false }
   }
 
-  return { close, error, needsRefresh, pending, phase, status, sync }
+  return { close,closingChannelId,error,needsRefresh,pending,phase,status,sync }
 }

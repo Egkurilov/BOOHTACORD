@@ -64,6 +64,14 @@ describe('voice revocation during pending join', () => {
     expect(store.error).toContain('Администратор')
   })
 
+  it('cancels a pending join on leave and revokes its late lease before another join is allowed',async()=>{
+    const {store,joining,finish}=pendingJoin()
+    await vi.waitFor(()=>expect(fixture.join).toHaveBeenCalledOnce())
+    const leaving=store.leave();expect(store.canJoin).toBe(false)
+    finish();await joining;await leaving
+    expect(fixture.revoke).toHaveBeenCalledWith('lease-1');expect(store.active).toBeNull();expect(store.state).toBe('IDLE')
+  })
+
   it('preserves a join when an unrelated lease was revoked during admission', async () => {
     const { store, joining, finish } = pendingJoin()
     await expect(store.revokeLease('lease-other', 'KICK')).resolves.toBe(false)

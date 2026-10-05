@@ -1,5 +1,7 @@
 import type { Ref } from 'vue'
 import type { VoiceDisconnectState } from './disconnect_notice/state'
+import { journeyRecorder } from '../telemetry/journey_intervals/runtime'
+import type { Outcome } from '../telemetry/journey_intervals/state'
 
 import type { VoiceConnectionState } from './connection_store'
 import { unknownScreenDiagnostics, type ScreenDiagnostics } from './screen_diagnostics'
@@ -25,18 +27,22 @@ export function installVoiceConnectionLifecycle(
   refreshAudioProcessingDiagnostics: () => void,
   terminal?: VoiceDisconnectState,
 ): void {
+  let reconnect:((outcome:Outcome)=>void)|null=null
   session.setConnectionObserver({
-    admitted: (leaseID, channelID) => terminal?.bind(leaseID, channelID),
+    admitted: (leaseID, channelID) => {reconnect?.('cancelled');reconnect=null;terminal?.bind(leaseID,channelID)},
     reconnecting: () => {
       if (active.value && state.value !== 'LEAVING' && !terminal?.notice.value) {
+        reconnect ??= journeyRecorder.begin('reconnect_recovered')
         state.value = 'RECONNECTING'
         error.value = null
       }
     },
     reconnected: () => {
+      reconnect?.(active.value&&!terminal?.notice.value?'completed':'cancelled');reconnect=null
       if (active.value && !terminal?.notice.value) state.value = active.value.microphone === 'PUBLISHED' ? 'CONNECTED' : 'LISTENER'
     },
     disconnected: () => {
+      reconnect?.('failed');reconnect=null
       if (active.value) terminal?.bind(active.value.leaseId, active.value.channelId)
       terminal?.transport()
       screenViewer.stop()

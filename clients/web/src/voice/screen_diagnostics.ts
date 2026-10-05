@@ -9,6 +9,8 @@ export interface ScreenMeasurement {
 }
 
 export interface ScreenDiagnostics {
+  capturedFrames?:number|null
+  encodedFrames?:number|null
   profileCheck?: import('./screen_profile/types').ProfileSnapshot
   sampledAt?: number
   senderStatsAvailable?: boolean

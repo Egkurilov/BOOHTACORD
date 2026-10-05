@@ -7,9 +7,10 @@ import { useAudioSettingsStore } from '../voice/audio_settings_store'
 import type { AudioDeviceKind } from '../voice/audio_devices'
 import { useVoiceActivationStore } from '../voice/activation_store'
 import { useVoiceConnectionStore } from '../voice/connection_store'
-import type { ScreenProfile, VoiceJoinMode } from '../voice/livekit_gateway'
+import type { ScreenProfile } from '../voice/livekit_gateway'
 import { useVoiceNavigationStore } from '../voice/navigation_store'
-import { streamStartChime } from '../voice/stream_start_runtime'
+import { createWorkspaceVoiceJoin } from './voice_join/action'
+import { stopJourneyRun } from '../telemetry/journey_intervals/runtime'
 import { executeVoiceShortcut } from '../voice/shortcuts/execute'
 import { VoiceShortcuts } from '../voice/voice_shortcuts'
 import type { VoiceShortcutSource } from '../voice/voice_shortcuts'
@@ -40,6 +41,7 @@ export function useWorkspaceVoiceControls(accountId = '') {
   })
   onBeforeUnmount(() => {
     bindMicrophoneAccount(null)
+    stopJourneyRun()
     voiceConnection.bindControllerAccount?.('')
     navigator.mediaDevices?.removeEventListener?.('devicechange', refreshDevices)
     window.removeEventListener('blur', cancelShortcuts); shortcuts?.stop()
@@ -89,16 +91,7 @@ export function useWorkspaceVoiceControls(accountId = '') {
     voiceNavigation.selectDirectMessage(directMessageId)
   }
 
-  async function joinVoice(channelId: string, transfer = false, joinMode: VoiceJoinMode = 'with-microphone'): Promise<void> {
-    const activeChannelId = voiceConnection.active?.channelId
-    streamStartChime.activate()
-    if (activeChannelId && activeChannelId !== channelId) await leaveVoice()
-    await audioSettings.loadInput(voiceConnection.setInputDevice)
-    await audioSettings.loadProcessing(voiceConnection.setAudioProcessing)
-    await voiceConnection.join(channelId, transfer, voiceActivation.mode === 'PTT' ? 'listener' : joinMode)
-    if (voiceConnection.active && voiceActivation.mode === 'PTT' && joinMode === 'with-microphone') await voiceActivation.setMode('PTT')
-    if (voiceConnection.active) voiceNavigation.confirmVoiceConnected(voiceConnection.active.channelId)
-  }
+  const joinVoice=createWorkspaceVoiceJoin(audioSettings,voiceActivation,voiceConnection,voiceNavigation,leaveVoice)
 
   async function leaveVoice(): Promise<void> {
     await voiceActivation.stop(false)

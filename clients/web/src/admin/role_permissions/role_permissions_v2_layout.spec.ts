@@ -27,7 +27,7 @@ describe('Design V2 role permission table', () => {
     expect(component).toContain(':disabled="selected === \'ADMINISTRATOR\'"')
     expect(component).toContain('@click="reset"')
     expect(component).toContain('@click="cancel"')
-    expect(component).toContain('@click="save"')
+    expect(component).toContain('@click="save()"')
   })
 
   it('uses a functional settings header and keeps the mobile deletion notice visible', () => {

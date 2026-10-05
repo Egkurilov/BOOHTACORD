@@ -38,3 +38,12 @@ it('drops stale ownership when an account is switched during a pending claim',as
   controller.bind('a');const pending=controller.claim('voice',false);controller.bind('b');grant()
   expect(await pending).toBe(false);expect(controller.owned.value).toBe(false);controller.cancel()
 })
+
+it('does not release an owner whose media cleanup failed',async()=>{
+  const {port,held}=fixture(),yielding=vi.fn(async()=>false)
+  const first=createControllerOwnership(yielding,port),second=createControllerOwnership(async()=>true,port)
+  first.bind('account');second.bind('account');await first.claim('voice-a',false)
+  expect(await second.claim('voice-b',true)).toBe(false)
+  expect(yielding).toHaveBeenCalledOnce();expect(first.owned.value).toBe(true);expect(held.size).toBe(1)
+  await first.release();await second.release();first.cancel();second.cancel()
+})

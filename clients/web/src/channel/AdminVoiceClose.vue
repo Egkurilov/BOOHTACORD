@@ -2,6 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 
 import AdminConfirmation from './AdminConfirmation.vue'
+import ClosureStatus from './voice_closure/Status.vue'
 import { createVoiceCloseEditor } from './voice_close_editor'
 import type { TopologyCategory } from './topology_client'
 
@@ -39,5 +40,6 @@ watch(editor.error, async (message) => { if (message) { await nextTick(); errorN
     <p v-if="editor.status.value" ref="statusNode" class="admin-topology-status" role="status" tabindex="-1">{{ editor.status.value }}</p>
     <p v-if="editor.error.value" ref="errorNode" class="admin-topology-error" role="alert" tabindex="-1">{{ editor.error.value }}</p>
     <AdminConfirmation ref="confirmation" id="voice-close-confirm" title="Подтверждение закрытия" confirm-label="Закрыть вход" />
+    <ClosureStatus v-if="editor.phase.value !== 'idle'" :channel-id="editor.closingChannelId.value || selectedChannelId" />
   </form>
 </template>

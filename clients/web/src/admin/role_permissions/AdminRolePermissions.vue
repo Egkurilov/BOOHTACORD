@@ -3,6 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { memberPermissionDefaults, type PermissionKey, type PermissionValues } from '../../authorization/permission_keys'
 import { loadRolePolicies, RolePolicyError, saveMemberPolicy, type RoleName, type RolePolicy } from './role_policy_client'
 import { changed, copyPermissions, newlyGrantedDeletes } from './role_policy_editor'
+import { createConflictReview } from '../../channel/conflict_review/state'
+import Comparison from '../../channel/conflict_review/Comparison.vue'
 
 const labels: Record<PermissionKey, string> = {
   'channel.text.create': 'Создавать текстовые каналы', 'channel.text.delete': 'Удалять текстовые каналы',
@@ -21,13 +23,18 @@ const current = computed(() => roles.value.find((role) => role.role === selected
 const orderedRoles = computed(() => [...roles.value].sort((left, right) => left.role === 'ADMINISTRATOR' ? -1 : right.role === 'ADMINISTRATOR' ? 1 : 0))
 const dirty = computed(() => selected.value === 'MEMBER' && changed(baseline.value, draft.value))
 const displayed = computed(() => selected.value === 'MEMBER' ? draft.value : current.value?.permissions ?? draft.value)
+const review=createConflictReview<PermissionValues>()
+function summary(value:PermissionValues|null):string {return value ? Object.entries(value).map(([key,on])=>`${labels[key as PermissionKey]}: ${on ? 'да' : 'нет'}`).join('; ') : ''}
 
 async function load(resetDraft = true): Promise<void> {
   loading.value = true; error.value = ''; status.value = ''
   try {
     const page = await loadRolePolicies(); roles.value = page.roles; revision.value = page.revision
-    const member = page.roles.find((role) => role.role === 'MEMBER')!; baseline.value = copyPermissions(member.permissions)
-    if (resetDraft) draft.value = copyPermissions(member.permissions)
+    const member = page.roles.find((role) => role.role === 'MEMBER')!
+    if(!resetDraft&&dirty.value&&!review.before.value&&changed(baseline.value,member.permissions)) review.capture(copyPermissions(baseline.value),copyPermissions(draft.value))
+    baseline.value = copyPermissions(member.permissions)
+    if(review.before.value) review.refresh(copyPermissions(member.permissions),page.revision)
+    if (resetDraft) {draft.value = copyPermissions(member.permissions);review.reset()}
   } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить настройки ролей.' }
   finally { loading.value = false }
 }
@@ -37,13 +44,15 @@ function choose(role: RoleName): void {
   selected.value = role; draft.value = copyPermissions(baseline.value); error.value = ''; status.value = ''
 }
 function reset(): void { draft.value = memberPermissionDefaults(); status.value = 'Загружены значения по умолчанию. Нажмите «Сохранить».' }
-function cancel(): void { draft.value = copyPermissions(baseline.value); error.value = ''; status.value = '' }
-async function save(): Promise<void> {
+function cancel(): void { draft.value = copyPermissions(baseline.value);review.reset();error.value = ''; status.value = '' }
+async function save(reviewed=false): Promise<void> {
+  if(saving.value||loading.value||review.before.value&&!reviewed||reviewed&&!review.ready(revision.value)) return
   const grants = newlyGrantedDeletes(baseline.value, draft.value)
   if (grants.length && !window.confirm('Выдать участникам права удаления? Это позволит удалять объекты гильдии.')) return
   saving.value = true; error.value = ''; status.value = ''
   try { await saveMemberPolicy(revision.value, draft.value, grants.length > 0); await load(true); status.value = 'Разрешения участников сохранены.' }
   catch (cause) {
+    if(cause instanceof RolePolicyError&&cause.status===409){review.capture(copyPermissions(baseline.value),copyPermissions(draft.value));await load(false)}
     error.value = cause instanceof RolePolicyError && cause.status === 409 ? 'Настройки уже изменены другим администратором. Черновик сохранён; обновите данные или отмените изменения.' : cause instanceof Error ? cause.message : 'Не удалось сохранить разрешения.'
   } finally { saving.value = false }
 }
@@ -68,7 +77,8 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', guard))
       <p class="role-permission-notice"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v5m0-8h.01" /></svg><span>Разрешение удаления действует на любые каналы, в том числе созданные другими участниками и администраторами.</span></p>
     </fieldset>
     <p v-if="selected === 'ADMINISTRATOR'" class="role-policy-note">Разрешения администратора обязательны и не изменяются.</p>
-    <div v-else class="role-policy-actions"><span class="role-policy-status">{{ dirty ? 'Есть несохранённые изменения' : 'Изменения не внесены' }}</span><button type="button" :disabled="saving" @click="reset">По умолчанию</button><button type="button" :disabled="saving" @click="cancel">Отменить</button><button type="button" :disabled="!dirty || saving" @click="save">{{ saving ? 'Сохраняем…' : 'Сохранить' }}</button></div>
+    <Comparison v-if="review.before.value" :before="summary(review.before.value)" :current="review.current.value ? summary(review.current.value) : null" :proposed="summary(draft)" :ready="review.ready(revision)" :busy="saving || loading" @refresh="load(false)" @discard="cancel" @apply="save(true)" />
+    <div v-else class="role-policy-actions"><span class="role-policy-status">{{ dirty ? 'Есть несохранённые изменения' : 'Изменения не внесены' }}</span><button type="button" :disabled="saving" @click="reset">По умолчанию</button><button type="button" :disabled="saving" @click="cancel">Отменить</button><button type="button" :disabled="!dirty || saving" @click="save()">{{ saving ? 'Сохраняем…' : 'Сохранить' }}</button></div>
     <p v-if="status" class="admin-status" aria-live="polite">{{ status }}</p><p v-if="error" class="admin-error" role="alert">{{ error }}</p>
   </section>
 </template>

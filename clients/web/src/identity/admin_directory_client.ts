@@ -2,7 +2,8 @@ import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import type { ProfileRequest } from './profile_client'
 
-export interface AdminAccount { account_id: string; login: string; display_name: string; role: 'MEMBER' | 'ADMINISTRATOR'; blocked: boolean; created_at: string }
+export interface AdminAccount { account_id: string; login: string; display_name: string; role: 'MEMBER' | 'ADMINISTRATOR'; blocked: boolean; created_at: string; updated_at?:string }
+export class AdminDirectoryError extends Error {constructor(message:string,readonly status:number){super(message)}}
 export interface AdminAccountPage { accounts: AdminAccount[]; next_cursor?: string }
 export interface AuditEvent { id: string; actor_user_id?: string; actor_display_name?: string; actor_login?: string; event_type: string; target_user_id?: string; target_display_name?: string; target_login?: string; created_at: string }
 export interface AuditPage { events: AuditEvent[]; next_cursor?: string }
@@ -18,7 +19,7 @@ function role(value: unknown): AdminAccount['role'] { if (value === 'MEMBER' || 
 function parseAccount(value: unknown): AdminAccount {
   const account = record(value)
   if (typeof account.blocked !== 'boolean') throw new Error('Сервер вернул некорректный статус аккаунта.')
-  return { account_id: text(account.account_id), login: text(account.login), display_name: text(account.display_name), role: role(account.role), blocked: account.blocked, created_at: text(account.created_at) }
+  return { account_id: text(account.account_id), login: text(account.login), display_name: text(account.display_name), role: role(account.role), blocked: account.blocked, created_at: text(account.created_at),...(typeof account.updated_at==='string'?{updated_at:account.updated_at}:{}) }
 }
 function parseEvent(value: unknown): AuditEvent {
   const event = record(value)
@@ -35,8 +36,9 @@ function parseEvent(value: unknown): AuditEvent {
 async function call(path: string, init: RequestInit, request: ProfileRequest): Promise<Response> {
   const response = await request(`${apiBaseUrl}${path}`, { ...init, credentials: 'same-origin', headers: { accept: 'application/json', ...init.headers } })
   if (response.ok) return response
-  try { const body = record(await response.json()); const error = record(body.error); if (typeof error.message === 'string') throw new Error(error.message) } catch (cause) { if (cause instanceof Error && cause.message !== 'Сервер вернул некорректный ответ администрирования.') throw cause }
-  throw new Error(`Не удалось выполнить запрос (${response.status}).`)
+  let message=`Не удалось выполнить запрос (${response.status}).`
+  try {const error=record(record(await response.json()).error);if(typeof error.message==='string') message=error.message}catch{/* bounded status fallback */}
+  throw new AdminDirectoryError(message,response.status)
 }
 function query(cursor: string | undefined): string {
   const parameters = new URLSearchParams({ limit: '100' }); if (cursor) parameters.set('cursor', cursor)
@@ -53,9 +55,9 @@ export async function listAuditEvents(before?: string, request: ProfileRequest =
   if (!Array.isArray(page.events)) throw new Error('Сервер вернул некорректный список аудита.')
   return { events: page.events.map(parseEvent), ...(typeof page.next_cursor === 'string' ? { next_cursor: page.next_cursor } : {}) }
 }
-export async function updateAdminAccount(accountID: string, role: AdminAccount['role'], blocked: boolean, request: ProfileRequest = tracedFetch): Promise<void> {
+export async function updateAdminAccount(accountID: string, role: AdminAccount['role'], blocked: boolean, request: ProfileRequest = tracedFetch,expectedUpdatedAt?:string): Promise<void> {
   if (!accountID || !['MEMBER', 'ADMINISTRATOR'].includes(role) || typeof blocked !== 'boolean') throw new Error('Некорректное состояние аккаунта.')
-  await call(`/admin/accounts/${encodeURIComponent(accountID)}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ role, blocked }) }, request)
+  await call(`/admin/accounts/${encodeURIComponent(accountID)}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ role, blocked,...(expectedUpdatedAt?{expected_updated_at:expectedUpdatedAt}:{}) }) }, request)
 }
 export async function createPasswordResetLink(accountID: string, request: ProfileRequest = tracedFetch): Promise<PasswordResetLink> {
   if (!accountID) throw new Error('Не выбран аккаунт для восстановления доступа.')

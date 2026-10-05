@@ -4,10 +4,12 @@ import {
   type ScreenSenderStats,
 } from './screen_diagnostics'
 import { ScreenPacketLossWindow } from './screen_packet_loss'
+import { readSourceCounters } from './viewer_diagnosis/capture'
 
 const losses = new WeakMap<LiveKitScreenVideoTrack, { stream?: string; window: ScreenPacketLossWindow }>()
 
 export interface LiveKitScreenVideoTrack {
+  sender?:Pick<RTCRtpSender,'getStats'>
   currentBitrate?: number
   getSenderStats(): Promise<ScreenSenderStats[]>
   getSourceTrackSettings(): MediaTrackSettings
@@ -44,7 +46,8 @@ export async function inspectLiveKitScreenDiagnostics(
     loss = entry.window.add({ timestamp: sender?.timestamp ?? NaN, packetsSent: sender?.packetsSent, packetsLost: sender?.packetsLost })
     windowMs = entry.window.durationMs
   }
-  return { ...normalizeScreenDiagnostics({
+  const counters=await readSourceCounters(video?.sender)
+  return { ...counters,...normalizeScreenDiagnostics({
     audioTrack,
     bitrateBps: video?.currentBitrate,
     connectionQuality,

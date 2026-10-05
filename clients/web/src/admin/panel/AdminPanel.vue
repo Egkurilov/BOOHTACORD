@@ -7,10 +7,11 @@ import AdminAuditSection from '../audit/AdminAuditSection.vue'
 import AdminMediaDiagnostics from '../media/AdminMediaDiagnostics.vue'
 import AdminRolePermissions from '../role_permissions/AdminRolePermissions.vue'
 import AdminGuildSettings from '../guild_settings/AdminGuildSettings.vue'
+import ReadinessPanel from '../readiness/Panel.vue'
 
 defineProps<{ categories: TopologyCategory[]; revision: number }>()
 const emit = defineEmits<{ topologyChanged: [] }>()
-const section = ref<'members' | 'roles' | 'channels' | 'audit' | 'media' | 'guild'>('members')
+const section = ref<'members' | 'roles' | 'channels' | 'audit' | 'media' | 'guild' | 'readiness'>('members')
 const title = ref<HTMLElement | null>(null)
 let focusFrame: number | null = null
 onMounted(() => { focusFrame = window.requestAnimationFrame(() => title.value?.focus()) })
@@ -27,12 +28,14 @@ onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(foc
       <button type="button" :aria-current="section === 'channels' ? 'page' : undefined" @click="section = 'channels'">Каналы</button>
       <button type="button" :aria-current="section === 'audit' ? 'page' : undefined" @click="section = 'audit'">Аудит</button>
       <button type="button" :aria-current="section === 'media' ? 'page' : undefined" @click="section = 'media'">Медиа</button>
+      <button type="button" :aria-current="section === 'readiness' ? 'page' : undefined" @click="section = 'readiness'">Готовность</button>
     </nav>
     <AdminGuildSettings v-if="section === 'guild'" :categories="categories" />
     <AdminMembersSection v-else-if="section === 'members'" />
     <AdminRolePermissions v-else-if="section === 'roles'" />
     <AdminTopologyControls v-else-if="section === 'channels'" :categories="categories" :revision="revision" @changed="emit('topologyChanged')" />
     <AdminAuditSection v-else-if="section === 'audit'" />
+    <ReadinessPanel v-else-if="section === 'readiness'" />
     <AdminMediaDiagnostics v-else />
   </section>
 </template>

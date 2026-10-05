@@ -12,6 +12,7 @@ function confirm():void {dialog.value?.close();emit('confirm',voice.transferJoin
   <section aria-label="Перенос голосового подключения">
     <p role="status">Уже есть голосовое подключение: {{ currentRoom }}.</p>
     <p>Сессия входа остаётся общей. Управлять микрофоном и демонстрацией может одно окно.</p>
+    <p v-if="!voice.originControllerAvailable">Координация окон в этом браузере недоступна. Перенос контролирует серверный lease.</p>
     <button class="gc-button gc-button--primary" type="button" @click="dialog?.showModal()">Перенести подключение сюда…</button>
     <dialog ref="dialog" aria-labelledby="transfer-title">
       <h3 id="transfer-title">Перенести голосовое подключение?</h3>

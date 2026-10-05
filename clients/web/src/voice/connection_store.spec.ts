@@ -90,11 +90,13 @@ describe('voice connection store', () => {
     fixture.participantSource.cards.mockReturnValue([{ accountId, id: accountId, microphoneMuted: false, name: undefined, speaking: false }])
     fixture.screenSource.cards.mockReturnValue([{ accountId, hasAudio: false, id: `${accountId}:screen`, participantId: accountId, participantName: accountId }])
     const response = (name: string) => new Response(JSON.stringify({ user_id: accountId, login: 'member', display_name: name, role: 'MEMBER' }))
-    const request = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(response('Новый ник')).mockResolvedValueOnce(response('Ник после переименования'))
+    let resolveProfile!:(value:Response)=>void
+    const request = vi.spyOn(globalThis, 'fetch').mockImplementationOnce(()=>new Promise<Response>(resolve=>{resolveProfile=resolve})).mockResolvedValueOnce(response('Ник после переименования'))
     try {
       const store = useVoiceConnectionStore()
       await store.join('channel-1')
       expect(store.voiceVolumeParticipants[0]?.name).toBeUndefined()
+      resolveProfile(response('Новый ник'))
       await vi.waitFor(() => expect(store.voiceVolumeParticipants[0]?.name).toBe('Новый ник'))
       expect(store.screenViewerCards[0]?.participantName).toBe('Новый ник')
       expect(buildVoiceNavigationPresence('channel-1', null, store)?.members[0]?.name).toBe('Новый ник')
