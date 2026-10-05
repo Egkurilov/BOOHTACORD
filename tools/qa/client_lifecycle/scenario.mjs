@@ -26,7 +26,8 @@ try {
   await sessions(a, b, guest, report, input.directory, redactions)
   const refreshed = (await api(a, '/guild-profile')).body
   assert.equal(refreshed.name, 'Автономная гильдия')
-  const anonymous = await browser.newContext({ ignoreHTTPSErrors: true })
+  const anonymous = await browser.newContext({ ignoreHTTPSErrors: true,
+    viewport: { width: input.width, height: 900 } })
   const auth = await anonymous.newPage()
   await auth.goto(origin)
   await expect(auth.locator('.authentication-brand .guild-profile-name')).toHaveText(refreshed.name)
