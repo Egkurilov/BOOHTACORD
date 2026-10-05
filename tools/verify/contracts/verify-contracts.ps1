@@ -35,6 +35,7 @@ $realtime = Get-Content -Raw -LiteralPath $realtimePath | ConvertFrom-Json
 . (Join-Path $PSScriptRoot 'guild_lifecycle.ps1')
 . (Join-Path $PSScriptRoot 'identity.ps1')
 . (Join-Path $PSScriptRoot 'own_sessions.ps1')
+. (Join-Path $PSScriptRoot 'message_delivery.ps1')
 . (Join-Path $PSScriptRoot 'workspace.ps1')
 . (Join-Path $PSScriptRoot 'direct_messages.ps1')
 . (Join-Path $PSScriptRoot 'text_channels.ps1')

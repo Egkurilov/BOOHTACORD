@@ -19,6 +19,7 @@ describe('direct-message send retry', () => {
     const posts: Record<string, unknown>[] = []
     let rejectFirst: ((error: Error) => void) | undefined
     const request = async (_input: string, init: RequestInit) => {
+      if (_input.includes('/message-delivery/')) return new Response(JSON.stringify({ account_id: 'me', message_id: null }))
       if (init.method === 'GET') return page()
       const payload = JSON.parse(String(init.body)) as Record<string, unknown>
       posts.push(payload)
@@ -45,6 +46,7 @@ describe('direct-message send retry', () => {
     let nextId = 0
     const posts: string[] = []
     const request = async (_input: string, init: RequestInit) => {
+      if (_input.includes('/message-delivery/')) return new Response(JSON.stringify({ account_id: 'me', message_id: null }))
       if (init.method === 'GET') return page(history)
       const payload = JSON.parse(String(init.body)) as { client_message_id: string }
       posts.push(payload.client_message_id)
@@ -65,8 +67,9 @@ describe('direct-message send retry', () => {
   it('keeps a failed send scoped to its DM across navigation and never inserts it into another history', async () => {
     const store = useDirectMessageStore()
     let rejectSend: ((error: Error) => void) | undefined
-    const request = async (input: string, init: RequestInit) => {
-      if (init.method === 'GET') return page(input.includes('/dm-b/') ? [serverMessage('dm-b', 'message-b', 'client-b', 'B')] : [])
+    const request = async (_input: string, init: RequestInit) => {
+      if (_input.includes('/message-delivery/')) return new Response(JSON.stringify({ account_id: 'me', message_id: null }))
+      if (init.method === 'GET') return page(_input.includes('/dm-b/') ? [serverMessage('dm-b', 'message-b', 'client-b', 'B')] : [])
       return new Promise<Response>((_resolve, reject) => { rejectSend = reject })
     }
     await store.open('dm-a', request)
@@ -99,6 +102,7 @@ describe('direct-message send retry', () => {
     const store = useDirectMessageStore()
     const posts: string[] = []
     const request = async (_input: string, init: RequestInit) => {
+      if (_input.includes('/message-delivery/')) return new Response(JSON.stringify({ account_id: 'me', message_id: null }))
       if (init.method === 'GET') return page()
       const payload = JSON.parse(String(init.body)) as { client_message_id: string }
       posts.push(payload.client_message_id)

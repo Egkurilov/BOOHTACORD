@@ -3,7 +3,7 @@ interface LogMessage {
   authorId: string
   createdAt: string
   deleted?: boolean
-  sendStatus?: 'sending' | 'failed'
+  sendStatus?: 'sending' | 'checking' | 'failed'
 }
 
 interface LogUpdate {

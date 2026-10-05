@@ -1,4 +1,4 @@
-interface ServerMessage { id: string; sendStatus?: 'sending' | 'failed' }
+interface ServerMessage { id: string; sendStatus?: 'sending' | 'checking' | 'failed' }
 interface ScrollMetrics { scrollHeight: number; clientHeight: number; scrollTop: number }
 
 export function newestServerMessageId(messages: readonly ServerMessage[]): string | undefined {

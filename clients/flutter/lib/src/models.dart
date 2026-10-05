@@ -540,7 +540,7 @@ class MessageAttachment {
   }
 }
 
-enum MessageSendStatus { sending, failed }
+enum MessageSendStatus { sending, checking, failed }
 
 List<MessageAttachment> _messageAttachments(Object? value) {
   if (value == null) return const [];

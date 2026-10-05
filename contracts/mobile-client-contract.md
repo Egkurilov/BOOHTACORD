@@ -61,6 +61,22 @@
 - Удаление — soft deletion. Очистите локальный отображаемый текст, когда сервер вернёт deletion marker; не сохраняйте удалённый remote body в постоянном mobile cache.
 - Продвигайте DM read cursor только для сообщения, видимо отрисованного в выбранной foreground conversation. Сервер перемещает его монотонно; retry не может сдвинуть cursor назад.
 
+## Неопределённая доставка сообщения
+
+При timeout/lost response сначала вызовите caller-only
+`GET /api/v1/channels/{channelID}/message-delivery/{clientMessageID}` либо
+`GET /api/v1/direct-messages/{directMessageID}/message-delivery/{clientMessageID}`.
+Проверьте `account_id` ответа. Если `message_id` существует, загрузите историю
+с `at=message_id` и подтвердите author/client UUID; повторный POST не нужен.
+Удалённая серверная запись тоже подтверждает доставку и не должна воскресать.
+При `message_id: null` пользователь может повторить точный payload с тем же UUID;
+изменение payload создаёт новый UUID. Не повторяйте после 400/403/409/507 автоматически.
+При недоступной проверке остаётся локальная неопределённость; отсутствие ответа
+не доказывает отсутствие записи. Показывайте sending/checking/failed по беседам,
+убирайте optimistic row локально без server DELETE и очищайте очередь при смене
+аккаунта/сервера. Ограничение ожидания запроса — 20 секунд, после POST timeout
+проверка также ограничена. Поздний commit согласуется по прежнему UUID.
+
 ## Собственные активные сеансы
 
 `GET /api/v1/me/sessions` возвращает только сеансы владельца secure cookie:

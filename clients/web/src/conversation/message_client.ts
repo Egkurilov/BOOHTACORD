@@ -21,7 +21,8 @@ export interface TextMessage {
   deleted: boolean
   attachments: TextMessageAttachment[]
   mentionUserIds: string[]
-  sendStatus?: 'sending' | 'failed'
+  retryBlocked?: boolean
+  sendStatus?: 'sending' | 'checking' | 'failed'
 }
 
 export interface MessagePage {

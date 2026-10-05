@@ -1,4 +1,6 @@
 import '../../conversation/lifecycle/controller.dart';
+import '../../conversation/delivery/recovery.dart';
+import 'delivery.dart';
 
 extension ConversationSendDirect on ConversationController {
   Future<bool> sendDirect(
@@ -28,6 +30,8 @@ extension ConversationSendDirect on ConversationController {
       attachmentIds,
     );
     final clientMessageId = sendRetryIds.putIfAbsent(retryKey, uuid.v4);
+    final retry = pendingDirectSends.containsKey(clientMessageId);
+    if (blockedSendRetries.contains(clientMessageId)) return false;
     final pending =
         pendingDirectSends[clientMessageId] ??
         DirectChatMessage(
@@ -56,14 +60,7 @@ extension ConversationSendDirect on ConversationController {
     error = null;
     changed();
     try {
-      final message = await api.sendDirectMessage(
-        conversation.id,
-        clientMessageId,
-        trimmed,
-        replyToId: replyToId,
-        mentionUserIds: mentions,
-        attachmentIds: attachmentIds,
-      );
+      final message = await deliverDirect(pending, retry, active);
       if (!active()) return false;
       sendRetryIds.remove(retryKey);
       pendingDirectSends.remove(clientMessageId);
@@ -80,6 +77,7 @@ extension ConversationSendDirect on ConversationController {
       return true;
     } catch (cause) {
       if (!active()) return false;
+      if (!uncertainDelivery(cause)) blockedSendRetries.add(clientMessageId);
       if (pendingDirectSends.containsKey(clientMessageId)) {
         pendingDirectSends[clientMessageId] = pending.withSendStatus(
           MessageSendStatus.failed,

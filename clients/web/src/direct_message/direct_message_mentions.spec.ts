@@ -26,6 +26,7 @@ describe('DM mentions by stable user ID', () => {
     const store = useDirectMessageStore()
     const payloads: unknown[] = []
     const request = async (_input: string, init: RequestInit) => {
+      if (_input.includes('/message-delivery/')) return new Response(JSON.stringify({ account_id: 'user-1', message_id: null }))
       if (init.method === 'GET') return new Response(JSON.stringify({ messages: [] }))
       payloads.push(JSON.parse(String(init.body)))
       if (payloads.length === 1) throw new Error('Сеть недоступна')
@@ -44,6 +45,7 @@ describe('DM mentions by stable user ID', () => {
     const store = useDirectMessageStore()
     let editPayload: unknown
     const request = async (_input: string, init: RequestInit) => {
+      if (_input.includes('/message-delivery/')) return new Response(JSON.stringify({ account_id: 'user-1', message_id: null }))
       if (init.method === 'GET') return new Response(JSON.stringify({ messages: [message] }))
       editPayload = JSON.parse(String(init.body))
       return new Response(JSON.stringify({ ...message, body: 'Новое имя', revision: 2, edited_at: '2026-09-25T00:01:00Z' }))
@@ -58,6 +60,7 @@ describe('DM mentions by stable user ID', () => {
     const store = useDirectMessageStore()
     let editPayload: Record<string, unknown> | undefined
     const request = async (_input: string, init: RequestInit) => {
+      if (_input.includes('/message-delivery/')) return new Response(JSON.stringify({ account_id: 'user-1', message_id: null }))
       if (init.method === 'GET') return new Response(JSON.stringify({ messages: [message] }))
       editPayload = JSON.parse(String(init.body)) as Record<string, unknown>
       return new Response(JSON.stringify({ ...message, mention_user_ids: [], revision: 2, edited_at: '2026-09-25T00:01:00Z' }))

@@ -86,7 +86,8 @@ function remove(): void {
         <TextMessageAttachments v-if="textChannelId && textAttachments.length" :channel-id="textChannelId" :attachments="textAttachments" />
         <DirectMessageAttachments v-if="message.directMessageId && textAttachments.length" :direct-message-id="message.directMessageId" :attachments="textAttachments" />
         <p v-if="message.sendStatus === 'sending'" class="message-send-status" role="status">Отправляется…</p>
-        <div v-if="message.sendStatus === 'failed'" class="message-send-status" role="alert"><span>Не отправлено</span><button type="button" :disabled="retryDisabled" @click="emit('retry')">Повторить отправку</button></div>
+        <p v-if="message.sendStatus === 'checking'" class="message-send-status" role="status">Проверяем доставку…</p>
+        <div v-if="message.sendStatus === 'failed'" class="message-send-status" role="alert"><span>Не отправлено</span><button type="button" :disabled="retryDisabled || message.retryBlocked" @click="emit('retry')">Повторить отправку</button><button type="button" :disabled="retryDisabled" @click="emit('remove')">Убрать из очереди</button><small v-if="message.retryBlocked">Исправьте сообщение или доступ перед новой отправкой.</small></div>
       </template>
       <div v-if="!editing && !message.deleted && !message.sendStatus" class="message-actions" :class="{ 'is-open': actionsOpen }" @keydown.esc="closeActions">
         <button ref="actionsToggle" class="message-actions-toggle" type="button" aria-label="Действия с сообщением" :aria-expanded="actionsOpen" :aria-controls="`message-actions-${message.id}`" @click="actionsOpen = !actionsOpen">⋯</button>

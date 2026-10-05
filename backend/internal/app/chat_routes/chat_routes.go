@@ -62,6 +62,7 @@ import (
 )
 
 func ConfigureChatRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, events *eventhub.Hub) {
+	configureDeliveryRoutes(mux, database, sessions)
 	service := createtextmessage.New(messagepostgres.New(messagepostgres.NewPoolDatabase(database)))
 	editService := edittextmessage.New(editpostgres.New(editpostgres.NewPoolDatabase(database)))
 	deleteService := deletetextmessage.New(deletepostgres.New(deletepostgres.NewPoolDatabase(database)))

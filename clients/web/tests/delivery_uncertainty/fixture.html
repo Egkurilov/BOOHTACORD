@@ -1,0 +1,17 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Delivery</title><div id="app"></div>
+<script type="module">
+import { createApp,h,ref } from 'vue'
+import { createPinia } from 'pinia'
+import { useMessageStore } from '/src/conversation/message_store.ts'
+import MessageItem from '/src/conversation/MessageItem.vue'
+import '/src/style.css'
+const owner='00000000-0000-4000-8000-000000000001'
+const app=createApp({setup(){
+ const store=useMessageStore(),draft=ref('fixture')
+ store.open('00000000-0000-4000-8000-000000000002')
+ return()=>h('main',[h('input',{value:draft.value,'aria-label':'Сообщение',onInput:event=>{draft.value=event.target.value}}),
+ h('button',{onClick:()=>store.send(draft.value,undefined,undefined,undefined,[],owner),disabled:store.sending},'Отправить'),
+ ...store.messages.map(message=>h(MessageItem,{key:message.id,message,canEdit:false,canDelete:false,onRetry:()=>store.retry(message.clientMessageId),onRemove:()=>store.remove(message.id)}))])
+}}).use(createPinia())
+app.mount('#app')
+</script></html>

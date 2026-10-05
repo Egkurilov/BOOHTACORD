@@ -41,6 +41,7 @@ class ConversationController extends ChangeNotifier {
   bool loadingDirectMessages = false;
   bool sending = false;
   final Map<String, String> sendRetryIds = {};
+  final Set<String> blockedSendRetries = {};
   final Map<String, ChatMessage> pendingTextSends = {};
   final Map<String, DirectChatMessage> pendingDirectSends = {};
   String? lastReadDirectMessageId;

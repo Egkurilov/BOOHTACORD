@@ -4,7 +4,7 @@ interface GroupableMessage {
   replyToId?: string
   system?: boolean
   deleted?: boolean
-  sendStatus?: 'sending' | 'failed'
+  sendStatus?: 'sending' | 'checking' | 'failed'
 }
 
 export function groupChronologicalMessages<T extends GroupableMessage, E extends { message: T; dateLabel?: string }>(entries: readonly E[]): (E & { grouped: boolean })[] {

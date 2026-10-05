@@ -1,4 +1,4 @@
-interface ReadMessage { id: string; sendStatus?: 'sending' | 'failed' }
+interface ReadMessage { id: string; sendStatus?: 'sending' | 'checking' | 'failed' }
 
 export function newestVisibleServerMessageId(viewport: HTMLElement | null, messages: readonly ReadMessage[]): string | undefined {
   if (!viewport || viewport.clientHeight <= 0) return undefined

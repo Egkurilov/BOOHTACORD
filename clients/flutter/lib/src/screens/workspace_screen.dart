@@ -15,6 +15,7 @@ import '../services/message_presentation.dart';
 import '../services/composer_draft_memory.dart';
 import '../services/pinned_screen_mini_player_policy.dart';
 import '../services/api_client.dart';
+import '../features/conversation/delivery/status.dart';
 import '../services/voice_avatar_palette.dart';
 import '../services/voice_connection_quality.dart';
 import '../services/voice_participant_presentation.dart';
@@ -2937,17 +2938,9 @@ class _MessageRow extends StatelessWidget {
                 )
               else
                 FormattedMessageBody(body: message.body, color: GcColors.text),
-              if (message.sendStatus == MessageSendStatus.sending)
-                const Text(
-                  'Отправляется…',
-                  style: TextStyle(color: GcColors.muted, fontSize: 12),
-                ),
-              if (message.sendStatus == MessageSendStatus.failed)
-                TextButton.icon(
-                  onPressed: state.sending ? null : onRetry,
-                  icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Не отправлено · Повторить отправку'),
-                ),
+              DeliveryStatus(status:message.sendStatus,busy:state.sending,
+                retryBlocked:state.conversation.blockedSendRetries.contains(message.clientMessageId),
+                onRetry:onRetry,onDiscard:()=>state.deleteText(message)),
               if (!message.deleted &&
                   message.sendStatus == null &&
                   message.attachments.isNotEmpty)
@@ -4649,29 +4642,9 @@ class _DirectConversationState extends State<_DirectConversation> {
                                           fontSize: 14,
                                           lineHeight: 1.4,
                                         ),
-                                      if (message.sendStatus ==
-                                          MessageSendStatus.sending)
-                                        const Text(
-                                          'Отправляется…',
-                                          style: TextStyle(
-                                            color: GcColors.muted,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      if (message.sendStatus ==
-                                          MessageSendStatus.failed)
-                                        TextButton.icon(
-                                          onPressed: widget.state.sending
-                                              ? null
-                                              : () => _retry(message),
-                                          icon: const Icon(
-                                            Icons.refresh,
-                                            size: 16,
-                                          ),
-                                          label: const Text(
-                                            'Не отправлено · Повторить отправку',
-                                          ),
-                                        ),
+                                      DeliveryStatus(status:message.sendStatus,busy:widget.state.sending,
+                                        retryBlocked:widget.state.conversation.blockedSendRetries.contains(message.clientMessageId),
+                                        onRetry:()=>_retry(message),onDiscard:()=>widget.state.deleteDirect(message)),
                                       if (!message.deleted &&
                                           message.sendStatus == null &&
                                           message.attachments.isNotEmpty)
