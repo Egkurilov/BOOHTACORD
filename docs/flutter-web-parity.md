@@ -1290,16 +1290,25 @@ with 58 frames skipped in the Android interval, about 2 Mbit/s received and no
 packet loss at a selected 1080p/60 profile. This points to the Android receive,
 decode or render path only if the three clients were observing the same source;
 the screenshot does not identify the publisher, exact client revisions, or a
-physical device. A current read-only check finds API 35 Emulator running
-`1.0.34+67`, with no active screen projection, so the comparison could not be
-reproduced in this session.
+physical device. QA-293 recorded an API 35 Emulator with package versionName
+`1.0.34` and versionCode `2067`, with no active screen projection, so the
+comparison could not be reproduced then.
+After ADB access was granted, the emulator inventory was rechecked: the same
+package version is installed, the launcher is foreground, and MediaProjection
+is still null; there is no active receiver sample to compare in this session.
 
 The Android WebRTC fork currently reports `DEFAULT_FPS=30` in captured track
 settings, but its `OrientationAwareScreenCapturer` ignores the supplied capture
-framerate; this value alone does not prove a 30 FPS transmission cap. Keep the
-root cause open until a synchronized Mac/Web/Android receiver run captures the
-same publication and sender/receiver frame counters, followed by an emulator vs
-physical-device comparison — [QA-293](../evidence/flutter/qa293-android-receiver-decoded-fps-parity-2026-10-05-001.json).
+framerate; this value alone does not prove a 30 FPS transmission cap. Flutter's
+receiver diagnostics now report separately sampled received, decoded and
+rendered frame rates plus codec/decoder implementation when WebRTC exposes
+them. This is local presentation only; no report or server/API contract changed.
+The diagnostics tests, full Flutter suite, changed-file analyzer, Android Debug
+and macOS Debug builds pass. Keep the root cause open until a synchronized
+Mac/Web/Android receiver run captures the same publication and sender/receiver
+frame counters, followed by an emulator vs physical-device comparison —
+[QA-293](../evidence/flutter/qa293-android-receiver-decoded-fps-parity-2026-10-05-001.json),
+[QA-297](../evidence/flutter/qa297-flutter-android-receiver-diagnostic-breakdown-2026-10-05-001.json).
 
 ## TEXT visible read cursor ordering (FV2-037)
 

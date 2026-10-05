@@ -1,5 +1,12 @@
 # Фронтенд — только открытые задачи
 
+Обновление FV2-036: receiver diagnostics во Flutter теперь показывают отдельно
+полученные/декодированные/отображённые FPS, codec и decoder implementation.
+Тесты, analyzer, полный suite (644) и Android/macOS Debug builds прошли; ADB
+подтвердил доступный, но простаивающий API 35 emulator (`1.0.34`, versionCode
+2067) без активной MediaProjection. Причина расхождения FPS и парная приёмка остаются
+открыты — [QA-297](../evidence/flutter/qa297-flutter-android-receiver-diagnostic-breakdown-2026-10-05-001.json).
+
 - [x] **FV2-028 — Видимость шапки и composer при скролле TEXT на Android.** Widget regression проверяет неизменность bounds шапки/composer и отсутствие открытия навигационной панели при вертикальном скролле; focused test, analyzer и полный suite (585/585) проходят. Контролируемый вертикальный жест на эмуляторе `1.0.30+2065` переместил список к старым сообщениям, оставив шапку/composer видимыми; UIAutomator подтвердил bounds subtitle и composer и отсутствие drawer — [QA-278](../evidence/flutter/qa278-flutter-text-scroll-chrome-android-2026-10-05-001.json).
 
 Уточнение FV2-026 после синхронизации с `origin/master`: targeted test и analyzer

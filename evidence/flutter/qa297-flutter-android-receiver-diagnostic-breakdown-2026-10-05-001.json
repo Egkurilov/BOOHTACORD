@@ -1,0 +1,72 @@
+{
+  "id": "QA-297",
+  "date": "2026-10-05",
+  "task": "FV2-036 / FV2-003 — Android screen receiver decoded FPS parity investigation",
+  "source_revision": "bd5d9334",
+  "checks": [
+    {
+      "name": "Receiver diagnostics regression before implementation",
+      "command": "cd clients/flutter && flutter test --no-pub test/screen_receiver_diagnostics_test.dart --plain-name 'shows receiver codec and decoder in diagnostics'",
+      "result": "EXPECTED_FAIL_BEFORE_FIX",
+      "observation": "The diagnostics popover did not expose codec or decoder rows before the change."
+    },
+    {
+      "name": "Receiver diagnostics tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/screen_receiver_diagnostics_test.dart",
+      "result": "PASS",
+      "passed": 13,
+      "observation": "Coverage verifies native received/decoded/rendered counters, codec and decoder mapping, normalized timestamps, and distinct received/decoded/rendered rates."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter failures-only",
+      "result": "PASS",
+      "passed": 644
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/screen_receiver_diagnostics.dart test/screen_receiver_diagnostics_test.dart lib/src/features/session/lifecycle/restore.dart test/app_state_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "ADB emulator inventory",
+      "command": "adb devices -l",
+      "result": "PASS",
+      "observation": "emulator-5554 API 35 is attached. Package ru.boohtacord.app is versionName 1.0.34, versionCode 2067; the launcher is foreground and dumpsys media_projection reports null. No active screen-share source or receiver sample is available."
+    },
+    {
+      "name": "Synchronized Mac/Web/Android FPS acceptance and emulator-vs-device comparison",
+      "result": "NOT_RUN",
+      "observation": "The emulator is idle with no active MediaProjection. No same-publication sender/receiver sample or physical Android device was available, so runtime FPS root cause remains unproven."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core (pwsh) is not installed on this host; verifier remains required in CI after the backlog update."
+    }
+  ],
+  "implementation": {
+    "files": [
+      "clients/flutter/lib/src/screens/screen_receiver_diagnostics.dart",
+      "clients/flutter/test/screen_receiver_diagnostics_test.dart"
+    ],
+    "behavior": "Receiver diagnostics now distinguish received, decoded and rendered FPS and show bounded codec/decoder implementation details when present in WebRTC stats.",
+    "web_or_contract_changed": false,
+    "server_payload_changed": false
+  },
+  "status": "LOCAL_DIAGNOSTIC_BREAKDOWN_IMPLEMENTED_AND_TESTED; ANDROID_RUNTIME_ROOT_CAUSE_AND_PAIRED_DEVICE_ACCEPTANCE_OPEN"
+}
