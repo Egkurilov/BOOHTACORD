@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
+    "render:social-preview": "node scripts/render_social_preview.mjs",
+    "verify:social-preview": "node scripts/verify_social_preview.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:screen-profile": "playwright test -c tests/screen_profile/playwright.config.ts",
