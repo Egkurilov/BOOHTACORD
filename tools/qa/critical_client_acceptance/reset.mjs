@@ -20,10 +20,13 @@ export async function resetLinks(browser, admin, accountId, input, report, redac
     await submit()
     await expect(page.getByRole('status')).toContainText('Пароль изменён')
     await expect(page.getByRole('status')).toBeFocused()
+    console.log('stage=actual-reset-completed-focus')
+    await page.goto(origin)
     await page.goto(url)
     await submit()
     await expect(page.getByRole('alert')).toContainText('срок её действия истёк')
     await expect(page.getByRole('alert')).toBeFocused()
+    console.log('stage=actual-used-reset-rejected-focus')
     await page.getByRole('button', { name: 'Перейти ко входу' }).click()
     await expect(page.getByLabel('Логин', { exact: true })).toBeFocused()
     const next = await api(admin, '/admin/password-reset-links', 'POST', { account_id: accountId })
@@ -33,6 +36,7 @@ export async function resetLinks(browser, admin, accountId, input, report, redac
     // Expire only the owned disposable fixture's resets; no production clock or data mutation.
     owned('db', 'exec', '$owned', 'psql', '-U', 'qa', '-d', 'qa', '-c',
       "update password_resets set expires_at = now() - interval '1 second' where used_at is null")
+    await page.goto(origin)
     await page.goto(origin+'/reset-password'+nextToken)
     await submit()
     await expect(page.getByRole('alert')).toContainText('срок её действия истёк')
