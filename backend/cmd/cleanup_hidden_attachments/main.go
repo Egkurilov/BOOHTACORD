@@ -2,10 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -14,25 +13,13 @@ import (
 	cleanup "voice-platform/backend/internal/storage/cleanup_hidden_attachments"
 	cleanupdb "voice-platform/backend/internal/storage/cleanup_hidden_attachments/postgres"
 	files "voice-platform/backend/internal/storage/cleanup_unattached_attachments"
+	inspect "voice-platform/backend/internal/storage/inspect_attachment_cleanup"
 )
 
-func parseArgs(args []string) (int, error) {
-	flags := flag.NewFlagSet("cleanup-hidden-attachments", flag.ContinueOnError)
-	flags.SetOutput(io.Discard)
-	limit := flags.Int("limit", cleanup.MaxBatch, "maximum rows per run")
-	if err := flags.Parse(args); err != nil {
-		return 0, err
-	}
-	if flags.NArg() != 0 || *limit < 1 || *limit > cleanup.MaxBatch {
-		return 0, cleanup.ErrInvalidRun
-	}
-	return *limit, nil
-}
-
 func main() {
-	limit, err := parseArgs(os.Args[1:])
+	mode, err := parseMode(os.Args[1:])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "usage: cleanup-hidden-attachments [--limit=1..100]")
+		fmt.Fprintln(os.Stderr, "usage: cleanup-hidden-attachments [--dry-run] [--limit=1..100]")
 		os.Exit(2)
 	}
 	root := os.Getenv("ATTACHMENTS_DIRECTORY")
@@ -54,7 +41,18 @@ func main() {
 		os.Exit(1)
 	}
 	defer database.Close()
-	result, err := cleanup.New(cleanupdb.New(database), fileStore).Run(ctx, time.Now().UTC(), limit)
+	if mode.dryRun {
+		report, err := inspect.New(database).Database(ctx, "HIDDEN", time.Now().UTC())
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "inspection failed")
+			os.Exit(1)
+		}
+		if err := json.NewEncoder(os.Stdout).Encode(report); err != nil {
+			os.Exit(1)
+		}
+		return
+	}
+	result, err := cleanup.New(cleanupdb.New(database), fileStore).Run(ctx, time.Now().UTC(), mode.limit)
 	fmt.Printf("Claimed: %d; removed: %d; retryable failures: %d.\n", result.Claimed, result.Removed, result.Failed)
 	if err != nil {
 		if errors.Is(err, cleanup.ErrPartialCleanup) {

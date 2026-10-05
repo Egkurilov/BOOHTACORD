@@ -50,11 +50,7 @@ func (service Service) Run(ctx context.Context, now time.Time, limit int) (Resul
 			result.Failed++
 			continue
 		}
-		if err := service.files.Remove(candidate.Key); err != nil {
-			result.Failed++
-			continue
-		}
-		if err := service.store.Finalize(ctx, candidate.ID); err != nil {
+		if err := service.finalize(ctx, candidate); err != nil {
 			result.Failed++
 			continue
 		}

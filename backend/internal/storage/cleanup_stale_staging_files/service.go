@@ -29,6 +29,17 @@ func New(directory string) (Service, error) {
 }
 
 func (service Service) RemoveBefore(cutoff time.Time) (int, error) {
+	return service.removeBefore(cutoff, 0)
+}
+
+func (service Service) RemoveBeforeLimit(cutoff time.Time, limit int) (int, error) {
+	if limit < 1 || limit > 100 {
+		return 0, ErrInvalidCutoff
+	}
+	return service.removeBefore(cutoff, limit)
+}
+
+func (service Service) removeBefore(cutoff time.Time, limit int) (int, error) {
 	if cutoff.IsZero() {
 		return 0, ErrInvalidCutoff
 	}
@@ -38,6 +49,9 @@ func (service Service) RemoveBefore(cutoff time.Time) (int, error) {
 	}
 	removed := 0
 	for _, entry := range entries {
+		if limit > 0 && removed >= limit {
+			break
+		}
 		if entry.IsDir() || entry.Type()&os.ModeSymlink != 0 || !stagedUploadName(entry.Name()) {
 			continue
 		}
@@ -49,6 +63,17 @@ func (service Service) RemoveBefore(cutoff time.Time) (int, error) {
 			return removed, fmt.Errorf("inspect staged attachment: %w", err)
 		}
 		if !info.Mode().IsRegular() || !info.ModTime().Before(cutoff) {
+			continue
+		}
+		// Recheck immediately before unlink; a producer may have resumed writing.
+		current, err := os.Lstat(filepath.Join(service.directory, entry.Name()))
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return removed, err
+		}
+		if !current.Mode().IsRegular() || !current.ModTime().Before(cutoff) {
 			continue
 		}
 		if err := os.Remove(filepath.Join(service.directory, entry.Name())); err != nil {
