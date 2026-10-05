@@ -1,4 +1,5 @@
 import { audioCodec } from './codec'
+import { audioInterval } from './interval'
 import { statNumber, type AudioDirection, type AudioSample, type RawAudioStat } from './model'
 type Previous = { at: number; report: RawAudioStat }
 export class AudioStatsReader {
@@ -14,8 +15,7 @@ export class AudioStatsReader {
       const key = scope + '\n' + String(rtp.id)
       const old = this.previous.get(key)
       const dt = old ? at - old.at : 0
-      const fresh = !old || rtp.timestamp !== old.report.timestamp || rtp.timestamp === undefined
-      const valid = fresh && dt > 0 && dt <= 15000
+      const { fresh, valid } = audioInterval(rtp, old?.report, at, old?.at, direction)
       const delta = (field: string): number | null => {
         const current = statNumber(rtp[field]), previous = statNumber(old?.report[field])
         return valid && current !== null && previous !== null && current >= previous ? current - previous : null
