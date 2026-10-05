@@ -39,9 +39,16 @@ export async function uploads(page, input, report) {
     await page.locator('#message-attachments').setInputFiles(file('cancel.bin', 25_000_000))
     await expect.poll(reserved, { timeout: 15000 }).toBe(25_000_000)
     await expect(picker.locator('progress')).toBeVisible()
+    await expect.poll(async()=>Number(await picker.locator('progress').getAttribute('value'))).toBeGreaterThan(0)
     await picker.getByRole('button', { name: 'Отменить загрузку cancel.bin', exact: true }).click()
     await expect.poll(reserved, { timeout: 15000 }).toBe(0)
     assert.equal(owned('keeper', 'exec', '$owned', 'sh', '-c', 'find /attachments/staging -type f | wc -l'), '0')
+    await page.locator('#message-attachments').setInputFiles(file('switch-scope.bin',25_000_000))
+    await expect.poll(reserved,{timeout:15000}).toBe(25_000_000)
+    await select(page,'NextB')
+    await expect.poll(reserved,{timeout:15000}).toBe(0)
+    await expect(queue).toHaveCount(0)
+    await select(page,'NextA'); await expect(queue).toHaveCount(0)
     await session.send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 })
     await session.detach()
     await page.locator('#message-attachments').setInputFiles(Array.from({ length: 10 }, (_, i) => file(`large-${i}.bin`,25_000_000)))
@@ -53,9 +60,15 @@ export async function uploads(page, input, report) {
     await page.locator('.direct-message-navigation .channel-button').filter({ hasText: 'qa_next_member' }).click()
     await page.locator('#dm-attachments').setInputFiles(file('dm-real.bin', 1_000_000))
     await expect(picker.locator('[data-upload-status="done"]')).toHaveCount(1)
+    await page.locator('.message-composer').evaluate(form=>{
+      const dataTransfer=new DataTransfer()
+      dataTransfer.items.add(new File([new Uint8Array(1024)],'drop-real.bin'))
+      form.dispatchEvent(new DragEvent('drop',{dataTransfer,bubbles:true,cancelable:true}))
+    })
+    await expect(picker.locator('[data-upload-status="done"]')).toHaveCount(2)
     await page.getByRole('button', { name: 'Отправить сообщение', exact: true }).click()
     await expect(queue).toHaveCount(0)
     report.uploads = { actual_abort_releases_reservation: true, staging_files: 0, actual_progress: true,
-      ten_25mb_files: true, successful_text_and_dm_publication: true }
+      ten_25mb_files: true, actual_scope_switch_aborts:true, actual_active_composer_drop:true, successful_text_and_dm_publication: true }
   }
 }

@@ -32,6 +32,9 @@ def main():
                 scenarios[-1]['api_binary_sha256'] = hashlib.sha256(stack.binary.read_bytes()).hexdigest()
             finally:
                 stack.close()
+        receipt = dict(scenarios[-1], source_revision=output('git', '-C', str(root), 'rev-parse', 'HEAD'),
+                       mocks=False, actual_postgres_and_livekit=True, owned_resources_removed=True)
+        (destination/('limited.json' if limited else 'unlimited.json')).write_text(json.dumps(receipt, indent=2)+'\n')
     report = dict(status='PASS', source_revision=output('git', '-C', str(root), 'rev-parse', 'HEAD'),
                   mocks=False, actual_postgres_and_livekit=True, owned_resources_removed=True, scenarios=scenarios)
     sources = list((root/'tools/qa/next_client_acceptance').glob('*.*'))

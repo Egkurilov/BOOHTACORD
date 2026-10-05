@@ -33,7 +33,7 @@ export async function unread(page, browser, fixture, input, report) {
     for (let i=0; i<6; i++) await context.getByRole('button', { name: 'Показать следующие сообщения', exact: true }).click()
     await expect(context.locator('[data-message-id]')).toHaveCount(121)
     assert.notEqual(read(), data.ids[120], 'Invisible tail was incorrectly marked read')
-    const before = read(), background = await browser.newPage()
+    const before = read(), background = await page.context().newPage()
     await background.bringToFront()
     await expect.poll(() => page.evaluate(() => document.visibilityState)).toBe('hidden')
     await context.locator('.search-context-list').evaluate(list => { list.scrollTop=list.scrollHeight; list.dispatchEvent(new Event('scroll')) })
