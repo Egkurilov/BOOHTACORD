@@ -12,7 +12,9 @@ import '../widgets/confirmation_dialog.dart';
 import '../features/admin/role_permissions/panel.dart';
 import 'admin_member_filter.dart';
 import 'admin_member_filters.dart';
+
 enum _AdminSection { members, roles, channels, audit, media }
+
 class _AdminAccountDraft {
   _AdminAccountDraft({required this.role, required this.blocked});
   String role;
@@ -348,10 +350,30 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       role: SemanticsRole.tab,
       onTap: () => _selectSection(section),
       child: ExcludeSemantics(
-        child: ChoiceChip(
-          label: Text(label),
-          selected: selected,
-          onSelected: (_) => _selectSection(section),
+        child: InkWell(
+          onTap: () => _selectSection(section),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 44),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: selected ? GcColors.accent : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? GcColors.text : GcColors.textSecondary,
+                fontSize: 14,
+                height: 20 / 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -660,7 +682,8 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
           _AdminWorkspaceHeader(
             compact: compact,
             onToggleNavigation: widget.onToggleNavigation,
-            onClose: widget.onClose ??
+            onClose:
+                widget.onClose ??
                 () => widget.state.toggleWorkspacePanel(WorkspacePanel.none),
           ),
           Padding(
@@ -719,29 +742,54 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-            child: Semantics(
-              key: const ValueKey('admin-section-tabs-semantics'),
-              container: true,
-              explicitChildNodes: true,
-              role: SemanticsRole.tabBar,
-              label: 'Разделы администрирования',
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _adminSectionTab('Участники', _AdminSection.members),
-                  _adminSectionTab('Роли', _AdminSection.roles),
-                  _adminSectionTab('Каналы', _AdminSection.channels),
-                  _adminSectionTab('Аудит', _AdminSection.audit),
-                  _adminSectionTab('Медиа', _AdminSection.media),
-                ],
+          SizedBox(
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: GcColors.borderSubtle),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  key: const ValueKey('admin-section-tabs-scroll'),
+                  scrollDirection: Axis.horizontal,
+                  child: Semantics(
+                    key: const ValueKey('admin-section-tabs-semantics'),
+                    container: true,
+                    explicitChildNodes: true,
+                    role: SemanticsRole.tabBar,
+                    label: 'Разделы администрирования',
+                    child: Row(
+                      children: [
+                        _adminSectionTab('Участники', _AdminSection.members),
+                        if (MediaQuery.sizeOf(context).width > 1023)
+                          const SizedBox(width: 8),
+                        _adminSectionTab('Роли', _AdminSection.roles),
+                        if (MediaQuery.sizeOf(context).width > 1023)
+                          const SizedBox(width: 8),
+                        _adminSectionTab('Каналы', _AdminSection.channels),
+                        if (MediaQuery.sizeOf(context).width > 1023)
+                          const SizedBox(width: 8),
+                        _adminSectionTab('Аудит', _AdminSection.audit),
+                        if (MediaQuery.sizeOf(context).width > 1023)
+                          const SizedBox(width: 8),
+                        _adminSectionTab('Медиа', _AdminSection.media),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
           Expanded(
-            child: _selectedAdminSection == _AdminSection.roles ? RolePermissionsPanel(api: widget.state.api, onSaved: widget.state.permissions.refresh) : _selectedAdminSection == _AdminSection.audit
+            child: _selectedAdminSection == _AdminSection.roles
+                ? RolePermissionsPanel(
+                    api: widget.state.api,
+                    onSaved: widget.state.permissions.refresh,
+                  )
+                : _selectedAdminSection == _AdminSection.audit
                 ? _buildAuditPanel()
                 : _selectedAdminSection == _AdminSection.media
                 ? _buildMediaPanel()

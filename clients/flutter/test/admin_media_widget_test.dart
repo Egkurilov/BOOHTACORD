@@ -18,12 +18,88 @@ Future<AppState> _openMedia(WidgetTester tester, TopologyTestApi api) async {
     ),
   );
   await tester.pumpAndSettle();
-  await tester.tap(find.widgetWithText(ChoiceChip, 'Медиа'));
+  await tester.ensureVisible(
+    find.byKey(const ValueKey('admin-section-tab-media')),
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const ValueKey('admin-section-tab-media')));
   await tester.pumpAndSettle();
   return state;
 }
 
 void main() {
+  testWidgets('admin section tabs match the web horizontal tab strip', (
+    tester,
+  ) async {
+    final api = TopologyTestApi();
+    final state = await _openMedia(tester, api);
+    addTearDown(() {
+      tester.view.reset();
+      state.dispose();
+    });
+
+    final tabKeys = [
+      'members',
+      'roles',
+      'channels',
+      'audit',
+      'media',
+    ].map((name) => ValueKey('admin-section-tab-$name'));
+    final tabTopPositions = tabKeys
+        .map((key) => tester.getTopLeft(find.byKey(key)).dy)
+        .toSet();
+    expect(
+      tabTopPositions,
+      hasLength(1),
+      reason: 'web keeps all administration tabs on one horizontally scrollable row',
+    );
+
+    final scroll = find.byKey(const ValueKey('admin-section-tabs-scroll'));
+    expect(scroll, findsOneWidget);
+    expect(
+      tester.widget<SingleChildScrollView>(scroll).scrollDirection,
+      Axis.horizontal,
+    );
+    await tester.drag(scroll, const Offset(400, 0));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('admin-section-tab-media')).hitTestable(),
+      findsNothing,
+    );
+    await tester.drag(scroll, const Offset(-240, 0));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('admin-section-tab-media')).hitTestable(),
+      findsOneWidget,
+      reason: 'the final tab remains reachable by horizontal scrolling',
+    );
+  });
+
+  testWidgets('desktop admin tab divider fills its available panel width', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final api = TopologyTestApi();
+    final state = AppState(api)..topology = api.current;
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: AdminScreen(state: state)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('admin-section-tabs-scroll')))
+          .width,
+      1392,
+      reason: 'the tab strip must fill the width provided by its parent panel',
+    );
+  });
+
   testWidgets('media tab shows the web-equivalent empty state and polls', (
     tester,
   ) async {
@@ -70,7 +146,7 @@ void main() {
     await tester.pump();
     expect(api.screenMetricsLoads, 2);
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Каналы'));
+    await tester.tap(find.byKey(const ValueKey('admin-section-tab-channels')));
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 10));
     expect(api.screenMetricsLoads, 2);

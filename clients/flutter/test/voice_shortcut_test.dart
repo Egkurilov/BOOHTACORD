@@ -4,6 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:boohtacord_desktop/src/features/voice/microphone/shortcut.dart';
 
 void main() {
+  test('formats named legacy logical keys without labels', () {
+    expect(
+      VoiceShortcutBinding(keyId: LogicalKeyboardKey.tab.keyId, label: '')
+          .code,
+      'Tab',
+    );
+    expect(
+      VoiceShortcutBinding(keyId: LogicalKeyboardKey.escape.keyId, label: '')
+          .code,
+      'Escape',
+    );
+  });
+
   test('validates, formats and serializes modifier shortcuts', () {
     const binding = VoiceShortcutBinding(keyId: 42, label: 'M', control: true);
     expect(binding.isValid, isTrue);

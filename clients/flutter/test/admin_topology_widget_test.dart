@@ -18,7 +18,7 @@ Future<AppState> _openChannels(WidgetTester tester, TopologyTestApi api) async {
     ),
   );
   await tester.pump();
-  await tester.tap(find.widgetWithText(ChoiceChip, 'Каналы'));
+  await tester.tap(find.byKey(const ValueKey('admin-section-tab-channels')));
   await tester.pumpAndSettle();
   expect(
     tester
@@ -181,7 +181,7 @@ void main() {
     expect(find.text('Участников пока нет.'), findsOneWidget);
 
     api.pendingAudit = Completer<AdminAuditPage>();
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Аудит'));
+    await tester.tap(find.byKey(const ValueKey('admin-section-tab-audit')));
     await tester.pump();
     final auditLoading = find.byKey(const ValueKey('admin-audit-loading'));
     expect(find.text('Загружаем аудит…'), findsOneWidget);

@@ -94,6 +94,30 @@ was hot-reloaded and visually checked on Administration → Roles. Android API
 existing session/data preserved; no permission was changed or saved. The
 change is client presentation/test-only — [QA-270](../evidence/flutter/qa270-flutter-admin-list-tile-warning-2026-10-05-001.json).
 
+## Admin section tabs (FV2-024)
+
+Flutter administration now follows the web tab-strip interaction: one
+horizontal row, horizontally scrollable on compact widths, a 44 px minimum
+target, 12 px horizontal button padding, 8 px desktop spacing/zero compact
+spacing, and a 2 px accent underline for the selected tab. Tab and tab-bar
+semantics are retained. The previous `Wrap` of `ChoiceChip`s was test-first
+reproduced as three rows on compact screens; a separate desktop regression
+caught the divider shrinking to the tabs' intrinsic width. Focused admin and
+workspace tests pass 74/74 and changed-file analysis is clean. The existing
+macOS Debug session was hot-reloaded and visually checked without restarting
+or disturbing its authenticated session. Android API 35 was checked on signed
+local build `1.0.29+2060` installed in place, preserving the existing session;
+all five tabs fit at the emulator's compact width, and a horizontal swipe
+confirmed that Media remains reachable. No role setting was changed or saved —
+[QA-272](../evidence/flutter/qa272-flutter-admin-section-tabs-design-v2-2026-10-05-001.json).
+
+Source review surfaced a separate remaining parity gap: web constrains the
+whole `.admin-panel` to 880 px and visually hides its inner heading while the
+workspace header supplies the page title. Flutter's admin body currently spans
+more width and shows an additional heading; track this as FV2-025 rather than
+folding it into the tab-strip change. Windows-native visual acceptance remains
+open in FV2-006.
+
 ## Frameless desktop window chrome (FV2-018)
 
 macOS and Windows now use a compact 32 px draggable title bar instead of the

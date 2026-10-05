@@ -47,7 +47,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Роли'));
+    await tester.tap(find.byKey(const ValueKey('admin-section-tab-roles')));
     await tester.pumpAndSettle();
 
     final permissionTile = find.widgetWithText(

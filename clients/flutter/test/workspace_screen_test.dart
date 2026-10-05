@@ -1833,7 +1833,7 @@ void main() {
     expect(find.text('Роли и доступ к этой гильдии'), findsOneWidget);
     expect(find.text('@peer'), findsOneWidget);
     expect(find.text('Сбросить пароль'), findsOneWidget);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Каналы'));
+    await tester.tap(find.byKey(const ValueKey('admin-section-tab-channels')));
     await tester.pumpAndSettle();
     final channelPicker = find.byType(DropdownButtonFormField<String>).at(1);
     await tester.ensureVisible(channelPicker);
@@ -2013,7 +2013,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Аудит'));
+    await tester.tap(find.byKey(const ValueKey('admin-section-tab-audit')));
     await tester.pumpAndSettle();
     expect(find.text('Не удалось загрузить журнал аудита.'), findsOneWidget);
 
@@ -2050,7 +2050,7 @@ void main() {
     await tester.pumpAndSettle();
 
     api.auditGate = Completer<void>();
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Аудит'));
+    await tester.tap(find.byKey(const ValueKey('admin-section-tab-audit')));
     await tester.pump();
     expect(find.text('Загружаем аудит…'), findsOneWidget);
     api.auditGate!.complete();

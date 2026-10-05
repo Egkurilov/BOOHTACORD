@@ -1,0 +1,83 @@
+{
+  "id": "QA-272",
+  "date": "2026-10-05",
+  "task": "FV2-024 — Flutter Design V2 administration section tabs",
+  "source_revision": "65199633",
+  "working_tree_changes": true,
+  "environment": {
+    "flutter": "3.47.5 stable",
+    "dart": "3.13.4",
+    "macos": "arm64 Flutter Debug app via connected DevTools",
+    "android_device": "Android Emulator sdk_gphone64_arm64",
+    "android_api": 35,
+    "android_resolution": "1080x2400",
+    "android_density_dpi": 420,
+    "android_build": "1.0.29+2060 / versionCode 2060"
+  },
+  "summary": "Replaced Flutter's wrapping ChoiceChip administration sections with the web-style horizontal tab strip: one row, scroll access on compact viewports, 44 px minimum height, 12 px horizontal padding, responsive gaps, active accent underline and accessible tab semantics. Focused tests and analyzer pass; the existing macOS app was hot-reloaded, and the signed Android APK was installed in place for emulator visual acceptance.",
+  "checks": [
+    {
+      "name": "Web source comparison",
+      "result": "PASS",
+      "observation": "Read-only comparison against clients/web/src/design/settings.css and design_v2_admin_permissions.css confirmed the horizontal overflow model, 44 px minimum height, 12 px horizontal padding, 8 px desktop/zero compact gap, and selected 2 px accent underline. No web source was changed. The 880 px max-width and visually hidden inner heading belong to the whole admin panel and are tracked separately as FV2-025."
+    },
+    {
+      "name": "Test-first compact and desktop regression",
+      "result": "PASS",
+      "observation": "Before implementation, the compact tab top positions were [223.0, 279.0, 335.0], showing three wrapped rows. After the first horizontal-row change, a desktop regression caught an intrinsic-width divider (605.25 px rather than the 1392 px parent constraint); the tab viewport now fills its provided panel width. Tests also verify horizontal scroll direction and that the final Media tab can be reached."
+    },
+    {
+      "name": "Focused admin and workspace tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/admin_media_widget_test.dart test/admin_topology_widget_test.dart test/admin_role_permissions_surface_test.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "passed": 74,
+      "observation": "All focused admin/workspace tests passed, including horizontal single-row layout, scroll reachability, desktop parent-width behavior, and existing navigation/media/role regressions."
+    },
+    {
+      "name": "Changed-file Flutter analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/admin_screen.dart test/admin_media_widget_test.dart test/admin_topology_widget_test.dart test/admin_role_permissions_surface_test.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android arm64 test release build",
+      "command": "cd clients/flutter && flutter build apk --release --no-pub --target-platform android-arm64 --build-number=2060",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-release.apk (71.8 MB, ignored local build output)",
+      "observation": "Signed local APK 1.0.29+2060 built successfully for emulator testing only; it was not published as a release or added to Git."
+    },
+    {
+      "name": "Android emulator runtime visual verification",
+      "result": "PASS",
+      "observation": "Installed the current-source signed APK with adb install -r over the existing package, preserving app data/session. Opened Administration and visually confirmed a single row with all five tabs fitting at the emulator width and the selected Roles tab showing its accent underline. The current-source widget regressions separately confirm the final Media tab remains reachable by horizontal scrolling. No role or permission value was changed or saved. A temporary screenshot was inspected locally and not added to the repository because it contains account/member UI data."
+    },
+    {
+      "name": "macOS runtime visual verification",
+      "result": "PASS",
+      "observation": "Used the user-provided local Flutter DevTools connection to hot-reload the already-running macOS Debug app after the final spacing adjustment. Visually confirmed the five tabs on one row, selected Roles underline, and divider spanning the available panel width. The app was not restarted; the authenticated session remained intact and no Keychain prompt appeared."
+    },
+    {
+      "name": "Windows native visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "No Windows runner/device was available for this local runtime check. Platform-level Windows acceptance remains in FV2-006."
+    },
+    {
+      "name": "Backlog YAML and QA evidence JSON parse",
+      "command": "ruby -rjson -ryaml -e 'YAML.load_file(\"backlog/tasks.yaml\"); JSON.parse(File.read(\"evidence/flutter/qa272-flutter-admin-section-tabs-design-v2-2026-10-05-001.json\"))'",
+      "result": "PASS",
+      "observation": "Backlog YAML and evidence JSON parsed successfully; task IDs were unique and FV2-024/FV2-025 were present."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core (pwsh) is not installed on this macOS host. The verifier was attempted after backlog updates; the YAML and evidence JSON syntax were independently parsed successfully with Ruby."
+    }
+  ],
+  "limitations": [
+    "FV2-024 closes the tab-strip leaf for Android and macOS; Windows-native visual acceptance remains part of FV2-006.",
+    "Source review identified a separate web parity difference: web caps the full admin content panel at 880 px and visually hides its inner heading. Flutter still displays a wider panel and duplicate inner title; FV2-025 is open for that change.",
+    "No web, API, ACL, session, storage, or LiveKit behavior was modified. No role/permission changes were saved."
+  ],
+  "status": "CLOSED_ADMIN_TABS_ANDROID_MACOS_VISUAL_PASS_WINDOWS_GATE_OPEN"
+}
