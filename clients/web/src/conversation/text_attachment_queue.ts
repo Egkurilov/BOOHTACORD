@@ -1,79 +1,10 @@
-import { ref } from 'vue'
-
 import { uploadTextAttachment, type TextAttachmentUpload } from './text_attachment_upload_client'
-import { exceedsAttachmentCount } from './attachment_limits'
+import { createManagedUploadQueue } from './upload_queue/queue'
+import { progressRequest } from './upload_queue/transport'
+import type { Emit, Upload } from './upload_queue/types'
 
-type Emit = ((event: 'change', attachments: TextAttachmentUpload[]) => void) & ((event: 'pending', value: boolean) => void)
-type Upload = typeof uploadTextAttachment
-
-export function useTextAttachmentQueue(channelId: () => string, disabled: () => boolean, emit: Emit, uploadFile: Upload = uploadTextAttachment, initial: TextAttachmentUpload[] = []) {
-  const attachments = ref<TextAttachmentUpload[]>([...initial])
-  const failed = ref<File[]>([])
-  const pending = ref(false)
-  const error = ref<string | null>(null)
-  let generation = 0
-
-  function clear(): void {
-    generation++
-    attachments.value = []
-    failed.value = []
-    error.value = null
-    pending.value = false
-    emit('change', [])
-    emit('pending', false)
-  }
-
-  function restore(prepared: TextAttachmentUpload[]): void {
-    clear()
-    attachments.value = [...prepared]
-    emit('change', [...attachments.value])
-  }
-
-  async function upload(files: File[]): Promise<void> {
-    if (!files.length || pending.value || disabled()) return
-    if (exceedsAttachmentCount(attachments.value.length, failed.value.length, files.length)) {
-      error.value = 'К сообщению можно прикрепить не более 10 файлов.'
-      return
-    }
-    const target = channelId()
-    const version = generation
-    pending.value = true
-    error.value = null
-    emit('pending', true)
-    try {
-      for (const file of files) {
-        try {
-          const uploaded = await uploadFile(target, file)
-          if (version !== generation || target !== channelId()) return
-          attachments.value = [...attachments.value, uploaded]
-          emit('change', [...attachments.value])
-        } catch (cause) {
-          if (version !== generation || target !== channelId()) return
-          failed.value = [...failed.value, file]
-          error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить вложение.'
-        }
-      }
-    } finally {
-      if (version === generation && target === channelId()) {
-        pending.value = false
-        emit('pending', false)
-      }
-    }
-  }
-
-  function addFiles(event: Event): void {
-    const input = event.currentTarget as HTMLInputElement
-    const files = Array.from(input.files ?? [])
-    input.value = ''
-    void upload(files)
-  }
-
-  async function retry(): Promise<void> {
-    if (!failed.value.length || pending.value || disabled()) return
-    const files = failed.value
-    failed.value = []
-    await upload(files)
-  }
-
-  return { attachments, failed, pending, error, clear, restore, upload, addFiles, retry }
+export function useTextAttachmentQueue(scope: () => string, disabled: () => boolean, emit: Emit<TextAttachmentUpload>, uploadFile = uploadTextAttachment, initial: TextAttachmentUpload[] = []) {
+  const upload: Upload<TextAttachmentUpload> = (id, file, control) => uploadFile === uploadTextAttachment
+    ? uploadFile(id, file, progressRequest(control)) : uploadFile(id, file)
+  return createManagedUploadQueue(scope, disabled, emit, upload, initial)
 }

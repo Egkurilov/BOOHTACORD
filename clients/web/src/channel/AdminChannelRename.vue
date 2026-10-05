@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 
 import { createChannelRenameEditor } from './channel_rename_editor'
+import Comparison from './conflict_review/Comparison.vue'
 import type { TopologyCategory } from './topology_client'
 
 const props = defineProps<{ categories: TopologyCategory[]; revision: number; channelId?: string }>()
@@ -34,7 +35,8 @@ function changeDraft(event: Event): void { editor.setDraft((event.target as HTML
     <label>Новое имя канала
       <input :value="editor.draft.value" :disabled="editor.pending.value || editor.needsRefresh.value || !selected" name="channel-new-name" required :aria-describedby="editor.error.value ? 'channel-rename-error' : undefined" @input="changeDraft">
     </label>
-    <button type="submit" :disabled="editor.pending.value || editor.needsRefresh.value || !selected">{{ editor.pending.value ? 'Сохраняем…' : 'Переименовать канал' }}</button>
+    <button type="submit" :disabled="editor.pending.value || editor.needsRefresh.value || editor.conflict.value || !selected">{{ editor.pending.value ? 'Сохраняем…' : 'Переименовать канал' }}</button>
+    <Comparison v-if="editor.conflict.value" :before="editor.review.before.value ?? ''" :current="editor.review.current.value" :proposed="editor.draft.value" :ready="editor.review.ready(revision)" :busy="editor.pending.value" @apply="editor.applyReviewed" @discard="editor.discard" @refresh="emit('changed')" />
     <p v-if="selected" class="admin-topology-kind">Тип: {{ selected.kind === 'VOICE' ? 'голосовой' : 'текстовый' }}. Переименование не меняет тип и подключение.</p>
     <button v-if="editor.needsRefresh.value" type="button" @click="emit('changed')">Повторить обновление списка</button>
     <p v-if="editor.status.value" class="admin-topology-status" aria-live="polite">{{ editor.status.value }}</p>

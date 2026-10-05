@@ -1,0 +1,62 @@
+import assert from 'node:assert/strict'
+import { randomUUID } from 'node:crypto'
+import { api, channel, expect, select, sql, status } from './fixture.mjs'
+import { cacheAcl } from './cache_acl.mjs'
+async function position(page) {
+  return page.locator('.message-history-wrap .message-list').evaluate(list => {
+    const top=list.getBoundingClientRect().top
+    const row=[...list.querySelectorAll('[data-message-id]')].find(row=>row.getBoundingClientRect().bottom>top)
+    return { id:row?.dataset.messageId, offset:row?.getBoundingClientRect().top-top }
+  })
+}
+export async function navigation(page, fixture, input, report) {
+  const voice = await channel(page,fixture.category,'NextVoice','VOICE')
+  await select(page,'NextVoice')
+  await page.getByRole('button',{name:'Подключиться без микрофона',exact:true}).click()
+  await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён',{timeout:25000})
+  const lease=()=>sql(`SELECT id FROM voice_leases WHERE user_id='${fixture.admin}' AND revoked_at IS NULL`)
+  const originalLease=lease(); assert.ok(originalLease)
+  await cacheAcl(page,fixture,input,report)
+  const ids=sql(`SELECT id FROM messages WHERE channel_id='${fixture.a}' ORDER BY created_at,id LIMIT 1`).split('\n')
+  const tail=Array.from({length:50},(_,i)=>`('${randomUUID()}','${fixture.a}','${fixture.member}','${randomUUID()}','QA unseen tail',TIMESTAMPTZ '2026-01-01' + INTERVAL '${200+i} seconds')`)
+  sql(`INSERT INTO messages(id,channel_id,author_id,client_message_id,body,created_at) VALUES ${tail.join(',')}`)
+  sql(`UPDATE messages SET reply_to_id='${ids[0]}' WHERE channel_id='${fixture.a}' AND id=(SELECT id FROM messages WHERE channel_id='${fixture.a}' ORDER BY created_at DESC,id DESC LIMIT 1)`)
+  await select(page,'NextUnread')
+  await page.locator('.message-history-wrap .message-list').evaluate(list=>list.scrollTop=Math.max(0,list.scrollHeight-list.clientHeight-200))
+  await page.locator('.reply-preview').scrollIntoViewIfNeeded()
+  const before=await position(page)
+  await page.locator('.reply-preview').click()
+  const context=page.getByTestId('search-message-context')
+  await expect(context.locator('[data-search-anchor]')).toBeFocused()
+  assert.equal(lease(),originalLease,'Message navigation replaced voice lease')
+  await context.getByRole('button',{name:'Вернуться к исходной позиции',exact:true}).click()
+  const after=await position(page)
+  assert.equal(after.id,before.id,'Reply return lost the originating scroll anchor')
+  assert.ok(Math.abs(after.offset-before.offset)<=2,'Reply return lost its offset')
+  await expect(page.locator('.reply-preview')).toBeFocused()
+  sql(`UPDATE messages SET body='',deleted_at=now() WHERE id='${ids[0]}'`)
+  await page.locator('.reply-preview').click()
+  await expect(context.locator('[data-search-anchor]')).toContainText('Сообщение удалено.')
+  const tombstone=await api(page,`/channels/${fixture.a}/messages?at=${ids[0]}&limit=20`);status(tombstone,200)
+  assert.equal(tombstone.body.messages[0].body,'')
+  await context.getByRole('button',{name:'Вернуться к исходной позиции',exact:true}).click()
+  await page.locator('.guild-search-button').click()
+  const search=page.getByTestId('search-panel')
+  await search.getByLabel('Запрос',{exact:true}).fill('QA history 1')
+  await search.getByRole('button',{name:'Найти',exact:true}).click()
+  const priorCursor=sql(`SELECT message_id FROM channel_read_cursors WHERE account_id='${fixture.admin}' AND channel_id='${fixture.a}'`)
+  await search.getByRole('button',{name:/Открыть сообщение от/}).first().click()
+  await expect(context.locator('[data-search-anchor]')).toBeFocused()
+  assert.equal(sql(`SELECT message_id FROM channel_read_cursors WHERE account_id='${fixture.admin}' AND channel_id='${fixture.a}'`),priorCursor,'Search context consumed unseen history')
+  assert.equal(lease(),originalLease)
+  await page.screenshot({path:input.directory+'/search-context-voice-retained.png'})
+  await context.getByRole('button',{name:'Вернуться к исходной позиции',exact:true}).click()
+  // This DM is between two synthetic members. Administrator status never grants reading.
+  const other=await api(page,'/auth/register','POST',{login:'qa_private_member',password:input.password});status(other,201)
+  const foreign=sql(`INSERT INTO direct_messages(id,participant_one_id,participant_two_id) VALUES(gen_random_uuid(),LEAST('${fixture.member}'::uuid,'${other.body.id}'::uuid),GREATEST('${fixture.member}'::uuid,'${other.body.id}'::uuid)) RETURNING id` ).split('\n')[0]
+  const denied=await api(page,`/direct-messages/${foreign}/messages?at=${ids[0]}`);status(denied,404)
+  assert.equal(JSON.stringify(denied.body).includes('qa_private_member'),false)
+  await page.getByTestId('voice-dock').getByRole('button',{name:'Выйти из голосового канала',exact:true}).click()
+  report.navigation={loaded_reply_route_preserved:true,old_reply_at:true,return_anchor_offset:true,keyboard_focus:true,
+    tombstone_body_hidden:true,search_unseen_tail_retained:true,foreign_dm_admin_denied:true,dm_name_not_disclosed:true,voice_lease_preserved:true}
+}

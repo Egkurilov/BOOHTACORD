@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 
 import { createChannelOrderEditor } from './channel_order_editor'
+import Comparison from './conflict_review/Comparison.vue'
 import type { TopologyCategory } from './topology_client'
 
 const props = defineProps<{ categories: TopologyCategory[]; revision: number; channelId?: string }>()
@@ -17,6 +18,7 @@ const category = computed(() => props.categories.find(({ id }) => id === selecte
 const channels = computed(() => [...(category.value?.channels ?? [])].sort((a, b) => a.position - b.position || a.id.localeCompare(b.id)))
 const selected = computed(() => channels.value.find(({ id }) => id === selectedChannelId.value))
 const editor = createChannelOrderEditor(() => ({ categories: props.categories, revision: props.revision, selectedCategoryId: selectedCategoryId.value, selectedChannelId: selectedChannelId.value }), () => emit('changed'))
+function names(ids:string[]|null):string {return (ids ?? []).map(id=>channels.value.find(c=>c.id===id)?.name ?? 'Удалённый канал').join(' → ')}
 
 watch(() => props.categories, (categories) => {
   if (props.channelId !== undefined) return
@@ -46,6 +48,7 @@ watch(() => [props.categories, props.revision, selectedCategoryId.value], editor
       <button type="button" :disabled="!editor.canMove(1)" :aria-label="`Переместить канал «${selected?.name ?? ''}» ниже`" @click="editor.move(1)">Ниже</button>
     </div>
     <p class="admin-topology-kind">Порядок изменится после ответа сервера и обновления списка.</p>
+    <Comparison v-if="editor.conflict.value" :before="names(editor.review.before.value)" :current="editor.review.current.value ? names(editor.review.current.value) : null" :proposed="names(editor.review.proposed.value)" :ready="editor.review.ready(revision)" :busy="editor.pending.value" @apply="editor.applyReviewed" @discard="editor.discard" @refresh="emit('changed')" />
     <button v-if="editor.needsRefresh.value" type="button" @click="emit('changed')">Повторить обновление списка</button>
     <p v-if="editor.status.value" class="admin-topology-status" aria-live="polite">{{ editor.status.value }}</p>
     <p v-if="editor.error.value" class="admin-topology-error" role="alert">{{ editor.error.value }}</p>

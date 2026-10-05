@@ -32,7 +32,9 @@ describe('channel order editor', () => {
     expect(changed).toHaveBeenCalledTimes(1)
     revision = 8
     editor.sync()
-    await expect(editor.move(-1)).resolves.toBe(true)
+    await expect(editor.move(-1)).resolves.toBe(false)
+    expect(request).toHaveBeenCalledTimes(1)
+    await expect(editor.applyReviewed()).resolves.toBe(true)
     expect(JSON.parse(String(request.mock.calls[1][1].body))).toEqual({ expected_revision: 8, ids: ['voice-b', 'voice-a'] })
   })
 })

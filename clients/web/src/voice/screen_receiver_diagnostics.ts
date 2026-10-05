@@ -9,6 +9,7 @@ export interface ScreenReceiverSnapshot {
 }
 
 export interface ScreenReceiverMetrics {
+  decodedFrames?:number|null
   packetLossWindowMs?: number | null
   bitrateKbps: number | null
   decodedFps: number | null
@@ -27,6 +28,7 @@ export function compareScreenReceiverStats(previous: ScreenReceiverSnapshot | nu
   const elapsedMs = previous ? current.timestamp - previous.timestamp : 0
   const dropped = previous && elapsedMs > 0 && Number.isFinite(current.framesDropped) && current.framesDropped >= previous.framesDropped ? current.framesDropped - previous.framesDropped : null
   return {
+    decodedFrames:Number.isSafeInteger(current.framesDecoded)&&current.framesDecoded>=0?current.framesDecoded:null,
     bitrateKbps: rate(previous?.bytesReceived, current.bytesReceived, elapsedMs, 8),
     decodedFps: rate(previous?.framesDecoded, current.framesDecoded, elapsedMs, 1000),
     droppedFrames: dropped,

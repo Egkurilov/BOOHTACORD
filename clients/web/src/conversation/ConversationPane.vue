@@ -105,7 +105,7 @@ function clearScreenPreview(): void {
               ref="screenViewerRef" v-show="selectedScreenStreamId !== null" :audio-muted="screenAudioMuted" :cards="screenViewerCards" :deafened="selfDeafened" :ended="screenViewerEnded" :error="screenViewerError" :expanded="screenExpanded" :mini="miniVisible" :own-screen-sharing="screenState === 'SHARING'" :pinned="screenPinned" :participant-count="voiceVolumeParticipants.length + 1" :selected-audio-volume="selectedScreenAudioVolume" :selected-id="selectedScreenStreamId"
               @clear="clearScreenPreview" @select="(id, video, audio) => emit('selectScreenStream', id, video, audio)" @set-audio-volume="emit('setScreenVolume', $event)" @toggle-audio="emit('toggleScreenAudio')"
               @pin="screenPinned = !screenPinned" @return-voice="emit('returnVoice', voiceChannel.id)" @change-quality="emit('startScreen', screenProfile ?? selectedScreenProfile)"
-              @update:expanded="screenExpanded = $event"
+              :source-diagnostics="screenDiagnostics" @update:expanded="screenExpanded = $event"
             />
           </template>
           <div v-if="!selectedScreenStreamId" class="room-wrap">

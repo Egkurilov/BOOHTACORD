@@ -38,7 +38,7 @@ import (
 	writeupload "voice-platform/backend/internal/storage/write_upload"
 )
 
-func ConfigureStorageRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, root string, limiter *ratelimit.Limiter, metrics *httpmetrics.Recorder) error {
+func ConfigureStorageRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, root string, limiter *ratelimit.Limiter, metrics *httpmetrics.Recorder, inspectors ...func(reserve.Space, *reserve.Manager)) error {
 	if root == "" || limiter == nil || metrics == nil {
 		return errors.New("invalid attachment route configuration")
 	}
@@ -59,6 +59,9 @@ func ConfigureStorageRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 	}
 	if err := metrics.RegisterAttachmentFilesystem(attachmentFilesystemMetricSource{space: space, manager: manager}); err != nil {
 		return err
+	}
+	for _, inspect := range inspectors {
+		inspect(space, manager)
 	}
 	writer, err := writeupload.New(staging)
 	if err != nil {

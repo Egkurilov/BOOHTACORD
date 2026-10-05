@@ -49,5 +49,5 @@ export function useScreenReceiverDiagnostics(selected: Ref<ScreenViewerCard | nu
 
   watch([() => selected.value?.id, () => selected.value?.readReceiverStats, ended], restart, { immediate: true })
   onBeforeUnmount(() => { generation += 1; if (timer) clearInterval(timer) })
-  return { metrics, sampledAt }
+  return { metrics,sampledAt,refresh:()=>{const card=selected.value;if(card&&!ended()) void sample(card,generation)} }
 }

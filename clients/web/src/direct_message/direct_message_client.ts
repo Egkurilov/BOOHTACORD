@@ -102,10 +102,10 @@ function requestInit(method: 'GET' | 'PUT', body?: unknown): RequestInit {
   }
 }
 
-export async function loadDirectMessageHistory(directMessageId: string, before: string | undefined, request: DirectMessageRequest = tracedFetch, at?: string): Promise<DirectMessageHistoryPage> {
+export async function loadDirectMessageHistory(directMessageId: string, before: string | undefined, request: DirectMessageRequest = tracedFetch, at?: string, after?: string): Promise<DirectMessageHistoryPage> {
   if (!directMessageId) invalidHistory()
-  if (before && at) invalidHistory()
-  const query = at ? `?at=${encodeURIComponent(at)}&limit=20` : before ? `?before=${encodeURIComponent(before)}` : ''
+  if ((before && at) || (after && (before || at))) invalidHistory()
+  const query = after ? `?after=${encodeURIComponent(after)}&limit=20` : at ? `?at=${encodeURIComponent(at)}&limit=20` : before ? `?before=${encodeURIComponent(before)}` : ''
   const source = record(await checked(await request(`${apiBaseUrl}/direct-messages/${encodeURIComponent(directMessageId)}/messages${query}`, requestInit('GET'))))
   if (!source || !Array.isArray(source.messages)) invalidHistory()
   return { messages: source.messages.map(historyItem), nextCursor: optionalText(source.next_cursor) }

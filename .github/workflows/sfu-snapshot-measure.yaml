@@ -1,0 +1,34 @@
+name: Actual SFU snapshot measurement
+
+on:
+  pull_request:
+    paths:
+      - backend/internal/media/**
+      - backend/internal/app/media_routes/**
+      - backend/internal/observability/http_metrics/**
+      - tools/qa/sfu_snapshot_measure/**
+      - .github/workflows/sfu-snapshot-measure.yaml
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Measure real private RoomService fan-out
+        run: python3 -m tools.qa.sfu_snapshot_measure.run --expect-reduction
+      - name: Retain bounded source-bound measurement
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sfu-snapshot-measure-${{ github.sha }}
+          path: .out/sfu-snapshot-measure/report.json
+          if-no-files-found: ignore
+          retention-days: 30

@@ -26,12 +26,10 @@ export interface TextMessage {
   retryBlocked?: boolean
   sendStatus?: 'sending' | 'checking' | 'failed'
 }
-
 export interface MessagePage {
   messages: TextMessage[]
   nextCursor?: string
 }
-
 export type MessageRequest = (input: string, init: RequestInit) => Promise<Response>
 
 export class MessageRequestError extends Error {
@@ -91,9 +89,9 @@ function requestInit(method: string, body?: unknown): RequestInit {
   return { method, credentials: 'same-origin', headers: { accept: 'application/json', ...(body ? { 'content-type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) }
 }
 
-export async function loadMessagePage(channelId: string, before: string | undefined, request: MessageRequest = tracedFetch, at?: string): Promise<MessagePage> {
-  if (before && at) throw new Error('Выберите один курсор истории.')
-  const query = at ? `?at=${encodeURIComponent(at)}&limit=20` : before ? `?before=${encodeURIComponent(before)}` : ''
+export async function loadMessagePage(channelId: string, before: string | undefined, request: MessageRequest = tracedFetch, at?: string, after?: string): Promise<MessagePage> {
+  if ((before && at) || (after && (before || at))) throw new Error('Выберите один курсор истории.')
+  const query = after ? `?after=${encodeURIComponent(after)}&limit=20` : at ? `?at=${encodeURIComponent(at)}&limit=20` : before ? `?before=${encodeURIComponent(before)}` : ''
   const response = await request(`${apiBaseUrl}/channels/${encodeURIComponent(channelId)}/messages${query}`, requestInit('GET'))
   const source = record(await checked(response))
   if (!source || !Array.isArray(source.messages)) throw new Error('Сервер вернул некорректную историю сообщений.')

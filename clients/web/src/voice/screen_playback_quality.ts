@@ -2,10 +2,12 @@ import { onBeforeUnmount, ref, watch, type Ref } from 'vue'
 
 import { observeScreenPlaybackFps } from './screen_playback_fps'
 import { formatScreenVideoQuality } from './screen_video_quality'
+import { markScreenFrame } from '../telemetry/journey_intervals/runtime'
 
 export function useScreenPlaybackQuality(video: Ref<HTMLVideoElement | null>, selectedId: () => string | null, ended: () => boolean) {
   const actualVideoQuality = ref('Определяем качество…')
   const playbackFps = ref<number | null>(null)
+  const presentedFrames=ref<number|null>(null)
   const videoReady = ref(false)
   let stopObservingPlayback: (() => void) | null = null
 
@@ -17,6 +19,7 @@ export function useScreenPlaybackQuality(video: Ref<HTMLVideoElement | null>, se
     stopObservingPlayback?.()
     stopObservingPlayback = null
     playbackFps.value = null
+    presentedFrames.value=null
     videoReady.value = false
     refreshVideoQuality()
     if (video.value && selectedId() && !ended()) {
@@ -24,18 +27,20 @@ export function useScreenPlaybackQuality(video: Ref<HTMLVideoElement | null>, se
         playbackFps.value = fps
         refreshVideoQuality()
       }, () => {
+        markScreenFrame(video.value)
         videoReady.value = true
         refreshVideoQuality()
-      })
+      },frames=>{presentedFrames.value=frames})
     }
   }
 
   function markVideoReady(): void {
     videoReady.value = Boolean(video.value?.videoWidth && video.value?.videoHeight)
+    if(videoReady.value&&typeof video.value?.requestVideoFrameCallback!=='function') markScreenFrame(video.value)
     refreshVideoQuality()
   }
 
   watch([video, selectedId, ended], restartPlaybackObservation, { flush: 'post' })
   onBeforeUnmount(() => stopObservingPlayback?.())
-  return { actualVideoQuality, markVideoReady, playbackFps, refreshVideoQuality, resetVideoFrame: restartPlaybackObservation, videoReady }
+  return {actualVideoQuality,markVideoReady,playbackFps,presentedFrames,refreshVideoQuality,resetVideoFrame:restartPlaybackObservation,videoReady}
 }

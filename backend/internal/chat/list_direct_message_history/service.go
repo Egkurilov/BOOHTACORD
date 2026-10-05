@@ -13,8 +13,8 @@ var (
 )
 
 type Input struct {
-	ActorID, DirectMessageID, Before, At string
-	Limit                                int
+	ActorID, DirectMessageID, Before, At, After string
+	Limit                                       int
 }
 type Request struct{ Input }
 type ReplyPreview struct {
@@ -47,7 +47,7 @@ type Service struct{ store Store }
 
 func New(store Store) Service { return Service{store: store} }
 func (service Service) List(context context.Context, input Input) (Result, error) {
-	if !validUUID(input.ActorID) || !validUUID(input.DirectMessageID) || (input.Before != "" && !validUUID(input.Before)) || (input.At != "" && !validUUID(input.At)) || (input.Before != "" && input.At != "") || input.Limit < 1 || input.Limit > 100 {
+	if !validUUID(input.ActorID) || !validUUID(input.DirectMessageID) || (input.Before != "" && !validUUID(input.Before)) || (input.At != "" && !validUUID(input.At)) || (input.After != "" && (!validUUID(input.After) || input.Before != "" || input.At != "")) || (input.Before != "" && input.At != "") || input.Limit < 1 || input.Limit > 100 {
 		return Result{}, ErrInvalidInput
 	}
 	messages, err := service.store.List(context, Request{Input: input})

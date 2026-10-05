@@ -6,6 +6,7 @@ function row(messageId: string, scrollIntoView = vi.fn()): HTMLElement {
   return {
     dataset: { messageId },
     scrollIntoView,
+    focus: vi.fn(),
   } as unknown as HTMLElement
 }
 
@@ -25,6 +26,8 @@ describe('reply context navigation', () => {
     navigateToReplyTarget(root, 'target-1', openMissingContext)
 
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
+    expect(target.focus).toHaveBeenCalledWith({ preventScroll: true })
+    expect(target.tabIndex).toBe(-1)
     expect(openMissingContext).not.toHaveBeenCalled()
   })
 

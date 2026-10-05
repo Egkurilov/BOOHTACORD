@@ -11,7 +11,7 @@ import TextMessageSearch from './TextMessageSearch.vue'
 import MentionPicker from './MentionPicker.vue'
 import MentionAutocomplete from './MentionAutocomplete.vue'
 import EmojiPicker from './EmojiPicker.vue'
-import { insertEmojiAtRange } from './emoji_insert'
+import { useComposerInput } from './composer_input/controller'
 import ConversationOverflowMenu from './ConversationOverflowMenu.vue'
 import type { TextAttachmentUpload } from './text_attachment_upload_client'
 import { advanceTextReadIfVisible } from './text_read_gate'
@@ -20,9 +20,10 @@ import { useSavedComposer } from './use_saved_composer'
 import { submitOnComposerEnter } from './composer_enter'
 import SearchMessageContext from '../search/SearchMessageContext.vue'
 import { useSearchTargetStore } from '../search/search_target_store'
-import { pasteClipboardImages } from './clipboard_images'
 import { useUnreadBoundary } from './use_unread_boundary'
 import { useScopedSend } from './use_scoped_send'
+import type { Position } from './context_position/dom'
+import { useContextPosition } from './context_position/return'
 import { useVisibleRead } from './use_visible_read'
 
 const props = defineProps<{ accountId: string; active: boolean; channelId: string; channelName: string; channelDescription?: string; navOpen: boolean; membersOpen: boolean; showMembers: boolean }>()
@@ -32,8 +33,9 @@ const topology = useTopologyStore()
 const searchTarget = useSearchTargetStore()
 const contextTarget = computed(() => searchTarget.target?.kind === 'CHANNEL' && searchTarget.target.conversationId === props.channelId ? searchTarget.target : null)
 const replyContextTarget = ref<string | null>(null)
+const restored = ref<Position | null>(null)
 const firstUnread = computed(() => topology.topology?.categories.flatMap(({ channels }) => channels).find(({ id }) => id === props.channelId)?.firstUnreadMessageId)
-const { unreadBoundary, unreadContextOpen, readUnlocked, showUnread, continueAtLatest } = useUnreadBoundary(() => props.channelId, firstUnread, () => queueVisibleRead())
+const { unreadBoundary, unreadContextOpen, readUnlocked, showUnread, continueAtLatest } = useUnreadBoundary(() => props.channelId, firstUnread, () => { void showLatest().then(queueVisibleRead) })
 const authors = useAuthorDirectory()
 const session = ref<CurrentSession | null>(null)
 const composer = useSavedComposer<TextMessage, TextAttachmentUpload>(props.accountId, 'CHANNEL', () => props.channelId)
@@ -45,11 +47,14 @@ const attachmentPicker = ref<{ addPastedFiles: (files: File[]) => void } | null>
 const emojiPicker = ref<{ show: () => Promise<void> } | null>(null)
 const { readRoot, queueVisibleRead } = useVisibleRead({
   conversationId: () => props.channelId, loadedConversationId: () => store.channelId, messages: () => store.messages,
-  canRead: () => props.active && Boolean(topology.topology) && (!unreadBoundary.value || readUnlocked.value),
+  canRead: () => props.active && Boolean(topology.topology) && !contextTarget.value && !replyContextTarget.value && !unreadContextOpen.value && !restored.value && (!unreadBoundary.value || readUnlocked.value),
   advance: (id, messageId) => advanceTextReadIfVisible({ activeChannelId: store.channelId, renderedChannelId: id,
     newestDisplayedMessageId: messageId, visibilityState: document.visibilityState }),
   refreshCounters: () => { void topology.refresh() },
 })
+const contextOpen = () => Boolean(contextTarget.value || replyContextTarget.value || unreadContextOpen.value || restored.value)
+const { save: savePosition, showLatest } = useContextPosition(props.accountId, 'CHANNEL', () => props.channelId, readRoot, contextOpen, () => store.historyLoaded && store.channelId === props.channelId, restored)
+function onViewportChange(): void { savePosition(); queueVisibleRead() }
 watch(() => props.channelId, (channelId) => {
   replyContextTarget.value = null
   void store.open(channelId)
@@ -67,18 +72,9 @@ const { send, retry } = useScopedSend<TextMessage, TextAttachmentUpload, TextMes
 async function loadSession(): Promise<void> {
   try { session.value = await loadCurrentSession() } catch { session.value = null }
 }
-async function addEmoji(emoji: string): Promise<void> {
-  const input = composerTextarea.value
-  const result = insertEmojiAtRange(draft.value, input?.selectionStart ?? draft.value.length, input?.selectionEnd ?? draft.value.length, emoji)
-  draft.value = result.text
-  await nextTick()
-  input?.focus(); input?.setSelectionRange(result.caret, result.caret)
-}
-function insertMobileMention(): void { draft.value += draft.value && !/\s$/.test(draft.value) ? ' @' : '@'; void nextTick(() => composerTextarea.value?.focus()) }
+const { addEmoji, insertMobileMention, onComposerPaste, onDragOver, onDrop } = useComposerInput(draft, composerTextarea, attachmentPicker, () => props.active && !store.sending)
 function closeSearch(): void { searchOpen.value = false; void nextTick(() => searchTrigger.value?.focus()) }
-function onComposerPaste(event: ClipboardEvent): void {
-  if (composerTextarea.value) pasteClipboardImages(event, composerTextarea.value, (files) => attachmentPicker.value?.addPastedFiles(files))
-}
+
 </script>
 
 <template>
@@ -90,7 +86,7 @@ function onComposerPaste(event: ClipboardEvent): void {
       </div>
       <WorkspaceHeaderActions :members-expanded="props.membersOpen" :nav-expanded="props.navOpen" :show-members="props.showMembers" @toggle-members="emit('toggleMembers')" @toggle-navigation="emit('toggleNav')"><button ref="searchTrigger" class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen ? closeSearch() : searchOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button><template #overflow><ConversationOverflowMenu :show-members="props.showMembers" :members-open="props.membersOpen" @search="searchOpen = true" @toggle-members="emit('toggleMembers')" /></template></WorkspaceHeaderActions>
     </header>
-    <div v-if="searchOpen" class="conversation-tools"><TextMessageSearch :channel-id="props.channelId" @close="closeSearch" /></div>
+    <div v-if="searchOpen" v-show="!contextOpen()" class="conversation-tools"><TextMessageSearch :channel-id="props.channelId" @open="searchTarget.open({ kind: 'CHANNEL', conversationId: props.channelId, messageId: $event })" @close="closeSearch" /></div>
     <p v-if="store.loading" class="state" aria-live="polite">Загружаем историю…</p>
     <p v-if="store.error" id="text-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refresh()">Повторить загрузку</button></p>
     <div v-if="unreadBoundary && !readUnlocked" class="unread-boundary-actions" role="status">
@@ -100,13 +96,14 @@ function onComposerPaste(event: ClipboardEvent): void {
     </div>
     <SearchMessageContext v-if="contextTarget" kind="CHANNEL" :conversation-id="props.channelId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
     <SearchMessageContext v-else-if="replyContextTarget" kind="CHANNEL" :conversation-id="props.channelId" :message-id="replyContextTarget" heading="Контекст ответа" @close="replyContextTarget = null" />
-    <SearchMessageContext v-else-if="unreadContextOpen" kind="CHANNEL" :conversation-id="props.channelId" :message-id="unreadBoundary" heading="Первое непрочитанное сообщение" @close="continueAtLatest" />
-    <TextHistoryList :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @reply-context="replyContextTarget = $event" @retry="retry" @viewport-change="queueVisibleRead" />
+    <SearchMessageContext v-else-if="unreadContextOpen" kind="CHANNEL" :conversation-id="props.channelId" :message-id="unreadBoundary" heading="Первое непрочитанное сообщение" unread :active="props.active" @read="topology.refresh()" @viewport-change="savePosition" @close="continueAtLatest" />
+    <SearchMessageContext v-else-if="restored" kind="CHANNEL" :conversation-id="props.channelId" :message-id="restored.id" :offset="restored.offset" heading="Сохранённая позиция" @viewport-change="savePosition" @close="restored = null" />
+    <TextHistoryList v-show="!contextOpen()" :channel-id="props.channelId" :session="session" @reply="replyTarget = $event" @reply-context="replyContextTarget = $event" @retry="retry" @viewport-change="onViewportChange" />
     <div class="composer-wrap">
       <p v-if="replyTarget" class="reply-target"><span class="reply-target-icon" aria-hidden="true">↶</span><span>Ответ <strong>{{ authors.displayName(replyTarget.authorId) }}</strong> · {{ replyTarget.body }}</span><button type="button" aria-label="Отменить ответ" @click="replyTarget = null">×</button></p>
       <MentionAutocomplete v-model="draft" v-model:mention-user-ids="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" />
-      <form class="message-composer composer" @submit.prevent="send">
-        <TextMessageAttachmentPicker ref="attachmentPicker" :channel-id="props.channelId" :initial-attachments="attachments" :disabled="store.sending || attachmentPending"
+      <form class="message-composer composer" @submit.prevent="send" @dragover="onDragOver" @drop="onDrop">
+        <TextMessageAttachmentPicker ref="attachmentPicker" :channel-id="props.channelId" :initial-attachments="attachments" :disabled="store.sending"
           :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" @mention="insertMobileMention" @emoji="emojiPicker?.show()" />
         <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" quick @activate="insertMobileMention" />
         <label class="gc-sr-only" for="message-body">Сообщение</label>

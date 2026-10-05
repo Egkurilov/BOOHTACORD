@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict'
+import { api, expect, login, select, sql } from './fixture.mjs'
+async function calls() {
+  const response=await fetch('http://127.0.0.1:4820/metrics')
+  return (await response.text()).split('\n').filter(line=>line.startsWith('voice_platform_sfu_room_service_calls_total{'))
+    .reduce((sum,line)=>sum+Number(line.split(' ').at(-1)),0)
+}
+export async function cacheAcl(page,fixture,input,report) {
+  const browser=page.context().browser(), context=await browser.newContext({ignoreHTTPSErrors:true,viewport:{width:1440,height:900}})
+  try {
+    const member=await context.newPage()
+    await login(member,'qa_unread_member',input.password)
+    await select(member,'NextVoice')
+    await member.getByRole('button',{name:'Подключиться без микрофона',exact:true}).click()
+    await expect(member.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён',{timeout:25000})
+    const present=async()=>Boolean((await api(page,'/voice/participants')).body.channels.some(room=>room.participants.some(person=>person.account_id===fixture.member)))
+    await expect.poll(present,{timeout:10000}).toBe(true)
+    const receipt = {}
+    for (const action of ['block','revoke']) {
+      await page.waitForTimeout(300)
+      await api(page,'/voice/participants')
+      const before=await calls()
+      sql(action==='block' ? `UPDATE users SET blocked_at=now() WHERE id='${fixture.member}'`
+        : `UPDATE voice_leases SET revoked_at=now() WHERE user_id='${fixture.member}' AND revoked_at IS NULL`)
+      assert.equal(await present(),false,'Cached SFU metadata exposed a blocked account or revoked lease')
+      receipt[action+'_removed_with_fresh_snapshot']=(await calls())===before
+      assert.equal(receipt[action+'_removed_with_fresh_snapshot'],true,'Fresh-TTL witness expired before the database recheck')
+      if (action==='block') { sql(`UPDATE users SET blocked_at=NULL WHERE id='${fixture.member}'`); await expect.poll(present).toBe(true) }
+    }
+    report.sfu_fresh_acl=receipt
+  } finally { await context.close(); await page.bringToFront() }
+}

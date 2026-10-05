@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import DisconnectNotice from './disconnect_notice/Notice.vue'
+import TransferConfirmation from './controller_ownership/TransferConfirmation.vue'
 import type { VoiceDisconnectNotice } from './disconnect_notice/model'
 import type { VoiceConnectionState } from './connection_store'
 import type { VoiceJoinMode } from './livekit_gateway'
@@ -22,9 +23,10 @@ const emit = defineEmits<{ join: [channelId: string, transfer?: boolean, joinMod
       <p v-else class="state" role="status">Проверяем, кто сейчас в комнате…</p>
       <DisconnectNotice v-if="notice" :notice="notice" />
       <p v-else-if="voiceError" class="state state-error" role="alert">{{ voiceError }}</p>
-      <div class="voice-prejoin-actions">
+      <TransferConfirmation v-if="voiceTransferRequired" @confirm="emit('join', channelId, true, $event)" />
+      <div v-else class="voice-prejoin-actions">
         <button class="gc-button gc-button--primary" type="button" :disabled="voiceState === 'JOINING' || voiceState === 'LEAVING' || notice?.reconnectAllowed === false" @click="emit('join', channelId)">{{ voiceState === 'JOINING' ? 'Подключаемся…' : 'Подключиться к голосу' }}</button>
-        <button class="gc-button gc-button--secondary" type="button" :disabled="voiceState === 'JOINING' || voiceState === 'LEAVING' || notice?.reconnectAllowed === false" @click="emit('join', channelId, true, 'listener')">Подключиться без микрофона</button>
+        <button class="gc-button gc-button--secondary" type="button" :disabled="voiceState === 'JOINING' || voiceState === 'LEAVING' || notice?.reconnectAllowed === false" @click="emit('join', channelId, false, 'listener')">Подключиться без микрофона</button>
       </div>
     </article>
   </div>

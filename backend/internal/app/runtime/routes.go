@@ -24,6 +24,7 @@ import (
 	tracehttp "voice-platform/backend/internal/observability/trace_http"
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 	"voice-platform/backend/internal/security/request_id"
+	reserve "voice-platform/backend/internal/storage/reserve_upload_space"
 )
 
 func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub, metrics *httpmetrics.Recorder, updates clientupdates.Provider, usage *observeusage.Tracker) (http.Handler, error) {
@@ -42,8 +43,11 @@ func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *
 	}
 	observabilityroutes.ConfigureStatusRoutes(mux, maintenanceService, metrics)
 	channelsroutes.ConfigureChannelRoutes(mux, database, sessionService, events)
+	channelsroutes.ConfigureVoiceClosureRoutes(mux, database, sessionService, configuration.MediaSnapshot)
 	chatroutes.ConfigureChatAndRealtimeRoutes(mux, database, sessionService, metrics, events)
-	if err := storageroutes.ConfigureStorageRoutes(mux, database, sessionService, configuration.AttachmentRoot, configuration.UploadLimiter, metrics); err != nil {
+	if err := storageroutes.ConfigureStorageRoutes(mux, database, sessionService, configuration.AttachmentRoot, configuration.UploadLimiter, metrics, func(space reserve.Space, manager *reserve.Manager) {
+		observabilityroutes.ConfigureReadinessRoutes(mux, database, sessionService, configuration.MediaSnapshot, space, manager)
+	}); err != nil {
 		return nil, fmt.Errorf("configure attachment routes: %w", err)
 	}
 	if err := identityroutes.ConfigureProfileAdminRoutes(mux, database, sessionService, configuration, events); err != nil {

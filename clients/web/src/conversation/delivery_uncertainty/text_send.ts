@@ -4,6 +4,7 @@ import { pendingMessage, type PendingSend } from '../text_history'
 import { validCodePointLength } from '../../validation/unicode_limits/unicode_limits'
 import { deliverWithRecovery, uncertainFailure } from './flow'
 import { lookupTextDelivery } from './lookup'
+import { journeyRecorder,markAccepted } from '../../telemetry/journey_intervals/runtime'
 interface State { channelId: Ref<string | null>; sending: Ref<boolean>; error: Ref<string | null>; messages: Ref<TextMessage[]>; pending: Map<string, PendingSend>; retries: Map<string, string> }
 export function createTextDelivery(state: State) {
   let closed = false
@@ -12,6 +13,7 @@ export function createTextDelivery(state: State) {
   async function submit(id: string, draft: PendingSend, request = draft.request, retry = false): Promise<boolean> {
     if (closed || state.sending.value || state.channelId.value !== draft.channelId || draft.retryBlocked) return false
     state.sending.value = true; state.error.value = null
+    const finish=journeyRecorder.begin('send_ack')
     const status = (value: 'sending' | 'checking') => {
       if (closed || !state.pending.has(id)) return
       draft.sendStatus = value
@@ -23,10 +25,13 @@ export function createTextDelivery(state: State) {
         lookup: () => lookupTextDelivery(draft.channelId, id, draft.authorId, request), status, active: () => !closed,
       }, retry)
       acknowledge(id)
+      finish('completed')
       const confirmed = created.deleted ? created : { ...created, attachments: created.attachments.length ? created.attachments : [...draft.attachments] }
+      markAccepted(confirmed)
       if (state.channelId.value === draft.channelId) state.messages.value = [confirmed, ...state.messages.value.filter(row => row.id !== created.id && row.clientMessageId !== id)]
       return true
     } catch (cause) {
+      finish('failed')
       if (closed) return false
       draft.sendStatus = 'failed'; draft.retryBlocked = !uncertainFailure(cause)
       if (state.channelId.value === draft.channelId && state.pending.has(id)) {

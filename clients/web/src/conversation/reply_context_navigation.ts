@@ -6,6 +6,8 @@ export function navigateToReplyTarget(
   const target = [...(root?.querySelectorAll<HTMLElement>('[data-message-id]') ?? [])]
     .find((item) => item.dataset.messageId === messageId)
   if (target) {
+    target.tabIndex = -1
+    target.focus({ preventScroll: true })
     target.scrollIntoView({ behavior: 'smooth', block: 'center' })
     return
   }

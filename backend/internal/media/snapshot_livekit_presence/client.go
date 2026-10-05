@@ -22,7 +22,10 @@ type Config struct{ URL, APIKey, APISecret string }
 
 type Snapshot struct{ Participants, Streams, ScreenStreams int }
 
-type Client struct{ config Config }
+type Client struct {
+	config   Config
+	observer CallObserver
+}
 
 func New(config Config) (Client, error) {
 	endpoint, err := url.ParseRequestURI(config.URL)
@@ -81,18 +84,6 @@ func (client Client) token(grant auth.VideoGrant) (string, error) {
 
 func (client Client) service(token string) livekit.RoomService {
 	return livekit.NewRoomServiceJSONClient(client.config.URL, &http.Client{
-		Transport: bearerTransport{token: token, next: http.DefaultTransport},
+		Transport: bearerTransport{token: token, next: http.DefaultTransport, observer: client.observer},
 	})
-}
-
-type bearerTransport struct {
-	token string
-	next  http.RoundTripper
-}
-
-func (transport bearerTransport) RoundTrip(request *http.Request) (*http.Response, error) {
-	clone := request.Clone(request.Context())
-	clone.Header = request.Header.Clone()
-	clone.Header.Set("Authorization", "Bearer "+transport.token)
-	return transport.next.RoundTrip(clone)
 }

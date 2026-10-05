@@ -18,13 +18,17 @@ const liveLinkStatement = `SELECT
              WHERE link.attachment_id=$1 AND message.deleted_at IS NULL)`
 
 func (repository Repository) Finalize(ctx context.Context, candidate cleanup.Candidate) error {
+	return repository.FinalizeWithFile(ctx, candidate, nil)
+}
+
+func (repository Repository) FinalizeWithFile(ctx context.Context, candidate cleanup.Candidate, remove func(string) error) error {
 	tx, err := repository.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin hidden attachment finalization: %w", err)
 	}
 	defer tx.Rollback(context.Background())
-	var id string
-	err = tx.QueryRow(ctx, `SELECT id::text FROM attachments WHERE id=$1 AND state='HIDDEN' AND hidden_cleanup_claim_token=$2 FOR UPDATE`, candidate.ID, candidate.Token).Scan(&id)
+	var id, key string
+	err = tx.QueryRow(ctx, `SELECT id::text,storage_key::text FROM attachments WHERE id=$1 AND state='HIDDEN' AND hidden_cleanup_claim_token=$2 FOR UPDATE`, candidate.ID, candidate.Token).Scan(&id, &key)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrFinalizationBlocked
 	}
@@ -37,6 +41,14 @@ func (repository Repository) Finalize(ctx context.Context, candidate cleanup.Can
 	}
 	if live {
 		return ErrFinalizationBlocked
+	}
+	if remove != nil {
+		if candidate.Key != key {
+			return ErrFinalizationBlocked
+		}
+		if err := remove(key); err != nil {
+			return err
+		}
 	}
 	textLinks, err := tx.Exec(ctx, `DELETE FROM message_attachments WHERE attachment_id=$1`, id)
 	if err != nil {

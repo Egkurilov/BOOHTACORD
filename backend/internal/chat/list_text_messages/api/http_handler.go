@@ -28,7 +28,7 @@ func NewHandler(lister Lister) http.Handler {
 			}
 			limit = parsed
 		}
-		result, err := lister.List(request.Context(), listtextmessages.Input{ChannelID: request.PathValue("channelID"), Before: request.URL.Query().Get("before"), At: request.URL.Query().Get("at"), Limit: limit})
+		result, err := lister.List(request.Context(), listtextmessages.Input{ChannelID: request.PathValue("channelID"), Before: request.URL.Query().Get("before"), At: request.URL.Query().Get("at"), After: request.URL.Query().Get("after"), Limit: limit})
 		if errors.Is(err, listtextmessages.ErrInvalidInput) {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректная страница сообщений")
 			return

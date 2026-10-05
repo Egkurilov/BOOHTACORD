@@ -8,7 +8,7 @@ import (
 )
 
 const listAccounts = `
-SELECT id::text, login, display_name, role, blocked_at IS NOT NULL, created_at
+SELECT id::text, login, display_name, role, blocked_at IS NOT NULL, created_at, updated_at
 FROM users
 WHERE ($1::uuid IS NULL OR id > $1::uuid)
 ORDER BY id ASC LIMIT $2`
@@ -39,7 +39,7 @@ func (repository Repository) List(ctx context.Context, cursor string, limit int)
 	var accounts []listadminaccounts.Account
 	for rows.Next() {
 		var account listadminaccounts.Account
-		if err := rows.Scan(&account.ID, &account.Login, &account.DisplayName, &account.Role, &account.Blocked, &account.CreatedAt); err != nil {
+		if err := rows.Scan(&account.ID, &account.Login, &account.DisplayName, &account.Role, &account.Blocked, &account.CreatedAt, &account.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan admin account: %w", err)
 		}
 		accounts = append(accounts, account)

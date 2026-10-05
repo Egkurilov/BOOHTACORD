@@ -5,7 +5,7 @@ import { useAuthorDirectory } from '../identity/author_directory'
 import MentionPicker from '../conversation/MentionPicker.vue'
 import MentionAutocomplete from '../conversation/MentionAutocomplete.vue'
 import EmojiPicker from '../conversation/EmojiPicker.vue'
-import { insertEmojiAtRange } from '../conversation/emoji_insert'
+import { useComposerInput } from '../conversation/composer_input/controller'
 import ConversationOverflowMenu from '../conversation/ConversationOverflowMenu.vue'
 import type { TextMessageAttachment } from '../conversation/message_client'
 import DirectMessageAttachmentPicker from './DirectMessageAttachmentPicker.vue'
@@ -19,18 +19,20 @@ import { useSavedComposer } from '../conversation/use_saved_composer'
 import { submitOnComposerEnter } from '../conversation/composer_enter'
 import SearchMessageContext from '../search/SearchMessageContext.vue'
 import { useSearchTargetStore } from '../search/search_target_store'
-import { pasteClipboardImages } from '../conversation/clipboard_images'
 import { useUnreadBoundary } from '../conversation/use_unread_boundary'
 import { useScopedSend } from '../conversation/use_scoped_send'
+import type { Position } from '../conversation/context_position/dom'
+import { useContextPosition } from '../conversation/context_position/return'
 import { useVisibleRead } from '../conversation/use_visible_read'
 const props = defineProps<{ accountId: string; active: boolean; directMessageId: string; otherParticipantId: string; otherParticipantDisplayName: string; navOpen: boolean }>()
 const emit = defineEmits<{ toggleNav: [] }>()
 const store = useDirectMessageStore()
 const firstUnread = computed(() => store.directMessages.find(({ id }) => id === props.directMessageId)?.firstUnreadMessageId)
-const { unreadBoundary, unreadContextOpen, readUnlocked, showUnread, continueAtLatest } = useUnreadBoundary(() => props.directMessageId, firstUnread, () => queueVisibleRead())
+const { unreadBoundary, unreadContextOpen, readUnlocked, showUnread, continueAtLatest } = useUnreadBoundary(() => props.directMessageId, firstUnread, () => { void showLatest().then(queueVisibleRead) })
 const searchTarget = useSearchTargetStore()
 const contextTarget = computed(() => searchTarget.target?.kind === 'DIRECT_MESSAGE' && searchTarget.target.conversationId === props.directMessageId ? searchTarget.target : null)
 const replyContextTarget = ref<string | null>(null)
+const restored = ref<Position | null>(null)
 const authors = useAuthorDirectory()
 const session = ref<CurrentSession | null>(null)
 const composer = useSavedComposer<DirectMessageHistoryItem, TextMessageAttachment>(props.accountId, 'DIRECT_MESSAGE', () => props.directMessageId)
@@ -42,12 +44,15 @@ const attachmentPicker = ref<{ addPastedFiles: (files: File[]) => void } | null>
 const emojiPicker = ref<{ show: () => Promise<void> } | null>(null)
 const { readRoot, queueVisibleRead } = useVisibleRead({
   conversationId: () => props.directMessageId, loadedConversationId: () => store.directMessageId, messages: () => store.messages,
-  canRead: () => props.active && store.directMessages.some(({ id }) => id === props.directMessageId) && (!unreadBoundary.value || readUnlocked.value),
+  canRead: () => props.active && store.directMessages.some(({ id }) => id === props.directMessageId) && !contextTarget.value && !replyContextTarget.value && !unreadContextOpen.value && !restored.value && (!unreadBoundary.value || readUnlocked.value),
   advance: (id, messageId) => advanceReadIfVisible({ activeDirectMessageId: store.directMessageId,
     renderedDirectMessageId: id, newestDisplayedMessageId: messageId, visibilityState: document.visibilityState }),
   refreshCounters: () => { void store.refreshNavigation() },
 })
 
+const contextOpen = () => Boolean(contextTarget.value || replyContextTarget.value || unreadContextOpen.value || restored.value)
+const { save: savePosition, showLatest } = useContextPosition(props.accountId, 'DIRECT_MESSAGE', () => props.directMessageId, readRoot, contextOpen, () => store.historyLoaded && store.directMessageId === props.directMessageId, restored)
+function onViewportChange(): void { savePosition(); queueVisibleRead() }
 const { send, retry } = useScopedSend<DirectMessageHistoryItem, TextMessageAttachment, DirectMessageHistoryItem>(
   props.accountId, 'DIRECT_MESSAGE', () => props.directMessageId, composer,
   () => !attachmentPending.value && store.directMessageId === props.directMessageId,
@@ -59,18 +64,9 @@ async function loadSession(): Promise<void> {
   try { session.value = await loadCurrentSession() } catch { session.value = null }
 }
 
-async function addEmoji(emoji: string): Promise<void> {
-  const input = composerTextarea.value
-  const result = insertEmojiAtRange(draft.value, input?.selectionStart ?? draft.value.length, input?.selectionEnd ?? draft.value.length, emoji)
-  draft.value = result.text
-  await nextTick()
-  input?.focus(); input?.setSelectionRange(result.caret, result.caret)
-}
-function insertMobileMention(): void { draft.value += draft.value && !/\s$/.test(draft.value) ? ' @' : '@'; void nextTick(() => composerTextarea.value?.focus()) }
+const { addEmoji, insertMobileMention, onComposerPaste, onDragOver, onDrop } = useComposerInput(draft, composerTextarea, attachmentPicker, () => props.active && !store.sending)
 function closeSearch(): void { searchOpen.value = false; void nextTick(() => searchTrigger.value?.focus()) }
-function onComposerPaste(event: ClipboardEvent): void {
-  if (composerTextarea.value) pasteClipboardImages(event, composerTextarea.value, (files) => attachmentPicker.value?.addPastedFiles(files))
-}
+
 
 onMounted(() => {
   void loadSession()
@@ -89,7 +85,7 @@ onBeforeUnmount(() => searchTarget.clearFor('DIRECT_MESSAGE', props.directMessag
       </div>
       <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="props.navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')"><button ref="searchTrigger" class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen ? closeSearch() : searchOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button><template #overflow><ConversationOverflowMenu @search="searchOpen = true" /></template></WorkspaceHeaderActions>
     </header>
-    <div v-if="searchOpen" class="conversation-tools"><DirectMessageSearch :direct-message-id="props.directMessageId" @close="closeSearch" /></div>
+    <div v-if="searchOpen" v-show="!contextOpen()" class="conversation-tools"><DirectMessageSearch :direct-message-id="props.directMessageId" @open="searchTarget.open({ kind: 'DIRECT_MESSAGE', conversationId: props.directMessageId, messageId: $event })" @close="closeSearch" /></div>
     <p v-if="store.loadingHistory" class="state" aria-live="polite">Загружаем историю…</p>
     <p v-if="store.error" id="direct-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refreshHistory()">Повторить загрузку</button></p>
     <div v-if="unreadBoundary && !readUnlocked" class="unread-boundary-actions" role="status">
@@ -99,13 +95,14 @@ onBeforeUnmount(() => searchTarget.clearFor('DIRECT_MESSAGE', props.directMessag
     </div>
     <SearchMessageContext v-if="contextTarget" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
     <SearchMessageContext v-else-if="replyContextTarget" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="replyContextTarget" heading="Контекст ответа" @close="replyContextTarget = null" />
-    <SearchMessageContext v-else-if="unreadContextOpen" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="unreadBoundary" heading="Первое непрочитанное сообщение" @close="continueAtLatest" />
-    <DirectMessageHistoryList :direct-message-id="props.directMessageId" :session="session" :other-participant-id="props.otherParticipantId" :other-participant-display-name="props.otherParticipantDisplayName" @reply="replyTarget = $event" @reply-context="replyContextTarget = $event" @retry="retry" @viewport-change="queueVisibleRead" />
+    <SearchMessageContext v-else-if="unreadContextOpen" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="unreadBoundary" heading="Первое непрочитанное сообщение" unread :active="props.active" @read="store.refreshNavigation()" @viewport-change="savePosition" @close="continueAtLatest" />
+    <SearchMessageContext v-else-if="restored" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="restored.id" :offset="restored.offset" heading="Сохранённая позиция" @viewport-change="savePosition" @close="restored = null" />
+    <DirectMessageHistoryList v-show="!contextOpen()" :direct-message-id="props.directMessageId" :session="session" :other-participant-id="props.otherParticipantId" :other-participant-display-name="props.otherParticipantDisplayName" @reply="replyTarget = $event" @reply-context="replyContextTarget = $event" @retry="retry" @viewport-change="onViewportChange" />
     <div class="composer-wrap">
       <MentionAutocomplete v-model="draft" v-model:mention-user-ids="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" />
-      <form class="message-composer composer" @submit.prevent="send">
+      <form class="message-composer composer" @submit.prevent="send" @dragover="onDragOver" @drop="onDrop">
         <p v-if="replyTarget" class="reply-target">Ответ для {{ authors.displayName(replyTarget.authorId) }} <button type="button" @click="replyTarget = null">Отмена</button></p>
-        <DirectMessageAttachmentPicker ref="attachmentPicker" :direct-message-id="props.directMessageId" :initial-attachments="attachments" :disabled="store.sending || attachmentPending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" @mention="insertMobileMention" @emoji="emojiPicker?.show()" />
+        <DirectMessageAttachmentPicker ref="attachmentPicker" :direct-message-id="props.directMessageId" :initial-attachments="attachments" :disabled="store.sending" :clear-token="attachmentClearToken" @change="attachments = $event" @pending="attachmentPending = $event" @mention="insertMobileMention" @emoji="emojiPicker?.show()" />
         <MentionPicker v-model="mentionUserIds" :self-id="session?.accountId ?? ''" :disabled="store.sending || !session" :only-participant="{ id: props.otherParticipantId, displayName: props.otherParticipantDisplayName }" quick @activate="insertMobileMention" />
         <label class="gc-sr-only" for="direct-message-body">Сообщение</label>
         <textarea id="direct-message-body" ref="composerTextarea" v-model="draft" rows="1" :disabled="store.sending" :aria-describedby="store.error ? 'direct-conversation-error direct-composer-help' : 'direct-composer-help'" placeholder="Написать сообщение…" @keydown="submitOnComposerEnter($event, send)" @paste="onComposerPaste" />

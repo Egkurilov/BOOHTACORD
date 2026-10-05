@@ -7,12 +7,14 @@ import type { TextMessageAttachment } from '../message_client'
 import { validCodePointLength } from '../../validation/unicode_limits/unicode_limits'
 import { deliverWithRecovery, uncertainFailure } from './flow'
 import { lookupDirectDelivery } from './lookup'
+import { journeyRecorder,markAccepted } from '../../telemetry/journey_intervals/runtime'
 export function createDirectDelivery(state: DirectMessageActionState) {
   let closed = false
   if (getCurrentScope()) onScopeDispose(() => { closed = true; state.pending.clear(); state.retries.clear() })
   async function submit(id: string, draft: PendingDirectMessageSend, request = draft.request, retry = false): Promise<boolean> {
     if (closed || state.sending.value || state.directMessageId.value !== draft.directMessageId || draft.retryBlocked) return false
     state.sending.value = true; state.error.value = null
+    const finish=journeyRecorder.begin('send_ack')
     const status = (value: 'sending' | 'checking') => {
       if (closed || !state.pending.has(id)) return
       draft.sendStatus = value
@@ -24,10 +26,13 @@ export function createDirectDelivery(state: DirectMessageActionState) {
         lookup: () => lookupDirectDelivery(draft.directMessageId, id, draft.authorId, request), status, active: () => !closed,
       }, retry)
       state.acknowledge(id)
+      finish('completed')
       const confirmed = created.deleted ? created : { ...created, attachments: created.attachments.length ? created.attachments : [...draft.attachments] }
+      markAccepted(confirmed)
       if (state.directMessageId.value === draft.directMessageId) state.messages.value = [confirmed, ...state.messages.value.filter(row => row.id !== created.id && row.clientMessageId !== id)]
       return true
     } catch (cause) {
+      finish('failed')
       if (closed) return false
       draft.sendStatus = 'failed'; draft.retryBlocked = !uncertainFailure(cause)
       if (state.directMessageId.value === draft.directMessageId && state.pending.has(id)) {

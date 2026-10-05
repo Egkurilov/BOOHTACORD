@@ -27,8 +27,9 @@ func NewHandler(updater Updater) http.Handler {
 			return
 		}
 		var body struct {
-			Role    adminaccount.Role `json:"role"`
-			Blocked *bool             `json:"blocked"`
+			Role              adminaccount.Role `json:"role"`
+			Blocked           *bool             `json:"blocked"`
+			ExpectedUpdatedAt string            `json:"expected_updated_at"`
 		}
 		decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 8<<10))
 		decoder.DisallowUnknownFields()
@@ -36,7 +37,11 @@ func NewHandler(updater Updater) http.Handler {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректные данные аккаунта")
 			return
 		}
-		account, err := updater.Update(request.Context(), adminaccount.Input{ActorID: principal.AccountID, AccountID: request.PathValue("accountID"), Role: body.Role, Blocked: *body.Blocked})
+		account, err := updater.Update(request.Context(), adminaccount.Input{ActorID: principal.AccountID, AccountID: request.PathValue("accountID"), Role: body.Role, Blocked: *body.Blocked, ExpectedUpdatedAt: body.ExpectedUpdatedAt})
+		if errors.Is(err, adminaccount.ErrRevisionConflict) {
+			writeError(writer, request, http.StatusConflict, "REVISION_CONFLICT", "Аккаунт изменён другим администратором. Сравните актуальные данные.")
+			return
+		}
 		if errors.Is(err, adminaccount.ErrInvalidInput) {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректные данные аккаунта")
 			return

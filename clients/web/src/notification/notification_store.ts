@@ -4,9 +4,10 @@ import { ref, watch, type WatchStopHandle } from 'vue'
 import { useTopologyStore } from '../channel/topology_store'
 import { useDirectMessageStore } from '../direct_message/direct_message_store'
 import type { RealtimeEvent } from '../realtime/realtime_client'
-import { createNotificationDelivery, type NotificationRuntime } from './notification_delivery'
+import { browserNotificationRuntime, createNotificationDelivery, type NotificationRuntime } from './notification_delivery'
 import { addressedUnread, notificationCandidate, notificationTitle, unreadTotal } from './notification_policy'
-import { welcomeNotice } from './welcome_notice'
+import { createConversationNotificationController, defaultConversationPreference } from './conversation_preferences/controller'
+import type { ConversationKind, Preference } from './conversation_preferences/policy'
 import { guildProfile } from '../guild/profile/state'
 
 export const useNotificationStore = defineStore('notifications', () => {
@@ -19,6 +20,17 @@ export const useNotificationStore = defineStore('notifications', () => {
   let delivery: ReturnType<typeof createNotificationDelivery> | null = null
   let stopTitleWatch: WatchStopHandle | null = null
   let originalTitle = ''
+  let conversations:ReturnType<typeof createConversationNotificationController>|null=null
+  const preferencesRevision=ref(0)
+  const conversationPreference=(kind:ConversationKind,id:string):Preference=>{preferencesRevision.value;return conversations?.get(kind,id) ?? defaultConversationPreference()}
+  async function setConversationPreference(kind:ConversationKind,id:string,value:Preference):Promise<void> {
+    error.value=null
+    try {await conversations?.set(kind,id,value)} catch(cause) {error.value=cause instanceof Error ? cause.message : 'Не удалось сохранить уведомления.'}
+  }
+  async function resetConversationPreferences():Promise<void> {
+    error.value=null
+    try {await conversations?.reset()} catch {error.value='Не удалось сбросить настройки уведомлений.'}
+  }
 
   function refreshStatus(): void {
     try {
@@ -34,7 +46,10 @@ export const useNotificationStore = defineStore('notifications', () => {
 
   function start(accountID: string, runtime?: NotificationRuntime): void {
     stop()
-    delivery = createNotificationDelivery(accountID, runtime)
+    const port=runtime ?? browserNotificationRuntime()
+    delivery = createNotificationDelivery(accountID, port)
+    conversations=createConversationNotificationController(accountID,port,()=>{preferencesRevision.value++})
+    preferencesRevision.value++
     refreshStatus()
     if (typeof document === 'undefined') return
     originalTitle = document.title
@@ -48,6 +63,7 @@ export const useNotificationStore = defineStore('notifications', () => {
   function stop(): void {
     if (stopTitleWatch) { stopTitleWatch(); stopTitleWatch = null; document.title = originalTitle }
     delivery?.cancel()
+    conversations?.cancel();conversations=null;preferencesRevision.value++
     delivery = null
     refreshStatus()
   }
@@ -77,11 +93,12 @@ export const useNotificationStore = defineStore('notifications', () => {
     let body = notificationCandidate(event, topology.topology, directMessages.directMessages, previousUnread)
     if (!body || !enabled.value) return
     const currentDelivery = delivery
-    body = await welcomeNotice(event) ?? body
-    if (delivery !== currentDelivery) return
-    try { await delivery.deliver(event.eventId, body) } catch { /* Notification delivery must not break realtime recovery. */ }
+    const currentConversations=conversations, notice=await currentConversations?.prepare(event)
+    if (!notice || delivery !== currentDelivery) return
+    body=notice.body ?? body
+    try { await delivery.deliver(event.eventId, body,()=>delivery===currentDelivery && document.visibilityState==='hidden' && Boolean(currentConversations?.allowed(event,notice.mentioned))) } catch { /* Keep realtime recovery independent. */ }
     refreshStatus()
   }
 
-  return { available, enabled, permission, error, start, stop, enable, disable, refreshStatus, capture, deliver }
+  return { available, enabled, permission, error, start, stop, enable, disable, refreshStatus, capture, deliver, conversationPreference, setConversationPreference, resetConversationPreferences }
 })

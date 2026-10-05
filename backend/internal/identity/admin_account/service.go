@@ -3,11 +3,13 @@ package adminaccount
 import (
 	"context"
 	"errors"
+	"time"
 )
 
 var (
-	ErrInvalidInput = errors.New("invalid account administration input")
-	ErrUpdateDenied = errors.New("account administration update denied")
+	ErrInvalidInput     = errors.New("invalid account administration input")
+	ErrUpdateDenied     = errors.New("account administration update denied")
+	ErrRevisionConflict = errors.New("account administration revision conflict")
 )
 
 type Role string
@@ -18,10 +20,11 @@ const (
 )
 
 type Input struct {
-	ActorID   string
-	AccountID string
-	Role      Role
-	Blocked   bool
+	ActorID           string
+	AccountID         string
+	Role              Role
+	Blocked           bool
+	ExpectedUpdatedAt string
 }
 
 type Account struct {
@@ -43,6 +46,11 @@ func New(store Store) Service {
 }
 
 func (service Service) Update(context context.Context, input Input) (Account, error) {
+	if input.ExpectedUpdatedAt != "" {
+		if _, err := time.Parse(time.RFC3339Nano, input.ExpectedUpdatedAt); err != nil {
+			return Account{}, ErrInvalidInput
+		}
+	}
 	if input.ActorID == "" || input.AccountID == "" || (input.Role != RoleMember && input.Role != RoleAdministrator) {
 		return Account{}, ErrInvalidInput
 	}

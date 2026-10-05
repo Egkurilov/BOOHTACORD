@@ -24,7 +24,11 @@ describe('channel rename editor', () => {
     await expect(editor.rename()).resolves.toBe(false)
     revision = 6
     editor.sync()
-    await expect(editor.rename()).resolves.toBe(true)
+    await expect(editor.rename()).resolves.toBe(false)
+    expect(request).toHaveBeenCalledTimes(1)
+    expect(editor.review.before.value).toBe('Голосовой')
+    expect(editor.review.current.value).toBe('Голосовой')
+    await expect(editor.applyReviewed()).resolves.toBe(true)
     expect(JSON.parse(String(request.mock.calls[1][1].body))).toEqual({ name: 'Новый голосовой', expected_revision: 6 })
   })
 

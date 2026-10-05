@@ -7,7 +7,7 @@ import { useAuthorDirectory } from '../identity/author_directory'
 import { searchDirectMessageHistory, type DirectMessageSearchResult } from './direct_message_search_client'
 
 const props = defineProps<{ directMessageId: string }>()
-const emit = defineEmits<{ close: [] }>()
+const emit = defineEmits<{ close: []; open: [messageId: string] }>()
 const query = ref('')
 const queryInput = ref<HTMLInputElement | null>(null)
 const activeQuery = ref('')
@@ -82,6 +82,7 @@ function loadMore(): void { if (nextCursor.value) void runSearch(activeQuery.val
       <li v-for="message in messages" :key="message.id" class="direct-search-result">
         <p class="message-meta">{{ authors.displayName(message.authorId) }} · {{ new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }}<span v-if="message.editedAt"> · изменено</span></p>
         <MessageBody :body="message.body" />
+        <button type="button" @click="emit('open', message.id)">Открыть сообщение</button>
       </li>
     </ol>
     <button v-if="nextCursor" class="direct-search-more" type="button" :disabled="!canLoadMore" @click="loadMore">Показать ещё</button>
