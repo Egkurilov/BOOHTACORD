@@ -1,6 +1,7 @@
 """Use exact Windows plugin source paths where CMake cannot traverse Flutter links."""
 import json
 import re
+from contextlib import contextmanager
 from pathlib import Path
 
 
@@ -20,3 +21,14 @@ def configure(client):
         if original not in content: raise ValueError('Unexpected generated CMake file')
         content = content.replace(original, '"${BOOHTACORD_PLUGIN_SOURCE_${' + variable + '}}/windows"')
     cmake.write_text('\n'.join(lines) + '\n' + content, encoding='utf-8')
+
+
+@contextmanager
+def configured_plugins(client):
+    cmake = client / 'windows/flutter/generated_plugins.cmake'
+    original = cmake.read_bytes()
+    try:
+        configure(client)
+        yield
+    finally:
+        cmake.write_bytes(original)

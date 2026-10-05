@@ -3,7 +3,7 @@ import json
 import sys
 from tools.ci.native.process import ROOT, client, output, require_version, run
 from tools.release.native_artifact.manifest import write
-from .plugins import configure
+from .plugins import configured_plugins
 from tools.build.client_identity import dart_defines, flutter_version_args
 
 
@@ -12,8 +12,8 @@ def main():
     require_version('flutter', json.loads(output('flutter', '--version', '--machine'))['frameworkVersion'])
     flutter = client('flutter')
     run('flutter', 'pub', 'get', '--enforce-lockfile', cwd=flutter)
-    configure(flutter)
-    run('flutter', 'build', 'windows', '--release', '--no-pub', *flutter_version_args('windows'), *dart_defines('windows'), cwd=flutter)
+    with configured_plugins(flutter):
+        run('flutter', 'build', 'windows', '--release', '--no-pub', *flutter_version_args('windows'), *dart_defines('windows'), cwd=flutter)
     release = flutter / 'build/windows/x64/runner/Release'
     for required in ('boohtacord_desktop.exe', 'flutter_windows.dll', 'libwebrtc.dll', 'data/flutter_assets'):
         if not (release / required).exists(): raise RuntimeError('Incomplete Windows release: ' + required)
