@@ -103,7 +103,7 @@ void main() {
       reason: 'oversized files should stay removable in the failed queue',
     );
     expect(
-      find.text('Каждый файл должен быть не больше 25 МБ.'),
+      find.text('Файл не соответствует ограничению вложения.'),
       findsOneWidget,
     );
   });
@@ -266,7 +266,7 @@ void main() {
       expect(controller.text, 'caption + image');
       expect(state.uploadedNames, isEmpty);
       expect(
-        find.text('Каждый файл должен быть не больше 25 МБ.'),
+        find.text('Файл не соответствует ограничению вложения.'),
         findsOneWidget,
       );
       expect(find.text('clipboard-image.png · не загружено'), findsOneWidget);

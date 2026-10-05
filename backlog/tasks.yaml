@@ -293,6 +293,11 @@ tasks:
     requirements: [REQ-CHAT-01, REQ-CHAT-02]
     depends_on: [T-040, T-044, T-051]
     evidence: [flutter-attachment-composer-tests, flutter-full-suite, flutter-changed-file-analysis, android-debug-build, macos-debug-build, windows-ci-release-build, android-ci-debug-build, QA-295]
+  - id: FV2-039
+    title: Flutter attachment size error copy matches web
+    requirements: [REQ-CHAT-01, REQ-CHAT-02]
+    depends_on: [FV2-038, T-040, T-044, T-051]
+    evidence: [flutter-attachment-composer-tests, flutter-full-suite, flutter-changed-file-analysis, android-debug-build, macos-debug-build, windows-ci-release-build, android-ci-debug-build, QA-296]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

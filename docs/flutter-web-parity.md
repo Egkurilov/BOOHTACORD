@@ -1327,6 +1327,15 @@ actionable failed queue. Regression tests first reproduced the missing chips;
 the complete attachment-composer test file now passes —
 [QA-295](../evidence/flutter/qa295-flutter-attachment-size-failure-queue-parity-2026-10-05-001.json).
 
+## Attachment size error copy (FV2-039)
+
+The web upload client presents the same restriction message for an invalid file
+name/size: “Файл не соответствует ограничению вложения.” Flutter previously
+used a more specific 25 MB message for its local size check. To keep cross-client
+feedback identical, the Flutter file-picker and clipboard-image paths now use
+the web copy. Both size-rejection widget cases assert that visible message —
+[QA-296](../evidence/flutter/qa296-flutter-attachment-size-copy-parity-2026-10-05-001.json).
+
 ## Client update awareness
 
 Web, Android and Windows use independent release identities with shared policy

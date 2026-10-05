@@ -250,14 +250,14 @@ class MessageAttachmentComposerState extends State<MessageAttachmentComposer> {
           if (!_isCurrent(generation, scope)) return;
           if (size > 25000000) {
             throw const FormatException(
-              'Каждый файл должен быть не больше 25 МБ.',
+              'Файл не соответствует ограничению вложения.',
             );
           }
           final bytes = await file.readAsBytes();
           if (!_isCurrent(generation, scope)) return;
           if (bytes.length > 25000000) {
             throw const FormatException(
-              'Каждый файл должен быть не больше 25 МБ.',
+              'Файл не соответствует ограничению вложения.',
             );
           }
           final uploaded = await widget.state.uploadAttachment(

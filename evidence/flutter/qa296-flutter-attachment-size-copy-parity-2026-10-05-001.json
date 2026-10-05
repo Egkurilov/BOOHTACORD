@@ -1,0 +1,65 @@
+{
+  "id": "QA-296",
+  "date": "2026-10-05",
+  "task": "FV2-039 / FV2-002 — Flutter attachment size error copy parity",
+  "source_revision": "PENDING_IMPLEMENTATION_COMMIT",
+  "checks": [
+    {
+      "name": "Native file picker error-copy regression before fix",
+      "command": "cd clients/flutter && flutter test --no-pub test/message_attachment_composer_test.dart --plain-name 'keeps oversized selected files in the failed queue'",
+      "result": "EXPECTED_FAIL_BEFORE_FIX",
+      "observation": "The failed-file queue was present, but the Flutter-specific 25 MB copy differed from the web upload client's message."
+    },
+    {
+      "name": "Attachment composer tests after fix",
+      "command": "cd clients/flutter && flutter test --no-pub test/message_attachment_composer_test.dart",
+      "result": "PASS",
+      "passed": 10,
+      "observation": "Both native picker and clipboard-image oversize tests now assert the same visible error as web; existing composer behavior remains green."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 641
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && dart analyze lib/src/widgets/message_attachment_composer.dart test/message_attachment_composer_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Windows CI build",
+      "result": "PENDING",
+      "observation": "Wait for GitHub Actions after pushing the tested revision."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core (`pwsh`) is not installed locally; the contracts job invokes this verifier. Record the CI result after push."
+    }
+  ],
+  "implementation": {
+    "files": [
+      "clients/flutter/lib/src/widgets/message_attachment_composer.dart",
+      "clients/flutter/test/message_attachment_composer_test.dart"
+    ],
+    "behavior": "Flutter local attachment size rejection now displays the web upload client's exact restriction message for both native selection and clipboard-image paste.",
+    "web_or_contract_changed": false
+  },
+  "status": "IMPLEMENTED_AND_LOCALLY_TESTED; WINDOWS_CI_PENDING"
+}
