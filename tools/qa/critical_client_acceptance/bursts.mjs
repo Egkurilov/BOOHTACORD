@@ -26,7 +26,7 @@ export async function bursts(a, b, channelId, report, directory, baseline = fals
     const [active, hiddenResult] = counters.map(counter => counter.stop())
     assert.equal(hiddenResult.history, 0)
     assert.ok(active.history >= 1 && (baseline || active.history <= Math.max(2, size/2)), 'Unbounded protected GET burst')
-    assert.ok(active.max_parallel <= 1 && hiddenResult.max_parallel <= 1, 'Parallel GETs for one resource')
+    if (!baseline) assert.ok(active.max_parallel <= 1 && hiddenResult.max_parallel <= 1, 'Parallel GETs for one resource')
     samples.push({ events: size, active, hidden: hiddenResult })
   }
   if (baseline) { report.protected_refresh = { actual_api_bursts: samples }; return }

@@ -15,7 +15,10 @@ try {
   await bursts(a, b, target.body.id, report, input.directory, true)
   writeFileSync(input.directory+'/report.json', JSON.stringify(report, null, 2)+'\n')
 } catch (error) {
-  // Keep fixture failures bounded; neither password nor session values are printed.
-  console.error('Previous native client measurement failed: '+error.name)
+  let message = String(error)
+  const secrets = [input.password]
+  for (const context of browser.contexts()) secrets.push(...(await context.cookies()).map(cookie => cookie.value))
+  for (const value of secrets.filter(Boolean)) message = message.split(value).join('[redacted]')
+  console.error('Previous native client measurement failed: '+message.slice(0, 2000))
   process.exitCode = 1
 } finally { await browser.close() }
