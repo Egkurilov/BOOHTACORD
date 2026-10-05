@@ -514,6 +514,18 @@ card hierarchy. The app was not restarted. Tracked in `backlog/FRONTEND_TODO.md`
 no web files were changed. See
 [QA-277](../evidence/flutter/qa277-flutter-audio-settings-design-v2-2026-10-05-001.json).
 
+Audio-preference session-restore follow-up: an existing Android API 35 install
+reproduced “Сначала войдите в аккаунт” when changing the VAD threshold. The
+current source already includes lazy account-scoped preference loading and
+publishes the restored account before preparation (`82d572f9`, `8fe7d23d`). A
+new signed arm64 Release APK `1.0.35+2068` updated in place with the same
+signer and retained app data/session; changing `−50 → −48 → −50 dBFS` then
+completed without an error. The same threshold change/restore was checked in
+the already-running macOS Debug app. Focused test, changed-file analyzer, full
+Flutter suite, and Android Release build passed. No voice call or microphone
+capture was started. Tag `android-v1.0.35` will trigger the GitHub Release
+workflow — [QA-298](../evidence/flutter/qa298-flutter-vad-sensitivity-session-restore-2026-10-05-001.json).
+
 Admin panel geometry follow-up (FV2-025): web's `.admin-panel` is capped at
 880 px and centered, with a visually hidden inner heading because the workspace
 header already names the page. Flutter now matches that width and avoids a
