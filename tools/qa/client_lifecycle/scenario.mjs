@@ -7,6 +7,7 @@ import { registration, rateLimit } from '../critical_client_acceptance/auth.mjs'
 import { resetLinks } from '../critical_client_acceptance/reset.mjs'
 import { bursts } from '../critical_client_acceptance/bursts.mjs'
 import { media } from '../critical_client_acceptance/media.mjs'
+import { prepareSessionRevoke, checkSessionRevoke } from '../critical_client_acceptance/teardown.mjs'
 const input = JSON.parse(readFileSync(process.env.QA_INPUT, 'utf8'))
 assert.equal(origin, 'https://localhost:4810')
 const browser = await chromium.launch({ headless: true })
@@ -39,7 +40,9 @@ try {
     await resetLinks(browser, a, flowAccount.account_id, input, report, redactions)
     console.log('stage=actual-reset-links-accepted')
   }
-  await sessions(a, b, guest, report, input.directory, redactions)
+  await sessions(a, b, guest, report, input.directory, redactions, input.critical ? {
+    prepare: () => prepareSessionRevoke(b), check: () => checkSessionRevoke(b, report),
+  } : undefined)
   const refreshed = (await api(a, '/guild-profile')).body
   assert.equal(refreshed.name, 'Автономная гильдия')
   const anonymous = await browser.newContext({ ignoreHTTPSErrors: true,

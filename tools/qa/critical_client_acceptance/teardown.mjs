@@ -53,3 +53,22 @@ export async function teardown(a, b, channelId, input, report, observed) {
   report.connection_status.logout_clears_voice_and_roster = true
   await login(a, 'qa_admin', input.password)
 }
+export async function prepareSessionRevoke(page) {
+  await page.addInitScript(() => {
+    window.__qaPeers = []
+    const Native = window.RTCPeerConnection
+    window.RTCPeerConnection = new Proxy(Native, { construct(target, args) {
+      const peer = Reflect.construct(target, args); window.__qaPeers.push(peer); return peer
+    } })
+  })
+  await page.reload()
+  await join(page)
+  await expect.poll(() => page.evaluate(() => window.__qaPeers.some(peer => peer.connectionState === 'connected'))).toBe(true)
+}
+export async function checkSessionRevoke(page, report) {
+  await expect(page.locator('.authentication-page')).toBeVisible({ timeout: 15000 })
+  await mediaClosed(page)
+  await expect(page.getByTestId('connection-status')).toHaveCount(0)
+  await expect(page.getByTestId('voice-dock')).toHaveCount(0)
+  report.connection_status.session_revoke_clears_chat_voice_roster = true
+}

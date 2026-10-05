@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { api, expect, origin, security, status } from './request.mjs'
-export async function sessions(a, b, member, report, directory, redactions) {
+export async function sessions(a, b, member, report, directory, redactions, media) {
   const own = (await api(a, '/me/sessions')).body
   assert.equal(own.sessions.length, 2)
   const foreign = (await api(member, '/me/sessions')).body
@@ -15,6 +15,7 @@ export async function sessions(a, b, member, report, directory, redactions) {
   })
   await b.reload()
   await expect(b.getByRole('img', { name: 'В сети', exact: true })).toBeVisible()
+  await media?.prepare()
   const oldCookies = await b.context().cookies()
   redactions.push(...oldCookies.map(cookie => cookie.value))
   assert.ok(oldCookies.some(cookie => cookie.name === 'vp_session' && cookie.path === '/'
@@ -24,6 +25,7 @@ export async function sessions(a, b, member, report, directory, redactions) {
   assert.equal(await a.getByTestId('session-revoke').filter({ visible: true }).count(), 2)
   await a.locator('[data-testid="session-revoke"]:not([disabled])').click()
   await expect.poll(() => closed).toBe(true)
+  await media?.check()
   const expired = await b.context().request.get(origin+'/api/v1/me/sessions', {
     headers: { Cookie: oldCookies.map(cookie => cookie.name+'='+cookie.value).join('; ') },
   })
