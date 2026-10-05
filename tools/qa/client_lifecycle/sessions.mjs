@@ -16,6 +16,7 @@ export async function sessions(a, b, member, report, directory, redactions, medi
   await b.reload()
   await expect(b.getByRole('img', { name: 'В сети', exact: true })).toBeVisible()
   await media?.prepare()
+  closed = false
   const oldCookies = await b.context().cookies()
   redactions.push(...oldCookies.map(cookie => cookie.value))
   assert.ok(oldCookies.some(cookie => cookie.name === 'vp_session' && cookie.path === '/'
