@@ -1311,8 +1311,9 @@ discarded locally. A test-first regression reproduced one advance instead of
 two for `message-a` then `message-z`. Flutter now compares the same timestamp/ID
 tuple both for confirmed and in-flight cursors, including out-of-order request
 completion, without changing the API contract or web implementation. The focused
-regressions, full Flutter suite, Android Debug build and macOS Debug build pass;
-server SQL ordering was inspected —
+regressions, full Flutter suite, Android/macOS Debug builds and the full
+GitHub CI run pass. CI retained both the Android Debug APK and Windows x64
+Release distribution; server SQL ordering was inspected —
 [QA-294](../evidence/flutter/qa294-flutter-text-read-cursor-order-2026-10-05-001.json).
 
 ## Client update awareness

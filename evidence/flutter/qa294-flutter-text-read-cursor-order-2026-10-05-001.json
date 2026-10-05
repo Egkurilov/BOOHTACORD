@@ -2,7 +2,7 @@
   "id": "QA-294",
   "date": "2026-10-05",
   "task": "FV2-037 / FV2-002 — Flutter TEXT visible read cursor ordering parity",
-  "source_revision": "working tree changes based on dff883bf",
+  "source_revision": "50f6dc3fce76330c35ada2263c74ac4eb7ef520f",
   "checks": [
     {
       "name": "Test-first equal-timestamp regression",
@@ -45,6 +45,21 @@
       "name": "Windows Debug build",
       "result": "NOT_RUN",
       "observation": "This host is macOS; Windows-native build remains part of Windows CI/acceptance."
+    },
+    {
+      "name": "GitHub CI for implementation commit",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37335365140",
+      "result": "PASS",
+      "observation": "Run 37335365140 on 50f6dc3f completed successfully. Contracts, Windows CI and Flutter CI jobs passed; Flutter CI included the full app/vendor tests and analyzer, Android Kotlin build modes and Debug APK build. Windows CI included app/vendor tests and analyzer, release-publisher tests, Windows x64 Release build/inspection and artifact retention."
+    },
+    {
+      "name": "Platform CI artifacts",
+      "result": "PASS",
+      "artifacts": [
+        "boohtacord-android-debug-apk",
+        "BOOHTACORD-windows-x64-50f6dc3fce76330c35ada2263c74ac4eb7ef520f"
+      ],
+      "observation": "Both artifacts are present and unexpired for the successful run."
     },
     {
       "name": "Server ordering contract review",
