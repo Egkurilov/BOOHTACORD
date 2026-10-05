@@ -433,6 +433,13 @@ void main() {
       scrollable: audioScrollable,
     );
     expect(find.text('Подавление эха'), findsOneWidget);
+    final processingAdvanced = find.byKey(
+      const ValueKey('audio-processing-advanced'),
+    );
+    await tester.ensureVisible(processingAdvanced);
+    await tester.pumpAndSettle();
+    await tester.tap(processingAdvanced);
+    await tester.pumpAndSettle();
     expect(find.textContaining('Нативный SDK не сообщает'), findsOneWidget);
 
     await tester.dragUntilVisible(
@@ -565,6 +572,73 @@ void main() {
     state.dispose();
     debugDefaultTargetPlatformOverride = null;
   });
+
+  testWidgets(
+    'audio processing keeps essentials visible and discloses advanced controls',
+    (tester) async {
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      for (final scenario in [
+        (TargetPlatform.macOS, const Size(1440, 900)),
+        (TargetPlatform.android, const Size(390, 844)),
+      ]) {
+        debugDefaultTargetPlatformOverride = scenario.$1;
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = scenario.$2;
+        final state = AppState(
+          _PortraitApi(),
+          audioDeviceLoader: () async => const [],
+        );
+        await state.initialize();
+        state.toggleWorkspacePanel(WorkspacePanel.audio);
+        await tester.pumpWidget(
+          MaterialApp(home: WorkspaceScreen(state: state)),
+        );
+        await tester.pumpAndSettle();
+
+        final audioScrollable = find.descendant(
+          of: find.byKey(const ValueKey('audio-settings-list')),
+          matching: find.byType(Scrollable),
+        );
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('audio-settings-processing-card')),
+          160,
+          scrollable: audioScrollable,
+        );
+        await tester.pumpAndSettle();
+
+        final advanced = find.byKey(
+          const ValueKey('audio-processing-advanced'),
+        );
+        expect(advanced, findsOneWidget);
+        expect(
+          find.text('Расширенные настройки и диагностика'),
+          findsOneWidget,
+        );
+        expect(
+          find.text('Автоматическая регулировка усиления'),
+          findsOneWidget,
+        );
+        expect(find.text('Подавление эха'), findsOneWidget);
+        expect(find.text('Громкость микрофона: 100 %'), findsOneWidget);
+        expect(find.text('Шумоподавление'), findsNothing);
+        expect(find.text('Диагностика качества голоса'), findsNothing);
+
+        final processingBefore = state.audioProcessing;
+        await tester.tap(advanced);
+        await tester.pumpAndSettle();
+        expect(find.text('Шумоподавление'), findsOneWidget);
+        expect(find.text('Диагностика обработки'), findsOneWidget);
+        expect(find.text('Диагностика качества голоса'), findsOneWidget);
+        expect(state.audioProcessing, processingBefore);
+        expect(tester.takeException(), isNull);
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        state.dispose();
+      }
+      debugDefaultTargetPlatformOverride = null;
+      tester.view.reset();
+    },
+  );
 
   testWidgets('compact Design V2 audio cards preserve mobile control sizes', (
     tester,

@@ -343,6 +343,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
     depends_on: [FV2-042, FV2-027, T-051]
     evidence: [audio-shortcut-desktop-mobile-geometry-tests, macos-android-visual-acceptance, QA-308]
+  - id: FV2-050
+    title: Separate playback volume reset from microphone processing settings
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
+    depends_on: [FV2-044, FV2-027, T-051]
+    evidence: [audio-volume-reset-placement-tests, flutter-audio-settings-visual-acceptance, QA-309]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

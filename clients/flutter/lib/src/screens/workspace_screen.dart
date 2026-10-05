@@ -37,13 +37,11 @@ import '../widgets/topology_actions/buttons.dart';
 import '../widgets/topology_actions/delete_actions.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
-import '../widgets/noise_suppression_settings.dart';
-import '../widgets/voice_audio_diagnostics/control.dart';
+import '../widgets/audio_processing_advanced_settings.dart';
 import '../widgets/voice_disconnect/notice.dart';
 import '../widgets/voice_disconnect/join_actions.dart';
 import '../widgets/participant_volume/menu.dart';
 import '../widgets/participant_volume/slider.dart';
-import '../widgets/participant_volume/reset.dart';
 import '../widgets/microphone_controls/control.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
@@ -7009,9 +7007,9 @@ class _AudioSettingsScreen extends StatelessWidget {
                     _AudioSettingsCard(
                       cardKey: const ValueKey('audio-settings-processing-card'),
                       title: 'Обработка микрофона',
-                      subtitle: 'Параметры передаются LiveKit. Нативный SDK не сообщает, какие эффекты фактически применены устройством.',
+                      subtitle: 'Автоматическая обработка и усиление сигнала микрофона.',
                       compact: compact,
-                      minHeight: compact ? 256 : 272,
+                      minHeight: compact ? 224 : 236,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -7047,20 +7045,16 @@ class _AudioSettingsScreen extends StatelessWidget {
                                 AudioActivationMode.vad,
                             agc: state.audioProcessing.autoGainControl,
                           ),
-                          NoiseSuppressionSettings(
+                          AudioProcessingAdvancedSettings(
                             processing: state.audioProcessing,
                             runtime: state.noiseSuppressionRuntime,
-                            onChanged: state.setAudioProcessing,
-                          ),
-                          AudioVolumeReset(
-                            reset: state.resetAudioVolumes,
-                            warning: state.voiceVolumeWarning,
-                          ),
-                          VoiceAudioDiagnosticsControl(
-                            connected:
+                            onProcessingChanged: state.setAudioProcessing,
+                            voiceConnected:
                                 state.voicePhase != VoicePhase.idle &&
                                 state.voicePhase != VoicePhase.error,
-                            diagnostics: state.voiceAudioDiagnostics,
+                            voiceDiagnostics: state.voiceAudioDiagnostics,
+                            resetVolumes: state.resetAudioVolumes,
+                            volumeWarning: state.voiceVolumeWarning,
                           ),
                         ],
                       ),

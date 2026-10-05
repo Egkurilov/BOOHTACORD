@@ -1,0 +1,53 @@
+{
+  "id": "QA-303",
+  "date": "2026-10-06",
+  "task": "FV2-044 — Flutter progressive disclosure for audio processing and diagnostics",
+  "source_revision": "working-tree",
+  "working_tree_changes": true,
+  "summary": "A full pass over the macOS audio settings covered device selection and refresh, local mic/output checks, VAD/PTT activation, desktop shortcuts, AGC/AEC, gain, noise suppression, voice diagnostics, and volume reset. The primary processing card now keeps AGC/AEC and gain visible while grouping less frequent noise suppression and diagnostics under an advanced disclosure. Existing values and callbacks are passed through unchanged. The user observed that the device list refreshed after connecting to and leaving voice; this is consistent with the active hardware device-change listener and no device preference was changed during this pass.",
+  "checks": [
+    {
+      "name": "Test-first responsive disclosure regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'audio processing keeps essentials visible and discloses advanced controls'",
+      "result": "PASS",
+      "observation": "Verified at macOS 1440x900 and Android 390x844: AGC/AEC/gain remain visible; advanced noise suppression and voice diagnostics are initially hidden; expanding reveals controls without changing saved processing preferences."
+    },
+    {
+      "name": "Audio settings, voice diagnostics, and noise-suppression suites",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart test/voice_audio_diagnostics_control_test.dart test/native_noise_suppression_test.dart",
+      "result": "PASS",
+      "passed": 80
+    },
+    {
+      "name": "Changed-file analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/widgets/audio_processing_advanced_settings.dart lib/src/screens/workspace_screen.dart test/workspace_screen_test.dart test/voice_audio_diagnostics_control_test.dart test/native_noise_suppression_test.dart",
+      "result": "PASS_WITH_PREEXISTING_INFO",
+      "observation": "No analyzer errors. Two existing curly_braces_in_flow_control_structures info diagnostics remain at workspace_screen.dart:2909 and :2915 outside this change."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS"
+    },
+    {
+      "name": "Live macOS hot reload",
+      "command": "cd clients/flutter && flutter attach -d macos",
+      "result": "BLOCKED",
+      "observation": "The currently open BOOHTACORD process did not expose a Flutter VM Service; attach waited without connecting. The app was not restarted to avoid triggering the user's Keychain prompt, so live screenshot verification of the new disclosure remains outstanding."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/widgets/audio_processing_advanced_settings.dart",
+      "clients/flutter/lib/src/screens/workspace_screen.dart",
+      "clients/flutter/test/workspace_screen_test.dart",
+      "backlog/tasks.yaml",
+      "backlog/FRONTEND_TODO.md",
+      "evidence/flutter/qa303-flutter-audio-processing-disclosure-2026-10-06-001.json"
+    ],
+    "web_or_api_changed": false,
+    "livekit_routing_changed": false
+  },
+  "follow_up": "FV2-050 records the separate placement issue: playback volume reset currently sits under microphone processing.",
+  "status": "PASS_WITH_LIMITATION — responsive tests and macOS Debug build pass; the already-running client could not be hot-reloaded, and was left untouched."
+}
