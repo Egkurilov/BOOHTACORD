@@ -116,3 +116,5 @@ Keep #89 and QA-09/12 open until their original acceptance is fulfilled.
 Full QA-03/05/09/10/12/13, physical Android/Windows/macOS media acceptance and
 production release approval retain their original status. These scoped proofs
 do not close their broader device, privacy, load or compatible rollback criteria.
+
+Follow-up: [notification batch preservation](notification-coalescing-preservation-2026-10-05.md).

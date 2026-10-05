@@ -16,6 +16,7 @@ import { guildProfile } from '../guild/profile/state'
 import { createProtectedRefreshGate } from './protected_refresh/gate'
 import { coalesceStores } from './protected_refresh/stores'
 import { refreshEditedHints } from './protected_refresh/revisions'
+import { deliverProtectedHintBatch } from './protected_refresh/batch'
 
 interface Refreshable { error: string | null; refresh(): Promise<void> }
 interface TextHistory extends Refreshable { channelId: string | null; refreshMessages?(ids: string[]): Promise<unknown> }
@@ -60,7 +61,7 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
   const permissions = usePermissionStore()
   let active = false
   let lifecycle = 0
-  function onEvent(event: RealtimeEvent): void | Promise<void> {
+  function onEvent(event: RealtimeEvent, notify = true): void | Promise<void> {
     if (!active) return
     const eventLifecycle = lifecycle
     if (presence.acceptRealtimeEvent(event)) return
@@ -68,22 +69,22 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
     if (event.kind === 'guild.profile.updated') return guildProfile.refresh(event.payload.revision as number)
     if (event.kind === 'connection.resync_required') return refreshProtectedState(stores)
     if (event.kind === 'direct_message.message_created' || event.kind === 'direct_message.message_updated' || event.kind === 'direct_message.message_deleted') {
-      const previousUnread = notifications.capture(event)
+      const previousUnread = notify ? notifications.capture(event) : null
       return refreshDirectMessageHint(stores.directMessages, event.payload.direct_message_id as string).then(() => {
-        if (active && lifecycle === eventLifecycle) return notifications.deliver(event, previousUnread)
+        if (notify && active && lifecycle === eventLifecycle) return notifications.deliver(event, previousUnread)
       })
     }
     if (event.kind === 'channel.updated') return refreshTopologyHint(stores.topology)
     if (event.kind === 'role.permissions.updated' || event.kind === 'auth.permissions.invalidated') return permissions.refresh()
     if (event.kind === 'voice.lease_revoked') return applyVoiceLeaseRevocation(voice, voiceNavigation, event.payload.lease_id as string, event.payload.reason as VoiceLeaseRevocationReason)
     if (event.kind === 'message.created' || event.kind === 'message.updated' || event.kind === 'message.deleted') {
-      const previousUnread = notifications.capture(event)
+      const previousUnread = notify ? notifications.capture(event) : null
       const visible = shouldRefreshTextHistory(event, stores.messages.channelId, Boolean(stores.directMessages.directMessageId))
       return Promise.all([
         checked(() => stores.topology.refresh(), () => stores.topology.error),
         visible ? checked(() => stores.messages.refresh(), () => stores.messages.error) : Promise.resolve(),
       ]).then(() => {
-        if (active && lifecycle === eventLifecycle) return notifications.deliver(event, previousUnread)
+        if (notify && active && lifecycle === eventLifecycle) return notifications.deliver(event, previousUnread)
       })
     }
     return refreshProtectedState(stores)
@@ -96,7 +97,7 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
       lifecycle += 1
       notifications.start(accountID)
       realtime.connect(onEvent, undefined, undefined, {
-        onHintBatch: events => Promise.all(events.map(onEvent)).then(() => refreshEditedHints(original, events)),
+        onHintBatch: events => deliverProtectedHintBatch(events, onEvent).then(() => refreshEditedHints(original, events)),
         onRecovery: () => Promise.all([refreshProtectedState(stores), permissions.refresh(), guildProfile.refresh()]).then(() => undefined),
         checkSession: async () => (await loadCurrentSession())?.accountId === accountID,
         onSessionExpired,
