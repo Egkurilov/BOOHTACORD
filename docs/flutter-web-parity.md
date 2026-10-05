@@ -1282,6 +1282,25 @@ cleared (`MediaProjection=null`). The post-fix remote Mac rail result remains
 unverified until the existing Mac session is restored —
 [QA-291](../evidence/flutter/qa291-flutter-selected-screen-rail-thumbnail-2026-10-05-001.json).
 
+## Android receiver FPS comparison (FV2-036)
+
+A user-provided side-by-side comparison of one screen stream reported 51.5 decoded /
+52 FPS on macOS, 52 FPS in Web, and 21.7 decoded / 21 FPS in Flutter Android,
+with 58 frames skipped in the Android interval, about 2 Mbit/s received and no
+packet loss at a selected 1080p/60 profile. This points to the Android receive,
+decode or render path only if the three clients were observing the same source;
+the screenshot does not identify the publisher, exact client revisions, or a
+physical device. A current read-only check finds API 35 Emulator running
+`1.0.34+67`, with no active screen projection, so the comparison could not be
+reproduced in this session.
+
+The Android WebRTC fork currently reports `DEFAULT_FPS=30` in captured track
+settings, but its `OrientationAwareScreenCapturer` ignores the supplied capture
+framerate; this value alone does not prove a 30 FPS transmission cap. Keep the
+root cause open until a synchronized Mac/Web/Android receiver run captures the
+same publication and sender/receiver frame counters, followed by an emulator vs
+physical-device comparison — [QA-293](../evidence/flutter/qa293-android-receiver-decoded-fps-parity-2026-10-05-001.json).
+
 ## Client update awareness
 
 Web, Android and Windows use independent release identities with shared policy
