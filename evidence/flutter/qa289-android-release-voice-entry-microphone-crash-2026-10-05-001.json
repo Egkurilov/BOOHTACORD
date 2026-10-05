@@ -2,7 +2,7 @@
   "id": "QA-289",
   "date": "2026-10-05",
   "task": "T-022/T-051 — Android release voice admission microphone capture crash",
-  "source_revision": "7827b44b",
+  "source_revision": "4828557c51e5ab0da64aff5e800ab982a355709e",
   "working_tree_changes": true,
   "environment": {
     "android": "Android 15, API 35, arm64 emulator",
@@ -26,7 +26,8 @@
       "name": "Full Flutter test suite",
       "command": "cd clients/flutter && flutter test --no-pub",
       "result": "PASS",
-      "passed": 623
+      "passed": 635,
+      "observation": "Repeated after rebasing the fix onto the latest origin/master commit."
     },
     {
       "name": "Version/build identity synchronization",
@@ -56,11 +57,16 @@
       "name": "Post-test device cleanup",
       "result": "PASS",
       "observation": "The updated APK remains installed, the emulator's RECORD_AUDIO permission is denied as before the test, and Android records the post-test process stop as PERMISSION CHANGE rather than a crash."
+    },
+    {
+      "name": "GitHub Android 1.0.34 release publication",
+      "result": "PASS",
+      "observation": "Tag android-v1.0.34 on source revision 4828557c51e5ab0da64aff5e800ab982a355709e completed the Android Release workflow successfully. GitHub published the arm64-v8a, armeabi-v7a, and x86_64 APK assets at https://github.com/Egkurilov/BOOHTACORD/releases/tag/android-v1.0.34 on 2026-10-05T10:14:29Z."
     }
   ],
   "limitations": [
     "The regression was reproduced on the API 35 emulator; the user's physical handset was not connected for this run.",
-    "The voice-capture runtime regression was exercised on the signed 1.0.34+67 APK; the final r48 identity rebuild was reinstalled and launched without a crash. Publishing the GitHub release requires the matching android-v1.0.34 tag workflow."
+    "The emulator runtime smoke test used the locally signed 1.0.34+67 build; the published GitHub release was built from the tagged source revision by CI."
   ],
-  "status": "PASS — CRASH REPRODUCED, FIXED, RELEASE-BUILT, AND VERIFIED ON ANDROID EMULATOR"
+  "status": "PASS — CRASH REPRODUCED, FIXED, VERIFIED ON ANDROID EMULATOR, AND RELEASE PUBLISHED"
 }
