@@ -1,0 +1,48 @@
+{
+  "id": "QA-275",
+  "date": "2026-10-05",
+  "task": "FV2-022 — Flutter protected image viewer Android/macOS runtime acceptance",
+  "source_revision": "e32b36ff",
+  "working_tree_changes": false,
+  "environment": {
+    "macos": "arm64 BOOHTACORD Debug app, existing session, no restart",
+    "android_device": "Android Emulator sdk_gphone64_arm64",
+    "android_api": 35,
+    "android_resolution": "1080x2400",
+    "android_density_dpi": 420,
+    "android_build": "1.0.29+2062 / versionCode 2062"
+  },
+  "summary": "Runtime visual acceptance of the existing protected image viewer passed on Android API 35 and macOS Debug. Both clients displayed the complete image and viewer actions; platform Back/Escape returned to the originating text channel.",
+  "checks": [
+    {
+      "name": "Android viewer visual state",
+      "result": "PASS",
+      "observation": "An existing image attachment loaded in the text channel and opened in a viewport-filling viewer. The entire image was visible without crop, with the filename header, separate Download and Close controls, and fit-to-window status."
+    },
+    {
+      "name": "Android Back behavior",
+      "result": "PASS",
+      "observation": "Android system Back closed the viewer and returned to the same text channel. Accessibility hierarchy and a fresh screenshot confirmed the inline attachment state after the transition."
+    },
+    {
+      "name": "macOS viewer visual state",
+      "result": "PASS",
+      "observation": "The already-running macOS Debug client displayed the full image with filename header, separate Download action and Close control. The image was fit to the window without restart or Keychain prompt."
+    },
+    {
+      "name": "macOS Escape behavior",
+      "result": "PASS",
+      "observation": "Escape closed the viewer and returned to the originating Text channel."
+    },
+    {
+      "name": "Windows native visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "No Windows runtime is available in this environment; remains tracked in FV2-006."
+    }
+  ],
+  "limitations": [
+    "No message was sent, edited, downloaded, or deleted.",
+    "This record closes Android/macOS runtime acceptance only; FV2-022 remains open until Windows runtime visual acceptance."
+  ],
+  "status": "PASS on Android/macOS; Windows acceptance pending"
+}
