@@ -12,11 +12,17 @@ export async function teardown(a, b, channelId, input, report) {
   await join(a)
   await a.locator('.channel-button').filter({ hasText: 'WelcomeLab' }).click()
   let release, waiting = false
+  const routed = []
   const held = new Promise(resolve => { release = resolve })
   const pattern = `**/api/v1/channels/${channelId}/messages*`
-  await a.route(pattern, async route => {
-    if (route.request().method() === 'GET') { waiting = true; await held }
-    await route.continue()
+  await a.route(pattern, route => {
+    const work = (async () => {
+      if (route.request().method() === 'GET') { waiting = true; await held }
+      try { await route.continue() }
+      catch (error) { if (!error.message.includes('Route is already handled') && !error.message.includes('has been closed')) throw error }
+    })()
+    routed.push(work)
+    return work
   })
   try {
     status(await api(b, `/channels/${channelId}/messages`, 'POST', {
@@ -30,7 +36,7 @@ export async function teardown(a, b, channelId, input, report) {
     await expect(a.getByTestId('voice-dock')).not.toHaveClass(/connected/)
     await mediaClosed(a)
     report.connection_status.lease_revoke_during_blocked_rest = true
-  } finally { release(); await a.unroute(pattern) }
+  } finally { release(); await Promise.all(routed); await a.unroute(pattern) }
   await join(a)
   await security(a)
   await a.getByRole('button', { name: 'Выйти из аккаунта', exact: true }).click()

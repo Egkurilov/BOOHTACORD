@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { api, expect, status } from '../client_lifecycle/request.mjs'
 import { requests } from './requests.mjs'
-export async function bursts(a, b, channelId, report, directory) {
+export async function bursts(a, b, channelId, report, directory, baseline = false) {
   const category = await api(a, '/admin/categories', 'POST', { name: 'HiddenLab' }); status(category, 201)
   const hidden = await api(a, `/admin/categories/${category.body.id}/channels`, 'POST', { name: 'HiddenLab', kind: 'TEXT' }); status(hidden, 201)
   await expect(b.locator('.channel-button').filter({ hasText: 'HiddenLab' })).toBeVisible()
@@ -25,10 +25,11 @@ export async function bursts(a, b, channelId, report, directory) {
     await a.waitForTimeout(500)
     const [active, hiddenResult] = counters.map(counter => counter.stop())
     assert.equal(hiddenResult.history, 0)
-    assert.ok(active.history >= 1 && active.history <= Math.max(2, size/2), 'Unbounded protected GET burst')
+    assert.ok(active.history >= 1 && (baseline || active.history <= Math.max(2, size/2)), 'Unbounded protected GET burst')
     assert.ok(active.max_parallel <= 1 && hiddenResult.max_parallel <= 1, 'Parallel GETs for one resource')
     samples.push({ events: size, active, hidden: hiddenResult })
   }
+  if (baseline) { report.protected_refresh = { actual_api_bursts: samples }; return }
   const row = a.locator(`[data-message-id="${oldest.id}"]`)
   if (await row.count() === 0) await a.getByRole('button', { name: 'Показать предыдущие сообщения', exact: true }).click()
   await expect(row).toHaveCount(1)
