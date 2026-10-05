@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import '../../features/audio/preferences/microphone.dart';
 import '../../features/audio/microphone_controls/native.dart';
 import 'meter.dart';
+
 class MicrophoneControl extends StatelessWidget {
   const MicrophoneControl({super.key, required this.settings, required this.runtime,
     required this.onChanged, required this.sensitivity, required this.vad, required this.agc});
   final MicrophoneSettings settings;
   final NativeMicrophoneControls runtime;
-  final Future<void> Function(MicrophoneSettings) onChanged;
+  final Future<void> Function({double? vadThresholdDb, double? microphoneGainPercent}) onChanged;
   final bool sensitivity, vad, agc;
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
@@ -26,9 +27,9 @@ class MicrophoneControl extends StatelessWidget {
           value: value, min: sensitivity ? -70 : 0, max: sensitivity ? -20 : 200,
           divisions: sensitivity ? 50 : 200, label: '${value.round()} $unit',
           semanticFormatterCallback: (v) => '${v.round()} $unit',
-          onChanged: disabled ? null : (v) => onChanged(sensitivity
-            ? settings.copyWith(vadThresholdDb: v)
-            : settings.copyWith(microphoneGainPercent: v)),
+          onChanged: disabled ? null : (v) => sensitivity
+            ? onChanged(vadThresholdDb: v)
+            : onChanged(microphoneGainPercent: v),
         ),
         if (sensitivity) ...[
           const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -53,9 +54,9 @@ class MicrophoneControl extends StatelessWidget {
             : 'Перегрузка не обнаружена.')),
         ],
         TextButton(
-          onPressed: disabled ? null : () => onChanged(sensitivity
-            ? settings.copyWith(vadThresholdDb: -50)
-            : settings.copyWith(microphoneGainPercent: 100)),
+          onPressed: disabled ? null : () => sensitivity
+            ? onChanged(vadThresholdDb: -50)
+            : onChanged(microphoneGainPercent: 100),
           child: Text(sensitivity ? 'Сбросить чувствительность' : 'Сбросить громкость'),
         ),
       ]);

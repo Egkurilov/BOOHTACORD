@@ -7,7 +7,8 @@ void main() {
   testWidgets('AGC disables manual gain and PTT disables sensitivity', (tester) async {
     final runtime = NativeMicrophoneControls(invoke: (_, _) async => {'status': 'active'});
     Widget widget(bool sensitivity) => MaterialApp(home: Scaffold(body: MicrophoneControl(
-      settings: const MicrophoneSettings(), runtime: runtime, onChanged: (_) async {},
+      settings: const MicrophoneSettings(), runtime: runtime,
+      onChanged: ({double? vadThresholdDb, double? microphoneGainPercent}) async {},
       sensitivity: sensitivity, vad: false, agc: true,
     )));
     await tester.pumpWidget(widget(false));

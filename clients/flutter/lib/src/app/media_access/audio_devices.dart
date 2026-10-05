@@ -10,6 +10,13 @@ mixin AppAudioDevicesAccess on AppOwners {
   MicrophoneSettings get microphoneSettings => audioDevices.preferences?.microphone ?? const MicrophoneSettings();
   NativeMicrophoneControls get microphoneControlsRuntime => audioDevices.nativeMicrophone;
   Future<void> setMicrophoneSettings(MicrophoneSettings next) => audioDevices.setMicrophoneSettings(next);
+  Future<void> updateMicrophoneSettings({
+    double? vadThresholdDb,
+    double? microphoneGainPercent,
+  }) => audioDevices.updateMicrophoneSettings(
+    vadThresholdDb: vadThresholdDb,
+    microphoneGainPercent: microphoneGainPercent,
+  );
   List<MediaDevice> get audioInputDevices => audioDevices.audioInputDevices;
 
   set audioInputDevices(List<MediaDevice> value) =>

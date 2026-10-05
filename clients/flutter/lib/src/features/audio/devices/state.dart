@@ -13,6 +13,7 @@ import '../microphone_controls/native.dart';
 abstract class AudioDeviceState extends ChangeNotifier {
   AudioDeviceState({
     required this.readRoom,
+    this.readAccountId,
     Future<List<MediaDevice>> Function()? loader,
     this.changes,
     SessionScope? scope,
@@ -26,6 +27,7 @@ abstract class AudioDeviceState extends ChangeNotifier {
   bool microphoneMutedIntent = true;
   NoiseSuppressionMode? captureNoiseOverride;
   final Room? Function() readRoom;
+  final String? Function()? readAccountId;
   final Future<List<MediaDevice>> Function() loader;
   final Stream<List<MediaDevice>>? changes;
   Room? get room => readRoom();

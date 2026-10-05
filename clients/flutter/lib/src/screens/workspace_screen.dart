@@ -6941,7 +6941,7 @@ class _AudioSettingsScreen extends StatelessWidget {
                           MicrophoneControl(
                             settings: state.microphoneSettings,
                             runtime: state.microphoneControlsRuntime,
-                            onChanged: state.setMicrophoneSettings,
+                            onChanged: state.updateMicrophoneSettings,
                             sensitivity: true,
                             vad:
                                 state.audioActivationMode ==
@@ -7034,7 +7034,7 @@ class _AudioSettingsScreen extends StatelessWidget {
                           MicrophoneControl(
                             settings: state.microphoneSettings,
                             runtime: state.microphoneControlsRuntime,
-                            onChanged: state.setMicrophoneSettings,
+                            onChanged: state.updateMicrophoneSettings,
                             sensitivity: false,
                             vad:
                                 state.audioActivationMode ==

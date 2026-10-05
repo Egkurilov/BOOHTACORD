@@ -18,6 +18,7 @@ class AudioDeviceController extends AudioDeviceState
         AudioDeviceMicrophone {
   AudioDeviceController({
     required super.readRoom,
+    super.readAccountId,
     super.loader,
     super.changes,
     super.scope,

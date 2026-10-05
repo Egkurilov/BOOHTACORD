@@ -8,6 +8,7 @@ void configureMedia(AppOwners app) {
   app.audioDevices = AudioDeviceController(
     scope: app.session.scope,
     readRoom: () => app.voice.room,
+    readAccountId: () => app.session.user?.accountId,
     loader: app.audioDeviceLoader,
     changes: app.audioDeviceChanges,
   )..addListener(app.notifyListeners);
