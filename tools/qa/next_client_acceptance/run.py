@@ -18,7 +18,7 @@ def main():
     for limited in (True, False):
         with tempfile.TemporaryDirectory(prefix='qa-next-client-', dir=root/'.out') as temporary:
             work = Path(temporary)
-            stack = Stack(root, work, 2147483648+51000000 if limited else 8*1024**3)
+            stack = Stack(root, work, 2147483648+61000000 if limited else 8*1024**3)
             try:
                 stack.start()
                 inputs = work/'input.json'

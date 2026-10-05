@@ -12,7 +12,7 @@ export async function uploads(page, input, report) {
   let count = 0
   page.on('request', request => { if (request.method()==='POST' && /\/attachments$/.test(new URL(request.url()).pathname)) count++ })
   if (input.limited) {
-    owned('keeper', 'exec', '$owned', 'dd', 'if=/dev/zero', 'of=/attachments/qa-capacity-fill', 'bs=1000000', 'count=20')
+    owned('keeper', 'exec', '$owned', 'dd', 'if=/dev/zero', 'of=/attachments/qa-capacity-fill', 'bs=1000000', 'count=25')
     await page.locator('#message-attachments').setInputFiles([file('one.bin', 5_000_000), file('two.bin', 5_000_000), file('three.bin', 25_000_000)])
     await expect(picker.locator('[data-upload-status="done"]')).toHaveCount(2)
     await expect(picker.locator('[data-upload-status="failed"]')).toHaveCount(1)

@@ -19,7 +19,7 @@ export function useContextPosition(accountId: string, kind: 'CHANNEL' | 'DIRECT_
     if (open && !wasOpen) { previous = capture(main()); focus = document.activeElement instanceof HTMLElement ? document.activeElement : null }
     if (!open && wasOpen) {
       await nextTick()
-      if (previous) restore(main(), previous)
+      if (previous && !restore(main(), previous)) restored.value = previous
       if (focus?.isConnected) focus.focus({ preventScroll: true })
       else root.value?.querySelector<HTMLElement>('textarea')?.focus({ preventScroll: true })
     }
@@ -32,6 +32,7 @@ export function useContextPosition(accountId: string, kind: 'CHANNEL' | 'DIRECT_
     if (!target) return
     await nextTick()
     if (requestKey !== key || epoch !== draftMemoryEpoch()) return
+    if (contextOpen()) { previous = target; return }
     if (!restore(main(), target)) restored.value = target
   }, { immediate: true, flush: 'post' })
   onBeforeUnmount(save)

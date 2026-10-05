@@ -7,7 +7,7 @@ export function capture(viewport: HTMLElement | null): Position | null {
 }
 export function restore(viewport: HTMLElement | null, position: Position): boolean {
   const row = [...(viewport?.querySelectorAll<HTMLElement>('[data-message-id]') ?? [])].find(item => item.dataset.messageId === position.id)
-  if (!viewport || !row) return false
+  if (!viewport || viewport.clientHeight <= 0 || !row) return false
   viewport.scrollTop += row.getBoundingClientRect().top - viewport.getBoundingClientRect().top - position.offset
   return true
 }

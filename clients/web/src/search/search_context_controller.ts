@@ -37,9 +37,9 @@ export function createSearchContextController<Item extends ContextItem>(load: (m
     try {
       const page = await fetch(cursor)
       if (current !== sequence) return
-      const merged = new Map(messages.value.map(item => [item.id, item]))
-      for (const item of page.messages) merged.set(item.id, item)
-      messages.value = [...merged.values()].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '') || b.id.localeCompare(a.id))
+      const updates = new Map(page.messages.map(item => [item.id, item])), seen = new Set<string>()
+      const ordered = direction === 'newer' ? [...page.messages].reverse().concat(messages.value) : messages.value.concat(page.messages)
+      messages.value = ordered.filter(item => { if (seen.has(item.id)) return false; seen.add(item.id); return true }).map(item => updates.get(item.id) ?? item)
       if (direction === 'newer') { newerCursor = page.nextCursor ?? newerCursor; hasNewer.value = Boolean(page.nextCursor) }
       else olderCursor.value = page.nextCursor
     } catch { if (current === sequence) pagingError.value = 'Не удалось загрузить страницу. Повторите попытку.' }
