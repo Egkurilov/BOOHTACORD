@@ -29,6 +29,10 @@ services:
 
   api:
     image: ${API_IMAGE:?set API_IMAGE to a pinned image reference in .env}
+    deploy:
+      replicas: 1
+      update_config: {order: stop-first}
+      rollback_config: {order: stop-first}
     environment:
       API_ADDR: :8080
       PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:8088}
