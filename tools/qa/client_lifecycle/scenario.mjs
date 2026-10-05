@@ -12,6 +12,7 @@ assert.equal(origin, 'https://localhost:4810')
 const browser = await chromium.launch({ headless: true })
 const report = { schema_version: 1, width: input.width, mocks: false, synthetic_accounts: true }
 const redactions = [input.password]
+browser.on('context', context => { context.setDefaultTimeout(15000); context.setDefaultNavigationTimeout(15000) })
 try {
   const contexts = await Promise.all([0, 1, 2].map(() => browser.newContext({
     ignoreHTTPSErrors: true, viewport: { width: input.width, height: 900 },
@@ -19,7 +20,9 @@ try {
   const [a, b, guest] = await Promise.all(contexts.map(context => context.newPage()))
   await login(a, 'qa_admin', input.password)
   await login(b, 'qa_admin', input.password)
+  console.log('stage=two-admin-clients-authenticated')
   const flowAccount = input.critical ? await registration(browser, input, report) : null
+  console.log('stage=registration-outcome-accepted')
   await guest.goto(origin)
   const value = await guild(a, b, guest, input.password, report, input.directory)
   await login(guest, 'qa_member', input.password)
@@ -30,8 +33,11 @@ try {
   report.guild.member_denied = true
   if (input.critical) {
     await bursts(a, b, value.channelId, report, input.directory)
+    console.log('stage=actual-protected-bursts-accepted')
     await media(a, b, guest, value.channelId, report, input.directory)
+    console.log('stage=actual-media-faults-accepted')
     await resetLinks(browser, a, flowAccount.account_id, input, report, redactions)
+    console.log('stage=actual-reset-links-accepted')
   }
   await sessions(a, b, guest, report, input.directory, redactions)
   const refreshed = (await api(a, '/guild-profile')).body
