@@ -28,6 +28,7 @@ class BoohtacordApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: guildTheme(),
         home: DesktopWindowChrome(
+          title: state.guildProfile.name,
           child: AnimatedBuilder(
             animation: Listenable.merge([state, updates]),
             builder: (context, _) => Column(

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../theme.dart';
+import '../features/guild/profile/desktop_title.dart';
 
 abstract interface class DesktopWindowActions {
   Future<void> startDragging();
@@ -43,9 +44,11 @@ class DesktopWindowChrome extends StatefulWidget {
     required this.child,
     this.platform,
     this.actions,
+    this.title = 'BOOHTACORD',
   });
 
   final Widget child;
+  final String title;
   final TargetPlatform? platform;
   final DesktopWindowActions? actions;
 
@@ -70,12 +73,14 @@ class _DesktopWindowChromeState extends State<DesktopWindowChrome>
     if (_isDesktop && widget.actions == null) {
       windowManager.addListener(this);
     }
+    if (_isDesktop && widget.actions == null) unawaited(windowManager.setTitle(widget.title).catchError((Object _) {}));
     if (_isWindows) unawaited(_refreshMaximized());
   }
 
   @override
   void didUpdateWidget(covariant DesktopWindowChrome oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (_isDesktop && widget.actions == null && oldWidget.title != widget.title) unawaited(windowManager.setTitle(widget.title).catchError((Object _) {}));
     if (oldWidget.platform != widget.platform ||
         oldWidget.actions != widget.actions) {
       final oldPlatform = oldWidget.platform ?? defaultTargetPlatform;
@@ -152,9 +157,9 @@ class _DesktopWindowChromeState extends State<DesktopWindowChrome>
                     child: SizedBox.expand(
                       child: Padding(
                         padding: EdgeInsets.only(left: macOS ? 78 : 12),
-                        child: const Align(
+                        child: Align(
                           alignment: Alignment.centerLeft,
-                          child: _DesktopBrand(),
+                          child: DesktopGuildTitle(widget.title),
                         ),
                       ),
                     ),
@@ -193,28 +198,6 @@ class _DesktopWindowChromeState extends State<DesktopWindowChrome>
   }
 }
 
-class _DesktopBrand extends StatelessWidget {
-  const _DesktopBrand();
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    key: const ValueKey('desktop-window-brand'),
-    label: 'BOOHTACORD',
-    header: true,
-    child: const Text(
-      'BOOHTACORD',
-      style: TextStyle(
-        color: GcColors.text,
-        fontFamily: GcTypography.fontFamily,
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 1.5,
-        height: 1,
-        decoration: TextDecoration.none,
-      ),
-    ),
-  );
-}
 
 class _WindowControlButton extends StatelessWidget {
   const _WindowControlButton({
