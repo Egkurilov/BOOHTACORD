@@ -48,10 +48,10 @@ export function createNotificationDelivery(accountID: string, runtime: Notificat
     },
     cancel(): void { active = false },
     disable(): void { runtime.storage?.setItem(preferenceKey, '0') },
-    async deliver(eventID: string, body: string): Promise<void> {
-      if (!enabled() || runtime.permission() !== 'granted') return
+    async deliver(eventID: string, body: string, allowed: () => boolean = () => true): Promise<void> {
+      if (!enabled() || runtime.permission() !== 'granted' || !allowed()) return
       await runtime.lock!(prefix, async () => {
-        if (!enabled() || runtime.permission() !== 'granted') return
+        if (!enabled() || runtime.permission() !== 'granted' || !allowed()) return
         const seen = readSeen(runtime.storage!, seenKey)
         if (seen.includes(eventID)) return
         runtime.show('BOOHTACORD', { body, tag: eventID })

@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useNotificationStore } from './notification_store'
+import ConversationNotificationSettings from './conversation_preferences/Settings.vue'
+import { streamStartChime } from '../voice/stream_start_runtime'
 
 const notifications = useNotificationStore()
+function changeStreamSound(event:Event):void {const enabled=(event.target as HTMLInputElement).checked;streamStartChime.setEnabled(enabled);if(enabled) streamStartChime.activate()}
 onMounted(() => { notifications.refreshStatus(); window.addEventListener('focus', notifications.refreshStatus) })
 onBeforeUnmount(() => window.removeEventListener('focus', notifications.refreshStatus))
 const status = computed(() => {
@@ -20,5 +23,7 @@ const status = computed(() => {
     <button v-if="notifications.enabled" class="profile-secondary-button" type="button" @click="notifications.disable()">Отключить уведомления</button>
     <button v-else class="profile-secondary-button" type="button" :disabled="!notifications.available || notifications.permission === 'denied'" @click="notifications.enable()">Включить уведомления</button>
     <p v-if="notifications.error" class="profile-error" role="alert">{{ notifications.error }}</p>
+    <ConversationNotificationSettings />
+    <label><input type="checkbox" :checked="streamStartChime.enabled.value" @change="changeStreamSound"> Отдельный звук начала демонстрации</label>
   </section>
 </template>
