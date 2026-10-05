@@ -997,6 +997,29 @@ void main() {
   );
 
   test(
+    'older DM pages prefer the newer revision of an overlapping row',
+    () async {
+      final api = _FakeApi(
+        topology,
+        includeDirectMessage: true,
+        paginated: true,
+      )..overlappingDirectRevision = 2;
+      final state = AppState(api);
+      addTearDown(state.dispose);
+      await state.initialize();
+      await state.openDirectConversation(state.directMessages.single);
+
+      expect(await state.loadOlderDirectMessages(), isTrue);
+
+      final overlap = state.directMessageHistory.singleWhere(
+        (message) => message.id == 'dm-message-1',
+      );
+      expect(overlap.revision, 2);
+      expect(overlap.body, 'Обновлённое личное сообщение');
+    },
+  );
+
+  test(
     'realtime text refresh preserves already loaded history pages',
     () async {
       final api = _FakeApi(topology, paginated: true);
@@ -1326,6 +1349,7 @@ class _FakeApi extends ApiClient {
   int olderTextRevision = 1;
   int? overlappingTextRevision;
   int olderDirectRevision = 1;
+  int? overlappingDirectRevision;
   bool reverseEqualTimestampMessageIds = false;
   String? deletedTextMessageId;
   String? deletedDirectMessageId;
@@ -1524,6 +1548,16 @@ class _FakeApi extends ApiClient {
                     deleted: false,
                     revision: olderDirectRevision,
                   ),
+                  if (overlappingDirectRevision case final revision?)
+                    DirectChatMessage(
+                      id: 'dm-message-1',
+                      directMessageId: id,
+                      authorId: 'account-2',
+                      body: 'Обновлённое личное сообщение',
+                      createdAt: DateTime.utc(2026, 9, 24),
+                      deleted: false,
+                      revision: revision,
+                    ),
                 ],
               )
             : DirectChatMessagePage(

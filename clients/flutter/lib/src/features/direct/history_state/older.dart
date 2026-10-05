@@ -22,7 +22,10 @@ extension ConversationLoadOlderDirectMessages on ConversationController {
         for (final message in directMessageHistory) message.id: message,
       };
       for (final message in page.messages) {
-        byId.putIfAbsent(message.id, () => message);
+        final existing = byId[message.id];
+        if (existing == null || message.revision >= existing.revision) {
+          byId[message.id] = message;
+        }
       }
       acknowledgeMessageIds(
         page.messages.map((message) => message.clientMessageId),

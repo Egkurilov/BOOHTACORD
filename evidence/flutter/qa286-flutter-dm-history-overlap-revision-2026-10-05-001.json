@@ -1,0 +1,54 @@
+{
+  "id": "QA-286",
+  "date": "2026-10-05",
+  "task": "FV2-033 — Flutter older DM history pages retain the newest overlapping message revision",
+  "source_revision": "30e1eafb",
+  "working_tree_changes": true,
+  "summary": "Flutter DM older-page merging now retains the highest revision for an overlapping message ID, matching web and the TEXT implementation.",
+  "checks": [
+    {
+      "name": "Test-first baseline reproduction",
+      "command": "cd clients/flutter && flutter test --no-pub test/app_state_test.dart --plain-name 'older DM pages prefer'",
+      "result": "FAIL_AS_EXPECTED_BEFORE_FIX",
+      "observation": "The older page returned revision 2 for the overlapping DM row, but state retained the already-loaded revision 1."
+    },
+    {
+      "name": "Focused TEXT and DM overlap tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/app_state_test.dart --plain-name 'newer revision of an overlapping row'",
+      "result": "PASS",
+      "passed": 2
+    },
+    {
+      "name": "Changed-file Dart analyzer",
+      "command": "cd clients/flutter && dart analyze lib/src/features/direct/history_state/older.dart test/app_state_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter compact",
+      "result": "PASS",
+      "passed": 624
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this host."
+    },
+    {
+      "name": "Backlog YAML validation",
+      "command": "ruby -e 'require \"yaml\"; YAML.load_file(\"backlog/tasks.yaml\")'",
+      "result": "PASS"
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "No API, DM cursor, read-state, or server behavior changed; runtime history state was not mutated."
+  ],
+  "status": "IMPLEMENTED; TESTS_AND_ANALYZER_PASS"
+}
