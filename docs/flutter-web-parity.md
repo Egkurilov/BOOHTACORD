@@ -418,6 +418,33 @@ action and responsive viewer controls; Android Back and macOS Escape return to
 Text. Windows visual acceptance remains pending —
 [QA-275](../evidence/flutter/qa275-flutter-protected-image-viewer-runtime-2026-10-05-001.json).
 
+Android maintenance-banner safe-area follow-up (FV2-026): an API 35 runtime
+screen showed the maintenance copy sharing the status-bar area with the clock
+and system icons. Flutter now wraps the root content in a top SafeArea only
+while maintenance is active; the widget regression checks both the top inset
+and the zero-gap transition to the workspace header. Analyzer and the full
+Flutter suite pass. Android release `1.0.30+2063` was installed, but the
+backend currently reports maintenance inactive, so active-banner visual
+acceptance on the device is NOT_RUN; the macOS session is locked. A host-side
+390×800 Flutter capture visually confirms the 48 dp safe area, warning-color
+banner and adjacent header, but its missing Cyrillic fallback limits it to
+geometry/color evidence. See
+[QA-276](../evidence/flutter/qa276-flutter-maintenance-banner-status-inset-2026-10-05-001.json).
+
+Audio settings R10–R11 follow-up (FV2-027): source comparison found a visual
+and ordering gap despite preserved audio behavior. Flutter now leads with a
+device/local-check card, followed by activation, applicable shortcut, and
+processing cards, with a segmented VAD/PTT selector. Widget tests cover
+responsive card order/geometry and existing state; all 570 Flutter tests pass.
+Android API 35 visual acceptance passes at 1080×2400 on release `1.0.30+2065`;
+the compact subtitle is fully visible as a full-width body intro above the
+first card, and the activation/processing cards remain readable when scrolled.
+The native arm64 macOS Debug app received a DevTools hot reload in 559.8 ms; its
+current screenshot/accessibility tree confirm the full subtitle and device-first
+card hierarchy. The app was not restarted. Tracked in `backlog/FRONTEND_TODO.md`;
+no web files were changed. See
+[QA-277](../evidence/flutter/qa277-flutter-audio-settings-design-v2-2026-10-05-001.json).
+
 Admin panel geometry follow-up (FV2-025): web's `.admin-panel` is capped at
 880 px and centered, with a visually hidden inner heading because the workspace
 header already names the page. Flutter now matches that width and avoids a
