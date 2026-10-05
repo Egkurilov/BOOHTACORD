@@ -41,6 +41,7 @@ class _VoiceAudioDiagnosticsControlState extends State<VoiceAudioDiagnosticsCont
           Text('Профиль: ${snapshot.profile}; предел ${metric(snapshot.capBps)} бит/с.'),
           Text('Capture: ${metric(snapshot.capture['sampleRate'])} Гц, ${metric(snapshot.capture['channels'])} каналов. AGC ${flag(snapshot.capture['agc'])}, AEC ${flag(snapshot.capture['aec'])}, NS ${flag(snapshot.capture['ns'])}.'),
           const Text('Native SDK не подтверждает параметры исходного capture. Каналы RTP Opus не доказывают стерео capture.'),
+          const Text('DTX, FEC и stereo показывают параметры SDP, а не использование в каждом пакете. Opus в статистике не исключает RED; RTP bitrate может включать избыточные данные.'),
           Text('Последний native processing hook: ${metric(snapshot.capture['processingSampleRate'])} Гц, ${metric(snapshot.capture['processingChannels'])} каналов. Это формат PCM обработки, не аппаратного capture.'),
           if (snapshot.samples.isEmpty) const Text('SDK не сообщил RTP-статистику микрофона.'),
           for (final sample in snapshot.samples) Padding(
