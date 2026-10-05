@@ -31,7 +31,7 @@ def main():
     root = Path(__file__).resolve().parents[3]
     destination = root/'.out/refresh-baseline'
     destination.mkdir(parents=True, exist_ok=True)
-    source = subprocess.check_output(['git', 'archive', args.revision, 'clients/web'], cwd=root)
+    source = subprocess.check_output(['git', 'archive', args.revision, 'clients/web', 'contracts/client-build.json'], cwd=root)
     with tempfile.TemporaryDirectory(prefix='qa-baseline-', dir=root/'.out') as directory:
         work = Path(directory)
         stack = Stack(root, work)
@@ -39,7 +39,7 @@ def main():
             extract(source, work/'source')
             web = work/'source/clients/web'
             run('npm', 'ci', '--no-audit', '--no-fund', cwd=web, stdout=subprocess.DEVNULL)
-            run('npm', 'run', 'build', '--', '--outDir', str(root/'clients/web/dist'), cwd=web, stdout=subprocess.DEVNULL)
+            run('npm', 'run', 'build', '--', '--outDir', str(root/'clients/web/dist'), '--emptyOutDir', cwd=web, stdout=subprocess.DEVNULL)
             stack.start()
             inputs = work/'input.json'
             inputs.write_text(json.dumps(dict(password=stack.password, directory=str(destination))))

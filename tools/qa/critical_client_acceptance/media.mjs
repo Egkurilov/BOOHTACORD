@@ -9,6 +9,7 @@ async function connected(page) {
 export async function media(a, b, member, channelId, report, input) {
   const directory = input.directory
   let blocked = false
+  const observed = { revocations: 0 }
   const chat = []
   await a.addInitScript(() => {
     window.__qaPeers = []
@@ -20,6 +21,10 @@ export async function media(a, b, member, channelId, report, input) {
   await a.routeWebSocket(url => new URL(url).pathname === '/api/v1/realtime', socket => {
     if (blocked) { socket.close(); return }
     const server = socket.connectToServer(); chat.push({ socket, server })
+    server.onMessage(message => {
+      try { if (JSON.parse(String(message)).kind === 'voice.lease_revoked') observed.revocations++ } catch { /* non-JSON control frame */ }
+      socket.send(message)
+    })
   })
   await a.reload()
   const category = await api(a, '/admin/categories', 'POST', { name: 'VoiceLab' }); status(category, 201)
@@ -61,5 +66,5 @@ export async function media(a, b, member, channelId, report, input) {
   await a.locator('.channel-button').filter({ hasText: 'WelcomeLab' }).click()
   await b.locator('.channel-button').filter({ hasText: 'WelcomeLab' }).click()
   report.connection_status.targeted_roster_retry = true
-  await teardown(a, b, channelId, input, report)
+  await teardown(a, b, channelId, input, report, observed)
 }

@@ -8,7 +8,7 @@ async function join(page) {
 async function mediaClosed(page) {
   await expect.poll(() => page.evaluate(() => window.__qaPeers.every(peer => peer.connectionState !== 'connected'))).toBe(true)
 }
-export async function teardown(a, b, channelId, input, report) {
+export async function teardown(a, b, channelId, input, report, observed) {
   await join(a)
   await a.locator('.channel-button').filter({ hasText: 'WelcomeLab' }).click()
   let release, waiting = false
@@ -30,9 +30,11 @@ export async function teardown(a, b, channelId, input, report) {
     }), 201)
     await expect.poll(() => waiting).toBe(true)
     const account = (await api(b, '/auth/session')).body.account_id
+    const previousRevocations = observed.revocations
     const kick = await api(b, `/admin/accounts/${account}/voice-kick`, 'POST')
     status(kick, 200)
     assert.equal(kick.body.revoked_leases, 1)
+    await expect.poll(() => observed.revocations, { timeout: 15000 }).toBeGreaterThan(previousRevocations)
     await expect(a.getByTestId('voice-dock')).not.toHaveClass(/connected/)
     await mediaClosed(a)
     report.connection_status.lease_revoke_during_blocked_rest = true
