@@ -1,0 +1,93 @@
+{
+  "id": "QA-294",
+  "date": "2026-10-05",
+  "task": "FV2-037 / FV2-002 — Flutter TEXT visible read cursor ordering parity",
+  "source_revision": "50f6dc3fce76330c35ada2263c74ac4eb7ef520f",
+  "checks": [
+    {
+      "name": "Test-first equal-timestamp regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/app_state_test.dart --plain-name 'advances text read cursor across equal timestamps in server order'",
+      "result": "EXPECTED_FAIL_BEFORE_FIX",
+      "observation": "With two messages sharing createdAt and ordered by ID, marking message-a then message-z produced only one API advance (expected two) because Flutter compared timestamps only."
+    },
+    {
+      "name": "Focused cursor tests after fix",
+      "command": "cd clients/flutter && flutter test --no-pub test/app_state_test.dart --plain-name 'advances text read cursor'",
+      "result": "PASS",
+      "passed": 3,
+      "observation": "The cursor advances once for repeated reads of the same message, advances from message-a to message-z when both share the same timestamp, and remains monotonic when those API requests complete out of order."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 640
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && dart analyze lib/src/features/conversation/lifecycle/controller.dart lib/src/features/conversation/lifecycle/clear.dart lib/src/features/conversation/lifecycle/cancel.dart lib/src/features/text/read_state/controller.dart test/app_state_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Windows Debug build",
+      "result": "NOT_RUN",
+      "observation": "This host is macOS; Windows-native build remains part of Windows CI/acceptance."
+    },
+    {
+      "name": "GitHub CI for implementation commit",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37335365140",
+      "result": "PASS",
+      "observation": "Run 37335365140 on 50f6dc3f completed successfully. Contracts, Windows CI and Flutter CI jobs passed; Flutter CI included the full app/vendor tests and analyzer, Android Kotlin build modes and Debug APK build. Windows CI included app/vendor tests and analyzer, release-publisher tests, Windows x64 Release build/inspection and artifact retention."
+    },
+    {
+      "name": "Platform CI artifacts",
+      "result": "PASS",
+      "artifacts": [
+        "boohtacord-android-debug-apk",
+        "BOOHTACORD-windows-x64-50f6dc3fce76330c35ada2263c74ac4eb7ef520f"
+      ],
+      "observation": "Both artifacts are present and unexpired for the successful run."
+    },
+    {
+      "name": "Server ordering contract review",
+      "result": "PASS",
+      "observation": "The text cursor repository compares (message_created_at, message_id), and unread queries use the same tuple. No backend or API contract changes were needed."
+    },
+    {
+      "name": "Runtime persistence acceptance",
+      "result": "NOT_RUN",
+      "observation": "No server-backed TEXT session was mutated for this unit-level parity correction. Existing integration/device acceptance remains part of FV2-002."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this host."
+    }
+  ],
+  "implementation": {
+    "files": [
+      "clients/flutter/lib/src/features/conversation/lifecycle/controller.dart",
+      "clients/flutter/lib/src/features/conversation/lifecycle/clear.dart",
+      "clients/flutter/lib/src/features/conversation/lifecycle/cancel.dart",
+      "clients/flutter/lib/src/features/text/read_state/controller.dart",
+      "clients/flutter/test/app_state_test.dart"
+    ],
+    "behavior": "Confirmed and pending read cursors now compare createdAt then messageId, matching the monotonic server tuple and web message ordering. Concurrent completions cannot move the local confirmed cursor backwards.",
+    "web_or_contract_changed": false
+  },
+  "status": "IMPLEMENTED_AND_TESTED; SERVER_BACKED_RUNTIME_ACCEPTANCE_REMAINS_OPEN_UNDER_FV2-002"
+}

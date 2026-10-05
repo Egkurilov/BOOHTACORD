@@ -1,0 +1,90 @@
+{
+  "id": "QA-295",
+  "date": "2026-10-05",
+  "task": "FV2-038 / FV2-002 — Flutter oversized attachment failure queue parity",
+  "source_revision": "f43e58473c0e2a9deba69357faa0fa0d2c621218",
+  "checks": [
+    {
+      "name": "Native file picker regression before fix",
+      "command": "cd clients/flutter && flutter test test/message_attachment_composer_test.dart --plain-name 'keeps oversized selected files in the failed queue'",
+      "result": "EXPECTED_FAIL_BEFORE_FIX",
+      "observation": "A 25,000,001-byte selected file showed the size error but did not render the failed-file chip, so it could not be removed or retried."
+    },
+    {
+      "name": "Clipboard image regression before fix",
+      "command": "cd clients/flutter && flutter test test/message_attachment_composer_test.dart --plain-name 'keeps co-pasted text when the image exceeds the attachment cap'",
+      "result": "EXPECTED_FAIL_BEFORE_FIX",
+      "observation": "The text was preserved and size error shown, but the rejected clipboard image did not remain in the failed queue."
+    },
+    {
+      "name": "Attachment composer tests after fix",
+      "command": "cd clients/flutter && flutter test test/message_attachment_composer_test.dart",
+      "result": "PASS",
+      "passed": 10,
+      "observation": "Both oversize paths keep the failed source actionable; existing upload, retry, progress and stale-conversation behavior passes."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 641
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && dart analyze lib/src/widgets/message_attachment_composer.dart test/message_attachment_composer_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Windows CI build",
+      "command": "GitHub Actions workflow run 37338711890 — windows / windows",
+      "result": "PASS",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37338711890",
+      "artifact": "BOOHTACORD-windows-x64-f43e58473c0e2a9deba69357faa0fa0d2c621218",
+      "observation": "The Windows app/vendor tests, analyzer and x64 Release build/inspection passed. The retained artifact is present and unexpired through 2026-11-04."
+    },
+    {
+      "name": "Spec traceability verifier in CI contracts job",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "PASS",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37338711890",
+      "observation": "The successful contracts job invokes the project-owned spec_traceability verifier through tools/ci/native/contracts.py. A direct local invocation was unavailable because PowerShell Core (`pwsh`) is not installed on this host."
+    },
+    {
+      "name": "GitHub CI for implementation commit",
+      "result": "PASS",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37338711890",
+      "observation": "Contracts, Flutter and Windows jobs completed successfully for f43e58473c0e2a9deba69357faa0fa0d2c621218; backend/frontend jobs were correctly skipped because no corresponding files changed."
+    },
+    {
+      "name": "Platform CI artifacts",
+      "result": "PASS",
+      "artifacts": [
+        "boohtacord-android-debug-apk",
+        "BOOHTACORD-windows-x64-f43e58473c0e2a9deba69357faa0fa0d2c621218"
+      ],
+      "observation": "Both Android Debug APK and Windows x64 Release artifacts are present and unexpired for workflow run 37338711890."
+    }
+  ],
+  "implementation": {
+    "files": [
+      "clients/flutter/lib/src/widgets/message_attachment_composer.dart",
+      "clients/flutter/test/message_attachment_composer_test.dart"
+    ],
+    "behavior": "The common Flutter upload validator now places locally size-rejected native files and clipboard images in the failed queue, matching the web queue's remove/retry affordance while preserving the explanatory size error.",
+    "web_or_contract_changed": false
+  },
+  "status": "IMPLEMENTED_AND_VERIFIED_ON_ANDROID_MACOS_WINDOWS_CI"
+}

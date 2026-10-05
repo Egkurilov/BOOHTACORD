@@ -1,0 +1,66 @@
+{
+  "id": "QA-293",
+  "date": "2026-10-05",
+  "task": "FV2-036 / FV2-003 — Android screen receiver decoded FPS parity investigation",
+  "source_revision": "d474f5d6",
+  "reported_observation": {
+    "source": "User-provided simultaneous Mac, Android and Web screenshot",
+    "selected_profile": "1080p / 60 FPS",
+    "macos": {
+      "current_viewer_rate_fps": 52,
+      "decoded_fps": 51.5
+    },
+    "web": {
+      "current_viewer_rate_fps": 52,
+      "decoded_fps": 52
+    },
+    "android": {
+      "current_viewer_rate_fps": 21,
+      "decoded_fps": 21.7,
+      "skipped_frames_interval": 58,
+      "received_kbit_per_second": 2156.2,
+      "packet_loss_percent": 0
+    },
+    "limitations": [
+      "The publisher identity, exact Android build, codec details and whether the Android client was a physical device are not captured in the screenshot.",
+      "Treat the comparison as a single shared source only after reproducing all three receivers against the same publication."
+    ]
+  },
+  "checks": [
+    {
+      "name": "Current Android emulator package version",
+      "command": "adb -s emulator-5554 shell dumpsys package ru.boohtacord.app | rg 'versionName|versionCode'",
+      "result": "PASS",
+      "observation": "The connected API 35 Android emulator has versionName 1.0.34 and versionCode 2067."
+    },
+    {
+      "name": "Current Android MediaProjection state",
+      "command": "adb -s emulator-5554 shell dumpsys media_projection",
+      "result": "PASS",
+      "observation": "MediaProjection is null; there is no active screen-share source to pair with receiver measurements."
+    },
+    {
+      "name": "Android WebRTC screen capture source review",
+      "result": "PASS_WITH_LIMITATION",
+      "observation": "GetUserMediaImpl assigns DEFAULT_FPS=30 to VideoCapturerInfoEx and exposes it in track.settings. OrientationAwareScreenCapturer.startCapture accepts but ignores its framerate argument, and its VirtualDisplay path has no 30 FPS pacing. Therefore the metadata default alone does not establish a 30 FPS source cap or explain the reported Android receiver decode rate."
+    },
+    {
+      "name": "Focused screen-share profile tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/screen_share_quality_test.dart",
+      "result": "PASS",
+      "passed": 13
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core (pwsh) is not installed on this host."
+    }
+  ],
+  "remaining": [
+    "Repeat Mac, Android and Web receiver measurements simultaneously against a confirmed identical screen publication, recording sender encoded frames and each receiver decoded/rendered frames over the same interval.",
+    "Repeat on the Android emulator and a physical Android device to separate emulator decode/render constraints from Flutter client behavior.",
+    "Record Android decoder codec, hardware/software selection and render/drop counters before changing client capture or renderer behavior."
+  ],
+  "status": "USER_REPORTED_ANDROID_RECEIVER_FPS_DISCREPANCY; ANDROID_30_FPS_METADATA_NOT_A_PROVEN_CAPTURE_CAP; ROOT_CAUSE_AND_PHYSICAL_DEVICE_ACCEPTANCE_OPEN"
+}

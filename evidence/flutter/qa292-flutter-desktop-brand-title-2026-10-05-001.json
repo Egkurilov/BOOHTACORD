@@ -1,0 +1,47 @@
+{
+  "id": "QA-292",
+  "date": "2026-10-05",
+  "task": "FV2-018 — desktop title bar must retain BOOHTACORD product branding",
+  "source_revision": "working tree changes",
+  "checks": [
+    {
+      "name": "Test-first title branding regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/desktop_window_chrome_test.dart --plain-name 'desktop title bar keeps product branding across guild names'",
+      "result": "EXPECTED_FAIL_BEFORE_FIX",
+      "observation": "With guildProfile.name set to Bootybay, the test observed DesktopWindowChrome.title == Bootybay instead of BOOHTACORD."
+    },
+    {
+      "name": "Focused desktop chrome widget suite",
+      "command": "cd clients/flutter && flutter test --no-pub test/desktop_window_chrome_test.dart",
+      "result": "PASS",
+      "passed": 6,
+      "observation": "The regression now asserts both MaterialApp.title and DesktopWindowChrome.title remain BOOHTACORD when guild metadata has another name. Windows controls, macOS native-control inset, macOS mouse-drag dispatch and mobile exclusion tests pass."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 638,
+      "observation": "The full client suite passes with the branding regression and selected remote screen thumbnail capture policy tests included."
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze lib/src/app.dart test/desktop_window_chrome_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app",
+      "observation": "Compiled successfully; the running Mac app was not restarted or hot-reloaded."
+    },
+    {
+      "name": "Post-fix live visual acceptance",
+      "result": "BLOCKED",
+      "observation": "The existing Mac app is on `Не удалось проверить сессию` after the earlier hot reload. To avoid another restart or keychain interaction, no new live screenshot was taken. Previously recorded Windows native controls/drag acceptance is also still open."
+    }
+  ],
+  "status": "STATIC_BRAND_FIX_IMPLEMENTED; SIX_FOCUSED_TESTS_FULL_638_TEST_SUITE_ANALYZER_AND_MACOS_DEBUG_BUILD_PASS; MACOS_POST_FIX_VISUAL_AND_WINDOWS_NATIVE_ACCEPTANCE_OPEN"
+}

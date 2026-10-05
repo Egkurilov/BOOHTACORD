@@ -6,6 +6,7 @@ import 'package:livekit_client/livekit_client.dart'
 
 import '../../../services/screen_share_diagnostics.dart';
 import '../lifecycle/controller.dart';
+import '../screen_preview/capture_policy.dart';
 import '../screen_viewer/audio_publication.dart';
 
 extension VoiceEventsRemoteTracks on VoiceController {
@@ -34,6 +35,23 @@ extension VoiceEventsRemoteTracks on VoiceController {
         if (waiter != null && !waiter.isCompleted) {
           waiter.complete(event.track as RemoteVideoTrack);
         }
+        unawaited(
+          captureSelectedRemoteScreenThumbnail(
+            temporaryPreview: screenThumbnailRemoteTrackIds.containsKey(
+              event.publication.sid,
+            ),
+            capture: () => captureRemoteThumbnail(
+              room,
+              event.participant,
+              event.publication,
+              event.track as RemoteVideoTrack,
+            ),
+            source: event.publication.source,
+            isRemoteVideoTrack: event.track is RemoteVideoTrack,
+            participantIdentity: event.participant.identity,
+            selectedIdentity: selectedRemoteScreenViewerIdentity,
+          ),
+        );
       }
       if (event.track is RemoteAudioTrack) {
         if (deafened) unawaited(event.publication.disable());

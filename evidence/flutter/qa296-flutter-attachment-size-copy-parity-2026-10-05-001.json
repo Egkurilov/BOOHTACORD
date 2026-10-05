@@ -1,0 +1,84 @@
+{
+  "id": "QA-296",
+  "date": "2026-10-05",
+  "task": "FV2-039 / FV2-002 — Flutter attachment size error copy parity",
+  "source_revision": "d8089587b7c4bd8dbe3db623ff590c19bb3f2339",
+  "checks": [
+    {
+      "name": "Native file picker error-copy regression before fix",
+      "command": "cd clients/flutter && flutter test --no-pub test/message_attachment_composer_test.dart --plain-name 'keeps oversized selected files in the failed queue'",
+      "result": "EXPECTED_FAIL_BEFORE_FIX",
+      "observation": "The failed-file queue was present, but the Flutter-specific 25 MB copy differed from the web upload client's message."
+    },
+    {
+      "name": "Attachment composer tests after fix",
+      "command": "cd clients/flutter && flutter test --no-pub test/message_attachment_composer_test.dart",
+      "result": "PASS",
+      "passed": 10,
+      "observation": "Both native picker and clipboard-image oversize tests now assert the same visible error as web; existing composer behavior remains green."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 641
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && dart analyze lib/src/widgets/message_attachment_composer.dart test/message_attachment_composer_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/macos/Build/Products/Debug/BOOHTACORD.app"
+    },
+    {
+      "name": "Windows CI build",
+      "command": "GitHub Actions workflow run 37342383959 — windows / windows",
+      "result": "PASS",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37342383959",
+      "artifact": "BOOHTACORD-windows-x64-d8089587b7c4bd8dbe3db623ff590c19bb3f2339",
+      "observation": "Windows app/vendor tests, analyzer and x64 Release build/inspection passed. The artifact is present and unexpired through 2026-11-04."
+    },
+    {
+      "name": "Spec traceability verifier in CI contracts job",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "PASS",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37342383959",
+      "observation": "The successful contracts job invokes the project-owned spec_traceability verifier through tools/ci/native/contracts.py. A direct local invocation was unavailable because PowerShell Core (`pwsh`) is not installed."
+    },
+    {
+      "name": "GitHub CI for implementation commit",
+      "result": "PASS",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37342383959",
+      "observation": "Contracts, Flutter and Windows jobs completed successfully for d8089587b7c4bd8dbe3db623ff590c19bb3f2339; backend/frontend jobs were correctly skipped because no corresponding files changed."
+    },
+    {
+      "name": "Platform CI artifacts",
+      "result": "PASS",
+      "artifacts": [
+        "boohtacord-android-debug-apk",
+        "BOOHTACORD-windows-x64-d8089587b7c4bd8dbe3db623ff590c19bb3f2339"
+      ],
+      "observation": "Android Debug APK and Windows x64 Release artifacts are present and unexpired for workflow run 37342383959."
+    }
+  ],
+  "implementation": {
+    "files": [
+      "clients/flutter/lib/src/widgets/message_attachment_composer.dart",
+      "clients/flutter/test/message_attachment_composer_test.dart"
+    ],
+    "behavior": "Flutter local attachment size rejection now displays the web upload client's exact restriction message for both native selection and clipboard-image paste.",
+    "web_or_contract_changed": false
+  },
+  "status": "IMPLEMENTED_AND_VERIFIED_ON_ANDROID_MACOS_WINDOWS_CI"
+}

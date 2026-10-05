@@ -47,8 +47,10 @@ class ConversationController extends ChangeNotifier {
   final Map<String, ChatMessage> pendingTextSends = {};
   final Map<String, DirectChatMessage> pendingDirectSends = {};
   String? lastReadDirectMessageId;
-  final Map<String, DateTime> lastReadTextAt = {};
-  final Map<String, DateTime> pendingTextReadAt = {};
+  final Map<String, ({DateTime createdAt, String messageId})>
+  lastReadTextCursor = {};
+  final Map<String, ({DateTime createdAt, String messageId})>
+  pendingTextReadCursor = {};
   final Set<String> pendingTextReads = {};
   SessionUser? get user => readUser();
   GuildChannel? get selectedChannel => workspace.selectedChannel;
