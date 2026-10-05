@@ -15,6 +15,9 @@ rtc:
   tcp_port: 4881
   udp_port: 4882
   use_external_ip: false
+  enable_loopback_candidate: true
+  interfaces:
+    includes: ["lo"]
 keys:
   qa-only: qa-local-only-secret-12345
 webhook:

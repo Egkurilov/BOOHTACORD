@@ -42,7 +42,7 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
       - name: Verify disposable resource guards
-        run: python3 -m unittest tools.qa.client_lifecycle.test_services tools.qa.client_lifecycle.test_telemetry
+        run: python3 -m unittest tools.qa.client_lifecycle.test_services tools.qa.client_lifecycle.test_telemetry tools.qa.critical_client_acceptance.test_stack
       - name: Measure previous native client REST requests
         env:
           QA_BASELINE_REVISION: ${{ github.event.pull_request.base.sha || github.sha }}
