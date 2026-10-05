@@ -74,3 +74,12 @@ Catalog CAS 14 to 19 promotes five selectors after verified native publication.
 Deliver through the canonical signed server builder/installer, then check public
 policy, source receipts, container digests and health. Physical media remains
 NOT_RUN and does not close hardware/capacity gates.
+
+## Concurrent master snapshot
+
+Master received cd404f2d with Flutter audio settings during publication.
+Merge it without discarding that runtime change. Freeze this source snapshot
+for a final 1.0.32+46 release; rebuild Android and Windows after the full gate.
+Keep immutable 1.0.30/1.0.31 assets. Promote r46 only after verified 1.0.32
+publication, using CAS 19 to 24. Catalog r45 remains valid in the meantime.
+Later unrelated work is a separate release packet, outside this frozen snapshot.
