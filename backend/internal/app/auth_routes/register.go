@@ -5,6 +5,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"net/http"
 	"time"
+	ownsessionroutes "voice-platform/backend/internal/app/own_session_routes"
 	runtimeconfig "voice-platform/backend/internal/config/runtime"
 	"voice-platform/backend/internal/identity/admin_account"
 	adminapi "voice-platform/backend/internal/identity/admin_account/api"
@@ -50,6 +51,7 @@ func Register(mux *http.ServeMux, database *pgxpool.Pool, configuration runtimec
 	loginService := loginuser.New(loginRepository, loginRepository)
 	logoutService := logoutuser.New(logoutpostgres.New(logoutpostgres.NewPoolDatabase(database)))
 	sessionService := authenticatesession.New(observeusage.TrackSessions(sessionpostgres.New(sessionpostgres.NewPoolDatabase(database)), usage))
+	ownsessionroutes.Register(mux, database, sessionService, events)
 	passwordResetService := completepasswordreset.New(completeresetpostgres.New(completeresetpostgres.NewPoolDatabase(database)))
 	passwordResetCreator := createpasswordreset.New(createresetpostgres.New(createresetpostgres.NewPoolDatabase(database)), time.Now)
 	accountAdministration := adminaccount.New(adminpostgres.New(adminpostgres.NewPoolDatabase(database)))

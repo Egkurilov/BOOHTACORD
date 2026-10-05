@@ -12,10 +12,13 @@ import '../app_state.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../services/message_presentation.dart';
+import '../features/text/system_welcome/row.dart';
+import '../features/text/system_welcome/content.dart';
 import '../services/composer_draft_memory.dart';
 import '../services/message_emoji_catalog.dart';
 import '../services/pinned_screen_mini_player_policy.dart';
 import '../services/api_client.dart';
+import '../features/conversation/delivery/status.dart';
 import '../services/voice_avatar_palette.dart';
 import '../services/voice_connection_quality.dart';
 import '../services/voice_participant_presentation.dart';
@@ -1011,6 +1014,7 @@ class _Sidebar extends StatelessWidget {
     child: Column(
       children: [
         WorkspaceNavigationTop(
+          guildName: state.guildProfile.name,
           memberCount: state.members.isEmpty ? null : state.members.length,
           channelsSelected:
               state.navigationSection == NavigationSection.channels,
@@ -1776,7 +1780,7 @@ class _MainSurface extends StatelessWidget {
         children: [
           _Header(
             icon: Icons.forum_outlined,
-            title: 'Моя гильдия',
+            title: state.guildProfile.name,
             subtitle: 'Выберите канал',
             onToggleNavigation: onToggleNavigation,
             onOpenMembers: onOpenMembers,
@@ -2900,6 +2904,7 @@ class _MessageRow extends StatelessWidget {
         .where((value) => value.id == message.authorId)
         .firstOrNull;
     final authorName = member?.displayName ?? message.authorId;
+    if(message.kind=='SYSTEM_WELCOME') return SystemWelcomeMessage(message:message,displayName:member?.displayName??'Участник',onDelete:state.user?.isAdmin==true?()async{if(await _confirmDelete(context))await state.deleteText(message);}:null);
     final time =
         '${message.createdAt.hour.toString().padLeft(2, '0')}:${message.createdAt.minute.toString().padLeft(2, '0')}';
     return Row(
@@ -3032,17 +3037,9 @@ class _MessageRow extends StatelessWidget {
                 )
               else
                 FormattedMessageBody(body: message.body, color: GcColors.text),
-              if (message.sendStatus == MessageSendStatus.sending)
-                const Text(
-                  'Отправляется…',
-                  style: TextStyle(color: GcColors.muted, fontSize: 12),
-                ),
-              if (message.sendStatus == MessageSendStatus.failed)
-                TextButton.icon(
-                  onPressed: state.sending ? null : onRetry,
-                  icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Не отправлено · Повторить отправку'),
-                ),
+              DeliveryStatus(status:message.sendStatus,busy:state.sending,
+                retryBlocked:state.conversation.blockedSendRetries.contains(message.clientMessageId),
+                onRetry:onRetry,onDiscard:()=>state.deleteText(message)),
               if (!message.deleted &&
                   message.sendStatus == null &&
                   message.attachments.isNotEmpty)
@@ -3123,7 +3120,9 @@ class _SearchContextMessage {
     required this.deleted,
     required this.attachments,
     this.editedAt,
+    this.messageKind='USER',
   });
+  final String messageKind;
   final String id;
   final String authorId;
   final String body;
@@ -4040,7 +4039,7 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
                                         ),
                                       ),
                                       const SizedBox(height: 8),
-                                      FormattedMessageBody(
+                                      message.messageKind=='SYSTEM_WELCOME'?SystemWelcomeContent(displayName:author,body:message.body):FormattedMessageBody(
                                         body: message.body,
                                         color: GcColors.text,
                                         fontSize: 14,
@@ -4097,6 +4096,7 @@ class _SearchMessageContextState extends State<_SearchMessageContext> {
         : widget.state.searchContextTextMessages
               .map(
                 (message) => _SearchContextMessage(
+                  messageKind:message.kind,
                   id: message.id,
                   authorId: message.authorId,
                   body: message.body,
@@ -4220,7 +4220,7 @@ class _SearchMessageContextState extends State<_SearchMessageContext> {
                           ),
                         )
                       else ...[
-                        FormattedMessageBody(body: body, color: GcColors.text),
+                        message.messageKind=='SYSTEM_WELCOME'?SystemWelcomeContent(displayName:authorName,body:body):FormattedMessageBody(body: body, color: GcColors.text),
                         if (attachments.isNotEmpty && conversationId != null)
                           MessageAttachmentList(
                             state: widget.state,
@@ -4784,29 +4784,9 @@ class _DirectConversationState extends State<_DirectConversation> {
                                           fontSize: 14,
                                           lineHeight: 1.4,
                                         ),
-                                      if (message.sendStatus ==
-                                          MessageSendStatus.sending)
-                                        const Text(
-                                          'Отправляется…',
-                                          style: TextStyle(
-                                            color: GcColors.muted,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      if (message.sendStatus ==
-                                          MessageSendStatus.failed)
-                                        TextButton.icon(
-                                          onPressed: widget.state.sending
-                                              ? null
-                                              : () => _retry(message),
-                                          icon: const Icon(
-                                            Icons.refresh,
-                                            size: 16,
-                                          ),
-                                          label: const Text(
-                                            'Не отправлено · Повторить отправку',
-                                          ),
-                                        ),
+                                      DeliveryStatus(status:message.sendStatus,busy:widget.state.sending,
+                                        retryBlocked:widget.state.conversation.blockedSendRetries.contains(message.clientMessageId),
+                                        onRetry:()=>_retry(message),onDiscard:()=>widget.state.deleteDirect(message)),
                                       if (!message.deleted &&
                                           message.sendStatus == null &&
                                           message.attachments.isNotEmpty)

@@ -46,6 +46,7 @@ describe('direct-message attachment model and API', () => {
     const store = useDirectMessageStore()
     const payloads: Record<string, unknown>[] = []
     const request = async (_path: string, init: RequestInit) => {
+      if (_path.includes('/message-delivery/')) return new Response(JSON.stringify({ account_id: 'me', message_id: null }))
       if (init.method === 'GET') return new Response(JSON.stringify({ messages: [] }))
       payloads.push(JSON.parse(String(init.body)))
       if (payloads.length === 1) throw new Error('network')

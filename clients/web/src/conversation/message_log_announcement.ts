@@ -3,7 +3,8 @@ interface LogMessage {
   authorId: string
   createdAt: string
   deleted?: boolean
-  sendStatus?: 'sending' | 'failed'
+  sendStatus?: 'sending' | 'checking' | 'failed'
+  kind?: string
 }
 
 interface LogUpdate {
@@ -37,7 +38,7 @@ export function createMessageLogAnnouncer(): (update: LogUpdate) => string | nul
     latestAt = newestAt
     if (!active || !ownId) return null
     const incoming = added.filter((message) => message.authorId !== ownId && !message.deleted)
-    if (incoming.length === 1) return `Новое сообщение от ${displayName(incoming[0].authorId)}.`
+    if (incoming.length === 1) return incoming[0].kind === 'SYSTEM_WELCOME' ? 'Новый участник в гильдии.' : `Новое сообщение от ${displayName(incoming[0].authorId)}.`
     return incoming.length > 1 ? `Новых сообщений: ${incoming.length}.` : null
   }
 }

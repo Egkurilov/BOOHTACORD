@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
+import GuildName from '../guild/profile/GuildName.vue'
 import { login, register } from './auth_client'
 import { generateSecurePassword } from './password_generator'
 import PasswordGenerationActions from './password_generation/PasswordGenerationActions.vue'
@@ -78,7 +79,7 @@ onBeforeUnmount(() => { active = false; clearPassword() })
 <template>
   <main class="authentication-page" aria-labelledby="authentication-title">
     <section class="authentication-card">
-      <div class="authentication-brand"><img src="/brand.png" alt=""><p class="eyebrow">BOOHTACORD</p></div>
+      <div class="authentication-brand"><img src="/brand.png" alt=""><p class="eyebrow"><GuildName /></p></div>
       <h1 id="authentication-title">Добро пожаловать</h1>
       <p class="authentication-intro">Войдите в «Моя гильдия».</p>
 

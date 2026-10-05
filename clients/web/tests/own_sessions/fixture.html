@@ -1,0 +1,14 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Own sessions</title><div id="app"></div>
+<script type="module">
+import { createApp, h, ref } from 'vue'
+import OwnSessionsPanel from '/src/identity/own_sessions/OwnSessionsPanel.vue'
+import { notifyOwnSessionsChanged } from '/src/identity/own_sessions/state.ts'
+import '/src/style.css'
+const owner=ref('00000000-0000-4000-8000-000000000001')
+window.changeAccount=value=>{owner.value=value}
+window.sessionHint=notifyOwnSessionsChanged
+window.expired=false
+const app=createApp({render:()=>h(OwnSessionsPanel,{accountId:owner.value,onSessionExpired:()=>{window.expired=true}})})
+app.mount('#app')
+window.closeSessions=()=>app.unmount()
+</script></html>

@@ -1,4 +1,7 @@
 import '../../features/session/lifecycle/controller.dart';
+
+import 'dart:async';
+
 import '../../models.dart';
 import '../composition/owners.dart';
 
@@ -21,9 +24,16 @@ mixin AppSessionAccess on AppOwners {
 
   String get serverUrl => api.baseUrl;
 
-  Future<void> initialize() => session.initialize();
+  Future<void> initialize() async {
+    await session.initialize();
+    if (!disposed) unawaited(guildProfile.refresh());
+  }
 
-  Future<void> setServer(String value) => session.setServer(value);
+  Future<void> setServer(String value) async {
+    guildProfile.reset();
+    await session.setServer(value);
+    if (!disposed) unawaited(guildProfile.refresh());
+  }
 
   Future<void> authenticate(
     String login,

@@ -11,12 +11,19 @@ import (
 )
 
 const selectActivePrincipal = `
+WITH active AS MATERIALIZED (
 SELECT u.id::text, u.role, u.display_name
 FROM sessions s
 JOIN users u ON u.id = s.user_id
 WHERE s.token_digest = $1
   AND s.revoked_at IS NULL
-  AND u.blocked_at IS NULL`
+  AND u.blocked_at IS NULL
+), touched AS (
+ UPDATE sessions SET last_active_at=now()
+ WHERE token_digest=$1 AND EXISTS(SELECT 1 FROM active)
+   AND last_active_at < now() - interval '60 seconds'
+)
+SELECT id,role,display_name FROM active`
 
 type Row interface {
 	Scan(...any) error

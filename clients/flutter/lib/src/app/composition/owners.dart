@@ -15,6 +15,7 @@ import '../../features/voice/lifecycle/controller.dart';
 import '../../features/voice/roster_state/controller.dart';
 import '../../features/screen/lifecycle/controller.dart';
 import '../../features/authorization/permissions/controller.dart';
+import '../../features/guild/profile/controller.dart';
 
 abstract class AppOwners extends ChangeNotifier {
   AppOwners(
@@ -36,6 +37,7 @@ abstract class AppOwners extends ChangeNotifier {
   final Room Function(RoomOptions)? voiceRoomFactory;
   final NativeNotificationService nativeNotifications;
   late final SessionController session;
+  late final GuildProfileController guildProfile;
   late final PasswordResetController reset;
   late final MaintenanceController maintenance;
   late final ProfileController profileOwner;

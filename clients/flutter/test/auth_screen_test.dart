@@ -25,7 +25,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: AuthScreen(state: state)));
 
     expect(tester.getSize(find.byKey(const ValueKey('auth-card'))).width, 342);
-    expect(find.text('Voice Platform'), findsOneWidget);
+    expect(find.text('BOOHTACORD'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

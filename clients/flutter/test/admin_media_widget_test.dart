@@ -39,6 +39,7 @@ void main() {
     });
 
     final tabKeys = [
+      'guild',
       'members',
       'roles',
       'channels',
@@ -66,7 +67,7 @@ void main() {
       find.byKey(const ValueKey('admin-section-tab-media')).hitTestable(),
       findsNothing,
     );
-    await tester.drag(scroll, const Offset(-240, 0));
+    await tester.drag(scroll, const Offset(-600, 0));
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('admin-section-tab-media')).hitTestable(),

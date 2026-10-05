@@ -1,4 +1,6 @@
 import '../../conversation/lifecycle/controller.dart';
+import '../../conversation/delivery/recovery.dart';
+import 'delivery.dart';
 
 extension ConversationSend on ConversationController {
   Future<bool> send(
@@ -29,6 +31,8 @@ extension ConversationSend on ConversationController {
       attachmentIds,
     );
     final clientMessageId = sendRetryIds.putIfAbsent(retryKey, uuid.v4);
+    final retry = pendingTextSends.containsKey(clientMessageId);
+    if (blockedSendRetries.contains(clientMessageId)) return false;
     final pending =
         pendingTextSends[clientMessageId] ??
         ChatMessage(
@@ -52,14 +56,7 @@ extension ConversationSend on ConversationController {
     error = null;
     changed();
     try {
-      final message = await api.sendMessage(
-        channel.id,
-        clientMessageId,
-        trimmed,
-        replyToId: replyToId,
-        mentionUserIds: mentions,
-        attachmentIds: attachmentIds,
-      );
+      final message = await deliverText(pending, retry, active);
       if (!active()) return false;
       sendRetryIds.remove(retryKey);
       pendingTextSends.remove(clientMessageId);
@@ -76,6 +73,7 @@ extension ConversationSend on ConversationController {
       return true;
     } catch (cause) {
       if (!active()) return false;
+      if (!uncertainDelivery(cause)) blockedSendRetries.add(clientMessageId);
       if (pendingTextSends.containsKey(clientMessageId)) {
         pendingTextSends[clientMessageId] = pending.withSendStatus(
           MessageSendStatus.failed,

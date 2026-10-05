@@ -13,6 +13,7 @@ import DirectMessageAttachments from '../direct_message/DirectMessageAttachments
 import { useMessageEditController, type EditResult } from './message_edit_controller'
 import { handleMessageEditKeydown } from './message_edit_shortcuts'
 import { useMessageActionDisclosure } from './message_actions/disclosure'
+import SystemWelcomeMessage from './system_welcome/SystemWelcomeMessage.vue'
 
 type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments' | 'mentionUserIds'> & { channelId?: string; directMessageId?: string; attachments?: TextMessageAttachment[]; mentionUserIds?: string[] }
 
@@ -58,7 +59,8 @@ function remove(): void {
 </script>
 
 <template>
-  <article ref="row" class="message-item message-row" :class="{ deleted: message.deleted, grouped: compact }" tabindex="-1" @pointerdown="onRowPointerDown" @focusout="onRowFocusOut">
+  <SystemWelcomeMessage v-if="message.kind === 'SYSTEM_WELCOME'" :body="message.body" :author-id="message.authorId" :created-at="message.createdAt" :deleted="message.deleted" :can-delete="canDelete" @remove="emit('remove')" />
+  <article v-else ref="row" class="message-item message-row" :class="{ deleted: message.deleted, grouped: compact }" tabindex="-1" @pointerdown="onRowPointerDown" @focusout="onRowFocusOut">
     <span v-if="compact" class="message-avatar-spacer" aria-hidden="true"></span>
     <img v-else-if="authorAvatar && !avatarFailed" class="message-avatar" :src="authorAvatar" alt="" @error="avatarFailed = true">
     <span v-else class="message-avatar" :style="avatarFallbackStyle(message.authorId)" aria-hidden="true">{{ avatarInitials(authorName) }}</span>
@@ -86,7 +88,8 @@ function remove(): void {
         <TextMessageAttachments v-if="textChannelId && textAttachments.length" :channel-id="textChannelId" :attachments="textAttachments" />
         <DirectMessageAttachments v-if="message.directMessageId && textAttachments.length" :direct-message-id="message.directMessageId" :attachments="textAttachments" />
         <p v-if="message.sendStatus === 'sending'" class="message-send-status" role="status">Отправляется…</p>
-        <div v-if="message.sendStatus === 'failed'" class="message-send-status" role="alert"><span>Не отправлено</span><button type="button" :disabled="retryDisabled" @click="emit('retry')">Повторить отправку</button></div>
+        <p v-if="message.sendStatus === 'checking'" class="message-send-status" role="status">Проверяем доставку…</p>
+        <div v-if="message.sendStatus === 'failed'" class="message-send-status" role="alert"><span>Не отправлено</span><button type="button" :disabled="retryDisabled || message.retryBlocked" @click="emit('retry')">Повторить отправку</button><button type="button" :disabled="retryDisabled" @click="emit('remove')">Убрать из очереди</button><small v-if="message.retryBlocked">Исправьте сообщение или доступ перед новой отправкой.</small></div>
       </template>
       <div v-if="!editing && !message.deleted && !message.sendStatus" class="message-actions" :class="{ 'is-open': actionsOpen }" @keydown.esc="closeActions">
         <button ref="actionsToggle" class="message-actions-toggle" type="button" aria-label="Действия с сообщением" :aria-expanded="actionsOpen" :aria-controls="`message-actions-${message.id}`" @click="actionsOpen = !actionsOpen">⋯</button>

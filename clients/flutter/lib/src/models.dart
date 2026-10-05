@@ -1,6 +1,11 @@
+export 'features/search/result_model/model.dart';
+import 'features/text/message_model/attachments.dart';
+import 'features/text/message_model/message.dart';
+export 'features/text/message_model/attachments.dart';
+export 'features/text/message_model/message.dart';
+
 enum ChannelKind { text, voice }
 
-enum SearchMessageKind { channel, directMessage }
 
 class VoiceRosterMember {
   const VoiceRosterMember({
@@ -62,79 +67,7 @@ class VoiceRoomRoster {
   }
 }
 
-bool _isUuid(Object? value) =>
-    value is String &&
-    RegExp(
-      r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-      caseSensitive: false,
-    ).hasMatch(value);
 
-class SearchMessage {
-  const SearchMessage({
-    required this.id,
-    required this.kind,
-    required this.conversationId,
-    required this.authorId,
-    required this.body,
-    required this.createdAt,
-    required this.revision,
-    this.editedAt,
-  });
-  final String id;
-  final SearchMessageKind kind;
-  final String conversationId;
-  final String authorId;
-  final String body;
-  final DateTime createdAt;
-  final DateTime? editedAt;
-  final int revision;
-
-  factory SearchMessage.fromJson(Map<String, dynamic> json) {
-    final kind = switch (json['kind']) {
-      'CHANNEL' => SearchMessageKind.channel,
-      'DIRECT_MESSAGE' => SearchMessageKind.directMessage,
-      _ => throw const FormatException('Invalid search result kind.'),
-    };
-    final id = json['id'];
-    final authorId = json['author_id'];
-    final conversationId = kind == SearchMessageKind.channel
-        ? json['channel_id']
-        : json['direct_message_id'];
-    final body = json['body'] as String;
-    final revision = json['revision'] as int;
-    final createdAt = DateTime.parse(json['created_at'] as String).toLocal();
-    final editedAt = json['edited_at'] == null
-        ? null
-        : DateTime.parse(json['edited_at'] as String).toLocal();
-    if (!_isUuid(id) ||
-        !_isUuid(authorId) ||
-        !_isUuid(conversationId) ||
-        body.isEmpty ||
-        revision < 1 ||
-        (kind == SearchMessageKind.channel &&
-            json.containsKey('direct_message_id')) ||
-        (kind == SearchMessageKind.directMessage &&
-            json.containsKey('channel_id'))) {
-      throw const FormatException('Invalid search result.');
-    }
-    return SearchMessage(
-      id: id as String,
-      kind: kind,
-      conversationId: conversationId as String,
-      authorId: authorId as String,
-      body: body,
-      createdAt: createdAt,
-      editedAt: editedAt,
-      revision: revision,
-    );
-  }
-}
-
-class SearchMessagePage {
-  const SearchMessagePage({required this.messages, this.nextCursor});
-  final List<SearchMessage> messages;
-  final String? nextCursor;
-}
 
 class SessionUser {
   const SessionUser({required this.accountId, required this.role});
@@ -509,129 +442,6 @@ class ChannelTopology {
       );
 }
 
-class MessageAttachment {
-  const MessageAttachment({
-    required this.id,
-    required this.originalName,
-    required this.sizeBytes,
-  });
-  final String id;
-  final String originalName;
-  final int sizeBytes;
-
-  factory MessageAttachment.fromJson(Map<String, dynamic> json) {
-    final size = json['byte_size'];
-    final id = json['id'];
-    final originalName = json['original_name'];
-    if (id is! String ||
-        id.isEmpty ||
-        originalName is! String ||
-        originalName.isEmpty ||
-        size is! int ||
-        size < 0 ||
-        size > 25000000) {
-      throw const FormatException('Invalid message attachment size.');
-    }
-    return MessageAttachment(
-      id: id,
-      originalName: originalName,
-      sizeBytes: size,
-    );
-  }
-}
-
-enum MessageSendStatus { sending, failed }
-
-List<MessageAttachment> _messageAttachments(Object? value) {
-  if (value == null) return const [];
-  if (value is! List) {
-    throw const FormatException('Invalid message attachments.');
-  }
-  if (value.length > 10) {
-    throw const FormatException('Too many message attachments.');
-  }
-  return value
-      .map((item) => MessageAttachment.fromJson(item as Map<String, dynamic>))
-      .toList(growable: false);
-}
-
-class ChatMessage {
-  const ChatMessage({
-    required this.id,
-    required this.channelId,
-    required this.authorId,
-    required this.body,
-    required this.createdAt,
-    required this.deleted,
-    required this.revision,
-    this.clientMessageId,
-    this.sendStatus,
-    this.replyToId,
-    this.mentionUserIds = const [],
-    this.attachments = const [],
-    this.editedAt,
-  });
-  final String id;
-  final String channelId;
-  final String authorId;
-  final String body;
-  final DateTime createdAt;
-  final bool deleted;
-  final int revision;
-  final String? clientMessageId;
-  final MessageSendStatus? sendStatus;
-  final String? replyToId;
-  final List<String> mentionUserIds;
-  final List<MessageAttachment> attachments;
-  final DateTime? editedAt;
-  factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
-    id: json['id'] as String,
-    channelId: json['channel_id'] as String,
-    authorId: json['author_id'] as String,
-    body: json['body'] as String? ?? '',
-    createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
-    deleted: json['deleted'] as bool? ?? false,
-    revision: json['revision'] as int,
-    clientMessageId: json['client_message_id'] as String?,
-    replyToId: json['reply_to_id'] as String?,
-    mentionUserIds: (json['mention_user_ids'] as List<dynamic>? ?? const [])
-        .whereType<String>()
-        .toList(growable: false),
-    attachments: _messageAttachments(json['attachments']),
-    editedAt: json['edited_at'] == null
-        ? null
-        : DateTime.parse(json['edited_at'] as String).toLocal(),
-  );
-
-  ChatMessage withSendStatus(MessageSendStatus status) => ChatMessage(
-    id: id,
-    channelId: channelId,
-    authorId: authorId,
-    body: body,
-    createdAt: createdAt,
-    deleted: deleted,
-    revision: revision,
-    clientMessageId: clientMessageId,
-    sendStatus: status,
-    replyToId: replyToId,
-    mentionUserIds: mentionUserIds,
-    attachments: attachments,
-    editedAt: editedAt,
-  );
-
-  ChatMessage asDeleted() => ChatMessage(
-    id: id,
-    channelId: channelId,
-    authorId: authorId,
-    body: '',
-    createdAt: createdAt,
-    deleted: true,
-    revision: revision + 1,
-    clientMessageId: clientMessageId,
-    replyToId: replyToId,
-  );
-}
-
 class ChatMessagePage {
   const ChatMessagePage({required this.messages, this.nextCursor});
   final List<ChatMessage> messages;
@@ -797,7 +607,7 @@ class DirectChatMessage {
                 json['reply_preview'] as Map<String, dynamic>,
               )
             : null,
-        attachments: _messageAttachments(json['attachments']),
+        attachments: parseMessageAttachments(json['attachments']),
         editedAt: json['edited_at'] == null
             ? null
             : DateTime.parse(json['edited_at'] as String).toLocal(),

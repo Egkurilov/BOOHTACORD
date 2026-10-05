@@ -2987,15 +2987,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Не отправлено · Повторить отправку'), findsOneWidget);
+    expect(find.text('Повторить отправку'), findsOneWidget);
     expect(state.messages.last.sendStatus, MessageSendStatus.failed);
-    await tester.tap(find.text('Не отправлено · Повторить отправку'));
+    await tester.tap(find.text('Повторить отправку'));
     await tester.pumpAndSettle();
 
     expect(api.textSendIds, hasLength(2));
     expect(api.textSendIds.last, api.textSendIds.first);
     expect(state.messages.last.sendStatus, isNull);
-    expect(find.text('Не отправлено · Повторить отправку'), findsNothing);
+    expect(find.text('Повторить отправку'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
@@ -3909,6 +3909,10 @@ class _PublishedScreenState extends AppState {
 }
 
 class _PortraitApi extends ApiClient {
+  @override
+  Future<ChatMessage?> findSentText(String conversation,String client,String owner) async => null;
+  @override
+  Future<DirectChatMessage?> findSentDirect(String conversation,String client,String owner) async => null;
   _PortraitApi({
     this.withHistory = false,
     this.historyCount = 1,

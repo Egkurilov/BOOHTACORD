@@ -59,6 +59,7 @@ List<PresentedMessage> presentMessages(List<ChatMessage> messages) {
         previous != null &&
         !startsDate &&
         previous.authorId == message.authorId &&
+        previous.kind != 'SYSTEM_WELCOME' && message.kind != 'SYSTEM_WELCOME' &&
         previous.replyToId == null &&
         message.replyToId == null &&
         !previous.deleted &&

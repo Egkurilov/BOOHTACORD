@@ -9,16 +9,17 @@ export interface PendingDirectMessageSend {
   mentionUserIds: string[]
   attachments: TextMessageAttachment[]
   request?: DirectMessageRequest
-  sendStatus: 'sending' | 'failed'
+  retryBlocked?: boolean
+  sendStatus: 'sending' | 'checking' | 'failed'
 }
 
-export type DirectMessageDisplayItem = DirectMessageHistoryItem & { sendStatus?: 'sending' | 'failed' }
+export type DirectMessageDisplayItem = DirectMessageHistoryItem & { retryBlocked?: boolean; sendStatus?: 'sending' | 'checking' | 'failed' }
 
 export function pendingDirectMessage(id: string, draft: PendingDirectMessageSend): DirectMessageDisplayItem {
   return {
     id: `optimistic:${id}`, directMessageId: draft.directMessageId, authorId: draft.authorId,
     clientMessageId: id, body: draft.body, replyToId: draft.replyToId,
-    createdAt: new Date().toISOString(), revision: 0, deleted: false, attachments: draft.attachments, mentionUserIds: draft.mentionUserIds, sendStatus: draft.sendStatus,
+    createdAt: new Date().toISOString(), revision: 0, deleted: false, attachments: draft.attachments, mentionUserIds: draft.mentionUserIds, retryBlocked: draft.retryBlocked, sendStatus: draft.sendStatus,
   }
 }
 

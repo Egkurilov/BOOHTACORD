@@ -10,6 +10,7 @@ extension ConversationCleanup on ConversationController {
     clearDirect();
     sending = false;
     sendRetryIds.clear();
+    blockedSendRetries.clear();
     pendingTextSends.clear();
     pendingDirectSends.clear();
     lastReadDirectMessageId = null;

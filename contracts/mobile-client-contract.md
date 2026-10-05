@@ -61,6 +61,37 @@
 - Удаление — soft deletion. Очистите локальный отображаемый текст, когда сервер вернёт deletion marker; не сохраняйте удалённый remote body в постоянном mobile cache.
 - Продвигайте DM read cursor только для сообщения, видимо отрисованного в выбранной foreground conversation. Сервер перемещает его монотонно; retry не может сдвинуть cursor назад.
 
+## Неопределённая доставка сообщения
+
+При timeout/lost response сначала вызовите caller-only
+`GET /api/v1/channels/{channelID}/message-delivery/{clientMessageID}` либо
+`GET /api/v1/direct-messages/{directMessageID}/message-delivery/{clientMessageID}`.
+Проверьте `account_id` ответа. Если `message_id` существует, загрузите историю
+с `at=message_id` и подтвердите author/client UUID; повторный POST не нужен.
+Удалённая серверная запись тоже подтверждает доставку и не должна воскресать.
+При `message_id: null` пользователь может повторить точный payload с тем же UUID;
+изменение payload создаёт новый UUID. Не повторяйте после 400/403/409/507 автоматически.
+При недоступной проверке остаётся локальная неопределённость; отсутствие ответа
+не доказывает отсутствие записи. Показывайте sending/checking/failed по беседам,
+убирайте optimistic row локально без server DELETE и очищайте очередь при смене
+аккаунта/сервера. Ограничение ожидания запроса — 20 секунд, после POST timeout
+проверка также ограничена. Поздний commit согласуется по прежнему UUID.
+
+## Собственные активные сеансы
+
+`GET /api/v1/me/sessions` возвращает только сеансы владельца secure cookie:
+публичный UUID, общую метку, даты входа/активности и отметку `current`.
+Список не содержит cookie, digest, IP или fingerprint и не кэшируется.
+Проверяйте `account_id` ответа перед отображением; при смене аккаунта или сервера
+отбрасывайте незавершённые запросы и очищайте список.
+`DELETE /api/v1/me/sessions/{sessionID}` завершает выбранный собственный сеанс;
+`POST /api/v1/me/sessions/revoke-others` сохраняет сеанс инициатора.
+Обе операции требуют доверенный Origin и `X-Account-ID` отображаемого владельца.
+Заголовок защищает от устаревшего экрана, право доступа определяется cookie.
+При `409 SESSION_ACCOUNT_CHANGED` не повторяйте действие для нового аккаунта.
+Приватный пустой hint `session.state_changed` обновляет открытый список;
+отозванный WebSocket закрывается, voice lease отзывается сервером.
+
 ## Realtime-контракт
 
 Открывайте same-origin WebSocket на `GET /api/v1/realtime?capabilities=role_permissions_v1` только после установки cookie session. Capability не является credential и только разрешает новые permission hints; старый клиент без неё их не получает. Cookie аутентифицирует upgrade; никогда не добавляйте authentication token в URL, query, log или event payload.

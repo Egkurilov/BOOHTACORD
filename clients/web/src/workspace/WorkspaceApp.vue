@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import GuildName from '../guild/profile/GuildName.vue'
 import ChannelTopologyActions from '../channel/member_topology/ChannelTopologyActions.vue'
 import { buildVoiceNavigationPresence } from '../channel/voice_navigation_presence'
 import { createVoiceRosterRealtime, createVoiceRosterReconnectGate } from '../voice/voice_roster_realtime'
@@ -57,7 +58,7 @@ onMounted(() => { permissions.start(props.accountId); void topologyStore.refresh
     <ShortcutStatus :message="voiceActivation.shortcutStatus" />
       <div class="gc-shell" :class="{ 'no-aside': (activePanel === 'search' && voiceStageWide) || (activePanel !== 'search' && (voiceStageWide || selectedDirectMessage || activePanel !== 'none')), 'search-active': activePanel === 'search', 'voice-stage-wide': voiceStageWide, 'members-collapsed': membersOpen && !voiceStageWide && !selectedDirectMessage && activePanel === 'none' }" data-testid="app-shell">
       <aside id="nav-sidebar" class="sidebar" :class="{ 'is-open': navOpen }" :role="modalDrawer === 'nav' ? 'dialog' : undefined" :aria-modal="modalDrawer === 'nav' ? 'true' : undefined" aria-label="Навигация гильдии" data-testid="nav-sidebar">
-        <button class="guild-header" type="button" :aria-expanded="activePanel === 'admin'" @click="openGuildPanel"><img class="guild-mark" src="/brand.png" alt=""><span class="guild-header-copy"><span id="app-title">Моя гильдия</span><small v-if="guildMemberCount !== null" class="guild-member-count">{{ guildMemberCount }} {{ guildMemberCount === 1 ? 'участник' : guildMemberCount < 5 ? 'участника' : 'участников' }}</small></span><span class="guild-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m8 10 4 4 4-4" /></svg></span></button>
+        <button class="guild-header" type="button" :aria-expanded="activePanel === 'admin'" @click="openGuildPanel"><img class="guild-mark" src="/brand.png" alt=""><span class="guild-header-copy"><GuildName id="app-title" /><small v-if="guildMemberCount !== null" class="guild-member-count">{{ guildMemberCount }} {{ guildMemberCount === 1 ? 'участник' : guildMemberCount < 5 ? 'участника' : 'участников' }}</small></span><span class="guild-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m8 10 4 4 4-4" /></svg></span></button>
         <button v-if="navOpen" class="mobile-nav-close" type="button" aria-label="Закрыть навигацию" @click="toggleNavigation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
         <div class="nav-drawer" tabindex="-1">
           <SearchLauncher :active="activePanel === 'search'" @open="togglePanel('search')" @close="activePanel = 'none'" />
@@ -94,7 +95,7 @@ onMounted(() => { permissions.start(props.accountId); void topologyStore.refresh
           <template #admin>
             <AdminPanel v-if="props.role === 'ADMINISTRATOR'" :categories="topologyStore.topology?.categories ?? []" :revision="topologyStore.topology?.revision ?? 0" @topology-changed="refreshTopology" />
           </template>
-          <template #profile><ProfileSettings :profile="profile" :loading="profileLoading" :load-error="profileError" :logout-busy="logoutBusy" :logout-error="logoutError" @saved="setProfile" @logout="signOut" /></template>
+          <template #profile><ProfileSettings :profile="profile" :loading="profileLoading" :load-error="profileError" :logout-busy="logoutBusy" :logout-error="logoutError" @saved="setProfile" @logout="signOut" @session-expired="expireSession" /></template>
           <template #audio>
             <AudioSettings :reset-audio-volumes="voiceConnection.resetAudioVolumes" :volume-warning="voiceConnection.voiceVolumeError" :activation-error="voiceActivation.error" :activation-mode="voiceActivation.mode" :connected="Boolean(voiceConnection.active)" :input-device-id="audioSettings.selectedInput" :input-warning="audioSettings.inputWarning" :input-switching="audioSettings.inputSwitching" :devices="audioSettings.devices" :error="audioSettings.error" :processing="audioSettings.processing"
               :actual-audio-diagnostics="voiceConnection.voiceAudioDiagnostics" :audio-profile-locked="!voiceConnection.canJoin" :processing-diagnostics="voiceConnection.audioProcessingDiagnostics" :microphone-track="voiceConnection.microphoneTrack" :ptt-key="voiceActivation.pttKey" :microphone-shortcut="voiceActivation.microphoneShortcut" :deafen-shortcut="voiceActivation.deafenShortcut" :state="audioSettings.state" @load="loadAudioDevices" @select="selectAudioDevice" @set-activation="voiceActivation.setMode"

@@ -1250,6 +1250,10 @@ void main() {
 }
 
 class _FakeApi extends ApiClient {
+  @override
+  Future<ChatMessage?> findSentText(String conversation,String client,String owner) async => null;
+  @override
+  Future<DirectChatMessage?> findSentDirect(String conversation,String client,String owner) async => null;
   _FakeApi(
     this.value, {
     this.voiceFailure,

@@ -2,6 +2,7 @@ import 'owners.dart';
 
 void disposeOwners(AppOwners app) {
   app.disposed = true;
+  app.guildProfile.dispose();
   app.api.onUnauthorized = null;
   app.session.dispose();
   app.realtime.dispose();

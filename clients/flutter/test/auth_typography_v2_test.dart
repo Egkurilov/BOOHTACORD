@@ -22,7 +22,7 @@ void main() {
       );
       expect(eyebrow.style?.fontSize, width <= 720 ? 16 : 18);
       expect(eyebrow.style?.fontWeight, FontWeight.w700);
-      final heading = tester.widget<Text>(find.text('Voice Platform'));
+      final heading = tester.widget<Text>(find.text('BOOHTACORD'));
       expect(heading.style?.fontSize, 24);
       expect(heading.style?.fontWeight, FontWeight.w600);
       final submit = tester.widget<Text>(

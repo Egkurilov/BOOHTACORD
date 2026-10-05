@@ -1,0 +1,24 @@
+<script setup lang="ts">
+import { computed, watch } from 'vue'
+import { useAuthorDirectory } from '../../identity/author_directory'
+const props = defineProps<{ body: string; authorId: string; createdAt?: string; deleted?: boolean; canDelete?: boolean }>()
+const emit = defineEmits<{ remove: [] }>()
+const authors = useAuthorDirectory()
+const name = computed(() => authors.displayName(props.authorId))
+watch(() => props.authorId, id => { void authors.ensure(id) }, { immediate: true })
+function remove(): void { if (window.confirm('Удалить это системное приветствие?')) emit('remove') }
+</script>
+<template>
+  <article class="system-welcome-message" aria-label="Системное приветствие">
+    <span aria-hidden="true">✦</span>
+    <p v-if="deleted">Системное приветствие удалено.</p>
+    <p v-else><span class="message-mention" :data-user-id="authorId">@{{ name }}</span> {{ body }}</p>
+    <time v-if="createdAt" :datetime="createdAt">{{ new Date(createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }}</time>
+    <button v-if="canDelete && !deleted" type="button" aria-label="Удалить системное приветствие" @click="remove">Удалить</button>
+  </article>
+</template>
+<style scoped>
+.system-welcome-message { display: flex; align-items: baseline; gap: 12px; padding: 10px 16px; color: var(--gc-text-muted); overflow-wrap: anywhere; }
+p { flex: 1; min-width: 0; margin: 0; } time { font-size: 12px; white-space: nowrap; }
+.message-mention { color: var(--gc-accent); }
+</style>

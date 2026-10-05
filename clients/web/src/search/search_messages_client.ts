@@ -1,10 +1,11 @@
+import { parseMessageKind, type MessageKind } from '../conversation/system_welcome/kind'
 import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { MessageRequestError, type MessageRequest } from '../conversation/message_client'
 
 export type SearchConversationKind = 'CHANNEL' | 'DIRECT_MESSAGE'
 export interface SearchMessagesInput { query: string; channelId?: string; directMessageId?: string; before?: string; limit?: number }
-interface SearchMessageBase { id: string; kind: SearchConversationKind; authorId: string; body: string; createdAt: string; editedAt?: string; revision: number }
+interface SearchMessageBase { messageKind?: MessageKind; id: string; kind: SearchConversationKind; authorId: string; body: string; createdAt: string; editedAt?: string; revision: number }
 export type SearchMessage = SearchMessageBase & ({ kind: 'CHANNEL'; channelId: string; directMessageId?: never } | { kind: 'DIRECT_MESSAGE'; directMessageId: string; channelId?: never })
 export interface SearchMessagesPage { messages: SearchMessage[]; nextCursor?: string }
 
@@ -17,7 +18,8 @@ function date(value: unknown): string { const result = text(value); return resul
 function parseMessage(value: unknown): SearchMessage {
   const source = record(value)
   if (!source || (source.kind !== 'CHANNEL' && source.kind !== 'DIRECT_MESSAGE') || typeof source.body !== 'string' || !source.body || !Number.isInteger(source.revision) || (source.revision as number) < 1) return invalid()
-  const common = { id: uuid(source.id), authorId: uuid(source.author_id), body: source.body, createdAt: date(source.created_at), editedAt: source.edited_at === undefined ? undefined : date(source.edited_at), revision: source.revision as number }
+  const messageKind = parseMessageKind(source.message_kind)
+  const common = { ...(source.message_kind === undefined ? {} : { messageKind }), id: uuid(source.id), authorId: uuid(source.author_id), body: source.body, createdAt: date(source.created_at), editedAt: source.edited_at === undefined ? undefined : date(source.edited_at), revision: source.revision as number }
   if (source.kind === 'CHANNEL') {
     if (source.direct_message_id !== undefined) return invalid()
     return { ...common, kind: 'CHANNEL', channelId: uuid(source.channel_id) }

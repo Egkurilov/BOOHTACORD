@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useAuthorDirectory } from '../identity/author_directory'
 import { avatarBackground, avatarForeground } from '../design/avatar_color'
 import { avatarInitials } from '../design/avatar_initials'
+import SystemWelcomeMessage from '../conversation/system_welcome/SystemWelcomeMessage.vue'
 import SearchResultBody from './SearchResultBody.vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { searchMessages, type SearchMessage } from './search_messages_client'
@@ -70,7 +71,7 @@ onMounted(() => { void nextTick(() => queryInput.value?.focus()) })
     <span v-if="searched && messages.length" class="search-result-count" aria-hidden="true">Найдено {{ messages.length }} сообщения</span>
     <ol v-if="messages.length" class="search-results" aria-label="Результаты поиска">
       <li v-for="message in messages" :key="`${message.kind}:${message.id}`" class="search-result">
-        <article><header>{{ conversationLabel(message) }} · <time :datetime="message.createdAt">{{ formattedDate(message.createdAt) }}</time></header><div class="search-result-author"><span class="search-result-avatar" :style="{ backgroundColor: avatarBackground(message.authorId), color: avatarForeground(message.authorId) }">{{ avatarInitials(authors.displayName(message.authorId)) }}</span><strong>{{ authors.displayName(message.authorId) }}</strong></div><SearchResultBody :body="message.body" :query="activeQuery" /><button type="button" :aria-label="`Открыть сообщение от ${authors.displayName(message.authorId)}`" @click="emit('open', message)">Открыть сообщение</button></article>
+        <article><header>{{ conversationLabel(message) }} · <time :datetime="message.createdAt">{{ formattedDate(message.createdAt) }}</time></header><div class="search-result-author"><span class="search-result-avatar" :style="{ backgroundColor: avatarBackground(message.authorId), color: avatarForeground(message.authorId) }">{{ avatarInitials(authors.displayName(message.authorId)) }}</span><strong>{{ authors.displayName(message.authorId) }}</strong></div><SystemWelcomeMessage v-if="message.messageKind === 'SYSTEM_WELCOME'" :author-id="message.authorId" :body="message.body" /><SearchResultBody v-else :body="message.body" :query="activeQuery" /><button type="button" :aria-label="`Открыть сообщение от ${authors.displayName(message.authorId)}`" @click="emit('open', message)">Открыть сообщение</button></article>
       </li>
     </ol>
     <button v-if="nextCursor" class="search-more" type="button" :disabled="loading" @click="runSearch(nextCursor)">Показать ещё</button>

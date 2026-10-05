@@ -25,6 +25,7 @@ describe('message store', () => {
     const payloads: Record<string, unknown>[] = []
     const attachment = { id: 'attachment-image', originalName: 'clipboard.png', sizeBytes: 4 }
     const request = async (_input: string, init: RequestInit) => {
+      if (_input.includes('/message-delivery/')) return new Response(JSON.stringify({ account_id: 'user-1', message_id: null }))
       if (init.method === 'GET') return new Response(JSON.stringify({ messages: [] }))
       const payload = JSON.parse(String(init.body)) as Record<string, unknown>
       payloads.push(payload)
@@ -62,6 +63,7 @@ describe('message store', () => {
     const store = useMessageStore()
     let attempt = 0
     const request = async (_input: string, init: RequestInit) => {
+      if (_input.includes('/message-delivery/')) return new Response(JSON.stringify({ account_id: 'user-1', message_id: null }))
       if (init.method === 'GET') return new Response(JSON.stringify({ messages: [] }))
       if (attempt++ === 0) throw new Error('Сеть недоступна')
       return new Response(JSON.stringify(message))
@@ -79,6 +81,7 @@ describe('message store', () => {
     const store = useMessageStore()
     const payloads: unknown[] = []
     const request = async (_input: string, init: RequestInit) => {
+      if (_input.includes('/message-delivery/')) return new Response(JSON.stringify({ account_id: 'user-1', message_id: null }))
       if (init.method === 'GET') return new Response(JSON.stringify({ messages: [] }))
       payloads.push(JSON.parse(String(init.body)))
       if (payloads.length === 1) throw new Error('Сеть недоступна')
@@ -98,6 +101,7 @@ describe('message store', () => {
     const sentIds: string[] = []
     let attempt = 0
     const request = async (_input: string, init: RequestInit) => {
+      if (_input.includes('/message-delivery/')) return new Response(JSON.stringify({ account_id: 'user-1', message_id: null }))
       if (init.method === 'GET') return new Response(JSON.stringify({ messages: [] }))
       const payload = JSON.parse(String(init.body)) as { client_message_id: string }
       sentIds.push(payload.client_message_id)

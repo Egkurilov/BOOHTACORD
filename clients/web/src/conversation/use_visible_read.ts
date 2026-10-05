@@ -1,7 +1,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { newestVisibleServerMessageId, shouldAdvanceVisibleRead } from './read_visibility'
 
-interface ReadMessage { id: string; sendStatus?: 'sending' | 'failed' }
+interface ReadMessage { id: string; sendStatus?: 'sending' | 'checking' | 'failed' }
 
 export function useVisibleRead(options: {
   conversationId: () => string

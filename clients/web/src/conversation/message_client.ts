@@ -1,6 +1,7 @@
 import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { parseMentionIds } from './mention_ids'
+import { parseMessageKind, type MessageKind } from './system_welcome/kind'
 
 export interface TextMessageAttachment {
   id: string
@@ -9,6 +10,7 @@ export interface TextMessageAttachment {
 }
 
 export interface TextMessage {
+  kind?: MessageKind
   id: string
   channelId: string
   authorId: string
@@ -21,7 +23,8 @@ export interface TextMessage {
   deleted: boolean
   attachments: TextMessageAttachment[]
   mentionUserIds: string[]
-  sendStatus?: 'sending' | 'failed'
+  retryBlocked?: boolean
+  sendStatus?: 'sending' | 'checking' | 'failed'
 }
 
 export interface MessagePage {
@@ -73,7 +76,8 @@ function message(value: unknown, requireAttachments = false): TextMessage {
   }
   const replyToId = text(source.reply_to_id) ?? undefined
   const editedAt = text(source.edited_at) ?? undefined
-  return { id, channelId, authorId, clientMessageId, body, replyToId, revision: source.revision as number, createdAt, editedAt, deleted: source.deleted === true, attachments: attachments(source.attachments, requireAttachments), mentionUserIds: parseMentionIds(source.mention_user_ids) }
+  const kind = parseMessageKind(source.kind)
+  return { ...(source.kind === undefined ? {} : { kind }), id, channelId, authorId, clientMessageId, body, replyToId, revision: source.revision as number, createdAt, editedAt, deleted: source.deleted === true, attachments: attachments(source.attachments, requireAttachments), mentionUserIds: parseMentionIds(source.mention_user_ids) }
 }
 
 async function checked(response: Response): Promise<unknown> {
