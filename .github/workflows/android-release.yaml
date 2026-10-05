@@ -70,4 +70,6 @@ jobs:
             --asset "$asset_root/BOOHTACORD-$tag-armeabi-v7a.apk" \
             --asset "$asset_root/BOOHTACORD-$tag-x86_64.apk" \
             --asset "$asset_root/artifact-manifest.json" \
-            --asset "$asset_root/SHA256SUMS"
+            --asset "$asset_root/SHA256SUMS" \
+            --asset "$asset_root/LICENSE-RNNoise.txt" \
+            --asset "$asset_root/rnnoise-component.cdx.json"
