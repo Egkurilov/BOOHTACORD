@@ -1,0 +1,82 @@
+{
+  "id": "QA-273",
+  "date": "2026-10-05",
+  "task": "FE-72 / T-078 — Flutter voice shortcut compile compatibility",
+  "source_revision": "5f7252e3",
+  "working_tree_changes": true,
+  "environment": {
+    "flutter": "3.47.5 stable",
+    "dart": "3.13.4",
+    "macos": "arm64 Flutter Debug app via the user-provided local DevTools connection",
+    "android_device": "Android Emulator sdk_gphone64_arm64",
+    "android_api": 35,
+    "android_build": "1.0.29+2061 / versionCode 2061"
+  },
+  "summary": "Fixed a Flutter compile blocker exposed after integrating origin/master: LogicalKeyboardKey instances cannot be keys in a const map. The named-key lookup is now runtime final, preserving lookup behavior, with regression coverage for empty-label legacy Tab and Escape bindings. This was recorded as a separate task and commit from the Design V2 admin-tab change.",
+  "checks": [
+    {
+      "name": "Pre-fix compiler regression",
+      "result": "FAIL_BEFORE_FIX",
+      "observation": "The focused test runner failed during compilation because a const map used LogicalKeyboardKey values as keys."
+    },
+    {
+      "name": "Voice/admin/workspace focused tests",
+      "command": "flutter test --no-pub test/voice_shortcut_test.dart test/admin_media_widget_test.dart test/admin_topology_widget_test.dart test/admin_role_permissions_surface_test.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "passed": 78
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "flutter test --no-pub",
+      "result": "PASS",
+      "passed": 564
+    },
+    {
+      "name": "Changed-file Flutter analyzer",
+      "command": "flutter analyze --no-pub lib/src/screens/admin_screen.dart lib/src/features/voice/shortcuts/physical_code.dart test/admin_media_widget_test.dart test/admin_topology_widget_test.dart test/admin_role_permissions_surface_test.dart test/workspace_screen_test.dart test/voice_shortcut_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Full Flutter analyzer",
+      "command": "flutter analyze --no-pub",
+      "result": "WARNINGS_REMAIN",
+      "diagnostics": 43,
+      "observation": "The repository-wide analyzer exits nonzero on existing info/warning diagnostics, including experimental WebRTC API notices. The changed files pass targeted analysis."
+    },
+    {
+      "name": "Android signed arm64 test build",
+      "command": "flutter build apk --release --no-pub --target-platform android-arm64 --build-number=2061",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-release.apk (about 71.8 MB decimal; ignored local output)",
+      "observation": "Installed in place over the existing emulator app; app data and session were preserved. This was a local test build, not a published release."
+    },
+    {
+      "name": "Android administration tabs visual check",
+      "result": "PASS",
+      "observation": "On Android API 35, all five administration tabs were visible in one row with the selected underline. No role or permission changes were saved. A temporary local screenshot was inspected and removed; it was not committed."
+    },
+    {
+      "name": "macOS Debug hot reload",
+      "result": "PASS_HOT_RELOAD_SCREENSHOT_NOT_RUN",
+      "observation": "Hot reload completed through the provided local DevTools connection without restarting the app or triggering Keychain. A fresh screenshot could not be captured afterward because the Mac had locked; the same admin-tab UI had already been visually inspected in QA-272."
+    },
+    {
+      "name": "Backlog YAML and evidence JSON validation",
+      "command": "Ruby YAML/JSON parse and duplicate-task-ID check",
+      "result": "PASS"
+    },
+    {
+      "name": "Spec traceability PowerShell verifier",
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this macOS host."
+    }
+  ],
+  "limitations": [
+    "Windows native acceptance remains part of FV2-006.",
+    "FV2-025 remains open for Flutter admin panel max-width and duplicate heading parity.",
+    "No web, API, ACL, session, LiveKit, or permission behavior was changed."
+  ],
+  "status": "CLOSED_COMPILE_FIX_TESTS_PASS_REPOSITORY_ANALYZER_WARNINGS_REMAIN"
+}

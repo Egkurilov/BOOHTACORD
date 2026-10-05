@@ -288,6 +288,11 @@ tasks:
     requirements: [REQ-QUALITY-02]
     depends_on: [T-061, T-074]
     evidence: [evidence/flutter/qa265-flutter-native-audio-test-harness-2026-10-05-001.json, flutter-full-suite]
+  - id: T-078
+    title: Flutter legacy voice shortcut key mapping compilation compatibility
+    requirements: [REQ-PLATFORM-01, REQ-QUALITY-02]
+    depends_on: [T-051]
+    evidence: [flutter-legacy-shortcut-keycode-regression, flutter-full-suite, changed-file-flutter-analysis, android-arm64-release-build]
   - id: UPD-001
     title: Public client update policy contract and bounded catalog
     requirements: [REQ-SECURITY-01, REQ-DEPLOY-01]

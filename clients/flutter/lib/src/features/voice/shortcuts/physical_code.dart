@@ -2,8 +2,9 @@ import 'package:flutter/services.dart';
 
 String physicalKeyCode(int usage) {
   final key = usage & 0xffff;
-  if (usage >= 0x70004 && usage <= 0x7001d)
+  if (usage >= 0x70004 && usage <= 0x7001d) {
     return 'Key${String.fromCharCode(65 + key - 4)}';
+  }
   if (usage >= 0x7001e && usage <= 0x70026) return 'Digit${key - 0x1d}';
   if (usage == 0x70027) return 'Digit0';
   if (usage >= 0x7003a && usage <= 0x70045) return 'F${key - 0x39}';
@@ -49,10 +50,11 @@ String physicalKeyCode(int usage) {
 }
 
 String legacyKeyCode(int keyId, String label) {
-  if (keyId >= 97 && keyId <= 122)
+  if (keyId >= 97 && keyId <= 122) {
     return 'Key${String.fromCharCode(keyId - 32)}';
+  }
   if (keyId >= 48 && keyId <= 57) return 'Digit${String.fromCharCode(keyId)}';
-  const named = {
+  final named = {
     LogicalKeyboardKey.tab: 'Tab',
     LogicalKeyboardKey.escape: 'Escape',
     LogicalKeyboardKey.backspace: 'Backspace',
