@@ -1,5 +1,6 @@
 import 'codec.dart';
 import 'model.dart';
+import 'interval.dart';
 class AudioStatsReader {
   final _previous = <String, ({double at, Map<String, Object?> report})>{};
   void retain(Set<String> scopes) => _previous.removeWhere((key, _) => !scopes.contains(key.split('\n').first));
@@ -11,8 +12,7 @@ class AudioStatsReader {
       final key = '$scope\n${rtp['id']}';
       final old = _previous[key];
       final dt = old == null ? 0.0 : at - old.at;
-      final fresh = old == null || rtp['timestamp'] != old.report['timestamp'] || rtp['timestamp'] == null;
-      final valid = fresh && dt > 0 && dt <= 15000;
+      final (:fresh, :valid) = audioInterval(rtp, old?.report, at, old?.at, direction);
       double? delta(String field) {
         final current = statNumber(rtp[field]), previous = statNumber(old?.report[field]);
         return valid && current != null && previous != null && current >= previous ? current - previous : null;

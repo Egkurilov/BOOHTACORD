@@ -24,6 +24,7 @@ const flag = (value: boolean | null) => value === null ? 'неизвестно' 
       <p>Текущий профиль: {{ diagnostics.profile }}; предел {{ diagnostics.capBps / 1000 }} кбит/с.</p>
       <p>Исходный capture: {{ metric(diagnostics.capture.sampleRate, ' Гц') }}, {{ metric(diagnostics.capture.channels, ' каналов') }}. AGC {{ flag(diagnostics.capture.agc) }}, AEC {{ flag(diagnostics.capture.aec) }}, NS {{ flag(diagnostics.capture.ns) }}.</p>
       <p>Каналы RTP Opus не доказывают стерео capture. Неизвестные flags не подменяются запрошенными.</p>
+      <p>DTX, FEC и stereo показывают параметры SDP, а не использование в каждом пакете. Opus в статистике не исключает RED; RTP bitrate может включать избыточные данные.</p>
       <p v-if="!diagnostics.samples.length">SDK не сообщил RTP-статистику микрофона.</p>
       <section v-for="(sample, index) in diagnostics.samples" :key="index">
         <h3>{{ sample.direction === 'sender' ? 'Отправка' : 'Приём' }} {{ index + 1 }}</h3>

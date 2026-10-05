@@ -15,6 +15,12 @@ network adaptation and platform support can produce different actual results.
 Opus RTP channels=2 alone does not establish stereo capture. FEC, stereo and DTX
 fmtp are negotiated declarations, not proof that every packet uses that feature.
 Unreported properties remain unknown.
+An Opus codec stats entry does not establish that RED is disabled. Report RED
+as true only when explicitly reported; otherwise keep it unknown. The isolated
+2026-10-05 browser comparison measured 130.8 vs 64.4 kbit/s with RED on/off at
+the same 64k encoder cap. This explains measured payload overhead in that setup,
+not a perceptual preference. See the issue-110 completion evidence and anonymous
+measurements in evidence/; default promotion remains NOT_RUN.
 
 The vendored Flutter SDK inverted its positive red option when setting the SFU
 disableRed field (red=true sent disableRed=true). Correct the polarity while
@@ -46,7 +52,9 @@ Never use screen/game audio counters. Monotonic local time and interval counter
 deltas give payload bitrate, packets, loss and concealment; jitter is seconds→ms.
 Duplicate, reset, replaced, missing or stale counters yield unknown rates.
 Reset history on reconnect, dispose polling on leave, suppress late results.
-Wire bitrate includes additional protocol/RED overhead and is not the cap.
+RTP payload bitrate includes redundant/retransmitted payload and is not an encoder
+cap or link bandwidth. RTP header/padding and transport headers are excluded from
+these counters; see [WebRTC Stats](https://www.w3.org/TR/webrtc-stats/).
 
 UI reports are anonymous. Audio levels stay local and are stripped from export.
 The authenticated OTLP relay accepts voice.audio.sample with a closed profile/

@@ -29,7 +29,8 @@ Map<String, Object?> audioCodec(Map<String, Object?> rtp, List<Map<String, Objec
   return {
     'codec': codecName(decoded?['mimeType']), 'transportCodec': transportCodec,
     'codecChannels': statNumber(decoded?['channels']), 'clockRate': statNumber(decoded?['clockRate']),
-    'red': transportCodec == null ? null : transportCodec == 'red',
+    // An Opus stats entry does not prove the absence of redundant payloads.
+    'red': transportCodec == 'red' ? true : null,
     'dtx': flag('usedtx'), 'fec': flag('useinbandfec'), 'stereo': flag('stereo'),
   };
 }

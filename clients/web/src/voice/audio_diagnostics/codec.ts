@@ -18,6 +18,7 @@ export function audioCodec(rtp: RawAudioStat, reports: RawAudioStat[]) {
     return found?.[1] === '1' ? true : found?.[1] === '0' ? false : null
   }
   return { codec: name(decoded?.mimeType), transportCodec, codecChannels: statNumber(decoded?.channels),
-    clockRate: statNumber(decoded?.clockRate), red: transportCodec === null ? null : transportCodec === 'red',
+    // Chromium can report Opus even when RED adds redundant payloads.
+    clockRate: statNumber(decoded?.clockRate), red: transportCodec === 'red' ? true : null,
     dtx: flag('usedtx'), fec: flag('useinbandfec'), stereo: flag('stereo') }
 }
