@@ -39,8 +39,9 @@ Preservation baseline: exact-payload idempotency and per-conversation pending ma
 
 ## Limits
 
-Whole integration CI and signed distribution publication are pending remaining
-issues. Physical Android media lifecycle acceptance is NOT_RUN. These checks do not
+Whole integration CI passed; publication is recorded in
+[integration evidence](critical-five-release-2026-10-05.md).
+Physical Android media lifecycle acceptance is NOT_RUN. These checks do not
 claim hardware capacity or production media quality. Production user content untouched.
 
 Slavik Gym report: route=split_first; packet=delivery-uncertainty; tokens=estimated:16000;

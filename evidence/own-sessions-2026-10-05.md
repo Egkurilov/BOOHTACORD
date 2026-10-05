@@ -36,7 +36,8 @@ own_sessions, Flutter session/own_sessions. Baseline: dcef7fe4.
 
 No production accounts or messages changed. Physical SDK disconnect/Android device
 acceptance is NOT_RUN; durable queue/admission evidence does not claim audible media
-cutoff or hardware capacity. Whole integration CI is pending the other four issues.
+cutoff or hardware capacity. Whole integration CI passed; see
+[integration evidence](critical-five-release-2026-10-05.md).
 
 Slavik Gym report: route=split_first; packet=owned-sessions; tokens=estimated:18500;
 method=manual_estimate; driver=account-and-media-invalidation; next_split=delivery-uncertainty.

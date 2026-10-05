@@ -1,5 +1,12 @@
 # Android APK download size
 
+Published signed 1.0.33+66 verification PASS: arm64 19,831,683 bytes (-51.84% from
+published 1.0.32), armv7 17,644,771 bytes and x64 21,188,113 bytes. All three actual
+downloads pass checksum, unchanged signer, version, ABI, ZIP compression and
+64-bit ELF alignment checks. See [release evidence](critical-five-release-2026-10-05.md).
+Device installation/loading remains NOT_RUN; the table below records the earlier
+local measurement and must not be confused with the signed published binaries.
+
 Status: PASS for packaging/build/size checks; device loading NOT_RUN.
 Base: dcef7fe4, published Android 1.0.32+46. Application/signing identity and
 ABI versionCode rules are unchanged. Measurement binaries were release-mode

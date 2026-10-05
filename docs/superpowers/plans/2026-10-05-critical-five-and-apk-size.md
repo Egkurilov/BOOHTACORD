@@ -46,7 +46,7 @@ account-settings capabilities. Follow logout/authenticate/session revocation edg
   IP or fingerprint in DTO. Revoke selected/others atomically for the caller only.
 - [x] Bind CSRF/Origin and existing durable session/voice invalidation; add account
   settings UI with explicit current-session marker, busy/error/empty states.
-- [ ] Run nearest Go integration, Web and Flutter tests plus contract validator.
+- [x] Run nearest Go integration, Web and Flutter tests plus contract validator.
   Check two clients, old cookie/WS/SDK credentials and initiating session survival.
 
 ## Packet 3 — delivery uncertainty, #71 (T-040/T-041; IMP-07)
@@ -61,7 +61,8 @@ DTO/row leaves and caller-authorized lookup repository/API/contracts if missing.
   Preserve UUID for identical retry; changed payload gets a new UUID.
 - [x] Explicit 400/403 do not trigger blind retry; 507 keeps upload failure distinct.
   Removing an optimistic row invokes no server delete; account switch clears scope.
-- [ ] Run focused Web/Flutter/Go checks and actual two-client browser acceptance.
+- [x] Run focused Web/Flutter/Go checks, actual Chrome components in two contexts
+  and separate real HTTP/PostgreSQL lost-response acceptance.
 
 ## Packet 4 — guild settings, #100 (T-014/T-050/T-051)
 
@@ -73,7 +74,7 @@ navigation/admin/realtime bindings. Preserve backend/internal/guild/update_setti
   result, admin save/conflict/error and Unicode name boundaries.
 - [x] Implement profile fetch + revision-aware event refetch, live navigation/auth
   title, administrator editor and accessible long-name truncation.
-- [ ] Run existing Go ACL/concurrency tests and new Web/Flutter tests; capture actual
+- [x] Run existing Go ACL/concurrency tests and new Web/Flutter tests; capture actual
   components at 1024/1440 px and 150% zoom plus native compact/desktop layouts.
 
 ## Packet 5 — system welcome, #101 (T-040; depends #100)
@@ -86,8 +87,9 @@ registration_welcome, register_user and chat semantics tests.
   disabled user edit/reply/attachment, permitted admin delete and neutral notification.
 - [x] Add distinct system row and active-TEXT selector with disabled/empty/conflict
   states. Preserve registration/message atomicity and existing audit/realtime ACL.
-- [ ] Verify enabled/disabled/unavailable/rollback/duplicate registration outcomes,
-  real two-client appearance and reconnect dedup; run native contract checks.
+- [x] Verify enabled/disabled/unavailable/rollback/duplicate registration outcomes
+  and native contract checks.
+- [ ] Verify real native two-client appearance and reconnect dedup on devices.
 
 ## Packet 6 — private lifecycle observability, #102 (T-052; depends #100/#101)
 
@@ -98,15 +100,15 @@ registration/guild edges; existing Grafana lifecycle panels and bounded metrics.
   post-commit failure, conflict and hostile client OTLP attributes.
 - [x] Complete only missing source behavior; verify fixed event names, bounded
   metric outcomes, private user correlation and absence of bodies/password/raw names.
-- [ ] Run exact Go tests, dashboard validators and scoped observable integration;
+- [x] Run exact Go tests, dashboard validators and scoped observable integration;
   record real trace IDs/counter deltas without publishing secrets or user content.
 
 ## Integration and review gate
 
-- [ ] Inspect status/sizes, stage exact source files, commit per capability.
-- [ ] Run complete native CI on integration SHA; fix failures and repeat checks.
-- [ ] Attach any created PR, provide per-issue evidence and actual APK size delta.
-- [ ] Record unavailable physical/platform checks accurately; preserve open gates.
+- [x] Inspect status/sizes, stage exact source files, commit per capability.
+- [x] Run complete native CI on integration SHA; fix failures and repeat checks.
+- [x] Attach any created PR, provide per-issue evidence and actual signed APK delta.
+- [x] Record unavailable physical/platform checks accurately; preserve open gates.
 
 Compound physical/production checks remain unchecked; code and local automated
 evidence are in evidence/{android-apk-size,own-sessions,message-delivery,
