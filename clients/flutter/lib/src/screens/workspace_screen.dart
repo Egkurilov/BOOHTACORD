@@ -52,7 +52,6 @@ import '../widgets/message_mention_dialog.dart';
 import '../widgets/message_emoji_picker.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/screen_share_setup_dialog.dart';
-import '../widgets/voice_participant_thumbnail.dart';
 import '../widgets/voice_stream_indicator.dart';
 import '../widgets/formatted_message_body.dart';
 import '../widgets/horizontal_swipe_region.dart';
@@ -5301,14 +5300,15 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                             connecting: selectedScreenPublication != null,
                             choices: [
                               if (localScreenTrack != null)
-                                VoiceScreenChoice(
-                                  identity: null,
-                                  label: 'Ваш экран',
+                                VoiceScreenChoice.local(
                                   selected: false,
-                                  isLocal: true,
                                   avatarIdentity: state.user?.accountId,
                                   avatarLabel:
                                       state.profile?.displayName ?? 'Вы',
+                                  thumbnail: screenThumbnailForIdentity(
+                                    state.screenThumbnails,
+                                    room?.localParticipant?.identity,
+                                  ),
                                 ),
                               for (final participant in screens)
                                 VoiceScreenChoice(
@@ -5319,6 +5319,10 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                                     participant,
                                   ),
                                   avatarLabel: _participantName(participant),
+                                  thumbnail: screenThumbnailForIdentity(
+                                    state.screenThumbnails,
+                                    participant.identity,
+                                  ),
                                   hasAudio:
                                       screenShareAudioPublication(
                                         participant,
@@ -5863,13 +5867,6 @@ class _VoiceParticipantRoom extends StatelessWidget {
                       isLocal: true,
                       hasScreen:
                           state.screenSharePhase == ScreenSharePhase.sharing,
-                      thumbnail:
-                          state.screenSharePhase == ScreenSharePhase.sharing
-                          ? screenThumbnailForIdentity(
-                              state.screenThumbnails,
-                              room?.localParticipant?.identity,
-                            )
-                          : null,
                       onScreenTap:
                           state.screenSharePhase == ScreenSharePhase.sharing
                           ? () => onScreenSelected(null)
@@ -5900,12 +5897,6 @@ class _VoiceParticipantRoom extends StatelessWidget {
                             state.setParticipantVolume(participant, level),
                           ),
                     hasScreen: hasScreen,
-                    thumbnail: hasScreen
-                        ? screenThumbnailForIdentity(
-                            state.screenThumbnails,
-                            participant.identity,
-                          )
-                        : null,
                     onScreenTap: hasScreen
                         ? () => onScreenSelected(participant.identity)
                         : null,
@@ -6087,13 +6078,14 @@ class _VoiceScreenViewer extends StatelessWidget {
     if (screens.isEmpty && !localScreenAvailable) return null;
     final choices = [
       if (localScreenAvailable)
-        VoiceScreenChoice(
-          identity: null,
-          label: 'Ваш экран',
+        VoiceScreenChoice.local(
           selected: showingLocalScreen,
-          isLocal: true,
           avatarIdentity: state.user?.accountId,
           avatarLabel: localName,
+          thumbnail: screenThumbnailForIdentity(
+            state.screenThumbnails,
+            state.room?.localParticipant?.identity,
+          ),
         ),
       for (final participant in screens)
         VoiceScreenChoice(
@@ -6352,12 +6344,6 @@ class _VoiceParticipantStrip extends StatelessWidget {
                 speaking: localSpeaking,
                 microphoneUnavailable: state.microphoneUnavailable,
                 deafened: state.deafened,
-                thumbnail: state.screenSharePhase == ScreenSharePhase.sharing
-                    ? screenThumbnailForIdentity(
-                        state.screenThumbnails,
-                        state.room?.localParticipant?.identity,
-                      )
-                    : null,
                 screenSharing:
                     state.screenSharePhase == ScreenSharePhase.sharing,
               ),
@@ -6373,18 +6359,6 @@ class _VoiceParticipantStrip extends StatelessWidget {
                         publication.source == TrackSource.screenShareVideo &&
                         !publication.muted,
                   ),
-                  thumbnail:
-                      participant.videoTrackPublications.any(
-                        (publication) =>
-                            publication.source ==
-                                TrackSource.screenShareVideo &&
-                            !publication.muted,
-                      )
-                      ? screenThumbnailForIdentity(
-                          state.screenThumbnails,
-                          participant.identity,
-                        )
-                      : null,
                 ),
             ],
           ),
@@ -6403,7 +6377,6 @@ class _VoiceStripPerson extends StatelessWidget {
     required this.speaking,
     this.microphoneUnavailable = false,
     this.deafened = false,
-    this.thumbnail,
     this.screenSharing = false,
   });
 
@@ -6414,7 +6387,6 @@ class _VoiceStripPerson extends StatelessWidget {
   final bool speaking;
   final bool microphoneUnavailable;
   final bool deafened;
-  final Uint8List? thumbnail;
   final bool screenSharing;
 
   @override
@@ -6438,18 +6410,13 @@ class _VoiceStripPerson extends StatelessWidget {
       ),
       child: Row(
         children: [
-          VoiceParticipantThumbnail(
-            thumbnail: thumbnail,
-            width: 44,
-            height: 32,
-            fallback: AuthenticatedAvatar(
-              state: state,
-              name: name,
-              avatarUrl: avatarUrl,
-              radius: 15,
-              borderColor: presentation.isSpeaking ? GcColors.success : null,
-              borderWidth: presentation.isSpeaking ? 2 : 0,
-            ),
+          AuthenticatedAvatar(
+            state: state,
+            name: name,
+            avatarUrl: avatarUrl,
+            radius: 15,
+            borderColor: presentation.isSpeaking ? GcColors.success : null,
+            borderWidth: presentation.isSpeaking ? 2 : 0,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -6498,7 +6465,6 @@ class _VoiceParticipantCard extends StatelessWidget {
     this.volume,
     this.onVolumeChanged,
     this.hasScreen = false,
-    this.thumbnail,
     this.isLocal = false,
     this.onScreenTap,
     this.microphoneUnavailable = false,
@@ -6512,7 +6478,6 @@ class _VoiceParticipantCard extends StatelessWidget {
   final int? volume;
   final ValueChanged<int>? onVolumeChanged;
   final bool hasScreen;
-  final Uint8List? thumbnail;
   final bool isLocal;
   final VoidCallback? onScreenTap;
   final bool microphoneUnavailable;
@@ -6544,15 +6509,12 @@ class _VoiceParticipantCard extends StatelessWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              VoiceParticipantThumbnail.participantCard(
-                thumbnail: thumbnail,
-                fallback: AuthenticatedAvatar(
-                  state: state,
-                  name: name,
-                  avatarUrl: avatarUrl,
-                  radius: 32,
-                  fallbackFontSize: 26,
-                ),
+              AuthenticatedAvatar(
+                state: state,
+                name: name,
+                avatarUrl: avatarUrl,
+                radius: 32,
+                fallbackFontSize: 26,
               ),
               const SizedBox(height: 8),
               Row(

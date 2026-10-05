@@ -25,13 +25,11 @@ void main() {
             return Scaffold(
               body: VoiceScreenSelectionRail(
                 choices: [
-                  VoiceScreenChoice(
-                    identity: null,
-                    label: 'Ваш экран',
+                  VoiceScreenChoice.local(
                     selected: selectedIdentity == null,
-                    isLocal: true,
                     avatarIdentity: 'account-1',
                     avatarLabel: 'Евгений',
+                    thumbnail: thumbnail,
                   ),
                   VoiceScreenChoice(
                     identity: 'peer-1',
@@ -55,13 +53,19 @@ void main() {
     expect(find.text('Ваш экран'), findsOneWidget);
     expect(find.text('Экран Алиса'), findsOneWidget);
     expect(find.text('ЭФИР'), findsOneWidget);
-    expect(find.text('Е'), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('voice-screen-preview-local'))),
+      const Size(142, 60),
+    );
     expect(find.byIcon(Icons.volume_up_outlined), findsNothing);
     expect(find.byIcon(Icons.volume_off_outlined), findsNothing);
-    final renderedThumbnail = tester.widget<Image>(find.byType(Image));
-    expect(renderedThumbnail.fit, BoxFit.cover);
-    expect(renderedThumbnail.image, isA<MemoryImage>());
-    expect((renderedThumbnail.image as MemoryImage).bytes, same(thumbnail));
+    final renderedThumbnails = tester.widgetList<Image>(find.byType(Image));
+    expect(renderedThumbnails, hasLength(2));
+    for (final renderedThumbnail in renderedThumbnails) {
+      expect(renderedThumbnail.fit, BoxFit.cover);
+      expect(renderedThumbnail.image, isA<MemoryImage>());
+      expect((renderedThumbnail.image as MemoryImage).bytes, same(thumbnail));
+    }
     expect(
       tester.getSize(find.byKey(const ValueKey('voice-screen-preview-peer-1'))),
       const Size(142, 60),

@@ -60,7 +60,7 @@
     },
     {
       "name": "Backlog YAML validation",
-      "command": "ruby -e 'require \"yaml\"; YAML.load_file(\"backlog/tasks.yaml')'",
+      "command": "ruby -e 'require \"yaml\"; YAML.load_file(\"backlog/tasks.yaml\")'",
       "result": "PASS"
     },
     {

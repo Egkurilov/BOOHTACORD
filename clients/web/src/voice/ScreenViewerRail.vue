@@ -4,7 +4,7 @@ import { avatarBackground, avatarForeground } from '../design/avatar_color'
 import type { ScreenViewerCard } from './screen_viewer_controller'
 import { observeHorizontalOverflow } from './screen_rail_overflow'
 
-defineProps<{ cards: ScreenViewerCard[]; selectedId: string | null; participantCount: number }>()
+const props = withDefaults(defineProps<{ cards: ScreenViewerCard[]; selectedId: string | null; participantCount: number; showReturnToVoice?: boolean }>(), { showReturnToVoice: true })
 const emit = defineEmits<{ select: [id: string]; returnVoice: [] }>()
 const rail = ref<HTMLDivElement | null>(null)
 const hasOverflow = ref(false)
@@ -19,12 +19,13 @@ const initials = (name: string) => name.trim().slice(0, 2).toLocaleUpperCase('ru
 
 <template>
   <section class="screen-rail-section" aria-label="Демонстрации в канале">
+    <h3>Демонстрации в канале</h3>
     <div ref="rail" class="screen-cards stream-rail" :class="{ 'has-overflow': hasOverflow }" data-testid="stream-rail" aria-label="Выбор демонстрации" :aria-description="hasOverflow ? 'Есть ещё демонстрации справа. Прокрутите список по горизонтали.' : undefined">
       <button v-for="stream in cards" :key="stream.id" data-testid="stream-select" class="screen-card stream-option" :class="{ selected: stream.id === selectedId }" type="button" :aria-pressed="stream.id === selectedId" @click="emit('select', stream.id)">
         <span class="stream-card-preview"><img v-if="stream.thumbnailUrl" class="stream-thumbnail" :src="stream.thumbnailUrl" alt=""><span v-else class="stream-avatar" :style="{ backgroundColor: avatarBackground(stream.accountId ?? stream.participantId), color: avatarForeground(stream.accountId ?? stream.participantId) }" aria-hidden="true">{{ initials(stream.participantName) }}</span></span>
         <span class="stream-option-copy"><span>{{ stream.isLocal ? 'Ваш экран' : `Экран ${stream.participantName || 'участника'}` }}</span><b v-if="stream.id === selectedId">ЭФИР</b></span>
       </button>
-      <button class="screen-card stream-option stream-rail-participants" type="button" @click="emit('returnVoice')"><span class="stream-card-preview"><span class="stream-avatar" aria-hidden="true">ДА</span></span><span class="stream-option-copy">Участники · {{ participantCount }}</span></button>
+      <button v-if="props.showReturnToVoice" class="screen-card stream-option stream-rail-participants" type="button" @click="emit('returnVoice')"><span class="stream-card-preview"><span class="stream-avatar" aria-hidden="true">ДА</span></span><span class="stream-option-copy">Участники · {{ participantCount }}</span></button>
     </div>
   </section>
 </template>

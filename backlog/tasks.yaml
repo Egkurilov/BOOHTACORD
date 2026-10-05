@@ -273,6 +273,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]
     depends_on: [FV2-002, T-040, T-041, T-051]
     evidence: [flutter-history-pagination-error-tests, flutter-full-suite, QA-287]
+  - id: FV2-035
+    title: Flutter and web screen thumbnails live in the screen-sharing rail
+    requirements: [REQ-UI-01, REQ-VOICE-01, REQ-SCREEN-01, REQ-SCREEN-03]
+    depends_on: [FV2-009, T-030, T-051]
+    evidence: [flutter-screen-rail-thumbnail-tests, web-voice-screen-rail-tests, web-build, flutter-full-suite, QA-288]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]
