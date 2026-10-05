@@ -29,6 +29,7 @@ import WorkspaceSearchPanel from './search/WorkspaceSearchPanel.vue'
 import { usePermissionStore } from '../authorization/permission_store'
 import { useScreenShareSetup } from './screen_share_setup'
 import { useWorkspaceNavigation } from './workspace_navigation'
+import ConnectionStatus from './connection_status/Status.vue'
 const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string }>()
 const emit = defineEmits<{ sessionExpired: []; loggedOut: [] }>()
 const { activeVoiceChannel, audioSettings, loadAudioDevices, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls(props.accountId)
@@ -64,6 +65,7 @@ onMounted(() => { permissions.start(props.accountId); void topologyStore.refresh
           <SearchLauncher :active="activePanel === 'search'" @open="togglePanel('search')" @close="activePanel = 'none'" />
           <WorkspaceSidebarTabs class="sidebar-tabs" :active="sidebarSection" @select="sidebarSection = $event" />
           <div class="nav-content">
+          <ConnectionStatus :chat="realtimeStore.state" :voice="voiceConnection.state" :roster-available="voiceRoster.channels.value !== null && !voiceRoster.error.value" :last-updated-at="voiceRoster.lastUpdatedAt.value" @retry-chat="realtimeStore.reconnect()" @retry-roster="voiceRoster.reconnect()" />
           <template v-if="sidebarSection === 'channels'">
             <p v-if="topologyStore.loading" class="state" aria-live="polite">Загружаем каналы…</p>
             <p v-else-if="topologyStore.error" class="state state-error" role="alert">{{ topologyStore.error }} Войдите в аккаунт или повторите попытку.</p>

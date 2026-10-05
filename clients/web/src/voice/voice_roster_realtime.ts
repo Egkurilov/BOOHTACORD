@@ -27,6 +27,7 @@ export function createVoiceRosterRealtime(
 ) {
   const channels = ref<VoiceRoomRoster[] | null>(null)
   const error = ref<string | null>(null)
+  const lastUpdatedAt = ref<number | null>(null)
   let source: VoiceRosterEvents | null = null
   let generation = 0
   let staleTimer: ReturnType<typeof setTimeout> | null = null
@@ -45,6 +46,7 @@ export function createVoiceRosterRealtime(
       if (generation !== currentGeneration) return
       try {
         channels.value = parseVoiceRosters(JSON.parse(event.data))
+        lastUpdatedAt.value = Date.now()
         error.value = null
         clearStaleTimer()
       } catch {
@@ -57,13 +59,14 @@ export function createVoiceRosterRealtime(
       generation++
       currentSource.close()
       channels.value = null
+      lastUpdatedAt.value = null
       error.value = null
       clearStaleTimer()
       onSessionExpired()
     })
     currentSource.onerror = () => {
       if (generation !== currentGeneration) return
-      if (channels.value === null) error.value = 'Нет связи со списком голосовых каналов. Восстанавливаем соединение.'
+      error.value = 'Нет связи со списком голосовых каналов. Восстанавливаем соединение.'
       if (staleTimer === null) staleTimer = setTimeout(() => {
         if (generation === currentGeneration) {
           channels.value = null
@@ -80,6 +83,7 @@ export function createVoiceRosterRealtime(
     source?.close()
     source = null
     channels.value = null
+    lastUpdatedAt.value = null
     error.value = null
   }
 
@@ -87,5 +91,5 @@ export function createVoiceRosterRealtime(
     if (source === null) reconnect()
   }
 
-  return { channels, error, reconnect, start, stop }
+  return { channels, error, lastUpdatedAt, reconnect, start, stop }
 }

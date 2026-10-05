@@ -3,42 +3,38 @@ import { ref } from 'vue'
 import { loadCurrentSession } from '../identity/current_session'
 import { parseRealtimeEvent, realtimeTraceURL, realtimeURL, type RealtimeEvent } from './realtime_client'
 import { createRealtimeDelivery, type EventHandler } from './realtime_event_delivery'
-import { reconnectDelay } from './reconnect_policy'
+import { createReconnectSchedule } from './reconnect_schedule/controller'
 import type { RealtimeConnectOptions, RealtimeSocket, RealtimeSocketFactory } from './realtime_connection_types'
 import { startTracedCompletion } from '../telemetry/client_tracing'
-
 export type { RealtimeConnectOptions, RealtimeSocket, RealtimeSocketFactory } from './realtime_connection_types'
 export type RealtimeState = 'IDLE' | 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR'
 export const useRealtimeStore = defineStore('realtime', () => {
   const state = ref<RealtimeState>('IDLE')
   const error = ref<string | null>(null)
   let socket: RealtimeSocket | null = null
-  let timer: ReturnType<typeof setTimeout> | null = null
+  let stopSchedule = () => {}
   let active = false
   let generation = 0
-  let attempt = 0
   let delivery: ReturnType<typeof createRealtimeDelivery> | null = null
   let pendingConnection: (() => void) | null = null
+  let retryNow: (() => void) | null = null
   function connect(onEvent: EventHandler, factory: RealtimeSocketFactory = (url) => new WebSocket(url), url?: string, options: RealtimeConnectOptions = {}): void {
     if (active) return
     active = true
     const ownGeneration = ++generation
-    attempt = 0
+    const retry = createReconnectSchedule(open, options.random)
+    stopSchedule = retry.stop
     state.value = 'CONNECTING'
     error.value = null
     delivery = createRealtimeDelivery(onEvent, options.onRecovery, (cause) => {
       if (ownGeneration !== generation) return
-      error.value = cause instanceof Error ? cause.message : 'Не удалось обновить данные после восстановления связи.'
+      error.value = cause instanceof Error ? cause.message : 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ РґР°РЅРЅС‹Рµ РїРѕСЃР»Рµ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ СЃРІСЏР·Рё.'
       state.value = 'ERROR'
       if (socket) fail(socket)
     })
-
     function schedule(): void {
-      if (!active || ownGeneration !== generation || timer) return
-      const delay = reconnectDelay(attempt++, options.random)
-      timer = setTimeout(() => { timer = null; open() }, delay)
+      if (active && ownGeneration === generation) retry.schedule()
     }
-
     async function checkAndRetry(): Promise<void> {
       let valid: boolean | null = null
       try { valid = await (options.checkSession ?? (async () => (await loadCurrentSession()) !== null))() }
@@ -51,20 +47,18 @@ export const useRealtimeStore = defineStore('realtime', () => {
       }
       schedule()
     }
-
     function fail(current: RealtimeSocket): void {
       if (!active || socket !== current || ownGeneration !== generation) return
       socket = null
       delivery?.disconnected()
       state.value = 'DISCONNECTED'
-      error.value ??= 'Realtime-соединение недоступно. Повторяем подключение.'
+      error.value ??= 'Realtime-СЃРѕРµРґРёРЅРµРЅРёРµ РЅРµРґРѕСЃС‚СѓРїРЅРѕ. РџРѕРІС‚РѕСЂСЏРµРј РїРѕРґРєР»СЋС‡РµРЅРёРµ.'
       current.close()
       void checkAndRetry()
     }
-
     function open(): void {
       if (!active || ownGeneration !== generation) return
-      const operation = attempt === 0 ? 'realtime.connect' : 'realtime.reconnect'
+      const operation = retry.attempt() === 0 ? 'realtime.connect' : 'realtime.reconnect'
       const { finish, traceparent, tracestate } = startTracedCompletion(operation)
       pendingConnection = () => finish(true)
       state.value = 'CONNECTING'
@@ -75,7 +69,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
         current = factory(realtimeTraceURL(after ? `${target}${target.includes('?') ? '&' : '?'}after=${encodeURIComponent(after)}` : target, traceparent, tracestate))
       } catch (cause) {
         finish(true)
-        error.value = cause instanceof Error ? cause.message : 'Realtime-соединение недоступно.'
+        error.value = cause instanceof Error ? cause.message : 'Realtime-СЃРѕРµРґРёРЅРµРЅРёРµ РЅРµРґРѕСЃС‚СѓРїРЅРѕ.'
         state.value = 'DISCONNECTED'
         schedule()
         return
@@ -86,34 +80,41 @@ export const useRealtimeStore = defineStore('realtime', () => {
         if (socket !== current) return
         try {
           const event: RealtimeEvent = parseRealtimeEvent(JSON.parse(message.data))
-          if (event.kind === 'connection.ready') attempt = 0
+          if (event.kind === 'connection.ready') retry.ready()
           delivery?.accept(event)
         } catch (cause) {
-          error.value = cause instanceof Error ? cause.message : 'Некорректное realtime-событие.'
+          error.value = cause instanceof Error ? cause.message : 'РќРµРєРѕСЂСЂРµРєС‚РЅРѕРµ realtime-СЃРѕР±С‹С‚РёРµ.'
           state.value = 'ERROR'
         }
       }
       current.onerror = () => { finish(true); fail(current) }
       current.onclose = () => { finish(true); fail(current) }
     }
+    retryNow = () => {
+      if (!active || ownGeneration !== generation) return
+      retry.stop()
+      const current = socket
+      socket = null
+      current?.close()
+      delivery?.disconnected()
+      open()
+    }
     open()
   }
-
   function disconnect(): void {
     active = false
     generation++
-    if (timer) clearTimeout(timer)
-    timer = null
+    stopSchedule()
     delivery?.reset()
     delivery = null
     const current = socket
     socket = null
     pendingConnection?.()
     pendingConnection = null
+    retryNow = null
     if (current) { current.onclose = null; current.onerror = null; current.onmessage = null; current.onopen = null; current.close() }
     state.value = 'DISCONNECTED'
     error.value = null
   }
-
-  return { connect, disconnect, error, state }
+  return { connect, disconnect, reconnect: () => retryNow?.(), error, state }
 })
