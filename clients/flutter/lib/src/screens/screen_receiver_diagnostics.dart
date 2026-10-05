@@ -17,6 +17,7 @@ class ScreenReceiverSnapshot {
     this.bytesReceived,
     this.framesDecoded,
     this.framesRendered,
+    this.framesReceived,
     this.framesDropped,
     this.jitterSeconds,
     this.packetsLost,
@@ -24,12 +25,15 @@ class ScreenReceiverSnapshot {
     this.frameWidth,
     this.frameHeight,
     this.framesPerSecond,
+    this.codec,
+    this.decoderImplementation,
   });
 
   final double timestampMs;
   final double? bytesReceived;
   final double? framesDecoded;
   final double? framesRendered;
+  final double? framesReceived;
   final double? framesDropped;
   final double? jitterSeconds;
   final double? packetsLost;
@@ -37,11 +41,14 @@ class ScreenReceiverSnapshot {
   final double? frameWidth;
   final double? frameHeight;
   final double? framesPerSecond;
+  final String? codec;
+  final String? decoderImplementation;
 }
 
 class ScreenReceiverMetrics {
   const ScreenReceiverMetrics({
     this.bitrateKbps,
+    this.receivedFps,
     this.decodedFps,
     this.presentedFps,
     this.droppedFrames,
@@ -51,6 +58,7 @@ class ScreenReceiverMetrics {
   });
 
   final double? bitrateKbps;
+  final double? receivedFps;
   final double? decodedFps;
   final double? presentedFps;
   final double? droppedFrames;
@@ -67,6 +75,12 @@ ScreenReceiverMetrics compareScreenReceiverStats(
       ? null
       : current.timestampMs - previous.timestampMs;
   return ScreenReceiverMetrics(
+    receivedFps: _rate(
+      previous?.framesReceived,
+      current.framesReceived,
+      elapsedMs,
+      1000,
+    ),
     bitrateKbps: _rate(
       previous?.bytesReceived,
       current.bytesReceived,
@@ -330,6 +344,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
         bytesReceived: stats.bytesReceived?.toDouble(),
         framesDecoded: stats.framesDecoded?.toDouble(),
         framesRendered: stats.framesRendered?.toDouble(),
+        framesReceived: stats.framesReceived?.toDouble(),
         framesDropped: stats.framesDropped?.toDouble(),
         jitterSeconds: stats.jitter?.toDouble(),
         packetsLost: stats.packetsLost?.toDouble(),
@@ -337,10 +352,13 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
         frameWidth: stats.frameWidth?.toDouble(),
         frameHeight: stats.frameHeight?.toDouble(),
         framesPerSecond: stats.framesPerSecond?.toDouble(),
+        codec: stats.mimeType,
+        decoderImplementation: stats.decoderImplementation,
       );
       final measured = compareScreenReceiverStats(_previous, next);
       final metrics = ScreenReceiverMetrics(
         bitrateKbps: measured.bitrateKbps,
+        receivedFps: measured.receivedFps,
         decodedFps: measured.decodedFps,
         presentedFps: measured.presentedFps,
         droppedFrames: measured.droppedFrames,
@@ -491,10 +509,35 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
                                 value: _formatResolution(_current),
                               ),
                               _DiagnosticRow(
+                                label: 'Получено кадров',
+                                value: _formatMetric(
+                                  _metrics?.receivedFps,
+                                  'FPS',
+                                ),
+                              ),
+                              _DiagnosticRow(
                                 label: 'Декодировано',
                                 value: _formatMetric(
                                   _metrics?.decodedFps ??
                                       _current?.framesPerSecond,
+                                  'FPS',
+                                ),
+                              ),
+                              if (_boundedReceiverDetail(_current?.codec)
+                                  case final codec?)
+                                _DiagnosticRow(label: 'Кодек', value: codec),
+                              if (_boundedReceiverDetail(
+                                    _current?.decoderImplementation,
+                                  )
+                                  case final decoder?)
+                                _DiagnosticRow(
+                                  label: 'Декодер',
+                                  value: decoder,
+                                ),
+                              _DiagnosticRow(
+                                label: 'Показано',
+                                value: _formatMetric(
+                                  _metrics?.presentedFps,
                                   'FPS',
                                 ),
                               ),
@@ -698,3 +741,14 @@ String _formatMetric(double? value, [String unit = '']) {
 
 String _formatTime(DateTime dateTime) =>
     '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}';
+
+String? _boundedReceiverDetail(String? value) {
+  final normalized = value?.trim().replaceAll(
+    RegExp(r'[\u0000-\u001f\u007f]'),
+    '',
+  );
+  if (normalized == null || normalized.isEmpty) return null;
+  return normalized.length <= 64
+      ? normalized
+      : '${normalized.substring(0, 61)}…';
+}

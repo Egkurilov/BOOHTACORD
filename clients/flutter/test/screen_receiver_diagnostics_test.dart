@@ -18,6 +18,7 @@ void main() {
       bytesReceived: 100000,
       framesDecoded: 20,
       framesRendered: 20,
+      framesReceived: 20,
       framesDropped: 1,
       packetsLost: 2,
     );
@@ -26,6 +27,7 @@ void main() {
       bytesReceived: 1100000,
       framesDecoded: 140,
       framesDropped: 4,
+      framesReceived: 180,
       jitterSeconds: 0.012,
       packetsLost: 3,
       frameWidth: 1920,
@@ -37,6 +39,7 @@ void main() {
     final metrics = compareScreenReceiverStats(previous, current);
 
     expect(metrics.bitrateKbps, 4000);
+    expect(metrics.receivedFps, 80);
     expect(metrics.decodedFps, 60);
     expect(metrics.droppedFrames, 3);
     expect(metrics.jitterMs, 12);
@@ -44,7 +47,7 @@ void main() {
     expect(metrics.presentedFps, 30);
   });
 
-  test('maps native inbound framesRendered into receiver stats', () async {
+  test('maps native codec and decoder details into receiver stats', () async {
     final track = livekit_remote.RemoteVideoTrack(
       TrackSource.screenShareVideo,
       _EmptyMediaStream(),
@@ -53,8 +56,11 @@ void main() {
         rtc.StatsReport('inbound-1', 'inbound-rtp', 3000, {
           'framesDecoded': 90,
           'framesRendered': 84,
+          'framesReceived': 100,
           'framesDropped': 3,
+          'decoderImplementation': 'c2.android.avc.decoder',
         }),
+        rtc.StatsReport('codec-1', 'codec', 3000, {'mimeType': 'video/H264'}),
       ]),
     );
 
@@ -62,7 +68,44 @@ void main() {
 
     expect(stats?.framesDecoded, 90);
     expect(stats?.framesRendered, 84);
+    expect(stats?.framesReceived, 100);
     expect(stats?.framesDropped, 3);
+    expect(stats?.mimeType, 'video/H264');
+    expect(stats?.decoderImplementation, 'c2.android.avc.decoder');
+  });
+
+  testWidgets('shows receiver codec and decoder in diagnostics', (
+    tester,
+  ) async {
+    final sample = VideoReceiverStats('inbound', 3000)
+      ..mimeType = 'video/H264'
+      ..decoderImplementation = 'c2.android.avc.decoder'
+      ..framesDecoded = 90
+      ..framesRendered = 84
+      ..frameWidth = 1280
+      ..frameHeight = 720
+      ..framesPerSecond = 30;
+    final track = _StatsTrack(() async => sample);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ScreenReceiverDiagnostics(
+            track: track,
+            isLocal: false,
+            hasAudio: false,
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Статистика'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Кодек'), findsOneWidget);
+    expect(find.text('video/H264'), findsOneWidget);
+    expect(find.text('Декодер'), findsOneWidget);
+    expect(find.text('c2.android.avc.decoder'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   test('does not invent rates without a valid baseline', () {
@@ -120,50 +163,63 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('normalizes native microsecond timestamps before receiver rates', (
-    tester,
-  ) async {
-    final samples = [
-      VideoReceiverStats('inbound', 5000000)
-        ..bytesReceived = 50000
-        ..framesDecoded = 20
-        ..framesRendered = 10
-        ..framesDropped = 1
-        ..frameWidth = 576
-        ..frameHeight = 1280
-        ..framesPerSecond = 14,
-      VideoReceiverStats('inbound', 7000000)
-        ..bytesReceived = 1050000
-        ..framesDecoded = 140
-        ..framesRendered = 50
-        ..framesDropped = 4
-        ..frameWidth = 576
-        ..frameHeight = 1280
-        ..framesPerSecond = 14,
-    ];
-    var nextSample = 0;
-    final track = _StatsTrack(() async => samples[nextSample++]);
+  testWidgets(
+    'normalizes native microsecond timestamps before receiver rates',
+    (tester) async {
+      final samples = [
+        VideoReceiverStats('inbound', 5000000)
+          ..bytesReceived = 50000
+          ..framesDecoded = 20
+          ..framesRendered = 10
+          ..framesReceived = 20
+          ..framesDropped = 1
+          ..frameWidth = 576
+          ..frameHeight = 1280
+          ..framesPerSecond = 14
+          ..mimeType = 'video/H264'
+          ..decoderImplementation = 'c2.android.avc.decoder',
+        VideoReceiverStats('inbound', 7000000)
+          ..bytesReceived = 1050000
+          ..framesDecoded = 140
+          ..framesRendered = 50
+          ..framesReceived = 180
+          ..framesDropped = 4
+          ..frameWidth = 576
+          ..frameHeight = 1280
+          ..framesPerSecond = 14
+          ..mimeType = 'video/H264'
+          ..decoderImplementation = 'c2.android.avc.decoder',
+      ];
+      var nextSample = 0;
+      final track = _StatsTrack(() async => samples[nextSample++]);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: ScreenReceiverDiagnostics(
-            track: track,
-            isLocal: false,
-            hasAudio: false,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ScreenReceiverDiagnostics(
+              track: track,
+              isLocal: false,
+              hasAudio: false,
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pump(const Duration(seconds: 2));
-    await tester.pump();
-    await tester.tap(find.text('Статистика'));
-    await tester.pumpAndSettle();
+      );
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump();
+      await tester.tap(find.text('Статистика'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('60 FPS'), findsOneWidget);
-    expect(find.text('4000 кбит/с'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('60 FPS'), findsOneWidget);
+      expect(find.text('80 FPS'), findsOneWidget);
+      expect(find.text('20 FPS'), findsOneWidget);
+      expect(find.text('Получено кадров'), findsOneWidget);
+      expect(find.text('Декодер'), findsOneWidget);
+      expect(find.text('video/H264'), findsOneWidget);
+      expect(find.text('c2.android.avc.decoder'), findsOneWidget);
+      expect(find.text('4000 кбит/с'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('reports receiver rates computed from normalized timestamps', (
     tester,
