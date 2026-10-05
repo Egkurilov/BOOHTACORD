@@ -15,7 +15,7 @@ import (
 )
 
 func ConfigureVoiceParticipantRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, presence snapshotlivekitpresence.Client, metrics *httpmetrics.Recorder, apiKey, apiSecret string) {
-	service := listconnectedparticipants.New(rosterpostgres.New(rosterpostgres.NewPoolDatabase(database)), presence, metrics)
+	service := listconnectedparticipants.New(rosterpostgres.New(rosterpostgres.NewPoolDatabase(database)), presence.WithObserver(metrics), metrics)
 	notifier := watchroster.NewNotifier()
 	mux.Handle("GET /api/v1/voice/participants", sessionapi.Require(sessions)(rosterapi.NewHandler(service)))
 	mux.Handle("GET /api/v1/voice/rosters/events", sessionapi.Require(sessions)(watchroster.NewHandler(service, notifier, sessions)))

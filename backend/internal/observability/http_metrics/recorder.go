@@ -48,7 +48,7 @@ func New() *Recorder {
 	clientUpdates := newClientUpdateMetrics()
 	roster := newVoiceRosterMetrics()
 	registry.MustRegister(requests, duration, voiceSFURevocations, realtime.active, realtime.total, realtime.ready, reconnectOutcomes, eventDeliveryLatency, uploadFailures.total, clientScreen.total, clientScreen.fps, clientScreen.bitrate, roster.snapshots, roster.failures, roster.duration, roster.rooms, clientUpdates.checks, clientUpdates.reloads, clientUpdates.valid, clientUpdates.lastSuccess, clientUpdates.revision)
-	registry.MustRegister(guildLifecycle.settings, guildLifecycle.welcome)
+	registry.MustRegister(guildLifecycle.settings, guildLifecycle.welcome, roster.calls)
 	return &Recorder{guildLifecycle: guildLifecycle, clientScreen: clientScreen, clientUpdates: clientUpdates, duration: duration, eventDeliveryLatency: eventDeliveryLatency, handler: promhttp.HandlerFor(registry, promhttp.HandlerOpts{}), reconnectOutcomes: reconnectOutcomes, realtime: realtime, roster: roster, registry: registry, requests: requests, uploadFailures: uploadFailures, voiceSFURevocations: voiceSFURevocations}
 }
 
