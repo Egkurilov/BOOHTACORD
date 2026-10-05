@@ -13,14 +13,18 @@ import { shouldRefreshTextHistory } from './active_message_resync'
 import { usePermissionStore } from '../authorization/permission_store'
 import { notifyOwnSessionsChanged } from '../identity/own_sessions/state'
 import { guildProfile } from '../guild/profile/state'
+import { createProtectedRefreshGate } from './protected_refresh/gate'
+import { coalesceStores } from './protected_refresh/stores'
+import { refreshEditedHints } from './protected_refresh/revisions'
 
 interface Refreshable { error: string | null; refresh(): Promise<void> }
-interface TextHistory extends Refreshable { channelId: string | null }
+interface TextHistory extends Refreshable { channelId: string | null; refreshMessages?(ids: string[]): Promise<unknown> }
 interface DirectHistory {
   directMessageId: string | null
   error: string | null
   refreshNavigation(): Promise<void>
   refreshHistory(): Promise<void>
+  refreshMessages?(ids: string[]): Promise<unknown>
 }
 export interface WorkspaceRealtimeStores {
   topology: Refreshable
@@ -48,6 +52,9 @@ export async function refreshProtectedState(stores: WorkspaceRealtimeStores): Pr
 }
 
 export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtime: ReturnType<typeof useRealtimeStore>, presence: ReturnType<typeof useGuildPresence>, voice: ReturnType<typeof useVoiceConnectionStore>, accountID: string, onSessionExpired: () => void) {
+  let gate = createProtectedRefreshGate()
+  const original = stores
+  stores = coalesceStores(original, gate)
   const voiceNavigation = useVoiceNavigationStore()
   const notifications = useNotificationStore()
   const permissions = usePermissionStore()
@@ -85,14 +92,16 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
   return {
     start(): void {
       active = true
+      gate = createProtectedRefreshGate(); stores = coalesceStores(original, gate)
       lifecycle += 1
       notifications.start(accountID)
       realtime.connect(onEvent, undefined, undefined, {
+        onHintBatch: events => Promise.all(events.map(onEvent)).then(() => refreshEditedHints(original, events)),
         onRecovery: () => Promise.all([refreshProtectedState(stores), permissions.refresh(), guildProfile.refresh()]).then(() => undefined),
         checkSession: async () => (await loadCurrentSession())?.accountId === accountID,
         onSessionExpired,
       })
     },
-    stop(): void { active = false; lifecycle += 1; realtime.disconnect(); notifications.stop() },
+    stop(): void { active = false; lifecycle += 1; gate.close(); realtime.disconnect(); notifications.stop() },
   }
 }

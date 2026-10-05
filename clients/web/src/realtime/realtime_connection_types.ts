@@ -9,6 +9,7 @@ export interface RealtimeSocket {
 export type RealtimeSocketFactory = (url: string) => RealtimeSocket
 
 export interface RealtimeConnectOptions {
+  onHintBatch?: import('./hint_batch/controller').HintBatchHandler
   checkSession?: () => Promise<boolean>
   onRecovery?: () => void | Promise<void>
   onSessionExpired?: () => void

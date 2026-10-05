@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { loadCurrentSession } from '../identity/current_session'
 import { parseRealtimeEvent, realtimeTraceURL, realtimeURL, type RealtimeEvent } from './realtime_client'
 import { createRealtimeDelivery, type EventHandler } from './realtime_event_delivery'
+import { createCoalescedDelivery } from './hint_batch/controller'
 import { createReconnectSchedule } from './reconnect_schedule/controller'
 import type { RealtimeConnectOptions, RealtimeSocket, RealtimeSocketFactory } from './realtime_connection_types'
 import { startTracedCompletion } from '../telemetry/client_tracing'
@@ -13,11 +14,9 @@ export const useRealtimeStore = defineStore('realtime', () => {
   const error = ref<string | null>(null)
   let socket: RealtimeSocket | null = null
   let stopSchedule = () => {}
-  let active = false
-  let generation = 0
+  let active = false, generation = 0
   let delivery: ReturnType<typeof createRealtimeDelivery> | null = null
-  let pendingConnection: (() => void) | null = null
-  let retryNow: (() => void) | null = null
+  let pendingConnection: (() => void) | null = null, retryNow: (() => void) | null = null
   function connect(onEvent: EventHandler, factory: RealtimeSocketFactory = (url) => new WebSocket(url), url?: string, options: RealtimeConnectOptions = {}): void {
     if (active) return
     active = true
@@ -26,12 +25,13 @@ export const useRealtimeStore = defineStore('realtime', () => {
     stopSchedule = retry.stop
     state.value = 'CONNECTING'
     error.value = null
-    delivery = createRealtimeDelivery(onEvent, options.onRecovery, (cause) => {
+    const failure = (cause: unknown) => {
       if (ownGeneration !== generation) return
       error.value = cause instanceof Error ? cause.message : 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ РґР°РЅРЅС‹Рµ РїРѕСЃР»Рµ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ СЃРІСЏР·Рё.'
       state.value = 'ERROR'
       if (socket) fail(socket)
-    })
+    }
+    delivery = options.onHintBatch ? createCoalescedDelivery(onEvent, options.onRecovery, failure, options.onHintBatch) : createRealtimeDelivery(onEvent, options.onRecovery, failure)
     function schedule(): void {
       if (active && ownGeneration === generation) retry.schedule()
     }

@@ -74,6 +74,7 @@ describe('workspace typed realtime dispatch', () => {
     let finishRefresh!: () => void
     value.stores.directMessages.refreshNavigation.mockImplementationOnce(() => new Promise<void>((resolve) => { finishRefresh = resolve }))
     const pending = value.deliver(hint('direct_message.message_created', { direct_message_id: directID, message_id: messageID }))
+    await vi.waitFor(() => expect(typeof finishRefresh).toBe('function'))
 
     value.workspace.stop()
     createWorkspaceRealtime(value.stores, value.realtime as never, value.presence as never, value.voice as never, 'account-2', vi.fn()).start()

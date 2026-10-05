@@ -18,7 +18,7 @@ export const useDirectMessageStore = defineStore('direct-messages', () => {
     pending.delete(id)
     for (const [key, value] of retries) if (value === id) retries.delete(key)
   }
-  const { close, directMessageId, messages, nextCursor, loadingHistory, olderLoading, historyLoaded, error, olderError, open, refreshHistory, loadOlder, refreshMessage } = createDirectMessageHistory(pending, acknowledge)
+  const { close, directMessageId, messages, nextCursor, loadingHistory, olderLoading, historyLoaded, error, olderError, open, refreshHistory, loadOlder, refreshMessage, refreshMessages } = createDirectMessageHistory(pending, acknowledge)
   const loadingNavigation = ref(false)
   const sending = ref(false)
   let navigationSequence = 0
@@ -55,6 +55,7 @@ export const useDirectMessageStore = defineStore('direct-messages', () => {
     ...actions,
     refreshHistory,
     refreshMessage,
+    refreshMessages,
     refreshNavigation,
     sending,
   }
