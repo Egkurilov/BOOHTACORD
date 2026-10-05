@@ -3,6 +3,7 @@ import '../core/platform/session_storage.dart' as platform;
 import '../features/session/authentication/facade.dart';
 import '../features/session/password_reset/facade.dart';
 import '../features/session/maintenance/facade.dart';
+import '../features/session/own_sessions/facade.dart';
 import '../features/telemetry/export/facade.dart';
 import '../features/media/report_metrics/facade.dart';
 import '../features/profile/edit/facade.dart';
@@ -44,6 +45,7 @@ class ApiClient extends ApiFacadeBase
         AuthSessionFacade,
         PasswordResetFacade,
         MaintenanceFacade,
+        OwnSessionsFacade,
         TelemetryExportFacade,
         ScreenMetricsReportFacade,
         OwnProfileFacade,

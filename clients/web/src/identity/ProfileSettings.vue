@@ -4,10 +4,11 @@ import { validCodePointLength } from '../validation/unicode_limits/unicode_limit
 import { changeOwnPassword, deleteAvatar, loadOwnProfile, saveOwnProfile, uploadAvatar, type OwnProfile } from './profile_client'
 import NotificationSettings from '../notification/NotificationSettings.vue'
 import UpdateStatus from '../updates/UpdateStatus.vue'
+import OwnSessionsPanel from './own_sessions/OwnSessionsPanel.vue'
 type ProfileTab = 'profile' | 'security' | 'notifications' | 'about'
 
 const props = defineProps<{ profile: OwnProfile | null; loading: boolean; loadError: string | null; logoutBusy?: boolean; logoutError?: string | null }>()
-const emit = defineEmits<{ saved: [profile: OwnProfile]; logout: [] }>()
+const emit = defineEmits<{ saved: [profile: OwnProfile]; logout: []; sessionExpired: [] }>()
 const displayName = ref(''); const currentPassword = ref(''); const newPassword = ref('')
 const busy = ref(false); const error = ref<string | null>(null); const status = ref<string | null>(null)
 const activeTab = ref<ProfileTab>('profile')
@@ -81,6 +82,7 @@ async function changePassword(): Promise<void> {
         <button class="profile-secondary-button" type="button" :disabled="busy || props.logoutBusy" @click="emit('logout')">{{ props.logoutBusy ? 'Выходим…' : 'Выйти из аккаунта' }}</button>
         <p v-if="props.logoutError" class="profile-error" role="alert">{{ props.logoutError }}</p>
       </section>
+      <OwnSessionsPanel :account-id="props.profile.account_id" @session-expired="emit('sessionExpired')" />
       </section>
     </template>
     <template v-else-if="props.profile && activeTab === 'notifications'"><section class="profile-panel" role="tabpanel" aria-label="Уведомления"><NotificationSettings /></section></template>

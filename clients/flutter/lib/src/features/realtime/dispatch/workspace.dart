@@ -3,6 +3,7 @@ import 'dart:async';
 import '../../conversation/lifecycle/controller.dart';
 import '../../workspace/lifecycle/controller.dart';
 import '../lifecycle/event.dart';
+import '../../session/own_sessions/hint.dart';
 
 class WorkspaceRealtimeDispatch {
   WorkspaceRealtimeDispatch(
@@ -20,6 +21,8 @@ class WorkspaceRealtimeDispatch {
   void call(RealtimeEvent event) {
     final payload = event.payload;
     switch (event.kind) {
+      case 'session.state_changed':
+        if (payload.isEmpty) notifyOwnSessionsChanged();
       case 'presence.snapshot':
         workspace.guildPresence.acceptSnapshot(payload['online_user_ids']);
       case 'presence.changed':

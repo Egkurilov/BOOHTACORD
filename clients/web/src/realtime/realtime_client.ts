@@ -1,7 +1,7 @@
 import { apiBaseUrl } from '../config/runtime'
 import { isVoiceLeaseRevocationReason } from '../voice/voice_lease_revocation_reason'
 
-export type RealtimeKind = 'connection.ready' | 'connection.resync_required' | 'voice.lease_revoked' | 'channel.updated' | 'presence.snapshot' | 'presence.changed' | 'message.created' | 'message.updated' | 'message.deleted' | 'direct_message.message_created' | 'direct_message.message_updated' | 'direct_message.message_deleted' | 'role.permissions.updated' | 'auth.permissions.invalidated'
+export type RealtimeKind = 'connection.ready' | 'connection.resync_required' | 'voice.lease_revoked' | 'channel.updated' | 'presence.snapshot' | 'presence.changed' | 'message.created' | 'message.updated' | 'message.deleted' | 'direct_message.message_created' | 'direct_message.message_updated' | 'direct_message.message_deleted' | 'role.permissions.updated' | 'auth.permissions.invalidated' | 'session.state_changed'
 export interface RealtimeEvent {
   eventId: string
   kind: RealtimeKind
@@ -24,7 +24,7 @@ export function parseRealtimeEvent(value: unknown): RealtimeEvent {
   const source = record(value)
   const kind = source?.kind
   const payload = record(source?.payload)
-  if (!source || typeof source.event_id !== 'string' || typeof source.occurred_at !== 'string' || Number.isNaN(Date.parse(source.occurred_at)) || typeof kind !== 'string' || !['connection.ready', 'connection.resync_required', 'voice.lease_revoked', 'channel.updated', 'presence.snapshot', 'presence.changed', 'message.created', 'message.updated', 'message.deleted', 'direct_message.message_created', 'direct_message.message_updated', 'direct_message.message_deleted', 'role.permissions.updated', 'auth.permissions.invalidated'].includes(kind) || !payload) {
+  if (!source || typeof source.event_id !== 'string' || typeof source.occurred_at !== 'string' || Number.isNaN(Date.parse(source.occurred_at)) || typeof kind !== 'string' || !['connection.ready', 'connection.resync_required', 'voice.lease_revoked', 'channel.updated', 'presence.snapshot', 'presence.changed', 'message.created', 'message.updated', 'message.deleted', 'direct_message.message_created', 'direct_message.message_updated', 'direct_message.message_deleted', 'role.permissions.updated', 'auth.permissions.invalidated', 'session.state_changed'].includes(kind) || !payload) {
     throw new Error('Сервер вернул некорректное realtime-событие.')
   }
   if (kind === 'presence.snapshot' && (Object.keys(payload).length !== 1 || !Array.isArray(payload.online_user_ids) || !payload.online_user_ids.every(uuid))) throw new Error('Некорректное realtime-событие.')
@@ -35,7 +35,7 @@ export function parseRealtimeEvent(value: unknown): RealtimeEvent {
   if (kind === 'channel.updated' && (!keys(payload, ['revision']) || !revision(payload.revision))) throw new Error('Некорректное realtime-событие.')
   if (kind === 'voice.lease_revoked' && (!keys(payload, ['lease_id', 'reason']) || !uuid(payload.lease_id) || !isVoiceLeaseRevocationReason(payload.reason))) throw new Error('Некорректное realtime-событие.')
   if (kind === 'role.permissions.updated' && (!keys(payload, ['role', 'revision']) || payload.role !== 'MEMBER' || !revision(payload.revision))) throw new Error('Некорректное realtime-событие.')
-  if (kind === 'auth.permissions.invalidated' && Object.keys(payload).length !== 0) throw new Error('Некорректное realtime-событие.')
+  if ((kind === 'auth.permissions.invalidated' || kind === 'session.state_changed') && Object.keys(payload).length !== 0) throw new Error('Некорректное realtime-событие.')
   return { eventId: source.event_id, kind: kind as RealtimeKind, occurredAt: source.occurred_at, payload }
 }
 

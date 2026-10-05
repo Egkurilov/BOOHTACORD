@@ -61,6 +61,21 @@
 - Удаление — soft deletion. Очистите локальный отображаемый текст, когда сервер вернёт deletion marker; не сохраняйте удалённый remote body в постоянном mobile cache.
 - Продвигайте DM read cursor только для сообщения, видимо отрисованного в выбранной foreground conversation. Сервер перемещает его монотонно; retry не может сдвинуть cursor назад.
 
+## Собственные активные сеансы
+
+`GET /api/v1/me/sessions` возвращает только сеансы владельца secure cookie:
+публичный UUID, общую метку, даты входа/активности и отметку `current`.
+Список не содержит cookie, digest, IP или fingerprint и не кэшируется.
+Проверяйте `account_id` ответа перед отображением; при смене аккаунта или сервера
+отбрасывайте незавершённые запросы и очищайте список.
+`DELETE /api/v1/me/sessions/{sessionID}` завершает выбранный собственный сеанс;
+`POST /api/v1/me/sessions/revoke-others` сохраняет сеанс инициатора.
+Обе операции требуют доверенный Origin и `X-Account-ID` отображаемого владельца.
+Заголовок защищает от устаревшего экрана, право доступа определяется cookie.
+При `409 SESSION_ACCOUNT_CHANGED` не повторяйте действие для нового аккаунта.
+Приватный пустой hint `session.state_changed` обновляет открытый список;
+отозванный WebSocket закрывается, voice lease отзывается сервером.
+
 ## Realtime-контракт
 
 Открывайте same-origin WebSocket на `GET /api/v1/realtime?capabilities=role_permissions_v1` только после установки cookie session. Capability не является credential и только разрешает новые permission hints; старый клиент без неё их не получает. Cookie аутентифицирует upgrade; никогда не добавляйте authentication token в URL, query, log или event payload.

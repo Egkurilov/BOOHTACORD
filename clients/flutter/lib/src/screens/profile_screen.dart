@@ -6,6 +6,7 @@ import '../services/native_notifications.dart';
 import '../theme.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../features/updates/status_card.dart';
+import '../features/session/own_sessions/panel.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.state});
@@ -288,6 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ],
+                      if (profile != null) OwnSessionsPanel(api:widget.state.api,accountId:profile.accountId),
                       if (widget.state.error != null) ...[
                         const SizedBox(height: 12),
                         Semantics(

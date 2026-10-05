@@ -34,7 +34,7 @@ func streamEvents(connection *websocket.Conn, authenticator sessionapi.Authentic
 				delete(replayedIDs, event.EventID)
 				continue
 			}
-			if isPrivateDirectMessageEvent(event.Kind) && !privateEventSessionValid(authenticator, cookie, subscription) {
+			if (isPrivateDirectMessageEvent(event.Kind) || event.Kind == "session.state_changed") && !privateEventSessionValid(authenticator, cookie, subscription) {
 				_ = connection.Close(websocket.StatusPolicyViolation, "session is no longer valid")
 				return
 			}
