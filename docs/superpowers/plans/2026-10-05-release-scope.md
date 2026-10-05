@@ -44,3 +44,15 @@ Canonical GitHub sources are authoritative under ADR-011.
 Record tested SHA, results, workflow URLs, deployed SHA and published identities
 in evidence. No skipped tests or compilation result proves physical media.
 Inspect status and candidate sizes before explicitly staging source files.
+
+## APK identity correction after publication
+
+The immutable 1.0.30 APKs expose actual version codes 1044/2044/4044;
+Flutter offsets the logical native build 44 by the split ABI. The evaluator
+incorrectly reported identity_conflict. Baseline: six failing evaluator cases
+and five failing publisher rejection cases. Preserve exact universal/Windows
+identity and reject unknown ABI, wrong base and malformed codes.
+
+Publish corrected 1.0.31+45 after the complete gate, retaining 1.0.30 assets.
+Inspect actual APK native-code/versionCode before publication. Promote only
+r45 after verified artifacts exist; record this correction in final evidence.

@@ -39,4 +39,15 @@ def inspect(apk, *, release, version):
     match = re.search(r"package: name='([^']+)' versionCode='(\d+)' versionName='([^']+)'", badging)
     if not match or match[1] != APPLICATION or match[3] != version.split('+')[0]:
         raise ValueError('Built APK application ID or version differs')
+    build = version.split('+')
+    if len(build) != 2 or not re.fullmatch(r'[1-9][0-9]*', build[1]):
+        raise ValueError('Expected a canonical positive APK build number')
+    native = re.search(r'(?m)^native-code: (.+)$', badging)
+    arches = re.findall(r"'([^']+)'", native[1]) if native else []
+    offsets = {'armeabi-v7a': 1000, 'arm64-v8a': 2000, 'x86_64': 4000}
+    if any(arch not in offsets for arch in arches):
+        raise ValueError('Built APK contains an unsupported ABI')
+    expected = int(build[1]) + (offsets[arches[0]] if len(arches) == 1 else 0)
+    if int(match[2]) != expected:
+        raise ValueError('Built APK version code differs from its build number and ABI')
     return {'certificate_sha256': fingerprint, 'build_tools': directory.name, 'version_code': int(match[2])}

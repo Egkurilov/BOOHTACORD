@@ -1,4 +1,5 @@
 import 'model.dart';
+import 'package_identity/build_number.dart';
 
 List<int>? _parts(String value) {
   if (!RegExp(r'^\d+(\.\d+)*$').hasMatch(value)) return null;
@@ -32,7 +33,10 @@ UpdateResult evaluateUpdate(LocalUpdateIdentity? local, UpdatePolicy policy, Upd
   if (!target.arches.contains('any') && !target.arches.contains(environment.arch)) return UpdateResult.unsupportedEnvironment;
   if (target.minOsVersion != null && _below(environment.osVersion, target.minOsVersion!)) return UpdateResult.unsupportedEnvironment;
   if (local.installedVersion != null && local.version != null && local.installedVersion != local.version) return UpdateResult.identityConflict;
-  if (local.installedBuild != null && local.nativeBuild != null && local.installedBuild != local.nativeBuild) return UpdateResult.identityConflict;
+  if (!packageBuildMatches(platform: local.platform, arch: environment.arch,
+      declared: local.nativeBuild, installed: local.installedBuild)) {
+    return UpdateResult.identityConflict;
+  }
   if (local.packageName != null && local.expectedPackageName != null && local.packageName != local.expectedPackageName) return UpdateResult.identityConflict;
   if (target.releaseId == local.releaseId) return UpdateResult.upToDate;
   if (target.releaseOrder > local.releaseOrder) return UpdateResult.updateAvailable;
