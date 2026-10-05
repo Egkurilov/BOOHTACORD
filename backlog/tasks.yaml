@@ -303,6 +303,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-VOICE-01]
     depends_on: [FV2-003, T-022, T-051]
     evidence: [flutter-voice-participant-card-geometry-tests, flutter-workspace-screen-suite, flutter-changed-file-analysis, macos-debug-hot-reload, android-widget-platform-geometry, QA-300]
+  - id: FV2-042
+    title: Flutter macOS quick shortcut card left alignment
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
+    depends_on: [FV2-027, T-051]
+    evidence: [flutter-audio-shortcut-card-geometry-tests, flutter-workspace-screen-suite, flutter-changed-file-analysis, macos-debug-build, macos-live-visual-acceptance, QA-301]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

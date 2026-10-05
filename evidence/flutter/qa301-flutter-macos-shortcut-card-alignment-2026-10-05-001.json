@@ -1,0 +1,55 @@
+{
+  "id": "QA-301",
+  "date": "2026-10-05",
+  "task": "FV2-042 — Flutter macOS quick shortcut card left alignment",
+  "source_revision": "0c31178a",
+  "working_tree_changes": true,
+  "summary": "A user-provided macOS screenshot showed shortcut rows centered in a wide card while its title and reset action were left-aligned. The rows now stretch across the card so their labels and assignment controls align with the card's content inset.",
+  "checks": [
+    {
+      "name": "Test-first desktop geometry regression before fix",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'Design V2 audio settings lead with responsive device cards'",
+      "result": "FAIL_BEFORE_FIX",
+      "observation": "Before the fix, the shortcut label started at x=696.125 instead of the card content edge x=329.0."
+    },
+    {
+      "name": "Focused desktop shortcut alignment regression after fix",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'Design V2 audio settings lead with responsive device cards'",
+      "result": "PASS"
+    },
+    {
+      "name": "Flutter workspace widget suite",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart",
+      "result": "PASS",
+      "passed": 70
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/workspace_screen.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS"
+    },
+    {
+      "name": "macOS live visual acceptance after fix",
+      "result": "PASS",
+      "observation": "Launched the current macOS Debug build and inspected Audio Settings at 1440x900. In the Quick Shortcuts card, both shortcut labels and both Assign buttons share the same left edge as the card content inset; the card title, subtitle, and reset action remain left-aligned. The microphone-processing card below remains visually separate and unchanged. No audio settings were changed."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/screens/workspace_screen.dart",
+      "clients/flutter/test/workspace_screen_test.dart",
+      "backlog/tasks.yaml",
+      "backlog/FRONTEND_TODO.md",
+      "evidence/flutter/qa301-flutter-macos-shortcut-card-alignment-2026-10-05-001.json"
+    ],
+    "web_or_api_changed": false
+  },
+  "limitations": [],
+  "status": "PASS — code, widget geometry, analyzer, macOS Debug build and live macOS visual acceptance pass."
+}

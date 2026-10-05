@@ -529,6 +529,30 @@ void main() {
       of: find.byKey(const ValueKey('audio-settings-list')),
       matching: find.byType(Scrollable),
     );
+    final shortcuts = find.byKey(
+      const ValueKey('audio-settings-shortcuts-card'),
+    );
+    await tester.scrollUntilVisible(
+      shortcuts,
+      160,
+      scrollable: audioScrollable,
+    );
+    final shortcutsLeft = tester.getTopLeft(shortcuts).dx;
+    expect(
+      tester.getTopLeft(find.text('Микрофон · Не назначено')).dx,
+      closeTo(shortcutsLeft + 25, 1),
+    );
+    expect(
+      tester
+          .getTopLeft(
+            find.ancestor(
+              of: find.text('Назначить').first,
+              matching: find.byType(OutlinedButton),
+            ),
+          )
+          .dx,
+      closeTo(shortcutsLeft + 25, 1),
+    );
     await tester.scrollUntilVisible(
       processing,
       160,

@@ -6965,6 +6965,7 @@ class _AudioSettingsScreen extends StatelessWidget {
                         subtitle: 'Назначьте сочетания для микрофона и выключения звука. Они работают только в активном окне.',
                         compact: compact,
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             VoiceShortcutRow(
                               label: 'Микрофон',
