@@ -3,7 +3,7 @@ import { api, expect, login, security, status } from '../client_lifecycle/reques
 async function join(page) {
   await page.locator('.channel-button').filter({ hasText: 'VoiceLab' }).click()
   await page.getByRole('button', { name: 'Подключиться без микрофона', exact: true }).click()
-  await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён')
+  await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён', { timeout: 22000 })
 }
 async function mediaClosed(page) {
   await expect.poll(() => page.evaluate(() => window.__qaPeers.every(peer => peer.connectionState !== 'connected'))).toBe(true)

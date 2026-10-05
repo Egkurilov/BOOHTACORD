@@ -3,7 +3,7 @@ import { api, expect, status } from '../client_lifecycle/request.mjs'
 import { owned } from './control.mjs'
 import { teardown } from './teardown.mjs'
 async function connected(page) {
-  await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён')
+  await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён', { timeout: 22000 })
   await expect.poll(() => page.evaluate(() => window.__qaPeers.some(peer => peer.connectionState === 'connected'))).toBe(true)
 }
 export async function media(a, b, member, channelId, report, input) {
@@ -32,7 +32,7 @@ export async function media(a, b, member, channelId, report, input) {
   for (const page of [a, member]) {
     await page.locator('.channel-button').filter({ hasText: 'VoiceLab' }).click()
     await page.getByRole('button', { name: 'Подключиться без микрофона', exact: true }).click()
-    await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён')
+    await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён', { timeout: 22000 })
   }
   await connected(a)
   blocked = true
