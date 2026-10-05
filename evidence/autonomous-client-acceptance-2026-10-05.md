@@ -42,12 +42,12 @@ and API binaries were prepared; this is fixture duration, not a product p95 clai
 ## Defect and validation
 
 The auth brand already used the public guild profile, but its introduction still
-contained hardcoded `Моя гильдия`. Two real-component SSR regressions failed,
+contained hardcoded `РњРѕСЏ РіРёР»СЊРґРёСЏ`. Two real-component SSR regressions failed,
 then passed after binding the introduction to the same reactive public name.
 Vue escapes `<`, `>` and `&`; authentication and registration behavior is unchanged.
 
 - Web: 1102 tests / 344 files PASS; vue-tsc and Vite build PASS.
-- Fixture safety/correlation/privacy: seven regressions PASS.
+- Fixture safety/correlation/privacy: nine regressions PASS.
 - Native Python: 128 tests successful, including one existing Windows platform skip.
 - Contracts, 39-requirement traceability, imports, workflow and links PASS.
 - Fixture setup failures were repaired rather than retried to hide failures:
@@ -55,6 +55,10 @@ Vue escapes `<`, `>` and `&`; authentication and registration behavior is unchan
   host browser lacked shared libraries. Browser dependencies were installed in
   an owned container. Cookie and route expectations were aligned with the exact
   existing handler/tests (`Lax`, `POST /api/v1/auth/register`), preserving contracts.
+
+Sequential CI first exposed a fixture port probe treating closed TCP TIME_WAIT
+as a live listener. The probe now uses SO_REUSEADDR; two regressions check reuse
+ordering and rejection of an active listener. Assertions were not relaxed.
 
 ## Repeat autonomously
 
@@ -80,7 +84,7 @@ verified before removal. No production mutation or microphone is needed.
 | #63 | Real cookie, ACL, UI and immediate WebSocket revoke PASS | Connected media/old SDK credential device path |
 | #100 | Real Web rename, concurrency, auth/header and persistence PASS | Android/Windows Flutter actual screenshot/device parity |
 | #101 | Real two-client welcome, uniqueness and persistence PASS | Android/Windows realtime/device parity and complete original matrix |
-| #102 | Real isolated API → Tempo correlation and bounded counters PASS | Production Grafana dashboard/smoke acceptance |
+| #102 | Real isolated API в†’ Tempo correlation and bounded counters PASS | Production Grafana dashboard/smoke acceptance |
 | #95 | Existing isolated UDP/TCP failure/restoration matrix PASS | Actual home/hotspot; applicable media/revocation/capacity gates |
 | #105/#107 | Existing shared native DSP, model/widget and synthetic media checks | Physical pre-publish gain and audible restored participant level |
 | #110 | Existing actual synthetic LiveKit RTP/DTX/RED profile measurements | Same-source Web/Windows speech quality and blind acoustic A/B |

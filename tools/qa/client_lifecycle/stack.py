@@ -1,13 +1,12 @@
 """Own one isolated database, Tempo, proxy and API process."""
 import os
 import secrets
-import socket
 import ssl
 import subprocess
 import time
 import urllib.request
 from pathlib import Path
-from .services import LABEL, TEMPO, caddy_config, local_docker, remove_owned, run
+from .services import LABEL, TEMPO, caddy_config, local_docker, ports_available, remove_owned, run
 
 
 def ready(url):
@@ -40,9 +39,7 @@ class Stack:
 
     def start(self):
         local_docker()
-        for port in (4810, 4811, 4812, 4820, 5488):
-            with socket.socket() as listener:
-                listener.bind(('127.0.0.1', port))
+        ports_available((4810, 4811, 4812, 4820, 5488))
         run('docker', 'network', 'create', '--label', LABEL+'='+self.owner,
             self.owner, stdout=subprocess.DEVNULL)
         self.resources.append(('network', self.owner))

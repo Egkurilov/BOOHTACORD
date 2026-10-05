@@ -1,10 +1,26 @@
 """Safety boundaries for an autonomous disposable acceptance stack."""
 import unittest
+import socket
 from unittest.mock import patch
-from .services import local_origin, local_docker, remove_owned
+from .services import local_origin, local_docker, remove_owned, ports_available
 
 
 class SafetyTests(unittest.TestCase):
+    def test_port_probe_reuses_closed_connections_before_binding(self):
+        with patch('tools.qa.client_lifecycle.services.socket.socket') as factory:
+            listener = factory.return_value.__enter__.return_value
+            ports_available((4810,))
+            self.assertEqual(listener.mock_calls[:2], [
+                unittest.mock.call.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1),
+                unittest.mock.call.bind(('127.0.0.1', 4810))])
+
+    def test_port_probe_rejects_active_listener(self):
+        with socket.socket() as server:
+            server.bind(('127.0.0.1', 0))
+            server.listen()
+            with self.assertRaises(OSError):
+                ports_available((server.getsockname()[1],))
+
     def test_origin_rejects_remote_and_plaintext(self):
         for value in ('https://v.bootybay.ru', 'http://localhost:4810',
                       'https://localhost.evil:4810', 'https://user@localhost:4810'):

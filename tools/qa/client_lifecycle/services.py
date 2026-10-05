@@ -1,5 +1,6 @@
 """Local-only disposable service ownership and configuration."""
 import os
+import socket
 import subprocess
 from urllib.parse import urlsplit
 
@@ -12,6 +13,14 @@ def run(*args, **options):
 
 def output(*args):
     return subprocess.check_output(args, text=True).strip()
+
+
+def ports_available(ports):
+    for port in ports:
+        with socket.socket() as listener:
+            # TIME_WAIT from the previous owned run is not an active service.
+            listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            listener.bind(('127.0.0.1', port))
 
 
 def local_origin(value):
