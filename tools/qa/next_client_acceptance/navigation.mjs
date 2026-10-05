@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { api, channel, expect, select, sql, status } from './fixture.mjs'
+import { cacheAcl } from './cache_acl.mjs'
 async function position(page) {
   return page.locator('.message-history-wrap .message-list').evaluate(list => {
     const top=list.getBoundingClientRect().top
@@ -13,8 +14,9 @@ export async function navigation(page, fixture, input, report) {
   await select(page,'NextVoice')
   await page.getByRole('button',{name:'Подключиться без микрофона',exact:true}).click()
   await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён',{timeout:25000})
-  const lease=()=>sql(`SELECT id FROM voice_leases WHERE account_id='${fixture.admin}' AND revoked_at IS NULL`)
+  const lease=()=>sql(`SELECT id FROM voice_leases WHERE user_id='${fixture.admin}' AND revoked_at IS NULL`)
   const originalLease=lease(); assert.ok(originalLease)
+  await cacheAcl(page,fixture,input,report)
   const ids=sql(`SELECT id FROM messages WHERE channel_id='${fixture.a}' ORDER BY created_at,id LIMIT 1`).split('\n')
   const tail=Array.from({length:50},(_,i)=>`('${randomUUID()}','${fixture.a}','${fixture.member}','${randomUUID()}','QA unseen tail',TIMESTAMPTZ '2026-01-01' + INTERVAL '${200+i} seconds')`)
   sql(`INSERT INTO messages(id,channel_id,author_id,client_message_id,body,created_at) VALUES ${tail.join(',')}`)
