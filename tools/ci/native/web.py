@@ -17,6 +17,7 @@ def main():
     run("npm", "run", "test:member-popover", cwd=client("web"))
     run("npm", "run", "test:password-generation", cwd=client("web"))
     run("npm", "run", "test:voice-shortcuts", cwd=client("web"))
+    run("npm", "run", "test:voice-disconnect-notice", cwd=client("web"))
     run("npm", "run", "test:audio:quality", cwd=client("web"))
     with local_sfu():
         run("npm", "run", "test:audio:browser", cwd=client("web"))

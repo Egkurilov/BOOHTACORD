@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { VoiceDisconnectNotice } from './model'
-defineProps<{ notice: VoiceDisconnectNotice; announce?: boolean }>()
+withDefaults(defineProps<{ notice: VoiceDisconnectNotice; announce?: boolean }>(), { announce: true })
 </script>
 <template>
   <div class="state state-error" :role="announce === false ? undefined : 'status'" :aria-live="announce === false ? undefined : 'polite'" aria-atomic="true" data-testid="voice-disconnect-notice">
