@@ -1,6 +1,7 @@
 """Drop transport only inside the uniquely owned SFU network namespace."""
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -26,11 +27,31 @@ def restrict(name, profile):
         endpoint = os.environ['DOCKER_HOST']
     if endpoint != 'unix:///var/run/docker.sock':
         raise RuntimeError('Transport isolation requires the local rootful Docker socket')
+    if os.geteuid() != 0:
+        subprocess.run(['sudo', '-n', sys.executable, '-m', 'tools.network.restricted.restrict', name, profile], check=True)
+        return
+    label = subprocess.check_output(['docker', 'inspect', '--format',
+                                     '{{ index .Config.Labels "boohtacord.packet" }}', name], text=True).strip()
+    if label != 'restricted-networks':
+        raise RuntimeError('Refusing an unowned SFU container')
     pid = int(subprocess.check_output(['docker', 'inspect', '--format', '{{.State.Pid}}', name], text=True))
-    if pid <= 1 or Path(f'/proc/{pid}/ns/net').stat().st_ino == Path('/proc/self/ns/net').stat().st_ino:
+    if pid <= 1:
         raise RuntimeError('Refusing to modify the host network namespace')
-    privilege = [] if os.geteuid() == 0 else ['sudo', '-n']
-    for rule in filters:
-        subprocess.run([*privilege, 'nsenter', '--target', str(pid), '--net',
-                        'iptables', '-I', 'INPUT', *rule], check=True)
+    descriptor = os.open(f'/proc/{pid}/ns/net', os.O_RDONLY)
+    try:
+        if os.fstat(descriptor).st_ino == Path('/proc/self/ns/net').stat().st_ino:
+            raise RuntimeError('Refusing to modify the host network namespace')
+        # Pin the checked namespace across PID reuse. The parent stays alive
+        # while nsenter opens this FD via procfs; sudo need not inherit the FD.
+        namespace = f'/proc/{os.getpid()}/fd/{descriptor}'
+        for rule in filters:
+            subprocess.run(['nsenter', '--net=' + namespace, 'iptables', '-I', 'INPUT', *rule], check=True)
+    finally:
+        os.close(descriptor)
     # Rules disappear with this container's namespace; no host rule to restore.
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 3 or sys.argv[2] not in ('udp-blocked', 'signal-only'):
+        raise SystemExit('Expected owned SFU name and restricted profile')
+    restrict(sys.argv[1], sys.argv[2])
