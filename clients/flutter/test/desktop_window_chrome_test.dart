@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -126,6 +127,44 @@ void main() {
       tester.getTopLeft(find.byKey(const ValueKey('desktop-window-brand'))).dx,
       greaterThanOrEqualTo(72),
     );
+  });
+
+  testWidgets('macOS starts native dragging after a mouse pan is recognized', (
+    tester,
+  ) async {
+    final actions = _FakeDesktopWindowActions();
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1000, 700);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DesktopWindowChrome(
+          platform: TargetPlatform.macOS,
+          actions: actions,
+          child: const SizedBox.shrink(),
+        ),
+      ),
+    );
+
+    final dragRegion = find.byKey(const ValueKey('desktop-window-drag-region'));
+    final gesture = await tester.startGesture(
+      tester.getCenter(dragRegion),
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pump();
+    expect(actions.dragCount, 0);
+
+    await gesture.moveBy(const Offset(20, 0));
+    await tester.pump();
+    expect(actions.dragCount, 1);
+
+    await gesture.moveBy(const Offset(20, 0));
+    await tester.pump();
+    expect(actions.dragCount, 1);
+    await gesture.up();
+    await tester.pumpAndSettle();
   });
 
   testWidgets('mobile platforms do not get desktop title chrome', (
