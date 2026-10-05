@@ -20,6 +20,10 @@ Existing volume/history are retained; no backup or snapshot flow is added.
 Preflight: run the native topology check and confirm exactly one live API for
 the deployment. The process lock is the final startup guard, not permission to
 skip release headroom, migration compatibility or media-drain checks.
+The signed installer and rollback path inspect expanded Compose JSON and the
+running API count before invoking the guarded rollout. Two replicas or a
+start-first order fail before mutation. Previously signed Compose files retain
+their native one-replica/stop-first defaults; no old signed file is rewritten.
 
 `go test ./internal/storage/acquire_writer_lock` exercises same-process exclusion,
 independent-process exclusion, crash release and owner handover. Integration QA

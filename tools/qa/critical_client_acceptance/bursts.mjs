@@ -22,7 +22,7 @@ export async function bursts(a, b, channelId, report, directory, baseline = fals
     result.forEach(row => status(row, 201))
     oldest ??= result[0].body
     await expect(a.getByRole('log')).toContainText(`Synthetic burst ${size} item ${size-1}`)
-    await a.waitForTimeout(500)
+    await expect.poll(() => counters.every(counter => counter.quiet()), { timeout: 10000 }).toBe(true)
     const [active, hiddenResult] = counters.map(counter => counter.stop())
     assert.equal(hiddenResult.history, 0)
     assert.ok(active.history >= 1 && (baseline || active.history <= Math.max(2, size/2)), 'Unbounded protected GET burst')

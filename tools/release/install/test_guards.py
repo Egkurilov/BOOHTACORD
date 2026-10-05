@@ -1,8 +1,19 @@
 import unittest
-from .guards import disk_budget, installed_digests
+from .guards import disk_budget, installed_digests, writer_topology
 
 
 class InstallGuardsTests(unittest.TestCase):
+    def test_writer_preflight_rejects_multiple_and_start_first(self):
+        writer_topology({'services': {'api': {}}}, '')
+        supported = {'replicas': 1, 'update_config': {'order': 'stop-first'}, 'rollback_config': {'order': 'stop-first'}}
+        writer_topology({'services': {'api': {'deploy': supported}}}, 'one')
+        for deployment, running in (({**supported, 'replicas': 2}, 'one'),
+                                    ({**supported, 'update_config': {'order': 'start-first'}}, 'one'),
+                                    ({**supported, 'rollback_config': {'order': 'start-first'}}, 'one'),
+                                    (supported, 'one\ntwo')):
+            with self.assertRaises(ValueError):
+                writer_topology({'services': {'api': {'deploy': deployment}}}, running)
+
     def test_disk_budget_accounts_for_payload_and_protected_space(self):
         disk_budget(10_000_000_000, 100_000_000)
         for available, payload in ((1_000_000, 100_000_000), (5_000_000_000, 2_000_000_000), (10_000_000_000, 0)):
