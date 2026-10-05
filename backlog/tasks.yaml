@@ -127,7 +127,7 @@ tasks:
     title: Flutter frameless desktop window chrome and branded title bar
     requirements: [REQ-UI-01, REQ-UI-02, REQ-PLATFORM-01]
     depends_on: [FV2-001, T-050, T-051]
-    evidence: [flutter-desktop-window-chrome-widget-tests, macos-debug-build, windows-debug-build, desktop-window-visual-acceptance]
+    evidence: [flutter-desktop-window-chrome-widget-tests, macos-debug-build, windows-debug-build, desktop-window-visual-acceptance, QA-292]
   - id: FV2-019
     title: Flutter Design V2 search panel and result presentation parity
     requirements: [REQ-UI-01, REQ-UI-02, REQ-SEARCH-01]
@@ -277,7 +277,7 @@ tasks:
     title: Flutter and web screen thumbnails live in the screen-sharing rail
     requirements: [REQ-UI-01, REQ-VOICE-01, REQ-SCREEN-01, REQ-SCREEN-03]
     depends_on: [FV2-009, T-030, T-051]
-    evidence: [flutter-screen-rail-thumbnail-tests, web-voice-screen-rail-tests, web-build, flutter-full-suite, QA-288]
+    evidence: [flutter-screen-rail-thumbnail-tests, web-voice-screen-rail-tests, web-build, flutter-full-suite, QA-288, QA-291]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

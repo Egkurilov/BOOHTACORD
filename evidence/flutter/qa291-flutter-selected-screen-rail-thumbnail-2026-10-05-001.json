@@ -1,0 +1,80 @@
+{
+  "id": "QA-291",
+  "date": "2026-10-05",
+  "task": "FV2-035 / FV2-009 — selected remote screen thumbnail in the Flutter sharing rail",
+  "source_revision": "a326f4f812ff (working tree changes)",
+  "working_tree_changes": true,
+  "summary": "A paired screen-share run showed that the Flutter main viewer rendered a remote stream while its selected screen-sharing rail card still showed the publisher avatar. The cause was that temporary thumbnail capture intentionally skips the currently selected participant, while the persistent TrackSubscribed path did not start a replacement capture. The selected remote screen now captures a bounded thumbnail after subscription; temporary preview subscriptions are excluded to avoid duplicate capture.",
+  "checks": [
+    {
+      "name": "Flutter selected-screen capture policy regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/screen_preview_capture_policy_test.dart test/screen_thumbnail_pipeline_test.dart test/voice_screen_selection_rail_test.dart",
+      "result": "PASS",
+      "passed": 21,
+      "observation": "The new policy test first failed because the selected-subscription policy did not exist. After implementation it passes for selected remote screen video and rejects audio, non-video, unselected and other-participant subscriptions. Existing capture-pipeline and rail rendering/geometry tests also pass."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 637
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze lib/src/features/voice/screen_preview/capture_policy.dart lib/src/features/voice/room_events/remote_tracks.dart test/screen_preview_capture_policy_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android arm64 release build",
+      "command": "cd clients/flutter && flutter build apk --release --split-per-abi --target-platform android-arm64",
+      "result": "PASS",
+      "artifact": "clients/flutter/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk",
+      "size_bytes": 19836527,
+      "observation": "Release APK uses the existing local upload signing key; the artifact remains a build output and was not added to Git."
+    },
+    {
+      "name": "Android emulator in-place installation and launch",
+      "command": "adb install -r app-arm64-v8a-release.apk; adb shell am start -n ru.boohtacord.app/.MainActivity",
+      "result": "PASS",
+      "observation": "Signed APK installed over the existing 1.0.34+67 / versionCode 2067 app without uninstalling it or clearing data; BOOHTACORD opened to its existing workspace session. A live paired screen-rail thumbnail was not exercised."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "observation": "Built BOOHTACORD.app. The running host was locked, so the app was not restarted or visually reloaded."
+    },
+    {
+      "name": "Selected remote thumbnail paired visual retest before hot reload",
+      "result": "NOT_CONFIRMED",
+      "observation": "The already-running macOS Debug client displayed the moving Android stream in its main viewer, but the selected rail card still rendered the publisher avatar. The UI process was running build 1.0.29+43, so this screenshot did not exercise the latest working-tree fix."
+    },
+    {
+      "name": "macOS hot reload and in-place session recovery",
+      "result": "BLOCKED",
+      "observation": "DevTools connected to the existing macOS Debug app and reported Hot reload completed. The app then returned to startup; after its bounded wait it showed `Не удалось проверить сессию`. The visible `Повторить подключение` action was tried once and reached the same timeout. No Keychain prompt appeared and no password was entered. A post-fix paired thumbnail screenshot could not be obtained until the existing Mac session is restored."
+    },
+    {
+      "name": "Android local thumbnail and projection cleanup",
+      "result": "PASS",
+      "observation": "While the Android sender was foregrounded, its own screen-sharing rail showed a captured local thumbnail. The Android test share was stopped with the in-app control and `adb shell dumpsys media_projection` reported `null`; the client remained in SHARE_TEST with its microphone unavailable/disabled. This does not verify the remote Mac thumbnail."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core (pwsh) is not installed on this host."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "Selected remote thumbnail rendering after this fix still needs a paired visual runtime check after the existing macOS session recovers. The in-place Retry did not recover it; no login credential or Keychain password was entered.",
+    "Windows build and runtime acceptance were not part of this focused Flutter Mac/Android follow-up."
+  ],
+  "status": "SELECTED_REMOTE_THUMBNAIL_FIX_IMPLEMENTED; FLUTTER_TESTS_ANALYZER_ANDROID_RELEASE_AND_MACOS_DEBUG_BUILD_PASS; ANDROID_PROJECTION_STOPPED; POST_FIX_REMOTE_MAC_THUMBNAIL_NOT_CONFIRMED_MAC_SESSION_CHECK_TIMEOUT"
+}

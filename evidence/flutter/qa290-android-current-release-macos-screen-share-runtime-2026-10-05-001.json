@@ -1,0 +1,60 @@
+{
+  "id": "QA-290",
+  "date": "2026-10-05",
+  "task": "FE-59 / FE-52 / FV2-003 — current-release Android-to-macOS screen-share playback and receiver diagnostics",
+  "source_revision": "a326f4f812ff",
+  "runtime": {
+    "android": "Android Emulator API 35, signed release 1.0.34+67, versionCode 2067",
+    "macos": "Existing running BOOHTACORD app; build/version not captured; app was not restarted",
+    "channel": "SHARE_TEST",
+    "capture_source": "Android MediaProjection Entire screen; switched to built-in Clock Stopwatch after capture began",
+    "profile": "720p / 15 FPS",
+    "microphones": "Android microphone unavailable and disabled; macOS microphone muted"
+  },
+  "checks": [
+    {
+      "name": "Current-release Android publication discovery on macOS",
+      "result": "PASS",
+      "observation": "The running macOS client reported one active screen publication from the Android participant. Selecting the publication opened the viewer and the receiver obtained video frames."
+    },
+    {
+      "name": "Remote full-display frame and update",
+      "result": "PASS",
+      "observation": "The complete portrait Android screen rendered on macOS without visible cropping. After switching from the app's recursive view to the built-in Clock Stopwatch, the receiver showed the stopwatch and its elapsed value advanced."
+    },
+    {
+      "name": "Receiver diagnostics at selected 720p / 15 FPS profile",
+      "result": "OBSERVED_BELOW_PROFILE",
+      "observation": "The initial recursive frame sampled 576x1280 at 4 FPS, 3.5 decoded FPS, 58.4 kbit/s, 0% loss and 183 ms jitter. On the changing Clock Stopwatch frame, the latest sample was 384x853 at 6 FPS, 6.5 decoded FPS, 124 kbit/s, 0% loss and 49 ms jitter. Receiver RTT was unavailable; the source correctly reported no audio track. The viewer displayed the measurements and updated its last-measured time."
+    },
+    {
+      "name": "MediaProjection and session cleanup",
+      "result": "PASS",
+      "observation": "Stopping screen share cleared Android MediaProjection; the macOS viewer closed and the publication disappeared. The test macOS voice session was disconnected. Android was returned to BOOHTACORD in its pre-existing SHARE_TEST voice session, with the microphone still disabled and screen share stopped."
+    },
+    {
+      "name": "Focused Flutter receiver and metrics tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/screen_receiver_diagnostics_test.dart test/screen_receiver_report_test.dart test/screen_metrics_report_api_test.dart test/screen_share_metrics_test.dart",
+      "result": "PASS",
+      "passed": 26
+    },
+    {
+      "name": "Go screen-metrics recording and validation tests",
+      "command": "cd backend && GOCACHE=/tmp/boohtacord-go-cache go test ./internal/observability/http_metrics",
+      "result": "PASS"
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core (pwsh) is not installed on this host."
+    }
+  ],
+  "limitations": [
+    "The emulator's receiver rate remained below the selected 15 FPS profile; this does not establish a physical-device performance limit or its cause.",
+    "Android sender counters were not sampled concurrently while Clock was foregrounded, so sender/receiver telemetry correlation remains open.",
+    "The physical Pixel path, browser receiver, browser-published stream switch, and the running macOS build identity were not verified.",
+    "The room roster showed up to three participants during the run; the screen was shared only for this short test and microphones remained disabled."
+  ],
+  "status": "PASS_CURRENT_RELEASE_FULL_DISPLAY_PLAYBACK_AND_RECEIVER_RENDER; 720P15_RATE_BELOW_PROFILE; SENDER_CORRELATION_AND_DEVICE_ACCEPTANCE_OPEN"
+}

@@ -24,11 +24,11 @@ class BoohtacordApp extends StatelessWidget {
     builder: (context, _) => UpdateScope(
       controller: updates,
       child: MaterialApp(
-        title: state.guildProfile.name,
+        title: 'BOOHTACORD',
         debugShowCheckedModeBanner: false,
         theme: guildTheme(),
         home: DesktopWindowChrome(
-          title: state.guildProfile.name,
+          title: 'BOOHTACORD',
           child: AnimatedBuilder(
             animation: Listenable.merge([state, updates]),
             builder: (context, _) {

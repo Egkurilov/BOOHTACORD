@@ -171,6 +171,17 @@ Follow-up: the macOS native green traffic-light zoom action is now verified in
 both directions on the live window: it expands to the display-sized layout and
 restores the original 1440×900 size without restarting the app — [QA-263](../evidence/flutter/qa263-flutter-macos-native-titlebar-2026-10-04-001.json).
 
+On 2026-10-05, a test-first regression found that the root app passed the
+server's guild name to both `MaterialApp.title` and `DesktopWindowChrome`, so a
+guild named “Bootybay” replaced the requested BOOHTACORD desktop brand. Both
+desktop title sources now remain `BOOHTACORD` regardless of guild metadata. The
+regression was observed red then green; all six focused desktop-chrome tests,
+changed-file analysis and a macOS Debug build pass —
+[QA-292](../evidence/flutter/qa292-flutter-desktop-brand-title-2026-10-05-001.json).
+The existing Mac app is currently on its startup session-error screen, so no
+post-fix live screenshot or app restart was attempted. Native macOS drag and
+Windows visual acceptance remain open.
+
 macOS remote-stream discovery now distinguishes an active publication from a
 subscribed video track. With manual subscriptions, a live publication may have
 no attached track after thumbnail sampling; it must still expose the Watch
@@ -1241,6 +1252,35 @@ The latest Pixel 7 app-only tests are recorded in [QA-197](../evidence/flutter/q
 On Android Emulator API 35, release-signed `1.0.23+2036` additionally verified the app-only source-hidden state end to end: Android's MediaProjection visibility callback reached the matching Flutter track, and switching from Clock back to BOOHTACORD replaced the endless first-frame spinner with an explicit message that Android hid the selected app. Stop/leave cleared MediaProjection. This improves failure feedback but does not prove pixel rendering or remote playback; physical Pixel and paired receiver acceptance remain open — [QA-225](../evidence/flutter/qa225-android-app-only-hidden-source-feedback-2026-10-02-001.json).
 
 On 2026-10-03, a paired Android Emulator→macOS run in `SHARE_TEST` showed the selected portrait app frame end-to-end: macOS rendered all edges with letterboxing, and its receiver sample reported 576×1280 at 15 FPS, 15 decoded FPS, 151 kbit/s, 0% loss and 9 ms jitter. Returning BOOHTACORD showed Android's explicit app-hidden state; macOS retained the last decoded frame while receive/decode counters dropped to zero. Stopping cleared MediaProjection and removed the publication. Android was still on installed `1.0.25+2039` while the macOS Debug client was `1.0.28+42`; no simultaneous Android sender sample, browser receiver/source or physical Pixel was included, so current-source counter correlation remains open — [QA-234](../evidence/flutter/qa234-android-emulator-macos-live-screen-share-2026-10-03-001.json).
+
+On 2026-10-05, the current signed Android `1.0.34+67` full-display publication was
+discovered and rendered by the already-running macOS client. The full portrait
+Clock Stopwatch frame was visible without cropping and its elapsed value
+advanced. With the selected `720p/15 FPS` profile, the changing-frame receiver
+sample reached 384×853, 6.5 decoded FPS, 124 kbit/s, 0% loss and 49 ms jitter;
+these emulator measurements are below the selected rate and do not prove a
+hardware performance ceiling. Screen share stop cleared MediaProjection and
+removed the remote publication. Sender/receiver correlation, browser/physical
+Pixel acceptance and profile-rate investigation remain open —
+[QA-290](../evidence/flutter/qa290-android-current-release-macos-screen-share-runtime-2026-10-05-001.json).
+
+During the same paired run, the Flutter main viewer showed the moving remote
+Clock frame while the selected screen-rail card still showed the publisher
+avatar. The temporary preview path correctly skips a participant already
+selected for persistent playback, but the persistent `TrackSubscribed` path had
+no thumbnail capture. It now captures a bounded thumbnail for the selected
+remote video while avoiding duplicate work from a temporary preview; selecting
+an already-subscribed track also starts capture to close the cancellation race.
+Policy, pipeline and rail tests, all 637 Flutter tests, changed-file analysis, a
+signed Android arm64 Release APK and macOS Debug build pass. The release APK was
+installed in place on API 35 without clearing app data. A later paired retest
+initially still showed the avatar on the already-running macOS build. DevTools
+reported hot reload completed, but the Mac app returned to startup and then
+`Не удалось проверить сессию`; its in-place retry timed out the same way, with
+no Keychain prompt. The Android test projection was stopped and verified
+cleared (`MediaProjection=null`). The post-fix remote Mac rail result remains
+unverified until the existing Mac session is restored —
+[QA-291](../evidence/flutter/qa291-flutter-selected-screen-rail-thumbnail-2026-10-05-001.json).
 
 ## Client update awareness
 

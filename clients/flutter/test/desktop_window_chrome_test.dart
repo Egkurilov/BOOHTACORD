@@ -2,10 +2,33 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:boohtacord_desktop/src/app.dart';
+import 'package:boohtacord_desktop/src/app_state.dart';
+import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:boohtacord_desktop/src/widgets/desktop_window_chrome.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('desktop title bar keeps product branding across guild names', (
+    tester,
+  ) async {
+    final state = AppState(ApiClient());
+    addTearDown(state.dispose);
+    state.guildProfile.name = 'Bootybay';
+
+    await tester.pumpWidget(BoohtacordApp(state: state));
+    await tester.pump();
+
+    final chrome = tester.widget<DesktopWindowChrome>(
+      find.byType(DesktopWindowChrome),
+    );
+    expect(chrome.title, 'BOOHTACORD');
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).title,
+      'BOOHTACORD',
+    );
+  });
 
   testWidgets('Windows title bar brands the app and controls the window', (
     tester,

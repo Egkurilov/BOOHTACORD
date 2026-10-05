@@ -5,6 +5,7 @@ import 'package:livekit_client/livekit_client.dart'
 
 import '../../../services/screen_thumbnail.dart';
 import '../lifecycle/controller.dart';
+import '../screen_preview/capture_policy.dart';
 import 'audio_publication.dart';
 
 extension VoiceScreenViewerSelection on VoiceController {
@@ -57,6 +58,24 @@ extension VoiceScreenViewerSelection on VoiceController {
     for (final publication in participant.videoTrackPublications.where(
       (item) => item.source == TrackSource.screenShareVideo,
     )) {
+      final subscribedTrack = publication.track;
+      if (subscribedTrack is RemoteVideoTrack) {
+        unawaited(
+          captureSelectedRemoteScreenThumbnail(
+            temporaryPreview: false,
+            capture: () => captureRemoteThumbnail(
+              room,
+              participant,
+              publication,
+              subscribedTrack,
+            ),
+            source: publication.source,
+            isRemoteVideoTrack: true,
+            participantIdentity: participant.identity,
+            selectedIdentity: selectedRemoteScreenViewerIdentity,
+          ),
+        );
+      }
       unawaited(setRemoteTrackSubscription(publication, true));
     }
     final audioPublication = screenShareAudioPublication(participant);
