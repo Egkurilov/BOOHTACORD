@@ -1,0 +1,94 @@
+{
+  "id": "QA-302",
+  "date": "2026-10-05",
+  "task": "FV2-043 — Flutter audio device switching feedback and recovery",
+  "source_revision": "b823698a",
+  "working_tree_changes": true,
+  "summary": "Audio input/output selectors now show a local busy state with a live-region announcement while switching, ignore repeated selection requests, and clear the state after success, failure, or cancellation. Existing selection rollback and LiveKit routing behavior are preserved.",
+  "checks": [
+    {
+      "name": "Delayed microphone switch and duplicate-selection regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart --plain-name 'active input switch exposes busy state and ignores duplicate changes'",
+      "result": "PASS"
+    },
+    {
+      "name": "Delayed speaker switch and duplicate-selection regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart --plain-name 'output switch exposes busy state and ignores duplicate changes'",
+      "result": "PASS"
+    },
+    {
+      "name": "Speaker failure restores selection and clears busy state",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart --plain-name 'failed output switch restores selection and clears busy state'",
+      "result": "PASS"
+    },
+    {
+      "name": "Audio selection and workspace screen suites",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "passed": 81,
+      "observation": "Includes desktop 1440x900 and compact 390x844 busy-state layout, disabled selectors, live-region semantics, duplicate selection suppression, and success/failure recovery."
+    },
+    {
+      "name": "Changed-file analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/features/audio/devices/state.dart lib/src/features/audio/devices/selection.dart lib/src/app/media_access/audio_devices.dart lib/src/screens/workspace_screen.dart test/audio_devices/input_selection_probe_test.dart test/workspace_screen_test.dart",
+      "result": "PASS_WITH_PREEXISTING_INFO",
+      "observation": "No diagnostics in the changed sections; analyzer reports two existing curly_braces_in_flow_control_structures infos at workspace_screen.dart:2911 and :2917, outside this change."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS"
+    },
+    {
+      "name": "Android ARM64 Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub --target-platform android-arm64",
+      "result": "PASS"
+    },
+    {
+      "name": "macOS running-client hot reload",
+      "result": "PARTIAL",
+      "observation": "Attached to the existing VM Service without restarting the app; the hot-reload command reported 0 libraries reloaded, so the changed Dart code was not confirmed live. The app was left running and no audio route was changed."
+    },
+    {
+      "name": "Fresh macOS Debug restart and audio settings visual smoke",
+      "command": "flutter run --no-pub -d macos",
+      "result": "PASS",
+      "observation": "A fresh Debug build launched from the current source. The authenticated session restored without a Keychain prompt and the audio settings page rendered. After the user connected to and disconnected from voice, the menus exposed alternate routes. Selecting HyperX Quadcast as the microphone and then restoring System selection updated the visible value without enabling the mic test. Selecting Mac mini speakers as output and restoring System selection also updated the visible value; no sound was played."
+    },
+    {
+      "name": "Transient switch progress state",
+      "result": "PASS_WITH_TEST_COVERAGE",
+      "observation": "Native route changes completed before a live screenshot captured the short busy state. Delayed-channel widget tests keep both switches pending and verify the visible live-region status and disabled selector; recovery tests verify success and rollback."
+    },
+    {
+      "name": "Android emulator device availability",
+      "command": "adb devices -l",
+      "result": "PASS",
+      "observation": "emulator-5554 is available as an ARM64 Pixel API 35 emulator. No APK was installed and no audio route was changed."
+    },
+    {
+      "name": "Native audio-route runtime smoke",
+      "result": "NOT_RUN",
+      "observation": "No real or emulator audio device was selected during this UX task; widget tests cover the pending UI and controller state without altering the user's audio route."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/features/audio/devices/state.dart",
+      "clients/flutter/lib/src/features/audio/devices/selection.dart",
+      "clients/flutter/lib/src/app/media_access/audio_devices.dart",
+      "clients/flutter/lib/src/screens/workspace_screen.dart",
+      "clients/flutter/test/audio_devices/input_selection_probe_test.dart",
+      "clients/flutter/test/workspace_screen_test.dart",
+      "backlog/tasks.yaml",
+      "backlog/FRONTEND_TODO.md",
+      "evidence/flutter/qa302-flutter-audio-device-switch-feedback-2026-10-05-001.json"
+    ],
+    "web_or_api_changed": false,
+    "livekit_routing_changed": false
+  },
+  "limitations": [
+    "The transient busy indicator was not captured in a live screenshot because native device switches completed quickly; its pending-state appearance, semantics, selector lockout, and error recovery are covered by delayed widget/controller tests."
+  ],
+  "status": "PASS — implementation, 81 Flutter tests, macOS/Android Debug builds, fresh macOS launch, and native microphone/output selection plus restoration verified."
+}

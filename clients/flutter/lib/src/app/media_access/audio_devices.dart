@@ -7,9 +7,12 @@ import '../../features/audio/preferences/microphone.dart';
 import '../../features/audio/microphone_controls/native.dart';
 
 mixin AppAudioDevicesAccess on AppOwners {
-  MicrophoneSettings get microphoneSettings => audioDevices.preferences?.microphone ?? const MicrophoneSettings();
-  NativeMicrophoneControls get microphoneControlsRuntime => audioDevices.nativeMicrophone;
-  Future<void> setMicrophoneSettings(MicrophoneSettings next) => audioDevices.setMicrophoneSettings(next);
+  MicrophoneSettings get microphoneSettings =>
+      audioDevices.preferences?.microphone ?? const MicrophoneSettings();
+  NativeMicrophoneControls get microphoneControlsRuntime =>
+      audioDevices.nativeMicrophone;
+  Future<void> setMicrophoneSettings(MicrophoneSettings next) =>
+      audioDevices.setMicrophoneSettings(next);
   Future<void> updateMicrophoneSettings({
     double? vadThresholdDb,
     double? microphoneGainPercent,
@@ -55,6 +58,10 @@ mixin AppAudioDevicesAccess on AppOwners {
 
   set audioDeviceScanFailed(bool value) =>
       audioDevices.audioDeviceScanFailed = value;
+
+  bool get audioInputSwitching => audioDevices.audioInputSwitching;
+
+  bool get audioOutputSwitching => audioDevices.audioOutputSwitching;
 
   String? get audioSettingsError => audioDevices.audioSettingsError;
 

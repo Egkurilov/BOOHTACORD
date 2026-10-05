@@ -6786,6 +6786,7 @@ class _AudioSettingsScreen extends StatelessWidget {
                               label: 'Микрофон',
                               devices: state.audioInputDevices,
                               selectedId: state.selectedAudioInputId,
+                              switching: state.audioInputSwitching,
                               emptyLabel: state.audioDevicesLoading
                                   ? 'Ищем устройства…'
                                   : state.audioDeviceScanFailed
@@ -6798,6 +6799,7 @@ class _AudioSettingsScreen extends StatelessWidget {
                               label: 'Динамик',
                               devices: state.audioOutputDevices,
                               selectedId: state.selectedAudioOutputId,
+                              switching: state.audioOutputSwitching,
                               emptyLabel: state.audioDevicesLoading
                                   ? 'Ищем устройства…'
                                   : state.audioDeviceScanFailed
@@ -6813,6 +6815,7 @@ class _AudioSettingsScreen extends StatelessWidget {
                                     label: 'Микрофон',
                                     devices: state.audioInputDevices,
                                     selectedId: state.selectedAudioInputId,
+                                    switching: state.audioInputSwitching,
                                     emptyLabel: state.audioDevicesLoading
                                         ? 'Ищем устройства…'
                                         : state.audioDeviceScanFailed
@@ -6827,6 +6830,7 @@ class _AudioSettingsScreen extends StatelessWidget {
                                     label: 'Динамик',
                                     devices: state.audioOutputDevices,
                                     selectedId: state.selectedAudioOutputId,
+                                    switching: state.audioOutputSwitching,
                                     emptyLabel: state.audioDevicesLoading
                                         ? 'Ищем устройства…'
                                         : state.audioDeviceScanFailed
@@ -7225,6 +7229,7 @@ class _AudioDeviceDropdown extends StatelessWidget {
     required this.label,
     required this.devices,
     required this.selectedId,
+    required this.switching,
     required this.emptyLabel,
     required this.onChanged,
   });
@@ -7232,6 +7237,7 @@ class _AudioDeviceDropdown extends StatelessWidget {
   final String label;
   final List<MediaDevice> devices;
   final String? selectedId;
+  final bool switching;
   final String emptyLabel;
   final ValueChanged<String> onChanged;
 
@@ -7299,7 +7305,7 @@ class _AudioDeviceDropdown extends StatelessWidget {
                     ),
                   ),
               ],
-              onChanged: devices.isEmpty
+              onChanged: devices.isEmpty || switching
                   ? null
                   : (value) {
                       if (value != null) onChanged(value);
@@ -7307,6 +7313,27 @@ class _AudioDeviceDropdown extends StatelessWidget {
             ),
           ),
         ),
+        if (switching) ...[
+          const SizedBox(height: 8),
+          Semantics(
+            key: ValueKey('audio-device-switching-$label'),
+            liveRegion: true,
+            child: Row(
+              children: [
+                const SizedBox.square(
+                  dimension: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+                Text(switch (label) {
+                  'Микрофон' => 'Переключаем микрофон…',
+                  'Динамик' => 'Переключаем динамик…',
+                  _ => 'Переключаем $label…',
+                }, style: const TextStyle(color: GcColors.muted, fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }

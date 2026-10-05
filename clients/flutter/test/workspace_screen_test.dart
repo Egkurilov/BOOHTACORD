@@ -737,6 +737,75 @@ void main() {
     state.dispose();
   });
 
+  testWidgets(
+    'audio device switching shows status and disables each selector',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1440, 900);
+      addTearDown(tester.view.reset);
+      final state = AppState(
+        _PortraitApi(),
+        audioDeviceLoader: () async => const [
+          MediaDevice('input-1', 'USB microphone', 'audioinput', null),
+          MediaDevice('output-1', 'USB speakers', 'audiooutput', null),
+        ],
+      );
+      await state.initialize();
+      state.audioDevices.audioInputSwitching = true;
+      state.audioDevices.audioOutputSwitching = true;
+      state.toggleWorkspacePanel(WorkspacePanel.audio);
+      await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('Переключаем микрофон…'), findsOneWidget);
+      expect(find.text('Переключаем динамик…'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('audio-device-switching-Микрофон')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('audio-device-switching-Динамик')),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<Semantics>(
+              find.byKey(const ValueKey('audio-device-switching-Микрофон')),
+            )
+            .properties
+            .liveRegion,
+        isTrue,
+      );
+      final inputSelector = find.descendant(
+        of: find.byKey(const ValueKey('audio-device-control-Микрофон')),
+        matching: find.byType(DropdownButton<String>),
+      );
+      final outputSelector = find.descendant(
+        of: find.byKey(const ValueKey('audio-device-control-Динамик')),
+        matching: find.byType(DropdownButton<String>),
+      );
+      expect(
+        tester.widget<DropdownButton<String>>(inputSelector).onChanged,
+        isNull,
+      );
+      expect(
+        tester.widget<DropdownButton<String>>(outputSelector).onChanged,
+        isNull,
+      );
+      expect(find.byType(CircularProgressIndicator), findsNWidgets(2));
+
+      tester.view.physicalSize = const Size(390, 844);
+      await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Переключаем микрофон…'), findsOneWidget);
+      expect(find.text('Переключаем динамик…'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+    },
+  );
+
   testWidgets('shows named audio devices when the SDK has no default entry', (
     tester,
   ) async {

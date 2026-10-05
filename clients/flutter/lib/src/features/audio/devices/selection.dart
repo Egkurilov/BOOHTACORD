@@ -11,14 +11,35 @@ mixin AudioDeviceSelection on AudioDeviceState {
     final ticket = scope.capture();
     final settings = preferences;
     final targetRoom = room;
+    if (audioInputSwitching ||
+        !ticket.isActive ||
+        !identical(settings, preferences) ||
+        !identical(targetRoom, room) ||
+        isDisposed ||
+        !_containsDevice(audioInputDevices, deviceId)) {
+      return Future<void>.value();
+    }
+    final revision = ++audioInputSwitchRevision;
+    audioInputSwitching = true;
+    audioDeviceWarning = null;
+    audioSettingsError = null;
+    notifyListeners();
     return nativeNoise.run(() async {
-      if (!ticket.isActive ||
-          !identical(settings, preferences) ||
-          !identical(targetRoom, room) ||
-          isDisposed) {
-        return;
+      try {
+        if (!ticket.isActive ||
+            !identical(settings, preferences) ||
+            !identical(targetRoom, room) ||
+            isDisposed ||
+            revision != audioInputSwitchRevision) {
+          return;
+        }
+        await _selectAudioInput(deviceId);
+      } finally {
+        if (!isDisposed && revision == audioInputSwitchRevision) {
+          audioInputSwitching = false;
+          notifyListeners();
+        }
       }
-      await _selectAudioInput(deviceId);
     });
   }
 
@@ -130,7 +151,11 @@ mixin AudioDeviceSelection on AudioDeviceState {
         ticket.isActive &&
         identical(settings, preferences) &&
         identical(targetRoom, room);
-    if (!current()) return;
+    if (audioOutputSwitching ||
+        !current() ||
+        !_containsDevice(audioOutputDevices, deviceId)) {
+      return;
+    }
 
     final device = audioOutputDevices
         .where(
@@ -141,7 +166,11 @@ mixin AudioDeviceSelection on AudioDeviceState {
         .firstOrNull;
     if (device == null) return;
     final previous = selectedAudioOutputId;
+    final revision = ++audioOutputSwitchRevision;
+    audioOutputSwitching = true;
     audioDeviceWarning = null;
+    audioSettingsError = null;
+    notifyListeners();
     try {
       if (AndroidAudioDevices.isNativeOutputRoute(device.deviceId)) {
         if (room != null &&
@@ -173,7 +202,18 @@ mixin AudioDeviceSelection on AudioDeviceState {
       selectedAudioOutputId = previous;
       audioSettingsError =
           'Не удалось переключить динамик: ${cause.runtimeType}.';
+    } finally {
+      if (!isDisposed && revision == audioOutputSwitchRevision) {
+        audioOutputSwitching = false;
+        notifyListeners();
+      }
     }
-    if (current()) notifyListeners();
   }
+
+  bool _containsDevice(List<MediaDevice> devices, String deviceId) =>
+      devices.any(
+        (candidate) =>
+            candidate.deviceId == deviceId ||
+            (deviceId.isEmpty && candidate.deviceId == 'default'),
+      );
 }

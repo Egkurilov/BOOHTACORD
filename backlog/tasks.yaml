@@ -308,6 +308,41 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
     depends_on: [FV2-027, T-051]
     evidence: [flutter-audio-shortcut-card-geometry-tests, flutter-workspace-screen-suite, flutter-changed-file-analysis, macos-debug-build, macos-live-visual-acceptance, QA-301]
+  - id: FV2-043
+    title: Flutter audio device switching feedback and recovery
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
+    depends_on: [FV2-027, T-022, T-051]
+    evidence: [audio-device-switch-state-tests, audio-device-selection-tests, flutter-audio-settings-visual-acceptance, QA-302]
+  - id: FV2-044
+    title: Flutter progressive disclosure for audio processing and diagnostics
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
+    depends_on: [FV2-027, T-022]
+    evidence: [audio-processing-disclosure-tests, flutter-audio-settings-responsive-visual-acceptance, QA-303]
+  - id: FV2-045
+    title: Flutter truthful noise suppression runtime states
+    requirements: [REQ-UI-01, REQ-AUDIO-01]
+    depends_on: [FV2-027, T-022]
+    evidence: [noise-suppression-state-tests, native-noise-suppression-smoke, QA-304]
+  - id: FV2-046
+    title: Flutter microphone gain presentation while AGC is enabled
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
+    depends_on: [FV2-027, T-022]
+    evidence: [microphone-gain-agc-widget-tests, audio-settings-visual-acceptance, QA-305]
+  - id: FV2-047
+    title: Reset stale speaker test feedback after output device changes
+    requirements: [REQ-UI-01, REQ-AUDIO-01]
+    depends_on: [FV2-027, T-022]
+    evidence: [audio-device-check-output-change-tests, QA-306]
+  - id: FV2-048
+    title: Flutter audio settings responsive and accessibility acceptance
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
+    depends_on: [FV2-027, FV2-006, T-051]
+    evidence: [audio-settings-responsive-geometry-tests, audio-settings-semantics-tests, voiceover-talkback-acceptance, QA-307]
+  - id: FV2-049
+    title: Flutter desktop quick shortcut row density follow-up
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
+    depends_on: [FV2-042, FV2-027, T-051]
+    evidence: [audio-shortcut-desktop-mobile-geometry-tests, macos-android-visual-acceptance, QA-308]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

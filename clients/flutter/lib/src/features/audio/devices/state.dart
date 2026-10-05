@@ -45,16 +45,24 @@ abstract class AudioDeviceState extends ChangeNotifier {
       const AudioProcessingPreferences();
   bool audioDevicesLoading = false;
   bool audioDeviceScanFailed = false;
+  bool audioInputSwitching = false;
+  bool audioOutputSwitching = false;
+  int audioInputSwitchRevision = 0;
+  int audioOutputSwitchRevision = 0;
   String? audioSettingsError;
   String? audioDeviceWarning;
   void cancelOperations() {
     deviceRevision++;
+    audioInputSwitchRevision++;
+    audioOutputSwitchRevision++;
     nativeRecoveryRevision++;
     nativeNoise.cancel();
     unawaited(nativeMicrophone.clear());
     microphoneMutedIntent = true;
     captureNoiseOverride = null;
     audioDevicesLoading = false;
+    audioInputSwitching = false;
+    audioOutputSwitching = false;
     refreshQueued = false;
     refreshAfterCaptureRequested = false;
   }

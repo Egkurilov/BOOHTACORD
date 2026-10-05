@@ -84,11 +84,19 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final captures = <Object?>[];
   var captureFailures = 0;
+  Completer<void>? captureGate;
+  Completer<void>? captureStarted;
+  Completer<void>? outputGate;
+  Completer<void>? outputStarted;
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   setUp(() {
     captures.clear();
     captureFailures = 0;
+    captureGate = null;
+    captureStarted = null;
+    outputGate = null;
+    outputStarted = null;
     SharedPreferences.setMockInitialValues({});
     for (final channel in [
       'FlutterWebRTC.Event',
@@ -106,6 +114,10 @@ void main() {
         if (call.method == 'getSources') return {'sources': []};
         if (call.method == 'getUserMedia') {
           captures.add(call.arguments);
+          final started = captureStarted;
+          if (started != null && !started.isCompleted) started.complete();
+          final gate = captureGate;
+          if (gate != null) await gate.future;
           if (captureFailures > 0) {
             captureFailures--;
             throw PlatformException(code: 'device-unavailable');
@@ -122,6 +134,11 @@ void main() {
             ],
             'videoTracks': [],
           };
+        }
+        if (call.method == 'selectAudioOutput') {
+          final started = outputStarted;
+          if (started != null && !started.isCompleted) started.complete();
+          await outputGate?.future;
         }
         return null;
       },
@@ -238,6 +255,127 @@ void main() {
       },
     );
   }
+
+  test(
+    'active input switch exposes busy state and ignores duplicate changes',
+    () async {
+      final track = await LocalAudioTrack.create(
+        const AudioCaptureOptions(deviceId: 'mic-1'),
+      );
+      await track.start();
+      track.transceiver = _Transceiver(_Sender());
+      addTearDown(track.dispose);
+      final room = _Room(track);
+      final preferences = await AudioPreferences.open('account-a');
+      final owner = AudioDeviceController(readRoom: () => room)
+        ..preferences = preferences
+        ..selectedAudioInputId = 'mic-1'
+        ..microphoneMutedIntent = true;
+      addTearDown(owner.dispose);
+      owner.applyAudioDevices(const [
+        MediaDevice('mic-1', 'First', 'audioinput', 'qa'),
+        MediaDevice('mic-2', 'Second', 'audioinput', 'qa'),
+      ]);
+      await track.mute(stopOnMute: false);
+
+      final gate = Completer<void>();
+      final started = Completer<void>();
+      captureGate = gate;
+      captureStarted = started;
+      final switching = owner.selectAudioInput('mic-2');
+      expect(owner.audioInputSwitching, isTrue);
+      expect(owner.selectedAudioInputId, 'mic-1');
+
+      final capturesBeforeSwitch = captures.length;
+      await owner.selectAudioInput('mic-1');
+      expect(owner.audioInputSwitching, isTrue);
+      expect(captures, hasLength(capturesBeforeSwitch));
+      await started.future;
+      expect(captures, hasLength(capturesBeforeSwitch + 1));
+
+      gate.complete();
+      await switching;
+      expect(owner.audioInputSwitching, isFalse);
+      expect(owner.selectedAudioInputId, 'mic-2');
+      expect(owner.audioSettingsError, isNull);
+      captureGate = null;
+      captureStarted = null;
+      await track.stop();
+    },
+  );
+
+  test(
+    'output switch exposes busy state and ignores duplicate changes',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      final gate = Completer<void>();
+      final started = Completer<void>();
+      outputGate = gate;
+      outputStarted = started;
+      final preferences = await AudioPreferences.open('account-a');
+      final owner = AudioDeviceController(readRoom: () => null)
+        ..preferences = preferences
+        ..selectedAudioOutputId = 'output-1';
+      addTearDown(owner.dispose);
+      owner.applyAudioDevices(const [
+        MediaDevice('output-1', 'First output', 'audiooutput', 'qa'),
+        MediaDevice('output-2', 'Second output', 'audiooutput', 'qa'),
+      ]);
+
+      final switching = owner.selectAudioOutput('output-2');
+      expect(owner.audioOutputSwitching, isTrue);
+      await started.future;
+      await owner.selectAudioOutput('output-1');
+      expect(owner.audioOutputSwitching, isTrue);
+      expect(owner.selectedAudioOutputId, 'output-1');
+
+      gate.complete();
+      await switching;
+      expect(owner.audioOutputSwitching, isFalse);
+      expect(owner.audioSettingsError, isNull);
+      expect(owner.selectedAudioOutputId, 'output-2');
+      outputGate = null;
+      outputStarted = null;
+    },
+  );
+
+  test(
+    'failed output switch restores selection and clears busy state',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      final gate = Completer<void>();
+      final started = Completer<void>();
+      outputGate = gate;
+      outputStarted = started;
+      final preferences = await AudioPreferences.open('account-a');
+      final owner = AudioDeviceController(readRoom: () => null)
+        ..preferences = preferences
+        ..selectedAudioOutputId = 'output-1';
+      addTearDown(owner.dispose);
+      owner.applyAudioDevices(const [
+        MediaDevice('output-1', 'First output', 'audiooutput', 'qa'),
+        MediaDevice('output-2', 'Second output', 'audiooutput', 'qa'),
+      ]);
+
+      final switching = owner.selectAudioOutput('output-2');
+      await started.future;
+      expect(owner.audioOutputSwitching, isTrue);
+      gate.completeError(StateError('device unavailable'));
+      await switching;
+
+      expect(owner.audioOutputSwitching, isFalse);
+      expect(owner.selectedAudioOutputId, 'output-1');
+      expect(
+        owner.audioSettingsError,
+        contains('Не удалось переключить динамик'),
+      );
+      outputGate = null;
+      outputStarted = null;
+    },
+  );
+
   for (final terminal in [false, true]) {
     testWidgets(
       'failed active selection rolls back or remains muted (terminal=$terminal)',
@@ -263,6 +401,7 @@ void main() {
         captureFailures = terminal ? 2 : 1;
         await owner.selectAudioInput('mic-2');
         expect(owner.audioSettingsError, isNotNull);
+        expect(owner.audioInputSwitching, isFalse);
         expect(owner.selectedAudioInputId, 'mic-1');
         expect(preferences.inputDeviceId, 'mic-1');
         expect(track.muted, terminal);
