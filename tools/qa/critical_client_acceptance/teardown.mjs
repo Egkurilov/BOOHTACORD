@@ -31,13 +31,17 @@ export async function teardown(a, b, channelId, input, report, observed) {
     await expect.poll(() => waiting).toBe(true)
     const account = (await api(b, '/auth/session')).body.account_id
     const previousRevocations = observed.revocations
+    const started = Date.now()
     const kick = await api(b, `/admin/accounts/${account}/voice-kick`, 'POST')
     status(kick, 200)
     assert.equal(kick.body.revoked_leases, 1)
-    await expect.poll(() => observed.revocations, { timeout: 15000 }).toBeGreaterThan(previousRevocations)
-    await expect(a.getByTestId('voice-dock')).not.toHaveClass(/connected/)
+    // Native notification worker polls every 15 seconds; client teardown is checked separately.
+    await expect.poll(() => observed.revocations, { timeout: 20000 }).toBeGreaterThan(previousRevocations)
+    const received = Date.now()
+    await expect(a.getByTestId('voice-dock')).not.toHaveClass(/connected/, { timeout: 2000 })
     await mediaClosed(a)
     report.connection_status.lease_revoke_during_blocked_rest = true
+    report.connection_status.revoke_timing = { server_hint_wait_ms: received-started, local_disconnect_after_hint_ms: Date.now()-received }
   } finally { release(); await Promise.all(routed); await a.unroute(pattern) }
   await join(a)
   await security(a)
