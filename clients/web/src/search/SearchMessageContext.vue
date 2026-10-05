@@ -34,7 +34,10 @@ async function load(direction: 'older' | 'newer'): Promise<void> {
 
 watch(() => [props.kind, props.conversationId, props.messageId], () => { void context.open(props.messageId) }, { immediate: true })
 watch(messages, (items) => { for (const item of items) void authors.ensure(item.authorId) })
-watch(status, (value) => { if (value === 'ready' || value === 'deleted') void nextTick(() => {
+watch(status, (value) => { if (value === 'ready' || value === 'deleted') void nextTick(async () => {
+  const messageId = props.messageId
+  if (props.offset !== undefined) { await context.loadNewer(); await nextTick() }
+  if (props.messageId !== messageId || status.value === 'loading') return
   const anchor = root.value?.querySelector<HTMLElement>('[data-search-anchor]')
   anchor?.scrollIntoView({ block: props.unread ? 'start' : 'center' }); anchor?.focus({ preventScroll: true })
   if (props.offset !== undefined) restore(root.value?.querySelector<HTMLElement>('.search-context-list') ?? null, { id: props.messageId, offset: props.offset })

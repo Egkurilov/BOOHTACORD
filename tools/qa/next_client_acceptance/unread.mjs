@@ -43,9 +43,22 @@ export async function unread(page, browser, fixture, input, report) {
     await context.locator('.search-context-list').evaluate(list => list.dispatchEvent(new Event('scroll')))
     await expect.poll(read).toBe(data.ids[120])
     await page.screenshot({ path: input.directory+'/unread-'+kind.toLowerCase()+'.png' })
-    await context.getByRole('button', { name: 'К последним сообщениям', exact: true }).click()
+    if (kind==='CHANNEL') {
+      await context.locator('.search-context-list').evaluate((list,id) => {
+        const row=[...list.querySelectorAll('[data-message-id]')].find(row=>row.dataset.messageId===id)
+        list.scrollTop+=row.getBoundingClientRect().top-list.getBoundingClientRect().top+15
+        list.dispatchEvent(new Event('scroll'))
+      },data.ids[40])
+      await select(page,'NextB'); await select(page,'NextUnread')
+      await expect(context.locator('[data-search-anchor]')).toHaveAttribute('data-message-id',data.ids[40])
+      await expect.poll(()=>context.locator('.search-context-list').evaluate(list=>{
+        const row=list.querySelector('[data-search-anchor]');return Math.round(row.getBoundingClientRect().top-list.getBoundingClientRect().top)
+      })).toBe(-15)
+    }
+    const close = context.getByRole('button',{name:kind==='CHANNEL'?'Вернуться к исходной позиции':'К последним сообщениям',exact:true})
+    await close.click()
     results.push({ kind, postgres_forward_rows:120, browser_context_rows:121, divider:true, own_messages_present:true,
-      unseen_tail_retained:true, background_read_blocked:true, visible_tail_advances:true })
+      unseen_tail_retained:true, background_read_blocked:true, visible_tail_advances:true, ...(kind==='CHANNEL'?{scope_anchor_offset_restored:true}:{}) })
   }
   report.unread = results
 }

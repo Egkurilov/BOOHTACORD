@@ -36,5 +36,11 @@ export function useContextPosition(accountId: string, kind: 'CHANNEL' | 'DIRECT_
     if (!restore(main(), target)) restored.value = target
   }, { immediate: true, flush: 'post' })
   onBeforeUnmount(save)
-  return { restored, save }
+  async function showLatest(): Promise<void> {
+    previous = null; restored.value = null
+    await nextTick()
+    const viewport = main()
+    if (viewport) viewport.scrollTop = viewport.scrollHeight
+  }
+  return { restored, save, showLatest }
 }

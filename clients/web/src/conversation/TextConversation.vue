@@ -35,7 +35,7 @@ const contextTarget = computed(() => searchTarget.target?.kind === 'CHANNEL' && 
 const replyContextTarget = ref<string | null>(null)
 const restored = ref<Position | null>(null)
 const firstUnread = computed(() => topology.topology?.categories.flatMap(({ channels }) => channels).find(({ id }) => id === props.channelId)?.firstUnreadMessageId)
-const { unreadBoundary, unreadContextOpen, readUnlocked, showUnread, continueAtLatest } = useUnreadBoundary(() => props.channelId, firstUnread, () => queueVisibleRead())
+const { unreadBoundary, unreadContextOpen, readUnlocked, showUnread, continueAtLatest } = useUnreadBoundary(() => props.channelId, firstUnread, () => { void showLatest().then(queueVisibleRead) })
 const authors = useAuthorDirectory()
 const session = ref<CurrentSession | null>(null)
 const composer = useSavedComposer<TextMessage, TextAttachmentUpload>(props.accountId, 'CHANNEL', () => props.channelId)
@@ -53,7 +53,7 @@ const { readRoot, queueVisibleRead } = useVisibleRead({
   refreshCounters: () => { void topology.refresh() },
 })
 const contextOpen = () => Boolean(contextTarget.value || replyContextTarget.value || unreadContextOpen.value || restored.value)
-const { save: savePosition } = useContextPosition(props.accountId, 'CHANNEL', () => props.channelId, readRoot, contextOpen, () => store.historyLoaded && store.channelId === props.channelId, restored)
+const { save: savePosition, showLatest } = useContextPosition(props.accountId, 'CHANNEL', () => props.channelId, readRoot, contextOpen, () => store.historyLoaded && store.channelId === props.channelId, restored)
 function onViewportChange(): void { savePosition(); queueVisibleRead() }
 watch(() => props.channelId, (channelId) => {
   replyContextTarget.value = null

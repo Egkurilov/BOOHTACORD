@@ -28,7 +28,7 @@ const props = defineProps<{ accountId: string; active: boolean; directMessageId:
 const emit = defineEmits<{ toggleNav: [] }>()
 const store = useDirectMessageStore()
 const firstUnread = computed(() => store.directMessages.find(({ id }) => id === props.directMessageId)?.firstUnreadMessageId)
-const { unreadBoundary, unreadContextOpen, readUnlocked, showUnread, continueAtLatest } = useUnreadBoundary(() => props.directMessageId, firstUnread, () => queueVisibleRead())
+const { unreadBoundary, unreadContextOpen, readUnlocked, showUnread, continueAtLatest } = useUnreadBoundary(() => props.directMessageId, firstUnread, () => { void showLatest().then(queueVisibleRead) })
 const searchTarget = useSearchTargetStore()
 const contextTarget = computed(() => searchTarget.target?.kind === 'DIRECT_MESSAGE' && searchTarget.target.conversationId === props.directMessageId ? searchTarget.target : null)
 const replyContextTarget = ref<string | null>(null)
@@ -51,7 +51,7 @@ const { readRoot, queueVisibleRead } = useVisibleRead({
 })
 
 const contextOpen = () => Boolean(contextTarget.value || replyContextTarget.value || unreadContextOpen.value || restored.value)
-const { save: savePosition } = useContextPosition(props.accountId, 'DIRECT_MESSAGE', () => props.directMessageId, readRoot, contextOpen, () => store.historyLoaded && store.directMessageId === props.directMessageId, restored)
+const { save: savePosition, showLatest } = useContextPosition(props.accountId, 'DIRECT_MESSAGE', () => props.directMessageId, readRoot, contextOpen, () => store.historyLoaded && store.directMessageId === props.directMessageId, restored)
 function onViewportChange(): void { savePosition(); queueVisibleRead() }
 const { send, retry } = useScopedSend<DirectMessageHistoryItem, TextMessageAttachment, DirectMessageHistoryItem>(
   props.accountId, 'DIRECT_MESSAGE', () => props.directMessageId, composer,

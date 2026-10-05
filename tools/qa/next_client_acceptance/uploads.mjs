@@ -2,8 +2,10 @@ import assert from 'node:assert/strict'
 import { expect, select, owned } from './fixture.mjs'
 async function reserved() {
   const response = await fetch('http://127.0.0.1:4820/metrics')
-  const value = (await response.text()).match(/^voice_platform_attachment_upload_reserved_bytes (\d+)$/m)
-  assert.ok(value, 'Actual reservation metric missing'); return Number(value[1])
+  const value = (await response.text()).match(/^voice_platform_attachment_upload_reserved_bytes (\S+)$/m)
+  assert.ok(value, 'Actual reservation metric missing')
+  const bytes = Number(value[1]); assert.ok(Number.isSafeInteger(bytes) && bytes >= 0, 'Invalid reservation metric')
+  return bytes
 }
 function file(name, size) { return { name, mimeType: 'application/octet-stream', buffer: Buffer.alloc(size) } }
 export async function uploads(page, input, report) {
