@@ -1,0 +1,6 @@
+Emoji catalog
+
+Source: Unicode's published emoji-test data, transformed into fully-qualified
+emoji entries by clients/web/artifacts/design-v2/generate-emoji-catalog.py.
+Copyright © Unicode, Inc. Licensed under the Unicode License v3:
+https://www.unicode.org/license.txt
