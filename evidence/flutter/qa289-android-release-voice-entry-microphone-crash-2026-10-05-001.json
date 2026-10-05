@@ -12,6 +12,11 @@
   "summary": "Reproduced the Android release crash when microphone capture begins during voice admission. Flutter supplied integer sampleRate/channelCount constraints, and the Android WebRTC fork force-cast Number values to Double. The parser now converts Number.doubleValue(), so both integer and floating-point constraints are accepted.",
   "checks": [
     {
+      "name": "Initial permission-denied listener fallback",
+      "result": "PASS_WITH_LIMITATION",
+      "observation": "The first entry attempt had RECORD_AUDIO denied with USER_FIXED. The client connected as a listener and reported NotAllowedError rather than crashing; that path never reached microphone capture and could not reproduce the reported failure. Granting permission and retrying entered getUserAudio and exposed the fatal numeric cast below."
+    },
+    {
       "name": "Pre-fix Android crash reproduction",
       "result": "FAIL_BEFORE_FIX",
       "observation": "After granting RECORD_AUDIO and retrying microphone activation in SHARE_TEST, AndroidRuntime recorded a fatal ClassCastException (Integer cannot be cast to Double) in ConstraintsMap.getDouble → MediaConstraintsUtils → GetUserMediaImpl.getUserAudio. The app process exited; this did not originate from the APK's compressed native-library packaging."

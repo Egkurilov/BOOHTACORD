@@ -1,0 +1,55 @@
+{
+  "id": "QA-281",
+  "date": "2026-10-05",
+  "task": "FV2-018 — Flutter frameless desktop window chrome and branded title bar",
+  "source_revision": "5ba6e2a9",
+  "working_tree_changes": true,
+  "summary": "Kept the signed-in macOS Debug app open throughout. Confirmed the Flutter drag region receives pointer-down and used DevTools hot reload for source updates. The desktop UI driver did not deliver a move event to Flutter's pan recognizer, so this session cannot independently verify native window movement. Windows native acceptance remains open.",
+  "checks": [
+    {
+      "name": "Focused desktop title-bar widget tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/desktop_window_chrome_test.dart",
+      "result": "PASS",
+      "passed": 5,
+      "observation": "Covers Windows controls/actions, text-only brand, macOS native-control inset, recognized mouse-pan start dispatch, and mobile platforms without desktop chrome."
+    },
+    {
+      "name": "macOS native title-bar drag runtime",
+      "result": "NOT_VERIFIED",
+      "observation": "On the running BOOHTACORD Debug window, a DevTools read-only query showed `windowManager.getPosition() == Offset(1000,238)` before and after the attempted drag. Temporary diagnostic logging confirmed pointer-down reaches the drag region, but no pan-update event was emitted by the desktop UI driver; the driver therefore did not provide evidence that a real mouse drag was delivered. Temporary diagnostics were removed, the standard `onPanStart` path was restored, and the app was hot reloaded without restart. The app remained signed in on Text; no message, close/minimize action, microphone, or stream was activated, and no Keychain prompt appeared."
+    },
+    {
+      "name": "Changed-file Flutter analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/widgets/desktop_window_chrome.dart test/desktop_window_chrome_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug",
+      "result": "PASS",
+      "observation": "Built build/macos/Build/Products/Debug/BOOHTACORD.app. Build completed without launching or restarting the app."
+    },
+    {
+      "name": "Windows native drag and window-control runtime acceptance",
+      "result": "NOT_RUN",
+      "observation": "No Windows desktop session is available on this macOS host. The historical Windows runner verifies widget tests, analysis, and x64 release build, but not native window interaction."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this host. No requirement IDs or dependency declarations changed; the presentation task and existing dependency mapping were manually rechecked."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "FV2-018 remains open until macOS drag is independently verified and native Windows dragging/window controls are exercised; macOS minimize/close actions also remain untested.",
+    "No API, ACL, session, authentication, or LiveKit behavior changed."
+  ],
+  "status": "MACOS_DRAG_RUNTIME_NOT_VERIFIED; WINDOWS_NATIVE_ACCEPTANCE_OPEN"
+}

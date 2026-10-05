@@ -1,0 +1,45 @@
+{
+  "id": "QA-282",
+  "date": "2026-10-05",
+  "task": "FV2-002 — Flutter Design V2 TEXT/DM history and responsive behavior",
+  "source_revision": "0b3ee23432f9d29087996c2d38eade26a4e94095",
+  "working_tree_changes": true,
+  "environment": {
+    "android_device": "Android Emulator sdk_gphone64_arm64",
+    "android_api": 35,
+    "android_resolution": "1080x2400",
+    "android_build": "1.0.33 / versionCode 2066"
+  },
+  "summary": "Android runtime scrolling exposed older TEXT history while keeping the channel header and composer fixed. Existing focused tests confirm read-cursor advancement for the latest visible message and preserve the visible anchor when loading an older page. Normal visible-message read progression may have been sent; no message was sent or edited, and screenshots containing chat content were not retained.",
+  "checks": [
+    {
+      "name": "TEXT history latest/read-cursor widget test",
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'opens text history at latest and advances its read cursor'",
+      "observation": "The test passed. It covers initial positioning at the latest message and advancing the client read cursor for the newest visible message."
+    },
+    {
+      "name": "Older-page visible-anchor widget test",
+      "result": "PASS",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'preserves the visible text anchor when loading an older page'",
+      "observation": "The test passed. It verifies older-page insertion preserves the visible message anchor and does not mark the older first message as read."
+    },
+    {
+      "name": "Android TEXT history runtime visual acceptance",
+      "result": "PASS",
+      "observation": "On the installed API 35 emulator build, repeated vertical scroll gestures from the latest visible segment exposed older history. The workspace header and message composer remained fixed. A protected image preview in older history resolved after a short load. No message was sent or edited."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "result": "NOT_RUN",
+      "observation": "The repository verifier is a PowerShell script; `pwsh` is not installed on this host."
+    }
+  ],
+  "limitations": [
+    "This run did not independently inspect the server-persisted read cursor or capture the history-page HTTP request; the widget tests cover the client/API cursor contract.",
+    "Samsung/One UI keyboard behavior, remaining attachment states, and macOS/Windows runtime visual comparison remain open under FV2-002/FV2-006.",
+    "The repository spec traceability verifier remains unverified because `pwsh` is unavailable.",
+    "The full Flutter suite and analyzer were not rerun because no product source changed in this slice."
+  ],
+  "status": "PASS_WITH_LIMITATIONS"
+}
