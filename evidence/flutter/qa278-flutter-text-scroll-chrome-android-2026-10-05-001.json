@@ -1,0 +1,43 @@
+{
+  "id": "QA-278",
+  "date": "2026-10-05",
+  "task": "FV2-028 — Flutter Android text-history chrome visibility while scrolling",
+  "source_revision": "cd404f2d",
+  "working_tree_changes": true,
+  "environment": {
+    "android_device": "Android Emulator sdk_gphone64_arm64",
+    "android_api": 35,
+    "android_resolution": "1080x2400",
+    "android_build": "1.0.30 / versionCode 2065"
+  },
+  "summary": "Added a widget regression requiring the workspace header and text composer to retain their bounds during a vertical history scroll and ensuring the navigation drawer stays closed. Focused test, analyzer, full Flutter suite, and a controlled Android API 35 visual acceptance all pass.",
+  "checks": [
+    {
+      "name": "Focused text history scroll and fixed chrome regression",
+      "result": "PASS",
+      "command": "flutter test --no-pub test/workspace_screen_test.dart --plain-name 'opens text history at latest and advances its read cursor'",
+      "observation": "The test confirms the message list scroll offset changes while the workspace header and text composer bounds remain unchanged; a vertical drag does not open the navigation drawer."
+    },
+    {
+      "name": "Changed-file analyzer",
+      "result": "PASS",
+      "command": "dart analyze test/workspace_screen_test.dart",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "result": "PASS",
+      "command": "flutter test --no-pub",
+      "observation": "All 585 tests passed against the final test source."
+    },
+    {
+      "name": "Android text history scroll visual acceptance",
+      "result": "PASS",
+      "observation": "From a stable Text-channel screen with the drawer closed, a controlled vertical swipe visibly moved the history to older messages while the workspace header and composer remained on screen. UIAutomator reported the channel subtitle at [179,217][450,262] and composer at [21,2174][1059,2316]; the navigation drawer's close control was absent. The earlier inconsistent captures were resolved by repeating from this controlled starting state. No message was sent or edited. Read-cursor state was not inspected."
+    }
+  ],
+  "limitations": [
+    "Samsung/Gboard login behavior, history pagination, backend read-cursor state, and remaining composer/attachment states remain open under FV2-002."
+  ],
+  "status": "PASS"
+}

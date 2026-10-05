@@ -2310,6 +2310,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 150));
     await tester.pumpAndSettle();
     final messageList = find.byKey(const ValueKey('text-channel-messages'));
+    final header = find.byKey(const ValueKey('workspace-header'));
+    final composer = find.byKey(const ValueKey('text-composer-wrap'));
+    final headerRectBefore = tester.getRect(header);
+    final composerRectBefore = tester.getRect(composer);
+    expect(find.byTooltip('Закрыть навигацию'), findsNothing);
     final scrollController = tester.widget<ListView>(messageList).controller!;
     final initialOffset = scrollController.position.pixels;
     expect(initialOffset, greaterThan(0));
@@ -2325,6 +2330,9 @@ void main() {
       lessThan(initialOffset),
       reason: 'a downward touch drag should reveal older channel messages',
     );
+    expect(tester.getRect(header), headerRectBefore);
+    expect(tester.getRect(composer), composerRectBefore);
+    expect(find.byTooltip('Закрыть навигацию'), findsNothing);
     expect(api.advancedMessageIds, ['message-39']);
 
     await tester.pumpWidget(const SizedBox.shrink());

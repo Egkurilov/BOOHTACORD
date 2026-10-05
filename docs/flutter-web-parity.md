@@ -431,6 +431,17 @@ banner and adjacent header, but its missing Cyrillic fallback limits it to
 geometry/color evidence. See
 [QA-276](../evidence/flutter/qa276-flutter-maintenance-banner-status-inset-2026-10-05-001.json).
 
+Android text-history scroll chrome follow-up (FV2-028): the widget regression
+records header and composer bounds around a vertical history gesture and
+asserts that the navigation drawer stays closed. The focused test, changed-file
+analyzer, and full Flutter suite (585 tests) pass. A controlled Android API 35
+gesture on release `1.0.30+2065` visibly moved the message list to older history
+while keeping the header and composer on-screen; UIAutomator confirmed the
+header subtitle and composer bounds and no open navigation drawer. No message
+was sent or edited; read-cursor state was not inspected. FV2-028 is accepted;
+history pagination and server read-cursor checks remain open under FV2-002 —
+[QA-278](../evidence/flutter/qa278-flutter-text-scroll-chrome-android-2026-10-05-001.json).
+
 Audio settings R10–R11 follow-up (FV2-027): source comparison found a visual
 and ordering gap despite preserved audio behavior. Flutter now leads with a
 device/local-check card, followed by activation, applicable shortcut, and

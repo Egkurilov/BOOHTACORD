@@ -124,6 +124,17 @@ release `1.0.30+2063` установлен. Однако backend сейчас н
 кириллического fallback); macOS-сессия заблокирована. Не закрывать FV2-026 до
 runtime-снимка при видимом баннере — [QA-276](../../../evidence/flutter/qa276-flutter-maintenance-banner-status-inset-2026-10-05-001.json).
 
+### FV2-028 — Android TEXT history chrome during touch scroll
+
+Current API 35 emulator release `1.0.30+2065` moved the TEXT history to older
+rows during a controlled vertical touch gesture while the header and composer
+remained visible. UIAutomator confirmed their bounds and no open navigation
+drawer. The widget regression records header/composer bounds around the gesture
+and asserts the drawer stays closed; focused test, analyzer, and full Flutter
+suite (585 tests) pass. FV2-028 is accepted. Backend read-cursor and older-page
+acceptance remain open under FV2-002 —
+[QA-278](../../../evidence/flutter/qa278-flutter-text-scroll-chrome-android-2026-10-05-001.json).
+
 ### FV2-027 — Audio settings R10–R11 follow-up
 
 Source comparison on 2026-10-05 found that the current Flutter audio settings
