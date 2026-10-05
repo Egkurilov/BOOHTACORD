@@ -17,6 +17,7 @@ export async function cacheAcl(page,fixture,input,report) {
     await expect.poll(present,{timeout:10000}).toBe(true)
     const receipt = {}
     for (const action of ['block','revoke']) {
+      await page.waitForTimeout(300)
       await api(page,'/voice/participants')
       const before=await calls()
       sql(action==='block' ? `UPDATE users SET blocked_at=now() WHERE id='${fixture.member}'`

@@ -14,7 +14,7 @@ try {
   await login(page,'qa_admin',input.password)
   const fixture = await setup(page,input.password)
   await page.reload()
-  await uploads(page,input,report)
+  await uploads(page,input,report,fixture)
   console.log('stage=actual-managed-uploads-accepted')
   if (!input.limited) {
     await unread(page,browser,fixture,input,report)

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { expect, select, owned } from './fixture.mjs'
+import { expect, select, owned, sql } from './fixture.mjs'
 async function reserved() {
   const response = await fetch('http://127.0.0.1:4820/metrics')
   const value = (await response.text()).match(/^voice_platform_attachment_upload_reserved_bytes (\S+)$/m)
@@ -10,7 +10,7 @@ async function reserved() {
   return bytes
 }
 function file(name, size) { return { name, mimeType: 'application/octet-stream', buffer: Buffer.alloc(size) } }
-export async function uploads(page, input, report) {
+export async function uploads(page, input, report, fixture) {
   await select(page, 'NextA')
   const picker = page.locator('.attachment-picker'), queue = picker.locator('[data-upload-status]')
   let count = 0
@@ -32,6 +32,7 @@ export async function uploads(page, input, report) {
     await expect(page.locator('#message-body')).toHaveValue('QA attachment queue')
     await page.getByRole('button', { name: 'Отправить сообщение', exact: true }).click()
     await expect(queue).toHaveCount(0)
+    assert.equal(sql(`SELECT count(*) FROM attachments WHERE channel_id='${fixture.a}' AND state='ATTACHED'`),'3')
     await page.screenshot({ path: input.directory+'/upload-retried-published.png' })
     report.uploads = { actual_third_file_507: true, retry_only_failed: true, prepared_ids_survive_scope: true, published: true }
   } else {
@@ -51,6 +52,7 @@ export async function uploads(page, input, report) {
     await expect.poll(reserved,{timeout:15000}).toBe(0)
     await expect(queue).toHaveCount(0)
     await select(page,'NextA'); await expect(queue).toHaveCount(0)
+    assert.equal(sql("SELECT count(*) FROM attachments WHERE original_name IN ('cancel.bin','switch-scope.bin')"),'0')
     await session.send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 })
     await session.detach()
     mkdirSync(input.files_directory)
@@ -61,6 +63,7 @@ export async function uploads(page, input, report) {
     await expect(page.getByRole('button', { name: 'Отправить сообщение', exact: true })).toBeEnabled()
     await page.getByRole('button', { name: 'Отправить сообщение', exact: true }).click()
     await expect(queue).toHaveCount(0)
+    assert.equal(sql(`SELECT count(*) FROM attachments WHERE channel_id='${fixture.a}' AND state='ATTACHED'`),'10')
     await page.getByRole('button', { name: 'Личные', exact: true }).click()
     await page.locator('.direct-message-navigation .channel-button').filter({ hasText: 'qa_next_member' }).click()
     await page.locator('#dm-attachments').setInputFiles(file('dm-real.bin', 1_000_000))
@@ -73,6 +76,7 @@ export async function uploads(page, input, report) {
     await expect(picker.locator('[data-upload-status="done"]')).toHaveCount(2)
     await page.getByRole('button', { name: 'Отправить сообщение', exact: true }).click()
     await expect(queue).toHaveCount(0)
+    assert.equal(sql(`SELECT count(*) FROM attachments WHERE direct_message_id='${fixture.dm}' AND state='ATTACHED'`),'2')
     report.uploads = { actual_abort_releases_reservation: true, staging_files: 0, actual_progress: true,
       ten_25mb_files: true, actual_scope_switch_aborts:true, actual_active_composer_drop:true, successful_text_and_dm_publication: true }
   }
