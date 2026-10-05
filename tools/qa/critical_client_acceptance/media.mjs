@@ -3,15 +3,25 @@ import { api, expect, status } from '../client_lifecycle/request.mjs'
 import { owned } from './control.mjs'
 import { teardown } from './teardown.mjs'
 async function connected(page) {
-  await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён', { timeout: 22000 })
-  await expect.poll(() => page.evaluate(() => window.__qaPeers.some(peer => peer.connectionState === 'connected'))).toBe(true)
+  try {
+    await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён', { timeout: 22000 })
+    await expect.poll(() => page.evaluate(() => window.__qaPeers.some(peer => peer.connectionState === 'connected'))).toBe(true)
+  } catch (error) {
+    // Keep only native transport state enums and counts; never SDP, tokens, identities or URLs.
+    console.error('media-connect-states='+JSON.stringify(await page.evaluate(() => window.__qaPeers?.map(peer => ({
+      connection: peer.connectionState, ice: peer.iceConnectionState, gathering: peer.iceGatheringState,
+      signaling: peer.signalingState, local_description: Boolean(peer.localDescription),
+      remote_description: Boolean(peer.remoteDescription),
+    })) ?? [])))
+    throw error
+  }
 }
 export async function media(a, b, member, channelId, report, input) {
   const directory = input.directory
   let blocked = false
   const observed = { revocations: 0 }
   const chat = []
-  await a.addInitScript(() => {
+  for (const page of [a, member]) await page.addInitScript(() => {
     window.__qaPeers = []
     const Native = window.RTCPeerConnection
     window.RTCPeerConnection = new Proxy(Native, { construct(target, args) {
@@ -27,12 +37,13 @@ export async function media(a, b, member, channelId, report, input) {
     })
   })
   await a.reload()
+  await member.reload()
   const category = await api(a, '/admin/categories', 'POST', { name: 'VoiceLab' }); status(category, 201)
   const room = await api(a, `/admin/categories/${category.body.id}/channels`, 'POST', { name: 'VoiceLab', kind: 'VOICE' }); status(room, 201)
   for (const page of [a, member]) {
     await page.locator('.channel-button').filter({ hasText: 'VoiceLab' }).click()
     await page.getByRole('button', { name: 'Подключиться без микрофона', exact: true }).click()
-    await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён', { timeout: 22000 })
+    await connected(page)
   }
   await connected(a)
   blocked = true

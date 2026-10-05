@@ -10,7 +10,8 @@ import { media } from '../critical_client_acceptance/media.mjs'
 import { prepareSessionRevoke, checkSessionRevoke } from '../critical_client_acceptance/teardown.mjs'
 const input = JSON.parse(readFileSync(process.env.QA_INPUT, 'utf8'))
 assert.equal(origin, 'https://localhost:4810')
-const browser = await chromium.launch({ headless: true })
+// The owned SFU advertises only loopback ICE candidates; permit that interface in this local fixture.
+const browser = await chromium.launch({ headless: true, args: ['--allow-loopback-in-peer-connection'] })
 const report = { schema_version: 1, width: input.width, mocks: false, synthetic_accounts: true }
 const redactions = [input.password]
 try {
