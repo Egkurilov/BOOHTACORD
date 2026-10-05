@@ -1,0 +1,68 @@
+{
+  "id": "QA-280",
+  "date": "2026-10-05",
+  "task": "FV2-029 — Flutter Design V2 TEXT/DM composer emoji picker parity",
+  "source_revision": "8891a5e8",
+  "working_tree_changes": true,
+  "environment": {
+    "flutter": "Flutter 3.47.5",
+    "macos": "arm64 Debug app connected through Flutter DevTools; hot restart completed without closing the app or prompting Keychain",
+    "android_emulator": "API 35 arm64 emulator; signed r47 arm64 APK installed with app data preserved"
+  },
+  "summary": "Flutter TEXT/DM composers expose a Discord-like emoji picker on compact and wide layouts. The picker has quick emoji, a lazy full Unicode catalog with Russian/English search labels, persisted recents and insertion/replacement at the draft selection. No web, API, ACL or message-send behavior changed.",
+  "checks": [
+    {
+      "name": "Emoji catalog service and composer widget regressions",
+      "result": "PASS",
+      "command": "flutter test --no-pub test/message_emoji_catalog_test.dart test/workspace_screen_test.dart",
+      "observation": "72 tests passed (4 catalog and 68 workspace tests), covering full-catalog search, quick emoji, recents persistence, compact TEXT/DM access and insertion at/replacement of the current selection."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "result": "PASS",
+      "command": "flutter test --no-pub",
+      "observation": "All 592 tests passed, including the app-version label regression after aligning pubspec and client build identities."
+    },
+    {
+      "name": "Changed-file analyzer",
+      "result": "PASS",
+      "command": "dart analyze lib/src/app_version.dart lib/src/services/message_emoji_catalog.dart lib/src/widgets/message_emoji_picker.dart lib/src/widgets/compact_message_composer_actions.dart lib/src/widgets/message_mention_dialog.dart lib/src/screens/workspace_screen.dart test/message_emoji_catalog_test.dart test/workspace_screen_test.dart",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Android signed split-release build and ABI identity",
+      "result": "PASS_WITH_LIMITATION",
+      "command": "python3 -m tools.build.android.run; tools.build.android.signature.inspect on each split APK",
+      "observation": "Flutter produced all three release APKs; signer matched the installed app and versionName was 1.0.33. ABI codes were armeabi-v7a 1066, arm64-v8a 2066 and x86_64 4066; sizes were 32.7 MB, 41.2 MB and 47.0 MB. The wrapper's artifact-retention step refused to mix them with pre-existing 1.0.18 files in clients/flutter/build/release-assets, so it did not copy/manifest the new APKs there. Existing artifacts were preserved."
+    },
+    {
+      "name": "Android emulator update and runtime visual acceptance",
+      "result": "PASS_WITH_LIMITATION",
+      "command": "adb install -r -d app-arm64-v8a-release.apk; adb shell am start; adb shell dumpsys package ru.boohtacord.app",
+      "observation": "Installed signed version 1.0.33/versionCode 2066 over the prior test build using the same certificate, preserving app data. The TEXT composer plus menu, quick picker, full catalog, thumb search and local-draft insertion were visually exercised; the inserted emoji was removed and no message was sent. The emulator's floating input toolbar overlaps the leftmost catalog cells, and its system font reports some newer Unicode sequences as NO GLYPH."
+    },
+    {
+      "name": "macOS Debug build and visual acceptance",
+      "result": "PASS",
+      "command": "flutter build macos --debug --no-pub; Flutter DevTools Hot restart",
+      "observation": "Built the arm64 Debug app and hot-restarted the existing connected session. The TEXT composer and centered quick emoji picker were visually verified; the app remained signed in and no Keychain prompt appeared. The full catalog/search grid was also confirmed in this session."
+    },
+    {
+      "name": "Android release signing regression tests",
+      "result": "PASS",
+      "command": "python3 -m unittest tools.build.android.test_signature",
+      "observation": "All 7 signer and split-ABI identity tests passed; the r47 identity loader resolves build number 66 and arm64 code 2066."
+    },
+    {
+      "name": "Spec traceability and contract PowerShell verifiers",
+      "result": "NOT_RUN",
+      "observation": "The repository verifiers are PowerShell scripts and pwsh is unavailable on this host. Flutter build identity JSON was parsed and checked with the project's Python loader; full contract verification remains outstanding."
+    }
+  ],
+  "limitations": [
+    "FV2-029 implementation and required Flutter/macOS/Android visual checks are complete; the parent FV2-002 remains open for history/pagination, server read-cursor acceptance, remaining attachment states and physical Samsung/Gboard coverage.",
+    "The Android emulator has a floating system input toolbar over part of the emoji grid and lacks font glyphs for some newer Unicode sequences; common emoji, search and draft insertion work.",
+    "Android release APKs were built and individually validated but were not copied into the existing retained-artifact directory because it contains a different old release. No live update catalog, GitHub release or web client was changed."
+  ],
+  "status": "PASS_WITH_LIMITATIONS — implementation, 592 tests, analyzer, signed Android release build, Android/macOS visual checks and Mac hot restart passed; PowerShell verifiers and retained-artifact copying were not run/completed"
+}

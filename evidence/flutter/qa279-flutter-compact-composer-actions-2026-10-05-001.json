@@ -1,0 +1,60 @@
+{
+  "id": "QA-279",
+  "date": "2026-10-05",
+  "task": "FV2-002 — Flutter compact message composer actions",
+  "source_revision": "8891a5e8",
+  "working_tree_changes": true,
+  "environment": {
+    "flutter": "local Flutter SDK",
+    "android_emulator": "API 35 arm64 emulator; signed r47 arm64 APK 1.0.33/versionCode 2066 installed with app data preserved",
+    "macos": "arm64 native Debug window connected through Flutter DevTools; hot restart completed without Keychain prompt"
+  },
+  "summary": "At viewport widths up to 720 px, TEXT and DM composer attachment, clipboard paste and mention actions now share a compact plus menu; the separate mention trigger remains on wider layouts. Mention selection is preserved in the current draft. No API, ACL, message-send or web behavior changed. A separate Flutter emoji-picker parity gap was found and tracked as FV2-029.",
+  "checks": [
+    {
+      "name": "Test-first compact TEXT and DM composer regression",
+      "result": "PASS",
+      "command": "flutter test --no-pub test/workspace_screen_test.dart",
+      "observation": "The regression initially failed because the compact action menu was absent. After implementation, it exposed and helped fix a 26 px menu-row overflow. The final workspace screen suite passed 68/68, covering compact 390×844 TEXT and DM, hidden standalone mention trigger, menu actions and selected mention chips."
+    },
+    {
+      "name": "Changed-file analyzer",
+      "result": "PASS",
+      "command": "flutter analyze lib/src/screens/workspace_screen.dart lib/src/widgets/compact_message_composer_actions.dart lib/src/widgets/message_mention_dialog.dart test/workspace_screen_test.dart",
+      "observation": "No issues found after adding braces to three existing single-line if statements in the touched screen file."
+    },
+    {
+      "name": "Android Debug build",
+      "result": "PASS",
+      "command": "flutter build apk --debug --no-pub",
+      "observation": "The Android Debug APK compiled successfully and was not installed on the emulator."
+    },
+    {
+      "name": "macOS Debug build",
+      "result": "PASS",
+      "command": "flutter build macos --debug --no-pub",
+      "observation": "BOOHTACORD.app compiled successfully; it was not launched or used to restart the locked Mac session."
+    },
+    {
+      "name": "Android emulator visual acceptance",
+      "result": "PASS",
+      "observation": "On the signed r47 app, opened the compact TEXT composer plus menu and visually verified attachment, paste, mention and Emoji actions. No file was attached, clipboard data was not pasted and no message was sent."
+    },
+    {
+      "name": "macOS visual acceptance",
+      "result": "PASS",
+      "observation": "After DevTools hot restart, the wide TEXT composer and separate emoji action were verified, along with the quick picker and full catalog. Existing session remained open and no Keychain prompt appeared."
+    },
+    {
+      "name": "Spec traceability verifier",
+      "result": "NOT_RUN",
+      "observation": "The repository verifier is a PowerShell script, but pwsh is unavailable on this host. Requirement IDs referenced by the new task are existing approved IDs."
+    }
+  ],
+  "limitations": [
+    "FV2-002 remains open for history/pagination, server read-cursor acceptance, device IME and remaining attachment/composer states.",
+    "FV2-029 tracks compact EmojiPicker search, recents and draft insertion parity with web.",
+    "FV2-002 remains open for history/pagination, server read-cursor acceptance, remaining attachment/composer states, device IME and Samsung/Gboard coverage. Windows acceptance is outside this check."
+  ],
+  "status": "PASS_WITH_LIMITATIONS — compact TEXT/DM action menu and Mac/Android visual acceptance pass; FV2-002 remains open for unrelated conversation and device-level work"
+}

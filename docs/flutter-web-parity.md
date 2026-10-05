@@ -1,5 +1,9 @@
 # Flutter ↔ web parity plan
 
+## Компактный composer — проверка 2026-10-05
+
+В Flutter шириной до 720 px действия attach, paste, mention и emoji собраны под одним `+` menu для TEXT и DM; в wide composer emoji picker остаётся отдельным действием. Picker содержит шесть быстрых emoji, searchable полный каталог с русскими/английскими подписями, recents и вставку/замену текущего выделения в draft. Service/widget suite — 72/72, полный suite — 592/592, changed-file analyzer чистый; подписанный Android r47 и Mac Debug визуально проверены после DevTools hot restart. На Android API 35 системная floating IME-панель перекрывает часть левого края каталога, а часть новых Unicode glyphs отсутствует в системном шрифте. Web не изменялся; update catalog не менялся — [QA-279](../evidence/flutter/qa279-flutter-compact-composer-actions-2026-10-05-001.json), [QA-280](../evidence/flutter/qa280-flutter-emoji-picker-design-v2-2026-10-05-001.json).
+
 ## Design V2 Inter font (FV2-001 follow-up)
 
 Flutter now bundles the same Inter Variable 4.001 source as Web, converted from
@@ -422,13 +426,14 @@ Android maintenance-banner safe-area follow-up (FV2-026): an API 35 runtime
 screen showed the maintenance copy sharing the status-bar area with the clock
 and system icons. Flutter now wraps the root content in a top SafeArea only
 while maintenance is active; the widget regression checks both the top inset
-and the zero-gap transition to the workspace header. Analyzer and the full
-Flutter suite pass. Android release `1.0.30+2063` was installed, but the
-backend currently reports maintenance inactive, so active-banner visual
-acceptance on the device is NOT_RUN; the macOS session is locked. A host-side
-390×800 Flutter capture visually confirms the 48 dp safe area, warning-color
-banner and adjacent header, but its missing Cyrillic fallback limits it to
-geometry/color evidence. See
+and the zero-gap transition to the workspace header. The focused analyzer is
+clean and the full Flutter suite passes (585 tests). Android release
+`1.0.30+2065` is installed. A fresh 390×800 Flutter test capture visually
+confirms the 48 dp safe area, warning-color banner and adjacent header, but the
+host renderer shows Cyrillic fallback squares even with Inter/MaterialIcons
+loaded, so it proves geometry/colors only. Current Android and macOS screens do
+not show maintenance, leaving active-branch device visual acceptance NOT_RUN.
+See
 [QA-276](../evidence/flutter/qa276-flutter-maintenance-banner-status-inset-2026-10-05-001.json).
 
 Android text-history scroll chrome follow-up (FV2-028): the widget regression

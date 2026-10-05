@@ -2665,9 +2665,163 @@ void main() {
     expect(find.text('Прикрепить файл'), findsOneWidget);
     expect(find.text('Вставить из буфера'), findsOneWidget);
     expect(find.byTooltip('Выбрать упоминание'), findsOneWidget);
+    expect(find.byTooltip('Добавить emoji'), findsOneWidget);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Добавить emoji'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Добавить 😀'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(find.byType(TextField).last).controller!.text,
+      '😀',
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets(
+    'compact composer groups attachment, paste, and mention actions under plus',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 844);
+      addTearDown(tester.view.reset);
+
+      final state = AppState(_PortraitApi());
+      await state.initialize();
+      await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'initial compact layout');
+
+      expect(find.byTooltip('Действия редактора'), findsOneWidget);
+      expect(find.byTooltip('Выбрать упоминание'), findsNothing);
+
+      await tester.tap(find.byTooltip('Действия редактора'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'compact action menu');
+      expect(find.text('Прикрепить файл'), findsOneWidget);
+      expect(find.text('Вставить из буфера'), findsOneWidget);
+      expect(find.text('Упомянуть'), findsOneWidget);
+      expect(find.text('Emoji'), findsOneWidget);
+
+      await tester.tap(find.text('Упомянуть'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'mention picker');
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('Собеседник'), findsOneWidget);
+
+      await tester.tap(find.text('Собеседник'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Готово'));
+      await tester.pumpAndSettle();
+      expect(find.text('@Собеседник'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+    },
+  );
+
+  testWidgets('compact DM composer opens mention picker from plus menu', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+
+    final state = AppState(_PortraitApi(includeDirectMessage: true));
+    await state.initialize();
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Действия редактора'), findsOneWidget);
+    expect(find.byTooltip('Выбрать упоминание'), findsNothing);
+    await tester.tap(find.byTooltip('Действия редактора'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Упомянуть'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Собеседник').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Готово'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('@Собеседник'), findsOneWidget);
+    await tester.tap(find.byTooltip('Действия редактора'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Emoji'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Добавить 🎮'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(find.byType(TextField).last).controller!.text,
+      '🎮',
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('compact TEXT composer searches and inserts emoji at selection', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    final composer = tester.widget<TextField>(find.byType(TextField).last);
+    composer.controller!.value = const TextEditingValue(
+      text: 'Привет мир',
+      selection: TextSelection(baseOffset: 10, extentOffset: 7),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Действия редактора'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Emoji'));
+    await tester.pumpAndSettle();
+    expect(find.text('Выбор emoji'), findsOneWidget);
+
+    await tester.tap(find.text('Все emoji'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.byTooltip('Поиск emoji'), findsOneWidget);
+    await tester.enterText(find.byTooltip('Поиск emoji'), 'палец');
+    await tester.pump();
+    final searchField = find.descendant(
+      of: find.byTooltip('Поиск emoji'),
+      matching: find.byType(TextField),
+    );
+    expect(tester.widget<TextField>(searchField).controller!.text, 'палец');
+    expect(find.text('👍🏽'), findsOneWidget);
+    await tester.tap(find.text('👍🏽'));
+    await tester.pumpAndSettle();
+
+    expect(composer.controller!.text, 'Привет 👍🏽');
+    expect(
+      composer.controller!.selection,
+      const TextSelection.collapsed(offset: 11),
+    );
+    final emojiPreferences = await SharedPreferences.getInstance();
+    expect(
+      emojiPreferences.getStringList('boohtacord-recent-emoji')?.first,
+      '👍🏽',
+    );
+
+    await tester.tap(find.byTooltip('Действия редактора'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Emoji'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Все emoji'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.text('Недавние'), findsOneWidget);
+
+    expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
   });

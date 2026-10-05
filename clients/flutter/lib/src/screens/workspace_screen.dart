@@ -15,6 +15,7 @@ import '../services/message_presentation.dart';
 import '../features/text/system_welcome/row.dart';
 import '../features/text/system_welcome/content.dart';
 import '../services/composer_draft_memory.dart';
+import '../services/message_emoji_catalog.dart';
 import '../services/pinned_screen_mini_player_policy.dart';
 import '../services/api_client.dart';
 import '../features/conversation/delivery/status.dart';
@@ -46,6 +47,9 @@ import '../widgets/participant_volume/reset.dart';
 import '../widgets/microphone_controls/control.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
+import '../widgets/compact_message_composer_actions.dart';
+import '../widgets/message_mention_dialog.dart';
+import '../widgets/message_emoji_picker.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/screen_share_setup_dialog.dart';
 import '../widgets/voice_participant_thumbnail.dart';
@@ -152,8 +156,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   void _workspaceChanged() {
-    if (_shortcutAccount != widget.state.user?.accountId || widget.state.workspacePanel != WorkspacePanel.audio) {
-      if (_capturingVoiceShortcut != null) setState(() => _capturingVoiceShortcut = null);
+    if (_shortcutAccount != widget.state.user?.accountId ||
+        widget.state.workspacePanel != WorkspacePanel.audio) {
+      if (_capturingVoiceShortcut != null) {
+        setState(() => _capturingVoiceShortcut = null);
+      }
       _shortcutAccount = widget.state.user?.accountId;
     }
     final screenSharePhase = widget.state.screenSharePhase;
@@ -311,12 +318,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   bool _handleHardwareKey(KeyEvent event) {
-    if (!_shortcutAvailability.foreground || ModalRoute.of(context)?.isCurrent == false) return false;
-    if (!kIsWeb && event is KeyDownEvent && !_shortcutAvailability.hardwareKeyboard) {
+    if (!_shortcutAvailability.foreground ||
+        ModalRoute.of(context)?.isCurrent == false) {
+      return false;
+    }
+    if (!kIsWeb &&
+        event is KeyDownEvent &&
+        !_shortcutAvailability.hardwareKeyboard) {
       setState(_shortcutAvailability.observeHardwareKey);
     }
     if (_capturingVoiceShortcut != null) {
-      if (widget.state.workspacePanel != WorkspacePanel.audio || shortcutInputFocused()) {
+      if (widget.state.workspacePanel != WorkspacePanel.audio ||
+          shortcutInputFocused()) {
         setState(() => _capturingVoiceShortcut = null);
         return false;
       }
@@ -325,7 +338,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
       if (capture.kind == ShortcutCaptureKind.wait) return true;
       setState(() => _capturingVoiceShortcut = null);
       if (capture.kind == ShortcutCaptureKind.navigate) return false;
-      if (capture.kind == ShortcutCaptureKind.clear || capture.kind == ShortcutCaptureKind.assign) {
+      if (capture.kind == ShortcutCaptureKind.clear ||
+          capture.kind == ShortcutCaptureKind.assign) {
         unawaited(widget.state.setVoiceShortcut(action, capture.binding));
       }
       return true;
@@ -390,10 +404,22 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   bool _handleVoiceShortcut(KeyDownEvent event) {
-    if (kIsWeb || !_shortcutAvailability.enabled(mobile: widget.state.usesTouchPushToTalk) || ModalRoute.of(context)?.isCurrent == false || shortcutFocusBlocked()) return false;
+    if (kIsWeb ||
+        !_shortcutAvailability.enabled(
+          mobile: widget.state.usesTouchPushToTalk,
+        ) ||
+        ModalRoute.of(context)?.isCurrent == false ||
+        shortcutFocusBlocked()) {
+      return false;
+    }
     if (widget.state.pushToTalkKeyId == event.logicalKey.keyId) return false;
     final keyboard = HardwareKeyboard.instance;
-    final action = widget.state.microphoneShortcut?.matches(event, keyboard) == true ? 'microphone' : widget.state.deafenShortcut?.matches(event, keyboard) == true ? 'deafen' : null;
+    final action =
+        widget.state.microphoneShortcut?.matches(event, keyboard) == true
+        ? 'microphone'
+        : widget.state.deafenShortcut?.matches(event, keyboard) == true
+        ? 'deafen'
+        : null;
     if (action == null) return false;
     unawaited(widget.state.voice.runVoiceShortcut(action));
     return true;
@@ -488,11 +514,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
 
   void _beginPttKeyCapture() => setState(() => _capturingPttKey = true);
 
-  void _beginVoiceShortcutCapture(String action) =>
-      setState(() {
-        _capturingPttKey = false;
-        _capturingVoiceShortcut = action.isEmpty ? null : action;
-      });
+  void _beginVoiceShortcutCapture(String action) => setState(() {
+    _capturingPttKey = false;
+    _capturingVoiceShortcut = action.isEmpty ? null : action;
+  });
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -522,7 +547,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   }
 
   void _setShortcutForeground(bool foreground) {
-    _shortcutAvailability.setForeground(foreground, mobile: widget.state.usesTouchPushToTalk);
+    _shortcutAvailability.setForeground(
+      foreground,
+      mobile: widget.state.usesTouchPushToTalk,
+    );
     if (!foreground) {
       setState(() {
         _capturingVoiceShortcut = null;
@@ -537,7 +565,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
     floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     floatingActionButton: AnimatedBuilder(
       animation: widget.state.voice,
-      builder: (context, _) => VoiceShortcutStatus(message: widget.state.voiceShortcutStatus),
+      builder: (context, _) =>
+          VoiceShortcutStatus(message: widget.state.voiceShortcutStatus),
     ),
     body: SafeArea(
       top:
@@ -624,7 +653,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                             capturingPttKey: _capturingPttKey,
                             onCaptureVoiceShortcut: _beginVoiceShortcutCapture,
                             capturingVoiceShortcut: _capturingVoiceShortcut,
-                            hardwareKeyboardAvailable: _shortcutAvailability.hardwareKeyboard,
+                            hardwareKeyboardAvailable:
+                                _shortcutAvailability.hardwareKeyboard,
                           ),
                         ),
                       ),
@@ -746,9 +776,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                                     : null,
                                 onCapturePttKey: _beginPttKeyCapture,
                                 capturingPttKey: _capturingPttKey,
-                                onCaptureVoiceShortcut: _beginVoiceShortcutCapture,
+                                onCaptureVoiceShortcut:
+                                    _beginVoiceShortcutCapture,
                                 capturingVoiceShortcut: _capturingVoiceShortcut,
-                                hardwareKeyboardAvailable: _shortcutAvailability.hardwareKeyboard,
+                                hardwareKeyboardAvailable:
+                                    _shortcutAvailability.hardwareKeyboard,
                               ),
                             ),
                           ),
@@ -2105,6 +2137,45 @@ class _ConversationState extends State<_Conversation>
     await _attachmentComposerKey.currentState?.pasteFromClipboard();
   }
 
+  Future<void> _pickMentions() async {
+    final selected = await showMessageMentionDialog(
+      context: context,
+      options: widget.state.members
+          .map((member) => (member.id, member.displayName))
+          .toList(growable: false),
+      selfId: widget.state.user?.accountId ?? '',
+      selectedIds: _mentionUserIds,
+    );
+    if (!mounted || selected == null) return;
+    setState(() {
+      _mentionUserIds
+        ..clear()
+        ..addAll(selected);
+    });
+    _rememberDraft();
+  }
+
+  Future<void> _pickEmoji() async {
+    final emoji = await showMessageEmojiPicker(context);
+    if (!mounted || emoji == null) return;
+    _insertEmoji(emoji);
+  }
+
+  void _insertEmoji(String emoji) {
+    final insertion = insertMessageEmoji(
+      _controller.text,
+      _controller.selection,
+      emoji,
+    );
+    _controller.value = TextEditingValue(
+      text: insertion.text,
+      selection: insertion.selection,
+      composing: TextRange.empty,
+    );
+    _composerFocus.requestFocus();
+    _rememberDraft();
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -2314,6 +2385,7 @@ class _ConversationState extends State<_Conversation>
   Widget build(BuildContext context) {
     final viewportWidth = MediaQuery.sizeOf(context).width;
     final compact = viewportWidth < GcLayout.mobileBreakpoint;
+    final compactComposerActions = viewportWidth <= 720;
     final composerBorderRadius = _replyTarget == null
         ? const BorderRadius.all(Radius.circular(12))
         : const BorderRadius.only(
@@ -2613,60 +2685,83 @@ class _ConversationState extends State<_Conversation>
                     hintText: 'Написать сообщение…',
                     prefixIcon: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        PopupMenuButton<String>(
-                          tooltip: 'Вложение и вставка',
-                          enabled:
-                              !widget.state.sending && !_attachmentsPending,
-                          onSelected: (action) {
-                            if (action == 'file') {
-                              _attachmentComposerKey.currentState?.pickFiles();
-                            } else if (action == 'paste') {
-                              _pasteFromClipboard();
-                            }
-                          },
-                          itemBuilder: (context) => const [
-                            PopupMenuItem(
-                              value: 'file',
-                              child: ListTile(
-                                dense: true,
-                                leading: Icon(Icons.attach_file),
-                                title: Text('Прикрепить файл'),
+                      children: compactComposerActions
+                          ? [
+                              CompactMessageComposerActions(
+                                enabled:
+                                    !widget.state.sending &&
+                                    !_attachmentsPending,
+                                onAttach: () => _attachmentComposerKey
+                                    .currentState
+                                    ?.pickFiles(),
+                                onPaste: _pasteFromClipboard,
+                                onMention: _pickMentions,
+                                onEmoji: _pickEmoji,
                               ),
-                            ),
-                            PopupMenuItem(
-                              value: 'paste',
-                              child: ListTile(
-                                dense: true,
-                                leading: Icon(Icons.content_paste),
-                                title: Text('Вставить из буфера'),
+                            ]
+                          : [
+                              PopupMenuButton<String>(
+                                tooltip: 'Вложение и вставка',
+                                enabled:
+                                    !widget.state.sending &&
+                                    !_attachmentsPending,
+                                onSelected: (action) {
+                                  if (action == 'file') {
+                                    _attachmentComposerKey.currentState
+                                        ?.pickFiles();
+                                  } else if (action == 'paste') {
+                                    _pasteFromClipboard();
+                                  }
+                                },
+                                itemBuilder: (context) => const [
+                                  PopupMenuItem(
+                                    value: 'file',
+                                    child: ListTile(
+                                      dense: true,
+                                      leading: Icon(Icons.attach_file),
+                                      title: Text('Прикрепить файл'),
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'paste',
+                                    child: ListTile(
+                                      dense: true,
+                                      leading: Icon(Icons.content_paste),
+                                      title: Text('Вставить из буфера'),
+                                    ),
+                                  ),
+                                ],
+                                child: const SizedBox(
+                                  width: 44,
+                                  height: 48,
+                                  child: Icon(Icons.add_circle_outline),
+                                ),
                               ),
-                            ),
-                          ],
-                          child: const SizedBox(
-                            width: 44,
-                            height: 48,
-                            child: Icon(Icons.add_circle_outline),
-                          ),
-                        ),
-                        _MentionPicker(
-                          options: widget.state.members
-                              .map((member) => (member.id, member.displayName))
-                              .toList(growable: false),
-                          selfId: widget.state.user?.accountId ?? '',
-                          selectedIds: _mentionUserIds,
-                          triggerOnly: true,
-                          disabled: widget.state.sending,
-                          onChanged: (ids) {
-                            setState(() {
-                              _mentionUserIds
-                                ..clear()
-                                ..addAll(ids);
-                            });
-                            _rememberDraft();
-                          },
-                        ),
-                      ],
+                              _MentionPicker(
+                                options: widget.state.members
+                                    .map(
+                                      (member) =>
+                                          (member.id, member.displayName),
+                                    )
+                                    .toList(growable: false),
+                                selfId: widget.state.user?.accountId ?? '',
+                                selectedIds: _mentionUserIds,
+                                triggerOnly: true,
+                                disabled: widget.state.sending,
+                                onChanged: (ids) {
+                                  setState(() {
+                                    _mentionUserIds
+                                      ..clear()
+                                      ..addAll(ids);
+                                  });
+                                  _rememberDraft();
+                                },
+                              ),
+                              MessageEmojiPickerButton(
+                                enabled: !widget.state.sending,
+                                onSelected: _insertEmoji,
+                              ),
+                            ],
                     ),
                     suffixIcon: IconButton(
                       tooltip: 'Отправить сообщение',
@@ -4231,6 +4326,45 @@ class _DirectConversationState extends State<_DirectConversation> {
     await _attachmentComposerKey.currentState?.pasteFromClipboard();
   }
 
+  Future<void> _pickMentions() async {
+    final selected = await showMessageMentionDialog(
+      context: context,
+      options: [
+        (widget.conversation.participantId, widget.conversation.displayName),
+      ],
+      selfId: widget.state.user?.accountId ?? '',
+      selectedIds: _mentionUserIds,
+    );
+    if (!mounted || selected == null) return;
+    setState(() {
+      _mentionUserIds
+        ..clear()
+        ..addAll(selected);
+    });
+    _rememberDraft();
+  }
+
+  Future<void> _pickEmoji() async {
+    final emoji = await showMessageEmojiPicker(context);
+    if (!mounted || emoji == null) return;
+    _insertEmoji(emoji);
+  }
+
+  void _insertEmoji(String emoji) {
+    final insertion = insertMessageEmoji(
+      _controller.text,
+      _controller.selection,
+      emoji,
+    );
+    _controller.value = TextEditingValue(
+      text: insertion.text,
+      selection: insertion.selection,
+      composing: TextRange.empty,
+    );
+    _composerFocus.requestFocus();
+    _rememberDraft();
+  }
+
   @override
   void didUpdateWidget(covariant _DirectConversation oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -4474,6 +4608,7 @@ class _DirectConversationState extends State<_DirectConversation> {
     );
     final viewportWidth = MediaQuery.sizeOf(context).width;
     final compact = viewportWidth < GcLayout.mobileBreakpoint;
+    final compactComposerActions = viewportWidth <= 720;
     final composerBorderRadius = _replyTarget == null
         ? const BorderRadius.all(Radius.circular(12))
         : const BorderRadius.only(
@@ -4832,63 +4967,83 @@ class _DirectConversationState extends State<_DirectConversation> {
                     hintText: 'Написать сообщение…',
                     prefixIcon: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        PopupMenuButton<String>(
-                          tooltip: 'Вложение и вставка',
-                          enabled:
-                              !widget.state.sending && !_attachmentsPending,
-                          onSelected: (action) {
-                            if (action == 'file') {
-                              _attachmentComposerKey.currentState?.pickFiles();
-                            } else if (action == 'paste') {
-                              _pasteFromClipboard();
-                            }
-                          },
-                          itemBuilder: (context) => const [
-                            PopupMenuItem(
-                              value: 'file',
-                              child: ListTile(
-                                dense: true,
-                                leading: Icon(Icons.attach_file),
-                                title: Text('Прикрепить файл'),
+                      children: compactComposerActions
+                          ? [
+                              CompactMessageComposerActions(
+                                enabled:
+                                    !widget.state.sending &&
+                                    !_attachmentsPending,
+                                onAttach: () => _attachmentComposerKey
+                                    .currentState
+                                    ?.pickFiles(),
+                                onPaste: _pasteFromClipboard,
+                                onMention: _pickMentions,
+                                onEmoji: _pickEmoji,
                               ),
-                            ),
-                            PopupMenuItem(
-                              value: 'paste',
-                              child: ListTile(
-                                dense: true,
-                                leading: Icon(Icons.content_paste),
-                                title: Text('Вставить из буфера'),
+                            ]
+                          : [
+                              PopupMenuButton<String>(
+                                tooltip: 'Вложение и вставка',
+                                enabled:
+                                    !widget.state.sending &&
+                                    !_attachmentsPending,
+                                onSelected: (action) {
+                                  if (action == 'file') {
+                                    _attachmentComposerKey.currentState
+                                        ?.pickFiles();
+                                  } else if (action == 'paste') {
+                                    _pasteFromClipboard();
+                                  }
+                                },
+                                itemBuilder: (context) => const [
+                                  PopupMenuItem(
+                                    value: 'file',
+                                    child: ListTile(
+                                      dense: true,
+                                      leading: Icon(Icons.attach_file),
+                                      title: Text('Прикрепить файл'),
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'paste',
+                                    child: ListTile(
+                                      dense: true,
+                                      leading: Icon(Icons.content_paste),
+                                      title: Text('Вставить из буфера'),
+                                    ),
+                                  ),
+                                ],
+                                child: const SizedBox(
+                                  width: 44,
+                                  height: 48,
+                                  child: Icon(Icons.add_circle_outline),
+                                ),
                               ),
-                            ),
-                          ],
-                          child: const SizedBox(
-                            width: 44,
-                            height: 48,
-                            child: Icon(Icons.add_circle_outline),
-                          ),
-                        ),
-                        _MentionPicker(
-                          options: [
-                            (
-                              widget.conversation.participantId,
-                              widget.conversation.displayName,
-                            ),
-                          ],
-                          selfId: widget.state.user?.accountId ?? '',
-                          selectedIds: _mentionUserIds,
-                          triggerOnly: true,
-                          disabled: widget.state.sending,
-                          onChanged: (ids) {
-                            setState(() {
-                              _mentionUserIds
-                                ..clear()
-                                ..addAll(ids);
-                            });
-                            _rememberDraft();
-                          },
-                        ),
-                      ],
+                              _MentionPicker(
+                                options: [
+                                  (
+                                    widget.conversation.participantId,
+                                    widget.conversation.displayName,
+                                  ),
+                                ],
+                                selfId: widget.state.user?.accountId ?? '',
+                                selectedIds: _mentionUserIds,
+                                triggerOnly: true,
+                                disabled: widget.state.sending,
+                                onChanged: (ids) {
+                                  setState(() {
+                                    _mentionUserIds
+                                      ..clear()
+                                      ..addAll(ids);
+                                  });
+                                  _rememberDraft();
+                                },
+                              ),
+                              MessageEmojiPickerButton(
+                                enabled: !widget.state.sending,
+                                onSelected: _insertEmoji,
+                              ),
+                            ],
                     ),
                     suffixIcon: IconButton(
                       tooltip: 'Отправить личное сообщение',
@@ -5434,7 +5589,9 @@ class _VoicePrejoinCard extends StatelessWidget {
                   ),
                   if (state.voiceDisconnectNotice != null) ...[
                     const SizedBox(height: 16),
-                    VoiceDisconnectNoticeView(notice: state.voiceDisconnectNotice!),
+                    VoiceDisconnectNoticeView(
+                      notice: state.voiceDisconnectNotice!,
+                    ),
                   ] else if (state.error != null) ...[
                     const SizedBox(height: 16),
                     Semantics(
@@ -5464,7 +5621,8 @@ class _VoicePrejoinCard extends StatelessWidget {
                     admissionClosed: channel.admissionClosed,
                     notice: state.voiceDisconnectNotice,
                     onJoin: () => unawaited(state.joinVoice(channel)),
-                    onListen: () => unawaited(state.joinVoice(channel, listenerOnly: true)),
+                    onListen: () =>
+                        unawaited(state.joinVoice(channel, listenerOnly: true)),
                   ),
                 ],
               ),
@@ -8275,14 +8433,21 @@ class _MemberProfilePopoverState extends State<_MemberProfilePopover> {
                     ),
                     child: ParticipantVolumeSlider(
                       name: member.displayName,
-                      volume: widget.state.participantVolume(participant) ?? 100,
-                      onChanged: (value) => unawaited(widget.state.setParticipantVolume(participant, value)),
-                      onChangeEnd: () => unawaited(widget.state.flushVoiceVolumes()),
+                      volume:
+                          widget.state.participantVolume(participant) ?? 100,
+                      onChanged: (value) => unawaited(
+                        widget.state.setParticipantVolume(participant, value),
+                      ),
+                      onChangeEnd: () =>
+                          unawaited(widget.state.flushVoiceVolumes()),
                     ),
                   ),
                 ],
                 if (widget.state.voiceVolumeWarning != null)
-                  Semantics(liveRegion: true, child: Text(widget.state.voiceVolumeWarning!)),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(widget.state.voiceVolumeWarning!),
+                  ),
                 if (_error != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),

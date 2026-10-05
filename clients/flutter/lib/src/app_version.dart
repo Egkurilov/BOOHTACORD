@@ -1,7 +1,7 @@
-const appVersionName = String.fromEnvironment('APP_VERSION', defaultValue: '1.0.32');
-const appBuildNumber = String.fromEnvironment('APP_NATIVE_BUILD', defaultValue: '46');
-const appReleaseId = String.fromEnvironment('APP_RELEASE_ID', defaultValue: 'development-r46');
-const appReleaseOrder = int.fromEnvironment('APP_RELEASE_ORDER', defaultValue: 46);
+const appVersionName = String.fromEnvironment('APP_VERSION', defaultValue: '1.0.33');
+const appBuildNumber = String.fromEnvironment('APP_NATIVE_BUILD', defaultValue: '66');
+const appReleaseId = String.fromEnvironment('APP_RELEASE_ID', defaultValue: 'development-r47');
+const appReleaseOrder = int.fromEnvironment('APP_RELEASE_ORDER', defaultValue: 47);
 const appDistribution = String.fromEnvironment('APP_DISTRIBUTION', defaultValue: 'development');
 const appChannel = String.fromEnvironment('APP_CHANNEL', defaultValue: 'development');
 const appVersionLabel = 'Версия $appVersionName ($appBuildNumber)';

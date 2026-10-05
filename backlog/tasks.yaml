@@ -243,6 +243,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02]
     depends_on: [FV2-007, FV2-008, T-051]
     evidence: [flutter-text-scroll-fixed-chrome-regression, android-text-scroll-visual-acceptance, QA-278]
+  - id: FV2-029
+    title: Flutter Design V2 TEXT/DM composer emoji picker parity
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02]
+    depends_on: [FV2-001, FV2-002, T-040, T-041, T-050, T-051]
+    evidence: [flutter-emoji-picker-search-recents-tests, flutter-full-suite, macos-emoji-picker-visual-acceptance, android-emoji-picker-visual-acceptance, QA-280]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]
