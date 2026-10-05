@@ -6,6 +6,7 @@ extension ConversationLoadDirectHistory on ConversationController {
     final active = admission(selection: true);
     if (!active()) return;
     nextDirectMessageCursor = null;
+    olderDirectHistoryError = null;
     loadingDirectMessages = true;
     error = null;
     changed();

@@ -32,12 +32,14 @@ class ConversationController extends ChangeNotifier {
   List<ChatMessage> messages = const [];
   String? nextMessageCursor;
   bool loadingOlderMessages = false;
+  String? olderTextHistoryError;
   bool loadingMessages = false;
   bool textHistoryHasLoadedOlderPages = false;
   int textHistoryLoadSequence = 0;
   List<DirectChatMessage> directMessageHistory = const [];
   String? nextDirectMessageCursor;
   bool loadingOlderDirectMessages = false;
+  String? olderDirectHistoryError;
   bool loadingDirectMessages = false;
   bool sending = false;
   final Map<String, String> sendRetryIds = {};

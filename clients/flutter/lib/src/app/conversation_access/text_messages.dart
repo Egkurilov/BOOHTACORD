@@ -16,6 +16,8 @@ mixin AppTextMessagesAccess on AppOwners {
   set loadingOlderMessages(bool value) =>
       conversation.loadingOlderMessages = value;
 
+  String? get olderTextHistoryError => conversation.olderTextHistoryError;
+
   bool get loadingMessages => conversation.loadingMessages;
 
   set loadingMessages(bool value) => conversation.loadingMessages = value;

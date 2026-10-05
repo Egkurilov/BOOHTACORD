@@ -19,6 +19,8 @@ mixin AppDirectMessagesAccess on AppOwners {
   set loadingOlderDirectMessages(bool value) =>
       conversation.loadingOlderDirectMessages = value;
 
+  String? get olderDirectHistoryError => conversation.olderDirectHistoryError;
+
   bool get loadingDirectMessages => conversation.loadingDirectMessages;
 
   set loadingDirectMessages(bool value) =>

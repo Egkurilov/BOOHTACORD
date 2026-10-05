@@ -268,6 +268,11 @@ tasks:
     requirements: [REQ-UI-01, REQ-CHAT-02, REQ-DM-01]
     depends_on: [FV2-002, T-041, T-051]
     evidence: [flutter-dm-history-overlap-revision-tests, flutter-full-suite, QA-286]
+  - id: FV2-034
+    title: Flutter older TEXT and DM history errors stay inline and retryable
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-CHAT-01, REQ-CHAT-02, REQ-DM-01]
+    depends_on: [FV2-002, T-040, T-041, T-051]
+    evidence: [flutter-history-pagination-error-tests, flutter-full-suite, QA-287]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

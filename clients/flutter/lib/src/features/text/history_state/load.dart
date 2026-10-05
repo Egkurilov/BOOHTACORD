@@ -8,6 +8,7 @@ extension ConversationLoadChannelHistory on ConversationController {
     final loadSequence = ++textHistoryLoadSequence;
     messages = const [];
     nextMessageCursor = null;
+    olderTextHistoryError = null;
     textHistoryHasLoadedOlderPages = false;
     loadingMessages = false;
     error = null;

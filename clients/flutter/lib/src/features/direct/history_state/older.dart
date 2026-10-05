@@ -10,6 +10,7 @@ extension ConversationLoadOlderDirectMessages on ConversationController {
       return false;
     }
     loadingOlderDirectMessages = true;
+    olderDirectHistoryError = null;
     changed();
     try {
       final page = await api.directMessageHistoryPage(
@@ -35,7 +36,7 @@ extension ConversationLoadOlderDirectMessages on ConversationController {
       return true;
     } catch (cause) {
       if (!active()) return false;
-      error = formatError(cause);
+      olderDirectHistoryError = formatError(cause);
       return false;
     } finally {
       if (active()) {

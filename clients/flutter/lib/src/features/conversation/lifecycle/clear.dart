@@ -23,6 +23,7 @@ extension ConversationCleanup on ConversationController {
     invalidateSelection();
     messages = const [];
     nextMessageCursor = null;
+    olderTextHistoryError = null;
     textHistoryHasLoadedOlderPages = false;
   }
 
@@ -30,6 +31,7 @@ extension ConversationCleanup on ConversationController {
     invalidateSelection();
     directMessageHistory = const [];
     nextDirectMessageCursor = null;
+    olderDirectHistoryError = null;
     lastReadDirectMessageId = null;
   }
 }

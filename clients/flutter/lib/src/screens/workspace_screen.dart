@@ -2394,6 +2394,10 @@ class _ConversationState extends State<_Conversation>
           );
     final renderedMessages = widget.state.messages;
     final timeline = messageTimeline(renderedMessages);
+    final hasOlderTextCursor = widget.state.nextMessageCursor != null;
+    final olderTextHistoryError = widget.state.olderTextHistoryError;
+    final historyHeaderCount =
+        (hasOlderTextCursor ? 1 : 0) + (olderTextHistoryError == null ? 0 : 1);
     if (_observedChannelId != widget.channel.id ||
         !identical(_observedMessages, renderedMessages)) {
       _observedChannelId = widget.channel.id;
@@ -2454,9 +2458,7 @@ class _ConversationState extends State<_Conversation>
                             viewportWidth < GcLayout.mediumBreakpoint ? 20 : 24,
                             12,
                           ),
-                    itemCount:
-                        timeline.length +
-                        (widget.state.nextMessageCursor == null ? 0 : 1),
+                    itemCount: timeline.length + historyHeaderCount,
                     findItemIndexCallback: (key) {
                       final messageKey = _messageKeys.entries
                           .where((entry) => identical(entry.value, key))
@@ -2469,17 +2471,13 @@ class _ConversationState extends State<_Conversation>
                         (entry) => entry.message?.id == messageId,
                       );
                       if (timelineIndex < 0) return null;
-                      return timelineIndex +
-                          (widget.state.nextMessageCursor == null ? 0 : 1);
+                      return timelineIndex + historyHeaderCount;
                     },
                     separatorBuilder: (context, index) {
-                      if (widget.state.nextMessageCursor != null &&
-                          index == 0) {
+                      if (index < historyHeaderCount) {
                         return const SizedBox(height: 12);
                       }
-                      final timelineIndex =
-                          index -
-                          (widget.state.nextMessageCursor == null ? 0 : 1);
+                      final timelineIndex = index - historyHeaderCount;
                       final current = timeline[timelineIndex];
                       final next = timeline[timelineIndex + 1];
                       if (current.message == null) {
@@ -2502,8 +2500,7 @@ class _ConversationState extends State<_Conversation>
                       );
                     },
                     itemBuilder: (context, index) {
-                      if (widget.state.nextMessageCursor != null &&
-                          index == 0) {
+                      if (hasOlderTextCursor && index == 0) {
                         return Center(
                           child: TextButton.icon(
                             onPressed: widget.state.loadingOlderMessages
@@ -2526,9 +2523,16 @@ class _ConversationState extends State<_Conversation>
                           ),
                         );
                       }
-                      final timelineIndex =
-                          index -
-                          (widget.state.nextMessageCursor == null ? 0 : 1);
+                      final errorRowIndex = hasOlderTextCursor ? 1 : 0;
+                      if (olderTextHistoryError != null &&
+                          index == errorRowIndex) {
+                        return _OlderHistoryErrorRow(
+                          message: olderTextHistoryError,
+                          loading: widget.state.loadingOlderMessages,
+                          onRetry: _loadOlder,
+                        );
+                      }
+                      final timelineIndex = index - historyHeaderCount;
                       final entry = timeline[timelineIndex];
                       if (entry.message == null) {
                         return _HistoryDateDivider(label: entry.dateLabel!);
@@ -4609,6 +4613,11 @@ class _DirectConversationState extends State<_DirectConversation> {
     final viewportWidth = MediaQuery.sizeOf(context).width;
     final compact = viewportWidth < GcLayout.mobileBreakpoint;
     final compactComposerActions = viewportWidth <= 720;
+    final hasOlderDirectCursor = widget.state.nextDirectMessageCursor != null;
+    final olderDirectHistoryError = widget.state.olderDirectHistoryError;
+    final directHistoryHeaderCount =
+        (hasOlderDirectCursor ? 1 : 0) +
+        (olderDirectHistoryError == null ? 0 : 1);
     final composerBorderRadius = _replyTarget == null
         ? const BorderRadius.all(Radius.circular(12))
         : const BorderRadius.only(
@@ -4667,7 +4676,7 @@ class _DirectConversationState extends State<_DirectConversation> {
                         : const EdgeInsets.fromLTRB(24, 20, 24, 12),
                     itemCount:
                         widget.state.directMessageHistory.length +
-                        (widget.state.nextDirectMessageCursor == null ? 0 : 1),
+                        directHistoryHeaderCount,
                     findChildIndexCallback: (key) {
                       final messageKey = _directMessageKeys.entries
                           .where((entry) => identical(entry.value, key))
@@ -4679,14 +4688,10 @@ class _DirectConversationState extends State<_DirectConversation> {
                       final messageIndex = widget.state.directMessageHistory
                           .indexWhere((message) => message.id == messageId);
                       if (messageIndex < 0) return null;
-                      return messageIndex +
-                          (widget.state.nextDirectMessageCursor == null
-                              ? 0
-                              : 1);
+                      return messageIndex + directHistoryHeaderCount;
                     },
                     itemBuilder: (context, index) {
-                      if (widget.state.nextDirectMessageCursor != null &&
-                          index == 0) {
+                      if (hasOlderDirectCursor && index == 0) {
                         return Center(
                           child: TextButton.icon(
                             onPressed: widget.state.loadingOlderDirectMessages
@@ -4709,11 +4714,16 @@ class _DirectConversationState extends State<_DirectConversation> {
                           ),
                         );
                       }
-                      final messageIndex =
-                          index -
-                          (widget.state.nextDirectMessageCursor == null
-                              ? 0
-                              : 1);
+                      final errorRowIndex = hasOlderDirectCursor ? 1 : 0;
+                      if (olderDirectHistoryError != null &&
+                          index == errorRowIndex) {
+                        return _OlderHistoryErrorRow(
+                          message: olderDirectHistoryError,
+                          loading: widget.state.loadingOlderDirectMessages,
+                          onRetry: _loadOlderDirect,
+                        );
+                      }
+                      final messageIndex = index - directHistoryHeaderCount;
                       final message =
                           widget.state.directMessageHistory[messageIndex];
                       final own =
@@ -8736,4 +8746,72 @@ class _ErrorBanner extends StatelessWidget {
       ),
     );
   }
+}
+
+class _OlderHistoryErrorRow extends StatelessWidget {
+  const _OlderHistoryErrorRow({
+    required this.message,
+    required this.loading,
+    required this.onRetry,
+  });
+
+  final String message;
+  final bool loading;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    role: SemanticsRole.alert,
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF422830),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 1),
+                child: Icon(
+                  Icons.error_outline,
+                  color: GcColors.danger,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(color: GcColors.danger, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: loading ? null : onRetry,
+              icon: loading
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh, size: 16),
+              label: const Text('Повторить'),
+              style: TextButton.styleFrom(
+                foregroundColor: GcColors.danger,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

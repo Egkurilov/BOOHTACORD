@@ -1,0 +1,77 @@
+{
+  "id": "QA-287",
+  "date": "2026-10-05",
+  "task": "FV2-034 — Flutter older TEXT and DM history errors stay inline and retryable",
+  "source_revision": "f981b562",
+  "working_tree_changes": true,
+  "summary": "Flutter now presents older-page TEXT and DM failures within the history list, keeps the existing cursor, and exposes a retry action matching the web clients.",
+  "checks": [
+    {
+      "name": "Test-first TEXT baseline",
+      "command": "cd clients/flutter && flutter test test/workspace_screen_test.dart --plain-name 'keeps older text-page failures inline and retryable'",
+      "result": "FAIL_AS_EXPECTED_BEFORE_FIX",
+      "observation": "The failed older-page request populated the global error banner instead of a local retry row; the test expected the app-level error to remain unset."
+    },
+    {
+      "name": "Test-first DM baseline",
+      "command": "cd clients/flutter && flutter test test/workspace_screen_test.dart --plain-name 'keeps older DM-page failures inline and retryable'",
+      "result": "FAIL_AS_EXPECTED_BEFORE_FIX",
+      "observation": "The failed older-page request populated the global error banner instead of a local retry row; the test expected the app-level error to remain unset."
+    },
+    {
+      "name": "Focused TEXT and DM retry tests",
+      "command": "cd clients/flutter && flutter test test/workspace_screen_test.dart --name 'keeps older (text|DM)-page failures inline and retryable'",
+      "result": "PASS",
+      "passed": 2
+    },
+    {
+      "name": "Changed-file Dart analyzer",
+      "command": "cd clients/flutter && dart analyze lib/src/app/conversation_access/direct_messages.dart lib/src/app/conversation_access/text_messages.dart lib/src/features/conversation/lifecycle/clear.dart lib/src/features/conversation/lifecycle/controller.dart lib/src/features/direct/history_state/load.dart lib/src/features/direct/history_state/older.dart lib/src/features/text/history_state/load.dart lib/src/features/text/history_state/older.dart lib/src/screens/workspace_screen.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter compact",
+      "result": "PASS",
+      "passed": 626
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS"
+    },
+    {
+      "name": "Android Debug APK build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub",
+      "result": "PASS"
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this host."
+    },
+    {
+      "name": "Runtime platform visual acceptance",
+      "command": "macOS Debug / Android API 35 emulator",
+      "result": "NOT_RUN",
+      "observation": "A natural older-history network failure was not induced in either signed-in session; the retry/error rendering and recovery are covered by Flutter widget tests."
+    },
+    {
+      "name": "Backlog YAML validation",
+      "command": "ruby -e 'require \"yaml\"; YAML.load_file(\"backlog/tasks.yaml\')'",
+      "result": "PASS"
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "No web, API, cursor contract, read-state or server behavior changed.",
+    "macOS and Android live-session error states were not forced; this avoids disrupting the user's active sessions."
+  ],
+  "status": "IMPLEMENTED; TESTS_AND_ANALYZER_PASS"
+}

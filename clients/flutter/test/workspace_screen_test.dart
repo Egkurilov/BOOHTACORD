@@ -2431,6 +2431,84 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('keeps older text-page failures inline and retryable', (
+    tester,
+  ) async {
+    final api = _PortraitApi(withHistory: true, paginatedHistory: true)
+      ..failOlderTextPages = 1;
+    final state = AppState(api);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await state.initialize();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Загрузить предыдущие сообщения'));
+    await tester.pumpAndSettle();
+
+    expect(state.error, isNull);
+    expect(state.nextMessageCursor, 'older-page');
+    expect(find.text('Повторить'), findsOneWidget);
+    expect(find.text('Сеть недоступна'), findsOneWidget);
+
+    await tester.tap(find.text('Повторить'));
+    await tester.pumpAndSettle();
+
+    expect(api.messagePageCalls, 3);
+    expect(state.messages.first.id, 'older-message-0');
+    expect(find.text('Повторить'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('keeps older DM-page failures inline and retryable', (
+    tester,
+  ) async {
+    final api = _PortraitApi(
+      includeDirectMessage: true,
+      paginatedDirectHistory: true,
+      directHistoryCount: 2,
+    )..failOlderDirectPages = 1;
+    final state = AppState(api);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await state.initialize();
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Загрузить предыдущие сообщения'));
+    await tester.pumpAndSettle();
+
+    expect(state.error, isNull);
+    expect(state.nextDirectMessageCursor, 'older-dm-page');
+    expect(find.text('Повторить'), findsOneWidget);
+    expect(find.text('Сеть недоступна'), findsOneWidget);
+
+    await tester.tap(find.text('Повторить'));
+    await tester.pumpAndSettle();
+
+    expect(api.directMessagePageCalls, 3);
+    expect(state.directMessageHistory.first.id, 'older-dm-message-0');
+    expect(find.text('Повторить'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('selects a reply target and sends a reply in a text channel', (
     tester,
   ) async {
@@ -3945,6 +4023,8 @@ class _PortraitApi extends ApiClient {
   final int historyCount;
   final bool paginatedHistory;
   final bool paginatedDirectHistory;
+  int failOlderTextPages = 0;
+  int failOlderDirectPages = 0;
   final int directHistoryCount;
   final bool includeDirectMessage;
   final List<VoiceRoomRoster> voiceRosters;
@@ -4250,6 +4330,10 @@ class _PortraitApi extends ApiClient {
     String? at,
   }) async {
     directMessagePageCalls++;
+    if (before != null && failOlderDirectPages > 0) {
+      failOlderDirectPages--;
+      throw const ApiFailure('Сеть недоступна');
+    }
     if (at != null) {
       lastDirectMessageAt = at;
       if (directReplyContextPage != null) return directReplyContextPage!;
@@ -4342,6 +4426,10 @@ class _PortraitApi extends ApiClient {
     String? at,
   }) async {
     messagePageCalls++;
+    if (before != null && failOlderTextPages > 0) {
+      failOlderTextPages--;
+      throw const ApiFailure('Сеть недоступна');
+    }
     if (at != null) {
       lastMessageAt = at;
       if (replyContextPage != null) return replyContextPage!;
