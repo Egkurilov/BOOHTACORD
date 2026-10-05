@@ -1,0 +1,72 @@
+{
+  "id": "QA-299",
+  "date": "2026-10-05",
+  "task": "FV2-040 — Responsive client update banner on desktop",
+  "source_revision": "24489973",
+  "working_tree_changes": true,
+  "summary": "A user-provided Windows screenshot showed the long release summary wrapping into a very tall, underlined column and pushing the workspace below the fold. The Flutter update banner now clamps its summary to two lines with ellipsis and explicitly disables text decoration; full release details remain available in the existing details sheet. Package-version fallback defaults were also synchronized with 1.0.35+68 after the release quality workflow exposed drift.",
+  "checks": [
+    {
+      "name": "Test-first desktop geometry regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/updates/banner_test.dart",
+      "result": "PASS",
+      "observation": "Before the fix, the new regression failed because maxLines was null. After the fix, a 1280×900 desktop layout at text scale 2.5 has a two-line summary, no text decoration, banner height below 220 px, and no Flutter exception."
+    },
+    {
+      "name": "Client update tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/updates",
+      "result": "PASS",
+      "passed": 28
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter failures-only",
+      "result": "PASS",
+      "passed": 645
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/app_version.dart lib/src/features/updates/banner.dart test/updates/banner_test.dart test/profile_screen_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS"
+    },
+    {
+      "name": "Android arm64 Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug --target-platform android-arm64 --no-pub",
+      "result": "PASS",
+      "observation": "Built only; the installed emulator app was not replaced."
+    },
+    {
+      "name": "Windows native visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "The regression uses Windows desktop width and increased text scale in Flutter widget tests, but no Windows desktop runtime is available on this Mac host. GitHub Windows CI is pending after push."
+    },
+    {
+      "name": "Android v1.0.35 release quality workflow",
+      "result": "FAILED_BEFORE_BUILD",
+      "run_id": 37355877073,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37355877073",
+      "observation": "643 tests passed and one failed because app_version.dart defaults were still 1.0.34+67 while pubspec.yaml was bumped to 1.0.35+68. The defaults are corrected in the current working tree; this failure was on the already-pushed tag commit. No APK release was published; the tag has not been moved."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/app_version.dart",
+      "clients/flutter/lib/src/features/updates/banner.dart",
+      "clients/flutter/test/updates/banner_test.dart",
+      "backlog/FRONTEND_TODO.md",
+      "docs/flutter-web-parity.md"
+    ],
+    "web_or_api_changed": false
+  },
+  "limitations": [
+    "Windows-native rendering was not captured locally; only the supplied screenshot and platform-neutral desktop-size widget regression were available.",
+    "The existing android-v1.0.35 tag points to a commit whose quality workflow failed on stale version defaults. Repointing the remote release tag was not attempted."
+  ],
+  "status": "PASS — Flutter UI fix verified; Windows-native screenshot and Android release-tag recovery remain open."
+}

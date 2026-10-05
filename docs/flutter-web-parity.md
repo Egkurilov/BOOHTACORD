@@ -1367,3 +1367,11 @@ open an explicit external download page and leave active media intact until the
 user decides. Automated contract and build gates are separate from the pending
 two-release physical A/B acceptance recorded in
 [QA-226](../evidence/flutter/qa226-client-update-device-acceptance-2026-10-02-001.json).
+
+Desktop update-banner follow-up (FV2-040): long changelog summaries are now
+limited to two lines with ellipsis in the banner; the full summary remains in
+“Что нового”. Explicitly removing text decoration also avoids the underline
+visible in the supplied Windows screenshot. A widget regression checks
+1280×900 with text scale 2.5 and keeps the banner below 220 px; native Windows
+visual acceptance is still pending —
+[QA-299](../evidence/flutter/qa299-windows-client-update-banner-responsive-2026-10-05-001.json).
