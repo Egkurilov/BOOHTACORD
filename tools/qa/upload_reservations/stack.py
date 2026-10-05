@@ -38,11 +38,13 @@ class UploadStack(Stack):
         if self.api_name:
             label = output('docker', 'inspect', self.api_name, '--format', '{{index .Config.Labels "'+LABEL+'"}}')
             assert label == self.owner, 'Foreign API container'
-            run('docker', 'stop', '--time', '15', self.api_name, stdout=subprocess.DEVNULL)
-            assert output('docker', 'inspect', self.api_name, '--format', '{{.State.ExitCode}}') != '137', 'API shutdown exceeded its graceful deadline'
-            remove_owned(self.api_name, self.owner)
-            self.resources.remove(('container', self.api_name))
-            self.api_name = None
+            try:
+                run('docker', 'stop', '--time', '15', self.api_name, stdout=subprocess.DEVNULL)
+                self.last_exit_code = output('docker', 'inspect', self.api_name, '--format', '{{.State.ExitCode}}')
+            finally:
+                remove_owned(self.api_name, self.owner)
+                self.resources.remove(('container', self.api_name))
+                self.api_name = None
 
     def reject_second_writer(self):
         result = subprocess.run(['docker', 'exec', self.api_name, '/qa-api'], capture_output=True, text=True, timeout=10)
@@ -52,6 +54,7 @@ class UploadStack(Stack):
         for _ in range(2):
             previous = output('docker', 'inspect', self.api_name, '--format', '{{.Id}}')
             self.stop_api()
+            assert self.last_exit_code != '137', 'API shutdown exceeded its graceful deadline'
             exited = subprocess.run(['docker', 'inspect', previous], capture_output=True)
             assert exited.returncode != 0, 'Previous owned API still exists before next writer starts'
             self.restart()
