@@ -21,7 +21,10 @@ extension ConversationLoadOlderMessages on ConversationController {
       textHistoryHasLoadedOlderPages = true;
       final byId = {for (final message in messages) message.id: message};
       for (final message in page.messages) {
-        byId.putIfAbsent(message.id, () => message);
+        final existing = byId[message.id];
+        if (existing == null || message.revision >= existing.revision) {
+          byId[message.id] = message;
+        }
       }
       acknowledgeMessageIds(
         page.messages.map((message) => message.clientMessageId),

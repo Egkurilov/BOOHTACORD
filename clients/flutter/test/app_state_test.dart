@@ -950,6 +950,25 @@ void main() {
   );
 
   test(
+    'older text pages prefer the newer revision of an overlapping row',
+    () async {
+      final api = _FakeApi(topology, paginated: true)
+        ..overlappingTextRevision = 2;
+      final state = AppState(api);
+      addTearDown(state.dispose);
+      await state.initialize();
+
+      expect(await state.loadOlderMessages(), isTrue);
+
+      final overlap = state.messages.singleWhere(
+        (message) => message.id == 'message-1',
+      );
+      expect(overlap.revision, 2);
+      expect(overlap.body, 'Обновлённая версия');
+    },
+  );
+
+  test(
     'realtime text refresh preserves already loaded history pages',
     () async {
       final api = _FakeApi(topology, paginated: true);
@@ -1277,6 +1296,7 @@ class _FakeApi extends ApiClient {
   int failTextEdits = 0;
   int failDirectEdits = 0;
   int olderTextRevision = 1;
+  int? overlappingTextRevision;
   int olderDirectRevision = 1;
   String? deletedTextMessageId;
   String? deletedDirectMessageId;
@@ -1512,6 +1532,16 @@ class _FakeApi extends ApiClient {
             deleted: false,
             revision: olderTextRevision,
           ),
+          if (overlappingTextRevision case final revision?)
+            ChatMessage(
+              id: 'message-1',
+              channelId: channelId,
+              authorId: 'account-1',
+              body: 'Обновлённая версия',
+              createdAt: DateTime.utc(2026, 9, 20),
+              deleted: false,
+              revision: revision,
+            ),
         ],
       );
     }

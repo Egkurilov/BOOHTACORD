@@ -1,0 +1,50 @@
+{
+  "id": "QA-284",
+  "date": "2026-10-05",
+  "task": "FV2-031 — Flutter text history overlap merges the newest message revision",
+  "source_revision": "7c09197b",
+  "working_tree_changes": true,
+  "summary": "Flutter older cursor-page merging now deduplicates by message ID and retains the greatest message revision, matching the web mergePage rule and existing Flutter refresh behavior.",
+  "checks": [
+    {
+      "name": "Test-first baseline reproduction",
+      "command": "cd clients/flutter && flutter test --no-pub test/app_state_test.dart --plain-name 'older text pages prefer the newer revision of an overlapping row'",
+      "result": "FAIL_AS_EXPECTED_BEFORE_FIX",
+      "observation": "An overlapping revision 2 was returned while the already-loaded revision 1 remained in state."
+    },
+    {
+      "name": "Focused AppState suite",
+      "command": "cd clients/flutter && flutter test --no-pub test/app_state_test.dart",
+      "result": "PASS",
+      "passed": 50
+    },
+    {
+      "name": "Changed-file Flutter analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/features/text/history_state/older.dart test/app_state_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Full Flutter test suite on updated master",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 621
+    },
+    {
+      "name": "Spec traceability verifier",
+      "command": "pwsh -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "NOT_RUN",
+      "observation": "PowerShell Core is not installed on this host."
+    },
+    {
+      "name": "Whitespace validation",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "Live cursor/read-state was not mutated or inspected; runtime device acceptance remains tracked under FV2-002.",
+    "macOS native drag interaction was not confirmed by the UI driver and remains open under FV2-018."
+  ],
+  "status": "IMPLEMENTED; TESTS_AND_ANALYZER_PASS; LIVE_READ_CURSOR_ACCEPTANCE_NOT_RUN"
+}
