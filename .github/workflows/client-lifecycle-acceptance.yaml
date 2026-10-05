@@ -1,0 +1,48 @@
+name: Autonomous client lifecycle acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - tools/qa/client_lifecycle/**
+      - clients/web/src/guild/profile/**
+      - clients/web/src/identity/**
+      - clients/web/src/App.vue
+      - backend/**
+      - .github/workflows/client-lifecycle-acceptance.yaml
+
+permissions:
+  contents: read
+
+jobs:
+  lifecycle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Install locked real browser
+        working-directory: clients/web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Verify disposable resource guards
+        run: python3 -m unittest tools.qa.client_lifecycle.test_services tools.qa.client_lifecycle.test_telemetry
+      - name: Run independent actual TLS API browser journeys
+        run: |
+          python3 -m tools.qa.client_lifecycle.run --width 1440
+          python3 -m tools.qa.client_lifecycle.run --width 1024
+      - name: Retain synthetic actual screenshots and bounded results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: autonomous-client-lifecycle-${{ github.sha }}
+          path: .out/client-lifecycle/
+          if-no-files-found: ignore
+          retention-days: 30
