@@ -98,6 +98,9 @@ Keep #89 and QA-09/12 open until their original acceptance is fulfilled.
 - [Native GitHub CI](https://github.com/Egkurilov/BOOHTACORD/actions/runs/37344794829)
   PASS: contracts, Go/PostgreSQL test/vet/build, full Web/audio/browser, Flutter
   analyze/tests/Android build modes/debug APK and Windows build inspection.
+- A later cold audio fixture startup exposed a module readiness timeout. The
+  fixture now returns 503 until all modules/static imports are warmed; three
+  Node regression checks pass. Audio assertions and timeouts are unchanged.
 - Local safe reports/screenshots: `C:/Users/egkur/.codex/visualizations/2026/10/05/critical-five-issues`.
 - Upload report `upload-reservations-graceful.json` SHA-256:
   `aa455bc0b4fab5ec4990b85c3f03c8575def51f273d66b0a2ca191a27d5ec33c`.
