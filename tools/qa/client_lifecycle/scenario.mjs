@@ -34,7 +34,7 @@ try {
   if (input.critical) {
     await bursts(a, b, value.channelId, report, input.directory)
     console.log('stage=actual-protected-bursts-accepted')
-    await media(a, b, guest, value.channelId, report, input.directory)
+    await media(a, b, guest, value.channelId, report, input)
     console.log('stage=actual-media-faults-accepted')
     await resetLinks(browser, a, flowAccount.account_id, input, report, redactions)
     console.log('stage=actual-reset-links-accepted')

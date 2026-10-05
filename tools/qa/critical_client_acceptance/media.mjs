@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict'
-import { api, expect, status, login } from '../client_lifecycle/request.mjs'
+import { api, expect, status } from '../client_lifecycle/request.mjs'
 import { owned } from './control.mjs'
+import { teardown } from './teardown.mjs'
 async function connected(page) {
   await expect(page.getByTestId('voice-dock').locator('.voice-status')).toHaveText('Голос подключён')
   await expect.poll(() => page.evaluate(() => window.__qaPeers.some(peer => peer.connectionState === 'connected'))).toBe(true)
 }
-export async function media(a, b, member, channelId, report, directory) {
+export async function media(a, b, member, channelId, report, input) {
+  const directory = input.directory
   let blocked = false
   const chat = []
   await a.addInitScript(() => {
@@ -59,4 +61,5 @@ export async function media(a, b, member, channelId, report, directory) {
   await a.locator('.channel-button').filter({ hasText: 'WelcomeLab' }).click()
   await b.locator('.channel-button').filter({ hasText: 'WelcomeLab' }).click()
   report.connection_status.targeted_roster_retry = true
+  await teardown(a, b, channelId, input, report)
 }
