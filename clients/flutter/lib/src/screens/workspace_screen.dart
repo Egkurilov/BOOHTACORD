@@ -6505,6 +6505,7 @@ class _VoiceParticipantCard extends StatelessWidget {
         ),
       ),
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           Column(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -6611,7 +6612,7 @@ class _VoiceParticipantCard extends StatelessWidget {
             ),
           if (volume != null && onVolumeChanged != null)
             Positioned(
-              top: 0,
+              top: -8,
               right: 0,
               child: ParticipantVolumeMenu(
                 warning: state.voiceVolumeWarning,

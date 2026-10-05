@@ -1,0 +1,52 @@
+{
+  "id": "QA-300",
+  "date": "2026-10-05",
+  "task": "FV2-041 — Flutter voice participant volume menu alignment",
+  "source_revision": "da1570da",
+  "working_tree_changes": true,
+  "summary": "The participant volume ellipsis sat 8 dp below the intended alignment. The action is raised by 8 dp while allowing its hit target to paint outside the card stack; a test-first widget regression verifies its position against the avatar on macOS and Android target platforms.",
+  "checks": [
+    {
+      "name": "Flutter workspace widget suite",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart",
+      "result": "PASS",
+      "passed": 70
+    },
+    {
+      "name": "Changed-file analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/workspace_screen.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "macOS Debug runtime",
+      "result": "PASS",
+      "observation": "Existing Debug app stayed open; DevTools hot reload completed. The current app screen was disconnected from voice, so the participant card itself was not visible for a runtime screenshot. No app restart or Keychain prompt occurred."
+    },
+    {
+      "name": "Android widget geometry",
+      "result": "PASS",
+      "observation": "The same alignment assertion passed with TargetPlatform.android; no emulator UI screenshot was captured."
+    },
+    {
+      "name": "git diff whitespace check",
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/screens/workspace_screen.dart",
+      "clients/flutter/test/workspace_screen_test.dart",
+      "backlog/tasks.yaml",
+      "backlog/FRONTEND_TODO.md",
+      "evidence/flutter/qa300-flutter-voice-participant-menu-alignment-2026-10-05-001.json"
+    ],
+    "web_or_api_changed": false
+  },
+  "limitations": [
+    "No native Android screenshot was taken because the emulator UI was not exposed in the desktop app inventory.",
+    "A connected voice participant card was not open on macOS during the live hot reload; visual alignment is verified by platform-target widget geometry tests."
+  ],
+  "status": "PASS — participant volume action geometry regression fixed and covered on macOS and Android widget targets; native screenshots remain NOT_RUN."
+}
