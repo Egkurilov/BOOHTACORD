@@ -2275,6 +2275,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Голос подключён'), findsOneWidget);
+    expect(find.text('Подключено'), findsNothing);
     expect(find.byIcon(Icons.headphones_outlined), findsOneWidget);
     expect(
       tester.widget<Text>(find.text('Голос подключён')).style?.fontWeight,
@@ -2380,7 +2381,6 @@ void main() {
     state.voicePhase = VoicePhase.joining;
     state.notifyListeners();
     await tester.pump();
-    expect(find.text('Подключаемся'), findsOneWidget);
     expect(find.text('Подключено'), findsNothing);
     expect(find.text('Подключаемся к голосовому каналу'), findsOneWidget);
     expect(find.text('Соединяемся с голосовой комнатой.'), findsNothing);

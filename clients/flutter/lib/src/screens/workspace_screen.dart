@@ -5924,20 +5924,6 @@ class _VoiceParticipantRoom extends StatelessWidget {
                   ],
                 ),
               ),
-              VoiceConnectionBadge(
-                status: switch (state.voicePhase) {
-                  VoicePhase.connected ||
-                  VoicePhase.listener => VoiceConnectionBadgeStatus.connected,
-                  VoicePhase.joining => VoiceConnectionBadgeStatus.connecting,
-                  VoicePhase.reconnecting =>
-                    VoiceConnectionBadgeStatus.reconnecting,
-                  VoicePhase.leaving => VoiceConnectionBadgeStatus.leaving,
-                  VoicePhase.error => VoiceConnectionBadgeStatus.error,
-                  VoicePhase.idle => VoiceConnectionBadgeStatus.disconnected,
-                },
-                quality: state.voiceConnectionQuality,
-                pingMs: state.voicePingMs,
-              ),
             ],
           ),
           if (state.error != null) ...[
