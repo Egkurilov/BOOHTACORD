@@ -1054,6 +1054,7 @@ class _Sidebar extends StatelessWidget {
                       if (state.navigationSection == NavigationSection.channels)
                         for (final category in state.topology!.categories)
                           _Category(
+                            key: ValueKey('workspace-category:${category.id}'),
                             state: state,
                             category: category,
                             onChannelSelected: onChannelSelected,
@@ -1157,8 +1158,9 @@ class _DirectMessageNavigation extends StatelessWidget {
   );
 }
 
-class _Category extends StatelessWidget {
+class _Category extends StatefulWidget {
   const _Category({
+    super.key,
     required this.state,
     required this.category,
     this.onChannelSelected,
@@ -1166,92 +1168,147 @@ class _Category extends StatelessWidget {
   final AppState state;
   final ChannelCategory category;
   final VoidCallback? onChannelSelected;
+
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(10, 12, 10, 7),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  category.name.toUpperCase(),
-                  style: const TextStyle(
-                    color: GcColors.muted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: .6,
+  State<_Category> createState() => _CategoryState();
+}
+
+class _CategoryState extends State<_Category> {
+  bool _expanded = true;
+  bool _hovered = false;
+  bool _focused = false;
+
+  bool get _showObjectMenu => _hovered || _focused;
+
+  @override
+  Widget build(BuildContext context) {
+    final category = widget.category;
+    final state = widget.state;
+    final disclosureLabel =
+        '${_expanded ? 'Свернуть' : 'Развернуть'} раздел ${category.name}';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FocusableActionDetector(
+            key: ValueKey('workspace-category-focus:${category.id}'),
+            onShowHoverHighlight: (value) => setState(() => _hovered = value),
+            onShowFocusHighlight: (value) => setState(() => _focused = value),
+            child: Container(
+              key: ValueKey('workspace-category-header:${category.id}'),
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(GcRadii.md),
+                child: SizedBox(
+                  height: GcLayout.channelRowHeight,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        tooltip: disclosureLabel,
+                        onPressed: () => setState(() => _expanded = !_expanded),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 32,
+                          height: 36,
+                        ),
+                        icon: Icon(
+                          _expanded
+                              ? Icons.expand_more_rounded
+                              : Icons.chevron_right_rounded,
+                          size: 18,
+                          color: GcColors.muted,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          category.name.toUpperCase(),
+                          style: const TextStyle(
+                            color: GcColors.text,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: .6,
+                          ),
+                        ),
+                      ),
+                      TopologyCreateButton(state: state, category: category),
+                      TopologyObjectMenu(
+                        state: state,
+                        target: category,
+                        visible: _showObjectMenu,
+                      ),
+                    ],
                   ),
                 ),
               ),
-              TopologyCreateButton(state: state, category: category),
-              TopologyObjectMenu(state: state, target: category),
-            ],
-          ),
-        ),
-        if (category.channels.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Text(
-              'Нет каналов',
-              style: TextStyle(color: GcColors.muted, fontSize: 12),
             ),
           ),
-        for (final channel in category.channels) ...[
-          Builder(
-            builder: (context) {
-              final room = state.voiceChannel?.id == channel.id
-                  ? state.room
-                  : null;
-              final localParticipant = room?.localParticipant;
-              final roster = state.voiceRosters
-                  ?.where((item) => item.channelId == channel.id)
-                  .firstOrNull;
-              final memberCount = localParticipant == null
-                  ? roster?.participants.length
-                  : room!.remoteParticipants.length + 1;
-              return Column(
-                children: [
-                  _ChannelRow(
-                    state: state,
-                    channel: channel,
-                    selected: state.selectedChannel?.id == channel.id,
-                    voiceConnected: state.voiceChannel?.id == channel.id,
-                    voiceParticipantCount: memberCount,
-                    onTap: () {
-                      if (onChannelSelected != null &&
-                          channel.kind == ChannelKind.voice) {
-                        state.enterVoiceChannel(channel);
-                      } else {
-                        state.selectChannel(channel);
-                      }
-                      onChannelSelected?.call();
-                    },
-                  ),
-                  if (localParticipant != null)
-                    _VoiceNavigationMembers(
-                      state: state,
-                      localParticipant: localParticipant,
-                      remoteParticipants: room!.remoteParticipants.values,
-                    )
-                  else if (channel.kind == ChannelKind.voice &&
-                      roster != null &&
-                      roster.participants.isNotEmpty)
-                    _VoiceRosterNavigationMembers(roster: roster, state: state),
-                ],
-              );
-            },
-          ),
+          if (_expanded) ...[
+            if (category.channels.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                child: Text(
+                  'Нет каналов',
+                  style: TextStyle(color: GcColors.muted, fontSize: 12),
+                ),
+              ),
+            for (final channel in category.channels) ...[
+              Builder(
+                builder: (context) {
+                  final room = state.voiceChannel?.id == channel.id
+                      ? state.room
+                      : null;
+                  final localParticipant = room?.localParticipant;
+                  final roster = state.voiceRosters
+                      ?.where((item) => item.channelId == channel.id)
+                      .firstOrNull;
+                  final memberCount = localParticipant == null
+                      ? roster?.participants.length
+                      : room!.remoteParticipants.length + 1;
+                  return Column(
+                    children: [
+                      _ChannelRow(
+                        state: state,
+                        channel: channel,
+                        selected: state.selectedChannel?.id == channel.id,
+                        voiceConnected: state.voiceChannel?.id == channel.id,
+                        voiceParticipantCount: memberCount,
+                        onTap: () {
+                          if (widget.onChannelSelected != null &&
+                              channel.kind == ChannelKind.voice) {
+                            state.enterVoiceChannel(channel);
+                          } else {
+                            state.selectChannel(channel);
+                          }
+                          widget.onChannelSelected?.call();
+                        },
+                      ),
+                      if (localParticipant != null)
+                        _VoiceNavigationMembers(
+                          state: state,
+                          localParticipant: localParticipant,
+                          remoteParticipants: room!.remoteParticipants.values,
+                        )
+                      else if (channel.kind == ChannelKind.voice &&
+                          roster != null &&
+                          roster.participants.isNotEmpty)
+                        _VoiceRosterNavigationMembers(
+                          roster: roster,
+                          state: state,
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ],
         ],
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
-class _ChannelRow extends StatelessWidget {
+class _ChannelRow extends StatefulWidget {
   const _ChannelRow({
     required this.state,
     required this.channel,
@@ -1266,104 +1323,137 @@ class _ChannelRow extends StatelessWidget {
   final bool voiceConnected;
   final int? voiceParticipantCount;
   final VoidCallback onTap;
+
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 2),
-    child: Material(
-      color: selected ? GcColors.selected : Colors.transparent,
-      borderRadius: BorderRadius.circular(7),
-      child: InkWell(
-        onTap: onTap,
-        onSecondaryTap: canDeleteChannel(state, channel)
-            ? () => deleteTopologyTarget(context, state, channel)
-            : null,
-        borderRadius: BorderRadius.circular(7),
-        child: SizedBox(
-          key: ValueKey('workspace-channel-row:${channel.id}'),
-          height: MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint
-              ? GcLayout.touchTargetSize
-              : GcLayout.channelRowHeight,
-          child: Row(
-            children: [
-              if (voiceConnected)
-                Container(
-                  width: 3,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: GcColors.success,
-                    borderRadius: BorderRadius.circular(3),
+  State<_ChannelRow> createState() => _ChannelRowState();
+}
+
+class _ChannelRowState extends State<_ChannelRow> {
+  bool _hovered = false;
+  bool _focused = false;
+
+  bool get _showObjectMenu => _hovered || _focused;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.state;
+    final channel = widget.channel;
+    final selected = widget.selected;
+    final voiceConnected = widget.voiceConnected;
+    final voiceParticipantCount = widget.voiceParticipantCount;
+    final canManage = canDeleteChannel(state, channel);
+    return FocusableActionDetector(
+      key: ValueKey('workspace-channel-focus:${channel.id}'),
+      enabled: canManage,
+      onShowHoverHighlight: (value) => setState(() => _hovered = value),
+      onShowFocusHighlight: (value) => setState(() => _focused = value),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 2),
+        child: Material(
+          color: selected ? GcColors.selected : Colors.transparent,
+          borderRadius: BorderRadius.circular(7),
+          child: InkWell(
+            onTap: widget.onTap,
+            onSecondaryTap: canManage
+                ? () => deleteTopologyTarget(context, state, channel)
+                : null,
+            borderRadius: BorderRadius.circular(7),
+            child: SizedBox(
+              key: ValueKey('workspace-channel-row:${channel.id}'),
+              height:
+                  MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint
+                  ? GcLayout.touchTargetSize
+                  : GcLayout.channelRowHeight,
+              child: Row(
+                children: [
+                  if (voiceConnected)
+                    Container(
+                      width: 3,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: GcColors.success,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 3),
+                  const SizedBox(width: 9),
+                  Icon(
+                    channel.kind == ChannelKind.text
+                        ? Icons.tag_rounded
+                        : Icons.volume_up_outlined,
+                    size: 20,
+                    color: voiceConnected ? GcColors.success : GcColors.muted,
                   ),
-                )
-              else
-                const SizedBox(width: 3),
-              const SizedBox(width: 9),
-              Icon(
-                channel.kind == ChannelKind.text
-                    ? Icons.tag_rounded
-                    : Icons.volume_up_outlined,
-                size: 20,
-                color: voiceConnected ? GcColors.success : GcColors.muted,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  channel.name,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: selected || voiceConnected
-                        ? GcColors.text
-                        : GcColors.textSecondary,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              if (channel.kind == ChannelKind.text && channel.unreadCount > 0)
-                _ChannelStateBadge(
-                  label: '${channel.unreadCount}',
-                  semanticLabel:
-                      'Непрочитанных сообщений: ${channel.unreadCount}',
-                ),
-              if (channel.kind == ChannelKind.text && channel.mentionCount > 0)
-                _ChannelStateBadge(
-                  label: '@${channel.mentionCount}',
-                  semanticLabel: 'Упоминаний: ${channel.mentionCount}',
-                ),
-              if (channel.admissionClosed)
-                const Padding(
-                  padding: EdgeInsets.only(right: 10),
-                  child: Icon(
-                    Icons.lock_outline,
-                    size: 16,
-                    color: GcColors.warning,
-                  ),
-                ),
-              if (voiceParticipantCount != null && voiceParticipantCount! > 0)
-                Padding(
-                  padding: const EdgeInsets.only(right: 9),
-                  child: Tooltip(
-                    message:
-                        'Участников в голосовом канале: $voiceParticipantCount',
-                    child: Semantics(
-                      label:
-                          'Участников в голосовом канале: $voiceParticipantCount',
-                      child: Text(
-                        '$voiceParticipantCount',
-                        style: const TextStyle(
-                          color: GcColors.textSecondary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      channel.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: selected || voiceConnected
+                            ? GcColors.text
+                            : GcColors.textSecondary,
+                        fontSize: 14,
                       ),
                     ),
                   ),
-                ),
-              TopologyObjectMenu(state: state, target: channel),
-            ],
+                  if (channel.kind == ChannelKind.text &&
+                      channel.unreadCount > 0)
+                    _ChannelStateBadge(
+                      label: '${channel.unreadCount}',
+                      semanticLabel:
+                          'Непрочитанных сообщений: ${channel.unreadCount}',
+                    ),
+                  if (channel.kind == ChannelKind.text &&
+                      channel.mentionCount > 0)
+                    _ChannelStateBadge(
+                      label: '@${channel.mentionCount}',
+                      semanticLabel: 'Упоминаний: ${channel.mentionCount}',
+                    ),
+                  if (channel.admissionClosed)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 10),
+                      child: Icon(
+                        Icons.lock_outline,
+                        size: 16,
+                        color: GcColors.warning,
+                      ),
+                    ),
+                  if (voiceParticipantCount != null &&
+                      voiceParticipantCount > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 9),
+                      child: Tooltip(
+                        message:
+                            'Участников в голосовом канале: $voiceParticipantCount',
+                        child: Semantics(
+                          label:
+                              'Участников в голосовом канале: $voiceParticipantCount',
+                          child: Text(
+                            '$voiceParticipantCount',
+                            style: const TextStyle(
+                              color: GcColors.textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  TopologyObjectMenu(
+                    state: state,
+                    target: channel,
+                    visible: _showObjectMenu,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _VoiceNavigationMembers extends StatelessWidget {

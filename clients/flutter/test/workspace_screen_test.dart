@@ -2117,6 +2117,69 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('channel categories collapse with a highlighted compact header', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi());
+    await state.initialize();
+    state.selectedChannel = _PortraitApi.channel;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final header = find.byKey(
+      const ValueKey('workspace-category-header:category-1'),
+    );
+    expect(header, findsOneWidget);
+    final headerContainer = tester.widget<Container>(header);
+    expect(headerContainer.decoration, isNull);
+    expect(
+      find.byKey(const ValueKey('workspace-channel-row:channel-1')),
+      findsOneWidget,
+    );
+    final menuVisibility = find.byKey(
+      const ValueKey('topology-object-menu-visibility:channel-1'),
+    );
+    expect(tester.widget<Visibility>(menuVisibility).visible, isFalse);
+    final channelFocus = tester.widget<FocusableActionDetector>(
+      find.byKey(const ValueKey('workspace-channel-focus:channel-1')),
+    );
+    channelFocus.onShowFocusHighlight!(true);
+    await tester.pump();
+    expect(tester.widget<Visibility>(menuVisibility).visible, isTrue);
+    channelFocus.onShowFocusHighlight!(false);
+    await tester.pump();
+    expect(tester.widget<Visibility>(menuVisibility).visible, isFalse);
+    await tester.tap(find.byTooltip('Свернуть раздел Текстовые каналы'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('workspace-channel-row:channel-1')),
+      findsNothing,
+    );
+    expect(
+      find.byTooltip('Развернуть раздел Текстовые каналы'),
+      findsOneWidget,
+    );
+    await tester.tap(find.byTooltip('Развернуть раздел Текстовые каналы'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('workspace-channel-row:channel-1')),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('voice prejoin matches web desktop spacing and card padding', (
     tester,
   ) async {
