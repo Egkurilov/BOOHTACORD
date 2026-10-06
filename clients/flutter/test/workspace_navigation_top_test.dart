@@ -50,6 +50,31 @@ void main() {
       const Rect.fromLTWH(16, 128, 142, 32),
     );
     expect(find.text('6 участников'), findsOneWidget);
+    final searchButton = tester.widget<IconButton>(
+      find.descendant(
+        of: find.byKey(const ValueKey('navigation-search')),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(
+      searchButton.style!.shape!.resolve(<WidgetState>{}),
+      isA<RoundedRectangleBorder>(),
+    );
+    expect(
+      (searchButton.style!.shape!.resolve(<WidgetState>{})
+              as RoundedRectangleBorder)
+          .borderRadius,
+      BorderRadius.circular(8),
+    );
+    expect(
+      tester.widget<Material>(
+        find.ancestor(
+          of: find.byKey(const ValueKey('navigation-search')),
+          matching: find.byType(Material),
+        ).first,
+      ).clipBehavior,
+      Clip.antiAlias,
+    );
     await tester.tap(find.byTooltip('Поиск сообщений'));
     await tester.tap(find.text('Каналы'));
     await tester.tap(find.text('Личные'));

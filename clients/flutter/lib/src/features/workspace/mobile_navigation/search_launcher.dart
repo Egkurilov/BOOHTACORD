@@ -20,6 +20,7 @@ class WorkspaceNavigationSearch extends StatelessWidget {
     child: Material(
       color: GcColors.canvas,
       borderRadius: BorderRadius.circular(8),
+      clipBehavior: Clip.antiAlias,
       child: SizedBox(
         key: const ValueKey('navigation-search'),
         height: 36,
@@ -28,6 +29,23 @@ class WorkspaceNavigationSearch extends StatelessWidget {
           tooltip: 'Поиск сообщений',
           focusNode: focusNode,
           onPressed: onPressed,
+          style: ButtonStyle(
+            shape: WidgetStatePropertyAll(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            overlayColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.pressed)) {
+                return GcColors.selected;
+              }
+              if (states.contains(WidgetState.hovered) ||
+                  states.contains(WidgetState.focused)) {
+                return GcColors.hover;
+              }
+              return null;
+            }),
+          ),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
           icon: const Padding(
