@@ -29,3 +29,8 @@ Additional retained patches cover AGP built-in Kotlin compatibility, local audio
 RTT statistics, screen publication discovery before subscription, and bounded
 video-renderer first-frame callbacks. The focused tests are listed by path in
 the upstream record. `python -m tools.ci.native.flutter` runs the vendor suites.
+
+Native desktop microphone selection updates `Hardware.selectedAudioInput` only
+after FlutterWebRTC confirms the OS route switch. If native selection fails,
+the SDK cache stays on the previous device, matching the application and room
+options after their rollback.

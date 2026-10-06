@@ -13,6 +13,7 @@
     "lib/livekit_client.dart",
     "lib/src/core/engine.dart",
     "lib/src/core/room.dart",
+    "lib/src/hardware/hardware.dart",
     "lib/src/stats/stats.dart",
     "lib/src/track/local/audio.dart",
     "lib/src/track/remote/video.dart",

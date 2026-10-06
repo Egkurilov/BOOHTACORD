@@ -113,6 +113,7 @@ void main() {
   final captures = <Object?>[];
   final nativeCalls = <MethodCall>[];
   var captureFailures = 0;
+  String? nativeSelectionFailureCode;
   Completer<void>? captureGate;
   Completer<void>? captureStarted;
   Completer<void>? outputGate;
@@ -123,6 +124,7 @@ void main() {
     captures.clear();
     nativeCalls.clear();
     captureFailures = 0;
+    nativeSelectionFailureCode = null;
     captureGate = null;
     captureStarted = null;
     outputGate = null;
@@ -165,6 +167,11 @@ void main() {
             ],
             'videoTracks': [],
           };
+        }
+        final selectionFailureCode = nativeSelectionFailureCode;
+        if (call.method == 'selectAudioInput' && selectionFailureCode != null) {
+          nativeSelectionFailureCode = null;
+          throw PlatformException(code: selectionFailureCode);
         }
         if (call.method == 'selectAudioOutput') {
           final started = outputStarted;
@@ -304,6 +311,15 @@ void main() {
         addTearDown(track.dispose);
         final room = _NativeRouteRoom(track);
         addTearDown(room.dispose);
+        final hardware = Hardware.instance;
+        final previousHardwareInput = hardware.selectedAudioInput;
+        hardware.selectedAudioInput = const MediaDevice(
+          'mic-1',
+          'First',
+          'audioinput',
+          'qa',
+        );
+        addTearDown(() => hardware.selectedAudioInput = previousHardwareInput);
         final preferences = await AudioPreferences.open('account-a');
         final owner = AudioDeviceController(readRoom: () => room)
           ..preferences = preferences
@@ -331,6 +347,7 @@ void main() {
         expect(track.currentOptions.deviceId, 'mic-2');
         expect(room.roomOptions.defaultAudioCaptureOptions.deviceId, 'mic-2');
         expect(owner.selectedAudioInputId, 'mic-2');
+        expect(hardware.selectedAudioInput?.deviceId, 'mic-2');
         expect(owner.audioSettingsError, isNull);
       },
     );
@@ -367,6 +384,105 @@ void main() {
         expect(room.roomOptions.defaultAudioCaptureOptions.deviceId, 'mic-2');
         expect(owner.selectedAudioInputId, 'mic-2');
         expect(owner.audioSettingsError, isNull);
+      },
+    );
+
+    test(
+      'native route rejection rolls back selected input on $platform',
+      () async {
+        final previousTarget = debugDefaultTargetPlatformOverride;
+        final track = await LocalAudioTrack.create(
+          const AudioCaptureOptions(deviceId: 'mic-1'),
+        );
+        addTearDown(track.dispose);
+        final room = _NativeRouteRoom(track);
+        addTearDown(room.dispose);
+        final hardware = Hardware.instance;
+        final previousHardwareInput = hardware.selectedAudioInput;
+        hardware.selectedAudioInput = const MediaDevice(
+          'mic-1',
+          'First',
+          'audioinput',
+          'qa',
+        );
+        addTearDown(() => hardware.selectedAudioInput = previousHardwareInput);
+        final preferences = await AudioPreferences.open('account-a');
+        await preferences.setInputDevice('mic-1');
+        final owner = AudioDeviceController(readRoom: () => room)
+          ..preferences = preferences
+          ..selectedAudioInputId = 'mic-1';
+        addTearDown(owner.dispose);
+        owner.applyAudioDevices(const [
+          MediaDevice('mic-1', 'First', 'audioinput', 'qa'),
+          MediaDevice('mic-2', 'Second', 'audioinput', 'qa'),
+        ]);
+        final capturesBeforeSelection = captures.length;
+        nativeSelectionFailureCode = 'selectAudioInputFailed';
+
+        debugDefaultTargetPlatformOverride = platform;
+        try {
+          await owner.selectAudioInput('mic-2');
+        } finally {
+          debugDefaultTargetPlatformOverride = previousTarget;
+        }
+
+        final selectionCall = nativeCalls.singleWhere(
+          (call) => call.method == 'selectAudioInput',
+        );
+        expect(selectionCall.arguments, {'deviceId': 'mic-2'});
+        expect(owner.selectedAudioInputId, 'mic-1');
+        expect(preferences.inputDeviceId, 'mic-1');
+        expect(hardware.selectedAudioInput?.deviceId, 'mic-1');
+        expect(
+          owner.audioSettingsError,
+          'Система не смогла переключить микрофон. Проверьте подключение устройства и повторите попытку.',
+        );
+        expect(captures, hasLength(capturesBeforeSelection));
+      },
+    );
+
+    test(
+      'audio input enumeration failure gives retry guidance on $platform',
+      () async {
+        final previousTarget = debugDefaultTargetPlatformOverride;
+        final room = _ListenerRoom();
+        addTearDown(room.dispose);
+        final hardware = Hardware.instance;
+        final previousHardwareInput = hardware.selectedAudioInput;
+        hardware.selectedAudioInput = const MediaDevice(
+          'mic-1',
+          'First',
+          'audioinput',
+          'qa',
+        );
+        addTearDown(() => hardware.selectedAudioInput = previousHardwareInput);
+        final preferences = await AudioPreferences.open('account-a');
+        await preferences.setInputDevice('mic-1');
+        final owner = AudioDeviceController(readRoom: () => room)
+          ..preferences = preferences
+          ..selectedAudioInputId = 'mic-1';
+        addTearDown(owner.dispose);
+        owner.applyAudioDevices(const [
+          MediaDevice('mic-1', 'First', 'audioinput', 'qa'),
+          MediaDevice('mic-2', 'Second', 'audioinput', 'qa'),
+        ]);
+        nativeSelectionFailureCode = 'audioInputEnumerationFailed';
+
+        debugDefaultTargetPlatformOverride = platform;
+        try {
+          await owner.selectAudioInput('mic-2');
+        } finally {
+          debugDefaultTargetPlatformOverride = previousTarget;
+        }
+
+        expect(owner.selectedAudioInputId, 'mic-1');
+        expect(preferences.inputDeviceId, 'mic-1');
+        expect(hardware.selectedAudioInput?.deviceId, 'mic-1');
+        expect(
+          owner.audioSettingsError,
+          'Не удалось обновить список аудиоустройств. Повторите попытку.',
+        );
+        expect(captures, isEmpty);
       },
     );
   }

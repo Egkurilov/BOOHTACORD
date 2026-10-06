@@ -1,0 +1,30 @@
+{
+  "id": "QA-318",
+  "date": "2026-10-06",
+  "task": "FV2-052",
+  "source_revision": "fc97420ba93ea5d3a6b4a40ef801699884adc9d1",
+  "working_tree_changes": true,
+  "checks": [
+    {
+      "name": "Android emulator availability and version",
+      "result": "PASS",
+      "observation": "ADB reports emulator-5554 online, ARM64. The installed package reports versionName 1.0.37 and versionCode 2070. The pending debug APK was not installed; no app data was removed."
+    },
+    {
+      "name": "Android audio settings layout and navigation",
+      "result": "PASS",
+      "observation": "Opened audio settings through the sidebar account menu. Back navigation is visible; built-in microphone and phone speaker selectors are present before joining voice. Vertical scrolling exposes voice/PTT modes, sensitivity and processing controls without horizontal clipping in the observed viewport. Microphone probe was not started and no settings were changed."
+    },
+    {
+      "name": "Running Mac pre-join microphone inventory",
+      "result": "PASS",
+      "observation": "The existing debug app showed System Default, CORSAIR VOID ELITE Wireless Gaming Dongle and HyperX Quadcast inputs before voice admission. This is a UI inventory observation only, not acceptance of the pending source changes."
+    },
+    {
+      "name": "Mac current-source hot reload and route acceptance",
+      "result": "NOT_RUN",
+      "observation": "A running flutter run process and localhost Dart VM service were present, but flutter attach did not discover a connection. Subsequent UI clicks left the Mac audio screen unchanged. The app was not restarted; no voice session or microphone capture was started. Current-source/native route acceptance remains open."
+    }
+  ],
+  "status": "PARTIAL — Android visual smoke and running Mac input inventory observed; current-source Mac route and Windows hardware acceptance remain open."
+}

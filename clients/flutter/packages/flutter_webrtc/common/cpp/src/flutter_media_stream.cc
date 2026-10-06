@@ -1,5 +1,6 @@
 #include "flutter_media_stream.h"
 
+#include "audio_device_selection.h"
 #include "flutter_utf8_sanitize.h"
 
 #define DEFAULT_WIDTH 1280
@@ -506,19 +507,37 @@ void FlutterMediaStream::SelectAudioInput(
     std::unique_ptr<MethodResultProxy> result) {
   char deviceName[256];
   char deviceGuid[256];
-  int playout_devices = base_->audio_device_->RecordingDevices();
-  bool found = false;
-  for (uint16_t i = 0; i < playout_devices; i++) {
-    base_->audio_device_->RecordingDeviceName(i, deviceName, deviceGuid);
-    std::string cur_device_id =
-        SanitizeDeviceIdFromAudioBuffers(deviceName, deviceGuid);
-    if (device_id != "" && device_id == cur_device_id) {
-      base_->audio_device_->SetRecordingDevice(i);
-      found = true;
-      break;
-    }
+  const auto recording_devices = base_->audio_device_->RecordingDevices();
+  if (recording_devices < 0) {
+    result->Error("audioInputEnumerationFailed",
+                  "Unable to enumerate audio input devices.");
+    return;
   }
-  if (!found) {
+  const auto recording_device_count =
+      static_cast<uint16_t>(recording_devices);
+  std::vector<std::string> device_ids;
+  device_ids.reserve(recording_device_count);
+  for (uint16_t i = 0; i < recording_device_count; i++) {
+    if (base_->audio_device_->RecordingDeviceName(i, deviceName, deviceGuid) !=
+        0) {
+      result->Error("audioInputEnumerationFailed",
+                    "Unable to enumerate audio input devices.");
+      return;
+    }
+    device_ids.push_back(
+        SanitizeDeviceIdFromAudioBuffers(deviceName, deviceGuid));
+  }
+
+  const auto selection = SelectAudioInputDevice(
+      device_ids, device_id, [this](uint16_t index) {
+        return base_->audio_device_->SetRecordingDevice(index);
+      });
+  if (selection.status == AudioInputDeviceSelectionStatus::kNativeFailure) {
+    result->Error("selectAudioInputFailed",
+                  "The audio input device could not be activated.");
+    return;
+  }
+  if (selection.status == AudioInputDeviceSelectionStatus::kNotFound) {
     result->Error("Bad Arguments",
                   "Not found device id: " + SanitizeUtf8ForFlutter(device_id));
     return;

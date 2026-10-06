@@ -134,8 +134,9 @@ class Hardware {
       logger.warning('selectAudioInput is only supported on Windows/macOS');
       return;
     }
-    selectedAudioInput = device;
     await rtc.Helper.selectAudioInput(device.deviceId);
+    // Keep the SDK cache aligned with the route accepted by the native ADM.
+    selectedAudioInput = device;
   }
 
   @Deprecated('Use AudioManager.instance.setSpeakerOutputPreferred instead')

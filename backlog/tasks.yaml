@@ -342,7 +342,7 @@ tasks:
     title: Flutter desktop quick shortcut row density follow-up
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
     depends_on: [FV2-042, FV2-027, T-051]
-    evidence: [audio-shortcut-desktop-mobile-geometry-tests, macos-android-visual-acceptance, QA-314]
+    evidence: [audio-shortcut-desktop-mobile-geometry-tests, macos-android-visual-acceptance, QA-314, QA-316]
   - id: FV2-050
     title: Separate playback volume reset from microphone processing settings
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
@@ -352,12 +352,12 @@ tasks:
     title: Refresh audio device inventory after LiveKit voice connection
     requirements: [REQ-AUDIO-01]
     depends_on: [FV2-043, T-061]
-    evidence: [voice-connect-audio-device-refresh-tests, flutter-audio-device-controller-tests, flutter-audio-changed-file-analysis, macos-debug-build, macos-voice-device-inventory-runtime, QA-310]
+    evidence: [voice-connect-audio-device-refresh-tests, flutter-audio-device-controller-tests, flutter-audio-changed-file-analysis, macos-debug-build, macos-voice-device-inventory-runtime, QA-310, QA-316]
   - id: FV2-052
     title: Route active desktop microphone selection through LiveKit audio device module
     requirements: [REQ-AUDIO-01]
     depends_on: [FV2-043, T-061]
-    evidence: [desktop-active-input-route-tests, flutter-audio-changed-file-analysis, macos-debug-build, macos-live-input-route-acceptance, QA-311]
+    evidence: [desktop-active-input-route-tests, windows-native-selection-result-test, livekit-input-device-cache-rollback, flutter-audio-changed-file-analysis, android-arm64-debug-build, macos-debug-build, macos-live-input-route-acceptance, windows-live-input-route-acceptance, QA-311, QA-316, QA-317, QA-318]
   - id: T-052
     title: Security baseline and observability
     requirements: [REQ-SECURITY-01, REQ-SECURITY-02, REQ-OPS-01]

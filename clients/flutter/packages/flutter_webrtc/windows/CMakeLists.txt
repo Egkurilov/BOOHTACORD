@@ -72,3 +72,9 @@ set(flutter_webrtc_bundled_libraries
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/libwebrtc/lib/libwebrtc.dll"
   PARENT_SCOPE
 )
+
+add_subdirectory(
+  "${CMAKE_CURRENT_SOURCE_DIR}/../common/cpp/tests"
+  "${CMAKE_CURRENT_BINARY_DIR}/audio_device_selection_tests"
+)
+add_dependencies(${PLUGIN_NAME} audio_device_selection_test)

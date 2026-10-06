@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../services/android_audio_devices.dart';
@@ -147,14 +148,25 @@ mixin AudioDeviceSelection on AudioDeviceState {
     } catch (cause) {
       if (!current()) return;
       selectedAudioInputId = previous;
-      audioSettingsError =
-          'Не удалось переключить микрофон: ${cause.runtimeType}.';
+      audioSettingsError = _inputSelectionErrorMessage(cause);
       ClientTelemetry.audioInputSwitch(
         targetRoom == null ? 'prejoin' : 'active',
         switchOutcome,
       );
     }
     if (current()) notifyListeners();
+  }
+
+  String _inputSelectionErrorMessage(Object cause) {
+    if (cause is PlatformException) {
+      switch (cause.code) {
+        case 'selectAudioInputFailed':
+          return 'Система не смогла переключить микрофон. Проверьте подключение устройства и повторите попытку.';
+        case 'audioInputEnumerationFailed':
+          return 'Не удалось обновить список аудиоустройств. Повторите попытку.';
+      }
+    }
+    return 'Не удалось переключить микрофон. Повторите попытку.';
   }
 
   Future<void> selectAudioOutput(String deviceId) async {
