@@ -1,0 +1,75 @@
+{
+  "id": "QA-300",
+  "date": "2026-10-06",
+  "issue": "#132",
+  "task": "Runtime acceptance for Android screen share and background voice flows (#40 #42 #48 #49 #51 #86)",
+  "source_revision": "fa590bcb",
+  "runtime": {
+    "android": "Android Emulator API 35, ru.boohtacord.app 1.0.37+70 (versionCode 2070)",
+    "macos": "BOOHTACORD Debug 1.0.37+70",
+    "channel": "SHARE_TEST",
+    "profile": "720p / 15 FPS",
+    "capture_sources": ["Android app-only", "Android full-display"],
+    "microphones": "Android microphone unavailable/disabled; macOS microphone muted",
+    "run_window_utc": "2026-10-06T19:55:00Z/2026-10-06T20:04:00Z",
+    "connected_devices": "Android Emulator API 35 only; no physical Pixel ADB device attached"
+  },
+  "checks": [
+    {
+      "issue": "#40",
+      "name": "Android stream discovery on macOS",
+      "result": "FAIL",
+      "observation": "Current app-only and full-display publications were visible from the Android participant on macOS, the viewer subscribed and rendered live portrait frames, and stop/unpublish removed the publication. QA-236's historical no-publication regression was not reproduced on 1.0.37, so its original cause is still not established. The required Android sender counters were not exposed during the paired run (sender panel remained waiting), so the acceptance gate is incomplete.",
+      "receiver_counters": "App-only sample: 576x1280, 13.8 decoded FPS, 70.5 kbit/s, 0 dropped frames, 12 ms jitter."
+    },
+    {
+      "issue": "#42",
+      "name": "Paired Android to macOS publish/discovery/view",
+      "result": "FAIL",
+      "observation": "Publish, discovery, first frame, stop, restart with a second capture mode, and leave all worked. Receiver diagnostics updated live, but sender encoded FPS/bitrate were unavailable and presented FPS/RTT were not reported by the receiver in this run; therefore the required sender/receiver correlation is not accepted.",
+      "receiver_counters": "Full-display sample: 576x1280, 2.5 decoded FPS, 8.1 kbit/s, 0% loss, 0 dropped frames, 59 ms jitter; RTT unavailable."
+    },
+    {
+      "issue": "#48",
+      "name": "Preview and resumed screen stream",
+      "result": "FAIL",
+      "observation": "Android Emulator API 35 passed app-only and full-display local preview, paired macOS playback, a 10-second background interval, explicit Activity resume, and stop cleanup. The physical Pixel path required by the issue was not available, so device acceptance and renderer-surface restore on physical hardware remain unverified.",
+      "local_state": "MediaProjection remained TYPE_SCREEN_CAPTURE while backgrounded and returned to the BOOHTACORD Activity; stop cleared projection and the foreground service."
+    },
+    {
+      "issue": "#49",
+      "name": "Voice and screen publication in background",
+      "result": "NOT_RUN",
+      "observation": "Muted screen-only background continuity was observed on the emulator, including room membership and remote playback. The required microphone-enabled paired-background scenario and audible peer verification were not run because Android microphone access is unavailable in the installed emulator session; no physical Pixel was attached."
+    },
+    {
+      "issue": "#51",
+      "name": "Background microphone and Android FGS types",
+      "result": "NOT_RUN",
+      "observation": "The checked build declares only FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION and does not declare FOREGROUND_SERVICE_MICROPHONE. Consequently the required Android 14+ mic-only/both FGS, visible-Activity start, mute/unmute peer-hearability, and permission-denial matrix cannot be accepted. This remains the documented FE-68/QA-221 gap under ADR-006."
+    },
+    {
+      "issue": "#86",
+      "name": "Portrait app-only thumbnail",
+      "result": "FAIL",
+      "observation": "The portrait app-only capture produced a non-empty local preview and a visible participant thumbnail, and stopping the share removed the stale publication. A deterministic capture-failure/retry injection and a paired assertion of corrected portrait crop were not completed, so the retry/crop gate remains open."
+    }
+  ],
+  "automated_checks": [
+    {
+      "command": "cd clients/flutter && flutter test --no-pub test/android_screen_capture_fgs_contract_test.dart test/screen_share_quality_test.dart test/screen_share_diagnostics_test.dart test/screen_receiver_diagnostics_test.dart test/screen_receiver_report_test.dart test/screen_metrics_report_api_test.dart test/screen_share_metrics_test.dart",
+      "result": "PASS",
+      "passed": 46
+    }
+  ],
+  "cleanup": {
+    "result": "PASS",
+    "observation": "Android MediaProjection became null, the background service stopped, Android left SHARE_TEST, and macOS left SHARE_TEST after the run."
+  },
+  "status": "OPEN_PARTIAL_RUNTIME_ACCEPTANCE; #40/#42/#48/#86 PARTIAL; #49/#51 NOT_RUN",
+  "next_steps": [
+    "Repeat #40/#42/#48/#86 with a physical Pixel and capture bounded sender counters alongside macOS receiver counters.",
+    "Review ADR-006/FE-68 before implementing or accepting microphone FGS support; then run #49/#51 with mic-enabled and denied-permission cases.",
+    "Keep issue #132 open until all six checks are PASS."
+  ]
+}
