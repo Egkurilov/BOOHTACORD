@@ -7200,7 +7200,7 @@ class _AudioSettingsCard extends StatelessWidget {
   );
 }
 
-class _AudioActivationSelector extends StatelessWidget {
+class _AudioActivationSelector extends StatefulWidget {
   const _AudioActivationSelector({
     required this.compact,
     required this.value,
@@ -7212,74 +7212,140 @@ class _AudioActivationSelector extends StatelessWidget {
   final ValueChanged<AudioActivationMode> onChanged;
 
   @override
-  Widget build(BuildContext context) => Container(
-    key: const ValueKey('audio-settings-activation-segment'),
-    height: compact ? 50 : 46,
-    padding: const EdgeInsets.all(4),
-    decoration: BoxDecoration(
-      color: GcColors.sidebar,
-      border: Border.all(color: GcColors.borderSubtle),
-      borderRadius: BorderRadius.circular(GcRadii.md),
-    ),
-    child: Row(
-      children: [
-        _choice(
-          label: 'По голосу',
-          mode: AudioActivationMode.vad,
-          key: const ValueKey('audio-activation-vad'),
-        ),
-        const SizedBox(width: 4),
-        _choice(
-          label: 'По нажатию',
-          mode: AudioActivationMode.ptt,
-          key: const ValueKey('audio-activation-ptt'),
-        ),
-      ],
-    ),
-  );
+  State<_AudioActivationSelector> createState() =>
+      _AudioActivationSelectorState();
+}
+
+class _AudioActivationSelectorState extends State<_AudioActivationSelector> {
+  late final _voiceFocusNode = FocusNode(debugLabel: 'По голосу');
+  late final _pushToTalkFocusNode = FocusNode(debugLabel: 'По нажатию');
+
+  @override
+  void dispose() {
+    _voiceFocusNode.dispose();
+    _pushToTalkFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final stacked =
+        widget.compact &&
+        MediaQuery.textScalerOf(context).scale(GcTypography.body) > 18;
+    return Container(
+      key: const ValueKey('audio-settings-activation-segment'),
+      height: stacked
+          ? null
+          : widget.compact
+          ? 50
+          : 46,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: GcColors.sidebar,
+        border: Border.all(color: GcColors.borderSubtle),
+        borderRadius: BorderRadius.circular(GcRadii.md),
+      ),
+      child: stacked
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _choice(
+                  label: 'По голосу',
+                  mode: AudioActivationMode.vad,
+                  key: const ValueKey('audio-activation-vad'),
+                  focusNode: _voiceFocusNode,
+                  stacked: true,
+                ),
+                const SizedBox(height: 4),
+                _choice(
+                  label: 'По нажатию',
+                  mode: AudioActivationMode.ptt,
+                  key: const ValueKey('audio-activation-ptt'),
+                  focusNode: _pushToTalkFocusNode,
+                  stacked: true,
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                _choice(
+                  label: 'По голосу',
+                  mode: AudioActivationMode.vad,
+                  key: const ValueKey('audio-activation-vad'),
+                  focusNode: _voiceFocusNode,
+                  stacked: false,
+                ),
+                const SizedBox(width: 4),
+                _choice(
+                  label: 'По нажатию',
+                  mode: AudioActivationMode.ptt,
+                  key: const ValueKey('audio-activation-ptt'),
+                  focusNode: _pushToTalkFocusNode,
+                  stacked: false,
+                ),
+              ],
+            ),
+    );
+  }
 
   Widget _choice({
     required String label,
     required AudioActivationMode mode,
     Key? key,
+    required FocusNode focusNode,
+    required bool stacked,
   }) {
-    final selected = value == mode;
-    return Expanded(
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: label,
-        child: ExcludeSemantics(
-          child: Material(
-            color: selected ? GcColors.accent : Colors.transparent,
-            borderRadius: BorderRadius.circular(GcRadii.sm),
-            child: InkWell(
-              key: key,
+    final selected = widget.value == mode;
+    final choice = Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: ExcludeSemantics(
+        child: TextButton(
+          key: key,
+          focusNode: focusNode,
+          onPressed: () => widget.onChanged(mode),
+          style: TextButton.styleFrom(
+            backgroundColor: selected ? GcColors.accent : Colors.transparent,
+            foregroundColor: selected
+                ? GcColors.onAccent
+                : GcColors.textSecondary,
+            minimumSize: Size(
+              0,
+              stacked
+                  ? 44
+                  : widget.compact
+                  ? 40
+                  : 36,
+            ),
+            padding: stacked
+                ? const EdgeInsets.symmetric(horizontal: 8, vertical: 8)
+                : EdgeInsets.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(GcRadii.sm),
-              onTap: () => onChanged(mode),
-              child: SizedBox(
-                height: compact ? 40 : 36,
-                child: Center(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: selected
-                          ? GcColors.onAccent
-                          : GcColors.textSecondary,
-                      fontSize: GcTypography.body,
-                      fontWeight: GcTypography.medium,
-                    ),
-                  ),
-                ),
-              ),
             ),
           ),
+          child: _label(label, selected, stacked),
         ),
       ),
     );
+    return stacked
+        ? SizedBox(width: double.infinity, child: choice)
+        : Expanded(child: choice);
   }
+
+  Widget _label(String label, bool selected, bool stacked) => Text(
+    label,
+    maxLines: stacked ? null : 1,
+    overflow: stacked ? TextOverflow.visible : TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: TextStyle(
+      color: selected ? GcColors.onAccent : GcColors.textSecondary,
+      fontSize: GcTypography.body,
+      fontWeight: GcTypography.medium,
+    ),
+  );
 }
 
 class _AudioDeviceDropdown extends StatelessWidget {

@@ -337,7 +337,7 @@ tasks:
     title: Flutter audio settings responsive and accessibility acceptance
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
     depends_on: [FV2-027, FV2-006, T-051]
-    evidence: [audio-settings-responsive-geometry-tests, audio-settings-semantics-tests, voiceover-talkback-acceptance, QA-307]
+    evidence: [audio-settings-responsive-geometry-tests, audio-settings-semantics-tests, voiceover-talkback-acceptance, QA-307, QA-313]
   - id: FV2-049
     title: Flutter desktop quick shortcut row density follow-up
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]

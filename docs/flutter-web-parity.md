@@ -1419,6 +1419,19 @@ saved manual value remains visible while AGC is enabled, the slider is disabled,
 and the automatic-control explanation is present. No setting or audio route was
 changed. Desktop visual acceptance remains open.
 
+## Flutter audio settings responsiveness and accessibility (FV2-048)
+
+At compact widths, the microphone activation choices remain horizontal at the
+normal text scale and stack vertically when enlarged text would otherwise clip
+their labels. Voice Activity Detection and Push to Talk are keyboard-focusable
+buttons with explicit selected state; sensitivity exposes its dBFS unit in the
+accessible value. Widget tests exercise enlarged text, compact width, short
+windows, landscape geometry, keyboard traversal, activation semantics and the
+sensitivity value. Workspace tests (77), the full Flutter suite (669), changed-
+file analysis, and macOS/Android Debug builds pass. Native VoiceOver/TalkBack
+acceptance is still pending — see
+[QA-313](../evidence/flutter/qa313-flutter-audio-settings-responsive-accessibility-2026-10-06-001.json).
+
 ## Flutter playback volume reset placement (FV2-050)
 
 The per-device reset for remote participant and screen-share playback volume is

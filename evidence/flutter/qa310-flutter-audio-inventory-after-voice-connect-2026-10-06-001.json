@@ -80,8 +80,8 @@
     },
     {
       "name": "Live voice connection with native device enumeration",
-      "result": "NOT_RUN",
-      "observation": "No live voice admission was initiated because it could transfer an active voice lease. Runtime confirmation of physical device names after joining remains pending; automated tests verify the refresh ordering and listener-only behavior."
+      "result": "PASS_WITH_LIMITATION",
+      "observation": "With explicit user authorization, the running Mac client joined SHARE_TEST without enabling its microphone. After voice admission, the selectors listed two inputs (CORSAIR VOID ELITE Wireless Gaming Dongle, HyperX Quadcast) and four outputs (Mi Monitor, CORSAIR, HyperX, Динамики Mac mini); the inventory remained visible after disconnect. This confirms the live UI behavior in that process, but not that the current working-tree refresh implementation was loaded."
     }
   ],
   "implementation": {
@@ -101,7 +101,7 @@
     "microphone_capture_or_audio_route_changed": false
   },
   "limitations": [
-    "Live macOS voice join and physical input/output route confirmation remain NOT_RUN. The already-running Mac app was not restarted because it did not expose a Flutter VM service for hot reload."
+    "The already-running Mac app did not expose a Flutter VM service and was not restarted. The authorized live join confirms device inventory appears after voice admission in that process, but does not validate the current working-tree code; physical route changes remain unverified."
   ],
-  "status": "PARTIAL — implementation, 665-test suite, analyzer, formatting, traceability, and macOS/Android Debug builds PASS; live Mac voice-join acceptance remains open."
+  "status": "PARTIAL — implementation, 665-test suite, analyzer, formatting, traceability, and macOS/Android Debug builds PASS; live inventory refresh was observed in the running Mac client, while current-source and physical-route acceptance remain open."
 }

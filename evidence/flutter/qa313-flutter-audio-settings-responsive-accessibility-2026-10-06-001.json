@@ -1,0 +1,73 @@
+{
+  "id": "QA-313",
+  "date": "2026-10-06",
+  "task": "FV2-048 — Flutter audio settings responsive and accessibility acceptance",
+  "source_revision": "6cf315d1",
+  "working_tree_changes": true,
+  "summary": "Made the VAD/PTT activation selector keyboard-focusable and semantically explicit, with a vertical compact layout at enlarged text scales so option labels remain readable. Added regressions for selected semantics, dBFS slider value, large text, short landscape windows, and keyboard traversal.",
+  "checks": [
+    {
+      "name": "Large accessibility text regression before implementation",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'large accessibility text keeps audio activation labels readable'",
+      "result": "FAIL_BEFORE_FIX",
+      "observation": "At 2.5x text scaling the fixed-height horizontal activation selector clipped labels; the test observed the selector remaining at its compact fixed height."
+    },
+    {
+      "name": "Workspace UI tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart",
+      "result": "PASS",
+      "passed": 77,
+      "observation": "Includes activation selected/button semantics, sensitivity value in dBFS, large text, landscape/short-window reachability, and keyboard Tab/Enter selection."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter compact",
+      "result": "PASS",
+      "passed": 669
+    },
+    {
+      "name": "Changed-file analysis and formatting",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/workspace_screen.dart test/workspace_screen_test.dart; dart format --output=none --set-exit-if-changed lib/src/screens/workspace_screen.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No analyzer issues; both Dart files are formatted."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub --quiet",
+      "result": "PASS",
+      "observation": "Built current source without restarting the running Mac app."
+    },
+    {
+      "name": "Android arm64 Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub --target-platform android-arm64 --quiet",
+      "result": "PASS"
+    },
+    {
+      "name": "Native screen-reader acceptance",
+      "result": "NOT_RUN",
+      "observation": "VoiceOver/TalkBack spoken output and navigation have not been checked in a live client. The running Mac app had no Flutter VM service for hot reload, and it was not restarted to avoid triggering the Keychain prompt."
+    },
+    {
+      "name": "Spec traceability",
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "PASS",
+      "observation": "39 indexed requirements are referenced; the approved brief is unavailable on this host."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/screens/workspace_screen.dart",
+      "clients/flutter/test/workspace_screen_test.dart",
+      "backlog/tasks.yaml",
+      "backlog/FRONTEND_TODO.md",
+      "docs/flutter-web-parity.md",
+      "evidence/flutter/qa313-flutter-audio-settings-responsive-accessibility-2026-10-06-001.json"
+    ],
+    "web_or_api_changed": false,
+    "voice_or_audio_route_changed": false
+  },
+  "limitations": [
+    "Widget semantics and keyboard behavior pass automated checks, but native VoiceOver/TalkBack acceptance remains NOT_RUN; FV2-048 stays open until spoken output and traversal are verified on live macOS and Android clients."
+  ],
+  "status": "PARTIAL — responsive layout, widget semantics, keyboard navigation, tests, analysis and builds pass; VoiceOver/TalkBack live acceptance remains open."
+}

@@ -61,10 +61,9 @@
       "result": "PASS"
     },
     {
-      "name": "Current Mac runtime route acceptance",
-      "command": "flutter attach -d macos",
-      "result": "NOT_RUN",
-      "observation": "The app is running but did not expose a Flutter VM service; attach waited for a connection and was stopped rather than restarting the app. Although temporary route-switch/restore was authorized, no native input was changed without loading the verified source into a live debug client."
+      "name": "Authorized input selector round-trip in running Mac client",
+      "result": "PASS_WITH_LIMITATION",
+      "observation": "Joined SHARE_TEST with the microphone disabled, selected HyperX Quadcast in the input selector, then restored Системный выбор · Микрофон and disconnected. The UI selection round-trip succeeded; the running client had no Flutter VM service and did not prove that the physical native input route changed or that the current working-tree code was loaded."
     },
     {
       "name": "Physical macOS input route acceptance",
@@ -89,7 +88,7 @@
     "voice_lease_or_channel_state_changed": false
   },
   "limitations": [
-    "Previous QA-302 only confirmed that the dropdown label changed; it did not establish that the native microphone route changed. The live Mac app cannot currently hot reload, and restarting it was avoided to prevent a Keychain prompt. FV2-052 remains open for physical route acceptance in a debuggable session."
+    "The authorized live selector round-trip confirms the UI accepts and restores a device selection, but does not establish that the native physical microphone route changed. The live Mac app cannot currently hot reload, and restarting it was avoided to prevent a Keychain prompt. FV2-052 remains open for current-source physical route acceptance in a debuggable session."
   ],
   "status": "PARTIAL — regression, analyzer, traceability, and macOS/Android builds pass; physical route acceptance remains NOT_RUN."
 }
