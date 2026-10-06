@@ -35,6 +35,7 @@ class _AudioDeviceCheckState extends State<AudioDeviceCheck> {
   String _inputState = 'Проверка микрофона выключена.';
   String? _outputState;
   int _inputGeneration = 0;
+  int _outputGeneration = 0;
 
   @override
   void initState() {
@@ -48,6 +49,11 @@ class _AudioDeviceCheckState extends State<AudioDeviceCheck> {
     if (oldWidget.inputDeviceId != widget.inputDeviceId ||
         oldWidget.inputDeviceLabel != widget.inputDeviceLabel) {
       unawaited(_stopMicrophone());
+    }
+    if (oldWidget.outputDeviceId != widget.outputDeviceId ||
+        oldWidget.outputDeviceLabel != widget.outputDeviceLabel) {
+      _outputGeneration++;
+      _outputState = null;
     }
   }
 
@@ -156,6 +162,7 @@ class _AudioDeviceCheckState extends State<AudioDeviceCheck> {
 
   Future<void> _checkSpeaker() async {
     if (_outputBusy) return;
+    final generation = ++_outputGeneration;
     setState(() {
       _outputBusy = true;
       _outputState = 'Воспроизводим короткий сигнал…';
@@ -165,12 +172,12 @@ class _AudioDeviceCheckState extends State<AudioDeviceCheck> {
         deviceId: widget.outputDeviceId,
         deviceLabel: widget.outputDeviceLabel,
       );
-      if (!mounted) return;
+      if (!mounted || generation != _outputGeneration) return;
       setState(
         () => _outputState = 'Сигнал завершён. Если его не было слышно, проверьте системную громкость и динамик.',
       );
     } catch (cause) {
-      if (!mounted) return;
+      if (!mounted || generation != _outputGeneration) return;
       setState(
         () => _outputState = cause is AudioDeviceCheckFailure
             ? cause.message

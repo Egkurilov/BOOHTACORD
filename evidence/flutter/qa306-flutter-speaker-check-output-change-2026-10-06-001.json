@@ -1,0 +1,53 @@
+{
+  "id": "QA-306",
+  "date": "2026-10-06",
+  "task": "FV2-047 — Reset stale speaker test feedback after output device changes",
+  "source_revision": "06ad8505",
+  "working_tree_changes": true,
+  "summary": "The local speaker-check result is tied to the selected output device. Changing its ID or label clears previous feedback, and a delayed completion from an earlier output cannot publish stale success/error state. The control remains busy until the in-flight playback completes, preventing overlapping speaker checks.",
+  "checks": [
+    {
+      "name": "Regression before fix",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_device_check_test.dart --plain-name 'clears speaker feedback when the selected output changes'",
+      "result": "FAIL_BEFORE_FIX",
+      "observation": "After switching from output-1 to output-2, the previous 'Сигнал завершён' result remained visible."
+    },
+    {
+      "name": "Speaker and microphone check widget tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_device_check_test.dart",
+      "result": "PASS",
+      "passed": 8,
+      "observation": "Covers completed result invalidation, in-flight stale-result invalidation, current output selection, microphone check lifecycle, and unexpected input stream completion."
+    },
+    {
+      "name": "Changed Flutter source and test analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/widgets/audio_device_check.dart test/audio_device_check_test.dart test/microphone_gain_agc_widget_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Dart formatting",
+      "command": "cd clients/flutter && dart format --output=none --set-exit-if-changed lib/src/widgets/audio_device_check.dart test/audio_device_check_test.dart test/microphone_gain_agc_widget_test.dart",
+      "result": "PASS"
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 662
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/widgets/audio_device_check.dart",
+      "clients/flutter/test/audio_device_check_test.dart",
+      "docs/flutter-web-parity.md",
+      "backlog/FRONTEND_TODO.md",
+      "evidence/flutter/qa306-flutter-speaker-check-output-change-2026-10-06-001.json"
+    ],
+    "web_or_api_changed": false,
+    "microphone_capture_or_audio_route_changed": false
+  },
+  "limitations": [],
+  "status": "PASS — output-change feedback is invalidated, delayed stale results are ignored, focused regressions and the full suite pass."
+}

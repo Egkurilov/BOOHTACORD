@@ -1376,3 +1376,9 @@ visible in the supplied Windows screenshot. A widget regression checks
 Flutter package bump to `1.0.35+68` was synchronized with all native platform
 build identities at r49; native Windows visual acceptance remains pending —
 [QA-299](../evidence/flutter/qa299-windows-client-update-banner-responsive-2026-10-05-001.json).
+
+## Flutter speaker-check feedback (FV2-047)
+
+Changing the selected output device clears the previous local speaker-check result.
+In-flight completions from the previous output are ignored, and the control remains
+busy until playback ends to avoid overlapping test tones. Widget regression and
