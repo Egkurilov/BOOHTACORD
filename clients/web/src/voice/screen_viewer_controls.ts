@@ -1,5 +1,5 @@
 import { ref, type Ref } from 'vue'
-import { endTracedOperation, startTracedOperation } from '../telemetry/client_tracing'
+import { createViewObservation } from '../telemetry/observe_render/screen'
 
 import type { ScreenViewerCard, ScreenViewerController } from './screen_viewer_controller'
 
@@ -15,6 +15,7 @@ export function createScreenViewerControls(
   ended: Ref<boolean>,
 ) {
   let controller: ScreenViewerController | null = null
+  const observation = createViewObservation()
   let stopObserving: (() => void) | null = null
   const audioMuted = ref(false)
 
@@ -35,20 +36,18 @@ export function createScreenViewerControls(
 
   function select(id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null): void {
     if (!controller) return
-    const span = startTracedOperation('screen.view')
-    let failed = false
     try {
       controller.select(id, video, audio)
+      observation.select(video, () => controller?.selectedId === id && controller.hasAttachedVideo(video),id)
       error.value = null
     } catch (cause) {
-      failed = true
+      observation.fail()
       error.value = cause instanceof Error ? cause.message : 'Не удалось выбрать демонстрацию.'
-    } finally {
-      endTracedOperation(span, 'screen.view', failed)
     }
   }
 
   function stop(): void {
+    observation.stop()
     stopObserving?.()
     stopObserving = null
     controller?.clear()
@@ -58,6 +57,7 @@ export function createScreenViewerControls(
   }
 
   function clear(): void {
+    observation.stop()
     controller?.clear()
   }
 

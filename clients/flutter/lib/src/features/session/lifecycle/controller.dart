@@ -31,6 +31,7 @@ class SessionController extends ChangeNotifier {
   String? logoutError;
   Future<void>? _closing;
   bool _disposed = false;
+  bool hasInitialized = false;
   bool get closing => _closing != null;
   Future<void> waitForClose() async {
     while (_closing != null) {

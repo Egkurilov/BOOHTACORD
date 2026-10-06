@@ -2,6 +2,7 @@ package ingestclienttraces
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -21,7 +22,7 @@ func NewHandler(endpoint, authorization string, client *http.Client) http.Handle
 	}
 	destination, err := url.Parse(endpoint)
 	configured := err == nil && destination != nil && (destination.Scheme == "https" || destination.Scheme == "http") && destination.Host != "" && destination.User == nil && authorization != ""
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+	return withRelayHealth(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if !configured {
 			writer.WriteHeader(http.StatusServiceUnavailable)
 			return
@@ -40,17 +41,27 @@ func NewHandler(endpoint, authorization string, client *http.Client) http.Handle
 			writer.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		clean, ok := sanitize(&input, request.Header.Get("X-Client-Platform"))
-		if !ok {
+		sessionID, accountID := diagnosticIdentity(request)
+		if claimed := request.Header.Get("X-Telemetry-Session"); claimed != "" && claimed != sessionID {
+			observeBatch(request.Context(), batchResult{Fatal: true, Reason: "session_mismatch"})
 			writer.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		clean, result := sanitizeBatch(&input, request.Header.Get("X-Client-Platform"), sessionID, accountID)
+		if result.Fatal || result.Accepted == 0 {
+			observeBatch(request.Context(), result)
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		verifiedLinks(&input, clean, authorization, accountID)
 		encoded, err := proto.Marshal(clean)
 		if err != nil {
 			writer.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
-		outbound, err := http.NewRequestWithContext(request.Context(), http.MethodPost, endpoint, bytes.NewReader(encoded))
+		bounded, cancel := context.WithTimeout(request.Context(), 3*time.Second)
+		defer cancel()
+		outbound, err := http.NewRequestWithContext(bounded, http.MethodPost, endpoint, bytes.NewReader(encoded))
 		if err != nil {
 			writer.WriteHeader(http.StatusServiceUnavailable)
 			return
@@ -63,11 +74,27 @@ func NewHandler(endpoint, authorization string, client *http.Client) http.Handle
 			return
 		}
 		defer response.Body.Close()
-		_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, 4096))
-		if response.StatusCode != http.StatusOK {
+		upstreamBody, readErr := io.ReadAll(io.LimitReader(response.Body, 4097))
+		if response.StatusCode != http.StatusOK || readErr != nil || len(upstreamBody) > 4096 {
 			writer.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
-		writer.WriteHeader(http.StatusAccepted)
-	})
+		if len(upstreamBody) > 0 {
+			var upstream collectortrace.ExportTraceServiceResponse
+			if proto.Unmarshal(upstreamBody, &upstream) != nil {
+				writer.WriteHeader(http.StatusServiceUnavailable)
+				return
+			}
+			if partial := upstream.PartialSuccess; partial != nil && partial.RejectedSpans > 0 {
+				if partial.RejectedSpans > int64(result.Accepted) {
+					writer.WriteHeader(http.StatusServiceUnavailable)
+					return
+				}
+				result.Accepted -= int(partial.RejectedSpans)
+				result.Rejected += int(partial.RejectedSpans)
+			}
+		}
+		observeBatch(request.Context(), result)
+		accepted(writer, result)
+	}))
 }

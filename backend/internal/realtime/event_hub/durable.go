@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	causal "voice-platform/backend/internal/observability/causal_reference"
 )
 
 func replayable(kind string) bool {
@@ -19,6 +20,9 @@ func replayable(kind string) bool {
 }
 
 func (hub *Hub) persist(ctx context.Context, event Event, recipients []string, required bool) (Event, error) {
+	if !event.Cause.Valid() {
+		event.Cause = causal.From(ctx)
+	}
 	hub.mu.Lock()
 	journal := hub.journal
 	if hub.broken && journal != nil && replayable(event.Kind) {

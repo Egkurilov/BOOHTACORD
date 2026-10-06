@@ -87,7 +87,70 @@
         "operationId": "connectRealtime",
         "description": "Authenticated same-origin WebSocket upgrade. The optional after UUID is the last acknowledged durable event_id. The journal has 7-day retention and a 512-event replay limit; the server rechecks current session and per-event ACL. A cursor from another server boot epoch, an expired/invalid cursor, overflow or unavailable journal causes connection.resync_required and REST full resync. Replayed events can duplicate live delivery, so the client deduplicates by event_id. Presence and connection events are ephemeral and must not be used as after cursors.",
         "parameters": [
-          { "name": "after", "in": "query", "required": false, "schema": { "type": "string", "format": "uuid" }, "description": "Last acknowledged durable event_id; never an authentication token." }
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Last acknowledged durable event_id; never an authentication token."
+          },
+          {
+            "name": "telemetry_session",
+            "in": "query",
+            "required": false,
+            "description": "Optional same-origin short-handshake diagnostic metadata. Must match the verified session; never carries credentials or grants event access.",
+            "schema": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[a-f0-9]{32}$"
+            }
+          },
+          {
+            "name": "visit",
+            "in": "query",
+            "required": false,
+            "description": "Optional same-origin short-handshake diagnostic metadata. Must match the verified session; never carries credentials or grants event access.",
+            "schema": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[a-f0-9]{32}$"
+            }
+          },
+          {
+            "name": "flow",
+            "in": "query",
+            "required": false,
+            "description": "Optional same-origin short-handshake diagnostic metadata. Must match the verified session; never carries credentials or grants event access.",
+            "schema": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[a-f0-9]{32}$"
+            }
+          },
+          {
+            "name": "flow_name",
+            "in": "query",
+            "required": false,
+            "description": "Optional same-origin short-handshake diagnostic metadata. Must match the verified session; never carries credentials or grants event access.",
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            }
+          },
+          {
+            "name": "attempt",
+            "in": "query",
+            "required": false,
+            "description": "Optional same-origin short-handshake diagnostic metadata. Must match the verified session; never carries credentials or grants event access.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            }
+          }
         ],
         "responses": {
           "101": { "description": "WebSocket upgrade; frames follow realtime.schema.json" },
@@ -98,19 +161,76 @@
     "/api/v1/telemetry/traces": {
       "post": {
         "operationId": "ingestClientTraces",
-        "description": "Authenticated same-origin OTLP protobuf relay. The server accepts at most 256 KiB and 32 fixed-name spans, strips all client attributes, events, links and resource fields, then forwards metadata-only traces with a server-side collector credential. The client never receives that credential.",
+        "description": "Authenticated same-origin OTLP protobuf relay. The server accepts at most 256 KiB and 32 fixed-name spans, strips all client attributes, events, links and resource fields, then forwards metadata-only traces with a server-side collector credential. The client never receives that credential. Authenticated OTLP relay validates telemetry-flow-v1.json. V1 records must match the verified diagnostic session. Malformed, oversized or stale-session batches fail as a whole; unsupported records are partially rejected. IDs do not grant authorization. Client fields are observations, not server media truth.",
         "parameters": [
-          { "name": "X-Client-Platform", "in": "header", "required": true, "schema": { "type": "string", "enum": ["web", "android", "ios", "windows", "macos"] } }
+          {
+            "name": "X-Client-Platform",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "web",
+                "android",
+                "ios",
+                "windows",
+                "macos"
+              ]
+            }
+          }
         ],
-        "requestBody": { "required": true, "content": { "application/x-protobuf": { "schema": { "type": "string", "format": "binary", "maxLength": 262144 } } } },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-protobuf": {
+              "schema": {
+                "type": "string",
+                "format": "binary",
+                "maxLength": 262144
+              }
+            }
+          }
+        },
         "responses": {
-          "202": { "description": "Metadata-only spans accepted by collector" },
-          "400": { "description": "Invalid OTLP batch or operation name" },
-          "401": { "description": "No active server-side session" },
-          "413": { "description": "OTLP batch exceeds size limit" },
-          "415": { "description": "OTLP protobuf content type required" },
-          "429": { "description": "Telemetry rate limit exceeded" },
-          "503": { "description": "Collector unavailable or not configured" }
+          "202": {
+            "description": "Metadata-only spans accepted by collector",
+            "headers": {
+              "X-Telemetry-Accepted": {
+                "description": "Sanitized accepted/rejected record count; partial rejection is not retried.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 32
+                }
+              },
+              "X-Telemetry-Rejected": {
+                "description": "Sanitized accepted/rejected record count; partial rejection is not retried.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 32
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid OTLP batch or operation name"
+          },
+          "401": {
+            "description": "No active server-side session"
+          },
+          "413": {
+            "description": "OTLP batch exceeds size limit"
+          },
+          "415": {
+            "description": "OTLP protobuf content type required"
+          },
+          "429": {
+            "description": "Telemetry rate limit exceeded"
+          },
+          "503": {
+            "description": "Collector unavailable or not configured"
+          }
         }
       }
     },
@@ -749,7 +869,34 @@
       "get": {
         "operationId": "getCurrentSession",
         "responses": {
-          "200": { "description": "Authenticated current principal", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Principal" } } } },
+          "200": {
+            "description": "Authenticated current principal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Principal"
+                }
+              }
+            },
+            "headers": {
+              "X-Telemetry-Schema": {
+                "description": "Supported client diagnostic contract, present only for authenticated sessions.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "1"
+                  ]
+                }
+              },
+              "X-Telemetry-Session": {
+                "description": "Non-credential server-derived diagnostic binding; never a cookie or authorization proof.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{32}$"
+                }
+              }
+            }
+          },
           "401": { "description": "No valid active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "500": { "description": "Internal error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
@@ -2069,5 +2216,6 @@
         }
       }
     }
-  }
+  },
+  "x-telemetry-flow-contract": "telemetry-flow-v1.json"
 }

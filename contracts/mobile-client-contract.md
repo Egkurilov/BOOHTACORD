@@ -146,6 +146,23 @@ Mobile client может публиковать microphone и screen-share media
 - Этот документ не подразумевает camera, recording, group-DM, mobile UI, backup, snapshot или custom-SFU capability.
 - Mobile telemetry не может содержать passwords, sessions, reset/media tokens, message bodies, attachment contents или высококардинальные account/DM identifiers.
 
+## Диагностические user-flow traces v1
+
+Каноническая схема: [telemetry-flow-v1.json](telemetry-flow-v1.json).
+После authenticated restore/login сервер сообщает X-Telemetry-Schema=1 и
+X-Telemetry-Session. Это не credential; cookie/Origin/ACL продолжают проверяться.
+Visit создаётся на запуск, flow — на намерение, attempt растёт для точного retry.
+Account/logout/origin boundary очищает очередь; старый callback не становится
+событием следующего аккаунта. Preauth и postlogout наблюдения не экспортируются.
+Передавайте диагностические HTTP/WS поля только собственному API origin;
+не пересылайте baggage, cookies или LiveKit tokens ради корреляции.
+
+Realtime telemetry envelope optional; он не меняет required бизнес-поля.
+Ссылки причинности принимаются только с audience-bound server proof и текущим ACL.
+Render/readiness/first_frame завершаются по наблюдению компонента, а не HTTP 200.
+Производительность/звук/кадры требуют отдельного device evidence. Клиентские
+health checkpoints также могут потеряться во время outage; absence означает unknown.
+
 ## Политика изменений
 
 Mobile implementation обязан использовать проверенную ревизию OpenAPI/JSON Schema. Изменение endpoint method/path, required field, enum, authentication transport, ACL outcome, websocket event, LiveKit credential claim или error semantics требует согласованного изменения канонических contracts, этого руководства, contract verifier и release notes.

@@ -60,6 +60,7 @@ import '../widgets/sliding_drawer_layer.dart';
 import '../widgets/voice_connection_badge.dart';
 import '../widgets/voice_microphone_unavailable_notice.dart';
 import '../widgets/screen_frame_gate.dart';
+import '../features/telemetry/observe_render/messages.dart';
 import 'profile_screen.dart';
 import 'admin_screen.dart';
 import 'voice_screen_ended.dart';
@@ -3017,6 +3018,7 @@ class _MessageRow extends StatelessWidget {
   final VoidCallback? onRetry;
   @override
   Widget build(BuildContext context) {
+    observeMessageRender(message, context);
     final compact =
         MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint;
     final avatarDiameter = compact ? 32.0 : 36.0;
@@ -4873,6 +4875,7 @@ class _DirectConversationState extends State<_DirectConversation> {
                       final messageIndex = index - directHistoryHeaderCount;
                       final message =
                           widget.state.directMessageHistory[messageIndex];
+                      observeMessageRender(message, context);
                       final own =
                           message.authorId == widget.state.user?.accountId;
                       final key = _directMessageKeys.putIfAbsent(
@@ -6125,6 +6128,9 @@ class _VoiceScreenViewer extends StatelessWidget {
       reservedTrailingWidth: selectedIdentity == null ? 124 : 172,
       video: ScreenFrameGate(
         generation: track,
+        telemetry: showingLocalScreen
+            ? null
+            : state.api.transport.session.telemetry,
         waitingMessage:
             showingLocalScreen && state.screenCapturedContentVisible == false
             ? 'Android скрыл выбранное приложение. Вернитесь в него или выберите весь экран.'

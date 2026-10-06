@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import '../features/telemetry/action_scope/action.dart';
+import '../features/telemetry/action_scope/session.dart';
+import '../features/telemetry/observe_render/view.dart';
 
 /// Keeps the screen stage honest while a selected track has not produced a
 /// renderable frame yet, matching the web viewer's first-frame state.
@@ -10,9 +13,11 @@ class ScreenFrameGate extends StatefulWidget {
     required this.generation,
     required this.builder,
     this.waitingMessage,
+    this.telemetry,
   });
 
   final Object generation;
+  final TelemetrySession? telemetry;
   final Widget Function(BuildContext context, VoidCallback onFirstFrameRendered)
   builder;
   final String? waitingMessage;
@@ -23,11 +28,25 @@ class ScreenFrameGate extends StatefulWidget {
 
 class _ScreenFrameGateState extends State<ScreenFrameGate> {
   bool _hasRenderedFirstFrame = false;
+  ActionScope? _action;
+  @override
+  void initState() {
+    super.initState();
+    if (widget.telemetry != null) _action = claimView(widget.telemetry!);
+  }
+
+  @override
+  void dispose() {
+    _action?.finish('cancelled');
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(covariant ScreenFrameGate oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.generation != widget.generation) {
+      _action?.finish('superseded');
+      if (widget.telemetry != null) _action = beginView(widget.telemetry!);
       _hasRenderedFirstFrame = false;
     }
   }
@@ -39,7 +58,11 @@ class _ScreenFrameGateState extends State<ScreenFrameGate> {
     if (!mounted || generation != widget.generation || _hasRenderedFirstFrame) {
       return;
     }
+    if (_action != null && !_action!.session.current(_action!.snapshot)) return;
+    if (widget.waitingMessage != null) return;
     setState(() => _hasRenderedFirstFrame = true);
+    _action?.step('first_frame');
+    _action?.finish('success');
   }
 
   @override

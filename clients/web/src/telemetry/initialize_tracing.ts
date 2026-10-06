@@ -1,23 +1,16 @@
 import { WebTracerProvider } from '@opentelemetry/sdk-trace-web'
 import { ZoneContextManager } from '@opentelemetry/context-zone'
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto'
+import { SessionProcessor } from './export_session/processor'
 import { resourceFromAttributes } from '@opentelemetry/resources'
-import { apiBaseUrl } from '../config/runtime'
+import { AlwaysOffSampler,ParentBasedSampler,TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base'
 
 export function initializeTracing(): void {
-  const exporter = new OTLPTraceExporter({
-    url: `${window.location.origin}${apiBaseUrl}/telemetry/traces`,
-    headers: { 'X-Client-Platform': 'web' },
-  })
+  const configured=Number(import.meta.env.VITE_TRACE_SAMPLE_RATIO??1)
+  const ratio=import.meta.env.VITE_TELEMETRY_ENABLED==='false'?0:Number.isFinite(configured)&&configured>=0&&configured<=1?configured:1
   const provider = new WebTracerProvider({
+    sampler:import.meta.env.VITE_TELEMETRY_ENABLED==='false'?new AlwaysOffSampler():new ParentBasedSampler({root:new TraceIdRatioBasedSampler(ratio)}),
     resource: resourceFromAttributes({ 'service.name': 'boohtacord-web' }),
-    spanProcessors: [new BatchSpanProcessor(exporter, {
-      maxExportBatchSize: 16,
-      maxQueueSize: 128,
-      scheduledDelayMillis: 5000,
-      exportTimeoutMillis: 3000,
-    })],
+    spanProcessors: [new SessionProcessor()],
   })
   provider.register({ contextManager: new ZoneContextManager() })
 }

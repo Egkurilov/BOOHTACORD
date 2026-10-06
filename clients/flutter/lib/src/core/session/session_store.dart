@@ -4,19 +4,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../http/api_failure.dart';
 import '../platform/session_storage.dart';
 import 'scope.dart';
+import '../../features/telemetry/action_scope/session.dart';
 
 class SessionStore {
   SessionStore() : _storage = sessionStorage();
   static const _serverKey = 'server_url';
   static const _cookieKey = 'boohtacord_session_cookie';
   final FlutterSecureStorage _storage;
-  final SessionScope scope = SessionScope();
+  late final SessionScope scope = SessionScope(
+    onBoundary: () => telemetry.reset(),
+  );
+  late final TelemetrySession telemetry = TelemetrySession(
+    scope.capture,
+    () => _baseUrl,
+  );
   Future<void> _cookieWrites = Future<void>.value();
   String _baseUrl = 'https://v.bootybay.ru/api/v1';
   int serverRevision = 0;
   String get baseUrl => _baseUrl;
   set baseUrl(String value) {
-    if (_baseUrl != value) serverRevision++;
+    if (_baseUrl != value) {
+      serverRevision++;
+      telemetry.reset();
+    }
     _baseUrl = value;
   }
 
@@ -26,8 +36,10 @@ class SessionStore {
     return _storage.read(key: _cookieKey);
   }
 
-  Future<void> clearCookie({SessionTicket? ticket}) =>
-      _write(() => _storage.delete(key: _cookieKey), ticket);
+  Future<void> clearCookie({SessionTicket? ticket}) => _write(() {
+    telemetry.reset();
+    return _storage.delete(key: _cookieKey);
+  }, ticket);
   Future<void> writeCookie(String value, {SessionTicket? ticket}) =>
       _write(() => _storage.write(key: _cookieKey, value: value), ticket);
   Future<void> _write(Future<void> Function() action, SessionTicket? ticket) {

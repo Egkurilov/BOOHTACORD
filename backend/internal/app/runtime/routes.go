@@ -28,6 +28,9 @@ import (
 )
 
 func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub, metrics *httpmetrics.Recorder, updates clientupdates.Provider, usage *observeusage.Tracker) (http.Handler, error) {
+	if events != nil {
+		events.SetTelemetryKey(configuration.TelemetryAuth)
+	}
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/client-updates", clientupdates.Handler(updates, metrics))
 	lifecycle := guildlifecycle.New(otel.Tracer("boohtacord/guild"), otel.Meter("boohtacord/guild"), metrics)

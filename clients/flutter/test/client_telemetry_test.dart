@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:boohtacord_desktop/src/services/client_telemetry.dart';
 import 'package:boohtacord_desktop/src/services/tracing_http_client.dart';
+import 'package:boohtacord_desktop/src/core/session/scope.dart';
+import 'package:boohtacord_desktop/src/features/telemetry/action_scope/session.dart';
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
 import 'package:dartastic_opentelemetry/proto/opentelemetry_proto_dart.dart'
     as proto;
@@ -15,6 +17,11 @@ void main() {
     'manual spans propagate trace context without request secrets',
     () async {
       final exports = <Uint8List>[];
+      ClientTelemetry.session = TelemetrySession(
+        SessionScope().capture,
+        () => 'https://example.test',
+      );
+      ClientTelemetry.session!.bind('11111111111111111111111111111111', '1');
       await ClientTelemetry.initialize((body) async => exports.add(body));
       String? propagated;
       final client = TracingHttpClient(
@@ -59,7 +66,17 @@ void main() {
                 proto.ExportTraceServiceRequest.fromBuffer(body).resourceSpans,
           )
           .expand((resource) => resource.scopeSpans)
-          .expand((scope) => scope.spans);
+          .expand((scope) => scope.spans)
+          .where(
+            (span) =>
+                !span.attributes.any((a) => a.key == 'app.flow.record') ||
+                span.attributes.any(
+                  (a) =>
+                      a.key == 'app.flow.record' &&
+                      a.value.stringValue == 'terminal',
+                ) ||
+                span.name == 'api.request',
+          );
       final voice = spans.singleWhere((span) => span.name == 'voice.join');
       final input = spans.singleWhere(
         (span) => span.name == 'audio.input.switch',
@@ -68,6 +85,7 @@ void main() {
         'platform',
         'phase',
         'result',
+        'session.id',
       });
       expect(serialized, isNot(contains('private-device')));
       expect(serialized, isNot(contains('private-label')));

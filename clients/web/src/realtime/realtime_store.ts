@@ -59,14 +59,14 @@ export const useRealtimeStore = defineStore('realtime', () => {
     function open(): void {
       if (!active || ownGeneration !== generation) return
       const operation = retry.attempt() === 0 ? 'realtime.connect' : 'realtime.reconnect'
-      const { finish, traceparent, tracestate } = startTracedCompletion(operation)
-      pendingConnection = () => finish(true)
+      const { finish,cancel,fields, traceparent, tracestate } = startTracedCompletion(operation)
+      pendingConnection = cancel
       state.value = 'CONNECTING'
       let current: RealtimeSocket
       try {
         const target = url ?? realtimeURL()
         const after = delivery?.cursor()
-        current = factory(realtimeTraceURL(after ? `${target}${target.includes('?') ? '&' : '?'}after=${encodeURIComponent(after)}` : target, traceparent, tracestate))
+        current = factory(realtimeTraceURL(after ? `${target}${target.includes('?') ? '&' : '?'}after=${encodeURIComponent(after)}` : target, traceparent, tracestate,fields))
       } catch (cause) {
         finish(true)
         error.value = cause instanceof Error ? cause.message : 'Realtime-СЃРѕРµРґРёРЅРµРЅРёРµ РЅРµРґРѕСЃС‚СѓРїРЅРѕ.'
@@ -75,12 +75,12 @@ export const useRealtimeStore = defineStore('realtime', () => {
         return
       }
       socket = current
-      current.onopen = () => { finish(); if (socket === current) { state.value = 'CONNECTED'; error.value = null } }
+      current.onopen = () => { if (socket === current) { state.value = 'CONNECTED'; error.value = null } }
       current.onmessage = (message) => {
         if (socket !== current) return
         try {
           const event: RealtimeEvent = parseRealtimeEvent(JSON.parse(message.data))
-          if (event.kind === 'connection.ready') retry.ready()
+          if (event.kind === 'connection.ready') {finish();retry.ready()}
           delivery?.accept(event)
         } catch (cause) {
           error.value = cause instanceof Error ? cause.message : 'РќРµРєРѕСЂСЂРµРєС‚РЅРѕРµ realtime-СЃРѕР±С‹С‚РёРµ.'

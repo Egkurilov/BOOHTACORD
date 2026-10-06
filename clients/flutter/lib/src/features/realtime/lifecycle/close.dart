@@ -2,6 +2,8 @@ import 'controller.dart';
 
 extension RealtimeCleanup on RealtimeController {
   Future<void> close() async {
+    handshake?.finish('cancelled', reason: 'disposed');
+    handshake = null;
     generation++;
     retry?.cancel();
     retry = null;

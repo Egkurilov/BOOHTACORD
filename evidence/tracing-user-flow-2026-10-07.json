@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-07",
+  "source": "ec62b3af983634e8c60366069da1f3d099911c04",
+  "executor": "Codex Windows + isolated WSL synthetic QA",
+  "status": "PASS_STATIC_PASS_RUNTIME_PARTIAL",
+  "production_mutated": false,
+  "release_built": false,
+  "receipts": [
+    {
+      "path": ".out/tracing-qa/go-full-final.log",
+      "sha256": "1107eed56fa9bcdc336293f0744205d07c0cd61531d4feb00062d020e9e02925",
+      "bytes": 23521
+    },
+    {
+      "path": ".out/tracing-qa/web-full-final.log",
+      "sha256": "bc58ad380051fd599e8ad5c5f8ec341db4d06be30cb503b174e7de2e4506291c",
+      "bytes": 568
+    },
+    {
+      "path": ".out/tracing-qa/flutter-full-final.log",
+      "sha256": "f513b0dc1cdb46e5cb62c132dbc3719c6ef7771b9824183f13d85e01c1cfc35a",
+      "bytes": 130733
+    },
+    {
+      "path": ".out/tracing-qa/flutter-analyze-final.log",
+      "sha256": "572f2d2bf5b6be3af3a50bb82d4c22c5efb812da68c9c0912844ce0c13f19c53",
+      "bytes": 7685
+    },
+    {
+      "path": ".out/tracing-qa/browser-final.log",
+      "sha256": "e789484b138beb8be75679f80f1788c989ae20337ebcb7e8ba857daad23e524d",
+      "bytes": 5359
+    },
+    {
+      "path": ".out/tracing-qa/runtime-final.log",
+      "sha256": "ea6baed17102bc997a83fd01b5d5f9d81a13acad1870cb5fc45a910162b3b2be",
+      "bytes": 1080
+    },
+    {
+      "path": ".out/tracing-qa/causality-final.log",
+      "sha256": "e4ab0a55f7eec31f6b1b8193a3255fd785938fa81d053f72ebc01e4f27b69515",
+      "bytes": 4520
+    },
+    {
+      "path": ".out/tracing-qa/queries-final.log",
+      "sha256": "1fa6874bae98c2e16dc960ca719a1f9fce676d6deae10b32c580348a05e89892",
+      "bytes": 630
+    },
+    {
+      "path": ".out/tracing-qa/collector-outage-final.log",
+      "sha256": "a6e5d3b4fd73667cd6a0d97cc17421e8fa34a91b07aa63212eeb42c0b1babc46",
+      "bytes": 341
+    },
+    {
+      "path": ".out/tracing-qa/tempo-outage-final.log",
+      "sha256": "3e8b03ea63c411434c0b4db0796de730562cfd2bb35b616a5f0256cfe5609574",
+      "bytes": 419
+    },
+    {
+      "path": ".out/tracing-qa/promql-final.log",
+      "sha256": "0cf5b82fb6235fae2deb314b8857d40be6e913f6b0ff4a4903de10597a099580",
+      "bytes": 68
+    },
+    {
+      "path": ".out/tracing-qa/browser-resource-summary.json",
+      "sha256": "ae732aeefe6bc3463675a30728e8768a4bb319dcf231863aeb7664385f81164f",
+      "bytes": 367
+    },
+    {
+      "path": ".out/tracing-qa/container-resources.jsonl",
+      "sha256": "d45435f28db340a275d21e10551f2e8984f04142fe3c44e804d95c025ee4179d",
+      "bytes": 1081
+    }
+  ],
+  "remaining": [
+    "full live two-client voice/media and packaged native matrix",
+    "production rollout and observability pilot",
+    "Grafana UID source/ACL/visual/concurrent-save/rollback acceptance"
+  ]
+}

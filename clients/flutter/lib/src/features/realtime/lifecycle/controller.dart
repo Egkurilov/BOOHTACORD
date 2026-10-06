@@ -7,6 +7,7 @@ import '../../../core/session/scope.dart';
 import '../../../services/api_client.dart';
 import 'event.dart';
 import 'close.dart';
+import '../../telemetry/action_scope/action.dart';
 export 'connect.dart';
 export 'close.dart';
 export 'events.dart';
@@ -38,6 +39,8 @@ class RealtimeController extends ChangeNotifier {
   bool checkingSession = false;
   bool disposed = false;
   final Set<String> eventIds = {};
+  ActionScope? handshake;
+  bool hadConnection = false;
 
   bool Function() admission() {
     final ticket = scope.capture();

@@ -7,9 +7,6 @@ import (
 
 	"github.com/coder/websocket"
 	"github.com/google/uuid"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
 	"voice-platform/backend/internal/identity/session"
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
@@ -44,8 +41,8 @@ func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationIn
 		if err != nil {
 			return
 		}
-		_, span := otel.Tracer("boohtacord/realtime").Start(request.Context(), "realtime.connection", trace.WithSpanKind(trace.SpanKindServer))
-		defer span.End()
+		finishHandshake := beginHandshake(request.Context())
+		defer finishHandshake(errHandshakeWrite)
 		var subscription *eventhub.Subscription
 		if events != nil {
 			subscription = events.SubscribeAccountWithCapabilities(principal.AccountID, presenceEvent(principal.AccountID, "online", newID, now), requestedCapabilities(request))
@@ -64,7 +61,7 @@ func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationIn
 		var replayEpoch string
 		if request.URL.Query().Has("after") {
 			if !privateEventSessionValid(authenticator, cookie, subscription) && events != nil {
-				span.SetStatus(codes.Error, "session_rejected")
+				finishHandshake(errHandshakeSession)
 				observeReconnectOutcome(observer, "rejected")
 				_ = connection.Close(websocket.StatusPolicyViolation, "session is no longer valid")
 				return
@@ -108,6 +105,7 @@ func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationIn
 		if observer != nil {
 			observer.ObserveRealtimeConnectionReady(time.Since(acceptedAt))
 		}
+		finishHandshake(nil)
 		streamEvents(connection, authenticator, cookie, revalidationInterval, subscription, events, newID, now, observer, replayedIDs)
 	})
 }

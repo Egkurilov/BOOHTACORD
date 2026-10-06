@@ -2,6 +2,7 @@ import { ref } from 'vue'
 
 import { loadMessagePage, type MessageRequest, type TextMessage, type TextMessageAttachment } from './message_client'
 import { createLoadedRevisionRefresh } from './revision_refresh/loaded'
+import { trackRealtimeMessages } from '../telemetry/realtime_flow/process'
 
 export interface PendingSend { retryBlocked?: boolean; channelId: string; authorId: string; body: string; replyToId?: string; attachments: TextMessageAttachment[]; mentionUserIds: string[]; request?: MessageRequest; sendStatus?: 'sending' | 'checking' | 'failed' }
 
@@ -37,6 +38,7 @@ export function createTextHistory(pending: Map<string, PendingSend>) {
       return [pendingMessage(id, draft)]
     })
     messages.value = [...queued, ...server]
+    trackRealtimeMessages(incoming)
   }
 
   async function open(nextChannelId: string, request?: MessageRequest): Promise<void> {

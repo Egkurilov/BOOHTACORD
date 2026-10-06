@@ -1,8 +1,8 @@
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import '../features/telemetry/action_scope/action.dart';
+
 import 'package:livekit_client/livekit_client.dart';
 
 import '../app_state.dart';
-import '../models.dart';
 import '../services/client_telemetry.dart';
 import '../services/screen_share_quality.dart';
 
@@ -11,41 +11,60 @@ class TracedAppState extends AppState {
     addListener(_watchVoiceReconnect);
   }
 
-  Span? _reconnectSpan;
+  ActionScope? _reconnectSpan;
 
   void _watchVoiceReconnect() {
     if (!ClientTelemetry.enabled) return;
     if (voicePhase == VoicePhase.reconnecting) {
       if (_reconnectSpan == null) {
-        _reconnectSpan = OTel.tracer().startSpan('voice.reconnect');
-        _reconnectSpan!.addEventNow('app.client.voice.reconnect.started');
+        _reconnectSpan = ActionScope(
+          'voice.reconnect',
+          api.transport.session.telemetry,
+          enabled: ClientTelemetry.enabled,
+        );
+        _reconnectSpan!.step('connect');
       }
     } else if (_reconnectSpan != null) {
       final failed =
           voicePhase != VoicePhase.connected &&
           voicePhase != VoicePhase.listener;
-      if (failed) {
-        _reconnectSpan!.setStatus(SpanStatusCode.Error);
-      }
-      _reconnectSpan!.addEventNow(
-        'app.client.voice.reconnect.${failed ? 'failed' : 'completed'}',
+      final reason = voiceDisconnectNotice?.reason;
+      final cancelled =
+          failed && reason == null && voicePhase == VoicePhase.idle;
+      final superseded = failed && reason == 'TRANSFER';
+      final rejected =
+          failed &&
+          {
+            'KICK',
+            'BANNED',
+            'CHANNEL_CLOSED',
+            'SESSION_REVOKED',
+            'LOGOUT',
+          }.contains(reason);
+      if (!failed) _reconnectSpan!.step('ready');
+      _reconnectSpan!.finish(
+        superseded
+            ? 'superseded'
+            : rejected
+            ? 'rejected'
+            : cancelled
+            ? 'cancelled'
+            : failed
+            ? 'failed'
+            : 'success',
+        reason: superseded
+            ? 'generation_changed'
+            : rejected
+            ? 'revoked'
+            : cancelled
+            ? 'disposed'
+            : failed
+            ? 'network'
+            : 'none',
       );
-      _reconnectSpan!.end();
       _reconnectSpan = null;
     }
   }
-
-  @override
-  Future<void> joinVoice(GuildChannel channel, {bool listenerOnly = false}) =>
-      ClientTelemetry.trace(
-        'voice.join',
-        () => super.joinVoice(channel, listenerOnly: listenerOnly),
-        failed: () => voicePhase == VoicePhase.error,
-      );
-
-  @override
-  Future<void> leaveVoice() =>
-      ClientTelemetry.trace('voice.leave', super.leaveVoice);
 
   @override
   Future<void> startScreenShare({
@@ -69,8 +88,7 @@ class TracedAppState extends AppState {
   @override
   void dispose() {
     removeListener(_watchVoiceReconnect);
-    _reconnectSpan?.addEventNow('app.client.voice.reconnect.failed');
-    _reconnectSpan?.end();
+    _reconnectSpan?.finish('cancelled', reason: 'disposed');
     super.dispose();
   }
 }

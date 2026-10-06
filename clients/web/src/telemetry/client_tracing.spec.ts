@@ -30,7 +30,7 @@ describe('manual web tracing', () => {
     await expect(traceOperation(provider.getTracer('test'), 'voice.join', async () => {
       throw new Error('private voice token')
     })).rejects.toThrow('private voice token')
-    const span = exporter.getFinishedSpans()[0]
+    const span = exporter.getFinishedSpans().find(span => span.attributes['app.flow.record'] === 'terminal')!
     expect(span.name).toBe('voice.join')
     expect(span.events.map((event) => event.name)).toEqual(['app.client.voice.join.started', 'app.client.voice.join.failed'])
     expect(JSON.stringify({ name: span.name, attributes: span.attributes, status: span.status, events: span.events })).not.toContain('private voice token')
@@ -47,7 +47,8 @@ describe('manual web tracing', () => {
       await Promise.resolve()
       return within(() => request('/api/v1/voice', { method: 'POST' }))
     })
-    const [api, voice] = exporter.getFinishedSpans()
+    const api = exporter.getFinishedSpans().find(span => span.name === 'api.request')!
+    const voice = exporter.getFinishedSpans().find(span => span.attributes['app.flow.record'] === 'terminal')!
     expect(voice.events.map((event) => event.name)).toEqual(['app.client.voice.join.started', 'app.client.voice.join.completed'])
     expect(api.spanContext().traceId).toBe(voice.spanContext().traceId)
     expect(api.parentSpanContext?.spanId).toBe(voice.spanContext().spanId)

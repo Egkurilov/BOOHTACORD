@@ -25,7 +25,7 @@ func New(deleter Deleter, events *eventhub.Hub) EventPublishingDeleter {
 func (publisher EventPublishingDeleter) Delete(ctx context.Context, input deletetextmessage.Input) (deletetextmessage.Result, error) {
 	result, err := publisher.deleter.Delete(ctx, input)
 	if err == nil {
-		publisher.events.Publish(eventhub.Event{EventID: uuid.NewString(), Kind: "message.deleted", OccurredAt: time.Now().UTC(), Payload: map[string]any{"channel_id": result.ChannelID, "message_id": result.ID}})
+		publisher.events.PublishContext(ctx, eventhub.Event{EventID: uuid.NewString(), Kind: "message.deleted", OccurredAt: time.Now().UTC(), Payload: map[string]any{"channel_id": result.ChannelID, "message_id": result.ID}})
 	}
 	return result, err
 }

@@ -1,4 +1,6 @@
 import 'controller.dart';
+import '../../telemetry/action_scope/action.dart';
+import '../../telemetry/action_scope/failure.dart';
 
 extension ScreenShareStop on ScreenShareController {
   Future<void> stopScreenShare() {
@@ -12,6 +14,7 @@ extension ScreenShareStop on ScreenShareController {
   }
 
   Future<void> closeCapture(int expected) async {
+    ActionScope.current?.step('stop');
     final room = readRoom();
     final pending = starting;
     final wasIdle = phase == ScreenSharePhase.idle;
@@ -28,6 +31,11 @@ extension ScreenShareStop on ScreenShareController {
       phase = ScreenSharePhase.idle;
       error = null;
     } catch (cause) {
+      final failure = failureOutcome(cause);
+      ActionScope.current?.finish(
+        failure.outcome,
+        reason: failure.reason == 'network' ? 'dependency' : failure.reason,
+      );
       if (expected != revision) return;
       phase = ScreenSharePhase.error;
       error =

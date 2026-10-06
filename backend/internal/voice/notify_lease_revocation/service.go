@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	causal "voice-platform/backend/internal/observability/causal_reference"
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
@@ -35,6 +36,7 @@ func (service Service) Dispatch(context context.Context, limit int) (int, error)
 		err := service.publisher.PublishToAccountsDurable(context, []string{item.UserID}, eventhub.Event{
 			EventID:    uuid.NewSHA1(uuid.NameSpaceOID, []byte("voice.lease_revoked:"+item.LeaseID)).String(),
 			Kind:       "voice.lease_revoked",
+			Cause:      causal.Decode(item.TraceCause),
 			OccurredAt: item.RequestedAt,
 			Payload: map[string]any{
 				"lease_id": item.LeaseID,

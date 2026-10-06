@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	causal "voice-platform/backend/internal/observability/causal_reference"
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
@@ -43,7 +44,7 @@ func (repository Repository) Replay(ctx context.Context, accountID, after, epoch
 	if limit < 1 || limit > ReplayLimit {
 		limit = ReplayLimit
 	}
-	rows, err := repository.database.Query(ctx, `SELECT id::text, kind, occurred_at, payload
+	rows, err := repository.database.Query(ctx, `SELECT id::text, kind, occurred_at, payload, trace_cause
     FROM realtime_events
     WHERE sequence > $1 AND boot_epoch = $2::uuid
       AND stored_at >= clock_timestamp() - interval '7 days'
@@ -57,9 +58,11 @@ func (repository Repository) Replay(ctx context.Context, accountID, after, epoch
 	for rows.Next() {
 		var event eventhub.Event
 		var payload []byte
-		if err := rows.Scan(&event.EventID, &event.Kind, &event.OccurredAt, &payload); err != nil {
+		var cause []byte
+		if err := rows.Scan(&event.EventID, &event.Kind, &event.OccurredAt, &payload, &cause); err != nil {
 			return nil, fmt.Errorf("scan realtime replay: %w", err)
 		}
+		event.Cause = causal.Decode(cause)
 		if err := json.Unmarshal(payload, &event.Payload); err != nil {
 			return nil, fmt.Errorf("decode realtime replay: %w", err)
 		}

@@ -2,6 +2,7 @@ import { readScreenShareDiagnostics, startScreenShare, stopScreenShare, type Scr
 import { updateScreenShare } from './media_publishing'
 import type { ScreenDiagnostics } from './screen_diagnostics'
 import { tracedOperation } from '../telemetry/client_tracing'
+import { activeAction } from '../telemetry/action_scope/scope'
 
 export interface ScreenVoiceSession {
   room: VoiceRoom
@@ -12,9 +13,10 @@ export class VoiceScreenSession {
   constructor(private readonly current: () => ScreenVoiceSession | null) {}
 
   async startScreen(profile: ScreenProfile): Promise<ScreenDiagnostics> {
-    return tracedOperation('screen.share.start', async () => {
+    return tracedOperation('screen.share.start', async (within) => {
       const current = this.requireCurrent()
-      const diagnostics = await startScreenShare(current.room, profile)
+      activeAction()?.step('publish')
+      const diagnostics = await within(() => startScreenShare(current.room, profile))
       current.screenProfile = profile
       return diagnostics
     })

@@ -7,6 +7,7 @@ import '../../../services/screen_thumbnail.dart';
 import '../lifecycle/controller.dart';
 import '../screen_preview/capture_policy.dart';
 import 'audio_publication.dart';
+import '../../telemetry/observe_render/view.dart';
 
 extension VoiceScreenViewerSelection on VoiceController {
   Future<void> selectRemoteScreenForViewing(String? participantIdentity) async {
@@ -19,6 +20,11 @@ extension VoiceScreenViewerSelection on VoiceController {
         : nextIdentity;
     final previous = selectedRemoteScreenViewerIdentity;
     if (previous == next) return;
+    if (next == null) {
+      stopView(api.transport.session.telemetry);
+    } else {
+      beginView(api.transport.session.telemetry);
+    }
     selectedRemoteScreenViewerIdentity = next;
     final room = this.room;
     if (room == null) return;

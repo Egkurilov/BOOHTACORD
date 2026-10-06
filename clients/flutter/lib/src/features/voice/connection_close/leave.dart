@@ -1,15 +1,27 @@
 import 'dart:async';
+
 import '../../../services/android_audio_devices.dart';
 import '../../screen/lifecycle/controller.dart';
 import '../lifecycle/controller.dart';
+import 'observe.dart';
+import '../../telemetry/action_scope/action.dart';
 
 extension VoiceConnectionCloseLeave on VoiceController {
   Future<void> leaveVoice({bool explicit = true}) {
-    if (explicit && (room != null || voiceAdmissionPending || disconnect.notice != null)) { disconnect.local(); error = null; }
+    if (explicit &&
+        (room != null || voiceAdmissionPending || disconnect.notice != null)) {
+      disconnect.local();
+      error = null;
+    }
     final previous = closing;
     if (previous != null) return previous;
-    if (leaseId != null) disconnect.bind(leaseId!, voiceChannel?.id ?? disconnect.channelId ?? '');
-    final operation = closeVoice(++operationRevision);
+    if (leaseId != null) {
+      disconnect.bind(leaseId!, voiceChannel?.id ?? disconnect.channelId ?? '');
+    }
+    final revision = ++operationRevision;
+    final operation = explicit
+        ? observeVoiceLeave(this, () => closeVoice(revision))
+        : closeVoice(revision);
     closing = operation;
     return operation.whenComplete(() {
       if (identical(closing, operation)) closing = null;
@@ -29,6 +41,7 @@ extension VoiceConnectionCloseLeave on VoiceController {
     room = null;
     pendingRoom = null;
     leaseId = null;
+    api.transport.session.telemetry.endMedia();
     voiceAdmissionPending = false;
     stopVoiceConnectionStatsPolling();
     voicePhase = VoicePhase.leaving;
@@ -50,6 +63,7 @@ extension VoiceConnectionCloseLeave on VoiceController {
       try {
         await api.releaseVoice(lease);
       } catch (cause) {
+        ActionScope.current?.finish('failed', reason: 'dependency');
         if (ticket.isCurrent && revision == operationRevision) {
           error = formatError(cause);
         }
@@ -67,7 +81,10 @@ extension VoiceConnectionCloseLeave on VoiceController {
     listenerOnly = false;
     mutedBeforeDeafen = false;
     microphoneMutedBeforePtt = false;
-    voicePhase = disconnect.notice != null && disconnect.notice!.source != 'local' ? VoicePhase.error : VoicePhase.idle;
+    voicePhase =
+        disconnect.notice != null && disconnect.notice!.source != 'local'
+        ? VoicePhase.error
+        : VoicePhase.idle;
     notifyListeners();
   }
 

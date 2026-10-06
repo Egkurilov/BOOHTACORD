@@ -1,6 +1,6 @@
 import type { VoiceConnectionObserver } from './voice_session'
 import { type Span } from '@opentelemetry/api'
-import { endTracedOperation, startTracedOperation } from '../telemetry/client_tracing'
+import { endTracedOperation, startTracedOperation,cancelTracedOperation } from '../telemetry/client_tracing'
 
 export interface ReconnectableVoiceRoom {
   on(event: 'reconnecting' | 'reconnected' | 'disconnected', listener: () => void): unknown
@@ -18,7 +18,7 @@ export class VoiceReconnectMonitor {
   notifyAdmitted(leaseID: string, channelID: string): void { this.observer?.admitted?.(leaseID, channelID) }
   private interruptReconnect(): void {
     this.reconnectSpan?.addEvent('app.client.voice.reconnect.interrupted')
-    this.reconnectSpan?.end(); this.reconnectSpan = null
+    if(this.reconnectSpan)cancelTracedOperation(this.reconnectSpan); this.reconnectSpan = null
   }
   notifyDisconnected(): void {
     this.interruptReconnect()

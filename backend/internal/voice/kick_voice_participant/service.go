@@ -3,6 +3,7 @@ package kickvoiceparticipant
 import (
 	"context"
 	"errors"
+	flowstage "voice-platform/backend/internal/observability/flow_stage"
 )
 
 var ErrInvalidInput = errors.New("invalid voice kick input")
@@ -15,7 +16,9 @@ type Store interface {
 type Service struct{ store Store }
 
 func New(store Store) Service { return Service{store: store} }
-func (service Service) Kick(context context.Context, input Input) (Result, error) {
+func (service Service) Kick(context context.Context, input Input) (result Result, err error) {
+	context, span := flowstage.Begin(context, "voice.revoke.server", "authorize")
+	defer func() { flowstage.End(span, err, flowstage.Reject(ErrInvalidInput, "invalid")) }()
 	if input.ActorID == "" || input.TargetID == "" {
 		return Result{}, ErrInvalidInput
 	}

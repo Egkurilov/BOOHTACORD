@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+	flowstage "voice-platform/backend/internal/observability/flow_stage"
 
 	validatementions "voice-platform/backend/internal/chat/validate_mentions"
 )
@@ -40,7 +41,11 @@ type Service struct {
 }
 
 func New(store Store) Service { return Service{store: store, newID: newMessageID} }
-func (service Service) Create(context context.Context, input Input) (Result, error) {
+func (service Service) Create(context context.Context, input Input) (result Result, err error) {
+	context, span := flowstage.Begin(context, "message.send.server", "authorize")
+	defer func() {
+		flowstage.End(span, err, flowstage.Reject(ErrInvalidInput, "invalid"), flowstage.Reject(ErrChannelUnavailable, "permission_denied"))
+	}()
 	if !validUUID(input.ActorID) || !validUUID(input.ChannelID) || !validUUID(input.ClientMessageID) || (input.ReplyToID != "" && !validUUID(input.ReplyToID)) || !validAttachments(input.AttachmentIDs) || !validatementions.Valid(input.MentionUserIDs, input.ActorID) || !utf8.ValidString(input.Body) || utf8.RuneCountInString(input.Body) > 8000 || (input.Body == "" && len(input.AttachmentIDs) == 0) || strings.ContainsRune(input.Body, '\x00') {
 		return Result{}, ErrInvalidInput
 	}
@@ -48,7 +53,7 @@ func (service Service) Create(context context.Context, input Input) (Result, err
 	if err != nil {
 		return Result{}, fmt.Errorf("create message identifier: %w", err)
 	}
-	result, err := service.store.Create(context, Request{ID: id, Input: input})
+	result, err = service.store.Create(context, Request{ID: id, Input: input})
 	if errors.Is(err, ErrChannelUnavailable) {
 		return Result{}, ErrChannelUnavailable
 	}

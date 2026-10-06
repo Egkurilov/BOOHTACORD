@@ -25,12 +25,20 @@ void main() {
           return http.Response('', 202);
         }),
       );
+      api.transport.session.telemetry.bind(
+        '11111111111111111111111111111111',
+        '1',
+      );
       await api.submitClientSpans([1, 2, 3]);
       expect(sent.url.path, '/api/v1/telemetry/traces');
       expect(sent.headers['cookie'], 'session=private-test');
       expect(sent.headers['origin'], 'https://v.bootybay.ru');
       expect(sent.headers['x-client-platform'], Platform.operatingSystem);
       expect(sent.headers['content-type'], 'application/x-protobuf');
+      expect(
+        sent.headers['x-telemetry-session'],
+        '11111111111111111111111111111111',
+      );
       expect(sent.bodyBytes, [1, 2, 3]);
     },
   );
@@ -41,6 +49,10 @@ void main() {
         (_) async => http.Response('private-upstream-detail', 401),
       ),
     );
+    api.transport.session.telemetry.bind(
+      '11111111111111111111111111111111',
+      '1',
+    );
 
     try {
       await api.submitClientSpans([1]);
@@ -49,5 +61,17 @@ void main() {
       expect(error.message, contains('HTTP 401'));
       expect(error.message, isNot(contains('private-upstream-detail')));
     }
+  });
+
+  test('does not export anonymous observations', () async {
+    var calls = 0;
+    final api = ApiClient(
+      client: MockClient((_) async {
+        calls++;
+        return http.Response('', 202);
+      }),
+    );
+    await api.submitClientSpans([1]);
+    expect(calls, 0);
   });
 }

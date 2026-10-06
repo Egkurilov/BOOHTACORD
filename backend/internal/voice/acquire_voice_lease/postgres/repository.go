@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	causal "voice-platform/backend/internal/observability/causal_reference"
 	acquirevoicelease "voice-platform/backend/internal/voice/acquire_voice_lease"
 )
 
@@ -60,7 +61,7 @@ func (repository Repository) Acquire(context context.Context, request acquirevoi
 	transferred := err == nil
 	if transferred {
 		var revoked string
-		if err := transaction.QueryRow(context, revokeTransferredLease, active.ID, request.ActorID).Scan(&revoked); err != nil {
+		if err := transaction.QueryRow(context, revokeTransferredLease, active.ID, request.ActorID, causal.From(context).Bytes()).Scan(&revoked); err != nil {
 			return acquirevoicelease.Result{}, fmt.Errorf("revoke prior voice lease: %w", err)
 		}
 	}

@@ -37,7 +37,10 @@ func Middleware(tracer trace.Tracer, mux *http.ServeMux, next http.Handler) http
 			context = withGuildActions(context)
 		}
 		started := time.Now()
-		captured := &statusWriter{ResponseWriter: writer}
+		captured := &statusWriter{ResponseWriter: writer, onUpgrade: func(...trace.SpanEndOption) {
+			span.SetAttributes(attribute.Int("http.response.status_code", http.StatusSwitchingProtocols))
+			span.End()
+		}}
 		defer func() {
 			panicValue := recover()
 			status := captured.code
@@ -81,7 +84,8 @@ func safeMethod(method string) string {
 
 type statusWriter struct {
 	http.ResponseWriter
-	code int
+	code      int
+	onUpgrade func(...trace.SpanEndOption)
 }
 
 func (writer *statusWriter) Unwrap() http.ResponseWriter { return writer.ResponseWriter }
@@ -91,6 +95,10 @@ func (writer *statusWriter) WriteHeader(status int) {
 		writer.code = status
 	}
 	writer.ResponseWriter.WriteHeader(status)
+	if status == http.StatusSwitchingProtocols && writer.onUpgrade != nil {
+		writer.onUpgrade()
+		writer.onUpgrade = nil
+	}
 }
 
 func (writer *statusWriter) Write(value []byte) (int, error) {

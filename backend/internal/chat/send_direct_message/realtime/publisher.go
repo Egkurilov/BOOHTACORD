@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	senddirectmessage "voice-platform/backend/internal/chat/send_direct_message"
+	flowstage "voice-platform/backend/internal/observability/flow_stage"
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
@@ -30,14 +31,20 @@ func (publisher Publisher) Send(ctx context.Context, input senddirectmessage.Inp
 	if err != nil {
 		return result, err
 	}
+	flowstage.Mark(ctx, "commit", "success")
 	lookupContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
 	defer cancel()
 	accounts, err := publisher.recipients.Resolve(lookupContext, result.DirectMessageID, input.ActorID)
 	if err == nil {
-		publisher.events.PublishToAccounts(accounts, eventhub.Event{
+		err = publisher.events.PublishToAccountsContext(lookupContext, accounts, eventhub.Event{
 			EventID: uuid.NewString(), Kind: "direct_message.message_created", OccurredAt: time.Now().UTC(),
 			Payload: map[string]any{"direct_message_id": result.DirectMessageID, "message_id": result.ID},
 		})
+	}
+	if err != nil {
+		flowstage.Mark(ctx, "dispatch", "failed")
+	} else {
+		flowstage.Mark(ctx, "dispatch", "success")
 	}
 	return result, nil
 }

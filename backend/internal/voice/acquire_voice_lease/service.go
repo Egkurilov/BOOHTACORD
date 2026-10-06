@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	flowstage "voice-platform/backend/internal/observability/flow_stage"
 )
 
 var (
@@ -37,7 +38,11 @@ type Service struct {
 
 func New(store Store) Service { return Service{store: store, newID: newLeaseID} }
 
-func (service Service) Acquire(context context.Context, input Input) (Result, error) {
+func (service Service) Acquire(context context.Context, input Input) (result Result, err error) {
+	context, span := flowstage.Begin(context, "voice.lease.server", "lease")
+	defer func() {
+		flowstage.End(span, err, flowstage.Reject(ErrInvalidInput, "invalid"), flowstage.Reject(ErrActiveLease, "conflict"), flowstage.Reject(ErrSessionUnavailable, "revoked"), flowstage.Reject(ErrVoiceChannelUnavailable, "permission_denied"))
+	}()
 	if input.ActorID == "" || input.ChannelID == "" || input.SessionDigest == [sha256.Size]byte{} {
 		return Result{}, ErrInvalidInput
 	}
@@ -45,7 +50,7 @@ func (service Service) Acquire(context context.Context, input Input) (Result, er
 	if err != nil {
 		return Result{}, fmt.Errorf("create voice lease identifier: %w", err)
 	}
-	result, err := service.store.Acquire(context, Request{ID: id, Input: input})
+	result, err = service.store.Acquire(context, Request{ID: id, Input: input})
 	if errors.Is(err, ErrActiveLease) {
 		return result, ErrActiveLease
 	}

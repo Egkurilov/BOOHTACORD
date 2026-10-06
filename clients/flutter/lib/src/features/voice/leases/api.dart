@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../../../models.dart';
 import '../../../core/http/transport.dart';
+import '../../telemetry/action_scope/action.dart';
 
 class VoiceLeasesApi {
   VoiceLeasesApi(this.transport);
@@ -11,6 +12,7 @@ class VoiceLeasesApi {
     String channelId, {
     bool transfer = false,
   }) async {
+    ActionScope.current?.step('lease');
     final leaseData = await transport.checked(
       await transport.client.post(
         transport.uri('/voice/channels/$channelId/leases'),
@@ -19,6 +21,7 @@ class VoiceLeasesApi {
       ),
     ) as Map<String, dynamic>;
     final leaseId = leaseData['id'] as String;
+    ActionScope.current?.step('credential');
     final credential = await transport.checked(
       await transport.client.post(
         transport.uri('/voice/leases/$leaseId/credential'),

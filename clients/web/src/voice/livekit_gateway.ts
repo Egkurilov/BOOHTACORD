@@ -22,6 +22,7 @@ import { defaultLiveKitRoomFactory } from './livekit_room_factory'
 import type { AudioInputSelection } from './audio_input_selection'
 import type { VoiceAudioDiagnostics } from './audio_diagnostics/model'
 import type { NetworkDiagnostics } from './network_diagnostics/model'
+import { activeAction } from '../telemetry/action_scope/scope'
 
 export {
   readScreenShareDiagnostics,
@@ -101,6 +102,7 @@ export async function connectLiveKitRoom(
   if (joinMode === 'listener') return { room, microphone: 'MUTED' }
 
   try {
+    activeAction()?.step('microphone')
     return { room, microphone: await awaitMediaConnection(setMicrophone(room, true, processing), timeoutMs) }
   } catch (cause) {
     await room.disconnect()

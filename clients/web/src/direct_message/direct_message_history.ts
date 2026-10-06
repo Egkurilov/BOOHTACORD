@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { loadDirectMessageHistory, type DirectMessageHistoryItem, type DirectMessageRequest } from './direct_message_client'
 import { pendingDirectMessage, type DirectMessageDisplayItem, type PendingDirectMessageSend } from './direct_message_pending'
 import { createLoadedRevisionRefresh } from '../conversation/revision_refresh/loaded'
+import { trackRealtimeMessages } from '../telemetry/realtime_flow/process'
 
 export function createDirectMessageHistory(pending: Map<string, PendingDirectMessageSend>, acknowledge: (id: string) => void) {
   const directMessageId = ref<string | null>(null)
@@ -27,6 +28,7 @@ export function createDirectMessageHistory(pending: Map<string, PendingDirectMes
     for (const message of server) acknowledge(message.clientMessageId)
     const queued = [...pending].flatMap(([id, draft]) => draft.directMessageId === directMessageId.value ? [pendingDirectMessage(id, draft)] : [])
     messages.value = [...queued, ...server]
+    trackRealtimeMessages(incoming)
   }
 
   async function open(nextDirectMessageId: string, request?: DirectMessageRequest): Promise<void> {

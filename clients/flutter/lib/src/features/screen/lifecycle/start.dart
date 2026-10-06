@@ -5,6 +5,8 @@ import '../../../core/session/scope.dart';
 import '../../../services/screen_share_diagnostics.dart';
 import '../../../services/screen_share_quality.dart';
 import 'controller.dart';
+import '../../telemetry/action_scope/action.dart';
+import '../../telemetry/action_scope/failure.dart';
 
 extension ScreenShareStart on ScreenShareController {
   Future<void> startScreenShare({
@@ -65,6 +67,7 @@ extension ScreenShareStart on ScreenShareController {
         ScreenShareDiagnosticEvent.capturePrepared,
         platform: defaultTargetPlatform,
       );
+      ActionScope.current?.step('select');
       pending = await driver.capture(
         ScreenShareCaptureOptions(
           sourceId: sourceId,
@@ -85,6 +88,7 @@ extension ScreenShareStart on ScreenShareController {
         trackEnabled: screenShareTrackEnabled(pending),
         localScreenPublications: screenShareLocalPublicationCount(room),
       );
+      ActionScope.current?.step('publish');
       await driver.publish(room, pending, quality, dimensions);
       if (!active()) return;
       logScreenShareDiagnostic(
@@ -96,6 +100,11 @@ extension ScreenShareStart on ScreenShareController {
       published(room, pending);
       pending = null;
     } catch (cause) {
+      final failure = failureOutcome(cause);
+      ActionScope.current?.finish(
+        failure.outcome,
+        reason: failure.reason == 'network' ? 'dependency' : failure.reason,
+      );
       logScreenShareDiagnostic(
         publishing
             ? ScreenShareDiagnosticEvent.publishFailed

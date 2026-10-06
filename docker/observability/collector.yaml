@@ -17,6 +17,16 @@ processors:
 exporters:
   otlphttp/tempo:
     endpoint: http://tempo:4318
+    timeout: 3s
+    sending_queue:
+      enabled: true
+      num_consumers: 2
+      queue_size: 128
+    retry_on_failure:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 5s
+      max_elapsed_time: 30s
   prometheus:
     endpoint: 0.0.0.0:8889
     resource_to_telemetry_conversion:

@@ -59,9 +59,13 @@ extension ConversationSendDirect on ConversationController {
     sending = true;
     error = null;
     changed();
+    final action = sendObservation.begin(clientMessageId);
     try {
-      final message = await deliverDirect(pending, retry, active);
+      final message = await action.run(
+        () => deliverDirect(pending, retry, active),
+      );
       if (!active()) return false;
+      sendObservation.accepted(clientMessageId, message);
       sendRetryIds.remove(retryKey);
       pendingDirectSends.remove(clientMessageId);
       if (isReady() && selectedDirectMessage?.id == conversation.id) {
@@ -76,6 +80,7 @@ extension ConversationSendDirect on ConversationController {
       }
       return true;
     } catch (cause) {
+      sendObservation.failed(clientMessageId, cause);
       if (!active()) return false;
       if (!uncertainDelivery(cause)) blockedSendRetries.add(clientMessageId);
       if (pendingDirectSends.containsKey(clientMessageId)) {

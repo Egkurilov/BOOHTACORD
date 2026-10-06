@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { ActionScope } from './telemetry/action_scope/scope'
 import { guildProfile } from './guild/profile/state'
 
 import AuthenticationLanding from './identity/AuthenticationLanding.vue'
@@ -19,6 +20,7 @@ type AppState = 'loading' | 'guest' | 'authenticated' | 'error'
 const state = ref<AppState>('loading')
 const error = ref<string | null>(null)
 const session = ref<CurrentSession | null>(null)
+const readiness=shallowRef<ActionScope>()
 const maintenance = createMaintenanceRealtime()
 const maintenanceActive = maintenance.active
 const resetRoute = ref(false)
@@ -33,8 +35,9 @@ let sessionRevision = 0
 const updates = useUpdateStore()
 watch(guildProfile.name, name => { if (typeof document !== 'undefined') document.title = name }, { immediate: true })
 
-async function refreshSession(): Promise<void> {
+async function refreshSession(flow:'startup'|'session.restore'|'auth.login'='session.restore'): Promise<void> {
   const revision = ++sessionRevision
+  readiness.value?.finish('superseded','generation_changed');readiness.value=undefined
   if (session.value) { clearAuthenticatedState(); session.value = null }
   state.value = 'loading'
   error.value = null
@@ -42,6 +45,12 @@ async function refreshSession(): Promise<void> {
     const current = await loadCurrentSession()
     if (revision !== sessionRevision) return
     session.value = current
+    if(current){
+      // Preauth work stays local; this observes the authenticated UI readiness.
+      readiness.value=new ActionScope(flow);readiness.value.step('restore')
+      state.value='authenticated'
+      return
+    }
     state.value = session.value ? 'authenticated' : 'guest'
   } catch (cause) {
     if (revision !== sessionRevision) return
@@ -52,6 +61,7 @@ async function refreshSession(): Promise<void> {
 }
 
 function finishLogout(): void {
+  readiness.value?.finish('cancelled','disposed');readiness.value=undefined
   sessionRevision++
   session.value = null
   error.value = null
@@ -79,12 +89,13 @@ function returnToLogin(): void {
 
 onMounted(() => {
   void guildProfile.refresh()
-  if (!resetRoute.value) void refreshSession()
+  if (!resetRoute.value) void refreshSession('startup')
   maintenance.start()
   updates.start()
 })
 
 onUnmounted(() => {
+  readiness.value?.finish('cancelled','disposed')
   maintenance.stop()
   updates.dispose()
 })
@@ -97,8 +108,8 @@ onUnmounted(() => {
   <main v-else-if="state === 'loading'" class="session-state" aria-live="polite">Проверяем безопасную сессию…</main>
   <main v-else-if="state === 'error'" class="session-state" role="alert">
     <p>{{ error }}</p>
-    <button type="button" @click="refreshSession">Повторить</button>
+    <button type="button" @click="refreshSession()">Повторить</button>
   </main>
-  <AuthenticationLanding v-else-if="state === 'guest'" :focus-login-on-mount="focusLoginOnReturn" @authenticated="refreshSession" />
-  <WorkspaceApp v-else-if="session" :key="session.accountId" :role="session.role" :account-id="session.accountId" @session-expired="refreshSession" @logged-out="finishLogout" />
+  <AuthenticationLanding v-else-if="state === 'guest'" :focus-login-on-mount="focusLoginOnReturn" @authenticated="refreshSession('auth.login')" />
+  <WorkspaceApp v-else-if="session" :key="session.accountId" :role="session.role" :account-id="session.accountId" :readiness="readiness" @session-expired="refreshSession()" @logged-out="finishLogout" />
 </template>

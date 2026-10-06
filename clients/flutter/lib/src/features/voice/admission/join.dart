@@ -6,9 +6,19 @@ import '../lifecycle/controller.dart';
 import 'prepare.dart';
 import 'enable.dart';
 import 'failure.dart';
+import '../../telemetry/action_scope/action.dart';
+import 'observe.dart';
 
 extension VoiceAdmissionJoin on VoiceController {
-  Future<void> joinVoice(
+  Future<void> joinVoice(GuildChannel channel, {bool listenerOnly = false}) =>
+      observeVoiceAdmission(
+        this,
+        channel,
+        listenerOnly,
+        () => admitVoice(channel, listenerOnly: listenerOnly),
+      );
+
+  Future<void> admitVoice(
     GuildChannel channel, {
     bool listenerOnly = false,
   }) async {
@@ -66,6 +76,7 @@ extension VoiceAdmissionJoin on VoiceController {
       pendingRoom = candidate;
       bindVoiceRoomEvents(candidate);
       events = voiceEvents;
+      ActionScope.current?.step('connect');
       await candidate.connect(
         result.$2.url,
         result.$2.token,
@@ -84,11 +95,13 @@ extension VoiceAdmissionJoin on VoiceController {
       subscribeCurrentRemoteVoiceTracks(candidate);
       await applySavedVoiceVolumes(candidate);
       checkCurrentAdmission(admittedLease);
+      if (!listenerOnly) ActionScope.current?.step('microphone');
       await enableVoiceMicrophone(candidate, listenerOnly, ticket, revision);
       checkCurrentAdmission(admittedLease);
       startVoiceConnectionStatsPolling(candidate);
       observeVoiceStreamStarts(candidate);
       connected = true;
+      ActionScope.current?.step('ready');
     } catch (cause) {
       if (active(ticket, revision)) {
         await failVoiceAdmission(

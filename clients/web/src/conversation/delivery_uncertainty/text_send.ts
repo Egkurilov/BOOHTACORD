@@ -5,33 +5,38 @@ import { validCodePointLength } from '../../validation/unicode_limits/unicode_li
 import { deliverWithRecovery, uncertainFailure } from './flow'
 import { lookupTextDelivery } from './lookup'
 import { journeyRecorder,markAccepted } from '../../telemetry/journey_intervals/runtime'
+import { createSendObservation } from '../../telemetry/observe_render/messages'
 interface State { channelId: Ref<string | null>; sending: Ref<boolean>; error: Ref<string | null>; messages: Ref<TextMessage[]>; pending: Map<string, PendingSend>; retries: Map<string, string> }
 export function createTextDelivery(state: State) {
   let closed = false
-  onScopeDispose(() => { closed = true; state.pending.clear(); state.retries.clear() })
+  const observation = createSendObservation()
+  onScopeDispose(() => { observation.close(); closed = true; state.pending.clear(); state.retries.clear() })
   function acknowledge(id: string): void { state.pending.delete(id); for (const [key, value] of state.retries) if (value === id) state.retries.delete(key) }
   async function submit(id: string, draft: PendingSend, request = draft.request, retry = false): Promise<boolean> {
     if (closed || state.sending.value || state.channelId.value !== draft.channelId || draft.retryBlocked) return false
     state.sending.value = true; state.error.value = null
     const finish=journeyRecorder.begin('send_ack')
+    const action = observation.begin(id)
     const status = (value: 'sending' | 'checking') => {
       if (closed || !state.pending.has(id)) return
       draft.sendStatus = value
       if (state.channelId.value === draft.channelId) state.messages.value = [pendingMessage(id, draft), ...state.messages.value.filter(row => row.clientMessageId !== id)]
     }
     try {
-      const created = await deliverWithRecovery({
+      const created = await action.within(() => deliverWithRecovery({
         post: () => createTextMessage(draft.channelId, id, draft.body, request, draft.replyToId, draft.attachments.map(row => row.id), draft.mentionUserIds),
         lookup: () => lookupTextDelivery(draft.channelId, id, draft.authorId, request), status, active: () => !closed,
-      }, retry)
+      }, retry))
       acknowledge(id)
       finish('completed')
       const confirmed = created.deleted ? created : { ...created, attachments: created.attachments.length ? created.attachments : [...draft.attachments] }
       markAccepted(confirmed)
+      observation.acknowledged(id, confirmed)
       if (state.channelId.value === draft.channelId) state.messages.value = [confirmed, ...state.messages.value.filter(row => row.id !== created.id && row.clientMessageId !== id)]
       return true
     } catch (cause) {
       finish('failed')
+      observation.failed(id,cause)
       if (closed) return false
       draft.sendStatus = 'failed'; draft.retryBlocked = !uncertainFailure(cause)
       if (state.channelId.value === draft.channelId && state.pending.has(id)) {
@@ -56,7 +61,7 @@ export function createTextDelivery(state: State) {
     if (!messageId.startsWith('optimistic:')) return false
     const id = messageId.slice('optimistic:'.length), draft = state.pending.get(id)
     if (!draft || draft.sendStatus !== 'failed') return false
-    acknowledge(id); state.messages.value = state.messages.value.filter(row => row.clientMessageId !== id); return true
+    observation.discard(id); acknowledge(id); state.messages.value = state.messages.value.filter(row => row.clientMessageId !== id); return true
   }
   return { send, retry, discard }
 }

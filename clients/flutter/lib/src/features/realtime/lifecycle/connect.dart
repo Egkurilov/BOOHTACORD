@@ -1,4 +1,6 @@
 import 'controller.dart';
+import '../../telemetry/action_scope/action.dart';
+import '../../../services/client_telemetry.dart';
 
 extension RealtimeConnection on RealtimeController {
   Future<void> connect() async {
@@ -7,9 +9,18 @@ extension RealtimeConnection on RealtimeController {
       return;
     }
     connecting = true;
+    handshake?.finish('superseded');
+    final flow = ActionScope(
+      hadConnection ? 'realtime.reconnect' : 'realtime.connect',
+      api.transport.session.telemetry,
+      enabled: ClientTelemetry.enabled,
+    );
+    handshake = flow;
+    flow.step('connect');
     try {
-      final opened = await api.openRealtime();
+      final opened = await flow.run(api.openRealtime);
       if (!active()) {
+        flow.finish('cancelled', reason: 'generation_changed');
         await opened.close();
         return;
       }
@@ -28,6 +39,7 @@ extension RealtimeConnection on RealtimeController {
         cancelOnError: true,
       );
     } catch (_) {
+      flow.finish('failed', reason: 'network');
       if (active()) scheduleRetry();
     } finally {
       if (active()) connecting = false;
