@@ -2160,12 +2160,34 @@ void main() {
     await tester.pump();
     expect(tester.widget<Visibility>(menuVisibility).visible, isFalse);
     final categoryToggle = tester.widget<InkWell>(
-      find.byKey(
-        const ValueKey('workspace-category-toggle:category-1'),
-      ),
+      find.byKey(const ValueKey('workspace-category-toggle:category-1')),
     );
     expect(categoryToggle.hoverColor, Colors.transparent);
-    expect(categoryToggle.mouseCursor, SystemMouseCursors.click);
+    expect(categoryToggle.mouseCursor, SystemMouseCursors.basic);
+    categoryToggle.onHover!(true);
+    await tester.pump();
+    expect(
+      tester
+          .widget<InkWell>(
+            find.byKey(const ValueKey('workspace-category-toggle:category-1')),
+          )
+          .mouseCursor,
+      SystemMouseCursors.click,
+    );
+    tester
+        .widget<InkWell>(
+          find.byKey(const ValueKey('workspace-category-toggle:category-1')),
+        )
+        .onHover!(false);
+    await tester.pump();
+    expect(
+      tester
+          .widget<InkWell>(
+            find.byKey(const ValueKey('workspace-category-toggle:category-1')),
+          )
+          .mouseCursor,
+      SystemMouseCursors.basic,
+    );
     expect(find.byTooltip('Свернуть раздел Текстовые каналы'), findsNothing);
     await tester.tap(find.text('ТЕКСТОВЫЕ КАНАЛЫ'));
     await tester.pumpAndSettle();

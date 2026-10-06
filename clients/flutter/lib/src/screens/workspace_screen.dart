@@ -1176,6 +1176,7 @@ class _CategoryState extends State<_Category> {
   bool _expanded = true;
   bool _hovered = false;
   bool _focused = false;
+  bool _nameHovered = false;
 
   bool get _showObjectMenu => _hovered || _focused;
 
@@ -1214,9 +1215,16 @@ class _CategoryState extends State<_Category> {
                               'workspace-category-toggle:${category.id}',
                             ),
                             onTap: () => setState(() => _expanded = !_expanded),
+                            onHover: (value) {
+                              if (_nameHovered != value) {
+                                setState(() => _nameHovered = value);
+                              }
+                            },
                             borderRadius: BorderRadius.circular(GcRadii.md),
                             hoverColor: Colors.transparent,
-                            mouseCursor: SystemMouseCursors.click,
+                            mouseCursor: _nameHovered
+                                ? SystemMouseCursors.click
+                                : SystemMouseCursors.basic,
                             child: Padding(
                               padding: const EdgeInsets.only(left: 8),
                               child: Row(
