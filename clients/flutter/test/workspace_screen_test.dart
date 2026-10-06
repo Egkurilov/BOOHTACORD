@@ -2163,6 +2163,8 @@ void main() {
       find.byKey(const ValueKey('workspace-category-toggle:category-1')),
     );
     expect(categoryToggle.hoverColor, Colors.transparent);
+    expect(categoryToggle.highlightColor, Colors.transparent);
+    expect(categoryToggle.splashColor, Colors.transparent);
     expect(categoryToggle.mouseCursor, isA<WidgetStateMouseCursor>());
     final categoryCursor =
         categoryToggle.mouseCursor! as WidgetStateMouseCursor;

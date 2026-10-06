@@ -1216,6 +1216,8 @@ class _CategoryState extends State<_Category> {
                             onTap: () => setState(() => _expanded = !_expanded),
                             borderRadius: BorderRadius.circular(GcRadii.md),
                             hoverColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                            splashColor: Colors.transparent,
                             mouseCursor: WidgetStateMouseCursor.resolveWith(
                               (states) => states.contains(WidgetState.hovered)
                                   ? SystemMouseCursors.click
