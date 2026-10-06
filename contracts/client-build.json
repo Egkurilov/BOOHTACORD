@@ -3,9 +3,9 @@
   "application_family": "boohtacord",
   "builds": {
     "web": {"platform":"web","distribution":"browser","channel":"stable","arch":"any","release_id":"web-browser-stable-r46","release_order":46,"version":"1.0.32","native_build":null},
-    "android": {"platform":"android","distribution":"direct","channel":"stable","arch":"any","release_id":"android-direct-stable-r50","release_order":50,"version":"1.0.36","native_build":"69"},
-    "windows": {"platform":"windows","distribution":"direct","channel":"stable","arch":"x64","release_id":"windows-direct-stable-r50","release_order":50,"version":"1.0.36","native_build":"69"},
-    "ios": {"platform":"ios","distribution":"development","channel":"development","arch":"arm64","release_id":"ios-development-r50","release_order":50,"version":"1.0.36","native_build":"69"},
-    "macos": {"platform":"macos","distribution":"direct","channel":"stable","arch":"arm64","release_id":"macos-direct-stable-r50","release_order":50,"version":"1.0.36","native_build":"69"}
+    "android": {"platform":"android","distribution":"direct","channel":"stable","arch":"any","release_id":"android-direct-stable-r51","release_order":51,"version":"1.0.37","native_build":"70"},
+    "windows": {"platform":"windows","distribution":"direct","channel":"stable","arch":"x64","release_id":"windows-direct-stable-r51","release_order":51,"version":"1.0.37","native_build":"70"},
+    "ios": {"platform":"ios","distribution":"development","channel":"development","arch":"arm64","release_id":"ios-development-r51","release_order":51,"version":"1.0.37","native_build":"70"},
+    "macos": {"platform":"macos","distribution":"direct","channel":"stable","arch":"arm64","release_id":"macos-direct-stable-r51","release_order":51,"version":"1.0.37","native_build":"70"}
   }
 }
