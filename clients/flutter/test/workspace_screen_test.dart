@@ -2163,31 +2163,14 @@ void main() {
       find.byKey(const ValueKey('workspace-category-toggle:category-1')),
     );
     expect(categoryToggle.hoverColor, Colors.transparent);
-    expect(categoryToggle.mouseCursor, SystemMouseCursors.basic);
-    categoryToggle.onHover!(true);
-    await tester.pump();
+    expect(categoryToggle.mouseCursor, isA<WidgetStateMouseCursor>());
+    final categoryCursor =
+        categoryToggle.mouseCursor! as WidgetStateMouseCursor;
     expect(
-      tester
-          .widget<InkWell>(
-            find.byKey(const ValueKey('workspace-category-toggle:category-1')),
-          )
-          .mouseCursor,
+      categoryCursor.resolve(<WidgetState>{WidgetState.hovered}),
       SystemMouseCursors.click,
     );
-    tester
-        .widget<InkWell>(
-          find.byKey(const ValueKey('workspace-category-toggle:category-1')),
-        )
-        .onHover!(false);
-    await tester.pump();
-    expect(
-      tester
-          .widget<InkWell>(
-            find.byKey(const ValueKey('workspace-category-toggle:category-1')),
-          )
-          .mouseCursor,
-      SystemMouseCursors.basic,
-    );
+    expect(categoryCursor.resolve(<WidgetState>{}), SystemMouseCursors.basic);
     expect(find.byTooltip('Свернуть раздел Текстовые каналы'), findsNothing);
     await tester.tap(find.text('ТЕКСТОВЫЕ КАНАЛЫ'));
     await tester.pumpAndSettle();
