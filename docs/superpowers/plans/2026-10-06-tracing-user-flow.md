@@ -23,7 +23,7 @@ protected refresh coalescing, DB commit/outbox retry and physical first-frame ca
 - [x] #153 bounded session exporter; retry/status/sampling/rollout policy.
 - [x] #154 tools/qa flow harness: actual relay/Collector/Tempo, adversarial regression matrix.
 - [x] #155 docker/observability/dashboards existing boohtacord-traces; query fixtures/runbook.
-- [ ] Final fixed-SHA runtime, evidence and PR with acceptance gaps.
+- [x] Fixed-SHA runtime and evidence; draft PR handoff with acceptance gaps.
 
 **Checks:** nearest Go packages; Vitest/TypeScript; Dart unit/widget/analyze; contract and
 spec traceability validators; isolated Collector/Tempo smoke when available. No release builds.
@@ -37,12 +37,14 @@ Checked items above mean implementation artifacts, not production/device gate cl
 Go full tests with real isolated PostgreSQL and go vet PASS; Web full tests/typecheck
 PASS; Flutter full tests PASS with opt-in runtime test skipped and run separately.
 Actual Windows Flutter engine SDK/frame observer -> relay -> Collector -> Tempo PASS.
-Actual two-browser Vue components and 120s first-frame retry PASS before final SHA run.
+Actual two-browser Vue components and 120s first-frame retry PASS at ec62b3af.
 Real outbox restart/retry -> pinned SFU participant_absent -> Collector/Tempo PASS.
-Actual Tempo outage/recovery PASS. All 21 dashboard TraceQL queries PASS locally.
+Actual Collector outage and Tempo outage/recovery PASS at ec62b3af. All 21 TraceQL queries PASS locally.
 
 Remaining mandatory acceptance: full voice+screen/live participant and platform
 matrix, production data rollout/health, Grafana synthetic UI/ACL/source comparison,
 concurrency-safe update and rollback. These keep #144/#154/#155 open. Production
 Grafana was read using existing authenticated browser; no deployment was performed.
 Current export generation 13, dashboard.grafana.app/v2. Metrics UID is boohtacord_metrics.
+
+Final source: ec62b3af983634e8c60366069da1f3d099911c04. Go test/vet PASS; Web 1180; Flutter 689 + separate native runtime PASS. Production/dashboard gates remain open. See evidence/tracing-user-flow-2026-10-07.md and JSON receipts.

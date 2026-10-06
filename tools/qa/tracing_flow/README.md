@@ -72,5 +72,11 @@ python tools/qa/trace_queries/check_trace_queries.py "$TRACE_QA_TEMPO_URL" docke
 docker compose -p boohtacord-tracing-qa -f docker/observability/compose.yaml -f tools/qa/tracing_flow/compose.qa.yaml stop collector tempo postgres livekit
 ```
 
+Optionally start the existing `prometheus` service (pinned by the base Compose),
+then run `check_metric_queries.py http://127.0.0.1:9091 docker/observability/dashboards/traces.json`
+from the Docker host. With WSL, execute the Python command inside that distribution.
+Wait at least one 15s scrape after TestRelayHealth. Stop this owned service after QA.
+This verifies test-stack PromQL, not production Grafana datasource ACL or transformations.
+
 Record PASS/FAIL/NOT_RUN separately for each matrix row. Units/mock exporter results
 cannot close device, production Grafana, full voice/media or load acceptance gates.
