@@ -2,8 +2,12 @@ import { trace, type Link } from '@opentelemetry/api'
 import { nextTick } from 'vue'
 import { ActionScope } from '../action_scope/scope'
 import { telemetrySession, diagnosticId } from '../action_scope/session'
-import type { RealtimeEvent } from '../../realtime/realtime_client'
 import { awaitMessageRender } from '../observe_render/messages'
+export interface RealtimeTelemetryEvent {
+ kind:string
+ payload:Record<string,unknown>
+ telemetry?:{reference:string;traceId:string;spanId:string}
+}
 interface Targets {scope:ActionScope;pending:Set<string>}
 // A coalesced refresh may run in another cause's context. Preserve every
 // waiting observer while keeping independent roots and signed links.
@@ -14,7 +18,7 @@ export function trackRealtimeMessages(messages:{id:string}[]):void {
   if(!targets.pending.size)targets.scope.finish('success')
  })
 }
-export function eventLinks(events:RealtimeEvent[]):Link[]{
+export function eventLinks(events:RealtimeTelemetryEvent[]):Link[]{
  const seen=new Set<string>(),links:Link[]=[]
  for(const {telemetry} of events){
   if(!telemetry||seen.has(telemetry.reference))continue
@@ -24,7 +28,7 @@ export function eventLinks(events:RealtimeEvent[]):Link[]{
  }
  return links
 }
-export async function processRealtime<T>(events:RealtimeEvent[],call:()=>Promise<T>|T):Promise<T>{
+export async function processRealtime<T>(events:RealtimeTelemetryEvent[],call:()=>Promise<T>|T):Promise<T>{
  const scope=new ActionScope('realtime.process',trace.getTracer('boohtacord/web'),telemetrySession,1,diagnosticId(),eventLinks(events))
  scope.span.setAttribute('app.cause.truncated',Math.max(0,new Set(events.flatMap(e=>e.telemetry?[e.telemetry.reference]:[])).size-8))
  const targets:Targets={scope,pending:new Set(events.flatMap(event=>event.kind.endsWith('deleted')?[]:typeof event.payload.message_id==='string'?[event.payload.message_id]:[]))}
