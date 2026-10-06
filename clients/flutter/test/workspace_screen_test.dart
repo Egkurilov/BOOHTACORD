@@ -1813,6 +1813,15 @@ void main() {
     expect(find.text('Мика'), findsNWidgets(2));
     expect(find.byTooltip('Показывает экран'), findsNWidgets(2));
     expect(find.text('Идёт трансляция'), findsOneWidget);
+    final navigationMic = find.descendant(
+      of: find.byTooltip('Микрофон выключен'),
+      matching: find.byIcon(Icons.mic_off_outlined),
+    );
+    expect(navigationMic, findsNWidgets(2));
+    expect(
+      tester.widgetList<Icon>(navigationMic).map((icon) => icon.color),
+      everyElement(GcColors.text),
+    );
     final avatars = tester
         .widgetList<AuthenticatedAvatar>(find.byType(AuthenticatedAvatar))
         .where((avatar) => avatar.name == 'Мика');

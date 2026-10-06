@@ -1635,9 +1635,7 @@ class _VoiceRosterMemberRow extends StatelessWidget {
                   ? Icons.mic_off_outlined
                   : Icons.mic_none_outlined,
               size: 16,
-              color: participant.microphoneMuted
-                  ? GcColors.muted
-                  : GcColors.success,
+              color: GcColors.text,
             ),
           ),
         ],
