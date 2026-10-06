@@ -25,6 +25,11 @@ extension AppAccountInitialization on AppOwners {
     await nativeNotifications.useAccount(account.accountId);
     if (!ticket.isActive) return;
     await voice.loadAudioPreferences(account.accountId);
+    if (!ticket.isActive || audioDevices.nativeBootstrap == null) return;
+    // macOS creates its AudioEngine device module lazily. Bootstrap it after
+    // the account is known, before the workspace or voice join can request a
+    // device, so the settings screen starts with the complete inventory.
+    await audioDevices.bootstrap();
   }
 
   Future<void> loadWorkspace() async {

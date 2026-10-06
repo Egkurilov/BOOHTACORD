@@ -1813,6 +1813,15 @@ void main() {
     expect(find.text('Мика'), findsNWidgets(2));
     expect(find.byTooltip('Показывает экран'), findsNWidgets(2));
     expect(find.text('Идёт трансляция'), findsOneWidget);
+    final navigationMic = find.descendant(
+      of: find.byTooltip('Микрофон выключен'),
+      matching: find.byIcon(Icons.mic_off_outlined),
+    );
+    expect(navigationMic, findsNWidgets(2));
+    expect(
+      tester.widgetList<Icon>(navigationMic).map((icon) => icon.color),
+      everyElement(GcColors.text),
+    );
     final avatars = tester
         .widgetList<AuthenticatedAvatar>(find.byType(AuthenticatedAvatar))
         .where((avatar) => avatar.name == 'Мика');
@@ -2159,17 +2168,29 @@ void main() {
     channelFocus.onShowFocusHighlight!(false);
     await tester.pump();
     expect(tester.widget<Visibility>(menuVisibility).visible, isFalse);
-    await tester.tap(find.byTooltip('Свернуть раздел Текстовые каналы'));
+    final categoryToggle = tester.widget<InkWell>(
+      find.byKey(const ValueKey('workspace-category-toggle:category-1')),
+    );
+    expect(categoryToggle.hoverColor, Colors.transparent);
+    expect(categoryToggle.highlightColor, Colors.transparent);
+    expect(categoryToggle.splashColor, Colors.transparent);
+    expect(categoryToggle.mouseCursor, isA<WidgetStateMouseCursor>());
+    final categoryCursor =
+        categoryToggle.mouseCursor! as WidgetStateMouseCursor;
+    expect(
+      categoryCursor.resolve(<WidgetState>{WidgetState.hovered}),
+      SystemMouseCursors.click,
+    );
+    expect(categoryCursor.resolve(<WidgetState>{}), SystemMouseCursors.basic);
+    expect(find.byTooltip('Свернуть раздел Текстовые каналы'), findsNothing);
+    await tester.tap(find.text('ТЕКСТОВЫЕ КАНАЛЫ'));
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('workspace-channel-row:channel-1')),
       findsNothing,
     );
-    expect(
-      find.byTooltip('Развернуть раздел Текстовые каналы'),
-      findsOneWidget,
-    );
-    await tester.tap(find.byTooltip('Развернуть раздел Текстовые каналы'));
+    expect(find.byTooltip('Развернуть раздел Текстовые каналы'), findsNothing);
+    await tester.tap(find.text('ТЕКСТОВЫЕ КАНАЛЫ'));
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('workspace-channel-row:channel-1')),
@@ -2275,6 +2296,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Голос подключён'), findsOneWidget);
+    expect(find.text('Подключено'), findsNothing);
     expect(find.byIcon(Icons.headphones_outlined), findsOneWidget);
     expect(
       tester.widget<Text>(find.text('Голос подключён')).style?.fontWeight,
@@ -2380,7 +2402,6 @@ void main() {
     state.voicePhase = VoicePhase.joining;
     state.notifyListeners();
     await tester.pump();
-    expect(find.text('Подключаемся'), findsOneWidget);
     expect(find.text('Подключено'), findsNothing);
     expect(find.text('Подключаемся к голосовому каналу'), findsOneWidget);
     expect(find.text('Соединяемся с голосовой комнатой.'), findsNothing);

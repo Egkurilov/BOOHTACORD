@@ -1,4 +1,5 @@
 import 'package:boohtacord_desktop/src/features/workspace/mobile_navigation/top.dart';
+import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -37,6 +38,13 @@ void main() {
       tester.getRect(find.byKey(const ValueKey('navigation-guild-header'))),
       const Rect.fromLTWH(0, 0, 320, 64),
     );
+    final guildHeaderSurface = tester.widget<DecoratedBox>(
+      find.byKey(const ValueKey('navigation-guild-header-surface')),
+    );
+    expect(
+      (guildHeaderSurface.decoration as BoxDecoration).border!.bottom.color,
+      GcColors.borderSubtle,
+    );
     expect(
       tester.getRect(find.byKey(const ValueKey('navigation-search'))),
       const Rect.fromLTWH(12, 76, 296, 36),
@@ -50,6 +58,10 @@ void main() {
       const Rect.fromLTWH(16, 128, 142, 32),
     );
     expect(find.text('6 участников'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('navigation-guild-chevron')),
+      findsOneWidget,
+    );
     final searchButton = tester.widget<IconButton>(
       find.descendant(
         of: find.byKey(const ValueKey('navigation-search')),
@@ -61,18 +73,22 @@ void main() {
       isA<RoundedRectangleBorder>(),
     );
     expect(
-      (searchButton.style!.shape!.resolve(<WidgetState>{})
-              as RoundedRectangleBorder)
-          .borderRadius,
+      (searchButton.style!.shape!.resolve(
+        <WidgetState>{},
+      ) as RoundedRectangleBorder).borderRadius,
       BorderRadius.circular(8),
     );
     expect(
-      tester.widget<Material>(
-        find.ancestor(
-          of: find.byKey(const ValueKey('navigation-search')),
-          matching: find.byType(Material),
-        ).first,
-      ).clipBehavior,
+      tester
+          .widget<Material>(
+            find
+                .ancestor(
+                  of: find.byKey(const ValueKey('navigation-search')),
+                  matching: find.byType(Material),
+                )
+                .first,
+          )
+          .clipBehavior,
       Clip.antiAlias,
     );
     await tester.tap(find.byTooltip('Поиск сообщений'));
@@ -114,5 +130,9 @@ void main() {
       const Rect.fromLTWH(12, 128, 256, 40),
     );
     expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('navigation-guild-chevron')),
+      findsOneWidget,
+    );
   });
 }

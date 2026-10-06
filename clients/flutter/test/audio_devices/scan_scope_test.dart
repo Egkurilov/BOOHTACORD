@@ -6,6 +6,48 @@ import 'package:boohtacord_desktop/src/core/session/scope.dart';
 import 'package:boohtacord_desktop/src/features/audio/devices/controller.dart';
 
 void main() {
+  test('bootstraps native audio before the first inventory', () async {
+    var initialized = false;
+    final owner = AudioDeviceController(
+      readRoom: () => null,
+      nativeBootstrap: () async {
+        initialized = true;
+      },
+      loader: () async {
+        expect(initialized, isTrue);
+        return const [
+          MediaDevice('mac-input', 'Mac microphone', 'audioinput', null),
+          MediaDevice('mac-output', 'Mac speakers', 'audiooutput', null),
+        ];
+      },
+    );
+    addTearDown(owner.dispose);
+
+    await owner.bootstrap();
+
+    expect(owner.audioInputDevices.single.deviceId, 'mac-input');
+    expect(owner.audioOutputDevices.single.deviceId, 'mac-output');
+  });
+
+  test('keeps the inventory available when native bootstrap fails', () async {
+    final owner = AudioDeviceController(
+      readRoom: () => null,
+      nativeBootstrap: () async {
+        throw StateError('audio permission is pending');
+      },
+      loader: () async => const [
+        MediaDevice('mac-input', 'Mac microphone', 'audioinput', null),
+      ],
+    );
+    addTearDown(owner.dispose);
+
+    await owner.bootstrap();
+
+    expect(owner.audioInputDevices.single.deviceId, 'mac-input');
+    expect(owner.audioDeviceScanFailed, isFalse);
+    expect(owner.audioDeviceWarning, contains('аудиосистему'));
+  });
+
   test('an old scan cannot finish a new account scan', () async {
     final scope = SessionScope();
     final old = Completer<List<MediaDevice>>();

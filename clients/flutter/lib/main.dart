@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
+import 'package:livekit_client/livekit_client.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'src/app.dart';
@@ -40,7 +41,10 @@ Future<void> main() async {
   final api = ApiClient();
   ClientTelemetry.session = api.transport.session.telemetry;
   await ClientTelemetry.initialize(api.submitClientSpans);
-  final state = TracedAppState(api);
+  final state = TracedAppState(
+    api,
+    audioDeviceBootstrap: Platform.isMacOS ? LiveKitClient.initialize : null,
+  );
   final updates = UpdateController(
     api: UpdateApi(baseUrl: () => api.baseUrl),
     identity: await NativeUpdateIdentity.load(),

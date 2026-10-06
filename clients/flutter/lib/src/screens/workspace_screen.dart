@@ -1024,7 +1024,6 @@ class _Sidebar extends StatelessWidget {
           onClose: onClose,
           searchFocusNode: searchFocusNode,
         ),
-        const Divider(height: 1),
         Expanded(
           child: state.topology == null
               ? const Center(child: CircularProgressIndicator())
@@ -1205,30 +1204,54 @@ class _CategoryState extends State<_Category> {
                   height: GcLayout.channelRowHeight,
                   child: Row(
                     children: [
-                      IconButton(
-                        tooltip: disclosureLabel,
-                        onPressed: () => setState(() => _expanded = !_expanded),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints.tightFor(
-                          width: 32,
-                          height: 36,
-                        ),
-                        icon: Icon(
-                          _expanded
-                              ? Icons.expand_more_rounded
-                              : Icons.chevron_right_rounded,
-                          size: 18,
-                          color: GcColors.muted,
-                        ),
-                      ),
                       Expanded(
-                        child: Text(
-                          category.name.toUpperCase(),
-                          style: const TextStyle(
-                            color: GcColors.text,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: .6,
+                        child: Semantics(
+                          container: true,
+                          button: true,
+                          toggled: _expanded,
+                          label: disclosureLabel,
+                          child: InkWell(
+                            key: ValueKey(
+                              'workspace-category-toggle:${category.id}',
+                            ),
+                            onTap: () => setState(() => _expanded = !_expanded),
+                            borderRadius: BorderRadius.circular(GcRadii.md),
+                            hoverColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                            splashColor: Colors.transparent,
+                            mouseCursor: WidgetStateMouseCursor.resolveWith(
+                              (states) => states.contains(WidgetState.hovered)
+                                  ? SystemMouseCursors.click
+                                  : SystemMouseCursors.basic,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _expanded
+                                        ? Icons.expand_more_rounded
+                                        : Icons.chevron_right_rounded,
+                                    size: 18,
+                                    color: GcColors.muted,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      category.name.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: GcColors.text,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: .6,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -1613,9 +1636,7 @@ class _VoiceRosterMemberRow extends StatelessWidget {
                   ? Icons.mic_off_outlined
                   : Icons.mic_none_outlined,
               size: 16,
-              color: participant.microphoneMuted
-                  ? GcColors.muted
-                  : GcColors.success,
+              color: GcColors.text,
             ),
           ),
         ],
@@ -5926,20 +5947,6 @@ class _VoiceParticipantRoom extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-              VoiceConnectionBadge(
-                status: switch (state.voicePhase) {
-                  VoicePhase.connected ||
-                  VoicePhase.listener => VoiceConnectionBadgeStatus.connected,
-                  VoicePhase.joining => VoiceConnectionBadgeStatus.connecting,
-                  VoicePhase.reconnecting =>
-                    VoiceConnectionBadgeStatus.reconnecting,
-                  VoicePhase.leaving => VoiceConnectionBadgeStatus.leaving,
-                  VoicePhase.error => VoiceConnectionBadgeStatus.error,
-                  VoicePhase.idle => VoiceConnectionBadgeStatus.disconnected,
-                },
-                quality: state.voiceConnectionQuality,
-                pingMs: state.voicePingMs,
               ),
             ],
           ),
