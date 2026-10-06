@@ -2,6 +2,20 @@ import { expect,it,vi } from 'vitest'
 import { BasicTracerProvider } from '@opentelemetry/sdk-trace-base'
 import { SessionProcessor } from './processor'
 import { TelemetrySession } from '../action_scope/session'
+it('drops after two bounded 429 retries while independent work continues',async()=>{
+ vi.useFakeTimers()
+ const session=new TelemetrySession();session.bind('1'.repeat(32),'1')
+ const send=vi.fn(async()=>new Response(null,{status:429,headers:{'Retry-After':'3600'}}))
+ const processor=new SessionProcessor(session,send),provider=new BasicTracerProvider({spanProcessors:[processor]})
+ provider.getTracer('test').startSpan('voice.join').end()
+ const pending=processor.forceFlush()
+ let productReady=false;await Promise.resolve().then(()=>{productReady=true})
+ expect(productReady).toBe(true)
+ await vi.advanceTimersByTimeAsync(4300);await pending
+ expect(send).toHaveBeenCalledTimes(3);expect(processor.status.retried).toBe(2)
+ expect(processor.status.dropped).toBe(1);expect(processor.status.queued).toBe(0)
+ await provider.shutdown();vi.useRealTimers()
+})
 it('aborts the old in-flight batch and ignores a late acknowledgement after account change',async()=>{
  const session=new TelemetrySession();session.bind('1'.repeat(32),'1')
  let acknowledge!:(r:Response)=>void,signal:AbortSignal|undefined

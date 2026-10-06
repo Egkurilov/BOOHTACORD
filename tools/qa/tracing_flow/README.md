@@ -59,6 +59,12 @@ TRACE_QA_EXPECT_TEMPO_OUTAGE=1, wait for its unavailable observation, start `tem
 within 20 seconds. The test requires accepted data to become queryable within 30s.
 Set that flag only during this scenario. Collector retry horizon is 30 seconds.
 
+For actual Collector outage: stop only `collector`, set
+TRACE_QA_EXPECT_COLLECTOR_OUTAGE=1 and run TestActualCollectorOutageReturnsBoundedUnavailable.
+It requires the actual endpoint to be unavailable and relay 503 within four seconds,
+with no acceptance receipt. Start `collector` again and rerun TestRuntimeRelay.
+This combines with client retry/queue tests; it does not prove physical media quality.
+
 From root:
 
 ```sh

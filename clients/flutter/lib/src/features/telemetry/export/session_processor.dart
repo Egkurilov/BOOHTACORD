@@ -48,7 +48,7 @@ class SessionSpanProcessor extends SpanProcessor {
     if (_stopped ||
         owner == null ||
         owner.snapshot.binding == null ||
-        !owner.current ||
+        !_current(span) ||
         _queue.length >= 128) {
       telemetryExportStatus.dropped++;
       return;

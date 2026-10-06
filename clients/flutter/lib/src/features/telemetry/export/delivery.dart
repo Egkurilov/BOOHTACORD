@@ -1,9 +1,16 @@
 part of 'session_processor.dart';
 
 extension _Delivery on SessionSpanProcessor {
+  bool _current(Span span) {
+    final owner = _owners[span];
+    return owner != null &&
+        identical(owner.session, readSession()) &&
+        owner.current;
+  }
+
   void dropStale() {
     _queue.removeWhere((span) {
-      final stale = !(_owners[span]?.current ?? false);
+      final stale = !_current(span);
       if (stale) telemetryExportStatus.dropped++;
       return stale;
     });
@@ -22,7 +29,7 @@ extension _Delivery on SessionSpanProcessor {
       return;
     }
     for (var attempt = 0; attempt <= 2; attempt++) {
-      if (_stopped || batch.any((span) => !(_owners[span]?.current ?? false))) {
+      if (_stopped || batch.any((span) => !_current(span))) {
         telemetryExportStatus.dropped += batch.length;
         return;
       }

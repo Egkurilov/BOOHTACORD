@@ -20,6 +20,8 @@ class FlowDashboardTest(DashboardFixture):
             self.assertEqual(variables[name]['allValue'], '.*')
         for name in ('visit', 'flow', 'media'):
             self.assertIn('${session:regex}', variables[name]['query']['query'])
+        self.assertIn('${visit:regex}', variables['flow']['query']['query'])
+        self.assertIn('${flow:regex}', variables['media']['query']['query'])
 
     def test_terminals_do_not_include_polling_or_infer_success(self):
         query = self.panels[41]['targets'][0]['query']
@@ -48,6 +50,9 @@ class FlowDashboardTest(DashboardFixture):
         self.assertIn('app.flow.record', self.panels[48]['targets'][0]['query'])
         self.assertIn('clock', self.panels[48]['description'])
         self.assertIn('not acoustic silence', self.panels[44]['description'])
+        query = self.panels[44]['targets'][0]['query']
+        self.assertIn('span.app.flow.id = nil', query)
+        self.assertIn('"${flow:regex}" = ".*"', query)
 
 
 if __name__ == '__main__':
