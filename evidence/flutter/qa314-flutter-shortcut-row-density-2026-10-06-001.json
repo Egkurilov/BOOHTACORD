@@ -2,7 +2,7 @@
   "id": "QA-314",
   "date": "2026-10-06",
   "task": "FV2-049 — Flutter desktop quick shortcut row density follow-up",
-  "source_revision": "a7bd5143",
+  "source_revision": "ca03c226",
   "working_tree_changes": true,
   "summary": "Added a denser desktop row for voice shortcuts: action name at the left, current binding and assign/clear controls at the right. The existing vertical compact layout remains unchanged.",
   "checks": [
@@ -46,9 +46,16 @@
       "result": "PASS"
     },
     {
-      "name": "Live visual acceptance",
+      "name": "Android API 35 emulator compact-layout visual acceptance",
+      "command": "Build local Release with --build-name=1.0.35 --build-number=2070; adb install -r; open Audio Settings; scroll to shortcut card",
+      "result": "PASS",
+      "observation": "Installed over 1.0.35+2069 without clearing data. Screenshot at 1080x2400 confirms the unchanged compact audio settings and vertical shortcut rows. No microphone or shortcut binding was changed.",
+      "screenshot": "/private/tmp/boohtacord-fv2-049-android-20261006-05.png"
+    },
+    {
+      "name": "macOS live visual acceptance",
       "result": "NOT_RUN",
-      "observation": "The Mac app is running but has no Flutter VM service for hot reload; it was not restarted to avoid the Keychain prompt. The attached Android emulator has not yet been updated with this source."
+      "observation": "The running Mac app is on the Audio Settings screen but has no Flutter VM service for hot reload. It was not restarted to avoid the Keychain prompt; therefore the desktop row from the current source was not visually observed in the native app."
     },
     {
       "name": "Spec traceability",
@@ -73,7 +80,7 @@
     "mobile_layout_changed": false
   },
   "limitations": [
-    "The current Mac app could not hot reload, and was not restarted to avoid the Keychain prompt. The new Android APK was built but not installed; native runtime screenshots remain pending. FV2-049 stays open until the current source is visually accepted on desktop and Android compact layout."
+    "The current Mac app could not hot reload and was not restarted to avoid the Keychain prompt. Android compact runtime acceptance passed; FV2-049 stays open until the current desktop source is visually accepted on macOS."
   ],
-  "status": "PARTIAL — desktop density implemented and automated checks/builds pass; live Mac and Android visual acceptance remains NOT_RUN."
+  "status": "PARTIAL — desktop density implemented and Android compact UI visually confirmed; live macOS visual acceptance remains NOT_RUN."
 }

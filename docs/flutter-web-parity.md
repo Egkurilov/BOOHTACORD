@@ -1438,8 +1438,11 @@ On desktop, each shortcut row keeps the action name on the left and places its
 current binding plus assign/clear controls on the right. Compact mobile layouts
 retain the existing vertical presentation. Desktop/mobile widget regressions,
 the workspace card geometry check, the full Flutter suite (670 tests), changed-
-file analysis/formatting, and macOS/Android arm64 Debug builds pass. Live visual
-acceptance on the current Mac process and Android emulator remains pending —
+file analysis/formatting, and macOS/Android arm64 Debug builds pass. Android API
+35 Release `1.0.35+2070` was installed in-place; a 1080×2400 screenshot confirms
+the compact audio settings and vertical shortcut rows remain unchanged. Live
+visual acceptance of the new desktop row on the current Mac process is still
+pending because that process does not support hot reload and was not restarted —
 see [QA-314](../evidence/flutter/qa314-flutter-shortcut-row-density-2026-10-06-001.json).
 
 ## Flutter playback volume reset placement (FV2-050)
