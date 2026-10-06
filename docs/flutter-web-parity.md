@@ -1432,6 +1432,16 @@ file analysis, and macOS/Android Debug builds pass. Native VoiceOver/TalkBack
 acceptance is still pending — see
 [QA-313](../evidence/flutter/qa313-flutter-audio-settings-responsive-accessibility-2026-10-06-001.json).
 
+## Flutter desktop voice shortcut density (FV2-049)
+
+On desktop, each shortcut row keeps the action name on the left and places its
+current binding plus assign/clear controls on the right. Compact mobile layouts
+retain the existing vertical presentation. Desktop/mobile widget regressions,
+the workspace card geometry check, the full Flutter suite (670 tests), changed-
+file analysis/formatting, and macOS/Android arm64 Debug builds pass. Live visual
+acceptance on the current Mac process and Android emulator remains pending —
+see [QA-314](../evidence/flutter/qa314-flutter-shortcut-row-density-2026-10-06-001.json).
+
 ## Flutter playback volume reset placement (FV2-050)
 
 The per-device reset for remote participant and screen-share playback volume is

@@ -7025,6 +7025,7 @@ class _AudioSettingsScreen extends StatelessWidget {
                           children: [
                             VoiceShortcutRow(
                               label: 'Микрофон',
+                              desktopLayout: !compact,
                               binding: state.microphoneShortcut,
                               capturing: capturingVoiceShortcut == 'microphone',
                               onAssign: () =>
@@ -7036,6 +7037,7 @@ class _AudioSettingsScreen extends StatelessWidget {
                             ),
                             VoiceShortcutRow(
                               label: 'Выключить звук',
+                              desktopLayout: !compact,
                               binding: state.deafenShortcut,
                               capturing: capturingVoiceShortcut == 'deafen',
                               onAssign: () =>

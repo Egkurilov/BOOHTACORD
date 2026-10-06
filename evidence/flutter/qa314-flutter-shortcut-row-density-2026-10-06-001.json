@@ -1,0 +1,79 @@
+{
+  "id": "QA-314",
+  "date": "2026-10-06",
+  "task": "FV2-049 — Flutter desktop quick shortcut row density follow-up",
+  "source_revision": "a7bd5143",
+  "working_tree_changes": true,
+  "summary": "Added a denser desktop row for voice shortcuts: action name at the left, current binding and assign/clear controls at the right. The existing vertical compact layout remains unchanged.",
+  "checks": [
+    {
+      "name": "Desktop geometry regression before implementation",
+      "command": "cd clients/flutter && flutter test --no-pub test/voice_shortcut_widgets_test.dart --plain-name 'desktop shortcut row places assignment controls on the right'",
+      "result": "FAIL_BEFORE_FIX",
+      "observation": "The original vertical row placed the assignment button directly below the label, at x=0..44, instead of aligning it at the right edge of the 800 px desktop row."
+    },
+    {
+      "name": "Desktop/mobile shortcut and workspace tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/voice_shortcut_widgets_test.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "The mobile row remains vertical; the desktop row aligns its label and controls horizontally and places assignment controls to the right. The workspace audio-settings test checks the integrated desktop card geometry."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter compact",
+      "result": "PASS",
+      "passed": 670
+    },
+    {
+      "name": "Changed-file Flutter analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/widgets/voice_shortcuts/row.dart lib/src/screens/workspace_screen.dart test/voice_shortcut_widgets_test.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No analyzer issues in the four changed Dart files."
+    },
+    {
+      "name": "Dart formatting",
+      "command": "cd clients/flutter && dart format --output=none --set-exit-if-changed lib/src/widgets/voice_shortcuts/row.dart lib/src/screens/workspace_screen.dart test/voice_shortcut_widgets_test.dart test/workspace_screen_test.dart",
+      "result": "PASS"
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub --quiet",
+      "result": "PASS"
+    },
+    {
+      "name": "Android arm64 Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub --target-platform android-arm64 --quiet",
+      "result": "PASS"
+    },
+    {
+      "name": "Live visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "The Mac app is running but has no Flutter VM service for hot reload; it was not restarted to avoid the Keychain prompt. The attached Android emulator has not yet been updated with this source."
+    },
+    {
+      "name": "Spec traceability",
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "PASS",
+      "observation": "39 indexed requirements are referenced; the approved brief is unavailable on this host."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/widgets/voice_shortcuts/row.dart",
+      "clients/flutter/lib/src/screens/workspace_screen.dart",
+      "clients/flutter/test/voice_shortcut_widgets_test.dart",
+      "clients/flutter/test/workspace_screen_test.dart",
+      "backlog/tasks.yaml",
+      "backlog/FRONTEND_TODO.md",
+      "docs/flutter-web-parity.md",
+      "evidence/flutter/qa314-flutter-shortcut-row-density-2026-10-06-001.json"
+    ],
+    "web_or_api_changed": false,
+    "shortcut_assignment_or_capture_behavior_changed": false,
+    "mobile_layout_changed": false
+  },
+  "limitations": [
+    "The current Mac app could not hot reload, and was not restarted to avoid the Keychain prompt. The new Android APK was built but not installed; native runtime screenshots remain pending. FV2-049 stays open until the current source is visually accepted on desktop and Android compact layout."
+  ],
+  "status": "PARTIAL — desktop density implemented and automated checks/builds pass; live Mac and Android visual acceptance remains NOT_RUN."
+}

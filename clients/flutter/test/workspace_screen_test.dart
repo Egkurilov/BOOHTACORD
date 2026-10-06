@@ -547,20 +547,16 @@ void main() {
     );
     final shortcutsLeft = tester.getTopLeft(shortcuts).dx;
     expect(
-      tester.getTopLeft(find.text('Микрофон · Не назначено')).dx,
+      tester.getTopLeft(find.text('Микрофон').last).dx,
       closeTo(shortcutsLeft + 25, 1),
     );
-    expect(
-      tester
-          .getTopLeft(
-            find.ancestor(
-              of: find.text('Назначить').first,
-              matching: find.byType(OutlinedButton),
-            ),
-          )
-          .dx,
-      closeTo(shortcutsLeft + 25, 1),
+    final shortcutAssign = tester.getTopRight(
+      find.ancestor(
+        of: find.text('Назначить').first,
+        matching: find.byType(OutlinedButton),
+      ),
     );
+    expect(shortcutAssign.dx, greaterThan(shortcutsLeft + 500));
     await tester.scrollUntilVisible(
       processing,
       160,

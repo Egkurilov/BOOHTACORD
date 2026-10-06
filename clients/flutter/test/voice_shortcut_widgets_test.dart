@@ -43,6 +43,11 @@ void main() {
           ),
         ),
       );
+      final mobileLabel = find.text('Микрофон · Не назначено');
+      expect(
+        tester.getTopLeft(find.byType(OutlinedButton)).dy,
+        greaterThanOrEqualTo(tester.getBottomLeft(mobileLabel).dy),
+      );
       expect(find.text('Нажмите сочетание…'), findsOneWidget);
       await tester.tap(find.byType(OutlinedButton));
       expect(assigns, 1);
@@ -64,6 +69,40 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  testWidgets('desktop shortcut row places assignment controls on the right', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(900, 300);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: 800,
+              child: VoiceShortcutRow(
+                label: 'Микрофон',
+                desktopLayout: true,
+                binding: null,
+                capturing: false,
+                onAssign: () {},
+                onClear: () {},
+                onCancel: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final label = find.textContaining('Микрофон');
+    final assign = find.byType(OutlinedButton);
+    expect(tester.getCenter(label).dy, closeTo(tester.getCenter(assign).dy, 1));
+    expect(tester.getTopRight(assign).dx, greaterThan(560));
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('editable and modal focus block shortcuts', (tester) async {
     final focus = FocusNode();
     addTearDown(focus.dispose);

@@ -342,7 +342,7 @@ tasks:
     title: Flutter desktop quick shortcut row density follow-up
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
     depends_on: [FV2-042, FV2-027, T-051]
-    evidence: [audio-shortcut-desktop-mobile-geometry-tests, macos-android-visual-acceptance, QA-308]
+    evidence: [audio-shortcut-desktop-mobile-geometry-tests, macos-android-visual-acceptance, QA-314]
   - id: FV2-050
     title: Separate playback volume reset from microphone processing settings
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
