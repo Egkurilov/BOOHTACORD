@@ -4,7 +4,6 @@ import '../features/voice/audio_diagnostics/model.dart';
 import '../services/audio_preferences.dart';
 import '../services/native_noise_suppression.dart';
 import 'noise_suppression_settings.dart';
-import 'participant_volume/reset.dart';
 import 'voice_audio_diagnostics/control.dart';
 
 /// Less frequently changed audio controls, kept out of the primary settings flow.
@@ -16,8 +15,6 @@ class AudioProcessingAdvancedSettings extends StatelessWidget {
     required this.onProcessingChanged,
     required this.voiceConnected,
     required this.voiceDiagnostics,
-    required this.resetVolumes,
-    this.volumeWarning,
   });
 
   final AudioProcessingPreferences processing;
@@ -25,8 +22,6 @@ class AudioProcessingAdvancedSettings extends StatelessWidget {
   final Future<void> Function(AudioProcessingPreferences) onProcessingChanged;
   final bool voiceConnected;
   final VoiceAudioDiagnostics? voiceDiagnostics;
-  final Future<void> Function() resetVolumes;
-  final String? volumeWarning;
 
   @override
   Widget build(BuildContext context) => ExpansionTile(
@@ -50,7 +45,6 @@ class AudioProcessingAdvancedSettings extends StatelessWidget {
         connected: voiceConnected,
         diagnostics: voiceDiagnostics,
       ),
-      AudioVolumeReset(reset: resetVolumes, warning: volumeWarning),
     ],
   );
 }

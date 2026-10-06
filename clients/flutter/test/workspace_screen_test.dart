@@ -13,6 +13,7 @@ import 'package:boohtacord_desktop/src/services/composer_draft_memory.dart';
 import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:boohtacord_desktop/src/widgets/audio_device_check.dart';
+import 'package:boohtacord_desktop/src/widgets/participant_volume/reset.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -570,6 +571,66 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('playback volume reset is separate from microphone processing', (
+    tester,
+  ) async {
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    for (final scenario in [
+      (TargetPlatform.macOS, const Size(1440, 900)),
+      (TargetPlatform.android, const Size(390, 844)),
+    ]) {
+      debugDefaultTargetPlatformOverride = scenario.$1;
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = scenario.$2;
+      final state = AppState(
+        _PortraitApi(),
+        audioDeviceLoader: () async => const [],
+      );
+      await state.initialize();
+      state.toggleWorkspacePanel(WorkspacePanel.audio);
+      await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+      await tester.pumpAndSettle();
+
+      final audioList = find.byKey(const ValueKey('audio-settings-list'));
+      final scrollable = find.descendant(
+        of: audioList,
+        matching: find.byType(Scrollable),
+      );
+      final playbackCard = find.byKey(
+        const ValueKey('audio-settings-playback-card'),
+      );
+      await tester.scrollUntilVisible(
+        playbackCard,
+        140,
+        scrollable: scrollable,
+      );
+
+      final processingCard = find.byKey(
+        const ValueKey('audio-settings-processing-card'),
+      );
+      final reset = find.byType(AudioVolumeReset);
+      expect(playbackCard, findsOneWidget);
+      expect(find.text('Воспроизведение'), findsOneWidget);
+      expect(
+        find.descendant(of: playbackCard, matching: reset),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: processingCard, matching: reset),
+        findsNothing,
+      );
+      expect(find.text('Сбросить настройки аудио'), findsOneWidget);
+      expect(find.text('Расширенные настройки и диагностика'), findsOneWidget);
+      expect(find.text('Диагностика качества голоса'), findsNothing);
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+    }
+    tester.view.reset();
     debugDefaultTargetPlatformOverride = null;
   });
 

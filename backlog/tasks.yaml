@@ -347,7 +347,7 @@ tasks:
     title: Separate playback volume reset from microphone processing settings
     requirements: [REQ-UI-01, REQ-UI-02, REQ-AUDIO-01]
     depends_on: [FV2-044, FV2-027, T-051]
-    evidence: [audio-volume-reset-placement-tests, flutter-audio-settings-visual-acceptance, QA-309]
+    evidence: [audio-volume-reset-placement-tests, flutter-audio-settings-visual-acceptance, android-audio-settings-live-visual, macos-debug-build, QA-312]
   - id: FV2-051
     title: Refresh audio device inventory after LiveKit voice connection
     requirements: [REQ-AUDIO-01]

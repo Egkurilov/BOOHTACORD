@@ -1418,3 +1418,15 @@ On the Android API 35 emulator, release `1.0.35+2069` visually confirmed the
 saved manual value remains visible while AGC is enabled, the slider is disabled,
 and the automatic-control explanation is present. No setting or audio route was
 changed. Desktop visual acceptance remains open.
+
+## Flutter playback volume reset placement (FV2-050)
+
+The per-device reset for remote participant and screen-share playback volume is
+now presented in its own “Воспроизведение” card, separate from microphone
+processing and its collapsed diagnostics. The existing reset callback, busy
+state, persistence and warning behavior are unchanged. Widget coverage checks
+the card relationship at desktop and compact widths and ensures the action stays
+available while advanced microphone processing is collapsed. Android API 35
+release visual acceptance confirms the section is distinct and legible at
+1080×2400; macOS Debug build passes, while the locked Mac prevented a live
+desktop screenshot — see [QA-312](../evidence/flutter/qa312-flutter-playback-volume-reset-placement-2026-10-06-001.json).

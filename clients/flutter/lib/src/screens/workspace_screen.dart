@@ -32,6 +32,7 @@ import '../widgets/voice_shortcuts/keyboard.dart';
 import '../widgets/voice_shortcuts/availability.dart';
 import '../widgets/voice_shortcuts/row.dart';
 import '../widgets/voice_shortcuts/status.dart';
+import '../widgets/participant_volume/reset.dart';
 import '../features/workspace/mobile_navigation/top.dart';
 import '../features/workspace/search/panel_empty_state.dart';
 import '../widgets/topology_actions/buttons.dart';
@@ -7106,10 +7107,18 @@ class _AudioSettingsScreen extends StatelessWidget {
                                 state.voicePhase != VoicePhase.idle &&
                                 state.voicePhase != VoicePhase.error,
                             voiceDiagnostics: state.voiceAudioDiagnostics,
-                            resetVolumes: state.resetAudioVolumes,
-                            volumeWarning: state.voiceVolumeWarning,
                           ),
                         ],
+                      ),
+                    ),
+                    _AudioSettingsCard(
+                      cardKey: const ValueKey('audio-settings-playback-card'),
+                      title: 'Воспроизведение',
+                      subtitle: 'Громкость участников и демонстраций на этом устройстве.',
+                      compact: compact,
+                      child: AudioVolumeReset(
+                        reset: state.resetAudioVolumes,
+                        warning: state.voiceVolumeWarning,
                       ),
                     ),
                   ],
