@@ -15,7 +15,7 @@ test('real prejoin notice/actions fit 1440 and 1024 px', async ({page}) => {
     await join.click()
     await expect(page.locator('body')).toHaveAttribute('data-join','["synthetic-channel"]')
     await page.getByRole('button',{name:'Подключиться без микрофона',exact:true}).click()
-    await expect(page.locator('body')).toHaveAttribute('data-join','["synthetic-channel",true,"listener"]')
+    await expect(page.locator('body')).toHaveAttribute('data-join','["synthetic-channel",false,"listener"]')
    } else {
     await expect(join).toBeDisabled()
     await expect(page.getByRole('button',{name:'Подключиться без микрофона',exact:true})).toBeDisabled()
