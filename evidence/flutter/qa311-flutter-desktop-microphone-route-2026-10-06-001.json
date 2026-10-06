@@ -1,0 +1,120 @@
+{
+  "id": "QA-311",
+  "date": "2026-10-06",
+  "task": "FV2-052 — Route active desktop microphone selection through LiveKit audio device module",
+  "source_revision": "f8dea5d515f50ae892583a5dbcb758db07345688",
+  "working_tree_changes": true,
+  "summary": "After the user reported that device choices appeared only after voice admission and changing the selected input did not work, inspection showed that the active LocalAudioTrack path rebuilt getUserMedia instead of switching the desktop LiveKit Audio Device Module route. Desktop now calls Room.setAudioInputDevice, updates active track or connected-room defaults, and resets native noise-suppression runtime state. Android/iOS retain the capture-restart path.",
+  "checks": [
+    {
+      "name": "Regression before fix",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart --plain-name 'active desktop input switch uses the native LiveKit route'",
+      "result": "FAIL_BEFORE_FIX",
+      "observation": "Expected a FlutterWebRTC selectAudioInput method-channel call for the selected device; the active-track restart path emitted none."
+    },
+    {
+      "name": "Audio selection and noise-state focused regressions after final change",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart test/noise_suppression_settings_test.dart test/native_noise_suppression_test.dart",
+      "result": "PASS",
+      "passed": 25,
+      "observation": "The desktop test confirms native selectAudioInput(deviceId), updates both current track options and room defaults, and does not recapture. Android/iOS capture-restart, mute preservation, pending state, and rollback tests pass."
+    },
+    {
+      "name": "Connected listener route with no local microphone track",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart --plain-name 'connected listener switches the native route without opening a mic'",
+      "result": "PASS",
+      "passed": 2,
+      "observation": "On macOS and Windows, a connected Room without a local microphone publication forwards the selected device through FlutterWebRTC selectAudioInput, updates default capture options, and does not call getUserMedia."
+    },
+    {
+      "name": "Full audio-selection regression suite after listener-route coverage",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart",
+      "result": "PASS",
+      "passed": 14,
+      "observation": "Covers pre-join selection, connected listener and active-track routes on macOS/Windows, Android/iOS capture restart, output selection, pending state, rollback, and mute preservation."
+    },
+    {
+      "name": "Full Flutter suite after listener-route coverage",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter compact",
+      "result": "PASS",
+      "passed": 673,
+      "observation": "All Flutter tests pass with connected-listener and active-track native-route regressions on both macOS and Windows."
+    },
+    {
+      "name": "Audio selection and workspace UI suites",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "passed": 83,
+      "observation": "Includes selector feedback and responsive audio settings. This run preceded the final nativeNoise.reset call; the focused suites above passed after that addition."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter compact",
+      "result": "PASS",
+      "passed": 665,
+      "observation": "Includes desktop native-route, Android/iOS capture-restart, rollback/mute-preservation, queued inventory refresh, and audio-settings UI regressions."
+    },
+    {
+      "name": "Changed Flutter source analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub <16 changed Dart files>",
+      "result": "PASS",
+      "observation": "No issues found across all 16 changed Flutter source and test files."
+    },
+    {
+      "name": "Dart formatting",
+      "command": "cd clients/flutter && dart format --output=none --set-exit-if-changed <16 changed Dart files>",
+      "result": "PASS"
+    },
+    {
+      "name": "Spec traceability",
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "PASS",
+      "observation": "39 indexed requirements are referenced; approved brief is unavailable on this host."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS"
+    },
+    {
+      "name": "Android ARM64 Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub --target-platform android-arm64",
+      "result": "PASS"
+    },
+    {
+      "name": "Authorized input selector round-trip in running Mac client",
+      "result": "PASS_WITH_LIMITATION",
+      "observation": "Joined SHARE_TEST with the microphone disabled, selected HyperX Quadcast in the input selector, then restored Системный выбор · Микрофон and disconnected. The UI selection round-trip succeeded; the running client had no Flutter VM service and did not prove that the physical native input route changed or that the current working-tree code was loaded."
+    },
+    {
+      "name": "Connected Mac input/output inventory and input selector round-trip",
+      "result": "PASS_WITH_LIMITATION",
+      "observation": "With SHARE_TEST connected and the microphone still disabled, the input menu listed CORSAIR VOID ELITE Wireless Gaming Dongle and HyperX Quadcast; the output menu listed Mi Monitor, CORSAIR VOID ELITE Wireless Gaming Dongle, HyperX Quadcast, and Mac mini speakers. Selected HyperX Quadcast, verified it became the selected input, restored System input, and disconnected. No output device was changed. This verifies connected-state inventory and UI state updates only; native physical route/capture was not exercised."
+    },
+    {
+      "name": "Physical macOS input route acceptance",
+      "result": "NOT_RUN",
+      "observation": "Automated coverage proves the native route API is invoked and room/track selection state is updated, but does not prove the physical Mac input changed."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/features/audio/devices/selection.dart",
+      "clients/flutter/test/audio_devices/input_selection_probe_test.dart",
+      "clients/flutter/lib/src/features/audio/devices/scan.dart",
+      "clients/flutter/lib/src/features/audio/devices/state.dart",
+      "clients/flutter/lib/src/features/voice/admission/join.dart",
+      "clients/flutter/test/audio_devices/scan_scope_test.dart",
+      "clients/flutter/test/voice_scope/admission_test.dart",
+      "backlog/tasks.yaml",
+      "backlog/FRONTEND_TODO.md",
+      "docs/flutter-web-parity.md"
+    ],
+    "web_or_api_changed": false,
+    "voice_lease_or_channel_state_changed": false
+  },
+  "limitations": [
+    "The authorized live selector round-trip confirms the connected-state inventory and that the UI accepts and restores a device selection, but does not establish that the native physical microphone route changed. The live Mac app cannot currently hot reload, and restarting it was avoided to prevent a Keychain prompt. FV2-052 remains open for current-source physical route acceptance in a debuggable session."
+  ],
+  "status": "PARTIAL — regression, analyzer, traceability, and macOS/Android builds pass; physical route acceptance remains NOT_RUN."
+}

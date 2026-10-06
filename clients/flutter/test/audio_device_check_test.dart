@@ -150,6 +150,74 @@ void main() {
     expect(service.disposeCount, 1);
   });
 
+  testWidgets('clears speaker feedback when the selected output changes', (
+    tester,
+  ) async {
+    final service = _FakeAudioDeviceCheckService();
+    Widget buildCheck(String outputId, String outputLabel) => MaterialApp(
+      home: Scaffold(
+        body: AudioDeviceCheck(
+          inputDeviceId: null,
+          inputDeviceLabel: null,
+          outputDeviceId: outputId,
+          outputDeviceLabel: outputLabel,
+          serviceFactory: () => service,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(buildCheck('output-1', 'USB speakers'));
+    await tester.tap(find.text('Проверить динамик'));
+    await tester.pumpAndSettle();
+    expect(service.playedOutputId, 'output-1');
+    expect(find.textContaining('Сигнал завершён.'), findsOneWidget);
+
+    await tester.pumpWidget(buildCheck('output-2', 'Monitor audio'));
+    expect(find.textContaining('Сигнал завершён.'), findsNothing);
+
+    await tester.tap(find.text('Проверить динамик'));
+    await tester.pumpAndSettle();
+    expect(service.playedOutputId, 'output-2');
+    expect(find.textContaining('Сигнал завершён.'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('ignores an in-flight speaker result after output changes', (
+    tester,
+  ) async {
+    final service = _FakeAudioDeviceCheckService();
+    final playbackGate = Completer<void>();
+    service.playbackGate = playbackGate;
+    Widget buildCheck(String outputId) => MaterialApp(
+      home: Scaffold(
+        body: AudioDeviceCheck(
+          inputDeviceId: null,
+          inputDeviceLabel: null,
+          outputDeviceId: outputId,
+          outputDeviceLabel: outputId,
+          serviceFactory: () => service,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(buildCheck('output-1'));
+    await tester.tap(find.text('Проверить динамик'));
+    await tester.pump();
+    expect(find.text('Воспроизводим короткий сигнал…'), findsOneWidget);
+
+    await tester.pumpWidget(buildCheck('output-2'));
+    expect(find.text('Воспроизводим короткий сигнал…'), findsNothing);
+    playbackGate.complete();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 1)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Сигнал завершён.'), findsNothing);
+    expect(find.text('Проверить динамик'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets(
     'stops an active microphone check when its selected device changes',
     (tester) async {
@@ -229,6 +297,7 @@ class _FakeAudioDeviceCheckService implements AudioDeviceCheckService {
   String? startedInputLabel;
   String? playedOutputId;
   String? playedOutputLabel;
+  Completer<void>? playbackGate;
   int stopCount = 0;
   int disposeCount = 0;
 
@@ -251,6 +320,8 @@ class _FakeAudioDeviceCheckService implements AudioDeviceCheckService {
   Future<void> playSpeaker({String? deviceId, String? deviceLabel}) async {
     playedOutputId = deviceId;
     playedOutputLabel = deviceLabel;
+    final gate = playbackGate;
+    if (gate != null) await gate.future;
   }
 
   @override

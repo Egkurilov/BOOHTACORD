@@ -84,6 +84,15 @@ compilation passes, while injected-failure runtime and window-source
 acceptance remain open; see [QA-98](../../../../evidence/flutter/qa98-windows-screen-capture-start-failure-2026-09-29-001.json)
 and [QA-103](../../../../evidence/flutter/qa103-desktop-screen-share-rollback-2026-09-29-001.json).
 
+## Windows audio input route failure reporting
+
+The Windows `AudioDeviceModule::SetRecordingDevice` result is checked when
+selecting an input. A failed native route change or device enumeration now
+returns a generic MethodChannel error instead of reporting success and letting
+Flutter persist a device that the ADM rejected. The device-selection result
+mapping has a standalone C++ regression test. The Windows plugin CMake target
+builds and runs it. Real Windows hardware capture acceptance remains open.
+
 ## Source and maintenance policy
 
 [UPSTREAM.json](UPSTREAM.json) pins the published upstream archive SHA-256,

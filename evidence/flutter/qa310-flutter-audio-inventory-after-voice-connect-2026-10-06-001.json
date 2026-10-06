@@ -1,0 +1,107 @@
+{
+  "id": "QA-310",
+  "date": "2026-10-06",
+  "task": "FV2-051 — Refresh audio device inventory after LiveKit voice connection",
+  "source_revision": "3b685705",
+  "working_tree_changes": true,
+  "summary": "Re-enumerate audio devices after LiveKit Room.connect succeeds, including listener-only and push-to-talk joins. If a pre-connect scan is still running, the post-connect refresh now waits for its queued fresh scan instead of letting voice admission continue with stale device inventory.",
+  "checks": [
+    {
+      "name": "Muted voice admission refresh regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/voice_scope/admission_test.dart",
+      "result": "PASS",
+      "passed": 4,
+      "observation": "The test begins with only system routes, confirms they remain the current inventory when alternate routes become available from the loader, joins as listenerOnly, and verifies USB input/output routes appear without enabling the microphone."
+    },
+    {
+      "name": "Voice admission, device controller, scan scope, and app-state suites",
+      "command": "cd clients/flutter && flutter test --no-pub test/voice_scope/admission_test.dart test/audio_device_controller_test.dart test/audio_devices/scan_scope_test.dart test/app_state_test.dart",
+      "result": "PASS",
+      "passed": 63
+    },
+    {
+      "name": "Queued refresh waits for post-connect inventory",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/scan_scope_test.dart test/voice_scope/admission_test.dart",
+      "result": "PASS",
+      "passed": 6,
+      "observation": "The new regression failed before the fix because the concurrent refresh future completed immediately; it now remains pending until the second loader call returns the post-connect USB device inventory."
+    },
+    {
+      "name": "Queued refresh app-state regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/app_state_test.dart --plain-name 'queues a device refresh requested during an active scan'",
+      "result": "PASS",
+      "passed": 1,
+      "observation": "The test now awaits both callers through the queued scan and verifies the refreshed input/output inventory before either refresh operation completes."
+    },
+    {
+      "name": "Queued refresh is released during controller disposal",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/scan_scope_test.dart --plain-name 'disposing during a queued refresh releases its waiter'",
+      "result": "PASS",
+      "passed": 1,
+      "observation": "The new regression hung before the fix; disposing the controller now completes the queued refresh waiter, so voice admission or teardown cannot retain an orphaned future."
+    },
+    {
+      "name": "Full Flutter suite",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter compact",
+      "result": "PASS",
+      "passed": 665
+    },
+    {
+      "name": "Changed Flutter files analysis and format",
+      "command": "cd clients/flutter && flutter analyze --no-pub <16 changed Dart files>; dart format --output=none --set-exit-if-changed <16 changed Dart files>",
+      "result": "PASS",
+      "observation": "No analyzer issues; all 16 changed Dart files were already formatted."
+    },
+    {
+      "name": "Changed-file analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/features/voice/admission/join.dart test/voice_scope/admission_test.dart test/voice_scope/fakes.dart",
+      "result": "PASS"
+    },
+    {
+      "name": "Dart formatting",
+      "command": "cd clients/flutter && dart format --output=none --set-exit-if-changed lib/src/features/voice/admission/join.dart test/voice_scope/admission_test.dart test/voice_scope/fakes.dart",
+      "result": "PASS"
+    },
+    {
+      "name": "Spec traceability",
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "PASS",
+      "observation": "All 39 indexed requirements are referenced. The approved brief is unavailable on this host; the verifier validates the committed requirement index."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS"
+    },
+    {
+      "name": "Current macOS client hot reload",
+      "result": "NOT_RUN",
+      "observation": "The running app was not connected to the Flutter VM service: `flutter attach -d macos` remained at 'Waiting for a connection' and was stopped. The app was not restarted; the new queued-refresh change is therefore build/test verified but not loaded in that process."
+    },
+    {
+      "name": "Live voice connection with native device enumeration",
+      "result": "PASS_WITH_LIMITATION",
+      "observation": "With explicit user authorization, the running Mac client joined SHARE_TEST without enabling its microphone. After voice admission, the selectors listed two inputs (CORSAIR VOID ELITE Wireless Gaming Dongle, HyperX Quadcast) and four outputs (Mi Monitor, CORSAIR, HyperX, Динамики Mac mini); the inventory remained visible after disconnect. This confirms the live UI behavior in that process, but not that the current working-tree refresh implementation was loaded."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/features/voice/admission/join.dart",
+      "clients/flutter/test/voice_scope/admission_test.dart",
+      "clients/flutter/test/voice_scope/fakes.dart",
+      "clients/flutter/lib/src/features/audio/devices/scan.dart",
+      "clients/flutter/lib/src/features/audio/devices/state.dart",
+      "clients/flutter/test/audio_devices/scan_scope_test.dart",
+      "clients/flutter/test/app_state_test.dart",
+      "backlog/tasks.yaml",
+      "backlog/FRONTEND_TODO.md",
+      "evidence/flutter/qa310-flutter-audio-inventory-after-voice-connect-2026-10-06-001.json"
+    ],
+    "web_or_api_changed": false,
+    "microphone_capture_or_audio_route_changed": false
+  },
+  "limitations": [
+    "The already-running Mac app did not expose a Flutter VM service and was not restarted. The authorized live join confirms device inventory appears after voice admission in that process, but does not validate the current working-tree code; physical route changes remain unverified."
+  ],
+  "status": "PARTIAL — implementation, 665-test suite, analyzer, formatting, traceability, and macOS/Android Debug builds PASS; live inventory refresh was observed in the running Mac client, while current-source and physical-route acceptance remain open."
+}

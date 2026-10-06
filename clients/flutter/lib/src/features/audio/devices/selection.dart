@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../services/android_audio_devices.dart';
@@ -70,49 +72,63 @@ mixin AudioDeviceSelection on AudioDeviceState {
           ?.getTrackPublicationBySource(TrackSource.microphone)
           ?.track;
       if (track is LocalAudioTrack) {
-        final previousOptions = track.currentOptions;
-        await track.mute(stopOnMute: false);
-        await nativeNoise.reset();
-        // setDeviceId only edits options while muted. Explicitly recapture
-        // through the SDK so the sender actually changes before unmuting.
-        try {
-          await track.restartTrack(
-            previousOptions.copyWith(deviceId: deviceId),
+        if (_usesDesktopAudioDeviceModule) {
+          // Desktop LiveKit routes input through its Audio Device Module.
+          // Restarting getUserMedia does not switch that ADM route reliably;
+          // use the room API, which updates both the native route and the
+          // room's defaults for any later microphone track.
+          await nativeNoise.reset();
+          if (!current()) return;
+          await targetRoom!.setAudioInputDevice(device);
+          if (!current()) return;
+          track.currentOptions = track.currentOptions.copyWith(
+            deviceId: device.deviceId,
           );
-        } catch (_) {
-          if (!current()) {
-            await track.stop();
-            return;
-          }
+        } else {
+          final previousOptions = track.currentOptions;
+          await track.mute(stopOnMute: false);
+          await nativeNoise.reset();
+          // setDeviceId only edits options while muted. Explicitly recapture
+          // through the SDK so the sender actually changes before unmuting.
           try {
-            await track.restartTrack(previousOptions);
-            if (current() && !microphoneMutedIntent) {
-              await track.unmute(stopOnMute: false);
-            }
+            await track.restartTrack(
+              previousOptions.copyWith(deviceId: deviceId),
+            );
+          } catch (_) {
             if (!current()) {
               await track.stop();
               return;
             }
-            if (microphoneMutedIntent) await track.mute(stopOnMute: false);
-            switchOutcome = 'fallback';
-          } catch (_) {
-            microphoneMutedIntent = true;
-            nativeNoise.failMuted('input-switch-failed');
+            try {
+              await track.restartTrack(previousOptions);
+              if (current() && !microphoneMutedIntent) {
+                await track.unmute(stopOnMute: false);
+              }
+              if (!current()) {
+                await track.stop();
+                return;
+              }
+              if (microphoneMutedIntent) await track.mute(stopOnMute: false);
+              switchOutcome = 'fallback';
+            } catch (_) {
+              microphoneMutedIntent = true;
+              nativeNoise.failMuted('input-switch-failed');
+            }
+            rethrow;
           }
-          rethrow;
+          if (!current()) {
+            await track.stop();
+            return;
+          }
+          if (current() && !microphoneMutedIntent) {
+            await track.unmute(stopOnMute: false);
+          }
+          if (!current()) {
+            await track.stop();
+            return;
+          }
+          if (microphoneMutedIntent) await track.mute(stopOnMute: false);
         }
-        if (!current()) {
-          await track.stop();
-          return;
-        }
-        if (current() && !microphoneMutedIntent) {
-          await track.unmute(stopOnMute: false);
-        }
-        if (!current()) {
-          await track.stop();
-          return;
-        }
-        if (microphoneMutedIntent) await track.mute(stopOnMute: false);
       } else if (room != null) {
         await room!.setAudioInputDevice(device);
         if (!current()) return;
@@ -132,14 +148,25 @@ mixin AudioDeviceSelection on AudioDeviceState {
     } catch (cause) {
       if (!current()) return;
       selectedAudioInputId = previous;
-      audioSettingsError =
-          'Не удалось переключить микрофон: ${cause.runtimeType}.';
+      audioSettingsError = _inputSelectionErrorMessage(cause);
       ClientTelemetry.audioInputSwitch(
         targetRoom == null ? 'prejoin' : 'active',
         switchOutcome,
       );
     }
     if (current()) notifyListeners();
+  }
+
+  String _inputSelectionErrorMessage(Object cause) {
+    if (cause is PlatformException) {
+      switch (cause.code) {
+        case 'selectAudioInputFailed':
+          return 'Система не смогла переключить микрофон. Проверьте подключение устройства и повторите попытку.';
+        case 'audioInputEnumerationFailed':
+          return 'Не удалось обновить список аудиоустройств. Повторите попытку.';
+      }
+    }
+    return 'Не удалось переключить микрофон. Повторите попытку.';
   }
 
   Future<void> selectAudioOutput(String deviceId) async {
@@ -216,4 +243,10 @@ mixin AudioDeviceSelection on AudioDeviceState {
             candidate.deviceId == deviceId ||
             (deviceId.isEmpty && candidate.deviceId == 'default'),
       );
+
+  bool get _usesDesktopAudioDeviceModule =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.macOS ||
+          defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux);
 }

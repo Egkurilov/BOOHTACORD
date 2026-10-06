@@ -1,0 +1,97 @@
+{
+  "id": "RELEASE-ANDROID-WINDOWS-2026-10-06",
+  "date": "2026-10-06",
+  "task": "Android and Windows direct releases 1.0.36",
+  "source_revision": "f926a525d43718e14d44a979f27c8418c918b261",
+  "working_tree_changes": false,
+  "summary": "Published Android and Windows distributions from the same clean source revision. Native build identities are synchronized at version 1.0.36+69 / release order 50. Android release contains signed split APKs for arm64-v8a, armeabi-v7a and x86_64; Windows release contains the x64 distribution ZIP. The in-app client-update catalog was not changed or promoted.",
+  "checks": [
+    {
+      "name": "Full Flutter native release gate",
+      "command": "python3 -m tools.ci.native.flutter",
+      "result": "PASS",
+      "passed": 673,
+      "observation": "All Flutter client tests passed, followed by LiveKit and flutter_webrtc package tests and analyzer. Analyzer reported only non-fatal infos under the configured release gate."
+    },
+    {
+      "name": "Package version regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/profile_screen_test.dart",
+      "result": "PASS",
+      "passed": 10,
+      "observation": "Profile version label matches the shared package release version 1.0.36+69."
+    },
+    {
+      "name": "Build identity and release publisher tests",
+      "command": "python3 -m pytest -q tools/build/test_client_identity.py; node --test tools/release/android/publish.test.mjs tools/release/android/publish_retries.test.mjs tools/release/android/publish_conflicts.test.mjs tools/release/windows/publish.test.mjs",
+      "result": "PASS",
+      "passed": 12,
+      "observation": "Three client identity tests and nine Android/Windows publisher tests passed; Android, Windows, macOS and iOS identities validate at 1.0.36+69 / r50."
+    },
+    {
+      "name": "Android debug build preflight",
+      "command": "python3 -m tools.build.android.run --debug",
+      "result": "PASS",
+      "observation": "Built app-debug.apk locally with the new version identity. This debug APK is not part of the release assets."
+    },
+    {
+      "name": "Local Android Kotlin build-mode preflight",
+      "command": "bash tools/verify/android_kotlin/verify_android_kotlin_modes.sh",
+      "result": "BLOCKED_LOCAL_TOOLCHAIN",
+      "observation": "The local host has Java 8 only; the Kotlin mode check requires JDK 17. The hosted Android quality job ran the same check with setup-java@v4 and passed."
+    },
+    {
+      "name": "Hosted Android Release",
+      "run_id": 37459028703,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37459028703",
+      "result": "PASS",
+      "observation": "Both quality/flutter and android-release jobs completed successfully; signed distribution was published."
+    },
+    {
+      "name": "Hosted Windows Release",
+      "run_id": 37459028232,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37459028232",
+      "result": "PASS",
+      "observation": "Windows x64 distribution build and GitHub release publication completed successfully."
+    }
+  ],
+  "releases": [
+    {
+      "platform": "android",
+      "tag": "android-v1.0.36",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/releases/tag/android-v1.0.36",
+      "assets": [
+        {"name": "BOOHTACORD-android-v1.0.36-arm64-v8a.apk", "bytes": 19844551},
+        {"name": "BOOHTACORD-android-v1.0.36-armeabi-v7a.apk", "bytes": 17658651},
+        {"name": "BOOHTACORD-android-v1.0.36-x86_64.apk", "bytes": 21200505},
+        {"name": "artifact-manifest.json", "bytes": 4091},
+        {"name": "SHA256SUMS", "bytes": 588},
+        {"name": "LICENSE-RNNoise.txt", "bytes": 1581},
+        {"name": "rnnoise-component.cdx.json", "bytes": 823}
+      ]
+    },
+    {
+      "platform": "windows",
+      "tag": "windows-v1.0.36",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/releases/tag/windows-v1.0.36",
+      "assets": [
+        {"name": "BOOHTACORD-windows-v1.0.36-x64.zip", "bytes": 26278226},
+        {"name": "artifact-manifest.json", "bytes": 7931},
+        {"name": "SHA256SUMS", "bytes": 192}
+      ]
+    }
+  ],
+  "implementation": {
+    "version_commit": "f926a525d43718e14d44a979f27c8418c918b261",
+    "files_changed": [
+      "clients/flutter/pubspec.yaml",
+      "clients/flutter/lib/src/app_version.dart",
+      "contracts/client-build.json"
+    ],
+    "client_update_catalog_changed": false,
+    "macos_release_attempted": false
+  },
+  "limitations": [
+    "The GitHub release assets are published, but deploy/client-updates/catalog.json remains unchanged; clients will not be offered these builds through the in-app updater until a separate catalog promotion is requested. macOS release remains separate because its workflow requires the unavailable self-hosted macOS runner."
+  ],
+  "status": "PASS — Android and Windows GitHub Releases and all listed assets are published; release quality jobs passed."
+}

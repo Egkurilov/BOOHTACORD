@@ -35,6 +35,7 @@ abstract class AudioDeviceState extends ChangeNotifier {
   StreamSubscription<List<MediaDevice>>? subscription;
   int deviceRevision = 0;
   bool refreshQueued = false;
+  Completer<void>? queuedAudioRefreshCompletion;
   bool refreshAfterCaptureRequested = false;
   bool isDisposed = false;
   List<MediaDevice> audioInputDevices = const [];
@@ -63,8 +64,17 @@ abstract class AudioDeviceState extends ChangeNotifier {
     audioDevicesLoading = false;
     audioInputSwitching = false;
     audioOutputSwitching = false;
-    refreshQueued = false;
+    _releaseQueuedAudioRefresh();
     refreshAfterCaptureRequested = false;
+  }
+
+  void _releaseQueuedAudioRefresh() {
+    refreshQueued = false;
+    final queuedRefresh = queuedAudioRefreshCompletion;
+    queuedAudioRefreshCompletion = null;
+    if (queuedRefresh != null && !queuedRefresh.isCompleted) {
+      queuedRefresh.complete();
+    }
   }
 
   void clearAccount() {
@@ -99,6 +109,7 @@ abstract class AudioDeviceState extends ChangeNotifier {
   @override
   void dispose() {
     isDisposed = true;
+    _releaseQueuedAudioRefresh();
     nativeNoise.dispose();
     nativeMicrophone.dispose();
     deviceRevision++;

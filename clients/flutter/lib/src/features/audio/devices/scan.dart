@@ -13,6 +13,8 @@ mixin AudioDeviceScan on AudioDeviceState {
     if (isDisposed || !ticket.isActive) return;
     if (audioDevicesLoading) {
       refreshQueued = true;
+      final completion = queuedAudioRefreshCompletion ??= Completer<void>();
+      await completion.future;
       return;
     }
     final revision = deviceRevision;
@@ -38,7 +40,15 @@ mixin AudioDeviceScan on AudioDeviceState {
         notifyListeners();
         if (refreshQueued) {
           refreshQueued = false;
-          unawaited(refreshAudioDevices());
+          final completion = queuedAudioRefreshCompletion;
+          queuedAudioRefreshCompletion = null;
+          try {
+            await refreshAudioDevices();
+          } finally {
+            if (completion != null && !completion.isCompleted) {
+              completion.complete();
+            }
+          }
         }
       }
     }

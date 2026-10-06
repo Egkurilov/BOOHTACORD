@@ -1,0 +1,50 @@
+{
+  "id": "QA-316",
+  "date": "2026-10-06",
+  "task": "Runtime source-identity audit for FV2-049/051/052",
+  "source_revision": "f25ed3d8df08d2c3095374ee00514eba22c70176",
+  "working_tree_changes": true,
+  "summary": "The running macOS app is older than the checked-out Flutter source. The Android package version identity is older, but the installed 1.0.35+2070 UI build was produced from the Flutter application source at ca03c226, and no production Flutter UI code changed between that source and current HEAD.",
+  "checks": [
+    {
+      "name": "Live macOS app version identity",
+      "result": "STALE_RUNTIME",
+      "observation": "The BOOHTACORD profile accessibility tree reports 'Версия 1.0'. Current source app_version.dart and contracts/client-build.json identify the application as 1.0.36 (69). The open app does not match the current source/release identity. It was left running; no restart or Keychain interaction was attempted."
+    },
+    {
+      "name": "Android API 35 emulator package and foreground state",
+      "command": "adb devices -l; adb shell dumpsys package ru.boohtacord.app; adb shell dumpsys window",
+      "result": "VERSION_IDENTITY_OLDER_UI_SOURCE_MATCHES",
+      "observation": "emulator-5554 is online with BOOHTACORD versionName 1.0.35, versionCode 2070, lastUpdateTime 2026-10-06 13:33:54. QA-314 records building/installing this exact identity from source revision ca03c226. Comparing ca03c226 with current HEAD shows only app_version.dart, pubspec.yaml and an audio input test file changed under clients/flutter; no production UI implementation changed, so QA-314's Android visual acceptance remains relevant. The current foreground is an Android Accessibility Suite notification permission prompt; neither Allow nor Don't allow was selected."
+    },
+    {
+      "name": "Current source and published Android/Windows release identity",
+      "result": "PASS",
+      "observation": "Checked-out source revision f25ed3d8df08d2c3095374ee00514eba22c70176 identifies native release 1.0.36+69 / r50. Android and Windows 1.0.36 GitHub Release workflows completed successfully from source revision f926a525d43718e14d44a979f27c8418c918b261. The only commits after that release source add evidence and documentation; no Flutter application files changed."
+    },
+    {
+      "name": "Flutter version and desktop shortcut widget regressions",
+      "command": "cd clients/flutter && flutter test --no-pub test/profile_screen_test.dart test/voice_shortcut_widgets_test.dart",
+      "result": "PASS",
+      "passed": 14,
+      "observation": "Current-source version label and desktop/mobile shortcut layout regressions passed; this is source-level verification, not live acceptance of the open native app."
+    }
+  ],
+  "limitations": [
+    "Current-source desktop shortcut visual acceptance remains unverified because the running macOS app is stale and the user requested avoiding a restart that may invoke Keychain.",
+    "No new Android visual interaction was attempted while the Android Accessibility Suite notification prompt is foregrounded; existing QA-314 visual acceptance still applies to the current production UI code.",
+    "No microphone capture was performed. FV2-052 still requires explicit approval for a short capture-based native route check; Windows physical-device acceptance also remains open.",
+    "The pre-existing local edit in clients/flutter/pubspec.lock was preserved and not staged."
+  ],
+  "implementation": {
+    "files_changed": [
+      "backlog/FRONTEND_TODO.md",
+      "backlog/tasks.yaml",
+      "docs/flutter-web-parity.md",
+      "evidence/flutter/qa316-flutter-native-runtime-identity-audit-2026-10-06-001.json"
+    ],
+    "flutter_application_source_changed": false,
+    "user_pubspec_lock_change_staged": false
+  },
+  "status": "PARTIAL — macOS runtime is confirmed stale; Android version metadata is older but its UI source matches current production code. Current-source macOS visual acceptance remains open."
+}

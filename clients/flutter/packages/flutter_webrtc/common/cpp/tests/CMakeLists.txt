@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.15)
+project(flutter_webrtc_audio_device_selection_test LANGUAGES CXX)
+
+enable_testing()
+add_executable(audio_device_selection_test audio_device_selection_test.cc)
+target_include_directories(audio_device_selection_test PRIVATE ../include)
+target_compile_features(audio_device_selection_test PRIVATE cxx_std_17)
+if(MSVC)
+  target_compile_options(audio_device_selection_test PRIVATE /UNDEBUG)
+else()
+  target_compile_options(audio_device_selection_test PRIVATE -UNDEBUG)
+endif()
+add_test(NAME audio_device_selection_test COMMAND audio_device_selection_test)
+add_custom_command(TARGET audio_device_selection_test POST_BUILD
+  COMMAND $<TARGET_FILE:audio_device_selection_test>
+  VERBATIM
+)

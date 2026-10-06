@@ -1,0 +1,77 @@
+{
+  "id": "QA-312",
+  "date": "2026-10-06",
+  "task": "FV2-050 — Separate playback volume reset from microphone processing settings",
+  "source_revision": "ce8c3e0a",
+  "working_tree_changes": true,
+  "summary": "Moved the playback-volume reset action out of the expandable microphone-processing diagnostics into a dedicated playback card. The existing AudioVolumeReset widget and AppState reset callback are unchanged.",
+  "checks": [
+    {
+      "name": "Test-first playback reset placement regression (before implementation)",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'playback volume reset is separate from microphone processing'",
+      "result": "EXPECTED_FAIL",
+      "observation": "The pre-change screen had no audio-settings-playback-card, so the regression could not scroll to the required separate playback section."
+    },
+    {
+      "name": "Workspace and existing volume-reset widget suites",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart test/participant_volume_ui_test.dart",
+      "result": "PASS",
+      "passed": 76,
+      "observation": "The new placement regression passes at macOS desktop (1440x900) and Android compact (390x844); existing AudioVolumeReset tests still verify its callback and warning behavior."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter compact",
+      "result": "PASS",
+      "passed": 666
+    },
+    {
+      "name": "Changed Flutter source and test analysis",
+      "command": "cd clients/flutter && flutter analyze lib/src/screens/workspace_screen.dart lib/src/widgets/audio_processing_advanced_settings.dart test/workspace_screen_test.dart test/participant_volume_ui_test.dart",
+      "result": "PASS",
+      "observation": "No issues found in four analyzed files."
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub --quiet",
+      "result": "PASS",
+      "observation": "Built the current source without launching or restarting the locked Mac client."
+    },
+    {
+      "name": "Android API 35 release visual acceptance",
+      "command": "Build arm64 Release 1.0.35+2069; install with adb install -r; inspect audio settings at 1080x2400",
+      "result": "PASS",
+      "observation": "The signed APK installed over the existing app without clearing data. The separate 'Воспроизведение' card and explanatory copy are visible below the collapsed microphone-processing card. The reset button was not pressed; no audio route or voice connection was changed.",
+      "screenshot": "/private/tmp/boohtacord-fv2-050.NrgYSJ/audio-bottom-2.png"
+    },
+    {
+      "name": "macOS live visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "The Mac was locked and automatic unlock was unavailable."
+    },
+    {
+      "name": "Windows live visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "No Windows runtime is attached to this host; Windows visual acceptance remains in the cross-platform Design V2 task."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/screens/workspace_screen.dart",
+      "clients/flutter/lib/src/widgets/audio_processing_advanced_settings.dart",
+      "clients/flutter/test/workspace_screen_test.dart",
+      "backlog/tasks.yaml",
+      "backlog/FRONTEND_TODO.md",
+      "docs/flutter-web-parity.md",
+      "evidence/flutter/qa312-flutter-playback-volume-reset-placement-2026-10-06-001.json"
+    ],
+    "product_ui_changed": true,
+    "web_or_api_changed": false,
+    "volume_reset_behavior_changed": false,
+    "voice_or_audio_route_changed": false
+  },
+  "limitations": [
+    "The Android runtime screenshot passed; macOS live screenshot was unavailable because the Mac was locked, and Windows runtime visual acceptance remains open under FE-70/FV2-006."
+  ],
+  "status": "PASS — reset is visibly separated from microphone processing, remains available with diagnostics collapsed, and preserves the existing reset behavior."
+}

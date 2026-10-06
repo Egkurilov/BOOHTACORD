@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -31,19 +32,18 @@ import '../widgets/voice_shortcuts/keyboard.dart';
 import '../widgets/voice_shortcuts/availability.dart';
 import '../widgets/voice_shortcuts/row.dart';
 import '../widgets/voice_shortcuts/status.dart';
+import '../widgets/participant_volume/reset.dart';
 import '../features/workspace/mobile_navigation/top.dart';
 import '../features/workspace/search/panel_empty_state.dart';
 import '../widgets/topology_actions/buttons.dart';
 import '../widgets/topology_actions/delete_actions.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
-import '../widgets/noise_suppression_settings.dart';
-import '../widgets/voice_audio_diagnostics/control.dart';
+import '../widgets/audio_processing_advanced_settings.dart';
 import '../widgets/voice_disconnect/notice.dart';
 import '../widgets/voice_disconnect/join_actions.dart';
 import '../widgets/participant_volume/menu.dart';
 import '../widgets/participant_volume/slider.dart';
-import '../widgets/participant_volume/reset.dart';
 import '../widgets/microphone_controls/control.dart';
 import '../widgets/message_attachment_composer.dart';
 import '../widgets/message_attachment_list.dart';
@@ -1862,9 +1862,15 @@ class _Header extends StatelessWidget {
       width: compact ? 44 : 48,
       height: compact ? 44 : 48,
     );
+    final scaledHeaderTextHeight =
+        MediaQuery.textScalerOf(context).scale(16) * 1.4 +
+        MediaQuery.textScalerOf(context).scale(12) * 1.4;
     return SizedBox(
       key: const ValueKey('workspace-header'),
-      height: compact ? GcLayout.headerMobileHeight : GcLayout.headerHeight,
+      height: math.max(
+        compact ? GcLayout.headerMobileHeight : GcLayout.headerHeight,
+        scaledHeaderTextHeight + 8,
+      ),
       child: DecoratedBox(
         decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: GcColors.border)),
@@ -2907,7 +2913,19 @@ class _MessageRow extends StatelessWidget {
         .where((value) => value.id == message.authorId)
         .firstOrNull;
     final authorName = member?.displayName ?? message.authorId;
-    if(message.kind=='SYSTEM_WELCOME') return SystemWelcomeMessage(message:message,displayName:member?.displayName??'Участник',onDelete:state.user?.isAdmin==true?()async{if(await _confirmDelete(context))await state.deleteText(message);}:null);
+    if (message.kind == 'SYSTEM_WELCOME') {
+      return SystemWelcomeMessage(
+        message: message,
+        displayName: member?.displayName ?? 'Участник',
+        onDelete: state.user?.isAdmin == true
+            ? () async {
+                if (await _confirmDelete(context)) {
+                  await state.deleteText(message);
+                }
+              }
+            : null,
+      );
+    }
     final time =
         '${message.createdAt.hour.toString().padLeft(2, '0')}:${message.createdAt.minute.toString().padLeft(2, '0')}';
     return Row(
@@ -3040,9 +3058,15 @@ class _MessageRow extends StatelessWidget {
                 )
               else
                 FormattedMessageBody(body: message.body, color: GcColors.text),
-              DeliveryStatus(status:message.sendStatus,busy:state.sending,
-                retryBlocked:state.conversation.blockedSendRetries.contains(message.clientMessageId),
-                onRetry:onRetry,onDiscard:()=>state.deleteText(message)),
+              DeliveryStatus(
+                status: message.sendStatus,
+                busy: state.sending,
+                retryBlocked: state.conversation.blockedSendRetries.contains(
+                  message.clientMessageId,
+                ),
+                onRetry: onRetry,
+                onDiscard: () => state.deleteText(message),
+              ),
               if (!message.deleted &&
                   message.sendStatus == null &&
                   message.attachments.isNotEmpty)
@@ -3123,7 +3147,7 @@ class _SearchContextMessage {
     required this.deleted,
     required this.attachments,
     this.editedAt,
-    this.messageKind='USER',
+    this.messageKind = 'USER',
   });
   final String messageKind;
   final String id;
@@ -4042,13 +4066,18 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
                                         ),
                                       ),
                                       const SizedBox(height: 8),
-                                      message.messageKind=='SYSTEM_WELCOME'?SystemWelcomeContent(displayName:author,body:message.body):FormattedMessageBody(
-                                        body: message.body,
-                                        color: GcColors.text,
-                                        fontSize: 14,
-                                        lineHeight: 20 / 14,
-                                        searchTerm: _activeQuery,
-                                      ),
+                                      message.messageKind == 'SYSTEM_WELCOME'
+                                          ? SystemWelcomeContent(
+                                              displayName: author,
+                                              body: message.body,
+                                            )
+                                          : FormattedMessageBody(
+                                              body: message.body,
+                                              color: GcColors.text,
+                                              fontSize: 14,
+                                              lineHeight: 20 / 14,
+                                              searchTerm: _activeQuery,
+                                            ),
                                     ],
                                   ),
                                 ),
@@ -4099,7 +4128,7 @@ class _SearchMessageContextState extends State<_SearchMessageContext> {
         : widget.state.searchContextTextMessages
               .map(
                 (message) => _SearchContextMessage(
-                  messageKind:message.kind,
+                  messageKind: message.kind,
                   id: message.id,
                   authorId: message.authorId,
                   body: message.body,
@@ -4223,7 +4252,15 @@ class _SearchMessageContextState extends State<_SearchMessageContext> {
                           ),
                         )
                       else ...[
-                        message.messageKind=='SYSTEM_WELCOME'?SystemWelcomeContent(displayName:authorName,body:body):FormattedMessageBody(body: body, color: GcColors.text),
+                        message.messageKind == 'SYSTEM_WELCOME'
+                            ? SystemWelcomeContent(
+                                displayName: authorName,
+                                body: body,
+                              )
+                            : FormattedMessageBody(
+                                body: body,
+                                color: GcColors.text,
+                              ),
                         if (attachments.isNotEmpty && conversationId != null)
                           MessageAttachmentList(
                             state: widget.state,
@@ -4793,9 +4830,18 @@ class _DirectConversationState extends State<_DirectConversation> {
                                           fontSize: 14,
                                           lineHeight: 1.4,
                                         ),
-                                      DeliveryStatus(status:message.sendStatus,busy:widget.state.sending,
-                                        retryBlocked:widget.state.conversation.blockedSendRetries.contains(message.clientMessageId),
-                                        onRetry:()=>_retry(message),onDiscard:()=>widget.state.deleteDirect(message)),
+                                      DeliveryStatus(
+                                        status: message.sendStatus,
+                                        busy: widget.state.sending,
+                                        retryBlocked: widget
+                                            .state
+                                            .conversation
+                                            .blockedSendRetries
+                                            .contains(message.clientMessageId),
+                                        onRetry: () => _retry(message),
+                                        onDiscard: () =>
+                                            widget.state.deleteDirect(message),
+                                      ),
                                       if (!message.deleted &&
                                           message.sendStatus == null &&
                                           message.attachments.isNotEmpty)
@@ -6905,11 +6951,17 @@ class _AudioSettingsScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _AudioActivationSelector(
-                            compact: compact,
-                            value: state.audioActivationMode,
-                            onChanged: (mode) =>
-                                unawaited(state.setAudioActivationMode(mode)),
+                          Semantics(
+                            key: const ValueKey('audio-activation-mode-group'),
+                            container: true,
+                            explicitChildNodes: true,
+                            label: 'Активация микрофона',
+                            child: _AudioActivationSelector(
+                              compact: compact,
+                              value: state.audioActivationMode,
+                              onChanged: (mode) =>
+                                  unawaited(state.setAudioActivationMode(mode)),
+                            ),
                           ),
                           if (!state.usesTouchPushToTalk) ...[
                             const SizedBox(height: 12),
@@ -6973,6 +7025,7 @@ class _AudioSettingsScreen extends StatelessWidget {
                           children: [
                             VoiceShortcutRow(
                               label: 'Микрофон',
+                              desktopLayout: !compact,
                               binding: state.microphoneShortcut,
                               capturing: capturingVoiceShortcut == 'microphone',
                               onAssign: () =>
@@ -6984,6 +7037,7 @@ class _AudioSettingsScreen extends StatelessWidget {
                             ),
                             VoiceShortcutRow(
                               label: 'Выключить звук',
+                              desktopLayout: !compact,
                               binding: state.deafenShortcut,
                               capturing: capturingVoiceShortcut == 'deafen',
                               onAssign: () =>
@@ -7009,9 +7063,9 @@ class _AudioSettingsScreen extends StatelessWidget {
                     _AudioSettingsCard(
                       cardKey: const ValueKey('audio-settings-processing-card'),
                       title: 'Обработка микрофона',
-                      subtitle: 'Параметры передаются LiveKit. Нативный SDK не сообщает, какие эффекты фактически применены устройством.',
+                      subtitle: 'Автоматическая обработка и усиление сигнала микрофона.',
                       compact: compact,
-                      minHeight: compact ? 256 : 272,
+                      minHeight: compact ? 224 : 236,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -7047,22 +7101,26 @@ class _AudioSettingsScreen extends StatelessWidget {
                                 AudioActivationMode.vad,
                             agc: state.audioProcessing.autoGainControl,
                           ),
-                          NoiseSuppressionSettings(
+                          AudioProcessingAdvancedSettings(
                             processing: state.audioProcessing,
                             runtime: state.noiseSuppressionRuntime,
-                            onChanged: state.setAudioProcessing,
-                          ),
-                          AudioVolumeReset(
-                            reset: state.resetAudioVolumes,
-                            warning: state.voiceVolumeWarning,
-                          ),
-                          VoiceAudioDiagnosticsControl(
-                            connected:
+                            onProcessingChanged: state.setAudioProcessing,
+                            voiceConnected:
                                 state.voicePhase != VoicePhase.idle &&
                                 state.voicePhase != VoicePhase.error,
-                            diagnostics: state.voiceAudioDiagnostics,
+                            voiceDiagnostics: state.voiceAudioDiagnostics,
                           ),
                         ],
+                      ),
+                    ),
+                    _AudioSettingsCard(
+                      cardKey: const ValueKey('audio-settings-playback-card'),
+                      title: 'Воспроизведение',
+                      subtitle: 'Громкость участников и демонстраций на этом устройстве.',
+                      compact: compact,
+                      child: AudioVolumeReset(
+                        reset: state.resetAudioVolumes,
+                        warning: state.voiceVolumeWarning,
                       ),
                     ),
                   ],
@@ -7144,7 +7202,7 @@ class _AudioSettingsCard extends StatelessWidget {
   );
 }
 
-class _AudioActivationSelector extends StatelessWidget {
+class _AudioActivationSelector extends StatefulWidget {
   const _AudioActivationSelector({
     required this.compact,
     required this.value,
@@ -7156,72 +7214,140 @@ class _AudioActivationSelector extends StatelessWidget {
   final ValueChanged<AudioActivationMode> onChanged;
 
   @override
-  Widget build(BuildContext context) => Container(
-    key: const ValueKey('audio-settings-activation-segment'),
-    height: compact ? 50 : 46,
-    padding: const EdgeInsets.all(4),
-    decoration: BoxDecoration(
-      color: GcColors.sidebar,
-      border: Border.all(color: GcColors.borderSubtle),
-      borderRadius: BorderRadius.circular(GcRadii.md),
-    ),
-    child: Row(
-      children: [
-        _choice(
-          label: 'По голосу',
-          mode: AudioActivationMode.vad,
-          key: const ValueKey('audio-activation-vad'),
-        ),
-        const SizedBox(width: 4),
-        _choice(
-          label: 'По нажатию',
-          mode: AudioActivationMode.ptt,
-          key: const ValueKey('audio-activation-ptt'),
-        ),
-      ],
-    ),
-  );
+  State<_AudioActivationSelector> createState() =>
+      _AudioActivationSelectorState();
+}
+
+class _AudioActivationSelectorState extends State<_AudioActivationSelector> {
+  late final _voiceFocusNode = FocusNode(debugLabel: 'По голосу');
+  late final _pushToTalkFocusNode = FocusNode(debugLabel: 'По нажатию');
+
+  @override
+  void dispose() {
+    _voiceFocusNode.dispose();
+    _pushToTalkFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final stacked =
+        widget.compact &&
+        MediaQuery.textScalerOf(context).scale(GcTypography.body) > 18;
+    return Container(
+      key: const ValueKey('audio-settings-activation-segment'),
+      height: stacked
+          ? null
+          : widget.compact
+          ? 50
+          : 46,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: GcColors.sidebar,
+        border: Border.all(color: GcColors.borderSubtle),
+        borderRadius: BorderRadius.circular(GcRadii.md),
+      ),
+      child: stacked
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _choice(
+                  label: 'По голосу',
+                  mode: AudioActivationMode.vad,
+                  key: const ValueKey('audio-activation-vad'),
+                  focusNode: _voiceFocusNode,
+                  stacked: true,
+                ),
+                const SizedBox(height: 4),
+                _choice(
+                  label: 'По нажатию',
+                  mode: AudioActivationMode.ptt,
+                  key: const ValueKey('audio-activation-ptt'),
+                  focusNode: _pushToTalkFocusNode,
+                  stacked: true,
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                _choice(
+                  label: 'По голосу',
+                  mode: AudioActivationMode.vad,
+                  key: const ValueKey('audio-activation-vad'),
+                  focusNode: _voiceFocusNode,
+                  stacked: false,
+                ),
+                const SizedBox(width: 4),
+                _choice(
+                  label: 'По нажатию',
+                  mode: AudioActivationMode.ptt,
+                  key: const ValueKey('audio-activation-ptt'),
+                  focusNode: _pushToTalkFocusNode,
+                  stacked: false,
+                ),
+              ],
+            ),
+    );
+  }
 
   Widget _choice({
     required String label,
     required AudioActivationMode mode,
     Key? key,
+    required FocusNode focusNode,
+    required bool stacked,
   }) {
-    final selected = value == mode;
-    return Expanded(
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: label,
-        child: Material(
-          color: selected ? GcColors.accent : Colors.transparent,
-          borderRadius: BorderRadius.circular(GcRadii.sm),
-          child: InkWell(
-            key: key,
-            borderRadius: BorderRadius.circular(GcRadii.sm),
-            onTap: () => onChanged(mode),
-            child: SizedBox(
-              height: compact ? 40 : 36,
-              child: Center(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: selected
-                        ? GcColors.onAccent
-                        : GcColors.textSecondary,
-                    fontSize: GcTypography.body,
-                    fontWeight: GcTypography.medium,
-                  ),
-                ),
-              ),
+    final selected = widget.value == mode;
+    final choice = Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: ExcludeSemantics(
+        child: TextButton(
+          key: key,
+          focusNode: focusNode,
+          onPressed: () => widget.onChanged(mode),
+          style: TextButton.styleFrom(
+            backgroundColor: selected ? GcColors.accent : Colors.transparent,
+            foregroundColor: selected
+                ? GcColors.onAccent
+                : GcColors.textSecondary,
+            minimumSize: Size(
+              0,
+              stacked
+                  ? 44
+                  : widget.compact
+                  ? 40
+                  : 36,
+            ),
+            padding: stacked
+                ? const EdgeInsets.symmetric(horizontal: 8, vertical: 8)
+                : EdgeInsets.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(GcRadii.sm),
             ),
           ),
+          child: _label(label, selected, stacked),
         ),
       ),
     );
+    return stacked
+        ? SizedBox(width: double.infinity, child: choice)
+        : Expanded(child: choice);
   }
+
+  Widget _label(String label, bool selected, bool stacked) => Text(
+    label,
+    maxLines: stacked ? null : 1,
+    overflow: stacked ? TextOverflow.visible : TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: TextStyle(
+      color: selected ? GcColors.onAccent : GcColors.textSecondary,
+      fontSize: GcTypography.body,
+      fontWeight: GcTypography.medium,
+    ),
+  );
 }
 
 class _AudioDeviceDropdown extends StatelessWidget {

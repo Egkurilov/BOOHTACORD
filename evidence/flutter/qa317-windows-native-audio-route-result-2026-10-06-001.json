@@ -1,0 +1,89 @@
+{
+  "id": "QA-317",
+  "date": "2026-10-06",
+  "task": "FV2-052 — Report native desktop microphone route selection failures",
+  "source_revision": "fc97420ba93ea5d3a6b4a40ef801699884adc9d1",
+  "working_tree_changes": true,
+  "summary": "The Windows FlutterWebRTC bridge ignored the result of AudioDeviceModule::SetRecordingDevice and always returned success after a matching device ID. It now reports enumeration and native route-selection failures through MethodChannel so Flutter can roll back the selected device. LiveKit previously cached selectedAudioInput before native confirmation; it now updates the cache only after a successful route change. Flutter displays localized retry guidance and keeps its selection/preferences unchanged on either native failure.",
+  "checks": [
+    {
+      "name": "Native device selection mapping regression",
+      "command": "clang++ -std=c++17 -UNDEBUG -I clients/flutter/packages/flutter_webrtc/common/cpp/include -o /private/tmp/boohtacord-audio-device-selection-test clients/flutter/packages/flutter_webrtc/common/cpp/tests/audio_device_selection_test.cc && /private/tmp/boohtacord-audio-device-selection-test",
+      "result": "PASS",
+      "observation": "Matching IDs invoke the native setter with the expected index; a nonzero setter result is reported as failure; missing IDs do not invoke the setter."
+    },
+    {
+      "name": "Flutter active and listener route selection regression suite",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart",
+      "result": "PASS",
+      "passed": 18,
+      "observation": "Windows and macOS active-track/listener flows invoke the native selection method; simulated native route and enumeration failures preserve LiveKit's previous cached input, roll back UI/preferences, show localized guidance, and do not open another microphone capture. Android/iOS selection and related error paths remain covered."
+    },
+    {
+      "name": "Changed Flutter audio selection analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/features/audio/devices/selection.dart packages/livekit_client/lib/src/hardware/hardware.dart test/audio_devices/input_selection_probe_test.dart",
+      "result": "PASS",
+      "observation": "No issues found across the app error mapping, LiveKit hardware selector, and regression tests."
+    },
+    {
+      "name": "Dart formatting",
+      "command": "dart format --output=none --set-exit-if-changed clients/flutter/lib/src/features/audio/devices/selection.dart clients/flutter/packages/livekit_client/lib/src/hardware/hardware.dart clients/flutter/test/audio_devices/input_selection_probe_test.dart",
+      "result": "PASS",
+      "observation": "All three changed Dart files are formatted."
+    },
+    {
+      "name": "Android ARM64 debug build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub --target-platform android-arm64",
+      "result": "PASS",
+      "observation": "Built build/app/outputs/flutter-apk/app-debug.apk; Android's native capture-restart route remains unchanged."
+    },
+    {
+      "name": "Spec traceability",
+      "command": "pwsh -NoProfile -File tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "result": "PASS",
+      "observation": "39 approved requirement IDs remain referenced after backlog updates."
+    },
+    {
+      "name": "Standalone CMake configure, build and CTest",
+      "result": "PASS",
+      "observation": "The Android SDK bundles CMake 3.22.1 on this host. Configured and built the standalone regression using AppleClang, ran its POST_BUILD check and CTest (1/1 passed). The POST_BUILD command is defined beside its target in the child directory, avoiding CMake's cross-directory TARGET restriction."
+    },
+    {
+      "name": "Windows plugin CMake build and integrated test execution",
+      "result": "NOT_RUN",
+      "observation": "A Windows toolchain is unavailable on this macOS host; the Windows plugin build is wired to compile and run the C++ regression on a Windows runner. Standalone CMake configuration/build is verified separately."
+    },
+    {
+      "name": "Physical Windows and macOS microphone-route acceptance",
+      "result": "NOT_RUN",
+      "observation": "No microphone capture was started. Flutter UI rollback is covered, but physical native route changes still require a current debuggable build and explicit capture approval."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/packages/flutter_webrtc/common/cpp/include/audio_device_selection.h",
+      "clients/flutter/packages/flutter_webrtc/common/cpp/src/flutter_media_stream.cc",
+      "clients/flutter/packages/flutter_webrtc/common/cpp/tests/CMakeLists.txt",
+      "clients/flutter/packages/flutter_webrtc/common/cpp/tests/audio_device_selection_test.cc",
+      "clients/flutter/packages/flutter_webrtc/windows/CMakeLists.txt",
+      "clients/flutter/test/audio_devices/input_selection_probe_test.dart",
+      "clients/flutter/packages/livekit_client/lib/src/hardware/hardware.dart",
+      "clients/flutter/packages/livekit_client/UPSTREAM.json",
+      "clients/flutter/packages/livekit_client/BOOHTACORD_PATCHES.md",
+      "clients/flutter/packages/flutter_webrtc/UPSTREAM.json",
+      "clients/flutter/packages/flutter_webrtc/BOOHTACORD_PATCHES.md",
+      "backlog/tasks.yaml",
+      "backlog/FRONTEND_TODO.md",
+      "docs/flutter-web-parity.md",
+      "evidence/flutter/qa317-windows-native-audio-route-result-2026-10-06-001.json"
+    ],
+    "android_native_route_behavior_changed": false,
+    "shared_flutter_error_copy_changed": true,
+    "user_pubspec_lock_change_staged": false
+  },
+  "limitations": [
+    "The host has no Windows compiler, so the actual Flutter Windows plugin target has not been built locally.",
+    "The code change improves error reporting but does not itself prove that a physical input route changes on Windows or macOS. FV2-052 remains open pending runtime acceptance."
+  ],
+  "status": "PARTIAL — focused Flutter and standalone C++ regressions pass; Windows plugin build and physical route acceptance remain NOT_RUN."
+}

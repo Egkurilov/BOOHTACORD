@@ -52,6 +52,29 @@ void main() {
     expect(native.state.requestedMode, NoiseSuppressionMode.rnnoise);
     expect(native.state.effectiveMode, 'browser');
   });
+  test(
+    'RNNoise is not active while native processing reports a failure',
+    () async {
+      var failure = 'unsupported-audio-format';
+      final native = NativeNoiseSuppression(
+        invoke: (method, args) async => {
+          'supported': true,
+          'effectiveEngine': 'rnnoise',
+          'processedFrames': 12,
+          'failureReason': failure,
+        },
+      );
+      await native.prepare(NoiseSuppressionMode.rnnoise);
+      expect(native.state.effectiveMode, 'unknown');
+      expect(native.state.status, 'initializing');
+      expect(native.state.failureReason, failure);
+
+      failure = '';
+      await native.refresh();
+      expect(native.state.effectiveMode, 'rnnoise');
+      expect(native.state.status, 'active');
+    },
+  );
   test('missing native support falls back without losing preference', () async {
     final native = NativeNoiseSuppression(
       invoke: (method, args) async => {

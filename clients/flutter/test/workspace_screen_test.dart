@@ -13,6 +13,7 @@ import 'package:boohtacord_desktop/src/services/composer_draft_memory.dart';
 import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:boohtacord_desktop/src/widgets/audio_device_check.dart';
+import 'package:boohtacord_desktop/src/widgets/participant_volume/reset.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -433,6 +434,13 @@ void main() {
       scrollable: audioScrollable,
     );
     expect(find.text('Подавление эха'), findsOneWidget);
+    final processingAdvanced = find.byKey(
+      const ValueKey('audio-processing-advanced'),
+    );
+    await tester.ensureVisible(processingAdvanced);
+    await tester.pumpAndSettle();
+    await tester.tap(processingAdvanced);
+    await tester.pumpAndSettle();
     expect(find.textContaining('Нативный SDK не сообщает'), findsOneWidget);
 
     await tester.dragUntilVisible(
@@ -539,20 +547,16 @@ void main() {
     );
     final shortcutsLeft = tester.getTopLeft(shortcuts).dx;
     expect(
-      tester.getTopLeft(find.text('Микрофон · Не назначено')).dx,
+      tester.getTopLeft(find.text('Микрофон').last).dx,
       closeTo(shortcutsLeft + 25, 1),
     );
-    expect(
-      tester
-          .getTopLeft(
-            find.ancestor(
-              of: find.text('Назначить').first,
-              matching: find.byType(OutlinedButton),
-            ),
-          )
-          .dx,
-      closeTo(shortcutsLeft + 25, 1),
+    final shortcutAssign = tester.getTopRight(
+      find.ancestor(
+        of: find.text('Назначить').first,
+        matching: find.byType(OutlinedButton),
+      ),
     );
+    expect(shortcutAssign.dx, greaterThan(shortcutsLeft + 500));
     await tester.scrollUntilVisible(
       processing,
       160,
@@ -565,6 +569,133 @@ void main() {
     state.dispose();
     debugDefaultTargetPlatformOverride = null;
   });
+
+  testWidgets('playback volume reset is separate from microphone processing', (
+    tester,
+  ) async {
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    for (final scenario in [
+      (TargetPlatform.macOS, const Size(1440, 900)),
+      (TargetPlatform.android, const Size(390, 844)),
+    ]) {
+      debugDefaultTargetPlatformOverride = scenario.$1;
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = scenario.$2;
+      final state = AppState(
+        _PortraitApi(),
+        audioDeviceLoader: () async => const [],
+      );
+      await state.initialize();
+      state.toggleWorkspacePanel(WorkspacePanel.audio);
+      await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+      await tester.pumpAndSettle();
+
+      final audioList = find.byKey(const ValueKey('audio-settings-list'));
+      final scrollable = find.descendant(
+        of: audioList,
+        matching: find.byType(Scrollable),
+      );
+      final playbackCard = find.byKey(
+        const ValueKey('audio-settings-playback-card'),
+      );
+      await tester.scrollUntilVisible(
+        playbackCard,
+        140,
+        scrollable: scrollable,
+      );
+
+      final processingCard = find.byKey(
+        const ValueKey('audio-settings-processing-card'),
+      );
+      final reset = find.byType(AudioVolumeReset);
+      expect(playbackCard, findsOneWidget);
+      expect(find.text('Воспроизведение'), findsOneWidget);
+      expect(
+        find.descendant(of: playbackCard, matching: reset),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: processingCard, matching: reset),
+        findsNothing,
+      );
+      expect(find.text('Сбросить настройки аудио'), findsOneWidget);
+      expect(find.text('Расширенные настройки и диагностика'), findsOneWidget);
+      expect(find.text('Диагностика качества голоса'), findsNothing);
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+    }
+    tester.view.reset();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets(
+    'audio processing keeps essentials visible and discloses advanced controls',
+    (tester) async {
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      for (final scenario in [
+        (TargetPlatform.macOS, const Size(1440, 900)),
+        (TargetPlatform.android, const Size(390, 844)),
+      ]) {
+        debugDefaultTargetPlatformOverride = scenario.$1;
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = scenario.$2;
+        final state = AppState(
+          _PortraitApi(),
+          audioDeviceLoader: () async => const [],
+        );
+        await state.initialize();
+        state.toggleWorkspacePanel(WorkspacePanel.audio);
+        await tester.pumpWidget(
+          MaterialApp(home: WorkspaceScreen(state: state)),
+        );
+        await tester.pumpAndSettle();
+
+        final audioScrollable = find.descendant(
+          of: find.byKey(const ValueKey('audio-settings-list')),
+          matching: find.byType(Scrollable),
+        );
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('audio-settings-processing-card')),
+          160,
+          scrollable: audioScrollable,
+        );
+        await tester.pumpAndSettle();
+
+        final advanced = find.byKey(
+          const ValueKey('audio-processing-advanced'),
+        );
+        expect(advanced, findsOneWidget);
+        expect(
+          find.text('Расширенные настройки и диагностика'),
+          findsOneWidget,
+        );
+        expect(
+          find.text('Автоматическая регулировка усиления'),
+          findsOneWidget,
+        );
+        expect(find.text('Подавление эха'), findsOneWidget);
+        expect(find.text('Громкость микрофона: 100%'), findsOneWidget);
+        expect(find.text('Шумоподавление'), findsNothing);
+        expect(find.text('Диагностика качества голоса'), findsNothing);
+
+        final processingBefore = state.audioProcessing;
+        await tester.tap(advanced);
+        await tester.pumpAndSettle();
+        expect(find.text('Шумоподавление'), findsOneWidget);
+        expect(find.text('Диагностика обработки'), findsOneWidget);
+        expect(find.text('Диагностика качества голоса'), findsOneWidget);
+        expect(state.audioProcessing, processingBefore);
+        expect(tester.takeException(), isNull);
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        state.dispose();
+      }
+      debugDefaultTargetPlatformOverride = null;
+      tester.view.reset();
+    },
+  );
 
   testWidgets('compact Design V2 audio cards preserve mobile control sizes', (
     tester,
@@ -635,6 +766,290 @@ void main() {
           )
           .height,
       50,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets(
+    'audio activation and VAD expose web-equivalent semantics at compact width',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      SharedPreferences.setMockInitialValues({});
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 568);
+      addTearDown(tester.view.reset);
+      final state = AppState(
+        _PortraitApi(),
+        audioDeviceLoader: () async => const [],
+      );
+      await state.initialize();
+      await state.setAudioActivationMode(AudioActivationMode.vad);
+      state.toggleWorkspacePanel(WorkspacePanel.audio);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(2)),
+              child: WorkspaceScreen(state: state),
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final audioScrollable = find.descendant(
+        of: find.byKey(const ValueKey('audio-settings-list')),
+        matching: find.byType(Scrollable),
+      );
+      final activationGroup = find.byKey(
+        const ValueKey('audio-activation-mode-group'),
+      );
+      await tester.scrollUntilVisible(
+        activationGroup,
+        140,
+        scrollable: audioScrollable,
+      );
+      expect(tester.getSemantics(activationGroup).label, 'Активация микрофона');
+      final voiceMode = tester.getSemantics(
+        find.byKey(const ValueKey('audio-activation-vad')),
+      );
+      expect(voiceMode.label, 'По голосу');
+      expect(voiceMode.flagsCollection.isButton, isTrue);
+      expect(voiceMode.flagsCollection.isSelected, Tristate.isTrue);
+
+      final pttMode = find.byKey(const ValueKey('audio-activation-ptt'));
+      await tester.ensureVisible(pttMode);
+      await tester.pumpAndSettle();
+      await tester.tap(pttMode);
+      await tester.pumpAndSettle();
+      expect(state.audioActivationMode, AudioActivationMode.ptt);
+      final pushToTalkMode = tester.getSemantics(
+        find.byKey(const ValueKey('audio-activation-ptt')),
+      );
+      expect(pushToTalkMode.label, 'По нажатию');
+      expect(pushToTalkMode.flagsCollection.isButton, isTrue);
+      expect(pushToTalkMode.flagsCollection.isSelected, Tristate.isTrue);
+      expect(
+        tester
+            .getSemantics(find.byKey(const ValueKey('audio-activation-vad')))
+            .flagsCollection
+            .isSelected,
+        Tristate.isFalse,
+      );
+
+      final vadSlider = find.byKey(const ValueKey('microphone-vad-threshold'));
+      await tester.scrollUntilVisible(
+        vadSlider,
+        140,
+        scrollable: audioScrollable,
+      );
+      final vadSemantics = find
+          .ancestor(of: vadSlider, matching: find.byType(Semantics))
+          .first;
+      expect(
+        tester.getSemantics(vadSemantics).label,
+        contains('Чувствительность'),
+      );
+      final vadControl = tester.widget<Slider>(vadSlider);
+      expect(vadControl.semanticFormatterCallback?.call(-50), '-50 dBFS');
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+      semantics.dispose();
+      debugDefaultTargetPlatformOverride = null;
+    },
+  );
+
+  testWidgets(
+    'large accessibility text keeps audio activation labels readable',
+    (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 568);
+      addTearDown(tester.view.reset);
+      final state = AppState(
+        _PortraitApi(),
+        audioDeviceLoader: () async => const [],
+      );
+      await state.initialize();
+      state.toggleWorkspacePanel(WorkspacePanel.audio);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(2.5)),
+              child: WorkspaceScreen(state: state),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final audioScrollable = find.descendant(
+        of: find.byKey(const ValueKey('audio-settings-list')),
+        matching: find.byType(Scrollable),
+      );
+      final activationGroup = find.byKey(
+        const ValueKey('audio-activation-mode-group'),
+      );
+      await tester.scrollUntilVisible(
+        activationGroup,
+        120,
+        scrollable: audioScrollable,
+      );
+
+      final selector = find.byKey(
+        const ValueKey('audio-settings-activation-segment'),
+      );
+      expect(tester.getSize(selector).height, greaterThan(50));
+      for (final option in [
+        (const ValueKey('audio-activation-vad'), 'По голосу'),
+        (const ValueKey('audio-activation-ptt'), 'По нажатию'),
+      ]) {
+        final label = find.descendant(
+          of: find.byKey(option.$1),
+          matching: find.text(option.$2),
+        );
+        expect(label, findsOneWidget);
+        expect(
+          tester.renderObject<RenderParagraph>(label).didExceedMaxLines,
+          isFalse,
+          reason: '${option.$2} should not be truncated at 2.5× text scale',
+        );
+      }
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+      debugDefaultTargetPlatformOverride = null;
+    },
+  );
+
+  testWidgets(
+    'audio settings remain scrollable in landscape and short windows',
+    (tester) async {
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      final scenarios = [
+        (TargetPlatform.android, const Size(852, 393)),
+        (TargetPlatform.macOS, const Size(1100, 520)),
+      ];
+      for (final scenario in scenarios) {
+        debugDefaultTargetPlatformOverride = scenario.$1;
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = scenario.$2;
+        final state = AppState(
+          _PortraitApi(),
+          audioDeviceLoader: () async => const [],
+        );
+        await state.initialize();
+        state.toggleWorkspacePanel(WorkspacePanel.audio);
+        await tester.pumpWidget(
+          MaterialApp(home: WorkspaceScreen(state: state)),
+        );
+        await tester.pumpAndSettle();
+
+        final audioScrollable = find.descendant(
+          of: find.byKey(const ValueKey('audio-settings-list')),
+          matching: find.byType(Scrollable),
+        );
+        final microphone = find.byKey(
+          const ValueKey('audio-device-control-Микрофон'),
+        );
+        final speaker = find.byKey(
+          const ValueKey('audio-device-control-Динамик'),
+        );
+        expect(microphone, findsOneWidget);
+        expect(speaker, findsOneWidget);
+        if (scenario.$1 == TargetPlatform.android) {
+          expect(
+            tester.getRect(microphone).bottom,
+            lessThanOrEqualTo(tester.getRect(speaker).top),
+          );
+        } else {
+          expect(
+            tester.getRect(microphone).right,
+            lessThanOrEqualTo(tester.getRect(speaker).left),
+          );
+        }
+        expect(tester.takeException(), isNull);
+
+        final activationGroup = find.byKey(
+          const ValueKey('audio-activation-mode-group'),
+        );
+        await tester.scrollUntilVisible(
+          activationGroup,
+          100,
+          scrollable: audioScrollable,
+        );
+        expect(activationGroup, findsOneWidget);
+        final playback = find.byKey(
+          const ValueKey('audio-settings-playback-card'),
+        );
+        await tester.scrollUntilVisible(
+          playback,
+          100,
+          scrollable: audioScrollable,
+        );
+        expect(playback, findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        state.dispose();
+      }
+      tester.view.reset();
+      debugDefaultTargetPlatformOverride = null;
+    },
+  );
+
+  testWidgets('desktop audio activation modes support keyboard navigation', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1100, 640);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      _PortraitApi(),
+      audioDeviceLoader: () async => const [],
+    );
+    await state.initialize();
+    state.toggleWorkspacePanel(WorkspacePanel.audio);
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    final voiceMode = find.byKey(const ValueKey('audio-activation-vad'));
+    final pushToTalkMode = find.byKey(const ValueKey('audio-activation-ptt'));
+    await tester.ensureVisible(voiceMode);
+    await tester.pumpAndSettle();
+    final voiceFocusFinder = find.descendant(
+      of: voiceMode,
+      matching: find.byType(Focus),
+    );
+    expect(voiceFocusFinder, findsWidgets);
+    final voiceFocus = tester.widget<Focus>(voiceFocusFinder.first).focusNode!;
+    voiceFocus.requestFocus();
+    await tester.pumpAndSettle();
+    expect(voiceFocus.hasFocus, isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(state.audioActivationMode, AudioActivationMode.ptt);
+    expect(
+      tester.getSemantics(pushToTalkMode).flagsCollection.isSelected,
+      Tristate.isTrue,
     );
     expect(tester.takeException(), isNull);
 
@@ -4117,9 +4532,17 @@ class _PublishedScreenState extends AppState {
 
 class _PortraitApi extends ApiClient {
   @override
-  Future<ChatMessage?> findSentText(String conversation,String client,String owner) async => null;
+  Future<ChatMessage?> findSentText(
+    String conversation,
+    String client,
+    String owner,
+  ) async => null;
   @override
-  Future<DirectChatMessage?> findSentDirect(String conversation,String client,String owner) async => null;
+  Future<DirectChatMessage?> findSentDirect(
+    String conversation,
+    String client,
+    String owner,
+  ) async => null;
   _PortraitApi({
     this.withHistory = false,
     this.historyCount = 1,

@@ -67,7 +67,7 @@ class VoiceHarness {
   VoiceHarness() {
     audio = AudioDeviceController(
       readRoom: () => owner.room,
-      loader: () async => [],
+      loader: () async => enumeratedDevices,
     );
     screen = ScreenShareController(
       api,
@@ -92,6 +92,7 @@ class VoiceHarness {
   final api = DelayedVoiceApi();
   final scope = SessionScope();
   final room = PendingVoiceRoom();
+  List<MediaDevice> enumeratedDevices = const [];
   late final AudioDeviceController audio;
   late final ScreenShareController screen;
   late final VoiceController owner;

@@ -1376,3 +1376,128 @@ visible in the supplied Windows screenshot. A widget regression checks
 Flutter package bump to `1.0.35+68` was synchronized with all native platform
 build identities at r49; native Windows visual acceptance remains pending —
 [QA-299](../evidence/flutter/qa299-windows-client-update-banner-responsive-2026-10-05-001.json).
+
+## Flutter noise-suppression runtime states (FV2-045)
+
+The Flutter audio settings now distinguish unverified/idle, waiting for capture,
+native-confirmed RNNoise activity, confirmed standard-engine fallback,
+unsupported processing and microphone-stopped error states. The UI no longer
+uses “Работает” for an unverified mode. RNNoise is called active only when the
+current request matches the native report, `effectiveMode` is `rnnoise`, at
+least one frame was processed and no native failure reason is present. A stale
+runtime report from the previous selected mode is hidden until the new request
+is confirmed. Apple’s coupled AEC/NS reason no longer claims standard fallback
+before capture commits it. Focused widget/native-state tests include compact
+320 px layout at 2× text scale; macOS/Android builds and physical native capture
+acceptance are recorded separately in
+[QA-304](../evidence/flutter/qa304-flutter-noise-suppression-runtime-states-2026-10-06-001.json).
+
+## Flutter desktop microphone route selection (FV2-052)
+
+Changing the microphone on macOS/Windows uses LiveKit's
+`Room.setAudioInputDevice`, which selects the native Audio Device Module route
+and updates the room defaults. With a published local microphone track, Flutter
+also updates the track's capture options so later processing restarts retain
+the selected ID. The connected-listener path (no local microphone track) uses
+the same native route and updates the defaults for later publishing without
+opening a capture. Desktop no longer relies on rebuilding a `getUserMedia`
+track, while Android/iOS keep their capture-restart path. Regressions assert
+the native `selectAudioInput` call, updated options, and unchanged capture
+count; native-device acceptance is tracked separately in
+[QA-311](../evidence/flutter/qa311-flutter-desktop-microphone-route-2026-10-06-001.json).
+
+The 2026-10-06 muted Mac listener follow-up confirms runtime device inventory
+changes from the system-only pre-join selector to two physical input choices
+after voice admission. HyperX was selected and restored to the system input;
+the microphone remained disabled and the temporary room session was closed.
+This was a UI/inventory check in an already running app whose build/source
+identity was not established at the time. A later live profile audit found that
+the running GUI reports `Версия 1.0`, while the source at that audit was
+`1.0.36 (69)`; source has since advanced to `1.0.37 (70)` and the open Mac
+binary has not been rechecked. The QA-315 observations therefore do not prove
+runtime behavior of the current binary. The UI check also does not verify that the native capture route changed;
+do not enable the microphone without explicit approval. The stale-runtime
+finding and current verification boundary are recorded in
+[QA-315](../evidence/flutter/qa315-macos-muted-listener-audio-route-2026-10-06-001.json)
+and [QA-316](../evidence/flutter/qa316-flutter-native-runtime-identity-audit-2026-10-06-001.json).
+
+Windows' native selector previously ignored the return value from
+`AudioDeviceModule::SetRecordingDevice`, allowing Flutter to persist a device
+selection even if the Windows audio module rejected the route. The native
+bridge now reports failed enumeration and route changes instead of returning
+success, with a C++ mapping regression attached to the Windows plugin build.
+LiveKit also updates its cached selected input only after the native method
+succeeds, so failure keeps its cache, room defaults and Flutter selection on
+the prior device. The Flutter regressions cover success, native rejection,
+enumeration failure, rollback and no extra microphone capture on Windows and
+macOS. Physical route acceptance and a Windows CMake build remain open —
+[QA-317](../evidence/flutter/qa317-windows-native-audio-route-result-2026-10-06-001.json).
+
+The availability follow-up observed Android 1.0.37 (2070) audio-settings
+navigation, device selectors and scrolling on the ARM64 emulator. The existing
+Mac debug app already listed both physical inputs before joining voice, unlike
+the earlier QA-315 observation. Hot-reload attachment did not establish a
+connection and later Mac UI actions left the screen unchanged, so neither
+current-source nor native-route acceptance is claimed. The app was not restarted
+and microphones remained off —
+[QA-318](../evidence/flutter/qa318-macos-android-audio-settings-runtime-2026-10-06-001.json).
+
+## Flutter audio settings feedback (FV2-046–047)
+
+Manual microphone gain remains visible and stored while AGC owns the live
+level; its control is disabled with an explanation and returns at the saved
+value when AGC is switched off. Speaker-check feedback is cleared whenever the
+selected output changes, and a delayed result from the previous output is
+discarded. Widget regressions cover both transitions without opening a
+microphone or changing a hardware route —
+[QA-305](../evidence/flutter/qa305-flutter-microphone-gain-agc-2026-10-06-001.json),
+[QA-306](../evidence/flutter/qa306-flutter-speaker-check-output-change-2026-10-06-001.json).
+On the Android API 35 emulator, release `1.0.35+2069` visually confirmed the
+saved manual value remains visible while AGC is enabled, the slider is disabled,
+and the automatic-control explanation is present. No setting or audio route was
+changed. Desktop visual acceptance remains open.
+
+## Flutter audio settings responsiveness and accessibility (FV2-048)
+
+At compact widths, the microphone activation choices remain horizontal at the
+normal text scale and stack vertically when enlarged text would otherwise clip
+their labels. Voice Activity Detection and Push to Talk are keyboard-focusable
+buttons with explicit selected state; sensitivity exposes its dBFS unit in the
+accessible value. Widget tests exercise enlarged text, compact width, short
+windows, landscape geometry, keyboard traversal, activation semantics and the
+sensitivity value. Workspace tests (77), the full Flutter suite (669), changed-
+file analysis, and macOS/Android Debug builds pass. Native VoiceOver/TalkBack
+acceptance is still pending — see
+[QA-313](../evidence/flutter/qa313-flutter-audio-settings-responsive-accessibility-2026-10-06-001.json).
+
+## Flutter desktop voice shortcut density (FV2-049)
+
+On desktop, each shortcut row keeps the action name on the left and places its
+current binding plus assign/clear controls on the right. Compact mobile layouts
+retain the existing vertical presentation. Desktop/mobile widget regressions,
+the workspace card geometry check, the full Flutter suite (670 tests), changed-
+file analysis/formatting, and macOS/Android arm64 Debug builds pass. Android API
+35 Release `1.0.35+2070` was installed in-place; a 1080×2400 screenshot confirms
+the compact audio settings and vertical shortcut rows remain unchanged. Live
+visual acceptance of the new desktop row on the current Mac process is still
+pending because that process does not support hot reload and was not restarted —
+see [QA-314](../evidence/flutter/qa314-flutter-shortcut-row-density-2026-10-06-001.json).
+The QA-316 snapshot's Mac GUI reported `Версия 1.0` while source then was
+`1.0.36 (69)`; source is now `1.0.37 (70)`, and current Mac visual acceptance
+remains open. Android API 35's `1.0.35+2070` screenshot was built from source
+revision `ca03c226`; production Flutter UI code is unchanged since then, so
+that historical Android visual acceptance remains applicable. ADB currently
+reports no connected emulator; QA-316's Accessibility Suite notification prompt
+is a historical observation — [QA-316](../evidence/flutter/qa316-flutter-native-runtime-identity-audit-2026-10-06-001.json).
+
+## Flutter playback volume reset placement (FV2-050)
+
+The per-device reset for remote participant and screen-share playback volume is
+now presented in its own “Воспроизведение” card, separate from microphone
+processing and its collapsed diagnostics. The existing reset callback, busy
+state, persistence and warning behavior are unchanged. Widget coverage checks
+the card relationship at desktop and compact widths and ensures the action stays
+available while advanced microphone processing is collapsed. Android API 35
+release visual acceptance confirms the section is distinct and legible at
+1080×2400; macOS Debug build passes, while the locked Mac prevented a live
+desktop screenshot — see [QA-312](../evidence/flutter/qa312-flutter-playback-volume-reset-placement-2026-10-06-001.json).

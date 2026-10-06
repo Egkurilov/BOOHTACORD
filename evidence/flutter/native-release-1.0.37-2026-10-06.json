@@ -1,0 +1,98 @@
+{
+  "id": "RELEASE-ANDROID-WINDOWS-2026-10-06-1.0.37",
+  "date": "2026-10-06",
+  "task": "Android and Windows direct releases 1.0.37",
+  "source_revision": "6c7119130ad6e28bf2ee81b00840c0e71c38e109",
+  "working_tree_changes": false,
+  "summary": "Published Android and Windows distributions from the same clean GitHub Actions checkout. Native build identities are synchronized at version 1.0.37+70 / release order 51. This is a version-only release; no Flutter product code changed relative to 1.0.36. The in-app client-update catalog was not modified.",
+  "checks": [
+    {
+      "name": "Client build contract verifier",
+      "command": "pwsh -NoProfile -File tools/verify/contracts/verify-contracts.ps1",
+      "result": "PASS",
+      "observation": "Contracts OK; Android, Windows, macOS and iOS build identities agree with Flutter version 1.0.37+70 / release order 51."
+    },
+    {
+      "name": "Client build identity tests",
+      "command": "python3 -m pytest -q tools/build/test_client_identity.py",
+      "result": "PASS",
+      "passed": 3,
+      "observation": "Build identity drives platform Dart defines and rejects pubspec drift."
+    },
+    {
+      "name": "Profile version widget tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/profile_screen_test.dart",
+      "result": "PASS",
+      "passed": 10,
+      "observation": "Profile version label stays synchronized with the package release version."
+    },
+    {
+      "name": "Hosted Android Release",
+      "run_id": 37481015772,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37481015772",
+      "result": "PASS",
+      "observation": "Flutter quality checks, Android Kotlin build-mode verification, signed split-APK build and release publication completed successfully."
+    },
+    {
+      "name": "Hosted Windows Release",
+      "run_id": 37481014811,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37481014811",
+      "result": "PASS",
+      "observation": "Windows quality checks, x64 distribution build and GitHub release publication completed successfully."
+    },
+    {
+      "name": "GitHub CI",
+      "run_id": 37481014950,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37481014950",
+      "result": "PASS",
+      "observation": "Master branch CI completed successfully for the version and client-build identity commit."
+    },
+    {
+      "name": "Automatic production deployment",
+      "run_id": 37482226051,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37482226051",
+      "result": "PASS",
+      "observation": "The client-build contract change triggered the repository's Build server → Deploy production workflow chain. The install job completed successfully for source revision 6c7119130ad6e28bf2ee81b00840c0e71c38e109. This was an automatic consequence of pushing the contract update."
+    }
+  ],
+  "releases": [
+    {
+      "platform": "android",
+      "tag": "android-v1.0.37",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/releases/tag/android-v1.0.37",
+      "assets": [
+        {"name": "BOOHTACORD-android-v1.0.37-arm64-v8a.apk", "bytes": 19844475},
+        {"name": "BOOHTACORD-android-v1.0.37-armeabi-v7a.apk", "bytes": 17658703},
+        {"name": "BOOHTACORD-android-v1.0.37-x86_64.apk", "bytes": 21200505},
+        {"name": "artifact-manifest.json", "bytes": 4091},
+        {"name": "SHA256SUMS", "bytes": 588},
+        {"name": "LICENSE-RNNoise.txt", "bytes": 1581},
+        {"name": "rnnoise-component.cdx.json", "bytes": 823}
+      ]
+    },
+    {
+      "platform": "windows",
+      "tag": "windows-v1.0.37",
+      "url": "https://github.com/Egkurilov/BOOHTACORD/releases/tag/windows-v1.0.37",
+      "assets": [
+        {"name": "BOOHTACORD-windows-v1.0.37-x64.zip", "bytes": 26278289},
+        {"name": "artifact-manifest.json", "bytes": 7931},
+        {"name": "SHA256SUMS", "bytes": 192}
+      ]
+    }
+  ],
+  "implementation": {
+    "version_commit": "6c7119130ad6e28bf2ee81b00840c0e71c38e109",
+    "files_changed": [
+      "clients/flutter/pubspec.yaml",
+      "clients/flutter/lib/src/app_version.dart",
+      "contracts/client-build.json"
+    ],
+    "client_update_catalog_changed": false,
+    "macos_release_attempted": false
+  },
+  "limitations": [
+    "GitHub release assets are available, but deploy/client-updates/catalog.json remains unchanged; in-app update offers were not promoted. macOS was not part of this release."
+  ],
+  "status": "PASS — Android and Windows GitHub Releases and all listed assets are published; release quality jobs passed."
+}
