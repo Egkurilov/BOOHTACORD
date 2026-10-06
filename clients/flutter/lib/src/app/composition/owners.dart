@@ -25,6 +25,7 @@ abstract class AppOwners extends ChangeNotifier {
     this.voiceRosterStaleTimeout = const Duration(seconds: 10),
     this.audioDeviceLoader,
     this.audioDeviceChanges,
+    this.audioDeviceBootstrap,
     this.voiceRoomFactory,
     NativeNotificationService? nativeNotifications,
   }) : nativeNotifications = nativeNotifications ?? NativeNotificationService();
@@ -34,6 +35,7 @@ abstract class AppOwners extends ChangeNotifier {
   final Duration voiceRosterStaleTimeout;
   final Future<List<MediaDevice>> Function()? audioDeviceLoader;
   final Stream<List<MediaDevice>>? audioDeviceChanges;
+  final Future<void> Function()? audioDeviceBootstrap;
   final Room Function(RoomOptions)? voiceRoomFactory;
   final NativeNotificationService nativeNotifications;
   late final SessionController session;

@@ -7,7 +7,7 @@ import '../services/client_telemetry.dart';
 import '../services/screen_share_quality.dart';
 
 class TracedAppState extends AppState {
-  TracedAppState(super.api) {
+  TracedAppState(super.api, {super.audioDeviceBootstrap}) {
     addListener(_watchVoiceReconnect);
   }
 

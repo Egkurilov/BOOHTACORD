@@ -17,8 +17,7 @@ void configureWorkspace(AppOwners app) {
     app.session.scope,
     effects: WorkspaceEffects(
       audioPanelOpened: () {
-        app.audioDevices.watch();
-        unawaited(app.audioDevices.refreshAudioDevices());
+        unawaited(app.audioDevices.bootstrap());
       },
       selectChannel: (channel) => app.conversation.loadChannelHistory(channel),
       openDirect: (direct) => app.conversation.loadDirectHistory(direct),

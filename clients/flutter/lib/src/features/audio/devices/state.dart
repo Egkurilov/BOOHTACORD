@@ -16,6 +16,7 @@ abstract class AudioDeviceState extends ChangeNotifier {
     this.readAccountId,
     Future<List<MediaDevice>> Function()? loader,
     this.changes,
+    this.nativeBootstrap,
     SessionScope? scope,
   }) : scope = scope ?? SessionScope(),
        loader = loader ?? enumerateAudioDevices;
@@ -30,6 +31,12 @@ abstract class AudioDeviceState extends ChangeNotifier {
   final String? Function()? readAccountId;
   final Future<List<MediaDevice>> Function() loader;
   final Stream<List<MediaDevice>>? changes;
+
+  /// Initializes the native audio device module before the first inventory.
+  ///
+  /// The callback is injected by the application so tests and non-desktop
+  /// clients can keep using the existing loader without touching WebRTC.
+  final Future<void> Function()? nativeBootstrap;
   Room? get room => readRoom();
   AudioPreferences? preferences;
   StreamSubscription<List<MediaDevice>>? subscription;

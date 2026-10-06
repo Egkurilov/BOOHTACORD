@@ -11,6 +11,7 @@ void configureMedia(AppOwners app) {
     readAccountId: () => app.session.user?.accountId,
     loader: app.audioDeviceLoader,
     changes: app.audioDeviceChanges,
+    nativeBootstrap: app.audioDeviceBootstrap,
   )..addListener(app.notifyListeners);
   app.screen = ScreenShareController(
     app.api,

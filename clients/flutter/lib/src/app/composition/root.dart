@@ -55,6 +55,7 @@ class AppState extends AppOwners
     super.voiceRosterStaleTimeout,
     super.audioDeviceLoader,
     super.audioDeviceChanges,
+    super.audioDeviceBootstrap,
     super.nativeNotifications,
     super.voiceRoomFactory,
   }) {
