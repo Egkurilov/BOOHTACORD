@@ -86,6 +86,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
+    - assets/branding/brand.png
     - assets/licenses/rnnoise.txt
     - assets/licenses/unicode-emoji.txt
     - assets/emoji/emoji_full_catalog.json

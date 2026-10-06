@@ -2159,17 +2159,15 @@ void main() {
     channelFocus.onShowFocusHighlight!(false);
     await tester.pump();
     expect(tester.widget<Visibility>(menuVisibility).visible, isFalse);
-    await tester.tap(find.byTooltip('Свернуть раздел Текстовые каналы'));
+    expect(find.byTooltip('Свернуть раздел Текстовые каналы'), findsNothing);
+    await tester.tap(find.text('ТЕКСТОВЫЕ КАНАЛЫ'));
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('workspace-channel-row:channel-1')),
       findsNothing,
     );
-    expect(
-      find.byTooltip('Развернуть раздел Текстовые каналы'),
-      findsOneWidget,
-    );
-    await tester.tap(find.byTooltip('Развернуть раздел Текстовые каналы'));
+    expect(find.byTooltip('Развернуть раздел Текстовые каналы'), findsNothing);
+    await tester.tap(find.text('ТЕКСТОВЫЕ КАНАЛЫ'));
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('workspace-channel-row:channel-1')),
