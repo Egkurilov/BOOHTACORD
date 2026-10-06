@@ -49,6 +49,14 @@ class _Participant implements LocalParticipant {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _EmptyParticipant implements LocalParticipant {
+  @override
+  LocalTrackPublication? getTrackPublicationBySource(TrackSource source) =>
+      null;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class _Room implements Room {
   _Room(LocalAudioTrack track)
     : localParticipant = _Participant(_Publication(track));
@@ -64,6 +72,15 @@ class _NativeRouteRoom extends Room {
       super();
 
   final LocalParticipant _participant;
+
+  @override
+  LocalParticipant? get localParticipant => _participant;
+}
+
+class _ListenerRoom extends Room {
+  _ListenerRoom() : super();
+
+  final LocalParticipant _participant = _EmptyParticipant();
 
   @override
   LocalParticipant? get localParticipant => _participant;
@@ -276,43 +293,83 @@ void main() {
     );
   }
 
-  test('active desktop input switch uses the native LiveKit route', () async {
-    final previousTarget = debugDefaultTargetPlatformOverride;
-    final track = await LocalAudioTrack.create(
-      const AudioCaptureOptions(deviceId: 'mic-1'),
+  for (final platform in [TargetPlatform.macOS, TargetPlatform.windows]) {
+    test(
+      'active desktop input switch uses the native LiveKit route on $platform',
+      () async {
+        final previousTarget = debugDefaultTargetPlatformOverride;
+        final track = await LocalAudioTrack.create(
+          const AudioCaptureOptions(deviceId: 'mic-1'),
+        );
+        addTearDown(track.dispose);
+        final room = _NativeRouteRoom(track);
+        addTearDown(room.dispose);
+        final preferences = await AudioPreferences.open('account-a');
+        final owner = AudioDeviceController(readRoom: () => room)
+          ..preferences = preferences
+          ..selectedAudioInputId = 'mic-1';
+        addTearDown(owner.dispose);
+        owner.applyAudioDevices(const [
+          MediaDevice('mic-1', 'First', 'audioinput', 'qa'),
+          MediaDevice('mic-2', 'Second', 'audioinput', 'qa'),
+        ]);
+        final capturesBeforeSelection = captures.length;
+
+        debugDefaultTargetPlatformOverride = platform;
+        try {
+          await owner.selectAudioInput('mic-2');
+        } finally {
+          debugDefaultTargetPlatformOverride = previousTarget;
+        }
+
+        expect(nativeCalls.where((call) => call.method == 'selectAudioInput'), [
+          isA<MethodCall>().having((call) => call.arguments, 'arguments', {
+            'deviceId': 'mic-2',
+          }),
+        ]);
+        expect(captures, hasLength(capturesBeforeSelection));
+        expect(track.currentOptions.deviceId, 'mic-2');
+        expect(room.roomOptions.defaultAudioCaptureOptions.deviceId, 'mic-2');
+        expect(owner.selectedAudioInputId, 'mic-2');
+        expect(owner.audioSettingsError, isNull);
+      },
     );
-    addTearDown(track.dispose);
-    final room = _NativeRouteRoom(track);
-    addTearDown(room.dispose);
-    final preferences = await AudioPreferences.open('account-a');
-    final owner = AudioDeviceController(readRoom: () => room)
-      ..preferences = preferences
-      ..selectedAudioInputId = 'mic-1';
-    addTearDown(owner.dispose);
-    owner.applyAudioDevices(const [
-      MediaDevice('mic-1', 'First', 'audioinput', 'qa'),
-      MediaDevice('mic-2', 'Second', 'audioinput', 'qa'),
-    ]);
-    final capturesBeforeSelection = captures.length;
 
-    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
-    try {
-      await owner.selectAudioInput('mic-2');
-    } finally {
-      debugDefaultTargetPlatformOverride = previousTarget;
-    }
+    test(
+      'connected listener switches the native route without opening a mic on $platform',
+      () async {
+        final previousTarget = debugDefaultTargetPlatformOverride;
+        final room = _ListenerRoom();
+        addTearDown(room.dispose);
+        final preferences = await AudioPreferences.open('account-a');
+        final owner = AudioDeviceController(readRoom: () => room)
+          ..preferences = preferences
+          ..selectedAudioInputId = 'mic-1';
+        addTearDown(owner.dispose);
+        owner.applyAudioDevices(const [
+          MediaDevice('mic-1', 'First', 'audioinput', 'qa'),
+          MediaDevice('mic-2', 'Second', 'audioinput', 'qa'),
+        ]);
 
-    expect(nativeCalls.where((call) => call.method == 'selectAudioInput'), [
-      isA<MethodCall>().having((call) => call.arguments, 'arguments', {
-        'deviceId': 'mic-2',
-      }),
-    ]);
-    expect(captures, hasLength(capturesBeforeSelection));
-    expect(track.currentOptions.deviceId, 'mic-2');
-    expect(room.roomOptions.defaultAudioCaptureOptions.deviceId, 'mic-2');
-    expect(owner.selectedAudioInputId, 'mic-2');
-    expect(owner.audioSettingsError, isNull);
-  });
+        debugDefaultTargetPlatformOverride = platform;
+        try {
+          await owner.selectAudioInput('mic-2');
+        } finally {
+          debugDefaultTargetPlatformOverride = previousTarget;
+        }
+
+        expect(nativeCalls.where((call) => call.method == 'selectAudioInput'), [
+          isA<MethodCall>().having((call) => call.arguments, 'arguments', {
+            'deviceId': 'mic-2',
+          }),
+        ]);
+        expect(captures, isEmpty);
+        expect(room.roomOptions.defaultAudioCaptureOptions.deviceId, 'mic-2');
+        expect(owner.selectedAudioInputId, 'mic-2');
+        expect(owner.audioSettingsError, isNull);
+      },
+    );
+  }
 
   test(
     'active input switch exposes busy state and ignores duplicate changes',

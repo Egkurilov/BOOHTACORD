@@ -2,9 +2,9 @@
   "id": "QA-311",
   "date": "2026-10-06",
   "task": "FV2-052 — Route active desktop microphone selection through LiveKit audio device module",
-  "source_revision": "3b685705",
+  "source_revision": "f8dea5d515f50ae892583a5dbcb758db07345688",
   "working_tree_changes": true,
-  "summary": "After the user reported that device choices appeared only after voice admission and changing the selected input did not work, inspection showed that the active LocalAudioTrack path rebuilt getUserMedia instead of switching the desktop LiveKit Audio Device Module route. Desktop now calls Room.setAudioInputDevice, updates the active track and room defaults, and resets native noise-suppression runtime state. Android/iOS retain the capture-restart path.",
+  "summary": "After the user reported that device choices appeared only after voice admission and changing the selected input did not work, inspection showed that the active LocalAudioTrack path rebuilt getUserMedia instead of switching the desktop LiveKit Audio Device Module route. Desktop now calls Room.setAudioInputDevice, updates active track or connected-room defaults, and resets native noise-suppression runtime state. Android/iOS retain the capture-restart path.",
   "checks": [
     {
       "name": "Regression before fix",
@@ -18,6 +18,27 @@
       "result": "PASS",
       "passed": 25,
       "observation": "The desktop test confirms native selectAudioInput(deviceId), updates both current track options and room defaults, and does not recapture. Android/iOS capture-restart, mute preservation, pending state, and rollback tests pass."
+    },
+    {
+      "name": "Connected listener route with no local microphone track",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart --plain-name 'connected listener switches the native route without opening a mic'",
+      "result": "PASS",
+      "passed": 2,
+      "observation": "On macOS and Windows, a connected Room without a local microphone publication forwards the selected device through FlutterWebRTC selectAudioInput, updates default capture options, and does not call getUserMedia."
+    },
+    {
+      "name": "Full audio-selection regression suite after listener-route coverage",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart",
+      "result": "PASS",
+      "passed": 14,
+      "observation": "Covers pre-join selection, connected listener and active-track routes on macOS/Windows, Android/iOS capture restart, output selection, pending state, rollback, and mute preservation."
+    },
+    {
+      "name": "Full Flutter suite after listener-route coverage",
+      "command": "cd clients/flutter && flutter test --no-pub --reporter compact",
+      "result": "PASS",
+      "passed": 673,
+      "observation": "All Flutter tests pass with connected-listener and active-track native-route regressions on both macOS and Windows."
     },
     {
       "name": "Audio selection and workspace UI suites",

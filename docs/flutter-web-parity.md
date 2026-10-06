@@ -1394,14 +1394,16 @@ acceptance are recorded separately in
 
 ## Flutter desktop microphone route selection (FV2-052)
 
-When a local microphone track exists, changing its device on macOS/Windows now
-uses LiveKit's `Room.setAudioInputDevice`, which selects the native Audio Device
-Module route and updates the room defaults. Flutter also updates the existing
-track's capture options so later processing restarts retain the selected ID.
-It no longer relies on rebuilding a `getUserMedia` track for desktop, while
-Android/iOS keep their capture-restart path. A regression asserts the native
-`selectAudioInput` call and unchanged capture count; native-device acceptance is
-tracked separately in
+Changing the microphone on macOS/Windows uses LiveKit's
+`Room.setAudioInputDevice`, which selects the native Audio Device Module route
+and updates the room defaults. With a published local microphone track, Flutter
+also updates the track's capture options so later processing restarts retain
+the selected ID. The connected-listener path (no local microphone track) uses
+the same native route and updates the defaults for later publishing without
+opening a capture. Desktop no longer relies on rebuilding a `getUserMedia`
+track, while Android/iOS keep their capture-restart path. Regressions assert
+the native `selectAudioInput` call, updated options, and unchanged capture
+count; native-device acceptance is tracked separately in
 [QA-311](../evidence/flutter/qa311-flutter-desktop-microphone-route-2026-10-06-001.json).
 
 ## Flutter audio settings feedback (FV2-046–047)
