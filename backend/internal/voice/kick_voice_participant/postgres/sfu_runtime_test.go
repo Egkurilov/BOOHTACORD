@@ -1,3 +1,5 @@
+//go:build tracing_runtime
+
 package kickvoiceparticipantpostgres
 
 import (

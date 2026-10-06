@@ -43,8 +43,8 @@ schemas. Browser test lasts about 125 seconds: do not edit Web source during Vit
 From backend:
 
 ```sh
-go test ./internal/observability/ingest_client_traces -run 'TestRuntimeRelay|TestRelayHealth|TestBrowserComponents|TestNativeSDK' -v
-go test ./internal/voice/kick_voice_participant/postgres -run 'TestCommittedCause|TestFailedTransaction|TestDurableWorkerRetry' -v
+go test -tags tracing_runtime ./internal/observability/ingest_client_traces -run 'TestRuntimeRelay|TestRelayHealth|TestBrowserComponents|TestNativeSDK' -v
+go test -tags tracing_runtime ./internal/voice/kick_voice_participant/postgres -run 'TestCommittedCause|TestFailedTransaction|TestDurableWorkerRetry' -v
 go test ./internal/realtime/connect_session ./internal/realtime/replay_event/postgres -v
 ```
 
@@ -60,7 +60,7 @@ within 20 seconds. The test requires accepted data to become queryable within 30
 Set that flag only during this scenario. Collector retry horizon is 30 seconds.
 
 For actual Collector outage: stop only `collector`, set
-TRACE_QA_EXPECT_COLLECTOR_OUTAGE=1 and run TestActualCollectorOutageReturnsBoundedUnavailable.
+TRACE_QA_EXPECT_COLLECTOR_OUTAGE=1 and run `go test -tags tracing_runtime ./internal/observability/ingest_client_traces -run TestActualCollectorOutageReturnsBoundedUnavailable`.
 It requires the actual endpoint to be unavailable and relay 503 within four seconds,
 with no acceptance receipt. Start `collector` again and rerun TestRuntimeRelay.
 This combines with client retry/queue tests; it does not prove physical media quality.
