@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:livekit_client/livekit_client.dart';
 
 import 'api.dart';
 
@@ -51,6 +52,42 @@ void main() {
     await joining;
     expect(h.room.disconnected, greaterThan(disconnectedAtLogout));
     expect(h.owner.voicePhase, VoicePhase.idle);
+    expect(h.room.localParticipant.enabled, isEmpty);
+  });
+
+  test('refreshes audio devices after a muted voice connection', () async {
+    final h = VoiceHarness();
+    addTearDown(h.dispose);
+    h.enumeratedDevices = const [
+      MediaDevice('default', 'System microphone', 'audioinput', null),
+      MediaDevice('default-output', 'System output', 'audiooutput', null),
+    ];
+    await h.audio.refreshAudioDevices();
+    expect(h.audio.audioInputDevices.single.deviceId, 'default');
+
+    h.enumeratedDevices = const [
+      MediaDevice('default', 'System microphone', 'audioinput', null),
+      MediaDevice('usb-mic', 'USB microphone', 'audioinput', null),
+      MediaDevice('default-output', 'System output', 'audiooutput', null),
+      MediaDevice('usb-headset', 'USB headset', 'audiooutput', null),
+    ];
+    expect(h.audio.audioInputDevices.single.deviceId, 'default');
+    expect(h.audio.audioOutputDevices.single.deviceId, 'default-output');
+    h.api.credential.complete(('lease', credential));
+    final joining = h.owner.joinVoice(channel, listenerOnly: true);
+    await Future<void>.delayed(Duration.zero);
+    expect(h.room.connectCalled, isTrue);
+    h.room.connecting.complete();
+    await joining;
+
+    expect(
+      h.audio.audioInputDevices.map((device) => device.deviceId),
+      containsAll(['default', 'usb-mic']),
+    );
+    expect(
+      h.audio.audioOutputDevices.map((device) => device.deviceId),
+      containsAll(['default-output', 'usb-headset']),
+    );
     expect(h.room.localParticipant.enabled, isEmpty);
   });
 }

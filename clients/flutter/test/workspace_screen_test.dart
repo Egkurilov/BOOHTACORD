@@ -619,7 +619,7 @@ void main() {
           findsOneWidget,
         );
         expect(find.text('Подавление эха'), findsOneWidget);
-        expect(find.text('Громкость микрофона: 100 %'), findsOneWidget);
+        expect(find.text('Громкость микрофона: 100%'), findsOneWidget);
         expect(find.text('Шумоподавление'), findsNothing);
         expect(find.text('Диагностика качества голоса'), findsNothing);
 
@@ -716,6 +716,80 @@ void main() {
     state.dispose();
     debugDefaultTargetPlatformOverride = null;
   });
+
+  testWidgets(
+    'audio activation and VAD expose web-equivalent semantics at compact width',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      SharedPreferences.setMockInitialValues({});
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 568);
+      addTearDown(tester.view.reset);
+      final state = AppState(
+        _PortraitApi(),
+        audioDeviceLoader: () async => const [],
+      );
+      await state.initialize();
+      await state.setAudioActivationMode(AudioActivationMode.vad);
+      state.toggleWorkspacePanel(WorkspacePanel.audio);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(2)),
+              child: WorkspaceScreen(state: state),
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final audioScrollable = find.descendant(
+        of: find.byKey(const ValueKey('audio-settings-list')),
+        matching: find.byType(Scrollable),
+      );
+      final activationGroup = find.byKey(
+        const ValueKey('audio-activation-mode-group'),
+      );
+      await tester.scrollUntilVisible(
+        activationGroup,
+        140,
+        scrollable: audioScrollable,
+      );
+      expect(tester.getSemantics(activationGroup).label, 'Активация микрофона');
+      final voiceMode = tester.getSemantics(
+        find.byKey(const ValueKey('audio-activation-vad')),
+      );
+      expect(voiceMode.label, 'По голосу');
+      expect(voiceMode.flagsCollection.isButton, isTrue);
+      expect(voiceMode.flagsCollection.isSelected, Tristate.isTrue);
+
+      final vadSlider = find.byKey(const ValueKey('microphone-vad-threshold'));
+      await tester.scrollUntilVisible(
+        vadSlider,
+        140,
+        scrollable: audioScrollable,
+      );
+      final vadSemantics = find
+          .ancestor(of: vadSlider, matching: find.byType(Semantics))
+          .first;
+      expect(
+        tester.getSemantics(vadSemantics).label,
+        contains('Чувствительность'),
+      );
+      final vadControl = tester.widget<Slider>(vadSlider);
+      expect(vadControl.semanticFormatterCallback?.call(-50), '-50 dBFS');
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+      semantics.dispose();
+      debugDefaultTargetPlatformOverride = null;
+    },
+  );
 
   testWidgets('Android audio settings configure PTT without a key binding', (
     tester,
@@ -4191,9 +4265,17 @@ class _PublishedScreenState extends AppState {
 
 class _PortraitApi extends ApiClient {
   @override
-  Future<ChatMessage?> findSentText(String conversation,String client,String owner) async => null;
+  Future<ChatMessage?> findSentText(
+    String conversation,
+    String client,
+    String owner,
+  ) async => null;
   @override
-  Future<DirectChatMessage?> findSentDirect(String conversation,String client,String owner) async => null;
+  Future<DirectChatMessage?> findSentDirect(
+    String conversation,
+    String client,
+    String owner,
+  ) async => null;
   _PortraitApi({
     this.withHistory = false,
     this.historyCount = 1,

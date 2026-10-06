@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:boohtacord_desktop/src/core/session/scope.dart';
@@ -10,8 +11,11 @@ void main() {
     final old = Completer<List<MediaDevice>>();
     final current = Completer<List<MediaDevice>>();
     var calls = 0;
-    final owner = AudioDeviceController(scope: scope, readRoom: () => null,
-        loader: () => calls++ == 0 ? old.future : current.future);
+    final owner = AudioDeviceController(
+      scope: scope,
+      readRoom: () => null,
+      loader: () => calls++ == 0 ? old.future : current.future,
+    );
     addTearDown(owner.dispose);
     final oldScan = owner.refreshAudioDevices();
     scope.begin();
@@ -25,5 +29,70 @@ void main() {
     await newScan;
     expect(owner.audioInputDevices.single.deviceId, 'new');
     expect(owner.audioDevicesLoading, isFalse);
+  });
+
+  test(
+    'a refresh requested after connect waits for the queued inventory',
+    () async {
+      final beforeConnect = Completer<List<MediaDevice>>();
+      final afterConnect = Completer<List<MediaDevice>>();
+      var connected = false;
+      var calls = 0;
+      final owner = AudioDeviceController(
+        readRoom: () => null,
+        loader: () {
+          calls++;
+          return connected ? afterConnect.future : beforeConnect.future;
+        },
+      );
+      addTearDown(owner.dispose);
+
+      final initialRefresh = owner.refreshAudioDevices();
+      connected = true;
+      var postConnectRefreshCompleted = false;
+      final postConnectRefresh = owner.refreshAudioDevices().then((_) {
+        postConnectRefreshCompleted = true;
+      });
+
+      expect(calls, 1);
+      expect(postConnectRefreshCompleted, isFalse);
+      beforeConnect.complete(const [
+        MediaDevice('system-input', 'System microphone', 'audioinput', null),
+      ]);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(calls, 2);
+      expect(postConnectRefreshCompleted, isFalse);
+      expect(owner.audioInputDevices.single.deviceId, 'system-input');
+      afterConnect.complete(const [
+        MediaDevice('usb-input', 'USB microphone', 'audioinput', null),
+      ]);
+      await Future.wait([initialRefresh, postConnectRefresh]);
+
+      expect(postConnectRefreshCompleted, isTrue);
+      expect(owner.audioInputDevices.single.deviceId, 'usb-input');
+      expect(owner.audioDevicesLoading, isFalse);
+    },
+  );
+
+  test('disposing during a queued refresh releases its waiter', () async {
+    final loading = Completer<List<MediaDevice>>();
+    final owner = AudioDeviceController(
+      readRoom: () => null,
+      loader: () => loading.future,
+    );
+
+    final initialRefresh = owner.refreshAudioDevices();
+    var queuedRefreshCompleted = false;
+    final queuedRefresh = owner.refreshAudioDevices().then((_) {
+      queuedRefreshCompleted = true;
+    });
+
+    owner.dispose();
+    await queuedRefresh;
+    expect(queuedRefreshCompleted, isTrue);
+
+    loading.complete(const []);
+    await initialRefresh;
   });
 }

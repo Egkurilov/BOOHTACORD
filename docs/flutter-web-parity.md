@@ -1377,8 +1377,44 @@ Flutter package bump to `1.0.35+68` was synchronized with all native platform
 build identities at r49; native Windows visual acceptance remains pending —
 [QA-299](../evidence/flutter/qa299-windows-client-update-banner-responsive-2026-10-05-001.json).
 
-## Flutter speaker-check feedback (FV2-047)
+## Flutter noise-suppression runtime states (FV2-045)
 
-Changing the selected output device clears the previous local speaker-check result.
-In-flight completions from the previous output are ignored, and the control remains
-busy until playback ends to avoid overlapping test tones. Widget regression and
+The Flutter audio settings now distinguish unverified/idle, waiting for capture,
+native-confirmed RNNoise activity, confirmed standard-engine fallback,
+unsupported processing and microphone-stopped error states. The UI no longer
+uses “Работает” for an unverified mode. RNNoise is called active only when the
+current request matches the native report, `effectiveMode` is `rnnoise`, at
+least one frame was processed and no native failure reason is present. A stale
+runtime report from the previous selected mode is hidden until the new request
+is confirmed. Apple’s coupled AEC/NS reason no longer claims standard fallback
+before capture commits it. Focused widget/native-state tests include compact
+320 px layout at 2× text scale; macOS/Android builds and physical native capture
+acceptance are recorded separately in
+[QA-304](../evidence/flutter/qa304-flutter-noise-suppression-runtime-states-2026-10-06-001.json).
+
+## Flutter desktop microphone route selection (FV2-052)
+
+When a local microphone track exists, changing its device on macOS/Windows now
+uses LiveKit's `Room.setAudioInputDevice`, which selects the native Audio Device
+Module route and updates the room defaults. Flutter also updates the existing
+track's capture options so later processing restarts retain the selected ID.
+It no longer relies on rebuilding a `getUserMedia` track for desktop, while
+Android/iOS keep their capture-restart path. A regression asserts the native
+`selectAudioInput` call and unchanged capture count; native-device acceptance is
+tracked separately in
+[QA-311](../evidence/flutter/qa311-flutter-desktop-microphone-route-2026-10-06-001.json).
+
+## Flutter audio settings feedback (FV2-046–047)
+
+Manual microphone gain remains visible and stored while AGC owns the live
+level; its control is disabled with an explanation and returns at the saved
+value when AGC is switched off. Speaker-check feedback is cleared whenever the
+selected output changes, and a delayed result from the previous output is
+discarded. Widget regressions cover both transitions without opening a
+microphone or changing a hardware route —
+[QA-305](../evidence/flutter/qa305-flutter-microphone-gain-agc-2026-10-06-001.json),
+[QA-306](../evidence/flutter/qa306-flutter-speaker-check-output-change-2026-10-06-001.json).
+On the Android API 35 emulator, release `1.0.35+2069` visually confirmed the
+saved manual value remains visible while AGC is enabled, the slider is disabled,
+and the automatic-control explanation is present. No setting or audio route was
+changed. Desktop visual acceptance remains open.

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/features/authorization/permissions/model.dart';
@@ -13,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart' show MediaDevice;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'notification_scope/fakes.dart';
 
 void main() {
@@ -642,11 +644,10 @@ void main() {
 
     final initialRefresh = state.refreshAudioDevices();
     await Future<void>.delayed(Duration.zero);
-    await state.refreshAudioDevices();
+    final queuedRefresh = state.refreshAudioDevices();
     firstScan.complete(const [
       MediaDevice('default-input', 'System default', 'audioinput', null),
     ]);
-    await initialRefresh;
     await Future<void>.delayed(Duration.zero);
 
     expect(scanCount, 2);
@@ -654,7 +655,7 @@ void main() {
       MediaDevice('usb-input', 'USB microphone', 'audioinput', null),
       MediaDevice('usb-output', 'USB headphones', 'audiooutput', null),
     ]);
-    await Future<void>.delayed(Duration.zero);
+    await Future.wait([initialRefresh, queuedRefresh]);
 
     expect(state.audioInputDevices.single.deviceId, 'usb-input');
     expect(state.audioOutputDevices.single.deviceId, 'usb-output');
@@ -776,31 +777,28 @@ void main() {
     },
   );
 
-  test(
-    'keeps text read cursor monotonic when equal-time requests finish out of order',
-    () async {
-      final api = _FakeApi(topology)..reverseEqualTimestampMessageIds = true;
-      final olderRequest = Completer<void>();
-      final newerRequest = Completer<void>();
-      api.textReadCursorGates['message-a'] = olderRequest;
-      api.textReadCursorGates['message-z'] = newerRequest;
-      final state = AppState(api);
-      addTearDown(state.dispose);
-      await state.initialize();
+  test('keeps text read cursor monotonic when equal-time requests finish out of order', () async {
+    final api = _FakeApi(topology)..reverseEqualTimestampMessageIds = true;
+    final olderRequest = Completer<void>();
+    final newerRequest = Completer<void>();
+    api.textReadCursorGates['message-a'] = olderRequest;
+    api.textReadCursorGates['message-z'] = newerRequest;
+    final state = AppState(api);
+    addTearDown(state.dispose);
+    await state.initialize();
 
-      final markOlder = state.markTextChannelRead(textChannel.id, 'message-a');
-      final markNewer = state.markTextChannelRead(textChannel.id, 'message-z');
-      expect(api.textReadAdvances, 2);
+    final markOlder = state.markTextChannelRead(textChannel.id, 'message-a');
+    final markNewer = state.markTextChannelRead(textChannel.id, 'message-z');
+    expect(api.textReadAdvances, 2);
 
-      newerRequest.complete();
-      await markNewer;
-      olderRequest.complete();
-      await markOlder;
-      await state.markTextChannelRead(textChannel.id, 'message-z');
+    newerRequest.complete();
+    await markNewer;
+    olderRequest.complete();
+    await markOlder;
+    await state.markTextChannelRead(textChannel.id, 'message-z');
 
-      expect(api.textReadAdvances, 2);
-    },
-  );
+    expect(api.textReadAdvances, 2);
+  });
 
   test('adds a server-confirmed message to the conversation', () async {
     final api = _FakeApi(topology);
@@ -1014,8 +1012,7 @@ void main() {
   );
 
   test('orders equal-timestamp text messages by id like web', () async {
-    final api = _FakeApi(topology)
-      ..reverseEqualTimestampMessageIds = true;
+    final api = _FakeApi(topology)..reverseEqualTimestampMessageIds = true;
     final state = AppState(api);
     addTearDown(state.dispose);
     await state.initialize();
@@ -1385,9 +1382,17 @@ void main() {
 
 class _FakeApi extends ApiClient {
   @override
-  Future<ChatMessage?> findSentText(String conversation,String client,String owner) async => null;
+  Future<ChatMessage?> findSentText(
+    String conversation,
+    String client,
+    String owner,
+  ) async => null;
   @override
-  Future<DirectChatMessage?> findSentDirect(String conversation,String client,String owner) async => null;
+  Future<DirectChatMessage?> findSentDirect(
+    String conversation,
+    String client,
+    String owner,
+  ) async => null;
   _FakeApi(
     this.value, {
     this.voiceFailure,
@@ -1444,7 +1449,13 @@ class _FakeApi extends ApiClient {
 
   @override
   bool get realtimeEnabled => false;
-  @override Future<PermissionSnapshot> loadPermissions() async => PermissionSnapshot(accountId: 'account-1', role: GuildRole.member, revision: 1, values: {for (final permission in GuildPermission.values) permission: true});
+  @override
+  Future<PermissionSnapshot> loadPermissions() async => PermissionSnapshot(
+    accountId: 'account-1',
+    role: GuildRole.member,
+    revision: 1,
+    values: {for (final permission in GuildPermission.values) permission: true},
+  );
 
   @override
   Future<void> initialize() async => initializationGate?.future;

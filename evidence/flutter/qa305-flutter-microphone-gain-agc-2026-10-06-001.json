@@ -1,0 +1,67 @@
+{
+  "id": "QA-305",
+  "date": "2026-10-06",
+  "task": "FV2-046 — Flutter microphone gain presentation while AGC is enabled",
+  "source_revision": "3b685705",
+  "working_tree_changes": true,
+  "summary": "Added a dedicated widget regression for manual microphone gain while AGC is enabled. The existing UI preserves and displays the saved value, explains that AGC owns the live level, disables the manual slider, and restores the same saved value as editable when AGC is turned off.",
+  "checks": [
+    {
+      "name": "AGC/manual gain widget regression",
+      "command": "cd clients/flutter && flutter test --no-pub test/microphone_gain_agc_widget_test.dart",
+      "result": "PASS",
+      "passed": 1,
+      "observation": "With a saved 173% manual gain, slider is disabled and explanatory text is visible under AGC; after AGC is disabled, slider remains at 173%, is enabled, and updates the value to 145%. No audio route or microphone capture is involved."
+    },
+    {
+      "name": "Changed-test analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub test/microphone_gain_agc_widget_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Dart formatting",
+      "command": "cd clients/flutter && dart format --output=none --set-exit-if-changed test/microphone_gain_agc_widget_test.dart",
+      "result": "PASS"
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 665,
+      "observation": "The full suite includes the new manual-gain/AGC regression."
+    },
+    {
+      "name": "Android API 35 audio settings visual acceptance",
+      "command": "Build and install arm64 Release 1.0.35+2069 with adb install -r; inspect audio settings at 1080x2400",
+      "result": "PASS",
+      "observation": "Installed in place over 1.0.35+2068 with matching signing certificate; session/data remained available. In the live settings screen AGC is enabled, the saved manual gain (100%) remains visible, its slider is disabled, and the automatic-control explanation is shown. No setting was toggled and no microphone capture or route switch was performed."
+    },
+    {
+      "name": "Current-source macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub --quiet",
+      "result": "PASS",
+      "observation": "Built the macOS application from the current working tree without launching/restarting it."
+    },
+    {
+      "name": "Desktop audio settings visual acceptance",
+      "result": "NOT_RUN",
+      "observation": "The current macOS app does not expose Flutter VM Service, so it was not restarted to avoid a Keychain prompt; Windows runtime visual acceptance is also pending."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/widgets/microphone_controls/control.dart",
+      "clients/flutter/test/microphone_gain_agc_widget_test.dart",
+      "backlog/FRONTEND_TODO.md",
+      "evidence/flutter/qa305-flutter-microphone-gain-agc-2026-10-06-001.json"
+    ],
+    "product_ui_changed": true,
+    "web_or_api_changed": false,
+    "microphone_capture_or_audio_route_changed": false
+  },
+  "limitations": [
+    "Android visual acceptance is recorded; FV2-046 remains open for desktop (macOS/Windows) visual acceptance."
+  ],
+  "status": "PARTIAL — automated UI-state behavior and Android release visual acceptance PASS; desktop visual acceptance remains NOT_RUN."
+}

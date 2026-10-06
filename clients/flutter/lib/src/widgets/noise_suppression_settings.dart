@@ -21,22 +21,137 @@ class NoiseSuppressionSettings extends StatelessWidget {
     _ => 'Неизвестно',
   };
   static String reason(String? reason) => switch (reason) {
-    'platform-aec-ns-coupled' => 'На этой платформе шумоподавление связано с эхоподавлением. Используется стандартная обработка.',
+    'platform-aec-ns-coupled' =>
+      'На этой платформе нативное шумоподавление связано с эхоподавлением.',
     'hardware-noise-suppression-active' => 'Аппаратный шумодав уже активен.',
     'unsupported-audio-format' =>
       'Формат микрофона не поддерживается фильтром.',
     'invalid-audio-samples' => 'Аудиопроцессор получил некорректные данные.',
     'browser-recovery-failed' || 'rollback-failed' =>
       'Не удалось восстановить микрофон. Отправка звука выключена.',
+    'input-switch-failed' =>
+      'Не удалось переключить микрофон. Он отключён до восстановления.',
     'unsupported' => 'Нативный фильтр недоступен.',
+    'processor-unavailable' => 'Нативный фильтр недоступен.',
     'awaiting-audio' => 'Ожидаем аудио от микрофона.',
     null || '' => '',
     _ => 'Ошибка аудиофильтра.',
   };
+
+  static bool _requestMatches(
+    NativeNoiseSuppressionState runtime,
+    NoiseSuppressionMode requestedMode,
+  ) => runtime.requestedMode == requestedMode;
+
+  static bool _rnnoiseConfirmed(
+    NativeNoiseSuppressionState runtime,
+    NoiseSuppressionMode requestedMode,
+  ) =>
+      _requestMatches(runtime, requestedMode) &&
+      requestedMode == NoiseSuppressionMode.rnnoise &&
+      runtime.status == 'active' &&
+      runtime.effectiveMode == 'rnnoise' &&
+      runtime.processedFrames > 0 &&
+      (runtime.failureReason == null || runtime.failureReason!.isEmpty);
+
+  static String _runtimeTitle(
+    NativeNoiseSuppressionState runtime,
+    NoiseSuppressionMode requestedMode,
+  ) {
+    if (!_requestMatches(runtime, requestedMode)) {
+      return 'Ожидание подтверждения настройки';
+    }
+    return switch (runtime.status) {
+      'active' =>
+        _rnnoiseConfirmed(runtime, requestedMode)
+            ? 'RNNoise активен'
+            : 'Обработка не подтверждена',
+      'initializing' => 'Ожидание аудиопотока',
+      'fallback' =>
+        runtime.effectiveMode == 'browser'
+            ? 'Стандартная обработка включена'
+            : 'Резервный режим не подтверждён',
+      'unsupported' => 'RNNoise недоступен',
+      'error' => 'Обработка микрофона приостановлена',
+      'idle' => 'Состояние не проверено',
+      _ => 'Состояние неизвестно',
+    };
+  }
+
+  static String _runtimeDetail(
+    NativeNoiseSuppressionState runtime,
+    NoiseSuppressionMode requestedMode,
+  ) {
+    if (!_requestMatches(runtime, requestedMode)) {
+      return 'Отчёт относится к предыдущему режиму; активность нового режима пока не подтверждена.';
+    }
+    return switch (runtime.status) {
+      'active' =>
+        _rnnoiseConfirmed(runtime, requestedMode)
+            ? 'Нативный процессор подтвердил обработку ${runtime.processedFrames} кадров.'
+            : 'Текущие данные не подтверждают активную обработку.',
+      'initializing' =>
+        runtime.failureReason == 'awaiting-audio'
+            ? 'Первые обработанные кадры ещё не получены.'
+            : 'Режим не будет считаться активным до подтверждения обработанных кадров.',
+      'fallback' =>
+        runtime.effectiveMode == 'browser'
+            ? 'Нативный runtime сообщает о стандартной обработке вместо RNNoise.'
+            : 'Нативный runtime не подтвердил, какой режим применяется.',
+      'unsupported' =>
+        runtime.effectiveMode == 'browser'
+            ? 'RNNoise недоступен; runtime сообщает о стандартном режиме.'
+            : 'RNNoise недоступен; применение резервного режима не подтверждено.',
+      'error' => 'Отправка микрофона отключена до восстановления обработки.',
+      'idle' => 'Работа фильтра ещё не проверена аудиокадрами.',
+      _ => 'Не удалось определить режим по данным нативного runtime.',
+    };
+  }
+
+  static IconData _runtimeIcon(
+    NativeNoiseSuppressionState runtime,
+    NoiseSuppressionMode requestedMode,
+  ) {
+    if (!_requestMatches(runtime, requestedMode)) return Icons.sync;
+    return switch (runtime.status) {
+      'active' when _rnnoiseConfirmed(runtime, requestedMode) =>
+        Icons.check_circle_outline,
+      'initializing' => Icons.hourglass_top,
+      'fallback' => Icons.swap_horiz,
+      'unsupported' || 'error' => Icons.error_outline,
+      'idle' => Icons.help_outline,
+      _ => Icons.info_outline,
+    };
+  }
+
+  static Color _runtimeColor(
+    ColorScheme colors,
+    NativeNoiseSuppressionState runtime,
+    NoiseSuppressionMode requestedMode,
+  ) {
+    if (!_requestMatches(runtime, requestedMode)) {
+      return colors.onSurfaceVariant;
+    }
+    return switch (runtime.status) {
+      'active' when _rnnoiseConfirmed(runtime, requestedMode) =>
+        colors.tertiary,
+      'initializing' || 'fallback' => colors.primary,
+      'unsupported' || 'error' => colors.error,
+      _ => colors.onSurfaceVariant,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final compact =
         MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint;
+    final colors = Theme.of(context).colorScheme;
+    final requestedMode = processing.noiseSuppressionMode;
+    final runtimeTitle = _runtimeTitle(runtime, requestedMode);
+    final runtimeDetail = _runtimeDetail(runtime, requestedMode);
+    final requestMatches = _requestMatches(runtime, requestedMode);
+    final reasonText = requestMatches ? reason(runtime.failureReason) : '';
+    final statusColor = _runtimeColor(colors, runtime, requestedMode);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -83,26 +198,81 @@ class NoiseSuppressionSettings extends StatelessWidget {
           },
         ),
         const SizedBox(height: 8),
-        Text(
-          'Выбрано: ${label(processing.noiseSuppressionMode.name)}. Работает: ${label(runtime.effectiveMode)}.',
+        Text('Запрошено: ${label(processing.noiseSuppressionMode.name)}.'),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: statusColor.withAlpha(28),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Semantics(
+            key: const ValueKey('noise-suppression-runtime-status'),
+            container: true,
+            liveRegion: true,
+            label: [
+              runtimeTitle,
+              runtimeDetail,
+              if (reasonText.isNotEmpty) reasonText,
+            ].join('. '),
+            child: ExcludeSemantics(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    _runtimeIcon(runtime, requestedMode),
+                    color: statusColor,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          runtimeTitle,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: statusColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(runtimeDetail),
+                        if (reasonText.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(reasonText),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-        if (runtime.status == 'initializing')
-          const Text('Фильтр ожидает первые обработанные кадры.'),
-        if (reason(runtime.failureReason).isNotEmpty)
-          Text(reason(runtime.failureReason)),
         ExpansionTile(
           title: const Text('Диагностика обработки'),
           children: [
             Text(
-              'Статус: ${runtime.status}; обработано кадров: ${runtime.processedFrames}; fallback: ${runtime.fallbackFrames}.',
+              requestMatches
+                  ? 'Состояние: $runtimeTitle; обработано кадров: ${runtime.processedFrames}; резервных кадров: ${runtime.fallbackFrames}.'
+                  : 'Состояние: $runtimeTitle.',
             ),
-            if (runtime.sampleRate != null)
+            if (requestMatches)
+              Text('Нативный отчёт о режиме: ${label(runtime.effectiveMode)}.'),
+            if (requestMatches &&
+                runtime.sampleRate != null &&
+                runtime.sampleRate! > 0 &&
+                runtime.channels != null &&
+                runtime.channels! > 0)
               Text(
-                'PCM: ${runtime.sampleRate} Гц; каналы: ${runtime.channels ?? 0}.',
+                'PCM: ${runtime.sampleRate} Гц; каналы: ${runtime.channels}.',
               ),
-            const Text(
-              'Модель RNNoise: rnnoise-stock-v0.1. Время инициализации нативного DSP: недоступно.',
-            ),
+            if (_rnnoiseConfirmed(runtime, requestedMode))
+              const Text(
+                'Модель RNNoise: rnnoise-stock-v0.1. Время инициализации нативного DSP: недоступно.',
+              ),
             const Text(
               'Capture AEC/AGC остаются независимыми. Нативный SDK не подтверждает акустическое качество.',
             ),

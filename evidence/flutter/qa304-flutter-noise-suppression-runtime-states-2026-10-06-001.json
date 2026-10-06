@@ -1,0 +1,63 @@
+{
+  "id": "QA-304",
+  "date": "2026-10-06",
+  "task": "FV2-045 — Flutter truthful noise suppression runtime states",
+  "source_revision": "06ad8505",
+  "working_tree_changes": true,
+  "summary": "Flutter now distinguishes waiting, native-confirmed RNNoise activity, standard fallback, unsupported processing, and capture error without presenting a requested mode as an active result. Runtime output is accepted only when it matches the current request and reports processed frames without a failure reason.",
+  "checks": [
+    {
+      "name": "Noise-suppression settings and native-state regressions",
+      "command": "cd clients/flutter && flutter test --no-pub test/noise_suppression_settings_test.dart test/native_noise_suppression_test.dart",
+      "result": "PASS",
+      "passed": 14,
+      "observation": "Covers idle/initializing, confirmed active frames, stale request mismatch, fallback, unsupported, coupled Apple AEC/NS, live error status, and compact 320 px layout with 2x text scale."
+    },
+    {
+      "name": "Full Flutter test suite",
+      "command": "cd clients/flutter && flutter test --no-pub",
+      "result": "PASS",
+      "passed": 659
+    },
+    {
+      "name": "Changed Flutter source analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/features/audio/devices/selection.dart lib/src/widgets/noise_suppression_settings.dart lib/src/features/voice/admission/join.dart test/audio_devices/input_selection_probe_test.dart test/noise_suppression_settings_test.dart test/native_noise_suppression_test.dart test/voice_scope/admission_test.dart test/voice_scope/fakes.dart",
+      "result": "PASS",
+      "observation": "No issues found across all eight changed Dart files."
+    },
+    {
+      "name": "Dart formatting",
+      "command": "cd clients/flutter && dart format --output=none --set-exit-if-changed <changed Dart files>",
+      "result": "PASS"
+    },
+    {
+      "name": "macOS Debug build",
+      "command": "cd clients/flutter && flutter build macos --debug --no-pub",
+      "result": "PASS"
+    },
+    {
+      "name": "Android ARM64 Debug build",
+      "command": "cd clients/flutter && flutter build apk --debug --no-pub --target-platform android-arm64",
+      "result": "PASS"
+    },
+    {
+      "name": "Native microphone capture and acoustic acceptance",
+      "result": "NOT_RUN",
+      "observation": "No live microphone capture or listening test was performed. Hardware/runtime confirmation remains separate from the automated state-machine and widget regressions."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/widgets/noise_suppression_settings.dart",
+      "clients/flutter/test/noise_suppression_settings_test.dart",
+      "clients/flutter/test/native_noise_suppression_test.dart",
+      "docs/flutter-web-parity.md",
+      "backlog/FRONTEND_TODO.md"
+    ],
+    "web_or_api_changed": false
+  },
+  "limitations": [
+    "Native mic capture, hardware processing confirmation, and acoustic listening acceptance remain NOT_RUN."
+  ],
+  "status": "PARTIAL — source, tests, analysis, and macOS/Android Debug builds pass; native capture and acoustic acceptance remain open."
+}

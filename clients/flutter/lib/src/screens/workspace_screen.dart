@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -1860,9 +1861,15 @@ class _Header extends StatelessWidget {
       width: compact ? 44 : 48,
       height: compact ? 44 : 48,
     );
+    final scaledHeaderTextHeight =
+        MediaQuery.textScalerOf(context).scale(16) * 1.4 +
+        MediaQuery.textScalerOf(context).scale(12) * 1.4;
     return SizedBox(
       key: const ValueKey('workspace-header'),
-      height: compact ? GcLayout.headerMobileHeight : GcLayout.headerHeight,
+      height: math.max(
+        compact ? GcLayout.headerMobileHeight : GcLayout.headerHeight,
+        scaledHeaderTextHeight + 8,
+      ),
       child: DecoratedBox(
         decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: GcColors.border)),
@@ -2905,7 +2912,19 @@ class _MessageRow extends StatelessWidget {
         .where((value) => value.id == message.authorId)
         .firstOrNull;
     final authorName = member?.displayName ?? message.authorId;
-    if(message.kind=='SYSTEM_WELCOME') return SystemWelcomeMessage(message:message,displayName:member?.displayName??'Участник',onDelete:state.user?.isAdmin==true?()async{if(await _confirmDelete(context))await state.deleteText(message);}:null);
+    if (message.kind == 'SYSTEM_WELCOME') {
+      return SystemWelcomeMessage(
+        message: message,
+        displayName: member?.displayName ?? 'Участник',
+        onDelete: state.user?.isAdmin == true
+            ? () async {
+                if (await _confirmDelete(context)) {
+                  await state.deleteText(message);
+                }
+              }
+            : null,
+      );
+    }
     final time =
         '${message.createdAt.hour.toString().padLeft(2, '0')}:${message.createdAt.minute.toString().padLeft(2, '0')}';
     return Row(
@@ -3038,9 +3057,15 @@ class _MessageRow extends StatelessWidget {
                 )
               else
                 FormattedMessageBody(body: message.body, color: GcColors.text),
-              DeliveryStatus(status:message.sendStatus,busy:state.sending,
-                retryBlocked:state.conversation.blockedSendRetries.contains(message.clientMessageId),
-                onRetry:onRetry,onDiscard:()=>state.deleteText(message)),
+              DeliveryStatus(
+                status: message.sendStatus,
+                busy: state.sending,
+                retryBlocked: state.conversation.blockedSendRetries.contains(
+                  message.clientMessageId,
+                ),
+                onRetry: onRetry,
+                onDiscard: () => state.deleteText(message),
+              ),
               if (!message.deleted &&
                   message.sendStatus == null &&
                   message.attachments.isNotEmpty)
@@ -3121,7 +3146,7 @@ class _SearchContextMessage {
     required this.deleted,
     required this.attachments,
     this.editedAt,
-    this.messageKind='USER',
+    this.messageKind = 'USER',
   });
   final String messageKind;
   final String id;
@@ -4040,13 +4065,18 @@ class _WorkspaceSearchPanelState extends State<_WorkspaceSearchPanel> {
                                         ),
                                       ),
                                       const SizedBox(height: 8),
-                                      message.messageKind=='SYSTEM_WELCOME'?SystemWelcomeContent(displayName:author,body:message.body):FormattedMessageBody(
-                                        body: message.body,
-                                        color: GcColors.text,
-                                        fontSize: 14,
-                                        lineHeight: 20 / 14,
-                                        searchTerm: _activeQuery,
-                                      ),
+                                      message.messageKind == 'SYSTEM_WELCOME'
+                                          ? SystemWelcomeContent(
+                                              displayName: author,
+                                              body: message.body,
+                                            )
+                                          : FormattedMessageBody(
+                                              body: message.body,
+                                              color: GcColors.text,
+                                              fontSize: 14,
+                                              lineHeight: 20 / 14,
+                                              searchTerm: _activeQuery,
+                                            ),
                                     ],
                                   ),
                                 ),
@@ -4097,7 +4127,7 @@ class _SearchMessageContextState extends State<_SearchMessageContext> {
         : widget.state.searchContextTextMessages
               .map(
                 (message) => _SearchContextMessage(
-                  messageKind:message.kind,
+                  messageKind: message.kind,
                   id: message.id,
                   authorId: message.authorId,
                   body: message.body,
@@ -4221,7 +4251,15 @@ class _SearchMessageContextState extends State<_SearchMessageContext> {
                           ),
                         )
                       else ...[
-                        message.messageKind=='SYSTEM_WELCOME'?SystemWelcomeContent(displayName:authorName,body:body):FormattedMessageBody(body: body, color: GcColors.text),
+                        message.messageKind == 'SYSTEM_WELCOME'
+                            ? SystemWelcomeContent(
+                                displayName: authorName,
+                                body: body,
+                              )
+                            : FormattedMessageBody(
+                                body: body,
+                                color: GcColors.text,
+                              ),
                         if (attachments.isNotEmpty && conversationId != null)
                           MessageAttachmentList(
                             state: widget.state,
@@ -4791,9 +4829,18 @@ class _DirectConversationState extends State<_DirectConversation> {
                                           fontSize: 14,
                                           lineHeight: 1.4,
                                         ),
-                                      DeliveryStatus(status:message.sendStatus,busy:widget.state.sending,
-                                        retryBlocked:widget.state.conversation.blockedSendRetries.contains(message.clientMessageId),
-                                        onRetry:()=>_retry(message),onDiscard:()=>widget.state.deleteDirect(message)),
+                                      DeliveryStatus(
+                                        status: message.sendStatus,
+                                        busy: widget.state.sending,
+                                        retryBlocked: widget
+                                            .state
+                                            .conversation
+                                            .blockedSendRetries
+                                            .contains(message.clientMessageId),
+                                        onRetry: () => _retry(message),
+                                        onDiscard: () =>
+                                            widget.state.deleteDirect(message),
+                                      ),
                                       if (!message.deleted &&
                                           message.sendStatus == null &&
                                           message.attachments.isNotEmpty)
@@ -6903,11 +6950,17 @@ class _AudioSettingsScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _AudioActivationSelector(
-                            compact: compact,
-                            value: state.audioActivationMode,
-                            onChanged: (mode) =>
-                                unawaited(state.setAudioActivationMode(mode)),
+                          Semantics(
+                            key: const ValueKey('audio-activation-mode-group'),
+                            container: true,
+                            explicitChildNodes: true,
+                            label: 'Активация микрофона',
+                            child: _AudioActivationSelector(
+                              compact: compact,
+                              value: state.audioActivationMode,
+                              onChanged: (mode) =>
+                                  unawaited(state.setAudioActivationMode(mode)),
+                            ),
                           ),
                           if (!state.usesTouchPushToTalk) ...[
                             const SizedBox(height: 12),
@@ -7187,26 +7240,28 @@ class _AudioActivationSelector extends StatelessWidget {
         button: true,
         selected: selected,
         label: label,
-        child: Material(
-          color: selected ? GcColors.accent : Colors.transparent,
-          borderRadius: BorderRadius.circular(GcRadii.sm),
-          child: InkWell(
-            key: key,
+        child: ExcludeSemantics(
+          child: Material(
+            color: selected ? GcColors.accent : Colors.transparent,
             borderRadius: BorderRadius.circular(GcRadii.sm),
-            onTap: () => onChanged(mode),
-            child: SizedBox(
-              height: compact ? 40 : 36,
-              child: Center(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: selected
-                        ? GcColors.onAccent
-                        : GcColors.textSecondary,
-                    fontSize: GcTypography.body,
-                    fontWeight: GcTypography.medium,
+            child: InkWell(
+              key: key,
+              borderRadius: BorderRadius.circular(GcRadii.sm),
+              onTap: () => onChanged(mode),
+              child: SizedBox(
+                height: compact ? 40 : 36,
+                child: Center(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: selected
+                          ? GcColors.onAccent
+                          : GcColors.textSecondary,
+                      fontSize: GcTypography.body,
+                      fontWeight: GcTypography.medium,
+                    ),
                   ),
                 ),
               ),

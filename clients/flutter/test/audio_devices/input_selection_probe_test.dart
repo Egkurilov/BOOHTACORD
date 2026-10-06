@@ -58,6 +58,17 @@ class _Room implements Room {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _NativeRouteRoom extends Room {
+  _NativeRouteRoom(LocalAudioTrack track)
+    : _participant = _Participant(_Publication(track)),
+      super();
+
+  final LocalParticipant _participant;
+
+  @override
+  LocalParticipant? get localParticipant => _participant;
+}
+
 class _Probe implements AudioDeviceCheckService {
   final levels = StreamController<double>.broadcast();
   String? inputId;
@@ -83,6 +94,7 @@ class _Probe implements AudioDeviceCheckService {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final captures = <Object?>[];
+  final nativeCalls = <MethodCall>[];
   var captureFailures = 0;
   Completer<void>? captureGate;
   Completer<void>? captureStarted;
@@ -92,6 +104,7 @@ void main() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   setUp(() {
     captures.clear();
+    nativeCalls.clear();
     captureFailures = 0;
     captureGate = null;
     captureStarted = null;
@@ -111,6 +124,7 @@ void main() {
     messenger.setMockMethodCallHandler(
       const MethodChannel('FlutterWebRTC.Method'),
       (call) async {
+        nativeCalls.add(call);
         if (call.method == 'getSources') return {'sources': []};
         if (call.method == 'getUserMedia') {
           captures.add(call.arguments);
@@ -211,7 +225,7 @@ void main() {
       (tester) async {
         final track = await LocalAudioTrack.create();
         await track.start();
-      final sender = _Sender();
+        final sender = _Sender();
         track.transceiver = _Transceiver(sender);
         addTearDown(track.dispose);
         final room = _Room(track);
@@ -224,7 +238,13 @@ void main() {
         ]);
         owner.microphoneMutedIntent = muted;
         if (muted) await track.mute(stopOnMute: false);
-        await owner.selectAudioInput('mic-2');
+        final previousTarget = debugDefaultTargetPlatformOverride;
+        debugDefaultTargetPlatformOverride = TargetPlatform.android;
+        try {
+          await owner.selectAudioInput('mic-2');
+        } finally {
+          debugDefaultTargetPlatformOverride = previousTarget;
+        }
         expect(captures, hasLength(2));
         expect(owner.captureOptions.deviceId, 'mic-2');
         expect(track.muted, muted);
@@ -256,6 +276,44 @@ void main() {
     );
   }
 
+  test('active desktop input switch uses the native LiveKit route', () async {
+    final previousTarget = debugDefaultTargetPlatformOverride;
+    final track = await LocalAudioTrack.create(
+      const AudioCaptureOptions(deviceId: 'mic-1'),
+    );
+    addTearDown(track.dispose);
+    final room = _NativeRouteRoom(track);
+    addTearDown(room.dispose);
+    final preferences = await AudioPreferences.open('account-a');
+    final owner = AudioDeviceController(readRoom: () => room)
+      ..preferences = preferences
+      ..selectedAudioInputId = 'mic-1';
+    addTearDown(owner.dispose);
+    owner.applyAudioDevices(const [
+      MediaDevice('mic-1', 'First', 'audioinput', 'qa'),
+      MediaDevice('mic-2', 'Second', 'audioinput', 'qa'),
+    ]);
+    final capturesBeforeSelection = captures.length;
+
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    try {
+      await owner.selectAudioInput('mic-2');
+    } finally {
+      debugDefaultTargetPlatformOverride = previousTarget;
+    }
+
+    expect(nativeCalls.where((call) => call.method == 'selectAudioInput'), [
+      isA<MethodCall>().having((call) => call.arguments, 'arguments', {
+        'deviceId': 'mic-2',
+      }),
+    ]);
+    expect(captures, hasLength(capturesBeforeSelection));
+    expect(track.currentOptions.deviceId, 'mic-2');
+    expect(room.roomOptions.defaultAudioCaptureOptions.deviceId, 'mic-2');
+    expect(owner.selectedAudioInputId, 'mic-2');
+    expect(owner.audioSettingsError, isNull);
+  });
+
   test(
     'active input switch exposes busy state and ignores duplicate changes',
     () async {
@@ -278,29 +336,35 @@ void main() {
       ]);
       await track.mute(stopOnMute: false);
 
-      final gate = Completer<void>();
-      final started = Completer<void>();
-      captureGate = gate;
-      captureStarted = started;
-      final switching = owner.selectAudioInput('mic-2');
-      expect(owner.audioInputSwitching, isTrue);
-      expect(owner.selectedAudioInputId, 'mic-1');
+      final previousTarget = debugDefaultTargetPlatformOverride;
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      try {
+        final gate = Completer<void>();
+        final started = Completer<void>();
+        captureGate = gate;
+        captureStarted = started;
+        final switching = owner.selectAudioInput('mic-2');
+        expect(owner.audioInputSwitching, isTrue);
+        expect(owner.selectedAudioInputId, 'mic-1');
 
-      final capturesBeforeSwitch = captures.length;
-      await owner.selectAudioInput('mic-1');
-      expect(owner.audioInputSwitching, isTrue);
-      expect(captures, hasLength(capturesBeforeSwitch));
-      await started.future;
-      expect(captures, hasLength(capturesBeforeSwitch + 1));
+        final capturesBeforeSwitch = captures.length;
+        await owner.selectAudioInput('mic-1');
+        expect(owner.audioInputSwitching, isTrue);
+        expect(captures, hasLength(capturesBeforeSwitch));
+        await started.future;
+        expect(captures, hasLength(capturesBeforeSwitch + 1));
 
-      gate.complete();
-      await switching;
-      expect(owner.audioInputSwitching, isFalse);
-      expect(owner.selectedAudioInputId, 'mic-2');
-      expect(owner.audioSettingsError, isNull);
-      captureGate = null;
-      captureStarted = null;
-      await track.stop();
+        gate.complete();
+        await switching;
+        expect(owner.audioInputSwitching, isFalse);
+        expect(owner.selectedAudioInputId, 'mic-2');
+        expect(owner.audioSettingsError, isNull);
+        captureGate = null;
+        captureStarted = null;
+        await track.stop();
+      } finally {
+        debugDefaultTargetPlatformOverride = previousTarget;
+      }
     },
   );
 
@@ -399,7 +463,13 @@ void main() {
         ]);
         owner.selectedAudioInputId = 'mic-1';
         captureFailures = terminal ? 2 : 1;
-        await owner.selectAudioInput('mic-2');
+        final previousTarget = debugDefaultTargetPlatformOverride;
+        debugDefaultTargetPlatformOverride = TargetPlatform.android;
+        try {
+          await owner.selectAudioInput('mic-2');
+        } finally {
+          debugDefaultTargetPlatformOverride = previousTarget;
+        }
         expect(owner.audioSettingsError, isNotNull);
         expect(owner.audioInputSwitching, isFalse);
         expect(owner.selectedAudioInputId, 'mic-1');
