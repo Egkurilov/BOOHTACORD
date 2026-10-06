@@ -45,7 +45,7 @@
     {
       "name": "Native screen-reader acceptance",
       "result": "NOT_RUN",
-      "observation": "VoiceOver/TalkBack spoken output and navigation have not been checked in a live client. The running Mac app had no Flutter VM service for hot reload, and it was not restarted to avoid triggering the Keychain prompt."
+      "observation": "VoiceOver/TalkBack spoken output and navigation have not been checked in a live client. The running Mac app had no Flutter VM service for hot reload, and it was not restarted to avoid triggering the Keychain prompt. On the authorized Android emulator, enabling TalkBack triggered a recurring Android Accessibility Suite notification-permission dialog before reliable traversal could be tested; no notification or microphone permission was accepted. TalkBack was disabled and the original accessibility settings were restored."
     },
     {
       "name": "Spec traceability",

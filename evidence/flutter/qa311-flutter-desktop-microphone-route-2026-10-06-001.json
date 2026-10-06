@@ -87,6 +87,11 @@
       "observation": "Joined SHARE_TEST with the microphone disabled, selected HyperX Quadcast in the input selector, then restored Системный выбор · Микрофон and disconnected. The UI selection round-trip succeeded; the running client had no Flutter VM service and did not prove that the physical native input route changed or that the current working-tree code was loaded."
     },
     {
+      "name": "Connected Mac input/output inventory and input selector round-trip",
+      "result": "PASS_WITH_LIMITATION",
+      "observation": "With SHARE_TEST connected and the microphone still disabled, the input menu listed CORSAIR VOID ELITE Wireless Gaming Dongle and HyperX Quadcast; the output menu listed Mi Monitor, CORSAIR VOID ELITE Wireless Gaming Dongle, HyperX Quadcast, and Mac mini speakers. Selected HyperX Quadcast, verified it became the selected input, restored System input, and disconnected. No output device was changed. This verifies connected-state inventory and UI state updates only; native physical route/capture was not exercised."
+    },
+    {
       "name": "Physical macOS input route acceptance",
       "result": "NOT_RUN",
       "observation": "Automated coverage proves the native route API is invoked and room/track selection state is updated, but does not prove the physical Mac input changed."
@@ -109,7 +114,7 @@
     "voice_lease_or_channel_state_changed": false
   },
   "limitations": [
-    "The authorized live selector round-trip confirms the UI accepts and restores a device selection, but does not establish that the native physical microphone route changed. The live Mac app cannot currently hot reload, and restarting it was avoided to prevent a Keychain prompt. FV2-052 remains open for current-source physical route acceptance in a debuggable session."
+    "The authorized live selector round-trip confirms the connected-state inventory and that the UI accepts and restores a device selection, but does not establish that the native physical microphone route changed. The live Mac app cannot currently hot reload, and restarting it was avoided to prevent a Keychain prompt. FV2-052 remains open for current-source physical route acceptance in a debuggable session."
   ],
   "status": "PARTIAL — regression, analyzer, traceability, and macOS/Android builds pass; physical route acceptance remains NOT_RUN."
 }
