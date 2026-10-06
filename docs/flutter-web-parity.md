@@ -1406,6 +1406,16 @@ the native `selectAudioInput` call, updated options, and unchanged capture
 count; native-device acceptance is tracked separately in
 [QA-311](../evidence/flutter/qa311-flutter-desktop-microphone-route-2026-10-06-001.json).
 
+The 2026-10-06 muted Mac listener follow-up confirms runtime device inventory
+changes from the system-only pre-join selector to two physical input choices
+after voice admission. HyperX was selected and restored to the system input;
+the microphone remained disabled and the temporary room session was closed.
+This was a UI/inventory check in an already running app whose build/source
+identity could not be established. It does not verify that the native capture
+route changed; do not enable the microphone for that check without explicit
+approval. Current-source route regressions and the remaining acceptance boundary
+are recorded in [QA-315](../evidence/flutter/qa315-macos-muted-listener-audio-route-2026-10-06-001.json).
+
 ## Flutter audio settings feedback (FV2-046–047)
 
 Manual microphone gain remains visible and stored while AGC owns the live

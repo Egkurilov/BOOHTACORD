@@ -1,0 +1,42 @@
+{
+  "id": "QA-315",
+  "date": "2026-10-06",
+  "task": "FV2-051/052 — Muted Mac listener audio inventory and input selector follow-up",
+  "source_revision": "7fcade7326ea557a2c981755c266e7263d889307",
+  "summary": "A live macOS client showed only system audio-device choices before joining voice. After connecting to SHARE_TEST through the explicit no-microphone action, the input selector exposed two physical inputs. One was selected and then restored to the system input without enabling the microphone. The temporary room session was disconnected afterwards.",
+  "checks": [
+    {
+      "name": "Flutter desktop input-route, device-scan and muted-admission regressions",
+      "command": "cd clients/flutter && flutter test --no-pub test/audio_devices/input_selection_probe_test.dart test/audio_devices/scan_scope_test.dart test/voice_scope/admission_test.dart",
+      "result": "PASS",
+      "passed": 21,
+      "observation": "Covers macOS/Windows native input-route selection for active tracks and connected listeners without microphone capture, device inventory scan coordination, and refresh after muted voice connection."
+    },
+    {
+      "name": "Live Mac pre-join inventory",
+      "result": "PASS",
+      "observation": "The visible input/output selectors showed system choices before voice admission."
+    },
+    {
+      "name": "Live muted listener device inventory and selector round-trip",
+      "result": "PASS_WITH_LIMITATION",
+      "observation": "After joining SHARE_TEST with the microphone disabled, the input menu exposed two physical choices in addition to system selection. HyperX Quadcast was selected and then restored to the system input; the connected UI continued to report the microphone as disabled. No output device was changed."
+    },
+    {
+      "name": "Physical native input-route capture verification",
+      "result": "NOT_RUN",
+      "observation": "No microphone capture or local test was started. The live GUI had no Flutter VM service and its binary/source identity could not be matched to the current checkout, so the UI selection does not prove the physical capture route changed."
+    },
+    {
+      "name": "Temporary voice session cleanup",
+      "result": "PASS",
+      "observation": "The Mac listener disconnected after the check; the UI returned to the pre-join audio settings and the microphone stayed disabled."
+    }
+  ],
+  "limitations": [
+    "FV2-051 runtime inventory was verified on the already running macOS app, but the GUI build identity is unknown.",
+    "FV2-052 physical native input route remains unverified; microphone capture requires separate explicit approval.",
+    "Windows physical-device acceptance was not available in this run."
+  ],
+  "status": "PARTIAL — current-source regressions pass 21/21 and muted Mac inventory/selector behavior was observed; native capture route remains NOT_RUN."
+}
