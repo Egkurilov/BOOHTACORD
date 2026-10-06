@@ -1,0 +1,24 @@
+# Overlay for docker/observability/compose.yaml; synthetic isolated namespace only.
+services:
+  collector:
+    ports: !override
+      - "${TRACE_QA_HOST:-127.0.0.1}:14318:4318"
+      - "${TRACE_QA_HOST:-127.0.0.1}:18889:8889"
+  tempo:
+    ports: !override
+      - "${TRACE_QA_HOST:-127.0.0.1}:13200:3200"
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: trace_qa
+      POSTGRES_USER: trace_qa
+      POSTGRES_PASSWORD: synthetic-qa-only
+    ports: ["${TRACE_QA_HOST:-127.0.0.1}:15432:5432"]
+    mem_limit: 512m
+    cpus: 1.0
+  livekit:
+    image: livekit/livekit-server:v1.13.7
+    command: ["--dev", "--bind", "0.0.0.0", "--keys", "synthetic-qa: synthetic-qa-only-secret-1234567890"]
+    ports: ["${TRACE_QA_HOST:-127.0.0.1}:17880:7880"]
+    mem_limit: 512m
+    cpus: 1.0

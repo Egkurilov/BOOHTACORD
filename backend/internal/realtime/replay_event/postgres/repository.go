@@ -50,7 +50,9 @@ func (repository Repository) Append(ctx context.Context, event eventhub.Event, r
 		targetIDs = recipients
 	}
 	tx, err := repository.database.Begin(ctx)
-	if err != nil { return fmt.Errorf("begin realtime hint append: %w", err) }
+	if err != nil {
+		return fmt.Errorf("begin realtime hint append: %w", err)
+	}
 	defer tx.Rollback(context.Background())
 	// Identity sequence allocation must happen only after the prior append has
 	// committed, otherwise seq=2 can become visible before seq=1 and a cursor
@@ -59,9 +61,9 @@ func (repository Repository) Append(ctx context.Context, event eventhub.Event, r
 		return fmt.Errorf("serialize realtime hint append: %w", err)
 	}
 	_, err = tx.Exec(ctx, `INSERT INTO realtime_events
-    (id, boot_epoch, kind, occurred_at, payload, recipient_ids)
-    VALUES ($1::uuid, $2::uuid, $3, $4, $5::jsonb, $6::text[]::uuid[])
-    ON CONFLICT (id) DO NOTHING`, event.EventID, epoch, event.Kind, event.OccurredAt, payload, targetIDs)
+    (id, boot_epoch, kind, occurred_at, payload, recipient_ids, trace_cause)
+    VALUES ($1::uuid, $2::uuid, $3, $4, $5::jsonb, $6::text[]::uuid[], $7::jsonb)
+    ON CONFLICT (id) DO NOTHING`, event.EventID, epoch, event.Kind, event.OccurredAt, payload, targetIDs, event.Cause.Bytes())
 	if err != nil {
 		return fmt.Errorf("append realtime hint: %w", err)
 	}
@@ -71,6 +73,8 @@ func (repository Repository) Append(ctx context.Context, event eventhub.Event, r
 	if err != nil {
 		return fmt.Errorf("prune expired realtime hints: %w", err)
 	}
-	if err := tx.Commit(ctx); err != nil { return fmt.Errorf("commit realtime hint append: %w", err) }
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit realtime hint append: %w", err)
+	}
 	return nil
 }

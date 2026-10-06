@@ -6,6 +6,7 @@ import '../../../models.dart';
 import '../../../services/api_client.dart';
 import '../../workspace/lifecycle/controller.dart';
 import 'clear.dart';
+import '../../telemetry/observe_render/messages.dart';
 export 'exports.dart';
 
 class ConversationController extends ChangeNotifier {
@@ -19,6 +20,7 @@ class ConversationController extends ChangeNotifier {
     required this.formatError,
   });
   final ApiClient api;
+  late final sendObservation = SendObservation(api.transport.session.telemetry);
   final SessionScope scope;
   final WorkspaceController workspace;
   final SessionUser? Function() readUser;
@@ -92,6 +94,7 @@ class ConversationController extends ChangeNotifier {
 
   @override
   void dispose() {
+    sendObservation.clear();
     disposed = true;
     clear();
     super.dispose();

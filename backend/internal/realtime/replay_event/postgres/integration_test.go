@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strings"
 	"testing"
 	"time"
+	causal "voice-platform/backend/internal/observability/causal_reference"
 	postgresfixture "voice-platform/backend/internal/testsupport/postgres"
 
 	"github.com/google/uuid"
@@ -33,6 +35,7 @@ func TestJournalMigrationReplayAndCurrentACL(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	applyTraceMigration(t, ctx, db)
 	accountA, accountB, outsider, dmID := uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.NewString()
 	for _, id := range []string{accountA, accountB, outsider} {
 		if _, err := db.Exec(ctx, `INSERT INTO users(id) VALUES($1::uuid)`, id); err != nil {
@@ -45,6 +48,7 @@ func TestJournalMigrationReplayAndCurrentACL(t *testing.T) {
 	repository, epoch := New(db), uuid.NewString()
 	first := eventhub.Event{EventID: uuid.NewString(), Kind: "direct_message.message_created", OccurredAt: time.Now().UTC(), Payload: map[string]any{"direct_message_id": dmID, "message_id": uuid.NewString()}}
 	second := eventhub.Event{EventID: uuid.NewString(), Kind: "direct_message.message_deleted", OccurredAt: time.Now().UTC(), Payload: map[string]any{"direct_message_id": dmID, "message_id": uuid.NewString(), "revision": 2}}
+	second.Cause = causal.Cause{TraceID: strings.Repeat("a", 32), SpanID: strings.Repeat("b", 16), Version: 1}
 	for _, event := range []eventhub.Event{first, second, second} {
 		if err := repository.Append(ctx, event, []string{accountA, accountB}, epoch); err != nil {
 			t.Fatal(err)
@@ -53,6 +57,9 @@ func TestJournalMigrationReplayAndCurrentACL(t *testing.T) {
 	replayed, err := repository.Replay(ctx, accountA, first.EventID, epoch, ReplayLimit)
 	if err != nil || len(replayed) != 1 || replayed[0].EventID != second.EventID {
 		t.Fatalf("replay=%#v error=%v", replayed, err)
+	}
+	if replayed[0].Cause != second.Cause {
+		t.Fatal("replay lost persisted causal metadata")
 	}
 	if _, err := repository.Replay(ctx, outsider, first.EventID, epoch, ReplayLimit); !errors.Is(err, ErrInvalidCursor) {
 		t.Fatalf("outsider cursor error=%v", err)

@@ -39,6 +39,9 @@ func streamEvents(connection *websocket.Conn, authenticator sessionapi.Authentic
 				return
 			}
 			writeContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			if subscription.Supports("flow_tracing_v1") {
+				event = hub.Correlate(writeContext, subscription.AccountID(), event)
+			}
 			err := wsjson.Write(writeContext, connection, event)
 			cancel()
 			if err != nil {

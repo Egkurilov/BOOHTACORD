@@ -55,9 +55,13 @@ extension ConversationSend on ConversationController {
     sending = true;
     error = null;
     changed();
+    final action = sendObservation.begin(clientMessageId);
     try {
-      final message = await deliverText(pending, retry, active);
+      final message = await action.run(
+        () => deliverText(pending, retry, active),
+      );
       if (!active()) return false;
+      sendObservation.accepted(clientMessageId, message);
       sendRetryIds.remove(retryKey);
       pendingTextSends.remove(clientMessageId);
       if (isReady() && selectedChannel?.id == channel.id) {
@@ -72,6 +76,7 @@ extension ConversationSend on ConversationController {
       }
       return true;
     } catch (cause) {
+      sendObservation.failed(clientMessageId, cause);
       if (!active()) return false;
       if (!uncertainDelivery(cause)) blockedSendRetries.add(clientMessageId);
       if (pendingTextSends.containsKey(clientMessageId)) {

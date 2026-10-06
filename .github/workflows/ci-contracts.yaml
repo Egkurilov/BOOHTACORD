@@ -18,6 +18,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify generated tracing contract bindings
+        run: node tools/observability/flow_contract/generate.mjs --check
       - name: Install pinned CI verification dependencies
         run: python -m pip install -r tools/requirements-ci.txt
       - name: Verify API and requirement traceability
@@ -31,7 +39,7 @@ jobs:
         shell: pwsh
         run: ./tools/verify/otel_egress/verify-otel-egress.ps1
       - name: Verify trace dashboard correlation
-        run: python3 -m unittest tools.verify.trace_dashboard.test_traces_dashboard
+        run: python3 -m unittest tools.verify.trace_dashboard.test_traces_dashboard tools.verify.trace_dashboard.test_flow_dashboard
       - name: Reject implicit or latest Compose images
         shell: pwsh
         run: ./tools/verify/compose_images/verify-compose-images.ps1

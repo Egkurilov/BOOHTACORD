@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	createtextmessage "voice-platform/backend/internal/chat/create_text_message"
+	flowstage "voice-platform/backend/internal/observability/flow_stage"
 )
 
 const selectCommittedMessage = `
@@ -23,14 +24,15 @@ type Database interface {
 type Repository struct{ database Database }
 
 func New(database Database) Repository { return Repository{database: database} }
-func (repository Repository) Create(context context.Context, request createtextmessage.Request) (createtextmessage.Result, error) {
-	var result createtextmessage.Result
+func (repository Repository) Create(context context.Context, request createtextmessage.Request) (result createtextmessage.Result, err error) {
+	context, span := flowstage.Begin(context, "message.store", "dependency")
+	defer func() { flowstage.End(span, err) }()
 	var replyID any
 	if request.ReplyToID != "" {
 		replyID = request.ReplyToID
 	}
 	mentions := append([]string{}, request.MentionUserIDs...)
-	err := repository.database.QueryRow(context, insertMessage, request.ID, request.ChannelID, request.ActorID, request.ClientMessageID, request.Body, replyID, request.AttachmentIDs, mentions).Scan(
+	err = repository.database.QueryRow(context, insertMessage, request.ID, request.ChannelID, request.ActorID, request.ClientMessageID, request.Body, replyID, request.AttachmentIDs, mentions).Scan(
 		&result.ID, &result.ChannelID, &result.AuthorID, &result.ClientMessageID, &result.Body, &result.ReplyToID, &result.Revision, &result.CreatedAt, &result.MentionUserIDs,
 	)
 	var postgresError *pgconn.PgError
@@ -41,6 +43,8 @@ func (repository Repository) Create(context context.Context, request createtextm
 			&committed.ID, &committed.ChannelID, &committed.AuthorID, &committed.ClientMessageID, &committed.Body, &committed.ReplyToID, &committed.Revision, &committed.CreatedAt, &committed.MentionUserIDs,
 		)
 		if lookupErr == nil {
+			flowstage.Mark(context, "restore", "success")
+			flowstage.Storage(context, "replayed")
 			return committed, nil
 		}
 		if lookupErr != nil && !errors.Is(lookupErr, pgx.ErrNoRows) {
@@ -52,6 +56,11 @@ func (repository Repository) Create(context context.Context, request createtextm
 	}
 	if err != nil {
 		return createtextmessage.Result{}, fmt.Errorf("insert text message: %w", err)
+	}
+	if result.ID == request.ID {
+		flowstage.Storage(context, "committed")
+	} else {
+		flowstage.Storage(context, "replayed")
 	}
 	return result, nil
 }

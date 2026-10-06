@@ -38,6 +38,7 @@ Future<void> main() async {
     });
   }
   final api = ApiClient();
+  ClientTelemetry.session = api.transport.session.telemetry;
   await ClientTelemetry.initialize(api.submitClientSpans);
   final state = TracedAppState(api);
   final updates = UpdateController(

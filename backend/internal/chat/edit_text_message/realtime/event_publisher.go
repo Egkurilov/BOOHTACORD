@@ -25,7 +25,7 @@ func New(editor Editor, events *eventhub.Hub) EventPublishingEditor {
 func (publisher EventPublishingEditor) Edit(ctx context.Context, input edittextmessage.Input) (edittextmessage.Result, error) {
 	result, err := publisher.editor.Edit(ctx, input)
 	if err == nil {
-		publisher.events.Publish(eventhub.Event{EventID: uuid.NewString(), Kind: "message.updated", OccurredAt: time.Now().UTC(), Payload: map[string]any{"channel_id": result.ChannelID, "message_id": result.ID}})
+		publisher.events.PublishContext(ctx, eventhub.Event{EventID: uuid.NewString(), Kind: "message.updated", OccurredAt: time.Now().UTC(), Payload: map[string]any{"channel_id": result.ChannelID, "message_id": result.ID}})
 	}
 	return result, err
 }

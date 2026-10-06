@@ -3,6 +3,7 @@ import 'controller.dart';
 
 extension ConversationCleanup on ConversationController {
   void clear() {
+    sendObservation.clear();
     cacheGeneration++;
     invalidateSelection();
     ComposerDraftMemory.clear();

@@ -30,7 +30,9 @@ import { usePermissionStore } from '../authorization/permission_store'
 import { useScreenShareSetup } from './screen_share_setup'
 import { useWorkspaceNavigation } from './workspace_navigation'
 import ConnectionStatus from './connection_status/Status.vue'
-const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string }>()
+import type { ActionScope } from '../telemetry/action_scope/scope'
+import { observeWorkspace } from '../telemetry/observe_render/workspace'
+const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string;readiness?:ActionScope }>()
 const emit = defineEmits<{ sessionExpired: []; loggedOut: [] }>()
 const { activeVoiceChannel, audioSettings, loadAudioDevices, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls(props.accountId)
 const { confirmScreenShare, openScreenShareSetup, screenShareSetupOpen, selectedScreenProfile } = useScreenShareSetup(() => voiceConnection.screenState, startScreen)
@@ -51,7 +53,14 @@ useAuthorDirectoryLifecycle(profile)
 const voiceNavigationPresence = computed(() => buildVoiceNavigationPresence(activeVoiceChannel.value?.id ?? null, profile.value, voiceConnection))
 function setParticipantVolume(participantID: string, volume: number): void { voiceConnection.setParticipantVolume(participantID, volume) }
 function refreshTopology(): void { void topologyStore.refresh() }
-onMounted(() => { permissions.start(props.accountId); void topologyStore.refresh(); void directMessageStore.refreshNavigation(); void refreshProfile(); voiceRoster.start(); workspaceRealtime.start() }); onBeforeUnmount(() => { permissions.stop(); voiceRoster.stop(); workspaceRealtime.stop() })
+let mounted=true
+onMounted(() => {
+ permissions.start(props.accountId);voiceRoster.start();workspaceRealtime.start()
+ void observeWorkspace(props.readiness,async()=>{
+  await Promise.all([topologyStore.refresh(),directMessageStore.refreshNavigation(),refreshProfile()])
+ },()=>mounted,()=>Boolean(topologyStore.error||directMessageStore.error||profileError.value))
+})
+onBeforeUnmount(() => {mounted=false;props.readiness?.finish('cancelled','disposed');permissions.stop();voiceRoster.stop();workspaceRealtime.stop()})
 </script>
 <template>
   <div class="app-frame">

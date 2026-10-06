@@ -1,6 +1,7 @@
 """Validate dashboard TraceQL against Tempo without printing private identifiers."""
 import json
 import pathlib
+import re
 import sys
 import time
 import urllib.parse
@@ -20,7 +21,9 @@ def main():
     now = int(time.time())
     for panel in panels(dashboard['panels']):
         for target in panel.get('targets', []):
-            query = target['query'].replace('${user:regex}', '.*').replace('${session:regex}', '.*')
+            if target.get('queryType') != 'traceql':
+                continue
+            query = re.sub(r'\$\{(?:user|session|visit|flow|media|platform|client_version|operation|outcome):regex\}', '.*', target['query'])
             params = urllib.parse.urlencode({'q': query, 'start': now - 1800, 'end': now, 'limit': 5, 'spss': 5})
             with urllib.request.urlopen(sys.argv[1].rstrip('/') + '/api/search?' + params, timeout=30) as response:
                 result = json.load(response)

@@ -1,5 +1,7 @@
 import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
+import { recordMediaSample } from '../telemetry/media_sample/record'
+import { telemetrySession } from '../telemetry/action_scope/session'
 import type { ScreenDiagnostics } from './screen_diagnostics'
 
 export type { ScreenClientReport, ScreenClientReportInput, WebPlatform } from './report_media/types'
@@ -63,11 +65,13 @@ export async function postScreenClientReport(report: ScreenClientReport, request
 }
 
 export function startScreenClientReporting(read: () => ScreenClientReport | null, visible: () => boolean): () => void {
+  const owner=telemetrySession.snapshot()
   let busy = false
   const interval = globalThis.setInterval(() => {
     if (busy || !visible()) return
     const report = read()
     if (!report) return
+    recordMediaSample({...report},owner)
     busy = true
     void postScreenClientReport(report).catch(() => {}).finally(() => { busy = false })
   }, 5000)

@@ -10,7 +10,7 @@ describe('password reset App wiring', () => {
     const sessionRequest = app.indexOf('await loadCurrentSession()')
     expect(intake).toBeGreaterThan(0)
     expect(intake).toBeLessThan(sessionRequest)
-    expect(app).toContain('if (!resetRoute.value) void refreshSession()')
+    expect(app).toContain("if (!resetRoute.value) void refreshSession('startup')")
     expect(app).toContain('<PasswordResetCompletion v-if="resetRoute"')
   })
 

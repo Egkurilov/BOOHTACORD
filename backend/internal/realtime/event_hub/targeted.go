@@ -16,6 +16,9 @@ func (hub *Hub) PublishToAccounts(accountIDs []string, event Event) {
 	defer cancel()
 	_ = hub.publishToAccounts(ctx, accountIDs, event, false)
 }
+func (hub *Hub) PublishToAccountsContext(ctx context.Context, accountIDs []string, event Event) error {
+	return hub.publishToAccounts(ctx, accountIDs, event, false)
+}
 
 // PublishToAccountsDurable must persist a private hint before its outbox is
 // marked emitted. It succeeds even when no recipient currently has a socket.

@@ -5,24 +5,28 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	causal "voice-platform/backend/internal/observability/causal_reference"
 )
 
 type Event struct {
-	EventID    string         `json:"event_id"`
-	Kind       string         `json:"kind"`
-	OccurredAt time.Time      `json:"occurred_at"`
-	Payload    map[string]any `json:"payload"`
+	EventID    string             `json:"event_id"`
+	Kind       string             `json:"kind"`
+	OccurredAt time.Time          `json:"occurred_at"`
+	Payload    map[string]any     `json:"payload"`
+	Cause      causal.Cause       `json:"-"`
+	Telemetry  *TelemetryEnvelope `json:"telemetry,omitempty"`
 }
 
 type Hub struct {
-	mu          sync.Mutex
-	publishMu   sync.Mutex
-	queueSize   int
-	subscribers map[*Subscription]struct{}
-	connections map[string]int
-	journal     Journal
-	bootEpoch   string
-	broken      bool
+	mu           sync.Mutex
+	publishMu    sync.Mutex
+	queueSize    int
+	subscribers  map[*Subscription]struct{}
+	connections  map[string]int
+	journal      Journal
+	bootEpoch    string
+	broken       bool
+	telemetryKey string
 }
 
 type Subscription struct {

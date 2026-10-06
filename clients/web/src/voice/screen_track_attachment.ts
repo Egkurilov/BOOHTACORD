@@ -13,4 +13,7 @@ export class ScreenTrackAttachment {
   }
 
   clear(): void { this.update(null, null) }
+  matches(track:ScreenViewerTrack|null,element:HTMLMediaElement|null):boolean {
+    return track!==null&&this.track===track&&element!==null&&this.element===element
+  }
 }

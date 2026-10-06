@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	removelivekitparticipant "voice-platform/backend/internal/media/remove_livekit_participant"
 )
 
 var ErrPending = errors.New("voice sfu revocation pending")
@@ -39,18 +37,15 @@ func (service Service) Dispatch(context context.Context, limit int) (Result, err
 	}
 	var result Result
 	for _, item := range items {
-		err := service.remover.Remove(context, item.LeaseID, item.ChannelID)
-		if err == nil || errors.Is(err, removelivekitparticipant.ErrParticipantAbsent) {
-			if err := service.store.Confirm(context, item); err != nil {
-				return result, fmt.Errorf("confirm voice sfu revocation: %w", err)
-			}
+		confirmed, err := service.attempt(context, item)
+		if err != nil {
+			return result, fmt.Errorf("process voice sfu revocation: %w", err)
+		}
+		if confirmed {
 			result.Confirmed++
-			continue
+		} else {
+			result.Pending++
 		}
-		if err := service.store.Retry(context, item, "SFU_UNAVAILABLE"); err != nil {
-			return result, fmt.Errorf("retry voice sfu revocation: %w", err)
-		}
-		result.Pending++
 	}
 	if result.Pending > 0 {
 		return result, ErrPending

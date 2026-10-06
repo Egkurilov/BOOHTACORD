@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -27,9 +28,9 @@ WITH candidates AS (
         attempt_count = attempt_count + 1
     FROM candidates
     WHERE revocation.lease_id = candidates.lease_id
-    RETURNING revocation.lease_id::text, revocation.channel_id::text
+    RETURNING revocation.lease_id::text, revocation.channel_id::text, revocation.requested_at, revocation.attempt_count, revocation.trace_cause
 )
-SELECT lease_id, channel_id FROM claimed`
+SELECT lease_id, channel_id, requested_at, attempt_count, trace_cause FROM claimed`
 
 const confirmClaim = `
 UPDATE voice_sfu_revocations
@@ -47,7 +48,12 @@ SET claim_token = NULL,
     last_error_code = $3
 WHERE lease_id = $1 AND claim_token = $2::uuid AND completed_at IS NULL`
 
-type Item struct{ LeaseID, ChannelID, ClaimToken string }
+type Item struct {
+	LeaseID, ChannelID, ClaimToken string
+	RequestedAt                    time.Time
+	Attempt                        int
+	TraceCause                     []byte
+}
 
 type Rows interface {
 	Next() bool
@@ -78,7 +84,7 @@ func (repository Repository) Claim(context context.Context, limit int) ([]Item, 
 	items := make([]Item, 0, limit)
 	for rows.Next() {
 		item := Item{ClaimToken: claimToken}
-		if err := rows.Scan(&item.LeaseID, &item.ChannelID); err != nil {
+		if err := rows.Scan(&item.LeaseID, &item.ChannelID, &item.RequestedAt, &item.Attempt, &item.TraceCause); err != nil {
 			return nil, fmt.Errorf("scan claimed voice sfu revocation: %w", err)
 		}
 		items = append(items, item)

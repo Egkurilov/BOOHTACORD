@@ -54,6 +54,9 @@ func writeAuthorizedReplay(ctx context.Context, connection *websocket.Conn, auth
 		if !allowed {
 			continue
 		}
+		if subscription.Supports("flow_tracing_v1") {
+			event = hub.Correlate(ctx, subscription.AccountID(), event)
+		}
 		if err := wsjson.Write(ctx, connection, event); err != nil {
 			return false, false
 		}

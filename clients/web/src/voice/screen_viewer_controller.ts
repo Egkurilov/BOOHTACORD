@@ -27,6 +27,7 @@ export class ScreenViewerController {
   get selectedAccountId(): string | null { return this.selected?.accountId ?? null }
   get ended(): boolean { return this.hasEnded }
   get audioMuted(): boolean { return this.screenAudioMuted }
+  hasAttachedVideo(element:HTMLVideoElement|null):boolean {return this.attachedVideo.matches(this.selected?.video.track??null,element)}
 
   cards(): ScreenViewerCard[] {
     return this.source().map(({ accountId, hasAudio, id, isLocal, participantId, participantName, targetProfile, video }) => ({

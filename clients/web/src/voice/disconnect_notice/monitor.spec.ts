@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest'
 const span = vi.hoisted(() => ({ addEvent: vi.fn(), setStatus: vi.fn(), end: vi.fn() }))
-vi.mock('../../telemetry/client_tracing', () => ({ startTracedOperation: () => span, endTracedOperation: (value: typeof span, _name: string, failed: boolean) => { value.addEvent(failed ? 'failed' : 'completed'); value.end() } }))
+vi.mock('../../telemetry/client_tracing', () => ({ startTracedOperation: () => span,cancelTracedOperation:(value:typeof span)=>value.end(), endTracedOperation: (value: typeof span, _name: string, failed: boolean) => { value.addEvent(failed ? 'failed' : 'completed'); value.end() } }))
 import { VoiceReconnectMonitor } from '../voice_reconnect_monitor'
 it('ends terminated reconnect as interrupted without a false failed outcome', async () => {
   const handlers = new Map<string, () => void>(), monitor = new VoiceReconnectMonitor()

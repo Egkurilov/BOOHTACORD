@@ -7,6 +7,7 @@ export interface RealtimeEvent {
   kind: RealtimeKind
   occurredAt: string
   payload: Record<string, unknown>
+  telemetry?: {reference:string;traceId:string;spanId:string}
 }
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -36,18 +37,25 @@ export function parseRealtimeEvent(value: unknown): RealtimeEvent {
   if (kind === 'voice.lease_revoked' && (!keys(payload, ['lease_id', 'reason']) || !uuid(payload.lease_id) || !isVoiceLeaseRevocationReason(payload.reason))) throw new Error('Некорректное realtime-событие.')
   if (kind === 'role.permissions.updated' && (!keys(payload, ['role', 'revision']) || payload.role !== 'MEMBER' || !revision(payload.revision))) throw new Error('Некорректное realtime-событие.')
   if ((kind === 'auth.permissions.invalidated' || kind === 'session.state_changed') && Object.keys(payload).length !== 0) throw new Error('Некорректное realtime-событие.')
-  return { eventId: source.event_id, kind: kind as RealtimeKind, occurredAt: source.occurred_at, payload }
+  const metadata=record(source.telemetry)
+  const telemetry=metadata&&typeof metadata.reference==='string'&&metadata.reference.length<=512&&
+    typeof metadata.trace_id==='string'&&/^[0-9a-f]{32}$/.test(metadata.trace_id)&&typeof metadata.span_id==='string'&&/^[0-9a-f]{16}$/.test(metadata.span_id)
+    ? {reference:metadata.reference,traceId:metadata.trace_id,spanId:metadata.span_id}:undefined
+  return { eventId: source.event_id, kind: kind as RealtimeKind, occurredAt: source.occurred_at, payload, ...(telemetry?{telemetry}:{}) }
 }
 
 export interface RealtimeLocation { protocol: string; host: string }
 
 export function realtimeURL(location: RealtimeLocation = window.location, after?: string): string {
-  const base = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}${apiBaseUrl}/realtime?capabilities=role_permissions_v1`
+  const base = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}${apiBaseUrl}/realtime?capabilities=role_permissions_v1,flow_tracing_v1`
   return after ? `${base}&after=${encodeURIComponent(after)}` : base
 }
 
-export function realtimeTraceURL(target: string, traceparent?: string, tracestate?: string): string {
+export function realtimeTraceURL(target: string, traceparent?: string, tracestate?: string,fields:Record<string,string>={}): string {
+  if(typeof window!=='undefined'&&new URL(target).host!==window.location.host)return target
   if (!traceparent) return target
   const parentURL = `${target}${target.includes('?') ? '&' : '?'}traceparent=${encodeURIComponent(traceparent)}`
-  return tracestate ? `${parentURL}&tracestate=${encodeURIComponent(tracestate)}` : parentURL
+  const stateURL=tracestate ? `${parentURL}&tracestate=${encodeURIComponent(tracestate)}` : parentURL
+  const allowed=['telemetry_session','visit','flow','flow_name','attempt']
+  return stateURL+Object.entries(fields).filter(([key])=>allowed.includes(key)).map(([key,value])=>`&${key}=${encodeURIComponent(value)}`).join('')
 }

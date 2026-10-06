@@ -1,5 +1,10 @@
 import 'dart:typed_data';
 
+import '../features/telemetry/action_scope/session.dart';
+import '../features/telemetry/action_scope/runtime.dart';
+import '../features/telemetry/action_scope/sampling.dart';
+import '../features/telemetry/export/session_processor.dart';
+
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
@@ -10,6 +15,7 @@ class ClientTelemetry {
   ClientTelemetry._();
 
   static bool enabled = false;
+  static TelemetrySession? session;
   static void audioInputSwitch(String phase, String result) {
     if (!enabled ||
         !{'prejoin', 'active', 'reconnect'}.contains(phase) ||
@@ -53,18 +59,12 @@ class ClientTelemetry {
   }
 
   static Future<void> initialize(TraceSender send) async {
-    if (enabled) return;
+    if (enabled || !telemetryConfigured) return;
     await OTel.initialize(
       serviceName: 'boohtacord-flutter',
       tracerName: 'boohtacord/client',
-      spanProcessor: BatchSpanProcessor(
-        _RelayExporter(send),
-        BatchSpanProcessorConfig(
-          maxQueueSize: 512,
-          maxExportBatchSize: 32,
-          scheduleDelay: const Duration(seconds: 5),
-        ),
-      ),
+      sampler: configuredSampler(),
+      spanProcessor: SessionSpanProcessor(send, () => session),
       enableMetrics: false,
       enableLogs: false,
       detectPlatformResources: false,
@@ -78,6 +78,15 @@ class ClientTelemetry {
     bool Function()? failed,
   }) async {
     if (!enabled) return action();
+    if (session != null) {
+      return traceAction(
+        name,
+        session!,
+        action,
+        enabled: enabled,
+        failed: failed,
+      );
+    }
     final span = OTel.tracer().startSpan(name, kind: SpanKind.client);
     span.addEventNow('app.client.$name.started');
     try {
@@ -105,23 +114,4 @@ class _HeaderSetter extends TextMapSetter<String> {
   final Map<String, String> headers;
   @override
   void set(String key, String value) => headers[key] = value;
-}
-
-class _RelayExporter implements SpanExporter {
-  _RelayExporter(this.send);
-
-  final TraceSender send;
-
-  @override
-  Future<void> export(List<Span> spans) async {
-    if (spans.isEmpty) return;
-    final body = OtlpSpanTransformer.transformSpans(spans).writeToBuffer();
-    await send(body).timeout(const Duration(seconds: 5));
-  }
-
-  @override
-  Future<void> forceFlush() async {}
-
-  @override
-  Future<void> shutdown() async {}
 }

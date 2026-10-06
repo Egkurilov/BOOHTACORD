@@ -4,6 +4,8 @@ import 'controller.dart';
 
 extension RealtimeRecovery on RealtimeController {
   void handleClosed() {
+    handshake?.finish('failed', reason: 'network');
+    handshake = null;
     final previous = socket;
     generation++;
     socket = null;

@@ -1,17 +1,21 @@
 // A closed or replaced account scope cannot accept results of earlier work.
 class SessionScope {
+  SessionScope({this.onBoundary});
+  final void Function()? onBoundary;
   int _generation = 0;
   bool _open = true;
   bool _disposed = false;
   SessionTicket capture() => SessionTicket._(this, _generation);
   SessionTicket begin() {
     _generation++;
+    onBoundary?.call();
     _open = !_disposed;
     return capture();
   }
 
   SessionTicket close() {
     _generation++;
+    onBoundary?.call();
     _open = false;
     return capture();
   }

@@ -10,7 +10,10 @@ import 'scoped_client.dart';
 
 class ApiTransport {
   ApiTransport({http.Client? client}) : raw = client ?? http.Client() {
-    this.client = ScopedHttpClient(TracingHttpClient(raw), session.scope);
+    this.client = ScopedHttpClient(
+      TracingHttpClient(raw, session.telemetry),
+      session.scope,
+    );
   }
   final http.Client raw;
   late final http.Client client;
@@ -62,6 +65,10 @@ class ApiTransport {
   }) async {
     ensureCurrent();
     final ticket = RequestScope.current?.ticket ?? session.scope.capture();
+    session.telemetry.bind(
+      response.headers['x-telemetry-session'],
+      response.headers['x-telemetry-schema'],
+    );
     final setCookie = response.headers['set-cookie'];
     if (setCookie != null) {
       final pair = setCookie.split(';').first;

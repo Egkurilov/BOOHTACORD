@@ -1,5 +1,58 @@
 # Трейсы: пользователь, сессия и действие
 
+## User-flow schema v1
+
+Контракт: [telemetry-flow-v1.json](../../contracts/telemetry-flow-v1.json),
+[ADR-018](../adr/ADR-018-user-flow-tracing.md). Поставка дашборда следует после
+приёмки данных #154; подготовленный JSON сохраняет UID `boohtacord-traces`.
+
+1. Откройте существующий дашборд в orgId=1. Выберите пользователя, сессию и visit.
+2. Найдите terminal действия: flow, attempt, stage, outcome и reason. Отмена,
+   отказ, timeout и superseded различаются. Нет финала — unknown/incomplete.
+3. Выберите flow и откройте Tempo trace. Start/checkpoints и терминал одной
+   попытки — короткие записи; retry имеет тот же flow и следующий attempt.
+   Связанные worker/receiver traces открываются через Span Links. Один flow ID
+   сам по себе не доказывает причинность и не создаёт общий waterfall.
+4. Для screen.view проверьте first_frame и связанный retry. Connect/subscribe
+   не доказывает предъявление кадра. Sender render и receiver render различаются;
+   это диагностика компонента, а не read receipt.
+5. В media проверьте direction/source/provenance, sample_state и age. Отсутствие
+   измерения не равно 0; capture setting не является измеренным capture FPS.
+6. Проверьте relay accepted/rejected и клиентские queue/dropped/retried/age.
+   Клиентская очередь ограничена 128; при полном outage теряется и её диагностика.
+
+Графана применяет regex-экранирование multi/All. Не используйте фильтр пользователя
+как ACL. Legacy views сохранены отдельно. Ограничения таблиц — 500 traces / 20 spans
+для новых views; sampling, границы времени, retention и поздние spans ограничивают
+полноту. Структурный поиск incomplete в Tempo экспериментальный: результат требует
+проверки самого trace и не является счётчиком продуктовых отказов. Длительности
+между разными клиентами не вычисляются вычитанием несинхронизированных часов.
+
+### Rollout / rollback
+
+Порядок: nullable migration 0047 + backend/relay → клиенты → dashboard после #154.
+Новые клиенты ждут X-Telemetry-Schema=1 и verified X-Telemetry-Session. Это не
+credentials. Anonymous/postlogout записи остаются локальными; старые партии
+не принадлежат новому аккаунту или origin. Metadata failure не отменяет бизнес-коммит.
+
+Web: VITE_TELEMETRY_ENABLED=false; VITE_TRACE_SAMPLE_RATIO=0…1.
+Flutter compile defines: TELEMETRY_ENABLED=false; TRACE_SAMPLE_RATIO=0…1.
+Server: OTEL_TRACES_SAMPLER / OTEL_TRACES_SAMPLER_ARG; bounded synthetic pilot=1.
+Нет новой tail-sampling политики. При откате клиентов оставьте nullable metadata;
+старые записи выполняются без cause. Не удаляйте колонки при активном новом worker.
+
+Перед dashboard update прочитайте актуальную resourceVersion/version, JSON и ACL;
+сохраните конфигурацию локально для возврата. Не перезаписывайте конкурирующие
+изменения. В production read 2026-10-07 подтверждены generation=13,
+resourceVersion=1790842200468009, export schema dashboard.grafana.app/v2,
+Tempo UID boohtacord_tempo и Metrics UID boohtacord_metrics. Это read observation,
+а не deployed SHA или утверждение об актуальности версии в следующую поставку.
+Сохраняйте приватный доступ; не публикуйте снимки с реальными user/session IDs.
+
+[Изолированный runtime и fault-профиль](../../tools/qa/tracing_flow/README.md).
+Проверяйте queries на установленном Tempo; локальный JSON lint не заменяет
+production Grafana smoke, permissions и проверку rollback.
+
 Панель `boohtacord-traces` начинается со сводки сессий. Фильтр «Пользователь · имя и ID» показывает отображаемое имя профиля BOOHTACORD и ID аккаунта; список можно искать по имени. Фактическое значение фильтра — UUID, поэтому старые ссылки и история сохраняются при переименовании. Нажатие на ID сессии показывает её действия и запросы; ID спана открывает полный трейс в Explore.
 
 ## Модель корреляции

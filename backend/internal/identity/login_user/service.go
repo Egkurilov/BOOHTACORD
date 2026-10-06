@@ -9,6 +9,8 @@ import (
 	"voice-platform/backend/internal/identity/password"
 	"voice-platform/backend/internal/identity/registration"
 	"voice-platform/backend/internal/identity/session"
+	correlatesession "voice-platform/backend/internal/observability/correlate_session"
+	flowstage "voice-platform/backend/internal/observability/flow_stage"
 )
 
 var (
@@ -50,7 +52,11 @@ func New(accounts Accounts, sessions Sessions) Service {
 	return Service{accounts: accounts, sessions: sessions}
 }
 
-func (service Service) Login(context context.Context, input Input) (Result, error) {
+func (service Service) Login(context context.Context, input Input) (result Result, err error) {
+	context, span := flowstage.Begin(context, "auth.login.server", "authenticate")
+	defer func() {
+		flowstage.End(span, err, flowstage.Reject(ErrInvalidCredentials, "permission_denied"), flowstage.Reject(ErrBlocked, "permission_denied"))
+	}()
 	login, err := registration.NormalizeLogin(input.Login)
 	if err != nil {
 		return Result{}, ErrInvalidCredentials
@@ -80,5 +86,7 @@ func (service Service) Login(context context.Context, input Input) (Result, erro
 	if err := service.sessions.Create(context, account.ID, issued.Digest); err != nil {
 		return Result{}, fmt.Errorf("persist session: %w", err)
 	}
+	span.SetAttributes(correlatesession.Attributes(account.ID, issued.Digest)...)
+	flowstage.Mark(context, "commit", "success")
 	return Result{Token: issued.Token}, nil
 }

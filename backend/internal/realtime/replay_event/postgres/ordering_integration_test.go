@@ -23,6 +23,7 @@ func TestConcurrentAppendAllocatesSequenceInCommitOrder(t *testing.T) {
 	if _, err := db.Exec(ctx, string(migration)); err != nil {
 		t.Fatal(err)
 	}
+	applyTraceMigration(t, ctx, db)
 	_, err = db.Exec(ctx, `CREATE FUNCTION hold_realtime_insert() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN PERFORM pg_advisory_xact_lock(7102140037::bigint); RETURN NEW; END $$;
 CREATE TRIGGER hold_realtime_insert BEFORE INSERT ON realtime_events

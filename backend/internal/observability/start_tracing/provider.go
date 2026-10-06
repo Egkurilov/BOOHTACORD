@@ -35,11 +35,12 @@ func Start(ctx context.Context) (func(context.Context) error, error) {
 	}
 	provider := sdktrace.NewTracerProvider(
 		sdktrace.WithResource(service),
-		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithSampler(configuredSampler()),
 		sdktrace.WithBatcher(exporter,
-			sdktrace.WithMaxQueueSize(2048),
+			sdktrace.WithMaxQueueSize(128),
+			sdktrace.WithMaxExportBatchSize(16),
 			sdktrace.WithBatchTimeout(5*time.Second),
-			sdktrace.WithExportTimeout(5*time.Second),
+			sdktrace.WithExportTimeout(3*time.Second),
 		),
 	)
 	otel.SetTracerProvider(provider)

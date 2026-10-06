@@ -3,6 +3,8 @@ package kickvoiceparticipantpostgres
 import (
 	"context"
 	"fmt"
+	causal "voice-platform/backend/internal/observability/causal_reference"
+	flowstage "voice-platform/backend/internal/observability/flow_stage"
 
 	kickvoiceparticipant "voice-platform/backend/internal/voice/kick_voice_participant"
 )
@@ -14,8 +16,8 @@ WITH revoked AS (
     WHERE user_id = $1 AND revoked_at IS NULL
     RETURNING id, channel_id
 ), queued AS (
-    INSERT INTO voice_sfu_revocations (lease_id, channel_id)
-    SELECT id, channel_id FROM revoked
+    INSERT INTO voice_sfu_revocations (lease_id, channel_id, trace_cause)
+    SELECT id, channel_id, $3::jsonb FROM revoked
     ON CONFLICT (lease_id) DO NOTHING
 ), audited AS (
     INSERT INTO audit_events (actor_user_id, target_user_id, event_type, metadata)
@@ -52,12 +54,14 @@ func (repository Repository) Kick(context context.Context, input kickvoicepartic
 		return kickvoiceparticipant.Result{}, fmt.Errorf("lock voice account: %w", err)
 	}
 	var result kickvoiceparticipant.Result
-	if err := transaction.QueryRow(context, kickVoiceLease, input.TargetID, input.ActorID).Scan(&result.RevokedLeases); err != nil {
+	if err := transaction.QueryRow(context, kickVoiceLease, input.TargetID, input.ActorID, causal.From(context).Bytes()).Scan(&result.RevokedLeases); err != nil {
 		return kickvoiceparticipant.Result{}, fmt.Errorf("revoke voice lease: %w", err)
 	}
 	if err := transaction.Commit(context); err != nil {
 		return kickvoiceparticipant.Result{}, fmt.Errorf("commit voice kick: %w", err)
 	}
 	committed = true
+	flowstage.Mark(context, "commit", "success")
+	flowstage.Mark(context, "enqueue", "success")
 	return result, nil
 }

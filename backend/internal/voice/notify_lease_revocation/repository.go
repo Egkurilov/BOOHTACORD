@@ -27,9 +27,9 @@ WITH candidates AS (
         notification_claimed_at = now()
     FROM candidates
     WHERE revocation.lease_id = candidates.lease_id
-    RETURNING revocation.lease_id, revocation.requested_at
+    RETURNING revocation.lease_id, revocation.requested_at, revocation.trace_cause
 )
-SELECT claimed.lease_id::text, lease.user_id::text, lease.revocation_reason, claimed.requested_at
+SELECT claimed.lease_id::text, lease.user_id::text, lease.revocation_reason, claimed.requested_at, claimed.trace_cause
 FROM claimed JOIN voice_leases AS lease ON lease.id = claimed.lease_id
 ORDER BY claimed.requested_at, claimed.lease_id`
 
@@ -44,6 +44,7 @@ WHERE lease_id = $1::uuid AND notification_claim_token = $2::uuid
 type Item struct {
 	LeaseID, UserID, Reason, ClaimToken string
 	RequestedAt                         time.Time
+	TraceCause                          []byte
 }
 
 type Rows interface {
@@ -75,7 +76,7 @@ func (repository Repository) Claim(context context.Context, limit int) ([]Item, 
 	items := make([]Item, 0, limit)
 	for rows.Next() {
 		item := Item{ClaimToken: claimToken}
-		if err := rows.Scan(&item.LeaseID, &item.UserID, &item.Reason, &item.RequestedAt); err != nil {
+		if err := rows.Scan(&item.LeaseID, &item.UserID, &item.Reason, &item.RequestedAt, &item.TraceCause); err != nil {
 			return nil, fmt.Errorf("scan voice lease revocation notification: %w", err)
 		}
 		items = append(items, item)

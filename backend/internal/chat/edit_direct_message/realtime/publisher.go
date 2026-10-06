@@ -34,7 +34,7 @@ func (publisher Publisher) Edit(ctx context.Context, input editdirectmessage.Inp
 	defer cancel()
 	accounts, err := publisher.recipients.Resolve(lookupContext, result.DirectMessageID, input.ActorID)
 	if err == nil {
-		publisher.events.PublishToAccounts(accounts, eventhub.Event{
+		publisher.events.PublishToAccountsContext(lookupContext, accounts, eventhub.Event{
 			EventID: uuid.NewString(), Kind: "direct_message.message_updated", OccurredAt: time.Now().UTC(),
 			Payload: map[string]any{"direct_message_id": result.DirectMessageID, "message_id": result.ID, "revision": result.Revision},
 		})

@@ -1,10 +1,8 @@
-import 'dart:async';
-
 import '../../../services/voice_lease_revocation.dart';
 import '../lifecycle/controller.dart';
 
 extension VoiceLeaseEventsRevocation on VoiceController {
-  void dispatchVoiceRevocation(Map<String, dynamic> payload) {
+  Future<void> dispatchVoiceRevocation(Map<String, dynamic> payload) async {
     if (disposed || !scope.capture().isActive) return;
     final revocation = VoiceLeaseRevocation.parse(
       payload['lease_id'],
@@ -13,9 +11,17 @@ extension VoiceLeaseEventsRevocation on VoiceController {
       admissionPending: voiceAdmissionPending,
     );
     if (revocation == null) return;
-    if (leaseId == revocation.leaseId) disconnect.bind(revocation.leaseId, voiceChannel?.id ?? disconnect.channelId ?? '');
+    if (leaseId == revocation.leaseId) {
+      disconnect.bind(
+        revocation.leaseId,
+        voiceChannel?.id ?? disconnect.channelId ?? '',
+      );
+    }
     final accepted = disconnect.server(revocation.leaseId, revocation.reason);
-    if (accepted && room == null && !voiceAdmissionPending) { showVoiceDisconnect(); return; }
+    if (accepted && room == null && !voiceAdmissionPending) {
+      showVoiceDisconnect();
+      return;
+    }
     if (voiceAdmissionPending) {
       revokedVoiceLeasesDuringJoin[revocation.leaseId] = revocation.reason;
       if (revokedVoiceLeasesDuringJoin.length > 16) {
@@ -24,10 +30,10 @@ extension VoiceLeaseEventsRevocation on VoiceController {
         );
       }
       if (leaseId == revocation.leaseId) {
-        unawaited(pendingRoom?.disconnect().catchError((Object _) {}));
+        await pendingRoom?.disconnect().catchError((Object _) {});
       }
     } else {
-      unawaited(handleVoiceLeaseRevoked(revocation.leaseId, revocation.reason));
+      await handleVoiceLeaseRevoked(revocation.leaseId, revocation.reason);
     }
   }
 
@@ -40,7 +46,9 @@ extension VoiceLeaseEventsRevocation on VoiceController {
     final closing = leaveVoice(explicit: false);
     final revision = operationRevision;
     await closing;
-    if (!active(ticket, revision) || generation != disconnect.generation) return;
+    if (!active(ticket, revision) || generation != disconnect.generation) {
+      return;
+    }
     showVoiceDisconnect();
   }
 }

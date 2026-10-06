@@ -36,7 +36,7 @@ void configureRealtime(AppOwners app) {
       app.workspace,
       app.conversation,
       voiceRevoked: app.voice.dispatchVoiceRevocation,
-      permissionsChanged: () => unawaited(app.permissions.refresh()),
+      permissionsChanged: app.permissions.refresh,
       notifyMessage: notifications.call,
       guildChanged: (revision) => unawaited(app.guildProfile.refresh(revision)),
     ).call,

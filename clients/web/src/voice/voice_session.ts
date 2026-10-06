@@ -21,6 +21,8 @@ import { VoiceAudioProcessing } from './voice_audio_processing'
 import { VoiceScreenSession } from './voice_screen_session'
 import type { ActiveVoiceSession, RoomJoiner, VoiceAdmission, VoiceConnectionObserver } from './voice_session_types'
 import { tracedOperation } from '../telemetry/client_tracing'
+import { activeAction } from '../telemetry/action_scope/scope'
+import { telemetrySession } from '../telemetry/action_scope/session'
 import type { AudioInputSelection } from './audio_input_selection'
 import { reportAudioInputSwitch } from './audio_input_reporting'
 export type { ActiveVoiceSession, RoomJoiner, VoiceAdmission, VoiceConnectionObserver } from './voice_session_types'
@@ -52,14 +54,21 @@ export class VoiceSession {
   remoteVoices() { return this.current?.room.remoteVoices ?? null }
   participantCards() { return this.current?.room.participantCards ?? null }
   async join(channelId: string, transfer = false, joinMode: VoiceJoinMode = 'with-microphone'): Promise<ActiveVoiceSession> {
+    if (!this.current) telemetrySession.beginMedia()
     return tracedOperation('voice.join', async (within) => {
       if (this.current) throw new Error('Сначала завершите текущее голосовое подключение.')
       let lease: VoiceLease | null = null
       try {
-        const acquired = await this.admission.acquire(channelId, transfer)
+        const action = activeAction()
+        if(action)telemetrySession.bindMediaFlow(action.id)
+        action?.step('lease')
+        const acquired = await within(() => this.admission.acquire(channelId, transfer))
         lease = acquired
         this.monitor.notifyAdmitted(acquired.id, acquired.channelId)
-        const joined = await this.joinRoom(await within(() => this.admission.credential(acquired.id)), this.audioProcessing.value, joinMode, this.inputDeviceId)
+        action?.step('credential')
+        const credential = await within(() => this.admission.credential(acquired.id))
+        action?.step('connect')
+        const joined = await within(() => this.joinRoom(credential, this.audioProcessing.value, joinMode, this.inputDeviceId))
         this.current = { listenerOnly: joinMode === 'listener', channelId: lease.channelId, leaseId: lease.id, screenProfile: null, ...joined }
         const observeInput = (selection: AudioInputSelection) => {
           if (this.current?.room !== joined.room) return
@@ -73,8 +82,11 @@ export class VoiceSession {
         const selected = joined.room.readAudioInputSelection?.()
         if (selected) observeInput(selected)
         this.monitor.bind(joined.room, () => this.current?.room === joined.room, () => this.handleDisconnected(joined.room))
+        action?.span.setAttribute('app.voice.mode',this.current.microphone==='LISTENER_PERMISSION_DENIED'?'microphone_unavailable':this.current.listenerOnly?'listener':'participant')
+        action?.step('ready')
         return this.current
       } catch (cause) {
+        telemetrySession.endMedia()
         const acquired = lease
         if (acquired) await within(() => this.admission.release(acquired.id)).catch(() => undefined)
         throw cause
@@ -90,6 +102,7 @@ export class VoiceSession {
         this.stopInputSelection?.()
         this.stopInputSelection = undefined
         this.current = null
+        telemetrySession.endMedia()
         this.deafen.reset()
         await within(() => this.admission.release(current.leaseId))
       })
@@ -103,6 +116,7 @@ export class VoiceSession {
       this.stopInputSelection?.()
       this.stopInputSelection = undefined
       this.current = null
+      telemetrySession.endMedia()
       this.deafen.reset()
     })
     return true
@@ -157,6 +171,7 @@ export class VoiceSession {
     this.stopInputSelection?.()
     this.stopInputSelection = undefined
     this.current = null
+    telemetrySession.endMedia()
     this.deafen.reset()
     this.monitor.notifyDisconnected()
     await this.admission.release(current.leaseId).catch(() => undefined)

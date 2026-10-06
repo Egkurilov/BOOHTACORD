@@ -17,6 +17,7 @@ import { createProtectedRefreshGate } from './protected_refresh/gate'
 import { coalesceStores } from './protected_refresh/stores'
 import { refreshEditedHints } from './protected_refresh/revisions'
 import { deliverProtectedHintBatch } from './protected_refresh/batch'
+import { processRealtime } from '../telemetry/realtime_flow/process'
 
 interface Refreshable { error: string | null; refresh(): Promise<void> }
 interface TextHistory extends Refreshable { channelId: string | null; refreshMessages?(ids: string[]): Promise<unknown> }
@@ -96,9 +97,9 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
       gate = createProtectedRefreshGate(); stores = coalesceStores(original, gate)
       lifecycle += 1
       notifications.start(accountID)
-      realtime.connect(onEvent, undefined, undefined, {
-        onHintBatch: events => deliverProtectedHintBatch(events, onEvent).then(() => refreshEditedHints(original, events)),
-        onRecovery: () => Promise.all([refreshProtectedState(stores), permissions.refresh(), guildProfile.refresh()]).then(() => undefined),
+      realtime.connect(event => processRealtime([event],()=>onEvent(event)), undefined, undefined, {
+        onHintBatch: events => processRealtime(events,()=>deliverProtectedHintBatch(events, onEvent).then(() => refreshEditedHints(original, events))),
+        onRecovery: () => processRealtime([],()=>Promise.all([refreshProtectedState(stores), permissions.refresh(), guildProfile.refresh()]).then(() => undefined)),
         checkSession: async () => (await loadCurrentSession())?.accountId === accountID,
         onSessionExpired,
       })

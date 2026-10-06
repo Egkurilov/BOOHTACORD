@@ -60,6 +60,7 @@ func TestRunExecutesEmbeddedMigrations(t *testing.T) {
 		{"CREATE TABLE IF NOT EXISTS guild_settings", "welcome_channel_id UUID", "ON CONFLICT (singleton) DO NOTHING"},
 		{"ADD COLUMN IF NOT EXISTS kind", "SYSTEM_WELCOME", "messages_one_welcome_per_account", "guard_system_welcome"},
 		{"ADD COLUMN IF NOT EXISTS public_id", "last_active_at", "sessions_public_id_unique"},
+		{"ALTER TABLE voice_sfu_revocations ADD COLUMN IF NOT EXISTS trace_cause", "ALTER TABLE realtime_events ADD COLUMN IF NOT EXISTS trace_cause", "voice_trace_cause_bounded", "event_trace_cause_bounded"},
 	}
 	if len(executor.statements) != len(expected) {
 		t.Fatalf("migration count = %d", len(executor.statements))

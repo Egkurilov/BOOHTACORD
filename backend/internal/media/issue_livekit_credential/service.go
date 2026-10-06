@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	flowstage "voice-platform/backend/internal/observability/flow_stage"
 
 	livekitcredential "voice-platform/backend/internal/media/livekit_credential"
 )
@@ -31,7 +32,11 @@ type Service struct {
 }
 
 func New(store Store, issuer Issuer) Service { return Service{store: store, issuer: issuer} }
-func (service Service) Issue(context context.Context, input Input) (livekitcredential.Credential, error) {
+func (service Service) Issue(context context.Context, input Input) (result livekitcredential.Credential, err error) {
+	context, span := flowstage.Begin(context, "voice.credential.server", "credential")
+	defer func() {
+		flowstage.End(span, err, flowstage.Reject(ErrInvalidInput, "invalid"), flowstage.Reject(ErrLeaseUnavailable, "permission_denied"))
+	}()
 	if input.ActorID == "" || input.LeaseID == "" || input.SessionDigest == [sha256.Size]byte{} {
 		return livekitcredential.Credential{}, ErrInvalidInput
 	}
