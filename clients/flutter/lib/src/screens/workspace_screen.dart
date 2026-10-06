@@ -1215,6 +1215,8 @@ class _CategoryState extends State<_Category> {
                             ),
                             onTap: () => setState(() => _expanded = !_expanded),
                             borderRadius: BorderRadius.circular(GcRadii.md),
+                            hoverColor: Colors.transparent,
+                            mouseCursor: SystemMouseCursors.click,
                             child: Padding(
                               padding: const EdgeInsets.only(left: 8),
                               child: Row(

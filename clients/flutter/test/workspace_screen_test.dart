@@ -2159,6 +2159,13 @@ void main() {
     channelFocus.onShowFocusHighlight!(false);
     await tester.pump();
     expect(tester.widget<Visibility>(menuVisibility).visible, isFalse);
+    final categoryToggle = tester.widget<InkWell>(
+      find.byKey(
+        const ValueKey('workspace-category-toggle:category-1'),
+      ),
+    );
+    expect(categoryToggle.hoverColor, Colors.transparent);
+    expect(categoryToggle.mouseCursor, SystemMouseCursors.click);
     expect(find.byTooltip('Свернуть раздел Текстовые каналы'), findsNothing);
     await tester.tap(find.text('ТЕКСТОВЫЕ КАНАЛЫ'));
     await tester.pumpAndSettle();
