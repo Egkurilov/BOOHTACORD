@@ -13,6 +13,11 @@ Baseline: `6b8ffa5e5c266d42a534f294c18e5a282139bfa9`. Source-only handoff; issue
 - PASS: Python dashboard/source mapping, fixed private query limits/links, missing values, SFU freshness, CI rule wiring.
 - NOT_RUN: Docker Desktop engine unavailable; native official pinned Windows binaries used for local checks.
 
+## CI composition revalidation
+
+- Initial PR CI failed the existing LiveKit artifact hash check because compose and Prometheus rule configuration intentionally changed. Updated those two normalized evidence SHA256 bindings with an explicit source review; checker/model unchanged.
+- PASS: 15 LiveKit network tests; full `python -m tools.ci.native.contracts`, including 174 Python tests (one pre-existing skip), contracts/traceability/link/topology/workflow/Compose checks. Source correction does not imply live acceptance.
+
 ## Versions and export proof
 
 - Collector source pin 0.161.0, native output `otelcol version 0.161.0`.

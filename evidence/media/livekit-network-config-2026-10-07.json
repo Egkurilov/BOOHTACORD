@@ -2,7 +2,7 @@
   "kind": "livekit-network-configuration",
   "status": "PARTIAL",
   "observed_at": "2026-10-07",
-  "source_revision": "dee50f1b6c637a673f8a6b670ecac45fd4bcf463",
+  "source_revision": "fa17c613b75990181eb087fcab6a83d0db54b263",
   "upstream_review": {
     "image": "livekit/livekit-server:v1.13.7",
     "listener_binding_source": "https://github.com/livekit/livekit/blob/v1.13.7/pkg/service/server.go#L1494-L1524",
@@ -19,8 +19,8 @@
     "deploy/livekit/compose.yaml": "sha256:a172baeddb370f902a95ad5661dc770bd8f7f0b5ba003978f1a1a2ab95b9238d",
     "deploy/compose.yaml": "sha256:7db64951d73f0edd58045992e3f113721f7b029f7905df43b86a03b9582c1f83",
     "deploy/operators.yaml": "sha256:a036a6e02411fd838031f085f0eec0ad40a9d43ae3de12beae1afc6c880492b6",
-    "docker/observability/compose.yaml": "sha256:48c0c7b91bdce7bc7288c8d09a3ab26c2b7cd77a0106f771ac4dac90ce352311",
-    "docker/observability/prometheus.yaml": "sha256:e5d8c1566ff35f198ba35e970d9d7c7373e39c6083bfe9b0f9f7d983e901c5b6",
+    "docker/observability/compose.yaml": "sha256:a5fb64b931b2e67f8bdd9506121ca0ee692195c91a347c81503548ad1a7fb698",
+    "docker/observability/prometheus.yaml": "sha256:7852473943253ef651640000282105f06256b62e3a84d232a910989cd9846b30",
     "docker/observability/livekit-network-alerts.yaml": "sha256:0198b460a241c051dfd7fb76658814ca2c2e113a57ad4d81d604b576db528b8d",
     "docs/runbooks/livekit-network-acceptance.md": "sha256:17894987e43b1a919c5e1a9b421d0b71fbb138cfee33d31c93768643e8c45fe5",
     "tools/verify/livekit_network_config/check.py": "sha256:6d3eeee0c616f2c467d454fa7bc48cbf805d4eb172fed72287111535b55da849",
@@ -51,13 +51,13 @@
       "name": "Repository Python regression suite",
       "result": "PASS",
       "command": "python -m tools.verify.python_tests.run",
-      "observation": "169 tests passed; one suite test was skipped."
+      "observation": "174 tests passed; one pre-existing suite test was skipped during the QoE composition source revalidation."
     },
     {
       "name": "Native contracts checks",
       "result": "PASS",
       "command": "python -m tools.ci.native.contracts",
-      "observation": "Contracts, traceability, documentation links, Compose topology and CI routing checks passed."
+      "observation": "Revalidated after the intentional read-only media QoE rule mount/entry: contracts, traceability, documentation links, Compose topology and CI routing checks passed."
     },
     {
       "name": "Effective deployment image/config/NAT/firewall/TURN inventory",
@@ -80,5 +80,14 @@
       "observation": "No deployment change was applied. The normal release workflow and rollback check remain required."
     }
   ],
-  "remaining": "Capture redacted effective deployment state, run direct UDP/ICE-TCP/configured TURN scenarios for publisher and subscriber, verify private scrape and alerts, measure SFU/network resources against #158, then apply through the approved test deployment workflow and exercise rollback."
+  "remaining": "Capture redacted effective deployment state, run direct UDP/ICE-TCP/configured TURN scenarios for publisher and subscriber, verify private scrape and alerts, measure SFU/network resources against #158, then apply through the approved test deployment workflow and exercise rollback.",
+  "composition_review": {
+    "issue_refs": [
+      6,
+      175
+    ],
+    "source_revision": "fa17c613b75990181eb087fcab6a83d0db54b263",
+    "change": "Added read-only media-qoe-alerts.yaml mount and Prometheus rule_files entry; LiveKit ports, peers, allowlist, image pin and existing scrape availability alert unchanged.",
+    "verification": "PASS: 15 focused LiveKit network tests and full python -m tools.ci.native.contracts. All 174 Python tests passed with one pre-existing skip; contracts, traceability, documentation links, topology, workflows and Compose checks passed. No deployment/runtime acceptance performed."
+  }
 }
