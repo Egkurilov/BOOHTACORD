@@ -12,6 +12,7 @@ import '../features/admin/role_permissions/panel.dart';
 import '../features/admin/guild_settings/panel.dart';
 import '../features/admin/readiness/panel.dart';
 import '../features/admin/topology/panel.dart';
+import '../features/admin/topology/actions.dart';
 import '../features/admin/audit/filter.dart';
 import '../features/admin/layout/width_class.dart';
 import '../features/admin/members/controller.dart';
@@ -44,14 +45,6 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   final _channelRename = TextEditingController();
   final _channelDescription = TextEditingController();
   final _auditActor = TextEditingController();
-  String? _categoryId;
-  final _collapsedTopologyCategories = <String>{};
-  String? _channelId;
-  String? _moveChannelId;
-  String? _moveTargetCategoryId;
-  String? _archiveChannelId;
-  String? _closeVoiceChannelId;
-  ChannelKind _channelKind = ChannelKind.voice;
   bool _busy = false;
   String? _status;
   String? _error;
@@ -136,26 +129,27 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _createCategory() async {
+  Future<String?> _createCategory(String name) async {
     setState(() {
       _busy = true;
       _status = null;
       _error = null;
     });
     try {
-      await widget.state.api.createCategory(_categoryName.text);
-      _categoryName.clear();
+      await widget.state.api.createCategory(name);
       await widget.state.refreshTopology();
       if (!mounted) return;
+      final id = widget.state.topology?.categories.lastOrNull?.id;
       setState(() {
-        _categoryId = widget.state.topology?.categories.lastOrNull?.id;
         _status = 'Категория создана. Топология обновлена.';
       });
+      return id;
     } catch (cause) {
       await _recoverTopology(cause);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+    return null;
   }
 
   Future<void> _loadAudit({String? before}) async {
@@ -290,11 +284,10 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> _createChannel() async {
-    final categoryId =
-        _categoryId ?? widget.state.topology?.categories.firstOrNull?.id;
-    if (categoryId == null) {
-      setState(() => _error = 'Сначала создайте категорию.');
+  Future<void> _createChannel(String categoryId, int revision, String name, ChannelKind kind) async {
+    if (!await _validateTopologyRevision(revision)) return;
+    if (_currentCategory(categoryId) == null) {
+      await _recoverStaleTopology();
       return;
     }
     setState(() {
@@ -305,10 +298,9 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     try {
       await widget.state.api.createChannel(
         categoryId: categoryId,
-        name: _channelName.text,
-        kind: _channelKind,
+        name: name,
+        kind: kind,
       );
-      _channelName.clear();
       await widget.state.refreshTopology();
       if (!mounted) return;
       setState(() => _status = 'Канал создан. Топология обновлена.');
@@ -319,215 +311,166 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _renameCategory(ChannelCategory category) async {
+  Future<void> _renameCategory(ChannelCategory category, int revision, String name) async {
+    if (!await _validateTopologyRevision(revision)) return;
+    final current = _currentCategory(category.id);
+    if (current == null) return _recoverStaleTopology();
     await _mutate(
       'Категория переименована. Топология обновлена.',
       () => widget.state.api.renameCategory(
-        categoryId: category.id,
-        name: _categoryRename.text,
-        expectedRevision: widget.state.topology!.revision,
+        categoryId: current.id,
+        name: name,
+        expectedRevision: revision,
       ),
       revisionBound: true,
     );
   }
 
-  Future<void> _renameChannel(GuildChannel channel) async {
+  Future<void> _renameChannel(GuildChannel channel, int revision, String name) async {
+    if (!await _validateTopologyRevision(revision)) return;
+    final current = _currentChannel(channel.id);
+    if (current == null) return _recoverStaleTopology();
     await _mutate(
       'Канал переименован. Топология обновлена.',
       () => widget.state.api.renameChannel(
-        channelId: channel.id,
-        name: _channelRename.text,
-        expectedRevision: widget.state.topology!.revision,
+        channelId: current.id,
+        name: name,
+        expectedRevision: revision,
       ),
       revisionBound: true,
     );
   }
 
-  Future<void> _saveChannelDescription(GuildChannel channel) async {
+  Future<void> _saveChannelDescription(GuildChannel channel, int revision, String description) async {
+    if (!await _validateTopologyRevision(revision)) return;
+    final current = _currentChannel(channel.id);
+    if (current == null) return _recoverStaleTopology();
     await _mutate(
       'Описание канала сохранено. Топология обновлена.',
       () => widget.state.api.updateChannelDescription(
-        channelId: channel.id,
-        description: _channelDescription.text,
-        expectedRevision: widget.state.topology!.revision,
+        channelId: current.id,
+        description: description,
+        expectedRevision: revision,
       ),
       revisionBound: true,
     );
   }
 
-  Future<void> _deleteCategory(ChannelCategory category) async {
+  Future<void> _deleteCategory(ChannelCategory category, int revision) async {
+    if (!await _validateTopologyRevision(revision)) return;
+    final current = _currentCategory(category.id);
+    if (current == null) return _recoverStaleTopology();
+    if (current.channels.isNotEmpty) return;
     final approved = await showConfirmationDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Удалить категорию?'),
-        content: Text('Удалить пустую категорию «${category.name}»?'),
+        content: Text('Удалить пустую категорию «${current.name}»?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Отмена'),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Удалить'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+          FilledButton.tonal(onPressed: () => Navigator.pop(context, true), child: const Text('Удалить')),
         ],
       ),
     );
-    if (approved != true) return;
-    await _mutate(
-      'Пустая категория удалена. Топология обновлена.',
-      () => widget.state.api.deleteEmptyCategory(
-        categoryId: category.id,
-        expectedRevision: widget.state.topology!.revision,
-      ),
-      revisionBound: true,
-    );
+    if (approved != true || !await _validateTopologyRevision(revision)) return;
+    final latest = _currentCategory(category.id);
+    if (latest == null) return _recoverStaleTopology();
+    if (latest.channels.isNotEmpty) return;
+    await _mutate('Пустая категория удалена. Топология обновлена.', () => widget.state.api.deleteEmptyCategory(categoryId: latest.id, expectedRevision: revision), revisionBound: true);
   }
 
-  Future<void> _reorderCategory(int direction) async {
+  Future<void> _reorderCategory(String categoryId, int revision, int direction) async {
+    if (!await _validateTopologyRevision(revision)) return;
     final topology = widget.state.topology;
-    if (topology == null || _categoryId == null) return;
+    if (topology == null) return _recoverStaleTopology();
+    final index = topology.categories.indexWhere((item) => item.id == categoryId);
+    final target = index + direction;
+    if (index < 0 || target < 0 || target >= topology.categories.length) return;
     final ids = topology.categories.map((item) => item.id).toList();
-    final index = ids.indexOf(_categoryId!);
-    final target = index + direction;
-    if (index < 0 || target < 0 || target >= ids.length) return;
-    final movedId = ids[index];
+    final moved = ids[index];
     ids[index] = ids[target];
-    ids[target] = movedId;
-    await _mutate(
-      'Порядок категорий сохранён. Топология обновлена.',
-      () => widget.state.api.reorderCategories(
-        categoryIds: ids,
-        expectedRevision: topology.revision,
-      ),
-      revisionBound: true,
-    );
+    ids[target] = moved;
+    await _mutate('Порядок категорий сохранён. Топология обновлена.', () => widget.state.api.reorderCategories(categoryIds: ids, expectedRevision: revision), revisionBound: true);
   }
 
-  Future<void> _reorderChannel(int direction) async {
+  Future<void> _reorderChannel(String categoryId, GuildChannel channel, int revision, int direction) async {
+    if (!await _validateTopologyRevision(revision)) return;
     final topology = widget.state.topology;
-    final category = topology?.categories
-        .where((item) => item.id == _categoryId)
-        .firstOrNull;
-    if (topology == null || category == null || _channelId == null) return;
+    final category = _currentCategory(categoryId);
+    if (topology == null || category == null) return _recoverStaleTopology();
+    final index = category.channels.indexWhere((item) => item.id == channel.id);
+    final target = index + direction;
+    if (index < 0 || target < 0 || target >= category.channels.length) return;
     final ids = category.channels.map((item) => item.id).toList();
-    final index = ids.indexOf(_channelId!);
-    final target = index + direction;
-    if (index < 0 || target < 0 || target >= ids.length) return;
-    final movedId = ids[index];
+    final moved = ids[index];
     ids[index] = ids[target];
-    ids[target] = movedId;
-    await _mutate(
-      'Порядок каналов сохранён. Топология обновлена.',
-      () => widget.state.api.reorderChannels(
-        categoryId: category.id,
-        channelIds: ids,
-        expectedRevision: topology.revision,
-      ),
-      revisionBound: true,
-    );
+    ids[target] = moved;
+    await _mutate('Порядок каналов сохранён. Топология обновлена.', () => widget.state.api.reorderChannels(categoryId: category.id, channelIds: ids, expectedRevision: revision), revisionBound: true);
   }
 
-  Future<void> _moveChannel() async {
+  Future<void> _moveChannel(GuildChannel channel, int revision, String targetId) async {
+    if (!await _validateTopologyRevision(revision)) return;
     final topology = widget.state.topology;
-    if (topology == null ||
-        _moveChannelId == null ||
-        _moveTargetCategoryId == null) {
-      return;
-    }
-    final source = topology.categories
-        .where(
-          (category) =>
-              category.channels.any((channel) => channel.id == _moveChannelId),
-        )
-        .firstOrNull;
-    if (source == null || source.id == _moveTargetCategoryId) return;
-    await _mutate(
-      'Канал перенесён. Топология обновлена.',
-      () => widget.state.api.moveChannel(
-        channelId: _moveChannelId!,
-        categoryId: _moveTargetCategoryId!,
-        expectedRevision: topology.revision,
-      ),
-      revisionBound: true,
-    );
+    final current = _currentChannel(channel.id);
+    final target = _currentCategory(targetId);
+    if (topology == null || current == null || target == null) return _recoverStaleTopology();
+    final source = topology.categories.where((category) => category.channels.any((item) => item.id == current.id)).firstOrNull;
+    if (source == null || source.id == target.id) return;
+    await _mutate('Канал перенесён. Топология обновлена.', () => widget.state.api.moveChannel(channelId: current.id, categoryId: target.id, expectedRevision: revision), revisionBound: true);
   }
 
-  Future<void> _archiveTextChannel(List<GuildChannel> channels) async {
-    final channel = channels
-        .where(
-          (item) =>
-              item.id == _archiveChannelId && item.kind == ChannelKind.text,
-        )
-        .firstOrNull;
-    final topology = widget.state.topology;
-    if (channel == null || topology == null) return;
+  Future<void> _archiveTextChannel(GuildChannel channel, int revision) async {
+    if (!await _validateTopologyRevision(revision)) return;
+    final current = _currentChannel(channel.id);
+    if (current == null || current.kind != ChannelKind.text) return _recoverStaleTopology();
     final approved = await showConfirmationDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Подтверждение архивации'),
-        content: Text(
-          'Архивировать текстовый канал «${channel.name}»? История сообщений сохранится, канал исчезнет из навигации.',
-        ),
+        content: Text('Архивировать текстовый канал «${current.name}»? История сообщений сохранится, канал исчезнет из навигации.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Отмена'),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Архивировать канал'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+          FilledButton.tonal(onPressed: () => Navigator.pop(context, true), child: const Text('Архивировать канал')),
         ],
       ),
     );
-    if (approved != true) return;
-    await _mutate(
-      'Канал архивирован. Топология обновлена.',
-      () => widget.state.api.archiveTextChannel(
-        channelId: channel.id,
-        expectedRevision: topology.revision,
-      ),
-      revisionBound: true,
-    );
+    if (approved != true || !await _validateTopologyRevision(revision)) return;
+    final latest = _currentChannel(channel.id);
+    if (latest == null || latest.kind != ChannelKind.text) return _recoverStaleTopology();
+    await _mutate('Канал архивирован. Топология обновлена.', () => widget.state.api.archiveTextChannel(channelId: latest.id, expectedRevision: revision), revisionBound: true);
   }
 
-  Future<void> _closeVoiceAdmission(List<GuildChannel> channels) async {
-    final channel = channels
-        .where(
-          (item) =>
-              item.id == _closeVoiceChannelId && item.kind == ChannelKind.voice,
-        )
-        .firstOrNull;
-    final topology = widget.state.topology;
-    if (channel == null || topology == null || channel.admissionClosed) return;
+  Future<void> _closeVoiceAdmission(GuildChannel channel, int revision) async {
+    if (!await _validateTopologyRevision(revision)) return;
+    final current = _currentChannel(channel.id);
+    if (current == null || current.kind != ChannelKind.voice || current.admissionClosed) return;
     final approved = await showConfirmationDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Подтверждение закрытия'),
-        content: Text(
-          'Закрыть вход в голосовой канал «${channel.name}»? Участникам будет отправлена причина; отзыв media-доступа в SFU может занять время.',
-        ),
+        content: Text('Закрыть вход в голосовой канал «${current.name}»? Участникам будет отправлена причина; отзыв media-доступа в SFU может занять время.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Отмена'),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Закрыть вход'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+          FilledButton.tonal(onPressed: () => Navigator.pop(context, true), child: const Text('Закрыть вход')),
         ],
       ),
     );
-    if (approved != true) return;
+    if (approved != true || !await _validateTopologyRevision(revision)) return;
+    final latest = _currentChannel(channel.id);
+    if (latest == null || latest.kind != ChannelKind.voice || latest.admissionClosed) return _recoverStaleTopology();
     await _mutate('Вход закрыт. Отзыв media-доступа в SFU ещё подтверждается; число отозванных leases не подтверждает отключение участников.', () async {
-      await widget.state.api.closeVoiceAdmission(
-        channelId: channel.id,
-        expectedRevision: topology.revision,
-      );
+      await widget.state.api.closeVoiceAdmission(channelId: latest.id, expectedRevision: revision);
     }, revisionBound: true);
   }
+
+  ChannelCategory? _currentCategory(String id) => widget.state.topology?.categories.where((item) => item.id == id).firstOrNull;
+  GuildChannel? _currentChannel(String id) => widget.state.topology?.categories.expand((item) => item.channels).where((item) => item.id == id).firstOrNull;
+  Future<bool> _validateTopologyRevision(int revision) async {
+    if (widget.state.topology?.revision == revision) return true;
+    await _recoverStaleTopology();
+    return false;
+  }
+  Future<void> _recoverStaleTopology() => _recoverTopology(const ApiFailure('Устаревшая топология', status: 409), revisionBound: true);
 
   Future<void> _mutate(
     String success,
@@ -581,35 +524,6 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     final compact = width < GcLayout.mobileBreakpoint;
     final categories =
         widget.state.topology?.categories ?? const <ChannelCategory>[];
-    final selectedId = categories.any((item) => item.id == _categoryId)
-        ? _categoryId
-        : categories.firstOrNull?.id;
-    final selectedCategory = categories
-        .where((item) => item.id == selectedId)
-        .firstOrNull;
-    final expandedCategoryId =
-        selectedId != null && !_collapsedTopologyCategories.contains(selectedId)
-        ? selectedId
-        : null;
-    final channels = selectedCategory?.channels ?? const <GuildChannel>[];
-    final selectedChannel = channels
-        .where((item) => item.id == _channelId)
-        .firstOrNull;
-    final moveSourceCategory = categories
-        .where(
-          (category) =>
-              category.channels.any((channel) => channel.id == _moveChannelId),
-        )
-        .firstOrNull;
-    final allChannels = categories
-        .expand((category) => category.channels)
-        .toList(growable: false);
-    final textChannels = allChannels
-        .where((channel) => channel.kind == ChannelKind.text)
-        .toList(growable: false);
-    final voiceChannels = allChannels
-        .where((channel) => channel.kind == ChannelKind.voice)
-        .toList(growable: false);
     return Material(
       color: GcColors.content,
       child: Column(
@@ -760,613 +674,25 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                               ? AdminReadinessPanel(api: widget.state.api)
                               : _selectedAdminSection == _AdminSection.members
                               ? _buildMembersPanel()
-                              : ListView(
-                                  padding: EdgeInsets.fromLTRB(
-                                    _adminContentInset,
-                                    0,
-                                    _adminContentInset,
-                                    24,
+                              : AdminTopologyPanel(
+                                  categories: categories,
+                                  revision: widget.state.topology?.revision ?? 0,
+                                  busy: _busy,
+                                  status: _status,
+                                  error: _error,
+                                  actions: TopologyActions(
+                                    createCategory: _createCategory,
+                                    createChannel: _createChannel,
+                                    renameCategory: _renameCategory,
+                                    deleteCategory: _deleteCategory,
+                                    reorderCategory: _reorderCategory,
+                                    renameChannel: _renameChannel,
+                                    saveDescription: _saveChannelDescription,
+                                    moveChannel: _moveChannel,
+                                    reorderChannel: _reorderChannel,
+                                    archiveTextChannel: _archiveTextChannel,
+                                    closeVoiceAdmission: _closeVoiceAdmission,
                                   ),
-                                  children: [
-                                    _section(
-                                      title: 'Управление каналами',
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: [
-                                          TopologyTree(
-                                            categories: categories,
-                                            selectedCategoryId:
-                                                expandedCategoryId,
-                                            selectedChannelId: _channelId,
-                                            onCategorySelected: (category) =>
-                                                setState(() {
-                                                  _categoryId = category.id;
-                                                  if (!_collapsedTopologyCategories
-                                                      .add(category.id)) {
-                                                    _collapsedTopologyCategories
-                                                        .remove(category.id);
-                                                  }
-                                                  _categoryRename.text =
-                                                      category.name;
-                                                  _channelId = null;
-                                                  _channelRename.clear();
-                                                  _channelDescription.clear();
-                                                }),
-                                            onChannelSelected: (channel) =>
-                                                setState(() {
-                                                  _categoryId =
-                                                      selectedCategory?.id;
-                                                  if (selectedCategory !=
-                                                      null) {
-                                                    _collapsedTopologyCategories
-                                                        .remove(
-                                                          selectedCategory.id,
-                                                        );
-                                                  }
-                                                  _channelId = channel.id;
-                                                  _channelRename.text =
-                                                      channel.name;
-                                                  _channelDescription.text =
-                                                      channel.description ?? '';
-                                                }),
-                                          ),
-                                          const SizedBox(height: 16),
-                                          TextField(
-                                            controller: _categoryName,
-                                            enabled: !_busy,
-                                            maxLength: 80,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Новая категория',
-                                            ),
-                                            onSubmitted: (_) =>
-                                                _createCategory(),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: FilledButton.tonal(
-                                              onPressed: _busy
-                                                  ? null
-                                                  : _createCategory,
-                                              child: const Text(
-                                                'Создать категорию',
-                                              ),
-                                            ),
-                                          ),
-                                          const Divider(height: 32),
-                                          DropdownButtonFormField<String>(
-                                            key: ValueKey(selectedId),
-                                            initialValue: selectedId,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Категория',
-                                            ),
-                                            items: [
-                                              for (final category in categories)
-                                                DropdownMenuItem(
-                                                  value: category.id,
-                                                  child: Text(category.name),
-                                                ),
-                                            ],
-                                            onChanged: _busy
-                                                ? null
-                                                : (value) => setState(() {
-                                                    _categoryId = value;
-                                                    final category = categories
-                                                        .where(
-                                                          (item) =>
-                                                              item.id == value,
-                                                        )
-                                                        .firstOrNull;
-                                                    _categoryRename.text =
-                                                        category?.name ?? '';
-                                                    _channelId = null;
-                                                    _channelRename.clear();
-                                                    _channelDescription.clear();
-                                                  }),
-                                          ),
-                                          if (selectedCategory != null) ...[
-                                            TextField(
-                                              controller: _categoryRename,
-                                              enabled: !_busy,
-                                              maxLength: 80,
-                                              decoration: const InputDecoration(
-                                                labelText:
-                                                    'Новое имя категории',
-                                              ),
-                                            ),
-                                            Wrap(
-                                              spacing: 8,
-                                              children: [
-                                                OutlinedButton(
-                                                  onPressed: _busy
-                                                      ? null
-                                                      : () => _renameCategory(
-                                                          selectedCategory,
-                                                        ),
-                                                  child: const Text(
-                                                    'Переименовать категорию',
-                                                  ),
-                                                ),
-                                                OutlinedButton(
-                                                  onPressed:
-                                                      _busy ||
-                                                          selectedCategory
-                                                              .channels
-                                                              .isNotEmpty
-                                                      ? null
-                                                      : () => _deleteCategory(
-                                                          selectedCategory,
-                                                        ),
-                                                  child: const Text(
-                                                    'Удалить пустую категорию',
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            Wrap(
-                                              spacing: 8,
-                                              children: [
-                                                OutlinedButton(
-                                                  onPressed:
-                                                      _busy ||
-                                                          categories.indexOf(
-                                                                selectedCategory,
-                                                              ) ==
-                                                              0
-                                                      ? null
-                                                      : () => _reorderCategory(
-                                                          -1,
-                                                        ),
-                                                  child: const Text(
-                                                    'Категорию выше',
-                                                  ),
-                                                ),
-                                                OutlinedButton(
-                                                  onPressed:
-                                                      _busy ||
-                                                          categories.indexOf(
-                                                                selectedCategory,
-                                                              ) ==
-                                                              categories
-                                                                      .length -
-                                                                  1
-                                                      ? null
-                                                      : () =>
-                                                            _reorderCategory(1),
-                                                  child: const Text(
-                                                    'Категорию ниже',
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const Divider(height: 32),
-                                            DropdownButtonFormField<String>(
-                                              key: ValueKey(_channelId),
-                                              initialValue:
-                                                  channels.any(
-                                                    (item) =>
-                                                        item.id == _channelId,
-                                                  )
-                                                  ? _channelId
-                                                  : null,
-                                              decoration: const InputDecoration(
-                                                labelText: 'Канал',
-                                              ),
-                                              items: [
-                                                for (final channel in channels)
-                                                  DropdownMenuItem(
-                                                    value: channel.id,
-                                                    child: Text(channel.name),
-                                                  ),
-                                              ],
-                                              onChanged: _busy
-                                                  ? null
-                                                  : (value) => setState(() {
-                                                      _channelId = value;
-                                                      _channelRename.text =
-                                                          channels
-                                                              .where(
-                                                                (item) =>
-                                                                    item.id ==
-                                                                    value,
-                                                              )
-                                                              .firstOrNull
-                                                              ?.name ??
-                                                          '';
-                                                      _channelDescription.text =
-                                                          channels
-                                                              .where(
-                                                                (item) =>
-                                                                    item.id ==
-                                                                    value,
-                                                              )
-                                                              .firstOrNull
-                                                              ?.description ??
-                                                          '';
-                                                    }),
-                                            ),
-                                            if (selectedChannel != null) ...[
-                                              TextField(
-                                                controller: _channelRename,
-                                                enabled: !_busy,
-                                                maxLength: 80,
-                                                decoration:
-                                                    const InputDecoration(
-                                                      labelText:
-                                                          'Новое имя канала',
-                                                    ),
-                                              ),
-                                              TextField(
-                                                controller: _channelDescription,
-                                                enabled: !_busy,
-                                                maxLength: 200,
-                                                maxLines: 2,
-                                                decoration:
-                                                    const InputDecoration(
-                                                      labelText:
-                                                          'Описание канала',
-                                                      hintText: 'Кратко объясните назначение канала',
-                                                    ),
-                                              ),
-                                              Align(
-                                                alignment: Alignment.centerLeft,
-                                                child: OutlinedButton(
-                                                  onPressed: _busy
-                                                      ? null
-                                                      : () => _renameChannel(
-                                                          selectedChannel,
-                                                        ),
-                                                  child: const Text(
-                                                    'Переименовать канал',
-                                                  ),
-                                                ),
-                                              ),
-                                              Align(
-                                                alignment: Alignment.centerLeft,
-                                                child: OutlinedButton(
-                                                  onPressed: _busy
-                                                      ? null
-                                                      : () =>
-                                                            _saveChannelDescription(
-                                                              selectedChannel,
-                                                            ),
-                                                  child: const Text(
-                                                    'Сохранить описание',
-                                                  ),
-                                                ),
-                                              ),
-                                              Wrap(
-                                                spacing: 8,
-                                                children: [
-                                                  OutlinedButton(
-                                                    onPressed:
-                                                        _busy ||
-                                                            channels.indexOf(
-                                                                  selectedChannel,
-                                                                ) ==
-                                                                0
-                                                        ? null
-                                                        : () => _reorderChannel(
-                                                            -1,
-                                                          ),
-                                                    child: const Text(
-                                                      'Канал выше',
-                                                    ),
-                                                  ),
-                                                  OutlinedButton(
-                                                    onPressed:
-                                                        _busy ||
-                                                            channels.indexOf(
-                                                                  selectedChannel,
-                                                                ) ==
-                                                                channels.length -
-                                                                    1
-                                                        ? null
-                                                        : () => _reorderChannel(
-                                                            1,
-                                                          ),
-                                                    child: const Text(
-                                                      'Канал ниже',
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ],
-                                          const Divider(height: 32),
-                                          TextField(
-                                            controller: _channelName,
-                                            enabled:
-                                                !_busy && categories.isNotEmpty,
-                                            maxLength: 80,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Новый канал',
-                                            ),
-                                            onSubmitted: (_) =>
-                                                _createChannel(),
-                                          ),
-                                          DropdownButtonFormField<ChannelKind>(
-                                            initialValue: _channelKind,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Тип канала',
-                                            ),
-                                            items: const [
-                                              DropdownMenuItem(
-                                                value: ChannelKind.voice,
-                                                child: Text('Голосовой'),
-                                              ),
-                                              DropdownMenuItem(
-                                                value: ChannelKind.text,
-                                                child: Text('Текстовый'),
-                                              ),
-                                            ],
-                                            onChanged: _busy
-                                                ? null
-                                                : (value) {
-                                                    if (value != null) {
-                                                      setState(
-                                                        () => _channelKind =
-                                                            value,
-                                                      );
-                                                    }
-                                                  },
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: FilledButton(
-                                              onPressed:
-                                                  _busy || categories.isEmpty
-                                                  ? null
-                                                  : _createChannel,
-                                              child: _busy
-                                                  ? const SizedBox.square(
-                                                      dimension: 16,
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                            strokeWidth: 2,
-                                                          ),
-                                                    )
-                                                  : const Text('Создать канал'),
-                                            ),
-                                          ),
-                                          if (categories.isNotEmpty) ...[
-                                            const Divider(height: 32),
-                                            DropdownButtonFormField<String>(
-                                              key: ValueKey(
-                                                'move-channel:$_moveChannelId',
-                                              ),
-                                              initialValue:
-                                                  categories
-                                                      .expand(
-                                                        (category) =>
-                                                            category.channels,
-                                                      )
-                                                      .any(
-                                                        (channel) =>
-                                                            channel.id ==
-                                                            _moveChannelId,
-                                                      )
-                                                  ? _moveChannelId
-                                                  : null,
-                                              decoration: const InputDecoration(
-                                                labelText: 'Перенести канал',
-                                              ),
-                                              items: [
-                                                for (final category
-                                                    in categories)
-                                                  for (final channel
-                                                      in category.channels)
-                                                    DropdownMenuItem(
-                                                      value: channel.id,
-                                                      child: Text(
-                                                        '${category.name} · ${channel.name}',
-                                                      ),
-                                                    ),
-                                              ],
-                                              onChanged: _busy
-                                                  ? null
-                                                  : (value) => setState(() {
-                                                      _moveChannelId = value;
-                                                      _moveTargetCategoryId =
-                                                          null;
-                                                    }),
-                                            ),
-                                            DropdownButtonFormField<String>(
-                                              key: ValueKey(
-                                                'move-target:$_moveTargetCategoryId',
-                                              ),
-                                              initialValue:
-                                                  categories.any(
-                                                    (item) =>
-                                                        item.id ==
-                                                        _moveTargetCategoryId,
-                                                  )
-                                                  ? _moveTargetCategoryId
-                                                  : null,
-                                              decoration: const InputDecoration(
-                                                labelText: 'В категорию',
-                                              ),
-                                              items: [
-                                                for (final category
-                                                    in categories)
-                                                  DropdownMenuItem(
-                                                    value: category.id,
-                                                    child: Text(category.name),
-                                                  ),
-                                              ],
-                                              onChanged: _busy
-                                                  ? null
-                                                  : (value) => setState(
-                                                      () =>
-                                                          _moveTargetCategoryId =
-                                                              value,
-                                                    ),
-                                            ),
-                                            Align(
-                                              alignment: Alignment.centerLeft,
-                                              child: OutlinedButton(
-                                                onPressed:
-                                                    _busy ||
-                                                        _moveChannelId ==
-                                                            null ||
-                                                        _moveTargetCategoryId ==
-                                                            null ||
-                                                        moveSourceCategory
-                                                                ?.id ==
-                                                            _moveTargetCategoryId
-                                                    ? null
-                                                    : _moveChannel,
-                                                child: const Text(
-                                                  'Перенести канал',
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                          if (textChannels.isNotEmpty) ...[
-                                            const Divider(height: 32),
-                                            DropdownButtonFormField<String>(
-                                              key: ValueKey(
-                                                'archive-channel:$_archiveChannelId',
-                                              ),
-                                              initialValue:
-                                                  textChannels.any(
-                                                    (channel) =>
-                                                        channel.id ==
-                                                        _archiveChannelId,
-                                                  )
-                                                  ? _archiveChannelId
-                                                  : null,
-                                              decoration: const InputDecoration(
-                                                labelText: 'Текстовый канал для архивации',
-                                              ),
-                                              items: [
-                                                for (final channel
-                                                    in textChannels)
-                                                  DropdownMenuItem(
-                                                    value: channel.id,
-                                                    child: Text(channel.name),
-                                                  ),
-                                              ],
-                                              onChanged: _busy
-                                                  ? null
-                                                  : (value) => setState(
-                                                      () => _archiveChannelId =
-                                                          value,
-                                                    ),
-                                            ),
-                                            Align(
-                                              alignment: Alignment.centerLeft,
-                                              child: OutlinedButton(
-                                                onPressed:
-                                                    _busy ||
-                                                        _archiveChannelId ==
-                                                            null
-                                                    ? null
-                                                    : () => _archiveTextChannel(
-                                                        allChannels,
-                                                      ),
-                                                child: const Text(
-                                                  'Архивировать канал',
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                          if (voiceChannels.any(
-                                            (channel) =>
-                                                !channel.admissionClosed,
-                                          )) ...[
-                                            DropdownButtonFormField<String>(
-                                              key: ValueKey(
-                                                'close-channel:$_closeVoiceChannelId',
-                                              ),
-                                              initialValue:
-                                                  voiceChannels.any(
-                                                    (channel) =>
-                                                        channel.id ==
-                                                        _closeVoiceChannelId,
-                                                  )
-                                                  ? _closeVoiceChannelId
-                                                  : null,
-                                              decoration: const InputDecoration(
-                                                labelText: 'Голосовой канал для закрытия',
-                                              ),
-                                              items: [
-                                                for (final channel
-                                                    in voiceChannels)
-                                                  DropdownMenuItem(
-                                                    value: channel.id,
-                                                    child: Text(
-                                                      '${channel.name}${channel.admissionClosed ? ' · вход закрыт' : ''}',
-                                                    ),
-                                                  ),
-                                              ],
-                                              onChanged: _busy
-                                                  ? null
-                                                  : (value) => setState(
-                                                      () =>
-                                                          _closeVoiceChannelId =
-                                                              value,
-                                                    ),
-                                            ),
-                                            Align(
-                                              alignment: Alignment.centerLeft,
-                                              child: OutlinedButton(
-                                                onPressed:
-                                                    _busy ||
-                                                        _closeVoiceChannelId ==
-                                                            null ||
-                                                        voiceChannels.any(
-                                                          (channel) =>
-                                                              channel.id ==
-                                                                  _closeVoiceChannelId &&
-                                                              channel
-                                                                  .admissionClosed,
-                                                        )
-                                                    ? null
-                                                    : () =>
-                                                          _closeVoiceAdmission(
-                                                            allChannels,
-                                                          ),
-                                                child: const Text(
-                                                  'Закрыть вход',
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                    if (_status != null)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 12),
-                                        child: Semantics(
-                                          liveRegion: true,
-                                          label: _status,
-                                          child: Text(
-                                            _status!,
-                                            style: const TextStyle(
-                                              color: GcColors.success,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    if (_error != null)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 12),
-                                        child: Semantics(
-                                          liveRegion: true,
-                                          label: _error,
-                                          child: Text(
-                                            _error!,
-                                            style: const TextStyle(
-                                              color: GcColors.danger,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
                                 ),
                         ),
                       ],
@@ -1380,26 +706,6 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       ),
     );
   }
-
-  Widget _section({required String title, required Widget child}) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: GcColors.surface,
-      border: Border.all(color: GcColors.border),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 12),
-        child,
-      ],
-    ),
-  );
 
   Widget _buildMediaPanel() => Column(
     children: [
