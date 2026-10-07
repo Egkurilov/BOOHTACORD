@@ -45,13 +45,49 @@ void main() {
     expect(mac1080p30.requiresRestartFrom(mac720p30), isTrue);
   });
 
-  test('mobile keeps its existing source ceiling while desktop plans vary', () {
+  test('Android capture bounds follow selected profile and restart safely', () {
     const quality = ScreenShareQuality(resolution: 720, frameRate: 15);
     final android = quality.capturePlan(TargetPlatform.android);
 
-    expect(android.requestedMaxFrameRate, 60);
-    expect(android.requestedParameters.dimensions.height, 1440);
-    expect(android.frameRateLimitSupportedAtCapture, isFalse);
+    expect(android.requestedMaxFrameRate, 15);
+    expect(android.requestedParameters.dimensions.height, 720);
+    expect(android.resolutionLimitSupportedAtCapture, isTrue);
+    expect(android.frameRateLimitSupportedAtCapture, isTrue);
+
+    const high = ScreenShareQuality(resolution: 1080, frameRate: 30);
+    final androidHigh = high.capturePlan(TargetPlatform.android);
+    expect(androidHigh.requiresRestartFrom(android), isTrue);
+    expect(android.requestedParameters.dimensions.height, 720);
+    expect(android.requestedMaxFrameRate, 15);
+  });
+
+  test(
+    'LiveKit emits selected mobile profile as nested numeric video constraints',
+    () {
+      final previousPlatform = debugDefaultTargetPlatformOverride;
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = previousPlatform);
+      const quality = ScreenShareQuality(resolution: 720, frameRate: 15);
+      final options = ScreenShareCaptureOptions(params: quality.parameters);
+      final constraints = <String, dynamic>{
+        'audio': false,
+        'video': options.toMediaConstraintsMap(),
+      };
+      final video = constraints['video'] as Map<String, dynamic>;
+
+      expect(video['width'], 1280);
+      expect(video['height'], 720);
+      expect(video['frameRate'], 15);
+    },
+  );
+
+  test('iOS capture controls stay unsupported', () {
+    const quality = ScreenShareQuality(resolution: 720, frameRate: 15);
+    final ios = quality.capturePlan(TargetPlatform.iOS);
+    expect(ios.requestedMaxFrameRate, 60);
+    expect(ios.requestedParameters.dimensions.height, 1440);
+    expect(ios.resolutionLimitSupportedAtCapture, isFalse);
+    expect(ios.frameRateLimitSupportedAtCapture, isFalse);
   });
 
   test('profile scaling keeps odd portrait and ultrawide geometry in bounds', () {

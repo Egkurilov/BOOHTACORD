@@ -51,6 +51,8 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
     private WindowManager windowManager;
     private boolean isPortrait;
     private final String trackId;
+    private final int maximumDimension;
+    private final ScreenCaptureFrameRateGate frameRateGate;
 
     /**
      * Constructs a new Screen Capturer.
@@ -60,9 +62,13 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
      *                                            calling this method.
      **/
     public OrientationAwareScreenCapturer(Intent mediaProjectionPermissionResultData,
-                                          String trackId) {
+                                          String trackId,
+                                          int maximumDimension,
+                                          int maximumFrameRate) {
         this.mediaProjectionPermissionResultData = mediaProjectionPermissionResultData;
         this.trackId = trackId;
+        this.maximumDimension = maximumDimension;
+        this.frameRateGate = new ScreenCaptureFrameRateGate(maximumFrameRate);
         this.mediaProjectionCallback = new MediaProjection.Callback() {
             @Override
             public void onStop() {
@@ -83,7 +89,9 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
             public void onCapturedContentResize(int width, int height) {
                 if (width <= 0 || height <= 0 || isDisposed || isStopped) return;
                 capturedContentSizeAuthoritative = true;
-                changeCaptureFormat(width, height, 15);
+                int[] output = ScreenCaptureDimensions.forOutput(
+                        width, height, isDeviceOrientationPortrait(), true, maximumDimension);
+                changeCaptureFormat(output[0], output[1], 15);
             }
         };
     }
@@ -91,13 +99,14 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
     public void onFrame(VideoFrame frame) {
         // Silently drop in-flight frames that arrive after stop/dispose.
         // stopCapture() no longer holds the monitor (synchronized removed), so guard explicitly here.
-        if (isDisposed || isStopped) return;
+        if (isDisposed || isStopped || !frameRateGate.shouldForward(System.nanoTime())) return;
         this.isPortrait = isDeviceOrientationPortrait();
         final int[] outputDimensions = ScreenCaptureDimensions.forOutput(
                 this.width,
                 this.height,
                 this.isPortrait,
-                capturedContentSizeAuthoritative);
+                capturedContentSizeAuthoritative,
+                maximumDimension);
         final int newW = outputDimensions[0];
         final int newH = outputDimensions[1];
         // Avoid ANR: only enter changeCaptureFormat() (synchronized) when the dimensions actually change.
@@ -147,15 +156,13 @@ public class OrientationAwareScreenCapturer implements VideoCapturer, VideoSink 
         //checkNotDisposed();
 
         this.isPortrait = isDeviceOrientationPortrait();
-        if (this.isPortrait) {
-            this.width = width;
-            this.height = height;
-        } else {
-            this.height = width;
-            this.width = height;
-        }
+        int[] output = ScreenCaptureDimensions.forOutput(
+                width, height, this.isPortrait, false, maximumDimension);
+        this.width = output[0];
+        this.height = output[1];
         this.oldWidth = this.width;
         this.oldHeight = this.height;
+        frameRateGate.reset();
 
         mediaProjection = mediaProjectionManager.getMediaProjection(
                 Activity.RESULT_OK, mediaProjectionPermissionResultData);

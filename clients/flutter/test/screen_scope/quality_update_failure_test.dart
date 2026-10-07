@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:boohtacord_desktop/src/features/screen/lifecycle/controller.dart';
 import 'package:boohtacord_desktop/src/features/screen/profile/quality.dart';
@@ -5,11 +6,19 @@ import 'package:boohtacord_desktop/src/features/screen/profile/quality.dart';
 import 'fakes.dart';
 import 'quality_fakes.dart';
 
+void _useLiveUpdatePlatform() {
+  final previousPlatform = debugDefaultTargetPlatformOverride;
+  debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+  addTearDown(() => debugDefaultTargetPlatformOverride = previousPlatform);
+}
+
 void main() {
   test('failure keeps the previously applied profile after recovery', () async {
+    _useLiveUpdatePlatform();
     final driver = QualityScreenDriver()..failQualityUpdate = true;
     final track = FakeScreenTrack();
     final owner = qualityOwner(driver, track);
+    owner.quality = ScreenShareQuality.balanced;
     addTearDown(owner.dispose);
     driver.appliedQuality = owner.quality;
 
@@ -24,11 +33,13 @@ void main() {
   });
 
   test('cleanup-required failure stops the active capture', () async {
+    _useLiveUpdatePlatform();
     final driver = QualityScreenDriver()
       ..failQualityUpdate = true
       ..recoveryRestored = false;
     final track = FakeScreenTrack();
     final owner = qualityOwner(driver, track);
+    owner.quality = ScreenShareQuality.balanced;
     addTearDown(owner.dispose);
 
     await owner.updateScreenShareQuality(
@@ -44,9 +55,11 @@ void main() {
   });
 
   test('unclassified replacement failure stops an unconfirmed publisher', () async {
+    _useLiveUpdatePlatform();
     final driver = QualityScreenDriver()..throwUnclassifiedFailure = true;
     final track = FakeScreenTrack();
     final owner = qualityOwner(driver, track);
+    owner.quality = ScreenShareQuality.balanced;
     addTearDown(owner.dispose);
 
     await owner.updateScreenShareQuality(

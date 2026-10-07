@@ -1,0 +1,46 @@
+{
+  "id": "ISSUE-167",
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/167",
+  "kind": "android-mobile-capture-profile-and-lifecycle",
+  "status": "IMPLEMENTED_LOCAL_HELPER_TESTS_PASS_RUNTIME_ACCEPTANCE_NOT_RUN",
+  "executed_at": "2026-10-07",
+  "source_revision": "451eb8836b50c4f04524df8aeebeb8fa939ad2d6 + codex/issue-167-mobile-capture working tree",
+  "working_tree_changes": true,
+  "summary": "Android capture plans now pass profile dimensions and frame-rate limits to MediaProjection. The virtual display is capped by its longest edge while preserving full-display orientation and app-only content aspect ratio. A rate gate limits frames forwarded to the WebRTC video source. The existing permission, foreground-service and OS-stop lifecycle remains in place. iOS is explicitly left without capture-time profile support claims.",
+  "checks": [
+    {
+      "name": "Screen capture dimension and frame-rate helper unit tests",
+      "command": "javac + JUnitCore ScreenCaptureDimensionsTest ScreenCaptureFrameRateGateTest",
+      "status": "PASS",
+      "observation": "12 pure Java tests passed for nested profile-constraint parsing, orientation, aspect-preserving size caps, odd dimensions, rate limiting and capture-generation reset. This does not compile or exercise Android MediaProjection APIs."
+    },
+    {
+      "name": "Changed-file whitespace check",
+      "command": "git diff --check",
+      "status": "PASS",
+      "observation": "No whitespace errors."
+    },
+    {
+      "name": "Flutter tests and analyzer",
+      "command": "python -m tools.ci.native.flutter",
+      "status": "NOT_RUN",
+      "observation": "The repository-native check stopped before running tests because the Flutter executable is unavailable in PATH."
+    },
+    {
+      "name": "Android plugin compile and app build",
+      "status": "NOT_RUN",
+      "observation": "The Flutter app has no gradlew.bat script and Gradle is unavailable in PATH; pure helper JUnit tests are not a substitute for the Android build."
+    },
+    {
+      "name": "Physical Android and iOS capture acceptance",
+      "status": "NOT_RUN",
+      "observation": "No device capture was performed. Cadence, app-only/full-display selection, orientation, background transitions, permissions, interruption, OS stop, receiver frames, FPS, thermal behavior and iOS runtime support remain unverified."
+    }
+  ],
+  "limitations": [
+    "The Android rate gate drops frames before they reach the WebRTC video source but does not reduce MediaProjection compositor cadence; power and thermal effects need device measurements.",
+    "The active profile is a maximum edge request. Actual output can be smaller than the selected profile and must be read from runtime counters.",
+    "iOS keeps its current ReplayKit path and legacy capture request. The new Android profile controls are not claimed for iOS."
+  ],
+  "remaining": "Run the repository Flutter tests, analyzer and Android app build in CI. On physical Android, execute low-to-high-to-low, portrait/landscape, app-only resize and full-display, OS stop and user-initiated restart, background/resume with microphone on/off, permission denial and interruption scenarios with a remote viewer. Record capture/encoded/decoded counters, actual cadence, frame age, CPU and available thermal signals. Separately document iOS ReplayKit publication/receiver support and fallback behavior. Keep issue gates open until required runtime acceptance passes."
+}

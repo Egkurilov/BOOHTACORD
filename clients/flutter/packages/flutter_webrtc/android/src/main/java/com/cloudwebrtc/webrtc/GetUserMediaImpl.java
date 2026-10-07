@@ -508,6 +508,10 @@ public class GetUserMediaImpl {
 
     void getDisplayMedia(
             final ConstraintsMap constraints, final Result result, final MediaStream mediaStream) {
+        final ScreenCaptureConstraints.Limits captureLimits =
+                ScreenCaptureConstraints.from(constraints);
+        final int maximumDimension = captureLimits.maximumDimension;
+        final int maximumFrameRate = captureLimits.maximumFrameRate;
         if (mediaProjectionData == null) {
             screenRequestPermissions(
                     new ResultReceiver(new Handler(Looper.getMainLooper())) {
@@ -520,15 +524,24 @@ public class GetUserMediaImpl {
                                 resultError("screenRequestPermissions", "User didn't give permission to capture the screen.", result);
                                 return;
                             }
-                            getDisplayMedia(result, mediaStream, mediaProjectionData);
+                            getDisplayMedia(
+                                    result, mediaStream, mediaProjectionData,
+                                    maximumDimension, maximumFrameRate);
                         }
                     });
         } else {
-            getDisplayMedia(result, mediaStream, mediaProjectionData);
+            getDisplayMedia(
+                    result, mediaStream, mediaProjectionData,
+                    maximumDimension, maximumFrameRate);
         }
     }
 
-    private void getDisplayMedia(final Result result, final MediaStream mediaStream, final Intent mediaProjectionData) {
+    private void getDisplayMedia(
+            final Result result,
+            final MediaStream mediaStream,
+            final Intent mediaProjectionData,
+            final int maximumDimension,
+            final int maximumFrameRate) {
         /* Create ScreenCapture */
         VideoTrack displayTrack = null;
         VideoCapturer videoCapturer = null;
@@ -536,7 +549,9 @@ public class GetUserMediaImpl {
         videoCapturer =
                 new OrientationAwareScreenCapturer(
                         mediaProjectionData,
-                        trackId);
+                        trackId,
+                        maximumDimension,
+                        maximumFrameRate);
         if (videoCapturer == null) {
             resultError("screenRequestPermissions", "GetDisplayMediaFailed, User revoked permission to capture the screen.", result);
             return;

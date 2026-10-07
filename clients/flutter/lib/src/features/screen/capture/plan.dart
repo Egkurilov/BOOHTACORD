@@ -14,10 +14,10 @@ class ScreenShareCapturePlan {
   final VideoParameters requestedParameters;
   final int requestedMaxFrameRate;
 
-  /// API request support; actual output still requires device measurement.
+  /// Source-option support; actual output still requires device measurement.
   final bool resolutionLimitSupportedAtCapture;
 
-  /// API evidence only; actual cadence still requires device measurement.
+  /// Platform frame gate support; actual cadence still requires measurement.
   final bool frameRateLimitSupportedAtCapture;
 
   factory ScreenShareCapturePlan.forProfile({
@@ -29,21 +29,25 @@ class ScreenShareCapturePlan {
   }) {
     final desktop =
         platform == TargetPlatform.windows || platform == TargetPlatform.macOS;
+    final android = platform == TargetPlatform.android;
     final macOS = platform == TargetPlatform.macOS;
     return ScreenShareCapturePlan(
-      requestedParameters: desktop ? profileParameters : legacyParameters,
-      requestedMaxFrameRate: desktop
+      requestedParameters: desktop || android
+          ? profileParameters
+          : legacyParameters,
+      requestedMaxFrameRate: desktop || android
           ? profileMaxFrameRate
           : legacyMaxFrameRate,
-      // macOS consumes width/height before the WebRTC source; Windows only
-      // forwards FPS to its native DesktopCapturer start call.
-      resolutionLimitSupportedAtCapture: macOS,
-      frameRateLimitSupportedAtCapture: desktop,
+      // Android caps MediaProjection output and gates frames before WebRTC's
+      // video source. macOS applies dimensions natively; Windows forwards FPS
+      // to DesktopCapturer. iOS keeps its legacy capture path.
+      resolutionLimitSupportedAtCapture: macOS || android,
+      frameRateLimitSupportedAtCapture: desktop || android,
     );
   }
 
-  /// Static desktop capture options require a new source when a supported
-  /// native limit changes. The active publisher must own that restart.
+  /// Static desktop and Android source options require a new source when a
+  /// supported limit changes. The active publisher must own that restart.
   bool requiresRestartFrom(ScreenShareCapturePlan active) =>
       (frameRateLimitSupportedAtCapture &&
           requestedMaxFrameRate != active.requestedMaxFrameRate) ||

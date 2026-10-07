@@ -49,10 +49,12 @@ class NativeScreenShareDriver implements ScreenShareDriver {
         // Preserve the Android single layer pending physical receiver acceptance.
         simulcast: defaultTargetPlatform != TargetPlatform.android,
         sourceDimensions:
-            screenShareCaptureDimensions(track) ??
-            (defaultTargetPlatform == TargetPlatform.windows
-                ? dimensions
-                : null),
+            defaultTargetPlatform == TargetPlatform.android
+                ? null
+                : screenShareCaptureDimensions(track) ??
+                      (defaultTargetPlatform == TargetPlatform.windows
+                          ? dimensions
+                          : null),
       ),
     );
   }

@@ -8,6 +8,31 @@ import 'quality_fakes.dart';
 
 void main() {
   test(
+    'Android source profile change requires a consented capture restart',
+    () async {
+      final previousPlatform = debugDefaultTargetPlatformOverride;
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = previousPlatform);
+      final driver = QualityScreenDriver();
+      final track = FakeScreenTrack();
+      final owner = qualityOwner(driver, track);
+      addTearDown(owner.dispose);
+      final previousQuality = owner.quality;
+
+      await owner.updateScreenShareQuality(
+        const ScreenShareQuality(resolution: 1080, frameRate: 30),
+      );
+
+      expect(owner.captureRestartRequired, isTrue);
+      expect(owner.quality, previousQuality);
+      expect(owner.activeTrack, same(track));
+      expect(owner.phase, ScreenSharePhase.sharing);
+      expect(driver.qualityRequests, isEmpty);
+      expect(owner.error, contains('остановите демонстрацию'));
+    },
+  );
+
+  test(
     'Windows FPS change requires restart and preserves active profile',
     () async {
       final previousPlatform = debugDefaultTargetPlatformOverride;
