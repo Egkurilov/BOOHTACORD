@@ -22,6 +22,7 @@ mixin _WorkspaceTabs on _AdminWorkspaceBase {
                   role: SemanticsRole.tabBar,
                   label: 'Разделы администрирования',
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       _tab('Гильдия', AdminWorkspaceSection.guild),
                       _tab('Участники', AdminWorkspaceSection.members),
@@ -33,6 +34,7 @@ mixin _WorkspaceTabs on _AdminWorkspaceBase {
                       _tab('Аудит', AdminWorkspaceSection.audit),
                       if (width > 1023) const SizedBox(width: 8),
                       _tab('Медиа', AdminWorkspaceSection.media),
+                      if (width > 1023) const SizedBox(width: 8),
                       _tab(
                         width < 600 ? 'Статус' : 'Готовность',
                         AdminWorkspaceSection.readiness,
