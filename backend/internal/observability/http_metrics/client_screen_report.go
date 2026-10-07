@@ -3,15 +3,19 @@ package httpmetrics
 import (
 	"errors"
 	"math"
+	"voice-platform/backend/internal/observability/report_client_screen/measurement"
 	"voice-platform/backend/internal/observability/report_client_screen/profile"
 )
 
 var ErrInvalidClientScreenReport = errors.New("invalid client screen report")
 
+type Measurement = measurement.Report
+
 // ClientScreenReport contains only bounded measurements and fixed enums.
 // It intentionally has no account, room, track, address, or content fields.
 type ClientScreenReport struct {
 	profile.Report
+	Measurement
 	Platform           string   `json:"platform"`
 	Direction          string   `json:"direction"`
 	State              string   `json:"state"`
@@ -77,6 +81,9 @@ func (report ClientScreenReport) validate() error {
 		return ErrInvalidClientScreenReport
 	}
 	if report.FrameWidth != nil && (*report.FrameWidth < 1 || *report.FrameWidth > 8192 || *report.FrameHeight < 1 || *report.FrameHeight > 8192) {
+		return ErrInvalidClientScreenReport
+	}
+	if !report.Measurement.Valid(report.Direction) {
 		return ErrInvalidClientScreenReport
 	}
 	return report.validateMedia()
