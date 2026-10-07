@@ -6,10 +6,10 @@ when rebasing or restoring the package from pub.dev.
 ## Android MediaProjection track settings
 
 `GetUserMediaImpl.getDisplayMedia` includes the actual display width, height,
-and capture frame-rate in the created track's `settings` map. Android's native
-screen capture does not apply the requested 16:9 `getDisplayMedia` constraints;
-exposing the real source size lets LiveKit apply the user's selected
-resolution cap to its outgoing RTP encoding without cropping portrait frames.
+and capture frame-rate in the created track's `settings` map. The selected
+profile's longest edge and frame-rate ceiling are separately passed to the
+MediaProjection capturer so capture output can be bounded without treating the
+physical display size as an app-only source size.
 
 On Android 14+, `OrientationAwareScreenCapturer` also honors
 `MediaProjection.Callback.onCapturedContentResize`. App-only capture can have
@@ -19,6 +19,15 @@ device panel. Legacy/full-display capture keeps the existing orientation
 normalization until MediaProjection reports authoritative content dimensions.
 Unit coverage is recorded in
 [QA-184](../../../../evidence/flutter/qa184-android-app-window-capture-resize-2026-10-01-001.json).
+
+Android screen-share profiles now pass their longer edge and frame-rate ceiling
+into the MediaProjection capturer. The virtual display is bounded to that edge
+for both full-display and app-only resize callbacks, preserving aspect ratio;
+frames above the selected cadence are gated before reaching the WebRTC video
+source. This reduces downstream frame processing, but does not claim to lower
+MediaProjection compositor cadence or device thermal load. Android profile
+changes require a fresh user-started capture. Physical low/high, orientation,
+background, OS-stop, receiver and long-run checks remain open.
 
 The related LiveKit encoding support and Flutter profile logic live in
 `clients/flutter/packages/livekit_client` and `clients/flutter/lib/src/services/screen_share_quality.dart`.
