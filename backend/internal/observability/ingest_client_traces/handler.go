@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	incident "voice-platform/backend/internal/observability/observe_incidents"
 
 	collectortrace "go.opentelemetry.io/proto/otlp/collector/trace/v1"
 	"google.golang.org/protobuf/proto"
@@ -22,6 +23,7 @@ func NewHandler(endpoint, authorization string, client *http.Client) http.Handle
 	}
 	destination, err := url.Parse(endpoint)
 	configured := err == nil && destination != nil && (destination.Scheme == "https" || destination.Scheme == "http") && destination.Host != "" && destination.User == nil && authorization != ""
+	incident.Default.SetEnabled("relay_export", configured)
 	return withRelayHealth(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if !configured {
 			writer.WriteHeader(http.StatusServiceUnavailable)
@@ -68,32 +70,13 @@ func NewHandler(endpoint, authorization string, client *http.Client) http.Handle
 		}
 		outbound.Header.Set("Content-Type", "application/x-protobuf")
 		outbound.Header.Set("Authorization", authorization)
-		response, err := client.Do(outbound)
+		rejected, err := exportRelay(client, outbound, result.Accepted)
 		if err != nil {
 			writer.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
-		defer response.Body.Close()
-		upstreamBody, readErr := io.ReadAll(io.LimitReader(response.Body, 4097))
-		if response.StatusCode != http.StatusOK || readErr != nil || len(upstreamBody) > 4096 {
-			writer.WriteHeader(http.StatusServiceUnavailable)
-			return
-		}
-		if len(upstreamBody) > 0 {
-			var upstream collectortrace.ExportTraceServiceResponse
-			if proto.Unmarshal(upstreamBody, &upstream) != nil {
-				writer.WriteHeader(http.StatusServiceUnavailable)
-				return
-			}
-			if partial := upstream.PartialSuccess; partial != nil && partial.RejectedSpans > 0 {
-				if partial.RejectedSpans > int64(result.Accepted) {
-					writer.WriteHeader(http.StatusServiceUnavailable)
-					return
-				}
-				result.Accepted -= int(partial.RejectedSpans)
-				result.Rejected += int(partial.RejectedSpans)
-			}
-		}
+		result.Accepted -= rejected
+		result.Rejected += rejected
 		observeBatch(request.Context(), result)
 		accepted(writer, result)
 	}))

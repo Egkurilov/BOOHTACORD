@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"time"
+	incident "voice-platform/backend/internal/observability/observe_incidents"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -14,7 +15,9 @@ import (
 
 // Start exports only explicitly recorded instruments; existing private Prometheus metrics remain intact.
 func Start(ctx context.Context) (func(context.Context) error, error) {
-	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") == "" && os.Getenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT") == "" {
+	configured := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "" || os.Getenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT") != ""
+	incident.Default.SetEnabled("metric_export", configured)
+	if !configured {
 		return func(context.Context) error { return nil }, nil
 	}
 	options := []otlpmetrichttp.Option{}
@@ -34,7 +37,7 @@ func Start(ctx context.Context) (func(context.Context) error, error) {
 	}
 	provider := sdkmetric.NewMeterProvider(
 		sdkmetric.WithResource(service),
-		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(15*time.Second))),
+		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(incident.MetricExporter{Exporter: exporter}, sdkmetric.WithInterval(15*time.Second))),
 	)
 	otel.SetMeterProvider(provider)
 	return provider.Shutdown, nil

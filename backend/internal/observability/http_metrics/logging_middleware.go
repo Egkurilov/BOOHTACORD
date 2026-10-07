@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	observehttp "voice-platform/backend/internal/observability/observe_http_requests"
 	"voice-platform/backend/internal/observability/skip_requests"
 	"voice-platform/backend/internal/security/request_id"
 )
@@ -20,12 +21,18 @@ func LoggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 		}
 		started := time.Now()
 		captured := &responseWriter{ResponseWriter: writer}
+		defer func() {
+			value := recover()
+			status := captured.statusCode()
+			if value != nil {
+				status = http.StatusInternalServerError
+			}
+			logger.Info("http.request.completed", "request_id", requestid.From(request.Context()), "method", observehttp.Method(request.Method), "status", status, "duration_ms", time.Since(started).Milliseconds())
+			if value != nil {
+				panic(value)
+			}
+		}()
 		next.ServeHTTP(captured, request)
-		logger.Info("http.request.completed",
-			"request_id", requestid.From(request.Context()),
-			"method", request.Method,
-			"status", captured.statusCode(),
-			"duration_ms", time.Since(started).Milliseconds(),
-		)
+
 	})
 }

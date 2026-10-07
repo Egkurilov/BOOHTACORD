@@ -1,0 +1,56 @@
+package pool
+
+import (
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
+)
+
+type Metrics struct {
+	meter          metric.Meter
+	exportTotal    metric.Int64Counter
+	exportDuration metric.Float64Histogram
+	registration   metric.Registration
+	pool           *pgxpool.Pool
+	pending        prometheus.Gauge
+	acquires       *prometheus.CounterVec
+	duration       *prometheus.HistogramVec
+	stats          map[string]*prometheus.Desc
+}
+
+func NewMetrics() *Metrics {
+	m := &Metrics{meter: otel.Meter("boohtacord/incident-pool"), pending: prometheus.NewGauge(prometheus.GaugeOpts{Name: "voice_platform_database_acquires_pending", Help: "In-flight acquisition attempts; includes connection construction, not only saturation waiters."}),
+		acquires: prometheus.NewCounterVec(prometheus.CounterOpts{Name: "voice_platform_database_acquires_total", Help: "Pool acquisition outcomes, including failure and timeout."}, []string{"outcome"}),
+		duration: prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: "voice_platform_database_acquire_duration_seconds", Help: "Pool acquisition latency including failures."}, []string{"outcome"}), stats: make(map[string]*prometheus.Desc)}
+	for _, name := range []string{"acquired", "idle", "total", "max", "constructing", "empty_acquires_total", "empty_acquire_wait_seconds_total", "canceled_acquires_total"} {
+		m.stats[name] = prometheus.NewDesc("voice_platform_database_pool_"+name, "Native pgxpool statistic: "+name, nil, nil)
+	}
+	m.exportTotal, _ = m.meter.Int64Counter("boohtacord.incident.database.acquires", metric.WithDescription("Native pool acquisition outcomes including timeouts and failures."))
+	m.exportDuration, _ = m.meter.Float64Histogram("boohtacord.incident.database.acquire.duration", metric.WithDescription("Pool acquisition duration including failed waits."), metric.WithUnit("s"), metric.WithExplicitBucketBoundaries(.001, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5))
+	return m
+}
+func (m *Metrics) Describe(c chan<- *prometheus.Desc) {
+	m.pending.Describe(c)
+	m.acquires.Describe(c)
+	m.duration.Describe(c)
+	for _, d := range m.stats {
+		c <- d
+	}
+}
+func (m *Metrics) Collect(c chan<- prometheus.Metric) {
+	m.pending.Collect(c)
+	m.acquires.Collect(c)
+	m.duration.Collect(c)
+	if m.pool == nil {
+		return
+	}
+	s := m.pool.Stat()
+	for name, value := range map[string]float64{"acquired": float64(s.AcquiredConns()), "idle": float64(s.IdleConns()), "total": float64(s.TotalConns()), "max": float64(s.MaxConns()), "constructing": float64(s.ConstructingConns()), "empty_acquires_total": float64(s.EmptyAcquireCount()), "empty_acquire_wait_seconds_total": s.EmptyAcquireWaitTime().Seconds(), "canceled_acquires_total": float64(s.CanceledAcquireCount())} {
+		kind := prometheus.GaugeValue
+		if name == "empty_acquires_total" || name == "empty_acquire_wait_seconds_total" || name == "canceled_acquires_total" {
+			kind = prometheus.CounterValue
+		}
+		c <- prometheus.MustNewConstMetric(m.stats[name], kind, value)
+	}
+}

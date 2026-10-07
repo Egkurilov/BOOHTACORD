@@ -15,6 +15,10 @@ type responseWriter struct {
 func (writer *responseWriter) Unwrap() http.ResponseWriter { return writer.ResponseWriter }
 
 func (writer *responseWriter) WriteHeader(status int) {
+	if status >= 100 && status < 200 && status != http.StatusSwitchingProtocols {
+		writer.ResponseWriter.WriteHeader(status)
+		return
+	}
 	if writer.status == 0 {
 		writer.status = status
 	}
@@ -28,17 +32,15 @@ func (writer *responseWriter) Write(value []byte) (int, error) {
 	return writer.ResponseWriter.Write(value)
 }
 
-func (writer *responseWriter) Flush() {
-	if flusher, ok := writer.ResponseWriter.(http.Flusher); ok {
-		flusher.Flush()
+func (writer *responseWriter) FlushError() error {
+	if writer.status == 0 {
+		writer.WriteHeader(http.StatusOK)
 	}
+	return http.NewResponseController(writer.ResponseWriter).Flush()
 }
-
+func (writer *responseWriter) Flush() { _ = writer.FlushError() }
 func (writer *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if hijacker, ok := writer.ResponseWriter.(http.Hijacker); ok {
-		return hijacker.Hijack()
-	}
-	return nil, nil, http.ErrNotSupported
+	return http.NewResponseController(writer.ResponseWriter).Hijack()
 }
 
 func (writer *responseWriter) Push(target string, options *http.PushOptions) error {

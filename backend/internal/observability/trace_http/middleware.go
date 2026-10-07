@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 	"voice-platform/backend/internal/observability/skip_requests"
+	requestid "voice-platform/backend/internal/security/request_id"
 )
 
 // Middleware creates one span per API request; ServeMux templates keep private IDs out of span names.
@@ -69,6 +70,9 @@ func Middleware(tracer trace.Tracer, mux *http.ServeMux, next http.Handler) http
 			}
 		}()
 		span.SetAttributes(attribute.String("http.request.method", method), attribute.String("http.route", pattern))
+		if id := requestid.From(request.Context()); id != "" {
+			span.SetAttributes(attribute.String("request_id", id))
+		}
 		next.ServeHTTP(captured, request.WithContext(context))
 	})
 }
@@ -80,30 +84,4 @@ func safeMethod(method string) string {
 	default:
 		return "OTHER"
 	}
-}
-
-type statusWriter struct {
-	http.ResponseWriter
-	code      int
-	onUpgrade func(...trace.SpanEndOption)
-}
-
-func (writer *statusWriter) Unwrap() http.ResponseWriter { return writer.ResponseWriter }
-
-func (writer *statusWriter) WriteHeader(status int) {
-	if writer.code == 0 {
-		writer.code = status
-	}
-	writer.ResponseWriter.WriteHeader(status)
-	if status == http.StatusSwitchingProtocols && writer.onUpgrade != nil {
-		writer.onUpgrade()
-		writer.onUpgrade = nil
-	}
-}
-
-func (writer *statusWriter) Write(value []byte) (int, error) {
-	if writer.code == 0 {
-		writer.code = http.StatusOK
-	}
-	return writer.ResponseWriter.Write(value)
 }

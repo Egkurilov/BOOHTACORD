@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"time"
 	"voice-platform/backend/internal/lifecycle/periodic"
+	incident "voice-platform/backend/internal/observability/observe_incidents"
 )
 
 const voiceLeaseNotificationBatchLimit = 100
@@ -26,7 +27,9 @@ func Attempt(parent context.Context, notifier Notifier) {
 	defer cancel()
 	context, span := otel.Tracer("boohtacord/voice-workers").Start(context, "voice.lease_notification.dispatch")
 	defer span.End()
+	started := time.Now()
 	emitted, err := notifier.Dispatch(context, voiceLeaseNotificationBatchLimit)
+	incident.Observe("lease_notification_worker", started, err)
 	span.SetAttributes(attribute.Int("voice.notifications.emitted", emitted))
 	if err != nil {
 		span.SetStatus(codes.Error, "notification dispatch failed")
