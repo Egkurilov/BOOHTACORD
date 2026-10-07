@@ -1,7 +1,7 @@
 # FA-01 admin responsive foundation
 
 - Scope: Flutter administrator workspace shell and responsive geometry.
-- Commits: `69c37548`, `265f4fde`, `2087a62f`.
+- Commits: `69c37548`, `265f4fde`, `2087a62f`, `49f9b7d3`, `e3ea34c2`.
 - Result: PASS for the implemented foundation and Members/Audit/Media
   presentation entry points; FA-01 remains open only for removing the legacy
   migration methods and extracting the remaining topology mutation controller.
