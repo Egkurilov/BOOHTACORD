@@ -9,7 +9,7 @@ void main() {
 
   test('accepts and rejects shared descriptor fixtures', () {
     for (final sample in fixtures['descriptorCases']) {
-      final descriptor = {
+      final Map<String, dynamic> descriptor = {
         ...fixtures['validDescriptor'],
         ...sample['overrides'],
       };
