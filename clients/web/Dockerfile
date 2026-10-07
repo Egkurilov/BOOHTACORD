@@ -10,6 +10,7 @@ COPY clients/web/index.html clients/web/tsconfig.json clients/web/vite.config.ts
 COPY clients/web/src ./src
 COPY clients/web/public ./public
 COPY contracts/client-build.json /app/contracts/client-build.json
+COPY contracts/screen-share-profile-v1.catalog.json /app/contracts/screen-share-profile-v1.catalog.json
 RUN npm run build
 
 FROM nginx:1.27.4-alpine

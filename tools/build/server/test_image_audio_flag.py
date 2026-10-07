@@ -16,3 +16,11 @@ class WebAudioFlagTests(unittest.TestCase):
         source = (root / 'clients/web/Dockerfile').read_text(encoding='utf-8')
         self.assertIn('COPY clients/web/nginx.conf /etc/nginx/conf.d/default.conf', source)
         self.assertIn('COPY --from=build /app/clients/web/dist /usr/share/nginx/html', source)
+
+    def test_web_image_includes_shared_screen_profile_catalog(self):
+        root = Path(__file__).resolve().parents[3]
+        source = (root / 'clients/web/Dockerfile').read_text(encoding='utf-8')
+        self.assertIn(
+            'COPY contracts/screen-share-profile-v1.catalog.json /app/contracts/screen-share-profile-v1.catalog.json',
+            source,
+        )
