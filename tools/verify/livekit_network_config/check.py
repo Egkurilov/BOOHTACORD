@@ -34,7 +34,8 @@ def main():
     evidence_path = root / "evidence/media/livekit-network-config-2026-10-07.json"
     evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
     for path, expected in evidence["repository_artifacts"].items():
-        actual = hashlib.sha256((root / path).read_bytes()).hexdigest()
+        content = (root / path).read_bytes().replace(b"\r\n", b"\n")
+        actual = hashlib.sha256(content).hexdigest()
         if expected != f"sha256:{actual}":
             raise ValueError(f"repository artifact hash differs for {path}")
     print(f"LiveKit metrics peer set: {peers}")
