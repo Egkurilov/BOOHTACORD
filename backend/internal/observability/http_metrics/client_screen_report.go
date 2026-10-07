@@ -86,6 +86,9 @@ func (report ClientScreenReport) validate() error {
 	if !report.Measurement.Valid(report.Direction) {
 		return ErrInvalidClientScreenReport
 	}
+	if report.PresentationSource == "unsupported" && report.PresentedFPS != nil {
+		return ErrInvalidClientScreenReport
+	}
 	return report.validateMedia()
 }
 

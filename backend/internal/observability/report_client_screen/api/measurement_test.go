@@ -22,6 +22,7 @@ func TestIntervalReportAcceptedAndUnsafeIdentityRejected(t *testing.T) {
 		{strings.Replace(valid, `"total_bitrate_kbps":2100`, `"total_bitrate_kbps":100001`, 1), 400},
 		{strings.Replace(valid, `"collection_state":"active"`, `"rid":"private"`, 1), 400},
 		{`{"platform":"desktop_web","direction":"receiver","state":"playing"}`, 204},
+		{`{"platform":"windows_native","direction":"receiver","state":"playing","presentation_source":"unsupported","presented_fps":0}`, 400},
 	} {
 		w := httptest.NewRecorder()
 		handler.ServeHTTP(w, httptest.NewRequest("POST", "/", strings.NewReader(tc.body)))
