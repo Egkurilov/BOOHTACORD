@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"time"
+	incident "voice-platform/backend/internal/observability/observe_incidents"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -15,7 +16,9 @@ import (
 
 // Start enables explicit spans when an OTLP endpoint is configured.
 func Start(ctx context.Context) (func(context.Context) error, error) {
-	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") == "" && os.Getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") == "" {
+	configured := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "" || os.Getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") != ""
+	incident.Default.SetEnabled("trace_export", configured)
+	if !configured {
 		return func(context.Context) error { return nil }, nil
 	}
 	options := []otlptracehttp.Option{}
@@ -36,7 +39,7 @@ func Start(ctx context.Context) (func(context.Context) error, error) {
 	provider := sdktrace.NewTracerProvider(
 		sdktrace.WithResource(service),
 		sdktrace.WithSampler(configuredSampler()),
-		sdktrace.WithBatcher(exporter,
+		sdktrace.WithBatcher(incident.TraceExporter{SpanExporter: exporter},
 			sdktrace.WithMaxQueueSize(128),
 			sdktrace.WithMaxExportBatchSize(16),
 			sdktrace.WithBatchTimeout(5*time.Second),

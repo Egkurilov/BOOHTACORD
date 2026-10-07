@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	incident "voice-platform/backend/internal/observability/observe_incidents"
 
 	"github.com/google/uuid"
 	"github.com/livekit/protocol/auth"
@@ -65,5 +66,12 @@ func (transport bearerTransport) RoundTrip(request *http.Request) (*http.Respons
 	clone := request.Clone(request.Context())
 	clone.Header = request.Header.Clone()
 	clone.Header.Set("Authorization", "Bearer "+transport.token)
-	return transport.next.RoundTrip(clone)
+	started := time.Now()
+	response, err := transport.next.RoundTrip(clone)
+	observedErr := err
+	if observedErr == nil && (response == nil || response.StatusCode >= 400) {
+		observedErr = ErrRoomServiceUnavailable
+	}
+	incident.Observe("livekit_remove", started, observedErr)
+	return response, err
 }

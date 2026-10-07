@@ -3,6 +3,7 @@ package eventhub
 import (
 	"context"
 	"time"
+	incident "voice-platform/backend/internal/observability/observe_incidents"
 
 	"github.com/google/uuid"
 	causal "voice-platform/backend/internal/observability/causal_reference"
@@ -40,7 +41,10 @@ func (hub *Hub) persist(ctx context.Context, event Event, recipients []string, r
 		return event, nil
 	}
 	event = epochEvent(event, epoch)
-	if err := journal.Append(ctx, event, recipients, epoch); err != nil {
+	started := time.Now()
+	appendErr := journal.Append(ctx, event, recipients, epoch)
+	incident.Observe("realtime_journal", started, appendErr)
+	if err := appendErr; err != nil {
 		hub.breakContinuity()
 		return event, err
 	}

@@ -10,6 +10,7 @@ import (
 	"time"
 	"voice-platform/backend/internal/lifecycle/periodic"
 	dispatchvoicesfurevocation "voice-platform/backend/internal/media/dispatch_voice_sfu_revocation"
+	incident "voice-platform/backend/internal/observability/observe_incidents"
 )
 
 type Observer interface {
@@ -23,7 +24,13 @@ func Start(parent context.Context, dispatcher dispatchvoicesfurevocation.Dispatc
 func Attempt(context context.Context, dispatcher dispatchvoicesfurevocation.Dispatcher, observer Observer) {
 	context, span := otel.Tracer("boohtacord/voice-workers").Start(context, "voice.sfu_revocation.dispatch")
 	defer span.End()
+	started := time.Now()
 	result, err := dispatchvoicesfurevocation.DispatchPending(context, dispatcher)
+	observedErr := err
+	if errors.Is(err, dispatchvoicesfurevocation.ErrPending) {
+		observedErr = nil
+	}
+	incident.Observe("sfu_revocation_worker", started, observedErr)
 	span.SetAttributes(attribute.Int("voice.revocations.confirmed", result.Confirmed), attribute.Int("voice.revocations.pending", result.Pending))
 	observer.ObserveVoiceSFURevocation(result.Confirmed, result.Pending, err != nil && !errors.Is(err, dispatchvoicesfurevocation.ErrPending))
 	if err != nil && !errors.Is(err, dispatchvoicesfurevocation.ErrPending) {

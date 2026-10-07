@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 	"voice-platform/backend/internal/lifecycle/periodic"
+	incident "voice-platform/backend/internal/observability/observe_incidents"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -37,7 +38,9 @@ func Attempt(parent context.Context, finalizer voiceChannelFinalizer) {
 	defer cancel()
 	ctx, span := otel.Tracer("boohtacord/voice-workers").Start(ctx, "voice.channel.finalization")
 	defer span.End()
+	started := time.Now()
 	count, err := finalizer.Run(ctx, voiceChannelFinalizationBatchLimit)
+	incident.Observe("channel_finalization_worker", started, err)
 	span.SetAttributes(attribute.Int("voice.channels.finalized", count))
 	if err != nil {
 		span.SetStatus(codes.Error, "voice channel finalization failed")

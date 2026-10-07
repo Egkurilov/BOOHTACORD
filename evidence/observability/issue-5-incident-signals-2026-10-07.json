@@ -1,0 +1,90 @@
+{
+  "id": "issue-5-incident-signals-2026-10-07",
+  "kind": "local-implementation-validation",
+  "status": "PASS",
+  "observer": "Codex",
+  "baseline_revision": "6b8ffa5e5c266d42a534f294c18e5a282139bfa9",
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/5",
+  "validation": {
+    "focused_go_packages": {
+      "status": "PASS",
+      "packages": 17,
+      "note": "runtime package has no direct tests; guarded saturation test locally SKIP because both DB variables absent"
+    },
+    "go_vet_all": "PASS",
+    "go_build_all": "PASS",
+    "contracts": "PASS",
+    "spec_traceability": "PASS: 39 requirements, approved source hash checked",
+    "combined_wire_transport": "PASS: real WebSocket and open SSE flush/cancellation; both wrapper orders,101,100/103 then200,implicit200 flush,panic correlation",
+    "database_unit": "PASS: acquire success/failure/timeout/canceled and native/OTel live lazy-pool stats; no real server claimed",
+    "native_postgres_guard": "BLOCKED: disposable database variables absent",
+    "native_postgres_saturation": {
+      "local": "NOT_RUN: explicit SKIP",
+      "ci": "NOT_RUN: guarded integration test added to existing PostgreSQL17.6 CI, must pass before merge"
+    },
+    "collector": {
+      "status": "PASS",
+      "version": "0.161.0",
+      "binary_sha256": "A10EE585051BC6F822E41936FF91CA593CF38A0CA9D1089479BB0440A5E41805",
+      "scope": "isolated loopback15318/19889, actual Go SDK protobuf HTTP/pool fixtures, Prometheus scrape",
+      "metric_names": [
+        "boohtacord_incident_api_collection_timestamp_seconds",
+        "boohtacord_incident_database_acquire_duration_seconds_bucket",
+        "boohtacord_incident_database_acquire_duration_seconds_count",
+        "boohtacord_incident_database_acquire_duration_seconds_sum",
+        "boohtacord_incident_database_acquires_pending",
+        "boohtacord_incident_database_acquires_total",
+        "boohtacord_incident_database_pool",
+        "boohtacord_incident_database_pool_empty_acquire_wait_seconds_total",
+        "boohtacord_incident_database_pool_events_total",
+        "boohtacord_incident_enabled",
+        "boohtacord_incident_http_duration_seconds_bucket",
+        "boohtacord_incident_http_duration_seconds_count",
+        "boohtacord_incident_http_duration_seconds_sum",
+        "boohtacord_incident_http_requests_total",
+        "boohtacord_incident_last_attempt_timestamp_seconds",
+        "boohtacord_incident_last_success_timestamp_seconds",
+        "boohtacord_incident_last_successful",
+        "boohtacord_incident_livekit_snapshot",
+        "boohtacord_incident_operation_duration_seconds_bucket",
+        "boohtacord_incident_operation_duration_seconds_count",
+        "boohtacord_incident_operation_duration_seconds_sum",
+        "boohtacord_incident_operational_duration_seconds_bucket",
+        "boohtacord_incident_operational_duration_seconds_count",
+        "boohtacord_incident_operational_duration_seconds_sum",
+        "boohtacord_incident_operational_requests_total",
+        "boohtacord_incident_operations_total",
+        "boohtacord_incident_stale"
+      ],
+      "privacy_canaries": "PASS: private,secret,cookie,request_id,channel_id,room_id absent",
+      "metric_lint": "PASS: Promtool3.11.2 check metrics",
+      "cleanup": "PASS: foreground session interrupt, collector shutdown complete"
+    },
+    "dashboard_promql": "PASS: Promtool3.11.2 check rules,21 expressions with1m rate interval"
+  },
+  "production_acceptance": {
+    "dashboard_import": "NOT_RUN",
+    "live_api_route_p95": "NOT_RUN",
+    "live_dependency_outage": "NOT_RUN",
+    "collector_delivery_rollout": "NOT_RUN",
+    "load_capacity": "NOT_RUN",
+    "apk_or_windows_build": "NOT_RUN",
+    "deployment": "NOT_RUN"
+  },
+  "coverage": [
+    "bounded standard method/OTHER + registered route/unmatched + status labels",
+    "server-generated request ID matches span and safe completion event, including panic",
+    "all10 excluded operational paths have bounded completion aggregates and preserved span/log exclusion",
+    "pool pending/current/acquired/max/idle/constructing and successful empty wait, errors/timeouts",
+    "fixed LiveKit/realtime/relay/exporter/background attempt outcome+latency",
+    "scheduled bounded Ping/filesystem probe timestamps/result/stale; no participant fan-out",
+    "fresh API collection timestamp, disabled exporter reasons, absent/no-success distinguished from0"
+  ],
+  "limits": [
+    "Open WebSocket/SSE completions are counted after disconnect; existing readiness/delivery/roster signals cover ongoing work.",
+    "On-demand full LiveKit snapshot only runs via existing private API native scrape; collector-only deployment normally has no full snapshot mirror, explicitly documented.",
+    "Missing snapshots/exports are not evidence of capacity or healthy0.",
+    "Trace export idle periods and on-demand operations can be stale without a failure; exporter outage requires local native registry diagnostics.",
+    "No centralized log stack, production changes or issue closure."
+  ]
+}
