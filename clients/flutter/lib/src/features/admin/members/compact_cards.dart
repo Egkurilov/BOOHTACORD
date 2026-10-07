@@ -27,7 +27,7 @@ class AdminMembersCompactCard extends StatelessWidget {
         child: ExpansionTile(
           leading: AdminMemberAvatar(account: account),
           title: Row(children: [
-            Expanded(child: Text(account.displayName, maxLines: 1, overflow: TextOverflow.ellipsis)),
+            Expanded(child: Text(account.displayName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, height: 20 / 16, fontWeight: FontWeight.w600))),
             _badge(draft.blocked),
           ]),
           subtitle: Text('@${account.login}', maxLines: 1, overflow: TextOverflow.ellipsis),

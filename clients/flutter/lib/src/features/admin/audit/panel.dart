@@ -55,28 +55,35 @@ class _AdminAuditPanelState extends State<AdminAuditPanel> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
-          child: Row(
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: width < 480
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('Аудит', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-                    Text(
+                    const Text('Аудит', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                    const Text(
                       'События управления без содержимого сообщений',
                       style: TextStyle(color: GcColors.textSecondary, fontSize: 12),
                     ),
+                    Align(alignment: Alignment.centerRight, child: _refresh(controller)),
+                  ],
+                )
+              : Row(
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Аудит', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                          Text(
+                            'События управления без содержимого сообщений',
+                            style: TextStyle(color: GcColors.textSecondary, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _refresh(controller),
                   ],
                 ),
-              ),
-              TextButton.icon(
-                key: const ValueKey('admin-audit-refresh'),
-                onPressed: controller.isLoading ? null : controller.refresh,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Обновить'),
-              ),
-            ],
-          ),
         ),
         AdminAuditFiltersPanel(
           filters: controller.filters,
@@ -98,4 +105,11 @@ class _AdminAuditPanelState extends State<AdminAuditPanel> {
       ],
     );
   }
+
+  Widget _refresh(AdminAuditController controller) => TextButton.icon(
+    key: const ValueKey('admin-audit-refresh'),
+    onPressed: controller.isLoading ? null : controller.refresh,
+    icon: const Icon(Icons.refresh),
+    label: const Text('Обновить'),
+  );
 }

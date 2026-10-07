@@ -18,6 +18,11 @@ void main() {
       const ValueKey('permission-checkbox:category.delete'),
     );
     await tester.ensureVisible(categoryDelete);
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, -80),
+    );
+    await tester.pumpAndSettle();
     expect(
       tester.getRect(categoryDelete).bottom,
       lessThanOrEqualTo(

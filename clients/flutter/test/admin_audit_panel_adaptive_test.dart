@@ -9,6 +9,7 @@ void main() {
   testWidgets('compact filters open an accessible sheet without overflow', (
     tester,
   ) async {
+    tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(360, 800);
     addTearDown(tester.view.reset);
     final controller = AdminAuditController(

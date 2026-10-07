@@ -52,7 +52,7 @@ class _AdminMembersPanelState extends State<AdminMembersPanel> {
     padding: const EdgeInsets.fromLTRB(24, 18, 24, 14),
     child: Row(children: [
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Участники ${c.accounts.length}', key: const ValueKey('admin-members-section-title'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+        Text('Участники ${c.accounts.length}', key: const ValueKey('admin-members-section-title'), style: const TextStyle(fontSize: 20, height: 28 / 20, fontWeight: FontWeight.w600)),
         const Text('Роли и доступ к этой гильдии', style: TextStyle(color: GcColors.textSecondary, fontSize: 12)),
       ])),
       TextButton.icon(onPressed: c.loading ? null : () => c.refresh(), icon: const Icon(Icons.refresh), label: const Text('Обновить')),

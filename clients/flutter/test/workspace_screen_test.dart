@@ -2644,7 +2644,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Роли и доступ к этой гильдии'), findsOneWidget);
     expect(find.text('@peer'), findsOneWidget);
-    expect(find.text('Сбросить пароль'), findsOneWidget);
+    expect(find.byKey(const ValueKey('admin-member-actions:account-2')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('admin-section-tab-channels')));
     await tester.pumpAndSettle();
     final channelPicker = find.byType(DropdownButtonFormField<String>).at(1);
@@ -2736,34 +2736,22 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('role:account-2:MEMBER')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Администратор').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(Switch).first);
-    await tester.pumpAndSettle();
+    await _chooseAdminMemberAction(tester, 'Роль: Пользователь');
+    await _chooseAdminMemberAction(tester, 'Заблокировать');
 
     api.failAdminUpdate = true;
-    final saveButton = find.byKey(const ValueKey('save-account:account-2'));
-    await tester.ensureVisible(saveButton);
-    await tester.tap(saveButton);
-    await tester.pumpAndSettle();
+    await _chooseAdminMemberAction(tester, 'Сохранить');
     expect(find.text('Запрос отклонён сервером.'), findsOneWidget);
     expect(api.adminUpdates, [('account-2', 'ADMINISTRATOR', true)]);
     expect(find.text('Администратор'), findsWidgets);
-    expect(find.byType(Switch).first, findsOneWidget);
-    expect(tester.widget<FilledButton>(saveButton).focusNode?.hasFocus, isTrue);
+    expect(_adminMemberActionsFocus(tester).hasFocus, isTrue);
 
     api.failAdminUpdate = false;
-    await tester.tap(saveButton);
-    await tester.pumpAndSettle();
+    await _chooseAdminMemberAction(tester, 'Сохранить');
     expect(find.text('Изменения для @peer сохранены.'), findsOneWidget);
-    expect(tester.widget<FilledButton>(saveButton).focusNode?.hasFocus, isTrue);
+    expect(_adminMemberActionsFocus(tester).hasFocus, isTrue);
 
-    final resetButton = find.byKey(const ValueKey('reset-account:account-2'));
-    await tester.ensureVisible(resetButton);
-    await tester.tap(resetButton);
-    await tester.pumpAndSettle();
+    await _chooseAdminMemberAction(tester, 'Сбросить пароль');
     expect(find.text('Одноразовая ссылка для @peer'), findsOneWidget);
     expect(
       find.text('https://v.bootybay.ru/reset-password#token=one-time'),
@@ -2800,8 +2788,7 @@ void main() {
     );
 
     api.failResetLink = true;
-    await tester.tap(resetButton);
-    await tester.pumpAndSettle();
+    await _chooseAdminMemberAction(tester, 'Сбросить пароль');
     expect(find.text('Не удалось создать ссылку.'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -5195,3 +5182,14 @@ class _PortraitApi extends ApiClient {
     advancedMessageIds.add(messageId);
   }
 }
+
+Future<void> _chooseAdminMemberAction(WidgetTester tester, String action) async {
+  await tester.tap(find.byKey(const ValueKey('admin-member-actions:account-2')));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(action).last);
+  await tester.pumpAndSettle();
+}
+
+FocusNode _adminMemberActionsFocus(WidgetTester tester) => tester
+    .widget<Focus>(find.byKey(const ValueKey('admin-member-actions-focus:account-2')))
+    .focusNode!;

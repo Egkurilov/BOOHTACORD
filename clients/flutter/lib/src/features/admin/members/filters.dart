@@ -44,6 +44,7 @@ class AdminMembersFilters extends StatelessWidget {
               height: GcLayout.fieldHeight,
               child: DropdownButtonFormField<String>(
                 key: const ValueKey('admin-member-role-filter'),
+                icon: narrow ? const SizedBox.shrink() : null,
                 initialValue: role,
                 isExpanded: true,
                 items: const [

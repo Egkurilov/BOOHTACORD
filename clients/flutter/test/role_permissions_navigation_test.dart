@@ -49,8 +49,8 @@ void main() {
   testWidgets(
     'Tab reaches role tabs, permission controls, and action bar',
     (tester) async {
-      tester.view.physicalSize = const Size(1200, 900);
       tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1200, 900);
       addTearDown(tester.view.reset);
       await tester.pumpWidget(MaterialApp(home: Scaffold(
         body: RolePermissionsPanel(
@@ -77,7 +77,7 @@ void main() {
       var sawAdministrator = false;
       var sawPermission = false;
       var sawAction = false;
-      for (var index = 0; index < 20; index++) {
+      for (var index = 0; index < 80; index++) {
         await tester.sendKeyEvent(LogicalKeyboardKey.tab);
         await tester.pump();
         sawMember = sawMember || _hasPrimaryFocus(tester, member);

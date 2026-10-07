@@ -13,7 +13,7 @@ void main() {
     await tester.pumpAndSettle();
     final channel = find.byKey(const ValueKey('admin-topology-channel:voice'));
 
-    Focus.of(tester.element(channel)).requestFocus();
+    _focusEntry(tester, channel);
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
@@ -22,7 +22,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('admin-topology-tree')), findsOneWidget);
-    Focus.of(tester.element(channel)).requestFocus();
+    _focusEntry(tester, channel);
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.pumpAndSettle();
@@ -96,4 +96,9 @@ void main() {
       expect(tester.takeException(), isNull);
     }
   });
+}
+
+void _focusEntry(WidgetTester tester, Finder entry) {
+  final rowFocus = find.ancestor(of: entry, matching: find.byType(Focus)).first;
+  tester.state<FocusState>(rowFocus).focusNode.requestFocus();
 }

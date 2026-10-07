@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'admin_topology_fake_api.dart';
 
+void main() {
   testWidgets('announces member and audit loading states to screen readers', (
     tester,
   ) async {
@@ -18,6 +19,7 @@ import 'admin_topology_fake_api.dart';
       ..pendingAccounts = Completer<AdminAccountPage>();
     final state = AppState(api)..topology = api.current;
     addTearDown(state.dispose);
+    final semantics = tester.ensureSemantics();
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(body: AdminScreen(state: state)),
@@ -57,4 +59,7 @@ import 'admin_topology_fake_api.dart';
     api.pendingAudit!.complete(const AdminAuditPage(events: []));
     await tester.pumpAndSettle();
     expect(find.text('Записей пока нет.'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    semantics.dispose();
   });
+}

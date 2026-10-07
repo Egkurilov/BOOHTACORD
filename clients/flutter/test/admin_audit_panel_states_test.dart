@@ -13,6 +13,7 @@ void main() {
     final page = Completer<AdminAuditPage>();
     final controller = AdminAuditController(({String? before}) => page.future);
     addTearDown(controller.dispose);
+    tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1200, 900);
     addTearDown(tester.view.reset);
     await tester.pumpWidget(auditApp(controller));
@@ -24,6 +25,7 @@ void main() {
   });
 
   testWidgets('shows error and empty filtered states', (tester) async {
+    tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1200, 900);
     addTearDown(tester.view.reset);
     final controller = AdminAuditController(({String? before}) async {
@@ -41,6 +43,7 @@ void main() {
   testWidgets('shows safe unknown event summary and allowed details only', (
     tester,
   ) async {
+    tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1200, 900);
     addTearDown(tester.view.reset);
     final event = auditEvent(
@@ -61,7 +64,9 @@ void main() {
     expect(find.text('Другое событие управления'), findsOneWidget);
     expect(find.text('Member (@member)'), findsOneWidget);
     expect(find.textContaining('target-1'), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('admin-audit-details:event-1')));
+    final details = find.byKey(const ValueKey('admin-audit-details:event-1'));
+    await tester.ensureVisible(details);
+    await tester.tap(details);
     await tester.pumpAndSettle();
     expect(find.text('Тип · FUTURE_EVENT_TYPE'), findsOneWidget);
     expect(find.text('Объект · Member (@member)'), findsOneWidget);
@@ -72,6 +77,7 @@ void main() {
   });
 
   testWidgets('shows no matches without reloading the API', (tester) async {
+    tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1200, 900);
     addTearDown(tester.view.reset);
     var calls = 0;

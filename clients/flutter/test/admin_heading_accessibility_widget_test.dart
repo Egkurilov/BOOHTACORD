@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'admin_topology_fake_api.dart';
 
+void main() {
   testWidgets('admin panel focuses and announces its semantic heading', (
     tester,
   ) async {
@@ -13,6 +14,7 @@ import 'admin_topology_fake_api.dart';
     addTearDown(tester.view.reset);
     final api = TopologyTestApi();
     final state = AppState(api)..topology = api.current;
+    final semantics = tester.ensureSemantics();
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(body: AdminScreen(state: state)),
@@ -35,4 +37,6 @@ import 'admin_topology_fake_api.dart';
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
+    semantics.dispose();
   });
+}

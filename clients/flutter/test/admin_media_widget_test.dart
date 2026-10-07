@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'admin_topology_fake_api.dart';
 
 Future<AppState> _openMedia(WidgetTester tester, TopologyTestApi api) async {
+  tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = const Size(390, 844);
   final state = AppState(api)..topology = api.current;

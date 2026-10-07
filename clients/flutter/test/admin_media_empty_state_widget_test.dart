@@ -20,7 +20,6 @@ void main() {
     addTearDown(() {
       tester.view.reset();
       state.dispose();
-      semantics.dispose();
     });
     await tester.pumpWidget(
       MaterialApp(
@@ -65,5 +64,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 10));
     expect(api.screenMetricsLoads, 2);
+    await tester.pumpWidget(const SizedBox.shrink());
+    semantics.dispose();
   });
 }

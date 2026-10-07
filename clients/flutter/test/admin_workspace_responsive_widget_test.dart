@@ -16,7 +16,11 @@ void main() {
     final state = AppState(api)..topology = api.current;
     addTearDown(state.dispose);
     await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: AdminScreen(state: state))),
+      MaterialApp(
+        home: Scaffold(
+          body: AdminScreen(state: state, onToggleNavigation: () {}),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 

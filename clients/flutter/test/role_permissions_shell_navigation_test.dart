@@ -8,6 +8,7 @@ import 'role_permissions_fake_api.dart';
 
 void main() {
   testWidgets('switching admin sections confirms and preserves the role draft', (tester) async {
+    tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1200, 900);
     addTearDown(tester.view.reset);
     final api = RolePermissionsTestApi();
