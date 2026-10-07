@@ -560,8 +560,11 @@ void FlutterWebRTC::HandleMethodCall(
     int64_t texture_id = findLongInt(params, "textureId");
     const std::string owner_tag = findString(params, "ownerTag");
     const std::string track_id = findString(params, "trackId");
+    int64_t source_generation = findLongInt(params, "sourceGeneration");
+    if (source_generation < 0) source_generation = 0;
 
-    VideoRendererSetSrcObject(texture_id, stream_id, owner_tag, track_id);
+    VideoRendererSetSrcObject(texture_id, stream_id, owner_tag, track_id,
+                              source_generation);
     result->Success();
   } else if (method_call.method_name().compare(
                  "mediaStreamTrackSwitchCamera") == 0) {

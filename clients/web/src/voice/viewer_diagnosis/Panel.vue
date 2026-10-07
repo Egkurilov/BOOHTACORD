@@ -1,20 +1,22 @@
 <script setup lang="ts">
 import { computed,onBeforeUnmount,onMounted,ref,watch } from 'vue'
-import { diagnose } from './model'
+import { diagnose, resumeFirstFrameDeadline, shouldAutomaticallyRecover } from './model'
 import { buildBundle,parseBundle,type Sample } from './bundle'
 import { createDiagnosisSeries } from './series'
 import type { ScreenReceiverMetrics } from '../screen_receiver_diagnostics'
 import type { ScreenDiagnostics } from '../screen_diagnostics'
-const props=defineProps<{selectedId:string|null;ended:boolean;hasAudio:boolean;local:boolean;videoReady:boolean;presentedFps:number|null;presentedFrames?:number|null;sampledAt:number|null;metrics:ScreenReceiverMetrics|null;source?:ScreenDiagnostics}>()
-const emit=defineEmits<{retry:[];refresh:[];choose:[]}>()
-const now=ref(Date.now()),selectedAt=ref(Date.now()),visible=ref(true),error=ref(''),help=ref(false),second=ref<Sample[]|null>(null)
+const props=defineProps<{selectedId:string|null;ended:boolean;hasAudio:boolean;local:boolean;publisherPaused?:boolean;autoplayBlocked?:boolean;subscriptionFailed?:boolean;stageVisible?:()=>boolean;videoReady:boolean;presentedFps:number|null;presentedFrames?:number|null;sampledAt:number|null;metrics:ScreenReceiverMetrics|null;source?:ScreenDiagnostics}>()
+const emit=defineEmits<{retry:[];autoRetry:[];refresh:[];choose:[]}>()
+const now=ref(Date.now()),selectedAt=ref(Date.now()),visible=ref(true),error=ref(''),help=ref(false),second=ref<Sample[]|null>(null),automaticRecoveryUsed=ref(false),recoverySuppressed=ref(false)
 const diagnosis=computed(()=>diagnose({...props,selected:Boolean(props.selectedId),selectedAt:selectedAt.value,now:now.value,visible:visible.value}))
 const series=createDiagnosisSeries(()=>{
   const fresh=props.sampledAt!==null&&now.value-props.sampledAt>=0&&now.value-props.sampledAt<=6000
   const source=props.local&&props.source?.sampledAt!==undefined&&now.value-props.source.sampledAt>=0&&now.value-props.source.sampledAt<=6000?props.source:null
   return {state:diagnosis.value.state,captureFps:source?.profileCheck?.captureFps,encodedFps:source?.measured?.framesPerSecond,decodedFps:fresh?props.metrics?.decodedFps:null,presentedFps:visible.value?props.presentedFps:null,bitrateKbps:fresh?props.metrics?.bitrateKbps:null,rttMs:source?.roundTripTimeMs ?? null,sampleAgeMs:props.sampledAt===null?null:now.value-props.sampledAt,capturedFrames:source?.capturedFrames,encodedFrames:source?.encodedFrames,decodedFrames:fresh?props.metrics?.decodedFrames:null,presentedFrames:visible.value?props.presentedFrames:null}
 })
-function action():void {const value=diagnosis.value.action;if(value==='publisher') help.value=true;else if(value==='retry') emit('retry');else if(value==='refresh') emit('refresh');else if(value==='choose') emit('choose')}
+function recoveryInput(){return {...props,selected:Boolean(props.selectedId),selectedAt:selectedAt.value,now:now.value,visible:visible.value&&stageIsVisible(),automaticRecoveryAttempted:automaticRecoveryUsed.value||recoverySuppressed.value}}
+function attemptAutomaticRecovery():void {if(props.autoplayBlocked) recoverySuppressed.value=true;if(!shouldAutomaticallyRecover(recoveryInput()))return;automaticRecoveryUsed.value=true;selectedAt.value=Date.now();now.value=selectedAt.value;emit('autoRetry')}
+function action():void {const value=diagnosis.value.action;if(value==='publisher') help.value=true;else if(value==='retry'){selectedAt.value=Date.now();now.value=selectedAt.value;emit('retry')}else if(value==='refresh') emit('refresh');else if(value==='choose') emit('choose')}
 function exportBundle():void {
   const value=buildBundle(series.samples.value,second.value ?? undefined)
   const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'})),link=document.createElement('a')
@@ -25,10 +27,14 @@ async function importSecond(event:Event):Promise<void> {
   try {if(!file||file.size>32768) throw new Error('Выберите диагностический JSON до 32 КиБ.');const bundle=parseBundle(await file.text());if(bundle.receivers.length!==1) throw new Error('Нужен файл одного второго приёмника.');second.value=bundle.receivers[0].samples}
   catch(cause){error.value=cause instanceof Error?cause.message:'Некорректная диагностика.'}finally{input.value=''}
 }
-watch(()=>props.selectedId,()=>{selectedAt.value=Date.now();series.clear();second.value=null;help.value=false})
-let timer:ReturnType<typeof setInterval>|null=null
-onMounted(()=>{visible.value=document.visibilityState==='visible';timer=setInterval(()=>{now.value=Date.now();visible.value=document.visibilityState==='visible'},1000)})
-onBeforeUnmount(()=>{if(timer) clearInterval(timer);series.stop()})
+watch(()=>props.selectedId,()=>{selectedAt.value=Date.now();if(!deadlineActive)suspendedAt=selectedAt.value;automaticRecoveryUsed.value=false;recoverySuppressed.value=false;series.clear();second.value=null;help.value=false})
+let timer:ReturnType<typeof setInterval>|null=null,suspendedAt:number|null=null,deadlineActive=false
+function stageIsVisible():boolean {return document.visibilityState==='visible'&&(props.stageVisible?.()??true)}
+function updateVisibility():void {const at=Date.now(),nextVisible=stageIsVisible(),nextActive=nextVisible&&!props.publisherPaused;if(nextActive&&!deadlineActive&&suspendedAt!==null){selectedAt.value=resumeFirstFrameDeadline(selectedAt.value,suspendedAt,at);suspendedAt=null}else if(!nextActive&&deadlineActive)suspendedAt=at;deadlineActive=nextActive;visible.value=nextVisible;now.value=at;attemptAutomaticRecovery()}
+watch([()=>props.publisherPaused,()=>props.stageVisible],updateVisibility)
+watch([()=>props.subscriptionFailed,()=>props.autoplayBlocked,()=>props.videoReady,visible],attemptAutomaticRecovery)
+onMounted(()=>{updateVisibility();document.addEventListener('visibilitychange',updateVisibility);timer=setInterval(updateVisibility,1000);attemptAutomaticRecovery()})
+onBeforeUnmount(()=>{if(timer) clearInterval(timer);document.removeEventListener('visibilitychange',updateVisibility);series.stop()})
 </script>
 <template>
   <section class="screen-diagnosis" aria-label="Диагностика просмотра">

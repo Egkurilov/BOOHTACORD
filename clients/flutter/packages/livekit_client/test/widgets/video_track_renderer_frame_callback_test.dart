@@ -14,6 +14,7 @@ void main() {
     renderer.eventListener(<String, Object>{
       'event': 'didFirstFrameRendered',
       'id': 1,
+      'sourceGeneration': 0,
     });
 
     expect(notifications, 1);
@@ -22,6 +23,7 @@ void main() {
     renderer.eventListener(<String, Object>{
       'event': 'didFirstFrameRendered',
       'id': 1,
+      'sourceGeneration': 0,
     });
 
     expect(notifications, 1);

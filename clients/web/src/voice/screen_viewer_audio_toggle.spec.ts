@@ -19,7 +19,8 @@ describe('selected screen sound', () => {
     const firstOutput = { dispose: vi.fn(), setMuted: vi.fn(), setVolume: vi.fn() }
     const secondOutput = { dispose: vi.fn(), setMuted: vi.fn(), setVolume: vi.fn() }
     const outputs = [firstOutput, secondOutput]
-    const controller = new ScreenViewerController(() => [first, second], { attach: vi.fn(() => outputs.shift()!) } as never)
+    const attachOutput = vi.fn(() => outputs.shift()!)
+    const controller = new ScreenViewerController(() => [first, second], { attach: attachOutput } as never)
     const audio = {} as HTMLAudioElement
 
     controller.select('alice', {} as HTMLVideoElement, audio)
@@ -29,8 +30,10 @@ describe('selected screen sound', () => {
     controller.setAudioMuted(false)
     controller.setDeafened(false)
 
-    expect(firstOutput.setMuted).toHaveBeenLastCalledWith(true)
-    expect(secondOutput.setMuted.mock.calls.map(([muted]) => muted)).toEqual([true, true, true, false])
+    expect(firstOutput.setMuted).toHaveBeenLastCalledWith(false)
+    expect(firstOutput.dispose).not.toHaveBeenCalled()
+    expect(attachOutput).toHaveBeenCalledOnce()
+    expect(secondOutput.setMuted).not.toHaveBeenCalled()
     expect(controller.audioMuted).toBe(false)
     expect(first.audio!.setSubscribed).toHaveBeenLastCalledWith(false)
   })
@@ -61,6 +64,7 @@ describe('selected screen sound', () => {
     controller.select('alice', {} as HTMLVideoElement, audio)
     controller.setAudioMuted(true)
     const published = stream('alice')
+    published.video = selected.video
     selected = published
 
     controller.reconcile()

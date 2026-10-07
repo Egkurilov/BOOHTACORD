@@ -68,6 +68,7 @@ class ScreenShareController extends ChangeNotifier {
   _capturedContentVisibilitySubscription;
   ScreenSharePhase phase = ScreenSharePhase.idle;
   String? error;
+  bool captureRestartRequired = false;
   ScreenShareQuality quality =
       defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS

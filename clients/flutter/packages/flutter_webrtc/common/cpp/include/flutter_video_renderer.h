@@ -8,6 +8,7 @@
 #include "rtc_video_renderer.h"
 
 #include <mutex>
+#include <atomic>
 
 namespace flutter_webrtc_plugin {
 
@@ -32,6 +33,7 @@ class FlutterVideoRenderer
   virtual void OnFrame(scoped_refptr<RTCVideoFrame> frame) override;
 
   void SetVideoTrack(scoped_refptr<RTCVideoTrack> track);
+  bool SetSourceGeneration(int64_t generation);
 
   int64_t texture_id() { return texture_id_; }
 
@@ -47,6 +49,7 @@ class FlutterVideoRenderer
     size_t height;
   };
   FrameSize last_frame_size_ = {0, 0};
+  std::atomic<int64_t> source_generation_{0};
   bool first_frame_rendered = false;
   TextureRegistrar* registrar_ = nullptr;
   std::unique_ptr<EventChannelProxy> event_channel_;
@@ -69,7 +72,8 @@ class FlutterVideoRendererManager {
   void VideoRendererSetSrcObject(int64_t texture_id,
                                  const std::string& stream_id,
                                  const std::string& owner_tag,
-                                 const std::string& track_id);
+                                 const std::string& track_id,
+                                 int64_t source_generation);
 
   void VideoRendererDispose(int64_t texture_id,
                             std::unique_ptr<MethodResultProxy> result);

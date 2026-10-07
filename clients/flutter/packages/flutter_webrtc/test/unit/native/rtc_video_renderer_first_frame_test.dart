@@ -6,10 +6,12 @@ void main() {
     final renderer = RTCVideoRenderer();
     var notifications = 0;
     renderer.onFirstFrameRendered = () => notifications++;
+    // The initial binding generation is zero before the first srcObject bind.
 
     renderer.eventListener(<String, Object>{
       'event': 'didFirstFrameRendered',
       'id': 1,
+      'sourceGeneration': 0,
     });
 
     expect(notifications, 1);

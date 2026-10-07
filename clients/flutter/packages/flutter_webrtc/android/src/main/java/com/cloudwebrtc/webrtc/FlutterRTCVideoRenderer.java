@@ -26,6 +26,8 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
     private String mediaStreamId;
 
     private String ownerTag;
+    private volatile long sourceGeneration;
+    private long rendererEventsGeneration = -1;
 
     public void Dispose() {
         setVideoTrack(null);
@@ -45,16 +47,19 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
      */
     private RendererEvents rendererEvents;
 
-    private void listenRendererEvents() {
+    private void listenRendererEvents(long generation) {
+        rendererEventsGeneration = generation;
         rendererEvents = new RendererEvents() {
             private int _rotation = -1;
             private int _width = 0, _height = 0;
 
             @Override
             public void onFirstFrameRendered() {
+                if (generation != sourceGeneration) return;
                 ConstraintsMap params = new ConstraintsMap();
                 params.putString("event", "didFirstFrameRendered");
                 params.putInt("id", id);
+                params.putLong("sourceGeneration", generation);
                 if (eventSink != null) {
                     eventSink.success(params.toMap());
                 }
@@ -65,11 +70,13 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
                     int videoWidth, int videoHeight,
                     int rotation) {
 
+                if (generation != sourceGeneration) return;
                 if (eventSink != null) {
                     if (_width != videoWidth || _height != videoHeight) {
                         ConstraintsMap params = new ConstraintsMap();
                         params.putString("event", "didTextureChangeVideoSize");
                         params.putInt("id", id);
+                        params.putLong("sourceGeneration", generation);
                         params.putDouble("width", (double) videoWidth);
                         params.putDouble("height", (double) videoHeight);
                         _width = videoWidth;
@@ -81,6 +88,7 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
                         ConstraintsMap params2 = new ConstraintsMap();
                         params2.putString("event", "didTextureChangeRotation");
                         params2.putInt("id", id);
+                        params2.putLong("sourceGeneration", generation);
                         params2.putInt("rotation", rotation);
                         _rotation = rotation;
                         eventSink.success(params2.toMap());
@@ -103,7 +111,7 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
 
     public FlutterRTCVideoRenderer(TextureRegistry.SurfaceProducer producer) {
         this.surfaceTextureRenderer = new SurfaceTextureRenderer("");
-        listenRendererEvents();
+        listenRendererEvents(sourceGeneration);
         surfaceTextureRenderer.init(EglUtils.getRootEglBaseContext(), rendererEvents);
         surfaceTextureRenderer.surfaceCreated(producer);
 
@@ -118,6 +126,12 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public synchronized boolean setSourceGeneration(long generation) {
+        if (generation < sourceGeneration) return false;
+        sourceGeneration = generation;
+        return true;
     }
 
     @Override
@@ -221,7 +235,7 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
     public void setVideoTrack(VideoTrack videoTrack) {
         VideoTrack oldValue = this.videoTrack;
 
-        if (oldValue != videoTrack) {
+        if (oldValue != videoTrack || rendererEventsGeneration != sourceGeneration) {
             if (oldValue != null) {
                 removeRendererFromVideoTrack();
             }
@@ -258,7 +272,7 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
             }
 
             surfaceTextureRenderer.release();
-            listenRendererEvents();
+            listenRendererEvents(sourceGeneration);
             surfaceTextureRenderer.init(sharedContext, rendererEvents);
             surfaceTextureRenderer.surfaceCreated(producer);
 

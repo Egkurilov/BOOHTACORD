@@ -21,6 +21,7 @@ export interface LiveKitScreenViewerEvents {
   trackMuted: unknown
   trackPublished: unknown
   trackSubscribed: unknown
+  trackSubscriptionFailed?: unknown
   trackUnmuted: unknown
   trackUnpublished: unknown
   trackUnsubscribed: unknown
@@ -97,6 +98,12 @@ export function bindLiveKitScreenViewer(
       viewer.removeThumbnail(participantId(participant))
     }
     refresh()
+  })
+  room.on(events.trackSubscribed, (_track: unknown, publication: ScreenViewerPublication & { source?: unknown }, participant: LiveKitRemoteParticipant) => {
+    if (publication.source === sources.screenVideo && publication.trackSid) viewer.markSubscriptionSucceeded(publication.trackSid, participantId(participant))
+  })
+  if (events.trackSubscriptionFailed) room.on(events.trackSubscriptionFailed, (trackSid: string, participant: LiveKitRemoteParticipant) => {
+    viewer.markSubscriptionFailed(trackSid, participantId(participant))
   })
   bindLiveKitRemoteVoiceEvents(room, events, sources, voicePlayback, participantId, accountId, refresh)
   return {

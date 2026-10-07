@@ -31,11 +31,12 @@ extension ScreenShareCapturePublish on ScreenShareController {
         platform: defaultTargetPlatform,
       );
       ActionScope.current?.step('select');
+      final capturePlan = quality.capturePlan(defaultTargetPlatform);
       pending = await driver.capture(
         ScreenShareCaptureOptions(
           sourceId: sourceId,
-          maxFrameRate: quality.captureFrameRate.toDouble(),
-          params: quality.captureParameters,
+          maxFrameRate: capturePlan.requestedMaxFrameRate.toDouble(),
+          params: capturePlan.requestedParameters,
         ),
       );
       if (!active()) return;

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' show SemanticsRole, Tristate;
 
 import 'package:boohtacord_desktop/src/app_version.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
@@ -29,7 +30,13 @@ void main() {
   testWidgets('shows the app version and build number in profile settings', (
     tester,
   ) async {
-    final state = AppState(ApiClient());
+    final state = AppState(ApiClient())
+      ..profile = const OwnProfile(
+        accountId: 'account-1',
+        login: 'member',
+        displayName: 'Участник',
+        role: 'MEMBER',
+      );
     addTearDown(state.dispose);
 
     await tester.pumpWidget(
@@ -37,6 +44,8 @@ void main() {
         home: Scaffold(body: ProfileScreen(state: state)),
       ),
     );
+    await tester.tap(find.byKey(const ValueKey('profile-tab-about')));
+    await tester.pumpAndSettle();
 
     expect(find.text(appVersionLabel), findsOneWidget);
   });
@@ -72,12 +81,19 @@ void main() {
   });
 
   testWidgets('explains generic native notification privacy', (tester) async {
-    final state = AppState(
-      ApiClient(),
-      nativeNotifications: NativeNotificationService(
-        supportedOnCurrentPlatform: true,
-      ),
-    );
+    final state =
+        AppState(
+            ApiClient(),
+            nativeNotifications: NativeNotificationService(
+              supportedOnCurrentPlatform: true,
+            ),
+          )
+          ..profile = const OwnProfile(
+            accountId: 'account-1',
+            login: 'member',
+            displayName: 'Участник',
+            role: 'MEMBER',
+          );
     addTearDown(state.dispose);
 
     await tester.pumpWidget(
@@ -85,8 +101,10 @@ void main() {
         home: Scaffold(body: ProfileScreen(state: state)),
       ),
     );
+    await tester.tap(find.byKey(const ValueKey('profile-tab-notifications')));
+    await tester.pumpAndSettle();
 
-    expect(find.text('Уведомления'), findsOneWidget);
+    expect(find.text('Уведомления'), findsNWidgets(2));
     expect(
       find.textContaining('Содержимое личных сообщений не отображается.'),
       findsOneWidget,
@@ -119,7 +137,7 @@ void main() {
       tester
           .widget<AuthenticatedAvatar>(find.byType(AuthenticatedAvatar))
           .radius,
-      32,
+      36,
     );
     expect(
       tester
@@ -202,7 +220,15 @@ void main() {
       isTrue,
     );
     expect(
-      tester.getSemantics(find.text('Профиль')).flagsCollection.isHeader,
+      tester
+          .getSemantics(
+            find.descendant(
+              of: find.byKey(const ValueKey('profile-screen-title-focus')),
+              matching: find.text('Профиль'),
+            ),
+          )
+          .flagsCollection
+          .isHeader,
       isTrue,
     );
   });
@@ -234,5 +260,64 @@ void main() {
     );
     expect(error, findsOneWidget);
     expect(tester.getSemantics(error).flagsCollection.isLiveRegion, isTrue);
+  });
+
+  testWidgets('profile settings use the web tab layout and selected panels', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final state = AppState(ApiClient())
+      ..profile = const OwnProfile(
+        accountId: 'account-1',
+        login: 'member',
+        displayName: 'Участник',
+        role: 'MEMBER',
+      );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('profile-tabs-semantics')),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .getSemantics(find.byKey(const ValueKey('profile-tabs-semantics')))
+          .getSemanticsData()
+          .role,
+      SemanticsRole.tabBar,
+    );
+    expect(find.byKey(const ValueKey('profile-tab-profile')), findsOneWidget);
+    expect(
+      tester
+          .getSemantics(find.byKey(const ValueKey('profile-tab-profile')))
+          .getSemanticsData()
+          .flagsCollection
+          .isSelected,
+      Tristate.isTrue,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('profile-tab-security')));
+    await tester.pumpAndSettle();
+    expect(find.text('Изменить пароль'), findsOneWidget);
+    expect(find.text('Отображаемое имя'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('profile-tab-notifications')));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Содержимое личных сообщений не отображается.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('profile-tab-about')));
+    await tester.pumpAndSettle();
+    expect(find.text(appVersionLabel), findsOneWidget);
+    semantics.dispose();
   });
 }

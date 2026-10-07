@@ -4,9 +4,9 @@ import '../theme.dart';
 import '../features/telemetry/action_scope/action.dart';
 import '../features/telemetry/action_scope/session.dart';
 import '../features/telemetry/observe_render/view.dart';
+import 'screen_recovery_retry.dart';
 
-/// Keeps the screen stage honest while a selected track has not produced a
-/// renderable frame yet, matching the web viewer's first-frame state.
+/// Holds an overlay until the selected screen renders its first frame.
 class ScreenFrameGate extends StatefulWidget {
   const ScreenFrameGate({
     super.key,
@@ -14,6 +14,9 @@ class ScreenFrameGate extends StatefulWidget {
     required this.builder,
     this.waitingMessage,
     this.telemetry,
+    this.onFirstFrame,
+    this.recoveryExhausted = false,
+    this.onRecoveryRetry,
   });
 
   final Object generation;
@@ -21,6 +24,9 @@ class ScreenFrameGate extends StatefulWidget {
   final Widget Function(BuildContext context, VoidCallback onFirstFrameRendered)
   builder;
   final String? waitingMessage;
+  final VoidCallback? onFirstFrame;
+  final bool recoveryExhausted;
+  final VoidCallback? onRecoveryRetry;
 
   @override
   State<ScreenFrameGate> createState() => _ScreenFrameGateState();
@@ -61,6 +67,7 @@ class _ScreenFrameGateState extends State<ScreenFrameGate> {
     if (_action != null && !_action!.session.current(_action!.snapshot)) return;
     if (widget.waitingMessage != null) return;
     setState(() => _hasRenderedFirstFrame = true);
+    widget.onFirstFrame?.call();
     _action?.step('first_frame');
     _action?.finish('success');
   }
@@ -99,6 +106,9 @@ class _ScreenFrameGateState extends State<ScreenFrameGate> {
                       textAlign: TextAlign.center,
                       style: TextStyle(color: GcColors.muted, fontSize: 14),
                     ),
+                    if (widget.recoveryExhausted &&
+                        widget.onRecoveryRetry != null)
+                      ScreenRecoveryRetry(onPressed: widget.onRecoveryRetry!),
                   ],
                 ),
               ),

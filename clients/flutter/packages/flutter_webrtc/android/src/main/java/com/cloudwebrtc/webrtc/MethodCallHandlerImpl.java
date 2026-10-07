@@ -810,10 +810,18 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         String streamId = call.argument("streamId");
         String ownerTag = call.argument("ownerTag");
         String trackId = call.argument("trackId");
+        Number requestedGeneration = call.argument("sourceGeneration");
+        long sourceGeneration = requestedGeneration == null
+            ? 0L
+            : requestedGeneration.longValue();
         FlutterRTCVideoRenderer render = renders.get(textureId);
         if (render == null) {
           resultError("videoRendererSetSrcObject", "render [" + textureId + "] not found !", result);
           return;
+        }
+        if (!render.setSourceGeneration(sourceGeneration)) {
+          result.success(null);
+          break;
         }
         MediaStream stream = null;
         if (ownerTag.equals("local")) {
