@@ -1,6 +1,7 @@
 import 'package:boohtacord_desktop/src/services/audio_preferences.dart';
 import 'package:boohtacord_desktop/src/services/voice_audio_config.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:boohtacord_desktop/src/features/voice/admission/audio.dart';
 import 'package:boohtacord_desktop/src/features/voice/admission/prepare.dart';
 
 import 'voice_scope/fakes.dart';

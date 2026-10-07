@@ -11,25 +11,26 @@ mixin AudioDeviceInventory on AudioDeviceState {
     audioOutputDevices = devices
         .where((device) => device.kind == 'audiooutput')
         .toList(growable: false);
-    if (audioInputDevices.isNotEmpty &&
-        selectedAudioInputId != null &&
+    if (audioDeviceScanStatus != AudioDeviceScanStatus.ready) return;
+    if (selectedAudioInputId != null &&
         !audioInputDevices.any(
           (device) => device.deviceId == selectedAudioInputId,
         )) {
-      if (selectedAudioInputId != 'default') {
-        audioDeviceWarning = 'Выбранный микрофон отключён. Выберите доступное устройство и проверьте звук.';
-      }
-      selectedAudioInputId = audioInputDevices.first.deviceId;
+      audioDeviceWarning =
+          'Выбранный микрофон отключён. Выберите доступное устройство и проверьте звук.';
+      selectedAudioInputId = audioInputDevices.isEmpty
+          ? null
+          : audioInputDevices.first.deviceId;
     }
-    if (audioOutputDevices.isNotEmpty &&
-        selectedAudioOutputId != null &&
+    if (selectedAudioOutputId != null &&
         !audioOutputDevices.any(
           (device) => device.deviceId == selectedAudioOutputId,
         )) {
-      if (selectedAudioOutputId != 'default') {
-        audioDeviceWarning = 'Выбранный динамик отключён. Выберите доступное устройство и проверьте звук.';
-      }
-      selectedAudioOutputId = audioOutputDevices.first.deviceId;
+      audioDeviceWarning =
+          'Выбранный динамик отключён. Выберите доступное устройство и проверьте звук.';
+      selectedAudioOutputId = audioOutputDevices.isEmpty
+          ? null
+          : audioOutputDevices.first.deviceId;
     }
   }
 }

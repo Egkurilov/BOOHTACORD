@@ -10,6 +10,8 @@ export 'src/media_recorder.dart';
 export 'src/video_renderer_extension.dart';
 export 'src/native/factory_impl.dart'
     if (dart.library.js_interop) 'src/web/factory_impl.dart';
+export 'src/native/factory_bootstrap.dart'
+    if (dart.library.js_interop) 'src/web/factory_bootstrap.dart';
 export 'src/native/rtc_video_renderer_impl.dart'
     if (dart.library.js_interop) 'src/web/rtc_video_renderer_impl.dart';
 export 'src/native/rtc_video_view_impl.dart'

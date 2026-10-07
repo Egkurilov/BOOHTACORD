@@ -13,6 +13,7 @@ class PendingVoiceRoom with EventsEmittable<RoomEvent> implements Room {
   final connecting = Completer<void>();
   int disconnected = 0;
   bool connectCalled = false;
+  MediaDevice? selectedOutput;
   @override
   final PendingMicrophone localParticipant = PendingMicrophone();
   @override
@@ -34,7 +35,10 @@ class PendingVoiceRoom with EventsEmittable<RoomEvent> implements Room {
   Future<void> disconnect() async {
     disconnected++;
   }
-
+  @override
+  Future<void> setAudioOutputDevice(MediaDevice device) async {
+    selectedOutput = device;
+  }
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -64,10 +68,14 @@ class PendingMicrophone implements LocalParticipant {
 }
 
 class VoiceHarness {
-  VoiceHarness() {
+  VoiceHarness({Future<void> Function()? nativeBootstrap}) {
     audio = AudioDeviceController(
       readRoom: () => owner.room,
-      loader: () async => enumeratedDevices,
+      loader: () async {
+        audioScans++;
+        return enumeratedDevices;
+      },
+      nativeBootstrap: nativeBootstrap,
     );
     screen = ScreenShareController(
       api,
@@ -83,8 +91,9 @@ class VoiceHarness {
       readUser: () => null,
       reportError: (value) => error = value,
       formatError: (value) => value.toString(),
-      roomFactory: (_) {
+      roomFactory: (options) {
         created++;
+        createdRoomOptions = options;
         return room;
       },
     );
@@ -97,6 +106,8 @@ class VoiceHarness {
   late final ScreenShareController screen;
   late final VoiceController owner;
   int created = 0;
+  RoomOptions? createdRoomOptions;
+  int audioScans = 0;
   String? error;
   Future<void> dispose() async {
     owner.dispose();

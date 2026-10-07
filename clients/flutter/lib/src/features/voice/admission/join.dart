@@ -1,9 +1,10 @@
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../models.dart';
-import '../../../services/screen_thumbnail.dart';
 import '../lifecycle/controller.dart';
+import 'audio.dart';
 import 'prepare.dart';
+import 'finalize.dart';
 import 'enable.dart';
 import 'failure.dart';
 import '../../telemetry/action_scope/action.dart';
@@ -25,41 +26,14 @@ extension VoiceAdmissionJoin on VoiceController {
     final ticket = scope.capture();
     final admitted = operationRevision;
     await closing;
-    if (!active(ticket, admitted) ||
-        channel.admissionClosed ||
-        voiceAdmissionPending) {
-      return;
-    }
-    if (voiceChannel?.id == channel.id && room != null) return;
-    disconnect.selectChannel(channel.id);
-    if (disconnect.notice?.reconnectAllowed == false) return;
-    disconnect.reset();
-    revokedVoiceLeasesDuringJoin.clear();
-    disconnect.channelId = channel.id;
-    final disconnectGeneration = disconnect.generation;
-    final revision = ++operationRevision;
-    screenThumbnails.clear();
-    closeScreenPreviewSubscriptions();
-    screenPreviewSubscriptionQueue = ScreenPreviewSubscriptionQueue();
-    selectedRemoteScreenViewerIdentity = null;
-    transientScreenShareVolumes.clear();
-    voicePhase = VoicePhase.joining;
-    voicePingMs = null;
-    voiceAdmissionPending = true;
-    microphoneUnavailable = false;
-    error = null;
-    notifyListeners();
+    final setup = prepareVoiceAdmission(channel, ticket, admitted);
+    if (setup == null) return;
+    final revision = setup.revision;
+    final disconnectGeneration = setup.disconnectGeneration;
     Room? candidate;
     EventsListener<RoomEvent>? events;
     String? admittedLease;
     var connected = false;
-    void checkCurrentAdmission(String lease) {
-      if (disconnect.generation != disconnectGeneration) {
-        throw CancelledVoiceAdmission();
-      }
-      checkAdmission(ticket, revision, lease);
-    }
-
     try {
       final result = await api.voiceCredential(channel.id, transfer: true);
       admittedLease = result.$1;
@@ -68,10 +42,16 @@ extension VoiceAdmissionJoin on VoiceController {
         throw CancelledVoiceAdmission();
       }
       disconnect.bind(admittedLease, channel.id);
-      checkCurrentAdmission(admittedLease);
+      void check() => checkCurrentVoiceAdmission(
+        ticket,
+        revision,
+        admittedLease!,
+        disconnectGeneration,
+      );
+      check();
       leaseId = admittedLease;
-      await loadVoiceVolumes(ticket, revision, admittedLease);
-      checkCurrentAdmission(admittedLease);
+      await prepareVoiceAudio(ticket, revision, admittedLease, disconnectGeneration);
+      final outputIdAtRoomCreation = selectedAudioOutputId;
       candidate = createRoom(voiceRoomOptions());
       pendingRoom = candidate;
       bindVoiceRoomEvents(candidate);
@@ -82,22 +62,23 @@ extension VoiceAdmissionJoin on VoiceController {
         result.$2.token,
         connectOptions: const ConnectOptions(autoSubscribe: false),
       );
-      checkCurrentAdmission(admittedLease);
-      // WebRTC's native inventory can be incomplete before the room's peer
-      // connection exists. Refresh here too: listener-only and PTT joins do
-      // not capture a microphone and won't trigger the post-capture refresh.
-      await audio.refreshAudioDevices();
-      checkCurrentAdmission(admittedLease);
-      await selectVoiceOutput();
-      checkCurrentAdmission(admittedLease);
+      check();
+      await refreshVoiceAudioAfterConnect(
+        ticket,
+        revision,
+        admittedLease,
+        disconnectGeneration,
+      );
+      await applyVoiceOutputSelection(candidate, outputIdAtRoomCreation);
+      check();
       room = candidate;
       voiceChannel = channel;
       subscribeCurrentRemoteVoiceTracks(candidate);
       await applySavedVoiceVolumes(candidate);
-      checkCurrentAdmission(admittedLease);
+      check();
       if (!listenerOnly) ActionScope.current?.step('microphone');
       await enableVoiceMicrophone(candidate, listenerOnly, ticket, revision);
-      checkCurrentAdmission(admittedLease);
+      check();
       startVoiceConnectionStatsPolling(candidate);
       observeVoiceStreamStarts(candidate);
       connected = true;
@@ -111,23 +92,14 @@ extension VoiceAdmissionJoin on VoiceController {
         );
       }
     } finally {
-      if (!connected) {
-        try {
-          await candidate?.disconnect();
-        } catch (_) {}
-        await events?.dispose();
-        if (identical(voiceEvents, events)) voiceEvents = null;
-        if (admittedLease != null && ticket.isActive) {
-          try {
-            await api.releaseVoice(admittedLease);
-          } catch (_) {}
-        }
-      }
-      if (identical(pendingRoom, candidate)) pendingRoom = null;
-      if (active(ticket, revision)) {
-        voiceAdmissionPending = false;
-        notifyListeners();
-      }
+      await finalizeVoiceAdmission(
+        candidate: candidate,
+        events: events,
+        lease: admittedLease,
+        connected: connected,
+        ticket: ticket,
+        revision: revision,
+      );
     }
   }
 }
