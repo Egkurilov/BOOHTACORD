@@ -67,7 +67,11 @@ class _AdminTopologyPanelState extends State<AdminTopologyPanel> {
   Widget build(BuildContext context) => CallbackShortcuts(
     bindings: {const SingleActivator(LogicalKeyboardKey.escape): _back},
     child: Focus(child: LayoutBuilder(builder: (context, constraints) {
+      final previousWidth = _panelWidth;
       _panelWidth = constraints.maxWidth;
+      if (previousWidth > 720 && _panelWidth <= 720 && _category != null) {
+        _compactDrillIn = true;
+      }
       final workspace = _panelWidth >= 840 ? _desktop() : _panelWidth > 720 ? _stacked() : _compact();
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         const Text('Управление каналами', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
