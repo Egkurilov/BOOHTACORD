@@ -30,7 +30,13 @@ export function importsOf(source, path) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const paths = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z', '--', 'clients/web/src'], { cwd: root, encoding: 'utf8' }).split('\0').filter(path => path && existsSync(resolve(root, path)))
+  const trackedPaths = roots => execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z', '--', ...roots], { cwd: root, encoding: 'utf8' })
+    .split('\0')
+    .filter(path => path && existsSync(resolve(root, path)))
+  const paths = [...new Set([
+    ...trackedPaths(['clients/web/src']),
+    ...trackedPaths(['contracts']).filter(path => path.endsWith('.json')),
+  ])]
   const result = Object.fromEntries(paths.map(path => [path, /\.(ts|vue|js)$/.test(path) ? importsOf(readFileSync(resolve(root, path), 'utf8'), path) : []]))
   process.stdout.write(JSON.stringify(result))
 }

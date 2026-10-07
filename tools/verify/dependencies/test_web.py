@@ -21,3 +21,8 @@ class WebBoundaryTests(unittest.TestCase):
     def test_missing_local_dependency_is_rejected(self):
         sources = {'clients/web/src/workspace/WorkspaceApp.vue': ['./gone.vue']}
         self.assertIn('missing', violations(sources)[0])
+
+    def test_feature_can_import_shared_contract_json(self):
+        sources = {'clients/web/src/voice/policy.ts': ['../../../../contracts/screen-profile.json'],
+                   'contracts/screen-profile.json': []}
+        self.assertEqual(violations(sources), [])
