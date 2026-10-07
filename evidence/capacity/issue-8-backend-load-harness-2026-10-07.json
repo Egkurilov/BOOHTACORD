@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/8",
+  "task": "T-007",
+  "date": "2026-10-07",
+  "implementation": "PASS",
+  "checks": {
+    "go_load_protocol_tests": "PASS",
+    "go_load_vet": "PASS",
+    "python_guard_provision_tests": "PASS",
+    "actual_linux_api_smoke": "PASS: run37677120349/backend112983443029, source bca4b858, merge2703dc1d",
+    "target_100_voice_capacity": "NOT_RUN",
+    "physical_windows_macos_media": "NOT_RUN",
+    "target_network_sfu_packet_metrics": "NOT_RUN",
+    "extended_profiles_latest_revision": "NOT_RUN: mandatory CI normal/reconnect/uploads/shared-NAT/fault profiles added"
+  },
+  "criteria": {
+    "message_ws_p95_ms": 500,
+    "voice_join_p95_seconds": 3,
+    "stream_switch_p95_seconds": 2,
+    "voice_restore_p95_seconds": 10,
+    "guild_voice_participants": 100,
+    "voice_channel_max_participants": 20,
+    "attachment_max_bytes": 25000000
+  },
+  "privacy": "Only safe route and numeric aggregate metrics; no credentials, content or identity labels",
+  "limitations": "Protocol TLS/WebSocket fixture proves driver protocol behavior; actual API CI smoke and physical capacity are distinct gates. Independent loopback source profile does not prove shared-NAT auth capacity. Limited reversible faults do not prove unbounded production saturation.",
+  "reproduction": "docs/operations/backend-load.md",
+  "gate_closure": "NOT_RUN: do not close hardware/capacity acceptance",
+  "actual_smoke": {
+    "run_id": 37677120349,
+    "job_id": 112983443029,
+    "artifact_id": 11506864783,
+    "tested_head": "bca4b858fd520fa58f3a4f136237825602acdb72",
+    "go_tests": {
+      "passed": 1141,
+      "skipped": 0,
+      "failed": 0
+    },
+    "accounts": 2,
+    "http_requests": 652,
+    "fanout_samples": 182,
+    "fanout_p95_ms": 5.994291,
+    "fanout_p99_ms": 9.849441,
+    "phase_errors": 0,
+    "cleanup": "PASS",
+    "owned_resources_removed": true
+  }
+}
