@@ -62,4 +62,44 @@ void main() {
     expect(api.saves, 1);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'refresh with a dirty draft requires review before rebasing',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      addTearDown(tester.view.reset);
+      final api = RolePermissionsTestApi();
+      await tester.pumpWidget(MaterialApp(home: Scaffold(
+        body: RolePermissionsPanel(api: api, onSaved: () async {}),
+      )));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('permission-checkbox:channel.text.create')),
+      );
+      await tester.pumpAndSettle();
+      api.member = Map.of(api.member)..[GuildPermission.categoryCreate] = true;
+      api.revision++;
+
+      await tester.tap(find.text('Обновить'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('role-permission-conflict-review')), findsOneWidget);
+      expect(api.saves, 0);
+      expect(
+        tester.widget<Text>(find.byKey(
+          const ValueKey('conflict:category.create:current'),
+        )).data,
+        'Разрешено',
+      );
+      expect(find.text('Проверено — применить мой вариант'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.text('Проверено — применить мой вариант'));
+      await tester.pumpAndSettle();
+      expect(api.savedRevision, 2);
+      expect(api.savedValues![GuildPermission.textCreate], isTrue);
+      expect(api.savedValues![GuildPermission.categoryCreate], isFalse);
+      expect(api.saves, 1);
+    },
+  );
 }

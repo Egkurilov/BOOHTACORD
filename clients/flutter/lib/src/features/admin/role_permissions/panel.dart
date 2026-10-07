@@ -15,6 +15,7 @@ part 'panel_conflict.dart';
 part 'panel_action_bar.dart';
 part 'panel_chrome.dart';
 part 'panel_view.dart';
+part 'panel_load.dart';
 
 class RolePermissionsPanel extends StatefulWidget {
   const RolePermissionsPanel({
@@ -61,36 +62,6 @@ class RolePermissionsPanelState extends State<RolePermissionsPanel> {
 
   @override
   Widget build(BuildContext context) => _buildPanel(context);
-
-  Future<void> _load({required bool reset}) async {
-    setState(() {
-      loading = true;
-      error = null;
-      status = null;
-      if (!reset && conflictReview != null) {
-        conflictReview = conflictReview!.withoutCurrent();
-      }
-    });
-    try {
-      final page = await widget.api.loadRolePolicies();
-      final member = page.roles.firstWhere((item) => item.role == GuildRole.member);
-      if (!mounted) return;
-      setState(() {
-        roles = page.roles;
-        revision = page.revision;
-        baseline = Map.of(member.permissions);
-        if (reset) draft = Map.of(member.permissions);
-        if (reset) conflictReview = null;
-        if (!reset && conflictReview != null) {
-          conflictReview = conflictReview!.withCurrent(baseline, revision);
-        }
-      });
-    } catch (cause) {
-      if (mounted) setState(() => error = cause.toString());
-    } finally {
-      if (mounted) setState(() => loading = false);
-    }
-  }
 
   Future<bool> confirmBeforeLeaving() => _confirmBeforeLeaving();
 }

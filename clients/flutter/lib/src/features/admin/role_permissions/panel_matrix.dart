@@ -61,7 +61,11 @@ extension _RolePermissionMatrix on RolePermissionsPanelState {
         contentPadding: const EdgeInsets.symmetric(horizontal: 8),
         title: Text(_permissionLabels[key]!),
         value: values[key] ?? false,
-        onChanged: role != GuildRole.member || selected?.editable != true || saving
+        onChanged:
+            role != GuildRole.member ||
+                selected?.editable != true ||
+                saving ||
+                loading
             ? null
             : (value) => _setPermission(key, value ?? false),
       );

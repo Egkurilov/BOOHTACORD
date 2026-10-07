@@ -57,7 +57,7 @@ extension _RolePermissionActionBar on RolePermissionsPanelState {
       runSpacing: 8,
       children: [
         OutlinedButton(
-          onPressed: saving ? null : _setDefaults,
+          onPressed: saving || loading ? null : _setDefaults,
           child: const Text('По умолчанию'),
         ),
         TextButton(
@@ -65,7 +65,7 @@ extension _RolePermissionActionBar on RolePermissionsPanelState {
           child: const Text('Отменить'),
         ),
         FilledButton(
-          onPressed: !dirty || saving ? null : () => _save(),
+          onPressed: !dirty || saving || loading ? null : () => _save(),
           child: Text(saving ? 'Сохраняем…' : 'Сохранить'),
         ),
       ],

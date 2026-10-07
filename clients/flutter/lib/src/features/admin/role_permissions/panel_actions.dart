@@ -13,7 +13,7 @@ extension _RolePermissionActions on RolePermissionsPanelState {
   }
 
   void _setDefaults() {
-    if (selected?.editable != true || role != GuildRole.member || saving) return;
+    if (selected?.editable != true || role != GuildRole.member || saving || loading) return;
     final values = {
       for (final key in GuildPermission.values) key: !_deleteKeys.contains(key),
     };
@@ -27,7 +27,7 @@ extension _RolePermissionActions on RolePermissionsPanelState {
   }
 
   void _setPermission(GuildPermission permission, bool value) {
-    if (selected?.editable != true || role != GuildRole.member || saving) return;
+    if (selected?.editable != true || role != GuildRole.member || saving || loading) return;
     setState(() {
       draft = Map.of(draft)..[permission] = value;
       if (conflictReview case final review?) {
@@ -59,7 +59,7 @@ extension _RolePermissionActions on RolePermissionsPanelState {
       false;
 
   Future<void> _save({bool reviewedConflict = false}) async {
-    if (role != GuildRole.member || selected?.editable != true || saving) return;
+    if (role != GuildRole.member || selected?.editable != true || saving || loading) return;
     final review = conflictReview;
     if (review != null &&
         (!reviewedConflict || !review.ready || review.revision != revision)) return;

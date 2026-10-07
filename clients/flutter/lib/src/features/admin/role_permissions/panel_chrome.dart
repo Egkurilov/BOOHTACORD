@@ -9,7 +9,7 @@ extension _RolePermissionChrome on RolePermissionsPanelState {
       ),
     ),
     TextButton.icon(
-      onPressed: loading ? null : () => _load(reset: false),
+      onPressed: loading || saving ? null : () => _load(reset: false),
       icon: const Icon(Icons.refresh),
       label: const Text('Обновить'),
     ),

@@ -37,7 +37,7 @@ extension _RolePermissionConflictView on RolePermissionsPanelState {
     runSpacing: 8,
     children: [
       OutlinedButton(
-        onPressed: saving ? null : _refreshConflict,
+        onPressed: saving || loading ? null : _refreshConflict,
         child: const Text('Обновить сравнение'),
       ),
       TextButton(
