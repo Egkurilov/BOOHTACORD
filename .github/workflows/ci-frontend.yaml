@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: screen-share-sfu-smoke-${{ github.sha }}
-          path: .out/screen-profile-browser-results/**/attachments/screen-share-sfu-smoke.json
+          path: .out/screen-profile-browser-results/**/screen-share-sfu-smoke.json
           if-no-files-found: ignore
           retention-days: 30
       - name: Retain anonymous restricted-network measurements

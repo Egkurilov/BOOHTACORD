@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { AccessToken } from 'livekit-server-sdk'
 import { expect, test } from '@playwright/test'
 import type { SmokeSnapshot } from './screen_share_sfu/types'
@@ -102,7 +102,13 @@ test('real LiveKit SDK discovers without subscribing, selects, presents, and cle
     expect(Object.keys(evidence).sort()).toEqual([...evidenceSchema.required].sort())
     expect(evidenceSchema.properties.results.properties.hardwarePerformance.enum).toContain('NOT_RUN')
     expect(JSON.stringify(evidence)).not.toMatch(/token|identity|sdp|credential|candidate/i)
-    await testInfo.attach('screen-share-sfu-smoke.json', { body: JSON.stringify(evidence, null, 2), contentType: 'application/json' })
+    const evidenceJson = JSON.stringify(evidence, null, 2)
+    const evidencePath = testInfo.outputPath('screen-share-sfu-smoke.json')
+    writeFileSync(evidencePath, evidenceJson)
+    const persistedEvidence = readFileSync(evidencePath, 'utf8')
+    expect(JSON.parse(persistedEvidence)).toEqual(evidence)
+    expect(persistedEvidence).not.toMatch(/token|identity|sdp|credential|candidate/i)
+    await testInfo.attach('screen-share-sfu-smoke.json', { body: evidenceJson, contentType: 'application/json' })
     await Promise.all([publisherContext.close(), viewerContext.close()])
   }
 })
