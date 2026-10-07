@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
 
+import '../capture/plan.dart';
 import '../capture/jpeg_source_dimensions.dart' as jpeg_dimensions;
 import 'geometry.dart';
 
@@ -51,11 +53,21 @@ class ScreenShareQuality {
     ),
   );
 
-  // The native capturer cannot raise its frame cap with applyConstraints.
-  // Keep the source at the highest supported ceiling and tune the encoder.
+  // Legacy capture ceiling retained for platforms without a desktop capture plan.
   int get captureFrameRate => 60;
+
+  // Desktop paths use the selected profile when the source is created.
   VideoParameters get captureParameters =>
       const ScreenShareQuality(resolution: 1440, frameRate: 60).parameters;
+
+  ScreenShareCapturePlan capturePlan(TargetPlatform platform) =>
+      ScreenShareCapturePlan.forProfile(
+        profileParameters: parameters,
+        profileMaxFrameRate: frameRate,
+        legacyParameters: captureParameters,
+        legacyMaxFrameRate: captureFrameRate,
+        platform: platform,
+      );
 
   /// Caps the longer source edge at the selected profile without changing
   /// orientation or stretching portrait captures.

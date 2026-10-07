@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/livekit_client.dart';
 import 'package:boohtacord_desktop/src/features/screen/capture/driver.dart';
 import 'package:boohtacord_desktop/src/features/screen/profile/quality.dart';
@@ -18,8 +19,20 @@ class FakeScreenParticipant implements LocalParticipant {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class FakeMediaStreamTrack implements rtc.MediaStreamTrack {
+  @override
+  String get id => 'fake-screen-track';
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class FakeScreenTrack implements LocalVideoTrack {
   int stopCalls = 0;
+
+  @override
+  rtc.MediaStreamTrack get mediaStreamTrack => FakeMediaStreamTrack();
+
   @override
   Future<bool> stop() async {
     stopCalls++;

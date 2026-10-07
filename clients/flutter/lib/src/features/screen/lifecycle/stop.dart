@@ -6,6 +6,7 @@ extension ScreenShareStop on ScreenShareController {
   Future<void> stopScreenShare() {
     final previous = closing;
     if (previous != null) return previous;
+    captureRestartRequired = false;
     qualityIntentRevision++;
     pendingQualityUpdate = null;
     final operation = closeCapture(++revision);
