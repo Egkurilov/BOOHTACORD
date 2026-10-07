@@ -1,0 +1,29 @@
+{
+  "id": "QA-ADMIN-WINDOWS-CI-2026-10-07-001",
+  "date": "2026-10-07",
+  "task": "FV2-031 / FV2-032 / GitHub #198 — Windows CI verification",
+  "source_revision": "c6819f40",
+  "platform": "GitHub Actions windows-2022 runner",
+  "workflow": {
+    "run_id": 37677914111,
+    "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/37677914111",
+    "event": "pull_request"
+  },
+  "checks": [
+    {
+      "name": "Windows native CI job",
+      "result": "PASS",
+      "observation": "The windows / windows job completed successfully, including Flutter tests/analyzer, release build inspection and artifact retention."
+    },
+    {
+      "name": "Cross-repository PR checks",
+      "result": "PASS",
+      "observation": "changes, contracts / contracts, backend / backend, frontend / frontend and flutter / flutter all completed successfully in the same run."
+    }
+  ],
+  "not_run": [
+    "Interactive Windows visual/runtime acceptance was not available from this macOS host; the CI build does not prove live resize, native focus, NVDA or frameless drag behavior.",
+    "iOS native runtime, SafeArea, VoiceOver and landscape acceptance remain NOT_RUN because no iOS runner/device was available."
+  ],
+  "status": "WINDOWS CI BUILD/TEST PASS; Windows native visual and iOS runtime gates remain open"
+}

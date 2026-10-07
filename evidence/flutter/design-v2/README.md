@@ -78,3 +78,10 @@ recorded in
 [`qa-admin-accessibility-hardening-2026-10-07-002.json`](../qa-admin-accessibility-hardening-2026-10-07-002.json).
 It raises the full Flutter suite result to 796 passing tests with one expected
 skip; the native IME, TalkBack, iOS and Windows gate remains open.
+
+The PR checks for source revision `c6819f40` completed successfully in GitHub
+Actions run `37677914111`, including the Windows native CI job and the Flutter,
+contracts, backend and frontend jobs. This proves the Windows CI build/test
+path, not interactive Windows runtime behavior; iOS remains `NOT_RUN`. Details
+are in
+[`qa-admin-windows-ci-2026-10-07-001.json`](../qa-admin-windows-ci-2026-10-07-001.json).
