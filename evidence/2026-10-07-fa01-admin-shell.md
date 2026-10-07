@@ -1,10 +1,10 @@
 # FA-01 admin responsive foundation
 
 - Scope: Flutter administrator workspace shell and responsive geometry.
-- Commits: `69c37548`, `265f4fde`.
-- Result: PASS for the implemented foundation and the Media presentation
-  entry point; FA-01 remains open while Members and Audit presentation blocks
-  are still owned by `AdminScreen`.
+- Commits: `69c37548`, `265f4fde`, `2087a62f`.
+- Result: PASS for the implemented foundation and Members/Audit/Media
+  presentation entry points; FA-01 remains open only for removing the legacy
+  migration methods and extracting the remaining topology mutation controller.
 
 ## Checks
 
@@ -18,6 +18,8 @@
   x86_64 APKs built; generated artifacts remain ignored).
 - `AdminMediaMetricsPanel` now owns the media diagnostics presentation; the
   screen retains only loading/refresh state and routing.
+- `AdminMembersPanel` and `AdminAuditPanel` now own their tab composition;
+  account cards and controller callbacks remain stateful screen adapters.
 
 ## Notes
 
