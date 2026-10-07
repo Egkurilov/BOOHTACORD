@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "status": "proposed-unvalidated",
+  "source": "synthetic-moving-canvas; no captured desktop frames",
+  "voice": "paired voice scenario required; audibility is NOT_RUN",
+  "phases_seconds": {"warmup": 30, "ramp": 60, "steady": 600, "cooldown": 30, "soak": 7200},
+  "repeat_profiles": ["L01", "L04", "L05", "L09"],
+  "repeats": 3,
+  "profiles": [
+    {"id":"L01","participants":10,"rooms":[{"participants":10,"publishers":4}],"subscriptions_per_viewer":1,"subscription_pattern":"balanced","scenario":"healthy-baseline","impairments":[]},
+    {"id":"L02","participants":10,"rooms":[{"participants":10,"publishers":10}],"subscriptions_per_viewer":1,"subscription_pattern":"ring","scenario":"publish-and-view-one-other","impairments":[]},
+    {"id":"L03","participants":20,"rooms":[{"participants":20,"publishers":4}],"subscriptions_per_viewer":2,"subscription_pattern":"balanced","scenario":"bounded-fanout","impairments":[]},
+    {"id":"L04","participants":20,"rooms":[{"participants":20,"publishers":10}],"subscriptions_per_viewer":1,"subscription_pattern":"balanced","scenario":"mixed","impairments":[]},
+    {"id":"L05","participants":20,"rooms":[{"participants":20,"publishers":20}],"subscriptions_per_viewer":1,"subscription_pattern":"ring","scenario":"all-publishers-one-viewer","impairments":[]},
+    {"id":"L06","participants":30,"rooms":[{"participants":15,"publishers":5},{"participants":15,"publishers":5}],"subscriptions_per_viewer":1,"subscription_pattern":"balanced","scenario":"multi-room","impairments":[]},
+    {"id":"L07","participants":30,"rooms":[{"participants":15,"publishers":10},{"participants":15,"publishers":10}],"subscriptions_per_viewer":1,"subscription_pattern":"hot","scenario":"multi-room-skewed-popularity","hot_audience_per_room":7,"impairments":[]},
+    {"id":"L08","participants":20,"rooms":[{"participants":20,"publishers":10}],"subscriptions_per_viewer":1,"subscription_pattern":"balanced","scenario":"join-leave-switch-a-b-a","switches_per_viewer":100,"impairments":[]},
+    {"id":"L09","participants":20,"rooms":[{"participants":20,"publishers":10}],"subscriptions_per_viewer":1,"subscription_pattern":"balanced","scenario":"separate-uplink-downlink-recovery","impairments":[{"target":"sender-uplink","bandwidth_kbps":[2500,1000],"loss_percent":[1,3],"rtt_ms":[50,150],"jitter_ms":[10,40],"burst_loss":true},{"target":"one-receiver-downlink","bandwidth_kbps":[2500,1000],"loss_percent":[1,3],"rtt_ms":[50,150],"jitter_ms":[10,40],"burst_loss":true}]},
+    {"id":"L10","participants":20,"rooms":[{"participants":20,"publishers":10}],"subscriptions_per_viewer":1,"subscription_pattern":"balanced","scenario":"two-hour-soak-bounded-reconnect-and-dependency-fault","faults":[{"at_seconds":1800,"kind":"single-reconnect","max_events":1},{"at_seconds":3600,"kind":"preview-endpoint-unavailable","max_events":1}],"impairments":[]}
+  ]
+}
