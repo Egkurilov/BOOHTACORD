@@ -31,8 +31,8 @@
     }
   ],
   "limitations": [
-    "Native Android/macOS/iOS/Windows runtime acceptance and a matched screenshot comparison remain part of #198.",
-    "ADB was unavailable in this run because the local daemon could not start."
+    "Android portrait and macOS administrator-surface runtime passes are recorded separately; live-resize/IME/TalkBack and iOS/Windows acceptance remain part of #198.",
+    "The focused implementation record does not claim a matched screenshot comparison across platforms."
   ],
   "status": "IMPLEMENTATION PASS; native runtime pending"
 }

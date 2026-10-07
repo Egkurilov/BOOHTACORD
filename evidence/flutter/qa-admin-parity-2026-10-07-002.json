@@ -2,7 +2,7 @@
   "id": "QA-ADMIN-PARITY-2026-10-07-002",
   "date": "2026-10-07",
   "task": "FV2-031 / GitHub #188 — Flutter Design V2 administrator parity follow-up",
-  "source_revision": "a16b17bc",
+  "source_revision": "e844298e",
   "branch": "codex/issue-188-flutter-admin-completion",
   "checks": [
     {
@@ -29,10 +29,20 @@
       "name": "Admin feature evidence",
       "result": "PASS",
       "observation": "Readiness freshness, Members concurrency/responsive rows and Roles conflict comparison are covered by focused records; topology, audit, media and guild responsive slices retain their existing tests."
+    },
+    {
+      "name": "macOS admin runtime",
+      "result": "PASS",
+      "observation": "Native macOS 26.6.1 rendered Guild, Members, Roles, Channels, Audit, Media and Readiness at the observed desktop viewport; accessibility tree exposed the expected controls."
+    },
+    {
+      "name": "Android admin portrait runtime",
+      "result": "PASS",
+      "observation": "Android 15/API 35 emulator ran the fresh 1.0.38 arm64 APK through Members, Roles, Channels, Audit, Media and Readiness; system Back closed a transient dropdown and logcat had no fatal app crash."
     }
   ],
   "limitations": [
-    "Issue #198 native acceptance is not closed: this run did not produce fresh iOS/macOS/Windows runtime evidence, and local ADB was unavailable for Android installation."
+    "Issue #198 native acceptance is not closed: live-resize, IME/TalkBack, iOS and Windows runtime evidence are still missing. Android evidence is portrait-only and macOS evidence is an administrator-surface pass."
   ],
   "status": "IMPLEMENTATION PASS; cross-platform gate open"
 }
