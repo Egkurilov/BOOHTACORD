@@ -27,11 +27,11 @@ export function bindLiveKitRemoteVoiceEvents(
     if (publication.source === sources.microphone) publication.setSubscribed?.(true)
     refresh()
   })
-  const refreshMicrophoneState = (publication: { source?: unknown }) => {
-    if (publication.source === sources.microphone) refresh()
+  const refreshTrackState = (publication: { source?: unknown }) => {
+    if ([sources.microphone, sources.screenAudio, sources.screenVideo].includes(publication.source)) refresh()
   }
-  room.on(events.trackMuted, refreshMicrophoneState)
-  room.on(events.trackUnmuted, refreshMicrophoneState)
+  room.on(events.trackMuted, refreshTrackState)
+  room.on(events.trackUnmuted, refreshTrackState)
   room.on(events.trackSubscribed, (track: RemoteVoiceTrack, publication: ScreenViewerPublication & { source?: unknown }, participant: LiveKitRemoteParticipant) => {
     if (publication.source === sources.microphone) voicePlayback.attach(participantId(participant), track, participant.name, accountId(participant))
     refresh()

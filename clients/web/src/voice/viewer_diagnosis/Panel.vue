@@ -5,7 +5,7 @@ import { buildBundle,parseBundle,type Sample } from './bundle'
 import { createDiagnosisSeries } from './series'
 import type { ScreenReceiverMetrics } from '../screen_receiver_diagnostics'
 import type { ScreenDiagnostics } from '../screen_diagnostics'
-const props=defineProps<{selectedId:string|null;ended:boolean;hasAudio:boolean;local:boolean;videoReady:boolean;presentedFps:number|null;presentedFrames?:number|null;sampledAt:number|null;metrics:ScreenReceiverMetrics|null;source?:ScreenDiagnostics}>()
+const props=defineProps<{selectedId:string|null;ended:boolean;hasAudio:boolean;local:boolean;publisherPaused?:boolean;videoReady:boolean;presentedFps:number|null;presentedFrames?:number|null;sampledAt:number|null;metrics:ScreenReceiverMetrics|null;source?:ScreenDiagnostics}>()
 const emit=defineEmits<{retry:[];refresh:[];choose:[]}>()
 const now=ref(Date.now()),selectedAt=ref(Date.now()),visible=ref(true),error=ref(''),help=ref(false),second=ref<Sample[]|null>(null)
 const diagnosis=computed(()=>diagnose({...props,selected:Boolean(props.selectedId),selectedAt:selectedAt.value,now:now.value,visible:visible.value}))
@@ -14,7 +14,7 @@ const series=createDiagnosisSeries(()=>{
   const source=props.local&&props.source?.sampledAt!==undefined&&now.value-props.source.sampledAt>=0&&now.value-props.source.sampledAt<=6000?props.source:null
   return {state:diagnosis.value.state,captureFps:source?.profileCheck?.captureFps,encodedFps:source?.measured?.framesPerSecond,decodedFps:fresh?props.metrics?.decodedFps:null,presentedFps:visible.value?props.presentedFps:null,bitrateKbps:fresh?props.metrics?.bitrateKbps:null,rttMs:source?.roundTripTimeMs ?? null,sampleAgeMs:props.sampledAt===null?null:now.value-props.sampledAt,capturedFrames:source?.capturedFrames,encodedFrames:source?.encodedFrames,decodedFrames:fresh?props.metrics?.decodedFrames:null,presentedFrames:visible.value?props.presentedFrames:null}
 })
-function action():void {const value=diagnosis.value.action;if(value==='publisher') help.value=true;else if(value==='retry') emit('retry');else if(value==='refresh') emit('refresh');else if(value==='choose') emit('choose')}
+function action():void {const value=diagnosis.value.action;if(value==='publisher') help.value=true;else if(value==='retry'){selectedAt.value=Date.now();now.value=selectedAt.value;emit('retry')}else if(value==='refresh') emit('refresh');else if(value==='choose') emit('choose')}
 function exportBundle():void {
   const value=buildBundle(series.samples.value,second.value ?? undefined)
   const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'})),link=document.createElement('a')
@@ -26,8 +26,8 @@ async function importSecond(event:Event):Promise<void> {
   catch(cause){error.value=cause instanceof Error?cause.message:'Некорректная диагностика.'}finally{input.value=''}
 }
 watch(()=>props.selectedId,()=>{selectedAt.value=Date.now();series.clear();second.value=null;help.value=false})
-let timer:ReturnType<typeof setInterval>|null=null
-onMounted(()=>{visible.value=document.visibilityState==='visible';timer=setInterval(()=>{now.value=Date.now();visible.value=document.visibilityState==='visible'},1000)})
+let timer:ReturnType<typeof setInterval>|null=null,hiddenAt:number|null=null
+onMounted(()=>{visible.value=document.visibilityState==='visible';if(!visible.value)hiddenAt=Date.now();timer=setInterval(()=>{const at=Date.now(),nextVisible=document.visibilityState==='visible';if(nextVisible&&!visible.value&&hiddenAt!==null){selectedAt.value+=at-hiddenAt;hiddenAt=null}else if(!nextVisible&&visible.value)hiddenAt=at;now.value=at;visible.value=nextVisible},1000)})
 onBeforeUnmount(()=>{if(timer) clearInterval(timer);series.stop()})
 </script>
 <template>

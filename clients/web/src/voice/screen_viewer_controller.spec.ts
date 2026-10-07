@@ -59,7 +59,7 @@ describe('screen viewer controller', () => {
     expect(controller.ended).toBe(false)
   })
 
-  it('reattaches a restarted share from the selected participant without another click', () => {
+  it('requires a new selection when the selected publication disappears', () => {
     const initial = stream('alice-old')
     const streams: ScreenViewerStream[] = [initial]
     const controller = new ScreenViewerController(() => streams)
@@ -74,9 +74,12 @@ describe('screen viewer controller', () => {
     streams.push(restarted)
     controller.reconcile()
 
+    expect(controller.selectedId).toBeNull()
+    expect(controller.ended).toBe(true)
+    expect(restarted.video.setSubscribed).not.toHaveBeenCalledWith(true)
+    controller.select(restarted.id, video, audio)
     expect(controller.selectedId).toBe(restarted.id)
     expect(controller.ended).toBe(false)
-    expect(restarted.video.track?.attach).toHaveBeenCalledWith(video)
   })
 
   it('rejects a stream not reported by the current room', () => {
@@ -96,24 +99,6 @@ describe('screen viewer controller', () => {
     expect(audio.muted).toBe(true)
     controller.setDeafened(false)
     expect(audio.muted).toBe(false)
-  })
-
-  it('sets a separate selected-stream audio level and disposes it when switching streams', () => {
-    const first = stream('alice')
-    const second = stream('bob')
-    const firstOutput = { dispose: vi.fn(), setMuted: vi.fn(), setVolume: vi.fn() }
-    const secondOutput = { dispose: vi.fn(), setMuted: vi.fn(), setVolume: vi.fn() }
-    const outputs = [firstOutput, secondOutput]
-    const controller = new ScreenViewerController(() => [first, second], { attach: vi.fn(() => outputs.shift()!) } as never)
-    const audio = {} as HTMLAudioElement
-
-    controller.select('alice', {} as HTMLVideoElement, audio)
-    controller.setAudioVolume(160)
-    controller.select('bob', {} as HTMLVideoElement, audio)
-
-    expect(firstOutput.setVolume).toHaveBeenCalledWith(160)
-    expect(firstOutput.dispose).toHaveBeenCalledOnce()
-    expect(secondOutput.setVolume).toHaveBeenCalledWith(160)
   })
 
   it('plays a self screen preview without subscribing to it or routing its audio', () => {

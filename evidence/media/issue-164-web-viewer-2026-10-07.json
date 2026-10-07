@@ -1,0 +1,17 @@
+{
+  "id": "issue-164-web-viewer-2026-10-07",
+  "task": "GitHub #164 / SS-08",
+  "status": "PARTIAL",
+  "observed_at": "2026-10-07",
+  "source_base_commit": "11a45947db34b341c278fe3b7aaf4f22549058d9",
+  "change": "The Web viewer now treats selection of the same publication generation and media elements as a no-op, retains its media elements and reusable audio output across supported rebinds, rejects callbacks that no longer match the selected publication, and permits at most one explicit same-publication video recovery attempt. SDK subscription failure is surfaced only for the selected track SID. Sender-muted and hidden-tab states are distinguished without automatic retry. If a publication disappears or is replaced while its session identity cannot be confirmed, the viewer ends the selection and requires an explicit new choice.",
+  "checks": [
+    { "name": "focused_viewer_tests", "result": "PASS_LOCAL", "detail": "9 files, 44 tests; includes 100 repeated same-generation selections, stable binding counts, replaced publication fail-closed behavior, retry bounds, stale A-to-B callbacks, in-generation track replacement observation, SDK failure SID filtering, sender-muted state and shared-player structure." },
+    { "name": "full_web_suite", "result": "PASS_LOCAL", "detail": "npm test: 391 files, 1213 tests passed." },
+    { "name": "web_production_build", "result": "PASS_LOCAL", "detail": "VITE_PUBLIC_ORIGIN=https://localhost:4810 npm run build passed vue-tsc and Vite. Existing ineffective LiveKit dynamic-import and >500 kB chunk warnings remain." },
+    { "name": "real_livekit_two_client_recovery", "result": "NOT_RUN", "detail": "No authenticated LiveKit room was available to verify subscription failure and recovery against an active sender and independent viewer." },
+    { "name": "browser_playback_modes_audio_and_visibility", "result": "NOT_RUN", "detail": "No real browser/device run captured actual full, mini, resize, pin, autoplay, audio-output, background/static video or 100-cycle memory behavior." },
+    { "name": "pixel_screenshot_diff", "result": "NOT_RUN", "detail": "This packet changed viewer lifecycle behavior and did not capture real browser screenshots or compare rendered pixels." }
+  ],
+  "limitation": "The current Web LiveKit adapter does not carry the shared v1 session descriptor. Same-generation recovery is therefore bounded to the still-present SDK publication object; disappearance or replacement fails closed. Tests do not prove audible output, first-frame latency, hidden-tab behavior on a browser, SFU recovery, device compatibility or long-run memory stability. No SDK keyframe/PLI API was introduced."
+}

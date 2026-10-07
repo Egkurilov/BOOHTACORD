@@ -17,18 +17,29 @@ export function createScreenViewerControls(
   let controller: ScreenViewerController | null = null
   const observation = createViewObservation()
   let stopObserving: (() => void) | null = null
+  let selectedVideo: HTMLVideoElement | null = null
+  let observedSelection: { id: string; operation: number; video: HTMLVideoElement | null } | null = null
   const audioMuted = ref(false)
+  const subscriptionError = 'Не удалось подписаться на демонстрацию.'
 
   function sync(): void {
     cards.value = controller?.cards() ?? []
     selectedId.value = controller?.selectedId ?? null
     ended.value = controller?.ended ?? false
     audioMuted.value = controller?.audioMuted ?? false
+    if (controller?.subscriptionFailed) error.value = subscriptionError
+    else if (error.value === subscriptionError) error.value = null
+    if (!controller?.selectedId) {
+      if (observedSelection) observation.stop()
+      observedSelection = null
+    } else if (selectedVideo) observeSelection(controller.selectedId, selectedVideo)
   }
 
   function start(): void {
     stopObserving?.()
     controller = session.screenViewer()
+    selectedVideo = null
+    observedSelection = null
     stopObserving = controller?.onChange(sync) ?? null
     error.value = null
     sync()
@@ -36,11 +47,17 @@ export function createScreenViewerControls(
 
   function select(id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null): void {
     if (!controller) return
+    const previousVideo = selectedVideo
     try {
+      const previousId = controller.selectedId
+      const previousOperation = controller.operationGeneration
+      selectedVideo = video
       controller.select(id, video, audio)
-      observation.select(video, () => controller?.selectedId === id && controller.hasAttachedVideo(video),id)
+      if (previousId === id && previousOperation === controller.operationGeneration) return
+      observeSelection(id, video)
       error.value = null
     } catch (cause) {
+      selectedVideo = previousVideo
       observation.fail()
       error.value = cause instanceof Error ? cause.message : 'Не удалось выбрать демонстрацию.'
     }
@@ -48,17 +65,44 @@ export function createScreenViewerControls(
 
   function stop(): void {
     observation.stop()
+    observedSelection = null
     stopObserving?.()
     stopObserving = null
-    controller?.clear()
+    controller?.stop()
     controller = null
+    selectedVideo = null
     error.value = null
     sync()
   }
 
   function clear(): void {
     observation.stop()
+    observedSelection = null
+    selectedVideo = null
     controller?.clear()
+  }
+
+  function retry(): boolean {
+    if (!controller?.selectedId) return false
+    const selectedId = controller.selectedId
+    if (!controller.retry()) {
+      observation.fail()
+      error.value = 'Не удалось восстановить демонстрацию. Выберите её снова.'
+      return false
+    }
+    observeSelection(selectedId, selectedVideo)
+    error.value = null
+    return true
+  }
+
+  function observeSelection(id: string, video: HTMLVideoElement | null): void {
+    const selectedController = controller
+    if (!selectedController) return
+    const generation = selectedController.operationGeneration
+    if (observedSelection?.id === id && observedSelection.operation === generation && observedSelection.video === video) return
+    observedSelection = { id, operation: generation, video }
+    observation.select(video, () => selectedController === controller && selectedController.operationGeneration === generation
+      && selectedController.selectedId === id && selectedController.hasAttachedVideo(video), id)
   }
 
   function toggleAudio(volume: number, setVolume: (percent: number) => void): void {
@@ -71,5 +115,5 @@ export function createScreenViewerControls(
     controller.setAudioMuted(!controller.audioMuted)
   }
 
-  return { audioMuted, clear, select, start, stop, toggleAudio }
+  return { audioMuted, clear, retry, select, start, stop, toggleAudio }
 }

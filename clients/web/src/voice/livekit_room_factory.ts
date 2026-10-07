@@ -46,6 +46,7 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
     trackPublished: RoomEvent.TrackPublished,
     trackMuted: RoomEvent.TrackMuted,
     trackSubscribed: RoomEvent.TrackSubscribed,
+    trackSubscriptionFailed: RoomEvent.TrackSubscriptionFailed,
     trackUnmuted: RoomEvent.TrackUnmuted,
     trackUnpublished: RoomEvent.TrackUnpublished,
     trackUnsubscribed: RoomEvent.TrackUnsubscribed,

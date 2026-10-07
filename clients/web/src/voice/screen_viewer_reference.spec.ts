@@ -92,7 +92,7 @@ describe('screen viewer reference composition', () => {
     expect(playerRules).toContain('object-fit: contain')
   })
 
-  it('closes an ended selected stream while retaining its watcher for a restart', () => {
+  it('closes an ended selected stream and waits for an explicit new selection', () => {
     const pane = source('../conversation/ConversationPane.vue')
     const viewer = source('./ScreenViewer.vue')
 
@@ -110,6 +110,21 @@ describe('screen viewer reference composition', () => {
     expect(viewer).toContain('Получаем первый кадр демонстрации…')
     expect(viewer).toContain('@loadeddata="markVideoReady"')
     expect(viewer).toContain('@emptied="resetVideoFrame"')
+    expect(viewer).toContain('markScreenSelected(video.value)')
+    expect(viewer).toContain('resetVideoFrame()')
+    expect(source('./viewer_diagnosis/Panel.vue')).toContain('selectedAt.value=Date.now();now.value=selectedAt.value;emit(\'retry\')')
+    expect(source('./ScreenViewer.vue')).toContain(':publisher-paused="Boolean(selectedStream.videoMuted)"')
+  })
+  it('keeps one media player while the existing view moves between full, mini and pinned modes', () => {
+    const viewer = source('./ScreenViewer.vue')
+    const pane = source('../conversation/ConversationPane.vue')
+
+    expect(viewer.match(/<video\b/g)).toHaveLength(1)
+    expect(viewer.match(/<audio\b/g)).toHaveLength(1)
+    expect(viewer).not.toMatch(/<(video|audio)\b[^>]*\bv-if=/)
+    expect(pane).toContain('<Teleport to="body" :disabled="!screenExpanded && !miniVisible">')
+    expect(pane).toContain(':mini="miniVisible"')
+    expect(pane).toContain(':pinned="screenPinned"')
   })
   it('stacks viewer controls before the toolbar can overflow at zoomed and narrow widths', () => {
     const styles = source('../design/voice_viewer_reference.css')

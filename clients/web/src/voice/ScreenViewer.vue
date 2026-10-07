@@ -14,13 +14,14 @@ import { useScreenPlaybackQuality } from './screen_playback_quality'
 import { useScreenReceiverDiagnostics } from './use_screen_receiver_diagnostics'
 import { buildScreenClientReport, startScreenClientReporting, webPlatform } from './screen_client_reporter'
 const props = defineProps<{ audioMuted: boolean; cards: ScreenViewerCard[]; deafened: boolean; ended: boolean; error: string | null; expanded: boolean; mini?: boolean; ownScreenSharing?: boolean; pinned?: boolean; participantCount: number; selectedAudioVolume: number; selectedId: string | null; sourceDiagnostics?:ScreenDiagnostics }>()
-const emit = defineEmits<{ changeQuality: []; clear: []; pin: []; returnVoice: []; select: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setAudioVolume: [percent: number]; toggleAudio: []; 'update:expanded': [expanded: boolean] }>()
+const emit = defineEmits<{ changeQuality: []; clear: []; pin: []; retry: []; returnVoice: []; select: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setAudioVolume: [percent: number]; toggleAudio: []; 'update:expanded': [expanded: boolean] }>()
 const video = ref<HTMLVideoElement | null>(null)
 const audio = ref<HTMLAudioElement | null>(null)
 const stage = ref<HTMLDivElement | null>(null)
 const moreActions = ref<HTMLDetailsElement | null>(null)
 const fullscreenActive = ref(false)
 const fullscreenFeedback = ref('')
+const playbackFeedback = ref('')
 const { actualVideoQuality, markVideoReady,playbackFps,presentedFrames,refreshVideoQuality, resetVideoFrame, videoReady } = useScreenPlaybackQuality(video, () => props.selectedId, () => props.ended)
 let fullscreenControls: ReturnType<typeof createScreenFullscreenControls> | null = null
 let stopReporting: (() => void) | null = null
@@ -31,7 +32,18 @@ const audioMessage = computed(() => selectedStream.value ? screenAudioMessage({
   isLocal: Boolean(selectedStream.value.isLocal), hasAudio: selectedStream.value.hasAudio,
   adjustable: adjustable.value, deafened: props.deafened,
 }) : '')
-function select(id: string): void {markScreenSelected(video.value);emit('select',id,video.value,audio.value)}
+function select(id: string): void { if (id === props.selectedId) return; markScreenSelected(video.value); emit('select',id,video.value,audio.value) }
+function retry(): void {
+  playbackFeedback.value = ''
+  markScreenSelected(video.value)
+  resetVideoFrame()
+  emit('retry')
+  for (const element of [video.value, audio.value]) {
+    void element?.play().catch((cause: unknown) => {
+      if (cause instanceof DOMException && cause.name === 'NotAllowedError') playbackFeedback.value = 'Браузер заблокировал воспроизведение. Нажмите «Повторить» ещё раз после разрешения звука.'
+    })
+  }
+}
 function changeQuality(): void { if (moreActions.value) moreActions.value.open = false; emit('changeQuality') }
 function selectStream(id: string): void { select(id) }
 defineExpose({ selectStream })
@@ -88,9 +100,10 @@ async function toggleFullscreen(): Promise<void> {
         </div>
       </template>
       <p v-if="fullscreenFeedback" class="screen-fullscreen-feedback" role="status" aria-live="polite">{{ fullscreenFeedback }}</p>
+      <p v-if="playbackFeedback" class="screen-fullscreen-feedback" role="status" aria-live="polite">{{ playbackFeedback }}</p>
     </div>
     <audio ref="audio" autoplay></audio>
-    <DiagnosisPanel v-if="selectedStream && !mini" :selected-id="selectedId" :ended="ended" :has-audio="selectedStream.hasAudio" :local="Boolean(selectedStream.isLocal)" :video-ready="videoReady"  :presented-fps="playbackFps" :presented-frames="presentedFrames" :sampled-at="receiverSampledAt" :metrics="receiverMetrics" :source="sourceDiagnostics" @refresh="refreshReceiverMetrics" @retry="selectedId && select(selectedId)" @choose="emit('clear')" />
+    <DiagnosisPanel v-if="selectedStream && !mini" :selected-id="selectedId" :ended="ended" :has-audio="selectedStream.hasAudio" :local="Boolean(selectedStream.isLocal)" :publisher-paused="Boolean(selectedStream.videoMuted)" :video-ready="videoReady"  :presented-fps="playbackFps" :presented-frames="presentedFrames" :sampled-at="receiverSampledAt" :metrics="receiverMetrics" :source="sourceDiagnostics" @refresh="refreshReceiverMetrics" @retry="retry" @choose="emit('clear')" />
     <div v-if="selectedStream" class="stream-quality-row">
       <ScreenViewerAudioControl v-if="selectedStream.hasAudio && !selectedStream.isLocal" :adjustable="adjustable" :deafened="deafened" :muted="audioMuted" :volume="selectedAudioVolume" @toggle="emit('toggleAudio')" @set-volume="emit('setAudioVolume', $event)" />
       <p v-if="audioMessage" class="stream-audio-status gc-sr-only" role="status">{{ audioMessage }}</p>

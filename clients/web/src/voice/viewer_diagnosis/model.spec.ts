@@ -13,3 +13,7 @@ it('does not claim playback failure in a hidden tab or before the initial grace 
   expect(diagnose({...base,videoReady:false,selectedAt:10000}).state).toBe('connecting')
   expect(diagnose({...base,presentedFps:null}).state).toBe('playing')
 })
+it('reports a muted sender without offering viewer-side recovery',()=>{
+  expect(diagnose({...base,publisherPaused:true,videoReady:false}).state).toBe('publisher_paused')
+  expect(diagnose({...base,publisherPaused:true,videoReady:false}).action).toBe('none')
+})
