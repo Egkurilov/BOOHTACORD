@@ -1,0 +1,67 @@
+{
+  "kind": "livekit-network-configuration",
+  "status": "PARTIAL",
+  "observed_at": "2026-10-07",
+  "source_revision": "dee50f1b6c637a673f8a6b670ecac45fd4bcf463",
+  "repository_artifacts": {
+    "deploy/livekit/livekit.yaml": "sha256:53fee20a14ce76d36624feacb1a05b91f2471bf9c16398bc75e0b088e927cb81",
+    "deploy/livekit/compose.yaml": "sha256:14e60f90928ab38b930b5be2495587a61e4c11d16ec7da166ad6f8b2fed6c4f8",
+    "deploy/compose.yaml": "sha256:095854b55c2d2cc2eea366065a668274e2973d45bf035e4809a338aa96f2c1d6",
+    "docker/observability/compose.yaml": "sha256:9814cc8b5ecd3363f14d4c31b4c167bb7a2a332a7ae6aaa55a45f135c15b8256",
+    "docker/observability/prometheus.yaml": "sha256:2fec02f3a6629d46451d4fa378d454211194b6bd7eecd52d80092234402f9c6b",
+    "docker/observability/livekit-network-alerts.yaml": "sha256:0198b460a241c051dfd7fb76658814ca2c2e113a57ad4d81d604b576db528b8d"
+  },
+  "checks": [
+    {
+      "name": "Repository media port, metrics network, allowlist and alert invariants",
+      "result": "PASS",
+      "command": "python -m tools.verify.livekit_network_config.check",
+      "observation": "The checked-in UDP and TCP mappings match the LiveKit config. The metrics target uses a dedicated internal network, no host-published metrics port, a fixed metric-family allowlist and a scrape availability alert."
+    },
+    {
+      "name": "Application Compose interpolation",
+      "result": "PASS",
+      "command": "docker compose --env-file .env.example -f deploy/compose.yaml config --quiet",
+      "observation": "Compose accepted the application deployment model without starting services."
+    },
+    {
+      "name": "Observability Compose interpolation",
+      "result": "PASS",
+      "command": "docker compose -f docker/observability/compose.yaml config --quiet",
+      "observation": "Compose accepted the monitoring model and external private-network reference without starting services."
+    },
+    {
+      "name": "Repository Python regression suite",
+      "result": "PASS",
+      "command": "python -m tools.verify.python_tests.run",
+      "observation": "164 tests passed; one existing suite test was skipped."
+    },
+    {
+      "name": "Native contracts checks",
+      "result": "PASS",
+      "command": "python -m tools.ci.native.contracts",
+      "observation": "Contracts, traceability, documentation links, Compose topology and CI routing checks passed."
+    },
+    {
+      "name": "Effective deployment image/config/NAT/firewall/TURN inventory",
+      "result": "NOT_RUN",
+      "observation": "No production or test deployment was queried. Repository configuration does not establish the effective deployment, external TURN presence, advertised network addresses or firewall rules."
+    },
+    {
+      "name": "Selected publisher and subscriber ICE pairs with paired playback",
+      "result": "NOT_RUN",
+      "observation": "Requires the isolated synthetic-client matrix and records only sanitized fixed path classes; no candidate or session data was collected."
+    },
+    {
+      "name": "SFU/network resource baseline, capacity and degradation thresholds",
+      "result": "NOT_RUN",
+      "observation": "Requires representative isolated load and comparison against the #158 measurement baseline. No resource, capacity or media-quality claim is made."
+    },
+    {
+      "name": "Test deployment and rollback acceptance",
+      "result": "NOT_RUN",
+      "observation": "No deployment change was applied. The normal release workflow and rollback check remain required."
+    }
+  ],
+  "remaining": "Capture redacted effective deployment state, run direct UDP/ICE-TCP/configured TURN scenarios for publisher and subscriber, verify private scrape and alerts, measure SFU/network resources against #158, then apply through the approved test deployment workflow and exercise rollback."
+}

@@ -82,6 +82,8 @@ networks:
   telemetry-egress:
   private:
     internal: true
+  livekit-metrics:
+    internal: true
 
 volumes:
   postgres-data:

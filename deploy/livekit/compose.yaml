@@ -38,5 +38,5 @@ services:
       - "50000-50100:50000-50100/udp"
     volumes:
       - ./livekit.yaml:/etc/livekit-template.yaml:ro
-    networks: [edge, private]
+    networks: [edge, private, livekit-metrics]
     logging: *json-log-rotation
