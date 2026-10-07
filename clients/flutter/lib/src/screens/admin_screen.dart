@@ -15,8 +15,10 @@ import 'admin_member_filters.dart';
 import '../features/admin/readiness/panel.dart';
 import '../features/admin/topology/panel.dart';
 import '../features/admin/audit/filter.dart';
+import '../features/admin/audit/panel.dart';
 import '../features/admin/layout/width_class.dart';
 import '../features/admin/media_metrics/panel.dart';
+import '../features/admin/members/panel.dart';
 import '../features/admin/shell/section_tabs.dart';
 import '../features/admin/shell/workspace_header.dart';
 
@@ -1750,7 +1752,40 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
 
   String _integerMetric(int? value) => value?.toString() ?? 'Нет данных';
 
-  Widget _buildAuditPanel() {
+  Widget _buildAuditPanel() => AdminAuditPanel(
+    headerPadding: _adminSectionHeaderPadding,
+    listPadding: _adminSectionListPadding,
+    events: _auditEvents,
+    loading: _auditLoading,
+    error: _auditError,
+    cursor: _auditCursor,
+    scope: _auditScope,
+    eventType: _auditEventType,
+    from: _auditFrom,
+    to: _auditTo,
+    actor: _auditActor,
+    onRefresh: _loadAudit,
+    onScopeChanged: (value) => setState(() => _auditScope = value),
+    onEventTypeChanged: (value) => setState(() => _auditEventType = value),
+    onActorChanged: () => setState(() {}),
+    onPickFrom: () => _pickAuditDate(from: true),
+    onPickTo: () => _pickAuditDate(from: false),
+    onClearFilters: () => setState(() {
+      _auditScope = AdminAuditScope.all;
+      _auditEventType = null;
+      _auditActor.clear();
+      _auditFrom = null;
+      _auditTo = null;
+    }),
+    onLoadMore: () => _loadAudit(before: _auditCursor),
+    filters: _auditFilters,
+    formatDate: _auditDate,
+  );
+
+  // Kept temporarily as a migration reference while the remaining admin
+  // presentation leaves move out of this screen.
+  // ignore: unused_element
+  Widget _legacyBuildAuditPanel() {
     final filtered = filterAdminAuditEvents(_auditEvents, _auditFilters);
     final grouped = groupAdminAuditByDay(filtered);
     final compact = MediaQuery.sizeOf(context).width < 600;
@@ -1949,7 +1984,40 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     return '${day.day.toString().padLeft(2, '0')}.${day.month.toString().padLeft(2, '0')}.${day.year}';
   }
 
-  Widget _buildMembersPanel() => Column(
+  Widget _buildMembersPanel() => AdminMembersPanel(
+    headerPadding: _adminSectionHeaderPadding,
+    listPadding: _adminSectionListPadding,
+    accountsCount: _adminAccounts.length,
+    loading: _accountsLoading,
+    accountsEmpty: _adminAccounts.isEmpty,
+    error: _accountsError,
+    filters: AdminMemberFilters(
+      search: _accountSearch,
+      role: _accountRoleFilter,
+      onSearchChanged: () => setState(() {}),
+      onRoleChanged: (value) => setState(() => _accountRoleFilter = value),
+    ),
+    resetCard: _resetLink == null ? null : _buildResetLinkCard(),
+    accountCards: [
+      for (final account in _visibleAdminAccounts)
+        _buildAdminAccountCard(account),
+    ],
+    search: _accountSearch.text,
+    roleFilter: _accountRoleFilter,
+    cursor: _accountCursor,
+    status: _accountsStatus,
+    loadingState: _adminLoadingState(
+      'Загружаем список участников…',
+      'admin-members-loading',
+    ),
+    onRefresh: _loadAccounts,
+    onLoadMore: () => _loadAccounts(cursor: _accountCursor),
+  );
+
+  // Kept temporarily as a migration reference while account cards move into
+  // their own feature presentation widget.
+  // ignore: unused_element
+  Widget _legacyBuildMembersPanel() => Column(
     children: [
       Padding(
         padding: _adminSectionHeaderPadding,
