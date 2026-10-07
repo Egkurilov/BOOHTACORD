@@ -1,0 +1,39 @@
+{
+  "id": "QA-ADMIN-ANDROID-RUNTIME-2026-10-07-002",
+  "date": "2026-10-07",
+  "task": "FV2-031 / GitHub #198 — post-change Android admin smoke",
+  "source_revision": "60098037",
+  "app_version": {
+    "source": "1.0.38+71",
+    "installed_version_name": "1.0.38",
+    "installed_version_code": 2071
+  },
+  "platform": "Android 15 (API 35) emulator, sdk_gphone64_arm64",
+  "checks": [
+    {
+      "name": "Current release APK installation",
+      "result": "PASS",
+      "observation": "The arm64 release APK from the current branch installed in place and MainActivity started without clearing application data."
+    },
+    {
+      "name": "Portrait administrator surface",
+      "result": "PASS",
+      "observation": "The administrator screen opened through the account menu. The Members section rendered its heading, filters, expanded member cards, role selector, blocked switch and actions at 1080x2400 physical px."
+    },
+    {
+      "name": "Landscape administrator surface",
+      "result": "PASS",
+      "observation": "At 2400x1080 physical px the seven tabs — Guild, Members, Roles, Channels, Audit, Media and Readiness — remained visible in one row; the member filter and action row stayed within the viewport."
+    },
+    {
+      "name": "Crash smoke",
+      "result": "PASS",
+      "observation": "After install, launch, account-menu navigation, admin entry and rotation, logcat contained no FATAL EXCEPTION for ru.boohtacord.app."
+    }
+  ],
+  "not_run": [
+    "IME, TalkBack, iOS and Windows native acceptance were not captured in this short smoke run.",
+    "No mutation was submitted; the run was limited to navigation and layout inspection."
+  ],
+  "status": "ANDROID CURRENT-SOURCE PORTRAIT + LANDSCAPE SMOKE PASS; cross-platform gate pending"
+}

@@ -47,6 +47,12 @@ release APK split build completed; native IME, TalkBack, focus-loop and
 cross-platform runtime acceptance remain open —
 [QA-ADMIN-ACCESSIBILITY-HARDENING-2026-10-07-001](../evidence/flutter/qa-admin-accessibility-hardening-2026-10-07-001.json).
 
+The current branch was installed on the Android 15/API 35 emulator after that
+hardening commit. The administrator surface passed a short portrait + landscape
+smoke with all seven tabs visible and no app fatal exception; this does not
+replace the remaining IME/TalkBack/iOS/Windows gate —
+[QA-ADMIN-ANDROID-RUNTIME-2026-10-07-002](../evidence/flutter/qa-admin-android-runtime-2026-10-07-002.json).
+
 ## Компактный composer — проверка 2026-10-05
 
 В Flutter шириной до 720 px действия attach, paste, mention и emoji собраны под одним `+` menu для TEXT и DM; в wide composer emoji picker остаётся отдельным действием. Picker содержит шесть быстрых emoji, searchable полный каталог с русскими/английскими подписями, recents и вставку/замену текущего выделения в draft. Service/widget suite — 72/72, полный suite — 592/592, changed-file analyzer чистый; подписанный Android r47 и Mac Debug визуально проверены после DevTools hot restart. На Android API 35 системная floating IME-панель перекрывает часть левого края каталога, а часть новых Unicode glyphs отсутствует в системном шрифте. Web не изменялся; update catalog не менялся — [QA-279](../evidence/flutter/qa279-flutter-compact-composer-actions-2026-10-05-001.json), [QA-280](../evidence/flutter/qa280-flutter-emoji-picker-design-v2-2026-10-05-001.json).

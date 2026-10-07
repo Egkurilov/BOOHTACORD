@@ -66,3 +66,9 @@ APK split build passed. Details are in
 [`qa-admin-accessibility-hardening-2026-10-07-001.json`](../qa-admin-accessibility-hardening-2026-10-07-001.json).
 This is implementation/widget evidence; native IME, TalkBack, iOS, Windows,
 focus-loop and live-resize acceptance remain open under #197/#198.
+
+The current branch was also installed on the Android 15/API 35 emulator after
+the hardening commit. The admin screen was opened through the account menu in
+portrait and then landscape; all seven tabs remained visible and logcat had no
+app fatal exception. This short current-source smoke is recorded in
+[`qa-admin-android-runtime-2026-10-07-002.json`](../qa-admin-android-runtime-2026-10-07-002.json).

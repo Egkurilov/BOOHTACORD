@@ -24,6 +24,9 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   [QA-ADMIN-MACOS-RUNTIME-2026-10-07-001](../evidence/flutter/qa-admin-macos-runtime-2026-10-07-001.json);
   an Android portrait administrator-surface pass is recorded in
   [QA-ADMIN-ANDROID-RUNTIME-2026-10-07-001](../evidence/flutter/qa-admin-android-runtime-2026-10-07-001.json).
+  A current-source Android portrait + landscape smoke after the accessibility
+  hardening is recorded in
+  [QA-ADMIN-ANDROID-RUNTIME-2026-10-07-002](../evidence/flutter/qa-admin-android-runtime-2026-10-07-002.json).
   These records do not replace live-resize, IME/TalkBack, iOS or Windows acceptance.
 
 ## Текущий фокус: Flutter macOS и Android
