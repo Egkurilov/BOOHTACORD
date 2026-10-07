@@ -43,7 +43,12 @@ Future<void> main() async {
   await ClientTelemetry.initialize(api.submitClientSpans);
   final state = TracedAppState(
     api,
-    audioDeviceBootstrap: Platform.isMacOS ? LiveKitClient.initialize : null,
+    audioDeviceBootstrap: Platform.isMacOS
+        ? () async {
+            await LiveKitClient.initialize();
+            await rtc.ensurePeerConnectionFactoryReady();
+          }
+        : null,
   );
   final updates = UpdateController(
     api: UpdateApi(baseUrl: () => api.baseUrl),
