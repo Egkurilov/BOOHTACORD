@@ -12,10 +12,13 @@ import (
 )
 
 type Phase struct {
-	Name    string
-	Active  int
-	Seconds float64
-	Errors  int
+	Name              string
+	Active            int
+	Seconds           float64
+	Errors            int
+	CadenceMS         int64
+	Requests          int64
+	RequestsPerSecond float64
 }
 type Report struct {
 	SchemaVersion       int

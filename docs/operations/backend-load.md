@@ -33,7 +33,11 @@ The controller removes only resources it created, even after cancellation/failur
 
 Six bounded stages: warmup (one actor), ramp (half), steady (all), spike,
 recovery and saturation/stop. At most 75% of the configured overall deadline is
-allocated to stages; admission and operations consume the remainder. Every actor
+allocated to stages; admission and operations consume the remainder. Per-actor
+iteration pauses change actual pressure: warmup 500 ms, ramp 350 ms, steady
+250 ms, spike 50 ms, recovery 500 ms, saturation/stop 25 ms. Each phase records
+its cadence and observed request rate; these are offered workload settings,
+not a product capacity claim. Every actor
 retains its own authenticated socket/lease. A write waits for identifier-only
 fanout on every active socket, then advances its read cursor. History, search,
 topology/members, cookie owner, forbidden admin/foreign DM, wrong Origin,
