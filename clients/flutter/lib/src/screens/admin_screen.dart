@@ -16,6 +16,7 @@ import '../features/admin/readiness/panel.dart';
 import '../features/admin/topology/panel.dart';
 import '../features/admin/audit/filter.dart';
 import '../features/admin/layout/width_class.dart';
+import '../features/admin/media_metrics/panel.dart';
 import '../features/admin/shell/section_tabs.dart';
 import '../features/admin/shell/workspace_header.dart';
 
@@ -1446,7 +1447,22 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     ),
   );
 
-  Widget _buildMediaPanel() => Column(
+  Widget _buildMediaPanel() => AdminMediaMetricsPanel(
+    headerPadding: _adminSectionHeaderPadding,
+    listPadding: _adminSectionListPadding,
+    loading: _mediaLoading,
+    samples: _mediaSamples,
+    error: _mediaError,
+    lastSuccessfulAt: _mediaLastSuccessfulAt,
+    lastSeenAt: _mediaLastSeenAt,
+    onRefresh: _loadMediaMetrics,
+    formatDate: _auditDate,
+  );
+
+  // Kept temporarily as a migration reference while the remaining admin
+  // presentation leaves move out of this screen.
+  // ignore: unused_element
+  Widget _legacyBuildMediaPanel() => Column(
     children: [
       Padding(
         padding: _adminSectionHeaderPadding,
