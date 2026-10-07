@@ -30,7 +30,7 @@ Baseline: `6b8ffa5e5c266d42a534f294c18e5a282139bfa9`. Source-only handoff; issue
 
 ## Source SHA256
 
-- `docker/observability/dashboards/media-qoe.json`: `870054748a4942fac39fcb6f03441c5afa4c1915995e91620cda44e46adfd56d`
+- `docker/observability/dashboards/media-qoe.json`: `77891bd3244aff2881a45aadcec155e655c37092b6dde18984805879aff0524`
 - `docker/observability/media-qoe-alerts.yaml`: `454af773d9bf10d4871d265d5749f2e3b5987a9179c15aeed4565c83c966bd75`
 - `backend/internal/observability/report_client_screen/aggregate/instruments.go`: `54c57ea20528a463b177dfa98ab0349261d6e37b6ce90af80e528d36a6d618e2`
 - `backend/internal/observability/report_client_screen/aggregate/observe.go`: `6a01542dbfe41474746055e89679a8e751aa06f7426811633703e513a0a43cb4`
@@ -47,8 +47,8 @@ Baseline: `6b8ffa5e5c266d42a534f294c18e5a282139bfa9`. Source-only handoff; issue
 | #175 active publications/viewers | Publication query consumes #5 private native snapshot bridge, absent without bridge/scrape; participant count is not viewer count. Viewer population unavailable. |
 | #175 actual/target/FPS/bitrate/loss/RTT/jitter/drop | Real emitted fields delivered; target/dimension means avoid misleading histogram-interpolated intent. Quantiles explicitly approximate. |
 | #175 requested/applied/delivered, quality revision | Requested target and reported dimensions shown. Applied descriptor/quality revision not in report; #159 dependency unavailable. |
-| #175 per-layer/codec/encode/decode time/transport | Current contract only total sender bitrate/aggregate stages. #159 fields absent; explicit unsupported dependency, no invented metric. |
-| #175 first frame/switch/freeze distributions | Existing opt-in local journey recorder is not exported. No duration histograms in API; implementation remains dependent, not completed. |
+| #175 per-layer/codec/encode/decode time/transport | #159 emits selected-layer/retransmitted bitrate, per-frame encode/decode, and jitter-buffer measurements in authenticated `media.sample` spans. The QoE table exposes those trace-only values; no Prometheus aggregates, layer IDs, or codec plan are claimed. |
+| #175 first frame/switch/freeze distributions | #159 emits first-frame observation and cumulative freeze count/duration in authenticated spans; QoE drilldown exposes those per-sample values. Population distributions, switch duration, and freeze ratio remain unavailable; no metrics or alerts are fabricated. |
 | #175 downgrade/recovery reason/count | Bounded adaptation report reason exists; event count/quality revision unavailable. Reports are not events. |
 | #175 SFU CPU/throttling/NIC/UDP | #171 container attribution absent; no fabricated metric/alert. Existing allowlisted LiveKit network histograms retain separate server provenance. |
 | #175 alerts | Four bounded sustained info/experimental diagnostic rules evaluated locally. Freeze/firstframe/saturation rules await real fields and agreed #157 baseline. Controlled production firing/recovery NOT_RUN. |
@@ -66,3 +66,16 @@ Baseline: `6b8ffa5e5c266d42a534f294c18e5a282139bfa9`. Source-only handoff; issue
 - Rollback: revert this source/rule change or restore operator-saved existing media JSON/version after a future authorized import. Live previous media JSON could not be saved here; do not overwrite concurrent changes.
 
 Slavik Gym report: route=report_client_screen/aggregate + media-qoe source; packet=aggregate,dashboard-source,read-only-verification; tokens=estimated:19000; method=manual_estimate; driver=bounded telemetry + honest QoE semantics; next_split=#159/#171 field delivery and #157 baseline, then authorized deploy/#155 integration.
+
+## #159 trace-field dashboard follow-up
+
+2026-10-07 source-only follow-up: the private sample table now selects the
+validated #159 interval measurement and collection/presentation provenance
+fields from `media.sample`. These remain optional trace attributes and are not
+added to Prometheus panels or rules. `tools/verify/media_qoe/test_dashboard.py`
+checks mapping to the report contract, table selection, and absence from
+PromQL expressions. Focused dashboard tests and JSON parsing PASS; pinned
+Prometheus container checks are NOT_RUN because the local Docker Desktop engine
+is unavailable. Grafana/Tempo datasource execution, access/ACL, live import,
+paired media scenarios, screenshots, production alerts, and #155 integration
+remain NOT_RUN.
