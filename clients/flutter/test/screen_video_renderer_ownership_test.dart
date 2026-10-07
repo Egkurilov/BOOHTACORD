@@ -1,15 +1,25 @@
+import 'package:boohtacord_desktop/src/features/voice/screen_viewer/publication_generation.dart';
 import 'package:boohtacord_desktop/src/widgets/screen_video_renderer_slot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  const generation1 = ScreenViewerPublicationGeneration(
+    participantIdentity: 'participant-1',
+    publicationSid: 'publication-1',
+  );
+  const generation2 = ScreenViewerPublicationGeneration(
+    participantIdentity: 'participant-1',
+    publicationSid: 'publication-2',
+  );
+
   testWidgets('search mini owns the selected publication renderer', (
     tester,
   ) async {
     final owner = screenVideoRendererOwner(
-      selectedIdentity: 'publication-1',
-      selectedGeneration: 'generation-1',
-      pinnedIdentity: 'publication-1',
+      selectedIdentity: 'participant-1',
+      selectedGeneration: generation1,
+      pinnedIdentity: 'participant-1',
       pinnedMiniVisible: true,
       fullscreenSelection: null,
     );
@@ -21,13 +31,13 @@ void main() {
     tester,
   ) async {
     final owner = screenVideoRendererOwner(
-      selectedIdentity: 'publication-1',
-      selectedGeneration: 'generation-1',
-      pinnedIdentity: 'publication-1',
+      selectedIdentity: 'participant-1',
+      selectedGeneration: generation1,
+      pinnedIdentity: 'participant-1',
       pinnedMiniVisible: true,
       fullscreenSelection: const ScreenFullscreenSelection(
-        identity: 'publication-1',
-        generation: 'generation-1',
+        identity: 'participant-1',
+        generation: generation1,
       ),
     );
 
@@ -38,18 +48,35 @@ void main() {
     tester,
   ) async {
     final owner = screenVideoRendererOwner(
-      selectedIdentity: 'publication-1',
-      selectedGeneration: 'generation-2',
-      pinnedIdentity: 'publication-1',
+      selectedIdentity: 'participant-1',
+      selectedGeneration: generation2,
+      pinnedIdentity: 'participant-1',
       pinnedMiniVisible: true,
       fullscreenSelection: const ScreenFullscreenSelection(
-        identity: 'publication-1',
-        generation: 'generation-1',
+        identity: 'participant-1',
+        generation: generation1,
       ),
     );
 
     expect(owner, ScreenVideoRendererOwner.pinnedMini);
     await _expectOneRenderer(tester, owner, 'pinned-mini');
+  });
+
+  testWidgets('local fullscreen ownership matches stable capture generation', (
+    tester,
+  ) async {
+    final owner = screenVideoRendererOwner(
+      selectedIdentity: null,
+      selectedGeneration: 'local-publication-1',
+      pinnedIdentity: null,
+      pinnedMiniVisible: false,
+      fullscreenSelection: const ScreenFullscreenSelection(
+        identity: null,
+        generation: 'local-publication-1',
+      ),
+    );
+
+    await _expectOneRenderer(tester, owner, 'fullscreen');
   });
 }
 

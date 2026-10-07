@@ -6462,6 +6462,7 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
               participantIdentity: identity,
               publicationSid: publication.sid,
             );
+      final selectedFullscreen = fullscreenSelection;
       final miniIsSelectedPublication = selectedIdentity == identity;
       final selectedGeneration =
           miniIsSelectedPublication ? miniGeneration : null;
@@ -6567,9 +6568,9 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
                             miniGeneration != null &&
                             miniGeneration == selectedGeneration,
                         isFullscreenPublication: miniGeneration != null &&
-                            fullscreenSelection != null &&
-                            fullscreenSelection.identity == identity &&
-                            fullscreenSelection.generation == miniGeneration,
+                            selectedFullscreen != null &&
+                            selectedFullscreen.identity == identity &&
+                            selectedFullscreen.generation == miniGeneration,
                         child: ScreenFrameGate(
                           generation:
                               '$identity:${publicationSid ?? 'unknown'}',
