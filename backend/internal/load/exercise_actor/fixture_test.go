@@ -13,13 +13,14 @@ import (
 )
 
 type fixture struct {
-	manifest            validate_target.Manifest
-	server              *httptest.Server
-	mu                  sync.Mutex
-	sockets             map[*websocket.Conn]bool
-	events              []map[string]any
-	wrongOwner, corrupt bool
-	attachment          []byte
+	manifest                                     validate_target.Manifest
+	server                                       *httptest.Server
+	mu                                           sync.Mutex
+	sockets                                      map[*websocket.Conn]bool
+	events                                       []map[string]any
+	wrongOwner, corrupt, forceResync, enforceNAT bool
+	natAttempts                                  int
+	attachment                                   []byte
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -43,6 +44,15 @@ func (f *fixture) serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if path == "/auth/login" {
+		if f.enforceNAT {
+			f.natAttempts++
+			if f.natAttempts > 10 {
+				w.Header().Set("Retry-After", "300")
+				w.WriteHeader(429)
+				json.NewEncoder(w).Encode(map[string]any{"error": map[string]string{"code": "RATE_LIMITED"}})
+				return
+			}
+		}
 		http.SetCookie(w, &http.Cookie{Name: "vp_session", Value: "synthetic", Path: "/", Secure: true})
 		w.WriteHeader(204)
 		return

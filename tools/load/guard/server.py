@@ -62,14 +62,21 @@ class Guard:
         data = self.resources.read()
         data.update(Owner=self.manifest['Owner'], Dataset='qa', Origin=self.manifest['Origin'],
                     Commit=self.manifest['Commit'], DBName='qa', Accounts=len(self.manifest['Accounts'])+1,
-                    At=datetime.now(timezone.utc).isoformat(), Metrics=snapshot())
+                    At=datetime.now(timezone.utc).isoformat())
+        try:
+            data.update(Metrics=snapshot(), MetricsStatus='AVAILABLE')
+        except OSError:
+            data.update(Metrics={}, MetricsStatus='UNAVAILABLE')
         return data
 
     def start(self):
         self.thread.start()
 
     def close(self):
-        self.faults.restore()
-        self.server.shutdown()
-        self.server.server_close()
-        self.thread.join(timeout=3)
+        try:
+            self.faults.restore()
+        finally:
+            if self.thread.is_alive():
+                self.server.shutdown()
+            self.server.server_close()
+            self.thread.join(timeout=3) if self.thread.is_alive() else None

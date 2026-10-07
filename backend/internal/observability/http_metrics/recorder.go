@@ -29,6 +29,7 @@ type Recorder struct {
 func New() *Recorder {
 	guildLifecycle := newGuildLifecycleMetrics()
 	registry := prometheus.NewRegistry()
+	registry.MustRegister(prometheus.NewGoCollector(), prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
 	routeRequests := observehttp.New(registry)
 	voiceSFURevocations := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "voice_platform_voice_sfu_revocations_total",

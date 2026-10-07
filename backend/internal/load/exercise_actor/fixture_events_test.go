@@ -21,8 +21,12 @@ func (f *fixture) ws(w http.ResponseWriter, r *http.Request) {
 	send := func(value any) { data, _ := json.Marshal(value); conn.Write(ctx, websocket.MessageText, data) }
 	send(map[string]any{"event_id": uuid.NewString(), "kind": "connection.ready", "payload": map[string]any{}})
 	if r.URL.Query().Get("after") != "" {
-		for _, event := range f.events {
-			send(event)
+		if f.forceResync {
+			send(map[string]any{"event_id": uuid.NewString(), "kind": "connection.resync_required", "payload": map[string]string{"reason": "server_restart"}})
+		} else {
+			for _, event := range f.events {
+				send(event)
+			}
 		}
 	}
 	send(map[string]any{"event_id": uuid.NewString(), "kind": "presence.snapshot", "payload": map[string]any{"online_user_ids": []string{f.manifest.Accounts[0].ID}}})

@@ -3,6 +3,7 @@ package run_profile
 import (
 	"context"
 	"time"
+	"voice-platform/backend/internal/load/exercise_actor"
 	"voice-platform/backend/internal/load/observe_resources"
 	"voice-platform/backend/internal/load/record_results"
 	"voice-platform/backend/internal/load/validate_target"
@@ -18,6 +19,7 @@ func (r *Runner) Run(parent context.Context) (report Report) {
 		report.ElapsedSeconds = time.Since(started).Seconds()
 		report.Resources = r.resources
 		report.Criteria = criteria(report.Routes)
+		finalize(&report)
 	}()
 	if err := r.Manifest.Validate(); err != nil {
 		return report
@@ -37,6 +39,18 @@ func (r *Runner) Run(parent context.Context) (report Report) {
 	go func() { defer close(done); r.monitor(ctx, guard, stop, cancel) }()
 	defer func() { cancel(); <-done }()
 	defer func() { report.Cleanup = r.cleanup(guard) }()
+	if r.Profile == "nat_auth" {
+		a := exercise_actor.New(r.Manifest, 0, r.results, &r.budget)
+		r.actors = append(r.actors, a)
+		if a.SharedNAT(ctx) != nil {
+			report.StopReason = "shared_nat_quota"
+			return report
+		}
+		report.Phases = []Phase{{Name: "shared_nat_auth", Active: 1, Seconds: time.Since(started).Seconds()}}
+		report.Outcome = "PASS"
+		report.StopReason = "expected_429_quota"
+		return report
+	}
 	names := []string{"warmup", "ramp", "steady", "spike", "recovery", "saturation_stop"}
 	weights := []float64{.10, .20, .30, .10, .20, .10}
 	for index, name := range names {

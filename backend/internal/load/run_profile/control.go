@@ -9,7 +9,7 @@ import (
 )
 
 func validProfile(p string) bool {
-	return p == "normal" || p == "reconnect" || p == "uploads" || p == "faults"
+	return p == "nat_auth" || p == "normal" || p == "reconnect" || p == "uploads" || p == "faults"
 }
 func (r *Runner) admit(ctx context.Context, target int) error {
 	for len(r.actors) < target {

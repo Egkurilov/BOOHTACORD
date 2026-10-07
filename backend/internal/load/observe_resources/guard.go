@@ -11,6 +11,7 @@ import (
 )
 
 type Snapshot struct {
+	MetricsStatus                          string
 	Owner, Dataset, Origin, Commit, DBName string
 	At                                     time.Time
 	Accounts                               int

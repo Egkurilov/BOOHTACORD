@@ -39,14 +39,22 @@ jobs:
       - name: Test, vet and build Go API
         run: python3 -m tools.ci.receipts.run backend
       - name: Exercise owned real API load smoke
-        timeout-minutes: 6
-        run: python3 -m tools.load.controller.run --accounts 2 --seconds 20 --profile normal
+        timeout-minutes: 8
+        run: |
+          python3 -m tools.load.controller.run --accounts 2 --seconds 20 --profile normal
+          python3 -m tools.load.controller.run --accounts 2 --seconds 20 --profile reconnect
+          python3 -m tools.load.controller.run --accounts 2 --seconds 20 --profile uploads --upload-bytes 1024
+          python3 -m tools.load.controller.run --accounts 1 --seconds 20 --profile nat_auth
+          python3 -m tools.load.controller.run --accounts 2 --seconds 40 --profile faults
       - name: Retain sanitized load smoke evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: backend-load-smoke-${{ github.sha }}
-          path: .out/backend-load/normal/report.json
+          path: |
+            .out/backend-load/**/report.json
+            .out/backend-load/**/routes.csv
+            .out/backend-load/**/report.html
           if-no-files-found: error
           retention-days: 14
       - name: Retain source-bound gate receipt

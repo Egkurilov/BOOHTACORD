@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 	"sync/atomic"
 	"time"
 	"voice-platform/backend/internal/load/connect_realtime"
@@ -62,6 +63,12 @@ func (a *Actor) Request(ctx context.Context, name, method, path string, body any
 	defer response.Body.Close()
 	status := response.StatusCode
 	a.Results.ObserveOutcome(name, status, time.Since(started), status == expected)
+	if name == "nat_limit" {
+		retry, err := strconv.Atoi(response.Header.Get("Retry-After"))
+		if err != nil || retry < 1 {
+			return errors.New("missing quota retry interval")
+		}
+	}
 	if status != expected {
 		return errors.New("unexpected " + name + " response status")
 	}

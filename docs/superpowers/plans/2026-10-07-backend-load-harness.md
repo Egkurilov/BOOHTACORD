@@ -14,25 +14,27 @@ Route `split_first / large / structure_no_rg`; selected leaves: `validate_target
 
 ### Task 1: Safe target and result recording
 
-- [ ] Create tests rejecting production, foreign dataset/nonce/origin, redirects, stale/resource snapshots and missing inventory.
-- [ ] Implement `validate_target` manifest and loopback-only transport, `observe_resources` safety samples and `record_results` bounded route percentiles/error/status/phase summaries.
-- [ ] Run `go test ./internal/load/validate_target ./internal/load/observe_resources ./internal/load/record_results` from backend; failures first, then PASS.
+- [x] Create tests rejecting production, foreign dataset/nonce/origin, redirects, stale/resource snapshots and missing inventory.
+- [x] Implement `validate_target` manifest and loopback-only transport, `observe_resources` safety samples and `record_results` bounded route percentiles/error/status/phase summaries.
+- [x] Run `go test ./internal/load/validate_target ./internal/load/observe_resources ./internal/load/record_results` from backend; failures first, then PASS.
 
 ### Task 2: Real wire actor operations
 
-- [ ] Create TLS HTTP + coder/WebSocket fixture tests for login, session identity, ready, fanout, replay/resync, read cursor, leases/credentials/release, ACL, upload/download and logout revocation.
-- [ ] Implement protocol requests without recording bodies, credentials, IDs or raw error text. Message IDs remain transient deduplication keys only.
-- [ ] Run `go test ./internal/load/...`; include wrong-cookie owner, missing fanout, corrupt download, wrong-Origin and revoked-session failures.
+- [x] Create TLS HTTP + coder/WebSocket fixture tests for login, session identity, ready, fanout, replay/resync, read cursor, leases/credentials/release, ACL, upload/download and logout revocation.
+- [x] Implement protocol requests without recording bodies, credentials, IDs or raw error text. Message IDs remain transient deduplication keys only.
+- [x] Run `go test ./internal/load/...`; include wrong-cookie owner, missing fanout, corrupt download, wrong-Origin and revoked-session failures.
 
 ### Task 3: Owned deployment and bounded stages
 
-- [ ] Test guard rejects unauthenticated controls, foreign containers/database/volume, invalid fault families and stale snapshots; restore injected faults in finally.
-- [ ] Implement controller under `tools/load/controller`, provision under `tools/load/provision`, guard under `tools/load/guard`; existing fixture owns all resources.
-- [ ] Implement warmup/ramp/steady/spike/recovery/saturation-stop actor scheduling, maximum 100 logical leases and 20 per room, automatic cancellation, bounded upload budgets and cleanup.
-- [ ] Run `python -m unittest tools.load.guard.test_guard tools.load.provision.test_provision`; run local real-wire Go fixture without Docker.
+- [x] Test guard rejects unauthenticated controls, foreign containers/database/volume, invalid fault families and stale snapshots; restore injected faults in finally.
+- [x] Implement controller under `tools/load/controller`, provision under `tools/load/provision`, guard under `tools/load/guard`; existing fixture owns all resources.
+- [x] Implement warmup/ramp/steady/spike/recovery/saturation-stop actor scheduling, maximum 100 logical leases and 20 per room, automatic cancellation, bounded upload budgets and cleanup.
+- [x] Run `python -m unittest tools.load.guard.test_guard tools.load.provision.test_provision`; run local real-wire Go fixture without Docker.
 
 ### Task 4: Evidence and handoff
 
-- [ ] Document exact runnable commands, resource stop limits, normal/reconnect/upload/fault profiles and existing separate media fixture commands.
-- [ ] Record source/protocol results PASS and target hardware/capacity NOT_RUN in `evidence/capacity/issue-8-backend-load-harness-2026-10-07.json`.
-- [ ] Inspect status/file lengths, stage exact paths, commit, push and create PR referencing #8 without closing its physical acceptance gate.
+- [x] Document exact runnable commands, resource stop limits, normal/reconnect/upload/fault profiles and existing separate media fixture commands.
+- [x] Record source/protocol results PASS and target hardware/capacity NOT_RUN in `evidence/capacity/issue-8-backend-load-harness-2026-10-07.json`.
+- [x] Inspect status/file lengths, stage exact paths, commit, push and create PR referencing #8 without closing its physical acceptance gate.
+
+Actual first Linux API smoke: CI37677120349, job112983443029, 1141 Go tests without skips; 652 requests, 182 fanout samples, p95 5.994291 ms, six phases without errors, owner cleanup PASS. Extended profiles rerun on latest revision before merge.

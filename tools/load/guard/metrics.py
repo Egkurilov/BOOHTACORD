@@ -10,10 +10,13 @@ ALLOWED = frozenset(('go_goroutines', 'go_memstats_alloc_bytes', 'go_gc_duration
     'voice_platform_database_acquire_duration_seconds_count', 'voice_platform_database_pool_acquired', 'voice_platform_database_pool_idle',
     'voice_platform_database_pool_total', 'voice_platform_database_pool_max',
     'voice_platform_database_acquires_pending', 'voice_platform_database_pool_empty_acquire_wait_seconds_total',
-    'voice_platform_database_acquires_total', 'voice_platform_realtime_connections',
-    'voice_platform_upload_reservations_bytes', 'voice_platform_upload_failures_total',
-    'voice_platform_livekit_participants', 'voice_platform_livekit_publications',
-    'voice_platform_livekit_snapshot_errors_total'))
+    'voice_platform_database_acquires_total', 'voice_platform_realtime_connections_active',
+    'voice_platform_realtime_connections_total', 'voice_platform_realtime_connection_ready_seconds_sum',
+    'voice_platform_realtime_connection_ready_seconds_count', 'voice_platform_attachment_upload_reserved_bytes',
+    'voice_platform_attachment_filesystem_available_bytes', 'voice_platform_attachment_filesystem_snapshot_success',
+    'voice_platform_upload_failures_total', 'voice_platform_voice_participants_active',
+    'voice_platform_voice_streams_active', 'voice_platform_voice_screen_streams_active',
+    'voice_platform_voice_media_snapshot_success'))
 
 
 def aggregate(text):

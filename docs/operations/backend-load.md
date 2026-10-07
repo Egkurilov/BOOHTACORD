@@ -6,6 +6,7 @@ Go from `backend/go.mod`, Python 3.12+, free loopback ports 4810–4812, 4820,
 
 ```sh
 python3 -m tools.load.controller.run --accounts 2 --seconds 20 --profile normal
+python3 -m tools.load.controller.run --accounts 1 --seconds 20 --profile nat_auth
 python3 -m tools.load.controller.run --accounts 100 --seconds 600 --profile normal
 python3 -m tools.load.controller.run --accounts 100 --seconds 120 --profile reconnect
 python3 -m tools.load.controller.run --accounts 20 --seconds 120 --profile uploads --upload-bytes 25000000
@@ -50,7 +51,8 @@ it consumes replay before presence-ready, records replay/resync separately and
 reloads protected state after resync. It does not close or claim media recovery.
 Each independent actor binds a distinct 127.0.0.x source address: production
 login limits stay intact. This represents independent sources, **not** 100 logins
-behind one shared NAT; that quota is an independent authentication test.
+behind one shared NAT; `nat_auth` tests that quota separately: ten logins/logouts from one source,
+then an expected 429 RATE_LIMITED with a positive Retry-After.
 
 `uploads` sends up to four concurrent files during steady and spike, binds them
 to real messages, downloads them and checks SHA-256 of the complete synthetic
@@ -68,7 +70,8 @@ Fault-stage errors have a bounded four-errors-per-actor budget; recovery must pa
 
 ## Evidence and limits
 
-`.out/backend-load/<profile>/report.json` contains safe route names, observed
+`.out/backend-load/<profile>/report.json` plus `routes.csv` and standalone
+`report.html` graphs contain safe route names, observed
 status codes, total/error counts, p50/p95/p99 for the last 6000 samples per route,
 phase active counts, CPU/RSS/free space and fixed-name label-free private metrics.
 Passwords, cookies, JWTs, message bodies, usernames, DM IDs, storage paths and
