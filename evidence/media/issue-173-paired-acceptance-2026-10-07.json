@@ -3,6 +3,7 @@
   "issue": 173,
   "candidateSha": "NOT_RUN",
   "livekitServerImageDigest": "NOT_RUN",
+  "criteriaSha256": "e00287b76a355d460e150da196c07013fa9da68eefeb7d2bd3578d862712d25f",
   "status": "NOT_RUN",
   "pairings": [
     {"id": "win-chromium-to-win-chromium", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []},

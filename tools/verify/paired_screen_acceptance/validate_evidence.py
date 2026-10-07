@@ -6,6 +6,7 @@ import json
 import sys
 from pathlib import Path
 
+from tools.verify.paired_screen_acceptance.criteria import load_quality_acceptance
 from tools.verify.paired_screen_acceptance.rules import validate_evidence
 
 
@@ -18,7 +19,8 @@ def main() -> int:
     except (OSError, json.JSONDecodeError) as exc:
         print(f"invalid evidence JSON: {exc}")
         return 2
-    errors = validate_evidence(value)
+    criteria, source_hash = load_quality_acceptance()
+    errors = validate_evidence(value, criteria, source_hash)
     if errors:
         print("\n".join(errors))
         return 1
