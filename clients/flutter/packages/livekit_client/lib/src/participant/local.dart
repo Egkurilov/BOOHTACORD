@@ -285,50 +285,53 @@ class LocalParticipant extends Participant<LocalTrackPublication> {
     LocalVideoTrack track, {
     required VideoPublishOptions publishOptions,
     required bool Function() isCurrent,
-  }) => _publishRunner.run(() async {
-    if (track.source != TrackSource.screenShareVideo || track.processor != null) {
-      throw ArgumentError('Only an unprocessed screen share can change profile.');
-    }
-    if (!isCurrent()) return null;
-    final existing = videoTrackPublications.firstWhereOrNull((publication) => identical(publication.track, track));
-    final previousOptions = track.lastPublishOptions;
-    if (existing != null) {
-      track.invalidateSenderParameterOperations();
-      await track.waitForSenderParameterOperations();
-      if (!isCurrent()) return null;
-      await removePublishedTrack(existing.sid, notify: false, stopOnUnpublish: false);
-    } else if (previousOptions == null) {
-      throw StateError('Screen share has no previous publish profile to restore.');
-    }
-    if (!isCurrent()) return null;
-    try {
-      final publication = await _publishVideoTrack(track, publishOptions: publishOptions);
-      if (!isCurrent() && publication != null) {
-        await removePublishedTrack(publication.sid, notify: false, stopOnUnpublish: false);
-        track.lastPublishOptions = previousOptions;
-        return null;
+  }) async {
+    final result = await _publishRunner.run(() async {
+      if (track.source != TrackSource.screenShareVideo || track.processor != null) {
+        throw ArgumentError('Only an unprocessed screen share can change profile.');
       }
-      return publication;
-    } catch (error) {
-      if (!isCurrent() || previousOptions == null) rethrow;
+      if (!isCurrent()) return null;
+      final existing = videoTrackPublications.firstWhereOrNull((publication) => identical(publication.track, track));
+      final previousOptions = track.lastPublishOptions;
+      if (existing != null) {
+        track.invalidateSenderParameterOperations();
+        await track.waitForSenderParameterOperations();
+        if (!isCurrent()) return null;
+        await removePublishedTrack(existing.sid, notify: false, stopOnUnpublish: false);
+      } else if (previousOptions == null) {
+        throw StateError('Screen share has no previous publish profile to restore.');
+      }
+      if (!isCurrent()) return null;
       try {
-        final restored = await _publishVideoTrack(track, publishOptions: previousOptions);
-        if (!isCurrent() && restored != null) {
-          await removePublishedTrack(restored.sid, notify: false, stopOnUnpublish: false);
+        final publication = await _publishVideoTrack(track, publishOptions: publishOptions);
+        if (!isCurrent() && publication != null) {
+          await removePublishedTrack(publication.sid, notify: false, stopOnUnpublish: false);
           track.lastPublishOptions = previousOptions;
           return null;
         }
-      } catch (restoreError) {
-        if (!isCurrent()) rethrow;
-        throw ScreenShareProfileUpdateException(
-          'Screen share profile failed and rollback failed: $restoreError',
-          restored: false,
-        );
+        return publication;
+      } catch (error) {
+        if (!isCurrent() || previousOptions == null) rethrow;
+        try {
+          final restored = await _publishVideoTrack(track, publishOptions: previousOptions);
+          if (!isCurrent() && restored != null) {
+            await removePublishedTrack(restored.sid, notify: false, stopOnUnpublish: false);
+            track.lastPublishOptions = previousOptions;
+            return null;
+          }
+        } catch (restoreError) {
+          if (!isCurrent()) rethrow;
+          throw ScreenShareProfileUpdateException(
+            'Screen share profile failed and rollback failed: $restoreError',
+            restored: false,
+          );
+        }
+        if (!isCurrent()) return null;
+        throw ScreenShareProfileUpdateException('$error', restored: true);
       }
-      if (!isCurrent()) return null;
-      throw ScreenShareProfileUpdateException('$error', restored: true);
-    }
-  });
+    });
+    return result as LocalTrackPublication<LocalVideoTrack>?;
+  }
 
   Future<LocalTrackPublication<LocalVideoTrack>?> _publishVideoTrack(
     LocalVideoTrack track, {
