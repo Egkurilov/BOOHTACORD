@@ -17,6 +17,13 @@ Source issue: https://github.com/Egkurilov/BOOHTACORD/issues/177
 
 ## Physical acceptance
 
-- **NOT_RUN** A physical macOS run with multiple USB/Bluetooth endpoints, privacy
-  indicator observation, and hot-plug verification is still required. The local
-  unit and build checks do not replace that evidence.
+- **PASS** macOS debug build at source SHA `175ed0b9` showed multiple physical
+  endpoints in the audio settings before Join: `CORSAIR VOID ELITE Wireless
+  Gaming Dongle` and `HyperX Quadcast` as inputs; `Mi Monitor`, `CORSAIR VOID
+  ELITE Wireless Gaming Dongle`, `HyperX Quadcast`, and `Динамики Mac mini` as
+  outputs.
+- **PASS** Selected a non-default input and output before Join, restored the
+  system choices, and refreshed the inventory; all endpoints remained visible.
+  No Room connection, microphone test, or capture was started.
+- **NOT_RUN** USB/Bluetooth hot-plug while the settings screen is open and
+  privacy-indicator observation still require a separate physical check.
