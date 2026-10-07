@@ -1,42 +1,47 @@
 # Screen-share baseline harness
 
-The harness under `clients/web/tests/screen_profile/baseline/` is test-only. It uses the pinned `livekit-client`, creates one screen-video publisher and one remote viewer, and does not use BOOHTACORD production UI, preview, profile guard, or repair logic. The automated source is a moving, numbered canvas at 1920×1080; the local page also offers a user-triggered `getDisplayMedia` source for device comparisons.
+The page and Playwright test under `clients/web/tests/screen_profile/` use the pinned `livekit-client` SDK. They publish one video-only screen track and subscribe one remote viewer; they do not load BOOHTACORD production UI, profile guards, preview, or repair logic. Use an empty, isolated, non-production LiveKit room with short-lived publisher/viewer credentials created by the existing test operator workflow. No token endpoint is part of this harness.
 
-## Automated synthetic baseline
+## Automated moving-source run
 
-Create two short-lived credentials in the isolated test environment for the same non-production room: a publisher token with screen-video publish permission and a different viewer token with subscribe permission. Keep both tokens out of source files, shell transcripts, test reports, URLs, and artifacts. The test passes them through environment variables and the local page clears its password input after use. No token-minting endpoint is included.
-
-From `clients/web` in PowerShell:
+From `clients/web` in PowerShell, set credentials only in the current process. Do not put tokens in command arguments, URLs, source files, logs, or issue attachments. Set the target acknowledgement only after independently verifying that the endpoint and image digest belong to the isolated test SFU:
 
 ```powershell
+$env:SCREEN_BASELINE_TARGET = 'isolated-test'
 $env:SCREEN_BASELINE_LIVEKIT_URL = 'wss://isolated-test-livekit.example'
 $env:SCREEN_BASELINE_PUBLISHER_TOKEN = '<short-lived publisher token>'
 $env:SCREEN_BASELINE_VIEWER_TOKEN = '<short-lived viewer token>'
 $env:SCREEN_BASELINE_SOURCE_SHA = '<tested source commit SHA>'
 $env:SCREEN_BASELINE_WORKTREE_STATE = 'clean or dirty, plus local diff identifier'
 $env:SCREEN_BASELINE_SFU_IMAGE_DIGEST = 'sha256:<deployed test image digest>'
+$env:SCREEN_BASELINE_DEVICE_PROFILE = '<OS, GPU/driver, power mode, display size/refresh>'
+$env:SCREEN_BASELINE_REPEAT_INDEX = '60fps-r1'
 npm run test:screen-profile
-Remove-Item Env:SCREEN_BASELINE_LIVEKIT_URL,Env:SCREEN_BASELINE_PUBLISHER_TOKEN,Env:SCREEN_BASELINE_VIEWER_TOKEN,Env:SCREEN_BASELINE_SOURCE_SHA,Env:SCREEN_BASELINE_WORKTREE_STATE,Env:SCREEN_BASELINE_SFU_IMAGE_DIGEST
+Remove-Item Env:SCREEN_BASELINE_TARGET,Env:SCREEN_BASELINE_LIVEKIT_URL,Env:SCREEN_BASELINE_PUBLISHER_TOKEN,Env:SCREEN_BASELINE_VIEWER_TOKEN,Env:SCREEN_BASELINE_SOURCE_SHA,Env:SCREEN_BASELINE_WORKTREE_STATE,Env:SCREEN_BASELINE_SFU_IMAGE_DIGEST,Env:SCREEN_BASELINE_DEVICE_PROFILE,Env:SCREEN_BASELINE_REPEAT_INDEX
 ```
 
-The baseline test can be repeated five times without running the other browser test:
+The live test accepts only WSS or a loopback `ws://` endpoint and skips unless both short-lived tokens and the explicit isolated-target acknowledgement are present. The spec captures no screenshots, video, or Playwright traces. Its attachment is a numeric JSON result for that run; no credentials are part of the attachment. Repeat it five times in alternating order with the product client, setting a distinct repeat index for each run.
 
-```powershell
-npx playwright test -c tests/screen_profile/playwright.config.ts tests/screen_profile/baseline.browser.spec.ts --repeat-each=5
-```
+The fixed run uses the #157 catalog candidate `motion-1080p60-v1`: moving 1920×1080 source, VP8, a single layer, a 60 FPS target, and an 8,000,000 bit/s sender cap. The baseline overrides the product's normal simulcast policy to keep this comparison single-layer. It warms up for 30 seconds, records one-second windows for 180 seconds, and uses five repeats. Capture settings are configuration only. Encoded and decoded p05 FPS use counter deltas divided by monotonic elapsed time; missing, reset, hidden, or visibility-transition windows are unavailable and excluded. Source stats, RTP encode/decode/loss/jitter/time/bytes, selected candidate protocol/type/RTT/available bitrate, and presentation callback/frame-marker counts remain separated. Bitrate is `8 * delta(bytes) / delta(monotonicSeconds)`; receiver packet-loss ratio is `delta(packetsLost) / (delta(packetsLost) + delta(packetsReceived))` when both counters exist. Candidate IDs and addresses are never serialized.
 
-The run uses VP8, one layer, a selected 1080p60 target capped at 8,000,000 bit/s, one-second samples after a five-second warm-up, and a ten-second measurement window. The report attachment contains SDK and browser versions, source/deployment identity fields, sanitized sender stats, synthetic draw counts, first-frame latency, receiver presentation callbacks, and visibility state. It contains no tokens, SDP, addresses, track/session IDs, device labels, audio, or captured frames. Missing stats stay missing; they are not replaced with zero.
+For five live synthetic repeats, run `npx playwright test -c tests/screen_profile/playwright.config.ts tests/screen_profile/baseline.browser.spec.ts --repeat-each=5`; each attachment receives a distinct repeat suffix. For an intentional capture-rate control, open the local page in publisher and viewer roles, choose **30 FPS control** or **15 FPS control**, and keep every other condition fixed. The p05 calculation test verifies a 15 FPS counter series is reported as 15 rather than the 60 FPS baseline. The 20-cell visible frame marker has an 8-bit signature and a 12-bit rolling frame value; the viewer samples it in memory and exports only numeric IDs. Counter differences report repeated/skipped marker values. This verifies synthetic-source marker math; it does not establish physical display capture throughput. To test bandwidth limitation, apply a documented network shaper only on the isolated test network; compare the same metric report and note the shaping parameters. No bandwidth shaping or live 15 FPS SFU control was available during local verification.
 
-The derived encoded FPS is `delta(framesEncoded) / delta(monotonicSeconds)` and bitrate is `8 * delta(bytesSent) / delta(monotonicSeconds)`. p05 is calculated over visible one-second encoded-FPS windows. Presentation callback gaps over 500 ms are a browser-observation proxy, not proof of a unique image freeze or monitor scanout. `getSettings().frameRate` is reported only as a capture setting. The harness records measurements and makes no 55 FPS, 2 second, or capacity acceptance claim.
+Presentation metrics use `requestVideoFrameCallback` intervals and count callbacks per complete one-second window; `presentedFrameCallbackP05Fps` is a p05 callback rate, not unique-image or scanout proof. A callback gap over 500 ms is counted. `excessFreezeRatio` is `sum(max(gapMs - 500, 0)) / measuredWindowMs`. These callbacks and marker reads do not prove monitor scanout or end-to-end game latency. Static/background time is excluded from moving-source rate windows; no FPS or capacity SLO is asserted by the harness. Source-switch latency remains `null` because this harness does not switch sources.
 
-## Physical display-capture comparison
+## User-selected display capture
 
-Start the existing local Vite server from `clients/web`:
+Start the local Vite server from `clients/web`:
 
 ```powershell
 npm run dev -- --host 127.0.0.1 --port 4801 --strictPort
 ```
 
-Open `http://127.0.0.1:4801/tests/screen_profile/baseline.html` in two browser pages. Set one to publisher and one to viewer; enter short-lived tokens from the same isolated room. Connect the viewer, connect the publisher, then use **Start display capture** and choose an actual display or window in the browser prompt. Use **Download 10-second numeric sample** after capture has begun. The browser OS chooser is a user action; automation does not impersonate it.
+Open `http://127.0.0.1:4801/tests/screen_profile/baseline.html` in separate publisher and viewer pages. On both pages, confirm the isolated non-production target, enter the isolated WSS URL and each role's short-lived token, and connect. The publisher can start the numbered synthetic source or use **Start display capture** and select a real display/window in the browser chooser. In the viewer page, enable the numbered-source option only for the synthetic run; physical/unknown content is never treated as a generated frame counter. Download a numeric report from each role and pair the files by repeat index.
 
-For a paired comparison, record source SHA and dirty state, test SFU image digest, LiveKit SDK/browser/OS versions, CPU architecture, GPU/driver, display resolution/refresh rate, power mode, capture type, codec, source profile, sample windows, warm-up, repeats, and exclusions. Change one factor at a time and alternate run order. Do not include endpoint names, serials, tokens, SDP, IP addresses, or media. If hardware or server details are unavailable, record `NOT_RUN`/`unavailable` and keep the proposed SLO unproven.
+Fill in source SHA, test SFU image digest, SDK version (`npm ls livekit-client --depth=0`), and the device configuration fields. Record capture type, test room configuration, codec, source target, warm-up, window size, repeat/order, and any isolated network shaping. Do not include endpoint/room names, user identities, serials, tokens, SDP, IP addresses, device labels, audio, or pixels. Unknown fields should remain `unavailable` rather than being guessed.
+
+## Comparison protocol and acceptance status
+
+Compare the minimal client with the product client on the same device, SFU image, source, codec, one-layer topology, selected 60 FPS target, sender cap, and network. Alternate order across five repeats; use the same warm-up and measurement windows. Change one factor per follow-up run, then separately enable simulcast, the BOOHTACORD viewer, profile updates, or preview. Track source, encode, network, decode, and presentation metrics as separate stages. Proposed SLO values remain unvalidated experiments.
+
+Local validation can test the harness calculations and existing Chromium encoder behavior. A live SFU comparison, physical display capture, constrained-network control, and hardware/driver acceptance require the isolated SFU and real devices. Record each as `NOT_RUN` until that evidence exists; do not infer a production cause from these local results.
