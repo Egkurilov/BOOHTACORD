@@ -82,7 +82,7 @@ tasks:
     title: Screen-share profile contract and shared client fixtures (GitHub #157)
     requirements: [REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-SCREEN-04, REQ-CAPACITY-02]
     depends_on: [T-004, T-005, T-022]
-    evidence: [ADR-018, screen-share-profile-schema, screen-share-profile-catalog, web-screen-profile-contract-test, flutter-screen-profile-contract-test, flutter-screen-profile-geometry-test]
+    evidence: [ADR-018, screen-share-profile-schema, screen-share-profile-catalog, screen-share-lifecycle-fixtures, screen-share-acceptance-protocol, web-screen-profile-contract-test, flutter-screen-profile-contract-test, flutter-screen-profile-geometry-test, backend-screen-profile-contract-test]
   - id: T-032
     title: Minimal LiveKit screen-share baseline harness (GitHub #158)
     requirements: [REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-CAPACITY-02]

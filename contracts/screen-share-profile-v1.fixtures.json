@@ -1,11 +1,41 @@
 {
   "schemaVersion": 1,
+  "validDescriptor": {
+    "schema_version": 1,
+    "scope": { "origin_id": "origin-a", "account_id": "account-a", "room_id": "room-a", "media_session_id": "share-a", "publication_generation": 4, "operation_revision": 12 },
+    "mode": "motion",
+    "publisher_state": "sharing",
+    "viewer_state": "idle",
+    "requested_profile_id": "P1080_60",
+    "effective_profile": {
+      "capture": { "max_width": 1920, "max_height": 1080, "max_fps": 60 },
+      "encoding": { "codec": "VP8", "layers": [{ "rid": null, "width": 1920, "height": 1080, "max_fps": 60, "max_bitrate_bps": 8000000, "scale_down_by": 1, "active": true }] }
+    },
+    "layer_topology": "single-layer",
+    "profile_revision": 1,
+    "capabilities": { "live_update": true, "republish_without_recapture": false, "simulcast": false },
+    "reason_codes": ["user-request"]
+  },
+  "descriptorCases": [
+    { "name": "valid-v1-motion", "overrides": {}, "accepted": true },
+    { "name": "unknown-version-rejected", "overrides": { "schema_version": 99 }, "accepted": false },
+    { "name": "unknown-mode-rejected", "overrides": { "mode": "cinema" }, "accepted": false },
+    { "name": "unknown-profile-rejected", "overrides": { "requested_profile_id": "P999_30" }, "accepted": false },
+    { "name": "unknown-reason-code-rejected", "overrides": { "reason_codes": ["account-a"] }, "accepted": false },
+    { "name": "candidate-profile-mode-mismatch-rejected", "overrides": { "mode": "motion", "requested_profile_id": "text-1080p30-v1" }, "accepted": false },
+    { "name": "negative-profile-revision-rejected", "overrides": { "profile_revision": -1 }, "accepted": false },
+    { "name": "observation-cannot-masquerade-as-descriptor", "overrides": { "observed": { "presented_fps": 60 } }, "accepted": false }
+  ],
+  "legacyPublicationNames": [
+    { "name": "screenshare-720p-15fps", "profileId": "P720_15", "accepted": true },
+    { "name": "screenshare-1080p-30fps", "profileId": "P1080_30", "accepted": true },
+    { "name": "screenshare-1440p-60fps", "profileId": "P1440_60", "accepted": true },
+    { "name": "screenshare-999p-30fps", "profileId": null, "accepted": false }
+  ],
   "descriptorCompatibility": [
-    { "name": "legacy-profile-id-remains-valid", "schemaVersion": 1, "mode": "motion", "requestedProfileId": "P1080_30", "accepted": true },
-    { "name": "candidate-profile-is-versioned", "schemaVersion": 1, "mode": "text", "requestedProfileId": "text-1080p30-v1", "accepted": true },
-    { "name": "unknown-profile-is-rejected", "schemaVersion": 1, "mode": "motion", "requestedProfileId": "P999_30", "accepted": false },
-    { "name": "unknown-mode-is-rejected", "schemaVersion": 1, "mode": "cinema", "requestedProfileId": "P1080_30", "accepted": false },
-    { "name": "unknown-descriptor-version-is-rejected", "schemaVersion": 99, "mode": "motion", "requestedProfileId": "P1080_30", "accepted": false }
+    { "name": "legacy-publication-without-v1-descriptor", "descriptorVersion": null, "legacyTrackReadable": true, "v1ControlsEnabled": false, "fallbackAttempts": 0 },
+    { "name": "current-v1-descriptor", "descriptorVersion": 1, "legacyTrackReadable": true, "v1ControlsEnabled": true, "fallbackAttempts": 0 },
+    { "name": "unknown-descriptor-version", "descriptorVersion": 99, "legacyTrackReadable": true, "v1ControlsEnabled": false, "fallbackAttempts": 0 }
   ],
   "enumValidation": [
     { "property": "publisher_state", "value": "sharing", "accepted": true },
@@ -16,9 +46,14 @@
     { "property": "mode", "value": "cinema", "accepted": false }
   ],
   "lifecycle": [
-    { "name": "stop-invalidates-pending-profile-update", "schemaVersion": 1, "currentRevision": 8, "completionRevision": 7, "expectedOutcome": "superseded", "mayPublish": false },
-    { "name": "revoke-wins-over-pending-start", "schemaVersion": 1, "currentRevision": 4, "completionRevision": 4, "revoked": true, "expectedOutcome": "session-revoked", "mayPublish": false },
-    { "name": "reconnect-keeps-logical-session-and-advances-publication-generation", "schemaVersion": 1, "mediaSessionId": "session-a", "oldGeneration": 3, "newGeneration": 4, "expectedOutcome": "recovered", "recapture": false }
+    { "name": "stop-invalidates-pending-update", "operationRevision": 8, "completionRevision": 7, "expectedOutcome": "superseded", "mayPublish": false },
+    { "name": "revoke-wins-pending-start", "operationRevision": 4, "completionRevision": 4, "revoked": true, "expectedOutcome": "session-revoked", "mayPublish": false },
+    { "name": "logout-invalidates-pending-start", "loggedOut": true, "reasonCode": "logout", "expectedOutcome": "logged-out", "mayPublish": false },
+    { "name": "publish-failure-rolls-back-screen-only", "expectedOutcome": "publish-failed", "screenTracksReleased": true, "microphoneReleased": false, "voiceMembershipReleased": false },
+    { "name": "reconnect-reuses-capture", "mediaSessionId": "share-a", "oldGeneration": 3, "newGeneration": 4, "recapture": false, "retry": true },
+    { "name": "retry-keeps-generation", "mediaSessionId": "share-a", "oldGeneration": 4, "newGeneration": 4, "recapture": false, "retry": true },
+    { "name": "restart-after-source-ended", "mediaSessionId": "share-a", "oldGeneration": 4, "newGeneration": 5, "recapture": true, "userActionRequired": true },
+    { "name": "new-user-start-gets-session", "oldMediaSessionId": "share-a", "mediaSessionId": "share-b", "newGeneration": 0, "recapture": true, "userActionRequired": true }
   ],
   "geometry": [
     { "name": "landscape-16-9", "resolution": 720, "frameRate": 60, "source": { "width": 3840, "height": 2160 }, "expectedEncoded": { "width": 1280, "height": 720 } },
