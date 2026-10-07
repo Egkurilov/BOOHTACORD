@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "issue": 173,
+  "candidateSha": "NOT_RUN",
+  "livekitServerImageDigest": "NOT_RUN",
+  "status": "NOT_RUN",
+  "pairings": [
+    {"id": "win-chromium-to-win-chromium", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []},
+    {"id": "win-chromium-to-macos-chromium", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []},
+    {"id": "macos-chromium-to-win-chromium", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []},
+    {"id": "chromium-to-safari", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []},
+    {"id": "flutter-win-to-web", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []},
+    {"id": "flutter-macos-to-web", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []},
+    {"id": "web-to-flutter-win", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []},
+    {"id": "web-to-flutter-macos", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []},
+    {"id": "android-physical-to-macos", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []},
+    {"id": "android-physical-to-web", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []},
+    {"id": "web-to-android-physical", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []},
+    {"id": "web-to-ios", "result": "NOT_RUN", "unsupportedContractRef": null, "unsupportedCases": {}, "runs": []}
+  ]
+}
