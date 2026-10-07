@@ -74,8 +74,10 @@ extension ScreenShareQualityUpdate on ScreenShareController {
         error = null;
       } catch (cause) {
         if (current()) {
-          if (cause is ScreenShareProfileUpdateException && !cause.restored) {
-            final detail = 'Профиль не восстановлен; демонстрация остановлена: ${screenShareFailureDetail(cause)}';
+          if (cause is! ScreenShareProfileUpdateException || !cause.restored) {
+            final reason = screenShareFailureDetail(cause);
+            final detail =
+                'Профиль не подтверждён; демонстрация остановлена: $reason';
             await stopScreenShare();
             if (!disposed) {
               phase = ScreenSharePhase.error;

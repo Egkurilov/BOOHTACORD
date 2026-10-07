@@ -25,7 +25,9 @@ void main() {
   });
 
   test('stop cancels profile update before any stale write', () async {
-    final driver = QualityScreenDriver()..updateGate = Completer<void>();
+    final driver = QualityScreenDriver()
+      ..updateGate = Completer<void>()
+      ..staleOutcome = 'cancel';
     final scope = SessionScope();
     final track = FakeScreenTrack();
     final owner = qualityOwner(driver, track, scope: scope);
@@ -43,6 +45,7 @@ void main() {
     expect(owner.phase, ScreenSharePhase.idle);
     expect(owner.quality, ScreenShareQuality.balanced);
     expect(driver.staleQualityWrites, 0);
+    expect(driver.qualityOutcomes, ['cancel']);
     expect(track.stopCalls, 1);
   });
 

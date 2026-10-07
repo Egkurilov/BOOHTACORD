@@ -59,4 +59,20 @@ void main() {
       expect(item['fallbackAttempts'], 0);
     }
   });
+
+  test('keeps Flutter Android single-layer until device acceptance', () {
+    final runtime = catalog['topologyPolicy']['currentSourceDerivedByRuntime'];
+    expect(runtime['flutterAndroid'], {
+      'simulcast': false,
+      'primaryLayers': {'min': 1, 'max': 1},
+      'defaultProfileId': 'P720_15',
+      'evidenceStatus': 'source-derived-unvalidated',
+    });
+    expect(runtime['flutterIOS']['simulcast'], isTrue);
+    expect(runtime['flutterDesktop']['primaryLayers'], {'min': 1, 'max': 2});
+    expect(
+      catalog['topologyPolicy']['backupCodecEvidenceStatus'],
+      'sfu-negotiated-unvalidated',
+    );
+  });
 }
