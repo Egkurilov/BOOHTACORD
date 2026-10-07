@@ -1,8 +1,9 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import { loadMessagePage, type MessageRequest, type TextMessage, type TextMessageAttachment } from './message_client'
 import { createLoadedRevisionRefresh } from './revision_refresh/loaded'
 import { trackRealtimeMessages } from '../telemetry/realtime_flow/process'
+import { indexMessages } from './message_index/index'
 
 export interface PendingSend { retryBlocked?: boolean; channelId: string; authorId: string; body: string; replyToId?: string; attachments: TextMessageAttachment[]; mentionUserIds: string[]; request?: MessageRequest; sendStatus?: 'sending' | 'checking' | 'failed' }
 
@@ -13,6 +14,7 @@ export function pendingMessage(id: string, draft: PendingSend): TextMessage {
 export function createTextHistory(pending: Map<string, PendingSend>) {
   const channelId = ref<string | null>(null)
   const messages = ref<TextMessage[]>([])
+  const messageById = computed(() => indexMessages(messages.value))
   const nextCursor = ref<string | undefined>()
   const loading = ref(false)
   const olderLoading = ref(false)
@@ -100,5 +102,5 @@ export function createTextHistory(pending: Map<string, PendingSend>) {
     resourceId: channelId, version: () => generation, load: loadMessagePage, merge: mergePage, error,
     fallback: 'Не удалось обновить сообщение.' })
 
-  return { channelId, messages, nextCursor, loading, olderLoading, historyLoaded, error, olderError, open, refresh, loadOlder, refreshMessage, refreshMessages }
+  return { channelId, messages, messageById, nextCursor, loading, olderLoading, historyLoaded, error, olderError, open, refresh, loadOlder, refreshMessage, refreshMessages }
 }
