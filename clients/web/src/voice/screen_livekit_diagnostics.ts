@@ -41,7 +41,7 @@ export async function inspectLiveKitScreenDiagnostics(
       newestTimestamp = rows.length ? Math.max(...rows.map(row => row.timestamp)) : undefined
       const prior = observations.get(video)
       if (prior && newestTimestamp === prior.timestamp) return prior.diagnostics
-      counters = observed.counters
+      counters = { capturedFrames: null, encodedFrames: null }
       const sample = sampler.sample(rows, Date.now())
       layers = sample.layers
       selectedLayer = sample.selected
@@ -50,6 +50,7 @@ export async function inspectLiveKitScreenDiagnostics(
       }
       if (sample.selected) {
         const row = rows.find((candidate, index) => screenSenderLayerId(candidate, index) === sample.selected?.id)
+        counters = { capturedFrames: row?.capturedFrames ?? null, encodedFrames: row?.framesEncoded ?? null }
         sender = {
           timestamp: row?.timestamp, streamId: sample.selected.id, packetsSent: row?.packetsSent,
           packetsLost: row?.packetsLost, frameWidth: sample.selected.frameWidth, frameHeight: sample.selected.frameHeight,

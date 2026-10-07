@@ -7,6 +7,7 @@ export interface RawScreenLayerStats {
   active?: boolean
   frameWidth?: number
   frameHeight?: number
+  capturedFrames?: number
   framesEncoded?: number
   bytesSent?: number
   retransmittedBytesSent?: number

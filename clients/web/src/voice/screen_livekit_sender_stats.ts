@@ -48,6 +48,8 @@ export async function readLiveKitScreenSenderStats(video: LiveKitScreenVideoTrac
     const row = stat as unknown as Record<string, unknown>
     if (row.type !== 'outbound-rtp' || (row.kind ?? row.mediaType) !== 'video') return
     const codecId = text(row, 'codecId')
+    const sourceId = text(row, 'mediaSourceId')
+    const source = sourceId ? report.get(sourceId) as unknown as Record<string, unknown> | undefined : undefined
     const candidate = typeof row.id === 'string' ? remoteInbound.get(row.id) : undefined
     const remote = candidate && (candidate.ssrc === undefined || row.ssrc === candidate.ssrc) ? candidate : undefined
     rows.push({
@@ -55,6 +57,7 @@ export async function readLiveKitScreenSenderStats(video: LiveKitScreenVideoTrac
       ssrc: number(row, 'ssrc'), rid: text(row, 'rid'), codec: codecId ? codecs.get(codecId) : undefined,
       active: typeof row.active === 'boolean' ? row.active : undefined,
       frameWidth: number(row, 'frameWidth'), frameHeight: number(row, 'frameHeight'),
+      capturedFrames: source?.type === 'media-source' ? number(source, 'frames') : undefined,
       framesEncoded: number(row, 'framesEncoded'), bytesSent: number(row, 'bytesSent'),
       retransmittedBytesSent: number(row, 'retransmittedBytesSent'), packetsSent: number(row, 'packetsSent'),
       packetsLost: number(remote ?? {}, 'packetsLost'), roundTripTime: number(remote ?? {}, 'roundTripTime'),
