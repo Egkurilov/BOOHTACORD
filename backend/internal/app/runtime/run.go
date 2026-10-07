@@ -16,6 +16,7 @@ import (
 	runtimeconfig "voice-platform/backend/internal/config/runtime"
 	"voice-platform/backend/internal/database/pool"
 	observeusage "voice-platform/backend/internal/identity/observe_usage"
+	previewmemory "voice-platform/backend/internal/media/screen_preview/memory"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
 	writerlock "voice-platform/backend/internal/storage/acquire_writer_lock"
 )
@@ -48,6 +49,8 @@ func Run(ctx context.Context) (result error) {
 	resources.Add(func(ctx context.Context) error { return lifecycle.Wait(ctx, database.Close) })
 	usageStore := observeusage.NewPostgres(database)
 	usage := observeusage.NewTracker(usageStore, time.Now)
+	previews := previewmemory.New()
+	resources.Add(func(context.Context) error { return previews.Close() })
 	stopUsage, err := observeusage.RegisterMetrics(otel.Meter("boohtacord/user-usage"), usageStore, usage, time.Now)
 	if err != nil {
 		return err
@@ -58,7 +61,7 @@ func Run(ctx context.Context) (result error) {
 	metrics := httpmetrics.New()
 	updates := clientupdates.NewStore(configuration.ClientUpdateCatalogPath, configuration.ClientUpdateAllowedHosts, metrics)
 	updates.Start(ctx)
-	handler, err := routes(database, configuration, events, metrics, updates, usage)
+	handler, err := routes(database, configuration, events, metrics, updates, usage, previews)
 	if err != nil {
 		return err
 	}

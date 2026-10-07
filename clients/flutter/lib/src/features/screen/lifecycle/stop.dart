@@ -25,7 +25,7 @@ extension ScreenShareStop on ScreenShareController {
     activeTrack = null;
     sourceDimensions = null;
     capturedContentVisibility.track(null);
-    stopSampling();
+    await stopSampling();
     phase = ScreenSharePhase.stopping;
     changed();
     try {

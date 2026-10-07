@@ -3,6 +3,7 @@ import '../../../core/session/scope.dart';
 import '../../../services/voice_volume_preferences.dart';
 import '../../../services/voice_lease_revocation.dart';
 import '../lifecycle/controller.dart';
+import '../screen_preview/receive.dart';
 
 class CancelledVoiceAdmission implements Exception {}
 
@@ -49,6 +50,7 @@ extension VoiceAdmissionPrepare on VoiceController {
     disconnect.channelId = channel.id;
     final disconnectGeneration = disconnect.generation;
     final revision = ++operationRevision;
+    clearScreenPreviewReceivers();
     screenThumbnails.clear();
     screenThumbnailPublications.clear();
     selectedRemoteScreenViewerIdentity = null;

@@ -5,6 +5,7 @@ import 'package:livekit_client/livekit_client.dart';
 
 import '../../../core/session/scope.dart';
 import '../../../services/screen_thumbnail.dart';
+import '../../voice/screen_preview/uploader.dart';
 import 'sample.dart';
 
 class ScreenThumbnailController {
@@ -15,6 +16,7 @@ class ScreenThumbnailController {
     required this.thumbnails,
     required this.queue,
     required this.changed,
+    required this.previewUploader,
     Future<Uint8List> Function(LocalVideoTrack)? capture,
     Future<Uint8List?> Function(Uint8List)? encode,
   }) : capture = capture ?? captureTrack,
@@ -25,6 +27,7 @@ class ScreenThumbnailController {
   final Map<String, Uint8List> thumbnails;
   final ScreenThumbnailCaptureQueue queue;
   final void Function() changed;
+  final LatestScreenPreviewUploader previewUploader;
   final Future<Uint8List> Function(LocalVideoTrack) capture;
   final Future<Uint8List?> Function(Uint8List) encode;
   Timer? timer;
@@ -32,25 +35,50 @@ class ScreenThumbnailController {
   int revision = 0;
   int? busy;
   ScreenThumbnailCaptureResult? lastLoggedResult;
+  String? leaseId;
+  Future<void>? cleanup;
   static Future<Uint8List> captureTrack(LocalVideoTrack track) async =>
       (await track.mediaStreamTrack.captureFrame()).asUint8List();
   static Future<Uint8List?> encodeFrame(Uint8List frame) =>
       compute(encodeScreenThumbnail, frame);
-  void start(Room room, LocalVideoTrack track) {
-    stop();
+  Future<void> start(Room room, LocalVideoTrack track) async {
+    final expected = revision + 1;
+    final stopped = stop();
+    final startRevision = revision;
+    if (startRevision != expected) return;
     this.track = track;
+    await stopped;
+    if (revision != startRevision || !identical(this.track, track)) return;
     timer = Timer.periodic(const Duration(seconds: 4), (_) {
       unawaited(sample(room, track));
     });
     unawaited(sample(room, track));
   }
 
-  void stop() {
+  Future<void> stop() {
     revision++;
     timer?.cancel();
     timer = null;
     track = null;
     busy = null;
     lastLoggedResult = null;
+    return _invalidatePreview();
+  }
+
+  Future<void> changeLease(String? value) {
+    if (leaseId == value) return cleanup ?? Future<void>.value();
+    leaseId = value;
+    return _invalidatePreview();
+  }
+
+  Future<void> _invalidatePreview() {
+    final existing = cleanup;
+    if (existing != null) return existing;
+    late final Future<void> operation;
+    operation = previewUploader.stop().whenComplete(() {
+      if (identical(cleanup, operation)) cleanup = null;
+    });
+    cleanup = operation;
+    return operation;
   }
 }

@@ -1,6 +1,7 @@
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../core/session/scope.dart';
+import '../../screen/lifecycle/controller.dart';
 import '../lifecycle/controller.dart';
 
 extension VoiceAdmissionFinalize on VoiceController {
@@ -13,6 +14,7 @@ extension VoiceAdmissionFinalize on VoiceController {
     required int revision,
   }) async {
     if (!connected) {
+      await screen.stopScreenShare();
       try {
         await candidate?.disconnect();
       } catch (_) {}

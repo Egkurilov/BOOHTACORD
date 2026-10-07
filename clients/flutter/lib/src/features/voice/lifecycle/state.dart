@@ -18,7 +18,6 @@ import '../audio_diagnostics/model.dart';
 import '../volumes/telemetry.dart';
 import '../disconnect_notice/state.dart';
 import '../screen_viewer/selection_state.dart';
-
 abstract class VoiceState extends ChangeNotifier
     with VoiceScreenViewerSelectionState {
   VoiceState(
@@ -87,7 +86,13 @@ abstract class VoiceState extends ChangeNotifier
   final Map<String, int> transientScreenShareVolumes = <String, int>{};
   AudioPreferences? get audioPreferences => audio.preferences;
   set audioPreferences(AudioPreferences? value) => audio.preferences = value;
-  String? leaseId;
+  String? _leaseId;
+  String? get leaseId => _leaseId;
+  set leaseId(String? value) {
+    if (_leaseId != value) {
+      unawaited(screen.previewLeaseChanged(_leaseId = value));
+    }
+  }
   bool listenerOnly = false;
   bool voiceAdmissionPending = false;
   final Map<String, String> revokedVoiceLeasesDuringJoin = {};

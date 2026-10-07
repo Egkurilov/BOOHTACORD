@@ -14,22 +14,22 @@ import (
 )
 
 type Config struct {
-	Address, DatabaseURL, LiveKitAPIKey, LiveKitAPISecret string
-	PublicOrigin                                          string
-	ClientUpdateCatalogPath                               string
-	ClientUpdateAllowedHosts                              []string
-	OriginMiddleware                                      func(http.Handler) http.Handler
-	CredentialSigner                                      livekitcredential.Signer
-	RoomRemover                                           removelivekitparticipant.Client
-	MediaSnapshot                                         snapshotlivekitpresence.Client
-	RegistrationLimiter                                   *ratelimit.Limiter
-	LoginLimiter                                          *ratelimit.Limiter
-	PasswordResetLimiter                                  *ratelimit.Limiter
-	UploadLimiter                                         *ratelimit.Limiter
-	TelemetryLimiter                                      *ratelimit.Limiter
-	TelemetryEndpoint                                     string
-	TelemetryAuth                                         string
-	AttachmentRoot                                        string
+	Address, DatabaseURL, LiveKitAPIKey, LiveKitAPISecret, LiveKitPrivateHTTPURL string
+	PublicOrigin                                                                 string
+	ClientUpdateCatalogPath                                                      string
+	ClientUpdateAllowedHosts                                                     []string
+	OriginMiddleware                                                             func(http.Handler) http.Handler
+	CredentialSigner                                                             livekitcredential.Signer
+	RoomRemover                                                                  removelivekitparticipant.Client
+	MediaSnapshot                                                                snapshotlivekitpresence.Client
+	RegistrationLimiter                                                          *ratelimit.Limiter
+	LoginLimiter                                                                 *ratelimit.Limiter
+	PasswordResetLimiter                                                         *ratelimit.Limiter
+	UploadLimiter                                                                *ratelimit.Limiter
+	TelemetryLimiter                                                             *ratelimit.Limiter
+	TelemetryEndpoint                                                            string
+	TelemetryAuth                                                                string
+	AttachmentRoot                                                               string
 }
 
 func Load(getenv func(string) string) (Config, error) {
@@ -90,6 +90,7 @@ func Load(getenv func(string) string) (Config, error) {
 		configuration.Address = ":8080"
 	}
 	configuration.DatabaseURL = getenv("DATABASE_URL")
+	configuration.LiveKitPrivateHTTPURL = getenv("LIVEKIT_PRIVATE_HTTP_URL")
 	configuration.LiveKitAPIKey = getenv("LIVEKIT_API_KEY")
 	configuration.LiveKitAPISecret = getenv("LIVEKIT_API_SECRET")
 	return configuration, nil

@@ -4,6 +4,7 @@ import { accountIdFromMetadata } from './participant_identity'
 import { RemoteVoicePlayback } from './remote_voice_playback'
 import { ScreenViewerController, type ScreenViewerPublication } from './screen_viewer_controller'
 import { bindLiveKitRemoteVoiceEvents } from './livekit_remote_voice_events'
+import { replaceScreenPreviewParticipantLeases } from './screen_preview/participant_leases'
 
 export interface LiveKitScreenViewerRoom {
   localParticipant?: LiveKitRemoteParticipant
@@ -61,6 +62,7 @@ export function bindLiveKitScreenViewer(
       audio: participant.getTrackPublication(sources.screenAudio),
       identity: participantId(participant),
       name: participant.name,
+      previewLeaseId: participant.identity.startsWith('voice-lease:') ? participant.identity.slice('voice-lease:'.length) : undefined,
       video: participant.getTrackPublication(sources.screenVideo),
     }))
     const local = room.localParticipant
@@ -74,7 +76,11 @@ export function bindLiveKitScreenViewer(
     }] : [])]
   }
   const refresh = () => {
-    registry.refresh(participants(), viewer.selectedId)
+    const publications = participants()
+    replaceScreenPreviewParticipantLeases(publications.flatMap((participant) => !participant.isLocal && participant.previewLeaseId
+      ? [[participant.identity, participant.previewLeaseId] as const]
+      : []))
+    registry.refresh(publications, viewer.selectedId)
     participantCards.refresh()
     viewer.reconcile()
   }
@@ -101,7 +107,7 @@ export function bindLiveKitScreenViewer(
   })
   bindLiveKitRemoteVoiceEvents(room, events, sources, voicePlayback, participantId, accountId, refresh)
   return {
-    clear: () => { voicePlayback.clear(); viewer.clear() },
+    clear: () => { replaceScreenPreviewParticipantLeases([]); voicePlayback.clear(); viewer.clear() },
     refresh,
     participants: participantCards,
     remoteVoices: voicePlayback,

@@ -6,6 +6,7 @@ export interface ScreenParticipantPublication {
   identity: string
   isLocal?: boolean
   name?: string
+  previewLeaseId?: string
   video?: ScreenViewerPublication
 }
 

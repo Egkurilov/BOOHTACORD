@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:livekit_client/livekit_client.dart';
 
 import 'state.dart';
+import '../screen_preview/receive.dart';
 import '../shortcuts/execute.dart';
 import '../connection_close/leave.dart';
 import '../volumes/reset.dart';
@@ -29,6 +30,7 @@ export '../screen_viewer/recovery_foreground.dart';
 export '../screen_viewer/recovery_manual.dart';
 export '../screen_viewer/subscription_recovery.dart';
 export '../screen_preview/capture.dart';
+export '../screen_preview/receive.dart';
 export '../connection_stats/poll.dart';
 export '../volumes/read.dart';
 export '../volumes/mute.dart';
@@ -65,6 +67,7 @@ class VoiceController extends VoiceState {
     disconnect.reset();
     disposed = true;
     operationRevision++;
+    clearScreenPreviewReceivers();
     remoteScreenViewerRecoveryTimer?.cancel();
     remoteScreenViewerRecoveryTimer = null;
     remoteScreenViewerRecoveryDeadline.reset();

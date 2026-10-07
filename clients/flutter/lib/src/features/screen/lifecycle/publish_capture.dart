@@ -79,7 +79,7 @@ extension ScreenShareCapturePublish on ScreenShareController {
         errorType: cause.runtimeType.toString(),
       );
       if (active()) {
-        stopSampling();
+        await stopSampling();
         phase = ScreenSharePhase.error;
         error =
             'Не удалось начать демонстрацию экрана: ${screenShareFailureDetail(cause)}';

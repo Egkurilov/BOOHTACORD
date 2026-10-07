@@ -4,9 +4,10 @@ import '../../conversation/lifecycle/controller.dart';
 import '../../workspace/lifecycle/controller.dart';
 import '../lifecycle/event.dart';
 import '../../session/own_sessions/hint.dart';
-import 'text_message.dart';
-import 'direct_message.dart';
 import '../../telemetry/realtime/process.dart';
+import 'conversation_events.dart';
+import 'direct_message.dart';
+import 'screen_preview_event.dart';
 
 class WorkspaceRealtimeDispatch {
   WorkspaceRealtimeDispatch(
@@ -16,6 +17,8 @@ class WorkspaceRealtimeDispatch {
     required this.voiceRevoked,
     required this.permissionsChanged,
     this.guildChanged,
+    this.screenPreviewUpdated,
+    this.screenPreviewInvalidated,
   });
   final WorkspaceController workspace;
   final ConversationController conversation;
@@ -23,7 +26,11 @@ class WorkspaceRealtimeDispatch {
   final FutureOr<void> Function(Map<String, dynamic>) voiceRevoked;
   final FutureOr<void> Function() permissionsChanged;
   final void Function(int)? guildChanged;
+  final void Function(Map<String, dynamic>)? screenPreviewUpdated;
+  final void Function(Map<String, dynamic>)? screenPreviewInvalidated;
   void call(RealtimeEvent event) {
+    if (dispatchConversationEvent(event, workspace, conversation, notifyMessage)) return;
+    if (dispatchScreenPreviewEvent(event, screenPreviewUpdated, screenPreviewInvalidated)) return;
     final payload = event.payload;
     switch (event.kind) {
       case 'guild.profile.updated':
@@ -40,48 +47,6 @@ class WorkspaceRealtimeDispatch {
           payload['user_id'],
           payload['presence'],
         );
-      case 'message.created':
-      case 'message.updated':
-      case 'message.deleted':
-        if (workspace.selectedChannel?.id == payload['channel_id']) {
-          unawaited(
-            refreshReceived(
-              event,
-              conversation.api.transport.session.telemetry,
-              () => refreshTextEvent(
-                conversation,
-                workspace,
-                payload['message_id'] as String?,
-              ),
-              () => conversation.messages
-                  .map((m) => (id: m.id, value: m as Object))
-                  .toList(),
-            ),
-          );
-        }
-        if (event.kind == 'message.created') notifyMessage(event);
-      case 'direct_message.message_created':
-      case 'direct_message.message_updated':
-      case 'direct_message.message_deleted':
-        if (conversation.selectedDirectMessage?.id ==
-            payload['direct_message_id']) {
-          unawaited(
-            refreshReceived(
-              event,
-              conversation.api.transport.session.telemetry,
-              () => refreshDirectEvent(
-                conversation,
-                payload['message_id'] as String?,
-              ),
-              () => conversation.directMessageHistory
-                  .map((m) => (id: m.id, value: m as Object))
-                  .toList(),
-            ),
-          );
-        }
-        if (event.kind == 'direct_message.message_created') {
-          notifyMessage(event);
-        }
       case 'channel.updated':
         unawaited(
           processEffect(
@@ -107,7 +72,7 @@ class WorkspaceRealtimeDispatch {
           processEffect(
             event,
             conversation.api.transport.session.telemetry,
-            () => Future.wait([
+            () => Future.wait<void>([
               workspace.refreshTopology(),
               workspace.refreshMembers(),
               if (workspace.selectedChannel?.kind == ChannelKind.text)

@@ -40,6 +40,10 @@ export type { ScreenProfile } from './screen_profile/policy'
 export interface VoiceRoom {
   connect(url: string, token: string, options?: { autoSubscribe?: boolean }): Promise<void>
   disconnect(): Promise<void>
+  bindScreenPreviewLease?(leaseId: string): Promise<void> | void
+  stopScreenPreview?(): Promise<void>
+  applyScreenPreview?(leaseId: string, bytes: Uint8Array): void
+  clearScreenPreview?(leaseId: string): void
   on(event: 'reconnecting' | 'reconnected' | 'disconnected', listener: () => void): VoiceRoom
   readScreenDiagnostics?(): Promise<ScreenDiagnostics>
   stopScreenProfileChecks?(): void

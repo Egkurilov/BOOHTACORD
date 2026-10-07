@@ -19,6 +19,7 @@ import (
 	runtimeconfig "voice-platform/backend/internal/config/runtime"
 	observeusage "voice-platform/backend/internal/identity/observe_usage"
 	authorizelivekitsignal "voice-platform/backend/internal/media/authorize_livekit_signal"
+	screenpreview "voice-platform/backend/internal/media/screen_preview"
 	guildlifecycle "voice-platform/backend/internal/observability/guild_lifecycle"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
 	tracehttp "voice-platform/backend/internal/observability/trace_http"
@@ -27,7 +28,7 @@ import (
 	reserve "voice-platform/backend/internal/storage/reserve_upload_space"
 )
 
-func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub, metrics *httpmetrics.Recorder, updates clientupdates.Provider, usage *observeusage.Tracker) (http.Handler, error) {
+func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *eventhub.Hub, metrics *httpmetrics.Recorder, updates clientupdates.Provider, usage *observeusage.Tracker, previews screenpreview.Store) (http.Handler, error) {
 	if events != nil {
 		events.SetTelemetryKey(configuration.TelemetryAuth)
 	}
@@ -62,5 +63,8 @@ func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *
 	observabilityroutes.ConfigureClientTelemetryRoutes(mux, sessionService, configuration)
 	mediaroutes.ConfigureAdminVoiceRoutes(mux, database, sessionService)
 	mediaroutes.ConfigureMediaCredentialRoutes(mux, database, sessionService, configuration.CredentialSigner)
+	if err := mediaroutes.ConfigureScreenPreviewRoutes(mux, database, sessionService, configuration.LiveKitPrivateHTTPURL, configuration.LiveKitAPIKey, configuration.LiveKitAPISecret, previews, events); err != nil {
+		return nil, fmt.Errorf("configure private screen previews: %w", err)
+	}
 	return requestid.Middleware(httpmetrics.LoggingMiddleware(slog.Default(), metrics.Middleware(tracehttp.Middleware(otel.Tracer("boohtacord/api"), mux, configuration.OriginMiddleware(mux))))), nil
 }

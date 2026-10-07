@@ -6,8 +6,7 @@ import { bindScreenProfile } from './screen_profile/bind'
 import { BoundedVoiceReconnectPolicy } from './bounded_voice_reconnect_policy'
 import { clearLiveKitScreenDiagnostics, inspectLiveKitScreenDiagnostics, type LiveKitScreenVideoTrack } from './screen_livekit_diagnostics'
 import { readVoiceConnectionStats } from './voice_connection_quality'
-import { accountIdFromMetadata } from './participant_identity'
-import { captureLocalScreenThumbnails } from './screen_thumbnail'
+import { bindLiveKitScreenPreview } from './screen_preview/capture'
 import { selectedVoiceAudioProfile } from './audio_profile/profile'
 import { bindVoiceAudioDiagnostics } from './audio_diagnostics/bind'
 import { bindNetworkDiagnostics } from './network_diagnostics/bind'
@@ -26,6 +25,7 @@ export function wireLiveKitRoom(
     viewer.refresh()
   }
   room.disconnect = async () => {
+    await room.stopScreenPreview?.()
     const microphoneCleanup = room.disposeMicrophone?.()
     viewer.clear()
     try { await disconnect() } finally { await microphoneCleanup }
@@ -55,31 +55,32 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
     screenAudio: Track.Source.ScreenShareAudio,
     screenVideo: Track.Source.ScreenShare,
   })
-  let stopThumbnails: (() => void) | null = null
+  const preview = bindLiveKitScreenPreview(
+    liveKitRoom as unknown as Parameters<typeof bindLiveKitScreenPreview>[0],
+    viewer,
+    {
+      trackPublished: RoomEvent.LocalTrackPublished,
+      trackUnpublished: RoomEvent.LocalTrackUnpublished,
+      disconnected: RoomEvent.Disconnected,
+    },
+    Track.Source.ScreenShare,
+  )
   let diagnosticsTrack: LiveKitScreenVideoTrack | undefined
-  liveKitRoom.on(RoomEvent.LocalTrackPublished, (publication) => {
-    if (publication.source !== Track.Source.ScreenShare || !publication.videoTrack) return
-    stopThumbnails?.()
-    const local = liveKitRoom.localParticipant
-    const participantId = accountIdFromMetadata(local.metadata) ?? local.identity
-    stopThumbnails = captureLocalScreenThumbnails(publication.videoTrack, (bytes) => viewer.viewer.setThumbnail(participantId, bytes))
-  })
   liveKitRoom.on(RoomEvent.LocalTrackUnpublished, (publication) => {
     if (publication.source !== Track.Source.ScreenShare) return
     const unpublished = publication.videoTrack as LiveKitScreenVideoTrack | undefined
     if (unpublished ?? diagnosticsTrack) clearLiveKitScreenDiagnostics(unpublished ?? diagnosticsTrack!)
     diagnosticsTrack = undefined
-    stopThumbnails?.()
-    stopThumbnails = null
-    const local = liveKitRoom.localParticipant
-    viewer.viewer.removeThumbnail(accountIdFromMetadata(local.metadata) ?? local.identity)
   })
   liveKitRoom.on(RoomEvent.Disconnected, () => {
-    stopThumbnails?.(); stopThumbnails = null
     if (diagnosticsTrack) clearLiveKitScreenDiagnostics(diagnosticsTrack)
     diagnosticsTrack = undefined
   })
   const room = wireLiveKitRoom(liveKitRoom as unknown as VoiceRoom, viewer)
+  room.bindScreenPreviewLease = preview.bindLease
+  room.stopScreenPreview = preview.stop
+  room.applyScreenPreview = preview.apply
+  room.clearScreenPreview = preview.clear
   room.screenViewer = viewer.viewer
   room.participantCards = viewer.participants
   room.remoteVoices = viewer.remoteVoices

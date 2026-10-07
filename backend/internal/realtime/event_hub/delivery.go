@@ -32,8 +32,8 @@ func (hub *Hub) publishLocked(event Event) {
 }
 
 func (hub *Hub) deliverLocked(subscription *Subscription, event Event) {
-	if permissionCapabilityRequired(event.Kind) {
-		if _, supported := subscription.capabilities["role_permissions_v1"]; !supported {
+	if capability := requiredCapability(event.Kind); capability != "" {
+		if _, supported := subscription.capabilities[capability]; !supported {
 			return
 		}
 	}
@@ -45,6 +45,13 @@ func (hub *Hub) deliverLocked(subscription *Subscription, event Event) {
 	}
 }
 
-func permissionCapabilityRequired(kind string) bool {
-	return kind == "role.permissions.updated" || kind == "auth.permissions.invalidated"
+func requiredCapability(kind string) string {
+	switch kind {
+	case "role.permissions.updated", "auth.permissions.invalidated":
+		return "role_permissions_v1"
+	case "screen_preview.updated", "screen_preview.invalidated":
+		return "screen_previews_v1"
+	default:
+		return ""
+	}
 }

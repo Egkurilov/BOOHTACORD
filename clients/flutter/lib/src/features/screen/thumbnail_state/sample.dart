@@ -6,13 +6,17 @@ import 'controller.dart';
 
 extension ScreenThumbnailSample on ScreenThumbnailController {
   Future<void> sample(Room room, LocalVideoTrack track) async {
+    await cleanup;
     final ticket = scope.capture();
     final expected = revision;
+    final previewLease = leaseId;
     bool active() =>
+        cleanup == null &&
         ticket.isActive &&
         expected == revision &&
         identical(this.track, track) &&
         identical(readRoom(), room) &&
+        leaseId == previewLease &&
         isSharing();
     if (!active() || busy == expected) return;
     busy = expected;
@@ -24,6 +28,7 @@ extension ScreenThumbnailSample on ScreenThumbnailController {
           final identity = room.localParticipant?.identity;
           if (identity == null) return;
           thumbnails[identity] = thumbnail;
+          if (previewLease != null) previewUploader.offer(previewLease, thumbnail);
           changed();
         },
         isActive: active,
