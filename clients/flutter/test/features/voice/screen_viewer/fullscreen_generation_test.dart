@@ -6,15 +6,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 class _ScreenPublication extends Fake implements RemoteTrackPublication {
-  _ScreenPublication(this.sid);
+  _ScreenPublication(this.sid, {this.subscriptionAllowed = true});
   @override
   final String sid;
+  @override
+  final bool subscriptionAllowed;
   @override
   TrackSource get source => TrackSource.screenShareVideo;
   @override
   bool get muted => false;
 }
-
 class _RemotePeer extends Fake implements RemoteParticipant {
   _RemotePeer(this.identity, this.videoTrackPublications);
   @override
@@ -22,7 +23,6 @@ class _RemotePeer extends Fake implements RemoteParticipant {
   @override
   final List<RemoteTrackPublication> videoTrackPublications;
 }
-
 class _Room extends Fake implements Room {
   _Room(this.localParticipant, this.remoteParticipants);
   @override
@@ -30,7 +30,6 @@ class _Room extends Fake implements Room {
   @override
   final UnmodifiableMapView<String, RemoteParticipant> remoteParticipants;
 }
-
 class _LocalPublication extends Fake
     implements LocalTrackPublication<LocalVideoTrack> {
   _LocalPublication(this.sid, this.track);
@@ -39,7 +38,6 @@ class _LocalPublication extends Fake
   @override
   final LocalVideoTrack track;
 }
-
 class _LocalPeer extends Fake implements LocalParticipant {
   _LocalPeer(this.publication);
   final LocalTrackPublication<LocalVideoTrack> publication;
@@ -47,22 +45,27 @@ class _LocalPeer extends Fake implements LocalParticipant {
   LocalTrackPublication? getTrackPublicationBySource(TrackSource source) =>
       publication;
 }
-
 class _LocalTrack extends Fake implements LocalVideoTrack {}
 
 void main() {
-  test('same remote identity with a new SID expires the fullscreen route', () {
+  test('remote route closes on republish, revocation, or room replacement', () {
     const oldGeneration = ScreenViewerPublicationGeneration(
       participantIdentity: 'peer',
       publicationSid: 'old-sid',
     );
     final oldRoom = _remoteRoom('peer', 'old-sid');
     final republishedRoom = _remoteRoom('peer', 'new-sid');
+    final revokedRoom = _remoteRoom('peer', 'old-sid', allowed: false);
+    final replacedRoom = _remoteRoom('peer', 'old-sid');
 
     expect(_remoteCurrent(oldRoom, oldGeneration), isTrue);
     expect(_remoteCurrent(republishedRoom, oldGeneration), isFalse);
+    expect(_remoteCurrent(revokedRoom, oldGeneration), isFalse);
+    expect(
+      _remoteCurrent(replacedRoom, oldGeneration, capturedRoom: oldRoom),
+      isFalse,
+    );
   });
-
   test('local capture uses its SID and fallback track generation', () {
     final track = _LocalTrack();
     const sid = 'local-sid';
@@ -75,7 +78,6 @@ void main() {
       same(track),
     );
   });
-
   test('local route follows SID and closes on replacement or stop', () {
     final current = _localRoom('old-sid');
     final replacement = _localRoom('new-sid');
@@ -84,22 +86,22 @@ void main() {
     expect(_localCurrent(current, 'old-sid', active: false), isFalse);
   });
 }
-
-_Room _remoteRoom(String identity, String sid) => _Room(
+_Room _remoteRoom(String identity, String sid, {bool allowed = true}) => _Room(
   _LocalPeer(_LocalPublication('unused', _LocalTrack())),
   UnmodifiableMapView({
-    identity: _RemotePeer(identity, [_ScreenPublication(sid)]),
+    identity: _RemotePeer(identity, [
+      _ScreenPublication(sid, subscriptionAllowed: allowed),
+    ]),
   }),
 );
-
-bool _remoteCurrent(Room room, Object generation) =>
+bool _remoteCurrent(Room room, Object generation, {Room? capturedRoom}) =>
     screenFullscreenGenerationIsPublished(
       room: room,
+      capturedRoom: capturedRoom ?? room,
       publisherIdentity: 'peer',
       viewerGeneration: generation,
       localCaptureActive: false,
     );
-
 _Room _localRoom(String sid) => _Room(
   _LocalPeer(_LocalPublication(sid, _LocalTrack())),
   UnmodifiableMapView(const {}),
@@ -108,6 +110,7 @@ _Room _localRoom(String sid) => _Room(
 bool _localCurrent(Room room, Object generation, {bool active = true}) =>
     screenFullscreenGenerationIsPublished(
       room: room,
+      capturedRoom: room,
       publisherIdentity: null,
       viewerGeneration: generation,
       localCaptureActive: active,

@@ -5625,6 +5625,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
     final capturedRoom = widget.state.room;
     bool stillPublished() => screenFullscreenGenerationIsPublished(
       room: widget.state.room,
+      capturedRoom: capturedRoom,
       publisherIdentity: publisherIdentity,
       viewerGeneration: viewerGeneration,
       localCaptureActive:

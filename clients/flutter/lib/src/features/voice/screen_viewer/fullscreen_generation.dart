@@ -29,13 +29,15 @@ bool screenFullscreenGenerationIsCurrent({
 
 bool screenFullscreenGenerationIsPublished({
   required Room? room,
+  required Room? capturedRoom,
   required String? publisherIdentity,
   required Object viewerGeneration,
   required bool localCaptureActive,
 }) {
+  if (room == null || !identical(room, capturedRoom)) return false;
   if (publisherIdentity == null) {
     if (!localCaptureActive) return false;
-    final publication = room?.localParticipant?.getTrackPublicationBySource(
+    final publication = room.localParticipant?.getTrackPublicationBySource(
       TrackSource.screenShareVideo,
     );
     return screenFullscreenGenerationIsCurrent(
@@ -49,10 +51,10 @@ bool screenFullscreenGenerationIsPublished({
     );
   }
 
-  final participant = room?.remoteParticipants[publisherIdentity];
+  final participant = room.remoteParticipants[publisherIdentity];
   if (participant == null) return false;
   final publication = firstDiscoverableRemoteScreenPublication(participant);
-  if (publication == null) return false;
+  if (publication == null || !publication.subscriptionAllowed) return false;
   return screenFullscreenGenerationIsCurrent(
     selectionIdentity: publisherIdentity,
     selectionGeneration: viewerGeneration,
