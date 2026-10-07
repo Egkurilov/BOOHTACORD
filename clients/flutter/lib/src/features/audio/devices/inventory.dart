@@ -11,7 +11,10 @@ mixin AudioDeviceInventory on AudioDeviceState {
     audioOutputDevices = devices
         .where((device) => device.kind == 'audiooutput')
         .toList(growable: false);
-    if (audioDeviceScanStatus != AudioDeviceScanStatus.ready) return;
+    if (audioDeviceScanStatus != AudioDeviceScanStatus.ready ||
+        (audioInputDevices.isEmpty && audioOutputDevices.isEmpty)) {
+      return;
+    }
     if (selectedAudioInputId != null &&
         !audioInputDevices.any(
           (device) => device.deviceId == selectedAudioInputId,

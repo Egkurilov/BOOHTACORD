@@ -1,4 +1,5 @@
 import 'package:boohtacord_desktop/src/features/audio/devices/controller.dart';
+import 'package:boohtacord_desktop/src/features/audio/devices/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -7,7 +8,9 @@ void main() {
       ..audioDeviceScanStatus = AudioDeviceScanStatus.ready
       ..selectedAudioInputId = 'disconnected-mic';
     addTearDown(owner.dispose);
-    owner.applyAudioDevices(const []);
+    owner.applyAudioDevices(const [
+      MediaDevice('available-speaker', 'Speakers', 'audiooutput', null),
+    ]);
 
     expect(owner.selectedAudioInputId, isNull);
     expect(
@@ -21,7 +24,9 @@ void main() {
       ..audioDeviceScanStatus = AudioDeviceScanStatus.ready
       ..selectedAudioOutputId = 'disconnected-output';
     addTearDown(owner.dispose);
-    owner.applyAudioDevices(const []);
+    owner.applyAudioDevices(const [
+      MediaDevice('available-mic', 'Microphone', 'audioinput', null),
+    ]);
 
     expect(owner.selectedAudioOutputId, isNull);
     expect(
