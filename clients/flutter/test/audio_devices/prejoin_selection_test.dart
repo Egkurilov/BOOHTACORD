@@ -2,8 +2,6 @@ import 'package:boohtacord_desktop/src/core/session/scope.dart';
 import 'package:boohtacord_desktop/src/features/audio/devices/controller.dart';
 import 'package:boohtacord_desktop/src/features/screen/lifecycle/controller.dart';
 import 'package:boohtacord_desktop/src/features/voice/admission/audio.dart';
-import 'package:boohtacord_desktop/src/features/voice/admission/join.dart';
-import 'package:boohtacord_desktop/src/features/voice/admission/prepare.dart';
 import 'package:boohtacord_desktop/src/features/voice/lifecycle/controller.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/audio_preferences.dart';
@@ -13,7 +11,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../voice_scope/fakes.dart';
 import '../voice_scope/api.dart';
 
 class _Fixture {

@@ -11,9 +11,6 @@ class PendingVoiceRoom with EventsEmittable<RoomEvent> implements Room {
   @override
   late RoomOptions roomOptions;
   @override
-  String? get selectedAudioOutputDeviceId =>
-      selectedOutput?.deviceId ?? roomOptions.defaultAudioOutputOptions.deviceId;
-  @override
   final PendingMicrophone localParticipant = PendingMicrophone();
   @override
   UnmodifiableMapView<String, RemoteParticipant> get remoteParticipants =>
@@ -33,11 +30,6 @@ class PendingVoiceRoom with EventsEmittable<RoomEvent> implements Room {
   @override
   Future<void> disconnect() async {
     disconnected++;
-  }
-
-  @override
-  Future<void> setAudioOutputDevice(MediaDevice device) async {
-    selectedOutput = device;
   }
 
   @override
