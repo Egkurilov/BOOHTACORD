@@ -52,13 +52,6 @@ class MediaDevice {
 class Hardware {
   Hardware._internal() {
     rtc.navigator.mediaDevices.ondevicechange = _onDeviceChange;
-    unawaited(
-      enumerateDevices().then((devices) {
-        selectedAudioInput ??= devices.firstWhereOrNull((element) => element.kind == 'audioinput');
-        selectedAudioOutput ??= devices.firstWhereOrNull((element) => element.kind == 'audiooutput');
-        selectedVideoInput ??= devices.firstWhereOrNull((element) => element.kind == 'videoinput');
-      }),
-    );
   }
 
   static final Hardware instance = Hardware._internal();
@@ -70,6 +63,10 @@ class Hardware {
   MediaDevice? selectedAudioOutput;
 
   MediaDevice? selectedVideoInput;
+
+  Timer? _deviceChangeDebounce;
+  Future<void>? _deviceChangeRefresh;
+  bool _deviceChangePending = false;
 
   @Deprecated('Use AudioManager.instance.isSpeakerOutputPreferred instead')
   bool? get speakerOn => AudioManager.instance.isSpeakerOutputPreferred;
@@ -102,6 +99,7 @@ class Hardware {
   Future<List<MediaDevice>> enumerateDevices({String? type}) async {
     final infos = await rtc.navigator.mediaDevices.enumerateDevices();
     var devices = infos.map((e) => MediaDevice(e.deviceId, e.label, e.kind!, e.groupId)).toList();
+    _syncSelectedDevices(devices);
     if (type != null && type.isNotEmpty) {
       devices = devices.where((d) => d.kind == type).toList();
     }
@@ -190,11 +188,48 @@ class Hardware {
     return true;
   }
 
-  dynamic _onDeviceChange(dynamic _) async {
-    final devices = await enumerateDevices();
-    selectedAudioInput ??= devices.firstWhereOrNull((element) => element.kind == 'audioinput');
-    selectedAudioOutput ??= devices.firstWhereOrNull((element) => element.kind == 'audiooutput');
-    selectedVideoInput ??= devices.firstWhereOrNull((element) => element.kind == 'videoinput');
-    onDeviceChange.add(devices);
+  void _syncSelectedDevices(List<MediaDevice> devices) {
+    final inputs = devices.where((element) => element.kind == 'audioinput');
+    final outputs = devices.where((element) => element.kind == 'audiooutput');
+    final videos = devices.where((element) => element.kind == 'videoinput');
+    if (selectedAudioInput == null || !inputs.any((device) => device.deviceId == selectedAudioInput!.deviceId)) {
+      selectedAudioInput = inputs.firstOrNull;
+    }
+    if (selectedAudioOutput == null || !outputs.any((device) => device.deviceId == selectedAudioOutput!.deviceId)) {
+      selectedAudioOutput = outputs.firstOrNull;
+    }
+    if (selectedVideoInput == null || !videos.any((device) => device.deviceId == selectedVideoInput!.deviceId)) {
+      selectedVideoInput = videos.firstOrNull;
+    }
+  }
+
+  void _onDeviceChange(dynamic _) {
+    _deviceChangePending = true;
+    _deviceChangeDebounce?.cancel();
+    _deviceChangeDebounce = Timer(const Duration(milliseconds: 150), () {
+      unawaited(_flushDeviceChange());
+    });
+  }
+
+  Future<void> _flushDeviceChange() async {
+    if (!_deviceChangePending) return;
+    _deviceChangePending = false;
+    final pending = _deviceChangeRefresh;
+    if (pending != null) {
+      await pending;
+      if (_deviceChangePending) unawaited(_flushDeviceChange());
+      return;
+    }
+    final operation = enumerateDevices();
+    _deviceChangeRefresh = operation;
+    try {
+      final devices = await operation;
+      onDeviceChange.add(devices);
+    } finally {
+      if (identical(_deviceChangeRefresh, operation)) {
+        _deviceChangeRefresh = null;
+      }
+      if (_deviceChangePending) unawaited(_flushDeviceChange());
+    }
   }
 }

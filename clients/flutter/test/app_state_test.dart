@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/features/authorization/permissions/model.dart';
+import 'package:boohtacord_desktop/src/features/audio/devices/state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:boohtacord_desktop/src/services/native_notifications.dart';
@@ -622,6 +623,7 @@ void main() {
       await state.refreshAudioDevices();
 
       expect(state.audioDeviceScanFailed, isTrue);
+      expect(state.audioDeviceScanStatus, AudioDeviceScanStatus.error);
       expect(state.audioSettingsError, contains('Не удалось получить список'));
       expect(state.audioInputDevices, isEmpty);
       expect(state.audioOutputDevices, isEmpty);

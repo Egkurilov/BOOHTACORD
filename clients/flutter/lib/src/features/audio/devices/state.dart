@@ -10,6 +10,15 @@ import '../../../core/session/scope.dart';
 import 'platform.dart';
 import '../microphone_controls/native.dart';
 
+enum AudioDeviceScanStatus { idle, initializing, ready, error }
+
+enum AudioDeviceScanFailure {
+  permissionDenied,
+  permissionRestricted,
+  initializationFailed,
+  enumerationFailed,
+}
+
 abstract class AudioDeviceState extends ChangeNotifier {
   AudioDeviceState({
     required this.readRoom,
@@ -53,6 +62,8 @@ abstract class AudioDeviceState extends ChangeNotifier {
       const AudioProcessingPreferences();
   bool audioDevicesLoading = false;
   bool audioDeviceScanFailed = false;
+  AudioDeviceScanStatus audioDeviceScanStatus = AudioDeviceScanStatus.idle;
+  AudioDeviceScanFailure? audioDeviceScanFailure;
   bool audioInputSwitching = false;
   bool audioOutputSwitching = false;
   int audioInputSwitchRevision = 0;
@@ -69,6 +80,8 @@ abstract class AudioDeviceState extends ChangeNotifier {
     microphoneMutedIntent = true;
     captureNoiseOverride = null;
     audioDevicesLoading = false;
+    audioDeviceScanStatus = AudioDeviceScanStatus.idle;
+    audioDeviceScanFailure = null;
     audioInputSwitching = false;
     audioOutputSwitching = false;
     _releaseQueuedAudioRefresh();
@@ -90,6 +103,8 @@ abstract class AudioDeviceState extends ChangeNotifier {
     selectedAudioInputId = null;
     selectedAudioOutputId = null;
     audioDeviceWarning = null;
+    audioDeviceScanStatus = AudioDeviceScanStatus.idle;
+    audioDeviceScanFailure = null;
     audioProcessing = const AudioProcessingPreferences();
   }
 

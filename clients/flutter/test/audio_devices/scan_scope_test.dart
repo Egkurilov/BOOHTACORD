@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:boohtacord_desktop/src/core/session/scope.dart';
 import 'package:boohtacord_desktop/src/features/audio/devices/controller.dart';
+import 'package:boohtacord_desktop/src/features/audio/devices/state.dart';
 
 void main() {
   test('bootstraps native audio before the first inventory', () async {
@@ -27,7 +29,40 @@ void main() {
 
     expect(owner.audioInputDevices.single.deviceId, 'mac-input');
     expect(owner.audioOutputDevices.single.deviceId, 'mac-output');
+    expect(owner.audioDeviceScanStatus, AudioDeviceScanStatus.ready);
   });
+
+  test(
+    'concurrent bootstrap requests share native initialization and scan',
+    () async {
+      final nativeReady = Completer<void>();
+      var nativeCalls = 0;
+      var scanCalls = 0;
+      final owner = AudioDeviceController(
+        readRoom: () => null,
+        nativeBootstrap: () {
+          nativeCalls++;
+          return nativeReady.future;
+        },
+        loader: () async {
+          scanCalls++;
+          return const [
+            MediaDevice('mac-input', 'Mac microphone', 'audioinput', null),
+          ];
+        },
+      );
+      addTearDown(owner.dispose);
+
+      final first = owner.bootstrap();
+      final second = owner.bootstrap();
+      expect(nativeCalls, 1);
+      nativeReady.complete();
+      await Future.wait([first, second]);
+
+      expect(scanCalls, 1);
+      expect(owner.audioDeviceScanStatus, AudioDeviceScanStatus.ready);
+    },
+  );
 
   test('keeps the inventory available when native bootstrap fails', () async {
     final owner = AudioDeviceController(
@@ -46,6 +81,43 @@ void main() {
     expect(owner.audioInputDevices.single.deviceId, 'mac-input');
     expect(owner.audioDeviceScanFailed, isFalse);
     expect(owner.audioDeviceWarning, contains('аудиосистему'));
+  });
+
+  test(
+    'permission bootstrap failure is distinct from an enumeration failure',
+    () async {
+      final owner = AudioDeviceController(
+        readRoom: () => null,
+        nativeBootstrap: () =>
+            Future<void>.error(PlatformException(code: 'permissionDenied')),
+        loader: () async => const <MediaDevice>[],
+      );
+      addTearDown(owner.dispose);
+
+      await owner.bootstrap();
+
+      expect(owner.audioDeviceScanStatus, AudioDeviceScanStatus.error);
+      expect(
+        owner.audioDeviceScanFailure,
+        AudioDeviceScanFailure.permissionDenied,
+      );
+      expect(owner.audioSettingsError, contains('запретил доступ'));
+    },
+  );
+
+  test('a single real endpoint is a ready inventory, not an error', () async {
+    final owner = AudioDeviceController(
+      readRoom: () => null,
+      loader: () async => const [
+        MediaDevice('only-input', 'Only microphone', 'audioinput', null),
+      ],
+    );
+    addTearDown(owner.dispose);
+
+    await owner.refreshAudioDevices();
+
+    expect(owner.audioDeviceScanStatus, AudioDeviceScanStatus.ready);
+    expect(owner.audioDeviceScanFailed, isFalse);
   });
 
   test('an old scan cannot finish a new account scan', () async {

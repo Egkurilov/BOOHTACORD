@@ -67,10 +67,15 @@ class AudioDeviceController extends AudioDeviceState
     if (bootstrapFailure == null || isDisposed || !scope.capture().isActive) {
       return;
     }
-    audioDeviceWarning =
-        'Не удалось инициализировать аудиосистему: ${bootstrapFailure.runtimeType}.';
+    final failure = classifyAudioDeviceFailure(
+      bootstrapFailure,
+      bootstrap: true,
+    );
+    audioDeviceWarning = audioDeviceFailureMessage(failure);
     if (audioInputDevices.isEmpty && audioOutputDevices.isEmpty) {
       audioDeviceScanFailed = true;
+      audioDeviceScanStatus = AudioDeviceScanStatus.error;
+      audioDeviceScanFailure = failure;
       audioSettingsError = audioDeviceWarning;
     }
     notifyListeners();

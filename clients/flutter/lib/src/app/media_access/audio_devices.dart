@@ -5,6 +5,7 @@ import '../../services/native_noise_suppression.dart';
 import '../composition/owners.dart';
 import '../../features/audio/preferences/microphone.dart';
 import '../../features/audio/microphone_controls/native.dart';
+import '../../features/audio/devices/state.dart';
 
 mixin AppAudioDevicesAccess on AppOwners {
   MicrophoneSettings get microphoneSettings =>
@@ -58,6 +59,12 @@ mixin AppAudioDevicesAccess on AppOwners {
 
   set audioDeviceScanFailed(bool value) =>
       audioDevices.audioDeviceScanFailed = value;
+
+  AudioDeviceScanStatus get audioDeviceScanStatus =>
+      audioDevices.audioDeviceScanStatus;
+
+  AudioDeviceScanFailure? get audioDeviceScanFailure =>
+      audioDevices.audioDeviceScanFailure;
 
   bool get audioInputSwitching => audioDevices.audioInputSwitching;
 
