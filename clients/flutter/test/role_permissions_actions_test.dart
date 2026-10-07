@@ -29,7 +29,9 @@ void main() {
         tester.getRect(find.byKey(const ValueKey('role-permissions-action-bar'))).top,
       ),
     );
-    await tester.tap(categoryDelete);
+    await tester.tap(
+      find.descendant(of: categoryDelete, matching: find.byType(Checkbox)),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Разрешение удаления действует на любые каналы.'), findsOneWidget);
     await tester.tap(find.text('Сохранить'));

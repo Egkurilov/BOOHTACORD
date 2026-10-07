@@ -11,6 +11,7 @@ import 'compact_cards.dart';
 import 'conflict_review.dart';
 import 'desktop_table.dart';
 import 'filters.dart';
+import 'loading_state.dart';
 import 'reset_result.dart';
 import 'state.dart';
 
@@ -42,7 +43,7 @@ class _AdminMembersPanelState extends State<AdminMembersPanel> {
       if (c.error != null) _notice(c.error!, true),
       if (c.status != null) _notice(c.status!, false),
       Expanded(child: c.loading && c.accounts.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? const AdminMembersLoadingState()
           : c.error != null && c.accounts.isEmpty ? const Center(child: Text('Список участников недоступен.'))
           : c.accounts.isEmpty ? const Center(child: Text('Участников пока нет.')) : _list(context)),
     ]),

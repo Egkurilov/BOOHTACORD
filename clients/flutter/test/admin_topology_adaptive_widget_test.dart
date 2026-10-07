@@ -99,6 +99,6 @@ void main() {
 }
 
 void _focusEntry(WidgetTester tester, Finder entry) {
-  final rowFocus = find.ancestor(of: entry, matching: find.byType(Focus)).first;
-  tester.state<FocusState>(rowFocus).focusNode.requestFocus();
+  final material = find.descendant(of: entry, matching: find.byType(Material));
+  Focus.of(tester.element(material)).requestFocus();
 }

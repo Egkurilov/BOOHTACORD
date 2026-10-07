@@ -57,7 +57,9 @@ void main() {
     expect(find.text('Android · приложение · приём'), findsOneWidget);
     expect(find.textContaining('Размер кадра · 540 × 1170'), findsOneWidget);
     expect(find.textContaining('Декодировано · 14.5 FPS'), findsOneWidget);
-    await tester.tap(find.text('Дополнительные измерения'));
+    final extraMetrics = find.text('Дополнительные измерения');
+    await tester.ensureVisible(extraMetrics);
+    await tester.tap(extraMetrics);
     await tester.pumpAndSettle();
     expect(find.textContaining('Битрейт · 109.5 кбит/с'), findsOneWidget);
     expect(find.textContaining('RTT · 36 мс'), findsOneWidget);

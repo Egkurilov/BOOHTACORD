@@ -53,7 +53,11 @@ class AdminMembersFilters extends StatelessWidget {
                   DropdownMenuItem(value: 'ADMINISTRATOR', child: Text('Администратор')),
                 ],
                 selectedItemBuilder: (_) => narrow
-                    ? const [Text('Все'), Text('Участ.'), Text('Админ.')]
+                    ? const [
+                        Text('Все', softWrap: false, maxLines: 1),
+                        Text('Участ.', softWrap: false, maxLines: 1),
+                        Text('Админ.', softWrap: false, maxLines: 1),
+                      ]
                     : const [Text('Все роли'), Text('Пользователь'), Text('Администратор')],
                 onChanged: (value) { if (value != null) onRoleChanged(value); },
               ),

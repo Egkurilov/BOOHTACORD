@@ -69,10 +69,7 @@ void main() {
       final permission = find.byKey(
         const ValueKey('permission-checkbox:channel.text.create'),
       );
-      final save = find.text('Сохранить');
-      await tester.tap(find.text('Обновить'));
-      await tester.pumpAndSettle();
-
+      final save = find.widgetWithText(FilledButton, 'Сохранить');
       var sawMember = false;
       var sawAdministrator = false;
       var sawPermission = false;
@@ -85,7 +82,7 @@ void main() {
             _hasPrimaryFocus(tester, administrator);
         sawPermission = sawPermission ||
             _hasPrimaryFocus(tester, permission);
-        sawAction = sawAction || _hasPrimaryFocus(tester, save);
+        sawAction = sawAction || Focus.of(tester.element(save)).hasPrimaryFocus;
       }
       expect(sawMember, isTrue);
       expect(sawAdministrator, isTrue);

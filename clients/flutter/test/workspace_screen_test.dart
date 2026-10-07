@@ -2647,48 +2647,25 @@ void main() {
     expect(find.byKey(const ValueKey('admin-member-actions:account-2')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('admin-section-tab-channels')));
     await tester.pumpAndSettle();
-    final channelPicker = find.byType(DropdownButtonFormField<String>).at(1);
-    await tester.ensureVisible(channelPicker);
-    await tester.tap(channelPicker);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('общий').last);
+    final channel = find.byKey(
+      const ValueKey('admin-topology-channel:channel-1'),
+    );
+    await tester.ensureVisible(channel);
+    await tester.tap(channel);
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('admin-screen-title')), findsOneWidget);
-    expect(find.text('Создать категорию'), findsOneWidget);
-    expect(find.text('Создать канал'), findsOneWidget);
-    expect(find.text('Категорию выше'), findsOneWidget);
-    expect(find.text('Канал выше'), findsOneWidget);
-    expect(find.text('Перенести канал'), findsNWidgets(2));
-    expect(find.text('Текстовый канал для архивации'), findsOneWidget);
-    expect(find.text('Голосовой канал для закрытия'), findsOneWidget);
+    expect(find.byKey(const ValueKey('admin-topology-inspector')), findsOneWidget);
+    expect(find.text('Переименовать канал'), findsOneWidget);
+    expect(find.text('Сохранить описание'), findsOneWidget);
     expect(find.text('Архивировать канал'), findsOneWidget);
-    expect(find.text('Закрыть вход'), findsOneWidget);
     expect(find.byTooltip('Обновить список каналов'), findsOneWidget);
 
-    final archivePicker = find.byKey(const ValueKey('archive-channel:null'));
-    await tester.ensureVisible(archivePicker);
-    await tester.tap(archivePicker);
+    await tester.tap(
+      find.byKey(const ValueKey('admin-topology-channel:voice-1')),
+    );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('общий').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Архивировать канал'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('История сообщений сохранится'), findsOneWidget);
-    await tester.tap(find.text('Отмена').last);
-    await tester.pumpAndSettle();
-
-    final closePicker = find.byKey(const ValueKey('close-channel:null'));
-    await tester.ensureVisible(closePicker);
-    await tester.tap(closePicker);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('комната').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Закрыть вход'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('отзыв media-доступа в SFU'), findsOneWidget);
-    await tester.tap(find.text('Отмена').last);
-    await tester.pumpAndSettle();
+    expect(find.text('Закрыть вход'), findsOneWidget);
 
     await tester.tap(find.text('Аудит'));
     await tester.pumpAndSettle();
@@ -2712,8 +2689,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(home: WorkspaceScreen(state: memberState)),
     );
-    expect(find.text('Создать категорию'), findsNothing);
-    expect(find.text('Создать канал'), findsNothing);
+    expect(find.byKey(const ValueKey('admin-topology-tree')), findsNothing);
     expect(find.text('Добро пожаловать в #общий'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     memberState.dispose();

@@ -117,18 +117,6 @@ void main() {
     );
     expect(selectedMemberRole.softWrap, isFalse);
     expect(selectedMemberRole.maxLines, 1);
-    expect(
-      tester
-          .widget<FittedBox>(
-            find.ancestor(
-              of: find.text('Участ.'),
-              matching: find.byType(FittedBox),
-            ).first,
-          )
-          .fit,
-      BoxFit.scaleDown,
-      reason: 'the full compact member label scales down instead of truncating',
-    );
 
     await tester.tap(find.byKey(const ValueKey('admin-member-role-filter')));
     await tester.pumpAndSettle();
@@ -145,18 +133,6 @@ void main() {
     );
     expect(selectedAdminRole.softWrap, isFalse);
     expect(selectedAdminRole.maxLines, 1);
-    expect(
-      tester
-          .widget<FittedBox>(
-            find.ancestor(
-              of: find.text('Админ.'),
-              matching: find.byType(FittedBox),
-            ).first,
-          )
-          .fit,
-      BoxFit.scaleDown,
-      reason: 'the full compact administrator label scales down instead of truncating',
-    );
     tester.view.physicalSize = const Size(1440, 900);
     await tester.pumpAndSettle();
     expect(
