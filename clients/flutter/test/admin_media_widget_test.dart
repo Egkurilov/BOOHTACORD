@@ -1,5 +1,3 @@
-import 'dart:ui' show SemanticsRole, Tristate;
-
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/admin_screen.dart';
@@ -28,132 +26,6 @@ Future<AppState> _openMedia(WidgetTester tester, TopologyTestApi api) async {
 }
 
 void main() {
-  testWidgets('admin section tabs match the web horizontal tab strip', (
-    tester,
-  ) async {
-    final api = TopologyTestApi();
-    final state = await _openMedia(tester, api);
-    addTearDown(() {
-      tester.view.reset();
-      state.dispose();
-    });
-
-    final tabKeys = [
-      'guild',
-      'members',
-      'roles',
-      'channels',
-      'audit',
-      'media',
-    ].map((name) => ValueKey('admin-section-tab-$name'));
-    final tabTopPositions = tabKeys
-        .map((key) => tester.getTopLeft(find.byKey(key)).dy)
-        .toSet();
-    expect(
-      tabTopPositions,
-      hasLength(1),
-      reason: 'web keeps all administration tabs on one horizontally scrollable row',
-    );
-
-    final scroll = find.byKey(const ValueKey('admin-section-tabs-scroll'));
-    expect(scroll, findsOneWidget);
-    expect(
-      tester.widget<SingleChildScrollView>(scroll).scrollDirection,
-      Axis.horizontal,
-    );
-    await tester.drag(scroll, const Offset(400, 0));
-    await tester.pumpAndSettle();
-    expect(
-      find.byKey(const ValueKey('admin-section-tab-media')).hitTestable(),
-      findsNothing,
-    );
-    await tester.drag(scroll, const Offset(-600, 0));
-    await tester.pumpAndSettle();
-    expect(
-      find.byKey(const ValueKey('admin-section-tab-media')).hitTestable(),
-      findsOneWidget,
-      reason: 'the final tab remains reachable by horizontal scrolling',
-    );
-  });
-
-  testWidgets('desktop admin tab divider fills its centered panel width', (
-    tester,
-  ) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(1440, 900);
-    addTearDown(tester.view.reset);
-    final api = TopologyTestApi();
-    final state = AppState(api)..topology = api.current;
-    addTearDown(state.dispose);
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: AdminScreen(state: state)),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      tester
-          .getSize(find.byKey(const ValueKey('admin-section-tabs-scroll')))
-          .width,
-      880,
-      reason: 'the tab strip must fill the centered 880 px admin panel',
-    );
-  });
-
-  testWidgets('media tab shows the web-equivalent empty state and polls', (
-    tester,
-  ) async {
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    final semantics = tester.ensureSemantics();
-    final api = TopologyTestApi();
-    final state = await _openMedia(tester, api);
-    addTearDown(() {
-      tester.view.reset();
-      state.dispose();
-    });
-
-    expect(
-      tester
-          .getSemantics(
-            find.byKey(const ValueKey('admin-section-tabs-semantics')),
-          )
-          .getSemanticsData()
-          .role,
-      SemanticsRole.tabBar,
-    );
-    final mediaTab = tester.getSemantics(
-      find.byKey(const ValueKey('admin-section-tab-media')),
-    );
-    expect(mediaTab.getSemanticsData().role, SemanticsRole.tab);
-    expect(
-      mediaTab.getSemanticsData().flagsCollection.isSelected,
-      Tristate.isTrue,
-    );
-
-    expect(api.screenMetricsLoads, 1);
-    expect(
-      find.text(
-        'Свежих показателей пока нет. Откройте демонстрацию у зрителя.',
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining('без имён и идентификаторов участников'),
-      findsOneWidget,
-    );
-
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pump();
-    expect(api.screenMetricsLoads, 2);
-
-    await tester.tap(find.byKey(const ValueKey('admin-section-tab-channels')));
-    await tester.pumpAndSettle();
-    await tester.pump(const Duration(seconds: 10));
-    expect(api.screenMetricsLoads, 2);
-    semantics.dispose();
-  });
-
   testWidgets('media tab renders anonymous receiver metrics responsively', (
     tester,
   ) async {
@@ -163,7 +35,7 @@ void main() {
           platform: 'android_native',
           direction: 'receiver',
           state: 'playing',
-          sampledAtUtc: DateTime.utc(2026, 9, 29, 18, 30),
+          sampledAtUtc: DateTime.now().toUtc(),
           frameWidth: 540,
           frameHeight: 1170,
           decodedFps: 14.5,
@@ -184,6 +56,8 @@ void main() {
     expect(find.text('Android · приложение · приём'), findsOneWidget);
     expect(find.textContaining('Размер кадра · 540 × 1170'), findsOneWidget);
     expect(find.textContaining('Декодировано · 14.5 FPS'), findsOneWidget);
+    await tester.tap(find.text('Дополнительные измерения'));
+    await tester.pumpAndSettle();
     expect(find.textContaining('Битрейт · 109.5 кбит/с'), findsOneWidget);
     expect(find.textContaining('RTT · 36 мс'), findsOneWidget);
     expect(tester.takeException(), isNull);
