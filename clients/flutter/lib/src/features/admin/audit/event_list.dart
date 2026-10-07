@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../theme.dart';
 import 'controller.dart';
+import 'empty_state.dart';
 import 'event_details.dart';
 import 'presentation.dart';
 
@@ -38,9 +39,7 @@ class AdminAuditEventList extends StatelessWidget {
       return const Center(child: Text('Записей пока нет.'));
     }
     if (controller.filteredEvents.isEmpty && controller.filters.active) {
-      return const Center(
-        child: Text('Среди загруженных записей совпадений нет.'),
-      );
+      return AdminAuditNoMatches(controller: controller);
     }
     return ListView(
       key: const ValueKey('admin-audit-events'),

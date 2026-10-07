@@ -17,6 +17,13 @@ class AdminAuditController extends ChangeNotifier {
   bool hasLoaded = false;
   bool isLoading = false;
   bool isLoadingMore = false;
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   bool get hasMore => cursor != null;
   bool get isLoadingInitial => isLoading && events.isEmpty;
@@ -26,11 +33,13 @@ class AdminAuditController extends ChangeNotifier {
       groupAdminAuditByDay(filteredEvents);
 
   void updateFilters(AdminAuditFilters value) {
+    if (_disposed) return;
     filters = value;
     notifyListeners();
   }
 
   void resetFilters() {
+    if (_disposed) return;
     filters = const AdminAuditFilters();
     notifyListeners();
   }
@@ -44,13 +53,14 @@ class AdminAuditController extends ChangeNotifier {
   }
 
   Future<void> load({String? before}) async {
-    if (isLoading) return;
+    if (_disposed || isLoading) return;
     isLoading = true;
     isLoadingMore = before != null;
     error = null;
     notifyListeners();
     try {
       final page = await _loadPage(before: before);
+      if (_disposed) return;
       events = before == null
           ? page.events
           : appendAdminAuditEvents(events, page.events);
@@ -65,11 +75,13 @@ class AdminAuditController extends ChangeNotifier {
         filters = filters.copyWith(clearEventType: true);
       }
     } catch (_) {
-      error = 'Не удалось загрузить журнал аудита.';
+      if (!_disposed) error = 'Не удалось загрузить журнал аудита.';
     } finally {
-      isLoading = false;
-      isLoadingMore = false;
-      notifyListeners();
+      if (!_disposed) {
+        isLoading = false;
+        isLoadingMore = false;
+        notifyListeners();
+      }
     }
   }
 }

@@ -72,4 +72,13 @@ void main() {
     expect(controller.events, hasLength(1));
     expect(calls, 2);
   });
+
+  test('does not notify listeners when a request finishes after dispose', () async {
+    final page = Completer<AdminAuditPage>();
+    final controller = AdminAuditController(({String? before}) => page.future);
+    final loading = controller.load();
+    controller.dispose();
+    page.complete(const AdminAuditPage(events: []));
+    await expectLater(loading, completes);
+  });
 }
