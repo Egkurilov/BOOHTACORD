@@ -20,6 +20,7 @@ import { deliverProtectedHintBatch } from './protected_refresh/batch'
 import { processRealtime } from '../telemetry/realtime_flow/process'
 import { LatestScreenPreviewReader } from '../voice/screen_preview/reader'
 import { parseScreenPreviewHint } from '../voice/screen_preview/client'
+import { screenPreviewCardVisibility } from '../voice/screen_preview/visibility'
 
 interface Refreshable { error: string | null; refresh(): Promise<void> }
 interface TextHistory extends Refreshable { channelId: string | null; refreshMessages?(ids: string[]): Promise<unknown> }
@@ -65,7 +66,7 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
   const previews = new LatestScreenPreviewReader({
     apply: (hint, bytes) => { const active = voice.active; if (active && active.leaseId !== hint.leaseId) active.room.applyScreenPreview?.(hint.leaseId, bytes) },
     clear: leaseId => voice.active?.room.clearScreenPreview?.(leaseId),
-  })
+  }, undefined, undefined, { visibility: screenPreviewCardVisibility })
   let active = false
   let lifecycle = 0
   function onEvent(event: RealtimeEvent, notify = true): void | Promise<void> {
@@ -102,6 +103,7 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
   return {
     start(): void {
       active = true
+      previews.resume()
       gate = createProtectedRefreshGate(); stores = coalesceStores(original, gate)
       lifecycle += 1
       notifications.start(accountID)

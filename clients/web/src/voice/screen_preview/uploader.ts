@@ -1,5 +1,14 @@
 import { beginScreenPreview, invalidateScreenPreview, uploadScreenPreview, type ScreenPreviewRequest } from './client'
 import { validScreenThumbnail } from '../screen_thumbnail'
+import { ScreenPreviewRequestScopes } from './request_scopes'
+
+const shutdownGraceMs = 250
+async function settlesWithin(operation: Promise<unknown>): Promise<boolean> {
+  let timer!: ReturnType<typeof setTimeout>
+  const settled = operation.then(() => true, () => true)
+  return Promise.race([settled, new Promise<boolean>((resolve) => { timer = setTimeout(() => resolve(false), shutdownGraceMs) })])
+    .finally(() => clearTimeout(timer))
+}
 
 export class LatestScreenPreviewUploader {
   private leaseId = ''
@@ -10,8 +19,15 @@ export class LatestScreenPreviewUploader {
   private beginning: Promise<void> | null = null
   private stopping: Promise<void> | null = null
   private epoch = 0
+  private requestScopes: ScreenPreviewRequestScopes
 
-  constructor(private readonly request: ScreenPreviewRequest = fetch) {}
+  constructor(request: ScreenPreviewRequest = fetch) { this.requestScopes = new ScreenPreviewRequestScopes(request) }
+
+  private async invalidateBounded(leaseId: string, generationId: string): Promise<void> {
+    const scope = this.requestScopes.create()
+    const operation = invalidateScreenPreview(leaseId, generationId, scope.request).catch(() => undefined).finally(scope.release)
+    if (!await settlesWithin(operation)) { scope.abort(); scope.release() }
+  }
 
   async start(leaseId: string): Promise<void> {
     if (this.leaseId === leaseId && this.generationId) return
@@ -23,17 +39,20 @@ export class LatestScreenPreviewUploader {
     this.revision = 0
     this.pending = null
     const operation = (async () => {
-      if (previous) await invalidateScreenPreview(previous.leaseId, previous.generationId, this.request).catch(() => undefined)
-      const generationId = await beginScreenPreview(leaseId, this.request)
+      if (previous) await this.invalidateBounded(previous.leaseId, previous.generationId)
+      if (epoch !== this.epoch) return
+      const scope = this.requestScopes.create()
+      let generationId: string
+      try { generationId = await beginScreenPreview(leaseId, scope.request) } finally { scope.release() }
       if (epoch !== this.epoch) {
-        await invalidateScreenPreview(leaseId, generationId, this.request).catch(() => undefined)
+        await this.invalidateBounded(leaseId, generationId)
         return
       }
       this.generationId = generationId
       this.drain()
     })()
     this.beginning = operation
-    try { await operation } finally { if (epoch === this.epoch) this.beginning = null }
+    try { await operation } finally { if (this.beginning === operation) this.beginning = null }
   }
 
   offer(bytes: Uint8Array): void {
@@ -66,9 +85,10 @@ export class LatestScreenPreviewUploader {
     const beginning = this.beginning
     this.leaseId = ''
     this.generationId = ''
-    await this.pumping?.catch(() => undefined)
-    await beginning?.catch(() => undefined)
-    if (leaseId && generationId) await invalidateScreenPreview(leaseId, generationId, this.request).catch(() => undefined)
+    this.requestScopes.abortAll()
+    const pending = Promise.all([this.pumping?.catch(() => undefined), beginning?.catch(() => undefined)])
+    await settlesWithin(pending)
+    if (leaseId && generationId) await this.invalidateBounded(leaseId, generationId)
   }
 
   private drain(): void {
@@ -83,8 +103,10 @@ export class LatestScreenPreviewUploader {
     while (this.pending && this.generationId) {
       const bytes = this.pending, leaseId = this.leaseId, generationId = this.generationId
       this.pending = null
-      try { await uploadScreenPreview(leaseId, generationId, ++this.revision, bytes, this.request) }
+      const scope = this.requestScopes.create()
+      try { await uploadScreenPreview(leaseId, generationId, ++this.revision, bytes, scope.request) }
       catch { /* The next capture is the bounded latest-state retry. */ }
+      finally { scope.release() }
     }
   }
 }
