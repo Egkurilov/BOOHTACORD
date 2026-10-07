@@ -834,6 +834,13 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                         role: SemanticsRole.tabBar,
                                         label: 'Разделы администрирования',
                                         child: Row(
+                                          // Keep the tab strip sized to its
+                                          // content.  A max-sized Row inside a
+                                          // horizontal scroll view can resolve
+                                          // to the viewport width on desktop,
+                                          // which clips the final tab from the
+                                          // rendered and accessibility trees.
+                                          mainAxisSize: MainAxisSize.min,
                                           children: [
                                             _adminSectionTab(
                                               'Гильдия',
@@ -875,6 +882,10 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                               'Медиа',
                                               _AdminSection.media,
                                             ),
+                                            if (MediaQuery.sizeOf(context)
+                                                    .width >
+                                                1023)
+                                              const SizedBox(width: 8),
                                             _adminSectionTab(
                                               MediaQuery.sizeOf(context).width <
                                                       600

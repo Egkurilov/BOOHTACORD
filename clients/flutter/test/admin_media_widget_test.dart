@@ -45,6 +45,7 @@ void main() {
       'channels',
       'audit',
       'media',
+      'readiness',
     ].map((name) => ValueKey('admin-section-tab-$name'));
     final tabTopPositions = tabKeys
         .map((key) => tester.getTopLeft(find.byKey(key)).dy)
@@ -74,6 +75,15 @@ void main() {
       findsOneWidget,
       reason: 'the final tab remains reachable by horizontal scrolling',
     );
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('admin-section-tab-readiness')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('admin-section-tab-readiness')).hitTestable(),
+      findsOneWidget,
+      reason: 'the readiness tab remains reachable after the media tab',
+    );
   });
 
   testWidgets('desktop admin tab divider fills its centered panel width', (
@@ -98,6 +108,11 @@ void main() {
           .width,
       880,
       reason: 'the tab strip must fill the centered 880 px admin panel',
+    );
+    expect(
+      find.byKey(const ValueKey('admin-section-tab-readiness')),
+      findsOneWidget,
+      reason: 'desktop must expose the readiness tab in the admin tab strip',
     );
   });
 
