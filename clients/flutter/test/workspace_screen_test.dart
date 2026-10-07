@@ -1346,7 +1346,13 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
     await tester.pumpAndSettle();
 
-    expect(find.text('Профиль'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('profile-screen-title-focus')),
+        matching: find.text('Профиль'),
+      ),
+      findsOneWidget,
+    );
     expect(find.byTooltip('Открыть навигацию'), findsNothing);
     expect(find.byTooltip('Открыть участников'), findsNothing);
     expect(find.byTooltip('Назад'), findsNothing);
@@ -1369,7 +1375,13 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
     await tester.pumpAndSettle();
 
-    expect(find.text('Профиль'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('profile-screen-title-focus')),
+        matching: find.text('Профиль'),
+      ),
+      findsOneWidget,
+    );
     expect(find.byTooltip('Назад'), findsOneWidget);
     expect(find.byTooltip('Открыть навигацию'), findsOneWidget);
     expect(tester.getRect(find.byTooltip('Назад')).left, lessThan(24));
