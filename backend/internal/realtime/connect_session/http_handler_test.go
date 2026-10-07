@@ -12,6 +12,7 @@ import (
 	"github.com/coder/websocket/wsjson"
 	"voice-platform/backend/internal/identity/authenticate_session"
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
+	"voice-platform/backend/internal/realtime/admit_connection"
 )
 
 func TestHandlerSendsReadyEventForVerifiedSession(t *testing.T) {
@@ -81,6 +82,33 @@ func TestHandlerClosesSocketWhenSessionIsRevoked(t *testing.T) {
 	if websocket.CloseStatus(err) != websocket.StatusPolicyViolation {
 		t.Fatalf("CloseStatus() = %v, error = %v", websocket.CloseStatus(err), err)
 	}
+}
+
+func TestHandlerRejectsOverQuotaBeforeUpgradeAndReleasesOnClose(t *testing.T) {
+	quota, err := admitconnection.New(admitconnection.Config{GlobalLimit: 1, AccountLimit: 1, SessionLimit: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := NewHandlerWithAdmission(nil, 0, time.Now, nil, nil, nil, quota)
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		handler.ServeHTTP(writer, request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: "member"})))
+	}))
+	defer server.Close()
+	endpoint := "ws" + strings.TrimPrefix(server.URL, "http")
+	first, _, err := websocket.Dial(context.Background(), endpoint, &websocket.DialOptions{HTTPHeader: http.Header{"Origin": {server.URL}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, response, err := websocket.Dial(context.Background(), endpoint, &websocket.DialOptions{HTTPHeader: http.Header{"Origin": {server.URL}}})
+	if err == nil || response == nil || response.StatusCode != http.StatusTooManyRequests || response.Header.Get("Retry-After") != "1" {
+		t.Fatalf("over-quota response = %#v, error = %v", response, err)
+	}
+	first.CloseNow()
+	third, _, err := websocket.Dial(context.Background(), endpoint, &websocket.DialOptions{HTTPHeader: http.Header{"Origin": {server.URL}}})
+	if err != nil {
+		t.Fatalf("connection slot was not released: %v", err)
+	}
+	third.CloseNow()
 }
 
 type authenticatorFunc func(context.Context, string) (authenticatesession.Principal, error)

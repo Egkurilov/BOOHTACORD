@@ -48,8 +48,8 @@ func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *
 	observabilityroutes.ConfigureStatusRoutes(mux, maintenanceService, metrics)
 	channelsroutes.ConfigureChannelRoutes(mux, database, sessionService, events)
 	channelsroutes.ConfigureVoiceClosureRoutes(mux, database, sessionService, configuration.MediaSnapshot)
-	chatroutes.ConfigureChatAndRealtimeRoutes(mux, database, sessionService, metrics, events)
-	if err := storageroutes.ConfigureStorageRoutes(mux, database, sessionService, configuration.AttachmentRoot, configuration.UploadLimiter, metrics, func(space reserve.Space, manager *reserve.Manager) {
+	chatroutes.ConfigureChatAndRealtimeRoutes(mux, database, sessionService, metrics, events, configuration.RealtimeConnectionLimiter)
+	if err := storageroutes.ConfigureStorageRoutes(mux, database, sessionService, configuration.AttachmentRoot, configuration.UploadLimiter, configuration.UploadAccountLimiter, configuration.UploadDeploymentLimiter, configuration.UploadAdmissionLimiter, metrics, func(space reserve.Space, manager *reserve.Manager) {
 		observabilityroutes.ConfigureReadinessRoutes(mux, database, sessionService, configuration.MediaSnapshot, space, manager)
 	}); err != nil {
 		return nil, fmt.Errorf("configure attachment routes: %w", err)

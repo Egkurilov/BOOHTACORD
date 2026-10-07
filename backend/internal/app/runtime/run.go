@@ -19,6 +19,7 @@ import (
 	previewmemory "voice-platform/backend/internal/media/screen_preview/memory"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
 	dependencies "voice-platform/backend/internal/observability/observe_dependencies"
+	ratelimit "voice-platform/backend/internal/security/rate_limit"
 	writerlock "voice-platform/backend/internal/storage/acquire_writer_lock"
 	reserve "voice-platform/backend/internal/storage/reserve_upload_space"
 )
@@ -45,6 +46,14 @@ func Run(ctx context.Context) (result error) {
 	}
 	resources.Add(stopTelemetry)
 	metrics := httpmetrics.New()
+	if err := metrics.RegisterCollector(ratelimit.NewCollector(map[string]*ratelimit.Limiter{
+		"registration": configuration.RegistrationLimiter, "login_source": configuration.LoginLimiter,
+		"login_account_failure": configuration.LoginFailureLimiter, "password_reset": configuration.PasswordResetLimiter,
+		"upload_source": configuration.UploadLimiter, "upload_account": configuration.UploadAccountLimiter,
+		"upload_deployment": configuration.UploadDeploymentLimiter, "telemetry": configuration.TelemetryLimiter,
+	})); err != nil {
+		return err
+	}
 	poolMetrics := pool.NewMetrics()
 	if err := metrics.RegisterCollector(poolMetrics); err != nil {
 		return err

@@ -63,21 +63,21 @@ func (service Service) Login(context context.Context, input Input) (result Resul
 	}
 	account, err := service.accounts.FindByLogin(context, login)
 	if errors.Is(err, ErrAccountNotFound) {
+		password.VerifyUnknown(input.Password)
 		return Result{}, ErrInvalidCredentials
 	}
 	if err != nil {
 		return Result{}, fmt.Errorf("find account: %w", err)
 	}
-	if account.Blocked {
-		return Result{}, ErrBlocked
-	}
-
 	valid, err := password.Verify(input.Password, account.PasswordHash)
 	if err != nil {
 		return Result{}, fmt.Errorf("verify password hash: %w", err)
 	}
 	if !valid {
 		return Result{}, ErrInvalidCredentials
+	}
+	if account.Blocked {
+		return Result{}, ErrBlocked
 	}
 	issued, err := session.Issue()
 	if err != nil {

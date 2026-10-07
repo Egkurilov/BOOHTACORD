@@ -5,6 +5,13 @@ LiveKit configuration and contains no build instructions. `compose.dev.yaml`
 adds the API/web source build for development. The root Compose file forwards
 to this configuration during migration.
 
+The API trusts forwarded client addresses only from `TRUSTED_PROXY_CIDRS`.
+Production Compose gives Caddy the fixed `PRIVATE_PROXY_IP` on the private
+network and defaults trust to that single address. If the private subnet or
+proxy address conflicts with the host network, change `PRIVATE_NETWORK_SUBNET`,
+`PRIVATE_PROXY_IP`, and `TRUSTED_PROXY_CIDRS` together. Keep the API attached
+only to the internal network; do not publish its port.
+
 From the repository root, validate without contacting a Docker daemon:
 
 ```sh

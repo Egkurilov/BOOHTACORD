@@ -5,6 +5,7 @@ import "github.com/prometheus/client_golang/prometheus"
 var uploadFailureReasons = map[string]struct{}{
 	"invalid_multipart":    {},
 	"too_large":            {},
+	"timeout":              {},
 	"insufficient_storage": {},
 	"target_unavailable":   {},
 	"internal":             {},

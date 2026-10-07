@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"time"
 
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
 	"voice-platform/backend/internal/security/request_id"
@@ -13,10 +14,13 @@ import (
 	finalize "voice-platform/backend/internal/storage/finalize_staged_direct_message_attachment"
 	reserve "voice-platform/backend/internal/storage/reserve_upload_space"
 	upload "voice-platform/backend/internal/storage/upload_direct_message_attachment"
+	uploadrequest "voice-platform/backend/internal/storage/upload_request"
 	writeupload "voice-platform/backend/internal/storage/write_upload"
 )
 
 const maxRequestBytes int64 = writeupload.MaxBytes + 1_000_000
+const uploadMaximumDuration = 15 * time.Minute
+const uploadIdleDuration = time.Minute
 
 type Uploader interface {
 	Upload(context.Context, upload.Input) (upload.Result, error)
@@ -31,15 +35,28 @@ func NewHandler(uploader Uploader, failures FailureRecorder) http.Handler {
 			writeError(writer, request, 500, "INTERNAL", "Не удалось загрузить вложение")
 			return
 		}
+		request, cleanup := uploadrequest.WithLimits(request, uploadMaximumDuration, uploadIdleDuration)
+		defer cleanup()
+		defer request.Body.Close()
 		request.Body = http.MaxBytesReader(writer, request.Body, maxRequestBytes)
 		reader, err := request.MultipartReader()
 		if err != nil {
+			if uploadrequest.TimedOut(request.Context()) {
+				failures.UploadFailed("timeout")
+				writeError(writer, request, http.StatusRequestTimeout, "UPLOAD_TIMEOUT", "Передача вложения превысила допустимое время")
+				return
+			}
 			failures.UploadFailed("invalid_multipart")
 			writeError(writer, request, 400, "VALIDATION_FAILED", "Ожидался файл вложения")
 			return
 		}
 		part, err := reader.NextPart()
 		if err != nil || part.FormName() != "file" || part.FileName() == "" {
+			if uploadrequest.TimedOut(request.Context()) {
+				failures.UploadFailed("timeout")
+				writeError(writer, request, http.StatusRequestTimeout, "UPLOAD_TIMEOUT", "Передача вложения превысила допустимое время")
+				return
+			}
 			failures.UploadFailed("invalid_multipart")
 			writeError(writer, request, 400, "VALIDATION_FAILED", "Ожидался файл вложения")
 			return
@@ -47,6 +64,9 @@ func NewHandler(uploader Uploader, failures FailureRecorder) http.Handler {
 		defer part.Close()
 		result, err := uploader.Upload(request.Context(), upload.Input{ActorID: principal.AccountID, DirectMessageID: request.PathValue("directMessageID"), OriginalName: part.FileName(), Source: part})
 		switch {
+		case uploadrequest.TimedOut(request.Context()):
+			failures.UploadFailed("timeout")
+			writeError(writer, request, http.StatusRequestTimeout, "UPLOAD_TIMEOUT", "Передача вложения превысила допустимое время")
 		case tooLarge(err):
 			failures.UploadFailed("too_large")
 			writeError(writer, request, 413, "ATTACHMENT_TOO_LARGE", "Файл превышает допустимый размер")

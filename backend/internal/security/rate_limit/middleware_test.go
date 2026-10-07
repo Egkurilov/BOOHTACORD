@@ -10,7 +10,7 @@ import (
 
 func TestMiddlewareLimitsOneForwardedSourceAndResetsWindow(t *testing.T) {
 	now := time.Date(2026, time.September, 17, 12, 0, 0, 0, time.UTC)
-	limiter, err := New(Config{Limit: 2, Window: time.Minute, MaxSources: 8, Now: func() time.Time { return now }})
+	limiter, err := New(Config{Limit: 2, Window: time.Minute, MaxSources: 8, TrustedProxyCIDRs: []string{"10.0.0.0/8"}, Now: func() time.Time { return now }})
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -19,6 +19,7 @@ func TestMiddlewareLimitsOneForwardedSourceAndResetsWindow(t *testing.T) {
 	for attempt := 0; attempt < 2; attempt++ {
 		recorder := httptest.NewRecorder()
 		request := httptest.NewRequest(http.MethodPost, "/", nil)
+		request.RemoteAddr = "10.0.0.2:443"
 		request.Header.Set("X-Forwarded-For", "203.0.113.9, 10.0.0.2")
 		limiter.Middleware(next).ServeHTTP(recorder, request)
 		if recorder.Code != http.StatusNoContent {
@@ -28,6 +29,7 @@ func TestMiddlewareLimitsOneForwardedSourceAndResetsWindow(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodPost, "/", nil)
+	request.RemoteAddr = "10.0.0.2:443"
 	request.Header.Set("X-Forwarded-For", "203.0.113.9")
 	limiter.Middleware(next).ServeHTTP(recorder, request)
 	if recorder.Code != http.StatusTooManyRequests || recorder.Header().Get("Retry-After") != "60" || !strings.Contains(recorder.Body.String(), `"RATE_LIMITED"`) {
@@ -42,8 +44,33 @@ func TestMiddlewareLimitsOneForwardedSourceAndResetsWindow(t *testing.T) {
 	}
 }
 
-func TestMiddlewareDoesNotTrustMalformedForwardedSource(t *testing.T) {
-	if source := sourceKey(&http.Request{RemoteAddr: "192.0.2.4:1234", Header: http.Header{"X-Forwarded-For": []string{"not-an-ip"}}}); source != "192.0.2.4" {
-		t.Fatalf("source = %q", source)
+func TestLimiterKeepsActiveExhaustedBudgetAtCapacity(t *testing.T) {
+	now := time.Date(2026, time.September, 17, 12, 0, 0, 0, time.UTC)
+	limiter, err := New(Config{Limit: 1, Window: time.Minute, MaxSources: 2, Now: func() time.Time { return now }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, allowed := limiter.Allow("a"); !allowed {
+		t.Fatal("first request rejected")
+	}
+	if _, allowed := limiter.Allow("a"); allowed {
+		t.Fatal("exhausted source allowed")
+	}
+	if _, allowed := limiter.Allow("b"); !allowed {
+		t.Fatal("second source rejected")
+	}
+	if _, allowed := limiter.Allow("c"); allowed {
+		t.Fatal("new key should fail closed at capacity")
+	}
+	if _, allowed := limiter.Allow("a"); allowed {
+		t.Fatal("active source received a fresh budget after saturation")
+	}
+	now = now.Add(time.Minute)
+	if _, allowed := limiter.Allow("c"); !allowed {
+		t.Fatal("expired entries did not free capacity")
+	}
+	stats := limiter.Stats()
+	if stats.ActiveSources != 1 || stats.MaxSources != 2 || stats.Saturated != 1 {
+		t.Fatalf("stats = %#v", stats)
 	}
 }

@@ -59,10 +59,24 @@ func TestLoginRejectsWrongOrUnknownCredentialsWithoutSession(t *testing.T) {
 }
 
 func TestLoginRejectsBlockedAccount(t *testing.T) {
-	service := New(&fakeAccounts{account: Account{Blocked: true}}, &fakeSessions{})
-	_, err := service.Login(context.Background(), Input{Login: "egor", Password: "correct horse battery staple"})
-	if !errors.Is(err, ErrBlocked) {
-		t.Fatalf("Login() error = %v, want ErrBlocked", err)
+	hash, err := password.Hash("correct horse battery staple")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		name, inputPassword string
+		want                error
+	}{
+		{"wrong password", "not correct", ErrInvalidCredentials},
+		{"correct password", "correct horse battery staple", ErrBlocked},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			service := New(&fakeAccounts{account: Account{ID: "account-1", Blocked: true, PasswordHash: hash}}, &fakeSessions{})
+			_, got := service.Login(context.Background(), Input{Login: "egor", Password: test.inputPassword})
+			if !errors.Is(got, test.want) {
+				t.Fatalf("Login() error = %v, want %v", got, test.want)
+			}
+		})
 	}
 }
 

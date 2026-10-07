@@ -79,6 +79,8 @@ func TestRecorderPublishesRealtimeConnectionMetrics(t *testing.T) {
 	recorder := New()
 	recorder.RealtimeConnectionOpened()
 	recorder.ObserveRealtimeConnectionReady(25 * time.Millisecond)
+	recorder.ObserveRealtimeSessionRevalidation(5*time.Millisecond, false)
+	recorder.ObserveRealtimeConnectionRejected()
 	recorder.RealtimeConnectionClosed()
 
 	scrape := httptest.NewRecorder()
@@ -88,6 +90,9 @@ func TestRecorderPublishesRealtimeConnectionMetrics(t *testing.T) {
 		"voice_platform_realtime_connections_active 0",
 		"voice_platform_realtime_connections_total 1",
 		"voice_platform_realtime_connection_ready_seconds_count 1",
+		"voice_platform_realtime_session_revalidation_seconds_count 1",
+		"voice_platform_realtime_session_revalidation_failures_total 1",
+		"voice_platform_realtime_connections_rejected_total 1",
 	} {
 		if !strings.Contains(metrics, line) {
 			t.Fatalf("metrics lack %q: %q", line, metrics)

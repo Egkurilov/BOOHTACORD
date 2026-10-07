@@ -11,6 +11,7 @@ import (
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
 	"voice-platform/backend/internal/security/rate_limit"
+	admitupload "voice-platform/backend/internal/storage/admit_upload"
 	dmauthorize "voice-platform/backend/internal/storage/authorize_direct_message_attachment"
 	dmauthorizepostgres "voice-platform/backend/internal/storage/authorize_direct_message_attachment/postgres"
 	authorize "voice-platform/backend/internal/storage/authorize_text_attachment"
@@ -38,8 +39,8 @@ import (
 	writeupload "voice-platform/backend/internal/storage/write_upload"
 )
 
-func ConfigureStorageRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, root string, limiter *ratelimit.Limiter, metrics *httpmetrics.Recorder, inspectors ...func(reserve.Space, *reserve.Manager)) error {
-	if root == "" || limiter == nil || metrics == nil {
+func ConfigureStorageRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, root string, limiter, accountLimiter, deploymentLimiter *ratelimit.Limiter, admission *admitupload.Limiter, metrics *httpmetrics.Recorder, inspectors ...func(reserve.Space, *reserve.Manager)) error {
+	if root == "" || limiter == nil || accountLimiter == nil || deploymentLimiter == nil || admission == nil || metrics == nil {
 		return errors.New("invalid attachment route configuration")
 	}
 	staging, unattached := filepath.Join(root, "staging"), filepath.Join(root, "unattached")
@@ -58,6 +59,9 @@ func ConfigureStorageRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 		return err
 	}
 	if err := metrics.RegisterAttachmentFilesystem(attachmentFilesystemMetricSource{space: space, manager: manager}); err != nil {
+		return err
+	}
+	if err := metrics.RegisterCollector(admission); err != nil {
 		return err
 	}
 	for _, inspect := range inspectors {
@@ -85,11 +89,22 @@ func ConfigureStorageRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions
 	dmDownloader := dmdownload.New(dmdownloadpostgres.New(dmdownloadpostgres.NewPoolDatabase(database)), downloadFiles)
 	previewer := preview.New(downloader)
 	dmPreviewer := dmpreview.New(dmDownloader)
-	mux.Handle("POST /api/v1/channels/{channelID}/attachments", sessionapi.Require(sessions)(limiter.Middleware(uploadapi.NewHandler(uploader, metrics))))
-	mux.Handle("POST /api/v1/direct-messages/{directMessageID}/attachments", sessionapi.Require(sessions)(limiter.Middleware(dmuploadapi.NewHandler(dmUploader, metrics))))
+	textUpload := uploadapi.NewHandler(uploader, metrics)
+	directUpload := dmuploadapi.NewHandler(dmUploader, metrics)
+	textUpload = deploymentLimiter.MiddlewareFor(textUpload, func(*http.Request) string { return "deployment" })
+	directUpload = deploymentLimiter.MiddlewareFor(directUpload, func(*http.Request) string { return "deployment" })
+	textUpload = accountLimiter.MiddlewareFor(textUpload, accountKey)
+	directUpload = accountLimiter.MiddlewareFor(directUpload, accountKey)
+	mux.Handle("POST /api/v1/channels/{channelID}/attachments", sessionapi.Require(sessions)(admission.Middleware(limiter.Middleware(textUpload))))
+	mux.Handle("POST /api/v1/direct-messages/{directMessageID}/attachments", sessionapi.Require(sessions)(admission.Middleware(limiter.Middleware(directUpload))))
 	mux.Handle("GET /api/v1/channels/{channelID}/attachments/{attachmentID}", sessionapi.Require(sessions)(downloadapi.NewHandler(downloader)))
 	mux.Handle("GET /api/v1/channels/{channelID}/attachments/{attachmentID}/preview", sessionapi.Require(sessions)(previewapi.NewHandler(previewer)))
 	mux.Handle("GET /api/v1/direct-messages/{directMessageID}/attachments/{attachmentID}", sessionapi.Require(sessions)(dmdownloadapi.NewHandler(dmDownloader)))
 	mux.Handle("GET /api/v1/direct-messages/{directMessageID}/attachments/{attachmentID}/preview", sessionapi.Require(sessions)(dmpreviewapi.NewHandler(dmPreviewer)))
 	return nil
+}
+
+func accountKey(request *http.Request) string {
+	principal, _ := sessionapi.PrincipalFrom(request.Context())
+	return principal.AccountID
 }

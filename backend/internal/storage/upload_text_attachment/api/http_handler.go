@@ -6,17 +6,21 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"time"
 
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
 	"voice-platform/backend/internal/security/request_id"
 	authorize "voice-platform/backend/internal/storage/authorize_text_attachment"
 	finalize "voice-platform/backend/internal/storage/finalize_staged_text_attachment"
 	reserve "voice-platform/backend/internal/storage/reserve_upload_space"
+	uploadrequest "voice-platform/backend/internal/storage/upload_request"
 	upload "voice-platform/backend/internal/storage/upload_text_attachment"
 	writeupload "voice-platform/backend/internal/storage/write_upload"
 )
 
 const maxRequestBytes int64 = writeupload.MaxBytes + 1_000_000
+const uploadMaximumDuration = 15 * time.Minute
+const uploadIdleDuration = time.Minute
 
 type Uploader interface {
 	Upload(context.Context, upload.Input) (upload.Result, error)
@@ -34,9 +38,17 @@ func NewHandler(uploader Uploader, failures FailureRecorder) http.Handler {
 			writeError(writer, request, http.StatusInternalServerError, "INTERNAL", "Не удалось загрузить вложение")
 			return
 		}
+		request, cleanup := uploadrequest.WithLimits(request, uploadMaximumDuration, uploadIdleDuration)
+		defer cleanup()
+		defer request.Body.Close()
 		request.Body = http.MaxBytesReader(writer, request.Body, maxRequestBytes)
 		reader, err := request.MultipartReader()
 		if err != nil {
+			if uploadrequest.TimedOut(request.Context()) {
+				failures.UploadFailed("timeout")
+				writeError(writer, request, http.StatusRequestTimeout, "UPLOAD_TIMEOUT", "Передача вложения превысила допустимое время")
+				return
+			}
 			if isTooLarge(err) {
 				failures.UploadFailed("too_large")
 			} else {
@@ -47,6 +59,11 @@ func NewHandler(uploader Uploader, failures FailureRecorder) http.Handler {
 		}
 		part, err := reader.NextPart()
 		if err != nil || part.FormName() != "file" || part.FileName() == "" {
+			if uploadrequest.TimedOut(request.Context()) {
+				failures.UploadFailed("timeout")
+				writeError(writer, request, http.StatusRequestTimeout, "UPLOAD_TIMEOUT", "Передача вложения превысила допустимое время")
+				return
+			}
 			if isTooLarge(err) {
 				failures.UploadFailed("too_large")
 			} else {
@@ -57,6 +74,11 @@ func NewHandler(uploader Uploader, failures FailureRecorder) http.Handler {
 		}
 		defer part.Close()
 		result, err := uploader.Upload(request.Context(), upload.Input{ActorID: principal.AccountID, ChannelID: request.PathValue("channelID"), OriginalName: part.FileName(), Source: part})
+		if uploadrequest.TimedOut(request.Context()) {
+			failures.UploadFailed("timeout")
+			writeError(writer, request, http.StatusRequestTimeout, "UPLOAD_TIMEOUT", "Передача вложения превысила допустимое время")
+			return
+		}
 		if isTooLarge(err) {
 			failures.UploadFailed("too_large")
 			writeError(writer, request, http.StatusRequestEntityTooLarge, "ATTACHMENT_TOO_LARGE", "Файл превышает допустимый размер")

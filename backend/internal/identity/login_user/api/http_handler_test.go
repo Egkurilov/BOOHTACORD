@@ -6,8 +6,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"voice-platform/backend/internal/identity/login_user"
+	"voice-platform/backend/internal/security/rate_limit"
 )
 
 func TestHandlerSetsSecureOpaqueSessionCookie(t *testing.T) {
@@ -41,6 +43,62 @@ func TestHandlerDoesNotIssueCookieForInvalidCredentials(t *testing.T) {
 
 	if recorder.Code != http.StatusUnauthorized || len(recorder.Result().Cookies()) != 0 || !strings.Contains(recorder.Body.String(), `"UNAUTHENTICATED"`) {
 		t.Fatalf("status = %d, cookies = %#v, body = %q", recorder.Code, recorder.Result().Cookies(), recorder.Body.String())
+	}
+}
+
+func TestHandlerHidesBlockedAccountUntilPasswordIsVerified(t *testing.T) {
+	for _, candidate := range []struct {
+		name, password string
+		failure        error
+		status         int
+		code           string
+	}{
+		{"invalid", "wrong", loginuser.ErrInvalidCredentials, http.StatusUnauthorized, "UNAUTHENTICATED"},
+		{"blocked after verified password", "correct", loginuser.ErrBlocked, http.StatusForbidden, "ACCOUNT_BLOCKED"},
+	} {
+		t.Run(candidate.name, func(t *testing.T) {
+			handler := NewHandler(loginerFunc(func(_ context.Context, input loginuser.Input) (loginuser.Result, error) {
+				if input.Password != candidate.password {
+					return loginuser.Result{}, loginuser.ErrInvalidCredentials
+				}
+				return loginuser.Result{}, candidate.failure
+			}))
+			request := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"login":"egor","password":"`+candidate.password+`"}`))
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, request)
+			if recorder.Code != candidate.status || !strings.Contains(recorder.Body.String(), `"`+candidate.code+`"`) || len(recorder.Result().Cookies()) != 0 {
+				t.Fatalf("status = %d, body = %s, cookies = %#v", recorder.Code, recorder.Body.String(), recorder.Result().Cookies())
+			}
+		})
+	}
+}
+
+func TestFailedLoginBudgetIsPerNormalizedAccountAndDoesNotBlockValidPassword(t *testing.T) {
+	limiter, err := ratelimit.New(ratelimit.Config{Limit: 1, Window: time.Minute, MaxSources: 16})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := NewHandlerWithFailureLimiter(loginerFunc(func(_ context.Context, input loginuser.Input) (loginuser.Result, error) {
+		if input.Password == "correct" {
+			return loginuser.Result{Token: "synthetic"}, nil
+		}
+		return loginuser.Result{}, loginuser.ErrInvalidCredentials
+	}), limiter)
+	request := func(login, password, remote string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"login":"`+login+`","password":"`+password+`"}`))
+		req.RemoteAddr = remote
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, req)
+		return response
+	}
+	if got := request("EGOR", "wrong", "192.0.2.1:1"); got.Code != http.StatusUnauthorized {
+		t.Fatalf("first failure status = %d", got.Code)
+	}
+	if got := request("egor", "wrong", "192.0.2.2:1"); got.Code != http.StatusTooManyRequests || got.Header().Get("Retry-After") != "60" {
+		t.Fatalf("second failure status = %d, retry = %q", got.Code, got.Header().Get("Retry-After"))
+	}
+	if got := request("egor", "correct", "192.0.2.2:1"); got.Code != http.StatusNoContent {
+		t.Fatalf("valid password status = %d", got.Code)
 	}
 }
 

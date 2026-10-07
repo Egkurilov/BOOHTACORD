@@ -250,7 +250,7 @@
     "/api/v1/realtime": {
       "get": {
         "operationId": "connectRealtime",
-        "description": "Authenticated same-origin WebSocket upgrade. The optional after UUID is the last acknowledged durable event_id. The journal has 7-day retention and a 512-event replay limit; the server rechecks current session and per-event ACL. A cursor from another server boot epoch, an expired/invalid cursor, overflow or unavailable journal causes connection.resync_required and REST full resync. Replayed events can duplicate live delivery, so the client deduplicates by event_id. Presence and connection events are ephemeral and must not be used as after cursors.",
+        "description": "Authenticated same-origin WebSocket upgrade. Admission is bounded to 2 connections per session, 5 per account and 500 per deployment; rejected upgrades return 429 and Retry-After. The optional after UUID is the last acknowledged durable event_id. The journal has 7-day retention and a 512-event replay limit; the server rechecks current session and per-event ACL. A cursor from another server boot epoch, an expired/invalid cursor, overflow or unavailable journal causes connection.resync_required and REST full resync. Replayed events can duplicate live delivery, so the client deduplicates by event_id. Presence and connection events are ephemeral and must not be used as after cursors.",
         "parameters": [
           {
             "name": "after",
@@ -345,6 +345,8 @@
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
           "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
+          "429": { "description": "Connection quota reached before upgrade", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
+            "headers": {"Retry-After": {"description": "Retry delay in whole seconds.", "schema": {"type": "integer", "minimum": 1}}, "X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
           "500": {
             "description": "Handler failure; see documented status semantics. Middleware failure may emit an empty body.",
             "x-empty-body-possible": true,
@@ -620,7 +622,7 @@
     "/api/v1/direct-messages/{directMessageID}/attachments": {
       "post": {
         "operationId": "uploadDirectMessageAttachment",
-        "description": "Authenticated participant only. Streams one file to private staging for this canonical DM pair while both participants are active; administrator status grants no exception. The response contains metadata only, never a storage key or download URL.",
+        "description": "Authenticated participant only. Streams one file to private staging for this canonical DM pair while both participants are active; administrator status grants no exception. At most 2 uploads per account and 16 per deployment run concurrently. Upload bodies have a 60-second idle deadline and 15-minute total deadline; limits apply only to upload routes and do not change WebSocket lifetime. The response contains metadata only, never a storage key or download URL.",
         "parameters": [
           {
             "name": "directMessageID",
@@ -655,6 +657,8 @@
           "404": { "description": "DM is absent, caller is not a participant, or either account is blocked", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
           "413": { "description": "File exceeds 25,000,000 bytes", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
+            "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
+          "408": { "description": "Upload body made no progress for 60 seconds or exceeded the 15-minute total deadline", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
           "507": { "description": "Insufficient private attachment storage", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
@@ -1834,7 +1838,7 @@
     "/api/v1/channels/{channelID}/attachments": {
       "post": {
         "operationId": "uploadTextAttachment",
-        "description": "Authenticated active account only. Streams one file to private staging for a current TEXT channel; the server checks the target before and after staging. The response never grants a download URL or exposes a storage key.",
+        "description": "Authenticated active account only. Streams one file to private staging for a current TEXT channel; the server checks the target before and after staging. At most 2 uploads per account and 16 per deployment run concurrently. Upload bodies have a 60-second idle deadline and 15-minute total deadline; limits apply only to upload routes and do not change WebSocket lifetime. The response never grants a download URL or exposes a storage key.",
         "parameters": [
           {
             "name": "channelID",
@@ -1867,6 +1871,8 @@
           "404": { "description": "Text channel is absent or unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
           "413": { "description": "File exceeds 25,000,000 bytes", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
+            "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
+          "408": { "description": "Upload body made no progress for 60 seconds or exceeded the 15-minute total deadline", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
           "507": { "description": "Attachment volume cannot reserve required space", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
@@ -2896,6 +2902,7 @@
     "/api/v1/auth/login": {
       "post": {
         "operationId": "login",
+        "description": "Invalid credentials return the same 401 contract whether the login is absent or an account is blocked. A blocked-account response is disclosed only after the submitted password verifies; no session is issued. Rate limits include a broad source budget, failed attempts keyed by normalized login and a bounded global Argon2id verification concurrency.",
         "requestBody": {
           "required": true,
           "content": {

@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	livekitcredential "voice-platform/backend/internal/media/livekit_credential"
 	removelivekitparticipant "voice-platform/backend/internal/media/remove_livekit_participant"
 	snapshotlivekitpresence "voice-platform/backend/internal/media/snapshot_livekit_presence"
+	admitconnection "voice-platform/backend/internal/realtime/admit_connection"
 	"voice-platform/backend/internal/security/origin_check"
 	"voice-platform/backend/internal/security/rate_limit"
+	admitupload "voice-platform/backend/internal/storage/admit_upload"
 )
 
 type Config struct {
@@ -24,16 +25,22 @@ type Config struct {
 	MediaSnapshot                                                                snapshotlivekitpresence.Client
 	RegistrationLimiter                                                          *ratelimit.Limiter
 	LoginLimiter                                                                 *ratelimit.Limiter
+	LoginFailureLimiter                                                          *ratelimit.Limiter
 	PasswordResetLimiter                                                         *ratelimit.Limiter
 	UploadLimiter                                                                *ratelimit.Limiter
+	UploadAccountLimiter                                                         *ratelimit.Limiter
+	UploadDeploymentLimiter                                                      *ratelimit.Limiter
 	TelemetryLimiter                                                             *ratelimit.Limiter
 	TelemetryEndpoint                                                            string
 	TelemetryAuth                                                                string
 	AttachmentRoot                                                               string
+	TrustedProxyCIDRs                                                            []string
+	RealtimeConnectionLimiter                                                    *admitconnection.Limiter
+	UploadAdmissionLimiter                                                       *admitupload.Limiter
 }
 
 func Load(getenv func(string) string) (Config, error) {
-	configuration := Config{PublicOrigin: getenv("PUBLIC_ORIGIN"), AttachmentRoot: getenv("ATTACHMENTS_DIRECTORY")}
+	configuration := Config{PublicOrigin: getenv("PUBLIC_ORIGIN"), AttachmentRoot: getenv("ATTACHMENTS_DIRECTORY"), TrustedProxyCIDRs: splitHosts(getenv("TRUSTED_PROXY_CIDRS"))}
 	var err error
 	configuration.OriginMiddleware, err = origincheck.New(configuration.PublicOrigin)
 	if err != nil {
@@ -51,21 +58,8 @@ func Load(getenv func(string) string) (Config, error) {
 	if err != nil {
 		return Config{}, fmt.Errorf("configure livekit media snapshot: %w", err)
 	}
-	configuration.RegistrationLimiter, err = ratelimit.New(ratelimit.Config{Limit: 5, Window: 15 * time.Minute, MaxSources: 10_000})
-	if err == nil {
-		configuration.LoginLimiter, err = ratelimit.New(ratelimit.Config{Limit: 10, Window: 5 * time.Minute, MaxSources: 10_000})
-	}
-	if err == nil {
-		configuration.PasswordResetLimiter, err = ratelimit.New(ratelimit.Config{Limit: 5, Window: 15 * time.Minute, MaxSources: 10_000})
-	}
-	if err == nil {
-		configuration.UploadLimiter, err = ratelimit.New(ratelimit.Config{Limit: 10, Window: 5 * time.Minute, MaxSources: 10_000})
-	}
-	if err == nil {
-		configuration.TelemetryLimiter, err = ratelimit.New(ratelimit.Config{Limit: 120, Window: time.Minute, MaxSources: 10_000})
-	}
-	if err != nil {
-		return Config{}, fmt.Errorf("configure rate limiter: %w", err)
+	if err = configureAdmission(&configuration); err != nil {
+		return Config{}, err
 	}
 	if configuration.AttachmentRoot == "" {
 		return Config{}, fmt.Errorf("ATTACHMENTS_DIRECTORY is required")

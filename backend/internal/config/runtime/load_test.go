@@ -29,6 +29,9 @@ func TestDefaultsAndExplicitTraceEndpointPreservePrecedence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if configuration.RegistrationLimiter == nil || configuration.LoginLimiter == nil || configuration.LoginFailureLimiter == nil || configuration.PasswordResetLimiter == nil || configuration.UploadLimiter == nil || configuration.UploadAccountLimiter == nil || configuration.UploadDeploymentLimiter == nil || configuration.TelemetryLimiter == nil || configuration.RealtimeConnectionLimiter == nil || configuration.UploadAdmissionLimiter == nil {
+		t.Fatal("admission limiters were not configured")
+	}
 	if configuration.Address != ":8080" || configuration.TelemetryEndpoint != "http://collector:4318/v1/traces" {
 		t.Fatal("defaults changed")
 	}
@@ -40,5 +43,13 @@ func TestDefaultsAndExplicitTraceEndpointPreservePrecedence(t *testing.T) {
 	configuration, err = Load(func(key string) string { return values[key] })
 	if err != nil || configuration.Address != values["API_ADDR"] || configuration.TelemetryEndpoint != values["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"] {
 		t.Fatal("explicit configuration precedence changed")
+	}
+}
+
+func TestLoadRejectsInvalidTrustedProxyCIDR(t *testing.T) {
+	values := environment()
+	values["TRUSTED_PROXY_CIDRS"] = "not-a-cidr"
+	if _, err := Load(func(key string) string { return values[key] }); err == nil {
+		t.Fatal("invalid trusted proxy configuration accepted")
 	}
 }

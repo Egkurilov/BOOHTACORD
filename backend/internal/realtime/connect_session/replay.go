@@ -41,7 +41,7 @@ func writeAuthorizedReplay(ctx context.Context, connection *websocket.Conn, auth
 			observeReconnectOutcome(observer, "resync_required")
 			return writeEvent(ctx, connection, newID, now, "connection.resync_required", map[string]any{"reason": "replay_unavailable"}), false
 		}
-		if !privateEventSessionValid(authenticator, cookie, subscription) {
+		if !privateEventSessionValid(authenticator, cookie, subscription, observer) {
 			observeReconnectOutcome(observer, "rejected")
 			_ = connection.Close(websocket.StatusPolicyViolation, "session is no longer valid")
 			return false, false

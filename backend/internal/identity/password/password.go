@@ -21,8 +21,19 @@ const (
 )
 
 var ErrInvalidHash = errors.New("invalid password hash")
+var dummyHash string
+var argonSlots = make(chan struct{}, 4)
+
+func init() {
+	salt := []byte("boohtacord-login-dummy-salt")
+	key := argon2.IDKey([]byte("unmatchable-dummy-password"), salt, iterations, memoryKiB, parallelism, keyLength)
+	dummyHash = fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s", memoryKiB, iterations, parallelism,
+		base64.RawStdEncoding.EncodeToString(salt), base64.RawStdEncoding.EncodeToString(key))
+}
 
 func Hash(plainText string) (string, error) {
+	argonSlots <- struct{}{}
+	defer func() { <-argonSlots }()
 	salt := make([]byte, saltLength)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
 		return "", fmt.Errorf("generate password salt: %w", err)
@@ -40,6 +51,8 @@ func Hash(plainText string) (string, error) {
 }
 
 func Verify(plainText, encoded string) (bool, error) {
+	argonSlots <- struct{}{}
+	defer func() { <-argonSlots }()
 	salt, storedKey, err := decode(encoded)
 	if err != nil {
 		return false, err
@@ -47,6 +60,12 @@ func Verify(plainText, encoded string) (bool, error) {
 
 	candidate := argon2.IDKey([]byte(plainText), salt, iterations, memoryKiB, parallelism, keyLength)
 	return subtle.ConstantTimeCompare(candidate, storedKey) == 1, nil
+}
+
+// VerifyUnknown performs the same Argon2id work as a normal verification for
+// an account that does not exist. The result is intentionally discarded.
+func VerifyUnknown(plainText string) {
+	_, _ = Verify(plainText, dummyHash)
 }
 
 func decode(encoded string) ([]byte, []byte, error) {

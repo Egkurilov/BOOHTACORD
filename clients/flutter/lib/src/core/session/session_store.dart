@@ -9,7 +9,8 @@ import '../../features/telemetry/action_scope/session.dart';
 class SessionStore {
   SessionStore() : _storage = sessionStorage();
   static const _serverKey = 'server_url';
-  static const _cookieKey = 'boohtacord_session_cookie';
+  static const _legacyCookieKey = 'boohtacord_session_cookie';
+  static const _cookieKeyPrefix = 'boohtacord_session_cookie:';
   final FlutterSecureStorage _storage;
   late final SessionScope scope = SessionScope(
     onBoundary: () => telemetry.reset(),
@@ -33,15 +34,15 @@ class SessionStore {
   void Function()? onUnauthorized;
   Future<String?> readCookie() async {
     await _cookieWrites;
-    return _storage.read(key: _cookieKey);
+    return _storage.read(key: _cookieKeyFor(_baseUrl));
   }
 
   Future<void> clearCookie({SessionTicket? ticket}) => _write(() {
     telemetry.reset();
-    return _storage.delete(key: _cookieKey);
+    return _storage.delete(key: _cookieKeyFor(_baseUrl));
   }, ticket);
   Future<void> writeCookie(String value, {SessionTicket? ticket}) =>
-      _write(() => _storage.write(key: _cookieKey, value: value), ticket);
+      _write(() => _storage.write(key: _cookieKeyFor(_baseUrl), value: value), ticket);
   Future<void> _write(Future<void> Function() action, SessionTicket? ticket) {
     final admitted = ticket ?? scope.capture();
     final server = serverRevision;
@@ -54,6 +55,9 @@ class SessionStore {
 
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
+    // The old key had no origin metadata, so its destination cannot be proven.
+    // Discard it rather than attaching an ambiguous credential to a server.
+    await _storage.delete(key: _legacyCookieKey);
     baseUrl = prefs.getString(_serverKey) ?? baseUrl;
   }
 
@@ -69,9 +73,24 @@ class SessionStore {
         'Укажите HTTPS-адрес сервера, например https://guild.example.com.',
       );
     }
-    baseUrl = normalized;
+    final previousCookieKey = _cookieKeyFor(_baseUrl);
+    final nextCookieKey = _cookieKeyFor(normalized);
+    await _cookieWrites;
+    // Invalidate both sides before persisting/publishing the new server. If a
+    // secure-storage operation fails, the caller remains unauthenticated.
+    await _storage.delete(key: previousCookieKey);
+    if (nextCookieKey != previousCookieKey) {
+      await _storage.delete(key: nextCookieKey);
+    }
+    await _storage.delete(key: _legacyCookieKey);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_serverKey, baseUrl);
-    await clearCookie();
+    await prefs.setString(_serverKey, normalized);
+    baseUrl = normalized;
+  }
+
+  String _cookieKeyFor(String server) {
+    final uri = Uri.parse(server);
+    final port = uri.hasPort ? uri.port : 443;
+    return '$_cookieKeyPrefix${uri.scheme.toLowerCase()}://${uri.host.toLowerCase()}:$port';
   }
 }

@@ -12,11 +12,7 @@ import (
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
-func NewHandler(authenticator sessionapi.Authenticator, revalidationInterval time.Duration, now Clock, newID Identifier, observer ConnectionObserver) http.Handler {
-	return NewHandlerWithEvents(authenticator, revalidationInterval, now, newID, observer, nil)
-}
-
-func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationInterval time.Duration, now Clock, newID Identifier, observer ConnectionObserver, events *eventhub.Hub) http.Handler {
+func NewHandlerWithAdmission(authenticator sessionapi.Authenticator, revalidationInterval time.Duration, now Clock, newID Identifier, observer ConnectionObserver, events *eventhub.Hub, admission Admission) http.Handler {
 	if now == nil {
 		now = time.Now
 	}
@@ -31,6 +27,14 @@ func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationIn
 		if !ok {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
+		}
+		if admission != nil {
+			release, allowed := admission.TryAcquire(principal.AccountID, principal.SessionDigest)
+			if !allowed {
+				rejectAdmission(writer, observer)
+				return
+			}
+			defer release()
 		}
 		cookie, err := request.Cookie(session.CookieName)
 		if authenticator != nil && err != nil {
@@ -60,7 +64,7 @@ func NewHandlerWithEvents(authenticator sessionapi.Authenticator, revalidationIn
 		var replayReason string
 		var replayEpoch string
 		if request.URL.Query().Has("after") {
-			if !privateEventSessionValid(authenticator, cookie, subscription) && events != nil {
+			if !privateEventSessionValid(authenticator, cookie, subscription, observer) && events != nil {
 				finishHandshake(errHandshakeSession)
 				observeReconnectOutcome(observer, "rejected")
 				_ = connection.Close(websocket.StatusPolicyViolation, "session is no longer valid")

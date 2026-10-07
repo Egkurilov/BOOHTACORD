@@ -34,7 +34,7 @@ func streamEvents(connection *websocket.Conn, authenticator sessionapi.Authentic
 				delete(replayedIDs, event.EventID)
 				continue
 			}
-			if (isPrivateDirectMessageEvent(event.Kind) || event.Kind == "session.state_changed") && !privateEventSessionValid(authenticator, cookie, subscription) {
+			if (isPrivateDirectMessageEvent(event.Kind) || event.Kind == "session.state_changed") && !privateEventSessionValid(authenticator, cookie, subscription, observer) {
 				_ = connection.Close(websocket.StatusPolicyViolation, "session is no longer valid")
 				return
 			}
@@ -65,8 +65,10 @@ func streamEvents(connection *websocket.Conn, authenticator sessionapi.Authentic
 			subscription.AcknowledgeOverflow()
 		case <-revalidate:
 			context, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			started := time.Now()
 			_, err := authenticator.Authenticate(context, cookie.Value)
 			cancel()
+			observeRevalidation(observer, time.Since(started), err == nil)
 			if err != nil {
 				_ = connection.Close(websocket.StatusPolicyViolation, "session is no longer valid")
 				return
@@ -84,14 +86,29 @@ func isPrivateDirectMessageEvent(kind string) bool {
 	}
 }
 
-func privateEventSessionValid(authenticator sessionapi.Authenticator, cookie *http.Cookie, subscription *eventhub.Subscription) bool {
+func privateEventSessionValid(authenticator sessionapi.Authenticator, cookie *http.Cookie, subscription *eventhub.Subscription, observers ...ConnectionObserver) bool {
 	if authenticator == nil || cookie == nil || subscription == nil || subscription.AccountID() == "" {
 		return false
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	started := time.Now()
 	principal, err := authenticator.Authenticate(ctx, cookie.Value)
+	observeRevalidation(firstObserver(observers), time.Since(started), err == nil && principal.AccountID == subscription.AccountID())
 	return err == nil && principal.AccountID == subscription.AccountID()
+}
+
+func firstObserver(observers []ConnectionObserver) ConnectionObserver {
+	if len(observers) == 0 {
+		return nil
+	}
+	return observers[0]
+}
+
+func observeRevalidation(observer ConnectionObserver, duration time.Duration, valid bool) {
+	if metrics, ok := observer.(interface{ ObserveRealtimeSessionRevalidation(time.Duration, bool) }); ok {
+		metrics.ObserveRealtimeSessionRevalidation(duration, valid)
+	}
 }
 
 func writeEvent(context context.Context, connection *websocket.Conn, newID Identifier, now Clock, kind string, payload map[string]any) bool {

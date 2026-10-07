@@ -11,11 +11,15 @@ import (
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
 
-func ConfigureChatAndRealtimeRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, metrics *httpmetrics.Recorder, events *eventhub.Hub) {
+func ConfigureChatAndRealtimeRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service, metrics *httpmetrics.Recorder, events *eventhub.Hub, admission ...connectsession.Admission) {
 	ConfigureChatRoutes(mux, database, sessions, events)
-	ConfigureRealtimeRoutes(mux, sessions, metrics, events)
+	ConfigureRealtimeRoutes(mux, sessions, metrics, events, admission...)
 }
 
-func ConfigureRealtimeRoutes(mux *http.ServeMux, sessions authenticatesession.Service, metrics *httpmetrics.Recorder, events *eventhub.Hub) {
-	mux.Handle("GET /api/v1/realtime", sessionapi.Require(sessions)(connectsession.NewHandlerWithEvents(sessions, 0, nil, nil, metrics, events)))
+func ConfigureRealtimeRoutes(mux *http.ServeMux, sessions authenticatesession.Service, metrics *httpmetrics.Recorder, events *eventhub.Hub, admission ...connectsession.Admission) {
+	var quota connectsession.Admission
+	if len(admission) > 0 {
+		quota = admission[0]
+	}
+	mux.Handle("GET /api/v1/realtime", sessionapi.Require(sessions)(connectsession.NewHandlerWithAdmission(sessions, 0, nil, nil, metrics, events, quota)))
 }

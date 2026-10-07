@@ -1,7 +1,10 @@
 package ratelimit
 
 import (
+	"container/heap"
 	"errors"
+	"net"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -9,10 +12,11 @@ import (
 var ErrInvalidConfig = errors.New("invalid rate limit configuration")
 
 type Config struct {
-	Limit      int
-	Window     time.Duration
-	MaxSources int
-	Now        func() time.Time
+	Limit             int
+	Window            time.Duration
+	MaxSources        int
+	TrustedProxyCIDRs []string
+	Now               func() time.Time
 }
 
 type entry struct {
@@ -27,6 +31,9 @@ type Limiter struct {
 	maxSources int
 	now        func() time.Time
 	entries    map[string]entry
+	expires    expirations
+	trusted    []*net.IPNet
+	saturated  uint64
 }
 
 func New(config Config) (*Limiter, error) {
@@ -36,16 +43,20 @@ func New(config Config) (*Limiter, error) {
 	if config.Now == nil {
 		config.Now = time.Now
 	}
+	trusted, err := parseTrustedProxies(config.TrustedProxyCIDRs)
+	if err != nil {
+		return nil, err
+	}
 	return &Limiter{
-		limit:      config.Limit,
-		window:     config.Window,
-		maxSources: config.MaxSources,
-		now:        config.Now,
-		entries:    make(map[string]entry),
+		limit: config.Limit, window: config.Window, maxSources: config.MaxSources,
+		now: config.Now, entries: make(map[string]entry), trusted: trusted,
 	}, nil
 }
 
-func (limiter *Limiter) allow(source string) (time.Duration, bool) {
+// Allow consumes one unit for source. Unknown sources fail closed when the
+// bounded active-window store is full, so saturation cannot reset an active
+// source's budget.
+func (limiter *Limiter) Allow(source string) (time.Duration, bool) {
 	limiter.mutex.Lock()
 	defer limiter.mutex.Unlock()
 
@@ -59,29 +70,36 @@ func (limiter *Limiter) allow(source string) (time.Duration, bool) {
 		limiter.entries[source] = current
 		return 0, true
 	}
-	limiter.prune(now)
-	if len(limiter.entries) >= limiter.maxSources {
-		limiter.dropOldest()
+	if found {
+		delete(limiter.entries, source)
 	}
-	limiter.entries[source] = entry{count: 1, reset: now.Add(limiter.window)}
+	limiter.pruneExpired(now, 64)
+	if len(limiter.entries) >= limiter.maxSources {
+		limiter.saturated++
+		if len(limiter.expires) > 0 {
+			return maxDuration(time.Second, limiter.expires[0].reset.Sub(now)), false
+		}
+		return time.Second, false
+	}
+	current = entry{count: 1, reset: now.Add(limiter.window)}
+	limiter.entries[source] = current
+	heap.Push(&limiter.expires, expiry{source: source, reset: current.reset})
 	return 0, true
 }
 
-func (limiter *Limiter) prune(now time.Time) {
-	for source, current := range limiter.entries {
-		if !now.Before(current.reset) {
-			delete(limiter.entries, source)
-		}
-	}
+func (limiter *Limiter) Middleware(next http.Handler) http.Handler {
+	return limiter.MiddlewareFor(next, func(request *http.Request) string {
+		return sourceKey(request, limiter.trusted)
+	})
 }
 
-func (limiter *Limiter) dropOldest() {
-	var oldestSource string
-	var oldest time.Time
-	for source, current := range limiter.entries {
-		if oldestSource == "" || current.reset.Before(oldest) {
-			oldestSource, oldest = source, current.reset
+func (limiter *Limiter) MiddlewareFor(next http.Handler, key func(*http.Request) string) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		retryAfter, allowed := limiter.Allow(key(request))
+		if !allowed {
+			writeRateLimit(writer, request, retryAfter)
+			return
 		}
-	}
-	delete(limiter.entries, oldestSource)
+		next.ServeHTTP(writer, request)
+	})
 }
