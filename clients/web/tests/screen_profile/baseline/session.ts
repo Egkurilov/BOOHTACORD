@@ -1,79 +1,64 @@
-import { type LocalVideoTrack, type Room } from 'livekit-client'
-import { createDisplayCapture, createSyntheticCapture } from './capture'
+import { type RemoteTrack, type Room } from 'livekit-client'
 import { BaselinePresentation } from './presentation'
-import { collectSamples, sampleSender } from './stats'
+import { collectSamples, sampleReceiver } from './stats'
 import { connectBaselineRoom } from './connection'
-import { publishBaselineCapture } from './publish'
+import { baselinePlan } from './settings'
+import { BaselinePublisher } from './publisher'
 
 type Role = 'publisher' | 'viewer'
-type Credentials = { url: string; token: string; role: Role }
+type Credentials = { url: string; token: string; role: Role; numberedSynthetic?: boolean }
 
 export class ScreenBaselineSession {
   private credentials: Credentials | null = null
   private room: Room | null = null
-  private localTrack: LocalVideoTrack | null = null
-  private capture: MediaStream | null = null
-  private stopSynthetic: (() => void) | null = null
+  private remoteTrack: RemoteTrack | null = null
   private source = 'none'
-  private generatedFrames = 0
-  private generationStartedAt = 0
+  private visibilityRevision = 0
   private readonly presentation = new BaselinePresentation()
+  private readonly publisher: BaselinePublisher
 
-  configure(credentials: Credentials) { this.credentials = credentials }
+  constructor() {
+    this.publisher = new BaselinePublisher(
+      () => this.room, () => this.credentials?.role, value => this.setStatus(value),
+      async () => { this.setStatus('capture-ended'); await this.stop() },
+    )
+    document.addEventListener('visibilitychange', () => this.visibilityRevision++)
+  }
+
+  configure(credentials: Credentials) {
+    this.credentials = credentials
+    if (credentials.role === 'viewer') this.source = credentials.numberedSynthetic ? 'synthetic-moving-canvas' : 'remote-display-or-unknown'
+  }
 
   async connect() {
     if (!this.credentials || this.room) throw new Error('baseline session is not ready')
-    await connectBaselineRoom(this.credentials, this.presentation, room => { this.room = room }, value => this.setStatus(value))
-    this.credentials.token = ''
-    this.setStatus('connected')
-  }
-
-  async startSynthetic() {
-    if (this.credentials?.role !== 'publisher') throw new Error('publisher role required')
-    this.source = 'synthetic-moving-canvas'
-    this.generatedFrames = 0
-    this.generationStartedAt = performance.now()
-    const capture = createSyntheticCapture(frame => { this.generatedFrames = frame })
-    this.stopSynthetic = capture.stop
-    await this.publish(capture.stream)
-  }
-
-  async startDisplayCapture() {
-    if (this.credentials?.role !== 'publisher') throw new Error('publisher role required')
-    this.source = 'user-selected-display-capture'
+    const credentials = this.credentials
     try {
-      await this.publish(await createDisplayCapture())
-    } catch {
-      this.setStatus('display-capture-failed-or-cancelled')
-      throw new Error('Display capture failed or was cancelled.')
-    }
-  }
-
-  private async publish(stream: MediaStream) {
-    if (!this.room || this.credentials?.role !== 'publisher') throw new Error('publisher room required')
-    this.capture = stream
-    try {
-      this.localTrack = await publishBaselineCapture(this.room, stream, () => {
-        this.setStatus('capture-ended'); if (this.room) void this.stop()
-      })
-      this.setStatus('publishing-one-video-layer')
-    } catch {
-      this.setStatus('publish-failed')
+      await connectBaselineRoom(credentials, this.presentation, room => { this.room = room }, value => this.setStatus(value), track => { this.remoteTrack = track })
+      this.setStatus('connected')
+    } catch (error) {
       await this.stop()
-      throw new Error('Video publish failed; no track data was written to the report.')
+      this.setStatus('connect-failed')
+      throw error
+    } finally {
+      credentials.token = ''
     }
   }
+
+  startSynthetic(captureFps = 60) { return this.publisher.startSynthetic(captureFps) }
+  startDisplayCapture() { return this.publisher.startDisplayCapture() }
 
   waitForFirstFrame(timeoutMs: number) { return this.presentation.waitForFirstFrame(timeoutMs) }
 
   async snapshot() {
-    const settings = this.capture?.getVideoTracks()[0]?.getSettings()
+    const publication = await this.publisher.snapshot()
     return {
-      monotonicMs: performance.now(), role: this.credentials?.role ?? 'unknown', source: this.source,
-      captureSettings: settings ? { width: settings.width ?? null, height: settings.height ?? null, frameRate: settings.frameRate ?? null } : null,
-      generatedFrames: this.generatedFrames,
-      generatedFrameElapsedMs: this.generationStartedAt ? performance.now() - this.generationStartedAt : null,
-      outbound: await sampleSender(this.localTrack), ...this.presentation.snapshot(), userAgent: navigator.userAgent,
+      ...publication,
+      monotonicMs: performance.now(), role: this.credentials?.role ?? 'unknown',
+      source: this.credentials?.role === 'publisher' ? publication.source : this.source,
+      baselineProfileId: baselinePlan.profileId,
+      visibilityRevision: this.visibilityRevision,
+      inbound: await sampleReceiver(this.remoteTrack), ...this.presentation.snapshot(), userAgent: navigator.userAgent,
       visibilityState: document.visibilityState,
     }
   }
@@ -85,15 +70,12 @@ export class ScreenBaselineSession {
   async stop() {
     const room = this.room
     this.room = null
-    this.stopSynthetic?.()
-    this.stopSynthetic = null
     this.presentation.stop()
-    if (this.localTrack && room) await room.localParticipant.unpublishTrack(this.localTrack, true).catch(() => undefined)
-    this.localTrack?.stop()
-    this.localTrack = null
-    this.capture?.getTracks().forEach(track => track.stop())
-    this.capture = null
+    await this.publisher.stop(room)
+    this.remoteTrack = null
     await room?.disconnect(true)
+    if (this.credentials) this.credentials.token = ''
+    this.credentials = null
     this.setStatus('stopped')
   }
 

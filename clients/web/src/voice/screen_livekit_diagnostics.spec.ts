@@ -20,6 +20,7 @@ describe('LiveKit screen sender diagnostics', () => {
         return new Map<string, Record<string, unknown>>([
           ['codec', { id: 'vp8', type: 'codec', mimeType: 'video/VP8' }],
           ['low', frame('low', 'q', 640, bucket * 30)], ['full', frame('full', 'f', 1920, bucket * 30)],
+          ['remote-full', { id: 'remote-full', type: 'remote-inbound-rtp', localId: 'full', packetsLost: bucket * 2, roundTripTime: 0.045 }],
         ]) as unknown as RTCStatsReport
       },
     }
@@ -36,5 +37,7 @@ describe('LiveKit screen sender diagnostics', () => {
     expect(diagnostics.measured).toMatchObject({ width: 1920, height: 1080 })
     expect(diagnostics.measured?.framesPerSecond).toBeCloseTo(30, 0)
     expect(diagnostics.bitrateBps).toBe(2_500_000)
+    expect(diagnostics.layers?.[1]?.packetLossPercent).toBeCloseTo(100 / 16, 1)
+    expect(diagnostics.roundTripTimeMs).toBe(45)
   })
 })

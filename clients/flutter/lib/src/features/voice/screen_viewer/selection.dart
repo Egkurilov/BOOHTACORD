@@ -35,9 +35,11 @@ extension VoiceScreenViewerSelection on VoiceController {
         for (final publication in participant.videoTrackPublications.where(
           (item) => item.source == TrackSource.screenShareVideo,
         )) {
-          if (!screenThumbnailRemoteTrackIds.containsKey(publication.sid)) {
-            await setRemoteTrackSubscription(publication, false);
-            if (!active(ticket, revision)) return;
+          await setRemoteTrackSubscription(publication, false);
+          if (!active(ticket, revision)) return;
+          if (selectedRemoteScreenViewerIdentity == previous) {
+            subscribeRemoteScreenForViewing(room, previous);
+            return;
           }
         }
         final audioPublication = screenShareAudioPublication(participant);
@@ -68,7 +70,6 @@ extension VoiceScreenViewerSelection on VoiceController {
       if (subscribedTrack is RemoteVideoTrack) {
         unawaited(
           captureSelectedRemoteScreenThumbnail(
-            temporaryPreview: false,
             capture: () => captureRemoteThumbnail(
               room,
               participant,

@@ -16,14 +16,13 @@ import { screenPublisherEventHandlers } from './screen_publisher/events'
 
 export function wireLiveKitRoom(
   room: VoiceRoom,
-  viewer: Pick<ReturnType<typeof bindLiveKitScreenViewer>, 'clear' | 'refresh' | 'subscribeMicrophones' | 'subscribeScreenThumbnails'>,
+  viewer: Pick<ReturnType<typeof bindLiveKitScreenViewer>, 'clear' | 'refresh' | 'subscribeMicrophones'>,
 ): VoiceRoom {
   const connect = room.connect.bind(room)
   const disconnect = room.disconnect.bind(room)
   room.connect = async (url, token, options) => {
     await connect(url, token, { ...options, autoSubscribe: false })
     viewer.subscribeMicrophones()
-    viewer.subscribeScreenThumbnails()
     viewer.refresh()
   }
   room.disconnect = async () => {
@@ -104,9 +103,12 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   const screenPublisher = bindLiveKitScreenPublisher(liveKitRoom.localParticipant, () => room.readScreenDiagnostics!(),
     profile => room.adoptScreenProfile?.(profile), (profile, action, current) => profileGuard.repair(profile, action, current))
   room.screenPublisher = screenPublisher
-  const screenPublisherEvents = screenPublisherEventHandlers(screenPublisher, Track.Source.ScreenShare, profileGuard.stop.bind(profileGuard))
+  const screenPublisherEvents = screenPublisherEventHandlers(screenPublisher, Track.Source.ScreenShare, profileGuard)
   liveKitRoom.on(RoomEvent.LocalTrackPublished, screenPublisherEvents.published)
   liveKitRoom.on(RoomEvent.LocalTrackUnpublished, screenPublisherEvents.unpublished)
-  liveKitRoom.on(RoomEvent.Disconnected, profileGuard.stop.bind(profileGuard))
+  liveKitRoom.on(RoomEvent.Reconnecting, screenPublisherEvents.reconnecting)
+  liveKitRoom.on(RoomEvent.SignalReconnecting, screenPublisherEvents.reconnecting)
+  liveKitRoom.on(RoomEvent.Reconnected, screenPublisherEvents.reconnected)
+  liveKitRoom.on(RoomEvent.Disconnected, screenPublisherEvents.disconnected)
   return room
 }

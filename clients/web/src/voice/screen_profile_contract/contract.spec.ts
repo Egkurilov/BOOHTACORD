@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { profileDimensions, profileScale, screenProfile, screenShareMaxBitrate } from './policy'
-import type { ScreenFrameRate, ScreenProfile, ScreenResolution } from './policy'
+import { profileDimensions, profileScale, screenProfile, screenShareMaxBitrate } from '../screen_profile/policy'
+import type { ScreenFrameRate, ScreenProfile, ScreenResolution } from '../screen_profile/policy'
 
 const catalog = JSON.parse(readFileSync(new URL('../../../../../contracts/screen-share-profile-v1.catalog.json', import.meta.url), 'utf8'))
 const fixtures = JSON.parse(readFileSync(new URL('../../../../../contracts/screen-share-profile-v1.fixtures.json', import.meta.url), 'utf8'))
@@ -22,24 +22,24 @@ describe('screen-share contract v1', () => {
     expect(schema.properties.effective_profile.properties.encoding.properties.layers.maxItems).toBe(2)
     expect(catalog.topologyPolicy.selectedVideoSubscriptionsPerViewer).toBe(1)
     expect(catalog.topologyPolicy.maximumLayers).toBe(2)
-    expect(catalog.topologyPolicy.baselineByRuntime.web).toMatchObject({ simulcast: true, primaryLayers: { min: 1, max: 2 }, lowLayerMaxFps: 15, evidenceStatus: 'source-derived-unvalidated' })
-    expect(catalog.topologyPolicy.baselineByRuntime.flutterAndroid).toMatchObject({ simulcast: false, primaryLayers: { min: 1, max: 1 }, evidenceStatus: 'source-derived-unvalidated' })
-    expect(catalog.topologyPolicy.baselineByRuntime.flutterOther.primaryLayers.max).toBe(2)
+    expect(catalog.topologyPolicy.dynacastOwner).toBe('LiveKit/WebRTC SDK')
+    expect(catalog.topologyPolicy.currentSourceDerivedByRuntime.web).toMatchObject({ simulcast: true, primaryLayers: { min: 1, max: 2 }, lowLayerMaxFps: 15, evidenceStatus: 'source-derived-unvalidated' })
+    expect(catalog.topologyPolicy.currentSourceDerivedByRuntime.flutterAndroid).toMatchObject({ simulcast: false, primaryLayers: { min: 1, max: 1 }, evidenceStatus: 'source-derived-unvalidated' })
+    expect(catalog.topologyPolicy.currentSourceDerivedByRuntime.flutterIOS.defaultProfileId).toBe('P720_15')
+    expect(catalog.topologyPolicy.currentSourceDerivedByRuntime.flutterDesktop.primaryLayers.max).toBe(2)
     expect(catalog.topologyPolicy.backupCodecEvidenceStatus).toBe('sfu-negotiated-unvalidated')
-    expect(fixtures.lifecycle.every((fixture: { schemaVersion: number }) => fixture.schemaVersion === 1)).toBe(true)
+    expect(fixtures.schemaVersion).toBe(schema.properties.schema_version.const)
+    expect(fixtures.descriptorCompatibility).toEqual([
+      expect.objectContaining({ descriptorVersion: null, legacyTrackReadable: true, v1ControlsEnabled: false, fallbackAttempts: 0 }),
+      expect.objectContaining({ descriptorVersion: 1, legacyTrackReadable: true, v1ControlsEnabled: true, fallbackAttempts: 0 }),
+      expect.objectContaining({ descriptorVersion: 99, legacyTrackReadable: true, v1ControlsEnabled: false, fallbackAttempts: 0 }),
+    ])
     for (const fixture of fixtures.enumValidation) {
       const accepted = schema.properties[fixture.property]?.enum?.includes(fixture.value) ?? false
       expect(accepted).toBe(fixture.accepted)
     }
-    for (const fixture of fixtures.descriptorCompatibility) {
-      const knownProfile = catalog.existingProfiles.some((profile: { id: string }) => profile.id === fixture.requestedProfileId)
-        || catalog.experimentCandidates.some((profile: { id: string }) => profile.id === fixture.requestedProfileId)
-      expect(fixture.schemaVersion === schema.properties.schema_version.const
-        && schema.properties.mode.enum.includes(fixture.mode)
-        && knownProfile).toBe(fixture.accepted)
-    }
     const stopped = fixtures.lifecycle.find((fixture: { name: string }) => fixture.name.startsWith('stop-'))
-    expect(stopped.currentRevision).toBeGreaterThan(stopped.completionRevision)
+    expect(stopped.operationRevision).toBeGreaterThan(stopped.completionRevision)
     expect(stopped.expectedOutcome).toBe('superseded')
     expect(stopped.mayPublish).toBe(false)
     const revoked = fixtures.lifecycle.find((fixture: { name: string }) => fixture.name.startsWith('revoke-'))

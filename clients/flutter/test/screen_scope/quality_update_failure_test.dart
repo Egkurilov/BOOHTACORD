@@ -40,6 +40,24 @@ void main() {
     expect(track.stopCalls, 1);
     expect(owner.activeTrack, isNull);
     expect(owner.phase, ScreenSharePhase.error);
-    expect(owner.error, contains('Профиль не восстановлен'));
+    expect(owner.error, contains('Профиль не подтверждён'));
+  });
+
+  test('unclassified replacement failure stops an unconfirmed publisher', () async {
+    final driver = QualityScreenDriver()..throwUnclassifiedFailure = true;
+    final track = FakeScreenTrack();
+    final owner = qualityOwner(driver, track);
+    addTearDown(owner.dispose);
+
+    await owner.updateScreenShareQuality(
+      const ScreenShareQuality(resolution: 1440, frameRate: 60),
+    );
+
+    expect(driver.qualityOutcomes, ['failure']);
+    expect(driver.stopCalls, 1);
+    expect(track.stopCalls, 1);
+    expect(owner.activeTrack, isNull);
+    expect(owner.phase, ScreenSharePhase.error);
+    expect(owner.error, contains('Профиль не подтверждён'));
   });
 }

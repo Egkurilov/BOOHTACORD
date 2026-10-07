@@ -7,7 +7,6 @@ import '../shortcuts/execute.dart';
 import '../connection_close/leave.dart';
 import '../volumes/reset.dart';
 import '../connection_stats/poll.dart';
-import '../screen_preview/capture.dart';
 import '../stream_notice/events.dart';
 export 'types.dart';
 export '../shortcuts/execute.dart';
@@ -25,7 +24,6 @@ export '../admission/join.dart';
 export '../room_events/bind.dart';
 export '../remote_tracks/subscriptions.dart';
 export '../screen_viewer/selection.dart';
-export '../screen_preview/queue.dart';
 export '../screen_preview/capture.dart';
 export '../connection_stats/poll.dart';
 export '../volumes/read.dart';
@@ -54,6 +52,7 @@ class VoiceController extends VoiceState {
          createRoom: roomFactory ?? ((options) => Room(roomOptions: options)),
        );
   final Future<void> Function(Room, MediaDevice) audioOutputDeviceSetter;
+  final Map<String, RemoteTrackPublication> screenThumbnailPublications = {};
   static const voiceStreamSoundPreferenceKey = 'voice-screen-start-sound:v1';
   @override
   void dispose() {
@@ -62,9 +61,11 @@ class VoiceController extends VoiceState {
     disconnect.reset();
     disposed = true;
     operationRevision++;
+    selectedRemoteScreenViewerIdentity = null;
+    screenThumbnails.clear();
+    screenThumbnailPublications.clear();
     stopVoiceConnectionStatsPolling();
     clearVoiceStreamNotice(resetTracker: true, notify: false);
-    closeScreenPreviewSubscriptions();
     unawaited(disposeVoiceEvents());
     unawaited(room?.disconnect());
     unawaited(pendingRoom?.disconnect());

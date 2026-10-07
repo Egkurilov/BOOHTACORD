@@ -40,6 +40,9 @@ extension VoiceConnectionCloseLeave on VoiceController {
     final stopScreen = screen.stopScreenShare();
     room = null;
     pendingRoom = null;
+    screenThumbnails.clear();
+    screenThumbnailPublications.clear();
+    selectedRemoteScreenViewerIdentity = null;
     leaseId = null;
     api.transport.session.telemetry.endMedia();
     voiceAdmissionPending = false;
@@ -89,7 +92,6 @@ extension VoiceConnectionCloseLeave on VoiceController {
   }
 
   Future<void> disposeVoiceEvents() async {
-    closeScreenPreviewSubscriptions();
     final listener = voiceEvents;
     voiceEvents = null;
     await listener?.dispose();

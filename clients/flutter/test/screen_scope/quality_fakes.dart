@@ -11,7 +11,9 @@ import 'fakes.dart';
 class QualityScreenDriver extends DelayedScreenDriver {
   int staleQualityWrites = 0;
   bool failQualityUpdate = false;
+  bool throwUnclassifiedFailure = false;
   bool recoveryRestored = true;
+  String staleOutcome = 'superseded';
   ScreenShareQuality? appliedQuality;
   final qualityRequests = <ScreenShareQuality>[];
   final qualityOutcomes = <String>[];
@@ -28,8 +30,12 @@ class QualityScreenDriver extends DelayedScreenDriver {
     qualityRequests.add(quality);
     if (qualityRequests.length == 1) await updateGate?.future;
     if (!isCurrent()) {
-      qualityOutcomes.add('superseded');
+      qualityOutcomes.add(staleOutcome);
       return false;
+    }
+    if (throwUnclassifiedFailure) {
+      qualityOutcomes.add('failure');
+      throw StateError('profile replacement state is unknown');
     }
     if (failQualityUpdate) {
       qualityOutcomes.add('failure');
@@ -48,12 +54,13 @@ ScreenShareController qualityOwner(
   QualityScreenDriver driver,
   FakeScreenTrack track, {
   SessionScope? scope,
+  Room? Function()? readRoom,
 }) {
   final room = FakeScreenRoom();
   final owner = ScreenShareController(
     ApiClient(),
     scope ?? SessionScope(),
-    readRoom: () => room,
+    readRoom: readRoom ?? () => room,
     voiceReady: () => true,
     driver: driver,
   );

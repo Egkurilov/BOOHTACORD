@@ -1,7 +1,7 @@
 const maxBytes = 14 * 1024
 const thumbnailWidths = [160, 128, 96] as const
 
-export interface ThumbnailVideoTrack {
+export interface LocalScreenThumbnailTrack {
   attach(element: HTMLVideoElement): unknown
   detach(element: HTMLVideoElement): unknown
 }
@@ -11,56 +11,8 @@ export function validScreenThumbnail(bytes: Uint8Array): boolean {
     bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[bytes.length - 2] === 0xff && bytes[bytes.length - 1] === 0xd9
 }
 
-export interface ScreenThumbnailCaptureOptions {
-  attempts?: number
-  captureFrame?: (video: HTMLVideoElement) => Promise<Uint8Array | null>
-  createVideo?: () => HTMLVideoElement
-  isActive?: () => boolean
-  retryIntervalMs?: number
-}
-
-export async function captureScreenThumbnailFromTrack(
-  track: ThumbnailVideoTrack,
-  onThumbnail: (bytes: Uint8Array) => void,
-  options: ScreenThumbnailCaptureOptions = {},
-): Promise<boolean> {
-  const video = (options.createVideo ?? (() => document.createElement('video')))()
-  video.autoplay = true
-  video.muted = true
-  video.playsInline = true
-  const isActive = options.isActive ?? (() => true)
-  const attempts = Math.max(1, options.attempts ?? 12)
-  const retryIntervalMs = Math.max(0, options.retryIntervalMs ?? 250)
-  let attached = false
-  try {
-    track.attach(video)
-    attached = true
-    try { void video.play().catch(() => undefined) } catch { /* Browser playback can be unavailable in the background. */ }
-    for (let attempt = 0; attempt < attempts; attempt++) {
-      if (!isActive()) return false
-      if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
-        const bytes = await (options.captureFrame ?? captureVideoFrame)(video)
-        if (bytes && validScreenThumbnail(bytes) && isActive()) {
-          onThumbnail(bytes)
-          return true
-        }
-      }
-      if (attempt + 1 < attempts) await delay(retryIntervalMs)
-    }
-    return false
-  } catch {
-    // A preview failure must not interrupt the live screen track.
-    return false
-  } finally {
-    if (attached) {
-      try { track.detach(video) } catch { /* Detach failures must not escape the preview path. */ }
-    }
-    try { video.pause() } catch { /* Cleanup is best effort for a failed preview. */ }
-  }
-}
-
 export function captureLocalScreenThumbnails(
-  track: ThumbnailVideoTrack,
+  track: LocalScreenThumbnailTrack,
   onThumbnail: (bytes: Uint8Array) => void,
 ): () => void {
   const video = document.createElement('video')
@@ -101,8 +53,4 @@ async function captureVideoFrame(video: HTMLVideoElement): Promise<Uint8Array | 
   if (!blob || blob.size > maxBytes) return null
   const bytes = new Uint8Array(await blob.arrayBuffer())
   return validScreenThumbnail(bytes) ? bytes : null
-}
-
-function delay(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds))
 }

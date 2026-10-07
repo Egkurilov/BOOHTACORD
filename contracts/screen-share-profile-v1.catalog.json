@@ -10,7 +10,7 @@
     "publisher": ["idle", "requesting", "capturing", "publishing", "sharing", "updating", "stopping", "failed"],
     "viewer": ["idle", "subscribing", "waiting-first-frame", "playing", "suspended", "recovering", "ended", "failed"]
   },
-  "reasonCodes": ["user-request", "platform-constraint", "network-adaptation", "no-subscribers", "sdk-paused", "unsupported-profile", "capture-denied", "publish-failed", "superseded", "session-revoked", "unknown"],
+  "reasonCodes": ["user-request", "platform-constraint", "network-adaptation", "no-subscribers", "sdk-paused", "unsupported-profile", "capture-denied", "publish-failed", "superseded", "session-revoked", "logout", "unknown"],
   "resolutions": [
     { "height": 720, "width": 1280 },
     { "height": 1080, "width": 1920 },
@@ -24,15 +24,79 @@
   },
   "topologyPolicy": {
     "selectedVideoSubscriptionsPerViewer": 1,
-    "baselineByRuntime": {
-      "web": { "simulcast": true, "primaryLayers": { "min": 1, "max": 2 }, "lowLayerMaxFps": 15, "evidenceStatus": "source-derived-unvalidated" },
-      "flutterAndroid": { "simulcast": false, "primaryLayers": { "min": 1, "max": 1 }, "evidenceStatus": "source-derived-unvalidated" },
-      "flutterOther": { "simulcast": true, "primaryLayers": { "min": 1, "max": 2 }, "lowLayerMaxFps": 15, "evidenceStatus": "source-derived-unvalidated" }
-    },
-    "simulcast": "platform-sdk-default-preserved; maximum-two-primary-layers",
     "maximumLayers": 2,
+    "currentSourceDerivedByRuntime": {
+      "web": { "simulcast": true, "primaryLayers": { "min": 1, "max": 2 }, "lowLayerMaxFps": 15, "defaultProfileId": "P1080_30", "evidenceStatus": "source-derived-unvalidated" },
+      "flutterAndroid": { "simulcast": false, "primaryLayers": { "min": 1, "max": 1 }, "defaultProfileId": "P720_15", "evidenceStatus": "source-derived-unvalidated" },
+      "flutterIOS": { "simulcast": true, "primaryLayers": { "min": 1, "max": 2 }, "defaultProfileId": "P720_15", "evidenceStatus": "source-derived-unvalidated" },
+      "flutterDesktop": { "simulcast": true, "primaryLayers": { "min": 1, "max": 2 }, "lowLayerMaxFps": 15, "defaultProfileId": "P1080_30", "evidenceStatus": "source-derived-unvalidated" }
+    },
     "backupCodecEvidenceStatus": "sfu-negotiated-unvalidated",
-    "congestionControlOwner": "LiveKit/WebRTC SDK"
+    "congestionControlOwner": "LiveKit/WebRTC SDK",
+    "dynacastOwner": "LiveKit/WebRTC SDK"
+  },
+  "targetPolicy": {
+    "selectedVideoSubscriptionsPerViewer": 1,
+    "defaultRequestedProfileId": "P1080_60",
+    "defaultTopology": "single-layer",
+    "simulcast": { "enabledByDefault": false, "explicitOptIn": true, "maxLayers": 2 },
+    "congestionControlOwner": "LiveKit/WebRTC SDK",
+    "forceMinimumBitrate": false,
+    "periodicKeyframes": false,
+    "profileChange": "explicit user changes or a separately enabled slow supervisor; SDK owns fast adaptation",
+    "slowSupervisor": { "enabledByDefault": false, "windowSeconds": 10, "consecutiveWindows": 3, "minimumDwellSeconds": 30 },
+    "aggregateBudget": "sum active layer caps and account for transport overhead separately; profile caps are not observed wire bitrate"
+  },
+  "compatibility": {
+    "legacyPublicationPattern": "^screenshare-(720|1080|1440)p-(15|30|60)fps$",
+    "legacyProfileIdsRemainReadable": true,
+    "unknownDescriptorVersion": "keep legacy track readable and disable v1 controls for that publication generation",
+    "fallbackAttemptsPerGeneration": 1,
+    "fallbackCreatesNewPublication": false,
+    "nativeVideoOnlyGuaranteesSystemAudio": false
+  },
+  "rollout": {
+    "descriptorMetadata": { "featureSwitch": "screen-share.descriptor-v1", "independentlyDisableable": true },
+    "experimentProfiles": { "featureSwitch": "screen-share.experiment-profiles", "independentlyDisableable": true },
+    "boundedSimulcast": { "featureSwitch": "screen-share.bounded-simulcast", "independentlyDisableable": true },
+    "fallbackAttemptsPerGeneration": 1,
+    "unknownVersionNeverTriggersDowngradeLoop": true
+  },
+  "bitrateSemantics": {
+    "unit": "bit/s",
+    "profileCap": "maximum per active video encoding; not a claim of measured sender or wire bitrate",
+    "simulcastTotal": "sum caps for active layers plus separately measured protocol and transport overhead",
+    "audioIncluded": false
+  },
+  "qualityAcceptance": {
+    "status": "proposed-unvalidated",
+    "warmupSeconds": 30,
+    "durationSeconds": 180,
+    "windowSeconds": 1,
+    "repeats": 5,
+    "minimumValidWindowsPerRun": 120,
+    "presentedFpsP05": 55,
+    "latencyP95Ms": { "firstFrame": 2000, "profileSwitch": 2000 },
+    "latencyObservationTimeoutMs": 5000,
+    "minimumFirstFrameSamplesPerRun": 20,
+    "minimumSwitchSamplesPerRun": 20,
+    "freezeThresholdMs": 500,
+    "fpsObservation": "frames actually presented by the visible remote renderer per foreground second; never capture maxFramerate or local preview",
+    "denominator": "valid one-second foreground windows from the predeclared moving-content interval",
+    "exclude": ["predeclared static intervals", "hidden or minimized viewer", "publisher intentionally paused", "warm-up"],
+    "freezeRule": "include unexplained stalls over 500 ms in foreground moving-content windows; do not exclude them as packet loss",
+    "latencyClock": "measure each start/end pair with one participant monotonic clock from selected subscription or acknowledged profile switch to first frame presented",
+    "latencyDenominator": "include every attempted subscription or switch; no first frame by timeout is a failed sample, not an omitted value",
+    "networkRecovery": "separate voice-first recovery scenario; do not require 1080p60 on degraded networks",
+    "noiseRule": "bootstrap one-sided 95% confidence bounds; inconclusive overlap is not PASS and requires more repeats"
+  },
+  "ownership": {
+    "capture": "platform capture driver creates/releases tracks and applies capture constraints",
+    "sender": "publisher adapter applies profile encoding; SDK owns congestion control",
+    "metadata": "publisher adapter writes descriptor once per active publication generation",
+    "subscription": "selected-stream viewer owns one remote video subscription",
+    "renderer": "renderer presents the selected track and reports only available presented-frame observations",
+    "server": "authoritative ACL and media-session revocation; does not proxy media or interpret presented FPS"
   },
   "existingProfiles": [
     { "id": "P720_15", "resolution": 720, "frameRate": 15, "bitrateBps": 1500000 },

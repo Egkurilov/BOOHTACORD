@@ -1,4 +1,5 @@
 import { LocalVideoTrack, Track, type Room } from 'livekit-client'
+import { baselinePlan } from './settings'
 
 export async function publishBaselineCapture(
   room: Room,
@@ -11,8 +12,8 @@ export async function publishBaselineCapture(
   const track = new LocalVideoTrack(mediaTrack)
   mediaTrack.onended = onEnded
   await room.localParticipant.publishTrack(track, {
-    name: 'baseline-screen', source: Track.Source.ScreenShare, videoCodec: 'vp8',
-    screenShareEncoding: { maxFramerate: 60, maxBitrate: 8_000_000 },
+    name: 'baseline-screen', source: Track.Source.ScreenShare, videoCodec: baselinePlan.codec,
+    screenShareEncoding: { maxFramerate: baselinePlan.frameRate, maxBitrate: baselinePlan.bitrateBps },
     degradationPreference: 'maintain-framerate', simulcast: false,
     videoSimulcastLayers: [], screenShareSimulcastLayers: [],
   })

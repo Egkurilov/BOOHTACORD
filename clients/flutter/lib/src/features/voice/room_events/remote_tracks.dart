@@ -1,13 +1,15 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart'
     hide ChatMessage, voiceReconnectAttemptLimit;
 
-import '../../../services/screen_share_diagnostics.dart';
 import '../lifecycle/controller.dart';
 import '../screen_preview/capture_policy.dart';
 import '../screen_viewer/audio_publication.dart';
+import '../../../services/screen_share_diagnostics.dart';
+import 'remote_participants.dart';
+import 'refresh_voice_navigation.dart';
+import 'remote_state_diagnostics.dart';
 
 extension VoiceEventsRemoteTracks on VoiceController {
   void bindRemoteTracks(
@@ -15,31 +17,15 @@ extension VoiceEventsRemoteTracks on VoiceController {
     EventsListener<RoomEvent> listener,
     bool Function() owns,
   ) {
-    void logRemoteState(ScreenShareDiagnosticEvent event) {
-      final counts = screenShareRemoteCounts(room);
-      logScreenShareDiagnostic(
-        event,
-        platform: defaultTargetPlatform,
-        remoteParticipants: counts?.participants,
-        remoteScreenPublications: counts?.publications,
-      );
-    }
-
+    bindRemoteParticipantEvents(room, listener, owns);
     listener.on<TrackSubscribedEvent>((event) {
       if (!owns()) return;
       if (!identical(this.room, room)) return;
       if (event.publication.source == TrackSource.screenShareVideo &&
           event.track is RemoteVideoTrack) {
-        logRemoteState(ScreenShareDiagnosticEvent.remoteTrackSubscribed);
-        final waiter = screenPreviewTrackWaiters[event.publication.sid];
-        if (waiter != null && !waiter.isCompleted) {
-          waiter.complete(event.track as RemoteVideoTrack);
-        }
+        logRemoteVoiceState(room, ScreenShareDiagnosticEvent.remoteTrackSubscribed);
         unawaited(
           captureSelectedRemoteScreenThumbnail(
-            temporaryPreview: screenThumbnailRemoteTrackIds.containsKey(
-              event.publication.sid,
-            ),
             capture: () => captureRemoteThumbnail(
               room,
               event.participant,
@@ -62,48 +48,13 @@ extension VoiceEventsRemoteTracks on VoiceController {
         unawaited(applySavedAudioVolume(event.participant, source));
       }
     });
-    void refreshVoiceNavigation() {
-      if (!owns()) return;
-      if (!identical(this.room, room)) return;
-      observeVoiceStreamStarts(room);
-      notifyListeners();
-    }
-
-    listener.on<ParticipantConnectedEvent>((_) {
-      logRemoteState(ScreenShareDiagnosticEvent.remoteParticipantConnected);
-      refreshVoiceNavigation();
-    });
-    listener.on<ParticipantDisconnectedEvent>((event) {
-      if (!owns()) return;
-      logRemoteState(ScreenShareDiagnosticEvent.remoteParticipantDisconnected);
-      screenThumbnails.remove(event.participant.identity);
-      final endedTrackIds = screenThumbnailRemoteTrackIds.entries
-          .where((entry) => entry.value == event.participant.identity)
-          .map((entry) => entry.key)
-          .toList(growable: false);
-      for (final trackId in endedTrackIds) {
-        final waiter = screenPreviewTrackWaiters[trackId];
-        if (waiter != null && !waiter.isCompleted) waiter.complete(null);
-        screenThumbnailRemoteTrackIds.remove(trackId);
-      }
-      if (selectedRemoteScreenViewerIdentity == event.participant.identity) {
-        selectedRemoteScreenViewerIdentity = null;
-      }
-      refreshVoiceNavigation();
-    });
-    listener.on<ActiveSpeakersChangedEvent>((_) => refreshVoiceNavigation());
     listener.on<TrackPublishedEvent>((event) {
       if (!owns()) return;
       if (identical(this.room, room)) {
-        if (event.publication.source == TrackSource.microphone) {
+        if (shouldAutomaticallySubscribeRemoteTrack(event.publication.source)) {
           unawaited(setRemoteTrackSubscription(event.publication, true));
         } else if (event.publication.source == TrackSource.screenShareVideo) {
-          logRemoteState(ScreenShareDiagnosticEvent.remoteTrackPublished);
-          queueRemoteScreenThumbnail(
-            room,
-            event.participant,
-            event.publication,
-          );
+          logRemoteVoiceState(room, ScreenShareDiagnosticEvent.remoteTrackPublished);
           if (event.participant.identity ==
               selectedRemoteScreenViewerIdentity) {
             subscribeRemoteScreenForViewing(room, event.participant.identity);
@@ -117,34 +68,41 @@ extension VoiceEventsRemoteTracks on VoiceController {
           unawaited(setRemoteTrackSubscription(event.publication, true));
         }
       }
-      refreshVoiceNavigation();
+      refreshRemoteVoiceNavigation(this, room, owns);
     });
     listener.on<TrackUnpublishedEvent>((event) {
       if (!owns()) return;
       if (event.publication.source == TrackSource.screenShareVideo) {
-        logRemoteState(ScreenShareDiagnosticEvent.remoteTrackUnpublished);
-        screenThumbnails.remove(event.participant.identity);
-        screenThumbnailRemoteTrackIds.remove(event.publication.sid);
-        final waiter = screenPreviewTrackWaiters[event.publication.sid];
-        if (waiter != null && !waiter.isCompleted) waiter.complete(null);
-        if (selectedRemoteScreenViewerIdentity == event.participant.identity) {
+        logRemoteVoiceState(room, ScreenShareDiagnosticEvent.remoteTrackUnpublished);
+        removeRemoteScreenThumbnail(
+          event.participant.identity,
+          publication: event.publication,
+        );
+        final replacement = event.participant.videoTrackPublications.any(
+          (item) =>
+              !identical(item, event.publication) &&
+              item.source == TrackSource.screenShareVideo,
+        );
+        if (selectedRemoteScreenViewerIdentity == event.participant.identity &&
+            !replacement) {
           unawaited(selectRemoteScreenForViewing(null));
+        } else if (selectedRemoteScreenViewerIdentity ==
+                event.participant.identity &&
+            replacement) {
+          subscribeRemoteScreenForViewing(room, event.participant.identity);
         }
       }
-      refreshVoiceNavigation();
+      refreshRemoteVoiceNavigation(this, room, owns);
     });
-    listener.on<TrackMutedEvent>((_) => refreshVoiceNavigation());
-    listener.on<TrackUnmutedEvent>((_) => refreshVoiceNavigation());
-    listener.on<TrackSubscribedEvent>((_) => refreshVoiceNavigation());
+    listener.on<TrackMutedEvent>((_) => refreshRemoteVoiceNavigation(this, room, owns));
+    listener.on<TrackUnmutedEvent>((_) => refreshRemoteVoiceNavigation(this, room, owns));
+    listener.on<TrackSubscribedEvent>((_) => refreshRemoteVoiceNavigation(this, room, owns));
     listener.on<TrackUnsubscribedEvent>((event) {
       if (!owns()) return;
       if (event.publication.source == TrackSource.screenShareVideo) {
-        logRemoteState(ScreenShareDiagnosticEvent.remoteTrackUnsubscribed);
-        screenThumbnailRemoteTrackIds.remove(event.publication.sid);
-        final waiter = screenPreviewTrackWaiters[event.publication.sid];
-        if (waiter != null && !waiter.isCompleted) waiter.complete(null);
+        logRemoteVoiceState(room, ScreenShareDiagnosticEvent.remoteTrackUnsubscribed);
       }
-      refreshVoiceNavigation();
+      refreshRemoteVoiceNavigation(this, room, owns);
     });
   }
 }

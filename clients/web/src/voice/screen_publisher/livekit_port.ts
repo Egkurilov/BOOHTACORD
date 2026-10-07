@@ -8,6 +8,7 @@ import type { ScreenPublisherPort } from './types'
 export function bindLiveKitScreenPublisher(participant: LocalParticipant, diagnostics: () => Promise<ScreenDiagnostics>, adopt: (profile: ScreenProfile) => void, repair: (profile: ScreenProfile, action: () => Promise<void>, current: () => boolean) => Promise<boolean>) {
   let generation = 0
   const expectedUnpublish = new WeakSet<LocalVideoTrack>(), ended = new Set<() => void>()
+  const published = new Set<(track: LocalVideoTrack) => void>()
   const currentTrack = () => participant.getTrackPublication(Track.Source.ScreenShare)?.videoTrack
   async function unpublish(track: LocalVideoTrack, stopCapture: boolean): Promise<void> {
     expectedUnpublish.add(track)
@@ -47,10 +48,12 @@ export function bindLiveKitScreenPublisher(participant: LocalParticipant, diagno
       if (currentTrack() !== track) throw new Error('LiveKit не подтвердил восстановленную публикацию.')
     }, current),
     onEnded: listener => { ended.add(listener); return () => ended.delete(listener) },
-    trackPublished: () => { ++generation },
+    onPublished: listener => { published.add(listener); return () => published.delete(listener) },
+    trackPublished: track => { ++generation; published.forEach(listener => listener(track)) },
     trackUnpublished: track => {
       ++generation
       if (track && expectedUnpublish.delete(track)) return true
+      if (track?.mediaStreamTrack.readyState === 'live') return true
       for (const listener of ended) listener()
       return false
     },

@@ -10,13 +10,23 @@
       <h1>Screen-share baseline</h1>
       <label>LiveKit server URL <input id="url" type="url" autocomplete="off"></label>
       <label>Short-lived test token <input id="token" type="password" autocomplete="off"></label>
+      <label>Tested source commit SHA <input id="source-sha" autocomplete="off"></label>
+      <label>Test SFU image digest <input id="sfu-digest" autocomplete="off"></label>
+      <label>LiveKit SDK version <input id="sdk-version" autocomplete="off"></label>
+      <label>Device OS/GPU/driver/power/display <input id="device-profile" autocomplete="off"></label>
+      <label>Repeat index <input id="repeat-index" type="number" min="1" max="100"></label>
+      <label><input id="isolated-target" type="checkbox"> I confirmed this is an isolated, non-production SFU</label>
+      <label><input id="numbered-source" type="checkbox"> Viewer: publisher is using the numbered synthetic source</label>
       <label>Role
         <select id="role"><option value="viewer">Viewer</option><option value="publisher">Publisher</option></select>
+      </label>
+      <label>Synthetic capture cap
+        <select id="synthetic-fps"><option value="60">60 FPS</option><option value="30">30 FPS control</option><option value="15">15 FPS control</option></select>
       </label>
       <button id="connect" type="button">Connect</button>
       <button id="synthetic" type="button">Start synthetic moving source</button>
       <button id="display" type="button">Start display capture</button>
-      <button id="report" type="button">Download 10-second numeric sample</button>
+      <button id="report" type="button">Download 180-second numeric result</button>
       <button id="stop" type="button">Stop</button>
       <p id="status" role="status">Disconnected</p>
       <video id="remote" autoplay muted playsinline></video>

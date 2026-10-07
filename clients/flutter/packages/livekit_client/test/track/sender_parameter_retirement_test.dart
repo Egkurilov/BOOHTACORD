@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/src/proto/livekit_rtc.pb.dart' as lk_rtc;
 import 'package:livekit_client/src/proto/livekit_models.pb.dart' as lk_models;
+import 'package:livekit_client/src/options.dart';
 import 'package:livekit_client/src/track/local/video.dart';
 
 import '../mock/video_sender.dart';
@@ -42,5 +43,20 @@ void main() {
     expect(oldSender.writes, 0);
     expect(newSender.writes, 1);
     expect(newSender.parameters.encodings!.single.active, isFalse);
+  });
+
+  test('retired sender rejects degradation writer started after the barrier', () async {
+    final sender = TestVideoSender([rtc.RTCRtpEncoding(rid: 'f')]);
+    final track = testScreenTrack(sender);
+    track.invalidateSenderParameterOperations();
+    await track.waitForSenderParameterOperations();
+
+    final degradationUpdate = track.setDegradationPreference(
+      DegradationPreference.maintainResolution,
+    );
+    sender.release.complete();
+    await degradationUpdate;
+
+    expect(sender.writes, 0);
   });
 }

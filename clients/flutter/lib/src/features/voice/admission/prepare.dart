@@ -1,6 +1,5 @@
 import '../../../models.dart';
 import '../../../core/session/scope.dart';
-import '../../../services/screen_thumbnail.dart';
 import '../../../services/voice_volume_preferences.dart';
 import '../../../services/voice_lease_revocation.dart';
 import '../lifecycle/controller.dart';
@@ -51,8 +50,7 @@ extension VoiceAdmissionPrepare on VoiceController {
     final disconnectGeneration = disconnect.generation;
     final revision = ++operationRevision;
     screenThumbnails.clear();
-    closeScreenPreviewSubscriptions();
-    screenPreviewSubscriptionQueue = ScreenPreviewSubscriptionQueue();
+    screenThumbnailPublications.clear();
     selectedRemoteScreenViewerIdentity = null;
     transientScreenShareVolumes.clear();
     voicePhase = VoicePhase.joining;

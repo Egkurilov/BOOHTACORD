@@ -17,8 +17,10 @@ import 'types.dart';
 import '../audio_diagnostics/model.dart';
 import '../volumes/telemetry.dart';
 import '../disconnect_notice/state.dart';
+import '../screen_viewer/selection_state.dart';
 
-abstract class VoiceState extends ChangeNotifier {
+abstract class VoiceState extends ChangeNotifier
+    with VoiceScreenViewerSelectionState {
   VoiceState(
     this.api,
     this.scope,
@@ -97,11 +99,6 @@ abstract class VoiceState extends ChangeNotifier {
       VoiceStreamStartTracker();
   ScreenThumbnailCaptureQueue get screenThumbnailCaptureQueue =>
       screen.captureQueue;
-  ScreenPreviewSubscriptionQueue? screenPreviewSubscriptionQueue;
-  final Map<String, Completer<RemoteVideoTrack?>> screenPreviewTrackWaiters =
-      <String, Completer<RemoteVideoTrack?>>{};
-  String? selectedRemoteScreenViewerIdentity;
-  final Map<String, String> screenThumbnailRemoteTrackIds = <String, String>{};
   String? get selectedAudioInputId => audio.selectedAudioInputId;
   set selectedAudioInputId(String? value) => audio.selectedAudioInputId = value;
   String? get selectedAudioOutputId => audio.selectedAudioOutputId;

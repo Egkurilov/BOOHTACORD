@@ -10,6 +10,11 @@ class ScreenShareQuality {
 
   static const resolutions = [720, 1080, 1440];
   static const frameRates = [15, 30, 60];
+  static const _bitratesBps = {
+    720: {15: 1_500_000, 30: 2_500_000, 60: 4_000_000},
+    1080: {15: 2_500_000, 30: 5_000_000, 60: 8_000_000},
+    1440: {15: 5_000_000, 30: 8_000_000, 60: 12_000_000},
+  };
 
   final int resolution;
   final int frameRate;
@@ -18,32 +23,19 @@ class ScreenShareQuality {
   static VideoDimensions? sourceDimensionsFromJpeg(Uint8List? bytes) =>
       jpeg_dimensions.sourceDimensionsFromJpeg(bytes);
 
-  int get maxBitrate {
+  int get maxBitrateBps {
     if (!resolutions.contains(resolution) || !frameRates.contains(frameRate)) {
       throw ArgumentError('Некорректный профиль демонстрации.');
     }
-    return switch (resolution) {
-      720 => switch (frameRate) {
-        15 => 1500,
-        30 => 2500,
-        _ => 4000,
-      },
-      1080 => switch (frameRate) {
-        15 => 2500,
-        30 => 5000,
-        _ => 8000,
-      },
-      _ => switch (frameRate) {
-        15 => 5000,
-        30 => 8000,
-        _ => 12000,
-      },
-    };
+    return _bitratesBps[resolution]![frameRate]!;
   }
 
-  String get estimatedBandwidth => maxBitrate >= 1000
-      ? '≈ ${(maxBitrate / 1000).toStringAsFixed(maxBitrate % 1000 == 0 ? 0 : 1)} Мбит/с'
-      : '≈ $maxBitrate Кбит/с';
+  /// Legacy display value in kbit/s; contract values and encoders use bit/s.
+  int get maxBitrate => maxBitrateBps ~/ 1000;
+
+  String get estimatedBandwidth => maxBitrateBps >= 1000000
+      ? '≈ ${(maxBitrateBps / 1000000).toStringAsFixed(maxBitrateBps % 1000000 == 0 ? 0 : 1)} Мбит/с'
+      : '≈ ${(maxBitrateBps / 1000).toStringAsFixed(0)} Кбит/с';
 
   String get trackName => 'screenshare-${resolution}p-${frameRate}fps';
 
@@ -55,7 +47,7 @@ class ScreenShareQuality {
     },
     encoding: VideoEncoding(
       maxFramerate: frameRate,
-      maxBitrate: maxBitrate * 1000,
+      maxBitrate: maxBitrateBps,
     ),
   );
 

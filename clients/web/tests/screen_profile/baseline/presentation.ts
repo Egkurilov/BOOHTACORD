@@ -1,4 +1,5 @@
 import { Track, type RemoteTrack } from 'livekit-client'
+import { readFrameMarker } from './frame_marker'
 
 export class BaselinePresentation {
   private connectedAt = 0
@@ -9,15 +10,21 @@ export class BaselinePresentation {
   private callbackId: number | null = null
   private remoteTrack: RemoteTrack | null = null
   private video: HTMLVideoElement | null = null
+  private markerCanvas = document.createElement('canvas')
+  private numberedSource = false
+  private presentedFrameIds: Array<number | null> = []
+  private timestampCursor = 0
+  private frameIdCursor = 0
 
   start(monotonicMs: number) {
     this.connectedAt = monotonicMs
   }
 
-  attach(track: RemoteTrack, video: HTMLVideoElement) {
+  attach(track: RemoteTrack, video: HTMLVideoElement, numberedSource = false) {
     if (track.kind !== Track.Kind.Video || this.remoteTrack) return
     this.remoteTrack = track
     this.video = video
+    this.numberedSource = numberedSource
     track.attach(video)
     void video.play().catch(() => undefined)
     this.observe(video)
@@ -30,7 +37,19 @@ export class BaselinePresentation {
         const now = performance.now()
         this.presentedFrameCallbacks++
         this.presentationTimestamps.push(now)
-        if (this.presentationTimestamps.length > 1200) this.presentationTimestamps.shift()
+        if (this.presentationTimestamps.length > 50000) {
+          this.presentationTimestamps.shift()
+          this.timestampCursor = Math.max(0, this.timestampCursor - 1)
+        }
+        if (this.numberedSource) {
+          let frameId: number | null = null
+          try { frameId = readFrameMarker(video, this.markerCanvas) } catch { /* cross-browser canvas readback may be unavailable */ }
+          this.presentedFrameIds.push(frameId)
+          if (this.presentedFrameIds.length > 50000) {
+            this.presentedFrameIds.shift()
+            this.frameIdCursor = Math.max(0, this.frameIdCursor - 1)
+          }
+        }
         if (this.firstFrameLatencyMs === null) {
           this.firstFrameLatencyMs = now - this.connectedAt
           this.firstFrameResolver?.(this.firstFrameLatencyMs)
@@ -52,10 +71,15 @@ export class BaselinePresentation {
 
   snapshot() {
     const quality = this.video?.getVideoPlaybackQuality()
+    const timestamps = this.presentationTimestamps.slice(this.timestampCursor)
+    const frameIds = this.presentedFrameIds.slice(this.frameIdCursor)
+    this.timestampCursor = this.presentationTimestamps.length
+    this.frameIdCursor = this.presentedFrameIds.length
     return {
       firstFrameLatencyMs: this.firstFrameLatencyMs,
       presentedFrameCallbacks: this.presentedFrameCallbacks,
-      presentationTimestamps: [...this.presentationTimestamps],
+      presentationTimestamps: timestamps,
+      presentedFrameIds: frameIds,
       playbackQuality: quality ? { totalVideoFrames: quality.totalVideoFrames, droppedVideoFrames: quality.droppedVideoFrames } : null,
     }
   }
@@ -67,5 +91,9 @@ export class BaselinePresentation {
     if (this.video) this.video.srcObject = null
     this.remoteTrack = null
     this.video = null
+    this.presentedFrameIds = []
+    this.timestampCursor = 0
+    this.frameIdCursor = 0
+    this.numberedSource = false
   }
 }

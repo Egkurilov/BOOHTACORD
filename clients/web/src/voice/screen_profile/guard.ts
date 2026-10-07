@@ -11,6 +11,7 @@ export class ScreenProfileGuard {
   private checking = false
   private driftChecks = 0
   private terminal = false
+  private suspended = false
   private binding?: ReturnType<typeof trackBinding>
   private frames = new Map<string, number>()
   constructor(private readonly readTrack: () => ProfileTrack | undefined) {}
@@ -18,7 +19,7 @@ export class ScreenProfileGuard {
   adopt(profile: ScreenProfile): void {
     const track = this.readTrack()
     if (!track || track.mediaStreamTrack.readyState !== 'live') return
-    ++this.generation; this.profile = profile; this.binding = trackBinding(track); this.driftChecks = 0; this.terminal = false
+    ++this.generation; this.profile = profile; this.binding = trackBinding(track); this.driftChecks = 0; this.terminal = false; this.suspended = false
     this.frames.clear(); this.nextCheck = 0
     this.snapshot = { status: 'checking', reason: 'none', attempts: 0 }
   }
@@ -26,11 +27,26 @@ export class ScreenProfileGuard {
   stop(): void {
     ++this.generation
     if (this.binding?.sender) screenSenderStatsSampler.clear(this.binding.sender)
-    this.profile = null; this.binding = undefined; this.snapshot = undefined; this.frames.clear(); this.driftChecks = 0; this.terminal = false
+    this.profile = null; this.binding = undefined; this.snapshot = undefined; this.frames.clear(); this.driftChecks = 0; this.terminal = false; this.suspended = false
+  }
+
+  suspend(): void { if (this.profile && !this.suspended) { this.suspended = true; ++this.generation } }
+
+  resume(): void {
+    if (!this.profile || !this.suspended) return
+    this.suspended = false; ++this.generation
+    const track = this.readTrack(), attempts = this.snapshot?.attempts ?? 0
+    this.driftChecks = 0; this.frames.clear(); this.nextCheck = 0
+    if (!track || track.mediaStreamTrack.readyState !== 'live') {
+      this.snapshot = { status: 'checking', reason: 'unavailable', attempts }; return
+    }
+    if (this.binding?.sender && this.binding.sender !== track.sender) screenSenderStatsSampler.clear(this.binding.sender)
+    this.binding = trackBinding(track); this.terminal = this.snapshot?.status === 'failed'
+    this.snapshot = { status: 'checking', reason: 'none', attempts }
   }
 
   async check(): Promise<void> {
-    if (!this.profile || this.terminal || this.checking || performance.now() < this.nextCheck) return
+    if (!this.profile || this.suspended || this.terminal || this.checking || performance.now() < this.nextCheck) return
     const track = this.readTrack()
     if (!track || track.mediaStreamTrack.readyState !== 'live') { this.stop(); return }
     if (!this.binding || !sameBinding(track, this.binding)) {
@@ -59,7 +75,7 @@ export class ScreenProfileGuard {
 
   async repair(profile: ScreenProfile, reconcile: () => Promise<void>, operationCurrent: () => boolean): Promise<boolean> {
     const track = this.readTrack(), binding = this.binding, generation = this.generation
-    if (this.snapshot?.status !== 'drift' || this.snapshot.attempts > 0 || this.profile !== profile || !track || !binding) return false
+    if (this.suspended || this.snapshot?.status !== 'drift' || this.snapshot.attempts > 0 || this.profile !== profile || !track || !binding) return false
     const operationCurrentForRepair = () => generation === this.generation && operationCurrent()
     const captureIsBound = () => sameCapture(this.readTrack(), binding)
     if (!operationCurrentForRepair() || !captureIsBound()) return false

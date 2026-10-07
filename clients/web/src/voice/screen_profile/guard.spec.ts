@@ -49,4 +49,17 @@ describe('screen profile diagnostics', () => {
     expect(await guard.repair('P1080_60', async () => {}, () => true)).toBe(false)
     expect(f.sender.setParameters).not.toHaveBeenCalled(); guard.stop(); screenSenderStatsSampler.clear(f.sender)
   })
+  it('preserves profile diagnostics across a temporary SDK reconnect unpublish', async () => {
+    const f = profileTrack(); let current: typeof f.track | undefined = f.track
+    f.setSettings({ width: 1920, height: 1080, frameRate: 60 })
+    f.setParameters({ encodings: [{ rid: 'h', maxFramerate: 60, maxBitrate: 8_000_000, scaleResolutionDownBy: 1 }] } as RTCRtpSendParameters)
+    screenSenderStatsSampler.clear(f.sender)
+    const guard = new ScreenProfileGuard(() => current)
+    guard.adopt('P1080_60'); guard.suspend(); current = undefined
+    await guard.check()
+    expect(guard.snapshot).toMatchObject({ status: 'checking', attempts: 0 })
+    current = f.track; guard.resume(); await check(guard)
+    expect(guard.snapshot).toMatchObject({ status: 'matched', attempts: 0 })
+    guard.stop(); screenSenderStatsSampler.clear(f.sender)
+  })
 })

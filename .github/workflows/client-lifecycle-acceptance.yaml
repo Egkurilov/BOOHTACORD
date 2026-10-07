@@ -25,6 +25,8 @@ jobs:
   lifecycle:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    env:
+      VITE_PUBLIC_ORIGIN: https://localhost:4810
     steps:
       - uses: actions/checkout@v4
         with:

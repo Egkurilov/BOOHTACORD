@@ -3,9 +3,24 @@ import 'package:livekit_client/livekit_client.dart'
     hide ChatMessage, voiceReconnectAttemptLimit;
 
 import '../../../services/screen_thumbnail.dart';
+import '../../../services/screen_thumbnail_remote_capture.dart';
 import '../lifecycle/controller.dart';
 
 extension VoiceScreenPreviewCapture on VoiceController {
+  void removeRemoteScreenThumbnail(
+    String identity, {
+    RemoteTrackPublication? publication,
+  }) {
+    final capturedPublication = screenThumbnailPublications[identity];
+    if (publication != null &&
+        capturedPublication != null &&
+        !identical(capturedPublication, publication)) {
+      return;
+    }
+    screenThumbnailPublications.remove(identity);
+    screenThumbnails.remove(identity);
+  }
+
   bool isRemoteScreenPublicationActive(
     Room room,
     RemoteParticipant participant,
@@ -14,7 +29,7 @@ extension VoiceScreenPreviewCapture on VoiceController {
       !disposed &&
       scope.capture().isActive &&
       identical(this.room, room) &&
-      screenPreviewSubscriptionQueue?.isClosed == false &&
+      selectedRemoteScreenViewerIdentity == participant.identity &&
       identical(room.remoteParticipants[participant.identity], participant) &&
       participant.videoTrackPublications.any(
         (item) => identical(item, publication),
@@ -26,8 +41,10 @@ extension VoiceScreenPreviewCapture on VoiceController {
     RemoteTrackPublication publication,
     RemoteVideoTrack track,
   ) async {
+    final selectionRevision = screenViewerSelectionRevision;
     bool isActive() =>
         isRemoteScreenPublicationActive(room, participant, publication) &&
+        selectionRevision == screenViewerSelectionRevision &&
         identical(publication.track, track);
 
     final thumbnail = await captureRemoteScreenThumbnail(
@@ -42,17 +59,9 @@ extension VoiceScreenPreviewCapture on VoiceController {
       isActive: isActive,
     );
     if (thumbnail == null || !isActive()) return;
+    screenThumbnailPublications[participant.identity] = publication;
     screenThumbnails[participant.identity] = thumbnail;
     notifyListeners();
   }
 
-  void closeScreenPreviewSubscriptions() {
-    screenPreviewSubscriptionQueue?.close();
-    screenPreviewSubscriptionQueue = null;
-    for (final waiter in screenPreviewTrackWaiters.values) {
-      if (!waiter.isCompleted) waiter.complete(null);
-    }
-    screenPreviewTrackWaiters.clear();
-    screenThumbnailRemoteTrackIds.clear();
-  }
 }

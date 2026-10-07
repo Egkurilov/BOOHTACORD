@@ -52,10 +52,10 @@ describe('LiveKit voice gateway', () => {
     )
   })
 
-  it('preserves the SDK connect method when adding viewer subscriptions', async () => {
+  it('preserves the SDK connect method and enables only voice subscriptions on join', async () => {
     const fakeRoom = room(async () => undefined)
     const nativeConnect = fakeRoom.connect
-    const viewer = { clear: vi.fn(), refresh: vi.fn(), subscribeMicrophones: vi.fn(), subscribeScreenThumbnails: vi.fn() }
+    const viewer = { clear: vi.fn(), refresh: vi.fn(), subscribeMicrophones: vi.fn() }
     const connected = wireLiveKitRoom(fakeRoom, viewer)
 
     await connected.connect(credential.url, credential.token, { autoSubscribe: false })
@@ -63,7 +63,6 @@ describe('LiveKit voice gateway', () => {
     expect(nativeConnect).toHaveBeenCalledTimes(1)
     expect(nativeConnect).toHaveBeenCalledWith(credential.url, credential.token, { autoSubscribe: false })
     expect(viewer.subscribeMicrophones).toHaveBeenCalledOnce()
-    expect(viewer.subscribeScreenThumbnails).toHaveBeenCalledOnce()
     expect(viewer.refresh).toHaveBeenCalledOnce()
   })
 

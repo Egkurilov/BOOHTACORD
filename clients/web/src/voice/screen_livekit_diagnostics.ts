@@ -1,6 +1,6 @@
 import { normalizeScreenDiagnostics, type ScreenDiagnostics, type ScreenSenderStats } from './screen_diagnostics'
 import { ScreenPacketLossWindow } from './screen_packet_loss'
-import { ScreenSenderLayerSampler } from './screen_sender_layers'
+import { ScreenSenderLayerSampler, screenSenderLayerId } from './screen_sender_layers'
 import { readLiveKitScreenSenderStats, type LiveKitScreenVideoTrack } from './screen_livekit_sender_stats'
 import { screenSenderStatsSampler } from './screen_stats_sampler'
 export type { LiveKitScreenVideoTrack } from './screen_livekit_sender_stats'
@@ -33,12 +33,13 @@ export async function inspectLiveKitScreenDiagnostics(
       const sample = sampler.sample(rows, Date.now())
       layers = sample.layers
       if (sample.selected) {
-        const row = rows.find((candidate, index) => (candidate.id ?? `${candidate.ssrc ?? ''}:${candidate.rid ?? ''}:${index}`) === sample.selected?.id)
+        const row = rows.find((candidate, index) => screenSenderLayerId(candidate, index) === sample.selected?.id)
         sender = {
-          timestamp: row?.timestamp, streamId: row?.id, packetsSent: row?.packetsSent,
+          timestamp: row?.timestamp, streamId: sample.selected.id, packetsSent: row?.packetsSent,
           packetsLost: row?.packetsLost, frameWidth: sample.selected.frameWidth, frameHeight: sample.selected.frameHeight,
           framesPerSecond: sample.selected.framesPerSecond ?? undefined,
           qualityLimitationReason: sample.selected.qualityLimitationReason,
+          roundTripTime: row?.roundTripTime,
         }
       }
     }

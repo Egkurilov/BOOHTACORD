@@ -13,6 +13,8 @@ export class ScreenPublisherAdapter<T> implements ScreenPublisherOperations<T> {
   private runningKind?: ScreenPublishIntent<T>['kind']
   private pending?: ScreenPublishIntent<T>
   active: ActiveScreenPublication<T> | undefined
+  private publishedPort?: ScreenPublisherScope<T>['port']
+  private stopPublished?: () => void
   constructor(private readonly current: () => ScreenPublisherScope<T> | null) {}
   get currentRevision(): number { return this.revision }
   get stopping(): boolean { return this.intent === 'stop' }
@@ -35,6 +37,7 @@ export class ScreenPublisherAdapter<T> implements ScreenPublisherOperations<T> {
     ++this.revision; this.intent = 'stop'
     this.pending?.reject(this.abort('cancel')); this.pending = undefined
     const active = this.active, scope = active?.scope ?? this.current(); this.active = undefined
+    this.unwatchPublished()
     const stopping = scope ? scope.port.stop(active?.track) : Promise.resolve()
     if (pickerPending) return stopping.then(() => 'cleanup-pending')
     return Promise.all([stopping, this.running?.catch(() => undefined)]).then(() => 'complete')
@@ -42,6 +45,7 @@ export class ScreenPublisherAdapter<T> implements ScreenPublisherOperations<T> {
   cancel(): void {
     ++this.revision; this.intent = 'stop'; this.active = undefined
     this.pending?.reject(this.abort('cancel')); this.pending = undefined
+    this.unwatchPublished()
   }
 
   submitForEndedEvent(): Promise<void> {
@@ -52,6 +56,7 @@ export class ScreenPublisherAdapter<T> implements ScreenPublisherOperations<T> {
   private submit(kind: ScreenPublishIntent<T>['kind'], profile: ScreenProfile): Promise<ScreenDiagnostics> {
     const scope = this.current()
     if (!scope) return Promise.reject(this.abort('cancel'))
+    this.watchPublished(scope)
     const request = this.makeIntent(kind, profile, scope)
     if (this.running) {
       this.pending?.reject(this.abort('superseded')); this.pending = request
@@ -63,6 +68,16 @@ export class ScreenPublisherAdapter<T> implements ScreenPublisherOperations<T> {
     const revision = ++this.revision; this.intent = kind
     return { kind, profile, scope, revision, resolve: emptyResolve, reject: emptyResolve }
   }
+  private watchPublished(scope: ScreenPublisherScope<T>): void {
+    if (this.publishedPort === scope.port) return
+    this.unwatchPublished(); this.publishedPort = scope.port
+    this.stopPublished = scope.port.onPublished?.(track => {
+      const active = this.active, current = this.current()
+      if (!active || active.track !== track || !scope.port.isLive(track) || current?.owner !== scope.owner || current.room !== scope.room || current.port !== scope.port) return
+      active.generation = scope.port.generation()
+    })
+  }
+  private unwatchPublished(): void { this.stopPublished?.(); this.stopPublished = undefined; this.publishedPort = undefined }
   private execute(request: ScreenPublishIntent<T>): Promise<ScreenDiagnostics> {
     const operation = request.kind === 'start' ? runStart(this, request) : request.kind === 'repair' ? runRepair(this, request) : runUpdate(this, request)
     this.running = operation; this.runningKind = request.kind
