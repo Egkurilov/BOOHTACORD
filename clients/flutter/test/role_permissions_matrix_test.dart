@@ -53,6 +53,39 @@ void main() {
       );
     }
     expect(find.text('Разрешения администратора обязательны и не изменяются.'), findsOneWidget);
+    expect(find.text('Просмотр роли'), findsOneWidget);
+    expect(find.text('По умолчанию'), findsNothing);
+    expect(find.text('Сохранить'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'compact matrix groups each object with its two permissions',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(home: Scaffold(
+        body: RolePermissionsPanel(
+          api: RolePermissionsTestApi(), onSaved: () async {},
+        ),
+      )));
+      await tester.pumpAndSettle();
+      const groups = <String, List<String>>{
+        'Текстовые каналы': ['channel.text.create', 'channel.text.delete'],
+        'Голосовые каналы': ['channel.voice.create', 'channel.voice.delete'],
+        'Разделы': ['category.create', 'category.delete'],
+      };
+      for (final entry in groups.entries) {
+        final card = find.byKey(ValueKey('permission-group:${entry.key}'));
+        expect(tester.getRect(card).height, greaterThan(150));
+        for (final permission in entry.value) {
+          expect(find.descendant(
+            of: card,
+            matching: find.byKey(ValueKey('permission-checkbox:$permission')),
+          ), findsOneWidget);
+        }
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

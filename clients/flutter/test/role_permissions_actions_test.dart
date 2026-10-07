@@ -17,6 +17,12 @@ void main() {
       const ValueKey('permission-checkbox:category.delete'),
     );
     await tester.ensureVisible(categoryDelete);
+    expect(
+      tester.getRect(categoryDelete).bottom,
+      lessThanOrEqualTo(
+        tester.getRect(find.byKey(const ValueKey('role-permissions-action-bar'))).top,
+      ),
+    );
     await tester.tap(categoryDelete);
     await tester.pumpAndSettle();
     expect(find.text('Разрешение удаления действует на любые каналы.'), findsOneWidget);
