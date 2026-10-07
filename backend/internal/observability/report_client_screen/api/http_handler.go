@@ -5,7 +5,10 @@ import (
 	"io"
 	"net/http"
 
+	"go.opentelemetry.io/otel"
+
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
+	"voice-platform/backend/internal/observability/report_client_screen/aggregate"
 )
 
 type Recorder interface {
@@ -14,6 +17,7 @@ type Recorder interface {
 }
 
 func NewSubmitHandler(recorder Recorder) http.Handler {
+	qoe := aggregate.New(otel.Meter("boohtacord/media"))
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if request.Method != http.MethodPost {
 			writer.WriteHeader(http.StatusMethodNotAllowed)
@@ -27,6 +31,7 @@ func NewSubmitHandler(recorder Recorder) http.Handler {
 			return
 		}
 		recordMediaSample(request.Context(), report)
+		recordQoE(request.Context(), qoe, report)
 		writer.WriteHeader(http.StatusNoContent)
 	})
 }

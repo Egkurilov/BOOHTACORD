@@ -51,6 +51,11 @@ func recordMediaSample(ctx context.Context, report httpmetrics.ClientScreenRepor
 	if report.CaptureWidth != nil {
 		attrs = append(attrs, attribute.Int("media.capture_width", *report.CaptureWidth), attribute.Int("media.capture_height", *report.CaptureHeight))
 	}
+	for name, value := range map[string]*int64{"dropped_frames": report.DroppedFrames, "packets_lost": report.PacketsLost} {
+		if value != nil {
+			attrs = append(attrs, attribute.Int64("media."+name, *value))
+		}
+	}
 	// Age is relative to collection, avoiding dependence on the client's wall clock.
 	at := time.Now()
 	if report.SampleAgeMs != nil {
