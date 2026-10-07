@@ -38,6 +38,8 @@ jobs:
           cache-dependency-path: backend/go.sum
       - name: Test, vet and build Go API
         run: python3 -m tools.ci.receipts.run backend
+      - name: Validate screen-share media load profile matrix
+        run: python3 -m unittest tools.load.screen_share_matrix.test_planner
       - name: Exercise owned real API load smoke
         timeout-minutes: 8
         run: |
