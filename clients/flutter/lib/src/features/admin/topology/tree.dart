@@ -37,7 +37,7 @@ class TopologyTree extends StatelessWidget {
       if (categories.isNotEmpty) Expanded(child: ListView(padding: EdgeInsets.zero, children: [
         for (final category in categories) ...[
           TopologyTreeEntry(key: ValueKey('admin-topology-category:${category.id}'), label: category.name, icon: Icons.folder_outlined, selected: selectedCategoryId == category.id && selectedChannelId == null, count: '${category.channels.length}', onSelected: () => onCategorySelected(category)),
-          for (final channel in category.channels) TopologyTreeEntry(key: ValueKey('admin-topology-channel:${channel.id}'), label: channel.name, icon: topologyChannelIcon(channel.kind), selected: selectedChannelId == channel.id, indent: 18, closed: channel.kind == ChannelKind.voice && channel.admissionClosed, onSelected: () => onChannelSelected(channel)),
+          for (final channel in category.channels) TopologyTreeEntry(label: channel.name, icon: topologyChannelIcon(channel.kind), selected: selectedChannelId == channel.id, indent: 18, closed: channel.kind == ChannelKind.voice && channel.admissionClosed, onSelected: () => onChannelSelected(channel), key: ValueKey('admin-topology-channel:${channel.id}')),
         ],
       ])),
     ]),

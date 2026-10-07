@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../app_state.dart';
 import '../../../models.dart';
 import '../../../services/api_client.dart';
-import '../../../widgets/confirmation_dialog.dart';
+import '../../../core/ui/confirmation_dialog.dart';
 import 'actions.dart';
 
 part 'mutation_create.dart';
@@ -13,8 +12,15 @@ part 'mutation_danger.dart';
 part 'mutation_feedback.dart';
 
 abstract class _AdminTopologyMutationBase extends ChangeNotifier {
-  _AdminTopologyMutationBase(this.state, this.contextProvider);
-  final AppState state;
+  _AdminTopologyMutationBase({
+    required this.api,
+    required this.currentTopology,
+    required this.refreshTopology,
+    required this.contextProvider,
+  });
+  final ApiClient api;
+  final ChannelTopology? Function() currentTopology;
+  final Future<void> Function() refreshTopology;
   final BuildContext Function() contextProvider;
   bool busy = false;
   String? status;
@@ -37,9 +43,9 @@ abstract class _AdminTopologyMutationBase extends ChangeNotifier {
   }
 
   ChannelCategory? currentCategory(String id) =>
-      state.topology?.categories.where((item) => item.id == id).firstOrNull;
+      currentTopology()?.categories.where((item) => item.id == id).firstOrNull;
 
-  GuildChannel? currentChannel(String id) => state.topology?.categories
+  GuildChannel? currentChannel(String id) => currentTopology()?.categories
       .expand((item) => item.channels)
       .where((item) => item.id == id)
       .firstOrNull;
@@ -66,7 +72,12 @@ class AdminTopologyMutationController extends _AdminTopologyMutationBase
         _TopologyCategories,
         _TopologyChannels,
         _TopologyDangerActions {
-  AdminTopologyMutationController(super.state, super.contextProvider);
+  AdminTopologyMutationController({
+    required super.api,
+    required super.currentTopology,
+    required super.refreshTopology,
+    required super.contextProvider,
+  });
 
   TopologyActions get actions => TopologyActions(
     createCategory: createCategory,

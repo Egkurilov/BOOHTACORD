@@ -10,14 +10,17 @@ extension _RolePermissionMatrix on RolePermissionsPanelState {
             Container(
               key: ValueKey('permission-group:${group.label}'),
               margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              decoration: BoxDecoration(
+              child: Material(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(10),
+                clipBehavior: Clip.antiAlias,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: width < 600
+                      ? _compactGroup(group, values)
+                      : _wideGroup(group, values),
+                ),
               ),
-              child: width < 600
-                  ? _compactGroup(group, values)
-                  : _wideGroup(group, values),
             ),
         ],
       );

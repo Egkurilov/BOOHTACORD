@@ -26,8 +26,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Сохранить'));
     await tester.pumpAndSettle();
-    final actions = tester.widget<PopupMenuButton<String>>(find.byKey(const ValueKey('admin-member-actions:a')));
-    expect(actions.focusNode!.hasFocus, isTrue);
+    final actionsFocus = tester.widget<Focus>(
+      find.byKey(const ValueKey('admin-member-actions-focus:a')),
+    );
+    expect(actionsFocus.focusNode!.hasFocus, isTrue);
     expect(controller.baseline['a']?.updatedAt, DateTime.utc(2026, 1, 1, 0, 2));
     expect(controller.drafts['a']?.role, 'ADMINISTRATOR');
   });

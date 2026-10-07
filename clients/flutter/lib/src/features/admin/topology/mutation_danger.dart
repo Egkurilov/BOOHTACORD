@@ -33,7 +33,7 @@ mixin _TopologyDangerActions on _AdminTopologyMutationBase {
     }
     await mutate(
       'Канал архивирован. Топология обновлена.',
-      () => state.api.archiveTextChannel(
+      () => api.archiveTextChannel(
         channelId: latest.id,
         expectedRevision: revision,
       ),
@@ -77,7 +77,7 @@ mixin _TopologyDangerActions on _AdminTopologyMutationBase {
     }
     await mutate(
       'Вход закрыт. Отзыв media-доступа в SFU ещё подтверждается; число отозванных leases не подтверждает отключение участников.',
-      () => state.api.closeVoiceAdmission(
+      () => api.closeVoiceAdmission(
         channelId: latest.id,
         expectedRevision: revision,
       ),

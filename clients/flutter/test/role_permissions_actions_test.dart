@@ -6,6 +6,7 @@ import 'role_permissions_fake_api.dart';
 
 void main() {
   testWidgets('delete grant needs confirmation and action bar fits short screen', (tester) async {
+    tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 360);
     addTearDown(tester.view.reset);
     final api = RolePermissionsTestApi();

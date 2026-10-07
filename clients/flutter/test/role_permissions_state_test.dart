@@ -7,6 +7,7 @@ import 'role_permissions_fake_api.dart';
 
 void main() {
   testWidgets('dirty member draft survives confirmed role switch', (tester) async {
+    tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(900, 900);
     addTearDown(tester.view.reset);
     final api = RolePermissionsTestApi();
@@ -34,6 +35,9 @@ void main() {
   });
 
   testWidgets('defaults and cancel reflect the actual dirty state', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 900);
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(home: Scaffold(
       body: RolePermissionsPanel(
         api: RolePermissionsTestApi(), onSaved: () async {},
@@ -51,6 +55,7 @@ void main() {
   });
 
   testWidgets('another-role revision change requires explicit conflict review', (tester) async {
+    tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1200, 900);
     addTearDown(tester.view.reset);
     final api = RolePermissionsTestApi();

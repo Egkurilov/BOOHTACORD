@@ -31,31 +31,34 @@ class AdminMemberActions extends StatelessWidget {
   final VoidCallback onKick;
 
   @override
-  Widget build(BuildContext context) => PopupMenuButton<String>(
-    key: ValueKey('admin-member-actions:${account.accountId}'),
-    tooltip: 'Действия с участником ${account.displayName}',
-    enabled: !busy,
+  Widget build(BuildContext context) => Focus(
+    key: ValueKey('admin-member-actions-focus:${account.accountId}'),
     focusNode: focusNode,
-    onSelected: (action) {
-      switch (action) {
-        case 'role': onRole(); break;
-        case 'blocked': onBlocked(); break;
-        case 'save': onSave(); break;
-        case 'reset': onReset(); break;
-        case 'kick': onKick(); break;
-      }
-    },
-    itemBuilder: (_) => [
-      PopupMenuItem(value: 'role', child: Text('Роль: ${draft.role == 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь'}')),
-      PopupMenuItem(value: 'blocked', child: Text(draft.blocked ? 'Снять блокировку' : 'Заблокировать')),
-      const PopupMenuDivider(),
-      PopupMenuItem(value: 'save', enabled: !busy && canSave, child: const Text('Сохранить')),
-      PopupMenuItem(value: 'reset', enabled: !busy, child: const Text('Сбросить пароль')),
-      if (canKick) const PopupMenuItem(value: 'kick', enabled: true, child: Text('Отключить от голоса')),
-    ],
-    child: const SizedBox.square(
-      dimension: 44,
-      child: Center(child: Icon(Icons.more_horiz)),
+    child: PopupMenuButton<String>(
+      key: ValueKey('admin-member-actions:${account.accountId}'),
+      tooltip: 'Действия с участником ${account.displayName}',
+      enabled: !busy,
+      onSelected: (action) {
+        switch (action) {
+          case 'role': onRole(); break;
+          case 'blocked': onBlocked(); break;
+          case 'save': onSave(); break;
+          case 'reset': onReset(); break;
+          case 'kick': onKick(); break;
+        }
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(value: 'role', child: Text('Роль: ${draft.role == 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь'}')),
+        PopupMenuItem(value: 'blocked', child: Text(draft.blocked ? 'Снять блокировку' : 'Заблокировать')),
+        const PopupMenuDivider(),
+        PopupMenuItem(value: 'save', enabled: !busy && canSave, child: const Text('Сохранить')),
+        PopupMenuItem(value: 'reset', enabled: !busy, child: const Text('Сбросить пароль')),
+        if (canKick) const PopupMenuItem(value: 'kick', enabled: true, child: Text('Отключить от голоса')),
+      ],
+      child: const SizedBox.square(
+        dimension: 44,
+        child: Center(child: Icon(Icons.more_horiz)),
+      ),
     ),
   );
 }

@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../../models.dart';
 import '../../../theme.dart';
-import '../../../widgets/confirmation_dialog.dart';
+import '../../../core/ui/confirmation_dialog.dart';
 import '../layout/width_class.dart';
 import 'compact_cards.dart';
 import 'conflict_review.dart';

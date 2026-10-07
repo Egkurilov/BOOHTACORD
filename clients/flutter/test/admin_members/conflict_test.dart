@@ -1,5 +1,6 @@
 import 'package:boohtacord_desktop/src/core/http/api_failure.dart';
 import 'package:boohtacord_desktop/src/features/admin/members/controller.dart';
+import 'package:boohtacord_desktop/src/features/admin/members/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'fake_api.dart';

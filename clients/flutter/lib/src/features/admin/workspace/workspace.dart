@@ -3,7 +3,6 @@ import 'dart:ui' show SemanticsRole;
 
 import 'package:flutter/material.dart';
 
-import '../../../app_state.dart';
 import '../../../models.dart';
 import '../../../theme.dart';
 import '../audit/controller.dart';
@@ -17,6 +16,7 @@ import '../role_permissions/panel.dart';
 import '../topology/mutation_controller.dart';
 import '../topology/panel.dart';
 import 'workspace_header.dart';
+import 'ports.dart';
 
 part 'workspace_layout.dart';
 part 'workspace_navigation.dart';
@@ -28,12 +28,12 @@ enum AdminWorkspaceSection { members, roles, channels, audit, media, guild, read
 class AdminWorkspace extends StatefulWidget {
   const AdminWorkspace({
     super.key,
-    required this.state,
+    required this.ports,
     this.onToggleNavigation,
     this.onClose,
   });
 
-  final AppState state;
+  final AdminWorkspacePorts ports;
   final VoidCallback? onToggleNavigation;
   final VoidCallback? onClose;
 
@@ -58,11 +58,16 @@ abstract class _AdminWorkspaceBase extends State<AdminWorkspace> {
   @override
   void initState() {
     super.initState();
-    _members = AdminMembersController(widget.state.api);
+    _members = AdminMembersController(widget.ports.api);
     _audit = AdminAuditController(
-      ({String? before}) => widget.state.api.listAdminAudit(before: before),
+      ({String? before}) => widget.ports.api.listAdminAudit(before: before),
     );
-    _topology = AdminTopologyMutationController(widget.state, () => context);
+    _topology = AdminTopologyMutationController(
+      api: widget.ports.api,
+      currentTopology: widget.ports.topology,
+      refreshTopology: widget.ports.refreshTopology,
+      contextProvider: () => context,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _titleFocus.requestFocus();

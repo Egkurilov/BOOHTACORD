@@ -8,7 +8,7 @@ extension _RolePermissionView on RolePermissionsPanelState {
     },
     child: FocusTraversalGroup(
       key: const ValueKey('role-permissions-focus-order'),
-      policy: OrderedTraversalPolicy(),
+      policy: WidgetOrderTraversalPolicy(),
       child: LayoutBuilder(builder: (context, constraints) {
         final inset = constraints.maxWidth >= 1024 ? 24.0 : 12.0;
         return Column(

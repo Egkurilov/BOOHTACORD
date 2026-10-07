@@ -47,7 +47,7 @@ mixin _WorkspaceTabs on _AdminWorkspaceBase {
                 animation: _topology,
                 builder: (context, _) => IconButton(
                   tooltip: 'Обновить список каналов',
-                  onPressed: _topology.busy ? null : widget.state.refreshTopology,
+                  onPressed: _topology.busy ? null : widget.ports.refreshTopology,
                   icon: const Icon(Icons.refresh),
                 ),
               ),

@@ -26,8 +26,6 @@ mixin _WorkspaceNavigation on _AdminWorkspaceBase {
     final editor = _roleKey.currentState;
     if (editor != null && !await editor.confirmBeforeLeaving()) return;
     if (!mounted) return;
-    (widget.onClose ??
-            () => widget.state.toggleWorkspacePanel(WorkspacePanel.none))
-        .call();
+    (widget.onClose ?? widget.ports.closePanel).call();
   }
 }

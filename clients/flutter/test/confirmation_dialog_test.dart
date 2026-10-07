@@ -1,4 +1,4 @@
-import 'package:boohtacord_desktop/src/widgets/confirmation_dialog.dart';
+import 'package:boohtacord_desktop/src/core/ui/confirmation_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

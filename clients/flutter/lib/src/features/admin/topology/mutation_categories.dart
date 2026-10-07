@@ -11,7 +11,7 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     if (current == null) return recoverStaleTopology();
     await mutate(
       'Категория переименована. Топология обновлена.',
-      () => state.api.renameCategory(
+      () => api.renameCategory(
         categoryId: current.id,
         name: name,
         expectedRevision: revision,
@@ -48,7 +48,7 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     if (latest.channels.isNotEmpty) return;
     await mutate(
       'Пустая категория удалена. Топология обновлена.',
-      () => state.api.deleteEmptyCategory(
+      () => api.deleteEmptyCategory(
         categoryId: latest.id,
         expectedRevision: revision,
       ),
@@ -62,7 +62,7 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     int direction,
   ) async {
     if (!await validateRevision(revision)) return;
-    final topology = state.topology;
+    final topology = currentTopology();
     if (topology == null) return recoverStaleTopology();
     final index = topology.categories.indexWhere((item) => item.id == categoryId);
     final target = index + direction;
@@ -73,7 +73,7 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     ids[target] = moved;
     await mutate(
       'Порядок категорий сохранён. Топология обновлена.',
-      () => state.api.reorderCategories(
+      () => api.reorderCategories(
         categoryIds: ids,
         expectedRevision: revision,
       ),

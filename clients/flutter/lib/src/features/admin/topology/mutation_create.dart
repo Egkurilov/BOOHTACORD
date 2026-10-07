@@ -4,10 +4,10 @@ mixin _TopologyCreate on _AdminTopologyMutationBase {
   Future<String?> createCategory(String name) async {
     _begin();
     try {
-      await state.api.createCategory(name);
-      await state.refreshTopology();
+      await api.createCategory(name);
+      await refreshTopology();
       if (_disposed) return null;
-      final id = state.topology?.categories.lastOrNull?.id;
+      final id = currentTopology()?.categories.lastOrNull?.id;
       status = 'Категория создана. Топология обновлена.';
       notifyListeners();
       return id;
@@ -31,7 +31,7 @@ mixin _TopologyCreate on _AdminTopologyMutationBase {
       return;
     }
     await mutate('Канал создан. Топология обновлена.', () async {
-      await state.api.createChannel(
+      await api.createChannel(
         categoryId: categoryId,
         name: name,
         kind: kind,

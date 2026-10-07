@@ -7,6 +7,7 @@ import 'role_permissions_fake_api.dart';
 
 void main() {
   testWidgets('409 review shows actual before/current/proposed and keeps draft', (tester) async {
+    tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1200, 900);
     addTearDown(tester.view.reset);
     final api = RolePermissionsTestApi()..conflictOnNextSave = true;
@@ -44,6 +45,9 @@ void main() {
   });
 
   testWidgets('reviewed draft saves against the refreshed server revision', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 900);
+    addTearDown(tester.view.reset);
     final api = RolePermissionsTestApi()..conflictOnNextSave = true;
     await tester.pumpWidget(MaterialApp(home: Scaffold(
       body: RolePermissionsPanel(api: api, onSaved: () async {}),
@@ -66,6 +70,7 @@ void main() {
   testWidgets(
     'refresh with a dirty draft requires review before rebasing',
     (tester) async {
+      tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(1200, 900);
       addTearDown(tester.view.reset);
       final api = RolePermissionsTestApi();

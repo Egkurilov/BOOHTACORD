@@ -54,6 +54,14 @@ abstract class AdminMembersState extends ChangeNotifier {
     emit();
   }
 
+  Future<void> loadNextPage();
+  Future<bool> refresh({Set<String> resetDraftFor = const {}});
+  Future<void> createResetLink(String id);
+  void dismissResetLink();
+  Future<void> saveAccount(String id);
+  bool resolveConflict(String id, {required bool discard});
+  Future<void> kickVoiceParticipant(String id);
+
   bool isDirty(String id) {
     final account = baseline[id];
     final draft = drafts[id];

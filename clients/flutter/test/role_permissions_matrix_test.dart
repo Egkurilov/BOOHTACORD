@@ -35,6 +35,7 @@ void main() {
   }
 
   testWidgets('administrator remains read-only for all six permissions', (tester) async {
+    tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1200, 900);
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(home: Scaffold(
@@ -62,6 +63,7 @@ void main() {
   testWidgets(
     'compact matrix groups each object with its two permissions',
     (tester) async {
+      tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(360, 800);
       addTearDown(tester.view.reset);
       await tester.pumpWidget(MaterialApp(home: Scaffold(

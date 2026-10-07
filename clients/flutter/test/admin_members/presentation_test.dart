@@ -67,8 +67,10 @@ void main() {
     await tester.pumpWidget(host(controller));
     await tester.tap(find.byTooltip('Закрыть и удалить ссылку'));
     await tester.pumpAndSettle();
-    final actions = tester.widget<PopupMenuButton<String>>(find.byKey(const ValueKey('admin-member-actions:a')));
-    expect(actions.focusNode!.hasFocus, isTrue);
+    final actionsFocus = tester.widget<Focus>(
+      find.byKey(const ValueKey('admin-member-actions-focus:a')),
+    );
+    expect(actionsFocus.focusNode!.hasFocus, isTrue);
   });
 
   testWidgets('long identity, admin role, and blocked badge fit compact card', (tester) async {

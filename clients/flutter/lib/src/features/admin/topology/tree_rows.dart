@@ -26,7 +26,6 @@ class TopologyTreeEntry extends StatelessWidget {
       color: selected ? GcColors.selected : Colors.transparent,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(onTap: onSelected, borderRadius: BorderRadius.circular(8), child: Container(
-        key: key,
         constraints: const BoxConstraints(minHeight: 44),
         padding: EdgeInsets.only(left: 10 + indent.toDouble(), right: 10),
         child: Row(children: [

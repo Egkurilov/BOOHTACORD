@@ -14,12 +14,12 @@ class AdminAuditEventList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (controller.isLoadingInitial) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 12),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 12),
             Semantics(liveRegion: true, child: Text('Загружаем аудит…')),
           ],
         ),
