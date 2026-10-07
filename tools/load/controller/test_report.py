@@ -5,6 +5,17 @@ from .report import render
 
 
 class ReportTests(unittest.TestCase):
+    def test_missing_or_null_resources_render_as_not_run(self):
+        for resources in ('missing', None):
+            with self.subTest(resources=resources), tempfile.TemporaryDirectory() as directory:
+                driver = dict(Routes={}, Criteria={})
+                if resources is None:
+                    driver['Resources'] = None
+                render(Path(directory), dict(driver=driver))
+                page = (Path(directory)/'report.html').read_text()
+                for label in ('API CPU % of host', 'API RSS MiB', 'Attachment free MiB'):
+                    self.assertIn(label+': NOT_RUN', page)
+
     def test_graphs_and_csv_keep_units_and_escape_labels(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)

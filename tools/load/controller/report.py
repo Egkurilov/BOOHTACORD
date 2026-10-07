@@ -16,7 +16,7 @@ def render(destination, report):
     for field, label, divisor in (('CPUPercent', 'API CPU % of host', 1),
                                   ('RSSBytes', 'API RSS MiB', 1 << 20),
                                   ('FreeBytes', 'Attachment free MiB', 1 << 20)):
-        values = [row[field]/divisor for row in driver.get('Resources', [])]
+        values = [row[field]/divisor for row in driver.get('Resources') or []]
         if not values:
             panels.append('<p>'+label+': NOT_RUN</p>')
             continue
