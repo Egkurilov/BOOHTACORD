@@ -6,6 +6,8 @@ import 'package:livekit_client/livekit_client.dart'
 import '../lifecycle/controller.dart';
 import '../screen_preview/capture_policy.dart';
 import '../screen_viewer/audio_publication.dart';
+import '../screen_viewer/discovery.dart';
+import '../screen_viewer/subscription_failure.dart';
 import '../../../services/screen_share_diagnostics.dart';
 import 'remote_participants.dart';
 import 'refresh_voice_navigation.dart';
@@ -48,6 +50,14 @@ extension VoiceEventsRemoteTracks on VoiceController {
         unawaited(applySavedAudioVolume(event.participant, source));
       }
     });
+    listener.on<TrackSubscriptionExceptionEvent>((event) {
+      recoverRemoteScreenViewerAfterSubscriptionFailure(
+        this,
+        room,
+        event,
+        owns,
+      );
+    });
     listener.on<TrackPublishedEvent>((event) {
       if (!owns()) return;
       if (identical(this.room, room)) {
@@ -65,7 +75,7 @@ extension VoiceEventsRemoteTracks on VoiceController {
               event.participant,
               event.publication,
             )) {
-          unawaited(setRemoteTrackSubscription(event.publication, true));
+          subscribeRemoteScreenAudioForViewing(event.publication);
         }
       }
       refreshRemoteVoiceNavigation(this, room, owns);
@@ -81,7 +91,7 @@ extension VoiceEventsRemoteTracks on VoiceController {
         final replacement = event.participant.videoTrackPublications.any(
           (item) =>
               !identical(item, event.publication) &&
-              item.source == TrackSource.screenShareVideo,
+              isDiscoverableRemoteScreenPublication(item),
         );
         if (selectedRemoteScreenViewerIdentity == event.participant.identity &&
             !replacement) {

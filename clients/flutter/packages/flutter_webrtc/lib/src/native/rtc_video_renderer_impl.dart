@@ -63,7 +63,8 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
     WebRTC.invokeMethod('videoRendererSetSrcObject', <String, dynamic>{
       'textureId': textureId,
       'streamId': stream?.id ?? '',
-      'ownerTag': stream?.ownerTag ?? ''
+      'ownerTag': stream?.ownerTag ?? '',
+      'sourceGeneration': generation,
     }).then((_) {
       if (_disposed || generation != _srcObjectGeneration) return;
       value = (stream == null)
@@ -87,7 +88,8 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
         'textureId': _textureId,
         'streamId': stream?.id ?? '',
         'ownerTag': stream?.ownerTag ?? '',
-        'trackId': trackId ?? '0'
+        'trackId': trackId ?? '0',
+        'sourceGeneration': generation,
       });
       if (_disposed || generation != _srcObjectGeneration) return;
       value = (stream == null)
@@ -122,6 +124,11 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
   void eventListener(dynamic event) {
     if (_disposed) return;
     final Map<dynamic, dynamic> map = event;
+    final sourceGeneration = map['sourceGeneration'];
+    if (sourceGeneration is! int ||
+        sourceGeneration != _srcObjectGeneration) {
+      return;
+    }
     switch (map['event']) {
       case 'didTextureChangeRotation':
         value =

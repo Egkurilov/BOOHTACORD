@@ -16,6 +16,7 @@ void main() {
     final streamResult = Completer<void>();
     final clearInvoked = Completer<void>();
     final streamInvoked = Completer<void>();
+    var streamGeneration = 0;
     Future<Object?> handleMethod(MethodCall call) async {
       switch (call.method) {
         case 'initialize':
@@ -29,6 +30,7 @@ void main() {
             await clearResult.future;
             return null;
           }
+          streamGeneration = arguments['sourceGeneration'] as int;
           streamInvoked.complete();
           await streamResult.future;
           return null;
@@ -54,6 +56,7 @@ void main() {
     await Future.wait([clearInvoked.future, streamInvoked.future]);
     renderer.eventListener(<String, Object>{
       'event': 'didTextureChangeVideoSize',
+      'sourceGeneration': streamGeneration,
       'width': 640,
       'height': 360,
     });

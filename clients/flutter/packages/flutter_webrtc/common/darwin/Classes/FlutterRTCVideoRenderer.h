@@ -16,6 +16,8 @@
 @property(nonatomic, weak) id<FlutterTextureRegistry> registry;
 @property(nonatomic, strong) FlutterEventSink eventSink;
 
+- (BOOL)updateSourceGeneration:(int64_t)sourceGeneration;
+
 - (instancetype)initWithTextureRegistry:(id<FlutterTextureRegistry>)registry
                               messenger:(NSObject<FlutterBinaryMessenger>*)messenger;
 

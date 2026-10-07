@@ -45,10 +45,13 @@ const FlutterDesktopPixelBuffer* FlutterVideoRenderer::CopyPixelBuffer(
 }
 
 void FlutterVideoRenderer::OnFrame(scoped_refptr<RTCVideoFrame> frame) {
+  const int64_t source_generation = source_generation_.load();
   if (!first_frame_rendered) {
     EncodableMap params;
     params[EncodableValue("event")] = "didFirstFrameRendered";
     params[EncodableValue("id")] = EncodableValue(texture_id_);
+    params[EncodableValue("sourceGeneration")] =
+        EncodableValue(source_generation);
     event_channel_->Success(EncodableValue(params));
     pixel_buffer_.reset(new FlutterDesktopPixelBuffer());
     pixel_buffer_->width = 0;
@@ -59,6 +62,8 @@ void FlutterVideoRenderer::OnFrame(scoped_refptr<RTCVideoFrame> frame) {
     EncodableMap params;
     params[EncodableValue("event")] = "didTextureChangeRotation";
     params[EncodableValue("id")] = EncodableValue(texture_id_);
+    params[EncodableValue("sourceGeneration")] =
+        EncodableValue(source_generation);
     params[EncodableValue("rotation")] =
         EncodableValue((int32_t)frame->rotation());
     event_channel_->Success(EncodableValue(params));
@@ -69,6 +74,8 @@ void FlutterVideoRenderer::OnFrame(scoped_refptr<RTCVideoFrame> frame) {
     EncodableMap params;
     params[EncodableValue("event")] = "didTextureChangeVideoSize";
     params[EncodableValue("id")] = EncodableValue(texture_id_);
+    params[EncodableValue("sourceGeneration")] =
+        EncodableValue(source_generation);
     params[EncodableValue("width")] = EncodableValue((int32_t)frame->width());
     params[EncodableValue("height")] = EncodableValue((int32_t)frame->height());
     event_channel_->Success(EncodableValue(params));
@@ -91,6 +98,20 @@ void FlutterVideoRenderer::SetVideoTrack(scoped_refptr<RTCVideoTrack> track) {
     if (track_)
       track_->AddRenderer(this);
   }
+}
+
+bool FlutterVideoRenderer::SetSourceGeneration(int64_t generation) {
+  int64_t current = source_generation_.load();
+  if (generation < current) return false;
+  if (generation == current) return true;
+  while (generation > current) {
+    if (source_generation_.compare_exchange_weak(current, generation)) {
+      first_frame_rendered = false;
+      last_frame_size_ = {0, 0};
+      return true;
+    }
+  }
+  return false;
 }
 
 bool FlutterVideoRenderer::CheckMediaStream(std::string mediaId) {
@@ -134,13 +155,15 @@ void FlutterVideoRendererManager::VideoRendererSetSrcObject(
     int64_t texture_id,
     const std::string& stream_id,
     const std::string& owner_tag,
-    const std::string& track_id) {
+    const std::string& track_id,
+    int64_t source_generation) {
   scoped_refptr<RTCMediaStream> stream =
       base_->MediaStreamForId(stream_id, owner_tag);
 
   auto it = renderers_.find(texture_id);
   if (it != renderers_.end()) {
     FlutterVideoRenderer* renderer = it->second.get();
+    if (!renderer->SetSourceGeneration(source_generation)) return;
     if (stream.get()) {
       auto video_tracks = stream->video_tracks();
       if (video_tracks.size() > 0) {

@@ -1048,6 +1048,11 @@ static void FlutterWebRTCApplyFieldTrials(void) {
                                  details:nil]);
       return;
     }
+    NSNumber* sourceGeneration = argsMap[@"sourceGeneration"];
+    if (![render updateSourceGeneration:sourceGeneration.longLongValue]) {
+      result(nil);
+      return;
+    }
     RTCMediaStream* stream = nil;
     RTCVideoTrack* videoTrack = nil;
     if ([ownerTag isEqualToString:@"local"]) {
