@@ -54,6 +54,7 @@ import '../widgets/message_mention_dialog.dart';
 import '../widgets/message_emoji_picker.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/screen_share_setup_dialog.dart';
+import '../widgets/screen_video_renderer_slot.dart';
 import '../widgets/voice_stream_indicator.dart';
 import '../widgets/formatted_message_body.dart';
 import '../widgets/horizontal_swipe_region.dart';
@@ -99,6 +100,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
   String? _selectedScreenIdentity;
   String? _screenWaitingToRestart;
   String? _pinnedScreenIdentity;
+  ScreenFullscreenSelection? _fullscreenScreenSelection;
   String? _screenSelectionVoiceChannelId;
   late ScreenSharePhase _lastObservedScreenSharePhase;
   String? get _visibleVoiceScreenIdentity =>
@@ -317,6 +319,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
       _selectedScreenIdentity = '';
       _pinnedScreenIdentity = null;
     });
+  }
+
+  void _setFullscreenScreenSelection(ScreenFullscreenSelection? selection) {
+    if (!mounted ||
+        (_fullscreenScreenSelection == null && selection == null) ||
+        (_fullscreenScreenSelection != null &&
+            selection != null &&
+            _fullscreenScreenSelection!.identity == selection.identity)) {
+      return;
+    }
+    setState(() => _fullscreenScreenSelection = selection);
   }
 
   bool _handleHardwareKey(KeyEvent event) {
@@ -612,6 +625,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
             workspacePanelOpen:
                 widget.state.workspacePanel != WorkspacePanel.none,
           );
+          final screenRendererOwner = screenVideoRendererOwner(
+            selectedIdentity: _visibleVoiceScreenIdentity,
+            pinnedIdentity: _pinnedScreenIdentity,
+            pinnedMiniVisible: pinnedMiniVisible,
+            fullscreenSelection: _fullscreenScreenSelection,
+          );
           Widget pinnedMiniLayer() => Positioned(
             right: compact ? 12 : 16,
             bottom: 16,
@@ -626,6 +645,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                   child: _PinnedScreenMiniPlayer(
                     state: widget.state,
                     identity: _pinnedScreenIdentity!,
+                    selectedIdentity: _visibleVoiceScreenIdentity,
+                    fullscreenSelection: _fullscreenScreenSelection,
+                    rendererOwner: screenRendererOwner,
                     onReturnToVoice: () => unawaited(
                       widget.state.selectChannel(activeVoiceChannel!),
                     ),
@@ -650,6 +672,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                             state: widget.state,
                             selectedScreenIdentity: _visibleVoiceScreenIdentity,
                             onSelectScreen: _selectVoiceScreen,
+                            screenRendererOwner: screenRendererOwner,
+                            onFullscreenSelectionChanged:
+                                _setFullscreenScreenSelection,
                             pinnedScreenIdentity: _visiblePinnedScreenIdentity,
                             onToggleScreenPin: _toggleVoiceScreenPin,
                             onToggleNavigation: _toggleNavigation,
@@ -775,6 +800,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                                 selectedScreenIdentity:
                                     _visibleVoiceScreenIdentity,
                                 onSelectScreen: _selectVoiceScreen,
+                                screenRendererOwner: screenRendererOwner,
+                                onFullscreenSelectionChanged:
+                                    _setFullscreenScreenSelection,
                                 pinnedScreenIdentity:
                                     _visiblePinnedScreenIdentity,
                                 onToggleScreenPin: _toggleVoiceScreenPin,
@@ -1805,6 +1833,8 @@ class _MainSurface extends StatelessWidget {
     required this.state,
     required this.selectedScreenIdentity,
     required this.onSelectScreen,
+    required this.screenRendererOwner,
+    required this.onFullscreenSelectionChanged,
     required this.pinnedScreenIdentity,
     required this.onToggleScreenPin,
     this.onToggleNavigation,
@@ -1818,6 +1848,8 @@ class _MainSurface extends StatelessWidget {
   final AppState state;
   final String? selectedScreenIdentity;
   final ValueChanged<String?> onSelectScreen;
+  final ScreenVideoRendererOwner screenRendererOwner;
+  final ValueChanged<ScreenFullscreenSelection?> onFullscreenSelectionChanged;
   final String? pinnedScreenIdentity;
   final ValueChanged<String?> onToggleScreenPin;
   final VoidCallback? onToggleNavigation;
@@ -1932,6 +1964,8 @@ class _MainSurface extends StatelessWidget {
               channel: channel,
               selectedScreenIdentity: selectedScreenIdentity,
               onSelectScreen: onSelectScreen,
+              screenRendererOwner: screenRendererOwner,
+              onFullscreenSelectionChanged: onFullscreenSelectionChanged,
               pinnedScreenIdentity: pinnedScreenIdentity,
               onToggleScreenPin: onToggleScreenPin,
               onToggleNavigation: onToggleNavigation,
@@ -5249,6 +5283,8 @@ class _VoiceRoom extends StatefulWidget {
     required this.channel,
     required this.selectedScreenIdentity,
     required this.onSelectScreen,
+    required this.screenRendererOwner,
+    required this.onFullscreenSelectionChanged,
     required this.pinnedScreenIdentity,
     required this.onToggleScreenPin,
     this.onToggleNavigation,
@@ -5258,6 +5294,8 @@ class _VoiceRoom extends StatefulWidget {
   final GuildChannel channel;
   final String? selectedScreenIdentity;
   final ValueChanged<String?> onSelectScreen;
+  final ScreenVideoRendererOwner screenRendererOwner;
+  final ValueChanged<ScreenFullscreenSelection?> onFullscreenSelectionChanged;
   final String? pinnedScreenIdentity;
   final ValueChanged<String?> onToggleScreenPin;
   final VoidCallback? onToggleNavigation;
@@ -5393,6 +5431,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                         ? _VoiceScreenViewer(
                             state: state,
                             track: viewerTrack,
+                            rendererOwner: widget.screenRendererOwner,
                             publisherName: selectedName!,
                             screens: screens,
                             selectedIdentity: widget.selectedScreenIdentity,
@@ -5466,12 +5505,29 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                                       level,
                                     ),
                                   ),
-                            onFullscreen: () => unawaited(
-                              _openScreenFullscreen(
-                                track: viewerTrack,
-                                publisherName: selectedName,
-                                publisherIdentity: selectedScreen?.identity,
-                              ),
+                            onFullscreen: () => _openScreenFullscreen(
+                              track: viewerTrack,
+                              publisherName: selectedName,
+                              publisherIdentity: selectedScreen?.identity,
+                              viewerGeneration: selectedScreen == null ||
+                                      selectedScreenPublication == null
+                                  ? localScreenPublication?.sid ?? viewerTrack
+                                  : ScreenViewerPublicationGeneration(
+                                      participantIdentity:
+                                          selectedScreen.identity,
+                                      publicationSid:
+                                          selectedScreenPublication.sid,
+                                    ),
+                              onFirstFrameRendered:
+                                  selectedScreen == null ||
+                                      selectedScreenPublication == null
+                                  ? null
+                                  : () => state.voice
+                                      .markRemoteScreenFirstFrameRendered(
+                                        selectedScreen.identity,
+                                        selectedScreenPublication.sid,
+                                      ),
+                              showingLocalScreen: showingLocalScreen,
                             ),
                             onClose: () => widget.onSelectScreen(''),
                             onScreenSelected: widget.onSelectScreen,
@@ -5557,6 +5613,9 @@ class _VoiceRoomState extends State<_VoiceRoom> {
     required VideoTrack track,
     required String publisherName,
     required String? publisherIdentity,
+    required Object viewerGeneration,
+    required VoidCallback? onFirstFrameRendered,
+    required bool showingLocalScreen,
   }) async {
     ScreenFullscreenPresentation? presentation;
     BuildContext? overlayContext;
@@ -5583,7 +5642,12 @@ class _VoiceRoomState extends State<_VoiceRoom> {
       Navigator.of(target).pop();
     }
 
+    widget.onFullscreenSelectionChanged(
+      ScreenFullscreenSelection(identity: publisherIdentity),
+    );
     try {
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
       presentation = await ScreenFullscreenPresentation.enter();
       if (!mounted) return;
       widget.state.addListener(closeWhenEnded);
@@ -5598,7 +5662,39 @@ class _VoiceRoomState extends State<_VoiceRoom> {
           WidgetsBinding.instance.addPostFrameCallback((_) => closeWhenEnded());
           return ScreenFullscreenOverlay(
             publisherName: publisherName,
-            video: VideoTrackRenderer(track, renderMode: VideoRenderMode.auto),
+            video: ScreenVideoRendererSlot(
+              surface: ScreenVideoRendererSurface.fullscreen,
+              owner: ScreenVideoRendererOwner.fullscreen,
+              isSelectedPublication: true,
+              isFullscreenPublication: true,
+              child: ScreenFrameGate(
+                generation: viewerGeneration,
+                onFirstFrame: onFirstFrameRendered,
+                telemetry: showingLocalScreen
+                    ? null
+                    : widget.state.api.transport.session.telemetry,
+                recoveryExhausted:
+                    !showingLocalScreen &&
+                    widget.state.voice.remoteScreenViewerRecoveryExhausted,
+                onRecoveryRetry: showingLocalScreen
+                    ? null
+                    : widget.state.voice.retryRemoteScreenViewerRecovery,
+                builder: (context, onFirstFrameRendered) => VideoTrackRenderer(
+                  track,
+                  renderMode: VideoRenderMode.auto,
+                  onFirstFrameRendered: () {
+                    if (showingLocalScreen) {
+                      debugPrint(
+                        '[screen-preview] local_renderer=first_swap_buffers',
+                      );
+                    } else {
+                      debugPrint('[screen-viewer] remote_renderer=first_frame');
+                    }
+                    onFirstFrameRendered();
+                  },
+                ),
+              ),
+            ),
             onClose: () => Navigator.of(dialogContext).pop(),
           );
         },
@@ -5614,6 +5710,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
     } finally {
       widget.state.removeListener(closeWhenEnded);
       await presentation?.restore();
+      widget.onFullscreenSelectionChanged(null);
     }
   }
 }
@@ -6091,6 +6188,7 @@ class _VoiceScreenViewer extends StatelessWidget {
   const _VoiceScreenViewer({
     required this.state,
     required this.track,
+    required this.rendererOwner,
     required this.publisherName,
     required this.screens,
     required this.selectedIdentity,
@@ -6119,6 +6217,7 @@ class _VoiceScreenViewer extends StatelessWidget {
 
   final AppState state;
   final VideoTrack track;
+  final ScreenVideoRendererOwner rendererOwner;
   final String publisherName;
   final List<RemoteParticipant> screens;
   final String? selectedIdentity;
@@ -6151,34 +6250,42 @@ class _VoiceScreenViewer extends StatelessWidget {
       avatarName: showingLocalScreen ? localName : publisherName,
       isLocal: showingLocalScreen,
       reservedTrailingWidth: selectedIdentity == null ? 124 : 172,
-      video: ScreenFrameGate(
-        generation: viewerGeneration,
-        onFirstFrame: onFirstFrameRendered,
-        telemetry: showingLocalScreen
-            ? null
-            : state.api.transport.session.telemetry,
-        recoveryExhausted:
-            !showingLocalScreen &&
-            state.voice.remoteScreenViewerRecoveryExhausted,
-        onRecoveryRetry: showingLocalScreen
-            ? null
-            : state.voice.retryRemoteScreenViewerRecovery,
-        waitingMessage:
-            showingLocalScreen && state.screenCapturedContentVisible == false
-            ? 'Android скрыл выбранное приложение. Вернитесь в него или выберите весь экран.'
-            : null,
-        builder: (context, onFirstFrameRendered) => VideoTrackRenderer(
-          track,
-          key: ValueKey(viewerGeneration),
-          renderMode: VideoRenderMode.auto,
-          onFirstFrameRendered: () {
-            if (showingLocalScreen) {
-              debugPrint('[screen-preview] local_renderer=first_swap_buffers');
-            } else {
-              debugPrint('[screen-viewer] remote_renderer=first_frame');
-            }
-            onFirstFrameRendered();
-          },
+      video: ScreenVideoRendererSlot(
+        surface: ScreenVideoRendererSurface.stage,
+        owner: rendererOwner,
+        isSelectedPublication: true,
+        isFullscreenPublication: false,
+        child: ScreenFrameGate(
+          generation: viewerGeneration,
+          onFirstFrame: onFirstFrameRendered,
+          telemetry: showingLocalScreen
+              ? null
+              : state.api.transport.session.telemetry,
+          recoveryExhausted:
+              !showingLocalScreen &&
+              state.voice.remoteScreenViewerRecoveryExhausted,
+          onRecoveryRetry: showingLocalScreen
+              ? null
+              : state.voice.retryRemoteScreenViewerRecovery,
+          waitingMessage:
+              showingLocalScreen && state.screenCapturedContentVisible == false
+              ? 'Android скрыл выбранное приложение. Вернитесь в него или выберите весь экран.'
+              : null,
+          builder: (context, onFirstFrameRendered) => VideoTrackRenderer(
+            track,
+            key: ValueKey(viewerGeneration),
+            renderMode: VideoRenderMode.auto,
+            onFirstFrameRendered: () {
+              if (showingLocalScreen) {
+                debugPrint(
+                  '[screen-preview] local_renderer=first_swap_buffers',
+                );
+              } else {
+                debugPrint('[screen-viewer] remote_renderer=first_frame');
+              }
+              onFirstFrameRendered();
+            },
+          ),
         ),
       ),
       overlays: [
@@ -6311,12 +6418,18 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
   const _PinnedScreenMiniPlayer({
     required this.state,
     required this.identity,
+    required this.selectedIdentity,
+    required this.fullscreenSelection,
+    required this.rendererOwner,
     required this.onReturnToVoice,
     required this.onStopWatching,
   });
 
   final AppState state;
   final String identity;
+  final String? selectedIdentity;
+  final ScreenFullscreenSelection? fullscreenSelection;
+  final ScreenVideoRendererOwner rendererOwner;
   final VoidCallback onReturnToVoice;
   final VoidCallback onStopWatching;
 
@@ -6427,29 +6540,41 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
                         builder: (context, onFirstFrameRendered) =>
                             const SizedBox.expand(),
                       )
-                    : ScreenFrameGate(
-                        generation: '$identity:${publicationSid ?? 'unknown'}',
-                        recoveryExhausted:
-                            state.voice.remoteScreenViewerRecoveryExhausted,
-                        onRecoveryRetry:
-                            state.voice.retryRemoteScreenViewerRecovery,
-                        onFirstFrame: publicationSid == null
-                            ? null
-                            : () => state.voice
-                                .markRemoteScreenFirstFrameRendered(
-                                  identity,
-                                  publicationSid,
+                    : ScreenVideoRendererSlot(
+                        surface: ScreenVideoRendererSurface.pinnedMini,
+                        owner: rendererOwner,
+                        isSelectedPublication:
+                            selectedIdentity != null &&
+                            selectedIdentity == identity,
+                        isFullscreenPublication:
+                            fullscreenSelection != null &&
+                            fullscreenSelection.identity == identity,
+                        child: ScreenFrameGate(
+                          generation:
+                              '$identity:${publicationSid ?? 'unknown'}',
+                          recoveryExhausted: state
+                              .voice
+                              .remoteScreenViewerRecoveryExhausted,
+                          onRecoveryRetry:
+                              state.voice.retryRemoteScreenViewerRecovery,
+                          onFirstFrame: publicationSid == null
+                              ? null
+                              : () => state.voice
+                                  .markRemoteScreenFirstFrameRendered(
+                                    identity,
+                                    publicationSid,
+                                  ),
+                          builder: (context, onFirstFrameRendered) =>
+                              VideoTrackRenderer(
+                                track,
+                                key: ValueKey(
+                                  '$identity:${publicationSid ?? 'unknown'}',
                                 ),
-                        builder: (context, onFirstFrameRendered) =>
-                            VideoTrackRenderer(
-                              track,
-                              key: ValueKey(
-                                '$identity:${publicationSid ?? 'unknown'}',
+                                fit: VideoViewFit.contain,
+                                renderMode: VideoRenderMode.auto,
+                                onFirstFrameRendered: onFirstFrameRendered,
                               ),
-                              fit: VideoViewFit.contain,
-                              renderMode: VideoRenderMode.auto,
-                              onFirstFrameRendered: onFirstFrameRendered,
-                            ),
+                        ),
                       ),
               ),
             ),
