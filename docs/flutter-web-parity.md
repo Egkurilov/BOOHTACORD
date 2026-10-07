@@ -53,6 +53,12 @@ smoke with all seven tabs visible and no app fatal exception; this does not
 replace the remaining IME/TalkBack/iOS/Windows gate —
 [QA-ADMIN-ANDROID-RUNTIME-2026-10-07-002](../evidence/flutter/qa-admin-android-runtime-2026-10-07-002.json).
 
+The later compact identity follow-up added an expanded role selector for narrow
+member cards and a long display-name/login regression at text scale 2.0. The
+full suite now passes 796 tests with one expected skip; the current release APK
+also launches on Android API 35 without an app fatal exception —
+[QA-ADMIN-ACCESSIBILITY-HARDENING-2026-10-07-002](../evidence/flutter/qa-admin-accessibility-hardening-2026-10-07-002.json).
+
 ## Компактный composer — проверка 2026-10-05
 
 В Flutter шириной до 720 px действия attach, paste, mention и emoji собраны под одним `+` menu для TEXT и DM; в wide composer emoji picker остаётся отдельным действием. Picker содержит шесть быстрых emoji, searchable полный каталог с русскими/английскими подписями, recents и вставку/замену текущего выделения в draft. Service/widget suite — 72/72, полный suite — 592/592, changed-file analyzer чистый; подписанный Android r47 и Mac Debug визуально проверены после DevTools hot restart. На Android API 35 системная floating IME-панель перекрывает часть левого края каталога, а часть новых Unicode glyphs отсутствует в системном шрифте. Web не изменялся; update catalog не менялся — [QA-279](../evidence/flutter/qa279-flutter-compact-composer-actions-2026-10-05-001.json), [QA-280](../evidence/flutter/qa280-flutter-emoji-picker-design-v2-2026-10-05-001.json).

@@ -72,3 +72,9 @@ the hardening commit. The admin screen was opened through the account menu in
 portrait and then landscape; all seven tabs remained visible and logcat had no
 app fatal exception. This short current-source smoke is recorded in
 [`qa-admin-android-runtime-2026-10-07-002.json`](../qa-admin-android-runtime-2026-10-07-002.json).
+
+The follow-up compact identity regression and current-source launch smoke are
+recorded in
+[`qa-admin-accessibility-hardening-2026-10-07-002.json`](../qa-admin-accessibility-hardening-2026-10-07-002.json).
+It raises the full Flutter suite result to 796 passing tests with one expected
+skip; the native IME, TalkBack, iOS and Windows gate remains open.

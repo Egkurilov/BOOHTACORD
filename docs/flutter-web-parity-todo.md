@@ -27,6 +27,9 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   A current-source Android portrait + landscape smoke after the accessibility
   hardening is recorded in
   [QA-ADMIN-ANDROID-RUNTIME-2026-10-07-002](../evidence/flutter/qa-admin-android-runtime-2026-10-07-002.json).
+  The subsequent compact identity regression and current APK launch smoke are
+  recorded in
+  [QA-ADMIN-ACCESSIBILITY-HARDENING-2026-10-07-002](../evidence/flutter/qa-admin-accessibility-hardening-2026-10-07-002.json).
   These records do not replace live-resize, IME/TalkBack, iOS or Windows acceptance.
 
 ## Текущий фокус: Flutter macOS и Android

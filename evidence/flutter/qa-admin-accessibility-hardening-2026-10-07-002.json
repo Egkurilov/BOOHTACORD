@@ -1,0 +1,47 @@
+{
+  "id": "QA-ADMIN-ACCESSIBILITY-HARDENING-2026-10-07-002",
+  "date": "2026-10-07",
+  "task": "FV2-031 / GitHub #197 — compact identity and text-scale follow-up",
+  "source_revision": "5f2a8d6c",
+  "app_version": {
+    "source": "1.0.38+71",
+    "release_apk": "flutter build apk --release --split-per-abi"
+  },
+  "checks": [
+    {
+      "name": "Compact pathological identities",
+      "result": "PASS",
+      "observation": "A 390x844 compact member card with a long display name and login remains usable at text scale 2.0 without a Flutter exception; identity labels remain ellipsis-safe and the role selector is expanded to its available width."
+    },
+    {
+      "name": "Focused admin regression suite",
+      "result": "PASS",
+      "observation": "Geometry, topology and member-filter tests completed with 25 passing tests."
+    },
+    {
+      "name": "Full Flutter suite",
+      "result": "PASS",
+      "observation": "flutter test --no-pub completed with 796 passing tests and one expected skip."
+    },
+    {
+      "name": "Changed-file analyzer",
+      "result": "PASS",
+      "observation": "admin_screen.dart and the updated member-filter test report no analyzer issues."
+    },
+    {
+      "name": "Android release build",
+      "result": "PASS",
+      "observation": "The release build produced armv7 (17.9 MB), arm64 (20.0 MB) and x86_64 (21.4 MB) APKs; generated APKs remain ignored build artifacts."
+    },
+    {
+      "name": "Android launch smoke",
+      "result": "PASS",
+      "observation": "The current arm64 APK installed on the Android 15/API 35 emulator, MainActivity resumed, and logcat had no app FATAL EXCEPTION."
+    }
+  ],
+  "not_run": [
+    "IME, TalkBack, iOS and Windows native acceptance were not captured in this follow-up.",
+    "No admin mutation was submitted during the launch smoke."
+  ],
+  "status": "IMPLEMENTATION PASS; native accessibility/runtime gate remains open"
+}
