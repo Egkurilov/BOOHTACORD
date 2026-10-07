@@ -8,6 +8,7 @@ import 'audio_publication.dart';
 import 'discovery.dart';
 import 'publication_generation.dart';
 import 'subscription.dart';
+import 'transition.dart';
 import '../../telemetry/observe_render/view.dart';
 
 extension VoiceScreenViewerSelection on VoiceController {

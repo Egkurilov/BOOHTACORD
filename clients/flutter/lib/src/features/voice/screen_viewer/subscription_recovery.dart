@@ -6,6 +6,33 @@ import 'package:livekit_client/livekit_client.dart'
 import '../lifecycle/controller.dart';
 import 'publication_current.dart';
 
+const _screenViewerRecoveryDelay = Duration(seconds: 5);
+
+void scheduleRemoteScreenViewerRecovery(
+  VoiceController voice,
+  RemoteTrackPublication publication,
+  bool Function() isCurrent,
+) {
+  final generation = voice.selectedRemoteScreenViewerGeneration;
+  if (generation == null ||
+      !voice.remoteScreenViewerForeground ||
+      voice.remoteScreenViewerRecoveryAttempt >= 2 ||
+      voice.remoteScreenViewerRecoveryInFlightGeneration == generation ||
+      !isCurrent()) {
+    return;
+  }
+  voice.remoteScreenViewerRecoveryTimer?.cancel();
+  voice.remoteScreenViewerRecoveryDeadline.start();
+  voice.remoteScreenViewerRecoveryTimer = Timer(
+    voice.remoteScreenViewerRecoveryDeadline.remaining,
+    () {
+      voice.remoteScreenViewerRecoveryDeadline.expire();
+      voice.remoteScreenViewerRecoveryTimer = null;
+      retryRemoteScreenViewerSubscription(voice, publication, isCurrent);
+    },
+  );
+}
+
 void retryRemoteScreenViewerSubscription(
   VoiceController voice,
   RemoteTrackPublication publication,
@@ -45,8 +72,7 @@ void retryRemoteScreenViewerSubscription(
           publication,
         );
         if (current == null) return;
-        // One SDK subscription cycle is the bounded fallback. LiveKit then
-        // supplies the fresh track through the normal renderer binding path.
+        // One bounded SDK cycle rebinds through the normal renderer path.
         await voice.setRemoteTrackSubscription(current, false);
         if (!isCurrent() ||
             currentRemoteScreenViewerPublication(voice, publication) == null) {
@@ -67,44 +93,28 @@ void retryRemoteScreenViewerSubscription(
   voice.remoteScreenSubscriptionTail = operation;
   unawaited(
     operation.then<void>(
-      (_) => _finishRemoteScreenViewerRecovery(
+      (_) => finishRemoteScreenViewerRecovery(
         voice,
         generation,
         publication,
         isCurrent,
         deferredForForeground: deferredForForeground,
+        scheduleDeferred: () =>
+            scheduleRemoteScreenViewerRecovery(voice, publication, isCurrent),
       ),
       onError: (Object error, StackTrace stackTrace) =>
-          _finishRemoteScreenViewerRecovery(
+          finishRemoteScreenViewerRecovery(
             voice,
             generation,
             publication,
             isCurrent,
             deferredForForeground: deferredForForeground,
+            scheduleDeferred: () => scheduleRemoteScreenViewerRecovery(
+              voice,
+              publication,
+              isCurrent,
+            ),
           ),
     ),
   );
-}
-
-void _finishRemoteScreenViewerRecovery(
-  VoiceController voice,
-  Object generation,
-  RemoteTrackPublication publication,
-  bool Function() isCurrent, {
-  required bool deferredForForeground,
-}) {
-  if (voice.remoteScreenViewerRecoveryInFlightGeneration != generation) return;
-  voice.remoteScreenViewerRecoveryInFlightGeneration = null;
-  if (voice.selectedRemoteScreenViewerGeneration == generation &&
-      voice.remoteScreenViewerFirstFrameGeneration != generation &&
-      isCurrent() &&
-      currentRemoteScreenViewerPublication(voice, publication) != null) {
-    voice.remoteScreenViewerRecoveryAttempt = deferredForForeground ? 0 : 2;
-  } else {
-    voice.remoteScreenViewerRecoveryAttempt = 0;
-  }
-  voice.notifyListeners();
-  if (deferredForForeground && voice.remoteScreenViewerForeground) {
-    scheduleRemoteScreenViewerRecovery(voice, publication, isCurrent);
-  }
 }

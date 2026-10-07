@@ -3,6 +3,7 @@ import 'package:livekit_client/livekit_client.dart'
 
 import '../lifecycle/controller.dart';
 import 'recovery.dart';
+import 'subscription_recovery.dart';
 
 extension VoiceScreenViewerForeground on VoiceController {
   void setRemoteScreenViewerForeground(bool foreground) {

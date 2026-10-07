@@ -28,3 +28,27 @@ RemoteTrackPublication? currentRemoteScreenViewerPublication(
   }
   return current;
 }
+
+void finishRemoteScreenViewerRecovery(
+  VoiceController voice,
+  Object generation,
+  RemoteTrackPublication publication,
+  bool Function() isCurrent, {
+  required bool deferredForForeground,
+  required void Function() scheduleDeferred,
+}) {
+  if (voice.remoteScreenViewerRecoveryInFlightGeneration != generation) return;
+  voice.remoteScreenViewerRecoveryInFlightGeneration = null;
+  if (voice.selectedRemoteScreenViewerGeneration == generation &&
+      voice.remoteScreenViewerFirstFrameGeneration != generation &&
+      isCurrent() &&
+      currentRemoteScreenViewerPublication(voice, publication) != null) {
+    voice.remoteScreenViewerRecoveryAttempt = deferredForForeground ? 0 : 2;
+  } else {
+    voice.remoteScreenViewerRecoveryAttempt = 0;
+  }
+  voice.notifyListeners();
+  if (deferredForForeground && voice.remoteScreenViewerForeground) {
+    scheduleDeferred();
+  }
+}
