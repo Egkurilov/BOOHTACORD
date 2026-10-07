@@ -11,6 +11,7 @@ import (
 	"testing"
 	clientupdates "voice-platform/backend/internal/client_updates/catalog"
 	runtimeconfig "voice-platform/backend/internal/config/runtime"
+	previewmemory "voice-platform/backend/internal/media/screen_preview/memory"
 	httpmetrics "voice-platform/backend/internal/observability/http_metrics"
 	eventhub "voice-platform/backend/internal/realtime/event_hub"
 )
@@ -26,7 +27,9 @@ func TestComposedRoutesPreserveSessionAndOriginBoundaries(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler, err := routes(nil, configuration, eventhub.New(64), httpmetrics.New(), unavailableUpdates{}, nil)
+	previews := previewmemory.New()
+	defer previews.Close()
+	handler, err := routes(nil, configuration, eventhub.New(64), httpmetrics.New(), unavailableUpdates{}, nil, previews)
 	if err != nil {
 		t.Fatal(err)
 	}

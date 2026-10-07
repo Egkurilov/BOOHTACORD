@@ -6,6 +6,7 @@
   "DELETE /api/v1/me/avatar",
   "DELETE /api/v1/me/sessions/{sessionID}",
   "DELETE /api/v1/voice/leases/{leaseID}",
+  "DELETE /api/v1/voice/leases/{leaseID}/screen-previews/v1/{generationID}",
   "GET /api/v1/admin/accounts",
   "GET /api/v1/admin/audit",
   "GET /api/v1/admin/guild-settings",
@@ -32,6 +33,7 @@
   "GET /api/v1/search/messages",
   "GET /api/v1/voice/participants",
   "GET /api/v1/voice/rosters/events",
+  "GET /api/v1/voice/screen-previews/v1/leases/{leaseID}/{generationID}",
   "PATCH /api/v1/admin/accounts/{accountID}",
   "PATCH /api/v1/admin/categories/{categoryID}",
   "PATCH /api/v1/admin/channels/{channelID}",
@@ -55,10 +57,12 @@
   "POST /api/v1/telemetry/traces",
   "POST /api/v1/voice/channels/{channelID}/leases",
   "POST /api/v1/voice/leases/{leaseID}/credential",
+  "POST /api/v1/voice/leases/{leaseID}/screen-previews/v1",
   "POST /api/v1/voice/screen-metrics",
-  "PUT /api/v1/admin/categories/order",
   "PUT /api/v1/admin/categories/{categoryID}/channels/order",
+  "PUT /api/v1/admin/categories/order",
   "PUT /api/v1/channels/{channelID}/read-cursor",
   "PUT /api/v1/direct-messages/{directMessageID}/read-cursor",
-  "PUT /api/v1/me/avatar"
+  "PUT /api/v1/me/avatar",
+  "PUT /api/v1/voice/leases/{leaseID}/screen-previews/v1/{generationID}"
 ]

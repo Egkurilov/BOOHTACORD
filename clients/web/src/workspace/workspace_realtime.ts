@@ -18,6 +18,8 @@ import { coalesceStores } from './protected_refresh/stores'
 import { refreshEditedHints } from './protected_refresh/revisions'
 import { deliverProtectedHintBatch } from './protected_refresh/batch'
 import { processRealtime } from '../telemetry/realtime_flow/process'
+import { LatestScreenPreviewReader } from '../voice/screen_preview_reader'
+import { parseScreenPreviewHint } from '../voice/screen_preview_client'
 
 interface Refreshable { error: string | null; refresh(): Promise<void> }
 interface TextHistory extends Refreshable { channelId: string | null; refreshMessages?(ids: string[]): Promise<unknown> }
@@ -60,6 +62,10 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
   const voiceNavigation = useVoiceNavigationStore()
   const notifications = useNotificationStore()
   const permissions = usePermissionStore()
+  const previews = new LatestScreenPreviewReader({
+    apply: (hint, bytes) => { const active = voice.active; if (active && active.leaseId !== hint.leaseId) active.room.applyScreenPreview?.(hint.leaseId, bytes) },
+    clear: leaseId => voice.active?.room.clearScreenPreview?.(leaseId),
+  })
   let active = false
   let lifecycle = 0
   function onEvent(event: RealtimeEvent, notify = true): void | Promise<void> {
@@ -77,6 +83,8 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
     }
     if (event.kind === 'channel.updated') return refreshTopologyHint(stores.topology)
     if (event.kind === 'role.permissions.updated' || event.kind === 'auth.permissions.invalidated') return permissions.refresh()
+    if (event.kind === 'screen_preview.updated') { const hint = parseScreenPreviewHint(event.payload); if (hint) previews.accept(hint); return }
+    if (event.kind === 'screen_preview.invalidated') { previews.invalidate(event.payload.lease_id as string, event.payload.generation_id as string); return }
     if (event.kind === 'voice.lease_revoked') return applyVoiceLeaseRevocation(voice, voiceNavigation, event.payload.lease_id as string, event.payload.reason as VoiceLeaseRevocationReason)
     if (event.kind === 'message.created' || event.kind === 'message.updated' || event.kind === 'message.deleted') {
       const previousUnread = notify ? notifications.capture(event) : null
@@ -104,6 +112,6 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
         onSessionExpired,
       })
     },
-    stop(): void { active = false; lifecycle += 1; gate.close(); realtime.disconnect(); notifications.stop() },
+    stop(): void { active = false; lifecycle += 1; previews.clear(); gate.close(); realtime.disconnect(); notifications.stop() },
   }
 }

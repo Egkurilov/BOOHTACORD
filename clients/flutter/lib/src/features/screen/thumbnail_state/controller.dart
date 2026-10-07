@@ -5,6 +5,7 @@ import 'package:livekit_client/livekit_client.dart';
 
 import '../../../core/session/scope.dart';
 import '../../../services/screen_thumbnail.dart';
+import '../../voice/screen_preview/uploader.dart';
 import 'sample.dart';
 
 class ScreenThumbnailController {
@@ -15,6 +16,7 @@ class ScreenThumbnailController {
     required this.thumbnails,
     required this.queue,
     required this.changed,
+    required this.previewUploader,
     Future<Uint8List> Function(LocalVideoTrack)? capture,
     Future<Uint8List?> Function(Uint8List)? encode,
   }) : capture = capture ?? captureTrack,
@@ -25,6 +27,7 @@ class ScreenThumbnailController {
   final Map<String, Uint8List> thumbnails;
   final ScreenThumbnailCaptureQueue queue;
   final void Function() changed;
+  final LatestScreenPreviewUploader previewUploader;
   final Future<Uint8List> Function(LocalVideoTrack) capture;
   final Future<Uint8List?> Function(Uint8List) encode;
   Timer? timer;
@@ -32,6 +35,7 @@ class ScreenThumbnailController {
   int revision = 0;
   int? busy;
   ScreenThumbnailCaptureResult? lastLoggedResult;
+  String? leaseId;
   static Future<Uint8List> captureTrack(LocalVideoTrack track) async =>
       (await track.mediaStreamTrack.captureFrame()).asUint8List();
   static Future<Uint8List?> encodeFrame(Uint8List frame) =>
@@ -52,5 +56,12 @@ class ScreenThumbnailController {
     track = null;
     busy = null;
     lastLoggedResult = null;
+    unawaited(previewUploader.stop());
+  }
+
+  void changeLease(String? value) {
+    if (leaseId == value) return;
+    leaseId = value;
+    unawaited(previewUploader.stop());
   }
 }

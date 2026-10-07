@@ -39,6 +39,8 @@ void configureRealtime(AppOwners app) {
       permissionsChanged: app.permissions.refresh,
       notifyMessage: notifications.call,
       guildChanged: (revision) => unawaited(app.guildProfile.refresh(revision)),
+      screenPreviewUpdated: app.voice.receiveScreenPreviewHint,
+      screenPreviewInvalidated: app.voice.receiveScreenPreviewInvalidation,
     ).call,
   )..addListener(app.notifyListeners);
 }

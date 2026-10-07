@@ -784,7 +784,78 @@
         }
       }
     },
-    "/api/v1/admin/accounts/{accountID}/voice-kick": {
+    "/api/v1/voice/leases/{leaseID}/screen-previews/v1": {
+      "post": {
+        "operationId": "beginScreenPreviewGeneration",
+        "description": "Session-authenticated owner of an active voice lease only. The server verifies the caller's lease/session and the exact current unmuted LiveKit ScreenShare track, then mints an in-memory generation bound to that track SID. Requires trusted Origin. Generation expires after 15 seconds; no image or room/participant claim is accepted here.",
+        "parameters": [{ "name": "leaseID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "201": { "description": "Server-minted ephemeral publication generation", "headers": { "Cache-Control": { "schema": { "const": "private, no-store, max-age=0" } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScreenPreviewGeneration" } } } },
+          "400": { "description": "Invalid lease identifier", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Caller does not own an active lease with a current screen publication", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Generation request rate limited", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "503": { "description": "Database, bounded memory cache or private LiveKit RoomService unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/voice/leases/{leaseID}/screen-previews/v1/{generationID}": {
+      "put": {
+        "operationId": "uploadScreenPreviewJPEG",
+        "description": "Authenticated current owner of the exact server-minted generation and verified current LiveKit screen track only. Raw JPEG body is bounded to 14 KiB and decoded with width <=160, height <=320 and <=51,200 pixels; at most one upload per four seconds. Requires trusted Origin. Data remains in private process memory for at most 15 seconds.",
+        "parameters": [
+          { "name": "leaseID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "generationID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "X-Screen-Preview-Revision", "in": "header", "required": true, "schema": { "type": "integer", "minimum": 1 } }
+        ],
+        "requestBody": { "required": true, "content": { "image/jpeg": { "schema": { "type": "string", "format": "binary", "maxLength": 14336 } } } },
+        "responses": {
+          "204": { "description": "Latest validated JPEG accepted; response contains no image data" },
+          "400": { "description": "Invalid revision or JPEG", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Caller is not the current publisher or generation is unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Generation or revision is stale", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "413": { "description": "Body exceeds 14 KiB" },
+          "415": { "description": "Only image/jpeg is accepted" },
+          "429": { "description": "Upload interval or bounded inflight limit exceeded", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "503": { "description": "Database or private LiveKit RoomService unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "operationId": "invalidateScreenPreviewGeneration",
+        "description": "Authenticated current owner only. Clears the matching generation from process memory immediately; an old generation cannot clear a newer one. Requires trusted Origin.",
+        "parameters": [
+          { "name": "leaseID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "generationID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "204": { "description": "Matching preview generation invalidated" },
+          "400": { "description": "Invalid identifier", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Caller does not own the active lease", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/voice/screen-previews/v1/leases/{leaseID}/{generationID}": {
+      "get": {
+        "operationId": "readPrivateScreenPreviewJPEG",
+        "description": "Authenticated viewer with an active lease in the same open voice channel as the current publisher. Server rechecks both session-bound leases and the exact LiveKit ScreenShare track. Administrators receive no additional access. Response is private/no-store and never uses a signed public URL. Unknown future hints may be ignored by clients.",
+        "parameters": [
+          { "name": "leaseID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "generationID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "after_revision", "in": "query", "schema": { "type": "integer", "minimum": 0 }, "description": "Return no body when the latest accepted revision is not newer." }
+        ],
+        "responses": {
+          "200": { "description": "Current ephemeral JPEG only", "headers": { "Cache-Control": { "schema": { "const": "private, no-store, max-age=0" } }, "X-Content-Type-Options": { "schema": { "const": "nosniff" } }, "X-Screen-Preview-Revision": { "schema": { "type": "integer", "minimum": 1 } } }, "content": { "image/jpeg": { "schema": { "type": "string", "format": "binary", "maxLength": 14336 } } } },
+          "204": { "description": "No newer revision is available" },
+          "400": { "description": "Invalid hint revision", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "No active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Caller is not an authorized viewer or no current preview exists", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Bounded inflight limit exceeded", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "503": { "description": "Database or private LiveKit RoomService unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },    "/api/v1/admin/accounts/{accountID}/voice-kick": {
       "post": {
         "operationId": "kickVoiceParticipant",
         "description": "Administrator-only. Revokes the target account's current logical voice lease, records audit metadata and creates a durable SFU revocation. The response counts logical leases only; completion and token replay remain POC-03 gates.",
@@ -2156,7 +2227,17 @@
           "active_channel_id": { "type": "string", "format": "uuid" }
         }
       },
-      "VoiceKick": {
+      "ScreenPreviewGeneration": {
+        "type": "object", "additionalProperties": false,
+        "required": ["schema_version", "generation_id", "expires_after_seconds", "minimum_interval_seconds"],
+        "properties": { "schema_version": { "const": 1 }, "generation_id": { "type": "string", "format": "uuid" }, "expires_after_seconds": { "const": 15 }, "minimum_interval_seconds": { "const": 4 } }
+      },
+      "ScreenPreviewHint": {
+        "type": "object", "additionalProperties": false,
+        "required": ["lease_id", "generation_id", "revision"],
+        "properties": { "lease_id": { "type": "string", "format": "uuid" }, "generation_id": { "type": "string", "format": "uuid" }, "revision": { "type": "integer", "minimum": 1 } },
+        "description": "Metadata-only realtime hint. Never contains image bytes, room IDs, participant IDs or authorization; clients coalesce latest revision and fetch over the authenticated API."
+      },      "VoiceKick": {
         "type": "object",
         "additionalProperties": false,
         "required": ["revoked_leases"],

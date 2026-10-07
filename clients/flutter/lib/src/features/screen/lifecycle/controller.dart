@@ -10,8 +10,10 @@ import '../../../services/api_client.dart';
 import '../profile/quality.dart';
 import '../../../services/screen_thumbnail.dart';
 import '../capture/driver.dart';
-import '../metrics/controller.dart';
+import '../metrics/factory.dart';
 import '../thumbnail_state/controller.dart';
+import '../../voice/screen_preview/client.dart';
+import '../../voice/screen_preview/uploader.dart';
 import 'captured_content_visibility.dart';
 import 'stop.dart';
 import 'types.dart';
@@ -29,14 +31,9 @@ class ScreenShareController extends ChangeNotifier {
     required this.voiceReady,
     ScreenShareDriver? driver,
   }) : driver = driver ?? NativeScreenShareDriver() {
-    metrics = ScreenShareMetricsController(
-      api,
-      scope,
-      readRoom: readRoom,
-      isSharing: () => phase == ScreenSharePhase.sharing,
-      readQuality: () => quality,
-      changed: changed,
-    );
+    metrics = createScreenShareMetricsController(api, scope,
+      readRoom: readRoom, isSharing: () => phase == ScreenSharePhase.sharing,
+      readQuality: () => quality, changed: changed);
     thumbnail = ScreenThumbnailController(
       scope,
       readRoom: readRoom,
@@ -44,6 +41,9 @@ class ScreenShareController extends ChangeNotifier {
       thumbnails: thumbnails,
       queue: captureQueue,
       changed: changed,
+      previewUploader: LatestScreenPreviewUploader(
+        ScreenPreviewClient(api.transport),
+      ),
     );
     if (Platform.isAndroid) {
       _capturedContentVisibilitySubscription = rtc
@@ -106,6 +106,8 @@ class ScreenShareController extends ChangeNotifier {
     metrics.stop();
     thumbnail.stop();
   }
+
+  void previewLeaseChanged(String? leaseId) => thumbnail.changeLease(leaseId);
 
   @override
   void dispose() {
