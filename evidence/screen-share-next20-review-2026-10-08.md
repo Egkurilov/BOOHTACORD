@@ -3,7 +3,7 @@
 - Date: 2026-10-08
 - Source base: GitHub `origin/master` at `9b524569bb2b46b95afbb1f5040c32ceefda7214`
 - Scope: #145, #146, #148, #157–#162, #164–#170, #172–#175 (20 open issues authored by `Egkurilov`)
-- Worktree: `codex/user-authored-issues-next20b-github`; no application source changed in this review.
+- Worktree: `codex/user-authored-issues-next20b-github`.
 
 ## Local checks
 
@@ -12,6 +12,8 @@
 | Web screen-profile browser suite | PASS — 7 passed, 1 skipped | `cd clients/web && npm run test:screen-profile -- --reporter=list`; isolated LiveKit baseline skipped because no test credentials/target were configured. |
 | Descriptor/viewer Web tests | PASS — 7 files, 26 tests | `npm run test -- --run src/voice/screen_profile_metadata src/voice/livekit_screen_registry.spec.ts src/voice/livekit_screen_viewer_metadata.spec.ts` |
 | Descriptor Go packages | PASS | `go test ./internal/media/publish_screen_descriptor/... ./internal/app/media_routes/screen_descriptor` from `backend/` |
+| Flutter dependency/import boundary | PASS — 740 files | `python -m tools.verify.dependencies.dart` |
+| Flutter focused widget helper tests | NOT_RUN | Flutter SDK executable is not installed on this host. The added tests cover Windows, macOS, Android, and iOS update notice text. |
 | Paired acceptance evidence validator | PASS — 7 tests | `python -m unittest tools.verify.paired_screen_acceptance.test_evidence` |
 | Media load matrix planner | PASS — 6 tests | `python -m unittest tools.load.screen_share_matrix.test_planner` |
 | Media QoE source contracts | PASS — 6 tests | `python -m unittest tools.verify.media_qoe.test_dashboard` |
@@ -25,6 +27,7 @@
 - #173 paired evidence JSON remains a template with every pairing `NOT_RUN`; physical device matrix was not run.
 - #174 planner defines L01–L10 but is not a media-client generator. Isolated capacity runs and soak are `NOT_RUN`.
 - #175 dashboard/alerts and synthetic query fixtures are source-tested. Promtool and deployed Grafana/datasource/alert runtime checks were not run here.
+- #166/#167: corrected the Flutter profile dialog so platform-specific source restart behavior is stated accurately; focused tests were added. Native tests remain `NOT_RUN` without Flutter SDK, and automatic capture source restart is not implemented.
 - Docker Desktop Linux engine is unavailable on this host; no local LiveKit/SFU container was started.
 
 No FPS, latency, quality, load capacity, or deployment result is inferred from unit tests, build output, planner output, or mocks. GitHub issue comments record the exact remaining test environments, per-case `PASS|FAIL|NOT_RUN`, versions, evidence fields, and artifact requirements.
