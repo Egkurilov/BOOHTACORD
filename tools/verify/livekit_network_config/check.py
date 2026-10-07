@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from .model import validate
+from .model import metrics_reachable_peers, validate
 
 
 def read(root, path):
@@ -13,23 +13,32 @@ def read(root, path):
         return yaml.safe_load(source)
 
 
-def main():
-    root = Path(__file__).resolve().parents[3]
+def load_configs(root):
     livekit = read(root, "deploy/livekit/livekit.yaml")
     deploy = read(root, "deploy/compose.yaml")
-    deploy["services"].update(read(root, "deploy/livekit/compose.yaml")["services"])
-    deploy["networks"].update(read(root, "deploy/livekit/compose.yaml").get("networks", {}))
+    for path in ("deploy/operators.yaml", "deploy/livekit/compose.yaml"):
+        included = read(root, path)
+        deploy["services"].update(included.get("services", {}))
+        deploy["networks"].update(included.get("networks", {}))
     observability = read(root, "docker/observability/compose.yaml")
     prometheus = read(root, "docker/observability/prometheus.yaml")
     alerts = read(root, "docker/observability/livekit-network-alerts.yaml")
+    return livekit, deploy, observability, prometheus, alerts
+
+
+def main():
+    root = Path(__file__).resolve().parents[3]
+    livekit, deploy, observability, prometheus, alerts = load_configs(root)
     validate(livekit, deploy, observability, prometheus, alerts)
+    peers = ", ".join(sorted(metrics_reachable_peers(deploy, observability)))
     evidence_path = root / "evidence/media/livekit-network-config-2026-10-07.json"
     evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
     for path, expected in evidence["repository_artifacts"].items():
         actual = hashlib.sha256((root / path).read_bytes()).hexdigest()
         if expected != f"sha256:{actual}":
             raise ValueError(f"repository artifact hash differs for {path}")
-    print("LiveKit media ports, internal scrape network, allowlist, and alert are valid")
+    print(f"LiveKit metrics peer set: {peers}")
+    print("LiveKit ports, peer boundary, metric labels, allowlist, and alert are valid")
 
 
 if __name__ == "__main__":

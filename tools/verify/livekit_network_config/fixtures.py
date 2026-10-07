@@ -1,5 +1,5 @@
 """Small policy fixture shared by LiveKit network unit tests."""
-from .model import SAFE_METRICS
+from .metric_contract import PINNED_LIVEKIT_IMAGE, SAFE_METRICS
 
 
 def valid_model():
@@ -12,8 +12,9 @@ def valid_model():
     deploy = {
         "name": "voice-platform",
         "services": {
-            "livekit": {"ports": ["7882:7882/tcp", "50000-50100:50000-50100/udp"],
-                        "networks": ["edge", "private", "livekit-metrics"]},
+            "livekit": {"image": PINNED_LIVEKIT_IMAGE,
+                        "ports": ["7882:7882/tcp", "50000-50100:50000-50100/udp"],
+                        "networks": ["private", "livekit-metrics"]},
             "api": {"networks": ["private"]}, "postgres": {"networks": ["private"]},
             "proxy": {"ports": ["443:443"], "networks": ["edge", "private"]},
         },

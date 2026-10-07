@@ -3,20 +3,36 @@
   "status": "PARTIAL",
   "observed_at": "2026-10-07",
   "source_revision": "dee50f1b6c637a673f8a6b670ecac45fd4bcf463",
+  "upstream_review": {
+    "image": "livekit/livekit-server:v1.13.7",
+    "listener_binding_source": "https://github.com/livekit/livekit/blob/v1.13.7/pkg/service/server.go#L1494-L1524",
+    "metric_label_sources": [
+      "https://github.com/livekit/livekit/blob/v1.13.7/pkg/telemetry/prometheus/packets.go",
+      "https://github.com/livekit/livekit/blob/v1.13.7/pkg/telemetry/prometheus/rooms.go"
+    ],
+    "listener_finding": "HTTP and Prometheus listeners both use the configured bind_addresses; 0.0.0.0 exposes the metrics listener on each attached container network interface.",
+    "label_finding": "After dropping node_id and country, allowlisted metrics retain only node_type and bounded kind, direction, transmission, source and type enums plus fixed histogram buckets and fixed scrape labels."
+  },
   "repository_artifacts": {
     "deploy/livekit/livekit.yaml": "sha256:53fee20a14ce76d36624feacb1a05b91f2471bf9c16398bc75e0b088e927cb81",
-    "deploy/livekit/compose.yaml": "sha256:14e60f90928ab38b930b5be2495587a61e4c11d16ec7da166ad6f8b2fed6c4f8",
+    "deploy/livekit/compose.yaml": "sha256:b9c1435e42996ebf635d50ee30e5dacaee1d27f02ac75fa6f5105415c703a408",
     "deploy/compose.yaml": "sha256:095854b55c2d2cc2eea366065a668274e2973d45bf035e4809a338aa96f2c1d6",
+    "deploy/operators.yaml": "sha256:adfa0665a6d4ee5608665ad44d63ee8ed4884a9f81406da93bd3c97933ef370d",
     "docker/observability/compose.yaml": "sha256:9814cc8b5ecd3363f14d4c31b4c167bb7a2a332a7ae6aaa55a45f135c15b8256",
     "docker/observability/prometheus.yaml": "sha256:2fec02f3a6629d46451d4fa378d454211194b6bd7eecd52d80092234402f9c6b",
-    "docker/observability/livekit-network-alerts.yaml": "sha256:0198b460a241c051dfd7fb76658814ca2c2e113a57ad4d81d604b576db528b8d"
+    "docker/observability/livekit-network-alerts.yaml": "sha256:0198b460a241c051dfd7fb76658814ca2c2e113a57ad4d81d604b576db528b8d",
+    "docs/runbooks/livekit-network-acceptance.md": "sha256:17894987e43b1a919c5e1a9b421d0b71fbb138cfee33d31c93768643e8c45fe5",
+    "tools/verify/livekit_network_config/check.py": "sha256:2cf0565386a7b8b9f51204c5829d4b6fdb96eb3b557cffe4e6871b05a1f9eb9f",
+    "tools/verify/livekit_network_config/model.py": "sha256:923bea50ee41f0446dc3c4f3d191c66802f11aea492aa316c93b8950297fed49",
+    "tools/verify/livekit_network_config/metric_contract.py": "sha256:1b2c144883b5fb524af2ef634a8bb5df494266dcdb2b83bc6184c0213221f5c3",
+    "tools/verify/livekit_network_config/test_model.py": "sha256:50a9d0169806c307fd2450b45a54becece5fcbcb95ef9758b1cc687a51e92e38"
   },
   "checks": [
     {
-      "name": "Repository media port, metrics network, allowlist and alert invariants",
+      "name": "Repository media ports, listener peer boundary, metric label contract and alert invariants",
       "result": "PASS",
       "command": "python -m tools.verify.livekit_network_config.check",
-      "observation": "The checked-in UDP and TCP mappings match the LiveKit config. The metrics target uses a dedicated internal network, no host-published metrics port, a fixed metric-family allowlist and a scrape availability alert."
+      "observation": "The checked-in UDP/TCP mappings match LiveKit configuration. Prometheus uses a dedicated internal network and metrics port 6789 is not host-published. Compose peers on the shared private network can also reach that listener; edge attachment is removed and the verifier checks the current peer set. The scrape allowlist is tied to the pinned v1.13.7 image, drops node_id/country, keeps only the reviewed bounded labels, and has a scrape availability alert."
     },
     {
       "name": "Application Compose interpolation",
@@ -34,7 +50,7 @@
       "name": "Repository Python regression suite",
       "result": "PASS",
       "command": "python -m tools.verify.python_tests.run",
-      "observation": "164 tests passed; one existing suite test was skipped."
+      "observation": "169 tests passed; one suite test was skipped."
     },
     {
       "name": "Native contracts checks",

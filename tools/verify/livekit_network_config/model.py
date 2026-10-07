@@ -1,11 +1,5 @@
 """Fail-closed checks for the repository's LiveKit network topology."""
-
-SAFE_METRICS = (
-    "livekit_(room_total|participant_total|connection_total|packet_total|packet_bytes|packet_loss_total|"
-    "packet_loss_percent_(bucket|sum|count)|packet_out_of_order_total|"
-    "packet_out_of_order_percent_(bucket|sum|count)|jitter_us_(bucket|sum|count)|"
-    "rtt_ms_(bucket|sum|count))"
-)
+from .metric_contract import validate_metric_contract
 
 
 def _range(value):
@@ -29,6 +23,14 @@ def _port_mapping(spec):
 def _network_list(service):
     networks = service.get("networks", [])
     return list(networks) if isinstance(networks, list) else list(networks)
+
+
+def metrics_reachable_peers(deploy, observability_compose):
+    services = dict(deploy.get("services", {}))
+    services.update(observability_compose.get("services", {}))
+    server_networks = set(_network_list(services.get("livekit", {})))
+    return {name for name, service in services.items() if name != "livekit" and
+            server_networks.intersection(_network_list(service))}
 
 
 def validate(livekit, deploy, observability_compose, prometheus, alerts):
@@ -66,6 +68,9 @@ def validate(livekit, deploy, observability_compose, prometheus, alerts):
     network = deploy.get("networks", {}).get(network_name, {})
     if network.get("internal") is not True or network_name not in _network_list(server):
         raise ValueError("LiveKit metrics must use an internal dedicated network")
+    if set(_network_list(server)) != {"private", network_name} or deploy.get(
+            "networks", {}).get("private", {}).get("internal") is not True:
+        raise ValueError("metrics port shares the internal private network; remove extra LiveKit networks")
     for name, service in services.items():
         if name != "livekit" and network_name in _network_list(service):
             raise ValueError("only LiveKit may join the dedicated metrics network")
@@ -85,18 +90,7 @@ def validate(livekit, deploy, observability_compose, prometheus, alerts):
     if len(jobs) != 1 or jobs[0].get("metrics_path") != "/metrics" or jobs[0].get(
             "static_configs", [{}])[0].get("targets") != [target]:
         raise ValueError("LiveKit scrape must use its private service target")
-    job = jobs[0]
-    if not any(item.get("target_label") == "instance" and item.get("replacement") ==
-               "boohtacord-livekit-sfu" for item in job.get("relabel_configs", [])):
-        raise ValueError("scraped series must use a fixed instance label")
-    filters = job.get("metric_relabel_configs", [])
-    if not any(item.get("action") == "keep" and item.get("source_labels") == ["__name__"]
-               and item.get("regex") == SAFE_METRICS for item in filters):
-        raise ValueError("LiveKit metric family allowlist is missing")
-    dropped = {label for item in filters if item.get("action") == "labeldrop"
-               for label in item.get("regex", "").split("|")}
-    if not {"node_id", "country"}.issubset(dropped):
-        raise ValueError("node_id and country labels must be dropped")
+    validate_metric_contract(jobs[0], server.get("image"))
 
     rules = [rule for group in alerts.get("groups", []) for rule in group.get("rules", [])]
     if not any(rule.get("alert") == "LiveKitMetricsScrapeUnavailable" and
