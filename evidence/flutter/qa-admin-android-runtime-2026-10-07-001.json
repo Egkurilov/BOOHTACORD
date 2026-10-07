@@ -2,7 +2,7 @@
   "id": "QA-ADMIN-ANDROID-RUNTIME-2026-10-07-001",
   "date": "2026-10-07",
   "task": "FV2-031 / GitHub #198 — Android Flutter admin runtime pass",
-  "source_revision": "c0bc7903",
+  "source_revision": "7d7cb383",
   "app_version": {
     "source": "1.0.38+71",
     "installed_version_name": "1.0.38",
@@ -40,11 +40,16 @@
       "name": "Crash smoke",
       "result": "PASS",
       "observation": "After installation, launch, navigation through all admin sections and Back smoke, logcat contained no FATAL EXCEPTION for the app process."
+    },
+    {
+      "name": "Landscape admin resize and tab navigation",
+      "result": "PASS",
+      "observation": "Android emulator rotated to 2400x1080 landscape. The admin shell rendered all seven tabs without clipping; Members, Roles, Channels, Audit, Media and Readiness each opened and exposed their expected controls. Returning to 1080x2400 portrait preserved the admin screen and process."
     }
   ],
   "not_run": [
-    "Landscape, IME-covered form actions and TalkBack smoke were not captured in this run.",
+    "IME-covered form actions and TalkBack smoke were not captured in this run.",
     "iOS and Windows native runtimes remain unavailable."
   ],
-  "status": "ANDROID ADMIN PORTRAIT RUNTIME PASS; cross-platform gate pending"
+  "status": "ANDROID ADMIN PORTRAIT + LANDSCAPE RUNTIME PASS; cross-platform gate pending"
 }
