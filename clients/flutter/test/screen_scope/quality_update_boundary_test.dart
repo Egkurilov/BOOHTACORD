@@ -58,10 +58,10 @@ void main() {
     final driver = QualityScreenDriver()
       ..updateGate = Completer<void>()
       ..staleOutcome = _outcome('stop-during-apply');
-    final track = FakeScreenTrack();
-    final owner = qualityOwner(driver, track);
-    addTearDown(owner.dispose);
     final room = FakeScreenRoom();
+    final track = FakeScreenTrack();
+    final owner = qualityOwner(driver, track, readRoom: () => room);
+    addTearDown(owner.dispose);
     final update = owner.updateScreenShareQuality(
       const ScreenShareQuality(resolution: 1440, frameRate: 60),
     );
