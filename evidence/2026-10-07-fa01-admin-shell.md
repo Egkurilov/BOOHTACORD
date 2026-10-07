@@ -14,6 +14,7 @@
   test/admin_media_widget_test.dart test/admin_role_permissions_surface_test.dart
   test/admin_readiness_test.dart test/admin_readiness_widget_test.dart` — PASS.
 - `flutter analyze --no-pub` on changed admin files — PASS.
+- `flutter test` — PASS (788 tests; one pre-existing skipped test).
 - `flutter build apk --release --split-per-abi` — PASS (armv7, arm64 and
   x86_64 APKs built; generated artifacts remain ignored).
 - `AdminMediaMetricsPanel` now owns the media diagnostics presentation; the
