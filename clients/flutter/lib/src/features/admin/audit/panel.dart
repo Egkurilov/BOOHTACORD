@@ -61,126 +61,173 @@ class AdminAuditPanel extends StatelessWidget {
     final compact = MediaQuery.sizeOf(context).width < 600;
     final eventTypes = events.map((event) => event.eventType).toSet().toList()
       ..sort();
+    final header = Padding(
+      padding: headerPadding,
+      child: Row(
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Аудит',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  'События управления без содержимого сообщений',
+                  style: TextStyle(color: GcColors.textSecondary, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          TextButton.icon(
+            onPressed: loading ? null : onRefresh,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Обновить'),
+          ),
+        ],
+      ),
+    );
+    final filterBar = Padding(
+      padding: listPadding.copyWith(bottom: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          SizedBox(
+            width: compact ? double.infinity : 180,
+            child: DropdownButtonFormField<AdminAuditScope>(
+              key: const ValueKey('admin-audit-scope-filter'),
+              isExpanded: true,
+              initialValue: scope,
+              decoration: const InputDecoration(labelText: 'Область'),
+              items: const [
+                DropdownMenuItem(
+                  value: AdminAuditScope.all,
+                  child: Text('Все события'),
+                ),
+                DropdownMenuItem(
+                  value: AdminAuditScope.admin,
+                  child: Text('Администрирование'),
+                ),
+                DropdownMenuItem(
+                  value: AdminAuditScope.voice,
+                  child: Text('Голос'),
+                ),
+              ],
+              onChanged: (value) =>
+                  onScopeChanged(value ?? AdminAuditScope.all),
+            ),
+          ),
+          SizedBox(
+            width: compact ? double.infinity : 220,
+            child: TextField(
+              controller: actor,
+              decoration: const InputDecoration(labelText: 'Инициатор'),
+              onChanged: (_) => onActorChanged(),
+            ),
+          ),
+          SizedBox(
+            width: compact ? double.infinity : 220,
+            child: DropdownButtonFormField<String?>(
+              key: ValueKey('admin-audit-type:$eventType'),
+              isExpanded: true,
+              initialValue: eventType,
+              decoration: const InputDecoration(labelText: 'Тип события'),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('Все типы'),
+                ),
+                for (final type in eventTypes)
+                  DropdownMenuItem<String?>(value: type, child: Text(type)),
+              ],
+              onChanged: onEventTypeChanged,
+            ),
+          ),
+          OutlinedButton(
+            key: const ValueKey('admin-audit-from-filter'),
+            onPressed: onPickFrom,
+            child: Text(from == null ? 'От даты' : 'От ${formatDate(from!)}'),
+          ),
+          OutlinedButton(
+            key: const ValueKey('admin-audit-to-filter'),
+            onPressed: onPickTo,
+            child: Text(to == null ? 'До даты' : 'До ${formatDate(to!)}'),
+          ),
+          if (filters.active)
+            TextButton(
+              onPressed: onClearFilters,
+              child: const Text('Сбросить фильтры'),
+            ),
+        ],
+      ),
+    );
+    final notice = Padding(
+      padding: listPadding.copyWith(top: 0, bottom: 8),
+      child: Text(
+        'Фильтры применяются к ${events.length} уже загруженным записям. Для более ранних событий загрузите следующую страницу.',
+        style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
+      ),
+    );
+    final bodyChildren = <Widget>[
+      for (final entry in grouped.entries) ...[
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            _dayLabel(entry.key),
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+        for (final event in entry.value) _eventRow(event),
+      ],
+      if (loading) const Center(child: CircularProgressIndicator()),
+      if (cursor != null)
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            onPressed: loading ? null : onLoadMore,
+            child: const Text('Показать более ранние'),
+          ),
+        ),
+      if (error != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Text(error!, style: const TextStyle(color: GcColors.danger)),
+        ),
+    ];
+    final body = Padding(
+      padding: listPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: bodyChildren,
+      ),
+    );
+    final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.5;
+    if (largeText) {
+      return ListView(
+        padding: const EdgeInsets.only(bottom: 24),
+        children: [
+          header,
+          filterBar,
+          notice,
+          if (loading && events.isEmpty)
+            _loadingContent('Загружаем аудит…')
+          else if (!loading && events.isEmpty && error == null)
+            const _AuditEmptyState('Записей пока нет.')
+          else if (!loading && filtered.isEmpty && filters.active)
+            const _AuditEmptyState('Среди загруженных записей совпадений нет.')
+          else
+            body,
+        ],
+      );
+    }
     return Column(
       children: [
-        Padding(
-          padding: headerPadding,
-          child: Row(
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Аудит',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      'События управления без содержимого сообщений',
-                      style: TextStyle(
-                        color: GcColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              TextButton.icon(
-                onPressed: loading ? null : onRefresh,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Обновить'),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: listPadding.copyWith(bottom: 8),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              SizedBox(
-                width: compact ? double.infinity : 180,
-                child: DropdownButtonFormField<AdminAuditScope>(
-                  key: const ValueKey('admin-audit-scope-filter'),
-                  isExpanded: true,
-                  initialValue: scope,
-                  decoration: const InputDecoration(labelText: 'Область'),
-                  items: const [
-                    DropdownMenuItem(
-                      value: AdminAuditScope.all,
-                      child: Text('Все события'),
-                    ),
-                    DropdownMenuItem(
-                      value: AdminAuditScope.admin,
-                      child: Text('Администрирование'),
-                    ),
-                    DropdownMenuItem(
-                      value: AdminAuditScope.voice,
-                      child: Text('Голос'),
-                    ),
-                  ],
-                  onChanged: (value) =>
-                      onScopeChanged(value ?? AdminAuditScope.all),
-                ),
-              ),
-              SizedBox(
-                width: compact ? double.infinity : 220,
-                child: TextField(
-                  controller: actor,
-                  decoration: const InputDecoration(labelText: 'Инициатор'),
-                  onChanged: (_) => onActorChanged(),
-                ),
-              ),
-              SizedBox(
-                width: compact ? double.infinity : 220,
-                child: DropdownButtonFormField<String?>(
-                  key: ValueKey('admin-audit-type:$eventType'),
-                  isExpanded: true,
-                  initialValue: eventType,
-                  decoration: const InputDecoration(labelText: 'Тип события'),
-                  items: [
-                    const DropdownMenuItem<String?>(
-                      value: null,
-                      child: Text('Все типы'),
-                    ),
-                    for (final type in eventTypes)
-                      DropdownMenuItem<String?>(value: type, child: Text(type)),
-                  ],
-                  onChanged: onEventTypeChanged,
-                ),
-              ),
-              OutlinedButton(
-                key: const ValueKey('admin-audit-from-filter'),
-                onPressed: onPickFrom,
-                child: Text(
-                  from == null ? 'От даты' : 'От ${formatDate(from!)}',
-                ),
-              ),
-              OutlinedButton(
-                key: const ValueKey('admin-audit-to-filter'),
-                onPressed: onPickTo,
-                child: Text(to == null ? 'До даты' : 'До ${formatDate(to!)}'),
-              ),
-              if (filters.active)
-                TextButton(
-                  onPressed: onClearFilters,
-                  child: const Text('Сбросить фильтры'),
-                ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: listPadding.copyWith(top: 0, bottom: 8),
-          child: Text(
-            'Фильтры применяются к ${events.length} уже загруженным записям. Для более ранних событий загрузите следующую страницу.',
-            style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
-          ),
-        ),
+        header,
+        filterBar,
+        notice,
         if (loading && events.isEmpty)
           _loadingState('Загружаем аудит…')
         else if (!loading && events.isEmpty && error == null)
@@ -193,57 +240,27 @@ class AdminAuditPanel extends StatelessWidget {
           )
         else
           Expanded(
-            child: ListView(
-              padding: listPadding,
-              children: [
-                for (final entry in grouped.entries) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      _dayLabel(entry.key),
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  for (final event in entry.value) _eventRow(event),
-                ],
-                if (loading) const Center(child: CircularProgressIndicator()),
-                if (cursor != null)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: loading ? null : onLoadMore,
-                      child: const Text('Показать более ранние'),
-                    ),
-                  ),
-                if (error != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Text(
-                      error!,
-                      style: const TextStyle(color: GcColors.danger),
-                    ),
-                  ),
-              ],
-            ),
+            child: ListView(padding: listPadding, children: bodyChildren),
           ),
       ],
     );
   }
 
-  Widget _loadingState(String message) => Expanded(
-    child: Center(
-      child: Semantics(
-        key: const ValueKey('admin-audit-loading'),
-        liveRegion: true,
-        label: message,
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: GcColors.textSecondary),
-        ),
+  Widget _loadingContent(String message) => Center(
+    child: Semantics(
+      key: const ValueKey('admin-audit-loading'),
+      liveRegion: true,
+      label: message,
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: GcColors.textSecondary),
       ),
     ),
   );
+
+  Widget _loadingState(String message) =>
+      Expanded(child: _loadingContent(message));
 
   Widget _eventRow(AdminAuditEvent event) {
     final actorLabel = _accountLabel(
@@ -353,4 +370,16 @@ class AdminAuditPanel extends StatelessWidget {
     'VOICE_LEASE_TRANSFERRED' => 'Голосовое подключение перенесено',
     _ => 'Другое событие управления',
   };
+}
+
+class _AuditEmptyState extends StatelessWidget {
+  const _AuditEmptyState(this.message);
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 48),
+    child: Center(child: Text(message, textAlign: TextAlign.center)),
+  );
 }

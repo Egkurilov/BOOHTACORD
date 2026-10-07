@@ -32,82 +32,93 @@ class AdminMediaMetricsPanel extends StatelessWidget {
   final String Function(DateTime) formatDate;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Padding(
-        padding: headerPadding,
-        child: Row(
-          children: [
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Показатели трансляций',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    'Последние 60 секунд · без имён и идентификаторов участников',
-                    style: TextStyle(
-                      color: GcColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
+  Widget build(BuildContext context) {
+    final header = Padding(
+      padding: headerPadding,
+      child: Row(
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Показатели трансляций',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  'Последние 60 секунд · без имён и идентификаторов участников',
+                  style: TextStyle(color: GcColors.textSecondary, fontSize: 12),
+                ),
+              ],
             ),
-            TextButton.icon(
-              onPressed: loading ? null : onRefresh,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Обновить'),
-            ),
-          ],
+          ),
+          TextButton.icon(
+            onPressed: loading ? null : onRefresh,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Обновить'),
+          ),
+        ],
+      ),
+    );
+    final bodyChildren = <Widget>[
+      const Text(
+        'Сравните размер кадра и FPS отправки, приёма и показа: так проще найти участок потери разрешения или кадров. Данные сообщают сами клиенты; они не подтверждают содержимое кадра или аппаратный профиль.',
+        style: TextStyle(
+          color: GcColors.textSecondary,
+          fontSize: 13,
+          height: 1.45,
         ),
       ),
-      Expanded(
-        child: ListView(
-          padding: listPadding,
-          children: [
-            const Text(
-              'Сравните размер кадра и FPS отправки, приёма и показа: так проще найти участок потери разрешения или кадров. Данные сообщают сами клиенты; они не подтверждают содержимое кадра или аппаратный профиль.',
-              style: TextStyle(
-                color: GcColors.textSecondary,
-                fontSize: 13,
-                height: 1.45,
-              ),
+      const SizedBox(height: 12),
+      _freshnessSummary,
+      const SizedBox(height: 12),
+      if (loading && samples.isEmpty && error == null)
+        const Padding(
+          padding: EdgeInsets.all(24),
+          child: Center(child: CircularProgressIndicator()),
+        )
+      else if (error != null)
+        Semantics(
+          liveRegion: true,
+          child: Text(error!, style: const TextStyle(color: GcColors.danger)),
+        )
+      else if (samples.isEmpty)
+        Semantics(
+          liveRegion: true,
+          child: Text(
+            'Свежих показателей пока нет. Откройте демонстрацию у зрителя.',
+          ),
+        )
+      else ...[
+        if (loading) const LinearProgressIndicator(minHeight: 2),
+        for (final sample in samples) _sampleCard(context, sample),
+      ],
+    ];
+    final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.5;
+    if (largeText) {
+      return ListView(
+        padding: const EdgeInsets.only(bottom: 24),
+        children: [
+          header,
+          Padding(
+            padding: listPadding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: bodyChildren,
             ),
-            const SizedBox(height: 12),
-            _freshnessSummary,
-            const SizedBox(height: 12),
-            if (loading && samples.isEmpty && error == null)
-              const Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (error != null)
-              Semantics(
-                liveRegion: true,
-                child: Text(
-                  error!,
-                  style: const TextStyle(color: GcColors.danger),
-                ),
-              )
-            else if (samples.isEmpty)
-              Semantics(
-                liveRegion: true,
-                child: Text(
-                  'Свежих показателей пока нет. Откройте демонстрацию у зрителя.',
-                ),
-              )
-            else ...[
-              if (loading) const LinearProgressIndicator(minHeight: 2),
-              for (final sample in samples) _sampleCard(context, sample),
-            ],
-          ],
+          ),
+        ],
+      );
+    }
+    return Column(
+      children: [
+        header,
+        Expanded(
+          child: ListView(padding: listPadding, children: bodyChildren),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 
   Widget get _freshnessSummary {
     final lastSeen = lastSeenAt;

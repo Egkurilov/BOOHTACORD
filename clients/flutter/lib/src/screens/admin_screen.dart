@@ -795,6 +795,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                           DropdownButtonFormField<String>(
                                             key: ValueKey(selectedId),
                                             initialValue: selectedId,
+                                            isExpanded: true,
                                             decoration: const InputDecoration(
                                               labelText: 'Категория',
                                             ),
@@ -907,6 +908,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                   )
                                                   ? _channelId
                                                   : null,
+                                              isExpanded: true,
                                               decoration: const InputDecoration(
                                                 labelText: 'Канал',
                                               ),
@@ -1045,6 +1047,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                           ),
                                           DropdownButtonFormField<ChannelKind>(
                                             initialValue: _channelKind,
+                                            isExpanded: true,
                                             decoration: const InputDecoration(
                                               labelText: 'Тип канала',
                                             ),
@@ -1107,6 +1110,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                       )
                                                   ? _moveChannelId
                                                   : null,
+                                              isExpanded: true,
                                               decoration: const InputDecoration(
                                                 labelText: 'Перенести канал',
                                               ),
@@ -1142,6 +1146,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                   )
                                                   ? _moveTargetCategoryId
                                                   : null,
+                                              isExpanded: true,
                                               decoration: const InputDecoration(
                                                 labelText: 'В категорию',
                                               ),
@@ -1195,6 +1200,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                   )
                                                   ? _archiveChannelId
                                                   : null,
+                                              isExpanded: true,
                                               decoration: const InputDecoration(
                                                 labelText: 'Текстовый канал для архивации',
                                               ),
@@ -1246,6 +1252,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                   )
                                                   ? _closeVoiceChannelId
                                                   : null,
+                                              isExpanded: true,
                                               decoration: const InputDecoration(
                                                 labelText: 'Голосовой канал для закрытия',
                                               ),

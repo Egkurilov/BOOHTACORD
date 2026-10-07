@@ -84,92 +84,105 @@ class _AdminReadinessPanelState extends State<AdminReadinessPanel>
           : result.status == 'ready' && !result.hasFailedProbe
           ? 'Сервисы готовы'
           : 'Есть проблемы готовности';
-      return Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Готовность сервисов',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        'Приватная проверка PostgreSQL, LiveKit и хранилища.',
-                        style: TextStyle(
-                          color: GcColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: _busy ? null : _refresh,
-                  icon: const Icon(Icons.refresh),
-                  label: Text(_busy ? 'Проверяем…' : 'Обновить'),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.only(bottom: 24),
-              children: [
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    status,
-                    style: TextStyle(
-                      color: freshnessLost
-                          ? GcColors.warning
-                          : GcColors.success,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                if (result != null) ...[
-                  const SizedBox(height: 6),
+      final header = Padding(
+        padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
+        child: Row(
+          children: [
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    'Возраст проверки: ${result.ageAt(_now).inSeconds} с. После 15 с результат устаревает.',
-                    style: const TextStyle(color: GcColors.textSecondary),
+                    'Готовность сервисов',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      _probeCard('PostgreSQL', result.database, freshnessLost),
-                      _probeCard('LiveKit', result.sfu, freshnessLost),
-                      _probeCard('Хранилище', result.storage, freshnessLost),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _storageCard(
-                    result.storage,
-                    result.database.pendingRevocations,
-                    compact,
-                  ),
-                ] else if (_busy)
-                  const Center(child: CircularProgressIndicator()),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      _error!,
-                      style: const TextStyle(color: GcColors.danger),
+                  Text(
+                    'Приватная проверка PostgreSQL, LiveKit и хранилища.',
+                    style: TextStyle(
+                      color: GcColors.textSecondary,
+                      fontSize: 12,
                     ),
                   ),
                 ],
-              ],
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _busy ? null : _refresh,
+              icon: const Icon(Icons.refresh),
+              label: Text(_busy ? 'Проверяем…' : 'Обновить'),
+            ),
+          ],
+        ),
+      );
+      final bodyChildren = <Widget>[
+        Semantics(
+          liveRegion: true,
+          child: Text(
+            status,
+            style: TextStyle(
+              color: freshnessLost ? GcColors.warning : GcColors.success,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        if (result != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            'Возраст проверки: ${result.ageAt(_now).inSeconds} с. После 15 с результат устаревает.',
+            style: const TextStyle(color: GcColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _probeCard('PostgreSQL', result.database, freshnessLost),
+              _probeCard('LiveKit', result.sfu, freshnessLost),
+              _probeCard('Хранилище', result.storage, freshnessLost),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _storageCard(
+            result.storage,
+            result.database.pendingRevocations,
+            compact,
+          ),
+        ] else if (_busy)
+          const Center(child: CircularProgressIndicator()),
+        if (_error != null) ...[
+          const SizedBox(height: 12),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              _error!,
+              style: const TextStyle(color: GcColors.danger),
+            ),
+          ),
+        ],
+      ];
+      final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.5;
+      if (largeText) {
+        return ListView(
+          padding: const EdgeInsets.only(bottom: 24),
+          children: [
+            header,
+            Padding(
+              padding: EdgeInsets.zero,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: bodyChildren,
+              ),
+            ),
+          ],
+        );
+      }
+      return Column(
+        children: [
+          header,
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 24),
+              children: bodyChildren,
             ),
           ),
         ],
