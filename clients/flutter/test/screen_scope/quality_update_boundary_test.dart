@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:boohtacord_desktop/src/core/session/scope.dart';
 import 'package:boohtacord_desktop/src/features/screen/lifecycle/controller.dart';
@@ -19,8 +20,15 @@ String _outcome(String id) => (_lifecycleFixtures['cases'] as List)
     .cast<Map<String, dynamic>>()
     .firstWhere((item) => item['id'] == id)['outcome'] as String;
 
+void _useLiveUpdatePlatform() {
+  final previousPlatform = debugDefaultTargetPlatformOverride;
+  debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+  addTearDown(() => debugDefaultTargetPlatformOverride = previousPlatform);
+}
+
 void main() {
   test('server switch cancels a pending profile and closes its capture', () async {
+    _useLiveUpdatePlatform();
     final driver = QualityScreenDriver()
       ..updateGate = Completer<void>()
       ..staleOutcome = _outcome('stop-during-apply');
@@ -34,6 +42,7 @@ void main() {
       scope: scope,
       readRoom: () => currentRoom,
     );
+    owner.quality = ScreenShareQuality.balanced;
     addTearDown(owner.dispose);
 
     final update = owner.updateScreenShareQuality(
@@ -55,12 +64,14 @@ void main() {
   });
 
   test('OS projection stop cancels update without restarting capture', () async {
+    _useLiveUpdatePlatform();
     final driver = QualityScreenDriver()
       ..updateGate = Completer<void>()
       ..staleOutcome = _outcome('stop-during-apply');
     final room = FakeScreenRoom();
     final track = FakeScreenTrack();
     final owner = qualityOwner(driver, track, readRoom: () => room);
+    owner.quality = ScreenShareQuality.balanced;
     addTearDown(owner.dispose);
     final update = owner.updateScreenShareQuality(
       const ScreenShareQuality(resolution: 1440, frameRate: 60),

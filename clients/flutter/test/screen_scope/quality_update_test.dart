@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:boohtacord_desktop/src/core/session/scope.dart';
 import 'package:boohtacord_desktop/src/features/screen/lifecycle/controller.dart';
@@ -8,11 +9,19 @@ import 'package:boohtacord_desktop/src/features/screen/profile/quality.dart';
 import 'fakes.dart';
 import 'quality_fakes.dart';
 
+void _useLiveUpdatePlatform() {
+  final previousPlatform = debugDefaultTargetPlatformOverride;
+  debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+  addTearDown(() => debugDefaultTargetPlatformOverride = previousPlatform);
+}
+
 void main() {
   test('success applies the selected profile to the same capture', () async {
+    _useLiveUpdatePlatform();
     final driver = QualityScreenDriver();
     final track = FakeScreenTrack();
     final owner = qualityOwner(driver, track);
+    owner.quality = ScreenShareQuality.balanced;
     addTearDown(owner.dispose);
 
     await owner.updateScreenShareQuality(
@@ -25,12 +34,14 @@ void main() {
   });
 
   test('stop cancels profile update before any stale write', () async {
+    _useLiveUpdatePlatform();
     final driver = QualityScreenDriver()
       ..updateGate = Completer<void>()
       ..staleOutcome = 'cancel';
     final scope = SessionScope();
     final track = FakeScreenTrack();
     final owner = qualityOwner(driver, track, scope: scope);
+    owner.quality = ScreenShareQuality.balanced;
     addTearDown(owner.dispose);
     final update = owner.updateScreenShareQuality(
       const ScreenShareQuality(resolution: 1440, frameRate: 60),
@@ -50,9 +61,11 @@ void main() {
   });
 
   test('latest profile supersedes in-flight and queued profiles', () async {
+    _useLiveUpdatePlatform();
     final driver = QualityScreenDriver()..updateGate = Completer<void>();
     final track = FakeScreenTrack();
     final owner = qualityOwner(driver, track);
+    owner.quality = ScreenShareQuality.balanced;
     addTearDown(owner.dispose);
     final first = owner.updateScreenShareQuality(
       const ScreenShareQuality(resolution: 720, frameRate: 30),
