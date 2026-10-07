@@ -5621,17 +5621,44 @@ class _VoiceRoomState extends State<_VoiceRoom> {
     ScreenFullscreenPresentation? presentation;
     BuildContext? overlayContext;
     var closing = false;
+    final capturedRoom = widget.state.room;
     bool stillPublished() {
+      Object? currentGeneration;
+      String? currentIdentity;
       if (publisherIdentity == null) {
-        return widget.state.screenSharePhase == ScreenSharePhase.sharing;
+        if (widget.state.screenSharePhase != ScreenSharePhase.sharing) {
+          return false;
+        }
+        final publication = widget.state.room?.localParticipant
+            ?.getTrackPublicationBySource(TrackSource.screenShareVideo);
+        currentGeneration =
+            publication?.sid ?? (publication?.track as VideoTrack?);
+      } else {
+        final participant = widget
+            .state
+            .room
+            ?.remoteParticipants[publisherIdentity];
+        if (participant != null) {
+          final publication = firstDiscoverableRemoteScreenPublication(
+            participant,
+          );
+          if (publication != null) {
+            currentIdentity = participant.identity;
+            currentGeneration = ScreenViewerPublicationGeneration(
+              participantIdentity: participant.identity,
+              publicationSid: publication.sid,
+            );
+          }
+        }
       }
-      return widget
-              .state
-              .room
-              ?.remoteParticipants[publisherIdentity]
-              ?.videoTrackPublications
-              .any((item) => item.source == TrackSource.screenShareVideo) ??
-          false;
+      return screenFullscreenGenerationIsCurrent(
+        selection: ScreenFullscreenSelection(
+          identity: publisherIdentity,
+          generation: viewerGeneration,
+        ),
+        currentIdentity: currentIdentity,
+        currentGeneration: currentGeneration,
+      );
     }
 
     void closeWhenEnded() {
@@ -5655,6 +5682,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
       presentation = await ScreenFullscreenPresentation.enter();
       if (!mounted) return;
       widget.state.addListener(closeWhenEnded);
+      capturedRoom?.addListener(closeWhenEnded);
       await showGeneralDialog<void>(
         context: context,
         barrierDismissible: true,
@@ -5713,6 +5741,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
       }
     } finally {
       widget.state.removeListener(closeWhenEnded);
+      capturedRoom?.removeListener(closeWhenEnded);
       await presentation?.restore();
       widget.onFullscreenSelectionChanged(null);
     }

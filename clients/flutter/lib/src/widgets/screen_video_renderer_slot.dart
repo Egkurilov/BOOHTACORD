@@ -22,8 +22,11 @@ ScreenVideoRendererOwner screenVideoRendererOwner({
   required ScreenFullscreenSelection? fullscreenSelection,
 }) {
   if (fullscreenSelection != null &&
-      fullscreenSelection.identity == selectedIdentity &&
-      fullscreenSelection.generation == selectedGeneration) {
+      screenFullscreenGenerationIsCurrent(
+        selection: fullscreenSelection,
+        currentIdentity: selectedIdentity,
+        currentGeneration: selectedGeneration,
+      )) {
     return ScreenVideoRendererOwner.fullscreen;
   }
   if (pinnedMiniVisible &&
@@ -33,6 +36,14 @@ ScreenVideoRendererOwner screenVideoRendererOwner({
   }
   return ScreenVideoRendererOwner.stage;
 }
+
+bool screenFullscreenGenerationIsCurrent({
+  required ScreenFullscreenSelection selection,
+  required String? currentIdentity,
+  required Object? currentGeneration,
+}) =>
+    selection.identity == currentIdentity &&
+    selection.generation == currentGeneration;
 
 bool _shouldMountRenderer({
   required ScreenVideoRendererSurface surface,
