@@ -1672,7 +1672,11 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
             account.displayName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 16,
+              height: 20 / 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           subtitle: Text(
             '@${account.login}',

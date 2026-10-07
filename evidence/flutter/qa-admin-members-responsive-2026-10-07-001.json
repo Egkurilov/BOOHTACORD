@@ -2,7 +2,7 @@
   "id": "QA-ADMIN-MEMBERS-RESPONSIVE-2026-10-07-001",
   "date": "2026-10-07",
   "task": "FV2-031 / GitHub #191 — Flutter Members responsive presentation",
-  "source_revision": "d23196b9",
+  "source_revision": "e0c74473",
   "checks": [
     {
       "name": "Expanded member rows",
