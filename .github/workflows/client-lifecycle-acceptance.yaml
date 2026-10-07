@@ -25,6 +25,8 @@ jobs:
   lifecycle:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    env:
+      VITE_PUBLIC_ORIGIN: https://localhost:4810
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,7 +48,6 @@ jobs:
       - name: Measure previous native client REST requests
         env:
           QA_BASELINE_REVISION: ${{ github.event.pull_request.base.sha || github.sha }}
-          VITE_PUBLIC_ORIGIN: https://localhost:4810
         run: |
           python3 -m unittest tools.qa.refresh_baseline.test_archive
           python3 -m tools.qa.refresh_baseline.run --revision "$QA_BASELINE_REVISION"
