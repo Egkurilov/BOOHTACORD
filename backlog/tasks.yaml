@@ -284,6 +284,11 @@ tasks:
     depends_on: [FV2-021, T-051]
     evidence: [flutter-attachment-preview-failure-fallback-tests, flutter-full-suite, android-debug-build, macos-debug-build, QA-283]
   - id: FV2-031
+    title: Flutter Design V2 administrator parity (#188)
+    requirements: [REQ-UI-01, REQ-UI-02, REQ-ADMIN-01, REQ-ADMIN-02, REQ-QUALITY-01, REQ-QUALITY-02]
+    depends_on: [FV2-004, T-014, T-020, T-050, T-051]
+    evidence: [flutter-admin-parity-focused-tests, flutter-admin-parity-evidence, android-macos-windows-acceptance]
+  - id: FV2-031
     title: Flutter text history overlap merges the newest message revision
     requirements: [REQ-UI-01, REQ-CHAT-01, REQ-CHAT-02]
     depends_on: [FV2-002, T-040, T-051]

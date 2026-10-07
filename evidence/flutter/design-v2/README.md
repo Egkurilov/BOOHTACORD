@@ -12,3 +12,8 @@ The implementation plan is in
 [`docs/superpowers/plans/2026-10-03-design-v2-flutter.md`](../../../docs/superpowers/plans/2026-10-03-design-v2-flutter.md).
 Add dated evidence records here as each acceptance run is performed, including
 the source revision, platform/device, scenario, commands, result, and limits.
+
+The administrator parity implementation is tracked in
+[`qa-admin-parity-2026-10-07-001.json`](../qa-admin-parity-2026-10-07-001.json).
+It records the focused Flutter evidence and explicitly leaves unavailable
+platform runtime acceptance as `NOT_RUN`; it does not close FV2-006.

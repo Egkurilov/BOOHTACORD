@@ -280,6 +280,7 @@ class AdminAccount {
     required this.role,
     required this.blocked,
     required this.createdAt,
+    this.updatedAt,
   });
 
   final String accountId;
@@ -288,6 +289,7 @@ class AdminAccount {
   final String role;
   final bool blocked;
   final DateTime createdAt;
+  final DateTime? updatedAt;
 
   factory AdminAccount.fromJson(Map<String, dynamic> json) {
     final accountId = json['account_id'];
@@ -296,13 +298,15 @@ class AdminAccount {
     final role = json['role'];
     final blocked = json['blocked'];
     final createdAt = json['created_at'];
+    final updatedAt = json['updated_at'];
     if (accountId is! String ||
         accountId.isEmpty ||
         login is! String ||
         displayName is! String ||
         (role != 'MEMBER' && role != 'ADMINISTRATOR') ||
         blocked is! bool ||
-        createdAt is! String) {
+        createdAt is! String ||
+        (updatedAt != null && updatedAt is! String)) {
       throw const FormatException('Invalid admin account.');
     }
     return AdminAccount(
@@ -312,6 +316,9 @@ class AdminAccount {
       role: role as String,
       blocked: blocked,
       createdAt: DateTime.parse(createdAt).toLocal(),
+      updatedAt: updatedAt == null
+          ? null
+          : DateTime.parse(updatedAt as String).toLocal(),
     );
   }
 }

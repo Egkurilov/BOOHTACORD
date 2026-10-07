@@ -64,44 +64,62 @@ class _AdminGuildSettingsState extends State<AdminGuildSettings> {
   }
 
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(24),
-    children: [
-      const Text(
-        'Гильдия',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
-      ),
-      const SizedBox(height: 16),
-      TextField(
-        controller: name,
-        enabled: !state.busy && state.revision > 0,
-        decoration: const InputDecoration(
-          labelText: 'Название гильдии',
-          helperText: 'От 1 до 80 символов, без переводов строк.',
-        ),
-      ),
-      const SizedBox(height: 24),
-      WelcomeSelector(
-        value: state.welcome,
-        channels: _channels,
-        revision: state.revision,
-        busy: state.busy,
-        onChanged: (value) => setState(() => state.welcome = value),
-      ),
-      if (state.error != null)
-        Semantics(liveRegion: true, child: Text(state.error!)),
-      if (state.saved)
-        Semantics(liveRegion: true, child: const Text('Настройки сохранены.')),
-      const SizedBox(height: 16),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: FilledButton(
-          onPressed: state.busy || state.revision == 0 ? null : _save,
-          child: Text(state.busy ? 'Сохраняем…' : 'Сохранить'),
-        ),
-      ),
-      if (state.revision == 0 && !state.busy)
-        TextButton(onPressed: _load, child: const Text('Загрузить настройки')),
-    ],
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final compact = constraints.maxWidth < 840;
+      return ListView(
+        padding: EdgeInsets.fromLTRB(compact ? 0 : 24, 0, compact ? 0 : 24, 24),
+        children: [
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: compact ? double.infinity : 600,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Гильдия',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: name,
+                  enabled: !state.busy && state.revision > 0,
+                  decoration: const InputDecoration(
+                    labelText: 'Название гильдии',
+                    helperText: 'Название показывается участникам и на экране входа. От 1 до 80 символов, без переводов строк.',
+                  ),
+                ),
+                const SizedBox(height: 24),
+                WelcomeSelector(
+                  value: state.welcome,
+                  channels: _channels,
+                  revision: state.revision,
+                  busy: state.busy,
+                  onChanged: (value) => setState(() => state.welcome = value),
+                ),
+                if (state.error != null)
+                  Semantics(liveRegion: true, child: Text(state.error!)),
+                if (state.saved)
+                  Semantics(
+                    liveRegion: true,
+                    child: const Text('Настройки сохранены.'),
+                  ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: state.busy || state.revision == 0 ? null : _save,
+                  child: Text(state.busy ? 'Сохраняем…' : 'Сохранить'),
+                ),
+                if (state.revision == 0 && !state.busy)
+                  TextButton(
+                    onPressed: _load,
+                    child: const Text('Загрузить настройки'),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      );
+    },
   );
 }

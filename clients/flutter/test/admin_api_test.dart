@@ -353,7 +353,7 @@ void main() {
           requests.add(request);
           if (request.url.path == '/api/v1/admin/accounts') {
             return http.Response(
-              '{"accounts":[{"account_id":"account-2","login":"peer","display_name":"Peer","role":"MEMBER","blocked":false,"created_at":"2026-09-01T00:00:00Z"}],"next_cursor":"cursor-2"}',
+              '{"accounts":[{"account_id":"account-2","login":"peer","display_name":"Peer","role":"MEMBER","blocked":false,"created_at":"2026-09-01T00:00:00Z","updated_at":"2026-09-26T11:00:00Z"}],"next_cursor":"cursor-2"}',
               200,
             );
           }
@@ -375,11 +375,16 @@ void main() {
         accountId: 'account-2',
         role: 'ADMINISTRATOR',
         blocked: true,
+        expectedUpdatedAt: DateTime.utc(2026, 9, 26, 11),
       );
       final reset = await api.createAdminPasswordResetLink('account-2');
       final kicked = await api.kickAdminVoiceParticipant('account-2');
 
       expect(page.accounts.single.displayName, 'Peer');
+      expect(
+        page.accounts.single.updatedAt,
+        DateTime.utc(2026, 9, 26, 11).toLocal(),
+      );
       expect(page.nextCursor, 'cursor-2');
       expect(requests[0].url.queryParameters, {
         'limit': '100',
@@ -388,6 +393,7 @@ void main() {
       expect(jsonDecode(requests[1].body), {
         'role': 'ADMINISTRATOR',
         'blocked': true,
+        'expected_updated_at': '2026-09-26T11:00:00.000Z',
       });
       expect(jsonDecode(requests[2].body), {'account_id': 'account-2'});
       expect(reset.url, contains('token=one-time'));

@@ -13,8 +13,12 @@ import '../features/admin/role_permissions/panel.dart';
 import '../features/admin/guild_settings/panel.dart';
 import 'admin_member_filter.dart';
 import 'admin_member_filters.dart';
+import '../features/admin/readiness/panel.dart';
+import '../features/admin/topology/panel.dart';
+import '../features/admin/audit/filter.dart';
+import '../features/admin/layout/width_class.dart';
 
-enum _AdminSection { members, roles, channels, audit, media, guild }
+enum _AdminSection { members, roles, channels, audit, media, guild, readiness }
 
 class _AdminAccountDraft {
   _AdminAccountDraft({required this.role, required this.blocked});
@@ -46,7 +50,9 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   final _channelRename = TextEditingController();
   final _channelDescription = TextEditingController();
   final _accountSearch = TextEditingController();
+  final _auditActor = TextEditingController();
   String? _categoryId;
+  final _collapsedTopologyCategories = <String>{};
   String? _channelId;
   String? _moveChannelId;
   String? _moveTargetCategoryId;
@@ -77,10 +83,16 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   String? _auditCursor;
   bool _auditLoading = false;
   String? _auditError;
+  AdminAuditScope _auditScope = AdminAuditScope.all;
+  String? _auditEventType;
+  DateTime? _auditFrom;
+  DateTime? _auditTo;
   Timer? _mediaRefreshTimer;
   bool _mediaLoading = false;
   List<AdminScreenSample> _mediaSamples = const [];
   String? _mediaError;
+  DateTime? _mediaLastSuccessfulAt;
+  DateTime? _mediaLastSeenAt;
 
   @override
   void initState() {
@@ -105,6 +117,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     _channelRename.dispose();
     _channelDescription.dispose();
     _accountSearch.dispose();
+    _auditActor.dispose();
     for (final focusNode in _accountSaveFocusNodes.values) {
       focusNode.dispose();
     }
@@ -128,7 +141,17 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     try {
       final samples = await widget.state.api.listAdminScreenMetrics();
       if (!mounted) return;
-      setState(() => _mediaSamples = samples);
+      final latest = samples
+          .map((sample) => sample.sampledAtUtc)
+          .fold<DateTime?>(null, (current, value) {
+            if (current == null || value.isAfter(current)) return value;
+            return current;
+          });
+      setState(() {
+        _mediaSamples = samples;
+        _mediaLastSuccessfulAt = DateTime.now().toUtc();
+        _mediaLastSeenAt = latest;
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() => _mediaError = 'Не удалось загрузить показатели.');
@@ -182,6 +205,39 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _pickAuditDate({required bool from}) async {
+    final selected = await showDatePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 1)),
+      initialDate: (from ? _auditFrom : _auditTo) ?? DateTime.now(),
+    );
+    if (!mounted || selected == null) return;
+    setState(() {
+      if (from) {
+        _auditFrom = DateTime(selected.year, selected.month, selected.day);
+      } else {
+        _auditTo = DateTime(
+          selected.year,
+          selected.month,
+          selected.day,
+          23,
+          59,
+          59,
+          999,
+        );
+      }
+    });
+  }
+
+  AdminAuditFilters get _auditFilters => AdminAuditFilters(
+    scope: _auditScope,
+    from: _auditFrom,
+    to: _auditTo,
+    eventType: _auditEventType,
+    actor: _auditActor.text,
+  );
+
   Future<void> _loadAccounts({String? cursor}) async {
     if (_accountsLoading) return;
     setState(() {
@@ -216,6 +272,13 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   Future<void> _saveAccount(AdminAccount account) async {
     final draft = _accountDrafts[account.accountId];
     if (draft == null || _busyAccountIds.contains(account.accountId)) return;
+    if (account.updatedAt == null) {
+      setState(
+        () => _accountsError =
+            'Обновите список участников: серверная версия аккаунта недоступна.',
+      );
+      return;
+    }
     setState(() {
       _busyAccountIds.add(account.accountId);
       _accountsStatus = null;
@@ -226,14 +289,25 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         accountId: account.accountId,
         role: draft.role,
         blocked: draft.blocked,
+        expectedUpdatedAt: account.updatedAt,
       );
+      await _loadAccounts();
       if (mounted) {
         setState(
           () => _accountsStatus = 'Изменения для @${account.login} сохранены.',
         );
       }
     } catch (cause) {
-      if (mounted) setState(() => _accountsError = cause.toString());
+      if (cause is ApiFailure && cause.status == 409) {
+        await _loadAccounts();
+        if (mounted) {
+          setState(
+            () => _accountsError = 'Участник изменён другим администратором. Черновик сохранён; сравните данные и повторите действие.',
+          );
+        }
+      } else if (mounted) {
+        setState(() => _accountsError = cause.toString());
+      }
     } finally {
       if (mounted) {
         setState(() => _busyAccountIds.remove(account.accountId));
@@ -659,7 +733,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   }
 
   double get _adminContentInset =>
-      MediaQuery.sizeOf(context).width < GcLayout.mobileBreakpoint ? 0 : 24;
+      adminWidthClassFor(MediaQuery.sizeOf(context).width).isCompact ? 0 : 24;
 
   EdgeInsets get _adminSectionHeaderPadding =>
       EdgeInsets.fromLTRB(_adminContentInset, 0, _adminContentInset, 12);
@@ -679,6 +753,10 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     final selectedCategory = categories
         .where((item) => item.id == selectedId)
         .firstOrNull;
+    final expandedCategoryId =
+        selectedId != null && !_collapsedTopologyCategories.contains(selectedId)
+        ? selectedId
+        : null;
     final channels = selectedCategory?.channels ?? const <GuildChannel>[];
     final selectedChannel = channels
         .where((item) => item.id == _channelId)
@@ -757,7 +835,10 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                         label: 'Разделы администрирования',
                                         child: Row(
                                           children: [
-                                            _adminSectionTab('Гильдия', _AdminSection.guild),
+                                            _adminSectionTab(
+                                              'Гильдия',
+                                              _AdminSection.guild,
+                                            ),
                                             _adminSectionTab(
                                               'Участники',
                                               _AdminSection.members,
@@ -794,6 +875,13 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                               'Медиа',
                                               _AdminSection.media,
                                             ),
+                                            _adminSectionTab(
+                                              MediaQuery.sizeOf(context).width <
+                                                      600
+                                                  ? 'Статус'
+                                                  : 'Готовность',
+                                              _AdminSection.readiness,
+                                            ),
                                           ],
                                         ),
                                       ),
@@ -815,7 +903,17 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                         ),
                         Expanded(
                           child: _selectedAdminSection == _AdminSection.guild
-                              ? AdminGuildSettings(api: widget.state.api,channels: widget.state.topology?.categories.expand((category)=>category.channels).toList()??[],onSaved:widget.state.guildProfile.refresh)
+                              ? AdminGuildSettings(
+                                  api: widget.state.api,
+                                  channels:
+                                      widget.state.topology?.categories
+                                          .expand(
+                                            (category) => category.channels,
+                                          )
+                                          .toList() ??
+                                      [],
+                                  onSaved: widget.state.guildProfile.refresh,
+                                )
                               : _selectedAdminSection == _AdminSection.roles
                               ? RolePermissionsPanel(
                                   api: widget.state.api,
@@ -825,6 +923,8 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                               ? _buildAuditPanel()
                               : _selectedAdminSection == _AdminSection.media
                               ? _buildMediaPanel()
+                              : _selectedAdminSection == _AdminSection.readiness
+                              ? AdminReadinessPanel(api: widget.state.api)
                               : _selectedAdminSection == _AdminSection.members
                               ? _buildMembersPanel()
                               : ListView(
@@ -841,6 +941,44 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.stretch,
                                         children: [
+                                          TopologyTree(
+                                            categories: categories,
+                                            selectedCategoryId:
+                                                expandedCategoryId,
+                                            selectedChannelId: _channelId,
+                                            onCategorySelected: (category) =>
+                                                setState(() {
+                                                  _categoryId = category.id;
+                                                  if (!_collapsedTopologyCategories
+                                                      .add(category.id)) {
+                                                    _collapsedTopologyCategories
+                                                        .remove(category.id);
+                                                  }
+                                                  _categoryRename.text =
+                                                      category.name;
+                                                  _channelId = null;
+                                                  _channelRename.clear();
+                                                  _channelDescription.clear();
+                                                }),
+                                            onChannelSelected: (channel) =>
+                                                setState(() {
+                                                  _categoryId =
+                                                      selectedCategory?.id;
+                                                  if (selectedCategory !=
+                                                      null) {
+                                                    _collapsedTopologyCategories
+                                                        .remove(
+                                                          selectedCategory.id,
+                                                        );
+                                                  }
+                                                  _channelId = channel.id;
+                                                  _channelRename.text =
+                                                      channel.name;
+                                                  _channelDescription.text =
+                                                      channel.description ?? '';
+                                                }),
+                                          ),
+                                          const SizedBox(height: 16),
                                           TextField(
                                             controller: _categoryName,
                                             enabled: !_busy,
@@ -1475,6 +1613,8 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
               ),
             ),
             const SizedBox(height: 12),
+            _mediaFreshnessSummary,
+            const SizedBox(height: 12),
             if (_mediaLoading && _mediaSamples.isEmpty && _mediaError == null)
               const Padding(
                 padding: EdgeInsets.all(24),
@@ -1504,6 +1644,30 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       ),
     ],
   );
+
+  Widget get _mediaFreshnessSummary {
+    final lastSeen = _mediaLastSeenAt;
+    final age = lastSeen == null
+        ? null
+        : DateTime.now().toUtc().difference(lastSeen).inSeconds;
+    final state = _mediaError != null
+        ? 'Ошибка обновления'
+        : _mediaSamples.isEmpty
+        ? 'Пусто'
+        : age != null && age > 15
+        ? 'Устарело'
+        : 'Свежие данные';
+    return Semantics(
+      liveRegion: true,
+      child: Text(
+        'Состояние: $state · свежих образцов: ${_mediaSamples.length} · последнее успешное обновление: ${_mediaLastSuccessfulAt == null ? 'нет' : _auditDate(_mediaLastSuccessfulAt!)}',
+        style: TextStyle(
+          color: state == 'Свежие данные' ? GcColors.success : GcColors.warning,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
 
   Widget _mediaSampleCard(AdminScreenSample sample) => Container(
     margin: const EdgeInsets.only(bottom: 10),
@@ -1536,6 +1700,33 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         ),
         const SizedBox(height: 8),
         Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _mediaStage(
+              'Отправка',
+              sample.encodedFps,
+              sample.direction == 'sender',
+            ),
+            _mediaStage(
+              'Приём',
+              sample.decodedFps,
+              sample.direction == 'receiver',
+            ),
+            _mediaStage(
+              'Декодирование',
+              sample.decodedFps,
+              sample.direction == 'receiver',
+            ),
+            _mediaStage(
+              'Показ',
+              sample.presentedFps,
+              sample.presentedFps != null,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
           spacing: 18,
           runSpacing: 8,
           children: [
@@ -1562,6 +1753,72 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
             _mediaMetric('RTT', _mediaValue(sample.rttMs, 'мс')),
           ],
         ),
+        const SizedBox(height: 4),
+        Material(
+          color: Colors.transparent,
+          child: ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: EdgeInsets.zero,
+            title: const Text('Дополнительные измерения'),
+            children: [
+              Wrap(
+                spacing: 18,
+                runSpacing: 8,
+                children: [
+                  _mediaMetric('Состояние', _screenStateLabel(sample.state)),
+                  _mediaMetric(
+                    'Размер кадра',
+                    sample.frameWidth == null
+                        ? 'Нет данных'
+                        : '${sample.frameWidth} × ${sample.frameHeight}',
+                  ),
+                  _mediaMetric(
+                    'Отправлено',
+                    _mediaValue(sample.encodedFps, 'FPS'),
+                  ),
+                  _mediaMetric(
+                    'Декодировано',
+                    _mediaValue(sample.decodedFps, 'FPS'),
+                  ),
+                  _mediaMetric(
+                    'Показано',
+                    _mediaValue(sample.presentedFps, 'FPS'),
+                  ),
+                  _mediaMetric(
+                    'Битрейт',
+                    _mediaValue(sample.bitrateKbps, 'кбит/с'),
+                  ),
+                  _mediaMetric(
+                    'Потеряно пакетов',
+                    _integerMetric(sample.packetsLost),
+                  ),
+                  _mediaMetric(
+                    'Пропущено кадров',
+                    _integerMetric(sample.droppedFrames),
+                  ),
+                  _mediaMetric('Jitter', _mediaValue(sample.jitterMs, 'мс')),
+                  _mediaMetric('RTT', _mediaValue(sample.rttMs, 'мс')),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _mediaStage(String title, double? fps, bool applicable) => Container(
+    constraints: const BoxConstraints(minWidth: 150, maxWidth: 240),
+    padding: const EdgeInsets.all(10),
+    decoration: BoxDecoration(
+      color: GcColors.raised,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text(applicable ? _mediaValue(fps, 'FPS') : 'Нет данных'),
       ],
     ),
   );
@@ -1599,73 +1856,204 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
 
   String _integerMetric(int? value) => value?.toString() ?? 'Нет данных';
 
-  Widget _buildAuditPanel() => Column(
-    children: [
-      Padding(
-        padding: _adminSectionHeaderPadding,
-        child: Row(
-          children: [
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Аудит',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    'События управления без содержимого сообщений',
-                    style: TextStyle(
-                      color: GcColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            TextButton.icon(
-              onPressed: _auditLoading ? null : () => _loadAudit(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Обновить'),
-            ),
-          ],
-        ),
-      ),
-      if (_auditLoading && _auditEvents.isEmpty)
-        _adminLoadingState('Загружаем аудит…', 'admin-audit-loading')
-      else if (!_auditLoading && _auditEvents.isEmpty && _auditError == null)
-        const Expanded(child: Center(child: Text('Записей пока нет.')))
-      else
-        Expanded(
-          child: ListView(
-            padding: _adminSectionListPadding,
+  Widget _buildAuditPanel() {
+    final filtered = filterAdminAuditEvents(_auditEvents, _auditFilters);
+    final grouped = groupAdminAuditByDay(filtered);
+    final compact = MediaQuery.sizeOf(context).width < 600;
+    final eventTypes =
+        _auditEvents.map((event) => event.eventType).toSet().toList()..sort();
+    return Column(
+      children: [
+        Padding(
+          padding: _adminSectionHeaderPadding,
+          child: Row(
             children: [
-              for (final event in _auditEvents) _auditEventRow(event),
-              if (_auditLoading)
-                const Center(child: CircularProgressIndicator()),
-              if (_auditCursor != null)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: _auditLoading
-                        ? null
-                        : () => _loadAudit(before: _auditCursor),
-                    child: const Text('Показать более ранние'),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Аудит',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      'События управления без содержимого сообщений',
+                      style: TextStyle(
+                        color: GcColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _auditLoading ? null : () => _loadAudit(),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Обновить'),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: _adminSectionListPadding.copyWith(bottom: 8),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: compact ? double.infinity : 180,
+                child: DropdownButtonFormField<AdminAuditScope>(
+                  key: const ValueKey('admin-audit-scope-filter'),
+                  isExpanded: true,
+                  initialValue: _auditScope,
+                  decoration: const InputDecoration(labelText: 'Область'),
+                  items: const [
+                    DropdownMenuItem(
+                      value: AdminAuditScope.all,
+                      child: Text('Все события'),
+                    ),
+                    DropdownMenuItem(
+                      value: AdminAuditScope.admin,
+                      child: Text('Администрирование'),
+                    ),
+                    DropdownMenuItem(
+                      value: AdminAuditScope.voice,
+                      child: Text('Голос'),
+                    ),
+                  ],
+                  onChanged: (value) => setState(
+                    () => _auditScope = value ?? AdminAuditScope.all,
                   ),
                 ),
-              if (_auditError != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(
-                    _auditError!,
-                    style: const TextStyle(color: GcColors.danger),
-                  ),
+              ),
+              SizedBox(
+                width: compact ? double.infinity : 220,
+                child: TextField(
+                  controller: _auditActor,
+                  decoration: const InputDecoration(labelText: 'Инициатор'),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              SizedBox(
+                width: compact ? double.infinity : 220,
+                child: DropdownButtonFormField<String?>(
+                  key: ValueKey('admin-audit-type:$_auditEventType'),
+                  isExpanded: true,
+                  initialValue: _auditEventType,
+                  decoration: const InputDecoration(labelText: 'Тип события'),
+                  items: [
+                    const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('Все типы'),
+                    ),
+                    for (final type in eventTypes)
+                      DropdownMenuItem<String?>(value: type, child: Text(type)),
+                  ],
+                  onChanged: (value) => setState(() => _auditEventType = value),
+                ),
+              ),
+              OutlinedButton(
+                key: const ValueKey('admin-audit-from-filter'),
+                onPressed: () => _pickAuditDate(from: true),
+                child: Text(
+                  _auditFrom == null
+                      ? 'От даты'
+                      : 'От ${_auditDate(_auditFrom!)}',
+                ),
+              ),
+              OutlinedButton(
+                key: const ValueKey('admin-audit-to-filter'),
+                onPressed: () => _pickAuditDate(from: false),
+                child: Text(
+                  _auditTo == null ? 'До даты' : 'До ${_auditDate(_auditTo!)}',
+                ),
+              ),
+              if (_auditFilters.active)
+                TextButton(
+                  onPressed: () => setState(() {
+                    _auditScope = AdminAuditScope.all;
+                    _auditEventType = null;
+                    _auditActor.clear();
+                    _auditFrom = null;
+                    _auditTo = null;
+                  }),
+                  child: const Text('Сбросить фильтры'),
                 ),
             ],
           ),
         ),
-    ],
-  );
+        Padding(
+          padding: _adminSectionListPadding.copyWith(top: 0, bottom: 8),
+          child: Text(
+            'Фильтры применяются к ${_auditEvents.length} уже загруженным записям. Для более ранних событий загрузите следующую страницу.',
+            style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
+          ),
+        ),
+        if (_auditLoading && _auditEvents.isEmpty)
+          _adminLoadingState('Загружаем аудит…', 'admin-audit-loading')
+        else if (!_auditLoading && _auditEvents.isEmpty && _auditError == null)
+          const Expanded(child: Center(child: Text('Записей пока нет.')))
+        else if (!_auditLoading && filtered.isEmpty && _auditFilters.active)
+          const Expanded(
+            child: Center(
+              child: Text('Среди загруженных записей совпадений нет.'),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView(
+              padding: _adminSectionListPadding,
+              children: [
+                for (final entry in grouped.entries) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      _auditDayLabel(entry.key),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  for (final event in entry.value) _auditEventRow(event),
+                ],
+                if (_auditLoading)
+                  const Center(child: CircularProgressIndicator()),
+                if (_auditCursor != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: _auditLoading
+                          ? null
+                          : () => _loadAudit(before: _auditCursor),
+                      child: const Text('Показать более ранние'),
+                    ),
+                  ),
+                if (_auditError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      _auditError!,
+                      style: const TextStyle(color: GcColors.danger),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _auditDayLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final day = DateTime(date.year, date.month, date.day);
+    if (day == today) return 'Сегодня';
+    if (day == yesterday) return 'Вчера';
+    return '${day.day.toString().padLeft(2, '0')}.${day.month.toString().padLeft(2, '0')}.${day.year}';
+  }
 
   Widget _buildMembersPanel() => Column(
     children: [
@@ -1810,6 +2198,8 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         children: [
           Text(
             account.displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 16,
               height: 20 / 16,
@@ -1818,6 +2208,8 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
           ),
           Text(
             '@${account.login}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 8),
@@ -1948,40 +2340,36 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: GcColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _auditTitle(event.eventType),
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-              Text(
-                _auditDate(event.createdAt),
-                style: const TextStyle(
-                  color: GcColors.textSecondary,
-                  fontSize: 11,
-                ),
-              ),
-            ],
+      child: Material(
+        color: Colors.transparent,
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: EdgeInsets.zero,
+          title: Text(
+            _auditTitle(event.eventType),
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Инициатор · $actor',
-            style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
+          subtitle: Text('Инициатор · $actor'),
+          trailing: Text(
+            _auditDate(event.createdAt),
+            style: const TextStyle(color: GcColors.textSecondary, fontSize: 11),
           ),
-          if (target != null)
-            Text(
-              'Объект · $target',
-              style: const TextStyle(
-                color: GcColors.textSecondary,
-                fontSize: 12,
-              ),
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Тип · ${event.eventType}'),
             ),
-        ],
+            if (target != null)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Объект · $target'),
+              ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Время · ${_auditDate(event.createdAt)}'),
+            ),
+          ],
+        ),
       ),
     );
   }

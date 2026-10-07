@@ -2,6 +2,17 @@
 
 Source of truth: [parity map](flutter-web-parity.md). Реализованные admin, conversation и release APK leaves перенесены в [DONE_AUDIT_2026-09-27.md](history/status/DONE_AUDIT-2026-09-27.md). Этот checklist входит в QA-13; local widget/source checks не закрывают device acceptance.
 
+## Admin parity epic #188
+
+- [x] Flutter admin foundation and functional slices for readiness, members,
+  roles, topology, audit, media and guild settings implemented with focused
+  tests. See [parity map](flutter-web-parity.md) and
+  [FV2-031 evidence](../evidence/flutter/qa-admin-parity-2026-10-07-001.json).
+- [ ] Runtime acceptance across Android, iOS, macOS and Windows. Android and
+  macOS checks may be recorded when the clients are available; iOS and Windows
+  remain open until a real runtime is supplied. Do not mark this item PASS from
+  widget tests alone.
+
 ## Текущий фокус: Flutter macOS и Android
 
 Ближайшие leaves выполнять в таком порядке: (1) Android screen-preview regression

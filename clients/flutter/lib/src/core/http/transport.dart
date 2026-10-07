@@ -62,6 +62,7 @@ class ApiTransport {
   Future<dynamic> checked(
     http.Response response, {
     bool reportUnauthorized = true,
+    Set<int> acceptedStatuses = const {},
   }) async {
     ensureCurrent();
     final ticket = RequestScope.current?.ticket ?? session.scope.capture();
@@ -87,7 +88,10 @@ class ApiTransport {
         decoded = null;
       }
     }
-    if (response.statusCode >= 200 && response.statusCode < 300) return decoded;
+    if ((response.statusCode >= 200 && response.statusCode < 300) ||
+        acceptedStatuses.contains(response.statusCode)) {
+      return decoded;
+    }
     if (response.statusCode == 401) {
       await session.clearCookie(ticket: ticket);
       ensureCurrent();

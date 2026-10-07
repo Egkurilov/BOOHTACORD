@@ -47,6 +47,7 @@ class AdminAccountsApi {
     required String accountId,
     required String role,
     required bool blocked,
+    DateTime? expectedUpdatedAt,
   }) async {
     if (accountId.isEmpty || (role != 'MEMBER' && role != 'ADMINISTRATOR')) {
       throw const ApiFailure('Некорректные роль или участник.');
@@ -55,7 +56,12 @@ class AdminAccountsApi {
       await transport.client.patch(
         transport.uri('/admin/accounts/${Uri.encodeComponent(accountId)}'),
         headers: await transport.headers(jsonBody: true),
-        body: jsonEncode({'role': role, 'blocked': blocked}),
+        body: jsonEncode({
+          'role': role,
+          'blocked': blocked,
+          if (expectedUpdatedAt != null)
+            'expected_updated_at': expectedUpdatedAt.toUtc().toIso8601String(),
+        }),
       ),
     );
   }

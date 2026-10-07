@@ -1,5 +1,40 @@
 # Flutter ↔ web parity plan
 
+## Flutter admin parity epic #188
+
+The Flutter administrator workspace now has the same functional seams as the
+web Design V2 admin surface. A shared width-class foundation uses the approved
+breakpoints (compact `<600`, medium `600–839`, expanded `840–1199`, large
+`1200–1599`, extra-large `≥1600`) while keeping the existing 880 px desktop
+content bound. The implementation is intentionally additive: existing ACL,
+mutation, cursor and revision contracts stay in their feature facades.
+
+Implemented slices:
+
+- Readiness uses the authenticated `/admin/readiness` contract, accepts a
+  valid degraded `503`, marks results stale after 15 seconds, and shows
+  database/SFU/storage probe cards with storage headroom and pending-revocation
+  metrics.
+- Members retain drafts through an `updated_at` optimistic-concurrency save;
+  a `409` refreshes server state while preserving the local draft and exposing
+  a conflict message. Long names are ellipsized in the adaptive card layout.
+- Roles expose the web permission matrix, delete-grant confirmation, dirty
+  role-switch protection and conflict recovery.
+- Channels add a selectable topology tree and keep the existing revision-bound
+  create/rename/reorder/description mutations behind the inspector.
+- Audit adds scope, actor, event-type and date filters, day grouping and
+  expandable event details without exposing message contents.
+- Media adds freshness state and explicit send/receive/decode/present stages;
+  anonymous legacy measurements remain visible and advanced metrics are
+  available on demand.
+- Guild settings use a 600 px desktop form bound and full-width compact form,
+  with helper copy and existing loading/error/saved states.
+
+Focused widget/model/API tests cover the new slices. Android/macOS runtime
+checks are recorded separately; Windows and iOS acceptance remain `NOT_RUN`
+until those runtimes are available. This implementation record therefore does
+not claim the parent platform gate is closed.
+
 ## Компактный composer — проверка 2026-10-05
 
 В Flutter шириной до 720 px действия attach, paste, mention и emoji собраны под одним `+` menu для TEXT и DM; в wide composer emoji picker остаётся отдельным действием. Picker содержит шесть быстрых emoji, searchable полный каталог с русскими/английскими подписями, recents и вставку/замену текущего выделения в draft. Service/widget suite — 72/72, полный suite — 592/592, changed-file analyzer чистый; подписанный Android r47 и Mac Debug визуально проверены после DevTools hot restart. На Android API 35 системная floating IME-панель перекрывает часть левого края каталога, а часть новых Unicode glyphs отсутствует в системном шрифте. Web не изменялся; update catalog не менялся — [QA-279](../evidence/flutter/qa279-flutter-compact-composer-actions-2026-10-05-001.json), [QA-280](../evidence/flutter/qa280-flutter-emoji-picker-design-v2-2026-10-05-001.json).

@@ -37,6 +37,7 @@ import '../features/text/messages/facade.dart';
 import '../features/voice/leases/facade.dart';
 import '../features/authorization/permissions/facade.dart';
 import '../features/admin/role_permissions/facade.dart';
+import '../features/admin/readiness/facade.dart';
 import '../features/workspace/topology_mutations/facade.dart';
 
 export '../core/http/api_failure.dart';
@@ -82,6 +83,7 @@ class ApiClient extends ApiFacadeBase
         VoiceLeasesFacade,
         PermissionsFacade,
         RolePermissionsFacade,
+        AdminReadinessFacade,
         TopologyMutationsFacade {
   ApiClient({super.client});
   static const macOsSessionOptions = platform.macOsSessionOptions;

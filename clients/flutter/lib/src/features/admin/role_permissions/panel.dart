@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../services/api_client.dart';
@@ -36,6 +38,7 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
   bool saving = false;
   String? error;
   String? status;
+  bool conflict = false;
   List<RolePolicy> roles = const [];
   Map<GuildPermission, bool> baseline = {};
   Map<GuildPermission, bool> draft = {};
@@ -66,6 +69,7 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
         revision = page.revision;
         baseline = Map.of(member.permissions);
         if (reset) draft = Map.of(member.permissions);
+        if (reset) conflict = false;
       });
     } catch (cause) {
       if (mounted) setState(() => error = cause.toString());
@@ -89,6 +93,7 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
       saving = true;
       error = null;
       status = null;
+      conflict = false;
     });
     try {
       await widget.api.saveMemberRolePolicy(
@@ -100,12 +105,19 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
       await widget.onSaved();
       if (mounted) setState(() => status = 'Разрешения сохранены.');
     } catch (cause) {
-      if (mounted) {
-        setState(
-          () => error = cause is ApiFailure && cause.status == 409
-              ? 'Настройки уже изменены. Черновик сохранён; обновите данные.'
-              : cause.toString(),
-        );
+      if (cause is ApiFailure && cause.status == 409) {
+        setState(() {
+          conflict = true;
+          error = 'Настройки уже изменены. Проверьте актуальные значения и решите, применять ли черновик.';
+        });
+        await _load(reset: false);
+        if (mounted) {
+          setState(
+            () => error = 'Настройки уже изменены. Проверьте актуальные значения и решите, применять ли черновик.',
+          );
+        }
+      } else if (mounted) {
+        setState(() => error = cause.toString());
       }
     } finally {
       if (mounted) setState(() => saving = false);
@@ -133,6 +145,133 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
         ),
       ) ??
       false;
+
+  Future<void> _changeRole(GuildRole next) async {
+    if (next == role) return;
+    if (dirty) {
+      final discard = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Сохранить черновик?'),
+          content: const Text(
+            'При смене роли текущий черновик останется сохранённым локально.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Остаться'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Продолжить'),
+            ),
+          ],
+        ),
+      );
+      if (discard != true || !mounted) return;
+    }
+    setState(() => role = next);
+  }
+
+  static const _permissionGroups = [
+    (
+      label: 'Текстовые каналы',
+      hint: 'Создание и архивирование текстовой истории.',
+      create: GuildPermission.textCreate,
+      delete: GuildPermission.textDelete,
+    ),
+    (
+      label: 'Голосовые каналы',
+      hint: 'Создание и закрытие доступа к голосовым каналам.',
+      create: GuildPermission.voiceCreate,
+      delete: GuildPermission.voiceDelete,
+    ),
+    (
+      label: 'Разделы',
+      hint: 'Создание и удаление только пустых категорий.',
+      create: GuildPermission.categoryCreate,
+      delete: GuildPermission.categoryDelete,
+    ),
+  ];
+
+  Widget _permissionMatrix(Map<GuildPermission, bool> values, double width) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (width >= 600)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(child: Text('Объект')),
+                  SizedBox(width: 140, child: Text('Создавать')),
+                  SizedBox(width: 140, child: Text('Удалять')),
+                ],
+              ),
+            ),
+          for (final group in _permissionGroups)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: width < 600
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            group.label,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        Text(group.hint, style: const TextStyle(fontSize: 12)),
+                        _permissionTile(values, group.create),
+                        _permissionTile(values, group.delete),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: Material(
+                            color: Colors.transparent,
+                            child: ListTile(
+                              title: Text(group.label),
+                              subtitle: Text(group.hint),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 140,
+                          child: _permissionTile(values, group.create),
+                        ),
+                        SizedBox(
+                          width: 140,
+                          child: _permissionTile(values, group.delete),
+                        ),
+                      ],
+                    ),
+            ),
+        ],
+      );
+
+  Widget _permissionTile(
+    Map<GuildPermission, bool> values,
+    GuildPermission permission,
+  ) => Material(
+    color: Colors.transparent,
+    child: CheckboxListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      title: Text(labels[permission]!),
+      value: values[permission] ?? false,
+      onChanged: role == GuildRole.administrator || saving
+          ? null
+          : (value) => setState(() => draft[permission] = value ?? false),
+    ),
+  );
   @override
   Widget build(BuildContext context) {
     final values = role == GuildRole.member
@@ -171,21 +310,16 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
               ),
             ],
             selected: {role},
-            onSelectionChanged: (value) => setState(() => role = value.single),
+            onSelectionChanged: (value) => unawaited(_changeRole(value.single)),
           ),
           const SizedBox(height: 12),
           if (loading && roles.isEmpty)
             const Center(child: CircularProgressIndicator())
           else
-            for (final key in GuildPermission.values)
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(labels[key]!),
-                value: values[key] ?? false,
-                onChanged: role == GuildRole.administrator || saving
-                    ? null
-                    : (value) => setState(() => draft[key] = value ?? false),
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) =>
+                  _permissionMatrix(values, constraints.maxWidth),
+            ),
           if (role == GuildRole.administrator)
             const Text(
               'Разрешения администратора обязательны и не изменяются.',
@@ -219,6 +353,31 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
             Semantics(
               liveRegion: true,
               child: Text(error!, style: const TextStyle(color: Colors.red)),
+            ),
+          if (conflict)
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: Border.all(color: Theme.of(context).colorScheme.error),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Сравнение разрешений',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const Text(
+                    'Актуальные значения загружены. Ваш черновик сохранён; проверьте изменения перед повторным сохранением.',
+                  ),
+                  TextButton(
+                    onPressed: saving ? null : () => _load(reset: false),
+                    child: const Text('Обновить актуальные значения'),
+                  ),
+                ],
+              ),
             ),
         ],
       ),

@@ -4928,6 +4928,7 @@ class _PortraitApi extends ApiClient {
           role: 'MEMBER',
           blocked: false,
           createdAt: DateTime.utc(2026, 9, 1),
+          updatedAt: DateTime.utc(2026, 9, 26, 11),
         ),
       ],
       nextCursor: paginateAdminAccounts && cursor == null
@@ -4941,6 +4942,7 @@ class _PortraitApi extends ApiClient {
     required String accountId,
     required String role,
     required bool blocked,
+    DateTime? expectedUpdatedAt,
   }) async {
     adminUpdates.add((accountId, role, blocked));
     if (failAdminUpdate) {

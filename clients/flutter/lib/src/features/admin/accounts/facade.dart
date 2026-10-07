@@ -16,11 +16,13 @@ mixin AdminAccountsFacade on ApiFacadeBase {
     required String accountId,
     required String role,
     required bool blocked,
+    DateTime? expectedUpdatedAt,
   }) => transport.run(
     () => _adminAccounts.updateAdminAccount(
       accountId: accountId,
       role: role,
       blocked: blocked,
+      expectedUpdatedAt: expectedUpdatedAt,
     ),
   );
 }
