@@ -47,6 +47,10 @@ jobs:
           python3 -m tools.verify.media_qoe.promql .out/media-qoe
           docker run --rm --entrypoint promtool -v "$PWD:/work" -w /work prom/prometheus:v3.11.2 check rules docker/observability/media-qoe-alerts.yaml .out/media-qoe/dashboard-rules.yaml
           docker run --rm --entrypoint promtool -v "$PWD:/work" -w /work prom/prometheus:v3.11.2 test rules tools/verify/media_qoe/alerts.test.yaml tools/verify/media_qoe/diagnostics.test.yaml .out/media-qoe/dashboard.test.yaml
+      - name: Verify paired screen acceptance evidence gate
+        run: |
+          python3 -m unittest tools.verify.paired_screen_acceptance.test_evidence
+          python3 -m tools.verify.paired_screen_acceptance.validate_evidence evidence/media/issue-173-paired-acceptance-2026-10-07.json
       - name: Reject implicit or latest Compose images
         shell: pwsh
         run: ./tools/verify/compose_images/verify-compose-images.ps1
