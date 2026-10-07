@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' show SemanticsRole;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,8 +16,8 @@ import '../features/admin/readiness/panel.dart';
 import '../features/admin/topology/panel.dart';
 import '../features/admin/audit/filter.dart';
 import '../features/admin/layout/width_class.dart';
-
-enum _AdminSection { members, roles, channels, audit, media, guild, readiness }
+import '../features/admin/shell/section_tabs.dart';
+import '../features/admin/shell/workspace_header.dart';
 
 class _AdminAccountDraft {
   _AdminAccountDraft({required this.role, required this.blocked});
@@ -62,7 +61,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   bool _busy = false;
   String? _status;
   String? _error;
-  _AdminSection _selectedAdminSection = _AdminSection.members;
+  AdminSection _selectedAdminSection = AdminSection.members;
   List<AdminAccount> _adminAccounts = const [];
   String _accountRoleFilter = 'ALL';
   List<AdminAccount> get _visibleAdminAccounts => filterAdminMembers(
@@ -127,7 +126,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed &&
-        _selectedAdminSection == _AdminSection.media) {
+        _selectedAdminSection == AdminSection.media) {
       unawaited(_loadMediaMetrics());
     }
   }
@@ -397,17 +396,17 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _selectSection(_AdminSection section) {
+  void _selectSection(AdminSection section) {
     setState(() => _selectedAdminSection = section);
     _mediaRefreshTimer?.cancel();
     _mediaRefreshTimer = null;
-    if (section == _AdminSection.members && _adminAccounts.isEmpty) {
+    if (section == AdminSection.members && _adminAccounts.isEmpty) {
       _loadAccounts();
     }
-    if (section == _AdminSection.audit && _auditEvents.isEmpty) {
+    if (section == AdminSection.audit && _auditEvents.isEmpty) {
       _loadAudit();
     }
-    if (section == _AdminSection.media) {
+    if (section == AdminSection.media) {
       unawaited(_loadMediaMetrics());
       _mediaRefreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
         if (WidgetsBinding.instance.lifecycleState ==
@@ -416,44 +415,6 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         }
       });
     }
-  }
-
-  Widget _adminSectionTab(String label, _AdminSection section) {
-    final selected = _selectedAdminSection == section;
-    return Semantics(
-      key: ValueKey('admin-section-tab-${section.name}'),
-      button: true,
-      selected: selected,
-      role: SemanticsRole.tab,
-      onTap: () => _selectSection(section),
-      child: ExcludeSemantics(
-        child: InkWell(
-          onTap: () => _selectSection(section),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 44),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: selected ? GcColors.accent : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected ? GcColors.text : GcColors.textSecondary,
-                fontSize: 14,
-                height: 20 / 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _createChannel() async {
@@ -780,7 +741,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       color: GcColors.content,
       child: Column(
         children: [
-          _AdminWorkspaceHeader(
+          AdminWorkspaceHeader(
             compact: compact,
             titleFocus: _titleFocus,
             onToggleNavigation: widget.onToggleNavigation,
@@ -807,113 +768,19 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                       children: [
                         Padding(
                           padding: const EdgeInsets.only(bottom: 24),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: DecoratedBox(
-                              decoration: const BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: GcColors.borderSubtle,
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: SingleChildScrollView(
-                                      key: const ValueKey(
-                                        'admin-section-tabs-scroll',
-                                      ),
-                                      scrollDirection: Axis.horizontal,
-                                      child: Semantics(
-                                        key: const ValueKey(
-                                          'admin-section-tabs-semantics',
-                                        ),
-                                        container: true,
-                                        explicitChildNodes: true,
-                                        role: SemanticsRole.tabBar,
-                                        label: 'Разделы администрирования',
-                                        child: Row(
-                                          // Keep the tab strip sized to its
-                                          // content.  A max-sized Row inside a
-                                          // horizontal scroll view can resolve
-                                          // to the viewport width on desktop,
-                                          // which clips the final tab from the
-                                          // rendered and accessibility trees.
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            _adminSectionTab(
-                                              'Гильдия',
-                                              _AdminSection.guild,
-                                            ),
-                                            _adminSectionTab(
-                                              'Участники',
-                                              _AdminSection.members,
-                                            ),
-                                            if (MediaQuery.sizeOf(context)
-                                                    .width >
-                                                1023)
-                                              const SizedBox(width: 8),
-                                            _adminSectionTab(
-                                              'Роли',
-                                              _AdminSection.roles,
-                                            ),
-                                            if (MediaQuery.sizeOf(context)
-                                                    .width >
-                                                1023)
-                                              const SizedBox(width: 8),
-                                            _adminSectionTab(
-                                              'Каналы',
-                                              _AdminSection.channels,
-                                            ),
-                                            if (MediaQuery.sizeOf(context)
-                                                    .width >
-                                                1023)
-                                              const SizedBox(width: 8),
-                                            _adminSectionTab(
-                                              'Аудит',
-                                              _AdminSection.audit,
-                                            ),
-                                            if (MediaQuery.sizeOf(context)
-                                                    .width >
-                                                1023)
-                                              const SizedBox(width: 8),
-                                            _adminSectionTab(
-                                              'Медиа',
-                                              _AdminSection.media,
-                                            ),
-                                            if (MediaQuery.sizeOf(context)
-                                                    .width >
-                                                1023)
-                                              const SizedBox(width: 8),
-                                            _adminSectionTab(
-                                              MediaQuery.sizeOf(context).width <
-                                                      600
-                                                  ? 'Статус'
-                                                  : 'Готовность',
-                                              _AdminSection.readiness,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_selectedAdminSection ==
-                                      _AdminSection.channels)
-                                    IconButton(
-                                      tooltip: 'Обновить список каналов',
-                                      onPressed: _busy
-                                          ? null
-                                          : widget.state.refreshTopology,
-                                      icon: const Icon(Icons.refresh),
-                                    ),
-                                ],
-                              ),
-                            ),
+                          child: AdminSectionTabs(
+                            selectedSection: _selectedAdminSection,
+                            onSelected: _selectSection,
+                            compactLabel: width < 600,
+                            wideSpacing: width > 1023,
+                            channelsSelected:
+                                _selectedAdminSection == AdminSection.channels,
+                            onRefreshChannels: widget.state.refreshTopology,
+                            refreshDisabled: _busy,
                           ),
                         ),
                         Expanded(
-                          child: _selectedAdminSection == _AdminSection.guild
+                          child: _selectedAdminSection == AdminSection.guild
                               ? AdminGuildSettings(
                                   api: widget.state.api,
                                   channels:
@@ -925,18 +792,18 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                       [],
                                   onSaved: widget.state.guildProfile.refresh,
                                 )
-                              : _selectedAdminSection == _AdminSection.roles
+                              : _selectedAdminSection == AdminSection.roles
                               ? RolePermissionsPanel(
                                   api: widget.state.api,
                                   onSaved: widget.state.permissions.refresh,
                                 )
-                              : _selectedAdminSection == _AdminSection.audit
+                              : _selectedAdminSection == AdminSection.audit
                               ? _buildAuditPanel()
-                              : _selectedAdminSection == _AdminSection.media
+                              : _selectedAdminSection == AdminSection.media
                               ? _buildMediaPanel()
-                              : _selectedAdminSection == _AdminSection.readiness
+                              : _selectedAdminSection == AdminSection.readiness
                               ? AdminReadinessPanel(api: widget.state.api)
-                              : _selectedAdminSection == _AdminSection.members
+                              : _selectedAdminSection == AdminSection.members
                               ? _buildMembersPanel()
                               : ListView(
                                   padding: EdgeInsets.fromLTRB(
@@ -2434,98 +2301,4 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     'VOICE_LEASE_TRANSFERRED' => 'Голосовое подключение перенесено',
     _ => 'Другое событие управления',
   };
-}
-
-class _AdminWorkspaceHeader extends StatelessWidget {
-  const _AdminWorkspaceHeader({
-    required this.compact,
-    required this.titleFocus,
-    required this.onToggleNavigation,
-    required this.onClose,
-  });
-
-  final bool compact;
-  final FocusNode titleFocus;
-  final VoidCallback? onToggleNavigation;
-  final VoidCallback onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    final buttonConstraints = BoxConstraints.tightFor(
-      width: compact ? 44 : 36,
-      height: compact ? 44 : 36,
-    );
-    return SizedBox(
-      key: const ValueKey('admin-workspace-header'),
-      height: compact ? 56 : 64,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: GcColors.borderSubtle)),
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 24),
-          child: Row(
-            children: [
-              if (compact && onToggleNavigation != null) ...[
-                IconButton(
-                  key: const ValueKey('admin-workspace-nav-toggle'),
-                  tooltip: 'Открыть навигацию',
-                  constraints: buttonConstraints,
-                  padding: EdgeInsets.zero,
-                  style: IconButton.styleFrom(
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    fixedSize: Size.square(compact ? 44 : 36),
-                    padding: EdgeInsets.zero,
-                  ),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: onToggleNavigation,
-                  icon: const Icon(Icons.menu),
-                ),
-                const SizedBox(width: 8),
-              ],
-              const Icon(
-                Icons.admin_panel_settings_outlined,
-                color: GcColors.muted,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Focus(
-                  key: const ValueKey('admin-screen-title-focus'),
-                  focusNode: titleFocus,
-                  child: Semantics(
-                    key: const ValueKey('admin-screen-title'),
-                    header: true,
-                    child: const Text(
-                      'Администрирование',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              IconButton(
-                key: const ValueKey('admin-workspace-close'),
-                tooltip: 'Закрыть администрирование',
-                constraints: buttonConstraints,
-                padding: EdgeInsets.zero,
-                style: IconButton.styleFrom(
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  fixedSize: Size.square(compact ? 44 : 36),
-                  padding: EdgeInsets.zero,
-                ),
-                visualDensity: VisualDensity.compact,
-                onPressed: onClose,
-                icon: const Icon(Icons.close),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

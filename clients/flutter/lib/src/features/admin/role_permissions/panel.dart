@@ -277,109 +277,125 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
     final values = role == GuildRole.member
         ? draft
         : selected?.permissions ?? const <GuildPermission, bool>{};
-    final contentInset = MediaQuery.sizeOf(context).width < 1024 ? 0.0 : 24.0;
     return PopScope(
       canPop: !dirty,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(contentInset, 0, contentInset, 24),
-        children: [
-          Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final contentInset = constraints.maxWidth < 1024 ? 0.0 : 24.0;
+          return ListView(
+            padding: EdgeInsets.fromLTRB(contentInset, 0, contentInset, 24),
             children: [
-              const Expanded(
-                child: Text(
-                  'Роли и разрешения',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                ),
-              ),
-              TextButton.icon(
-                onPressed: loading ? null : () => _load(reset: false),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Обновить'),
-              ),
-            ],
-          ),
-          SegmentedButton<GuildRole>(
-            segments: const [
-              ButtonSegment(
-                value: GuildRole.member,
-                label: Text('Пользователь'),
-              ),
-              ButtonSegment(
-                value: GuildRole.administrator,
-                label: Text('Администратор'),
-              ),
-            ],
-            selected: {role},
-            onSelectionChanged: (value) => unawaited(_changeRole(value.single)),
-          ),
-          const SizedBox(height: 12),
-          if (loading && roles.isEmpty)
-            const Center(child: CircularProgressIndicator())
-          else
-            LayoutBuilder(
-              builder: (context, constraints) =>
-                  _permissionMatrix(values, constraints.maxWidth),
-            ),
-          if (role == GuildRole.administrator)
-            const Text(
-              'Разрешения администратора обязательны и не изменяются.',
-            ),
-          if (role == GuildRole.member)
-            Wrap(
-              spacing: 8,
-              children: [
-                OutlinedButton(
-                  onPressed: saving ? null : _defaults,
-                  child: const Text('По умолчанию'),
-                ),
-                TextButton(
-                  onPressed: !dirty || saving
-                      ? null
-                      : () => setState(() => draft = Map.of(baseline)),
-                  child: const Text('Отмена'),
-                ),
-                FilledButton(
-                  onPressed: !dirty || saving ? null : _save,
-                  child: Text(saving ? 'Сохраняем…' : 'Сохранить'),
-                ),
-              ],
-            ),
-          if (status != null)
-            Semantics(
-              liveRegion: true,
-              child: Text(status!, style: const TextStyle(color: Colors.green)),
-            ),
-          if (error != null)
-            Semantics(
-              liveRegion: true,
-              child: Text(error!, style: const TextStyle(color: Colors.red)),
-            ),
-          if (conflict)
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).colorScheme.error),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  const Text(
-                    'Сравнение разрешений',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                  const Expanded(
+                    child: Text(
+                      'Роли и разрешения',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                  const Text(
-                    'Актуальные значения загружены. Ваш черновик сохранён; проверьте изменения перед повторным сохранением.',
-                  ),
-                  TextButton(
-                    onPressed: saving ? null : () => _load(reset: false),
-                    child: const Text('Обновить актуальные значения'),
+                  TextButton.icon(
+                    onPressed: loading ? null : () => _load(reset: false),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Обновить'),
                   ),
                 ],
               ),
-            ),
-        ],
+              SegmentedButton<GuildRole>(
+                segments: const [
+                  ButtonSegment(
+                    value: GuildRole.member,
+                    label: Text('Пользователь'),
+                  ),
+                  ButtonSegment(
+                    value: GuildRole.administrator,
+                    label: Text('Администратор'),
+                  ),
+                ],
+                selected: {role},
+                onSelectionChanged: (value) =>
+                    unawaited(_changeRole(value.single)),
+              ),
+              const SizedBox(height: 12),
+              if (loading && roles.isEmpty)
+                const Center(child: CircularProgressIndicator())
+              else
+                LayoutBuilder(
+                  builder: (context, constraints) =>
+                      _permissionMatrix(values, constraints.maxWidth),
+                ),
+              if (role == GuildRole.administrator)
+                const Text(
+                  'Разрешения администратора обязательны и не изменяются.',
+                ),
+              if (role == GuildRole.member)
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    OutlinedButton(
+                      onPressed: saving ? null : _defaults,
+                      child: const Text('По умолчанию'),
+                    ),
+                    TextButton(
+                      onPressed: !dirty || saving
+                          ? null
+                          : () => setState(() => draft = Map.of(baseline)),
+                      child: const Text('Отмена'),
+                    ),
+                    FilledButton(
+                      onPressed: !dirty || saving ? null : _save,
+                      child: Text(saving ? 'Сохраняем…' : 'Сохранить'),
+                    ),
+                  ],
+                ),
+              if (status != null)
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    status!,
+                    style: const TextStyle(color: Colors.green),
+                  ),
+                ),
+              if (error != null)
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    error!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              if (conflict)
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Сравнение разрешений',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const Text(
+                        'Актуальные значения загружены. Ваш черновик сохранён; проверьте изменения перед повторным сохранением.',
+                      ),
+                      TextButton(
+                        onPressed: saving ? null : () => _load(reset: false),
+                        child: const Text('Обновить актуальные значения'),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
