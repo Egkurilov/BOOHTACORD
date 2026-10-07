@@ -69,17 +69,16 @@ extension VoiceAdmissionAudio on VoiceController {
 
   Future<void> applyVoiceOutputSelection(
     Room candidate,
-    String? outputIdAtRoomCreation,
   ) async {
     await selectVoiceOutput();
     if (audio.nativeBootstrap != null) return;
     if (AndroidAudioDevices.isNativeOutputRoute(selectedAudioOutputId)) return;
-    if (outputIdAtRoomCreation == selectedAudioOutputId) return;
     if (AndroidAudioDevices.isAndroid) {
       await AndroidAudioDevices.clearNativeOutput();
       if (selectedAudioOutputId == 'default') return;
     }
     final outputId = selectedAudioOutputId;
+    if (candidate.selectedAudioOutputDeviceId == outputId) return;
     final device = audio.audioOutputDevices
         .where((candidate) => candidate.deviceId == outputId)
         .firstOrNull;

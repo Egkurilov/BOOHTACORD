@@ -51,7 +51,6 @@ extension VoiceAdmissionJoin on VoiceController {
       check();
       leaseId = admittedLease;
       await prepareVoiceAudio(ticket, revision, admittedLease, disconnectGeneration);
-      final outputIdAtRoomCreation = selectedAudioOutputId;
       candidate = createRoom(voiceRoomOptions());
       pendingRoom = candidate;
       bindVoiceRoomEvents(candidate);
@@ -69,7 +68,7 @@ extension VoiceAdmissionJoin on VoiceController {
         admittedLease,
         disconnectGeneration,
       );
-      await applyVoiceOutputSelection(candidate, outputIdAtRoomCreation);
+      await applyVoiceOutputSelection(candidate);
       check();
       room = candidate;
       voiceChannel = channel;

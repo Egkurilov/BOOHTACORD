@@ -85,8 +85,8 @@ void main() {
       MediaDevice('speaker-default', 'Default output', 'audiooutput', null),
       MediaDevice('speaker-selected', 'USB output', 'audiooutput', null),
     ]);
-    await first.owner.selectAudioInput('mic-selected');
-    await first.owner.selectAudioOutput('speaker-selected');
+    await first.audio.selectAudioInput('mic-selected');
+    await first.audio.selectAudioOutput('speaker-selected');
 
     expect(hardware.selectedAudioInput?.deviceId, 'mic-selected');
     expect(hardware.selectedAudioOutput?.deviceId, 'speaker-selected');
