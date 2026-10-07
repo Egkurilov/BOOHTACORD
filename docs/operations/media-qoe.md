@@ -23,10 +23,13 @@ bindings, not proof that deployment has provisioned the new dashboard.
    presentation are a render symptom; low encode at sender and all receivers is
    a shared-source symptom. None proves a root cause by itself.
 5. Select the private sample population from the metric link; inspect up to 100
-   authenticated server samples. Trusted `user.id/session.id` row links open the
-   sole existing Traces dashboard. Modern #152 lifecycle traces carry media/flow
-   IDs; old server samples only correlate authenticated user/session. Time
-   proximity does not prove the samples share a publication.
+   authenticated server samples. The table includes #159 interval stats,
+   first-frame observation, freeze counters/duration, and collection provenance
+   when present; these remain per-sample trace attributes, not Prometheus
+   aggregates. Trusted `user.id/session.id` row links open the sole existing
+   Traces dashboard. Modern #152 lifecycle traces carry media/flow IDs; old
+   server samples only correlate authenticated user/session. Time proximity
+   does not prove the samples share a publication.
 6. Preserve sanitized paired evidence for the same moving content, then perform
    the existing controlled 720p30 A/B on sender and viewer. Exclude intentional
    static, hidden, paused, unsubscribed and warm-up periods from moving-source
