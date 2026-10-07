@@ -1,10 +1,8 @@
-import 'package:livekit_client/livekit_client.dart';
-
+import '../../../models.dart';
 import '../../../core/session/scope.dart';
-import '../../../services/android_audio_devices.dart';
+import '../../../services/screen_thumbnail.dart';
 import '../../../services/voice_volume_preferences.dart';
 import '../../../services/voice_lease_revocation.dart';
-import '../../../services/voice_audio_config.dart';
 import '../lifecycle/controller.dart';
 
 class CancelledVoiceAdmission implements Exception {}
@@ -34,24 +32,35 @@ extension VoiceAdmissionPrepare on VoiceController {
     volumePreferenceOutcome(preferences.status);
   }
 
-  RoomOptions voiceRoomOptions() => RoomOptions(
-    adaptiveStream: true,
-    dynacast: true,
-    defaultAudioCaptureOptions: audio.captureOptions,
-    defaultAudioPublishOptions: voiceMicrophonePublishOptions,
-    defaultAudioOutputOptions: AudioOutputOptions(
-      deviceId:
-          AndroidAudioDevices.isNativeOutputRoute(selectedAudioOutputId) ||
-              (AndroidAudioDevices.isAndroid &&
-                  selectedAudioOutputId == 'default')
-          ? null
-          : selectedAudioOutputId,
-    ),
-  );
-  Future<void> selectVoiceOutput() async {
-    if (AndroidAudioDevices.isNativeOutputRoute(selectedAudioOutputId) &&
-        !await AndroidAudioDevices.selectNativeOutput(selectedAudioOutputId!)) {
-      throw StateError('Android не смог выбрать сохранённый аудиовыход.');
+  ({int revision, int disconnectGeneration})? prepareVoiceAdmission(
+    GuildChannel channel,
+    SessionTicket ticket,
+    int admittedRevision,
+  ) {
+    if (!active(ticket, admittedRevision) ||
+        channel.admissionClosed ||
+        voiceAdmissionPending ||
+        (voiceChannel?.id == channel.id && room != null)) {
+      return null;
     }
+    disconnect.selectChannel(channel.id);
+    if (disconnect.notice?.reconnectAllowed == false) return null;
+    disconnect.reset();
+    revokedVoiceLeasesDuringJoin.clear();
+    disconnect.channelId = channel.id;
+    final disconnectGeneration = disconnect.generation;
+    final revision = ++operationRevision;
+    screenThumbnails.clear();
+    closeScreenPreviewSubscriptions();
+    screenPreviewSubscriptionQueue = ScreenPreviewSubscriptionQueue();
+    selectedRemoteScreenViewerIdentity = null;
+    transientScreenShareVolumes.clear();
+    voicePhase = VoicePhase.joining;
+    voicePingMs = null;
+    voiceAdmissionPending = true;
+    microphoneUnavailable = false;
+    error = null;
+    notifyListeners();
+    return (revision: revision, disconnectGeneration: disconnectGeneration);
   }
 }

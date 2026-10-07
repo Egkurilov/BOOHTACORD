@@ -37,6 +37,7 @@ class WebRTC {
   }
 
   static bool initialized = false;
+  static Future<void>? _initialization;
 
   /// Initialize the WebRTC plugin. If this is not manually called, will be
   /// initialized with default settings.
@@ -88,12 +89,27 @@ class WebRTC {
   ///                     for low latency scenarios on reliable networks. Like
   ///                     `enableWARP` it is a field trial, so it has to be set
   ///                     before the first peer connection is created.
-  static Future<void> initialize({Map<String, dynamic>? options}) async {
-    if (!initialized) {
-      await _channel.invokeMethod<void>('initialize', <String, dynamic>{
-        'options': options ?? {},
-      });
-      initialized = true;
-    }
+  static Future<void> initialize({Map<String, dynamic>? options}) {
+    if (initialized) return Future<void>.value();
+
+    final pending = _initialization;
+    if (pending != null) return pending;
+
+    late final Future<void> operation;
+    operation = _initialize(options ?? const <String, dynamic>{})
+        .whenComplete(() {
+      if (identical(_initialization, operation)) {
+        _initialization = null;
+      }
+    });
+    _initialization = operation;
+    return operation;
+  }
+
+  static Future<void> _initialize(Map<String, dynamic> options) async {
+    await _channel.invokeMethod<void>('initialize', <String, dynamic>{
+      'options': options,
+    });
+    initialized = true;
   }
 }

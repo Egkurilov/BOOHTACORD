@@ -52,14 +52,10 @@ class RTCFactoryNative extends RTCFactory {
   }
 
   @override
-  MediaRecorder mediaRecorder() {
-    return MediaRecorderNative();
-  }
+  MediaRecorder mediaRecorder() => MediaRecorderNative();
 
   @override
-  VideoRenderer videoRenderer() {
-    return RTCVideoRenderer();
-  }
+  VideoRenderer videoRenderer() => RTCVideoRenderer();
 
   @override
   Navigator get navigator => NavigatorNative.instance;
@@ -91,63 +87,22 @@ class RTCFactoryNative extends RTCFactory {
   }
 }
 
-bool _peerConnectionFactoryReady = false;
-Future<void>? _peerConnectionFactoryBootstrap;
-
-/// Warms the native peer-connection factory without opening a media session.
-///
-/// On macOS the audio device module is backed by a lazily initialized
-/// `RTCPeerConnectionFactory`. Creating and immediately disposing an empty
-/// peer connection follows the same native initialization path as a real
-/// connection, but performs no signaling, ICE exchange, capture, or track
-/// publication. Device enumeration can then use the authoritative ADM list.
-/// The operation is process-wide and single-flight because the factory itself
-/// is process-wide.
-Future<void> ensurePeerConnectionFactoryReady() {
-  if (_peerConnectionFactoryReady) return Future<void>.value();
-  final pending = _peerConnectionFactoryBootstrap;
-  if (pending != null) return pending;
-
-  final operation = _warmPeerConnectionFactory();
-  _peerConnectionFactoryBootstrap = operation;
-  return operation.whenComplete(() {
-    if (identical(_peerConnectionFactoryBootstrap, operation)) {
-      _peerConnectionFactoryBootstrap = null;
-    }
-  });
-}
-
-Future<void> _warmPeerConnectionFactory() async {
-  await WebRTC.initialize();
-  final peerConnection = await createPeerConnection(
-    const <String, dynamic>{},
-  );
-  await peerConnection.dispose();
-  _peerConnectionFactoryReady = true;
-}
-
 Future<RTCPeerConnection> createPeerConnection(
-    Map<String, dynamic> configuration,
-    [Map<String, dynamic> constraints = const {}]) async {
-  return RTCFactoryNative.instance
-      .createPeerConnection(configuration, constraints);
-}
+  Map<String, dynamic> configuration, [
+  Map<String, dynamic> constraints = const {},
+]) =>
+    RTCFactoryNative.instance.createPeerConnection(configuration, constraints);
 
-Future<MediaStream> createLocalMediaStream(String label) async {
-  return RTCFactoryNative.instance.createLocalMediaStream(label);
-}
+Future<MediaStream> createLocalMediaStream(String label) =>
+    RTCFactoryNative.instance.createLocalMediaStream(label);
 
-Future<RTCRtpCapabilities> getRtpReceiverCapabilities(String kind) async {
-  return RTCFactoryNative.instance.getRtpReceiverCapabilities(kind);
-}
+Future<RTCRtpCapabilities> getRtpReceiverCapabilities(String kind) =>
+    RTCFactoryNative.instance.getRtpReceiverCapabilities(kind);
 
-Future<RTCRtpCapabilities> getRtpSenderCapabilities(String kind) async {
-  return RTCFactoryNative.instance.getRtpSenderCapabilities(kind);
-}
+Future<RTCRtpCapabilities> getRtpSenderCapabilities(String kind) =>
+    RTCFactoryNative.instance.getRtpSenderCapabilities(kind);
 
-MediaRecorder mediaRecorder() {
-  return RTCFactoryNative.instance.mediaRecorder();
-}
+MediaRecorder mediaRecorder() => RTCFactoryNative.instance.mediaRecorder();
 
 Navigator get navigator => RTCFactoryNative.instance.navigator;
 

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 
 import 'package:livekit_client/livekit_client.dart';
 import 'package:boohtacord_desktop/src/core/session/scope.dart';
@@ -8,66 +7,19 @@ import 'package:boohtacord_desktop/src/features/screen/lifecycle/controller.dart
 import 'package:boohtacord_desktop/src/features/voice/lifecycle/controller.dart';
 
 import 'api.dart';
+import 'pending_room_fake.dart';
 
-class PendingVoiceRoom with EventsEmittable<RoomEvent> implements Room {
-  final connecting = Completer<void>();
-  int disconnected = 0;
-  bool connectCalled = false;
-  @override
-  final PendingMicrophone localParticipant = PendingMicrophone();
-  @override
-  UnmodifiableMapView<String, RemoteParticipant> get remoteParticipants =>
-      UnmodifiableMapView({});
-  @override
-  Future<void> connect(
-    String url,
-    String token, {
-    ConnectOptions? connectOptions,
-    RoomOptions? roomOptions,
-    FastConnectOptions? fastConnectOptions,
-  }) {
-    connectCalled = true;
-    return connecting.future;
-  }
-
-  @override
-  Future<void> disconnect() async {
-    disconnected++;
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class PendingMicrophone implements LocalParticipant {
-  @override
-  LocalTrackPublication? getTrackPublicationBySource(TrackSource source) =>
-      null;
-  final enabled = <bool>[];
-  final capture = Completer<void>();
-  final started = Completer<void>();
-  @override
-  Future<LocalTrackPublication?> setMicrophoneEnabled(
-    bool value, {
-    AudioCaptureOptions? audioCaptureOptions,
-  }) async {
-    enabled.add(value);
-    if (value) {
-      if (!started.isCompleted) started.complete();
-      await capture.future;
-    }
-    return null;
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
+export 'pending_room_fake.dart';
 
 class VoiceHarness {
-  VoiceHarness() {
+  VoiceHarness({Future<void> Function()? nativeBootstrap}) {
     audio = AudioDeviceController(
       readRoom: () => owner.room,
-      loader: () async => enumeratedDevices,
+      loader: () async {
+        audioScans++;
+        return enumeratedDevices;
+      },
+      nativeBootstrap: nativeBootstrap,
     );
     screen = ScreenShareController(
       api,
@@ -83,9 +35,14 @@ class VoiceHarness {
       readUser: () => null,
       reportError: (value) => error = value,
       formatError: (value) => value.toString(),
-      roomFactory: (_) {
+      roomFactory: (options) {
         created++;
+        createdRoomOptions = options;
+        room.roomOptions = options;
         return room;
+      },
+      audioOutputDeviceSetter: (candidate, device) async {
+        if (candidate is PendingVoiceRoom) candidate.selectedOutput = device;
       },
     );
   }
@@ -97,6 +54,8 @@ class VoiceHarness {
   late final ScreenShareController screen;
   late final VoiceController owner;
   int created = 0;
+  RoomOptions? createdRoomOptions;
+  int audioScans = 0;
   String? error;
   Future<void> dispose() async {
     owner.dispose();

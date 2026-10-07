@@ -370,7 +370,7 @@ void main() {
     final channelPicker = find.byWidgetPredicate(
       (widget) =>
           widget is DropdownButtonFormField<String> &&
-          widget.decoration?.labelText == 'Канал',
+          widget.decoration.labelText == 'Канал',
     );
     await tester.ensureVisible(channelPicker);
     await tester.tap(channelPicker);

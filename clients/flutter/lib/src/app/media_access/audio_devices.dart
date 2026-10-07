@@ -50,7 +50,9 @@ mixin AppAudioDevicesAccess on AppOwners {
   set audioProcessing(AudioProcessingPreferences value) =>
       audioDevices.audioProcessing = value;
 
-  bool get audioDevicesLoading => audioDevices.audioDevicesLoading;
+  bool get audioDevicesLoading =>
+      audioDevices.audioDevicesLoading ||
+      audioDevices.audioDeviceScanStatus == AudioDeviceScanStatus.initializing;
 
   set audioDevicesLoading(bool value) =>
       audioDevices.audioDevicesLoading = value;
@@ -80,7 +82,9 @@ mixin AppAudioDevicesAccess on AppOwners {
   set audioDeviceWarning(String? value) =>
       audioDevices.audioDeviceWarning = value;
 
-  Future<void> refreshAudioDevices() => audioDevices.refreshAudioDevices();
+  Future<void> refreshAudioDevices() => audioDevices.nativeBootstrap == null
+      ? audioDevices.refreshAudioDevices()
+      : audioDevices.bootstrap();
 
   Future<void> selectAudioInput(String deviceId) async {
     final target = voice.room;

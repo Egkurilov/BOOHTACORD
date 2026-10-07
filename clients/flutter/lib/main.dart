@@ -45,6 +45,8 @@ Future<void> main() async {
     api,
     audioDeviceBootstrap: Platform.isMacOS
         ? () async {
+            // Apply the same WebRTC options as a normal LiveKit startup before
+            // the plugin bootstrap makes its process-wide factory and ADM.
             await LiveKitClient.initialize();
             await rtc.ensurePeerConnectionFactoryReady();
           }
