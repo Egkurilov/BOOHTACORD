@@ -16,14 +16,13 @@ import { screenPublisherEventHandlers } from './screen_publisher/events'
 
 export function wireLiveKitRoom(
   room: VoiceRoom,
-  viewer: Pick<ReturnType<typeof bindLiveKitScreenViewer>, 'clear' | 'refresh' | 'subscribeMicrophones' | 'subscribeScreenThumbnails'>,
+  viewer: Pick<ReturnType<typeof bindLiveKitScreenViewer>, 'clear' | 'refresh' | 'subscribeMicrophones'>,
 ): VoiceRoom {
   const connect = room.connect.bind(room)
   const disconnect = room.disconnect.bind(room)
   room.connect = async (url, token, options) => {
     await connect(url, token, { ...options, autoSubscribe: false })
     viewer.subscribeMicrophones()
-    viewer.subscribeScreenThumbnails()
     viewer.refresh()
   }
   room.disconnect = async () => {

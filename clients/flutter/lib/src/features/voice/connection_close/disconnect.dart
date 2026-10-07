@@ -27,6 +27,7 @@ extension VoiceConnectionCloseDisconnect on VoiceController {
     final closing = leaveVoice(explicit: false);
     final revision = operationRevision;
     screenThumbnails.clear();
+    screenThumbnailPublications.clear();
     await closing;
     if (!active(ticket, revision) || generation != disconnect.generation) return;
     showVoiceDisconnect();

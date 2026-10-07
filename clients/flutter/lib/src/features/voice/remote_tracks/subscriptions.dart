@@ -9,14 +9,9 @@ extension VoiceRemoteTracksSubscriptions on VoiceController {
   void subscribeCurrentRemoteVoiceTracks(Room room) {
     for (final participant in room.remoteParticipants.values) {
       for (final publication in participant.audioTrackPublications.where(
-        (item) => item.source == TrackSource.microphone,
+        (item) => shouldAutomaticallySubscribeRemoteTrack(item.source),
       )) {
         unawaited(setRemoteTrackSubscription(publication, true));
-      }
-      for (final publication in participant.videoTrackPublications.where(
-        (item) => item.source == TrackSource.screenShareVideo,
-      )) {
-        queueRemoteScreenThumbnail(room, participant, publication);
       }
     }
   }
@@ -36,3 +31,6 @@ extension VoiceRemoteTracksSubscriptions on VoiceController {
     }
   }
 }
+
+bool shouldAutomaticallySubscribeRemoteTrack(TrackSource source) =>
+    source == TrackSource.microphone;
