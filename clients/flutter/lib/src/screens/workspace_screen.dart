@@ -5620,6 +5620,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
     required bool showingLocalScreen,
   }) async {
     ScreenFullscreenPresentation? presentation;
+    final rendererLease = ScreenFullscreenRendererLease();
     BuildContext? overlayContext;
     var closing = false;
     final capturedRoom = widget.state.room;
@@ -5638,7 +5639,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
         return;
       }
       closing = true;
-      Navigator.of(target).pop();
+      rendererLease.expire(() => Navigator.of(target).pop());
     }
 
     widget.onFullscreenSelectionChanged(
@@ -5682,19 +5683,26 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                 onRecoveryRetry: showingLocalScreen
                     ? null
                     : widget.state.voice.retryRemoteScreenViewerRecovery,
-                builder: (context, onFirstFrameRendered) => VideoTrackRenderer(
-                  track,
-                  renderMode: VideoRenderMode.auto,
-                  onFirstFrameRendered: () {
-                    if (showingLocalScreen) {
-                      debugPrint(
-                        '[screen-preview] local_renderer=first_swap_buffers',
-                      );
-                    } else {
-                      debugPrint('[screen-viewer] remote_renderer=first_frame');
-                    }
-                    onFirstFrameRendered();
-                  },
+                builder: (context, onFirstFrameRendered) =>
+                    ScreenFullscreenRendererGate(
+                      lease: rendererLease,
+                      child: VideoTrackRenderer(
+                        track,
+                        renderMode: VideoRenderMode.auto,
+                        onFirstFrameRendered: () {
+                          if (showingLocalScreen) {
+                            debugPrint(
+                              '[screen-preview] local_renderer=first_swap_buffers',
+                            );
+                          } else {
+                            debugPrint(
+                              '[screen-viewer] remote_renderer=first_frame',
+                            );
+                          }
+                          onFirstFrameRendered();
+                        },
+                      ),
+                    ),
                 ),
               ),
             ),
@@ -5713,6 +5721,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
     } finally {
       widget.state.removeListener(closeWhenEnded);
       capturedRoom?.removeListener(closeWhenEnded);
+      rendererLease.dispose();
       await presentation?.restore();
       widget.onFullscreenSelectionChanged(null);
     }

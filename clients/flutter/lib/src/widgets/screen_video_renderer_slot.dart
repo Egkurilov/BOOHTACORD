@@ -2,6 +2,38 @@ import 'package:flutter/widgets.dart';
 
 import '../features/voice/screen_viewer/fullscreen_generation.dart';
 
+class ScreenFullscreenRendererLease extends ChangeNotifier {
+  bool _active = true;
+
+  bool get active => _active;
+
+  void expire(VoidCallback closeRoute) {
+    if (!_active) return;
+    _active = false;
+    notifyListeners();
+    closeRoute();
+  }
+}
+
+class ScreenFullscreenRendererGate extends StatelessWidget {
+  const ScreenFullscreenRendererGate({
+    super.key,
+    required this.lease,
+    required this.child,
+  });
+
+  final ScreenFullscreenRendererLease lease;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: lease,
+    child: child,
+    builder: (context, child) =>
+        lease.active ? child! : const SizedBox.expand(),
+  );
+}
+
 enum ScreenVideoRendererOwner { stage, pinnedMini, fullscreen }
 
 enum ScreenVideoRendererSurface { stage, pinnedMini, fullscreen }
