@@ -1,0 +1,75 @@
+"""Authenticated local guard, with restoration independent of workload health."""
+import hmac
+import json
+import threading
+from datetime import datetime, timezone
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from .faults import Faults
+from .metrics import snapshot
+from .ownership import owned, verify_marker
+from .resources import Resources
+
+
+class Guard:
+    def __init__(self, stack, manifest):
+        self.stack, self.manifest = stack, manifest
+        verify_marker(stack, manifest['Nonce'], len(manifest['Accounts']))
+        self.resources, self.faults = Resources(stack), Faults(stack)
+        parent = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):
+                pass
+
+            def authorized(self):
+                return hmac.compare_digest(self.headers.get('X-Load-Nonce', ''), manifest['Nonce'])
+
+            def do_GET(self):
+                if not self.authorized():
+                    self.send_error(403)
+                    return
+                if self.path != '/snapshot':
+                    self.send_error(404)
+                    return
+                try:
+                    data = parent.sample()
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps(data).encode())
+                except (OSError, ValueError, RuntimeError):
+                    self.send_error(503)
+
+            def do_POST(self):
+                if not self.authorized():
+                    self.send_error(403)
+                    return
+                try:
+                    if not self.path.startswith('/fault/'):
+                        raise ValueError('Unknown controller command')
+                    owned(stack, 'db')  # Recovery checks ownership, never a health threshold.
+                    parent.faults.apply(self.path.removeprefix('/fault/'))
+                    self.send_response(204)
+                    self.end_headers()
+                except (OSError, ValueError, RuntimeError):
+                    self.send_error(503)
+
+        self.server = ThreadingHTTPServer(('127.0.0.1', 4890), Handler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+
+    def sample(self):
+        verify_marker(self.stack, self.manifest['Nonce'], len(self.manifest['Accounts']))
+        data = self.resources.read()
+        data.update(Owner=self.manifest['Owner'], Dataset='qa', Origin=self.manifest['Origin'],
+                    Commit=self.manifest['Commit'], DBName='qa', Accounts=len(self.manifest['Accounts'])+1,
+                    At=datetime.now(timezone.utc).isoformat(), Metrics=snapshot())
+        return data
+
+    def start(self):
+        self.thread.start()
+
+    def close(self):
+        self.faults.restore()
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=3)

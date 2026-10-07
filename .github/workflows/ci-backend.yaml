@@ -38,6 +38,17 @@ jobs:
           cache-dependency-path: backend/go.sum
       - name: Test, vet and build Go API
         run: python3 -m tools.ci.receipts.run backend
+      - name: Exercise owned real API load smoke
+        timeout-minutes: 6
+        run: python3 -m tools.load.controller.run --accounts 2 --seconds 20 --profile normal
+      - name: Retain sanitized load smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-load-smoke-${{ github.sha }}
+          path: .out/backend-load/normal/report.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Retain source-bound gate receipt
         if: inputs.release_receipt
         uses: actions/upload-artifact@v4

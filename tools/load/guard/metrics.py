@@ -1,0 +1,32 @@
+"""Private snapshots: fixed metric names only, no labels or unbounded samples."""
+import math
+import re
+import urllib.request
+
+ALLOWED = frozenset(('go_goroutines', 'go_memstats_alloc_bytes', 'go_gc_duration_seconds_sum',
+    'go_gc_duration_seconds_count', 'process_cpu_seconds_total', 'process_resident_memory_bytes',
+    'voice_platform_api_requests_total', 'voice_platform_api_request_duration_seconds_sum',
+    'voice_platform_api_request_duration_seconds_count', 'voice_platform_database_acquire_duration_seconds_sum',
+    'voice_platform_database_acquire_duration_seconds_count', 'voice_platform_database_pool_acquired', 'voice_platform_database_pool_idle',
+    'voice_platform_database_pool_total', 'voice_platform_database_pool_max',
+    'voice_platform_database_acquires_pending', 'voice_platform_database_pool_empty_acquire_wait_seconds_total',
+    'voice_platform_database_acquires_total', 'voice_platform_realtime_connections',
+    'voice_platform_upload_reservations_bytes', 'voice_platform_upload_failures_total',
+    'voice_platform_livekit_participants', 'voice_platform_livekit_publications',
+    'voice_platform_livekit_snapshot_errors_total'))
+
+
+def aggregate(text):
+    result = {}
+    for line in text.splitlines():
+        match = re.fullmatch(r'([a-zA-Z_:][a-zA-Z0-9_:]*)(?:\{[^\n]*\})? ([0-9.eE+\-]+)', line)
+        if match and match[1] in ALLOWED:
+            value = float(match[2])
+            if math.isfinite(value):
+                result[match[1]] = result.get(match[1], 0)+value
+    return result
+
+
+def snapshot():
+    with urllib.request.urlopen('http://127.0.0.1:4820/metrics', timeout=2) as response:
+        return aggregate(response.read(2 << 20).decode())
