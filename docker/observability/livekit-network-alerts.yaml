@@ -1,0 +1,11 @@
+groups:
+  - name: livekit-network
+    rules:
+      - alert: LiveKitMetricsScrapeUnavailable
+        expr: up{job="boohtacord-livekit"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: LiveKit metrics scrape unavailable
+          description: The internal LiveKit metrics scrape has failed for 2 minutes.

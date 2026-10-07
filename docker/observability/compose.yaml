@@ -42,10 +42,12 @@ services:
     volumes:
       - ./prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
       - ./guild-lifecycle-alerts.yaml:/etc/prometheus/guild-lifecycle-alerts.yaml:ro
+      - ./livekit-network-alerts.yaml:/etc/prometheus/livekit-network-alerts.yaml:ro
       - prometheus-data:/prometheus
     ports:
       - "127.0.0.1:9091:9090"
     depends_on: [collector, tempo]
+    networks: [default, livekit-metrics]
     mem_limit: 512m
     cpus: 0.5
     restart: unless-stopped
@@ -56,3 +58,8 @@ services:
 volumes:
   tempo-data:
   prometheus-data:
+
+networks:
+  livekit-metrics:
+    external: true
+    name: voice-platform_livekit-metrics
