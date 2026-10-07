@@ -48,4 +48,13 @@ $realtime = Get-Content -Raw -LiteralPath $realtimePath | ConvertFrom-Json
 . (Join-Path $PSScriptRoot 'security.ps1')
 . (Join-Path $PSScriptRoot 'role_permissions.ps1')
 . (Join-Path $PSScriptRoot 'telemetry.ps1')
+Push-Location (Join-Path $PSScriptRoot '../../..')
+try {
+    python -m unittest tools.verify.openapi_parity.test_parity tools.verify.openapi_parity.test_source
+    if ($LASTEXITCODE -ne 0) { throw 'OpenAPI parity tests failed.' }
+    python -m tools.verify.openapi_parity.lint
+    if ($LASTEXITCODE -ne 0) { throw 'OpenAPI schema lint failed.' }
+    python -m tools.verify.openapi_parity.validate
+    if ($LASTEXITCODE -ne 0) { throw 'OpenAPI native route/security/parameter parity failed.' }
+} finally { Pop-Location }
 Write-Output 'Contracts OK.'
