@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart' show VideoDimensions;
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 
+import '../features/screen/capture/update_notice.dart';
 import '../services/screen_share_quality.dart';
 import '../theme.dart';
 
@@ -304,7 +305,7 @@ class _ScreenShareSetupDialogState extends State<ScreenShareSetupDialog> {
               const SizedBox(height: 3),
               Text(
                 widget.updating
-                    ? 'Изменить качество и FPS без перезапуска'
+                    ? screenShareUpdateNotice(defaultTargetPlatform)
                     : defaultTargetPlatform == TargetPlatform.iOS
                     ? 'Выберите качество трансляции приложения'
                     : 'Выберите источник и качество трансляции',
