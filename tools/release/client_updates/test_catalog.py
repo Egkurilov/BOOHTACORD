@@ -2,9 +2,11 @@ import json
 from tools.release.client_updates.catalog import mutate
 
 
-def source(tmp_path):
+def source(tmp_path, current_target=None):
     path = tmp_path / "catalog.json"
-    path.write_text(json.dumps({"schema_version":1,"catalog_revision":4,"application_family":"boohtacord","entries":[{"platform":"windows","distribution":"direct","channel":"stable","arch":"x64","state":"unconfigured","target":None}]}), encoding="utf-8")
+    entry = {"platform":"windows","distribution":"direct","channel":"stable","arch":"x64",
+             "state":"published" if current_target else "unconfigured","target":current_target}
+    path.write_text(json.dumps({"schema_version":1,"catalog_revision":4,"application_family":"boohtacord","entries":[entry]}), encoding="utf-8")
     return path
 
 
@@ -34,3 +36,64 @@ def test_publisher_lock_rejects_a_concurrent_writer(tmp_path):
     try: mutate(path, 4, ("windows","direct","stable","x64"), "published", target())
     except ValueError as error: assert "publisher" in str(error)
     else: raise AssertionError("concurrent writer accepted")
+
+
+def test_rejects_late_release_promotion_that_would_downgrade_catalog(tmp_path):
+    current = target() | {"release_id":"windows-direct-stable-r52", "release_order":52,
+                          "version":"1.0.38", "native_build":"71"}
+    stale = target() | {"release_id":"windows-direct-stable-r46", "release_order":46,
+                        "version":"1.0.32", "native_build":"46"}
+    path = source(tmp_path, current)
+
+    try:
+        mutate(path, 4, ("windows","direct","stable","x64"), "published", stale)
+    except ValueError as error:
+        assert "regress" in str(error)
+    else:
+        raise AssertionError("older release replaced the newer catalog target")
+
+    document = json.loads(path.read_text(encoding="utf-8"))
+    assert document["catalog_revision"] == 4
+    assert document["entries"][0]["target"]["release_id"] == "windows-direct-stable-r52"
+
+
+def test_rejects_conflicting_identity_with_same_release_order(tmp_path):
+    current = target() | {"release_id":"windows-direct-stable-r52", "release_order":52,
+                          "version":"1.0.38", "native_build":"71"}
+    conflict = current | {"release_id":"windows-direct-stable-r53"}
+    path = source(tmp_path, current)
+
+    try:
+        mutate(path, 4, ("windows","direct","stable","x64"), "published", conflict)
+    except ValueError as error:
+        assert "order" in str(error)
+    else:
+        raise AssertionError("different release identities shared one release order")
+
+
+def test_rejects_same_release_id_with_conflicting_package_identity(tmp_path):
+    current = target() | {"release_id":"windows-direct-stable-r52", "release_order":52,
+                          "version":"1.0.38", "native_build":"71"}
+    conflict = current | {"version":"1.0.39", "native_build":"72"}
+    path = source(tmp_path, current)
+
+    try:
+        mutate(path, 4, ("windows","direct","stable","x64"), "published", conflict)
+    except ValueError as error:
+        assert "identity" in str(error)
+    else:
+        raise AssertionError("one release ID was allowed to identify conflicting packages")
+
+
+def test_current_windows_catalog_points_to_verified_release_identity():
+    from pathlib import Path
+    from tools.release.client_updates.catalog import load
+
+    repository = Path(__file__).resolve().parents[3]
+    catalog = load(repository / "deploy/client-updates/catalog.json")
+    windows = next(entry for entry in catalog["entries"] if entry["platform"] == "windows")
+    assert catalog["catalog_revision"] == 29
+    assert windows["target"]["release_id"] == "windows-direct-stable-r52"
+    assert windows["target"]["release_order"] == 52
+    assert windows["target"]["version"] == "1.0.38"
+    assert windows["target"]["native_build"] == "71"

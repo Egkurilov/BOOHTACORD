@@ -30,7 +30,9 @@ def validate(document):
 
 
 def validate_target(target, platform):
-    if not re.fullmatch(r"[A-Za-z0-9._-]{1,96}", target.get("release_id", "")) or target.get("release_order", 0) < 1:
+    order = target.get("release_order")
+    if (not re.fullmatch(r"[A-Za-z0-9._-]{1,96}", target.get("release_id", ""))
+            or type(order) is not int or not 1 <= order <= 2_147_483_647):
         raise ValueError("invalid release identity")
     if target.get("priority") not in ("normal", "important"):
         raise ValueError("invalid priority")
@@ -67,6 +69,23 @@ def mutate(path, expected_revision, selector, state, target):
         if document["catalog_revision"] != expected_revision: raise ValueError("catalog revision changed")
         matches = [entry for entry in document["entries"] if tuple(entry[name] for name in SELECTOR) == selector]
         if len(matches) != 1: raise ValueError("selector is not configured exactly once")
+        if state == "published":
+            if not isinstance(target, dict): raise ValueError("published promotion requires a target")
+            validate_target(target, selector[0])
+            previous = matches[0].get("target")
+            if isinstance(previous, dict):
+                previous_order = previous.get("release_order", 0)
+                next_order = target["release_order"]
+                if next_order < previous_order:
+                    raise ValueError("release order regression is not allowed")
+                if next_order == previous_order and target["release_id"] != previous.get("release_id"):
+                    raise ValueError("different release identities cannot share a release order")
+                if target["release_id"] == previous.get("release_id") and any(
+                        target.get(field) != previous.get(field)
+                        for field in ("release_order", "version", "native_build")):
+                    raise ValueError("release identity conflicts with its existing version or build")
+        elif state != "unconfigured" or target is not None:
+            raise ValueError("withdrawal requires the unconfigured state and no target")
         matches[0].update(state=state, target=target)
         document["catalog_revision"] += 1; validate(document)
         payload = json.dumps(document, indent=2, ensure_ascii=False) + "\n"

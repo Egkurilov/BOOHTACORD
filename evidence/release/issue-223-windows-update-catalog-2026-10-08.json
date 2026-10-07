@@ -1,0 +1,40 @@
+{
+  "issue": 223,
+  "verified_at": "2026-10-08",
+  "source_revision": "eace3c0e91dc565c6c22247930cb32870784526f",
+  "release": {
+    "tag": "windows-v1.0.38",
+    "published": true,
+    "draft": false,
+    "prerelease": false,
+    "platform": "windows",
+    "distribution": "direct",
+    "channel": "stable",
+    "architecture": "x64",
+    "release_id": "windows-direct-stable-r52",
+    "release_order": 52,
+    "version": "1.0.38",
+    "native_build": "71",
+    "artifact_manifest_sha256": "96ea1c86429eca1bb66cc1d6dcddea243d49b6f960f7279288c54637b0670edd",
+    "windows_zip_sha256": "9e58597a3220e9512e97903ea2a30941807b17ac9343a1c69524cde9edef288a",
+    "windows_zip_bytes": 26339160,
+    "checksum_source": "SHA256SUMS attached to the published GitHub release"
+  },
+  "repository": {
+    "catalog_revision": 29,
+    "catalog_target_matches_release_manifest": "PASS",
+    "atomic_promotion_rejects_order_regression": "PASS",
+    "same_order_or_release_id_identity_conflicts_rejected": "PASS"
+  },
+  "checks": {
+    "tools/release/client_updates/test_catalog.py": "PASS",
+    "client_update_catalog_validate": "PASS",
+    "tools/verify/contracts/verify-contracts.ps1": "PASS"
+  },
+  "acceptance": {
+    "production_endpoint_readback": "NOT_RUN",
+    "old_windows_1_0_32_client_observes_update": "NOT_RUN",
+    "catalog_deployment": "NOT_RUN",
+    "windows_install_and_post_update_status": "NOT_RUN"
+  }
+}
